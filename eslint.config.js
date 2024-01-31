@@ -1,7 +1,16 @@
 import ts from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
 
+const myRules = {
+  // https://eslint.org/docs/latest/rules/max-len
+  // Temporary rule to see if eslint will work:
+  //'max-len': ['warn', { code: 3, ignoreComments: false, ignoreRegExpLiterals: true, ignoreStrings: true, ignoreTemplateLiterals: true }],
+};
+
 export default [
+  {
+    rules: myRules,
+  },
   {
     ignores: [".bos/*"],
   },

@@ -6,7 +6,7 @@
   "devDependencies": {
     "@types/react": "^18.2.21",
     "@typescript-eslint/eslint-plugin": "^6.5.0",
-    "bos-cli": "^0.3.11",
+    "bos-cli": "^0.3.2",
     "eslint": "^8.48.0",
     "husky": "^8.0.0",
     "lint-staged": "^14.0.1",
@@ -21,7 +21,7 @@
     "fmt": "prettier --write '**/*.{js,jsx,ts,tsx,json}'",
     "fmt:check": "prettier --check '**/*.{js,jsx,ts,tsx,json}'",
     "lint": "tsc --pretty --noEmit && eslint .",
-    "dev": "~/.cargo/bin/bos-loader devhub.near --path src",
+    "dev": "~/.cargo/bin/bos-loader dashboard.treasury-devdao.near --path ./.bos/transpiled/src",
     "build": "npm run fmt && rimraf .bos/transpiled && mkdir -p .bos/transpiled/src && sucrase ./src -d .bos/transpiled/src/npm_package_name --transforms typescript,jsx --jsx-runtime preserve --disable-es-transforms --out-extension jsx && node ./build.js",
     "deploy": "npm run build && cd .bos/transpiled && bos components deploy",
     "prepare": "husky install"
@@ -41,20 +41,20 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/NEAR-DevHub/neardevhub-trustees-dashboard-bos"
+    "url": "git+https://github.com/NEAR-DevHub/neardevhub-treasury-dashboard.git"
   },
   "keywords": [
     "near",
     "nearprotocol",
     "bos",
-    "blockchains",
+    "blockchainos",
     "typescript",
-    "trustees"
+    "starter"
   ],
-  "author": "devhub.near",
+  "author": "frol.near",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/NEAR-DevHub/neardevhub-trustees-dashboard-bos"
+    "url": "https://github.com/NEAR-DevHub/neardevhub-treasury-dashboard.git"
   },
-  "homepage": "https://github.com/NEAR-DevHub/neardevhub-trustees-dashboard-bos#readme"
+  "homepage": "https://github.com/NEAR-DevHub/neardevhub-treasury-dashboard.git#readme"
 }
