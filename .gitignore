@@ -1,3 +1,6 @@
 node_modules
 .bos
 yarn.lock
+test-results
+build
+.env
