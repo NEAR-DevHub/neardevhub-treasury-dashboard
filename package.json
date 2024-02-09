@@ -1,5 +1,5 @@
 {
-  "name": "neardevhub-trustees-dashboard-bos",
+  "name": "neardevhub-trustees",
   "version": "1.0.0",
   "description": "Trustees dashboard built for NEAR BOS",
   "type": "module",
