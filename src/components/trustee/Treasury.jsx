@@ -56,7 +56,7 @@ for (const token of tokens) {
         Big(balance).div(Big(10).pow(ftMetadata.decimals)).toFixed()
       ),
       symbol: ftMetadata.symbol,
-      icon: ftMetadata.icon
+      icon: ftMetadata.icon,
     });
   }
 }

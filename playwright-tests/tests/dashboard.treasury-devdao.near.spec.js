@@ -6,6 +6,6 @@ test("should go to trustees dashboard", async ({ page }) => {
   );
 
   const dashboardHeader = await page.getByText("DevDAO Dashboard");
-  await dashboardHeader.waitFor({state: 'visible'});
+  await dashboardHeader.waitFor({ state: "visible" });
   expect(await dashboardHeader.isVisible()).toBeTruthy();
 });

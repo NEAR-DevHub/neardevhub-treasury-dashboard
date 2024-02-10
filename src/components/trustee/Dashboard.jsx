@@ -1,7 +1,7 @@
 import {
   REPL_TREASURY_CONTRACT,
   REPL_DEVHUB,
-  REPL_PROPOSAL_CONTRACT
+  REPL_PROPOSAL_CONTRACT,
 } from "@/includes//common";
 
 const { normalize } = VM.require(`${REPL_DEVHUB}/widget/core.lib.stringUtils`);
@@ -40,18 +40,18 @@ const tabs = [
   {
     title: "Need Approvals",
     view: "Approvals",
-    props: {}
+    props: {},
   },
   {
     title: "Payment History",
     view: "History",
-    props: {}
+    props: {},
   },
   {
     title: "Treasury",
     view: "Treasury",
-    props: {}
-  }
+    props: {},
+  },
 ];
 
 function findTab(tabTitle) {
@@ -77,14 +77,14 @@ return (
                   widgetSrc: `${REPL_TREASURY_CONTRACT}/widget/app`,
                   params: {
                     accountType: "trustees",
-                    tab: normalize(title)
-                  }
+                    tab: normalize(title),
+                  },
                 })}
                 className={[
                   "d-inline-flex gap-2",
                   normalize(currentTab.title) === normalize(title)
                     ? "nav-link active"
-                    : "nav-link"
+                    : "nav-link",
                 ].join(" ")}
               >
                 <span>{title}</span>

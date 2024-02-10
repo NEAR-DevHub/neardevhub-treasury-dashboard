@@ -8,7 +8,7 @@ const [selectedOption, setSelectedOption] = useState({
   label:
     options?.find((item) => item.value === selectedValue)?.label ??
     defaultLabel,
-  value: defaultLabel
+  value: defaultLabel,
 });
 
 useEffect(() => {
@@ -17,7 +17,7 @@ useEffect(() => {
       label:
         options?.find((item) => item.value === selectedValue)?.label ??
         defaultLabel,
-      value: defaultLabel
+      value: defaultLabel,
     });
   }
 }, [selectedValue]);

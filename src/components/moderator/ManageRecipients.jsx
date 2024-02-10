@@ -1,7 +1,7 @@
 import {
   REPL_TREASURY_CONTRACT,
   REPL_DEVHUB,
-  REPL_PROPOSAL_CONTRACT
+  REPL_PROPOSAL_CONTRACT,
 } from "@/includes//common";
 
 const resPerPage = 50;
@@ -19,7 +19,7 @@ const RecipientsData = [
     accountId: "megha19.near",
     testTransactionStatus: true,
     totalTransactions: 10,
-    totalPaid: "1500"
+    totalPaid: "1500",
   },
   {
     id: 2,
@@ -30,8 +30,8 @@ const RecipientsData = [
     accountId: "",
     testTransactionStatus: false,
     totalTransactions: 15,
-    totalPaid: "1000"
-  }
+    totalPaid: "1000",
+  },
 ];
 
 const Container = styled.div`
@@ -205,7 +205,7 @@ return (
         src={`${REPL_TREASURY_CONTRACT}/widget/neardevhub-trustees.components.molecule.Pagination`}
         props={{
           totalPages: 2,
-          onPageClick: (v) => setPage(v)
+          onPageClick: (v) => setPage(v),
         }}
       />
     </div>

@@ -1,7 +1,7 @@
 import {
   REPL_TREASURY_CONTRACT,
   REPL_DEVHUB,
-  REPL_PROPOSAL_CONTRACT
+  REPL_PROPOSAL_CONTRACT,
 } from "@/includes//common";
 
 const [form, setForm] = useState(null);
@@ -98,7 +98,7 @@ return (
         label: "First Name",
         onChange: () => {},
         placeholder: "Enter first name",
-        value: form
+        value: form,
       }}
     />
     <Widget
@@ -109,7 +109,7 @@ return (
         label: "Last Name",
         onChange: () => {},
         placeholder: "Enter last name",
-        value: form
+        value: form,
       }}
     />
     <Widget
@@ -120,7 +120,7 @@ return (
         label: "Email Address",
         onChange: () => {},
         placeholder: "Enter email address",
-        value: form
+        value: form,
       }}
     />
     <div>
@@ -149,7 +149,7 @@ return (
         label: "Wallet Address",
         options: fromWalletOptions,
         showSearch: true,
-        defaultLabel: "neardevhub.near"
+        defaultLabel: "neardevhub.near",
       }}
     />
     <VerificationIconContainer isVerified={true} label="KYC Verified" />
@@ -161,7 +161,7 @@ return (
         label: "Test Transaction URL",
         onChange: () => {},
         placeholder: "Enter URL",
-        value: form
+        value: form,
       }}
     />
     <div>
@@ -200,7 +200,7 @@ return (
         props={{
           classNames: { root: "btn-outline-danger shadow-none border-0" },
           label: "Cancel",
-          onClick: onCancelClick
+          onClick: onCancelClick,
         }}
       />
       <Widget
@@ -209,7 +209,7 @@ return (
           classNames: { root: "green-btn" },
           disabled: false, // add checks
           label: "Submit",
-          onClick: onSubmitClick
+          onClick: onSubmitClick,
         }}
       />
     </div>

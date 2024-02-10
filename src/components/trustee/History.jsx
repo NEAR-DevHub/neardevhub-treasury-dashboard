@@ -2,7 +2,7 @@ import {
   REPL_TREASURY_CONTRACT,
   REPL_DEVHUB,
   REPL_PROPOSAL_CONTRACT,
-  REPL_NEAR
+  REPL_NEAR,
 } from "@/includes//common";
 
 const treasuryDaoID = REPL_TREASURY_CONTRACT;
@@ -12,7 +12,7 @@ const [currentPage, setPage] = useState(0);
 const [expandSummaryIndex, setExpandSummary] = useState({});
 const proposals = Near.view(treasuryDaoID, "get_proposals", {
   from_index: currentPage === 0 ? currentPage : (currentPage - 1) * resPerPage,
-  limit: resPerPage
+  limit: resPerPage,
 });
 
 const lastProposalID = Near.view(treasuryDaoID, "get_last_proposal_id", {});
@@ -80,7 +80,7 @@ const ProposalsComponent = () => {
         const address = item.token;
         let ftMetadata = {
           symbol: "NEAR",
-          decimals: 24
+          decimals: 24,
         };
         if (!isNEAR) {
           ftMetadata = Near.view(address, "ft_metadata", {});
@@ -125,7 +125,7 @@ const ProposalsComponent = () => {
                     onClick={() =>
                       setExpandSummary((prevState) => ({
                         ...prevState,
-                        [index]: !prevState[index]
+                        [index]: !prevState[index],
                       }))
                     }
                     height={20}
@@ -161,7 +161,7 @@ const ProposalsComponent = () => {
               <Widget
                 src={`${REPL_NEAR}/widget/TimeAgo`}
                 props={{
-                  blockTimestamp: item.approvedAt
+                  blockTimestamp: item.approvedAt,
                 }}
               />
             </td>
@@ -207,7 +207,7 @@ return (
         src={`${REPL_TREASURY_CONTRACT}/widget/neardevhub-trustees.components.molecule.Pagination`}
         props={{
           totalPages: Math.round(lastProposalID / resPerPage),
-          onPageClick: (v) => setPage(v)
+          onPageClick: (v) => setPage(v),
         }}
       />
     </div>

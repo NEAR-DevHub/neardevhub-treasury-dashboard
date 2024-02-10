@@ -1,14 +1,14 @@
 import {
   REPL_TREASURY_CONTRACT,
   REPL_DEVHUB,
-  REPL_PROPOSAL_CONTRACT
+  REPL_PROPOSAL_CONTRACT,
 } from "@/includes//common";
 
 const { tab, accountType, ...passProps } = props;
 
 const tabKeys = {
   TRUSTEES: "trustees",
-  MODERATORS: "moderators"
+  MODERATORS: "moderators",
 };
 
 const councilInfo = Near.view(REPL_TREASURY_CONTRACT, "get_policy");

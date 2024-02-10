@@ -3,20 +3,20 @@ import { REPL_PROPOSAL_CONTRACT } from "@/includes//common";
 // dropdown options
 const [fromWalletOptions, setFromWalletOptions] = useState([
   { label: "treasury.dhthomas.testnet", value: "treasury.dhthomas.testnet" },
-  { label: "treasurydevhub.near", value: "treasurydevhub.near" }
+  { label: "treasurydevhub.near", value: "treasurydevhub.near" },
 ]);
 const [proposalsOptions, setProposalsOptions] = useState([]);
 const [recipientsOptions, setReceientsOptions] = useState([
   { label: "devhub.near", value: "devhub.near" },
-  { label: "devgovgigs.near", value: "devgovgigs.near" }
+  { label: "devgovgigs.near", value: "devgovgigs.near" },
 ]);
 const [tokensOptions, setTokenOptions] = useState([
   { label: "NEAR", value: "" },
   { label: "USDT", value: "usdt.tether-token.near" },
   {
     label: "USDC",
-    value: "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1"
-  }
+    value: "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+  },
 ]);
 
 const [sender, setSender] = useState(fromWalletOptions[0].value);
@@ -113,14 +113,14 @@ function onSubmitClick() {
               token_id: tokenId,
               receiver_id: receiver,
               amount: amount,
-              msg: memo
-            }
-          }
-        }
+              msg: memo,
+            },
+          },
+        },
       },
       gas: gas,
-      deposit: deposit
-    }
+      deposit: deposit,
+    },
   ]);
 }
 
@@ -151,7 +151,7 @@ return (
         label: "From Wallet",
         options: fromWalletOptions,
         showSearch: false,
-        defaultLabel: "treasury.near"
+        defaultLabel: "treasury.near",
       }}
     />
     <Widget
@@ -162,7 +162,7 @@ return (
         label: "Choose Proposal",
         options: proposalsOptions,
         showSearch: false,
-        defaultLabel: "Seach proposals"
+        defaultLabel: "Seach proposals",
       }}
     />
     <Widget
@@ -173,7 +173,7 @@ return (
         label: "To Wallet (Recipient)",
         options: recipientsOptions,
         showSearch: false,
-        defaultLabel: "neardevhub.near"
+        defaultLabel: "neardevhub.near",
       }}
     />
     <div className="d-flex gap-2 flex-column">
@@ -194,7 +194,7 @@ return (
         label: "Currency",
         options: tokensOptions,
         showSearch: false,
-        defaultLabel: "Near"
+        defaultLabel: "Near",
       }}
     />
     <Widget
@@ -207,8 +207,8 @@ return (
         placeholder: "Enter amount",
         value: amount,
         inputProps: {
-          type: "number"
-        }
+          type: "number",
+        },
       }}
     />
     <Widget
@@ -219,7 +219,7 @@ return (
         label: "Notes",
         onChange: (e) => setMemo(e.target.value),
         placeholder: "Enter memo",
-        value: memo
+        value: memo,
       }}
     />
     <div className="d-flex mt-4 gap-3 justify-content-end">
@@ -228,7 +228,7 @@ return (
         props={{
           classNames: { root: "btn-outline-danger shadow-none border-0" },
           label: "Cancel",
-          onClick: onCancelClick
+          onClick: onCancelClick,
         }}
       />
       <Widget
@@ -238,7 +238,7 @@ return (
           disabled:
             !amount || !sender || !receiver || !selectedProposalId?.toString(),
           label: "Submit",
-          onClick: onSubmitClick
+          onClick: onSubmitClick,
         }}
       />
     </div>
