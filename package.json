@@ -30,7 +30,8 @@
     "prepare": "husky install",
     "gateway": "node scripts/dev-gateway.js",
     "test": "npx playwright test",
-    "test:watch:codespaces": "npm test -- --ui-host=0.0.0.0"
+    "test:watch:codespaces": "npm test -- --ui-host=0.0.0.0",
+    "build:watch": "node ./scripts/watch.js"
   },
   "husky": {
     "hooks": {
