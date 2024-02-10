@@ -5,5 +5,7 @@ test("should go to trustees dashboard", async ({ page }) => {
     "/dashboard.treasury-devdao.near/widget/neardevhub-trustees.components.pages.app"
   );
 
-  expect(await page.getByText("DevDAO Dashboard").isVisible()).toBeTruthy();
+  const dashboardHeader = await page.getByText("DevDAO Dashboard");
+  await dashboardHeader.waitFor({state: 'visible'});
+  expect(await dashboardHeader.isVisible()).toBeTruthy();
 });
