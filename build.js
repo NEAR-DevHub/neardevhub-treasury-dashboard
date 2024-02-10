@@ -1,7 +1,7 @@
 import fs from "fs";
 import replaceInFiles from "replace-in-files";
 
-const transpiledPathPrefix = ".bos/transpiled/src/npm_package_name";
+const transpiledPathPrefix = ".bos/transpiled/src/neardevhub-trustees";
 
 async function build() {
   await replaceInFiles({
@@ -13,7 +13,7 @@ async function build() {
 
   await replaceInFiles({
     files: [`${transpiledPathPrefix}/**/*.jsx`],
-    from: /^export /,
+    from: /^export /gms,
     // NOTE: Empty string is ignored, so we use a function workaround it
     to: () => "",
   });
