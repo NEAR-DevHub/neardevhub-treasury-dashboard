@@ -34,10 +34,33 @@ if (context.accountId) {
   }
 }
 
+const Theme = styled.div`
+  position: fixed;
+  inset: 73px 0px 0px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: scroll;
+  padding-top: calc(-1 * var(--body-top-padding));
+  background: #f4f4f4;
+`;
+
+const ContentContainer = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+`;
+
 const Container = styled.div`
   width: 100%;
-  padding-block: 1rem;
-  padding-inline: 3rem;
+  padding-top: 1rem;
+  padding-inline: 1.5rem;
+
+  .tab-content {
+    min-height: 50vh;
+  }
 
   .bold {
     font-weight: 600;
@@ -66,51 +89,69 @@ const showLoginWindow =
   (selectedTab === tabKeys.MODERATORS && !isModerator);
 
 return (
-  <Container className="pl-5">
-    <div className="h2 bold">DevDAO Dashboard</div>
-    <div className="mt-3">
-      {showLoginWindow ? (
+  <Theme>
+    <ContentContainer>
+      <Container className="pl-5">
         <Widget
-          src={`${REPL_TREASURY_CONTRACT}/widget/neardevhub-trustees.components.trustee.Login`}
-          props={{ ...passProps, setIsTrustee }}
+          src={`${REPL_TREASURY_CONTRACT}/widget/neardevhub-trustees.components.organism.Navbar`}
+          props={{
+            ...passProps,
+          }}
         />
-      ) : (
-        <div className="mt-2">
-          <Tabs>
-            <div className="d-flex w-100 cursor">
-              <div
-                className={
-                  "flex-item " +
-                  (selectedTab === tabKeys.TRUSTEES ? "" : "bg-grey")
-                }
-                onClick={() => setSelectedTab(tabKeys.TRUSTEES)}
-              >
-                Trustees
-              </div>
-              <div
-                className={
-                  "flex-item " +
-                  (selectedTab === tabKeys.MODERATORS ? "" : "bg-grey")
-                }
-                onClick={() => setSelectedTab(tabKeys.MODERATORS)}
-              >
-                Moderators
-              </div>
+        <div className="h3 bold">DevDAO Dashboard</div>
+        <div className="mt-3">
+          {showLoginWindow ? (
+            <Widget
+              src={`${REPL_TREASURY_CONTRACT}/widget/neardevhub-trustees.components.trustee.Login`}
+              props={{ ...passProps, setIsTrustee }}
+            />
+          ) : (
+            <div className="mt-2">
+              <Tabs>
+                <div className="d-flex w-100 cursor">
+                  <div
+                    className={
+                      "flex-item " +
+                      (selectedTab === tabKeys.TRUSTEES ? "" : "bg-grey")
+                    }
+                    onClick={() => setSelectedTab(tabKeys.TRUSTEES)}
+                  >
+                    Trustees
+                  </div>
+                  <div
+                    className={
+                      "flex-item " +
+                      (selectedTab === tabKeys.MODERATORS ? "" : "bg-grey")
+                    }
+                    onClick={() => setSelectedTab(tabKeys.MODERATORS)}
+                  >
+                    Moderators
+                  </div>
+                </div>
+                <div className="tab-content">
+                  {selectedTab === tabKeys.TRUSTEES ? (
+                    <Widget
+                      src={`${REPL_TREASURY_CONTRACT}/widget/neardevhub-trustees.components.trustee.Dashboard`}
+                      props={{ ...passProps, setIsTrustee, tab }}
+                    />
+                  ) : (
+                    <Widget
+                      src={`${REPL_TREASURY_CONTRACT}/widget/neardevhub-trustees.components.moderator.Dashboard`}
+                      props={{ ...passProps, setIsTrustee, tab }}
+                    />
+                  )}
+                </div>
+              </Tabs>
             </div>
-            {selectedTab === tabKeys.TRUSTEES ? (
-              <Widget
-                src={`${REPL_TREASURY_CONTRACT}/widget/neardevhub-trustees.components.trustee.Dashboard`}
-                props={{ ...passProps, setIsTrustee, tab }}
-              />
-            ) : (
-              <Widget
-                src={`${REPL_TREASURY_CONTRACT}/widget/neardevhub-trustees.components.moderator.Dashboard`}
-                props={{ ...passProps, setIsTrustee, tab }}
-              />
-            )}
-          </Tabs>
+          )}
         </div>
-      )}
-    </div>
-  </Container>
+      </Container>
+      <Widget
+        src={`${REPL_TREASURY_CONTRACT}/widget/neardevhub-trustees.components.organism.Footer`}
+        props={{
+          ...passProps,
+        }}
+      />
+    </ContentContainer>
+  </Theme>
 );

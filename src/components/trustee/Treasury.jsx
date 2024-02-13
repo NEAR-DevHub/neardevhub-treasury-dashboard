@@ -52,9 +52,11 @@ for (const token of tokens) {
   if (balance !== null) {
     tokensAndBalances.push({
       token,
-      balance: numberWithCommas(
-        Big(balance).div(Big(10).pow(ftMetadata.decimals)).toFixed()
-      ),
+      balance: balance
+        ? numberWithCommas(
+            Big(balance).div(Big(10).pow(ftMetadata.decimals)).toFixed()
+          )
+        : 0,
       symbol: ftMetadata.symbol,
       icon: ftMetadata.icon,
     });

@@ -4,12 +4,20 @@ import {
   REPL_PROPOSAL_CONTRACT,
 } from "@/includes//common";
 
-const { normalize } = VM.require(`${REPL_DEVHUB}/widget/core.lib.stringUtils`);
+// const { normalize } = VM.require(`${REPL_DEVHUB}/widget/core.lib.stringUtils`);
 const { href } = VM.require(`${REPL_DEVHUB}/widget/core.lib.url`);
 
 href || (href = () => {});
 
-normalize || (normalize = () => {});
+const normalize = (text) =>
+  text
+    .replaceAll(/[- \.]/g, "_")
+    .replaceAll(/[^\w]+/g, "")
+    .replaceAll(/_+/g, "-")
+    .replace(/^-+/, "")
+    .replace(/-+$/, "")
+    .toLowerCase()
+    .trim("-");
 
 const { tab, ...passProps } = props;
 
@@ -74,7 +82,7 @@ return (
             <li className="nav-item" key={title}>
               <Link
                 to={href({
-                  widgetSrc: `${REPL_TREASURY_CONTRACT}/widget/app`,
+                  widgetSrc: `${REPL_TREASURY_CONTRACT}/widget/neardevhub-trustees.components.pages.app`,
                   params: {
                     accountType: "trustees",
                     tab: normalize(title),

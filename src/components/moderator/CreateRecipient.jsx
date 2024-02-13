@@ -31,11 +31,6 @@ const Container = styled.div`
     color: #b9b9b9 !important;
   }
 
-  .card-custom {
-    border-radius: 5px;
-    background-color: white;
-  }
-
   label {
     font-weight: 600;
     margin-bottom: 3px;

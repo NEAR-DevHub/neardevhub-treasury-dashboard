@@ -59,9 +59,10 @@ const Container = styled.div`
 
 // filter approved proposals
 const historyProposals = proposals.filter((item) => {
-  if (item.kind?.FunctionCall?.actions?.[0]?.method_name) {
+  if (item.kind) {
     return (
-      item.kind?.FunctionCall?.actions?.[0]?.method_name === "ft_transfer" &&
+      typeof item.kind === "object" &&
+      Object.keys(item.kind)?.[0] === "Transfer" &&
       item.status === "Approved"
     );
   }
@@ -72,26 +73,12 @@ const ProposalsComponent = () => {
   return (
     <tbody>
       {historyProposals?.map((item, index) => {
-        // decode args
-        const actions = item.kind?.FunctionCall?.actions?.[0];
-        const args = JSON.parse(atob(actions?.args ?? ""));
+        const description = JSON.parse(item.description);
+        const proposal = Near.view(REPL_PROPOSAL_CONTRACT, "get_proposal", {
+          proposal_id: description.proposal_id,
+        });
+        const args = item.kind.Transfer;
         const isReceiverkycbVerified = true;
-        const isNEAR = true;
-        const address = item.token;
-        let ftMetadata = {
-          symbol: "NEAR",
-          decimals: 24,
-        };
-        if (!isNEAR) {
-          ftMetadata = Near.view(address, "ft_metadata", {});
-          if (ftMetadata === null) return null;
-        }
-        let amount = amountWithDecimals;
-        if (amountWithoutDecimals !== undefined) {
-          amount = Big(amountWithoutDecimals)
-            .div(Big(10).pow(ftMetadata.decimals))
-            .toString();
-        }
         return (
           <tr className={expandSummaryIndex[index] ? "text-grey-100" : ""}>
             <td>{item.id}</td>
@@ -107,11 +94,11 @@ const ProposalsComponent = () => {
                       (!expandSummaryIndex[index] && " text-truncate")
                     }
                   >
-                    {args.title}
+                    {proposal?.snapshot?.name}
                   </div>
                   {expandSummaryIndex[index] && (
                     <div className={"text-dark-grey max-w-100"}>
-                      {args.summary}
+                      {proposal?.snapshot?.summary}
                     </div>
                   )}
                 </div>
@@ -149,9 +136,14 @@ const ProposalsComponent = () => {
                 "Need icon"
               )}
             </td>
-            <td className="bold">{item.token}</td>
             <td className="bold">
-              {parseFloat(args.amount).toLocaleString("en-US")}
+              <Widget
+                src={`${REPL_TREASURY_CONTRACT}/widget/neardevhub-trustees.components.molecule.TokenAmount`}
+                props={{
+                  amountWithoutDecimals: args.amount,
+                  address: args.token_id,
+                }}
+              />
             </td>
             <td>{Object.keys(item.votes ?? {}).join(", ")}</td>
             <td className="text-truncate" style={{ maxWidth: 150 }}>
@@ -191,14 +183,12 @@ return (
             <td>FROM</td>
             <td>TO</td>
             <td>KYC/B VERIFIED</td>
-            <td>TOKEN</td>
             <td>AMOUNT</td>
             <td>APPROVER</td>
             <td>TRANSACTION</td>
             <td>WHEN</td>
           </tr>
         </thead>
-
         <ProposalsComponent />
       </table>
     </div>
