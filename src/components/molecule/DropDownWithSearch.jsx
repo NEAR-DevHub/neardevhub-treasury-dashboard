@@ -105,7 +105,7 @@ const Container = styled.div`
 return (
   <Container>
     <label>{label}</label>
-    <div className="custom-select">
+    <div className="custom-select" tabIndex="0" onBlur={() => setIsOpen(false)}>
       <div className="select-header" onClick={toggleDropdown}>
         <div
           className={`selected-option ${
