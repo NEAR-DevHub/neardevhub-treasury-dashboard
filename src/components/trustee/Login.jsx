@@ -1,5 +1,5 @@
 const Container = styled.div`
-  width: 80vw;
+  height: 60vh;
   .card-custom {
     box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.2);
     border-radius: 5px;
@@ -16,7 +16,7 @@ const Container = styled.div`
 `;
 
 return (
-  <Container className="d-flex justify-content-center align-items-center h-100">
+  <Container className="d-flex justify-content-center align-items-center w-100">
     <div class="card-custom">
       <div class="card-body p-4 d-flex flex-column gap-2 justify-content-center align-items-center">
         <i class="bi bi-person-circle"></i>

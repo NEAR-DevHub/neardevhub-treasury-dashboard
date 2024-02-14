@@ -150,12 +150,12 @@ const ProposalsComponent = () => {
               {item.txnHash}
             </td>
             <td className="text-grey">
-              <Widget
+              {/* <Widget
                 src={`${REPL_NEAR}/widget/TimeAgo`}
                 props={{
                   blockTimestamp: item.approvedAt,
                 }}
-              />
+              /> */}
             </td>
           </tr>
         );
