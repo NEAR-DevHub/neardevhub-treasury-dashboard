@@ -15,7 +15,7 @@ if (!isNEAR) {
 let amount = amountWithDecimals;
 if (amountWithoutDecimals !== undefined) {
   amount = Big(amountWithoutDecimals)
-    .div(Big(10).pow(ftMetadata.decimals))
+    .div(Big(10).pow(ftMetadata.decimals ?? 1))
     .toString();
 }
 
