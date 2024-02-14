@@ -167,7 +167,7 @@ return (
   <Container className="d-flex gap-3 flex-column">
     <div className="h5 bold mb-2">Create Payment Request</div>
     <Widget
-      src={`${REPL_TREASURY_CONTRACT}/widget/neardevhub-trustees.components.molecule.DropDownWithSearch`}
+      src={`${REPL_TREASURY}/widget/neardevhub-trustees.components.molecule.DropDownWithSearch`}
       props={{
         selectedValue: sender,
         onChange: (v) => setSender(v),
@@ -178,7 +178,7 @@ return (
       }}
     />
     <Widget
-      src={`${REPL_TREASURY_CONTRACT}/widget/neardevhub-trustees.components.molecule.DropDownWithSearch`}
+      src={`${REPL_TREASURY}/widget/neardevhub-trustees.components.molecule.DropDownWithSearch`}
       props={{
         selectedValue: selectedProposalId,
         onChange: onSelectProposal,
@@ -189,7 +189,7 @@ return (
       }}
     />
     <Widget
-      src={`${REPL_TREASURY_CONTRACT}/widget/neardevhub-trustees.components.molecule.DropDownWithSearch`}
+      src={`${REPL_TREASURY}/widget/neardevhub-trustees.components.molecule.DropDownWithSearch`}
       props={{
         selectedValue: receiver,
         onChange: (v) => setReceiver(v),
@@ -210,7 +210,7 @@ return (
       </div>
     </div>
     <Widget
-      src={`${REPL_TREASURY_CONTRACT}/widget/neardevhub-trustees.components.molecule.DropDownWithSearch`}
+      src={`${REPL_TREASURY}/widget/neardevhub-trustees.components.molecule.DropDownWithSearch`}
       props={{
         selectedValue: tokenId,
         onChange: (v) => setTokenId(v),

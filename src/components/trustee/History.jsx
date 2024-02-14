@@ -1,4 +1,5 @@
 import {
+  REPL_TREASURY,
   REPL_TREASURY_CONTRACT,
   REPL_DEVHUB,
   REPL_PROPOSAL_CONTRACT,
@@ -138,7 +139,7 @@ const ProposalsComponent = () => {
             </td>
             <td className="bold">
               <Widget
-                src={`${REPL_TREASURY_CONTRACT}/widget/neardevhub-trustees.components.molecule.TokenAmount`}
+                src={`${REPL_TREASURY}/widget/neardevhub-trustees.components.molecule.TokenAmount`}
                 props={{
                   amountWithoutDecimals: args.amount,
                   address: args.token_id,
@@ -194,7 +195,7 @@ return (
     </div>
     <div className="d-flex align-items-center justify-content-center">
       <Widget
-        src={`${REPL_TREASURY_CONTRACT}/widget/neardevhub-trustees.components.molecule.Pagination`}
+        src={`${REPL_TREASURY}/widget/neardevhub-trustees.components.molecule.Pagination`}
         props={{
           totalPages: Math.round(lastProposalID / resPerPage),
           onPageClick: (v) => setPage(v),

@@ -1,5 +1,5 @@
 import {
-  REPL_TREASURY_CONTRACT,
+  REPL_TREASURY,
   REPL_DEVHUB,
   REPL_PROPOSAL_CONTRACT,
 } from "@/includes//common";
@@ -82,7 +82,7 @@ return (
             <li className="nav-item" key={title}>
               <Link
                 to={href({
-                  widgetSrc: `${REPL_TREASURY_CONTRACT}/widget/neardevhub-trustees.components.pages.app`,
+                  widgetSrc: `${REPL_TREASURY}/widget/neardevhub-trustees.components.pages.app`,
                   params: {
                     accountType: "trustees",
                     tab: normalize(title),
@@ -104,7 +104,7 @@ return (
     {currentTab && (
       <div className="w-100 h-100 mt-4" key={currentTab.title}>
         <Widget
-          src={`${REPL_TREASURY_CONTRACT}/widget/neardevhub-trustees.components.trustee.${currentTab.view}`}
+          src={`${REPL_TREASURY}/widget/neardevhub-trustees.components.trustee.${currentTab.view}`}
           props={currentTab.props}
         />
       </div>

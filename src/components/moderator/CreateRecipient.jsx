@@ -1,5 +1,5 @@
 import {
-  REPL_TREASURY_CONTRACT,
+  REPL_TREASURY,
   REPL_DEVHUB,
   REPL_PROPOSAL_CONTRACT,
 } from "@/includes//common";
@@ -137,7 +137,7 @@ return (
     </div>
 
     <Widget
-      src={`${REPL_TREASURY_CONTRACT}/widget/neardevhub-trustees.components.molecule.DropDownWithSearch`}
+      src={`${REPL_TREASURY}/widget/neardevhub-trustees.components.molecule.DropDownWithSearch`}
       props={{
         selectedValue: form,
         onChange: () => {},

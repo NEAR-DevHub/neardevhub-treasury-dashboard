@@ -1,4 +1,5 @@
 import {
+  REPL_TREASURY,
   REPL_TREASURY_CONTRACT,
   REPL_DEVHUB,
   REPL_PROPOSAL_CONTRACT,
@@ -93,7 +94,7 @@ return (
     <ContentContainer>
       <Container className="pl-5">
         <Widget
-          src={`${REPL_TREASURY_CONTRACT}/widget/neardevhub-trustees.components.organism.Navbar`}
+          src={`${REPL_TREASURY}/widget/neardevhub-trustees.components.organism.Navbar`}
           props={{
             ...passProps,
           }}
@@ -102,7 +103,7 @@ return (
         <div className="mt-3">
           {showLoginWindow ? (
             <Widget
-              src={`${REPL_TREASURY_CONTRACT}/widget/neardevhub-trustees.components.trustee.Login`}
+              src={`${REPL_TREASURY}/widget/neardevhub-trustees.components.trustee.Login`}
               props={{ ...passProps, setIsTrustee }}
             />
           ) : (
@@ -131,12 +132,12 @@ return (
                 <div className="tab-content">
                   {selectedTab === tabKeys.TRUSTEES ? (
                     <Widget
-                      src={`${REPL_TREASURY_CONTRACT}/widget/neardevhub-trustees.components.trustee.Dashboard`}
+                      src={`${REPL_TREASURY}/widget/neardevhub-trustees.components.trustee.Dashboard`}
                       props={{ ...passProps, setIsTrustee, tab }}
                     />
                   ) : (
                     <Widget
-                      src={`${REPL_TREASURY_CONTRACT}/widget/neardevhub-trustees.components.moderator.Dashboard`}
+                      src={`${REPL_TREASURY}/widget/neardevhub-trustees.components.moderator.Dashboard`}
                       props={{ ...passProps, setIsTrustee, tab }}
                     />
                   )}
@@ -147,7 +148,7 @@ return (
         </div>
       </Container>
       <Widget
-        src={`${REPL_TREASURY_CONTRACT}/widget/neardevhub-trustees.components.organism.Footer`}
+        src={`${REPL_TREASURY}/widget/neardevhub-trustees.components.organism.Footer`}
         props={{
           ...passProps,
         }}

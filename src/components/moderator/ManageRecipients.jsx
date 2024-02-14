@@ -1,5 +1,5 @@
 import {
-  REPL_TREASURY_CONTRACT,
+  REPL_TREASURY,
   REPL_DEVHUB,
   REPL_PROPOSAL_CONTRACT,
 } from "@/includes//common";
@@ -159,7 +159,7 @@ const RecipientsComponent = () => {
 if (showCreatePage) {
   return (
     <Widget
-      src={`${REPL_TREASURY_CONTRACT}/widget/neardevhub-trustees.components.moderator.CreateRecipient`}
+      src={`${REPL_TREASURY}/widget/neardevhub-trustees.components.moderator.CreateRecipient`}
     />
   );
 }
@@ -202,7 +202,7 @@ return (
     </div>
     <div className="d-flex align-items-center justify-content-center">
       <Widget
-        src={`${REPL_TREASURY_CONTRACT}/widget/neardevhub-trustees.components.molecule.Pagination`}
+        src={`${REPL_TREASURY}/widget/neardevhub-trustees.components.molecule.Pagination`}
         props={{
           totalPages: 2,
           onPageClick: (v) => setPage(v),

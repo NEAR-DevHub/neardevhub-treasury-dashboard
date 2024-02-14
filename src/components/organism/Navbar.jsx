@@ -1,5 +1,5 @@
 import {
-  REPL_TREASURY_CONTRACT,
+  REPL_TREASURY,
   REPL_DEVHUB,
   REPL_PROPOSAL_CONTRACT,
 } from "@/includes//common";
@@ -26,7 +26,7 @@ const Logo = () => {
     <Wrapper>
       <Link
         to={linkHref({
-          widgetSrc: `${REPL_TREASURY_CONTRACT}/widget/neardevhub-trustees.components.pages.app`,
+          widgetSrc: `${REPL_TREASURY}/widget/neardevhub-trustees.components.pages.app`,
         })}
       >
         <svg
