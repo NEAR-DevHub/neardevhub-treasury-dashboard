@@ -81,6 +81,7 @@ const Container = styled.div`
   .option {
     padding: 10px;
     cursor: pointer;
+    margin-block: 5px;
     border-bottom: 1px solid #f0f0f0;
     transition: background-color 0.3s ease;
   }

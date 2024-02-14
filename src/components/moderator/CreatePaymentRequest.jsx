@@ -47,12 +47,17 @@ const proposalsData = Near.view(REPL_PROPOSAL_CONTRACT, "get_proposals");
 if (proposalsData !== null && Array.isArray(proposalsData)) {
   setProposalsArray(proposalsData);
   const data = [];
-  const receiverArray = [];
+  const receiverSet = new Set();
+
   for (const prop of proposalsData) {
     const account = prop.snapshot.receiver_account;
     data.push({ label: prop.snapshot.name, value: prop.id });
-    receiverArray.push({ label: account, value: account });
+    receiverSet.add(account);
   }
+  const receiverArray = [...receiverSet].map((account) => ({
+    label: account,
+    value: account,
+  }));
   setProposalsOptions(data);
   setReceientsOptions(receiverArray);
 }
