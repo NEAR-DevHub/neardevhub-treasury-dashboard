@@ -47,51 +47,35 @@ const handleOptionClick = (option) => {
   onChange(option.value);
 };
 const Container = styled.div`
+  .drop-btn {
+    width: 100%;
+    text-align: left;
+    padding-inline: 10px;
+  }
+
+  .dropdown-toggle:after {
+    position: absolute;
+    top: 46%;
+    right: 5%;
+  }
+
+  .dropdown-menu {
+    width: 100%;
+  }
+
+  .dropdown-item.active,
+  .dropdown-item:active {
+    background-color: #f0f0f0 !important;
+    color: black;
+  }
+
   .custom-select {
     position: relative;
-  }
-
-  .select-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius-top: 5px;
-    cursor: pointer;
-    background-color: #fff;
-  }
-
-  .options-card {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    width: 100%;
-    border: 1px solid #ccc;
-    background-color: #fff;
-    padding: 0.5rem;
-    z-index: 9999;
   }
 
   .scroll-box {
     max-height: 200px;
     overflow-y: scroll;
-  }
-
-  .option {
-    padding: 10px;
-    cursor: pointer;
-    margin-block: 5px;
-    border-bottom: 1px solid #f0f0f0;
-    transition: background-color 0.3s ease;
-  }
-
-  .option:hover {
-    background-color: #f0f0f0; /* Custom hover effect color */
-  }
-
-  .option:last-child {
-    border-bottom: none;
   }
 
   .selected {
@@ -107,7 +91,10 @@ return (
   <Container>
     <label>{label}</label>
     <div className="custom-select" tabIndex="0" onBlur={() => setIsOpen(false)}>
-      <div className="select-header" onClick={toggleDropdown}>
+      <div
+        className="dropdown-toggle bg-white border rounded-2 btn drop-btn"
+        onClick={toggleDropdown}
+      >
         <div
           className={`selected-option ${
             selectedOption.label === defaultLabel ? "text-grey" : ""
@@ -115,11 +102,10 @@ return (
         >
           {selectedOption.label}
         </div>
-        <i class={`bi bi-chevron-${isOpen ? "up" : "down"}`}></i>
       </div>
 
       {isOpen && (
-        <div className="options-card">
+        <div className="dropdown-menu dropdown-menu-end dropdown-menu-lg-start px-2 shadow show">
           {showSearch && (
             <input
               type="text"
@@ -133,7 +119,7 @@ return (
             {filteredOptions.map((option) => (
               <div
                 key={option.value}
-                className={`option ${
+                className={`dropdown-item ${
                   selectedOption.value === option.value ? "selected" : ""
                 }`}
                 onClick={() => handleOptionClick(option)}
