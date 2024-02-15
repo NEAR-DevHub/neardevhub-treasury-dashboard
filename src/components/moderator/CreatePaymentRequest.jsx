@@ -89,6 +89,10 @@ const Container = styled.div`
     padding: 0px !important;
   }
 
+  .rounded-pill {
+    border-radius: 5px !important;
+  }
+
   .green-btn {
     background-color: #04a46e !important;
     color: white;
