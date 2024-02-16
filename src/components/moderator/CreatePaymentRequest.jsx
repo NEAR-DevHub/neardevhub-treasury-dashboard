@@ -122,6 +122,19 @@ function onSelectProposal(id) {
 function onCancelClick() {}
 
 function onSubmitClick() {
+  const isNEAR = tokenId === tokenMapping.NEAR;
+
+  let ftMetadata = {
+    decimals: 24,
+  };
+  if (!isNEAR) {
+    ftMetadata = Near.view(tokenId, "ft_metadata", {});
+    if (ftMetadata === null) return null;
+  }
+  let parsedAmount = Big(amount)
+    .mul(Big(10).pow(ftMetadata.decimals))
+    .toFixed();
+
   const policy = Near.view(sender, "get_policy");
   const gas = 200000000000000;
   const deposit = policy?.proposal_bond || 100000000000000000000000;
@@ -138,9 +151,9 @@ function onSubmitClick() {
           description: JSON.stringify(description),
           kind: {
             Transfer: {
-              token_id: tokenId === tokenMapping.NEAR ? "" : tokenId,
+              token_id: isNEAR ? "" : tokenId,
               receiver_id: receiver,
-              amount: amount,
+              amount: parsedAmount,
             },
           },
         },
@@ -243,7 +256,7 @@ return (
       props={{
         className: "flex-grow-1",
         key: `notes`,
-        label: "Notes",
+        label: "Notes (Optional)",
         onChange: (e) => setMemo(e.target.value),
         placeholder: "Enter memo",
         value: memo,

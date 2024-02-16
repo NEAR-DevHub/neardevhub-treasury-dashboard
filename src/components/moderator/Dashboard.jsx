@@ -62,16 +62,17 @@ const tabs = [
     view: "ManageRecipients",
     props: {},
   },
-  {
-    title: "Staking",
-    view: "Staking",
-    props: {},
-  },
-  {
-    title: "Accounting",
-    view: "Accounting",
-    props: {},
-  },
+  // hiding these tabs for time being
+  // {
+  //   title: "Staking",
+  //   view: "Staking",
+  //   props: {},
+  // },
+  // {
+  //   title: "Accounting",
+  //   view: "Accounting",
+  //   props: {},
+  // },
 ];
 
 function findTab(tabTitle) {

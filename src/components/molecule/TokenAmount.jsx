@@ -50,14 +50,6 @@ const NEAR = () => {
 };
 
 const Wrapper = styled.div`
-  display: inline-grid;
-  grid-template-columns: 32px 1fr;
-  grid-template-rows: 1fr 1fr;
-  grid-column-gap: 8px;
-
-  .icon {
-    grid-row: span 2;
-  }
   .amount {
     font-size: 18px;
     font-weight: 500;
@@ -70,26 +62,17 @@ const Wrapper = styled.div`
   }
 `;
 return (
-  <Wrapper>
+  <Wrapper className="d-flex gap-1 align-items-center">
     <div className="icon">
-      <OverlayTrigger
-        placement="auto"
-        overlay={
-          <Tooltip id={`tooltip-${address}`}>
-            Token address:
-            <strong>{address}</strong>
-          </Tooltip>
-        }
-        show={isNEAR ? false : undefined}
-      >
-        {!isNEAR ? (
-          <img width="32px" height="32px" src={ftMetadata.icon} />
-        ) : (
-          <NEAR />
-        )}
-      </OverlayTrigger>
+      {!isNEAR ? (
+        <img width="32px" height="32px" src={ftMetadata.icon} />
+      ) : (
+        <NEAR />
+      )}
     </div>
-    <span className="amount">{amount}</span>
-    <span className="symbol">{ftMetadata.symbol}</span>
+    <div className="d-flex gap-1 align-items-center">
+      <span className="amount">{amount}</span>
+      <span className="symbol">{ftMetadata.symbol}</span>
+    </div>
   </Wrapper>
 );
