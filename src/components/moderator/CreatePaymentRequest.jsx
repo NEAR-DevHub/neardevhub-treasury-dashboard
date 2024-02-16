@@ -51,7 +51,10 @@ if (proposalsData !== null && Array.isArray(proposalsData)) {
 
   for (const prop of proposalsData) {
     const account = prop.snapshot.receiver_account;
-    data.push({ label: prop.snapshot.name, value: prop.id });
+    data.push({
+      label: "Id " + prop.id + " : " + prop.snapshot.name,
+      value: prop.id,
+    });
     receiverSet.add(account);
   }
   const receiverArray = [...receiverSet].map((account) => ({
