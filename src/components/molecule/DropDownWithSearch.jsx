@@ -1,5 +1,14 @@
-const { selectedValue, onChange, label, options, defaultLabel, showSearch } =
-  props;
+const {
+  selectedValue,
+  onChange,
+  label,
+  options,
+  defaultLabel,
+  showSearch,
+  searchInputPlaceholder,
+  searchByLabel,
+  searchByValue,
+} = props;
 
 const [searchTerm, setSearchTerm] = useState("");
 const [filteredOptions, setFilteredOptions] = useState(options);
@@ -27,12 +36,17 @@ useEffect(() => {
 }, [options]);
 
 const handleSearch = (event) => {
-  const searchTerm = event.target.value.toLowerCase();
-  setSearchTerm(searchTerm);
+  const term = event.target.value.toLowerCase();
+  setSearchTerm(term);
 
-  const filteredOptions = options.filter((option) =>
-    option.label.toLowerCase().includes(searchTerm)
-  );
+  const filteredOptions = options.filter((option) => {
+    if (searchByLabel) {
+      return option.label.toLowerCase().includes(term);
+    }
+    if (searchByValue) {
+      return option.value.toLowerCase().includes(term);
+    }
+  });
 
   setFilteredOptions(filteredOptions);
 };
@@ -85,6 +99,10 @@ const Container = styled.div`
   input {
     background-color: #f8f9fa;
   }
+
+  .cursor-pointer {
+    cursor: pointer;
+  }
 `;
 
 return (
@@ -113,13 +131,14 @@ return (
               placeholder="Search options"
               value={searchTerm}
               onChange={handleSearch}
+              placeholder={searchInputPlaceholder ?? "Search options"}
             />
           )}
           <div className="scroll-box">
             {filteredOptions.map((option) => (
               <div
                 key={option.value}
-                className={`dropdown-item ${
+                className={`dropdown-item cursor-pointer ${
                   selectedOption.value === option.value ? "selected" : ""
                 }`}
                 onClick={() => handleOptionClick(option)}

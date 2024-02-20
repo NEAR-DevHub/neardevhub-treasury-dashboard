@@ -127,7 +127,7 @@ const ProposalsComponent = () => {
             <td className="text-truncate bold" style={{ maxWidth: 150 }}>
               {args.receiver_id}
             </td>
-            <td className="text-center">
+            <td>
               {isReceiverkycbVerified ? (
                 <img
                   src="https://ipfs.near.social/ipfs/bafkreidqveupkcc7e3rko2e67lztsqrfnjzw3ceoajyglqeomvv7xznusm"

@@ -2,7 +2,7 @@ import { REPL_PROPOSAL_CONTRACT } from "@/includes//common";
 
 // dropdown options
 const [fromWalletOptions, setFromWalletOptions] = useState([
-  { label: "treasurydevhub.testnet", value: "treasurydevhub.testnet" },
+  // { label: "treasurydevhub.testnet", value: "treasurydevhub.testnet" },
   { label: "treasurydevhub.near", value: "treasurydevhub.near" },
 ]);
 const [proposalsOptions, setProposalsOptions] = useState([]);
@@ -139,10 +139,16 @@ function onSubmitClick() {
     .toFixed();
 
   const policy = Near.view(sender, "get_policy");
-  const gas = 200000000000000;
+  const gas = 270000000000000;
   const deposit = policy?.proposal_bond || 100000000000000000000000;
+  const proposal = proposalsArray.find(
+    (item) => item.id === selectedProposalId
+  );
   const description = {
     proposal_id: selectedProposalId,
+    title: proposal.snapshot.name,
+    summary: proposal.snapshot.summary,
+    link: `https://near.org/devhub.near/widget/app?page=proposal&id=${selectedProposalId}`,
     memo: memo,
   };
   Near.call([
@@ -204,8 +210,10 @@ return (
         onChange: onSelectProposal,
         label: "Choose Proposal",
         options: proposalsOptions,
-        showSearch: false,
+        showSearch: true,
+        searchInputPlaceholder: "Search by Id",
         defaultLabel: "Seach proposals",
+        searchByValue: true,
       }}
     />
     <Widget
