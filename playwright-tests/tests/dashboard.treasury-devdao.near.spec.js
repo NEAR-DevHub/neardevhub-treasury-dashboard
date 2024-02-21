@@ -12,7 +12,7 @@ test.describe("Wallet is not connected", () => {
     await dashboardHeader.waitFor({ state: "visible" });
     expect(await dashboardHeader.isVisible()).toBeTruthy();
 
-    const loginCard = await page.getByText('Login Below Connect Wallet');
+    const loginCard = await page.getByText("Login Below Connect Wallet");
     await loginCard.waitFor({ state: "visible" });
     expect(await loginCard.isVisible()).toBeTruthy();
   });
@@ -34,8 +34,10 @@ test.describe("Wallet is connected with moderator account", () => {
     const dashboardHeader = await page.getByText("DevDAO Dashboard");
     await dashboardHeader.waitFor({ state: "visible" });
     expect(await dashboardHeader.isVisible()).toBeTruthy();
-    await page.getByText('Moderators').click();
-    const createPaymentRequestTab = await page.getByRole('link', { name: 'Create Payment Request' });
+    await page.getByText("Moderators").click();
+    const createPaymentRequestTab = await page.getByRole("link", {
+      name: "Create Payment Request",
+    });
     await createPaymentRequestTab.waitFor({ state: "visible" });
     expect(await createPaymentRequestTab.isVisible()).toBeTruthy();
   });
