@@ -1,5 +1,5 @@
 {
-  "name": "neardevhub-trustees-dashboard-bos",
+  "name": "neardevhub-trustees",
   "version": "1.0.0",
   "description": "Trustees dashboard built for NEAR BOS",
   "type": "module",
@@ -25,12 +25,13 @@
     "fmt:check": "prettier --check '**/*.{js,jsx,ts,tsx,json}'",
     "lint": "tsc --pretty --noEmit && eslint .",
     "dev": "~/.cargo/bin/bos-loader dashboard.treasury-devdao.near --path ./.bos/transpiled/src",
-    "build": "npm run fmt && rimraf .bos/transpiled && mkdir -p .bos/transpiled/src && sucrase ./src -d .bos/transpiled/src/npm_package_name --transforms typescript,jsx --jsx-runtime preserve --disable-es-transforms --out-extension jsx && node ./build.js",
+    "build": "npm run fmt && rimraf .bos/transpiled && mkdir -p .bos/transpiled/src && sucrase ./src -d .bos/transpiled/src/neardevhub-trustees --transforms typescript,jsx --jsx-runtime preserve --disable-es-transforms --out-extension jsx && sucrase ./src -d .bos/transpiled/src/neardevhub-trustees --transforms jsx --jsx-runtime preserve --disable-es-transforms --out-extension jsx && node ./build.js",
     "deploy": "npm run build && cd .bos/transpiled && bos components deploy",
     "prepare": "husky install",
     "gateway": "node scripts/dev-gateway.js",
     "test": "npx playwright test",
-    "test:watch:codespaces": "npm test -- --ui-host=0.0.0.0"
+    "test:watch:codespaces": "npm test -- --ui-host=0.0.0.0",
+    "build:watch": "node ./scripts/watch.js"
   },
   "husky": {
     "hooks": {
