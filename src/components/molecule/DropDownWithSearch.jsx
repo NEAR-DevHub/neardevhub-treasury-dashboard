@@ -105,10 +105,19 @@ const Container = styled.div`
   }
 `;
 
+let searchFocused = false;
 return (
   <Container>
     <label>{label}</label>
-    <div className="custom-select" tabIndex="0" onBlur={() => setIsOpen(false)}>
+    <div
+      className="custom-select"
+      tabIndex="0"
+      onBlur={() => {
+        setTimeout(() => {
+          setIsOpen(searchFocused || false);
+        }, 0);
+      }}
+    >
       <div
         className="dropdown-toggle bg-white border rounded-2 btn drop-btn"
         onClick={toggleDropdown}
@@ -131,6 +140,15 @@ return (
               placeholder="Search options"
               value={searchTerm}
               onChange={handleSearch}
+              onFocus={() => {
+                searchFocused = true;
+              }}
+              onBlur={() => {
+                setTimeout(() => {
+                  searchFocused = false;
+                  // setIsOpen(false);
+                }, 0);
+              }}
               placeholder={searchInputPlaceholder ?? "Search options"}
             />
           )}
