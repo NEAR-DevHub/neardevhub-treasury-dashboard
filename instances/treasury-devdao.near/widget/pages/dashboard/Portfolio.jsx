@@ -41,7 +41,7 @@ const Portfolio = () => {
                       }
                     >
                       <div className="d-flex gap-2 align-items-center">
-                        <img src={icon} height={40} />
+                        <img src={icon} height={35} />
                         <div className="">
                           <div className="h6 mb-0">{symbol}</div>
                           <div className="d-flex gap-2 text-sm text-muted">

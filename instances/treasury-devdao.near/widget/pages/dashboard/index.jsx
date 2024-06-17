@@ -17,12 +17,8 @@ const Wrapper = styled.div`
     font-size: 12px;
   }
 
-  .page-header {
-    color: var(--page-header-color);
-  }
-
   .border-bottom {
-    border-bottom: 1px solid rgba(226, 230, 236, 1);
+    border-bottom: 1px solid var(--border-color);
   }
 `;
 

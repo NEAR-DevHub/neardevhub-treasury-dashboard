@@ -64,20 +64,6 @@ const Navbar = styled.div`
   @media screen and (max-width: 768px) {
     padding: 1.875rem 1.375rem;
   }
-
-  a {
-    color: var(--link-inactive-color) !important;
-    &.active {
-      color: var(--link-active-color) !important;
-      font-weight: 700 !important;
-    }
-
-    &:hover {
-      text-decoration: none;
-      color: var(--link-active-color) !important;
-      font-weight: 700 !important;
-    }
-  }
 `;
 
 const LinksContainer = styled.div`
