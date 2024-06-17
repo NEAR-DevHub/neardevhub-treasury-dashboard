@@ -99,7 +99,7 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: "npm run gateway",
+    command: "npm run gateway:treasury",
     port: 3030,
     reuseExistingServer: !process.env.CI,
   },
