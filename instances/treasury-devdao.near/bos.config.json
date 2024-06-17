@@ -1,5 +1,5 @@
 {
-  "account": "treasury.near",
+  "account": "treasury-devdao.near",
   "aliasPrefix": "REPL",
   "aliasesContainsPrefix": true,
   "aliases": ["./aliases.mainnet.json"]

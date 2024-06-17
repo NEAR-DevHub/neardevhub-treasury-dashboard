@@ -27,9 +27,9 @@
     "lint": "tsc --pretty --noEmit && eslint .",
     "build": "npm run fmt",
     "prepare": "husky install",
-    "bw:dev:treasury": "bw dev instances/treasury.near",
-    "bw:build:treasury": "bw build instances/treasury.near",
-    "gateway:treasury": "node scripts/dev-gateway.mjs treasury.near",
+    "bw:dev:treasury": "bw dev instances/treasury-devdao.near",
+    "bw:build:treasury": "bw build instances/treasury-devdao.near",
+    "gateway:treasury": "node scripts/dev-gateway.js treasury-devdao.near",
     "test": "npx playwright test",
     "test:watch:codespaces": "npm test -- --ui-host=0.0.0.0"
   },
