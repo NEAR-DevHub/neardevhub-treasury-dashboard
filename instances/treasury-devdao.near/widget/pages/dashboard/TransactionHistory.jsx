@@ -6,7 +6,7 @@ const [transactionWithBalances, setTransactionWithBalance] = useState(null);
 const [page, setPage] = useState(1);
 const [showMoreLoading, setShowMoreLoading] = useState(false);
 const [hideViewMore, setHideViewMore] = useState(false);
-
+const totalTxnsPerPage = 20;
 const code = `
 <!doctype html>
 <html>
@@ -20,7 +20,7 @@ const code = `
 <body>
 <script>
 let archiveNodeUrl = 'https://archival-rpc.mainnet.near.org';
-const totalTxnsPerPage = 20;
+const totalTxnsPerPage = ${totalTxnsPerPage};
 const treasuryAccount = "${REPL_TREASURY}";
  async function getAccountChanges(block_id, account_ids) {
   return (await fetch(archiveNodeUrl, {
@@ -122,7 +122,7 @@ async function getTransactionsToDate(account, offset_timestamp, transactions = [
           }
           transactionsFetched++;
   }
-  return transactions;
+  return {txnsWithBalance : transactions, accountHistoryLength: accountHistory?.length};
 }
 
  async function getTransactionStatus(txhash, account_id) {
@@ -149,8 +149,8 @@ async function getTransactionsToDate(account, offset_timestamp, transactions = [
 }
 
 window.onload = async () => {
-  const transactions = await getTransactionsToDate(treasuryAccount);
-  window.parent.postMessage({ handler: "getTransactionsToDate", transactions }, "*");
+  const response = await getTransactionsToDate(treasuryAccount);
+  window.parent.postMessage({ handler: "getTransactionsToDate", response }, "*");
 };
 </script>
 </body>
@@ -199,10 +199,10 @@ const iframe = (
     onMessage={(e) => {
       switch (e.handler) {
         case "getTransactionsToDate":
-          if (!e.transactions.length) {
+          if (e.response.accountHistoryLength < totalTxnsPerPage) {
             setHideViewMore(true);
           }
-          setTransactionWithBalance(groupByDate(e.transactions));
+          setTransactionWithBalance(groupByDate(e.response.txnsWithBalance));
           setShowMoreLoading(false);
           break;
       }

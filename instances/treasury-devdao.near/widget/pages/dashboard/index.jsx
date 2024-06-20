@@ -38,6 +38,10 @@ const balance = Big(balanceResp?.body?.account?.[0]?.amount ?? "0")
   .div(Big(10).pow(24))
   .toFixed(4);
 
+const loading = (
+  <Widget src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"} />
+);
+
 return (
   <Wrapper className="d-flex flex-column gap-3">
     <div className="d-flex justify-content-between gap-2 mt-3">
@@ -48,7 +52,11 @@ return (
     </div>
     <div className="card card-body" style={{ maxHeight: "100px" }}>
       <div className="h5">Total Balance</div>
-      <div className="fw-bold h3">${balance} USD</div>
+      {balanceResp === null ? (
+        loading
+      ) : (
+        <div className="fw-bold h3">${balance} USD</div>
+      )}
     </div>
     <div className="d-flex gap-2 flex-wrap dashboard-item">
       <Portfolio />
