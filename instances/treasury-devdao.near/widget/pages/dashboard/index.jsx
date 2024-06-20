@@ -38,9 +38,22 @@ const balance = Big(balanceResp?.body?.account?.[0]?.amount ?? "0")
   .div(Big(10).pow(24))
   .toFixed(4);
 
+const price = useCache(
+  () =>
+    asyncFetch(`https://api3.nearblocks.io/v1/charts/latest`).then((res) => {
+      return res.body.charts?.[0].near_price;
+    }),
+  "price",
+  { subscribe: false }
+);
+
 const loading = (
   <Widget src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"} />
 );
+
+const amount = Big(balance ?? "0")
+  .mul(price ?? 1)
+  .toFixed(4);
 
 return (
   <Wrapper className="d-flex flex-column gap-3">
@@ -52,10 +65,10 @@ return (
     </div>
     <div className="card card-body" style={{ maxHeight: "100px" }}>
       <div className="h5">Total Balance</div>
-      {balanceResp === null ? (
+      {balanceResp === null || price === null ? (
         loading
       ) : (
-        <div className="fw-bold h3">${balance} USD</div>
+        <div className="fw-bold h3">${amount} USD</div>
       )}
     </div>
     <div className="d-flex gap-2 flex-wrap dashboard-item">
