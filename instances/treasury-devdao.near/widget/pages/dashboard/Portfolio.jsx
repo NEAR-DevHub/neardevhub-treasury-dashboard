@@ -7,6 +7,7 @@ const Portfolio = () => {
     <Widget src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"} />
   );
   const tokens = tokensAPI?.body?.inventory?.fts ?? [];
+
   return (
     <div className="card card-body flex-1">
       <div className="h5">Portfolio</div>
