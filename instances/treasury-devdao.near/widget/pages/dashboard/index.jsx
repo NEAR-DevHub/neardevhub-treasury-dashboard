@@ -47,12 +47,36 @@ const price = useCache(
   { subscribe: false }
 );
 
+const allTokensCummulativeAmount = useCache(
+  () =>
+    asyncFetch(
+      `https://api3.nearblocks.io/v1/account/${treasuryAccount}/inventory`
+    ).then((res) => {
+      const fts = res.body.inventory.fts;
+      const amounts = fts.map((ft) => {
+        const amount = ft.amount;
+        const decimals = ft.ft_meta.decimals;
+        const tokensNumber = Big(amount ?? "0")
+          .div(Big(10).pow(decimals))
+          .toFixed(4);
+        const tokenPrice = ft.ft_meta.price;
+        return Big(tokensNumber)
+          .mul(tokenPrice ?? 0)
+          .toFixed(4);
+      });
+      return amounts.reduce((acc, value) => acc + parseFloat(value), 0);
+    }),
+  "all-token-amount",
+  { subscribe: false }
+);
+
 const loading = (
   <Widget src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"} />
 );
 
 const amount = Big(balance ?? "0")
   .mul(price ?? 1)
+  .plus(Big(allTokensCummulativeAmount ?? "0"))
   .toFixed(4);
 
 return (
