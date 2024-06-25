@@ -1,7 +1,3 @@
-const { Portfolio } = VM.require(
-  "${REPL_TREASURY}/widget/pages.dashboard.Portfolio"
-) || { Portfolio: () => <></> };
-
 const treasuryAccount = "${REPL_TREASURY}";
 
 const Wrapper = styled.div`
@@ -31,14 +27,16 @@ const Wrapper = styled.div`
   }
 `;
 
+const [nearStakedTokens, setNearStakedTokens] = useState(null);
+
 const balanceResp = fetch(
   `https://api3.nearblocks.io/v1/account/${treasuryAccount}`
 );
-const balance = Big(balanceResp?.body?.account?.[0]?.amount ?? "0")
+const nearBalance = Big(balanceResp?.body?.account?.[0]?.amount ?? "0")
   .div(Big(10).pow(24))
-  .toFixed(4);
+  .toFixed();
 
-const price = useCache(
+const nearPrice = useCache(
   () =>
     asyncFetch(`https://api3.nearblocks.io/v1/charts/latest`).then((res) => {
       return res.body.charts?.[0].near_price;
@@ -47,7 +45,7 @@ const price = useCache(
   { subscribe: false }
 );
 
-const allTokensCummulativeAmount = useCache(
+const userFTTokens = useCache(
   () =>
     asyncFetch(
       `https://api3.nearblocks.io/v1/account/${treasuryAccount}/inventory`
@@ -58,13 +56,19 @@ const allTokensCummulativeAmount = useCache(
         const decimals = ft.ft_meta.decimals;
         const tokensNumber = Big(amount ?? "0")
           .div(Big(10).pow(decimals))
-          .toFixed(4);
+          .toFixed();
         const tokenPrice = ft.ft_meta.price;
         return Big(tokensNumber)
           .mul(tokenPrice ?? 0)
-          .toFixed(4);
+          .toFixed();
       });
-      return amounts.reduce((acc, value) => acc + parseFloat(value), 0);
+      return {
+        totalCummulativeAmt: amounts.reduce(
+          (acc, value) => acc + parseFloat(value),
+          0
+        ),
+        fts,
+      };
     }),
   "all-token-amount",
   { subscribe: false }
@@ -74,14 +78,105 @@ const loading = (
   <Widget src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"} />
 );
 
-const amount = Big(balance ?? "0")
-  .mul(price ?? 1)
-  .plus(Big(allTokensCummulativeAmount ?? "0"))
+const code = `
+  <!doctype html>
+  <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css">
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/highlight.js/latest/styles/github.min.css">
+      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+    </head>
+    <body>
+      <script>
+        const archiveNodeUrl = "https://archival-rpc.mainnet.near.org";
+        const treasuryAccount = "${treasuryAccount}"
+
+        async function getAccountBalance(stakingpool_id, account_id) {
+        return await fetch(archiveNodeUrl, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            id: "dontcare",
+            method: "query",
+            params: {
+              request_type: "call_function",
+              finality: 'final',
+              account_id: stakingpool_id,
+              method_name: "get_account_total_balance",
+              args_base64: btoa(
+                JSON.stringify({
+                  account_id: account_id,
+                })
+              ),
+            },
+          }),
+        })
+          .then((r) => r.json())
+          .then((r) =>
+            parseInt(
+              r.result.result
+                .map((c) => String.fromCharCode(c))
+                .join("")
+                .replace(/\"/g, "")
+            )
+          );
+      }
+
+      async function getStakingPools() {
+        return await fetch("https://api.fastnear.com/v1/account/" + treasuryAccount + "/staking").then(r => r.json())
+      }
+
+      window.onload = async () => {
+        const poolResp = await getStakingPools();
+        const pools = await Promise.all(poolResp.pools.map(async (i) => {
+          const balance = await getAccountBalance(i.pool_id, poolResp.account_id);
+          return balance;
+        }));
+        window.parent.postMessage({ handler: "stakedNearPool", pools }, "*");
+      };
+      </script>
+    </body>
+  </html> 
+  `;
+
+const iframe = (
+  <iframe
+    style={{
+      display: "none",
+    }}
+    srcDoc={code}
+    message={{}}
+    onMessage={(e) => {
+      switch (e.handler) {
+        case "stakedNearPool":
+          const pools = e.pools;
+          let sum = new Big(0);
+          pools.forEach((num) => {
+            let bigNum = new Big(num).div(1e24);
+            sum = sum.plus(bigNum);
+          });
+          setNearStakedTokens(sum.toFixed());
+          break;
+      }
+    }}
+  />
+);
+
+const totalBalance = Big(nearBalance ?? "0")
+  .plus(Big(nearStakedTokens ?? 0 ?? "0"))
+  .mul(nearPrice ?? 1)
+  .plus(Big(userFTTokens?.totalCummulativeAmt ?? "0"))
   .toFixed(4);
 
 return (
   <Wrapper className="d-flex flex-column gap-3">
     <div className="d-flex justify-content-between gap-2 mt-3">
+      {iframe}
       <h4 className="page-header">Dashboard</h4>
       <div className="bg-black text-white p-1 px-2 h6 rounded-2">
         {treasuryAccount}
@@ -89,14 +184,22 @@ return (
     </div>
     <div className="card card-body" style={{ maxHeight: "100px" }}>
       <div className="h5">Total Balance</div>
-      {balanceResp === null || price === null ? (
+      {balanceResp === null || nearPrice === null ? (
         loading
       ) : (
-        <div className="fw-bold h3">${amount} USD</div>
+        <div className="fw-bold h3">${totalBalance} USD</div>
       )}
     </div>
     <div className="d-flex gap-2 flex-wrap dashboard-item">
-      <Portfolio />
+      <Widget
+        src={"${REPL_TREASURY}/widget/pages.dashboard.Portfolio"}
+        props={{
+          ftTokens: userFTTokens.fts,
+          nearStakedTokens: nearStakedTokens,
+          nearBalance: nearBalance,
+          nearPrice: nearPrice,
+        }}
+      />
       <Widget
         src={"${REPL_TREASURY}/widget/pages.dashboard.TransactionHistory"}
       />

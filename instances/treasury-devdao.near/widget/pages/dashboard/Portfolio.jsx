@@ -1,93 +1,130 @@
 const treasuryAccount = "${REPL_TREASURY}";
+const archiveNodeUrl = "https://archival-rpc.mainnet.near.org";
+const nearTokenIcon =
+  "https://ipfs.near.social/ipfs/bafkreiaafwuojgz5fu3y5n4ehcjuvsni2ieosra7pta6sgimztbjyew2me";
 
-const Item = ({ icon, symbol, tokenPrice, tokensNumber, currentAmount }) => {
+function formatToReadableDecimals(number) {
+  return Big(number ?? "0").toFixed(3);
+}
+const Item = ({
+  icon,
+  symbol,
+  tokenPrice,
+  tokensNumber,
+  currentAmount,
+  showBorderBottom,
+  isStakedToken,
+}) => {
+  if (symbol === "wNEAR") {
+    icon = nearTokenIcon;
+  }
   return (
-    <div
-      className={"py-2 d-flex gap-2 align-items-center justify-content-between"}
-    >
-      <div className="d-flex gap-2 align-items-center">
-        <img src={icon} height={35} />
-        <div>
-          <div className="h6 mb-0">{symbol}</div>
-          <div className="d-flex gap-2 text-sm text-muted">
-            <div>{tokensNumber}</div>
-            <div>･ ${tokenPrice}</div>
+    <div className={showBorderBottom && " border-bottom"}>
+      <div
+        style={{ paddingLeft: isStakedToken ? "2.2rem" : "" }}
+        className={
+          "py-2 d-flex gap-2 align-items-center justify-content-between "
+        }
+      >
+        <div className="d-flex align-items-center" style={{ gap: "0.7rem" }}>
+          <img src={icon} height={30} />
+          <div>
+            <div className="h6 mb-0">{symbol}</div>
+            <div className="d-flex gap-2 text-sm text-muted">
+              <div>{formatToReadableDecimals(tokensNumber)}</div>
+              <div>･ ${formatToReadableDecimals(tokenPrice)}</div>
+            </div>
           </div>
         </div>
+        <div className="fw-bold">
+          ${formatToReadableDecimals(currentAmount)}
+        </div>
       </div>
-      <div className="fw-bold">${currentAmount}</div>
     </div>
   );
 };
 
-const Portfolio = () => {
-  // this API doesn't include NEAR token and price
-  const tokensAPI = fetch(
-    `https://api3.nearblocks.io/v1/account/${treasuryAccount}/inventory`
-  );
+const { ftTokens, nearStakedTokens, nearBalance, nearPrice } = props;
 
-  function convertBalanceToReadableFormat(amount, decimals) {
-    return Big(amount ?? "0")
-      .div(Big(10).pow(decimals))
-      .toFixed(4);
-  }
+function convertBalanceToReadableFormat(amount, decimals) {
+  return Big(amount ?? "0")
+    .div(Big(10).pow(decimals))
+    .toFixed();
+}
 
-  function getPrice(tokensNumber, tokenPrice) {
-    return Big(tokensNumber).mul(tokenPrice).toFixed(2);
-  }
+function getPrice(tokensNumber, tokenPrice) {
+  return Big(tokensNumber).mul(tokenPrice).toFixed(2);
+}
 
-  const nearBalanceResp = fetch(
-    `https://api3.nearblocks.io/v1/account/${treasuryAccount}`
-  );
-  const balance = convertBalanceToReadableFormat(
-    nearBalanceResp?.body?.account?.[0]?.amount,
-    24
-  );
-  const nearPrice = useCache(
-    () =>
-      asyncFetch(`https://api3.nearblocks.io/v1/charts/latest`).then((res) => {
-        return res.body.charts?.[0].near_price;
-      }),
-    "price",
-    { subscribe: false }
-  );
+const loading = (
+  <Widget src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"} />
+);
 
-  const loading = (
-    <Widget src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"} />
-  );
+const totalNearTokens = Big(nearBalance ?? "0")
+  .plus(Big(nearStakedTokens ?? "0"))
+  .toFixed();
 
-  const tokens = tokensAPI?.body?.inventory?.fts ?? [];
-
-  return (
-    <div className="card card-body flex-1">
-      <div className="h5">Portfolio</div>
-      <div className="">
-        {tokensAPI === null ||
-        nearPrice === null ||
-        nearBalanceResp === null ? (
-          <div className="d-flex justify-content-center align-items-center w-100 h-100">
-            {loading}
-          </div>
-        ) : (
-          <div className="mt-2">
-            {!tokens.length && !nearBalanceResp ? (
-              <div className="fw-bold">
-                {treasuryAccount} doesn't own any FTs.
-              </div>
-            ) : (
-              <div className="d-flex flex-column">
-                <div className={"border-bottom"}>
+return (
+  <div className="card card-body flex-1">
+    <div className="h5">Portfolio</div>
+    <div>
+      {ftTokens === null ||
+      nearStakedTokens === null ||
+      nearBalance === null ||
+      nearPrice === null ? (
+        <div className="d-flex justify-content-center align-items-center w-100 h-100">
+          {loading}
+        </div>
+      ) : (
+        <div className="mt-2">
+          {!ftTokens.length && !nearBalance ? (
+            <div className="fw-bold">
+              {treasuryAccount} doesn't own any FTs.
+            </div>
+          ) : (
+            <div className="d-flex flex-column">
+              {nearStakedTokens && nearStakedTokens !== "0" ? (
+                <div className="d-flex flex-column">
                   <Item
-                    icon={
-                      "https://ipfs.near.social/ipfs/bafkreiazt7rdkgmz2rpvloo3gjoahgxe6dtgicrgzujarf3rbmwuyk2iby"
-                    }
+                    showBorderBottom={true}
+                    icon={nearTokenIcon}
                     symbol={"NEAR"}
                     tokenPrice={nearPrice}
-                    tokensNumber={balance}
-                    currentAmount={getPrice(balance, nearPrice)}
+                    tokensNumber={totalNearTokens}
+                    currentAmount={getPrice(totalNearTokens, nearPrice)}
+                  />
+                  <Item
+                    isStakedToken={true}
+                    showBorderBottom={true}
+                    icon={nearTokenIcon}
+                    symbol={"NEAR"}
+                    tokenPrice={nearPrice}
+                    tokensNumber={nearBalance}
+                    currentAmount={getPrice(nearBalance, nearPrice)}
+                  />
+                  <Item
+                    isStakedToken={true}
+                    showBorderBottom={true}
+                    icon={nearTokenIcon}
+                    symbol={"Staked NEAR"}
+                    tokenPrice={nearPrice}
+                    tokensNumber={nearStakedTokens}
+                    currentAmount={getPrice(nearStakedTokens, nearPrice)}
                   />
                 </div>
-                {tokens.map((item, index) => {
+              ) : (
+                <Item
+                  showBorderBottom={ftTokens.length}
+                  icon={nearTokenIcon}
+                  symbol={"NEAR"}
+                  tokenPrice={nearPrice}
+                  tokensNumber={nearBalance}
+                  currentAmount={getPrice(nearBalance, nearPrice)}
+                />
+              )}
+
+              {Array.isArray(ftTokens) &&
+                ftTokens.map((item, index) => {
                   const { ft_meta, amount } = item;
                   const { decimals, symbol, icon, price } = ft_meta;
                   const tokensNumber = convertBalanceToReadableFormat(
@@ -97,28 +134,20 @@ const Portfolio = () => {
                   const tokenPrice = price ?? 0;
                   const currentAmount = getPrice(tokensNumber, tokenPrice);
                   return (
-                    <div
-                      className={
-                        index !== tokens.length - 1 && " border-bottom"
-                      }
-                    >
-                      <Item
-                        icon={icon}
-                        symbol={symbol}
-                        tokenPrice={tokenPrice}
-                        tokensNumber={tokensNumber}
-                        currentAmount={currentAmount}
-                      />
-                    </div>
+                    <Item
+                      showBorderBottom={index !== ftTokens.length - 1}
+                      icon={icon}
+                      symbol={symbol}
+                      tokenPrice={tokenPrice}
+                      tokensNumber={tokensNumber}
+                      currentAmount={currentAmount}
+                    />
                   );
                 })}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
-  );
-};
-
-return { Portfolio };
+  </div>
+);
