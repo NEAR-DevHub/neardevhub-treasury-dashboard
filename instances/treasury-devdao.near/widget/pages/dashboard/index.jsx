@@ -202,6 +202,9 @@ return (
       />
       <Widget
         src={"${REPL_TREASURY}/widget/pages.dashboard.TransactionHistory"}
+        props={{
+          nearPrice: nearPrice,
+        }}
       />
     </div>
   </Wrapper>

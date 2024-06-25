@@ -2,6 +2,7 @@ const { readableDate } = VM.require(
   "${REPL_DEVHUB}/widget/core.lib.common"
 ) || { readableDate: () => {} };
 
+const { nearPrice } = props;
 const [transactionWithBalances, setTransactionWithBalance] = useState(null);
 const [page, setPage] = useState(1);
 const [showMoreLoading, setShowMoreLoading] = useState(false);
@@ -19,7 +20,7 @@ const code = `
 </head>
 <body>
 <script>
-let archiveNodeUrl = 'https://archival-rpc.mainnet.near.org';
+let archiveNodeUrl = 'https://1rpc.io/near';
 const totalTxnsPerPage = ${totalTxnsPerPage};
 const treasuryAccount = "${REPL_TREASURY}";
  async function getAccountChanges(block_id, account_ids) {
@@ -211,7 +212,7 @@ const iframe = (
 function convertBalanceToReadableFormat(amount) {
   return Big(amount ?? "0")
     .div(Big(10).pow(24))
-    .toFixed(4);
+    .toFixed();
 }
 
 function formatRelativeDate(date) {
@@ -237,7 +238,7 @@ function formatRelativeDate(date) {
   } else if (diffDays === 1) {
     return "Yesterday";
   } else {
-    return targetDate.toLocaleDateString(); // Customize format as needed
+    return targetDate.toISOString().split("T")[0];
   }
 }
 
@@ -255,6 +256,13 @@ const loader = (
     {loading}
   </div>
 );
+
+function getPrice(tokensNumber) {
+  return Big(tokensNumber)
+    .mul(Big(nearPrice ?? "1"))
+    .toFixed(3);
+}
+
 return (
   <div className="card card-body flex-1">
     <div className="h5">Transaction History</div>
@@ -281,10 +289,11 @@ return (
                   </div>
                   <div className="d-flex flex-column gap-2">
                     {txns.map((txn, i) => {
-                      const balance = convertBalanceToReadableFormat(
+                      const balanceToken = convertBalanceToReadableFormat(
                         txn.balance
                       );
-                      let balanceDiff = balance;
+                      const balanceAmount = getPrice(balanceToken);
+                      let balanceDiff = balanceToken;
                       if (i < txns.length - 1) {
                         const prevBalance = txns[i + 1].balance;
                         balanceDiff = convertBalanceToReadableFormat(
@@ -301,7 +310,7 @@ return (
                           txn.balance - nextBalance
                         );
                       }
-
+                      balanceDiff = getPrice(balanceDiff);
                       // Check if it's the last transaction and there's no next group
                       if (
                         !hideViewMore &&
@@ -321,7 +330,9 @@ return (
                               <div className="fw-bold text-md mb-0">
                                 {txn.action_kind}
                               </div>
-                              <div> with {txn.receiver_id}</div>
+                              <div>
+                                with {(txn.receiver_id ?? "").substring(0, 30)}
+                              </div>
                               <div>
                                 {readableDate(txn.block_timestamp / 1000000)}
                               </div>
@@ -332,10 +343,11 @@ return (
                           </div>
                           <div className="text-align-end">
                             <div className="fw-bold">
-                              {balanceDiff > 0 ? "+" : ""} {balanceDiff} USD
+                              {balanceDiff > 0 ? "+" : ""}
+                              {balanceDiff} USD
                             </div>
                             <div className="text-light-grey text-md">
-                              Total Balance : ${balance}
+                              Total Balance : ${balanceAmount}
                             </div>
                           </div>
                         </div>
