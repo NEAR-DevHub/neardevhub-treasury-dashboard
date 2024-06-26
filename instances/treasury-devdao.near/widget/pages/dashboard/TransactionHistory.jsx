@@ -252,15 +252,16 @@ function getImage(actionKind) {
 }
 
 const loader = (
-  <div className="d-flex justify-content-center align-items-center w-100 h-100">
+  <div className="d-flex flex-column justify-content-center align-items-center w-100 h-100">
     {loading}
+    <div>This will take a while....</div>
   </div>
 );
 
 function getPrice(tokensNumber) {
   return Big(tokensNumber)
     .mul(Big(nearPrice ?? "1"))
-    .toFixed(3);
+    .toFixed(4);
 }
 
 return (

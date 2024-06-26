@@ -4,7 +4,7 @@ const nearTokenIcon =
   "https://ipfs.near.social/ipfs/bafkreiaafwuojgz5fu3y5n4ehcjuvsni2ieosra7pta6sgimztbjyew2me";
 
 function formatToReadableDecimals(number) {
-  return Big(number ?? "0").toFixed(3);
+  return Big(number ?? "0").toFixed(4);
 }
 const Item = ({
   icon,
@@ -32,7 +32,7 @@ const Item = ({
             <div className="h6 mb-0">{symbol}</div>
             <div className="d-flex gap-2 text-sm text-muted">
               <div>{formatToReadableDecimals(tokensNumber)}</div>
-              <div>･ ${formatToReadableDecimals(tokenPrice)}</div>
+              <div>･ ${tokenPrice}</div>
             </div>
           </div>
         </div>
