@@ -17,7 +17,7 @@ const Theme = styled.div`
   display: flex;
   flex-direction: column;
   padding-top: calc(-1 * var(--body-top-padding));
-  background: var(--theme-bg-color);
+  background: var(--theme-bg-color) !important;
 `;
 
 const Container = styled.div`
