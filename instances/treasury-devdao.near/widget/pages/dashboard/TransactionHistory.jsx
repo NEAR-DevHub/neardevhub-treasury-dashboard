@@ -7,7 +7,7 @@ const [transactionWithBalances, setTransactionWithBalance] = useState(null);
 const [page, setPage] = useState(1);
 const [showMoreLoading, setShowMoreLoading] = useState(false);
 const [hideViewMore, setHideViewMore] = useState(false);
-const totalTxnsPerPage = 20;
+const totalTxnsPerPage = 15;
 const code = `
 <!doctype html>
 <html>
@@ -254,7 +254,7 @@ function getImage(actionKind) {
 const loader = (
   <div className="d-flex flex-column justify-content-center align-items-center w-100 h-100">
     {loading}
-    <div>This will take a while....</div>
+    <div>This might take a while....</div>
   </div>
 );
 

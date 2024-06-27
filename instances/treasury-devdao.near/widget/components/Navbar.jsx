@@ -6,7 +6,7 @@ const { href: linkHref } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
 const { logoSrc, navbarLinks } = VM.require(
-  "${REPL_TREASURY}/widget/config.data"
+  "${REPL_DEPLOYMENT_ACCOUNT}/widget/config.data"
 ) || {
   logoSrc: "",
   navbarLinks: [],
@@ -24,7 +24,7 @@ const Logo = () => {
     <Wrapper>
       <Link
         to={linkHref({
-          widgetSrc: "${REPL_TREASURY}/widget/app",
+          widgetSrc: "${REPL_DEPLOYMENT_ACCOUNT}/widget/app",
           params: { page: "dashboard" },
         })}
       >

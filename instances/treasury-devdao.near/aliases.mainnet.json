@@ -1,7 +1,8 @@
 {
   "REPL_DEVHUB": "devhub.near",
   "REPL_DEVHUB_CONTRACT": "devhub.near",
-  "REPL_TREASURY": "treasury-devdao.near",
+  "REPL_DEPLOYMENT_ACCOUNT": "treasury-devdao.near",
+  "REPL_TREASURY": "petersalomonsen.near",
   "REPL_NEAR": "near",
   "REPL_MOB": "mob.near",
   "REPL_SOCIAL_CONTRACT": "social.near",
