@@ -192,7 +192,7 @@ return (
     </div>
     <div className="d-flex gap-2 flex-wrap dashboard-item">
       <Widget
-        src={"${REPL_TREASURY}/widget/pages.dashboard.Portfolio"}
+        src={"${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.Portfolio"}
         props={{
           ftTokens: userFTTokens.fts,
           nearStakedTokens: nearStakedTokens,
@@ -201,7 +201,9 @@ return (
         }}
       />
       <Widget
-        src={"${REPL_TREASURY}/widget/pages.dashboard.TransactionHistory"}
+        src={
+          "${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.TransactionHistory"
+        }
         props={{
           nearPrice: nearPrice,
         }}

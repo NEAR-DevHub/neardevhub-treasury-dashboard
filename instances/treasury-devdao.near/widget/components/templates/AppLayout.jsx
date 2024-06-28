@@ -26,7 +26,7 @@ const Container = styled.div`
 
 const AppHeader = ({ page }) => (
   <Widget
-    src="${REPL_TREASURY}/widget/components.Navbar"
+    src="${REPL_DEPLOYMENT_ACCOUNT}/widget/components.Navbar"
     props={{
       page: page,
       ...props,
