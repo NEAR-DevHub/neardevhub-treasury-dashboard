@@ -7,10 +7,12 @@ const { page, ...passProps } = props;
 
 // Import our modules
 const { AppLayout } = VM.require(
-  "${REPL_TREASURY}/widget/components.templates.AppLayout"
+  "${REPL_DEPLOYMENT_ACCOUNT}/widget/components.templates.AppLayout"
 ) || { AppLayout: () => <></> };
 
-const { Theme } = VM.require("${REPL_TREASURY}/widget/config.css") || {
+const { Theme } = VM.require(
+  "${REPL_DEPLOYMENT_ACCOUNT}/widget/config.css"
+) || {
   Theme: () => <></>,
 };
 
@@ -26,7 +28,7 @@ function Page() {
     case "dashboard": {
       return (
         <Widget
-          src="${REPL_TREASURY}/widget/pages.dashboard.index"
+          src="${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.index"
           props={passProps}
         />
       );
@@ -35,7 +37,7 @@ function Page() {
     case "members": {
       return (
         <Widget
-          src={"${REPL_TREASURY}/widget/pages.members.index"}
+          src={"${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.members.index"}
           props={passProps}
         />
       );
@@ -43,7 +45,7 @@ function Page() {
     case "operations": {
       return (
         <Widget
-          src={"${REPL_TREASURY}/widget/pages.operations.index"}
+          src={"${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.operations.index"}
           props={passProps}
         />
       );

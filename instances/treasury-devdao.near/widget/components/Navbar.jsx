@@ -6,7 +6,7 @@ const { href: linkHref } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
 const { logoSrc, navbarLinks } = VM.require(
-  "${REPL_TREASURY}/widget/config.data"
+  "${REPL_DEPLOYMENT_ACCOUNT}/widget/config.data"
 ) || {
   logoSrc: "",
   navbarLinks: [],
@@ -24,7 +24,7 @@ const Logo = () => {
     <Wrapper>
       <Link
         to={linkHref({
-          widgetSrc: "${REPL_TREASURY}/widget/app",
+          widgetSrc: "${REPL_DEPLOYMENT_ACCOUNT}/widget/app",
           params: { page: "dashboard" },
         })}
       >
@@ -63,20 +63,6 @@ const Navbar = styled.div`
 
   @media screen and (max-width: 768px) {
     padding: 1.875rem 1.375rem;
-  }
-
-  a {
-    color: var(--link-inactive-color) !important;
-    &.active {
-      color: var(--link-active-color) !important;
-      font-weight: 700 !important;
-    }
-
-    &:hover {
-      text-decoration: none;
-      color: var(--link-active-color) !important;
-      font-weight: 700 !important;
-    }
   }
 `;
 

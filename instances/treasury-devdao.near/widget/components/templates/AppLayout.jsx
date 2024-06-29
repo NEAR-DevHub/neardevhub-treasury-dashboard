@@ -24,17 +24,9 @@ const Container = styled.div`
   width: 100%;
 `;
 
-const ContentContainer = styled.div`
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-`;
-
 const AppHeader = ({ page }) => (
   <Widget
-    src="${REPL_TREASURY}/widget/components.Navbar"
+    src="${REPL_DEPLOYMENT_ACCOUNT}/widget/components.Navbar"
     props={{
       page: page,
       ...props,
@@ -48,7 +40,7 @@ function AppLayout({ page, children }) {
       <Theme>
         <Container>
           <AppHeader page={page} />
-          <ContentContainer>{children}</ContentContainer>
+          <div className="px-3 py-2">{children}</div>
         </Container>
       </Theme>
     </ParentContainer>
