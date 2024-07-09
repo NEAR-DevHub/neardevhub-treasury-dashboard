@@ -42,11 +42,14 @@ const [memo, setMemo] = useState(null);
 const [selectedProposalId, setSelectedProposalId] = useState("");
 const [amount, setAmount] = useState(null);
 const [proposalsArray, setProposalsArray] = useState([]);
+const [isTxnCreated, setTxnCreated] = useState(false);
 
 const [proposalsOptions, setProposalsOptions] = useState([]);
 const [searchProposalId, setSearchProposalId] = useState("");
 const [parsedAmount, setParsedAmount] = useState(null);
 const [daoPolicy, setDaoPolicy] = useState(null);
+const [lastProposalId, setLastProposalId] = useState(null);
+const [showPaymentsPage, setShowPaymentsPage] = useState(false);
 const QUERYAPI_ENDPOINT = `https://near-queryapi.api.pagoda.co/v1/graphql`;
 const queryName = "${REPL_PROPOSAL_FEED_INDEXER_QUERY_NAME}";
 const query = `query GetLatestSnapshot($offset: Int = 0, $limit: Int = 10, $where: ${queryName}_bool_exp = {}) {
@@ -91,6 +94,35 @@ const buildWhereClause = () => {
 
   return where;
 };
+
+function getLastProposalId() {
+  return Near.asyncView(sender, "get_last_proposal_id").then(
+    (result) => result
+  );
+}
+
+useEffect(() => {
+  if (sender) {
+    getLastProposalId().then((i) => setLastProposalId(i));
+  }
+}, [sender]);
+
+// redirect user to payments page after proposal is submitted
+useEffect(() => {
+  if (isTxnCreated) {
+    const checkForNewProposal = () => {
+      getLastProposalId().then((id) => {
+        if (lastProposalId !== id) {
+          setShowPaymentsPage(true);
+          setTxnCreated(false)
+        } else {
+          setTimeout(() => checkForNewProposal(), 1000);
+        }
+      });
+    };
+    checkForNewProposal();
+  }
+}, [isTxnCreated]);
 
 function fetchGraphQL(operationsDoc, operationName, variables) {
   return asyncFetch(QUERYAPI_ENDPOINT, {
@@ -223,6 +255,7 @@ useEffect(() => {
 }, [sender]);
 
 function onSubmitClick() {
+  setTxnCreated(true)
   const isNEAR = tokenId === tokenMapping.NEAR;
   const gas = 270000000000000;
   const deposit = daoPolicy?.proposal_bond || 100000000000000000000000;
@@ -276,6 +309,17 @@ const VerificationIconContainer = ({ isVerified, label }) => {
   );
 };
 
+if (showPaymentsPage) {
+  return (
+    <Widget
+      src={`${REPL_TREASURY}/widget/app`}
+      props={{
+        page: "operations",
+        tab: "payments",
+      }}
+    />
+  );
+}
 return (
   <Container className="container-xxl">
     <div className="d-flex gap-1 align-items-center mb-2 bolder h6 primary-text-color">
