@@ -45,6 +45,10 @@ const Theme = styled.div`
   .text-md {
     font-size: 15px;
   }
+
+  .primary-text-color {
+    color: var(--theme-color);
+  }
 `;
 
 return { Theme };

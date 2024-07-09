@@ -91,7 +91,7 @@ return (
       <div className="w-100 h-100 mt-4" key={currentTab.title}>
         <Widget
           src={`${REPL_TREASURY}/widget/pages.operations.${currentTab.view}`}
-          props={currentTab.props}
+          props={{ ...currentTab.props, ...props }}
         />
       </div>
     )}
