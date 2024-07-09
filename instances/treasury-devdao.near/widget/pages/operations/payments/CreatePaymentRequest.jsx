@@ -114,7 +114,7 @@ useEffect(() => {
       getLastProposalId().then((id) => {
         if (lastProposalId !== id) {
           setShowPaymentsPage(true);
-          setTxnCreated(false)
+          setTxnCreated(false);
         } else {
           setTimeout(() => checkForNewProposal(), 1000);
         }
@@ -255,7 +255,7 @@ useEffect(() => {
 }, [sender]);
 
 function onSubmitClick() {
-  setTxnCreated(true)
+  setTxnCreated(true);
   const isNEAR = tokenId === tokenMapping.NEAR;
   const gas = 270000000000000;
   const deposit = daoPolicy?.proposal_bond || 100000000000000000000000;
@@ -339,7 +339,7 @@ return (
     </div>
     <div className="card card-body">
       <Wrapper className="d-flex gap-3 flex-column">
-        <div className="h4 bolder my-2 text-center">Create Payment Request</div>
+        <div className="h5 bolder my-2 text-center">Create Payment Request</div>
         <div className="border-line p-3 rounded-3 d-flex flex-column gap-3">
           <div className="d-flex flex-column gap-1">
             <label>From Wallet</label>
@@ -450,7 +450,7 @@ return (
               }}
             />
           </div>
-          <div className="d-flex mt-4 gap-3 justify-content-end">
+          <div className="d-flex mt-2 gap-3 justify-content-end">
             <Link
               to={href({
                 widgetSrc: `${REPL_TREASURY}/widget/app`,

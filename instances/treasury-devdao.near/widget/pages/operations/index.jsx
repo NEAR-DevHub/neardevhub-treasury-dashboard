@@ -12,6 +12,7 @@ const Container = styled.div`
 
 const NavUnderline = styled.ul`
   cursor: pointer;
+  border-bottom: 2px solid rgba(203, 209, 212, 1);
   a {
     text-decoration: none;
     color: rgba(147, 149, 151, 1) !important;
