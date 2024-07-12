@@ -1,5 +1,6 @@
 name: Deploy Components to Mainnet
 on:
+  pull_request:
   push:
     branches: [main]
 jobs:
@@ -12,5 +13,13 @@ jobs:
         uses: actions/checkout@v4
       - name: Install dependencies
         run: npm ci
-      - name: Deploy components
-        run: npm run deploy -- '${{ vars.NEAR_SOCIAL_ACCOUNT_ID }}' sign-as '${{ vars.NEAR_SOCIAL_ACCOUNT_ID }}' network-config mainnet sign-with-plaintext-private-key --signer-public-key '${{ vars.NEAR_SOCIAL_ACCOUNT_PUBLIC_KEY }}' --signer-private-key '${{ secrets.NEAR_SOCIAL_ACCOUNT_PRIVATE_KEY }}' send
+      - name: Deploy widgets
+        run: |
+          BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+          echo "on branch $BRANCH"
+          if [[ "$BRANCH" != "main" ]]; then
+            echo "Not on main branch, dry run by diff with treasury-devdao.near"
+            npm run dry-run:treasury
+          else
+            npm run deploy:treasury -- '${{ vars.NEAR_SOCIAL_ACCOUNT_ID }}' sign-as '${{ vars.NEAR_SOCIAL_ACCOUNT_ID }}' network-config mainnet sign-with-plaintext-private-key --signer-public-key '${{ vars.NEAR_SOCIAL_ACCOUNT_PUBLIC_KEY }}' --signer-private-key '${{ secrets.NEAR_SOCIAL_ACCOUNT_PRIVATE_KEY }}' send
+          fi
