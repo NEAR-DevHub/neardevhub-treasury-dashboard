@@ -31,6 +31,7 @@
     "bw:build:treasury": "bw build instances/treasury-devdao.near build/treasury-devdao.near && mv build/treasury-devdao.near/src/widget/* build/treasury-devdao.near/src/ && rm -Rf build/treasury-devdao.near/src/widget",
     "gateway:treasury": "node scripts/dev-gateway.js treasury-devdao.near",
     "test": "npx playwright test",
+    "deploy": "npm run bw:build:treasury && cd ./build/treasury-devdao.near && bos components deploy",
     "test:watch:codespaces": "npm test -- --ui-host=0.0.0.0"
   },
   "husky": {
