@@ -1,16 +1,25 @@
 name: Deploy Components to Mainnet
 on:
+  pull_request:
   push:
     branches: [main]
 jobs:
   deploy-mainnet:
-    uses: NEARBuilders/bos-workspace/.github/workflows/deploy.yml@main
-    with:
-      bw-legacy: false
-      deploy-env: "mainnet"
-      app-name: "[APP_NAME]"
-      deploy-account-address: "[DEPLOY_ACCOUNT]"
-      signer-account-address: "[SIGNER_ACCOUNT]"
-      signer-public-key: [PUBLIC_KEY]
-    secrets:
-      SIGNER_PRIVATE_KEY: ${{ secrets.SIGNER_PRIVATE_KEY }}
+    name: Deploy components to social.near (mainnet)
+    runs-on: ubuntu-latest
+    environment: treasury-devdao.near
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install dependencies
+        run: npm ci
+      - name: Deploy widgets
+        run: |
+          BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+          echo "on branch $BRANCH"
+          if [[ "$BRANCH" != "main" ]]; then
+            echo "Not on main branch, dry run by diff with treasury-devdao.near"
+            npm run dry-run:treasury
+          else
+            npm run deploy:treasury -- '${{ vars.NEAR_SOCIAL_ACCOUNT_ID }}' sign-as '${{ vars.NEAR_SOCIAL_ACCOUNT_ID }}' network-config mainnet sign-with-plaintext-private-key --signer-public-key '${{ vars.NEAR_SOCIAL_ACCOUNT_PUBLIC_KEY }}' --signer-private-key '${{ secrets.NEAR_SOCIAL_ACCOUNT_PRIVATE_KEY }}' send
+          fi
