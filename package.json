@@ -28,7 +28,7 @@
     "build": "npm run fmt",
     "prepare": "husky install",
     "bw:dev:treasury": "bw dev instances/treasury-devdao.near",
-    "bw:build:treasury": "bw build instances/treasury-devdao.near",
+    "bw:build:treasury": "bw build instances/treasury-devdao.near build/treasury-devdao.near && mv build/treasury-devdao.near/src/widget/* build/treasury-devdao.near/src/ && rm -Rf build/treasury-devdao.near/src/widget",
     "gateway:treasury": "node scripts/dev-gateway.js treasury-devdao.near",
     "test": "npx playwright test",
     "test:watch:codespaces": "npm test -- --ui-host=0.0.0.0"
@@ -58,7 +58,7 @@
     "typescript",
     "starter"
   ],
-  "author": "devhub.near",
+  "author": "treasury-devdao.near",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/NEAR-DevHub/neardevhub-treasury-dashboard.git"
