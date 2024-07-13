@@ -1,7 +1,6 @@
 const treasuryAccount = "${REPL_TREASURY}";
 const archiveNodeUrl = "https://archival-rpc.mainnet.near.org";
-const nearTokenIcon =
-  "https://ipfs.near.social/ipfs/bafkreiaafwuojgz5fu3y5n4ehcjuvsni2ieosra7pta6sgimztbjyew2me";
+const nearTokenIcon = "${REPL_NEAR_TOKEN_ICON}";
 
 function formatToReadableDecimals(number) {
   return Big(number ?? "0").toFixed(4);

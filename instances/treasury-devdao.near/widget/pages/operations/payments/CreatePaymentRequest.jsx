@@ -6,14 +6,6 @@ const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
 
-const [fromWalletOptions, setFromWalletOptions] = useState([
-  { label: "treasurydevhub.near", value: "treasurydevhub.near" },
-  {
-    label: "infrastructure-committee.near",
-    value: "infrastructure-committee.near",
-  },
-]);
-
 // need to fetch the list from API
 const [recipientsOptions, setReceientsOptions] = useState([
   { label: "devhub.near", value: "devhub.near" },
@@ -26,16 +18,7 @@ const tokenMapping = {
   USDC: "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
 };
 
-const [tokensOptions, setTokenOptions] = useState([
-  { label: "NEAR", value: tokenMapping.NEAR },
-  { label: "USDT", value: tokenMapping.USDT },
-  {
-    label: "USDC",
-    value: tokenMapping.USDC,
-  },
-]);
-
-const [sender, setSender] = useState(fromWalletOptions[0].value);
+const sender = "${REPL_TREASURY}";
 const [tokenId, setTokenId] = useState(null);
 const [receiver, setReceiver] = useState(null);
 const [memo, setMemo] = useState(null);
@@ -102,10 +85,11 @@ function getLastProposalId() {
 }
 
 useEffect(() => {
-  if (sender) {
-    getLastProposalId().then((i) => setLastProposalId(i));
-  }
-}, [sender]);
+  getLastProposalId().then((i) => setLastProposalId(i));
+  Near.asyncView(sender, "get_policy").then((policy) => {
+    setDaoPolicy(policy);
+  });
+}, []);
 
 // redirect user to payments page after proposal is submitted
 useEffect(() => {
@@ -246,14 +230,6 @@ useEffect(() => {
   }
 }, [amount, tokenId]);
 
-useEffect(() => {
-  if (sender) {
-    Near.asyncView(sender, "get_policy").then((policy) => {
-      setDaoPolicy(policy);
-    });
-  }
-}, [sender]);
-
 function onSubmitClick() {
   setTxnCreated(true);
   const isNEAR = tokenId === tokenMapping.NEAR;
@@ -342,17 +318,7 @@ return (
         <div className="h5 bolder my-2 text-center">Create Payment Request</div>
         <div className="border-line p-3 rounded-3 d-flex flex-column gap-3">
           <div className="d-flex flex-column gap-1">
-            <label>From Wallet</label>
-            <Widget
-              src="${REPL_DEVHUB}/widget/devhub.components.molecule.DropDownWithSearch"
-              props={{
-                selectedValue: sender,
-                onChange: (v) => setSender(v.value),
-                options: fromWalletOptions,
-                showSearch: false,
-                defaultLabel: "treasury.near",
-              }}
-            />
+            <label>From Wallet: {sender}</label>
           </div>
           <div className="d-flex flex-column gap-1">
             <label>Choose Proposal</label>
@@ -411,13 +377,10 @@ return (
           <div className="d-flex flex-column gap-1">
             <label>Currency</label>
             <Widget
-              src="${REPL_DEVHUB}/widget/devhub.components.molecule.DropDownWithSearch"
+              src="${REPL_TREASURY}/widget/components.TokensDropdown"
               props={{
                 selectedValue: tokenId,
-                onChange: (v) => setTokenId(v.value),
-                options: tokensOptions,
-                showSearch: false,
-                defaultLabel: "Near",
+                onChange: (v) => setTokenId(v),
               }}
             />
           </div>
@@ -476,7 +439,6 @@ return (
                 classNames: { root: "green-btn" },
                 disabled:
                   !amount ||
-                  !sender ||
                   !receiver ||
                   !selectedProposalId?.toString() ||
                   !tokenId,
