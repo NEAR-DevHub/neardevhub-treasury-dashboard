@@ -6,5 +6,7 @@
   "REPL_NEAR": "near",
   "REPL_MOB": "mob.near",
   "REPL_SOCIAL_CONTRACT": "social.near",
-  "REPL_RPC_URL": "https://rpc.mainnet.near.org"
+  "REPL_RPC_URL": "https://rpc.mainnet.near.org",
+  "REPL_STAKE_ICON": "https://ipfs.near.social/ipfs/bafkreicjylnnugawkpvhtwjqegc2y6rhdmaqrzdo3cixr2epj5wlxz6ts4",
+  "REPL_UNSTAKE_ICON": "https://ipfs.near.social/ipfs/bafkreiepl6mvtyvd4hxiy3s4jpij4ep6e5fea324bvbujitmjup63iexea"
 }
