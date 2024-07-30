@@ -4,6 +4,7 @@ const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
 
 const treasuryAccount = "${REPL_TREASURY}";
 const archiveNodeUrl = "https://rpc.mainnet.near.org/";
+const [validators, setValidators] = useState([]);
 
 const Wrapper = styled.div`
   width: 50%;
@@ -80,21 +81,41 @@ const nearBalance = Big(balanceResp?.body?.account?.[0]?.amount ?? "0")
   .toFixed(4);
 
 function getAllStakingPools() {
-  return fetch("https://api.nearblocks.io/v1/validators");
+  asyncFetch("https://rpc.mainnet.near.org/", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: "dontcare",
+      method: "validators",
+      params: [null],
+    }),
+  }).then((resp) => {
+    if (Array.isArray(resp.body.result.current_validators)) {
+      const validatorsAccounts = resp.body.result.current_validators;
+      const promises = validatorsAccounts.map((item) => {
+        return Near.asyncView(item.account_id, "get_reward_fee_fraction").then(
+          (i) => {
+            return {
+              pool_id: item.account_id,
+              fee: i.numerator / i.denominator,
+            };
+          }
+        );
+      });
+
+      Promise.all(promises).then((res) => {
+        setValidators(res);
+      });
+    }
+  });
 }
 
-const data = getAllStakingPools();
-const validators = [];
-if (data !== null && Array.isArray(data?.body?.validatorFullData)) {
-  data.body.validatorFullData.map((validator) =>
-    validators.push({
-      account: validator.accountId,
-      fee:
-        validator.poolInfo.fee.numerator / validator.poolInfo.fee.denominator,
-      isActive: validator.stakingStatus === "active",
-    })
-  );
-}
+useEffect(() => {
+  getAllStakingPools();
+}, []);
 
 const [nearStakedTokens, setNearStakedTokens] = useState(null);
 const [amount, setAmount] = useState(null);
@@ -119,7 +140,11 @@ const loading = (
   </div>
 );
 
-if (!Array.isArray(data?.body?.validatorFullData) || nearBalance === null) {
+if (
+  !Array.isArray(validators) ||
+  validators.length === 0 ||
+  nearBalance === null
+) {
   return loading;
 }
 
@@ -192,23 +217,21 @@ return (
             <div className="validators-list p-3 mt-2 rounded-3">
               <div className="d-flex flex-column gap-2">
                 {validators.map((validator) => {
-                  const { account, fee, isActive } = validator;
-                  const isSelected = validatorAccount === account;
+                  const { pool_id, fee } = validator;
+                  const isSelected = validatorAccount === pool_id;
                   return (
                     <div className="d-flex gap-2 align-items-center justify-content-between">
                       <div>
-                        <div className="fw-bold"> {account} </div>
+                        <div className="fw-bold"> {pool_id} </div>
                         <div className="text-sm">
                           <span className="text-muted">{fee}% Fee - </span>
-                          <span className="text-green">
-                            {isActive && "active"}
-                          </span>
+                          <span className="text-green">active</span>
                         </div>
                       </div>
                       <div>
                         <button
                           className="white-btn"
-                          onClick={() => setValidatorAccount(account)}
+                          onClick={() => setValidatorAccount(pool_id)}
                           disabled={isSelected}
                         >
                           {isSelected ? "Selected" : "Select"}
