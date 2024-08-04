@@ -21,7 +21,7 @@ const tokenMapping = {
 const sender = "${REPL_TREASURY}";
 const [tokenId, setTokenId] = useState(null);
 const [receiver, setReceiver] = useState(null);
-const [memo, setMemo] = useState(null);
+const [notes, setNotes] = useState(null);
 const [selectedProposalId, setSelectedProposalId] = useState("");
 const [amount, setAmount] = useState(null);
 const [proposalsArray, setProposalsArray] = useState([]);
@@ -29,6 +29,7 @@ const [isTxnCreated, setTxnCreated] = useState(false);
 
 const [proposalsOptions, setProposalsOptions] = useState([]);
 const [searchProposalId, setSearchProposalId] = useState("");
+const [selectedProposal, setSelectedProposal] = useState(null);
 const [parsedAmount, setParsedAmount] = useState(null);
 const [daoPolicy, setDaoPolicy] = useState(null);
 const [lastProposalId, setLastProposalId] = useState(null);
@@ -48,6 +49,7 @@ ${queryName}(
   requested_sponsorship_usd_amount
   receiver_account
   summary
+  timeline
 }
 }`;
 
@@ -150,21 +152,6 @@ useEffect(() => {
   fetchProposals();
 }, [searchProposalId]);
 
-const Wrapper = styled.div`
-  width: 50%;
-  margin: auto;
-  @media screen and (max-width: 1300px) {
-    width: 60%;
-  }
-  @media screen and (max-width: 1000px) {
-    width: 100%;
-  }
-
-  .border-line {
-    border: 2px solid rgba(236, 238, 240, 1);
-  }
-`;
-
 const Container = styled.div`
   font-size: 14px;
   .text-grey {
@@ -185,13 +172,17 @@ const Container = styled.div`
   .rounded-pill {
     border-radius: 5px !important;
   }
-  .green-btn {
-    background-color: #04a46e !important;
+  .theme-btn {
+    background-color: var(--theme-color) !important;
     color: white;
   }
 
   .primary-text-color a {
     color: var(--theme-color) !important;
+  }
+
+  .btn:hover {
+    color: black !important;
   }
 `;
 
@@ -199,6 +190,10 @@ function onSelectProposal(id) {
   const proposal = proposalsArray.find((item) => item.proposal_id === id.value);
 
   if (proposal !== null) {
+    setSelectedProposal({
+      ...proposal,
+      timeline: JSON.parse(proposal.timeline),
+    });
     const token = tokenMapping[proposal.requested_sponsorship_paid_in_currency];
     const receiverAccount = proposal.receiver_account;
     if (!recipientsOptions.find((i) => i.value === receiverAccount)) {
@@ -245,7 +240,7 @@ function onSubmitClick() {
     link: getLinkUsingCurrentGateway(
       `${REPL_DEVHUB}/widget/app?page=proposal&id=${selectedProposalId}`
     ),
-    memo: memo,
+    notes: notes,
   };
   Near.call([
     {
@@ -269,22 +264,6 @@ function onSubmitClick() {
   ]);
 }
 
-const VerificationIconContainer = ({ isVerified, label }) => {
-  return (
-    <div className="d-flex gap-2 align-items-center">
-      <img
-        src={
-          isVerified
-            ? "https://ipfs.near.social/ipfs/bafkreidqveupkcc7e3rko2e67lztsqrfnjzw3ceoajyglqeomvv7xznusm"
-            : "https://ipfs.near.social/ipfs/bafkreidqveupkcc7e3rko2e67lztsqrfnjzw3ceoajyglqeomvv7xznusm"
-        }
-        height={30}
-      />
-      <div>{label}</div>
-    </div>
-  );
-};
-
 if (showPaymentsPage) {
   return (
     <Widget
@@ -296,159 +275,145 @@ if (showPaymentsPage) {
     />
   );
 }
-return (
-  <Container className="container-xxl">
-    <div className="d-flex gap-1 align-items-center mb-2 bolder h6 primary-text-color">
-      <Link
-        to={href({
-          widgetSrc: `${REPL_TREASURY}/widget/app`,
-          params: {
-            page: "operations",
-            tab: "payments",
-          },
-        })}
-      >
-        <div className="">Pending Requests</div>
-      </Link>
-      <span>/</span>
-      <div style={{ fontWeight: 700 }}>Create New</div>
-    </div>
-    <div className="card card-body">
-      <Wrapper className="d-flex gap-3 flex-column">
-        <div className="h5 bolder my-2 text-center">Create Payment Request</div>
-        <div className="border-line p-3 rounded-3 d-flex flex-column gap-3">
-          <div className="d-flex flex-column gap-1">
-            <label>From Wallet: {sender}</label>
-          </div>
-          <div className="d-flex flex-column gap-1">
-            <label>Choose Proposal</label>
-            <Widget
-              src="${REPL_DEVHUB}/widget/devhub.components.molecule.DropDownWithSearch"
-              props={{
-                selectedValue: "",
-                onChange: onSelectProposal,
-                options: proposalsOptions,
-                showSearch: true,
-                searchInputPlaceholder: "Search by id or title",
-                defaultLabel: "Search proposals",
-                searchByValue: true,
-                onSearch: (value) => {
-                  setSearchProposalId(value);
-                },
-              }}
-            />
-          </div>
-          <div className="d-flex flex-column gap-1">
-            <label>To Wallet (Recipient)</label>
-            <Widget
-              src="${REPL_DEVHUB}/widget/devhub.components.molecule.DropDownWithSearch"
-              props={{
-                selectedValue: receiver,
-                onChange: (v) => setReceiver(v.value),
-                options: recipientsOptions,
-                showSearch: false,
-                defaultLabel: "neardevhub.near",
-              }}
-            />
-          </div>
 
-          <div className="d-flex gap-2 flex-column">
-            <VerificationIconContainer isVerified={true} label="KYC Verified" />
-            <VerificationIconContainer
-              isVerified={true}
-              label="Test Transaction Confirmed"
-            />
-            <div className="text-grey">
-              You can add new recipients in the
-              <Link
-                to={href({
-                  widgetSrc: `${REPL_TREASURY}/widget/app`,
-                  params: {
-                    page: "operations",
-                    tab: "payments",
-                    innerTab: "payment-recipients",
-                  },
-                })}
-              >
-                Manage Recipients tab.
-              </Link>
-            </div>
-          </div>
-          <div className="d-flex flex-column gap-1">
-            <label>Currency</label>
-            <Widget
-              src="${REPL_TREASURY}/widget/components.TokensDropdown"
-              props={{
-                selectedValue: tokenId,
-                onChange: (v) => setTokenId(v),
-              }}
-            />
-          </div>
-          <div className="d-flex flex-column gap-1">
-            <label>Total Amount</label>
-            <Widget
-              src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Input`}
-              props={{
-                className: "flex-grow-1",
-                key: `total-amount`,
-                onChange: (e) => setAmount(e.target.value),
-                placeholder: "Enter amount",
-                value: amount,
-                inputProps: {
-                  type: "number",
-                },
-              }}
-            />
-          </div>
-          <div className="d-flex flex-column gap-1">
-            <label>Notes (Optional)</label>
-            <Widget
-              src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Input`}
-              props={{
-                className: "flex-grow-1",
-                key: `notes`,
-                onChange: (e) => setMemo(e.target.value),
-                placeholder: "Enter memo",
-                value: memo,
-              }}
-            />
-          </div>
-          <div className="d-flex mt-2 gap-3 justify-content-end">
-            <Link
-              to={href({
-                widgetSrc: `${REPL_TREASURY}/widget/app`,
-                params: {
-                  page: "operations",
-                  tab: "payments",
-                },
-              })}
-            >
+return (
+  <Container>
+    <div className="d-flex flex-column gap-3">
+      <div className="d-flex flex-column gap-1">
+        <label>Proposal</label>
+        <Widget
+          src="${REPL_DEVHUB}/widget/devhub.components.molecule.DropDownWithSearch"
+          props={{
+            selectedValue: "",
+            onChange: onSelectProposal,
+            options: proposalsOptions,
+            showSearch: true,
+            searchInputPlaceholder: "Search by id or title",
+            defaultLabel: "Select",
+            searchByValue: true,
+            onSearch: (value) => {
+              setSearchProposalId(value);
+            },
+          }}
+        />
+      </div>
+      {selectedProposal && (
+        <div className="border p-3 rounded-3 d-flex flex-column gap-2">
+          <h6 className="d-flex gap-2 mb-0">
+            {selectedProposal.name}{" "}
+            <div style={{ width: "fit-content" }}>
               <Widget
-                src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
+                src={"${REPL_DEVHUB}/widget/devhub.entity.proposal.StatusTag"}
                 props={{
-                  classNames: {
-                    root: "btn-outline-danger shadow-none border-0",
-                  },
-                  label: "Cancel",
+                  timelineStatus: selectedProposal.timeline.status,
                 }}
               />
-            </Link>
-            <Widget
-              src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
-              props={{
-                classNames: { root: "green-btn" },
-                disabled:
-                  !amount ||
-                  !receiver ||
-                  !selectedProposalId?.toString() ||
-                  !tokenId,
-                label: "Submit",
-                onClick: onSubmitClick,
-              }}
-            />
-          </div>
+            </div>
+          </h6>
+          <div>{selectedProposal.summary}</div>
+          <Link
+            target="_blank"
+            rel="noopener noreferrer"
+            to={href({
+              widgetSrc: `${REPL_DEVHUB}/widget/app`,
+              params: {
+                page: "proposal",
+                id: selectedProposal.proposal_id,
+              },
+            })}
+          >
+            <button className="btn p-0 d-flex align-items-center gap-2 bolder">
+              Open Proposal <i class="bi bi-box-arrow-up-right"></i>
+            </button>
+          </Link>
         </div>
-      </Wrapper>
+      )}
+      <div className="d-flex flex-column gap-1">
+        <label>Recipient</label>
+        <Widget
+          src="${REPL_DEVHUB}/widget/devhub.components.molecule.DropDownWithSearch"
+          props={{
+            selectedValue: receiver,
+            onChange: (v) => setReceiver(v.value),
+            options: recipientsOptions,
+            showSearch: false,
+            defaultLabel: "Select",
+          }}
+        />
+      </div>
+      <div className="d-flex flex-column gap-1">
+        <label>Requested Token</label>
+        <Widget
+          src="${REPL_TREASURY}/widget/components.TokensDropdown"
+          props={{
+            selectedValue: tokenId,
+            onChange: (v) => setTokenId(v),
+          }}
+        />
+      </div>
+      <div className="d-flex flex-column gap-1">
+        <label>Total Amount</label>
+        <Widget
+          src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Input`}
+          props={{
+            className: "flex-grow-1",
+            key: `total-amount`,
+            onChange: (e) => setAmount(e.target.value),
+            placeholder: "Enter amount",
+            value: amount,
+            inputProps: {
+              type: "number",
+            },
+          }}
+        />
+      </div>
+      <div className="d-flex flex-column gap-1">
+        <label>Notes (Optional)</label>
+        <Widget
+          src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Input`}
+          props={{
+            className: "flex-grow-1",
+            key: `notes`,
+            onChange: (e) => setMemo(e.target.value),
+            value: notes,
+            multiline: true,
+          }}
+        />
+      </div>
+      <div className="d-flex mt-2 gap-3 justify-content-end">
+        <Link
+          to={href({
+            widgetSrc: `${REPL_TREASURY}/widget/app`,
+            params: {
+              page: "operations",
+              tab: "payments",
+            },
+          })}
+        >
+          <Widget
+            src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
+            props={{
+              classNames: {
+                root: "btn-outline shadow-none border-0",
+              },
+              label: "Cancel",
+            }}
+          />
+        </Link>
+        <Widget
+          src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
+          props={{
+            classNames: { root: "theme-btn" },
+            disabled:
+              !amount ||
+              !receiver ||
+              !selectedProposalId?.toString() ||
+              !tokenId,
+            label: "Submit",
+            onClick: onSubmitClick,
+          }}
+        />
+      </div>
     </div>
   </Container>
 );
