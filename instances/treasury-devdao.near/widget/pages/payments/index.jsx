@@ -6,6 +6,15 @@ if (innerPage) {
 
 const [showCreateRequest, setShowCreateRequest] = useState(false);
 
+// to make it accessible in both history and pending payments requests
+const columnsVisibility = JSON.parse(
+  Storage.privateGet("COLUMNS_VISIBLILITY") ?? "[]"
+);
+
+function changeColumnsVisibility(value) {
+  Storage.privateSet("COLUMNS_VISIBLILITY", JSON.stringify(value));
+}
+
 const sidebarMenu = (
   <div className="d-flex gap-2 align-items-center">
     <button
@@ -15,13 +24,17 @@ const sidebarMenu = (
       <i class="bi bi-plus-circle-fill"></i>Create Request
     </button>
 
-    <Widget src={`${REPL_TREASURY}/widget/components.SettingsDropdown`} />
+    <Widget
+      src={`${REPL_TREASURY}/widget/components.SettingsDropdown`}
+      props={{ columnsVisibility, changeColumnsVisibility }}
+    />
   </div>
 );
 
 function toggleCreatePage() {
   setShowCreateRequest(!showCreateRequest);
 }
+
 return (
   <div>
     <Widget
@@ -46,12 +59,16 @@ return (
           {
             title: "Pending Requests",
             href: `${REPL_TREASURY}/widget/pages.payments.PendingRequests`,
-            props: {},
+            props: {
+              columnsVisibility,
+            },
           },
           {
             title: "History",
             href: `${REPL_TREASURY}/widget/pages.payments.History`,
-            props: {},
+            props: {
+              columnsVisibility,
+            },
           },
         ],
         sidebarMenu: sidebarMenu,

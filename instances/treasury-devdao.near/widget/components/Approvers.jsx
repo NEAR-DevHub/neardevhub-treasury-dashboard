@@ -7,7 +7,7 @@ const approve =
 const reject =
   "https://ipfs.near.social/ipfs/bafkreihrwi2nzl7d2dyij3tstr6tdr7fnioq7vu37en3dxt4faihxreabm";
 
-const maxIndex = 1000;
+const maxIndex = 100;
 
 const Container = styled.div`
   .grey-circle {

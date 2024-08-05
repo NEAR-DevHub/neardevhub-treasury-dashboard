@@ -1,5 +1,5 @@
 const treasuryDaoID = "aurorafinance.sputnik-dao.near";
-function getTransferApproversGroup() {
+function getTransferApproversAndThreshold() {
   const daoPolicy = Near.view(treasuryDaoID, "get_policy", {});
   const groupWithTransferPermission = (daoPolicy.roles ?? []).filter((role) => {
     const transferPermissions = [
@@ -17,10 +17,31 @@ function getTransferApproversGroup() {
   });
 
   let approversGroup = [];
-  groupWithTransferPermission.map(
-    (i) => (approversGroup = approversGroup.concat(i.kind.Group))
-  );
-  return approversGroup;
+  let ratios = [];
+  groupWithTransferPermission.map((i) => {
+    approversGroup = approversGroup.concat(i.kind.Group);
+    if (i.vote_policy["transfer"].weight_kind === "RoleWeight") {
+      ratios = ratios.concat(i.vote_policy["transfer"].threshold);
+      ratios = ratios.concat(i.vote_policy["transfer"].threshold);
+    }
+  });
+
+  let numerator = 0;
+  let denominator = 0;
+  ratios.forEach((value, index) => {
+    if (index == 0 || index % 2 === 0) {
+      // Even index -> numerator
+      numerator += value;
+    } else {
+      // Odd index -> denominator
+      denominator += value;
+    }
+  });
+
+  return {
+    approverAccounts: approversGroup,
+    threshold: numerator / denominator,
+  };
 }
 
 const filterFunction = (item, filterStatusArray, filterKindArray) => {
@@ -87,6 +108,6 @@ function getFilteredProposalsByStatusAndkind({
 }
 
 return {
-  getTransferApproversGroup,
+  getTransferApproversAndThreshold,
   getFilteredProposalsByStatusAndkind,
 };

@@ -1,49 +1,60 @@
-const { selectedValue, onChange, disabled } = props;
+const {
+  selectedValue,
+  onChange,
+  disabled,
+  changeColumnsVisibility,
+  columnsVisibility,
+} = props;
 
 onChange = onChange || (() => {});
+changeColumnsVisibility = changeColumnsVisibility || (() => {});
 
-const [settingsOptions, setSettingsOptions] = useState([
-  {
-    title: "Reference",
-    show: false,
-  },
-  {
-    title: "Title",
-    show: false,
-  },
-  {
-    title: "Summary",
-    show: true,
-  },
-  {
-    title: "Recipient",
-    show: true,
-  },
-  {
-    title: "Requested Token",
-    show: true,
-  },
-  {
-    title: "Funding Ask",
-    show: true,
-  },
-  {
-    title: "Creator",
-    show: true,
-  },
-  {
-    title: "Notes",
-    show: true,
-  },
-  {
-    title: "Votes",
-    show: true,
-  },
-  {
-    title: "Approvers",
-    show: true,
-  },
-]);
+const [settingsOptions, setSettingsOptions] = useState(
+  columnsVisibility.length
+    ? columnsVisibility
+    : [
+        {
+          title: "Reference",
+          show: true,
+        },
+        {
+          title: "Title",
+          show: true,
+        },
+        {
+          title: "Summary",
+          show: true,
+        },
+        {
+          title: "Recipient",
+          show: true,
+        },
+        {
+          title: "Requested Token",
+          show: true,
+        },
+        {
+          title: "Funding Ask",
+          show: true,
+        },
+        {
+          title: "Creator",
+          show: true,
+        },
+        {
+          title: "Notes",
+          show: true,
+        },
+        {
+          title: "Votes",
+          show: true,
+        },
+        {
+          title: "Approvers",
+          show: true,
+        },
+      ]
+);
 
 const [isOpen, setIsOpen] = useState(false);
 
@@ -51,17 +62,12 @@ const toggleDropdown = () => {
   setIsOpen(!isOpen);
 };
 
-useEffect(() => {
-  if (selectedValue && selectedValue !== selectedOptionValue) {
-    setSelectedValue(selectedValue);
-  }
-}, [selectedValue]);
-
 const handleOptionClick = (option) => {
   const newOptions = [...settingsOptions];
   const index = newOptions.findIndex((i) => i.title === option.title);
   newOptions[index].show = !newOptions[index].show;
   setSettingsOptions(newOptions);
+  changeColumnsVisibility(newOptions);
 };
 
 const Container = styled.div`
@@ -74,6 +80,7 @@ const Container = styled.div`
     top: 110%;
     right: 0;
     min-width: 220px;
+    z-index: 9999;
   }
 
   .dropdown-item.active,
@@ -92,6 +99,10 @@ const Container = styled.div`
 
   .text-grey {
     color: #b3b3b3;
+  }
+
+  .text-sm {
+    font-size: 13px;
   }
 `;
 
@@ -128,6 +139,7 @@ return (
       {isOpen && (
         <div className="dropdown-menu rounded-2 dropdown-menu-end dropdown-menu-lg-start px-2 shadow show w-100">
           <div>
+            <div className="text-muted text-sm">Shown in table</div>
             {settingsOptions.map((option) => (
               <div
                 key={option.title}
