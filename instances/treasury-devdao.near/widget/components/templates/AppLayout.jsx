@@ -11,6 +11,7 @@ const ParentContainer = gatewayURL.includes("near.org")
       inset: 73px 0px 0px;
       width: 100%;
       overflow-y: scroll;
+      background: var(--theme-bg-color) !important;
     `;
 
 const Theme = styled.div`

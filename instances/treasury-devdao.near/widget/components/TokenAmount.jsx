@@ -19,24 +19,18 @@ if (amountWithoutDecimals !== undefined) {
     .toString();
 }
 
-const Wrapper = styled.div`
-  .amount {
-    font-size: 14px;
-    font-weight: 500;
-    line-height: 1.15;
-  }
-`;
 return (
-  <Wrapper className="d-flex gap-1 align-items-center">
-    <div>
+  <div className="text-center">
+    <div className="d-flex gap-1 align-items-center justify-content-center">
+      <span className="amount h6 bolder mb-0">
+        {amount.toLocaleString("en-US")}
+      </span>
       <img
-        width="14px"
-        height="14px"
+        width="17px"
+        height="17px"
         src={isNEAR ? "${REPL_NEAR_TOKEN_ICON}" : ftMetadata.icon}
       />
     </div>
-    <div className="d-flex gap-1 align-items-center">
-      <span className="amount">{amount}</span>
-    </div>
-  </Wrapper>
+    <div className="text-muted">~1000 USD</div>
+  </div>
 );

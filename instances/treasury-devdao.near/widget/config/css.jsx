@@ -49,6 +49,20 @@ const Theme = styled.div`
   .primary-text-color {
     color: var(--theme-color);
   }
+
+  .btn-outline-plain {
+    padding-block: 8px;
+    padding-inline: 10px;
+    border-radius: 0.375rem;
+    border: 1.5px solid #e2e6ec;
+    background-color: white;
+    color: black;
+
+    &:hover {
+      background-color: white;
+      color: black;
+    }
+  }
 `;
 
 return { Theme };

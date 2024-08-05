@@ -16,7 +16,7 @@ const Container = styled.div`
 
 const NavUnderline = styled.ul`
   cursor: pointer;
-  font-size: 20px;
+  font-size: 16px;
   .nav-link {
     color: rgba(147, 149, 151, 1) !important;
   }

@@ -1,5 +1,5 @@
 const treasuryAccount = "megha19.near";
-const nearTokenIcon = "${REPL_TREASURY}";
+const nearTokenIcon = "${REPL_NEAR_TOKEN_ICON}";
 const { selectedValue, onChange, disabled } = props;
 
 onChange = onChange || (() => {});
@@ -138,7 +138,7 @@ const Container = styled.div`
 
 const Item = ({ option }) => {
   if (!option) {
-    return <div className="text-muted">NEAR Tokens</div>;
+    return <div className="text-muted">Select</div>;
   }
   return (
     <div className="d-flex gap-3 align-items-center w-100">

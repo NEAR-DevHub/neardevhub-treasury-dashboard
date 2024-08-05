@@ -42,10 +42,28 @@ function Page() {
         />
       );
     }
-    case "operations": {
+    case "payments": {
       return (
         <Widget
-          src={"${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.operations.index"}
+          src={"${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.payments.index"}
+          props={passProps}
+        />
+      );
+    }
+
+    case "stake-delegation": {
+      return (
+        <Widget
+          src={"${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.index"}
+          props={passProps}
+        />
+      );
+    }
+
+    case "stake-delegation": {
+      return (
+        <Widget
+          src={"${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.asset-exchange.index"}
           props={passProps}
         />
       );

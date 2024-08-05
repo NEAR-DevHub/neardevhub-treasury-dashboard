@@ -6,6 +6,7 @@ const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
 
+const onCloseCanvas = props.onCloseCanvas ?? (() => {});
 // need to fetch the list from API
 const [recipientsOptions, setReceientsOptions] = useState([
   { label: "devhub.near", value: "devhub.near" },
@@ -33,7 +34,7 @@ const [selectedProposal, setSelectedProposal] = useState(null);
 const [parsedAmount, setParsedAmount] = useState(null);
 const [daoPolicy, setDaoPolicy] = useState(null);
 const [lastProposalId, setLastProposalId] = useState(null);
-const [showPaymentsPage, setShowPaymentsPage] = useState(false);
+const [isManualRequest, setIsManualRequest] = useState(false);
 const QUERYAPI_ENDPOINT = `https://near-queryapi.api.pagoda.co/v1/graphql`;
 const queryName = "${REPL_PROPOSAL_FEED_INDEXER_QUERY_NAME}";
 const query = `query GetLatestSnapshot($offset: Int = 0, $limit: Int = 10, $where: ${queryName}_bool_exp = {}) {
@@ -93,13 +94,13 @@ useEffect(() => {
   });
 }, []);
 
-// redirect user to payments page after proposal is submitted
+// close canvas after proposal is submitted
 useEffect(() => {
   if (isTxnCreated) {
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
         if (lastProposalId !== id) {
-          setShowPaymentsPage(true);
+          onCloseCanvas();
           setTxnCreated(false);
         } else {
           setTimeout(() => checkForNewProposal(), 1000);
@@ -187,6 +188,11 @@ const Container = styled.div`
 `;
 
 function onSelectProposal(id) {
+  if (!id) {
+    setSelectedProposal(null);
+    return;
+  }
+
   const proposal = proposalsArray.find((item) => item.proposal_id === id.value);
 
   if (proposal !== null) {
@@ -230,18 +236,16 @@ function onSubmitClick() {
   const isNEAR = tokenId === tokenMapping.NEAR;
   const gas = 270000000000000;
   const deposit = daoPolicy?.proposal_bond || 100000000000000000000000;
-  const proposal = proposalsArray.find(
-    (item) => item.proposal_id === selectedProposalId
-  );
   const description = {
-    proposal_id: selectedProposalId,
-    title: proposal.name,
-    summary: proposal.summary,
-    link: getLinkUsingCurrentGateway(
-      `${REPL_DEVHUB}/widget/app?page=proposal&id=${selectedProposalId}`
-    ),
+    title: selectedProposal.name,
+    summary: selectedProposal.summary,
     notes: notes,
   };
+
+  if (!isManualRequest) {
+    description["proposalId"] = selectedProposalId;
+  }
+
   Near.call([
     {
       contractName: sender,
@@ -264,40 +268,71 @@ function onSubmitClick() {
   ]);
 }
 
-if (showPaymentsPage) {
-  return (
-    <Widget
-      src={`${REPL_TREASURY}/widget/app`}
-      props={{
-        page: "operations",
-        tab: "payments",
-      }}
-    />
-  );
-}
-
 return (
   <Container>
     <div className="d-flex flex-column gap-3">
       <div className="d-flex flex-column gap-1">
         <label>Proposal</label>
         <Widget
-          src="${REPL_DEVHUB}/widget/devhub.components.molecule.DropDownWithSearch"
+          src="${REPL_TREASURY}/widget/components.DropDownWithSearchAndManualRequest"
           props={{
             selectedValue: "",
             onChange: onSelectProposal,
             options: proposalsOptions,
             showSearch: true,
             searchInputPlaceholder: "Search by id or title",
-            defaultLabel: "Select",
+            defaultLabel: isManualRequest ? "Add manual request" : "Select",
             searchByValue: true,
             onSearch: (value) => {
               setSearchProposalId(value);
             },
+            onClickOfManualRequest: () => {
+              setSelectedProposal(null);
+              setIsManualRequest(true);
+            },
+            showManualRequest: true,
           }}
         />
       </div>
-      {selectedProposal && (
+      {isManualRequest && (
+        <div className="d-flex flex-column gap-3">
+          <div className="d-flex flex-column gap-1">
+            <label>Proposal Title</label>
+            <Widget
+              src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Input`}
+              props={{
+                className: "flex-grow-1",
+                key: `proposal-title`,
+                onBlur: (e) =>
+                  setSelectedProposal((prev) => ({
+                    ...prev,
+                    name: e.target.value,
+                  })),
+                value: selectedProposal.name,
+                multiline: true,
+              }}
+            />
+          </div>
+          <div className="d-flex flex-column gap-1">
+            <label>Proposal Summary</label>
+            <Widget
+              src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Input`}
+              props={{
+                className: "flex-grow-1",
+                key: `proposal-summary`,
+                onBlur: (e) =>
+                  setSelectedProposal((prev) => ({
+                    ...prev,
+                    summary: e.target.value,
+                  })),
+                value: selectedProposal.summary,
+                multiline: true,
+              }}
+            />
+          </div>
+        </div>
+      )}
+      {selectedProposal && !isManualRequest && (
         <div className="border p-3 rounded-3 d-flex flex-column gap-2">
           <h6 className="d-flex gap-2 mb-0">
             {selectedProposal.name}{" "}
@@ -374,43 +409,34 @@ return (
           props={{
             className: "flex-grow-1",
             key: `notes`,
-            onChange: (e) => setMemo(e.target.value),
+            onChange: (e) => setNotes(e.target.value),
             value: notes,
             multiline: true,
           }}
         />
       </div>
       <div className="d-flex mt-2 gap-3 justify-content-end">
-        <Link
-          to={href({
-            widgetSrc: `${REPL_TREASURY}/widget/app`,
-            params: {
-              page: "operations",
-              tab: "payments",
+        <Widget
+          src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
+          props={{
+            classNames: {
+              root: "btn-outline shadow-none border-0",
             },
-          })}
-        >
-          <Widget
-            src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
-            props={{
-              classNames: {
-                root: "btn-outline shadow-none border-0",
-              },
-              label: "Cancel",
-            }}
-          />
-        </Link>
+            label: "Cancel",
+            onClick: onCloseCanvas,
+            disabled: isTxnCreated,
+          }}
+        />
+
         <Widget
           src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
           props={{
             classNames: { root: "theme-btn" },
             disabled:
-              !amount ||
-              !receiver ||
-              !selectedProposalId?.toString() ||
-              !tokenId,
+              !amount || !receiver || !selectedProposal?.name || !tokenId,
             label: "Submit",
             onClick: onSubmitClick,
+            loading: isTxnCreated,
           }}
         />
       </div>

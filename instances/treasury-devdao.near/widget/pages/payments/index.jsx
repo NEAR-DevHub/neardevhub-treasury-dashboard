@@ -1,11 +1,7 @@
 const { innerPage } = props;
 
 if (innerPage) {
-  return (
-    <Widget
-      src={`${REPL_TREASURY}/widget/pages.operations.payments.${innerPage}`}
-    />
-  );
+  return <Widget src={`${REPL_TREASURY}/widget/pages.payments.${innerPage}`} />;
 }
 
 const [showCreateRequest, setShowCreateRequest] = useState(false);
@@ -13,29 +9,31 @@ const [showCreateRequest, setShowCreateRequest] = useState(false);
 const sidebarMenu = (
   <div className="d-flex gap-2 align-items-center">
     <button
-      className="primary p-2 rounded-2 h6 fw-bold d-flex align-items-center gap-2"
+      className="primary p-2 rounded-2 h6 fw-bold d-flex align-items-center gap-2 mb-0"
       onClick={() => setShowCreateRequest(true)}
     >
       <i class="bi bi-plus-circle-fill"></i>Create Request
     </button>
 
-    <button className="btn-outline p-2 rounded-2 h6 fw-bold">
-      <i class="bi bi-gear"></i>
-    </button>
+    <Widget src={`${REPL_TREASURY}/widget/components.SettingsDropdown`} />
   </div>
 );
 
+function toggleCreatePage() {
+  setShowCreateRequest(!showCreateRequest);
+}
 return (
   <div>
     <Widget
       src={`${REPL_TREASURY}/widget/components.OffCanvas`}
       props={{
         showCanvas: showCreateRequest,
-        onClose: () => setShowCreateRequest(!showCreateRequest),
+        onClose: toggleCreatePage,
         title: "Create Payment Request",
         children: (
           <Widget
-            src={`${REPL_TREASURY}/widget/pages.operations.payments.CreatePaymentRequest`}
+            src={`${REPL_TREASURY}/widget/pages.payments.CreatePaymentRequest`}
+            props={{ onCloseCanvas: toggleCreatePage }}
           />
         ),
       }}
@@ -47,12 +45,12 @@ return (
         tabs: [
           {
             title: "Pending Requests",
-            href: `${REPL_TREASURY}/widget/pages.operations.payments.PendingRequests`,
+            href: `${REPL_TREASURY}/widget/pages.payments.PendingRequests`,
             props: {},
           },
           {
             title: "History",
-            href: `${REPL_TREASURY}/widget/pages.operations.payments.History`,
+            href: `${REPL_TREASURY}/widget/pages.payments.History`,
             props: {},
           },
         ],

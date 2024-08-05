@@ -1,24 +1,21 @@
 const onNextClick = props.onNextClick ?? (() => {});
 const onPrevClick = props.onPrevClick ?? (() => {});
 const onRowsChange = props.onRowsChange ?? (() => {});
-const totalCount = props.totalCount;
-const rows = props.rowsPerPage;
+const totalPages = props.totalPages;
+const rowsPerPage = props.rowsPerPage;
+const page = props.currentPage;
 
-const [currentPage, setCurrentPage] = useState(0);
-const [rowsPerPage, setRowsPerPage] = useState(rows);
-
-useEffect(() => {
-  if (rows !== rowsPerPage) {
-    onRowsChange(rowsPerPage);
-  }
-}, []);
+const currentPage = page + 1;
 
 return (
-  <div className="d-flex justify-content-between align-items-center">
+  <div
+    className="d-flex justify-content-between align-items-center"
+    style={{ color: "#555555" }}
+  >
     <div className="d-flex gap-2 align-items-center">
       Rows per Page:
       <select
-        onChange={(e) => setRowsPerPage(e.target.value)}
+        onChange={(e) => onRowsChange(e.target.value)}
         value={rowsPerPage}
       >
         <option value={10}>10</option>
@@ -28,13 +25,21 @@ return (
     </div>
     <div className="d-flex gap-2 align-items-center">
       Showing: {currentPage * rowsPerPage - rowsPerPage + 1} -
-      {currentPage * rowsPerPage} of {totalCount}
-      <div onClick={onPrevClick}>
-        <i class="bi bi-arrow-left-square"></i>
-      </div>
-      <div onClick={onNextClick}>
-        <i class="bi bi-arrow-right-square"></i>
-      </div>
+      {currentPage * rowsPerPage} of {totalPages}
+      <button
+        className="btn-outline-plain"
+        disabled={page === 0}
+        onClick={onPrevClick}
+      >
+        <i class="bi bi-arrow-left h5"></i>
+      </button>
+      <button
+        className="btn-outline-plain"
+        disabled={page === totalPages}
+        onClick={onNextClick}
+      >
+        <i class="bi bi-arrow-right h5"></i>
+      </button>
     </div>
   </div>
 );
