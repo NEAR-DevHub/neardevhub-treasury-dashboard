@@ -13,7 +13,14 @@ const [proposals, setProposals] = useState(null);
 const [totalLength, setTotalLength] = useState(null);
 const [loading, setLoading] = useState(false);
 
-const refreshTableData = Storage.privateGet("REFRESH_TABLE_DATA");
+const refreshTableData = Storage.get(
+  "REFRESH_TABLE_DATA",
+  `${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.payments.CreatePaymentRequest`
+);
+const refreshVoteTableData = Storage.get(
+  "REFRESH__VOTE_ACTION_TABLE_DATA",
+  `${REPL_DEPLOYMENT_ACCOUNT}/widget/components.VoteActions`
+);
 
 useEffect(() => {
   setLoading(true);
@@ -33,7 +40,7 @@ useEffect(() => {
       });
     }
   });
-}, [currentPage, rowsPerPage, refreshTableData]);
+}, [currentPage, rowsPerPage, refreshTableData, refreshVoteTableData]);
 
 const policy = Near.view(treasuryDaoID, "get_policy", {});
 
