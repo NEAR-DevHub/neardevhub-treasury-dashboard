@@ -1,4 +1,4 @@
-const treasuryDaoID = "aurorafinance.sputnik-dao.near";
+const treasuryDaoID = "${REPL_TREASURY}";
 function getTransferApproversAndThreshold() {
   const daoPolicy = Near.view(treasuryDaoID, "get_policy", {});
   const groupWithTransferPermission = (daoPolicy.roles ?? []).filter((role) => {

@@ -7,8 +7,7 @@ const {
 const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
-const treasuryDaoID = "aurorafinance.sputnik-dao.near";
-// "${REPL_TREASURY}";
+const treasuryDaoID = "${REPL_TREASURY}";
 
 const columnsVisibility = props.columnsVisibility ?? [];
 

@@ -3,7 +3,7 @@ const columnsVisibility = props.columnsVisibility ?? [];
 const isPendingRequests = props.isPendingRequests;
 const transferApproversGroup = props.transferApproversGroup;
 
-const accountId = "aurorafinance2.near";
+const accountId = context.accountId;
 
 const hasVotingPermission = (
   transferApproversGroup?.approverAccounts ?? []
@@ -99,6 +99,11 @@ function isVisible(column) {
     ? ""
     : "display-none";
 }
+
+const requiredVotes = Math.ceil(
+  transferApproversGroup.threshold *
+    transferApproversGroup.approverAccounts.length
+);
 
 const ProposalsComponent = () => {
   return (
@@ -197,12 +202,13 @@ const ProposalsComponent = () => {
             </td>
             <td className={"bold " + isVisible("Creator")}>{item.proposer}</td>
             <td className={"text-sm " + isVisible("Notes")}>{notes ?? "-"}</td>
+            <td>{requiredVotes}</td>
             <td className={isVisible("Votes")}>
               <Widget
                 src={`${REPL_TREASURY}/widget/components.Votes`}
                 props={{
                   votes: item.votes,
-                  threshold: transferApproversGroup?.threshold,
+                  requiredVotes,
                 }}
               />
             </td>
@@ -222,6 +228,7 @@ const ProposalsComponent = () => {
                   src={`${REPL_TREASURY}/widget/components.VoteActions`}
                   props={{
                     votes: item.votes,
+                    proposalId: item.id,
                   }}
                 />
               </td>
@@ -250,6 +257,7 @@ return (
           <td className={isVisible("Funding Ask")}>Funding Ask</td>
           <td className={isVisible("Creator")}>Created by</td>
           <td className={isVisible("Notes")}>Notes</td>
+          <td>Required Votes</td>
           <td className={isVisible("Votes")}>Votes</td>
           <td className={isVisible("Approvers")}>Approvers</td>
           {isPendingRequests && hasVotingPermission && <td>Actions</td>}

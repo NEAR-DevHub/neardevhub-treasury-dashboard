@@ -1,9 +1,22 @@
 const votes = props.votes ?? {};
-const accountId = "aurorafinance2.near";
-context.accountId;
+const proposalId = props.proposalId;
+const treasuryDaoID = "";
+const accountId = context.accountId;
 
 const alreadyVoted = Object.keys(votes).includes(accountId);
 const userVote = votes[accountId];
+
+function actProposal(action) {
+  Near.call({
+    contractName: treasuryDaoID,
+    methodName: "act_proposal",
+    args: {
+      id: proposalId,
+      action: action,
+    },
+    gas: 200000000000000,
+  });
+}
 
 const Container = styled.div`
   .reject-btn {
@@ -38,8 +51,18 @@ return (
       />
     ) : (
       <div className="d-flex gap-2 align-items-center">
-        <button className="approve-btn btn">Approve</button>
-        <button className="reject-btn btn">Reject</button>
+        <button
+          className="approve-btn btn"
+          onClick={() => actProposal("VoteApprove")}
+        >
+          Approve
+        </button>
+        <button
+          className="reject-btn btn"
+          onClick={() => actProposal("VoteReject")}
+        >
+          Reject
+        </button>
       </div>
     )}
   </Container>

@@ -1,34 +1,68 @@
 const votes = props.votes;
-const threshold = props.threshold;
-const percentage = { Approve: 0, Reject: 0 };
-const total = Object.values(votes).map((i) => percentage[i]++);
+const requiredVotes = props.requiredVotes;
+const voteDistribution = { Approve: 0, Reject: 0 };
+
+const total = Object.values(votes).map((i) => voteDistribution[i]++);
+const getPercentage = (value) =>
+  value === 0 ? 0 : (value / requiredVotes) * 100;
 
 const Container = styled.div`
-  background-color: #e2e6ec;
-  width: 100px;
-  height: 15px;
-  display: flex;
-  overflow: hidden;
+  .bar {
+    background-color: #e2e6ec;
+    width: 100px;
+    height: 20px;
+    overflow: hidden;
+  }
+  .flex-item {
+    flex: 1;
+  }
+
+  .label {
+    font-weight: 500;
+  }
+
+  .green {
+    color: #04a46e;
+    text-align: left;
+  }
+
+  .red {
+    color: #dc6666;
+    text-align: right;
+  }
 `;
 
-const ApproveBar = styled.div`
-  background-color: #04a46e;
-  height: 100%;
-  width: ${(props) => props.width}%;
-`;
+const approvePercentage = getPercentage(voteDistribution.Approve);
+const rejectPercentage = getPercentage(voteDistribution.Reject);
 
-const RejectBar = styled.div`
-  background-color: #dc6666;
-  height: 100%;
-  width: ${(props) => props.width}%;
-`;
-
-function getPercentage(value) {
-  return (value / total.length) * 100;
-}
 return (
-  <Container className="rounded-pill">
-    <ApproveBar width={getPercentage(percentage.Approve)} />
-    <RejectBar width={getPercentage(percentage.Reject)} />
+  <Container className="d-flex flex-column gap-1" style={{ width: "100px" }}>
+    <div className="d-flex align-items-center px-2">
+      <div className="w-100 h-100 flex-item label green">
+        {voteDistribution.Approve}
+      </div>
+      <div className="w-100 h-100 flex-item label red">
+        {voteDistribution.Reject}
+      </div>
+    </div>
+    <div className="bar d-flex align-items-center rounded-pill">
+      <div className="w-100 h-100 flex-item">
+        <div
+          className="h-100"
+          style={{ width: `${approvePercentage}%`, backgroundColor: "#04a46e" }}
+        ></div>
+      </div>
+
+      <div className="w-100 h-100 flex-item">
+        <div
+          className="h-100"
+          style={{
+            width: `${rejectPercentage}%`,
+            backgroundColor: "#dc6666",
+            float: "inline-end",
+          }}
+        ></div>
+      </div>
+    </div>
   </Container>
 );

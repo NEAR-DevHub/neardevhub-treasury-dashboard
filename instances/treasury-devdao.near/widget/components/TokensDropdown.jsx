@@ -1,4 +1,4 @@
-const treasuryAccount = "megha19.near";
+const treasuryAccount = "${REPL_TREASURY}";
 const nearTokenIcon = "${REPL_NEAR_TOKEN_ICON}";
 const { selectedValue, onChange, disabled } = props;
 
