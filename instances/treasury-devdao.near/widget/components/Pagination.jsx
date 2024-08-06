@@ -35,7 +35,7 @@ return (
       </button>
       <button
         className="btn-outline-plain"
-        disabled={page === totalPages}
+        disabled={currentPage === totalPages}
         onClick={onNextClick}
       >
         <i class="bi bi-arrow-right h5"></i>

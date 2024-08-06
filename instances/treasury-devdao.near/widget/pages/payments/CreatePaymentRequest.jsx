@@ -370,16 +370,29 @@ return (
       )}
       <div className="d-flex flex-column gap-1">
         <label>Recipient</label>
-        <Widget
-          src="${REPL_DEVHUB}/widget/devhub.components.molecule.DropDownWithSearch"
-          props={{
-            selectedValue: receiver,
-            onChange: (v) => setReceiver(v.value),
-            options: recipientsOptions,
-            showSearch: false,
-            defaultLabel: "Select",
-          }}
-        />
+        {isManualRequest ? (
+          <Widget
+            src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Input`}
+            props={{
+              className: "flex-grow-1",
+              key: `receiver`,
+              onChange: (e) => setReceiver(e.target.value),
+              placeholder: "Enter receipient account",
+              value: receiver,
+            }}
+          />
+        ) : (
+          <Widget
+            src="${REPL_DEVHUB}/widget/devhub.components.molecule.DropDownWithSearch"
+            props={{
+              selectedValue: receiver,
+              onChange: (v) => setReceiver(v.value),
+              options: recipientsOptions,
+              showSearch: false,
+              defaultLabel: "Select",
+            }}
+          />
+        )}
       </div>
       <div className="d-flex flex-column gap-1">
         <label>Requested Token</label>
