@@ -60,7 +60,7 @@ function Page() {
       );
     }
 
-    case "stake-delegation": {
+    case "asset-exchange": {
       return (
         <Widget
           src={"${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.asset-exchange.index"}

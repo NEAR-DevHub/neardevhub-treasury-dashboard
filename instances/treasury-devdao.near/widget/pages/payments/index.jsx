@@ -6,15 +6,6 @@ if (innerPage) {
 
 const [showCreateRequest, setShowCreateRequest] = useState(false);
 
-// to make it accessible in both history and pending payments requests
-const columnsVisibility = JSON.parse(
-  Storage.privateGet("COLUMNS_VISIBLILITY") ?? "[]"
-);
-
-function changeColumnsVisibility(value) {
-  Storage.privateSet("COLUMNS_VISIBLILITY", JSON.stringify(value));
-}
-
 const sidebarMenu = (
   <div className="d-flex gap-2 align-items-center">
     <button
@@ -25,8 +16,7 @@ const sidebarMenu = (
     </button>
 
     <Widget
-      src={`${REPL_TREASURY}/widget/components.SettingsDropdown`}
-      props={{ columnsVisibility, changeColumnsVisibility }}
+      src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.SettingsDropdown`}
     />
   </div>
 );
@@ -38,37 +28,35 @@ function toggleCreatePage() {
 return (
   <div>
     <Widget
-      src={`${REPL_TREASURY}/widget/components.OffCanvas`}
+      src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.OffCanvas`}
       props={{
         showCanvas: showCreateRequest,
         onClose: toggleCreatePage,
         title: "Create Payment Request",
         children: (
           <Widget
-            src={`${REPL_TREASURY}/widget/pages.payments.CreatePaymentRequest`}
-            props={{ onCloseCanvas: toggleCreatePage }}
+            src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.payments.CreatePaymentRequest`}
+            props={{
+              onCloseCanvas: toggleCreatePage,
+            }}
           />
         ),
       }}
     />
     <Widget
-      src={`${REPL_TREASURY}/widget/components.Tabs`}
+      src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.Tabs`}
       props={{
         ...props,
         tabs: [
           {
             title: "Pending Requests",
-            href: `${REPL_TREASURY}/widget/pages.payments.PendingRequests`,
-            props: {
-              columnsVisibility,
-            },
+            href: `${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.payments.PendingRequests`,
+            props: {},
           },
           {
             title: "History",
-            href: `${REPL_TREASURY}/widget/pages.payments.History`,
-            props: {
-              columnsVisibility,
-            },
+            href: `${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.payments.History`,
+            props: {},
           },
         ],
         sidebarMenu: sidebarMenu,

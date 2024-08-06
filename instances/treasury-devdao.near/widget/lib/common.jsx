@@ -3,6 +3,7 @@ function getTransferApproversAndThreshold() {
   const daoPolicy = Near.view(treasuryDaoID, "get_policy", {});
   const groupWithTransferPermission = (daoPolicy.roles ?? []).filter((role) => {
     const transferPermissions = [
+      "*:*",
       "transfer:*",
       "transfer:VoteApprove",
       "transfer:VoteReject",
@@ -28,15 +29,21 @@ function getTransferApproversAndThreshold() {
 
   let numerator = 0;
   let denominator = 0;
-  ratios.forEach((value, index) => {
-    if (index == 0 || index % 2 === 0) {
-      // Even index -> numerator
-      numerator += value;
-    } else {
-      // Odd index -> denominator
-      denominator += value;
-    }
-  });
+
+  if (ratios.length > 0) {
+    ratios.forEach((value, index) => {
+      if (index == 0 || index % 2 === 0) {
+        // Even index -> numerator
+        numerator += value;
+      } else {
+        // Odd index -> denominator
+        denominator += value;
+      }
+    });
+  } else {
+    numerator = 1;
+    denominator = 2;
+  }
 
   return {
     approverAccounts: approversGroup,
@@ -96,7 +103,10 @@ function getFilteredProposalsByStatusAndkind({
     filteredProposals = proposals.filter((item) =>
       filterFunction(item, filterStatusArray, filterKindArray)
     );
-    const newArray = filteredProposals.slice(0, resPerPage);
+    const uniqueFilteredProposals = Array.from(
+      new Map(filteredProposals.map((item) => [item.id, item])).values()
+    );
+    const newArray = uniqueFilteredProposals.slice(0, resPerPage);
     if (reverse) {
       newArray.reverse();
     }

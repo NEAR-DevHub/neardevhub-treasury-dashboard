@@ -31,15 +31,15 @@ const tokensWithBalance =
   [];
 
 useEffect(() => {
-  if (tokensWithBalance.length > 0) {
-    const tokens = [
-      {
-        icon: nearTokenIcon,
-        title: "NEAR",
-        value: "NEAR",
-        tokenBalance: nearBalance,
-      },
-    ];
+  const tokens = [
+    {
+      icon: nearTokenIcon,
+      title: "NEAR",
+      value: "NEAR",
+      tokenBalance: nearBalance,
+    },
+  ];
+  if (tokensWithBalance.length > 0 && !options.length) {
     tokens = tokens.concat(
       tokensWithBalance.map((i) => {
         return {
@@ -52,8 +52,8 @@ useEffect(() => {
         };
       })
     );
-    setOptions(tokens);
   }
+  setOptions(tokens);
 }, [tokensWithBalance]);
 
 const [isOpen, setIsOpen] = useState(false);

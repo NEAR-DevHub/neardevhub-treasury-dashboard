@@ -1,5 +1,11 @@
+const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
+  href: () => {},
+};
+
 const proposals = props.proposals ?? [];
-const columnsVisibility = props.columnsVisibility ?? [];
+const columnsVisibility = JSON.parse(
+  Storage.privateGet("COLUMNS_VISIBLILITY") ?? "[]"
+);
 const isPendingRequests = props.isPendingRequests;
 const transferApproversGroup = props.transferApproversGroup;
 
@@ -121,7 +127,7 @@ const ProposalsComponent = () => {
             <td className="bold">{item.id}</td>
             <td>
               <Widget
-                src={`${REPL_TREASURY}/widget/components.Date`}
+                src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
                 props={{
                   timestamp: item.submission_time,
                 }}
@@ -130,7 +136,7 @@ const ProposalsComponent = () => {
             {!isPendingRequests && (
               <td>
                 <Widget
-                  src={`${REPL_TREASURY}/widget/components.ProposalStatus`}
+                  src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.ProposalStatus`}
                   props={{
                     isVoteStatus: false,
                     status: item.status,
@@ -151,7 +157,7 @@ const ProposalsComponent = () => {
                     },
                   })}
                 >
-                  <div className="d-flex gap-1 align-items-center text-underline bolder">
+                  <div className="d-flex gap-2 align-items-center text-underline bold text-black">
                     #{proposalId} <i class="bi bi-box-arrow-up-right"> </i>
                   </div>
                 </Link>
@@ -177,7 +183,7 @@ const ProposalsComponent = () => {
               style={{ maxWidth: 180 }}
             >
               <Widget
-                src={`${REPL_TREASURY}/widget/components.ReceiverAccount`}
+                src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.ReceiverAccount`}
                 props={{
                   receiverAccount: args.receiver_id,
                 }}
@@ -185,7 +191,7 @@ const ProposalsComponent = () => {
             </td>
             <td className={isVisible("Requested Token")}>
               <Widget
-                src={`${REPL_TREASURY}/widget/components.TokenIcon`}
+                src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.TokenIcon`}
                 props={{
                   address: args.token_id,
                 }}
@@ -193,7 +199,7 @@ const ProposalsComponent = () => {
             </td>
             <td className={isVisible("Funding Ask")}>
               <Widget
-                src={`${REPL_TREASURY}/widget/components.TokenAmount`}
+                src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
                 props={{
                   amountWithoutDecimals: args.amount,
                   address: args.token_id,
@@ -205,7 +211,7 @@ const ProposalsComponent = () => {
             <td>{requiredVotes}</td>
             <td className={isVisible("Votes")}>
               <Widget
-                src={`${REPL_TREASURY}/widget/components.Votes`}
+                src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.Votes`}
                 props={{
                   votes: item.votes,
                   requiredVotes,
@@ -214,7 +220,7 @@ const ProposalsComponent = () => {
             </td>
             <td className={isVisible("Approvers")} style={{ maxWidth: 180 }}>
               <Widget
-                src={`${REPL_TREASURY}/widget/components.Approvers`}
+                src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.Approvers`}
                 props={{
                   votes: item.votes,
                   transferApproversGroup:
@@ -225,7 +231,7 @@ const ProposalsComponent = () => {
             {isPendingRequests && hasVotingPermission && (
               <td>
                 <Widget
-                  src={`${REPL_TREASURY}/widget/components.VoteActions`}
+                  src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.VoteActions`}
                   props={{
                     votes: item.votes,
                     proposalId: item.id,

@@ -1,16 +1,10 @@
 const {
   getTransferApproversAndThreshold,
   getFilteredProposalsByStatusAndkind,
-} = VM.require("${REPL_TREASURY}/widget/lib.common") || {
+} = VM.require("${REPL_DEPLOYMENT_ACCOUNT}/widget/lib.common") || {
   getTransferApproversAndThreshold: () => {},
 };
-const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
-  href: () => {},
-};
 const treasuryDaoID = "${REPL_TREASURY}";
-
-const columnsVisibility = props.columnsVisibility ?? [];
-
 const [rowsPerPage, setRowsPerPage] = useState(10);
 const [currentPage, setPage] = useState(0);
 
@@ -61,17 +55,16 @@ if (
 return (
   <div className="d-flex flex-column gap-4">
     <Widget
-      src={`${REPL_TREASURY}/widget/pages.payments.Table`}
+      src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.payments.Table`}
       props={{
         proposals: proposals,
-        columnsVisibility,
         isPendingRequests: false,
         transferApproversGroup,
       }}
     />
     <div>
       <Widget
-        src={`${REPL_TREASURY}/widget/components.Pagination`}
+        src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.Pagination`}
         props={{
           totalPages: Math.ceil(totalLength / rowsPerPage),
           onNextClick: () => setPage(currentPage + 1),

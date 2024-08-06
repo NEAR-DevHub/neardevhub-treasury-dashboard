@@ -61,7 +61,7 @@ return (
         style={{ marginTop: 25, marginLeft: "-20px" }}
       />
     </div>
-    <div>
+    <div style={{ textAlign: "left" }}>
       <div className="h6 mb-0"> {name}</div>
 
       <div

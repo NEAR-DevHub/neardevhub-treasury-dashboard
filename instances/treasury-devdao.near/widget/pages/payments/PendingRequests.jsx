@@ -1,15 +1,10 @@
 const {
   getTransferApproversAndThreshold,
   getFilteredProposalsByStatusAndkind,
-} = VM.require("${REPL_TREASURY}/widget/lib.common") || {
+} = VM.require("${REPL_DEPLOYMENT_ACCOUNT}/widget/lib.common") || {
   getTransferApproversAndThreshold: () => {},
 };
-const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
-  href: () => {},
-};
 const treasuryDaoID = "${REPL_TREASURY}";
-
-const columnsVisibility = props.columnsVisibility ?? [];
 
 const [rowsPerPage, setRowsPerPage] = useState(10);
 const [currentPage, setPage] = useState(0);
@@ -17,6 +12,9 @@ const [currentPage, setPage] = useState(0);
 const [proposals, setProposals] = useState(null);
 const [totalLength, setTotalLength] = useState(null);
 const [loading, setLoading] = useState(false);
+
+const refreshTableData = Storage.privateGet("REFRESH_TABLE_DATA");
+
 useEffect(() => {
   setLoading(true);
   Near.asyncView(treasuryDaoID, "get_last_proposal_id").then((i) => {
@@ -35,7 +33,7 @@ useEffect(() => {
       });
     }
   });
-}, [currentPage, rowsPerPage]);
+}, [currentPage, rowsPerPage, refreshTableData]);
 
 const policy = Near.view(treasuryDaoID, "get_policy", {});
 
@@ -60,17 +58,16 @@ if (
 return (
   <div className="d-flex flex-column gap-4">
     <Widget
-      src={`${REPL_TREASURY}/widget/pages.payments.Table`}
+      src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.payments.Table`}
       props={{
         proposals: proposals,
-        columnsVisibility,
         isPendingRequests: true,
         transferApproversGroup,
       }}
     />
     <div>
       <Widget
-        src={`${REPL_TREASURY}/widget/components.Pagination`}
+        src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.Pagination`}
         props={{
           totalPages: Math.ceil(totalLength / rowsPerPage),
           onNextClick: () => setPage(currentPage + 1),

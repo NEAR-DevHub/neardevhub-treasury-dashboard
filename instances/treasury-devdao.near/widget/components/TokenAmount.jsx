@@ -31,6 +31,6 @@ return (
         src={isNEAR ? "${REPL_NEAR_TOKEN_ICON}" : ftMetadata.icon}
       />
     </div>
-    <div className="text-muted">~1000 USD</div>
+    {/* <div className="text-muted">~1000 USD</div> */}
   </div>
 );

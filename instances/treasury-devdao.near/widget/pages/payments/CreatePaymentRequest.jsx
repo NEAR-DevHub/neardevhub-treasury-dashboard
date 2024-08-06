@@ -94,6 +94,10 @@ useEffect(() => {
   });
 }, []);
 
+function refreshData() {
+  Storage.privateSet("REFRESH_TABLE_DATA", Math.random());
+}
+
 // close canvas after proposal is submitted
 useEffect(() => {
   if (isTxnCreated) {
@@ -101,6 +105,7 @@ useEffect(() => {
       getLastProposalId().then((id) => {
         if (lastProposalId !== id) {
           onCloseCanvas();
+          refreshData();
           setTxnCreated(false);
         } else {
           setTimeout(() => checkForNewProposal(), 1000);
@@ -274,7 +279,7 @@ return (
       <div className="d-flex flex-column gap-1">
         <label>Proposal</label>
         <Widget
-          src="${REPL_TREASURY}/widget/components.DropDownWithSearchAndManualRequest"
+          src="${REPL_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
           props={{
             selectedValue: "",
             onChange: onSelectProposal,
@@ -379,7 +384,7 @@ return (
       <div className="d-flex flex-column gap-1">
         <label>Requested Token</label>
         <Widget
-          src="${REPL_TREASURY}/widget/components.TokensDropdown"
+          src="${REPL_DEPLOYMENT_ACCOUNT}/widget/components.TokensDropdown"
           props={{
             selectedValue: tokenId,
             onChange: (v) => setTokenId(v),

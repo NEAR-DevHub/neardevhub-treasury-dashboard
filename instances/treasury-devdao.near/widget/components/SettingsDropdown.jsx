@@ -1,13 +1,14 @@
-const {
-  selectedValue,
-  onChange,
-  disabled,
-  changeColumnsVisibility,
-  columnsVisibility,
-} = props;
+const { selectedValue, onChange, disabled } = props;
 
 onChange = onChange || (() => {});
-changeColumnsVisibility = changeColumnsVisibility || (() => {});
+
+const columnsVisibility = JSON.parse(
+  Storage.privateGet("COLUMNS_VISIBLILITY") ?? "[]"
+);
+
+function changeColumnsVisibility(value) {
+  Storage.privateSet("COLUMNS_VISIBLILITY", JSON.stringify(value));
+}
 
 const [settingsOptions, setSettingsOptions] = useState(
   columnsVisibility.length
