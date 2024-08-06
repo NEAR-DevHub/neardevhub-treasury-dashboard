@@ -5,33 +5,10 @@ const [showMenu, setShowMenu] = useState(false);
 const { href: linkHref } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
-const { logoSrc, navbarLinks } = VM.require(
+const { navbarLinks } = VM.require(
   "${REPL_DEPLOYMENT_ACCOUNT}/widget/config.data"
 ) || {
-  logoSrc: "",
   navbarLinks: [],
-};
-
-const Logo = () => {
-  const Wrapper = styled.div`
-    @media screen and (max-width: 768px) {
-      img {
-        width: 90px;
-      }
-    }
-  `;
-  return (
-    <Wrapper>
-      <Link
-        to={linkHref({
-          widgetSrc: "${REPL_DEPLOYMENT_ACCOUNT}/widget/app",
-          params: { page: "dashboard" },
-        })}
-      >
-        <img width={140} src={logoSrc} />
-      </Link>
-    </Wrapper>
-  );
 };
 
 const MenuIcon = () => (
@@ -122,9 +99,13 @@ const MobileLink = styled.a`
 const isActive = (link) =>
   (link ?? "").toLowerCase() === props.page ? "active" : "";
 
+function getTitle(text) {
+  return text.replace(/-/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
 return (
-  <Navbar className="position-relative">
-    <Logo />
+  <Navbar className="position-relative d-flex justify-content-between">
+    <div className="h4 mb-0">{getTitle(page ?? "dashboard")}</div>
     <div className="d-flex gap-3 align-items-center">
       <LinksContainer>
         {navbarLinks.map((link) => (

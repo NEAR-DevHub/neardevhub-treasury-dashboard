@@ -247,7 +247,7 @@ function getImage(actionKind) {
 const loader = (
   <div className="d-flex flex-column justify-content-center align-items-center w-100 h-100">
     {loading}
-    <div>This might take a while....</div>
+    <div>This may take a few minutes.</div>
   </div>
 );
 

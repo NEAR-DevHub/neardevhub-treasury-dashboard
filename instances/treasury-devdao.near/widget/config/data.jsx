@@ -1,6 +1,4 @@
 return {
-  logoSrc:
-    "https://ipfs.near.social/ipfs/bafkreig444xsheuq43ua7nbe6ashbmim54tjezinqw3uehoh3wc4ebbpbq",
   appName: "Treasury",
   navbarLinks: [
     {
@@ -8,12 +6,20 @@ return {
       href: "?page=dashboard",
     },
     {
-      title: "Members",
-      href: "?page=members",
+      title: "Payments",
+      href: "?page=payments",
     },
     {
-      title: "Operations",
-      href: "?page=operations",
+      title: "Stake Delegation",
+      href: "?page=stake-delegation",
+    },
+    {
+      title: "Asset Exchange",
+      href: "?page=asset-exchange",
+    },
+    {
+      title: "Members",
+      href: "?page=members",
     },
   ],
 };
