@@ -22,7 +22,7 @@ function actProposal(action) {
 }
 
 function refreshData() {
-  Storage.privateSet("REFRESH_TABLE_DATA", Math.random());
+  Storage.set("REFRESH__VOTE_ACTION_TABLE_DATA", Math.random());
 }
 
 function getProposalData() {

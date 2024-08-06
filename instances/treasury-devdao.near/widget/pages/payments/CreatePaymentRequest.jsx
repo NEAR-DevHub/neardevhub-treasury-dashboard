@@ -95,7 +95,7 @@ useEffect(() => {
 }, []);
 
 function refreshData() {
-  Storage.privateSet("REFRESH_TABLE_DATA", Math.random());
+  Storage.set("REFRESH_TABLE_DATA", Math.random());
 }
 
 // close canvas after proposal is submitted

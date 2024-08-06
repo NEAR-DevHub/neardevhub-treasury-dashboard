@@ -3,11 +3,14 @@ const { selectedValue, onChange, disabled } = props;
 onChange = onChange || (() => {});
 
 const columnsVisibility = JSON.parse(
-  Storage.privateGet("COLUMNS_VISIBLILITY") ?? "[]"
+  Storage.get(
+    "COLUMNS_VISIBLILITY",
+    `${REPL_DEPLOYMENT_ACCOUNT}/widget/components.SettingsDropdown`
+  ) ?? "[]"
 );
 
 function changeColumnsVisibility(value) {
-  Storage.privateSet("COLUMNS_VISIBLILITY", JSON.stringify(value));
+  Storage.set("COLUMNS_VISIBLILITY", JSON.stringify(value));
 }
 
 const [settingsOptions, setSettingsOptions] = useState(

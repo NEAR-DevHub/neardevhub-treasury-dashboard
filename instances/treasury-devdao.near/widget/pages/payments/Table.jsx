@@ -4,7 +4,10 @@ const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
 
 const proposals = props.proposals ?? [];
 const columnsVisibility = JSON.parse(
-  Storage.privateGet("COLUMNS_VISIBLILITY") ?? "[]"
+  Storage.get(
+    "COLUMNS_VISIBLILITY",
+    `${REPL_DEPLOYMENT_ACCOUNT}/widget/components.SettingsDropdown`
+  ) ?? "[]"
 );
 const isPendingRequests = props.isPendingRequests;
 const transferApproversGroup = props.transferApproversGroup;
