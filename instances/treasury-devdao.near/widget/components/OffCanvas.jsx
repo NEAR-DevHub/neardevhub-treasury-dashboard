@@ -1,3 +1,9 @@
+const { isNearSocial } = VM.require(
+  "${REPL_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+) || {
+  isNearSocial: false,
+};
+
 const showCanvas = props.showCanvas;
 const onClose = props.onClose;
 const title = props.title;
@@ -35,7 +41,12 @@ return (
       data-bs-scroll="false"
       data-bs-backdrop="true"
     >
-      <div className="p-3 d-flex gap-2 align-items-center pb-0">
+      <div
+        className={
+          "p-3 d-flex gap-2 align-items-center pb-0 " +
+          (isNearSocial && " mt-5")
+        }
+      >
         <button
           onClick={onClose}
           type="button"
