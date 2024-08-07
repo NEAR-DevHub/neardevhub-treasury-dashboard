@@ -20,6 +20,7 @@ const hasVotingPermission = (
 
 const Container = styled.div`
   font-size: 13px;
+  min-height:60vh;
   .text-grey {
     color: #b9b9b9 !important;
   }
@@ -76,7 +77,6 @@ const Container = styled.div`
     border-radius: 5px;
     padding: 5px;
     position: absolute;
-    right:40%;
     z-index: 10000;
     top:100%;
     opacity: 0;

@@ -42,10 +42,8 @@ return (
       data-bs-backdrop="true"
     >
       <div
-        className={
-          "p-3 d-flex gap-2 align-items-center pb-0 " +
-          (isNearSocial && " mt-5")
-        }
+        className="p-3 d-flex gap-2 align-items-center pb-0"
+        style={{ marginTop: isNearSocial ? "4rem" : "" }}
       >
         <button
           onClick={onClose}
