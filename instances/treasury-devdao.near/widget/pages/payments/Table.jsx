@@ -109,10 +109,11 @@ function isVisible(column) {
     : "display-none";
 }
 
-const requiredVotes = Math.ceil(
-  transferApproversGroup.threshold *
-    transferApproversGroup.approverAccounts.length
-);
+const requiredVotes =
+  Math.floor(
+    transferApproversGroup.threshold *
+      transferApproversGroup.approverAccounts.length
+  ) + 1;
 
 const ProposalsComponent = () => {
   return (
