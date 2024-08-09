@@ -99,6 +99,9 @@ const Container = styled.div`
   .text-left{
     text-align:left;
   }
+  .text-underline{
+    text-decoration:underline !important;
+  }
 `;
 
 const TooltipContent = ({ title, summary }) => {
@@ -223,21 +226,25 @@ const ProposalsComponent = () => {
             <td className={"text-sm text-left " + isVisible("Notes")}>
               {notes ?? "-"}
             </td>
-            <td className={isVisible("Required Votes") + " text-center"}>
-              {requiredVotes}
-            </td>
-            <td className={isVisible("Votes") + " text-center"}>
-              <Widget
-                src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.Votes`}
-                props={{
-                  votes: item.votes,
-                  requiredVotes,
-                }}
-              />
-            </td>
+            {isPendingRequests && (
+              <td className={isVisible("Required Votes") + " text-center"}>
+                {requiredVotes}
+              </td>
+            )}
+            {isPendingRequests && (
+              <td className={isVisible("Votes") + " text-center"}>
+                <Widget
+                  src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.Votes`}
+                  props={{
+                    votes: item.votes,
+                    requiredVotes,
+                  }}
+                />
+              </td>
+            )}
             <td
               className={isVisible("Approvers") + " text-center"}
-              style={{ maxWidth: 180 }}
+              style={{ minWidth: 100 }}
             >
               <Widget
                 src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.Approvers`}
@@ -287,11 +294,14 @@ return (
           </td>
           <td className={isVisible("Creator") + " text-center"}>Created by</td>
           <td className={isVisible("Notes") + " text-left"}>Notes</td>
-          <td className={isVisible("Required Votes") + " text-center"}>
-            {" "}
-            Required Votes
-          </td>
-          <td className={isVisible("Votes") + " text-center"}>Votes</td>
+          {isPendingRequests && (
+            <td className={isVisible("Required Votes") + " text-center"}>
+              Required Votes
+            </td>
+          )}
+          {isPendingRequests && (
+            <td className={isVisible("Votes") + " text-center"}>Votes</td>
+          )}
           <td className={isVisible("Approvers") + " text-center"}>Approvers</td>
           {isPendingRequests && hasVotingPermission && (
             <td className="text-right">Actions</td>

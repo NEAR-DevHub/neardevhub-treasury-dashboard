@@ -29,6 +29,10 @@ const Container = styled.div`
   .approve {
     color: #089968;
   }
+
+  .custom-tooltip .tooltiptext {
+    right: 80%;
+  }
 `;
 
 const maxShow = 1;
@@ -38,7 +42,7 @@ function getImage(acc) {
 }
 
 return (
-  <Container>
+  <Container className="d-flex justify-content-center">
     <div className="custom-tooltip">
       <div className="tooltiptext p-3">
         <div className="d-flex flex-column gap-3">
