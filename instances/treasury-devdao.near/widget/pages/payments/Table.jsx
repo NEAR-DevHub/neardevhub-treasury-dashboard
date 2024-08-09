@@ -37,7 +37,6 @@ const Container = styled.div`
     padding: 0.5rem;
     color: inherit;
     vertical-align: middle;
-    text-align: center;
   }
  
   .max-w-100 {
@@ -92,6 +91,14 @@ const Container = styled.div`
   .display-none{
     display:none;
   }
+
+  .text-right{
+    text-align:end;
+  }
+
+  .text-left{
+    text-align:left;
+  }
 `;
 
 const TooltipContent = ({ title, summary }) => {
@@ -129,7 +136,7 @@ const ProposalsComponent = () => {
         return (
           <tr>
             <td className="bold">{item.id}</td>
-            <td>
+            <td className={isVisible("Created Date")}>
               <Widget
                 src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
                 props={{
@@ -193,7 +200,7 @@ const ProposalsComponent = () => {
                 }}
               />
             </td>
-            <td className={isVisible("Requested Token")}>
+            <td className={isVisible("Requested Token") + " text-center"}>
               <Widget
                 src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.TokenIcon`}
                 props={{
@@ -201,7 +208,7 @@ const ProposalsComponent = () => {
                 }}
               />
             </td>
-            <td className={isVisible("Funding Ask")}>
+            <td className={isVisible("Funding Ask") + " text-right"}>
               <Widget
                 src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
                 props={{
@@ -210,10 +217,16 @@ const ProposalsComponent = () => {
                 }}
               />
             </td>
-            <td className={"bold " + isVisible("Creator")}>{item.proposer}</td>
-            <td className={"text-sm " + isVisible("Notes")}>{notes ?? "-"}</td>
-            <td>{requiredVotes}</td>
-            <td className={isVisible("Votes")}>
+            <td className={"bold text-center " + isVisible("Creator")}>
+              {item.proposer}
+            </td>
+            <td className={"text-sm text-left " + isVisible("Notes")}>
+              {notes ?? "-"}
+            </td>
+            <td className={isVisible("Required Votes") + " text-center"}>
+              {requiredVotes}
+            </td>
+            <td className={isVisible("Votes") + " text-center"}>
               <Widget
                 src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.Votes`}
                 props={{
@@ -222,7 +235,10 @@ const ProposalsComponent = () => {
                 }}
               />
             </td>
-            <td className={isVisible("Approvers")} style={{ maxWidth: 180 }}>
+            <td
+              className={isVisible("Approvers") + " text-center"}
+              style={{ maxWidth: 180 }}
+            >
               <Widget
                 src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.Approvers`}
                 props={{
@@ -256,21 +272,30 @@ return (
       <thead>
         <tr className="text-grey">
           <td>#</td>
-          <td>Created Date</td>
+          <td className={isVisible("Created Date")}>Created Date</td>
           {!isPendingRequests && <td>Status</td>}
           <td className={isVisible("Reference")}>Reference</td>
 
           <td className={isVisible("Title")}>Title</td>
           <td className={isVisible("Summary")}>Summary</td>
           <td className={isVisible("Recipient")}>Recipient</td>
-          <td className={isVisible("Requested Token")}>Requested Token</td>
-          <td className={isVisible("Funding Ask")}>Funding Ask</td>
-          <td className={isVisible("Creator")}>Created by</td>
-          <td className={isVisible("Notes")}>Notes</td>
-          <td>Required Votes</td>
-          <td className={isVisible("Votes")}>Votes</td>
-          <td className={isVisible("Approvers")}>Approvers</td>
-          {isPendingRequests && hasVotingPermission && <td>Actions</td>}
+          <td className={isVisible("Requested Token") + " text-center"}>
+            Requested Token
+          </td>
+          <td className={isVisible("Funding Ask") + " text-right"}>
+            Funding Ask
+          </td>
+          <td className={isVisible("Creator") + " text-center"}>Created by</td>
+          <td className={isVisible("Notes") + " text-left"}>Notes</td>
+          <td className={isVisible("Required Votes") + " text-center"}>
+            {" "}
+            Required Votes
+          </td>
+          <td className={isVisible("Votes") + " text-center"}>Votes</td>
+          <td className={isVisible("Approvers") + " text-center"}>Approvers</td>
+          {isPendingRequests && hasVotingPermission && (
+            <td className="text-right">Actions</td>
+          )}
           {/* {!isPendingRequests && <td>Transaction Date</td>}
           {!isPendingRequests && <td>Transaction</td>} */}
         </tr>
