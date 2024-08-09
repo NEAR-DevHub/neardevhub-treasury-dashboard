@@ -1,3 +1,9 @@
+const { isNearSocial } = VM.require(
+  "${REPL_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+) || {
+  isNearSocial: false,
+};
+
 const receiverAccount = props.receiverAccount;
 const [isVerfied, setIsVerfied] = useState(false);
 const profile = Social.getr(`${receiverAccount}/profile`);
@@ -52,22 +58,26 @@ const Container = styled.div`
 
 return (
   <div className="d-flex gap-1 align-items-center">
-    <div>
+    <div style={{ minWidth: "40px", position: "relative" }}>
       <img src={imageSrc} height={40} width={40} className="rounded-circle" />
-
       <img
         src={isVerfied ? SuccessImg : WarningImg}
         height={20}
-        style={{ marginTop: 25, marginLeft: "-20px" }}
+        width={20}
+        style={
+          isNearSocial
+            ? { marginTop: 25, marginLeft: "-20px" }
+            : { marginTop: "-17px", marginLeft: "23px" }
+        }
       />
     </div>
-    <div style={{ textAlign: "left" }}>
+    <div
+      className="text-truncate"
+      style={{ textAlign: "left", width: "150px" }}
+    >
       <div className="h6 mb-0"> {name}</div>
 
-      <div
-        className={"text-truncate " + (isVerfied ? "text-green" : "text-red")}
-        style={{ width: "150px" }}
-      >
+      <div className={isVerfied ? "text-green" : "text-red"}>
         @{receiverAccount}
       </div>
     </div>
