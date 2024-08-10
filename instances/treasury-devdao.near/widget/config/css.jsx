@@ -10,6 +10,7 @@ const Theme = styled.div`
   --dark-grey-color: rgba(103, 103, 103, 1);
 
   a {
+    text-decoration: none;
     color: var(--link-inactive-color) !important;
     &.active {
       color: var(--link-active-color) !important;

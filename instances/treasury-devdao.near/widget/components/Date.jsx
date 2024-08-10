@@ -21,7 +21,7 @@ const formattedTime = date.toLocaleTimeString("en-GB", {
 });
 
 return (
-  <div className="text-center">
+  <div className="text-left">
     <div className="bold">{formattedTime}</div>
     <div className="text-muted text-sm">{formattedDate}</div>
   </div>

@@ -2,10 +2,15 @@ const onNextClick = props.onNextClick ?? (() => {});
 const onPrevClick = props.onPrevClick ?? (() => {});
 const onRowsChange = props.onRowsChange ?? (() => {});
 const totalPages = props.totalPages;
+const totalLength = props.totalLength;
 const rowsPerPage = props.rowsPerPage;
 const page = props.currentPage;
 
 const currentPage = page + 1;
+const currenPageLimit =
+  totalLength <= currentPage * rowsPerPage
+    ? totalLength
+    : currentPage * rowsPerPage;
 
 return (
   <div
@@ -24,8 +29,8 @@ return (
       </select>
     </div>
     <div className="d-flex gap-2 align-items-center">
-      Showing: {currentPage * rowsPerPage - rowsPerPage + 1} -
-      {currentPage * rowsPerPage} of {totalPages}
+      Showing: {currentPage * rowsPerPage - rowsPerPage + 1} - {currenPageLimit}{" "}
+      of {totalLength}
       <button
         className="btn-outline-plain"
         disabled={page === 0}

@@ -76,6 +76,7 @@ return (
       <Widget
         src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.Pagination`}
         props={{
+          totalLength: totalLength,
           totalPages: Math.ceil(totalLength / rowsPerPage),
           onNextClick: () => setPage(currentPage + 1),
           onPrevClick: () => setPage(currentPage - 1),

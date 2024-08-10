@@ -11,9 +11,10 @@ const Container = styled.div`
     color: #089968;
   }
 `;
+
 return (
   <Container>
-    {status === "Approve" ? (
+    {status === "Approved" ? (
       <div className="d-flex gap-2 align-items-center approve rounded-2 p-2 bold">
         <i class="bi bi-check2"></i>
         {isVoteStatus && "You"} Approved

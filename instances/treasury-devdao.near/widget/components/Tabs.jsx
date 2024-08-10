@@ -19,6 +19,7 @@ const NavUnderline = styled.ul`
   font-size: 16px;
   .nav-link {
     color: rgba(147, 149, 151, 1) !important;
+    padding-bottom: 15px;
   }
   .active {
     font-weight: bolder;

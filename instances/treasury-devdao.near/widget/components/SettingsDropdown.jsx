@@ -18,6 +18,10 @@ const [settingsOptions, setSettingsOptions] = useState(
     ? columnsVisibility
     : [
         {
+          title: "Created Date",
+          show: true,
+        },
+        {
           title: "Reference",
           show: true,
         },
@@ -47,6 +51,10 @@ const [settingsOptions, setSettingsOptions] = useState(
         },
         {
           title: "Notes",
+          show: true,
+        },
+        {
+          title: "Required Votes",
           show: true,
         },
         {

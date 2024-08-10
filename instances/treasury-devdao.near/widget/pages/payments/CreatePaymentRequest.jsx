@@ -7,11 +7,6 @@ const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
 };
 
 const onCloseCanvas = props.onCloseCanvas ?? (() => {});
-// need to fetch the list from API
-const [recipientsOptions, setReceientsOptions] = useState([
-  { label: "devhub.near", value: "devhub.near" },
-  { label: "devgovgigs.near", value: "devgovgigs.near" },
-]);
 
 const tokenMapping = {
   NEAR: "NEAR",
@@ -70,12 +65,19 @@ const buildWhereClause = () => {
   let where = {};
   const { number, text } = separateNumberAndText(searchProposalId);
 
-  if (number) {
+  if (typeof number === "number") {
     where = { proposal_id: { _eq: number }, ...where };
   }
 
   if (text) {
     where = { name: { _ilike: `%${text}%` }, ...where };
+  }
+
+  if (typeof number !== "number" && !text) {
+    where = {
+      timeline: { _cast: { String: { _niregex: `Funded` } } },
+      ...where,
+    };
   }
 
   return where;
@@ -143,7 +145,11 @@ const fetchProposals = () => {
         const data = [];
         for (const prop of proposalsData) {
           data.push({
-            label: "# " + prop.proposal_id + " : " + prop.name,
+            label: (
+              <span className="text-sm">
+                <b>#{prop.proposal_id}</b> {prop.name}{" "}
+              </span>
+            ),
             value: prop.proposal_id,
           });
         }
@@ -190,6 +196,10 @@ const Container = styled.div`
   .btn:hover {
     color: black !important;
   }
+
+  .text-sm {
+    font-size: 13px;
+  }
 `;
 
 function onSelectProposal(id) {
@@ -207,14 +217,7 @@ function onSelectProposal(id) {
     });
     const token = tokenMapping[proposal.requested_sponsorship_paid_in_currency];
     const receiverAccount = proposal.receiver_account;
-    if (!recipientsOptions.find((i) => i.value === receiverAccount)) {
-      const options = [
-        ...recipientsOptions,
-        { label: receiverAccount, value: receiverAccount },
-      ];
-      setReceientsOptions(options);
-      setReceiver(proposal.receiver_account);
-    }
+    setReceiver(receiverAccount);
     setAmount(proposal.requested_sponsorship_usd_amount);
     setTokenId(token);
     setSelectedProposalId(id.value);
@@ -273,6 +276,14 @@ function onSubmitClick() {
   ]);
 }
 
+function cleanInputs() {
+  setSelectedProposal(null);
+  setReceiver(null);
+  setAmount(null);
+  setNotes(null);
+  setTokenId(null);
+}
+
 return (
   <Container>
     <div className="d-flex flex-column gap-3">
@@ -292,7 +303,7 @@ return (
               setSearchProposalId(value);
             },
             onClickOfManualRequest: () => {
-              setSelectedProposal(null);
+              cleanInputs();
               setIsManualRequest(true);
             },
             showManualRequest: true,
@@ -370,29 +381,16 @@ return (
       )}
       <div className="d-flex flex-column gap-1">
         <label>Recipient</label>
-        {isManualRequest ? (
-          <Widget
-            src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Input`}
-            props={{
-              className: "flex-grow-1",
-              key: `receiver`,
-              onChange: (e) => setReceiver(e.target.value),
-              placeholder: "Enter receipient account",
-              value: receiver,
-            }}
-          />
-        ) : (
-          <Widget
-            src="${REPL_DEVHUB}/widget/devhub.components.molecule.DropDownWithSearch"
-            props={{
-              selectedValue: receiver,
-              onChange: (v) => setReceiver(v.value),
-              options: recipientsOptions,
-              showSearch: false,
-              defaultLabel: "Select",
-            }}
-          />
-        )}
+        <Widget
+          src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Input`}
+          props={{
+            className: "flex-grow-1",
+            key: `receiver`,
+            onChange: (e) => setReceiver(e.target.value),
+            placeholder: "Enter receipient account",
+            value: receiver,
+          }}
+        />
       </div>
       <div className="d-flex flex-column gap-1">
         <label>Requested Token</label>
@@ -441,7 +439,10 @@ return (
               root: "btn-outline shadow-none border-0",
             },
             label: "Cancel",
-            onClick: onCloseCanvas,
+            onClick: () => {
+              cleanInputs();
+              onCloseCanvas();
+            },
             disabled: isTxnCreated,
           }}
         />
