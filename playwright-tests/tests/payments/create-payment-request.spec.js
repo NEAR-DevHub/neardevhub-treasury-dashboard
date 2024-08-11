@@ -25,7 +25,7 @@ test.describe("admin connected", function () {
     );
     await page.getByRole("button", { name: "Submit" }).click();
 
-    await expect(await page.getByText('Deposit: 0.1 NEAR')).toBeVisible();
+    await expect(await page.getByText("Deposit: 0.1 NEAR")).toBeVisible();
     await expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
         description:
@@ -41,4 +41,3 @@ test.describe("admin connected", function () {
     });
   });
 });
-
