@@ -40,20 +40,6 @@ export default defineConfig({
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: "on-first-retry",
-    storageState: {
-      cookies: [],
-      origins: [
-        {
-          origin: "http://localhost:8080",
-          localStorage: [
-            {
-              name: "flags",
-              value: JSON.stringify({ bosLoaderUrl: "http://127.0.0.1:3030" }),
-            },
-          ],
-        },
-      ],
-    },
   },
 
   /* Configure projects for major browsers */
@@ -100,7 +86,7 @@ export default defineConfig({
   /* Run your local dev server before starting the tests */
   webServer: {
     command: "npm run gateway:treasury",
-    port: 3030,
+    port: 8080,
     reuseExistingServer: !process.env.CI,
   },
 });
