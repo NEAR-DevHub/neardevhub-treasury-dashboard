@@ -32,7 +32,7 @@ const access_keys = [
       },
     },
     public_key: "ed25519:EQr7NpVYFu1XcVZ23Lb4Ga3KbDQgrYeTMTgBsYa26Bne",
-  }
+  },
 ];
 
 export function decodeResultJSON(resultArray) {

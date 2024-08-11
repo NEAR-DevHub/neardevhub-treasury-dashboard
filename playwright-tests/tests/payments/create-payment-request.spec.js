@@ -1,5 +1,8 @@
 import { test, expect } from "@playwright/test";
-import { getTransactionModalObject, mockTransactionSubmitRPCResponses } from "../../util/transaction";
+import {
+  getTransactionModalObject,
+  mockTransactionSubmitRPCResponses,
+} from "../../util/transaction";
 import { mockRpcRequest } from "../../util/rpcmock";
 import { setDontAskAgainCacheValues } from "../../util/cache";
 
@@ -46,19 +49,27 @@ test.describe("admin connected", function () {
 
 test.describe("don't ask again", function () {
   test.use({
-    storageState: "playwright-tests/storage-states/wallet-connected-admin-with-accesskey.json",
+    storageState:
+      "playwright-tests/storage-states/wallet-connected-admin-with-accesskey.json",
   });
   test("approve payment request", async ({ page }) => {
     const contractId = "testing-astradao.sputnik-dao.near";
     await page.goto("/treasury-devdao.near/widget/app?page=payments");
-    await setDontAskAgainCacheValues({page, widgetSrc: "treasury-devdao.near/widget/components.VoteActions",
-        contractId, methodName: "act_proposal"});
+    await setDontAskAgainCacheValues({
+      page,
+      widgetSrc: "treasury-devdao.near/widget/components.VoteActions",
+      contractId,
+      methodName: "act_proposal",
+    });
 
     let isTransactionCompleted = false;
     await mockRpcRequest({
-      page, filterParams: {
-        "method_name": "get_proposals",
-      }, modifyOriginalResultFunction: (originalResult) => {
+      page,
+      filterParams: {
+        method_name: "get_proposals",
+      },
+      modifyOriginalResultFunction: (originalResult) => {
+        console.log("is transaction completed", isTransactionCompleted);
         if (isTransactionCompleted) {
           originalResult[0].status = "Approved";
         } else {
@@ -66,10 +77,9 @@ test.describe("don't ask again", function () {
         }
         originalResult[0].kind = "Transfer";
         return originalResult.slice(0, 1);
-      }
+      },
     });
 
-    
     await mockTransactionSubmitRPCResponses(
       page,
       async ({
@@ -83,11 +93,13 @@ test.describe("don't ask again", function () {
         await route.fallback();
       }
     );
-    const approveButton = await page.getByRole('button', { name: 'Approve' })
+    const approveButton = await page.getByRole("button", {
+      name: "Approve",
+      timeout: 10000,
+    });
     await expect(approveButton).toBeEnabled();
     await approveButton.click();
     await expect(approveButton).toBeDisabled();
-
 
     const transaction_toast = await page.getByText(
       `Calling contract ${contractId} with method act_proposal`
@@ -96,8 +108,6 @@ test.describe("don't ask again", function () {
 
     await transaction_toast.waitFor({ state: "detached", timeout: 10000 });
     await expect(transaction_toast).not.toBeVisible();
-
+    await page.waitForTimeout(1000);
   });
 });
-
-
