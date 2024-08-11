@@ -19,6 +19,7 @@ test.describe("admin connected", function () {
     await expect(createPaymentRequestButton).toBeVisible();
     await createPaymentRequestButton.click();
     const proposalSelect = await page.locator(".dropdown-toggle").first();
+    await expect(proposalSelect).toBeVisible({ timeout: 10000 });
     await proposalSelect.click();
     const proposal = await page.getByText("#173 Near Contract Standards");
     await proposal.click();
@@ -69,7 +70,6 @@ test.describe("don't ask again", function () {
         method_name: "get_proposals",
       },
       modifyOriginalResultFunction: (originalResult) => {
-        console.log("is transaction completed", isTransactionCompleted);
         if (isTransactionCompleted) {
           originalResult[0].status = "Approved";
         } else {
