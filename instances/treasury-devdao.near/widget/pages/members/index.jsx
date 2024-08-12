@@ -223,7 +223,10 @@ return (
       }}
     />
 
-    <div className="card rounded-3 py-3 d-flex flex-column gap-2 flex-1">
+    <div
+      className="card rounded-3 py-3 d-flex flex-column gap-2 flex-1"
+      style={{ overflowX: "auto" }}
+    >
       <div className="d-flex justify-content-between gap-2 align-items-center border-bottom px-2">
         <div className="nav-link">All Members</div>
         <button
