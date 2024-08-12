@@ -6,7 +6,7 @@ const { getMembersAndPermissions, getDaoRoles, getPolicyApproverGroup } =
   };
 
 const refreshTable = Storage.get(
-  "REFRESH_MEMBERS_TABLE_DATA"
+  "REFRESH_MEMBERS_TABLE_DATA",
   `${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.members.Editor`
 );
 
@@ -125,16 +125,6 @@ const Tag = styled.div`
   border: 1px solid #e2e6ec;
 `;
 
-if (loading) {
-  return (
-    <div className="d-flex justify-content-center align-items-center w-100 h-100">
-      <Widget
-        src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"}
-      />
-    </div>
-  );
-}
-
 const Members = () => {
   return (
     <tbody style={{ overflowX: "auto" }}>
@@ -243,33 +233,41 @@ return (
           <i class="bi bi-plus-circle-fill"></i>New Member
         </button>
       </div>
-      <div className="d-flex flex-column flex-1 justify-content-between px-2">
-        <table className="table">
-          <thead>
-            <tr className="text-grey">
-              <td>Name</td>
-              <td>User name</td>
-              <td>Permissions</td>
-              {showActions && <td className="text-right">Actions</td>}
-            </tr>
-          </thead>
-          <Members />
-        </table>
-        <div>
+      {loading ? (
+        <div className="d-flex justify-content-center align-items-center w-100 h-100">
           <Widget
-            src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.Pagination`}
-            props={{
-              totalLength: allMembers?.length,
-              totalPages: Math.ceil(allMembers?.length / rowsPerPage),
-              onNextClick: () => setPage(currentPage + 1),
-              onPrevClick: () => setPage(currentPage - 1),
-              currentPage: currentPage,
-              rowsPerPage: rowsPerPage,
-              onRowsChange: (v) => setRowsPerPage(parseInt(v)),
-            }}
+            src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"}
           />
         </div>
-      </div>
+      ) : (
+        <div className="d-flex flex-column flex-1 justify-content-between px-2">
+          <table className="table">
+            <thead>
+              <tr className="text-grey">
+                <td>Name</td>
+                <td>User name</td>
+                <td>Permissions</td>
+                {showActions && <td className="text-right">Actions</td>}
+              </tr>
+            </thead>
+            <Members />
+          </table>
+          <div>
+            <Widget
+              src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.Pagination`}
+              props={{
+                totalLength: allMembers?.length,
+                totalPages: Math.ceil(allMembers?.length / rowsPerPage),
+                onNextClick: () => setPage(currentPage + 1),
+                onPrevClick: () => setPage(currentPage - 1),
+                currentPage: currentPage,
+                rowsPerPage: rowsPerPage,
+                onRowsChange: (v) => setRowsPerPage(parseInt(v)),
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   </Container>
 );
