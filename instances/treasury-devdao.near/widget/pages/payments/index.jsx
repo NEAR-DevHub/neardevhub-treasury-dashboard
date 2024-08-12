@@ -28,8 +28,14 @@ function toggleCreatePage() {
   setShowCreateRequest(!showCreateRequest);
 }
 
+const Container = styled.div`
+  .flex-1 {
+    flex: 1;
+  }
+`;
+
 return (
-  <div>
+  <Container>
     <Widget
       src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.OffCanvas`}
       props={{
@@ -65,5 +71,5 @@ return (
         sidebarMenu: sidebarMenu,
       }}
     />
-  </div>
+  </Container>
 );
