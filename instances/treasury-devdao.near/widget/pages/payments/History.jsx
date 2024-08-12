@@ -53,7 +53,7 @@ if (
 }
 
 return (
-  <div className="d-flex flex-column gap-4">
+  <div className="d-flex flex-column flex-1 justify-content-between">
     <Widget
       src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.payments.Table`}
       props={{
