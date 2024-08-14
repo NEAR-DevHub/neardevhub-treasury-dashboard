@@ -54,15 +54,8 @@ test.describe("don't ask again", function () {
       "playwright-tests/storage-states/wallet-connected-admin-with-accesskey.json",
   });
   test("approve payment request", async ({ page }) => {
+    test.setTimeout(60_000);
     const contractId = "testing-astradao.sputnik-dao.near";
-    await page.goto("/treasury-devdao.near/widget/app?page=payments");
-    await setDontAskAgainCacheValues({
-      page,
-      widgetSrc: "treasury-devdao.near/widget/components.VoteActions",
-      contractId,
-      methodName: "act_proposal",
-    });
-
     let isTransactionCompleted = false;
     await mockRpcRequest({
       page,
@@ -78,6 +71,26 @@ test.describe("don't ask again", function () {
         originalResult[0].kind = "Transfer";
         return originalResult.slice(0, 1);
       },
+    });
+    await mockRpcRequest({
+      page,
+      filterParams: {
+        method_name: "get_proposal",
+      },
+      modifyOriginalResultFunction: (originalResult) => {
+        console.log("get_proposal", originalResult);
+        if (isTransactionCompleted) {
+          originalResult.votes["theori.near"] = "Approve";
+        }
+        return originalResult;
+      },
+    });
+    await page.goto("/treasury-devdao.near/widget/app?page=payments");
+    await setDontAskAgainCacheValues({
+      page,
+      widgetSrc: "treasury-devdao.near/widget/components.VoteActions",
+      contractId,
+      methodName: "act_proposal",
     });
 
     await mockTransactionSubmitRPCResponses(
@@ -95,9 +108,8 @@ test.describe("don't ask again", function () {
     );
     const approveButton = await page.getByRole("button", {
       name: "Approve",
-      timeout: 10000,
     });
-    await expect(approveButton).toBeEnabled();
+    await expect(approveButton).toBeEnabled({ timeout: 10000 });
     await approveButton.click();
     await expect(approveButton).toBeDisabled();
 
@@ -108,6 +120,20 @@ test.describe("don't ask again", function () {
 
     await transaction_toast.waitFor({ state: "detached", timeout: 10000 });
     await expect(transaction_toast).not.toBeVisible();
-    await page.waitForTimeout(1000);
+
+    await expect(
+      await page.locator(
+        'tbody[data-component="treasury-devdao.near/widget/pages.payments.Table"]'
+      )
+    ).toHaveText("", { timeout: 10000 });
+    await page
+      .locator("li")
+      .filter({ hasText: "History" })
+      .locator("div")
+      .click();
+    await expect(await page.getByText("Approved").first()).toBeVisible({
+      timeout: 10_000,
+    });
+    await page.waitForTimeout(1_000);
   });
 });
