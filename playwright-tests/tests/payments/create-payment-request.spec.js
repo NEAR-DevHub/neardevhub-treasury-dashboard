@@ -10,6 +10,51 @@ test.describe("admin connected", function () {
   test.use({
     storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
   });
+  test("create manual payment request", async ({ page }) => {
+    test.setTimeout(60_000);
+    await page.goto("/treasury-devdao.near/widget/app?page=payments");
+
+    const createPaymentRequestButton = await page.getByRole("button", {
+      name: " Create Request",
+    });
+    await expect(createPaymentRequestButton).toBeVisible();
+    await createPaymentRequestButton.click();
+
+    const proposalSelect = await page.locator(".dropdown-toggle").first();
+    await expect(proposalSelect).toBeVisible();
+    await expect(
+      await proposalSelect.getByText("Select", { exact: true })
+    ).toBeVisible();
+
+    await proposalSelect.click();
+    await page.getByText("Add manual request").click();
+    await page.getByTestId("proposal-title").fill("Test proposal title");
+    await page.getByTestId("proposal-summary").fill("Test proposal summary");
+
+    await page.getByTestId("receiver").fill("webassemblymusic.near");
+    await page.getByTestId("total-amount").fill("5000");
+
+    const tokenSelect = await page.getByText("Requested Token Select");
+    await tokenSelect.getByText("Select", { exact: true }).click();
+    await tokenSelect.locator(".dropdown-item").click();
+
+    await page.getByRole("button", { name: "Submit" }).click();
+
+    await expect(await page.getByText("Deposit: 0.1 NEAR")).toBeVisible();
+    await expect(await getTransactionModalObject(page)).toEqual({
+      proposal: {
+        description:
+          '{"title":"Test proposal title","summary":"Test proposal summary","notes":null}',
+        kind: {
+          Transfer: {
+            token_id: "",
+            receiver_id: "webassemblymusic.near",
+            amount: "5000000000000000000000000000",
+          },
+        },
+      },
+    });
+  });
   test("create payment request", async ({ page }) => {
     await page.goto("/treasury-devdao.near/widget/app?page=payments");
 
@@ -19,7 +64,11 @@ test.describe("admin connected", function () {
     await expect(createPaymentRequestButton).toBeVisible();
     await createPaymentRequestButton.click();
     const proposalSelect = await page.locator(".dropdown-toggle").first();
-    await expect(proposalSelect).toBeVisible({ timeout: 10000 });
+    await expect(proposalSelect).toBeVisible();
+    await expect(
+      await proposalSelect.getByText("Select", { exact: true })
+    ).toBeVisible();
+
     await proposalSelect.click();
     const proposal = await page.getByText("#173 Near Contract Standards");
     await proposal.click();
