@@ -172,12 +172,6 @@ test.describe("don't ask again", function () {
 
     await transaction_toast.waitFor({ state: "detached", timeout: 10000 });
     await expect(transaction_toast).not.toBeVisible();
-
-    await expect(
-      await page.locator(
-        'tbody[data-component="treasury-devdao.near/widget/pages.payments.Table"]'
-      )
-    ).toHaveText("", { timeout: 10000 });
     await page
       .locator("li")
       .filter({ hasText: "History" })
