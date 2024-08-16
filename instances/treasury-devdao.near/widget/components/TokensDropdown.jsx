@@ -1,6 +1,6 @@
 const treasuryAccount = "${REPL_TREASURY}";
 const nearTokenIcon = "${REPL_NEAR_TOKEN_ICON}";
-const { selectedValue, onChange, disabled } = props;
+const { selectedValue, onChange, disabled, setTokensAvailable } = props;
 
 onChange = onChange || (() => {});
 
@@ -72,6 +72,9 @@ useEffect(() => {
 useEffect(() => {
   if (selectedValue !== selectedOptionValue) {
     onChange(selectedOptionValue);
+    setTokensAvailable(
+      options.find((i) => i.value === selectedOptionValue)?.tokenBalance
+    );
   }
 }, [selectedOptionValue]);
 

@@ -141,7 +141,6 @@ const TextInput = ({
     return state.data;
   }, [state.data]);
 
-  console.log("yeajjj", getFormattedData());
   return (
     <div
       className={[

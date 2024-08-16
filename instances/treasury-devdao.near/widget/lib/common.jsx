@@ -194,7 +194,33 @@ function getDaoRoles() {
   return [];
 }
 
+function hasPermission(accountId, kindName, actionType) {
+  if (!accountId) {
+    return false;
+  }
+  const isAllowed = false;
+  const daoPolicy = Near.view(treasuryDaoID, "get_policy", {});
+  if (Array.isArray(daoPolicy.roles)) {
+    const permissions = daoPolicy.roles.map((role) => {
+      if (
+        Array.isArray(role.kind.Group) &&
+        role.kind.Group.includes(accountId)
+      ) {
+        return (
+          role.permissions.includes(`${kindName}:${actionType.toString()}`) ||
+          role.permissions.includes(`${kindName}:*`) ||
+          role.permissions.includes(`*:${actionType.toString()}`) ||
+          role.permissions.includes("*:*")
+        );
+      }
+    });
+    isAllowed = permissions.some((element) => element === true);
+  }
+  return isAllowed;
+}
+
 return {
+  hasPermission,
   getTransferApproversAndThreshold,
   getFilteredProposalsByStatusAndkind,
   isNearSocial,

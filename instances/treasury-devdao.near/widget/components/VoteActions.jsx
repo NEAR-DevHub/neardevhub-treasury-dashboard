@@ -57,11 +57,11 @@ useEffect(() => {
 
 const Container = styled.div`
   .reject-btn {
-    background-color: #dc6666;
+    background-color: #2c3e50;
     color: white;
 
     &:hover {
-      background-color: #dc6666;
+      background-color: #2c3e50;
       color: white;
     }
   }

@@ -152,7 +152,7 @@ const ProposalsComponent = () => {
             {!isPendingRequests && (
               <td>
                 <Widget
-                  src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.ProposalStatus`}
+                  src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.HistoryStatus`}
                   props={{
                     isVoteStatus: false,
                     status: item.status,
@@ -281,50 +281,71 @@ const ProposalsComponent = () => {
 
 return (
   <Container style={{ overflowX: "auto" }}>
-    <table className="table">
-      <thead>
-        <tr className="text-grey">
-          <td>#</td>
-          <td className={isVisible("Created Date")}>Created Date</td>
-          {!isPendingRequests && <td>Status</td>}
-          <td className={isVisible("Reference")}>Reference</td>
+    {proposals.length === 0 ? (
+      <div
+        style={{ height: "50vh" }}
+        className="d-flex justify-content-center align-items-center"
+      >
+        {isPendingRequests ? (
+          <div className="d-flex justify-content-center align-items-center flex-column gap-2">
+            <h4>No Payment Requests Found</h4>
+            <h6>There are currently no payment requests</h6>
+          </div>
+        ) : (
+          <div className="d-flex justify-content-center align-items-center flex-column gap-2">
+            <h4>No History Requests Found</h4>
+            <h6>There are currently no history requests</h6>
+          </div>
+        )}
+      </div>
+    ) : (
+      <table className="table">
+        <thead>
+          <tr className="text-grey">
+            <td>#</td>
+            <td className={isVisible("Created Date")}>Created Date</td>
+            {!isPendingRequests && <td>Status</td>}
+            <td className={isVisible("Reference")}>Reference</td>
 
-          <td className={isVisible("Title")}>Title</td>
-          <td className={isVisible("Summary")}>Summary</td>
-          <td className={isVisible("Recipient")}>Recipient</td>
-          <td className={isVisible("Requested Token") + " text-center"}>
-            Requested Token
-          </td>
-          <td className={isVisible("Funding Ask") + " text-right"}>
-            Funding Ask
-          </td>
-          <td className={isVisible("Creator") + " text-center"}>Created by</td>
-          <td className={isVisible("Notes") + " text-left"}>Notes</td>
-          {isPendingRequests && (
-            <td className={isVisible("Required Votes") + " text-center"}>
-              Required Votes
+            <td className={isVisible("Title")}>Title</td>
+            <td className={isVisible("Summary")}>Summary</td>
+            <td className={isVisible("Recipient")}>Recipient</td>
+            <td className={isVisible("Requested Token") + " text-center"}>
+              Requested Token
             </td>
-          )}
-          {isPendingRequests && (
-            <td className={isVisible("Votes") + " text-center"}>Votes</td>
-          )}
-          <td
-            className={
-              isVisible("Approvers") +
-              " text-center " +
-              (hideApproversCol && " display-none")
-            }
-          >
-            Approvers
-          </td>
-          {isPendingRequests && hasVotingPermission && (
-            <td className="text-right">Actions</td>
-          )}
-          {/* {!isPendingRequests && <td>Transaction Date</td>}
+            <td className={isVisible("Funding Ask") + " text-right"}>
+              Funding Ask
+            </td>
+            <td className={isVisible("Creator") + " text-center"}>
+              Created by
+            </td>
+            <td className={isVisible("Notes") + " text-left"}>Notes</td>
+            {isPendingRequests && (
+              <td className={isVisible("Required Votes") + " text-center"}>
+                Required Votes
+              </td>
+            )}
+            {isPendingRequests && (
+              <td className={isVisible("Votes") + " text-center"}>Votes</td>
+            )}
+            <td
+              className={
+                isVisible("Approvers") +
+                " text-center " +
+                (hideApproversCol && " display-none")
+              }
+            >
+              Approvers
+            </td>
+            {isPendingRequests && hasVotingPermission && (
+              <td className="text-right">Actions</td>
+            )}
+            {/* {!isPendingRequests && <td>Transaction Date</td>}
           {!isPendingRequests && <td>Transaction</td>} */}
-        </tr>
-      </thead>
-      <ProposalsComponent />
-    </table>
+          </tr>
+        </thead>
+        <ProposalsComponent />
+      </table>
+    )}
   </Container>
 );

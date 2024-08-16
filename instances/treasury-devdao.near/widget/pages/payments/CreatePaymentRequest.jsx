@@ -30,6 +30,7 @@ const [parsedAmount, setParsedAmount] = useState(null);
 const [daoPolicy, setDaoPolicy] = useState(null);
 const [lastProposalId, setLastProposalId] = useState(null);
 const [isManualRequest, setIsManualRequest] = useState(false);
+const [selectedTokensAvailable, setSelectedTokensAvailable] = useState(null);
 const QUERYAPI_ENDPOINT = `https://near-queryapi.api.pagoda.co/v1/graphql`;
 const queryName = "${REPL_PROPOSAL_FEED_INDEXER_QUERY_NAME}";
 const query = `query GetLatestSnapshot($offset: Int = 0, $limit: Int = 10, $where: ${queryName}_bool_exp = {}) {
@@ -200,6 +201,10 @@ const Container = styled.div`
 
   .text-sm {
     font-size: 13px;
+  }
+  .warning {
+    background-color: rgba(255, 158, 0, 0.1);
+    color: #ff9e00;
   }
 `;
 
@@ -424,6 +429,7 @@ return (
           props={{
             selectedValue: tokenId,
             onChange: (v) => setTokenId(v),
+            setTokensAvailable: setSelectedTokensAvailable,
           }}
         />
       </div>
@@ -443,6 +449,19 @@ return (
           }}
         />
       </div>
+      {selectedTokensAvailable &&
+        amount &&
+        parseFloat(selectedTokensAvailable) <= parseFloat(amount) && (
+          <div className="d-flex gap-3 align-items-center warning px-3 py-2 rounded-3">
+            <i class="bi bi-exclamation-triangle h5"></i>
+            <div>
+              The treasury balance is insufficient to cover the payment. You can
+              create the request, but it won’t be approved until the balance is
+              topped up.
+            </div>
+          </div>
+        )}
+
       <div className="d-flex flex-column gap-1">
         <label>Notes (Optional)</label>
         <Widget
