@@ -1,7 +1,8 @@
 const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
-
+const treasuryDaoID = "build.sputnik-dao.near";
+("${REPL_TREASURY}");
 const proposals = props.proposals ?? [];
 const columnsVisibility = JSON.parse(
   Storage.get(
@@ -126,6 +127,14 @@ const requiredVotes =
   ) + 1;
 
 const hideApproversCol = isPendingRequests && requiredVotes === 1;
+
+const userFTTokens = fetch(
+  `https://api3.nearblocks.io/v1/account/${treasuryDaoID}/inventory`
+);
+
+const balanceResp = fetch(
+  `https://api3.nearblocks.io/v1/account/${treasuryDaoID}`
+);
 
 const ProposalsComponent = () => {
   return (
@@ -268,6 +277,16 @@ const ProposalsComponent = () => {
                   props={{
                     votes: item.votes,
                     proposalId: item.id,
+                    tokensBalance: [
+                      ...(userFTTokens?.body?.inventory?.fts ?? []),
+                      {
+                        contract: "near",
+                        amount: balanceResp?.body?.account?.[0]?.amount,
+                      },
+                    ],
+                    currentAmount: args.amount,
+                    currentContract:
+                      args.token_id === "" ? "near" : args.token_id,
                   }}
                 />
               </td>

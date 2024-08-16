@@ -2,6 +2,9 @@ const votes = props.votes ?? {};
 const proposalId = props.proposalId;
 const treasuryDaoID = "${REPL_TREASURY}";
 const accountId = context.accountId;
+const tokensBalance = props.tokensBalance ?? [];
+const currentAmount = props.currentAmount ?? "0";
+const currentContract = props.currentContract ?? "";
 
 const alreadyVoted = Object.keys(votes).includes(accountId);
 const userVote = votes[accountId];
@@ -13,8 +16,18 @@ const actions = {
 
 const [isTxnCreated, setTxnCreated] = useState(false);
 const [vote, setVote] = useState(null);
+const [isInsufficientBalance, setInsufficientBal] = useState(false);
+const [showWarning, setShowWarning] = useState(false);
 
 const [showConfirmModal, setConfirmModal] = useState(null);
+
+useEffect(() => {
+  setInsufficientBal(
+    Big(
+      tokensBalance.find((i) => i.contract === currentContract)?.amount ?? "0"
+    ).lt(Big(currentAmount))
+  );
+}, [tokensBalance, currentAmount, currentContract]);
 
 function actProposal() {
   setTxnCreated(true);
@@ -75,10 +88,43 @@ const Container = styled.div`
       color: white;
     }
   }
+
+  .toast {
+    background: white !important;
+  }
+
+  .toast-header {
+    background-color: #2c3e50 !important;
+    color: white !important;
+  }
 `;
 
+useEffect(() => {
+  if (showWarning) {
+    const timer = setTimeout(() => setShowWarning(false), 5000);
+    return () => clearTimeout(timer);
+  }
+}, [showWarning]);
+
+const InsufficientBalanceWarning = () => {
+  return showWarning ? (
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+      <div className={`toast ${showWarning ? "show" : ""}`}>
+        <div class="toast-header px-2">
+          <strong class="me-auto">Just Now</strong>
+          <i class="bi bi-x-lg h6" onClick={() => setShowWarning(false)}></i>
+        </div>
+        <div class="toast-body">
+          The request cannot be approved because the treasury balance is
+          insufficient to cover the payment.
+        </div>
+      </div>
+    </div>
+  ) : null;
+};
 return (
   <Container>
+    <InsufficientBalanceWarning />
     <Widget
       src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
       props={{
@@ -115,8 +161,12 @@ return (
             },
             label: "Approve",
             onClick: () => {
-              setVote(actions.APPROVE);
-              setConfirmModal(true);
+              if (isInsufficientBalance) {
+                setShowWarning(true);
+              } else {
+                setVote(actions.APPROVE);
+                setConfirmModal(true);
+              }
             },
             loading: isTxnCreated && vote === actions.APPROVE,
             disabled: isTxnCreated,
