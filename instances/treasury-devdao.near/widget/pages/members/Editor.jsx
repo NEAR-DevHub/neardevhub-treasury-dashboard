@@ -137,6 +137,14 @@ const Container = styled.div`
   }
 `;
 
+function isAccountValid() {
+  return (
+    username.length === 64 ||
+    (username ?? "").includes(".near") ||
+    (username ?? "").includes(".tg")
+  );
+}
+
 return (
   <Container className="d-flex flex-column gap-2">
     <div className="d-flex flex-column gap-1">
@@ -144,6 +152,7 @@ return (
       <Widget
         src="${REPL_DEVHUB}/widget/devhub.entity.proposal.AccountInput"
         props={{
+          maxWidth: "100%",
           value: username,
           placeholder: "treasury.near",
           onUpdate: setUsername,
@@ -217,7 +226,8 @@ return (
           src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
           props={{
             classNames: { root: "theme-btn" },
-            disabled: !username || !roles?.length || isTxnCreated,
+            disabled:
+              !username || !roles?.length || isTxnCreated || !isAccountValid(),
             label: "Submit",
             onClick: onSubmitClick,
             loading: isTxnCreated,

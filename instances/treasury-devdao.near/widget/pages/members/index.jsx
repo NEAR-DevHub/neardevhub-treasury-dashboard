@@ -1,9 +1,13 @@
-const { getMembersAndPermissions, getDaoRoles, getPolicyApproverGroup } =
-  VM.require("${REPL_DEPLOYMENT_ACCOUNT}/widget/lib.common") || {
-    getMembersAndPermissions: () => {},
-    getDaoRoles: () => {},
-    getPolicyApproverGroup: () => {},
-  };
+const {
+  getMembersAndPermissions,
+  getDaoRoles,
+  getPolicyApproverGroup,
+  hasPermission,
+} = VM.require("${REPL_DEPLOYMENT_ACCOUNT}/widget/lib.common") || {
+  getDaoRoles: () => {},
+  getPolicyApproverGroup: () => {},
+  hasPermission: () => {},
+};
 
 const refreshTable = Storage.get(
   "REFRESH_MEMBERS_TABLE_DATA",
@@ -98,7 +102,7 @@ const [showDeleteModal, setShowDeleteModal] = useState(false);
 
 useEffect(() => {
   setLoading(true);
-  if (!loading) {
+  if (!loading && typeof getMembersAndPermissions === "function") {
     getMembersAndPermissions().then((res) => {
       setAllMembers(res);
     });
@@ -153,36 +157,43 @@ const Members = () => {
                 ))}
               </div>
             </td>
-            <td className="text-right">
-              <div className="d-flex align-items-center gap-2 justify-content-end">
-                <i
-                  class="bi bi-pencil-square h4 mb-0 cursor-pointer"
-                  onClick={() => {
-                    setSelectedMember(group);
-                    setShowEditor(true);
-                  }}
-                ></i>
-                <i
-                  class="bi bi-trash3 h4 mb-0 text-delete cursor-pointer"
-                  onClick={() => {
-                    setSelectedMember(group);
-                    setShowDeleteModal(true);
-                  }}
-                ></i>
-              </div>
-            </td>
+            {hasCreatePermission && (
+              <td className="text-right">
+                <div className="d-flex align-items-center gap-2 justify-content-end">
+                  <i
+                    class="bi bi-pencil-square h4 mb-0 cursor-pointer"
+                    onClick={() => {
+                      setSelectedMember(group);
+                      setShowEditor(true);
+                    }}
+                  ></i>
+                  <i
+                    class="bi bi-trash3 h4 mb-0 text-delete cursor-pointer"
+                    onClick={() => {
+                      setSelectedMember(group);
+                      setShowDeleteModal(true);
+                    }}
+                  ></i>
+                </div>
+              </td>
+            )}
           </tr>
         );
       })}
     </tbody>
   );
 };
-const showActions = (policyApproverGroup ?? []).includes(context.accountId);
 
 function toggleEditor() {
   setShowEditor(!showEditor);
   setSelectedMember(null);
 }
+
+const hasCreatePermission = hasPermission(
+  context.accountId,
+  "policy",
+  "AddProposal"
+);
 
 return (
   <Container className="d-flex flex-column gap-2">
@@ -229,12 +240,14 @@ return (
     >
       <div className="d-flex justify-content-between gap-2 align-items-center border-bottom px-2">
         <div className="nav-link">All Members</div>
-        <button
-          className="primary p-2 rounded-2 h6 d-flex align-items-center gap-2"
-          onClick={() => setShowEditor(true)}
-        >
-          <i class="bi bi-plus-circle-fill"></i>New Member
-        </button>
+        {hasCreatePermission && (
+          <button
+            className="primary p-2 rounded-2 h6 d-flex align-items-center gap-2"
+            onClick={() => setShowEditor(true)}
+          >
+            <i class="bi bi-plus-circle-fill"></i>New Member
+          </button>
+        )}
       </div>
       {loading ? (
         <div className="d-flex justify-content-center align-items-center w-100 h-100">
@@ -250,7 +263,7 @@ return (
                 <td>Name</td>
                 <td>User name</td>
                 <td>Permissions</td>
-                {showActions && <td className="text-right">Actions</td>}
+                {hasCreatePermission && <td className="text-right">Actions</td>}
               </tr>
             </thead>
             <Members />

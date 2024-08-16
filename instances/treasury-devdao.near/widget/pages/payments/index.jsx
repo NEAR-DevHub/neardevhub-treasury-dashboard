@@ -1,3 +1,9 @@
+const { hasPermission } = VM.require(
+  "${REPL_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+) || {
+  hasPermission: () => {},
+};
+
 const { innerPage } = props;
 
 if (innerPage) {
@@ -6,18 +12,25 @@ if (innerPage) {
 
 const [showCreateRequest, setShowCreateRequest] = useState(false);
 
+const hasCreatePermission = hasPermission(
+  context.accountId,
+  "transfer",
+  "AddProposal"
+);
+
 const sidebarMenu = (
   <div
     className="d-flex gap-2 align-items-center"
     style={{ paddingBottom: "7px" }}
   >
-    <button
-      className="primary p-2 rounded-2 h6 fw-bold d-flex align-items-center gap-2 mb-0"
-      onClick={() => setShowCreateRequest(true)}
-    >
-      <i class="bi bi-plus-circle-fill"></i>Create Request
-    </button>
-
+    {hasCreatePermission && (
+      <button
+        className="primary p-2 rounded-2 h6 fw-bold d-flex align-items-center gap-2 mb-0"
+        onClick={() => setShowCreateRequest(true)}
+      >
+        <i class="bi bi-plus-circle-fill"></i>Create Request
+      </button>
+    )}
     <Widget
       src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.SettingsDropdown`}
     />

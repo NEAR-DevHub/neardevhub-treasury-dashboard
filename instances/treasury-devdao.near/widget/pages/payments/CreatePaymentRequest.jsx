@@ -30,6 +30,7 @@ const [parsedAmount, setParsedAmount] = useState(null);
 const [daoPolicy, setDaoPolicy] = useState(null);
 const [lastProposalId, setLastProposalId] = useState(null);
 const [isManualRequest, setIsManualRequest] = useState(false);
+const [selectedTokensAvailable, setSelectedTokensAvailable] = useState(null);
 const QUERYAPI_ENDPOINT = `https://near-queryapi.api.pagoda.co/v1/graphql`;
 const queryName = "${REPL_PROPOSAL_FEED_INDEXER_QUERY_NAME}";
 const query = `query GetLatestSnapshot($offset: Int = 0, $limit: Int = 10, $where: ${queryName}_bool_exp = {}) {
@@ -49,6 +50,7 @@ ${queryName}(
 }
 }`;
 
+const [showCancelModal, setShowCancelModal] = useState(false);
 function separateNumberAndText(str) {
   const numberRegex = /\d+/;
 
@@ -200,6 +202,10 @@ const Container = styled.div`
   .text-sm {
     font-size: 13px;
   }
+  .warning {
+    background-color: rgba(255, 158, 0, 0.1);
+    color: #ff9e00;
+  }
 `;
 
 function onSelectProposal(id) {
@@ -277,6 +283,7 @@ function onSubmitClick() {
 }
 
 function cleanInputs() {
+  setSelectedProposalId(null);
   setSelectedProposal(null);
   setReceiver(null);
   setAmount(null);
@@ -284,8 +291,32 @@ function cleanInputs() {
   setTokenId(null);
 }
 
+function isAccountValid() {
+  return (
+    receiver.length === 64 ||
+    (receiver ?? "").includes(".near") ||
+    (receiver ?? "").includes(".tg")
+  );
+}
+
 return (
   <Container>
+    <Widget
+      src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
+      props={{
+        heading: "Are you sure you want to cancel?",
+        content:
+          "This action will clear all the information you have entered in the form and cannot be undone.",
+        confirmLabel: "Yes",
+        isOpen: showCancelModal,
+        onCancelClick: () => setShowCancelModal(false),
+        onConfirmClick: () => {
+          cleanInputs();
+          setShowCancelModal(false);
+          onCloseCanvas();
+        },
+      }}
+    />
     <div className="d-flex flex-column gap-3">
       <div className="d-flex flex-column gap-1">
         <label>Proposal</label>
@@ -315,7 +346,7 @@ return (
           <div className="d-flex flex-column gap-1">
             <label>Proposal Title</label>
             <Widget
-              src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Input`}
+              src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
               props={{
                 className: "flex-grow-1",
                 key: `proposal-title`,
@@ -332,7 +363,7 @@ return (
           <div className="d-flex flex-column gap-1">
             <label>Proposal Summary</label>
             <Widget
-              src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Input`}
+              src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
               props={{
                 className: "flex-grow-1",
                 key: `proposal-summary`,
@@ -382,13 +413,12 @@ return (
       <div className="d-flex flex-column gap-1">
         <label>Recipient</label>
         <Widget
-          src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Input`}
+          src="${REPL_DEVHUB}/widget/devhub.entity.proposal.AccountInput"
           props={{
-            className: "flex-grow-1",
-            key: `receiver`,
-            onChange: (e) => setReceiver(e.target.value),
-            placeholder: "Enter receipient account",
             value: receiver,
+            placeholder: "treasury.near",
+            onUpdate: setReceiver,
+            maxWidth: "100%",
           }}
         />
       </div>
@@ -399,13 +429,14 @@ return (
           props={{
             selectedValue: tokenId,
             onChange: (v) => setTokenId(v),
+            setTokensAvailable: setSelectedTokensAvailable,
           }}
         />
       </div>
       <div className="d-flex flex-column gap-1">
         <label>Total Amount</label>
         <Widget
-          src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Input`}
+          src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
           props={{
             className: "flex-grow-1",
             key: `total-amount`,
@@ -418,10 +449,23 @@ return (
           }}
         />
       </div>
+      {selectedTokensAvailable &&
+        amount &&
+        parseFloat(selectedTokensAvailable) <= parseFloat(amount) && (
+          <div className="d-flex gap-3 align-items-center warning px-3 py-2 rounded-3">
+            <i class="bi bi-exclamation-triangle h5"></i>
+            <div>
+              The treasury balance is insufficient to cover the payment. You can
+              create the request, but it won’t be approved until the balance is
+              topped up.
+            </div>
+          </div>
+        )}
+
       <div className="d-flex flex-column gap-1">
         <label>Notes (Optional)</label>
         <Widget
-          src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Input`}
+          src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
           props={{
             className: "flex-grow-1",
             key: `notes`,
@@ -440,8 +484,7 @@ return (
             },
             label: "Cancel",
             onClick: () => {
-              cleanInputs();
-              onCloseCanvas();
+              setShowCancelModal(true);
             },
             disabled: isTxnCreated,
           }}
@@ -452,7 +495,11 @@ return (
           props={{
             classNames: { root: "theme-btn" },
             disabled:
-              !amount || !receiver || !selectedProposal?.name || !tokenId,
+              !amount ||
+              !receiver ||
+              !selectedProposal?.name ||
+              !tokenId ||
+              !isAccountValid(),
             label: "Submit",
             onClick: onSubmitClick,
             loading: isTxnCreated,

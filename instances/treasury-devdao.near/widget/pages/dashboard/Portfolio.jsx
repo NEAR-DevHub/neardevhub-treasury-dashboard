@@ -47,12 +47,14 @@ const { ftTokens, nearStakedTokens, nearBalance, nearPrice } = props;
 
 function convertBalanceToReadableFormat(amount, decimals) {
   return Big(amount ?? "0")
-    .div(Big(10).pow(decimals))
+    .div(Big(10).pow(decimals ?? "1"))
     .toFixed();
 }
 
 function getPrice(tokensNumber, tokenPrice) {
-  return Big(tokensNumber).mul(tokenPrice).toFixed(2);
+  return Big(tokensNumber ?? "0")
+    .mul(tokenPrice ?? "1")
+    .toFixed(2);
 }
 
 const loading = (
