@@ -177,7 +177,7 @@ test.describe("don't ask again", function () {
       .filter({ hasText: "History" })
       .locator("div")
       .click();
-    await expect(await page.getByText("Approved").first()).toBeVisible({
+    await expect(await page.getByText("Funded").first()).toBeVisible({
       timeout: 10_000,
     });
     await page.waitForTimeout(1_000);
