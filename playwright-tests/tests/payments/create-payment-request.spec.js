@@ -31,7 +31,7 @@ test.describe("admin connected", function () {
     await page.getByTestId("proposal-title").fill("Test proposal title");
     await page.getByTestId("proposal-summary").fill("Test proposal summary");
 
-    await page.getByTestId("receiver").fill("webassemblymusic.near");
+    await page.getByPlaceholder("treasury.near").fill("webassemblymusic.near");
     await page.getByTestId("total-amount").fill("5000");
 
     const tokenSelect = await page.getByText("Requested Token Select");
@@ -72,9 +72,9 @@ test.describe("admin connected", function () {
     await proposalSelect.click();
     const proposal = await page.getByText("#173 Near Contract Standards");
     await proposal.click();
-    await expect(await page.getByTestId("receiver").inputValue()).toBe(
-      "robert.near"
-    );
+    await expect(
+      await page.getByPlaceholder("treasury.near").inputValue()
+    ).toBe("robert.near");
     await expect(await page.getByTestId("total-amount").inputValue()).toBe(
       "3120"
     );
@@ -155,11 +155,14 @@ test.describe("don't ask again", function () {
         await route.fallback();
       }
     );
-    const approveButton = await page.getByRole("button", {
-      name: "Approve",
-    });
+    const approveButton = await page
+      .getByRole("button", {
+        name: "Approve",
+      })
+      .first();
     await expect(approveButton).toBeEnabled({ timeout: 10000 });
     await approveButton.click();
+    await page.getByRole("button", { name: "Confirm" }).click();
     await expect(approveButton).toBeDisabled();
 
     const transaction_toast = await page.getByText(
