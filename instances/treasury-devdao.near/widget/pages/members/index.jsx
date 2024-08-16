@@ -1,6 +1,5 @@
 const { getMembersAndPermissions, getDaoRoles, getPolicyApproverGroup } =
   VM.require("${REPL_DEPLOYMENT_ACCOUNT}/widget/lib.common") || {
-    getMembersAndPermissions: () => {},
     getDaoRoles: () => {},
     getPolicyApproverGroup: () => {},
   };
@@ -98,7 +97,7 @@ const [showDeleteModal, setShowDeleteModal] = useState(false);
 
 useEffect(() => {
   setLoading(true);
-  if (!loading) {
+  if (!loading && typeof getMembersAndPermissions === "function") {
     getMembersAndPermissions().then((res) => {
       setAllMembers(res);
     });

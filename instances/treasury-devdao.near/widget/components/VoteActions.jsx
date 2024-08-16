@@ -6,16 +6,24 @@ const accountId = context.accountId;
 const alreadyVoted = Object.keys(votes).includes(accountId);
 const userVote = votes[accountId];
 
-const [isTxnCreated, setTxnCreated] = useState(false);
+const actions = {
+  APPROVE: "VoteApprove",
+  REJECT: "VoteReject",
+};
 
-function actProposal(action) {
+const [isTxnCreated, setTxnCreated] = useState(false);
+const [vote, setVote] = useState(null);
+
+const [showConfirmModal, setConfirmModal] = useState(null);
+
+function actProposal() {
   setTxnCreated(true);
   Near.call({
     contractName: treasuryDaoID,
     methodName: "act_proposal",
     args: {
       id: proposalId,
-      action: action,
+      action: vote,
     },
     gas: 200000000000000,
   });
@@ -68,18 +76,37 @@ const Container = styled.div`
     }
   }
 `;
+
 return (
   <Container>
+    <Widget
+      src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
+      props={{
+        heading: "Confirm your vote",
+        content: `Are you sure you want to vote to ${
+          vote === actions.APPROVE ? "approve" : "reject"
+        } this request? You cannot change this vote later.`,
+        confirmLabel: "Confirm",
+        isOpen: showConfirmModal,
+        onCancelClick: () => setConfirmModal(false),
+        onConfirmClick: () => {
+          actProposal(vote);
+          setConfirmModal(false);
+        },
+      }}
+    />
     {alreadyVoted ? (
-      <Widget
-        src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.ProposalStatus`}
-        props={{
-          isVoteStatus: true,
-          status: userVote,
-        }}
-      />
+      <div className="d-flex gap-2 align-items-center justify-content-end">
+        <Widget
+          src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.ProposalStatus`}
+          props={{
+            isVoteStatus: true,
+            status: userVote,
+          }}
+        />
+      </div>
     ) : (
-      <div className="d-flex gap-2 align-items-center">
+      <div className="d-flex gap-2 align-items-center justify-content-end">
         <Widget
           src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
           props={{
@@ -87,8 +114,11 @@ return (
               root: "approve-btn p-2",
             },
             label: "Approve",
-            onClick: () => actProposal("VoteApprove"),
-            loading: isTxnCreated,
+            onClick: () => {
+              setVote(actions.APPROVE);
+              setConfirmModal(true);
+            },
+            loading: isTxnCreated && vote === actions.APPROVE,
             disabled: isTxnCreated,
           }}
         />
@@ -99,8 +129,11 @@ return (
               root: "reject-btn p-2",
             },
             label: "Reject",
-            onClick: () => actProposal("VoteReject"),
-            loading: isTxnCreated,
+            onClick: () => {
+              setVote(actions.REJECT);
+              setConfirmModal(true);
+            },
+            loading: isTxnCreated && vote === actions.REJECT,
             disabled: isTxnCreated,
           }}
         />

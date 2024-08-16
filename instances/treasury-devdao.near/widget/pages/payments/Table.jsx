@@ -125,6 +125,8 @@ const requiredVotes =
       transferApproversGroup.approverAccounts.length
   ) + 1;
 
+const hideApproversCol = isPendingRequests && requiredVotes === 1;
+
 const ProposalsComponent = () => {
   return (
     <tbody style={{ overflowX: "auto" }}>
@@ -243,7 +245,11 @@ const ProposalsComponent = () => {
               </td>
             )}
             <td
-              className={isVisible("Approvers") + " text-center"}
+              className={
+                isVisible("Approvers") +
+                " text-center " +
+                (hideApproversCol && " display-none")
+              }
               style={{ minWidth: 100 }}
             >
               <Widget
@@ -256,7 +262,7 @@ const ProposalsComponent = () => {
               />
             </td>
             {isPendingRequests && hasVotingPermission && (
-              <td>
+              <td className="text-right">
                 <Widget
                   src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.VoteActions`}
                   props={{
@@ -302,7 +308,15 @@ return (
           {isPendingRequests && (
             <td className={isVisible("Votes") + " text-center"}>Votes</td>
           )}
-          <td className={isVisible("Approvers") + " text-center"}>Approvers</td>
+          <td
+            className={
+              isVisible("Approvers") +
+              " text-center " +
+              (hideApproversCol && " display-none")
+            }
+          >
+            Approvers
+          </td>
           {isPendingRequests && hasVotingPermission && (
             <td className="text-right">Actions</td>
           )}

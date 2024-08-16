@@ -28,6 +28,8 @@ const Theme = styled.div`
     &.primary {
       background-color: var(--theme-color);
       color: var(--text-color);
+      border: none !important;
+      padding-block: 0.7rem !important;
     }
   }
 
