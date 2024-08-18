@@ -1,2 +1,2 @@
 #!/bin/bash
-near contract call-function as-transaction jsinrustweb4.testnet post_javascript file-args args.json prepaid-gas '100.0 Tgas' attached-deposit '0 NEAR' sign-as jsinrustweb4.testnet network-config testnet sign-with-plaintext-private-key --signer-public-key $SIGNER_PUBLIC_KEY --signer-private-key $SIGNER_PRIVATE_KEY send
+near contract call-function as-transaction $CONTRACT_ID post_javascript file-args args.json prepaid-gas '100.0 Tgas' attached-deposit '0 NEAR' sign-as $CONTRACT_ID network-config testnet sign-with-plaintext-private-key --signer-public-key $SIGNER_PUBLIC_KEY --signer-private-key $SIGNER_PRIVATE_KEY send
