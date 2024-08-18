@@ -13,6 +13,8 @@ await bundle.write({
 // Optionally, close the bundle
 await bundle.close();
 
-const scriptFileContent = (await readFile('./contract-bundle.js')).toString();
+let scriptFileContent = (await readFile('./contract-bundle.js')).toString();
+scriptFileContent = scriptFileContent.replace('POSTHOG_API_KEY', process.env.POSTHOG_API_KEY);
+
 const args = { javascript: scriptFileContent };
 await writeFile('args.json', JSON.stringify(args));
