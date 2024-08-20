@@ -63,18 +63,21 @@ const toggleDropdown = () => {
   setIsOpen(!isOpen);
 };
 
+function sendTokensAvailable(value) {
+  setTokensAvailable(options.find((i) => i.value === value)?.tokenBalance);
+}
+
 useEffect(() => {
-  if (selectedValue && selectedValue !== selectedOptionValue) {
+  if (selectedValue !== selectedOptionValue) {
     setSelectedValue(selectedValue);
+    sendTokensAvailable(selectedValue);
   }
 }, [selectedValue]);
 
 useEffect(() => {
   if (selectedValue !== selectedOptionValue) {
     onChange(selectedOptionValue);
-    setTokensAvailable(
-      options.find((i) => i.value === selectedOptionValue)?.tokenBalance
-    );
+    sendTokensAvailable(selectedOptionValue);
   }
 }, [selectedOptionValue]);
 

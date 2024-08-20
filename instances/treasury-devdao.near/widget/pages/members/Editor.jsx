@@ -9,6 +9,7 @@ const [roles, setRoles] = useState([]);
 const [isTxnCreated, setTxnCreated] = useState(false);
 const [lastProposalId, setLastProposalId] = useState(null);
 const [showDeleteModal, setShowDeleteModal] = useState(false);
+const [showCancelModal, setShowCancelModal] = useState(false);
 
 const daoPolicy = Near.view(treasuryDaoID, "get_policy", {});
 const deposit = daoPolicy?.proposal_bond || 100000000000000000000000;
@@ -116,7 +117,7 @@ function onSubmitClick() {
 }
 
 function cleanInputs() {
-  setUsername(null);
+  setUsername("");
   setRoles([]);
 }
 
@@ -147,6 +148,22 @@ function isAccountValid() {
 
 return (
   <Container className="d-flex flex-column gap-2">
+    <Widget
+      src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
+      props={{
+        heading: "Are you sure you want to cancel?",
+        content:
+          "This action will clear all the information you have entered in the form and cannot be undone.",
+        confirmLabel: "Yes",
+        isOpen: showCancelModal,
+        onCancelClick: () => setShowCancelModal(false),
+        onConfirmClick: () => {
+          cleanInputs();
+          setShowCancelModal(false);
+          onCloseCanvas();
+        },
+      }}
+    />
     <div className="d-flex flex-column gap-1">
       <label>Username</label>
       <Widget
@@ -215,8 +232,7 @@ return (
             },
             label: "Cancel",
             onClick: () => {
-              cleanInputs();
-              onCloseCanvas();
+              setShowCancelModal(true);
             },
             disabled: isTxnCreated,
           }}

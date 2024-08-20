@@ -1,8 +1,7 @@
 const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
-const treasuryDaoID = "build.sputnik-dao.near";
-("${REPL_TREASURY}");
+const treasuryDaoID = "${REPL_TREASURY}";
 const proposals = props.proposals ?? [];
 const columnsVisibility = JSON.parse(
   Storage.get(
@@ -232,7 +231,20 @@ const ProposalsComponent = () => {
               />
             </td>
             <td className={"bold text-center " + isVisible("Creator")}>
-              {item.proposer}
+              <Widget
+                src="mob.near/widget/Profile.OverlayTrigger"
+                props={{
+                  accountId: item.proposer,
+                  children: (
+                    <div
+                      className="text-truncate"
+                      style={{ maxWidth: "300px" }}
+                    >
+                      {item.proposer}
+                    </div>
+                  ),
+                }}
+              />
             </td>
             <td className={"text-sm text-left " + isVisible("Notes")}>
               {notes ?? "-"}

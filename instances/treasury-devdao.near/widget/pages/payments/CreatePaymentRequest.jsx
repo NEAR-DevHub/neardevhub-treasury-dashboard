@@ -77,7 +77,7 @@ const buildWhereClause = () => {
 
   if (typeof number !== "number" && !text) {
     where = {
-      timeline: { _cast: { String: { _niregex: `Funded` } } },
+      timeline: { _cast: { String: { _regex: `PAYMENT` } } },
       ...where,
     };
   }
@@ -283,12 +283,12 @@ function onSubmitClick() {
 }
 
 function cleanInputs() {
-  setSelectedProposalId(null);
+  setSelectedProposalId("");
   setSelectedProposal(null);
-  setReceiver(null);
-  setAmount(null);
-  setNotes(null);
-  setTokenId(null);
+  setReceiver("");
+  setAmount("");
+  setNotes("");
+  setTokenId("");
 }
 
 function isAccountValid() {
@@ -323,7 +323,7 @@ return (
         <Widget
           src="${REPL_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
           props={{
-            selectedValue: "",
+            selectedValue: selectedProposalId,
             onChange: onSelectProposal,
             options: proposalsOptions,
             showSearch: true,

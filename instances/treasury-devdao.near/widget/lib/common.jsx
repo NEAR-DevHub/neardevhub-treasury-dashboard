@@ -147,7 +147,9 @@ const gatewayOrigin = data?.body?.headers?.Origin ?? "";
 
 const isNearSocial =
   gatewayOrigin.includes("near.social") ||
-  gatewayOrigin.includes("127.0.0.1:8080");
+  gatewayOrigin.includes("127.0.0.1:8080") ||
+  gatewayOrigin.includes("treasury-devdao.testnet.page") ||
+  gatewayOrigin.includes("treasury-devdao.near.page");
 
 function getMembersAndPermissions() {
   return Near.asyncView(treasuryDaoID, "get_policy", {}).then((daoPolicy) => {
