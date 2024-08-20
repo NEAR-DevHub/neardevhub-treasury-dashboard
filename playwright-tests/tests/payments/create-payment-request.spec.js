@@ -34,9 +34,9 @@ test.describe("admin connected", function () {
     await page.getByPlaceholder("treasury.near").fill("webassemblymusic.near");
     await page.getByTestId("total-amount").fill("5000");
 
-    const tokenSelect = await page.getByText("Requested Token Select");
-    await tokenSelect.getByText("Select", { exact: true }).click();
-    await tokenSelect.locator(".dropdown-item").click();
+    const tokenSelect = await page.getByText("Select");
+    await tokenSelect.click();
+    await page.getByText("NEAR Tokens available:").click();
 
     await page.getByRole("button", { name: "Submit" }).click();
 
@@ -44,7 +44,7 @@ test.describe("admin connected", function () {
     await expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
         description:
-          '{"title":"Test proposal title","summary":"Test proposal summary","notes":null}',
+          '{"title":"Test proposal title","summary":"Test proposal summary","notes":""}',
         kind: {
           Transfer: {
             token_id: "",
