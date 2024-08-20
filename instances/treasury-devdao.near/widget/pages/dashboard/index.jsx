@@ -171,9 +171,6 @@ return (
     <div className="d-flex justify-content-between gap-2 mt-3">
       {iframe}
       <h4 className="page-header">Dashboard</h4>
-      <div className="bg-black text-white p-1 px-2 h6 rounded-2">
-        {treasuryAccount}
-      </div>
     </div>
     <div className="card card-body" style={{ maxHeight: "100px" }}>
       <div className="h5">Total Balance</div>

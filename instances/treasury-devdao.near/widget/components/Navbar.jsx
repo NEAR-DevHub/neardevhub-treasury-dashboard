@@ -11,6 +11,8 @@ const { navbarLinks } = VM.require(
   navbarLinks: [],
 };
 
+const treasuryAccount = "${REPL_TREASURY}";
+
 const MenuIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -40,6 +42,13 @@ const Navbar = styled.div`
 
   @media screen and (max-width: 768px) {
     padding: 1.875rem 1.375rem;
+  }
+
+  .account-container {
+    background-color: #e3e6e8;
+    color: #2c3e50;
+    font-size: 14px;
+    font-weight: 700;
   }
 `;
 
@@ -105,7 +114,12 @@ function getTitle(text) {
 
 return (
   <Navbar className="position-relative d-flex justify-content-between">
-    <div className="h4 mb-0">{getTitle(page ?? "dashboard")}</div>
+    <div className="d-flex align-items-center gap-3">
+      <div className="h4 mb-0">{getTitle(page ?? "dashboard")}</div>
+      <div className="account-container py-1 px-2 rounded-3">
+        {treasuryAccount}
+      </div>
+    </div>
     <div className="d-flex gap-3 align-items-center">
       <LinksContainer>
         {navbarLinks.map((link) => (
