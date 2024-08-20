@@ -2,12 +2,11 @@ const { readableDate } = VM.require(
   "${REPL_DEVHUB}/widget/core.lib.common"
 ) || { readableDate: () => {} };
 
-const { nearPrice } = props;
 const [transactionWithBalances, setTransactionWithBalance] = useState(null);
 const [page, setPage] = useState(1);
 // we have two cursors, one to update the iframe on "View More" and other one to store the value of cursor from API response
-const [nextCursor,setCursor] = useState(null)
-const [staleCursor,setStaleCursor]= useState(null)
+const [nextCursor, setCursor] = useState(null);
+const [staleCursor, setStaleCursor] = useState(null);
 const [showMoreLoading, setShowMoreLoading] = useState(false);
 const [hideViewMore, setHideViewMore] = useState(false);
 
@@ -133,10 +132,10 @@ const iframe = (
           if (e.response < totalTxnsPerPage) {
             setHideViewMore(true);
           }
-          setStaleCursor(e.cursor)
+          setStaleCursor(e.cursor);
           setTransactionWithBalance(groupByDate(e.response));
           setShowMoreLoading(false);
-          
+
           break;
         }
       }
@@ -212,13 +211,16 @@ const Container = styled.div`
 
 function formatString(str) {
   return str
-      .split('_') 
-      .map((word) => {
-          return word.charAt(0).toUpperCase() + word.charAt(1).toLowerCase() + word.slice(2).toLowerCase();
-      })
-      .join(' '); 
+    .split("_")
+    .map((word) => {
+      return (
+        word.charAt(0).toUpperCase() +
+        word.charAt(1).toLowerCase() +
+        word.slice(2).toLowerCase()
+      );
+    })
+    .join(" ");
 }
-
 
 
 return (
@@ -248,16 +250,20 @@ return (
                   <div className="d-flex flex-column gap-2">
                     {txns.map((txn, i) => {
                       let balanceDiff = null;
-                      let token = 'NEAR'
-                      let icon = '${REPL_NEAR_TOKEN_ICON}'
+                      let token = "NEAR";
+                      let icon = "${REPL_NEAR_TOKEN_ICON}";
                       if (txn.delta_amount) {
-                        const decimals = txn.ft.decimals
-                        token = txn.ft.symbol
-                        icon = txn.ft.icon
-                        balanceDiff = convertBalanceToReadableFormat(txn.delta_amount, decimals);
+                        const decimals = txn.ft.decimals;
+                        token = txn.ft.symbol;
+                        icon = txn.ft.icon;
+                        balanceDiff = convertBalanceToReadableFormat(
+                          txn.delta_amount,
+                          decimals
+                        );
                       } else {
                         if (i < txns.length - 1) {
-                          const prevBalance = txns[i + 1].absolute_nonstaked_amount;
+                          const prevBalance =
+                            txns[i + 1].absolute_nonstaked_amount;
                           balanceDiff = convertBalanceToReadableFormat(
                             txn.absolute_nonstaked_amount - prevBalance
                           );
@@ -267,7 +273,8 @@ return (
                         ) {
                           const nextGroup =
                             transactionWithBalances[groupIndex + 1];
-                          const nextBalance = nextGroup.txns[0].absolute_nonstaked_amount;
+                          const nextBalance =
+                            nextGroup.txns[0].absolute_nonstaked_amount;
                           balanceDiff = convertBalanceToReadableFormat(
                             txn.absolute_nonstaked_amount - nextBalance
                           );
@@ -287,15 +294,12 @@ return (
                           key={txn.transaction_hash}
                         >
                           <div className="d-flex gap-2 align-items-center">
-                            <img
-                              src={getImage(
-                                txn.cause
-                              )}
-                              height="50"
-                            />
+                            <img src={getImage(txn.cause)} height="50" />
                             <div className="text-sm text-muted">
                               <div className="fw-bold text-md mb-0">
-                                {formatString(txn.actions?.[0]?.method ?? txn.cause) }
+                                {formatString(
+                                  txn.actions?.[0]?.method ?? txn.cause
+                                )}
                               </div>
                               <div>
                                 with{" "}
@@ -324,7 +328,8 @@ return (
                           <div className="text-align-end">
                             <div className="fw-bold d-flex gap-1 align-items-center justify-content-end">
                               {balanceDiff > 0 ? "+" : ""}
-                              {balanceDiff} <img src={icon} height={20} width={20}/>
+                              {balanceDiff}{" "}
+                              <img src={icon} height={20} width={20} />
                             </div>
                             {/* <div className="text-light-grey text-md">
                               Total Balance : ${balanceAmount}
@@ -345,7 +350,7 @@ return (
                 {!hideViewMore && (
                   <div
                     onClick={() => {
-                      setCursor(staleCursor)
+                      setCursor(staleCursor);
                       setPage(page + 1);
                       setShowMoreLoading(true);
                     }}
