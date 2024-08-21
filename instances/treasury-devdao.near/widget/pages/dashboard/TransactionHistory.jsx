@@ -222,7 +222,6 @@ function formatString(str) {
     .join(" ");
 }
 
-
 return (
   <Container className="card card-body flex-1">
     <div className="h5">Transaction History</div>
