@@ -146,10 +146,29 @@ const Members = () => {
                   width={30}
                   className="rounded-circle"
                 />
-                {profile.name ?? account}
+                {profile.name ?? (
+                  <span className="text-truncate" style={{ maxWidth: "300px" }}>
+                    {account}
+                  </span>
+                )}
               </div>
             </td>
-            <td>{account}</td>
+            <td>
+              <Widget
+                src="mob.near/widget/Profile.OverlayTrigger"
+                props={{
+                  accountId: account,
+                  children: (
+                    <div
+                      className="text-truncate"
+                      style={{ maxWidth: "300px" }}
+                    >
+                      {account}
+                    </div>
+                  ),
+                }}
+              />
+            </td>
             <td>
               <div className="d-flex gap-3 align-items-center">
                 {(group.roles ?? []).map((i) => (
@@ -189,11 +208,7 @@ function toggleEditor() {
   setSelectedMember(null);
 }
 
-const hasCreatePermission = hasPermission(
-  context.accountId,
-  "policy",
-  "AddProposal"
-);
+const hasCreatePermission = hasPermission(context.accountId, "policy", "vote");
 
 return (
   <Container className="d-flex flex-column gap-2">

@@ -26,7 +26,7 @@ const Item = ({
         }
       >
         <div className="d-flex align-items-center" style={{ gap: "0.7rem" }}>
-          <img src={icon} height={30} />
+          <img src={icon} height={30} width={30} />
           <div>
             <div className="h6 mb-0">{symbol}</div>
             <div className="d-flex gap-2 text-sm text-muted">
