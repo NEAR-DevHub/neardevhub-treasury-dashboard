@@ -2,150 +2,88 @@ const { readableDate } = VM.require(
   "${REPL_DEVHUB}/widget/core.lib.common"
 ) || { readableDate: () => {} };
 
-const { nearPrice } = props;
 const [transactionWithBalances, setTransactionWithBalance] = useState(null);
 const [page, setPage] = useState(1);
+// we have two cursors, one to update the iframe on "View More" and other one to store the value of cursor from API response
+const [nextCursor, setCursor] = useState(null);
+const [staleCursor, setStaleCursor] = useState(null);
 const [showMoreLoading, setShowMoreLoading] = useState(false);
 const [hideViewMore, setHideViewMore] = useState(false);
+
 const totalTxnsPerPage = 15;
+const treasuryAccount = "${REPL_TREASURY}";
 const code = `
 <!doctype html>
 <html>
-<body>
-<script>
-let archiveNodeUrl = 'https://1rpc.io/near';
-const totalTxnsPerPage = ${totalTxnsPerPage};
-const treasuryAccount = "${REPL_TREASURY}";
- async function getAccountChanges(block_id, account_ids) {
-  return (await fetch(archiveNodeUrl, {
-      method: 'POST',
-      headers: {
-          'content-type': 'application/json'
-      },
-      body: JSON.stringify({
-          "jsonrpc": "2.0",
-          "id": "dontcare",
-          "method": "EXPERIMENTAL_changes",
-          "params": {
-              "changes_type": "account_changes",
-              "account_ids": account_ids,
-              "block_id": block_id === 'final' ? undefined : block_id,
-              "finality": block_id === 'final' ? block_id : undefined
-          }
+  <body>
+    <script>
+      let archiveNodeUrl = 'https://1rpc.io/near';
+      const totalTxnsPerPage = ${totalTxnsPerPage};
+      const treasuryAccount = "${REPL_TREASURY}";
+      const nextCursor = "${nextCursor}";
+      async function corsFetch(url) {
+        return await fetch(url, {
+          mode: "cors",
+        }).then((r) => r.json());
       }
-      )
-  }).then(r => r.json())).result;
-}
 
- async function viewAccount(block_id, account_id) {
-  return (await fetch(archiveNodeUrl, {
-      method: 'POST',
-      headers: {
-          'content-type': 'application/json'
-      },
-      body: JSON.stringify({
-          "jsonrpc": "2.0",
-          "id": "dontcare",
-          "method": "query",
-          "params": {
-              "request_type": "view_account",
-              "account_id": account_id,
-              "block_id": block_id === 'final' ? undefined : block_id,
-              "finality": block_id === 'final' ? block_id : undefined
-          }
+      async function getNearTxns() {
+        const url = "https://api.nearblocks.io/v1/account/" + treasuryAccount + "/activities?per_page=" + totalTxnsPerPage + (nextCursor ? ("&cursor=" + nextCursor) : "" );
+        const txns = await corsFetch(url);
+        const parsedTxns = await Promise.all(
+          (txns.activities ?? []).map(async (i) => {
+            const txnHash = (
+              await corsFetch(
+                "https://api.nearblocks.io/v1/search?keyword=" + i.receipt_id,
+              )
+            ).receipts?.[0]?.originated_from_transaction_hash;
+            const txnDetails = (
+              await corsFetch("https://api.nearblocks.io/v1/txns/" + txnHash)
+            ).txns?.[0];
+            return {
+              ...i,
+              transaction_hash: txnHash,
+              block_timestamp: txnDetails.block_timestamp,
+              actions: txnDetails.actions,
+            };
+          }),
+        );
+        return { parsedTxns, cursor: txns.cursor };
       }
-      )
-  }).then(r => r.json())).result;
-}
 
- async function getNearblocksAccountHistory(account_id) {
-  const url = "https://api.nearblocks.io/v1/account/" + account_id + "/txns?page=" + ${page} + "&per_page=" + totalTxnsPerPage + "&order=desc";
-      try {
-          const result = (await fetch(url, {
-              mode: 'cors'
-          }).then(r => r.json())).txns.map(tx => (
-              {
-                  "block_hash": tx.included_in_block_hash,
-                  "block_timestamp": tx.block_timestamp,
-                  "hash": tx.transaction_hash,
-                  "signer_id": tx.predecessor_account_id,
-                  "receiver_id": tx.receiver_account_id,
-                  "action_kind": tx.actions? tx.actions[0].action : null,
-                  "args": {
-                      "method_name": tx.actions? tx.actions[0].method : null
-                  }
-              }
-          ));
-          return result;
-      } catch (e) {
-          console.error('error', e, 'retry in 30 seconds');
-          await new Promise(resolve => setTimeout(() => resolve(), 30_000));
-  }
-}
-
-async function retry(func, max_retries = 10, pause_millis = 30000) {
-  let err;
-  for (let n = 0;n<max_retries;n++) {
-      try {
-          return await func();
-      } catch(e) {
-          err = e;
-          console.error('error', e, 'retrying in ', pause_millis, 'milliseconds');
-          await new Promise(r => setTimeout(r, pause_millis));
+      async function getFtTxns() {
+        const txns = await corsFetch("https://api.nearblocks.io/v1/account/" + treasuryAccount + "/ft-txns?page=" + ${page} + "&per_page=" + totalTxnsPerPage + "&order=desc");
+        return txns.txns;
       }
-  }
-  console.error('max retries reached');
-  throw (err);
-}
 
-async function getTransactionsToDate(account, offset_timestamp, transactions = []) {
-  let accountHistory = await getNearblocksAccountHistory(account);
-  let insertIndex = 0;
-  let transactionsFetched = 0;
-  while (transactionsFetched < totalTxnsPerPage) {
-      for (let n = 0; n < accountHistory.length; n++) {
-          const historyLine = accountHistory[n];
-              const existingTransaction = transactions.find(t => t.hash == historyLine.hash);
-              if (!existingTransaction) {
-                  historyLine.balance = await retry(() => getAccountBalanceAfterTransaction(account, historyLine.hash));
-                  transactions.splice(insertIndex++, 0, historyLine);
-                  offset_timestamp = BigInt(historyLine.block_timestamp) + 1n;
-              }
-          }
-          transactionsFetched++;
-  }
-  return {txnsWithBalance : transactions, accountHistoryLength: accountHistory?.length};
-}
-
- async function getTransactionStatus(txhash, account_id) {
-  return (await fetch(archiveNodeUrl, {
-      method: 'POST',
-      headers: {
-          'content-type': 'application/json'
-      },
-      body: JSON.stringify({
-          "jsonrpc": "2.0",
-          "id": "dontcare",
-          "method": "tx",
-          "params": [txhash, account_id]
+      async function getAccountBalanceAfterTransaction(account_id, txhash) {
+        const executionBlockIds = (
+          await getTransactionStatus(txhash, account_id)
+        ).receipts_outcome.map((outcome) => outcome.block_hash);
+        const executionBlocksAccountStatus = await Promise.all(
+          executionBlockIds.map((block_hash) => viewAccount(block_hash, account_id)),
+        );
+        executionBlocksAccountStatus.sort((a, b) => b.block_height - a.block_height);
+        return executionBlocksAccountStatus[0].amount;
       }
-      )
-  }).then(r => r.json())).result;
-}
 
- async function getAccountBalanceAfterTransaction(account_id, txhash) {
-  const executionBlockIds = (await getTransactionStatus(txhash, account_id)).receipts_outcome.map(outcome => outcome.block_hash);
-  const executionBlocksAccountStatus = await Promise.all(executionBlockIds.map(block_hash => viewAccount(block_hash, account_id)));
-  executionBlocksAccountStatus.sort((a, b) => b.block_height - a.block_height);
-  return executionBlocksAccountStatus[0].amount;
-}
-
-window.onload = async () => {
-  const response = await getTransactionsToDate(treasuryAccount);
-  window.parent.postMessage({ handler: "getTransactionsToDate", response }, "*");
-};
-</script>
-</body>
+      window.onload = async () => {
+        const nearTxns = await getNearTxns();
+        const ftTxns = await getFtTxns();
+        const sortedArray = nearTxns.parsedTxns
+          .concat(ftTxns)
+          .sort((a, b) => b.block_timestamp - a.block_timestamp);
+        window.parent.postMessage(
+          {
+            handler: "getTransactions",
+            response: sortedArray,
+            cursor: nearTxns.cursor,
+          },
+          "*",
+        );
+      };
+    </script>
+  </body>
 </html>
 `;
 
@@ -190,22 +128,25 @@ const iframe = (
     message={{}}
     onMessage={(e) => {
       switch (e.handler) {
-        case "getTransactionsToDate":
-          if (e.response.accountHistoryLength < totalTxnsPerPage) {
+        case "getTransactions": {
+          if (e.response < totalTxnsPerPage) {
             setHideViewMore(true);
           }
-          setTransactionWithBalance(groupByDate(e.response.txnsWithBalance));
+          setStaleCursor(e.cursor);
+          setTransactionWithBalance(groupByDate(e.response));
           setShowMoreLoading(false);
+
           break;
+        }
       }
     }}
   />
 );
 
-function convertBalanceToReadableFormat(amount) {
+function convertBalanceToReadableFormat(amount, decimals) {
   return Big(amount ?? "0")
-    .div(Big(10).pow(24))
-    .toFixed();
+    .div(Big(10).pow(decimals ?? 24))
+    .toFixed(6);
 }
 
 function formatRelativeDate(date) {
@@ -247,7 +188,6 @@ function getImage(actionKind) {
 const loader = (
   <div className="d-flex flex-column justify-content-center align-items-center w-100 h-100">
     {loading}
-    <div>This may take a few minutes.</div>
   </div>
 );
 
@@ -268,6 +208,19 @@ const Container = styled.div`
     }
   }
 `;
+
+function formatString(str) {
+  return str
+    .split("_")
+    .map((word) => {
+      return (
+        word.charAt(0).toUpperCase() +
+        word.charAt(1).toLowerCase() +
+        word.slice(2).toLowerCase()
+      );
+    })
+    .join(" ");
+}
 
 return (
   <Container className="card card-body flex-1">
@@ -295,28 +248,37 @@ return (
                   </div>
                   <div className="d-flex flex-column gap-2">
                     {txns.map((txn, i) => {
-                      const balanceToken = convertBalanceToReadableFormat(
-                        txn.balance
-                      );
-                      const balanceAmount = getPrice(balanceToken);
-                      let balanceDiff = balanceToken;
-                      if (i < txns.length - 1) {
-                        const prevBalance = txns[i + 1].balance;
+                      let balanceDiff = null;
+                      let token = "NEAR";
+                      let icon = "${REPL_NEAR_TOKEN_ICON}";
+                      if (txn.delta_amount) {
+                        const decimals = txn.ft.decimals;
+                        token = txn.ft.symbol;
+                        icon = txn.ft.icon;
                         balanceDiff = convertBalanceToReadableFormat(
-                          txn.balance - prevBalance
+                          txn.delta_amount,
+                          decimals
                         );
-                      } else if (
-                        groupIndex <
-                        transactionWithBalances.length - 1
-                      ) {
-                        const nextGroup =
-                          transactionWithBalances[groupIndex + 1];
-                        const nextBalance = nextGroup.txns[0].balance;
-                        balanceDiff = convertBalanceToReadableFormat(
-                          txn.balance - nextBalance
-                        );
+                      } else {
+                        if (i < txns.length - 1) {
+                          const prevBalance =
+                            txns[i + 1].absolute_nonstaked_amount;
+                          balanceDiff = convertBalanceToReadableFormat(
+                            txn.absolute_nonstaked_amount - prevBalance
+                          );
+                        } else if (
+                          groupIndex <
+                          transactionWithBalances.length - 1
+                        ) {
+                          const nextGroup =
+                            transactionWithBalances[groupIndex + 1];
+                          const nextBalance =
+                            nextGroup.txns[0].absolute_nonstaked_amount;
+                          balanceDiff = convertBalanceToReadableFormat(
+                            txn.absolute_nonstaked_amount - nextBalance
+                          );
+                        }
                       }
-                      balanceDiff = getPrice(balanceDiff);
                       // Check if it's the last transaction and there's no next group
                       if (
                         !hideViewMore &&
@@ -328,16 +290,22 @@ return (
                       return (
                         <div
                           className="d-flex gap-2 justify-content-between align-items-center"
-                          key={txn.hash}
+                          key={txn.transaction_hash}
                         >
                           <div className="d-flex gap-2 align-items-center">
-                            <img src={getImage(txn.action_kind)} height="50" />
+                            <img src={getImage(txn.cause)} height="50" />
                             <div className="text-sm text-muted">
                               <div className="fw-bold text-md mb-0">
-                                {txn.action_kind}
+                                {formatString(
+                                  txn.actions?.[0]?.method ?? txn.cause
+                                )}
                               </div>
                               <div>
-                                with {(txn.receiver_id ?? "").substring(0, 30)}
+                                with{" "}
+                                {(txn.involved_account_id ?? "").substring(
+                                  0,
+                                  30
+                                )}
                               </div>
                               <div>
                                 {readableDate(txn.block_timestamp / 1000000)}
@@ -346,20 +314,21 @@ return (
                                 <Link
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  to={`https://nearblocks.io/txns/${txn.hash}`}
+                                  to={`https://nearblocks.io/txns/${txn.transaction_hash}`}
                                 >
-                                  {(txn.hash ?? "").substring(0, 20)}
+                                  {(txn.transaction_hash ?? "").substring(
+                                    0,
+                                    20
+                                  )}
                                 </Link>
                               </div>
                             </div>
                           </div>
                           <div className="text-align-end">
-                            <div className="fw-bold">
+                            <div className="fw-bold d-flex gap-1 align-items-center justify-content-end">
                               {balanceDiff > 0 ? "+" : ""}
-                              {balanceDiff} USD
-                            </div>
-                            <div className="text-light-grey text-md">
-                              Total Balance : ${balanceAmount}
+                              {balanceDiff}{" "}
+                              <img src={icon} height={20} width={20} />
                             </div>
                           </div>
                         </div>
@@ -377,6 +346,7 @@ return (
                 {!hideViewMore && (
                   <div
                     onClick={() => {
+                      setCursor(staleCursor);
                       setPage(page + 1);
                       setShowMoreLoading(true);
                     }}
