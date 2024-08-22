@@ -330,9 +330,6 @@ return (
                               {balanceDiff}{" "}
                               <img src={icon} height={20} width={20} />
                             </div>
-                            {/* <div className="text-light-grey text-md">
-                              Total Balance : ${balanceAmount}
-                            </div> */}
                           </div>
                         </div>
                       );
