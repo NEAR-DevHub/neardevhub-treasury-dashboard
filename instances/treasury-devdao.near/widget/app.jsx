@@ -33,11 +33,11 @@ function Page() {
         />
       );
     }
-    // ?page=members
-    case "members": {
+    // ?page=settings
+    case "settings": {
       return (
         <Widget
-          src={"${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.members.index"}
+          src={"${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.settings.index"}
           props={passProps}
         />
       );

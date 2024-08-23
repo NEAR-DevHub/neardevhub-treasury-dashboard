@@ -18,8 +18,8 @@ return {
     //   href: "?page=asset-exchange",
     // },
     {
-      title: "Members",
-      href: "?page=members",
+      title: "Settings",
+      href: "?page=settings",
     },
   ],
 };

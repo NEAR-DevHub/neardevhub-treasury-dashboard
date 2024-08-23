@@ -2,7 +2,7 @@ const { normalize } = VM.require(
   "${REPL_DEVHUB}/widget/core.lib.stringUtils"
 ) || { normalize: () => {} };
 
-const { innerTab, page, leftNavbarOptions } = props;
+const { selectedTab, page, leftNavbarOptions } = props;
 
 const Container = styled.div`
   .link {
@@ -12,13 +12,13 @@ const Container = styled.div`
   .link.active {
     font-weight: bolder;
     color: var(--theme-color) !important;
-    background-color:rgba(227, 230, 232, 1)
+    background-color:#F4F4F4;
   }
 
   .link:hover {
     color: var(--theme-color)) !important;
     color: var(--theme-color) !important;
-    background-color:rgba(227, 230, 232, 1);
+    background-color:#F4F4F4;
   }
 
   .flex-1 {
@@ -26,14 +26,14 @@ const Container = styled.div`
     min-width: 200px;
   }
 
-  .flex-3 {
-    flex: 3;
+  .flex-5 {
+    flex: 5;
     min-width: 600px;
   }
 `;
 
 const currentTabTitle =
-  props.innerTab ?? normalize(leftNavbarOptions?.[0].title);
+  props.selectedTab ?? normalize(leftNavbarOptions?.[0].title);
 
 const [currentTab, setCurrentTab] = useState(
   leftNavbarOptions.find((i) => normalize(i.title) === currentTabTitle) ??
@@ -42,10 +42,13 @@ const [currentTab, setCurrentTab] = useState(
 
 return (
   <Container className="d-flex gap-4 flex-wrap">
-    <div className="card card-body flex-1">
+    <div
+      className="card rounded-3 py-3 flex-1"
+      style={{ height: "max-content" }}
+    >
       <div className="d-flex gap-2 flex-column">
         {leftNavbarOptions.map((item) => {
-          const { title, icon } = item;
+          const { title } = item;
           return (
             <div
               onClick={() => setCurrentTab(item)}
@@ -55,18 +58,15 @@ return (
               ].join(" ")}
               key={title}
             >
-              <div className="d-flex gap-3 align-items-center">
-                <h5 className="mb-0">{icon} </h5>
-                {title}
-              </div>
+              <div>{title}</div>
             </div>
           );
         })}
       </div>
     </div>
-    <div className="card card-body flex-3">
+    <div className="flex-5">
       {currentTab && (
-        <div className="w-100 h-100 mt-4" key={currentTab.title}>
+        <div className="w-100 h-100" key={currentTab.title}>
           <Widget
             src={currentTab.href}
             props={{ ...props, ...currentTab.props }}

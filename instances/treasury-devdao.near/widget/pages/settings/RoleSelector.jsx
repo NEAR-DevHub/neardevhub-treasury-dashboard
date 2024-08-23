@@ -87,6 +87,10 @@ const Container = styled.div`
     overflow: hidden;
     white-space: normal;
   }
+
+  .text-sm {
+    font-size: 13px;
+  }
 `;
 
 const handleOptionClick = (option) => {
@@ -96,8 +100,31 @@ const handleOptionClick = (option) => {
   setIsOpen(false);
 };
 
+function getPermissionsText(type) {
+  switch (type) {
+    case "Create Requests": {
+      return "Enables users to initiate payment requests.";
+    }
+    case "Manage Members": {
+      return "Allows users to control treasury adminis and their access levels.";
+    }
+    case "Vote": {
+      return "Allows users to approve or request proposed payment requests.";
+    }
+    default:
+      return "";
+  }
+}
+
 const Item = ({ option }) => {
-  return <div> {option.title}</div>;
+  return (
+    <div className="w-100 text-wrap">
+      {option.title}
+      <div className="text-muted text-sm">
+        {getPermissionsText(option.title)}
+      </div>
+    </div>
+  );
 };
 
 return (

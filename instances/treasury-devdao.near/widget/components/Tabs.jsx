@@ -8,6 +8,8 @@ const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
 
 const { selectedTab, tabs, sidebarMenu } = props;
 
+const [currentTabProps, setCurrentTabProps] = useState(null);
+
 const Container = styled.div`
   .border-bottom {
     border-bottom: 1px solid rgba(226, 230, 236, 1);
@@ -40,13 +42,16 @@ const [currentTab, setCurrentTab] = useState(null);
 
 useEffect(() => {
   const defaultTab = tabs[0].title;
-  let tab = findTab(selectedTab ?? normalize(defaultTab));
+  let tab = findTab(
+    selectedTab ? normalize(selectedTab ?? "") : normalize(defaultTab)
+  );
   // in case selectedTab is not provided
   if (!tab) {
     tab = normalize(defaultTab);
   }
   setCurrentTab(tab);
-}, []);
+  setCurrentTabProps({ ...tab.props, ...props });
+}, [props]);
 
 return (
   <Container className="card rounded-3 py-3 d-flex flex-column gap-3">
@@ -60,7 +65,10 @@ return (
             title && (
               <li key={title}>
                 <div
-                  onClick={() => setCurrentTab(findTab(normalize(title)))}
+                  onClick={() => {
+                    setCurrentTab(findTab(normalize(title)));
+                    setCurrentTabProps({});
+                  }}
                   className={[
                     "d-inline-flex gap-2 nav-link",
                     normalize(currentTab.title) === normalize(title)
@@ -78,10 +86,7 @@ return (
     </div>
     {currentTab && (
       <div className="w-100 h-100 px-3" key={currentTab.title}>
-        <Widget
-          src={currentTab.href}
-          props={{ ...currentTab.props, ...props }}
-        />
+        <Widget src={currentTab.href} props={currentTabProps} />
       </div>
     )}
   </Container>
