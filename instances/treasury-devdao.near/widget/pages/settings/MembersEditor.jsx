@@ -179,7 +179,7 @@ return (
     <div className="d-flex flex-column gap-1">
       <label>Permissions</label>
       <Widget
-        src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.members.RoleSelector`}
+        src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.settings.RoleSelector`}
         props={{
           selected: roles,
           onChange: (v) => setRoles(v),
@@ -208,7 +208,7 @@ return (
           />
         )}
         <Widget
-          src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.members.DeleteModalConfirmation`}
+          src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.settings.DeleteModalConfirmation`}
           props={{
             isOpen: showDeleteModal,
             onCancelClick: () => setShowDeleteModal(false),

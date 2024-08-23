@@ -4,11 +4,7 @@ const { hasPermission } = VM.require(
   hasPermission: () => {},
 };
 
-const { innerPage } = props;
-
-if (innerPage) {
-  return <Widget src={`${REPL_TREASURY}/widget/pages.payments.${innerPage}`} />;
-}
+const { selectedTab } = props;
 
 const [showCreateRequest, setShowCreateRequest] = useState(false);
 
@@ -73,12 +69,12 @@ return (
           {
             title: "Pending Requests",
             href: `${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.payments.PendingRequests`,
-            props: {},
+            props: props,
           },
           {
             title: "History",
             href: `${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.payments.History`,
-            props: {},
+            props: props,
           },
         ],
         sidebarMenu: sidebarMenu,

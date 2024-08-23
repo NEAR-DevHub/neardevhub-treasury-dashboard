@@ -3,15 +3,17 @@ const {
   getDaoRoles,
   getPolicyApproverGroup,
   hasPermission,
+  getPermissionsText,
 } = VM.require("${REPL_DEPLOYMENT_ACCOUNT}/widget/lib.common") || {
   getDaoRoles: () => {},
   getPolicyApproverGroup: () => {},
   hasPermission: () => {},
+  getPermissionsText: () => {},
 };
 
 const refreshTable = Storage.get(
   "REFRESH_MEMBERS_TABLE_DATA",
-  `${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.members.Editor`
+  `${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.settings.MembersEditor`
 );
 
 const [refetch, setRefetch] = useState(false);
@@ -19,77 +21,105 @@ const policyApproverGroup = getPolicyApproverGroup();
 const roles = getDaoRoles();
 
 const Container = styled.div`
-  font-size: 13px;
-  min-height: 75vh;
-
-  .text-grey {
-    color: #b9b9b9 !important;
-  }
-
-  .text-size-2 {
-    font-size: 15px;
-  }
-
-  .text-dark-grey {
-    color: #687076;
-  }
-
-  .text-grey-100 {
-    background-color: #f5f5f5;
-  }
-
-  td {
-    padding: 0.7rem;
-    color: inherit;
-    vertical-align: middle;
-  }
-
-  .max-w-100 {
-    max-width: 100%;
-  }
-
-  table {
-    overflow-x: auto;
-  }
-
-  .bold {
-    font-weight: 500;
-  }
-
-  .text-right {
-    text-align: end;
-  }
-
-  .text-left {
-    text-align: left;
-  }
-  .text-underline {
-    text-decoration: underline !important;
-  }
-
-  .flex-1 {
-    flex: 1;
-  }
-
-  .nav-link {
-    font-size: 22px;
-    font-weight: bolder;
-    color: var(--theme-color) !important;
-  }
-
-  .text-delete {
-    color: #ff3b30;
-  }
-
-  .cursor-pointer {
-    cursor: pointer;
-  }
-
-  .theme-btn {
-    background-color: var(--theme-color) !important;
-    color: white;
-  }
-`;
+    font-size: 13px;
+    min-height: 75vh;
+  
+    .text-grey {
+      color: #b9b9b9 !important;
+    }
+  
+    .text-size-2 {
+      font-size: 15px;
+    }
+  
+    .text-dark-grey {
+      color: #687076;
+    }
+  
+    .text-grey-100 {
+      background-color: #f5f5f5;
+    }
+  
+    td {
+      padding: 0.7rem;
+      color: inherit;
+      vertical-align: middle;
+    }
+  
+    .max-w-100 {
+      max-width: 100%;
+    }
+  
+    table {
+      overflow-x: auto;
+    }
+  
+    .bold {
+      font-weight: 500;
+    }
+  
+    .text-right {
+      text-align: end;
+    }
+  
+    .text-left {
+      text-align: left;
+    }
+    .text-underline {
+      text-decoration: underline !important;
+    }
+  
+    .flex-1 {
+      flex: 1;
+    }
+  
+    .nav-link {
+      font-size: 22px;
+      font-weight: bolder;
+      color: var(--theme-color) !important;
+    }
+  
+    .text-delete {
+      color: #ff3b30;
+    }
+  
+    .cursor-pointer {
+      cursor: pointer;
+    }
+  
+    .theme-btn {
+      background-color: var(--theme-color) !important;
+      color: white;
+    }
+  
+    .custom-tooltip {
+      position: relative;
+      cursor: pointer;
+    }
+  
+    .custom-tooltip .tooltiptext {
+      display: none;
+      width: 300px;
+      background-color: white;
+      color: black
+      text-align: center;
+      border-radius: 5px;
+      padding: 5px;
+      position: absolute;
+      z-index: 10000;
+      top:110%;
+      right:80%;
+      opacity: 0;
+      box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3);
+      transition: opacity 0.3s;
+    }
+  
+    .custom-tooltip:hover .tooltiptext {
+      display: block;
+      opacity: 1;
+    }
+  
+  `;
 
 const [rowsPerPage, setRowsPerPage] = useState(10);
 const [currentPage, setPage] = useState(0);
@@ -102,7 +132,7 @@ const [showDeleteModal, setShowDeleteModal] = useState(false);
 
 useEffect(() => {
   setLoading(true);
-  if (!loading && typeof getMembersAndPermissions === "function") {
+  if (typeof getMembersAndPermissions === "function") {
     getMembersAndPermissions().then((res) => {
       setAllMembers(res);
     });
@@ -172,7 +202,12 @@ const Members = () => {
             <td>
               <div className="d-flex gap-3 align-items-center">
                 {(group.roles ?? []).map((i) => (
-                  <Tag className="rounded-pill px-2 py-1">{i}</Tag>
+                  <Tag className="rounded-pill px-2 py-1 custom-tooltip">
+                    {i}
+                    <div className="tooltiptext p-2">
+                      {getPermissionsText(i)}
+                    </div>
+                  </Tag>
                 ))}
               </div>
             </td>
@@ -211,9 +246,9 @@ function toggleEditor() {
 const hasCreatePermission = hasPermission(context.accountId, "policy", "vote");
 
 return (
-  <Container className="d-flex flex-column gap-2">
+  <Container className="d-flex flex-column">
     <Widget
-      src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.members.DeleteModalConfirmation`}
+      src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.settings.DeleteModalConfirmation`}
       props={{
         isOpen: showDeleteModal && selectedMember,
         onCancelClick: () => setShowDeleteModal(false),
@@ -236,7 +271,7 @@ return (
         title: selectedMember ? "Edit Member" : "Add Member",
         children: (
           <Widget
-            src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.members.Editor`}
+            src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.settings.MembersEditor`}
             props={{
               onCloseCanvas: toggleEditor,
               availableRoles: (roles ?? []).map((i) => {

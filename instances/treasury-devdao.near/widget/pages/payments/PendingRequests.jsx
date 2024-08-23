@@ -1,6 +1,6 @@
 const {
   getTransferApproversAndThreshold,
-  getFilteredProposalsByStatusAndkind,
+  getFilteredProposalsByStatusAndKind,
 } = VM.require("${REPL_DEPLOYMENT_ACCOUNT}/widget/lib.common") || {
   getTransferApproversAndThreshold: () => {},
 };
@@ -12,6 +12,7 @@ const [currentPage, setPage] = useState(0);
 const [proposals, setProposals] = useState(null);
 const [totalLength, setTotalLength] = useState(null);
 const [loading, setLoading] = useState(false);
+const [isPrevPageCalled, setIsPrevCalled] = useState(false);
 
 const refreshTableData = Storage.get(
   "REFRESH_TABLE_DATA",
@@ -25,18 +26,23 @@ const refreshVoteTableData = Storage.get(
 useEffect(() => {
   setLoading(true);
   Near.asyncView(treasuryDaoID, "get_last_proposal_id").then((i) => {
-    if (typeof getFilteredProposalsByStatusAndkind == "function") {
-      getFilteredProposalsByStatusAndkind({
+    if (typeof getFilteredProposalsByStatusAndKind == "function") {
+      const lastProposalId = i;
+      const offset = currentPage === 0 ? i : proposals[proposals.length - 1].id;
+      getFilteredProposalsByStatusAndKind({
         resPerPage: rowsPerPage,
-        reverse: true,
+        isPrevPageCalled: isPrevPageCalled,
         filterKindArray: ["Transfer"],
         filterStatusArray: ["InProgress"],
-        offset: currentPage * rowsPerPage,
-        lastProposalId: i,
+        offset: typeof offset === "number" ? offset : lastProposalId,
+        lastProposalId: lastProposalId,
+        currentPage,
       }).then((r) => {
+        if (currentPage === 0 && !totalLength) {
+          setTotalLength(r.totalLength);
+        }
         setLoading(false);
         setProposals(r.filteredProposals);
-        setTotalLength(r.totalLength);
       });
     }
   });
@@ -79,8 +85,16 @@ return (
           props={{
             totalLength: totalLength,
             totalPages: Math.ceil(totalLength / rowsPerPage),
-            onNextClick: () => setPage(currentPage + 1),
-            onPrevClick: () => setPage(currentPage - 1),
+            onNextClick: () => {
+              setIsPrevCalled(false);
+              setOffset(proposals[proposals.length - 1].id);
+              setPage(currentPage + 1);
+            },
+            onPrevClick: () => {
+              setIsPrevCalled(true);
+              setOffset(proposals[0].id);
+              setPage(currentPage - 1);
+            },
             currentPage: currentPage,
             rowsPerPage: rowsPerPage,
             onRowsChange: (v) => setRowsPerPage(parseInt(v)),

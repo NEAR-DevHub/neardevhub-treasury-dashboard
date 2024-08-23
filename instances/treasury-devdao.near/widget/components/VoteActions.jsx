@@ -3,8 +3,12 @@ const proposalId = props.proposalId;
 const treasuryDaoID = "${REPL_TREASURY}";
 const accountId = context.accountId;
 const tokensBalance = props.tokensBalance ?? [];
+const requiredVotes = props.requiredVotes;
+const showApproverToast = props.showApproverToast ?? (() => {});
+const showRejectToast = props.showRejectToast ?? (() => {});
 const currentAmount = props.currentAmount ?? "0";
 const currentContract = props.currentContract ?? "";
+const setVoteProposalId = props.setVoteProposalId ?? (() => {});
 
 const alreadyVoted = Object.keys(votes).includes(accountId);
 const userVote = votes[accountId];
@@ -52,11 +56,29 @@ function getProposalData() {
   );
 }
 
+function getProposalStatus(votes) {
+  const votesArray = Object.values(votes);
+  return {
+    isApproved:
+      votesArray.filter((i) => i === "Approve").length >= requiredVotes,
+    isRejected:
+      votesArray.filter((i) => i === "Reject").length >= requiredVotes,
+  };
+}
+
 useEffect(() => {
   if (isTxnCreated) {
     const checkForVoteOnProposal = () => {
       getProposalData().then((proposal) => {
         if (JSON.stringify(proposal.votes) !== JSON.stringify(votes)) {
+          const { isApproved, isRejected } = getProposalStatus(proposal.votes);
+          setVoteProposalId(proposalId);
+          if (isApproved) {
+            showApproverToast();
+          }
+          if (isRejected) {
+            showRejectToast();
+          }
           refreshData();
           setTxnCreated(false);
         } else {
@@ -87,15 +109,6 @@ const Container = styled.div`
       background-color: #04a46e;
       color: white;
     }
-  }
-
-  .toast {
-    background: white !important;
-  }
-
-  .toast-header {
-    background-color: #2c3e50 !important;
-    color: white !important;
   }
 `;
 

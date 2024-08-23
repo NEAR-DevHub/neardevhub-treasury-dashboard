@@ -91,38 +91,44 @@ const filterFunction = (item, filterStatusArray, filterKindArray) => {
   return true;
 };
 
-function getFilteredProposalsByStatusAndkind({
+function getFilteredProposalsByStatusAndKind({
   resPerPage,
-  reverse,
+  isPrevPageCalled,
   filterKindArray,
   filterStatusArray,
   offset,
   lastProposalId,
+  currentPage,
 }) {
-  let newLastProposalId = offset ?? 0;
+  let newLastProposalId = typeof offset === "number" ? offset : lastProposalId;
   let filteredProposals = [];
   const limit = 30;
-  if (reverse && !offset) {
-    newLastProposalId = lastProposalId;
-  }
   const promiseArray = [];
-  while (
-    (reverse && newLastProposalId > 0) ||
-    (!reverse && newLastProposalId < lastProposalId)
-  ) {
-    promiseArray.push(
-      Near.asyncView(treasuryDaoID, "get_proposals", {
-        from_index:
-          newLastProposalId - limit > 0 ? newLastProposalId - limit : 0,
-        limit: limit,
-      })
-    );
-    if (reverse) {
+
+  if (isPrevPageCalled) {
+    let startIndex = newLastProposalId;
+    while (startIndex < lastProposalId) {
+      promiseArray.push(
+        Near.asyncView(treasuryDaoID, "get_proposals", {
+          from_index: startIndex,
+          limit: limit,
+        })
+      );
+      startIndex += limit;
+    }
+  } else {
+    while (newLastProposalId > 0) {
+      promiseArray.push(
+        Near.asyncView(treasuryDaoID, "get_proposals", {
+          from_index:
+            newLastProposalId - limit > 0 ? newLastProposalId - limit : 0,
+          limit: offset > 0 && offset < limit ? offset - 1 : limit,
+        })
+      );
       newLastProposalId -= limit;
-    } else {
-      newLastProposalId += limit;
     }
   }
+
   return Promise.all(promiseArray).then((res) => {
     const proposals = [].concat(...res);
     filteredProposals = proposals.filter((item) =>
@@ -131,13 +137,15 @@ function getFilteredProposalsByStatusAndkind({
     const uniqueFilteredProposals = Array.from(
       new Map(filteredProposals.map((item) => [item.id, item])).values()
     );
-    const newArray = uniqueFilteredProposals.slice(0, resPerPage);
-    if (reverse) {
-      newArray.reverse();
-    }
+    const sortedProposals = uniqueFilteredProposals.sort((a, b) => b.id - a.id);
+    const start = isPrevPageCalled ? currentPage * resPerPage : 0;
+    const end = isPrevPageCalled
+      ? currentPage * resPerPage + resPerPage
+      : resPerPage;
+    const newArray = sortedProposals.slice(start, end);
     return {
       filteredProposals: newArray,
-      totalLength: filteredProposals.length,
+      totalLength: sortedProposals.length,
     };
   });
 }
@@ -221,12 +229,29 @@ function hasPermission(accountId, kindName, actionType) {
   return isAllowed;
 }
 
+function getPermissionsText(type) {
+  switch (type) {
+    case "Create Requests": {
+      return "Enables users to initiate payment requests.";
+    }
+    case "Manage Members": {
+      return "Allows users to control treasury adminis and their access levels.";
+    }
+    case "Vote": {
+      return "Allows users to approve or request proposed payment requests.";
+    }
+    default:
+      return "";
+  }
+}
+
 return {
   hasPermission,
   getTransferApproversAndThreshold,
-  getFilteredProposalsByStatusAndkind,
+  getFilteredProposalsByStatusAndKind,
   isNearSocial,
   getMembersAndPermissions,
   getDaoRoles,
   getPolicyApproverGroup,
+  getPermissionsText,
 };

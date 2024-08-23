@@ -9,8 +9,12 @@ const columnsVisibility = JSON.parse(
     `${REPL_DEPLOYMENT_ACCOUNT}/widget/components.SettingsDropdown`
   ) ?? "[]"
 );
+
+const highlightProposalId = props.highlightProposalId;
 const isPendingRequests = props.isPendingRequests;
 const transferApproversGroup = props.transferApproversGroup;
+const [showToastStatus, setToastStatus] = useState(false);
+const [voteProposalId, setVoteProposalId] = useState(null);
 
 const accountId = context.accountId;
 
@@ -37,6 +41,7 @@ const Container = styled.div`
     padding: 0.5rem;
     color: inherit;
     vertical-align: middle;
+    background:inherit;
   }
  
   .max-w-100 {
@@ -102,6 +107,29 @@ const Container = styled.div`
   .text-underline{
     text-decoration:underline !important;
   }
+
+  .bg-highlight{
+    background-color:rgb(185, 185, 185, 0.2);
+  }
+
+  .toast {
+    background: white !important;
+  }
+
+  .toast-header {
+    background-color: #2c3e50 !important;
+    color: white !important;
+  }
+`;
+
+const ToastContainer = styled.div`
+  a {
+    color: black !important;
+    text-decoration: underline !important;
+    &:hover {
+      color: black !important;
+    }
+  }
 `;
 
 const TooltipContent = ({ title, summary }) => {
@@ -135,6 +163,39 @@ const balanceResp = fetch(
   `https://api3.nearblocks.io/v1/account/${treasuryDaoID}`
 );
 
+const VoteSuccessToast = () => {
+  return showToastStatus && typeof voteProposalId === "number" ? (
+    <ToastContainer className="toast-container position-fixed bottom-0 end-0 p-3">
+      <div className={`toast ${showToastStatus ? "show" : ""}`}>
+        <div className="toast-header px-2">
+          <strong className="me-auto">Just Now</strong>
+          <i
+            className="bi bi-x-lg h6"
+            onClick={() => showToastStatus(null)}
+          ></i>
+        </div>
+        <div className="toast-body">
+          {showToastStatus === "APPROVE"
+            ? "The payment request has been successfully executed."
+            : "The payment has been rejected."}
+          <a
+            href={href({
+              widgetSrc: `${REPL_DEPLOYMENT_ACCOUNT}/widget/app`,
+              params: {
+                page: "payments",
+                selectedTab: "History",
+                highlightProposalId: voteProposalId,
+              },
+            })}
+          >
+            View in History
+          </a>
+        </div>
+      </div>
+    </ToastContainer>
+  ) : null;
+};
+
 const ProposalsComponent = () => {
   return (
     <tbody style={{ overflowX: "auto" }}>
@@ -147,7 +208,7 @@ const ProposalsComponent = () => {
         const args = item.kind.Transfer;
 
         return (
-          <tr>
+          <tr className={highlightProposalId === item.id ? "bg-highlight" : ""}>
             <td className="bold">{item.id}</td>
             <td className={isVisible("Created Date")}>
               <Widget
@@ -203,7 +264,7 @@ const ProposalsComponent = () => {
               </div>
             </td>
             <td
-              className={"text-truncate bold " + isVisible("Recipient")}
+              className={"bold custom-tooltip " + isVisible("Recipient")}
               style={{ maxWidth: 180 }}
             >
               <Widget
@@ -299,6 +360,10 @@ const ProposalsComponent = () => {
                     currentAmount: args.amount,
                     currentContract:
                       args.token_id === "" ? "near" : args.token_id,
+                    requiredVotes,
+                    showApproverToast: () => setToastStatus("APPROVE"),
+                    showRejectToast: () => setToastStatus("REJECT"),
+                    setVoteProposalId: setVoteProposalId,
                   }}
                 />
               </td>
@@ -312,6 +377,7 @@ const ProposalsComponent = () => {
 
 return (
   <Container style={{ overflowX: "auto" }}>
+    <VoteSuccessToast />
     {proposals.length === 0 ? (
       <div
         style={{ height: "50vh" }}

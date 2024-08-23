@@ -34,9 +34,9 @@ test.describe("admin connected", function () {
     await page.getByPlaceholder("treasury.near").fill("webassemblymusic.near");
     await page.getByTestId("total-amount").fill("5000");
 
-    const tokenSelect = await page.getByText("Select").nth(1);
+    const tokenSelect = await page.getByTestId("tokens-dropdown");
     await tokenSelect.click();
-    await page.getByText("NEAR Tokens available:").click();
+    await tokenSelect.getByText("NEAR").click();
 
     await page.getByRole("button", { name: "Submit" }).click();
 

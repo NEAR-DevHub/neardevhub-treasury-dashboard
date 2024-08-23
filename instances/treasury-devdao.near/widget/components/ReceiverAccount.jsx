@@ -6,6 +6,8 @@ const { isNearSocial } = VM.require(
 
 const receiverAccount = props.receiverAccount;
 const [isVerfied, setIsVerfied] = useState(false);
+const [verificationStatus, setVerificationStatus] = useState(null);
+
 const profile = Social.getr(`${receiverAccount}/profile`);
 const imageSrc =
   `https://i.near.social/magic/large/https://near.social/magic/img/account/${receiverAccount}` ??
@@ -24,25 +26,28 @@ useEffect(() => {
     (receiverAccount ?? "").includes(".near") ||
     (receiverAccount ?? "").includes(".tg")
   ) {
-    useCache(
-      () =>
-        asyncFetch(
-          `https://neardevhub-kyc-proxy.shuttleapp.rs/kyc/${receiverAccount}`
-        ).then((res) => {
-          let displayableText = "";
-          switch (res.body.kyc_status) {
-            case "Approved":
-              setIsVerfied(true);
-              break;
-
-            default:
-              setIsVerfied(false);
-              break;
-          }
-        }),
-      "kyc-check-proposal" + receiverAccount,
-      { subscribe: false }
-    );
+    asyncFetch(
+      `https://neardevhub-kyc-proxy.shuttleapp.rs/kyc/${receiverAccount}`
+    ).then((res) => {
+      let displayableText = "";
+      switch (res.body.kyc_status) {
+        case "Approved":
+          displayableText = "Verified";
+          setIsVerfied(true);
+          break;
+        case "Pending":
+          displayableText = "Pending";
+          break;
+        case "NotSubmitted":
+        case "Rejected":
+          displayableText = "Not Verfied";
+          break;
+        default:
+          displayableText = "Failed to get status";
+          break;
+      }
+      setVerificationStatus(displayableText);
+    });
   }
 }, [receiverAccount]);
 
@@ -56,29 +61,57 @@ const Container = styled.div`
   }
 `;
 
-return (
-  <div className="d-flex gap-1 align-items-center">
-    <div style={{ minWidth: "40px", position: "relative" }}>
-      <img src={imageSrc} height={40} width={40} className="rounded-circle" />
-      <img
-        src={isVerfied ? SuccessImg : WarningImg}
-        height={20}
-        width={20}
-        style={
-          isNearSocial
-            ? { marginTop: 25, marginLeft: "-20px" }
-            : { marginTop: "-17px", marginLeft: "23px" }
-        }
-      />
-    </div>
+const HoverCard = () => {
+  return (
     <div
-      className="text-truncate"
-      style={{ textAlign: "left", width: "150px" }}
+      className="tooltiptext p-2"
+      style={{ width: "150px", left: "20%", top: "80%" }}
     >
-      <div className="h6 mb-0"> {name}</div>
+      <div className="d-flex text-black justify-content-between align-items-center ">
+        <div className="d-flex" style={{ gap: "12px" }}>
+          <img
+            className="align-self-center object-fit-cover"
+            src={verificationStatus === "Verified" ? SuccessImg : WarningImg}
+            height={20}
+          />
+          <div className="d-flex flex-column justify-content-center">
+            <div className="h6 mb-0">Fractal</div>
+            <div className="text-sm text-muted">{verificationStatus}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
-      <div className={isVerfied ? "text-green" : "text-red"}>
-        @{receiverAccount}
+return (
+  <div>
+    {verificationStatus && <HoverCard />}
+    <div className="d-flex gap-1 align-items-center">
+      <div style={{ width: "40px", height: 40, position: "relative" }}>
+        <img src={imageSrc} height={40} width={40} className="rounded-circle" />
+        {verificationStatus && (
+          <img
+            src={isVerfied ? SuccessImg : WarningImg}
+            height={20}
+            width={20}
+            style={
+              isNearSocial
+                ? { marginTop: "-35px", marginLeft: "23px" }
+                : { marginTop: "-17px", marginLeft: "19px" }
+            }
+          />
+        )}
+      </div>
+      <div
+        className="text-truncate"
+        style={{ textAlign: "left", width: "150px" }}
+      >
+        <div className="h6 mb-0"> {name}</div>
+
+        <div className={isVerfied ? "text-green" : "text-red"}>
+          @{receiverAccount}
+        </div>
       </div>
     </div>
   </div>

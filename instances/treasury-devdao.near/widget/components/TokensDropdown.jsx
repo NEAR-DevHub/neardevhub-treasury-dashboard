@@ -23,7 +23,11 @@ if (
 const nearBalance = Big(nearBalanceResp?.body?.account?.[0]?.amount ?? "0")
   .div(Big(10).pow(24))
   .toFixed(4);
-
+const lockedStorageAmt = Big(
+  nearBalanceResp?.body?.account?.[0]?.storage_usage ?? "0"
+)
+  .div(Big(10).pow(5))
+  .toFixed(5);
 const [options, setOptions] = useState([]);
 
 const tokensWithBalance =
@@ -39,6 +43,7 @@ useEffect(() => {
       tokenBalance: nearBalance,
     },
   ];
+
   if (tokensWithBalance.length > 0 && !options.length) {
     tokens = tokens.concat(
       tokensWithBalance.map((i) => {
@@ -59,12 +64,18 @@ useEffect(() => {
 const [isOpen, setIsOpen] = useState(false);
 const [selectedOptionValue, setSelectedValue] = useState(selectedValue);
 
+function getNearAvailableBalance(tokenBalance) {
+  return Big(tokenBalance).minus(lockedStorageAmt).toFixed(4);
+}
 const toggleDropdown = () => {
   setIsOpen(!isOpen);
 };
 
 function sendTokensAvailable(value) {
-  setTokensAvailable(options.find((i) => i.value === value)?.tokenBalance);
+  const balance = options.find((i) => i.value === value)?.tokenBalance;
+  return setTokensAvailable(
+    value === "NEAR" ? getNearAvailableBalance(balance) : balance
+  );
 }
 
 useEffect(() => {
@@ -151,8 +162,16 @@ const Item = ({ option }) => {
       <img src={option.icon} height={30} width={30} />
       <div className="d-flex flex-column gap-1 w-100 text-wrap">
         <div className="h6 mb-0"> {option.title}</div>
+        {option.value === "NEAR" && (
+          <div className="text-sm text-muted w-100 text-wrap">
+            Tokens locked for storage: {lockedStorageAmt}
+          </div>
+        )}
         <div className="text-sm text-muted w-100 text-wrap">
-          Tokens available: {option.tokenBalance}
+          Tokens available:{" "}
+          {option.value === "NEAR"
+            ? getNearAvailableBalance(option.tokenBalance)
+            : option.tokenBalance}
         </div>
       </div>
     </div>
@@ -168,6 +187,7 @@ return (
       className="custom-select w-100"
       tabIndex="0"
       onBlur={() => setIsOpen(false)}
+      data-testid="tokens-dropdown"
     >
       <div
         className={
