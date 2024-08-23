@@ -3,10 +3,12 @@ const {
   getDaoRoles,
   getPolicyApproverGroup,
   hasPermission,
+  getPermissionsText,
 } = VM.require("${REPL_DEPLOYMENT_ACCOUNT}/widget/lib.common") || {
   getDaoRoles: () => {},
   getPolicyApproverGroup: () => {},
   hasPermission: () => {},
+  getPermissionsText: () => {},
 };
 
 const refreshTable = Storage.get(
@@ -156,22 +158,6 @@ function getImage(acc) {
 const Tag = styled.div`
   border: 1px solid #e2e6ec;
 `;
-
-function getPermissionsText(type) {
-  switch (type) {
-    case "Create Requests": {
-      return "Enables users to initiate payment requests.";
-    }
-    case "Manage Members": {
-      return "Allows users to control treasury adminis and their access levels.";
-    }
-    case "Vote": {
-      return "Allows users to approve or request proposed payment requests.";
-    }
-    default:
-      return "";
-  }
-}
 
 const Members = () => {
   return (

@@ -229,6 +229,22 @@ function hasPermission(accountId, kindName, actionType) {
   return isAllowed;
 }
 
+function getPermissionsText(type) {
+  switch (type) {
+    case "Create Requests": {
+      return "Enables users to initiate payment requests.";
+    }
+    case "Manage Members": {
+      return "Allows users to control treasury adminis and their access levels.";
+    }
+    case "Vote": {
+      return "Allows users to approve or request proposed payment requests.";
+    }
+    default:
+      return "";
+  }
+}
+
 return {
   hasPermission,
   getTransferApproversAndThreshold,
@@ -237,4 +253,5 @@ return {
   getMembersAndPermissions,
   getDaoRoles,
   getPolicyApproverGroup,
+  getPermissionsText,
 };

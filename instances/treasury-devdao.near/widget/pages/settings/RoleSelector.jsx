@@ -1,3 +1,9 @@
+const { getPermissionsText } = VM.require(
+  "${REPL_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+) || {
+  getPermissionsText: () => {},
+};
+
 const { href } = VM.require(`${REPL_DEVHUB}/widget/core.lib.url`);
 href || (href = () => {});
 
@@ -99,22 +105,6 @@ const handleOptionClick = (option) => {
   }
   setIsOpen(false);
 };
-
-function getPermissionsText(type) {
-  switch (type) {
-    case "Create Requests": {
-      return "Enables users to initiate payment requests.";
-    }
-    case "Manage Members": {
-      return "Allows users to control treasury adminis and their access levels.";
-    }
-    case "Vote": {
-      return "Allows users to approve or request proposed payment requests.";
-    }
-    default:
-      return "";
-  }
-}
 
 const Item = ({ option }) => {
   return (
