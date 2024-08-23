@@ -187,6 +187,7 @@ return (
       className="custom-select w-100"
       tabIndex="0"
       onBlur={() => setIsOpen(false)}
+      data-testid="tokens-dropdown"
     >
       <div
         className={
