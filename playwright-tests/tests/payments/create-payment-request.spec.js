@@ -15,7 +15,7 @@ test.describe("admin connected", function () {
     await page.goto("/treasury-devdao.near/widget/app?page=payments");
 
     const createPaymentRequestButton = await page.getByRole("button", {
-      name: " Create Request",
+      name: "Create Request",
     });
     await expect(createPaymentRequestButton).toBeVisible();
     await createPaymentRequestButton.click();
@@ -59,7 +59,7 @@ test.describe("admin connected", function () {
     await page.goto("/treasury-devdao.near/widget/app?page=payments");
 
     const createPaymentRequestButton = await page.getByRole("button", {
-      name: " Create Request",
+      name: "Create Request",
     });
     await expect(createPaymentRequestButton).toBeVisible();
     await createPaymentRequestButton.click();
