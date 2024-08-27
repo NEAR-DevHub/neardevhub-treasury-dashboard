@@ -60,22 +60,6 @@ const policy = Near.view(treasuryDaoID, "get_policy", {});
 
 const transferApproversGroup = getTransferApproversAndThreshold();
 
-if (
-  loading ||
-  proposals === null ||
-  totalLength === null ||
-  transferApproversGroup === null ||
-  policy === null
-) {
-  return (
-    <div className="d-flex justify-content-center align-items-center w-100 h-100">
-      <Widget
-        src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"}
-      />
-    </div>
-  );
-}
-
 return (
   <div className="d-flex flex-column flex-1 justify-content-between">
     <Widget
@@ -85,6 +69,7 @@ return (
         isPendingRequests: false,
         transferApproversGroup,
         highlightProposalId,
+        loading: loading,
       }}
     />
     {(proposals ?? [])?.length > 0 && (

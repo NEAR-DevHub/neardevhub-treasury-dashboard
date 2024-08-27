@@ -2,7 +2,7 @@ const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
 const treasuryDaoID = "${REPL_TREASURY}";
-const proposals = props.proposals ?? [];
+const proposals = props.proposals;
 const columnsVisibility = JSON.parse(
   Storage.get(
     "COLUMNS_VISIBLILITY",
@@ -11,6 +11,7 @@ const columnsVisibility = JSON.parse(
 );
 
 const highlightProposalId = props.highlightProposalId;
+const loading = props.loading;
 const isPendingRequests = props.isPendingRequests;
 const transferApproversGroup = props.transferApproversGroup;
 const [showToastStatus, setToastStatus] = useState(false);
@@ -132,6 +133,49 @@ const ToastContainer = styled.div`
   }
 `;
 
+useEffect(() => {
+  if (props.transactionHashes) {
+    asyncFetch("${REPL_RPC_URL}", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: "dontcare",
+        method: "tx",
+        params: [props.transactionHashes, context.accountId],
+      }),
+    }).then((transaction) => {
+      if (transaction !== null) {
+        const transaction_method_name =
+          transaction?.body?.result?.transaction?.actions[0].FunctionCall
+            .method_name;
+
+        if (transaction_method_name === "act_proposal") {
+          const args =
+            transaction?.body?.result?.transaction?.actions[0].FunctionCall
+              .args;
+          const decodedArgs = JSON.parse(atob(args ?? "") ?? "{}");
+          if (decodedArgs.id) {
+            const proposalId = decodedArgs.id;
+            Near.asyncView(treasuryDaoID, "get_proposal", {
+              id: proposalId,
+            }).then((result) => {
+              if (result.status !== "InProgress") {
+                setToastStatus(
+                  result.status === "Approved" ? "APPROVE" : "REJECT"
+                );
+                setVoteProposalId(proposalId);
+              }
+            });
+          }
+        }
+      }
+    });
+  }
+}, [props.transactionHashes]);
+
 const TooltipContent = ({ title, summary }) => {
   return (
     <div className="tooltiptext p-3">
@@ -149,8 +193,8 @@ function isVisible(column) {
 
 const requiredVotes =
   Math.floor(
-    transferApproversGroup.threshold *
-      transferApproversGroup.approverAccounts.length
+    transferApproversGroup?.threshold *
+      transferApproversGroup?.approverAccounts.length
   ) + 1;
 
 const hideApproversCol = isPendingRequests && requiredVotes === 1;
@@ -378,71 +422,84 @@ const ProposalsComponent = () => {
 return (
   <Container style={{ overflowX: "auto" }}>
     <VoteSuccessToast />
-    {proposals.length === 0 ? (
-      <div
-        style={{ height: "50vh" }}
-        className="d-flex justify-content-center align-items-center"
-      >
-        {isPendingRequests ? (
-          <div className="d-flex justify-content-center align-items-center flex-column gap-2">
-            <h4>No Payment Requests Found</h4>
-            <h6>There are currently no payment requests</h6>
-          </div>
-        ) : (
-          <div className="d-flex justify-content-center align-items-center flex-column gap-2">
-            <h4>No History Requests Found</h4>
-            <h6>There are currently no history requests</h6>
-          </div>
-        )}
+    {loading === true ||
+    proposals === null ||
+    transferApproversGroup === null ||
+    policy === null ? (
+      <div className="d-flex justify-content-center align-items-center w-100 h-100">
+        <Widget
+          src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"}
+        />
       </div>
     ) : (
-      <table className="table">
-        <thead>
-          <tr className="text-grey">
-            <td>#</td>
-            <td className={isVisible("Created Date")}>Created Date</td>
-            {!isPendingRequests && <td>Status</td>}
-            <td className={isVisible("Reference")}>Reference</td>
+      <div>
+        {proposals.length === 0 ? (
+          <div
+            style={{ height: "50vh" }}
+            className="d-flex justify-content-center align-items-center"
+          >
+            {isPendingRequests ? (
+              <div className="d-flex justify-content-center align-items-center flex-column gap-2">
+                <h4>No Payment Requests Found</h4>
+                <h6>There are currently no payment requests</h6>
+              </div>
+            ) : (
+              <div className="d-flex justify-content-center align-items-center flex-column gap-2">
+                <h4>No History Requests Found</h4>
+                <h6>There are currently no history requests</h6>
+              </div>
+            )}
+          </div>
+        ) : (
+          <table className="table">
+            <thead>
+              <tr className="text-grey">
+                <td>#</td>
+                <td className={isVisible("Created Date")}>Created Date</td>
+                {!isPendingRequests && <td>Status</td>}
+                <td className={isVisible("Reference")}>Reference</td>
 
-            <td className={isVisible("Title")}>Title</td>
-            <td className={isVisible("Summary")}>Summary</td>
-            <td className={isVisible("Recipient")}>Recipient</td>
-            <td className={isVisible("Requested Token") + " text-center"}>
-              Requested Token
-            </td>
-            <td className={isVisible("Funding Ask") + " text-right"}>
-              Funding Ask
-            </td>
-            <td className={isVisible("Creator") + " text-center"}>
-              Created by
-            </td>
-            <td className={isVisible("Notes") + " text-left"}>Notes</td>
-            {isPendingRequests && (
-              <td className={isVisible("Required Votes") + " text-center"}>
-                Required Votes
-              </td>
-            )}
-            {isPendingRequests && (
-              <td className={isVisible("Votes") + " text-center"}>Votes</td>
-            )}
-            <td
-              className={
-                isVisible("Approvers") +
-                " text-center " +
-                (hideApproversCol && " display-none")
-              }
-            >
-              Approvers
-            </td>
-            {isPendingRequests && hasVotingPermission && (
-              <td className="text-right">Actions</td>
-            )}
-            {/* {!isPendingRequests && <td>Transaction Date</td>}
+                <td className={isVisible("Title")}>Title</td>
+                <td className={isVisible("Summary")}>Summary</td>
+                <td className={isVisible("Recipient")}>Recipient</td>
+                <td className={isVisible("Requested Token") + " text-center"}>
+                  Requested Token
+                </td>
+                <td className={isVisible("Funding Ask") + " text-right"}>
+                  Funding Ask
+                </td>
+                <td className={isVisible("Creator") + " text-center"}>
+                  Created by
+                </td>
+                <td className={isVisible("Notes") + " text-left"}>Notes</td>
+                {isPendingRequests && (
+                  <td className={isVisible("Required Votes") + " text-center"}>
+                    Required Votes
+                  </td>
+                )}
+                {isPendingRequests && (
+                  <td className={isVisible("Votes") + " text-center"}>Votes</td>
+                )}
+                <td
+                  className={
+                    isVisible("Approvers") +
+                    " text-center " +
+                    (hideApproversCol && " display-none")
+                  }
+                >
+                  Approvers
+                </td>
+                {isPendingRequests && hasVotingPermission && (
+                  <td className="text-right">Actions</td>
+                )}
+                {/* {!isPendingRequests && <td>Transaction Date</td>}
           {!isPendingRequests && <td>Transaction</td>} */}
-          </tr>
-        </thead>
-        <ProposalsComponent />
-      </table>
+              </tr>
+            </thead>
+            <ProposalsComponent />
+          </table>
+        )}
+      </div>
     )}
   </Container>
 );

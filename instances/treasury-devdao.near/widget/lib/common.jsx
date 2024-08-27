@@ -122,7 +122,7 @@ function getFilteredProposalsByStatusAndKind({
         Near.asyncView(treasuryDaoID, "get_proposals", {
           from_index:
             newLastProposalId - limit > 0 ? newLastProposalId - limit : 0,
-          limit: offset > 0 && offset < limit ? offset - 1 : limit,
+          limit: offset > 0 && offset < limit ? offset : limit,
         })
       );
       newLastProposalId -= limit;
