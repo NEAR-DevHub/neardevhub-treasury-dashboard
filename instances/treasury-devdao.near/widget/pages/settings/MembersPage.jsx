@@ -185,7 +185,7 @@ const Members = () => {
             </td>
             <td>
               <Widget
-                src="mob.near/widget/Profile.OverlayTrigger"
+                src="${REPL_MOB}/widget/Profile.OverlayTrigger"
                 props={{
                   accountId: account,
                   children: (

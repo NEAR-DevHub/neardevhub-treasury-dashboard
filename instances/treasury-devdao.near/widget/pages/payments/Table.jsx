@@ -25,7 +25,7 @@ const hasVotingPermission = (
 
 const Container = styled.div`
   font-size: 13px;
-  min-height:60vh;
+  min-height: 60vh;
   .text-grey {
     color: #b9b9b9 !important;
   }
@@ -42,9 +42,9 @@ const Container = styled.div`
     padding: 0.5rem;
     color: inherit;
     vertical-align: middle;
-    background:inherit;
+    background: inherit;
   }
- 
+
   .max-w-100 {
     max-width: 100%;
   }
@@ -68,49 +68,23 @@ const Container = styled.div`
     text-align: left;
   }
 
-  .custom-tooltip {
-    position: relative;
-    cursor: pointer;
-  }
-
-  .custom-tooltip .tooltiptext {
+  .display-none {
     display: none;
-    width: 300px;
-    background-color: white;
-    color: black
-    text-align: center;
-    border-radius: 5px;
-    padding: 5px;
-    position: absolute;
-    z-index: 10000;
-    top:100%;
-    opacity: 0;
-    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3);
-    transition: opacity 0.3s;
   }
 
-  .custom-tooltip:hover .tooltiptext {
-    display: block;
-    opacity: 1;
+  .text-right {
+    text-align: end;
   }
 
-  .display-none{
-    display:none;
+  .text-left {
+    text-align: left;
+  }
+  .text-underline {
+    text-decoration: underline !important;
   }
 
-  .text-right{
-    text-align:end;
-  }
-
-  .text-left{
-    text-align:left;
-  }
-  .text-underline{
-    text-decoration:underline !important;
-  }
-
-  .bg-highlight{
-    background-color:rgb(185, 185, 185, 0.2);
+  .bg-highlight {
+    background-color: rgb(185, 185, 185, 0.2);
   }
 
   .toast {
@@ -178,7 +152,7 @@ useEffect(() => {
 
 const TooltipContent = ({ title, summary }) => {
   return (
-    <div className="tooltiptext p-3">
+    <div className="p-1">
       <h6>{title}</h6>
       <div>{summary}</div>
     </div>
@@ -334,22 +308,36 @@ const ProposalsComponent = () => {
               )}
             </td>
 
-            <td className={"custom-tooltip " + isVisible("Title")}>
-              <div className="custom-truncate bold" style={{ maxWidth: 180 }}>
-                {title}
-                <TooltipContent title={title} summary={summary} />
-              </div>
+            <td className={isVisible("Title")}>
+              <Widget
+                src="${REPL_MOB}/widget/N.Common.OverlayTrigger"
+                props={{
+                  popup: <TooltipContent title={title} summary={summary} />,
+                  children: (
+                    <div
+                      className="custom-truncate bold"
+                      style={{ width: 180 }}
+                    >
+                      {title}
+                    </div>
+                  ),
+                }}
+              />
             </td>
-            <td className={"custom-tooltip " + isVisible("Summary")}>
-              <div className="custom-truncate" style={{ maxWidth: 180 }}>
-                {summary}
-                <TooltipContent title={title} summary={summary} />
-              </div>
+            <td className={isVisible("Summary")}>
+              <Widget
+                src="${REPL_MOB}/widget/N.Common.OverlayTrigger"
+                props={{
+                  popup: <TooltipContent title={title} summary={summary} />,
+                  children: (
+                    <div className="custom-truncate" style={{ width: 180 }}>
+                      {summary}
+                    </div>
+                  ),
+                }}
+              />
             </td>
-            <td
-              className={"bold custom-tooltip " + isVisible("Recipient")}
-              style={{ maxWidth: 180 }}
-            >
+            <td className={"bold " + isVisible("Recipient")}>
               <Widget
                 src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.ReceiverAccount`}
                 props={{
@@ -376,7 +364,7 @@ const ProposalsComponent = () => {
             </td>
             <td className={"bold text-center " + isVisible("Creator")}>
               <Widget
-                src="mob.near/widget/Profile.OverlayTrigger"
+                src="${REPL_MOB}/widget/Profile.OverlayTrigger"
                 props={{
                   accountId: item.proposer,
                   children: (
