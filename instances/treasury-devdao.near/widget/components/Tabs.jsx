@@ -6,7 +6,7 @@ const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
 
-const { selectedTab, tabs, sidebarMenu } = props;
+const { selectedTab, tabs, SidebarMenu } = props;
 
 const [currentTabProps, setCurrentTabProps] = useState(null);
 
@@ -82,7 +82,9 @@ return (
             )
         )}
       </NavUnderline>
-      <div>{sidebarMenu}</div>
+      <div>
+        <SidebarMenu currentTab={currentTab} />
+      </div>
     </div>
     {currentTab && (
       <div className="w-100 h-100 px-3" key={currentTab.title}>

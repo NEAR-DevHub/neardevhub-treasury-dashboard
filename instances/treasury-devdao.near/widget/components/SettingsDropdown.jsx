@@ -1,4 +1,4 @@
-const { selectedValue, onChange, disabled } = props;
+const { selectedValue, onChange, disabled, isPendingPage } = props;
 
 onChange = onChange || (() => {});
 
@@ -63,6 +63,10 @@ const [settingsOptions, setSettingsOptions] = useState(
         },
         {
           title: "Approvers",
+          show: true,
+        },
+        {
+          title: "Expiring Date",
           show: true,
         },
       ]
@@ -152,15 +156,21 @@ return (
         <div className="dropdown-menu rounded-2 dropdown-menu-end dropdown-menu-lg-start px-2 shadow show w-100">
           <div>
             <div className="text-muted text-sm">Shown in table</div>
-            {settingsOptions.map((option) => (
-              <div
-                key={option.title}
-                className={`dropdown-item cursor-pointer w-100 my-1`}
-                onClick={() => handleOptionClick(option)}
-              >
-                <Item option={option} />
-              </div>
-            ))}
+            {settingsOptions.map((option) => {
+              // hide Expiring Date for history page
+              if (!isPendingPage && option.title === "Expiring Date") {
+                return;
+              }
+              return (
+                <div
+                  key={option.title}
+                  className={`dropdown-item cursor-pointer w-100 my-1`}
+                  onClick={() => handleOptionClick(option)}
+                >
+                  <Item option={option} />
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

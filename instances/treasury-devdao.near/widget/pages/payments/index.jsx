@@ -14,24 +14,27 @@ const hasCreatePermission = hasPermission(
   "AddProposal"
 );
 
-const sidebarMenu = (
-  <div
-    className="d-flex gap-2 align-items-center"
-    style={{ paddingBottom: "7px" }}
-  >
-    {hasCreatePermission && (
-      <button
-        className="primary p-2 rounded-2 h6 fw-bold d-flex align-items-center gap-2 mb-0"
-        onClick={() => setShowCreateRequest(true)}
-      >
-        <i class="bi bi-plus-circle-fill"></i>Create Request
-      </button>
-    )}
-    <Widget
-      src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.SettingsDropdown`}
-    />
-  </div>
-);
+const SidebarMenu = ({ currentTab }) => {
+  return (
+    <div
+      className="d-flex gap-2 align-items-center"
+      style={{ paddingBottom: "7px" }}
+    >
+      {hasCreatePermission && (
+        <button
+          className="primary p-2 rounded-2 h6 fw-bold d-flex align-items-center gap-2 mb-0"
+          onClick={() => setShowCreateRequest(true)}
+        >
+          <i class="bi bi-plus-circle-fill"></i>Create Request
+        </button>
+      )}
+      <Widget
+        src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.SettingsDropdown`}
+        props={{ isPendingPage: currentTab.title === "Pending Requests" }}
+      />
+    </div>
+  );
+};
 
 function toggleCreatePage() {
   setShowCreateRequest(!showCreateRequest);
@@ -77,7 +80,7 @@ return (
             props: props,
           },
         ],
-        sidebarMenu: sidebarMenu,
+        SidebarMenu: SidebarMenu,
       }}
     />
   </Container>

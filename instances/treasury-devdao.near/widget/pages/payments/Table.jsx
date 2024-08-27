@@ -2,7 +2,7 @@ const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
 const treasuryDaoID = "${REPL_TREASURY}";
-const proposals = props.proposals ?? [];
+const proposals = props.proposals;
 const columnsVisibility = JSON.parse(
   Storage.get(
     "COLUMNS_VISIBLILITY",
@@ -11,6 +11,7 @@ const columnsVisibility = JSON.parse(
 );
 
 const highlightProposalId = props.highlightProposalId;
+const loading = props.loading;
 const isPendingRequests = props.isPendingRequests;
 const transferApproversGroup = props.transferApproversGroup;
 const [showToastStatus, setToastStatus] = useState(false);
@@ -24,7 +25,7 @@ const hasVotingPermission = (
 
 const Container = styled.div`
   font-size: 13px;
-  min-height:60vh;
+  min-height: 60vh;
   .text-grey {
     color: #b9b9b9 !important;
   }
@@ -41,9 +42,9 @@ const Container = styled.div`
     padding: 0.5rem;
     color: inherit;
     vertical-align: middle;
-    background:inherit;
+    background: inherit;
   }
- 
+
   .max-w-100 {
     max-width: 100%;
   }
@@ -67,49 +68,23 @@ const Container = styled.div`
     text-align: left;
   }
 
-  .custom-tooltip {
-    position: relative;
-    cursor: pointer;
-  }
-
-  .custom-tooltip .tooltiptext {
+  .display-none {
     display: none;
-    width: 300px;
-    background-color: white;
-    color: black
-    text-align: center;
-    border-radius: 5px;
-    padding: 5px;
-    position: absolute;
-    z-index: 10000;
-    top:100%;
-    opacity: 0;
-    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3);
-    transition: opacity 0.3s;
   }
 
-  .custom-tooltip:hover .tooltiptext {
-    display: block;
-    opacity: 1;
+  .text-right {
+    text-align: end;
   }
 
-  .display-none{
-    display:none;
+  .text-left {
+    text-align: left;
+  }
+  .text-underline {
+    text-decoration: underline !important;
   }
 
-  .text-right{
-    text-align:end;
-  }
-
-  .text-left{
-    text-align:left;
-  }
-  .text-underline{
-    text-decoration:underline !important;
-  }
-
-  .bg-highlight{
-    background-color:rgb(185, 185, 185, 0.2);
+  .bg-highlight {
+    background-color: rgb(185, 185, 185, 0.2);
   }
 
   .toast {
@@ -132,9 +107,52 @@ const ToastContainer = styled.div`
   }
 `;
 
+useEffect(() => {
+  if (props.transactionHashes) {
+    asyncFetch("${REPL_RPC_URL}", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: "dontcare",
+        method: "tx",
+        params: [props.transactionHashes, context.accountId],
+      }),
+    }).then((transaction) => {
+      if (transaction !== null) {
+        const transaction_method_name =
+          transaction?.body?.result?.transaction?.actions[0].FunctionCall
+            .method_name;
+
+        if (transaction_method_name === "act_proposal") {
+          const args =
+            transaction?.body?.result?.transaction?.actions[0].FunctionCall
+              .args;
+          const decodedArgs = JSON.parse(atob(args ?? "") ?? "{}");
+          if (decodedArgs.id) {
+            const proposalId = decodedArgs.id;
+            Near.asyncView(treasuryDaoID, "get_proposal", {
+              id: proposalId,
+            }).then((result) => {
+              if (result.status !== "InProgress") {
+                setToastStatus(
+                  result.status === "Approved" ? "APPROVE" : "REJECT"
+                );
+                setVoteProposalId(proposalId);
+              }
+            });
+          }
+        }
+      }
+    });
+  }
+}, [props.transactionHashes]);
+
 const TooltipContent = ({ title, summary }) => {
   return (
-    <div className="tooltiptext p-3">
+    <div className="p-1">
       <h6>{title}</h6>
       <div>{summary}</div>
     </div>
@@ -149,8 +167,8 @@ function isVisible(column) {
 
 const requiredVotes =
   Math.floor(
-    transferApproversGroup.threshold *
-      transferApproversGroup.approverAccounts.length
+    transferApproversGroup?.threshold *
+      transferApproversGroup?.approverAccounts.length
   ) + 1;
 
 const hideApproversCol = isPendingRequests && requiredVotes === 1;
@@ -195,6 +213,45 @@ const VoteSuccessToast = () => {
     </ToastContainer>
   ) : null;
 };
+
+function formatSubmissionTimeStamp(timestamp) {
+  const milliseconds = Number(timestamp) / 1000000;
+  const date = new Date(milliseconds);
+
+  // Calculate days and minutes remaining from the timestamp
+  const now = new Date();
+  let diffTime = date - now;
+
+  // Check if the difference is negative
+  const isNegative = diffTime < 0;
+
+  // Convert the total difference into days, hours, and minutes
+  const totalMinutes = Math.floor(diffTime / (1000 * 60));
+  const totalHours = Math.floor(totalMinutes / 60);
+  const remainingMinutes = totalMinutes % 60;
+
+  const totalDays = Math.floor(totalHours / 24);
+  const remainingHours = totalHours % 24;
+
+  // Get hours, minutes, day, month, and year
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  const day = date.getDate().toString().padStart(2, "0");
+  const month = date.toLocaleString("default", { month: "short" });
+  const year = date.getFullYear();
+  return (
+    <div className="d-flex flex-column">
+      <div className="fw-bold">
+        {isNegative
+          ? "Expired"
+          : `${totalDays}d ${remainingHours}h ${remainingMinutes}m`}
+      </div>
+      <div className="text-muted text-sm">
+        {hours}:{minutes} {day} {month} {year}
+      </div>
+    </div>
+  );
+}
 
 const ProposalsComponent = () => {
   return (
@@ -251,22 +308,36 @@ const ProposalsComponent = () => {
               )}
             </td>
 
-            <td className={"custom-tooltip " + isVisible("Title")}>
-              <div className="custom-truncate bold" style={{ maxWidth: 180 }}>
-                {title}
-                <TooltipContent title={title} summary={summary} />
-              </div>
+            <td className={isVisible("Title")}>
+              <Widget
+                src="${REPL_MOB}/widget/N.Common.OverlayTrigger"
+                props={{
+                  popup: <TooltipContent title={title} summary={summary} />,
+                  children: (
+                    <div
+                      className="custom-truncate bold"
+                      style={{ width: 180 }}
+                    >
+                      {title}
+                    </div>
+                  ),
+                }}
+              />
             </td>
-            <td className={"custom-tooltip " + isVisible("Summary")}>
-              <div className="custom-truncate" style={{ maxWidth: 180 }}>
-                {summary}
-                <TooltipContent title={title} summary={summary} />
-              </div>
+            <td className={isVisible("Summary")}>
+              <Widget
+                src="${REPL_MOB}/widget/N.Common.OverlayTrigger"
+                props={{
+                  popup: <TooltipContent title={title} summary={summary} />,
+                  children: (
+                    <div className="custom-truncate" style={{ width: 180 }}>
+                      {summary}
+                    </div>
+                  ),
+                }}
+              />
             </td>
-            <td
-              className={"bold custom-tooltip " + isVisible("Recipient")}
-              style={{ maxWidth: 180 }}
-            >
+            <td className={"bold " + isVisible("Recipient")}>
               <Widget
                 src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.ReceiverAccount`}
                 props={{
@@ -293,7 +364,7 @@ const ProposalsComponent = () => {
             </td>
             <td className={"bold text-center " + isVisible("Creator")}>
               <Widget
-                src="mob.near/widget/Profile.OverlayTrigger"
+                src="${REPL_MOB}/widget/Profile.OverlayTrigger"
                 props={{
                   accountId: item.proposer,
                   children: (
@@ -343,6 +414,15 @@ const ProposalsComponent = () => {
                 }}
               />
             </td>
+
+            {isPendingRequests && (
+              <td
+                className={isVisible("Expiring Date") + " text-left"}
+                style={{ minWidth: 150 }}
+              >
+                {formatSubmissionTimeStamp(item.submission_time)}
+              </td>
+            )}
             {isPendingRequests && hasVotingPermission && (
               <td className="text-right">
                 <Widget
@@ -378,71 +458,89 @@ const ProposalsComponent = () => {
 return (
   <Container style={{ overflowX: "auto" }}>
     <VoteSuccessToast />
-    {proposals.length === 0 ? (
-      <div
-        style={{ height: "50vh" }}
-        className="d-flex justify-content-center align-items-center"
-      >
-        {isPendingRequests ? (
-          <div className="d-flex justify-content-center align-items-center flex-column gap-2">
-            <h4>No Payment Requests Found</h4>
-            <h6>There are currently no payment requests</h6>
-          </div>
-        ) : (
-          <div className="d-flex justify-content-center align-items-center flex-column gap-2">
-            <h4>No History Requests Found</h4>
-            <h6>There are currently no history requests</h6>
-          </div>
-        )}
+    {loading === true ||
+    proposals === null ||
+    transferApproversGroup === null ||
+    policy === null ? (
+      <div className="d-flex justify-content-center align-items-center w-100 h-100">
+        <Widget
+          src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"}
+        />
       </div>
     ) : (
-      <table className="table">
-        <thead>
-          <tr className="text-grey">
-            <td>#</td>
-            <td className={isVisible("Created Date")}>Created Date</td>
-            {!isPendingRequests && <td>Status</td>}
-            <td className={isVisible("Reference")}>Reference</td>
+      <div>
+        {proposals.length === 0 ? (
+          <div
+            style={{ height: "50vh" }}
+            className="d-flex justify-content-center align-items-center"
+          >
+            {isPendingRequests ? (
+              <div className="d-flex justify-content-center align-items-center flex-column gap-2">
+                <h4>No Payment Requests Found</h4>
+                <h6>There are currently no payment requests</h6>
+              </div>
+            ) : (
+              <div className="d-flex justify-content-center align-items-center flex-column gap-2">
+                <h4>No History Requests Found</h4>
+                <h6>There are currently no history requests</h6>
+              </div>
+            )}
+          </div>
+        ) : (
+          <table className="table">
+            <thead>
+              <tr className="text-grey">
+                <td>#</td>
+                <td className={isVisible("Created Date")}>Created Date</td>
+                {!isPendingRequests && <td>Status</td>}
+                <td className={isVisible("Reference")}>Reference</td>
 
-            <td className={isVisible("Title")}>Title</td>
-            <td className={isVisible("Summary")}>Summary</td>
-            <td className={isVisible("Recipient")}>Recipient</td>
-            <td className={isVisible("Requested Token") + " text-center"}>
-              Requested Token
-            </td>
-            <td className={isVisible("Funding Ask") + " text-right"}>
-              Funding Ask
-            </td>
-            <td className={isVisible("Creator") + " text-center"}>
-              Created by
-            </td>
-            <td className={isVisible("Notes") + " text-left"}>Notes</td>
-            {isPendingRequests && (
-              <td className={isVisible("Required Votes") + " text-center"}>
-                Required Votes
-              </td>
-            )}
-            {isPendingRequests && (
-              <td className={isVisible("Votes") + " text-center"}>Votes</td>
-            )}
-            <td
-              className={
-                isVisible("Approvers") +
-                " text-center " +
-                (hideApproversCol && " display-none")
-              }
-            >
-              Approvers
-            </td>
-            {isPendingRequests && hasVotingPermission && (
-              <td className="text-right">Actions</td>
-            )}
-            {/* {!isPendingRequests && <td>Transaction Date</td>}
+                <td className={isVisible("Title")}>Title</td>
+                <td className={isVisible("Summary")}>Summary</td>
+                <td className={isVisible("Recipient")}>Recipient</td>
+                <td className={isVisible("Requested Token") + " text-center"}>
+                  Requested Token
+                </td>
+                <td className={isVisible("Funding Ask") + " text-right"}>
+                  Funding Ask
+                </td>
+                <td className={isVisible("Creator") + " text-center"}>
+                  Created by
+                </td>
+                <td className={isVisible("Notes") + " text-left"}>Notes</td>
+                {isPendingRequests && (
+                  <td className={isVisible("Required Votes") + " text-center"}>
+                    Required Votes
+                  </td>
+                )}
+                {isPendingRequests && (
+                  <td className={isVisible("Votes") + " text-center"}>Votes</td>
+                )}
+                <td
+                  className={
+                    isVisible("Approvers") +
+                    " text-center " +
+                    (hideApproversCol && " display-none")
+                  }
+                >
+                  Approvers
+                </td>
+                {isPendingRequests && (
+                  <td className={isVisible("Expiring Date") + " text-left "}>
+                    Expiring Date
+                  </td>
+                )}
+                {isPendingRequests && hasVotingPermission && (
+                  <td className="text-right">Actions</td>
+                )}
+                {/* {!isPendingRequests && <td>Transaction Date</td>}
           {!isPendingRequests && <td>Transaction</td>} */}
-          </tr>
-        </thead>
-        <ProposalsComponent />
-      </table>
+              </tr>
+            </thead>
+            <ProposalsComponent />
+          </table>
+        )}
+      </div>
     )}
   </Container>
 );
