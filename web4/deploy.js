@@ -4,8 +4,8 @@ import { createDeployArgs } from './createdeployargs.js';
 
 // near contract call-function as-transaction $CONTRACT_ID post_javascript file-args web4/args.json prepaid-gas '100.0 Tgas' attached-deposit '0 NEAR' sign-as $CONTRACT_ID network-config testnet sign-with-plaintext-private-key --signer-public-key $SIGNER_PUBLIC_KEY --signer-private-key $SIGNER_PRIVATE_KEY send
 
-const networkId = process.env.NEAR_ENV;
-const contractId = process.env.CONTRACT_ID;
+const networkId = process.env.NEAR_NETWORK;
+const contractId = process.env.NEAR_SOCIAL_ACCOUNT_ID;
 
 const keyStore = new nearApi.keyStores.InMemoryKeyStore();
 const keyPair = nearApi.KeyPair.fromString(process.env.SIGNER_PRIVATE_KEY);
