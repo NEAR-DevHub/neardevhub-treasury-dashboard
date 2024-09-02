@@ -196,6 +196,7 @@ return (
         }
         props={{
           nearPrice: nearPrice,
+          ...props,
         }}
       />
     </div>
