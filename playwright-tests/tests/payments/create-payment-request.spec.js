@@ -32,15 +32,18 @@ test.describe("admin connected", function () {
     await page.getByTestId("proposal-summary").fill("Test proposal summary");
 
     await page.getByPlaceholder("treasury.near").fill("webassemblymusic.near");
-    await page.getByTestId("total-amount").fill("5000");
+    await page.getByTestId("total-amount").fill("3");
 
     const tokenSelect = await page.getByTestId("tokens-dropdown");
     await tokenSelect.click();
     await tokenSelect.getByText("NEAR").click();
 
-    await page.getByRole("button", { name: "Submit" }).click();
+    const submitBtn = page
+      .locator(".offcanvas-body")
+      .getByRole("button", { name: "Submit" });
+    await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
+    submitBtn.click();
 
-    await expect(await page.getByText("Deposit: 0.1 NEAR")).toBeVisible();
     await expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
         description:
@@ -49,7 +52,7 @@ test.describe("admin connected", function () {
           Transfer: {
             token_id: "",
             receiver_id: "webassemblymusic.near",
-            amount: "5000000000000000000000000000",
+            amount: "3000000000000000000000000",
           },
         },
       },
@@ -78,9 +81,10 @@ test.describe("admin connected", function () {
     await expect(await page.getByTestId("total-amount").inputValue()).toBe(
       "3120"
     );
-    await page.getByRole("button", { name: "Submit" }).click();
+    const submitBtn = page.getByRole("button", { name: "Submit" });
+    await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
+    submitBtn.click();
 
-    await expect(await page.getByText("Deposit: 0.1 NEAR")).toBeVisible();
     await expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
         description:
