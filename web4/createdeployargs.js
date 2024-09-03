@@ -6,7 +6,7 @@ export async function createDeployArgs() {
   const indexHtml = `export default ${JSON.stringify(
     (
       await readFile(new URL("public_html/index.html", import.meta.url))
-    ).toString(),
+    ).toString()
   )};`;
   await writeFile(new URL("index.html.js", import.meta.url), indexHtml);
 
@@ -25,12 +25,12 @@ export async function createDeployArgs() {
   let scriptFileContent = (await readFile("./contract-bundle.js")).toString();
   scriptFileContent = scriptFileContent.replace(
     "POSTHOG_API_KEY",
-    process.env.POSTHOG_API_KEY,
+    process.env.POSTHOG_API_KEY
   );
 
   scriptFileContent = scriptFileContent.replace(
     "PIKESPEAK_API_KEY",
-    process.env.PIKESPEAK_API_KEY,
+    process.env.PIKESPEAK_API_KEY
   );
 
   const args = { javascript: scriptFileContent };
