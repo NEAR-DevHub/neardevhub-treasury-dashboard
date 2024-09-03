@@ -14,7 +14,7 @@ const replaceRpc = async (htmlfile) => {
 
   let indexHtmlData = await readFile(indexHtmlFilePath, "utf8");
   indexHtmlData = indexHtmlData.replace(
-    "<near-social-viewer ",
+    "<near-social-viewer",
     `<near-social-viewer rpc="http://127.0.0.1:8080/api/proxy-rpc" `
   );
   await writeFile(indexHtmlFilePath, indexHtmlData, "utf8");
