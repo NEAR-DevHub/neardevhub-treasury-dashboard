@@ -28,6 +28,11 @@ export async function createDeployArgs() {
     process.env.POSTHOG_API_KEY
   );
 
+  scriptFileContent = scriptFileContent.replace(
+    "PIKESPEAK_API_KEY",
+    process.env.PIKESPEAK_API_KEY
+  );
+
   const args = { javascript: scriptFileContent };
   return args;
 }
