@@ -14,7 +14,14 @@ const tokenMapping = {
   USDC: "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
 };
 
-const sender = "${REPL_TREASURY}";
+const instance = props.instance;
+if (!instance) {
+  return <></>;
+}
+
+const { treasuryDaoID, proposalIndexerQueryName, proposalIndexerHasuraRole } =
+  VM.require(`${instance}/widget/config.data`);
+
 const [tokenId, setTokenId] = useState(null);
 const [receiver, setReceiver] = useState(null);
 const [notes, setNotes] = useState(null);
@@ -32,7 +39,7 @@ const [lastProposalId, setLastProposalId] = useState(null);
 const [isManualRequest, setIsManualRequest] = useState(false);
 const [selectedTokensAvailable, setSelectedTokensAvailable] = useState(null);
 const QUERYAPI_ENDPOINT = `https://near-queryapi.api.pagoda.co/v1/graphql`;
-const queryName = "${REPL_PROPOSAL_FEED_INDEXER_QUERY_NAME}";
+const queryName = proposalIndexerQueryName;
 const query = `query GetLatestSnapshot($offset: Int = 0, $limit: Int = 10, $where: ${queryName}_bool_exp = {}) {
 ${queryName}(
   offset: $offset
@@ -86,14 +93,14 @@ const buildWhereClause = () => {
 };
 
 function getLastProposalId() {
-  return Near.asyncView(sender, "get_last_proposal_id").then(
+  return Near.asyncView(treasuryDaoID, "get_last_proposal_id").then(
     (result) => result
   );
 }
 
 useEffect(() => {
   getLastProposalId().then((i) => setLastProposalId(i));
-  Near.asyncView(sender, "get_policy").then((policy) => {
+  Near.asyncView(treasuryDaoID, "get_policy").then((policy) => {
     setDaoPolicy(policy);
   });
 }, []);
@@ -123,7 +130,7 @@ useEffect(() => {
 function fetchGraphQL(operationsDoc, operationName, variables) {
   return asyncFetch(QUERYAPI_ENDPOINT, {
     method: "POST",
-    headers: { "x-hasura-role": "${REPL_X_HASURA_ROLE}" },
+    headers: { "x-hasura-role": proposalIndexerHasuraRole },
     body: JSON.stringify({
       query: operationsDoc,
       variables: variables,
@@ -262,7 +269,7 @@ function onSubmitClick() {
 
   Near.call([
     {
-      contractName: sender,
+      contractName: treasuryDaoID,
       methodName: "add_proposal",
       args: {
         proposal: {
@@ -302,8 +309,9 @@ function isAccountValid() {
 return (
   <Container>
     <Widget
-      src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
+      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
       props={{
+        instance,
         heading: "Are you sure you want to cancel?",
         content:
           "This action will clear all the information you have entered in the form and cannot be undone.",
@@ -321,7 +329,7 @@ return (
       <div className="d-flex flex-column gap-1">
         <label>Proposal</label>
         <Widget
-          src="${REPL_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
+          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
           props={{
             selectedValue: selectedProposalId,
             onChange: onSelectProposal,
@@ -346,7 +354,7 @@ return (
           <div className="d-flex flex-column gap-1">
             <label>Proposal Title</label>
             <Widget
-              src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
+              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
               props={{
                 className: "flex-grow-1",
                 key: `proposal-title`,
@@ -363,7 +371,7 @@ return (
           <div className="d-flex flex-column gap-1">
             <label>Proposal Summary</label>
             <Widget
-              src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
+              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
               props={{
                 className: "flex-grow-1",
                 key: `proposal-summary`,
@@ -425,8 +433,9 @@ return (
       <div className="d-flex flex-column gap-1">
         <label>Requested Token</label>
         <Widget
-          src="${REPL_DEPLOYMENT_ACCOUNT}/widget/components.TokensDropdown"
+          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokensDropdown"
           props={{
+            instance,
             selectedValue: tokenId,
             onChange: (v) => setTokenId(v),
             setTokensAvailable: setSelectedTokensAvailable,
@@ -436,7 +445,7 @@ return (
       <div className="d-flex flex-column gap-1">
         <label>Total Amount</label>
         <Widget
-          src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
+          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
           props={{
             className: "flex-grow-1",
             key: `total-amount`,
@@ -465,7 +474,7 @@ return (
       <div className="d-flex flex-column gap-1">
         <label>Notes (Optional)</label>
         <Widget
-          src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
+          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
           props={{
             className: "flex-grow-1",
             key: `notes`,

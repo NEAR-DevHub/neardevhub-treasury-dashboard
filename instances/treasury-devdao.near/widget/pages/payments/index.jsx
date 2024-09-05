@@ -1,14 +1,21 @@
 const { hasPermission } = VM.require(
-  "${REPL_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 ) || {
   hasPermission: () => {},
 };
 
-const { selectedTab } = props;
+const { selectedTab, instance } = props;
+
+if (!instance) {
+  return <></>;
+}
+
+const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 
 const [showCreateRequest, setShowCreateRequest] = useState(false);
 
 const hasCreatePermission = hasPermission(
+  treasuryDaoID,
   context.accountId,
   "transfer",
   "AddProposal"
@@ -29,7 +36,7 @@ const SidebarMenu = ({ currentTab }) => {
         </button>
       )}
       <Widget
-        src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.SettingsDropdown`}
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.SettingsDropdown`}
         props={{ isPendingPage: currentTab.title === "Pending Requests" }}
       />
     </div>
@@ -49,15 +56,16 @@ const Container = styled.div`
 return (
   <Container>
     <Widget
-      src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.OffCanvas`}
+      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OffCanvas`}
       props={{
         showCanvas: showCreateRequest,
         onClose: toggleCreatePage,
         title: "Create Payment Request",
         children: (
           <Widget
-            src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.payments.CreatePaymentRequest`}
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.CreatePaymentRequest`}
             props={{
+              instance,
               onCloseCanvas: toggleCreatePage,
             }}
           />
@@ -65,18 +73,18 @@ return (
       }}
     />
     <Widget
-      src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.Tabs`}
+      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Tabs`}
       props={{
         ...props,
         tabs: [
           {
             title: "Pending Requests",
-            href: `${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.payments.PendingRequests`,
+            href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.PendingRequests`,
             props: props,
           },
           {
             title: "History",
-            href: `${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.payments.History`,
+            href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.History`,
             props: props,
           },
         ],

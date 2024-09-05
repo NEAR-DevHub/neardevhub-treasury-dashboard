@@ -25,22 +25,22 @@ const Container = styled.div`
   width: 100%;
 `;
 
-const AppHeader = ({ page }) => (
+const AppHeader = ({ page, instance }) => (
   <Widget
-    src="${REPL_DEPLOYMENT_ACCOUNT}/widget/components.Navbar"
+    src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Navbar"
     props={{
-      page: page,
-      ...props,
+      page,
+      instance,
     }}
   />
 );
 
-function AppLayout({ page, children }) {
+function AppLayout({ page, instance, children }) {
   return (
     <ParentContainer>
       <Theme>
         <Container>
-          <AppHeader page={page} />
+          <AppHeader page={page} instance={instance} />
           <div className="px-3 py-2">{children}</div>
         </Container>
       </Theme>

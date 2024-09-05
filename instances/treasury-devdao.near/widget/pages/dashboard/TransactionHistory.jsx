@@ -3,12 +3,19 @@ const { readableDate } = VM.require(
 ) || { readableDate: () => {} };
 
 const { isBosGateway } = VM.require(
-  "${REPL_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
 
 if (!isBosGateway) {
-  return;
+  return <></>;
 }
+
+const instance = props.instance;
+if (!instance) {
+  return <></>;
+}
+
+const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 
 const [transactionWithBalances, setTransactionWithBalance] = useState(null);
 const [page, setPage] = useState(1);
@@ -16,7 +23,6 @@ const [showMoreLoading, setShowMoreLoading] = useState(false);
 const [hideViewMore, setHideViewMore] = useState(false);
 
 const totalTxnsPerPage = 15;
-const treasuryAccount = "${REPL_TREASURY}";
 
 const loading = (
   <Widget src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"} />
@@ -53,7 +59,8 @@ function groupByDate(items) {
 // use BOS open API for gateway and paid for web4
 const pikespeakKey = isBosGateway()
   ? "${REPL_PIKESPEAK_KEY}"
-  : props.pikespeakKey;
+  : "38020cf5-d3c6-40a6-b1fe-f3428747cafc"
+  
 
 if (!pikespeakKey) {
   return <></>;
@@ -72,7 +79,7 @@ useEffect(() => {
     setShowMoreLoading(true);
     promises.push(
       asyncFetch(
-        `https://api.pikespeak.ai/account/near-transfer/${treasuryAccount}?limit=${totalTxnsPerPage}&offset=${
+        `https://api.pikespeak.ai/account/near-transfer/${treasuryDaoID}?limit=${totalTxnsPerPage}&offset=${
           totalTxnsPerPage * (page - 1)
         }`,
         options
@@ -81,7 +88,7 @@ useEffect(() => {
 
     promises.push(
       asyncFetch(
-        `https://api.pikespeak.ai/account/ft-transfer/${treasuryAccount}?limit=${totalTxnsPerPage}&offset=${
+        `https://api.pikespeak.ai/account/ft-transfer/${treasuryDaoID}?limit=${totalTxnsPerPage}&offset=${
           totalTxnsPerPage * (page - 1)
         }`,
         options
@@ -187,7 +194,7 @@ return (
                       let token = "NEAR";
                       let icon = "${REPL_NEAR_TOKEN_ICON}";
                       const isDeposit = txn.deposit;
-                      const isReceived = txn.receiver === treasuryAccount;
+                      const isReceived = txn.receiver === treasuryDaoID;
                       if (txn.contract) {
                         const contractMetadata = Near.view(
                           txn.contract,

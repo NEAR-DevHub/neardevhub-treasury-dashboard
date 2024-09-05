@@ -1,4 +1,9 @@
-const treasuryDaoID = "${REPL_TREASURY}";
+const instance = props.instance;
+if (!instance) {
+  return <></>;
+}
+
+const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 
 const selectedMember = props.selectedMember;
 const availableRoles = props.availableRoles ?? [];
@@ -57,9 +62,12 @@ function updateDaoPolicy(rolesMap) {
   const updatedPolicy = { ...daoPolicy };
   if (Array.isArray(updatedPolicy.roles)) {
     updatedPolicy.roles = updatedPolicy.roles.map((role) => {
+      if (role.name === "all" && role.kind === "Everyone") {
+        return role;
+      }
       if (rolesMap.has(role.name)) {
         let group = role.kind.Group;
-        if (!group.includes(username)) {
+        if (Array.isArray(group) && !group.includes(username)) {
           group.push(username);
         }
         // Modify the role's group
@@ -149,8 +157,9 @@ function isAccountValid() {
 return (
   <Container className="d-flex flex-column gap-2">
     <Widget
-      src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
+      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
       props={{
+        instance,
         heading: "Are you sure you want to cancel?",
         content:
           "This action will clear all the information you have entered in the form and cannot be undone.",
@@ -179,7 +188,7 @@ return (
     <div className="d-flex flex-column gap-1">
       <label>Permissions</label>
       <Widget
-        src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.settings.RoleSelector`}
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.RoleSelector`}
         props={{
           selected: roles,
           onChange: (v) => setRoles(v),
@@ -208,8 +217,9 @@ return (
           />
         )}
         <Widget
-          src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.settings.DeleteModalConfirmation`}
+          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.DeleteModalConfirmation`}
           props={{
+            instance,
             isOpen: showDeleteModal,
             onCancelClick: () => setShowDeleteModal(false),
             onConfirmClick: () => {

@@ -1,4 +1,10 @@
-const treasuryDaoID = "${REPL_TREASURY}";
+const instance = props.instance;
+if (!instance) {
+  return <></>;
+}
+
+const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+
 const isOpen = props.isOpen;
 const heading = props.heading;
 const content = props.content;

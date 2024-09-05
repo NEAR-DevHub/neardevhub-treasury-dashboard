@@ -4,21 +4,28 @@ const {
   getPolicyApproverGroup,
   hasPermission,
   getPermissionsText,
-} = VM.require("${REPL_DEPLOYMENT_ACCOUNT}/widget/lib.common") || {
+} = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common") || {
   getDaoRoles: () => {},
   getPolicyApproverGroup: () => {},
   hasPermission: () => {},
   getPermissionsText: () => {},
 };
 
+const instance = props.instance;
+if (!instance) {
+  return <></>;
+}
+
+const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+
 const refreshTable = Storage.get(
   "REFRESH_MEMBERS_TABLE_DATA",
-  `${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.settings.MembersEditor`
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.MembersEditor`
 );
 
 const [refetch, setRefetch] = useState(false);
-const policyApproverGroup = getPolicyApproverGroup();
-const roles = getDaoRoles();
+const policyApproverGroup = getPolicyApproverGroup(treasuryDaoID);
+const roles = getDaoRoles(treasuryDaoID);
 
 const Container = styled.div`
     font-size: 13px;
@@ -133,7 +140,7 @@ const [showDeleteModal, setShowDeleteModal] = useState(false);
 useEffect(() => {
   setLoading(true);
   if (typeof getMembersAndPermissions === "function") {
-    getMembersAndPermissions().then((res) => {
+    getMembersAndPermissions(treasuryDaoID).then((res) => {
       setAllMembers(res);
     });
   }
@@ -243,13 +250,19 @@ function toggleEditor() {
   setSelectedMember(null);
 }
 
-const hasCreatePermission = hasPermission(context.accountId, "policy", "vote");
+const hasCreatePermission = hasPermission(
+  treasuryDaoID,
+  context.accountId,
+  "policy",
+  "vote"
+);
 
 return (
   <Container className="d-flex flex-column">
     <Widget
-      src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.settings.DeleteModalConfirmation`}
+      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.DeleteModalConfirmation`}
       props={{
+        instance,
         isOpen: showDeleteModal && selectedMember,
         onCancelClick: () => setShowDeleteModal(false),
         onConfirmClick: () => {
@@ -264,15 +277,16 @@ return (
       }}
     />
     <Widget
-      src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.OffCanvas`}
+      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OffCanvas`}
       props={{
         showCanvas: showEditor,
         onClose: toggleEditor,
         title: selectedMember ? "Edit Member" : "Add Member",
         children: (
           <Widget
-            src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.settings.MembersEditor`}
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.MembersEditor`}
             props={{
+              instance,
               onCloseCanvas: toggleEditor,
               availableRoles: (roles ?? []).map((i) => {
                 return { title: i, value: i };
@@ -320,7 +334,7 @@ return (
           </table>
           <div>
             <Widget
-              src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.Pagination`}
+              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Pagination`}
               props={{
                 totalLength: allMembers?.length,
                 totalPages: Math.ceil(allMembers?.length / rowsPerPage),
@@ -328,7 +342,10 @@ return (
                 onPrevClick: () => setPage(currentPage - 1),
                 currentPage: currentPage,
                 rowsPerPage: rowsPerPage,
-                onRowsChange: (v) => setRowsPerPage(parseInt(v)),
+                onRowsChange: (v) => {
+                  setPage(0);
+                  setRowsPerPage(parseInt(v));
+                },
               }}
             />
           </div>

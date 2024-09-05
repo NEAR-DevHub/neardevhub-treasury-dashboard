@@ -1,15 +1,15 @@
 {
   "REPL_DEVHUB": "devhub.near",
   "REPL_DEVHUB_CONTRACT": "devhub.near",
-  "REPL_DEPLOYMENT_ACCOUNT": "treasury-devdao.near",
-  "REPL_TREASURY": "testing-astradao.sputnik-dao.near",
+  "REPL_BASE_DEPLOYMENT_ACCOUNT": "treasury-devdao.near",
+  "REPL_INSTANCE": "treasury-devdao.near",
+  "REPL_TREASURY": "devdao.sputnik-dao.near",
   "REPL_NEAR": "near",
   "REPL_MOB": "mob.near",
   "REPL_SOCIAL_CONTRACT": "social.near",
   "REPL_RPC_URL": "https://rpc.mainnet.near.org",
   "REPL_PROPOSAL_FEED_INDEXER_QUERY_NAME": "polyprogrammist_near_devhub_prod_v1_proposals_with_latest_snapshot",
   "REPL_X_HASURA_ROLE": "polyprogrammist_near",
-  "REPL_PROPOSAL_CONTRACT": "devhub.near",
   "REPL_NEAR_TOKEN_ICON": "https://ipfs.near.social/ipfs/bafkreifnyxk6cssapw7j5vc6zuzwl7vt6o5ddspoo5lcmbvtdrcmfozqyu",
   "REPL_PIKESPEAK_KEY": "36f2b87a-7ee6-40d8-80b9-5e68e587a5b5"
 }

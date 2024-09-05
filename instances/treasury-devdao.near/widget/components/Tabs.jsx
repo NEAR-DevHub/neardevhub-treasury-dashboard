@@ -67,7 +67,7 @@ return (
                 <div
                   onClick={() => {
                     setCurrentTab(findTab(normalize(title)));
-                    setCurrentTabProps({});
+                    setCurrentTabProps({ instance: props.instance });
                   }}
                   className={[
                     "d-inline-flex gap-2 nav-link",

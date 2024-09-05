@@ -27,6 +27,7 @@
     "lint": "tsc --pretty --noEmit && eslint .",
     "build": "npm run fmt",
     "prepare": "husky install",
+    "bw:dev:instances": "bw ws dev",
     "bw:dev:treasury": "bw dev instances/treasury-devdao.near",
     "bw:build:treasury": "bw build instances/treasury-devdao.near build/treasury-devdao.near && mv build/treasury-devdao.near/src/widget/* build/treasury-devdao.near/src/ && rm -Rf build/treasury-devdao.near/src/widget",
     "gateway:treasury": "bw ws dev -g $(node scripts/create-static-hosting-web-gateway-folder.mjs)",

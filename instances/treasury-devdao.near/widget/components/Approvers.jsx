@@ -1,5 +1,5 @@
 const { isNearSocial } = VM.require(
-  "${REPL_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 ) || {
   isNearSocial: false,
 };
