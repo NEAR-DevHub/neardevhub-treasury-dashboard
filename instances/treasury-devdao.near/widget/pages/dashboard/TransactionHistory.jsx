@@ -59,8 +59,7 @@ function groupByDate(items) {
 // use BOS open API for gateway and paid for web4
 const pikespeakKey = isBosGateway()
   ? "${REPL_PIKESPEAK_KEY}"
-  : "38020cf5-d3c6-40a6-b1fe-f3428747cafc"
-  
+  : props.pikespeakKey;
 
 if (!pikespeakKey) {
   return <></>;
