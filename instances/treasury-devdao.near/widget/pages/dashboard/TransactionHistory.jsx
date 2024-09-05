@@ -94,28 +94,27 @@ useEffect(() => {
         options
       )
     );
-    Promise.all(promises)
-      .then((i) => {
-        if (!i[0].ok || !i[0].ok) {
-          setShowMoreLoading(false);
-          setError(
-            "Failed to fetch the transaction history, please try again later."
-          );
+    Promise.all(promises).then((i) => {
+      if (!i[0].ok || !i[0].ok) {
+        setShowMoreLoading(false);
+        setError(
+          "Failed to fetch the transaction history, please try again later."
+        );
+      }
+      const nearResp = i[0]?.body;
+      const ftResp = i[1]?.body;
+      if (Array.isArray(nearResp) && Array.isArray(ftResp)) {
+        if (
+          nearResp.length < totalTxnsPerPage &&
+          ftResp.length < totalTxnsPerPage
+        ) {
+          setHideViewMore(true);
         }
-        const nearResp = i[0]?.body;
-        const ftResp = i[1]?.body;
-        if (Array.isArray(nearResp) && Array.isArray(ftResp)) {
-          if (
-            nearResp.length < totalTxnsPerPage &&
-            ftResp.length < totalTxnsPerPage
-          ) {
-            setHideViewMore(true);
-          }
-          setError(null);
-          setTransactionWithBalance(groupByDate(nearResp.concat(ftResp)));
-          setShowMoreLoading(false);
-        }
-      });
+        setError(null);
+        setTransactionWithBalance(groupByDate(nearResp.concat(ftResp)));
+        setShowMoreLoading(false);
+      }
+    });
   }
 }, [page]);
 

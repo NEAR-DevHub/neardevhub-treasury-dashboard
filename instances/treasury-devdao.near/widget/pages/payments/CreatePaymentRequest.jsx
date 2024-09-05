@@ -284,7 +284,6 @@ function onSubmitClick() {
         },
       },
       gas: gas,
-      deposit: deposit,
     },
   ]);
 }

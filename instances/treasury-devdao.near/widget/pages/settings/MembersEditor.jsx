@@ -118,7 +118,6 @@ function onSubmitClick() {
         },
       },
       gas: 200000000000000,
-      deposit,
     },
     getApproveTxn(),
   ]);
