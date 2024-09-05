@@ -17,6 +17,7 @@ if (!instance) {
 
 const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 
+const [error, setError] = useState(null);
 const [transactionWithBalances, setTransactionWithBalance] = useState(null);
 const [page, setPage] = useState(1);
 const [showMoreLoading, setShowMoreLoading] = useState(false);
@@ -93,20 +94,28 @@ useEffect(() => {
         options
       )
     );
-    Promise.all(promises).then((i) => {
-      const nearResp = i[0]?.body;
-      const ftResp = i[1]?.body;
-      if (Array.isArray(nearResp) && Array.isArray(ftResp)) {
-        if (
-          nearResp.length < totalTxnsPerPage &&
-          ftResp.length < totalTxnsPerPage
-        ) {
-          setHideViewMore(true);
+    Promise.all(promises)
+      .then((i) => {
+        if (!i[0].ok || !i[0].ok) {
+          setShowMoreLoading(false);
+          setError(
+            "Failed to fetch the transaction history, please try again later."
+          );
         }
-        setTransactionWithBalance(groupByDate(nearResp.concat(ftResp)));
-        setShowMoreLoading(false);
-      }
-    });
+        const nearResp = i[0]?.body;
+        const ftResp = i[1]?.body;
+        if (Array.isArray(nearResp) && Array.isArray(ftResp)) {
+          if (
+            nearResp.length < totalTxnsPerPage &&
+            ftResp.length < totalTxnsPerPage
+          ) {
+            setHideViewMore(true);
+          }
+          setError(null);
+          setTransactionWithBalance(groupByDate(nearResp.concat(ftResp)));
+          setShowMoreLoading(false);
+        }
+      });
   }
 }, [page]);
 
@@ -176,7 +185,11 @@ return (
   <Container className="card card-body flex-1">
     <div className="h5">Transaction History</div>
     <div className="">
-      {transactionWithBalances === null ? (
+      {error ? (
+        <div class="alert alert-danger" role="alert">
+          {error}
+        </div>
+      ) : transactionWithBalances === null ? (
         loader
       ) : (
         <div className="d-flex flex-column gap-2">
