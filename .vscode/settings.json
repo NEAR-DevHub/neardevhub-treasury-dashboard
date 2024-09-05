@@ -1,0 +1,6 @@
+{
+    
+    "rust-analyzer.linkedProjects": [
+        "web4/rust_contract/treasury-web4/Cargo.toml",
+    ]
+}

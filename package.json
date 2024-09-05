@@ -29,6 +29,7 @@
     "build": "npm run fmt",
     "prepare": "husky install",
     "web4:createdeployargs": "node web4/createdeployargs.js",
+    "web4:createrustcontractbundle": "node web4/createrustcontractbundle.js",
     "web4:deploy": "node web4/deploy.js",
     "bw:dev:treasury": "bw dev instances/treasury-devdao.near",
     "bw:build:treasury": "bw build instances/treasury-devdao.near build/treasury-devdao.near && mv build/treasury-devdao.near/src/widget/* build/treasury-devdao.near/src/ && rm -Rf build/treasury-devdao.near/src/widget",
