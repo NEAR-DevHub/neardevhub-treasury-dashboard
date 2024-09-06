@@ -16,7 +16,10 @@ async fn test_contract_is_operational() -> Result<(), Box<dyn std::error::Error>
 
     let contract = sandbox.dev_deploy(&contract_wasm).await?;
 
-    let result = contract.view("web4_get").args_json(json!({"request": {"path": "/"}})).await?;
+    let result = contract
+        .view("web4_get")
+        .args_json(json!({"request": {"path": "/"}}))
+        .await?;
     let response = result.json::<Web4Response>().unwrap();
     assert_eq!("text/html; charset=UTF-8", response.content_type);
     Ok(())

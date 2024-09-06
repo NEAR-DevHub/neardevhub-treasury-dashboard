@@ -1,13 +1,12 @@
 // Find all our documentation at https://docs.near.org
 mod web4;
+use near_sdk::base64::{engine::general_purpose, Engine as _};
 use near_sdk::near;
-use near_sdk::base64::{Engine as _, engine::general_purpose};
 use web4::types::{Web4Request, Web4Response};
 
 // Define the contract structure
 #[near(contract_state)]
-pub struct Contract {
-}
+pub struct Contract {}
 
 // Define the default, which automatically initializes the contract
 impl Default for Contract {
@@ -22,7 +21,8 @@ impl Contract {
     pub fn web4_get(&self, request: Web4Request) -> Web4Response {
         Web4Response::Body {
             content_type: "text/html; charset=UTF-8".to_owned(),
-            body: general_purpose::STANDARD.encode(include_str!("../../../public_html/index.html").to_string()),
+            body: general_purpose::STANDARD
+                .encode(include_str!("../../../public_html/index.html").to_string()),
         }
     }
 }
@@ -35,7 +35,7 @@ impl Contract {
 mod tests {
     use super::*;
 
-    use near_sdk::base64::{Engine as _, engine::general_purpose};
+    use near_sdk::base64::{engine::general_purpose, Engine as _};
 
     #[test]
     fn web4_get() {
@@ -50,7 +50,8 @@ mod tests {
             Web4Response::Body { content_type, body } => {
                 assert_eq!("text/html; charset=UTF-8", content_type);
 
-                let body_string = String::from_utf8(general_purpose::STANDARD.decode(body).unwrap()).unwrap();
+                let body_string =
+                    String::from_utf8(general_purpose::STANDARD.decode(body).unwrap()).unwrap();
 
                 assert!(body_string.contains("<near-social-viewer"));
             }
