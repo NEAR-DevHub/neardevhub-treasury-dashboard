@@ -1,8 +1,8 @@
+use base64::{engine::general_purpose, Engine as _};
 use std::env;
 use std::fs;
-use std::path::Path;
 use std::io::Write;
-use base64::{engine::general_purpose, Engine as _};
+use std::path::Path;
 
 fn main() {
     // Change working directory to the directory of the script (similar to process.chdir)
@@ -10,8 +10,7 @@ fn main() {
 
     // Read the index.html file
     let index_path = current_dir.join("index.html");
-    let mut index_html = fs::read_to_string(index_path)
-        .expect("Failed to read index.html");
+    let mut index_html = fs::read_to_string(index_path).expect("Failed to read index.html");
 
     // Replace placeholders with environment variables
     if let Ok(posthog_api_key) = env::var("POSTHOG_API_KEY") {
@@ -27,9 +26,9 @@ fn main() {
 
     // Write the base64 string to the output file
     let output_path = Path::new(env!("CARGO_MANIFEST_DIR")).join("index.html.base64.txt");
-    let mut output_file = fs::File::create(output_path)
-        .expect("Failed to create output file");
+    let mut output_file = fs::File::create(output_path).expect("Failed to create output file");
 
-    output_file.write_all(index_html_base64.as_bytes())
+    output_file
+        .write_all(index_html_base64.as_bytes())
         .expect("Failed to write to output file");
 }
