@@ -2,4 +2,3 @@ args.json
 contract-bundle.js
 deploykeys.sh
 index.html.js
-index.html.base64.txt
