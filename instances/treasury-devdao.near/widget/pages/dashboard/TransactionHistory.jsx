@@ -3,20 +3,27 @@ const { readableDate } = VM.require(
 ) || { readableDate: () => {} };
 
 const { isBosGateway } = VM.require(
-  "${REPL_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
 
 if (!isBosGateway) {
-  return;
+  return <></>;
 }
 
+const instance = props.instance;
+if (!instance) {
+  return <></>;
+}
+
+const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+
+const [error, setError] = useState(null);
 const [transactionWithBalances, setTransactionWithBalance] = useState(null);
 const [page, setPage] = useState(1);
 const [showMoreLoading, setShowMoreLoading] = useState(false);
 const [hideViewMore, setHideViewMore] = useState(false);
 
 const totalTxnsPerPage = 15;
-const treasuryAccount = "${REPL_TREASURY}";
 
 const loading = (
   <Widget src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"} />
@@ -72,7 +79,7 @@ useEffect(() => {
     setShowMoreLoading(true);
     promises.push(
       asyncFetch(
-        `https://api.pikespeak.ai/account/near-transfer/${treasuryAccount}?limit=${totalTxnsPerPage}&offset=${
+        `https://api.pikespeak.ai/account/near-transfer/${treasuryDaoID}?limit=${totalTxnsPerPage}&offset=${
           totalTxnsPerPage * (page - 1)
         }`,
         options
@@ -81,13 +88,19 @@ useEffect(() => {
 
     promises.push(
       asyncFetch(
-        `https://api.pikespeak.ai/account/ft-transfer/${treasuryAccount}?limit=${totalTxnsPerPage}&offset=${
+        `https://api.pikespeak.ai/account/ft-transfer/${treasuryDaoID}?limit=${totalTxnsPerPage}&offset=${
           totalTxnsPerPage * (page - 1)
         }`,
         options
       )
     );
     Promise.all(promises).then((i) => {
+      if (!i[0].ok || !i[0].ok) {
+        setShowMoreLoading(false);
+        setError(
+          "Failed to fetch the transaction history, please try again later."
+        );
+      }
       const nearResp = i[0]?.body;
       const ftResp = i[1]?.body;
       if (Array.isArray(nearResp) && Array.isArray(ftResp)) {
@@ -97,6 +110,7 @@ useEffect(() => {
         ) {
           setHideViewMore(true);
         }
+        setError(null);
         setTransactionWithBalance(groupByDate(nearResp.concat(ftResp)));
         setShowMoreLoading(false);
       }
@@ -170,7 +184,11 @@ return (
   <Container className="card card-body flex-1">
     <div className="h5">Transaction History</div>
     <div className="">
-      {transactionWithBalances === null ? (
+      {error ? (
+        <div class="alert alert-danger" role="alert">
+          {error}
+        </div>
+      ) : transactionWithBalances === null ? (
         loader
       ) : (
         <div className="d-flex flex-column gap-2">
@@ -187,7 +205,7 @@ return (
                       let token = "NEAR";
                       let icon = "${REPL_NEAR_TOKEN_ICON}";
                       const isDeposit = txn.deposit;
-                      const isReceived = txn.receiver === treasuryAccount;
+                      const isReceived = txn.receiver === treasuryDaoID;
                       if (txn.contract) {
                         const contractMetadata = Near.view(
                           txn.contract,

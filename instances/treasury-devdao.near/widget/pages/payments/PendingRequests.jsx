@@ -1,10 +1,15 @@
 const {
   getTransferApproversAndThreshold,
   getFilteredProposalsByStatusAndKind,
-} = VM.require("${REPL_DEPLOYMENT_ACCOUNT}/widget/lib.common") || {
+} = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common") || {
   getTransferApproversAndThreshold: () => {},
 };
-const treasuryDaoID = "${REPL_TREASURY}";
+const instance = props.instance;
+if (!instance) {
+  return <></>;
+}
+
+const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 
 const [rowsPerPage, setRowsPerPage] = useState(10);
 const [currentPage, setPage] = useState(0);
@@ -16,11 +21,11 @@ const [isPrevPageCalled, setIsPrevCalled] = useState(false);
 
 const refreshTableData = Storage.get(
   "REFRESH_TABLE_DATA",
-  `${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.payments.CreatePaymentRequest`
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.CreatePaymentRequest`
 );
 const refreshVoteTableData = Storage.get(
   "REFRESH__VOTE_ACTION_TABLE_DATA",
-  `${REPL_DEPLOYMENT_ACCOUNT}/widget/components.VoteActions`
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.VoteActions`
 );
 
 useEffect(() => {
@@ -30,6 +35,7 @@ useEffect(() => {
       const lastProposalId = i;
       const offset = currentPage === 0 ? i : proposals[proposals.length - 1].id;
       getFilteredProposalsByStatusAndKind({
+        treasuryDaoID,
         resPerPage: rowsPerPage,
         isPrevPageCalled: isPrevPageCalled,
         filterKindArray: ["Transfer"],
@@ -50,12 +56,12 @@ useEffect(() => {
 
 const policy = Near.view(treasuryDaoID, "get_policy", {});
 
-const transferApproversGroup = getTransferApproversAndThreshold();
+const transferApproversGroup = getTransferApproversAndThreshold(treasuryDaoID);
 
 return (
   <div className="d-flex flex-column flex-1 justify-content-between">
     <Widget
-      src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.payments.Table`}
+      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.Table`}
       props={{
         proposals: proposals,
         isPendingRequests: true,
@@ -67,7 +73,7 @@ return (
     {(proposals ?? [])?.length > 0 && (
       <div>
         <Widget
-          src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.Pagination`}
+          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Pagination`}
           props={{
             totalLength: totalLength,
             totalPages: Math.ceil(totalLength / rowsPerPage),
@@ -83,7 +89,11 @@ return (
             },
             currentPage: currentPage,
             rowsPerPage: rowsPerPage,
-            onRowsChange: (v) => setRowsPerPage(parseInt(v)),
+            onRowsChange: (v) => {
+              setOffset(null);
+              setPage(0);
+              setRowsPerPage(parseInt(v));
+            },
           }}
         />
       </div>

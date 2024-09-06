@@ -1,12 +1,18 @@
 const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
-const treasuryDaoID = "${REPL_TREASURY}";
+const instance = props.instance;
+if (!instance) {
+  return <></>;
+}
+
+const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+
 const proposals = props.proposals;
 const columnsVisibility = JSON.parse(
   Storage.get(
     "COLUMNS_VISIBLILITY",
-    `${REPL_DEPLOYMENT_ACCOUNT}/widget/components.SettingsDropdown`
+    `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.SettingsDropdown`
   ) ?? "[]"
 );
 
@@ -198,7 +204,7 @@ const VoteSuccessToast = () => {
             : "The payment has been rejected."}
           <a
             href={href({
-              widgetSrc: `${REPL_DEPLOYMENT_ACCOUNT}/widget/app`,
+              widgetSrc: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app`,
               params: {
                 page: "payments",
                 selectedTab: "History",
@@ -269,7 +275,7 @@ const ProposalsComponent = () => {
             <td className="bold">{item.id}</td>
             <td className={isVisible("Created Date")}>
               <Widget
-                src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
                 props={{
                   timestamp: item.submission_time,
                 }}
@@ -278,8 +284,9 @@ const ProposalsComponent = () => {
             {!isPendingRequests && (
               <td>
                 <Widget
-                  src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.HistoryStatus`}
+                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.HistoryStatus`}
                   props={{
+                    instance,
                     isVoteStatus: false,
                     status: item.status,
                   }}
@@ -339,7 +346,7 @@ const ProposalsComponent = () => {
             </td>
             <td className={"bold " + isVisible("Recipient")}>
               <Widget
-                src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.ReceiverAccount`}
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.ReceiverAccount`}
                 props={{
                   receiverAccount: args.receiver_id,
                 }}
@@ -347,7 +354,7 @@ const ProposalsComponent = () => {
             </td>
             <td className={isVisible("Requested Token") + " text-center"}>
               <Widget
-                src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.TokenIcon`}
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenIcon`}
                 props={{
                   address: args.token_id,
                 }}
@@ -355,8 +362,9 @@ const ProposalsComponent = () => {
             </td>
             <td className={isVisible("Funding Ask") + " text-right"}>
               <Widget
-                src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
                 props={{
+                  instance,
                   amountWithoutDecimals: args.amount,
                   address: args.token_id,
                 }}
@@ -389,7 +397,7 @@ const ProposalsComponent = () => {
             {isPendingRequests && (
               <td className={isVisible("Votes") + " text-center"}>
                 <Widget
-                  src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.Votes`}
+                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Votes`}
                   props={{
                     votes: item.votes,
                     requiredVotes,
@@ -406,7 +414,7 @@ const ProposalsComponent = () => {
               style={{ minWidth: 100 }}
             >
               <Widget
-                src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.Approvers`}
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Approvers`}
                 props={{
                   votes: item.votes,
                   transferApproversGroup:
@@ -426,8 +434,9 @@ const ProposalsComponent = () => {
             {isPendingRequests && hasVotingPermission && (
               <td className="text-right">
                 <Widget
-                  src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.VoteActions`}
+                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.VoteActions`}
                   props={{
+                    instance,
                     votes: item.votes,
                     proposalId: item.id,
                     tokensBalance: [

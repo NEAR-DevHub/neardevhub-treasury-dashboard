@@ -1,15 +1,21 @@
-const treasuryAccount = "${REPL_TREASURY}";
+const instance = props.instance;
+if (!instance) {
+  return <></>;
+}
+
+const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+
 const nearTokenIcon = "${REPL_NEAR_TOKEN_ICON}";
 const { selectedValue, onChange, disabled, setTokensAvailable } = props;
 
 onChange = onChange || (() => {});
 
 const ftTokensResp = fetch(
-  `https://api3.nearblocks.io/v1/account/${treasuryAccount}/inventory`
+  `https://api3.nearblocks.io/v1/account/${treasuryDaoID}/inventory`
 );
 
 const nearBalanceResp = fetch(
-  `https://api3.nearblocks.io/v1/account/${treasuryAccount}`
+  `https://api3.nearblocks.io/v1/account/${treasuryDaoID}`
 );
 
 if (

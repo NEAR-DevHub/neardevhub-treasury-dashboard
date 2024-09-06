@@ -1,4 +1,10 @@
-const treasuryAccount = "${REPL_TREASURY}";
+const instance = props.instance;
+if (!instance) {
+  return <></>;
+}
+
+const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+
 const archiveNodeUrl = "https://archival-rpc.mainnet.near.org";
 const nearTokenIcon = "${REPL_NEAR_TOKEN_ICON}";
 
@@ -79,9 +85,7 @@ return (
       ) : (
         <div className="mt-2">
           {!ftTokens.length && !nearBalance ? (
-            <div className="fw-bold">
-              {treasuryAccount} doesn't own any FTs.
-            </div>
+            <div className="fw-bold">{treasuryDaoID} doesn't own any FTs.</div>
           ) : (
             <div className="d-flex flex-column">
               {nearStakedTokens && nearStakedTokens !== "0" ? (

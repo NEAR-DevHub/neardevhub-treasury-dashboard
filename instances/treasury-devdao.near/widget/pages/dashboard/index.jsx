@@ -1,4 +1,9 @@
-const treasuryAccount = "${REPL_TREASURY}";
+const instance = props.instance;
+if (!instance) {
+  return <></>;
+}
+
+const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 
 const Wrapper = styled.div`
   min-height: 80vh;
@@ -30,7 +35,7 @@ const Wrapper = styled.div`
 const [nearStakedTokens, setNearStakedTokens] = useState(null);
 
 const balanceResp = fetch(
-  `https://api3.nearblocks.io/v1/account/${treasuryAccount}`
+  `https://api3.nearblocks.io/v1/account/${treasuryDaoID}`
 );
 const nearBalance = Big(balanceResp?.body?.account?.[0]?.amount ?? "0")
   .div(Big(10).pow(24))
@@ -48,7 +53,7 @@ const nearPrice = useCache(
 const userFTTokens = useCache(
   () =>
     asyncFetch(
-      `https://api3.nearblocks.io/v1/account/${treasuryAccount}/inventory`
+      `https://api3.nearblocks.io/v1/account/${treasuryDaoID}/inventory`
     ).then((res) => {
       const fts = res.body.inventory.fts;
       const amounts = fts.map((ft) => {
@@ -84,7 +89,7 @@ const code = `
     <body>
       <script>
         const archiveNodeUrl = "https://archival-rpc.mainnet.near.org";
-        const treasuryAccount = "${treasuryAccount}"
+        const treasuryDaoID = "${treasuryDaoID}"
 
         async function getAccountBalance(stakingpool_id, account_id) {
         return await fetch(archiveNodeUrl, {
@@ -121,7 +126,7 @@ const code = `
       }
 
       async function getStakingPools() {
-        return await fetch("https://api.fastnear.com/v1/account/" + treasuryAccount + "/staking").then(r => r.json())
+        return await fetch("https://api.fastnear.com/v1/account/" + treasuryDaoID + "/staking").then(r => r.json())
       }
 
       window.onload = async () => {
@@ -182,8 +187,9 @@ return (
     </div>
     <div className="d-flex gap-2 flex-wrap dashboard-item">
       <Widget
-        src={"${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.Portfolio"}
+        src={"${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.Portfolio"}
         props={{
+          instance,
           ftTokens: userFTTokens.fts,
           nearStakedTokens: nearStakedTokens,
           nearBalance: nearBalance,
@@ -192,7 +198,7 @@ return (
       />
       <Widget
         src={
-          "${REPL_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.TransactionHistory"
+          "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.TransactionHistory"
         }
         props={{
           nearPrice: nearPrice,
