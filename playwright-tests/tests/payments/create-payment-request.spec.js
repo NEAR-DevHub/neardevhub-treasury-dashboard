@@ -108,7 +108,7 @@ test.describe("don't ask again", function () {
   });
   test("approve payment request", async ({ page }) => {
     test.setTimeout(60_000);
-    const contractId = "testing-astradao.sputnik-dao.near";
+    const contractId = "devdao.sputnik-dao.near";
     let isTransactionCompleted = false;
     await mockRpcRequest({
       page,

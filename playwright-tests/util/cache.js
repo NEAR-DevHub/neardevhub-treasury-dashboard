@@ -148,7 +148,7 @@ export async function setCommitWritePermissionDontAskAgainCacheValues({
 export async function setDontAskAgainCacheValues({
   page,
   widgetSrc,
-  contractId = "testing-astradao.sputnik-dao.near",
+  contractId = "devdao.sputnik-dao.near",
   methodName,
 }) {
   const value = {};
@@ -174,7 +174,7 @@ export async function setDontAskAgainCacheValues({
 export async function getDontAskAgainCacheValues({
   page,
   widgetSrc,
-  contractId = "testing-astradao.sputnik-dao.near",
+  contractId = "devdao.sputnik-dao.near",
 }) {
   const storedData = await page.evaluate(
     async ({ widgetSrc, contractId }) => {

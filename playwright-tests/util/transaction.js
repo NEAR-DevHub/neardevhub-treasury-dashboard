@@ -27,7 +27,7 @@ const access_keys = [
         FunctionCall: {
           allowance: "241917078840755500000000",
           method_names: [],
-          receiver_id: "testing-astradao.sputnik-dao.near",
+          receiver_id: "devdao.sputnik-dao.near",
         },
       },
     },
