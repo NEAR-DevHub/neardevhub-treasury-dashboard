@@ -2,6 +2,7 @@ const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
 const instance = props.instance;
+const policy = props.policy;
 if (!instance) {
   return <></>;
 }
@@ -204,7 +205,7 @@ const VoteSuccessToast = () => {
             : "The payment has been rejected."}
           <a
             href={href({
-              widgetSrc: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app`,
+              widgetSrc: `${instance}/widget/app`,
               params: {
                 page: "payments",
                 selectedTab: "History",
@@ -220,8 +221,11 @@ const VoteSuccessToast = () => {
   ) : null;
 };
 
-function formatSubmissionTimeStamp(timestamp) {
-  const milliseconds = Number(timestamp) / 1000000;
+const proposalPeriod = policy.proposal_period;
+
+function formatSubmissionTimeStamp(submissionTime) {
+  const endTime = Big(submissionTime).plus(proposalPeriod).toFixed();
+  const milliseconds = Number(endTime) / 1000000;
   const date = new Date(milliseconds);
 
   // Calculate days and minutes remaining from the timestamp

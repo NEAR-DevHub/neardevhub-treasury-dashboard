@@ -38,6 +38,7 @@ const [daoPolicy, setDaoPolicy] = useState(null);
 const [lastProposalId, setLastProposalId] = useState(null);
 const [isManualRequest, setIsManualRequest] = useState(false);
 const [selectedTokensAvailable, setSelectedTokensAvailable] = useState(null);
+const [isReceiverRegistered, setReceiverRegister] = useState(false);
 const QUERYAPI_ENDPOINT = `https://near-queryapi.api.pagoda.co/v1/graphql`;
 const queryName = proposalIndexerQueryName;
 const query = `query GetLatestSnapshot($offset: Int = 0, $limit: Int = 10, $where: ${queryName}_bool_exp = {}) {
@@ -267,7 +268,7 @@ function onSubmitClick() {
     description["proposalId"] = selectedProposalId;
   }
 
-  Near.call([
+  const calls = [
     {
       contractName: treasuryDaoID,
       methodName: "add_proposal",
@@ -285,7 +286,22 @@ function onSubmitClick() {
       },
       gas: gas,
     },
-  ]);
+  ];
+  if (!isReceiverRegistered && !isNEAR) {
+    const depositInYocto = Big(0.125).mul(Big(10).pow(24)).toFixed();
+    calls.push({
+      contractName: tokenId,
+      methodName: "storage_deposit",
+      args: {
+        account_id: receiver,
+        registration_only: true,
+      },
+      gas: gas,
+      deposit: depositInYocto,
+    });
+  }
+
+  Near.call(calls);
 }
 
 function cleanInputs() {
@@ -304,6 +320,25 @@ function isAccountValid() {
     (receiver ?? "").includes(".tg")
   );
 }
+
+useEffect(() => {
+  if (
+    tokenId &&
+    tokenId !== tokenMapping.NEAR &&
+    receiver &&
+    isAccountValid(receiver)
+  ) {
+    Near.asyncView(tokenId, "storage_balance_of", {
+      account_id: receiver,
+    }).then((storage) => {
+      if (!storage) {
+        setReceiverRegister(false);
+      } else {
+        setReceiverRegister(true);
+      }
+    });
+  }
+}, [receiver, tokenId]);
 
 return (
   <Container>
