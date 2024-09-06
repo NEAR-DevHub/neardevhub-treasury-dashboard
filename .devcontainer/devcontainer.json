@@ -7,10 +7,7 @@
   },
   "customizations": {
     "vscode": {
-      "extensions": [
-        "ms-playwright.playwright",
-        "github.vscode-github-actions"
-      ]
+      "extensions": ["ms-playwright.playwright", "github.vscode-github-actions"]
     }
   },
   "postCreateCommand": ".devcontainer/post-create.sh"
