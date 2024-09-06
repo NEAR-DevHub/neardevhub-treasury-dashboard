@@ -1,5 +1,4 @@
-const treasuryDaoID = "${REPL_TREASURY}";
-function getTransferApproversAndThreshold() {
+function getTransferApproversAndThreshold(treasuryDaoID) {
   const daoPolicy = Near.view(treasuryDaoID, "get_policy", {});
   const groupWithTransferPermission = (daoPolicy.roles ?? []).filter((role) => {
     const transferPermissions = [
@@ -51,7 +50,7 @@ function getTransferApproversAndThreshold() {
   };
 }
 
-function getPolicyApproverGroup() {
+function getPolicyApproverGroup(treasuryDaoID) {
   const daoPolicy = Near.view(treasuryDaoID, "get_policy", {});
   const groupWithPermission = (daoPolicy.roles ?? []).filter((role) => {
     const policyPermissions = [
@@ -92,6 +91,7 @@ const filterFunction = (item, filterStatusArray, filterKindArray) => {
 };
 
 function getFilteredProposalsByStatusAndKind({
+  treasuryDaoID,
   resPerPage,
   isPrevPageCalled,
   filterKindArray,
@@ -159,7 +159,7 @@ const isNearSocial =
   gatewayOrigin.includes("treasury-devdao.testnet.page") ||
   gatewayOrigin.includes("treasury-devdao.near.page");
 
-function getMembersAndPermissions() {
+function getMembersAndPermissions(treasuryDaoID) {
   return Near.asyncView(treasuryDaoID, "get_policy", {}).then((daoPolicy) => {
     const memberData = [];
 
@@ -195,7 +195,7 @@ function getMembersAndPermissions() {
   });
 }
 
-function getDaoRoles() {
+function getDaoRoles(treasuryDaoID) {
   const daoPolicy = Near.view(treasuryDaoID, "get_policy", {});
   if (Array.isArray(daoPolicy.roles)) {
     return daoPolicy.roles.map((role) => role.name);
@@ -204,7 +204,7 @@ function getDaoRoles() {
   return [];
 }
 
-function hasPermission(accountId, kindName, actionType) {
+function hasPermission(treasuryDaoID, accountId, kindName, actionType) {
   if (!accountId) {
     return false;
   }
@@ -219,6 +219,9 @@ function hasPermission(accountId, kindName, actionType) {
         return (
           role.permissions.includes(`${kindName}:${actionType.toString()}`) ||
           role.permissions.includes(`${kindName}:*`) ||
+          role.permissions.includes(`${kindName}:VoteApprove`) ||
+          role.permissions.includes(`${kindName}:VoteReject`) ||
+          role.permissions.includes(`${kindName}:VoteRemove`) ||
           role.permissions.includes(`*:${actionType.toString()}`) ||
           role.permissions.includes("*:*")
         );
@@ -245,6 +248,13 @@ function getPermissionsText(type) {
   }
 }
 
+function isBosGateway() {
+  return (
+    gatewayOrigin.includes("near.social") ||
+    gatewayOrigin.includes("dev.near.org")
+  );
+}
+
 return {
   hasPermission,
   getTransferApproversAndThreshold,
@@ -254,4 +264,5 @@ return {
   getDaoRoles,
   getPolicyApproverGroup,
   getPermissionsText,
+  isBosGateway,
 };

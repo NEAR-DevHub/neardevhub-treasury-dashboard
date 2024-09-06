@@ -1,0 +1,30 @@
+name: Deploy Components to Mainnet - Devhub and Testing
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy-widgets:
+    name: Deploy
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target_account:
+          - environment: treasury-devdao.near
+            deploy_command: npm run deploy:devdao
+          - environment: treasury-testing.near
+            deploy_command: npm run deploy:testing
+    environment: ${{ matrix.target_account.environment }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          curl --proto '=https' --tlsv1.2 -LsSf https://github.com/bos-cli-rs/bos-cli-rs/releases/download/v0.3.15/bos-cli-installer.sh | sh
+
+      - name: Deploy widgets
+        run: |
+          ${{ matrix.target_account.deploy_command }} -- '${{ vars.NEAR_SOCIAL_ACCOUNT_ID }}' sign-as '${{ vars.NEAR_SOCIAL_ACCOUNT_ID }}' network-config mainnet sign-with-plaintext-private-key --signer-public-key '${{ vars.NEAR_SOCIAL_ACCOUNT_PUBLIC_KEY }}' --signer-private-key '${{ secrets.NEAR_SOCIAL_ACCOUNT_PRIVATE_KEY }}' send

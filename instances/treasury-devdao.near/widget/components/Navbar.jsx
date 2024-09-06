@@ -1,17 +1,18 @@
 const page = props.page;
+const instance = props.instance;
+if (!instance) {
+  return <></>;
+}
+
+const { treasuryDaoID, navbarLinks } = VM.require(
+  `${instance}/widget/config.data`
+);
 
 const [showMenu, setShowMenu] = useState(false);
 
 const { href: linkHref } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
-const { navbarLinks } = VM.require(
-  "${REPL_DEPLOYMENT_ACCOUNT}/widget/config.data"
-) || {
-  navbarLinks: [],
-};
-
-const treasuryAccount = "${REPL_TREASURY}";
 
 const MenuIcon = () => (
   <svg
@@ -117,12 +118,12 @@ return (
     <div className="d-flex align-items-center gap-3">
       <div className="h4 mb-0">{getTitle(page ?? "dashboard")}</div>
       <div className="account-container py-1 px-2 rounded-3">
-        {treasuryAccount}
+        {treasuryDaoID}
       </div>
     </div>
     <div className="d-flex gap-3 align-items-center">
       <LinksContainer>
-        {navbarLinks.map((link) => (
+        {(navbarLinks ?? []).map((link) => (
           <Link className={isActive(link.title)} href={link.href}>
             {link.title}
           </Link>
@@ -141,7 +142,7 @@ return (
           <i className="bi bi-x h4"></i>
         </div>
         <div className="d-flex flex-column gap-2">
-          {navbarLinks.map((link, idx) => (
+          {(navbarLinks ?? []).map((link, idx) => (
             <MobileLink
               className={isActive(link.title)}
               key={`mobile-link-${idx}`}

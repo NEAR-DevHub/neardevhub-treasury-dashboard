@@ -1,5 +1,5 @@
 const { isNearSocial } = VM.require(
-  "${REPL_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 ) || {
   isNearSocial: false,
 };
@@ -39,7 +39,47 @@ function getImage(acc) {
 
 return (
   <Container className="d-flex justify-content-center">
-    <Widget
+    <div className="d-flex align-items-center">
+      {accounts.slice(0, maxShow).map((acc, index) => {
+        const imageSrc = getImage(acc);
+        const voteImg = votes[acc] === "Approve" ? approve : reject;
+        return (
+          <div
+            style={{
+              marginLeft: index > 0 ? "-10px" : 0,
+              zIndex: maxIndex - index,
+              position: "relative",
+            }}
+          >
+            <img
+              src={imageSrc}
+              height={40}
+              width={40}
+              className="rounded-circle"
+            />
+            <img
+              src={voteImg}
+              height={20}
+              style={
+                isNearSocial
+                  ? { marginTop: 25, marginLeft: "-20px" }
+                  : { marginTop: "-17px", marginLeft: "23px" }
+              }
+            />
+          </div>
+        );
+      })}
+      {accounts.length > maxShow && (
+        <div
+          style={{ marginLeft: "-10px" }}
+          className="grey-circle rounded-circle d-flex justify-content-center align-items-center"
+        >
+          +{accounts.length - maxShow}
+        </div>
+      )}
+    </div>
+    {/* we don't show the hover for now */}
+    {/* <Widget
       src="${REPL_MOB}/widget/N.Common.OverlayTrigger"
       props={{
         popup: (
@@ -98,47 +138,9 @@ return (
           </div>
         ),
         children: (
-          <div className="d-flex align-items-center">
-            {accounts.slice(0, maxShow).map((acc, index) => {
-              const imageSrc = getImage(acc);
-              const voteImg = votes[acc] === "Approve" ? approve : reject;
-              return (
-                <div
-                  style={{
-                    marginLeft: index > 0 ? "-10px" : 0,
-                    zIndex: maxIndex - index,
-                    position: "relative",
-                  }}
-                >
-                  <img
-                    src={imageSrc}
-                    height={40}
-                    width={40}
-                    className="rounded-circle"
-                  />
-                  <img
-                    src={voteImg}
-                    height={20}
-                    style={
-                      isNearSocial
-                        ? { marginTop: 25, marginLeft: "-20px" }
-                        : { marginTop: "-17px", marginLeft: "23px" }
-                    }
-                  />
-                </div>
-              );
-            })}
-            {accounts.length > maxShow && (
-              <div
-                style={{ marginLeft: "-10px" }}
-                className="grey-circle rounded-circle d-flex justify-content-center align-items-center"
-              >
-                +{accounts.length - maxShow}
-              </div>
-            )}
-          </div>
+       <></>
         ),
       }}
-    />
+    /> */}
   </Container>
 );

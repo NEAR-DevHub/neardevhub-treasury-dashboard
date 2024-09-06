@@ -1,6 +1,6 @@
 const address = props.address ?? ""; // Empty string for NEAR
 const amountWithDecimals = props.amountWithDecimals ?? 0;
-const amountWithoutDecimals = props.amountWithoutDecimals; // Automatically converted to the correct value
+const amountWithoutDecimals = props.amountWithoutDecimals;
 
 const isNEAR = address === "" || address.toLowerCase() === "near";
 
@@ -31,6 +31,7 @@ return (
         src={isNEAR ? "${REPL_NEAR_TOKEN_ICON}" : ftMetadata.icon}
       />
     </div>
+    {/* TODO later */}
     {/* <div className="text-muted">~1000 USD</div> */}
   </div>
 );

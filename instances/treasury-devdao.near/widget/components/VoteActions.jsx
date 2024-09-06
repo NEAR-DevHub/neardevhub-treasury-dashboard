@@ -1,6 +1,12 @@
+const instance = props.instance;
+if (!instance) {
+  return <></>;
+}
+
+const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+
 const votes = props.votes ?? {};
 const proposalId = props.proposalId;
-const treasuryDaoID = "${REPL_TREASURY}";
 const accountId = context.accountId;
 const tokensBalance = props.tokensBalance ?? [];
 const requiredVotes = props.requiredVotes;
@@ -139,8 +145,9 @@ return (
   <Container>
     <InsufficientBalanceWarning />
     <Widget
-      src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
+      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
       props={{
+        instance,
         heading: "Confirm your vote",
         content: `Are you sure you want to vote to ${
           vote === actions.APPROVE ? "approve" : "reject"
@@ -157,7 +164,7 @@ return (
     {alreadyVoted ? (
       <div className="d-flex gap-2 align-items-center justify-content-end">
         <Widget
-          src={`${REPL_DEPLOYMENT_ACCOUNT}/widget/components.ProposalStatus`}
+          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.ProposalStatus`}
           props={{
             isVoteStatus: true,
             status: userVote,
