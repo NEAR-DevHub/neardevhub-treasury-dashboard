@@ -78,6 +78,7 @@ return (
         transferApproversGroup,
         highlightProposalId,
         loading: loading,
+        policy,
       }}
     />
     {(proposals ?? [])?.length > 0 && (
