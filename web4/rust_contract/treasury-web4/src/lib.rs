@@ -1,6 +1,5 @@
 // Find all our documentation at https://docs.near.org
 mod web4;
-use near_sdk::base64::{engine::general_purpose, Engine as _};
 use near_sdk::near;
 use web4::types::{Web4Request, Web4Response};
 
@@ -21,8 +20,7 @@ impl Contract {
     pub fn web4_get(&self, request: Web4Request) -> Web4Response {
         Web4Response::Body {
             content_type: "text/html; charset=UTF-8".to_owned(),
-            body: general_purpose::STANDARD
-                .encode(include_str!("../../../public_html/index.html").to_string()),
+            body: include_str!("../index.html.base64.txt").to_string(),
         }
     }
 }

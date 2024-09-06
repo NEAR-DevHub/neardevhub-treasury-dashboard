@@ -5441,6 +5441,7 @@ dependencies = [
 name = "treasury-web4"
 version = "0.1.0"
 dependencies = [
+ "base64 0.22.1",
  "near-sdk",
  "near-workspaces",
  "serde_json",
