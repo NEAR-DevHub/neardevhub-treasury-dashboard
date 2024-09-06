@@ -15,6 +15,11 @@ const Container = styled.div`
     background-color: rgba(255, 122, 0, 0.16);
     color: #de6a00;
   }
+
+  .failed {
+    background-color: rgba(239, 56, 38, 0.1);
+    color: #ef3826;
+  }
 `;
 
 return (
@@ -23,6 +28,8 @@ return (
       <div className="approve rounded-2 p-2 bold">Funded</div>
     ) : status === "Rejected" ? (
       <div className="reject rounded-2 p-2 bold">Rejected</div>
+    ) : status === "Failed" ? (
+      <div className="failed rounded-2 p-2 bold">Failed</div>
     ) : (
       <div className="expire rounded-2 p-2 bold">Expired</div>
     )}

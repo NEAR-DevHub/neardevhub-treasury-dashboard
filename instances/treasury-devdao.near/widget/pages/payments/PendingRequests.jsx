@@ -67,6 +67,7 @@ return (
         isPendingRequests: true,
         transferApproversGroup,
         loading: loading,
+        policy,
         ...props,
       }}
     />
