@@ -205,7 +205,7 @@ const VoteSuccessToast = () => {
             : "The payment has been rejected."}
           <a
             href={href({
-              widgetSrc: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app`,
+              widgetSrc: `${instance}/widget/app`,
               params: {
                 page: "payments",
                 selectedTab: "History",
