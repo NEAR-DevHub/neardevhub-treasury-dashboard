@@ -21,7 +21,7 @@ impl Contract {
     pub fn web4_get(&self, request: Web4Request) -> Web4Response {
         Web4Response::Body {
             content_type: "text/html; charset=UTF-8".to_owned(),
-            body: include_str!("../../../index.html.base64.txt").to_string(),
+            body: include_str!("./index.html.base64.txt").to_string(),
         }
     }
 }

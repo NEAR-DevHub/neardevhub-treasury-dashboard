@@ -12,4 +12,4 @@ indexHtml = indexHtml.replace(
     process.env.PIKESPEAK_API_KEY
 );
 
-await writeFile(new URL("index.html.base64.txt", import.meta.url), Buffer.from(indexHtml).toString('base64'));
+await writeFile(new URL("rust_contract/treasury-web4/src/index.html.base64.txt", import.meta.url), Buffer.from(indexHtml).toString('base64'));
