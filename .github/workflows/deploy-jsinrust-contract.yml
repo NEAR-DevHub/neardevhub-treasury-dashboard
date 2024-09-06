@@ -1,0 +1,30 @@
+name: JsInRust web4 deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy-widgets:
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+            npm ci
+            curl --proto '=https' --tlsv1.2 -LsSf https://github.com/bos-cli-rs/bos-cli-rs/releases/download/v0.3.15/bos-cli-installer.sh | sh
+      - name: Deploy JS contract
+        run: |
+            BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+            echo "on branch $BRANCH"
+            if [[ "$BRANCH" != "main" ]]; then
+                echo "Not on main branch, showing deployment args"
+                npm run web4:createdeployargs
+                cat web4/args.json
+            else
+            echo "JSinRust deploy Not enabled"
+            npm run web4:deploy
+            fi
