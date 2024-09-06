@@ -1,4 +1,4 @@
-name: Deploy to production
+name: Deploy Rust web4 contract
 on:
   push:
     branches: [main]
