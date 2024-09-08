@@ -1,7 +1,6 @@
 name: Deploy Rust web4 contract
 
 on:
-  pull_request:
   push:
     branches: [main]
 
