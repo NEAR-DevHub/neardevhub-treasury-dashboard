@@ -1,5 +1,6 @@
 name: "Test web4 Rust"
 on:
+  workflow_call: {}
   pull_request:
   push:
     branches:
