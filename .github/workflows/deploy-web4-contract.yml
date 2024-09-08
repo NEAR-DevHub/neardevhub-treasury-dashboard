@@ -7,7 +7,7 @@ on:
 
 jobs:
   test:
-    uses: ./.github/workflows/test-web4.contract.yml
+    uses: ./.github/workflows/test-web4-contract.yml
 
   deploy-staging:
     name: Deploy to production
