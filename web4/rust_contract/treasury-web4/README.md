@@ -1,6 +1,6 @@
 # treasury-web4
 
-cargo-near-new-project-description
+This is the contract for serving web4 content
 
 ## How to Build Locally?
 
