@@ -7,7 +7,7 @@ Please refer to [NEAR DevHub](https://github.com/NEAR-DevHub/neardevhub-bos/blob
 
 # Web4 gateway
 
-In the [web4](./web4) folder there is a setup for a web4 gateway. The [public_html](./web4/public_html/) contains the gateway static index.html file that is served on the web4 page, and there is also the [rust_contract](./web4/rust_contract/) that contains the web4 contract that is written in Rust.
+In the [web4](./web4) folder there is a setup for a web4 gateway. The [public_html](./web4/public_html/) contains the gateway static index.html file that is served on the web4 page, and there is also the [treasury-web4](./web4/treasury-web4/) that contains the web4 contract that is written in Rust.
 
 ## Local development
 

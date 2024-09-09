@@ -26,4 +26,4 @@ jobs:
               --signer-public-key "${{ vars.NEAR_CONTRACT_PRODUCTION_ACCOUNT_PUBLIC_KEY }}" \
               --signer-private-key "${{ secrets.NEAR_CONTRACT_PRODUCTION_ACCOUNT_PRIVATE_KEY }}" \
             send
-        working-directory: ./web4/rust_contract/treasury-web4
+        working-directory: ./web4/treasury-web4
