@@ -1,5 +1,3 @@
 {
-  "rust-analyzer.linkedProjects": [
-    "web4/treasury-web4/Cargo.toml"
-  ]
+  "rust-analyzer.linkedProjects": ["web4/treasury-web4/Cargo.toml"]
 }
