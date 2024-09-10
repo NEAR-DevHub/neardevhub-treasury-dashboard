@@ -7,6 +7,7 @@
   "REPL_NEAR": "near",
   "REPL_MOB": "mob.near",
   "REPL_SOCIAL_CONTRACT": "social.near",
+  "REPL_REF_FINANCE_CONTRACT": "v2.ref-finance.near",
   "REPL_RPC_URL": "https://rpc.mainnet.near.org",
   "REPL_PROPOSAL_FEED_INDEXER_QUERY_NAME": "polyprogrammist_near_devhub_prod_v1_proposals_with_latest_snapshot",
   "REPL_X_HASURA_ROLE": "polyprogrammist_near",

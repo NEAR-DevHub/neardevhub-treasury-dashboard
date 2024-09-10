@@ -13,7 +13,7 @@ const proposals = props.proposals;
 const columnsVisibility = JSON.parse(
   Storage.get(
     "COLUMNS_VISIBLILITY",
-    `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.SettingsDropdown`
+    `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.SettingsDropdown`
   ) ?? "[]"
 );
 
