@@ -1,0 +1,3 @@
+{
+  "rust-analyzer.linkedProjects": ["web4/treasury-web4/Cargo.toml"]
+}

@@ -1,0 +1,386 @@
+<!doctype html>
+<html>
+
+<head>
+  <title></title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta property="og:url" content="devhub.near/widget/app" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="near/dev/hub" />
+  <meta property="og:description" content="The decentralized home base for NEAR builders" />
+  <meta property="og:image"
+    content="https://i.near.social/magic/large/https://near.social/magic/img/account/devhub.near" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="near/dev/hub" />
+  <meta name="twitter:description" content="The decentralized home base for NEAR builders" />
+  <meta name="twitter:image"
+    content="https://i.near.social/magic/large/https://near.social/magic/img/account/devhub.near" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@near-wallet-selector/modal-ui-js@8.7.2/styles.css">
+  <script defer
+    src="https://cdn.jsdelivr.net/npm/near-bos-webcomponent@0.0.9/dist/main.1b3f0d7d1017de355a7c.bundle.js"></script>
+  <script defer
+    src="https://cdn.jsdelivr.net/npm/near-bos-webcomponent@0.0.9/dist/runtime.25b143da327a5371509f.bundle.js"></script>
+  <style>
+    .custom-navbar {
+      display: flex;
+      justify-content: end;
+      width: 100%;
+      background-color: #f4f4f4;
+    }
+
+    .custom-login {
+      background-color: rgba(44, 62, 80, 1);
+      color: white;
+      padding-inline: 8px;
+      padding-block: 10px;
+      border-radius: 10px;
+      margin: 10px;
+    }
+
+    .custom-logout {
+      position: relative;
+      display: inline-block;
+    }
+
+    .custom-logout button {
+      align-items: center;
+      display: flex;
+      gap: 0.5rem;
+      padding-inline: 8px;
+      padding-block: 10px;
+      border-radius: 10px;
+      margin: 10px;
+      background: none;
+      border: none;
+    }
+
+    .custom-logout img {
+      border-radius: 50%;
+      height: 40px;
+      width: 40px;
+      object-fit: cover;
+    }
+
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      background-color: #f9f9f9;
+      box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+      padding: 12px 16px;
+      z-index: 1;
+      top: 85%;
+      width: 89%;
+      border-radius: 10px;
+      margin-inline: 10px;
+    }
+
+    .show {
+      display: block !important;
+    }
+
+    .custom-logout h6 {
+      margin-bottom: 0px;
+    }
+
+    .custom-logout .text-muted {
+      color: #555555;
+      font-size: 12px;
+    }
+
+    .text-align-left {
+      text-align: left;
+    }
+  </style>
+  <script>
+    !(function (t, e) {
+      var o, n, p, r;
+      e.__SV ||
+        ((window.posthog = e),
+          (e._i = []),
+          (e.init = function (i, s, a) {
+            function g(t, e) {
+              var o = e.split(".");
+              2 == o.length && ((t = t[o[0]]), (e = o[1])),
+                (t[e] = function () {
+                  t.push([e].concat(Array.prototype.slice.call(arguments, 0)));
+                });
+            }
+            ((p = t.createElement("script")).type = "text/javascript"),
+              (p.async = !0),
+              (p.src =
+                s.api_host.replace(".i.posthog.com", "-assets.i.posthog.com") +
+                "/static/array.js"),
+              (r = t.getElementsByTagName("script")[0]).parentNode.insertBefore(
+                p,
+                r,
+              );
+            var u = e;
+            for (
+              void 0 !== a ? (u = e[a] = []) : (a = "posthog"),
+              u.people = u.people || [],
+              u.toString = function (t) {
+                var e = "posthog";
+                return (
+                  "posthog" !== a && (e += "." + a), t || (e += " (stub)"), e
+                );
+              },
+              u.people.toString = function () {
+                return u.toString(1) + ".people (stub)";
+              },
+              o =
+              "capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys getNextSurveyStep onSessionId setPersonProperties".split(
+                " ",
+              ),
+              n = 0;
+              n < o.length;
+              n++
+            )
+              g(u, o[n]);
+            e._i.push([i, s, a]);
+          }),
+          (e.__SV = 1));
+    })(document, window.posthog || []);
+    posthog.init("POSTHOG_API_KEY", {
+      api_host: "https://eu.i.posthog.com",
+      person_profiles: "identified_only", // or 'always' to create profiles for anonymous users as well
+    });
+  </script>
+</head>
+
+<body>
+  <nav class="custom-navbar">
+    <button id="login-walletselector-btn" type="button" class="custom-login">
+      Connect Wallet
+    </button>
+
+    <div id="logout-dropdown-btn" type="button" class="custom-logout">
+      <div id="logout-btn"></div>
+      <div id="logout-dropdown" class="dropdown-content">
+        <div id="logout-walletselector-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+            class="bi bi-box-arrow-right" viewBox="0 0 16 16">
+            <path fill-rule="evenodd"
+              d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0z" />
+            <path fill-rule="evenodd"
+              d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z" />
+          </svg>
+          &nbsp; Log out
+        </div>
+      </div>
+
+    </div>
+  </nav>
+  <near-social-viewer 
+      src="treasury-devdao.near/widget/app"
+      initialProps='{"page":"", "pikespeakKey":"PIKESPEAK_API_KEY"}'
+    ></near-social-viewer>
+</body>
+<script
+    async
+    src="https://ga.jspm.io/npm:es-module-shims@1.8.2/dist/es-module-shims.js"
+    crossorigin="anonymous"
+  ></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "@near-wallet-selector/core": "https://ga.jspm.io/npm:@near-wallet-selector/core@8.9.1/index.js",
+        "@near-wallet-selector/here-wallet": "https://ga.jspm.io/npm:@near-wallet-selector/here-wallet@8.9.1/index.js",
+        "@near-wallet-selector/meteor-wallet": "https://ga.jspm.io/npm:@near-wallet-selector/meteor-wallet@8.9.1/index.js",
+        "@near-wallet-selector/modal-ui-js": "https://ga.jspm.io/npm:@near-wallet-selector/modal-ui-js@8.9.1/index.js",
+        "@near-wallet-selector/my-near-wallet": "https://ga.jspm.io/npm:@near-wallet-selector/my-near-wallet@8.9.1/index.js",
+        "@near-wallet-selector/sender": "https://ga.jspm.io/npm:@near-wallet-selector/sender@8.9.1/index.js"
+      },
+      "scopes": {
+        "https://ga.jspm.io/": {
+          "@here-wallet/core": "https://ga.jspm.io/npm:@here-wallet/core@1.5.1/build/index.js",
+          "@meteorwallet/sdk": "https://ga.jspm.io/npm:@meteorwallet/sdk@1.0.5/dist/meteor-sdk/src/index.js",
+          "@near-js/accounts": "https://ga.jspm.io/npm:@near-js/accounts@0.1.4/lib/index.js",
+          "@near-js/crypto": "https://ga.jspm.io/npm:@near-js/crypto@0.0.5/lib/index.js",
+          "@near-js/keystores": "https://ga.jspm.io/npm:@near-js/keystores@0.0.5/lib/index.js",
+          "@near-js/keystores-browser": "https://ga.jspm.io/npm:@near-js/keystores-browser@0.0.5/lib/index.js",
+          "@near-js/providers": "https://ga.jspm.io/npm:@near-js/providers@0.0.7/lib/index.js",
+          "@near-js/signers": "https://ga.jspm.io/npm:@near-js/signers@0.0.5/lib/index.js",
+          "@near-js/transactions": "https://ga.jspm.io/npm:@near-js/transactions@0.2.1/lib/index.js",
+          "@near-js/types": "https://ga.jspm.io/npm:@near-js/types@0.0.4/lib/index.js",
+          "@near-js/utils": "https://ga.jspm.io/npm:@near-js/utils@0.0.4/lib/index.js",
+          "@near-js/wallet-account": "https://ga.jspm.io/npm:@near-js/wallet-account@0.0.7/lib/index.js",
+          "@near-wallet-selector/wallet-utils": "https://ga.jspm.io/npm:@near-wallet-selector/wallet-utils@8.9.1/index.js",
+          "ajv": "https://ga.jspm.io/npm:ajv@8.12.0/dist/dev.ajv.js",
+          "ajv-formats": "https://ga.jspm.io/npm:ajv-formats@2.1.1/dist/index.js",
+          "ajv/dist/compile/codegen": "https://ga.jspm.io/npm:ajv@8.12.0/dist/compile/codegen/index.js",
+          "base-x": "https://ga.jspm.io/npm:base-x@3.0.9/src/index.js",
+          "bn.js": "https://ga.jspm.io/npm:bn.js@5.2.1/lib/bn.js",
+          "borsh": "https://ga.jspm.io/npm:borsh@0.7.0/lib/index.js",
+          "bs58": "https://ga.jspm.io/npm:bs58@4.0.1/index.js",
+          "buffer": "https://ga.jspm.io/npm:@jspm/core@2.0.1/nodelibs/browser/buffer.js",
+          "capability": "https://ga.jspm.io/npm:capability@0.2.5/index.js",
+          "capability/es5": "https://ga.jspm.io/npm:capability@0.2.5/es5.js",
+          "charenc": "https://ga.jspm.io/npm:charenc@0.0.2/charenc.js",
+          "copy-to-clipboard": "https://ga.jspm.io/npm:copy-to-clipboard@3.3.3/index.js",
+          "crypt": "https://ga.jspm.io/npm:crypt@0.0.2/crypt.js",
+          "crypto": "https://ga.jspm.io/npm:@jspm/core@2.0.1/nodelibs/browser/crypto.js",
+          "decode-uri-component": "https://ga.jspm.io/npm:decode-uri-component@0.2.2/index.js",
+          "depd": "https://ga.jspm.io/npm:depd@2.0.0/lib/browser/index.js",
+          "dijkstrajs": "https://ga.jspm.io/npm:dijkstrajs@1.0.3/dijkstra.js",
+          "encode-utf8": "https://ga.jspm.io/npm:encode-utf8@1.0.3/index.js",
+          "error-polyfill": "https://ga.jspm.io/npm:error-polyfill@0.1.3/index.js",
+          "events": "https://ga.jspm.io/npm:events@3.3.0/events.js",
+          "fast-deep-equal": "https://ga.jspm.io/npm:fast-deep-equal@3.1.3/index.js",
+          "filter-obj": "https://ga.jspm.io/npm:filter-obj@1.1.0/index.js",
+          "http": "https://ga.jspm.io/npm:@jspm/core@2.0.1/nodelibs/browser/http.js",
+          "http-errors": "https://ga.jspm.io/npm:http-errors@1.8.1/index.js",
+          "https": "https://ga.jspm.io/npm:@jspm/core@2.0.1/nodelibs/browser/https.js",
+          "inherits": "https://ga.jspm.io/npm:inherits@2.0.4/inherits_browser.js",
+          "is-mobile": "https://ga.jspm.io/npm:is-mobile@4.0.0/index.js",
+          "js-sha256": "https://ga.jspm.io/npm:js-sha256@0.9.0/src/sha256.js",
+          "json-schema-traverse": "https://ga.jspm.io/npm:json-schema-traverse@1.0.0/index.js",
+          "mustache": "https://ga.jspm.io/npm:mustache@4.2.0/mustache.js",
+          "nanoid": "https://ga.jspm.io/npm:nanoid@3.3.6/index.browser.js",
+          "near-abi": "https://ga.jspm.io/npm:near-abi@0.1.1/lib/index.js",
+          "near-api-js": "https://ga.jspm.io/npm:near-api-js@2.1.4/lib/browser-index.js",
+          "near-api-js/lib/providers": "https://ga.jspm.io/npm:near-api-js@2.1.4/lib/providers/index.js",
+          "near-api-js/lib/utils": "https://ga.jspm.io/npm:near-api-js@2.1.4/lib/utils/index.js",
+          "near-api-js/lib/utils/key_pair": "https://ga.jspm.io/npm:near-api-js@2.1.4/lib/utils/key_pair.js",
+          "near-api-js/lib/utils/serialize": "https://ga.jspm.io/npm:near-api-js@2.1.4/lib/utils/serialize.js",
+          "node-fetch": "https://ga.jspm.io/npm:node-fetch@2.7.0/browser.js",
+          "o3": "https://ga.jspm.io/npm:o3@1.0.3/index.js",
+          "process": "https://ga.jspm.io/npm:@jspm/core@2.0.1/nodelibs/browser/process.js",
+          "qrcode": "https://ga.jspm.io/npm:qrcode@1.5.3/lib/browser.js",
+          "query-string": "https://ga.jspm.io/npm:query-string@7.1.3/index.js",
+          "rxjs": "https://ga.jspm.io/npm:rxjs@7.8.1/dist/esm5/index.js",
+          "safe-buffer": "https://ga.jspm.io/npm:safe-buffer@5.2.1/index.js",
+          "setprototypeof": "https://ga.jspm.io/npm:setprototypeof@1.2.0/index.js",
+          "sha1": "https://ga.jspm.io/npm:sha1@1.1.1/sha1.js",
+          "split-on-first": "https://ga.jspm.io/npm:split-on-first@1.1.0/index.js",
+          "statuses": "https://ga.jspm.io/npm:statuses@1.5.0/dev.index.js",
+          "strict-uri-encode": "https://ga.jspm.io/npm:strict-uri-encode@2.0.0/index.js",
+          "text-encoding-utf-8": "https://ga.jspm.io/npm:text-encoding-utf-8@1.0.2/lib/encoding.lib.js",
+          "toggle-selection": "https://ga.jspm.io/npm:toggle-selection@1.0.6/index.js",
+          "toidentifier": "https://ga.jspm.io/npm:toidentifier@1.0.1/index.js",
+          "tslib": "https://ga.jspm.io/npm:tslib@2.6.2/tslib.es6.mjs",
+          "tweetnacl": "https://ga.jspm.io/npm:tweetnacl@1.0.3/nacl-fast.js",
+          "u3": "https://ga.jspm.io/npm:u3@0.1.1/index.js",
+          "uri-js": "https://ga.jspm.io/npm:uri-js@4.4.1/dist/es5/uri.all.js",
+          "uuid4": "https://ga.jspm.io/npm:uuid4@2.0.3/browser.mjs"
+        },
+        "https://ga.jspm.io/npm:http-errors@1.8.1/": {
+          "depd": "https://ga.jspm.io/npm:depd@1.1.2/lib/browser/index.js"
+        }
+      }
+    }
+  </script>
+<script type="module">
+  import { setupWalletSelector } from "@near-wallet-selector/core";
+  import { setupModal } from "@near-wallet-selector/modal-ui-js";
+  import { setupMyNearWallet } from "@near-wallet-selector/my-near-wallet";
+  import { setupHereWallet } from "@near-wallet-selector/here-wallet";
+  import { setupMeteorWallet } from "@near-wallet-selector/meteor-wallet";
+  import { setupSender } from "@near-wallet-selector/sender";
+
+  const selector = await setupWalletSelector({
+    network: "mainnet",
+    modules: [
+      setupMyNearWallet(),
+      setupHereWallet(),
+      setupMeteorWallet(),
+      setupSender(),
+    ],
+  });
+
+  const modal = setupModal(selector, {
+    contractId: "social.near",
+  });
+
+  document
+    .getElementById("login-walletselector-btn")
+    .addEventListener("click", () => {
+      return modal.show();
+    });
+
+  document
+    .getElementById("logout-walletselector-btn")
+    .addEventListener("click", async () => {
+      (await selector.wallet()).signOut().then((i) => checkForLogin());
+    });
+
+  document
+    .getElementById("logout-dropdown-btn")
+    .addEventListener("click", () => {
+      event.stopPropagation();
+      document.getElementById("logout-dropdown").classList.toggle("show");
+    });
+
+  window.onclick = function (event) {
+    const dropdownBtn = document.getElementById("logout-dropdown-btn");
+    const dropdownContent = document.getElementById("logout-dropdown");
+    if (
+      !dropdownBtn.contains(event.target) &&
+      !dropdownContent.contains(event.target)
+    ) {
+      dropdownContent.classList.remove("show");
+    }
+  };
+
+  async function checkForLogin() {
+    const isSignedIn = selector.isSignedIn();
+    const loginBtn = document.getElementById("login-walletselector-btn");
+    const logoutBtn = document.getElementById("logout-btn");
+    if (isSignedIn) {
+      const accountId = selector.store.getState().accounts[0].accountId;
+      loginBtn.style.display = "none";
+      logoutBtn.style.display = "block";
+      const imageSrc = `https://i.near.social/magic/large/https://near.social/magic/img/account/${accountId}`;
+      const response = await fetch("https://api.near.social/get", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Sec-Fetch-Mode": "cors",
+          "Sec-Fetch-Site": "cross-site",
+        },
+        body: JSON.stringify({
+          keys: [`${accountId}/profile/*`],
+        }),
+      });
+      const data = await response.json();
+      const name = data?.[accountId]?.profile.name;
+      logoutBtn.innerHTML = `
+          <button>
+            <img src="${imageSrc}" height=30/>
+            <div class="text-align-left">
+            <h6> ${name} </h6>
+            <div class="text-muted"> @${accountId} </div>
+            </div>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              fill="currentColor"
+              class="bi bi-chevron-down"
+              viewBox="0 0 16 16"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708"
+              />
+            </svg>
+          </button>`;
+    } else {
+      loginBtn.style.display = "block";
+      logoutBtn.style.display = "none";
+    }
+  }
+
+  checkForLogin();
+
+  modal.on("onHide", async (event) => {
+    if (event.hideReason === "wallet-navigation") {
+      checkForLogin();
+    }
+  });
+  const viewer = document.querySelector("near-social-viewer");
+  viewer.selector = selector;
+</script>
+
+</html>
