@@ -12,7 +12,7 @@ jobs:
     name: Deploy to production
     needs: [test]
     runs-on: ubuntu-latest
-    environment: ${{ vars.NEAR_TREASURY_WEB4_ACCOUNT_ID }}
+    environment: treasury-devdao.near
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
