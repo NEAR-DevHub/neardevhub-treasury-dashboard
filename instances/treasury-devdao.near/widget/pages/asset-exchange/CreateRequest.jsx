@@ -15,69 +15,58 @@ if (!instance) {
 
 const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 
-const [sendTokenMetadata, setSendTokenMetadata] = useState("");
-const [sendTokenSymbol, setSendTokenSymbol] = useState("NEAR");
+const [sendTokenMetadata, setSendTokenMetadata] = useState({});
+const [sendToken, setSendToken] = useState("near");
 const [sendAmount, setSendAmount] = useState(null);
-const [receiveToken, setReceiveToken] = useState(null);
+const [receiveToken, setReceiveToken] = useState("usdt.tether-token.near");
 const [receiveAmount, setReceiveAmount] = useState(null);
 const [notes, setNotes] = useState(null);
 const [isTxnCreated, setTxnCreated] = useState(false);
 const [nearStakedTokens, setNearStakedTokens] = useState(null);
 const [daoPolicy, setDaoPolicy] = useState(null);
 const [lastProposalId, setLastProposalId] = useState(null);
-const [availableBalance, setAvailableBalance] = useState(null);
-const [nearBalance, setNearBalance] = useState(null);
-const [ftTokensBalance, setFtTokensBalance] = useState(null);
 const [showCancelModal, setShowCancelModal] = useState(false);
-const [pools, setPools] = useState([]);
-const [whitelistedTokens, setWhitelistedTokens] = useState([]);
+const [priceSlippage, setPriceSlippage] = useState(null);
+const [txns, setTxns] = useState([]);
+const [error, setError] = useState(null);
+const [calculatingSwap, setCalculatingSwap] = useState(false);
+
+const loading = (
+  <Widget src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"} />
+);
+
+const whitelistedTokens = useCache(
+  () =>
+    asyncFetch(
+      `http://localhost:3003/whitelist-tokens?account=${treasuryDaoID}`
+    ).then((res) => {
+      return res.body;
+    }),
+  "whitelisted-tokens",
+  { subscribe: false }
+);
 
 function getLastProposalId() {
-  return Near.asyncView(sender, "get_last_proposal_id").then(
+  return Near.asyncView(treasuryDaoID, "get_last_proposal_id").then(
     (result) => result
   );
 }
 
-function getTokenMetadata(tokenId) {
-  return Near.asyncView(tokenId, "ft_metadata").then((result) =>
-    setSendTokenMetadata(result)
-  );
-}
+const updateCurrentTokenBalance = useCallback(
+  (tokenId) => {
+    setSendTokenMetadata(
+      (whitelistedTokens ?? []).find((i) => i.id === tokenId)
+    );
+  },
+  [whitelistedTokens]
+);
 
 useEffect(() => {
   getLastProposalId().then((i) => setLastProposalId(i));
-  Near.asyncView(sender, "get_policy").then((policy) => {
+  Near.asyncView(treasuryDaoID, "get_policy").then((policy) => {
     setDaoPolicy(policy);
   });
-
-  getTokenMetadata("wrap.near");
-
-  asyncFetch(
-    `https://api3.nearblocks.io/v1/account/${treasuryDaoID}/inventory`
-  ).then((res) => setFtTokensBalance(res?.body?.inventory?.fts ?? []));
-
-  asyncFetch(`https://api3.nearblocks.io/v1/account/${treasuryDaoID}`).then(
-    (res) => {
-      const tokenBalance = Big(res?.body?.account?.[0]?.amount ?? "0")
-        .div(Big(10).pow(24))
-        .toFixed(4);
-
-      const lockedStorageAmt = Big(
-        nearBalanceResp?.body?.account?.[0]?.storage_usage ?? "0"
-      )
-        .div(Big(10).pow(5))
-        .toFixed(5);
-      setNearBalance(tokenBalance);
-      setAvailableBalance(Big(tokenBalance).minus(lockedStorageAmt).toFixed(4));
-    }
-  );
 }, []);
-
-function convertBalanceToReadableFormat(amount, decimals) {
-  return Big(amount ?? "0")
-    .div(Big(10).pow(decimals ?? "1"))
-    .toFixed();
-}
 
 function refreshData() {
   Storage.set("REFRESH_ASSET_TABLE_DATA", Math.random());
@@ -149,58 +138,191 @@ const Container = styled.div`
   .border-right {
     border-right: 1px solid #dee2e6;
   }
+
+  .input-border-radius {
+    border-bottom-right-radius: 0px !important;
+    border-top-right-radius: 0px !important;
+    border-right: none !important;
+  }
+
+  .warning {
+    background-color: rgba(255, 158, 0, 0.1);
+    color: #ff9e00;
+  }
 `;
 
+const SendAmountComponent = useMemo(() => {
+  return (
+    <input
+      className={`form-control input-border-radius`}
+      type="number"
+      value={sendAmount}
+      onChange={(e) => setSendAmount(e.target.value)}
+    />
+  );
+}, []);
+
+const NotesComponent = useMemo(() => {
+  return (
+    <Widget
+      src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Input`}
+      props={{
+        className: "flex-grow-1",
+        key: `notes`,
+        onChange: (e) => setNotes(e.target.value),
+        value: notes,
+        multiline: true,
+      }}
+    />
+  );
+}, []);
+
+const PriceSlippageComponent = useMemo(() => {
+  return (
+    <Widget
+      src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Input`}
+      props={{
+        className: "flex-grow-1",
+        placeholder: "0%",
+        key: `price-slippage`,
+        onChange: (e) => setPriceSlippage(e.target.value),
+        value: priceSlippage,
+        inputProps: {
+          type: "number",
+        },
+      }}
+    />
+  );
+}, []);
+
+const TokensInComponent = useMemo(() => {
+  return (
+    <Widget
+      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.asset-exchange.TokensSelector`}
+      props={{
+        tokens: whitelistedTokens,
+        defaultTokenId: sendToken,
+        onChange: (v) => setSendToken(v),
+      }}
+    />
+  );
+}, [sendToken, whitelistedTokens]);
+
+const TokensOutComponent = useMemo(() => {
+  return (
+    <Widget
+      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.asset-exchange.TokensSelector`}
+      props={{
+        tokens: whitelistedTokens,
+        defaultTokenId: receiveToken,
+        onChange: (v) => setReceiveToken(v),
+      }}
+    />
+  );
+}, [receiveToken, whitelistedTokens]);
+
 useEffect(() => {
-  if (amount && tokenId) {
-    const isNEAR = tokenId === tokenMapping.NEAR;
-    if (isNEAR) {
-      setParsedAmount(Big(amount).mul(Big(10).pow(24)).toFixed());
-    } else {
-      Near.asyncView(tokenId, "ft_metadata", {}).then((ftMetadata) => {
-        setParsedAmount(
-          Big(amount).mul(Big(10).pow(ftMetadata.decimals)).toFixed()
-        );
-      });
-    }
+  if (whitelistedTokens.length) {
+    updateCurrentTokenBalance(sendToken ?? "near");
   }
-}, [amount, tokenId]);
+}, [sendToken, whitelistedTokens]);
 
-function onSubmitClick() {
-  setTxnCreated(true);
-  const isNEAR = tokenId === tokenMapping.NEAR;
-  const gas = 270000000000000;
-  const deposit = daoPolicy?.proposal_bond || 100000000000000000000000;
-
-  Near.call([
-    {
-      contractName: sender,
-      methodName: "add_proposal",
-      args: {
-        proposal: {
-          description: JSON.stringify(description),
-          kind: {
-            FunctionCall: {
-              receiver_id: registry,
-              actions: [
-                {
-                  method_name: "",
-                  args: "",
-                  deposit: deposit,
-                  gas: gas,
-                },
-              ],
-            },
+function fillTxn(args) {
+  const description = {
+    isAssetExchangeTxn: true,
+    notes: notes,
+    tokenIn: sendToken,
+    tokenOut: receiveToken,
+    amountIn: sendAmount,
+    slippage: priceSlippage,
+    amountOut: receiveAmount,
+  };
+  const gas = "270000000000000";
+  return {
+    contractName: treasuryDaoID,
+    methodName: "add_proposal",
+    args: {
+      proposal: {
+        description: JSON.stringify(description),
+        kind: {
+          FunctionCall: {
+            receiver_id: args.receiverId,
+            actions: args.functionCalls.map((fc) => ({
+              method_name: fc.methodName,
+              args: Buffer.from(JSON.stringify(fc.args)).toString("base64"),
+              deposit: "1",
+              gas: fc.gas,
+            })),
           },
         },
       },
-      gas: gas,
-      deposit: deposit,
     },
-  ]);
+    gas: gas,
+  };
 }
 
-function cleanInputs() {}
+function onSubmitClick() {
+  setTxnCreated(true);
+  const calls = [];
+  txns.map((i) => calls.push(fillTxn(i)));
+  Near.call(calls);
+}
+
+function swap() {
+  asyncFetch(
+    `http://localhost:3003/swap?accountId=${treasuryDaoID}&amountIn=${sendAmount}&tokenIn=${sendToken}&tokenOut=${receiveToken}&slippage=${
+      (priceSlippage ?? 0) / 100
+    }`
+  ).then((res) => {
+    const response = res.body;
+    setTxns(response.transactions);
+    setReceiveAmount(response.outEstimate);
+    return response;
+  });
+}
+
+useEffect(() => {
+  if (
+    sendAmount &&
+    sendToken &&
+    sendTokenMetadata &&
+    receiveToken &&
+    sendToken !== receiveToken
+  ) {
+    const timer = setTimeout(() => {
+      swap();
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }
+}, [sendAmount, sendToken, receiveToken, sendTokenMetadata, priceSlippage]);
+
+useEffect(() => {
+  if (sendToken === receiveToken) {
+    setError(`Please select different tokens for the swap.`);
+  } else if (sendAmount && sendToken && sendTokenMetadata) {
+    const balance = sendTokenMetadata.parsedBalance;
+    if (parseFloat(balance) < parseFloat(sendAmount)) {
+      setError(
+        `The treasury balance doesn't have insufficient tokens to swap. You can create the request, but it won’t be approved until the balance is topped up.`
+      );
+    } else {
+      setError(false);
+    }
+  } else {
+    setError(false);
+  }
+}, [receiveToken, sendAmount, sendToken, sendTokenMetadata]);
+
+function cleanInputs() {
+  setNotes("");
+  setReceiveAmount("");
+  setSendAmount("");
+}
+
+if (!whitelistedTokens) {
+  return loading;
+}
 
 return (
   <Container>
@@ -235,12 +357,7 @@ return (
             <div>
               <div className="text-green fw-bold">Available Balance</div>
               <h6 className="mb-0">
-                {console.log(
-                  availableBalance,
-                  sendTokenSymbol,
-                  nearStakedTokens
-                )}
-                {availableBalance} {sendTokenSymbol}
+                {sendTokenMetadata?.parsedBalance} {sendTokenMetadata?.symbol}
               </h6>
             </div>
           </div>
@@ -256,22 +373,20 @@ return (
       <div className="d-flex flex-column gap-1">
         <label>Send</label>
         <div className="d-flex">
-          <Widget
-            src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Input`}
-            props={{
-              className: "flex-grow-1",
-              key: `send-amount`,
-              onChange: (e) => sendAmount(e.target.value),
-              value: sendAmount,
-              inputProps: {
-                type: "number",
-              },
-            }}
-          />
+          {SendAmountComponent}
+          {TokensInComponent}
         </div>
       </div>
       <div className="d-flex flex-column gap-1">
-        <button className="primary d-flex align-items-center rounded-3 justify-content-center gap-1">
+        <button
+          className="primary d-flex align-items-center rounded-3 justify-content-center gap-1"
+          onClick={() => {
+            const inToken = sendToken;
+            const outToken = receiveToken;
+            setSendToken(outToken);
+            setReceiveToken(inToken);
+          }}
+        >
           <div className="d-flex align-items-center">
             <i class="bi bi-arrow-up"></i>
             <i class="bi bi-arrow-down"></i>
@@ -281,32 +396,31 @@ return (
       </div>
       <div className="d-flex flex-column gap-1">
         <label>Receive</label>
-        <Widget
-          src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Input`}
-          props={{
-            className: "flex-grow-1",
-            key: `receive-amount`,
-            onChange: (e) => setReceiveAmount(e.target.value),
-            value: receiveAmount,
-            inputProps: {
-              type: "number",
-            },
-          }}
-        />
+        <div className="d-flex">
+          <input
+            className={`form-control input-border-radius`}
+            type="number"
+            disabled={true}
+            value={receiveAmount}
+            onChange={(e) => setReceiveAmount(e.target.value)}
+          />
+          {TokensOutComponent}
+        </div>
+      </div>
+      <div className="d-flex flex-column gap-1">
+        <label>Price slippage limit (in %)</label>
+        {PriceSlippageComponent}
       </div>
       <div className="d-flex flex-column gap-1">
         <label>Notes (Optional)</label>
-        <Widget
-          src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Input`}
-          props={{
-            className: "flex-grow-1",
-            key: `notes`,
-            onChange: (e) => setNotes(e.target.value),
-            value: notes,
-            multiline: true,
-          }}
-        />
+        {NotesComponent}
       </div>
+      {error && (
+        <div className="d-flex gap-3 align-items-center warning px-3 py-2 rounded-3">
+          <i class="bi bi-exclamation-triangle h5"></i>
+          <div>{error}</div>
+        </div>
+      )}
       <div className="d-flex mt-2 gap-3 justify-content-end">
         <Widget
           src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
@@ -321,12 +435,11 @@ return (
             disabled: isTxnCreated,
           }}
         />
-
         <Widget
           src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
           props={{
             classNames: { root: "theme-btn" },
-            disabled: "",
+            disabled: !sendToken || !sendAmount || !receiveAmount,
             label: "Submit",
             onClick: onSubmitClick,
             loading: isTxnCreated,

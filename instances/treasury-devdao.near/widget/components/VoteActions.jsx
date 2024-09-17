@@ -13,6 +13,7 @@ const requiredVotes = props.requiredVotes;
 const showApproverToast = props.showApproverToast ?? (() => {});
 const showRejectToast = props.showRejectToast ?? (() => {});
 const currentAmount = props.currentAmount ?? "0";
+const isHumanReadableCurrentAmount = props.isHumanReadableCurrentAmount;
 const currentContract = props.currentContract ?? "";
 const setVoteProposalId = props.setVoteProposalId ?? (() => {});
 
@@ -32,12 +33,24 @@ const [showWarning, setShowWarning] = useState(false);
 const [showConfirmModal, setConfirmModal] = useState(null);
 
 useEffect(() => {
-  setInsufficientBal(
-    Big(
-      tokensBalance.find((i) => i.contract === currentContract)?.amount ?? "0"
-    ).lt(Big(currentAmount))
+  let parsedAmount = currentAmount;
+  const currentContractMetadata = tokensBalance.find(
+    (i) => i.contract === currentContract
   );
-}, [tokensBalance, currentAmount, currentContract]);
+  if (isHumanReadableCurrentAmount) {
+    parsedAmount = Big(parsedAmount ?? "0")
+      .mul(Big(10).pow(currentContractMetadata?.ft_meta?.decimals ?? 1))
+      .toFixed();
+  }
+  setInsufficientBal(
+    Big(currentContractMetadata?.amount ?? "0").lt(Big(parsedAmount))
+  );
+}, [
+  tokensBalance,
+  currentAmount,
+  currentContract,
+  isHumanReadableCurrentAmount,
+]);
 
 function actProposal() {
   setTxnCreated(true);
@@ -54,6 +67,7 @@ function actProposal() {
 
 function refreshData() {
   Storage.set("REFRESH__VOTE_ACTION_TABLE_DATA", Math.random());
+  Storage.set("REFRESH_VOTE_ASSET_TABLE_DATA", Math.random());
 }
 
 function getProposalData() {

@@ -157,8 +157,13 @@ return (
           <div>
             <div className="text-muted text-sm">Shown in table</div>
             {settingsOptions.map((option) => {
-              // hide Expiring Date for history page
-              if (!isPendingPage && option.title === "Expiring Date") {
+              // hide certain items for history page
+              if (
+                !isPendingPage &&
+                (option.title === "Expiring Date" ||
+                  option.title === "Required Votes" ||
+                  option.title === "Votes")
+              ) {
                 return;
               }
               return (

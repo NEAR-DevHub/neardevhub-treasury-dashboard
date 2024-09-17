@@ -13,21 +13,21 @@ const proposals = props.proposals;
 const columnsVisibility = JSON.parse(
   Storage.get(
     "COLUMNS_VISIBLILITY",
-    `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.SettingsDropdown`
+    `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.asset-exchange.SettingsDropdown`
   ) ?? "[]"
 );
 
 const highlightProposalId = props.highlightProposalId;
 const loading = props.loading;
 const isPendingRequests = props.isPendingRequests;
-const transferApproversGroup = props.transferApproversGroup;
+const functionCallApproversGroup = props.functionCallApproversGroup;
 const [showToastStatus, setToastStatus] = useState(false);
 const [voteProposalId, setVoteProposalId] = useState(null);
 
 const accountId = context.accountId;
 
 const hasVotingPermission = (
-  transferApproversGroup?.approverAccounts ?? []
+  functionCallApproversGroup?.approverAccounts ?? []
 ).includes(accountId);
 
 const Container = styled.div`
@@ -102,6 +102,14 @@ const Container = styled.div`
     background-color: #2c3e50 !important;
     color: white !important;
   }
+
+  .text-green {
+    color: #089968;
+  }
+
+  .text-red {
+    color: #ff3b30;
+  }
 `;
 
 const ToastContainer = styled.div`
@@ -144,9 +152,19 @@ useEffect(() => {
               id: proposalId,
             }).then((result) => {
               if (result.status !== "InProgress") {
-                setToastStatus(
-                  result.status === "Approved" ? "APPROVE" : "REJECT"
-                );
+                let status;
+                switch (result.status) {
+                  case "Approved":
+                    status = "APPROVE";
+                    break;
+                  case "Failed":
+                    status = "FAILED";
+                    break;
+                  default:
+                    status = "REJECT";
+                    break;
+                }
+                setToastStatus(status);
                 setVoteProposalId(proposalId);
               }
             });
@@ -157,15 +175,6 @@ useEffect(() => {
   }
 }, [props.transactionHashes]);
 
-const TooltipContent = ({ title, summary }) => {
-  return (
-    <div className="p-1">
-      <h6>{title}</h6>
-      <div>{summary}</div>
-    </div>
-  );
-};
-
 function isVisible(column) {
   return columnsVisibility.find((i) => i.title === column)?.show !== false
     ? ""
@@ -174,8 +183,8 @@ function isVisible(column) {
 
 const requiredVotes =
   Math.floor(
-    transferApproversGroup?.threshold *
-      transferApproversGroup?.approverAccounts.length
+    functionCallApproversGroup?.threshold *
+      functionCallApproversGroup?.approverAccounts.length
   ) + 1;
 
 const hideApproversCol = isPendingRequests && requiredVotes === 1;
@@ -201,13 +210,15 @@ const VoteSuccessToast = () => {
         </div>
         <div className="toast-body">
           {showToastStatus === "APPROVE"
-            ? "The payment request has been successfully executed."
-            : "The payment has been rejected."}
+            ? "Asset exchange request has been successfully executed."
+            : showToastStatus === "FAILED"
+            ? "The request could not be completed due to the exceeded price slippage limit."
+            : "Asset exchange request has been rejected."}
           <a
             href={href({
               widgetSrc: `${instance}/widget/app`,
               params: {
-                page: "payments",
+                page: "asset-exchange",
                 selectedTab: "History",
                 highlightProposalId: voteProposalId,
               },
@@ -268,11 +279,25 @@ const ProposalsComponent = () => {
     <tbody style={{ overflowX: "auto" }}>
       {proposals?.map((item, index) => {
         const description = JSON.parse(item.description);
-        const title = description.title;
-        const summary = description.summary;
-        const proposalId = description.proposalId;
+        const amountIn = description.amountIn;
+        const tokenIn = description.tokenIn;
+        const tokenOut = description.tokenOut;
+        const slippage = description.slippage;
+        const amountOut = description.amountOut;
         const notes = description.notes;
-        const args = item.kind.Transfer;
+        let currentSlippage = null;
+        if (isPendingRequests) {
+          const outEstimate =
+            fetch(
+              `http://localhost:3003/swap?accountId=${treasuryDaoID}&amountIn=${amountIn}&tokenIn=${tokenIn}&tokenOut=${tokenOut}&slippage=${slippage}`
+            )?.body?.outEstimate ?? "1";
+
+          currentSlippage = Big(amountOut ?? "0")
+            .minus(outEstimate ?? "1")
+            .div(outEstimate ?? "1")
+            .times(100)
+            .toFixed(2);
+        }
 
         return (
           <tr className={highlightProposalId === item.id ? "bg-highlight" : ""}>
@@ -293,87 +318,42 @@ const ProposalsComponent = () => {
                     instance,
                     isVoteStatus: false,
                     status: item.status,
-                    isPaymentsPage: true,
                   }}
                 />
               </td>
             )}
-            <td className={isVisible("Reference")}>
-              {typeof proposalId === "number" ? (
-                <Link
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  to={href({
-                    widgetSrc: `${REPL_DEVHUB}/widget/app`,
-                    params: {
-                      page: "proposal",
-                      id: proposalId,
-                    },
-                  })}
-                >
-                  <div className="d-flex gap-2 align-items-center text-underline bold text-black">
-                    #{proposalId} <i class="bi bi-box-arrow-up-right"> </i>
-                  </div>
-                </Link>
-              ) : (
-                "-"
-              )}
-            </td>
 
-            <td className={isVisible("Title")}>
-              <Widget
-                src="${REPL_MOB}/widget/N.Common.OverlayTrigger"
-                props={{
-                  popup: <TooltipContent title={title} summary={summary} />,
-                  children: (
-                    <div
-                      className="custom-truncate bold"
-                      style={{ width: 180 }}
-                    >
-                      {title}
-                    </div>
-                  ),
-                }}
-              />
-            </td>
-            <td className={isVisible("Summary")}>
-              <Widget
-                src="${REPL_MOB}/widget/N.Common.OverlayTrigger"
-                props={{
-                  popup: <TooltipContent title={title} summary={summary} />,
-                  children: (
-                    <div className="custom-truncate" style={{ width: 180 }}>
-                      {summary}
-                    </div>
-                  ),
-                }}
-              />
-            </td>
-            <td className={"bold " + isVisible("Recipient")}>
-              <Widget
-                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.ReceiverAccount`}
-                props={{
-                  receiverAccount: args.receiver_id,
-                }}
-              />
-            </td>
-            <td className={isVisible("Requested Token") + " text-center"}>
-              <Widget
-                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenIcon`}
-                props={{
-                  address: args.token_id,
-                }}
-              />
-            </td>
-            <td className={isVisible("Funding Ask") + " text-right"}>
+            <td className={"bold " + isVisible("Send")}>
               <Widget
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
                 props={{
                   instance,
-                  amountWithoutDecimals: args.amount,
-                  address: args.token_id,
+                  amountWithoutDecimals: amountIn,
+                  address: tokenIn,
+                  isHumanReadableAmount: true,
                 }}
               />
+            </td>
+            <td className={isVisible("Receive") + " text-center"}>
+              <Widget
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
+                props={{
+                  instance,
+                  amountWithoutDecimals: amountOut,
+                  address: tokenOut,
+                  isHumanReadableAmount: true,
+                }}
+              />
+            </td>
+            <td className={isVisible("Slippage Limit") + " text-center"}>
+              <b>{slippage}%</b>
+              {isPendingRequests && currentSlippage && (
+                <div
+                  className={currentSlippage >= 0 ? "text-green" : "text-red"}
+                >
+                  {currentSlippage}%
+                </div>
+              )}
             </td>
             <td className={"bold text-center " + isVisible("Creator")}>
               <Widget
@@ -422,8 +402,8 @@ const ProposalsComponent = () => {
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Approvers`}
                 props={{
                   votes: item.votes,
-                  transferApproversGroup:
-                    transferApproversGroup?.approverAccounts,
+                  functionCallApproversGroup:
+                    functionCallApproversGroup?.approverAccounts,
                 }}
               />
             </td>
@@ -451,9 +431,9 @@ const ProposalsComponent = () => {
                         amount: balanceResp?.body?.account?.[0]?.amount,
                       },
                     ],
-                    currentAmount: args.amount,
-                    currentContract:
-                      args.token_id === "" ? "near" : args.token_id,
+                    currentAmount: amountIn,
+                    isHumanReadableCurrentAmount: true,
+                    currentContract: tokenIn,
                     requiredVotes,
                     showApproverToast: () => setToastStatus("APPROVE"),
                     showRejectToast: () => setToastStatus("REJECT"),
@@ -474,7 +454,7 @@ return (
     <VoteSuccessToast />
     {loading === true ||
     proposals === null ||
-    transferApproversGroup === null ||
+    functionCallApproversGroup === null ||
     policy === null ? (
       <div className="d-flex justify-content-center align-items-center w-100 h-100">
         <Widget
@@ -490,13 +470,13 @@ return (
           >
             {isPendingRequests ? (
               <div className="d-flex justify-content-center align-items-center flex-column gap-2">
-                <h4>No Payment Requests Found</h4>
-                <h6>There are currently no payment requests</h6>
+                <h4>No Asset Exchange Requests Found</h4>
+                <h6>There are currently no asset exchange requests</h6>
               </div>
             ) : (
               <div className="d-flex justify-content-center align-items-center flex-column gap-2">
-                <h4>No History Requests Found</h4>
-                <h6>There are currently no history requests</h6>
+                <h4>No History Exchange Requests Found</h4>
+                <h6>There are currently no history exchange requests</h6>
               </div>
             )}
           </div>
@@ -506,18 +486,18 @@ return (
               <tr className="text-grey">
                 <td>#</td>
                 <td className={isVisible("Created Date")}>Created Date</td>
-                {!isPendingRequests && <td>Status</td>}
-                <td className={isVisible("Reference")}>Reference</td>
+                {!isPendingRequests && (
+                  <td className={"text-center"}>Status</td>
+                )}
 
-                <td className={isVisible("Title")}>Title</td>
-                <td className={isVisible("Summary")}>Summary</td>
-                <td className={isVisible("Recipient")}>Recipient</td>
-                <td className={isVisible("Requested Token") + " text-center"}>
-                  Requested Token
+                <td className={isVisible("Send") + " text-right"}>Send</td>
+                <td className={isVisible("Receive") + " text-right"}>
+                  Receive
                 </td>
-                <td className={isVisible("Funding Ask") + " text-right"}>
-                  Funding Ask
+                <td className={isVisible("Slippage Limit") + " text-center"}>
+                  Slippage Limit
                 </td>
+
                 <td className={isVisible("Creator") + " text-center"}>
                   Created by
                 </td>
@@ -547,8 +527,6 @@ return (
                 {isPendingRequests && hasVotingPermission && (
                   <td className="text-right">Actions</td>
                 )}
-                {/* {!isPendingRequests && <td>Transaction Date</td>}
-          {!isPendingRequests && <td>Transaction</td>} */}
               </tr>
             </thead>
             <ProposalsComponent />

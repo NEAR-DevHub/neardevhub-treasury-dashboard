@@ -21,7 +21,7 @@ const hasCreatePermission = hasPermission(
   "AddProposal"
 );
 
-const SidebarMenu = () => {
+const SidebarMenu = ({ currentTab }) => {
   return (
     <div
       className="d-flex gap-2 align-items-center"
@@ -37,7 +37,7 @@ const SidebarMenu = () => {
       )}
       <Widget
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.asset-exchange.SettingsDropdown`}
-        props={{}}
+        props={{ isPendingPage: currentTab.title === "Pending Requests" }}
       />
     </div>
   );

@@ -1,4 +1,5 @@
 const address = props.address ?? ""; // Empty string for NEAR
+const isHumanReadableAmount = props.isHumanReadableAmount;
 const amountWithDecimals = props.amountWithDecimals ?? 0;
 const amountWithoutDecimals = props.amountWithoutDecimals;
 
@@ -14,9 +15,13 @@ if (!isNEAR) {
 }
 let amount = amountWithDecimals;
 if (amountWithoutDecimals !== undefined) {
-  amount = Big(amountWithoutDecimals)
-    .div(Big(10).pow(ftMetadata.decimals ?? 1))
-    .toString();
+  if (isHumanReadableAmount) {
+    amount = amountWithoutDecimals;
+  } else {
+    amount = Big(amountWithoutDecimals)
+      .div(Big(10).pow(ftMetadata.decimals ?? 1))
+      .toString();
+  }
 }
 
 return (

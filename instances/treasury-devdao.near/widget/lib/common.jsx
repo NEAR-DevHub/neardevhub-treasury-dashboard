@@ -1,12 +1,12 @@
-function getTransferApproversAndThreshold(treasuryDaoID) {
+function getApproversAndThreshold(treasuryDaoID, kind) {
   const daoPolicy = Near.view(treasuryDaoID, "get_policy", {});
   const groupWithTransferPermission = (daoPolicy.roles ?? []).filter((role) => {
     const transferPermissions = [
       "*:*",
-      "transfer:*",
-      "transfer:VoteApprove",
-      "transfer:VoteReject",
-      "transfer:VoteRemove",
+      `${kind}:*`,
+      `${kind}:VoteApprove`,
+      `${kind}:VoteReject`,
+      `${kind}:VoteRemove`,
       "*:VoteApprove",
       "*:VoteReject",
       "*:VoteRemove",
@@ -20,9 +20,9 @@ function getTransferApproversAndThreshold(treasuryDaoID) {
   let ratios = [];
   groupWithTransferPermission.map((i) => {
     approversGroup = approversGroup.concat(i.kind.Group ?? []);
-    if (i.vote_policy["transfer"].weight_kind === "RoleWeight") {
-      ratios = ratios.concat(i.vote_policy["transfer"].threshold);
-      ratios = ratios.concat(i.vote_policy["transfer"].threshold);
+    if (i.vote_policy[kind].weight_kind === "RoleWeight") {
+      ratios = ratios.concat(i.vote_policy[kind].threshold);
+      ratios = ratios.concat(i.vote_policy[kind].threshold);
     }
   });
 
@@ -99,6 +99,7 @@ function getFilteredProposalsByStatusAndKind({
   offset,
   lastProposalId,
   currentPage,
+  isAssetExchange,
 }) {
   let newLastProposalId = typeof offset === "number" ? offset : lastProposalId;
   let filteredProposals = [];
@@ -129,11 +130,25 @@ function getFilteredProposalsByStatusAndKind({
     }
   }
 
+  const checkForExchangeProposals = (item) => {
+    const description = JSON.parse(item.description ?? "{}");
+    return description.isAssetExchangeTxn;
+  };
+
   return Promise.all(promiseArray).then((res) => {
     const proposals = [].concat(...res);
-    filteredProposals = proposals.filter((item) =>
-      filterFunction(item, filterStatusArray, filterKindArray)
-    );
+    filteredProposals = proposals.filter((item) => {
+      const kindCondition = filterFunction(
+        item,
+        filterStatusArray,
+        filterKindArray
+      );
+      // If isAssetExchange is true, check for description.isAssetExchangeTxn
+      if (isAssetExchange) {
+        return kindCondition && checkForExchangeProposals(item);
+      }
+      return kindCondition;
+    });
     const uniqueFilteredProposals = Array.from(
       new Map(filteredProposals.map((item) => [item.id, item])).values()
     );
@@ -256,8 +271,8 @@ function isBosGateway() {
 }
 
 return {
+  getApproversAndThreshold,
   hasPermission,
-  getTransferApproversAndThreshold,
   getFilteredProposalsByStatusAndKind,
   isNearSocial,
   getMembersAndPermissions,
