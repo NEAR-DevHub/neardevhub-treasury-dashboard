@@ -297,6 +297,9 @@ const ProposalsComponent = () => {
             .div(outEstimate ?? "1")
             .times(100)
             .toFixed(2);
+          if (currentSlippage == "-0.00") {
+            currentSlippage = "0.00";
+          }
         }
 
         return (
