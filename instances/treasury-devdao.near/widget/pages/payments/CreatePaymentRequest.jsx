@@ -212,7 +212,7 @@ const Container = styled.div`
   }
   .warning {
     background-color: rgba(255, 158, 0, 0.1);
-    color: #ff9e00;
+    color: #b17108;
   }
 `;
 

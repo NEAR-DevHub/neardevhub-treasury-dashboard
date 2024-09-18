@@ -60,7 +60,7 @@ return (
       props={{
         showCanvas: showCreateRequest,
         onClose: toggleCreatePage,
-        title: "Create Payment Request",
+        title: "Create Asset Exchange Request",
         children: (
           <Widget
             src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.asset-exchange.CreateRequest`}

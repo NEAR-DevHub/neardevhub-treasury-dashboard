@@ -289,8 +289,10 @@ const ProposalsComponent = () => {
         if (isPendingRequests) {
           const outEstimate =
             fetch(
-              `http://localhost:3003/swap?accountId=${treasuryDaoID}&amountIn=${amountIn}&tokenIn=${tokenIn}&tokenOut=${tokenOut}&slippage=${slippage}`
-            )?.body?.outEstimate ?? "1";
+              `http://localhost:3003/swap?accountId=${treasuryDaoID}&amountIn=${amountIn}&tokenIn=${tokenIn}&tokenOut=${tokenOut}&slippage=${
+                slippage / 100
+              }`
+            )?.body?.outEstimate ?? amountOut;
 
           currentSlippage = Big(amountOut ?? "0")
             .minus(outEstimate ?? "1")
@@ -354,7 +356,7 @@ const ProposalsComponent = () => {
                 <div
                   className={currentSlippage >= 0 ? "text-green" : "text-red"}
                 >
-                  {currentSlippage}%
+                  {currentSlippage >= 0 && "+"} {currentSlippage}%
                 </div>
               )}
             </td>

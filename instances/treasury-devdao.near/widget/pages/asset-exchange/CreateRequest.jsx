@@ -26,7 +26,7 @@ const [nearStakedTokens, setNearStakedTokens] = useState(null);
 const [daoPolicy, setDaoPolicy] = useState(null);
 const [lastProposalId, setLastProposalId] = useState(null);
 const [showCancelModal, setShowCancelModal] = useState(false);
-const [priceSlippage, setPriceSlippage] = useState(null);
+const [priceSlippage, setPriceSlippage] = useState(0);
 const [txns, setTxns] = useState([]);
 const [error, setError] = useState(null);
 const [calculatingSwap, setCalculatingSwap] = useState(false);
@@ -147,7 +147,7 @@ const Container = styled.div`
 
   .warning {
     background-color: rgba(255, 158, 0, 0.1);
-    color: #ff9e00;
+    color: #b17108;
   }
 `;
 
@@ -160,7 +160,19 @@ const SendAmountComponent = useMemo(() => {
       onChange={(e) => setSendAmount(e.target.value)}
     />
   );
-}, []);
+}, [sendAmount]);
+
+const ReceiveAmountComponent = useMemo(() => {
+  return (
+    <input
+      className={`form-control input-border-radius`}
+      type="number"
+      disabled={true}
+      value={receiveAmount}
+      onChange={(e) => setReceiveAmount(e.target.value)}
+    />
+  );
+}, [receiveAmount]);
 
 const NotesComponent = useMemo(() => {
   return (
@@ -282,6 +294,9 @@ function swap() {
 }
 
 useEffect(() => {
+  if (!sendAmount && receiveAmount) {
+    setReceiveAmount("");
+  }
   if (
     sendAmount &&
     sendToken &&
@@ -357,7 +372,8 @@ return (
             <div>
               <div className="text-green fw-bold">Available Balance</div>
               <h6 className="mb-0">
-                {sendTokenMetadata?.parsedBalance} {sendTokenMetadata?.symbol}
+                {Big(sendTokenMetadata?.parsedBalance).toFixed(4)}{" "}
+                {sendTokenMetadata?.symbol}
               </h6>
             </div>
           </div>
@@ -366,7 +382,9 @@ return (
           <i class="bi bi-lock h5 mb-0"></i>
           <div>
             <div className="text-muted fw-bold">Staked</div>
-            <h6>{nearStakedTokens} NEAR</h6>
+            <h6>
+              {nearStakedTokens} {sendTokenMetadata?.symbol}
+            </h6>
           </div>
         </div>
       </div>
@@ -383,6 +401,10 @@ return (
           onClick={() => {
             const inToken = sendToken;
             const outToken = receiveToken;
+            const amountIn = sendAmount;
+            const amountOut = receiveAmount;
+            setReceiveAmount(amountIn);
+            setSendAmount(amountOut);
             setSendToken(outToken);
             setReceiveToken(inToken);
           }}
@@ -397,18 +419,12 @@ return (
       <div className="d-flex flex-column gap-1">
         <label>Receive</label>
         <div className="d-flex">
-          <input
-            className={`form-control input-border-radius`}
-            type="number"
-            disabled={true}
-            value={receiveAmount}
-            onChange={(e) => setReceiveAmount(e.target.value)}
-          />
+          {ReceiveAmountComponent}
           {TokensOutComponent}
         </div>
       </div>
       <div className="d-flex flex-column gap-1">
-        <label>Price slippage limit (in %)</label>
+        <label>Price slippage limit (%)</label>
         {PriceSlippageComponent}
       </div>
       <div className="d-flex flex-column gap-1">

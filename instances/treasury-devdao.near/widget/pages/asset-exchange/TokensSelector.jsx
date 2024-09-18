@@ -12,6 +12,12 @@ const toggleDropdown = () => {
 };
 
 useEffect(() => {
+  if (defaultTokenId !== selectedTokenId) {
+    setSelectedTokenId(defaultTokenId);
+  }
+}, [defaultTokenId]);
+
+useEffect(() => {
   if (tokens && !filteredTokens.length) {
     setFilteredTokens(tokens);
   }
@@ -68,7 +74,7 @@ const Container = styled.div`
   }
 
   .scroll-box {
-    max-height: 400px;
+    max-height: 300px;
     overflow-y: scroll;
   }
 
@@ -157,7 +163,7 @@ return (
                       <TokenWithSymbol token={token} showPrice={true} />
                     </div>
                     <div className="text-muted">
-                      <div>{token.parsedBalance}</div>
+                      <div>{Big(token.parsedBalance).toFixed(4)}</div>
                     </div>
                   </div>
                 );
