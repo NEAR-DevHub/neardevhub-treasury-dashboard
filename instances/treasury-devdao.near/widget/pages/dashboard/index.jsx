@@ -28,7 +28,7 @@ const Wrapper = styled.div`
   }
 
   .dashboard-item > div {
-    min-width: 400px;
+    min-width: 280px;
   }
 `;
 

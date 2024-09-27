@@ -54,6 +54,8 @@ function groupByDate(items) {
       });
     }
   });
+  // Sort the groupedItems by date in descending order
+  groupedItems.sort((a, b) => new Date(b.date) - new Date(a.date));
   return groupedItems;
 }
 
@@ -119,7 +121,7 @@ useEffect(() => {
 }, [page]);
 
 function convertBalanceToReadableFormat(amount) {
-  return Big(amount ?? "0").toFixed(6);
+  return Big(amount ?? "0").toFixed(4);
 }
 
 function formatRelativeDate(date) {
@@ -225,7 +227,7 @@ return (
 
                       return (
                         <div
-                          className="d-flex gap-2 justify-content-between align-items-center"
+                          className="d-flex gap-2 justify-content-between align-items-center flex-wrap"
                           key={txn.transaction_id}
                         >
                           <div className="d-flex gap-2 align-items-center">
@@ -258,7 +260,10 @@ return (
                               </div>
                             </div>
                           </div>
-                          <div className="text-align-end">
+                          <div
+                            className="text-align-end"
+                            style={{ minWidth: "130px" }}
+                          >
                             <div className="fw-bold d-flex gap-1 align-items-center justify-content-end">
                               {isReceived ? "+" : "-"}
                               {balanceDiff}{" "}

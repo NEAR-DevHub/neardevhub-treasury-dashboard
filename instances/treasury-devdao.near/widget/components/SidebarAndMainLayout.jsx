@@ -28,7 +28,6 @@ const Container = styled.div`
 
   .flex-5 {
     flex: 5;
-    min-width: 600px;
   }
 `;
 
@@ -64,7 +63,7 @@ return (
         })}
       </div>
     </div>
-    <div className="flex-5">
+    <div className="flex-5 w-100">
       {currentTab && (
         <div className="w-100 h-100" key={currentTab.title}>
           <Widget
