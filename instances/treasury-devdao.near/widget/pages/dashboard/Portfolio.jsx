@@ -35,9 +35,9 @@ const Item = ({
           <img src={icon} height={30} width={30} />
           <div>
             <div className="h6 mb-0">{symbol}</div>
-            <div className="d-flex gap-2 text-sm text-muted">
+            <div className="d-flex gap-md-2 text-sm text-muted flex-wrap">
               <div>{formatToReadableDecimals(tokensNumber)}</div>
-              <div>･ ${tokenPrice}</div>
+              <div>･ ${Big(tokenPrice ?? "0").toFixed(4)}</div>
             </div>
           </div>
         </div>

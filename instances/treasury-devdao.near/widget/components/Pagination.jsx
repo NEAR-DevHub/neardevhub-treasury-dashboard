@@ -14,7 +14,7 @@ const currenPageLimit =
 
 return (
   <div
-    className="d-flex justify-content-between align-items-center"
+    className="d-flex justify-content-between align-items-center gap-2 flex-wrap"
     style={{ color: "#555555" }}
   >
     <div className="d-flex gap-2 align-items-center">
