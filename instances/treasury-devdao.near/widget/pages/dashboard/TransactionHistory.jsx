@@ -54,6 +54,8 @@ function groupByDate(items) {
       });
     }
   });
+  // Sort the groupedItems by date in descending order
+  groupedItems.sort((a, b) => new Date(b.date) - new Date(a.date));
   return groupedItems;
 }
 
