@@ -1,6 +1,7 @@
 const tokens = props.tokens ?? [];
 const defaultTokenId = props.defaultTokenId;
 const onChange = props.onChange ?? (() => {});
+const sendToken = props.sendToken;
 
 const [filteredTokens, setFilteredTokens] = useState([]);
 const [searchTerm, setSearchTerm] = useState(null);
@@ -94,6 +95,10 @@ const Container = styled.div`
     overflow: hidden;
     white-space: normal;
   }
+
+  .disabled img {
+    opacity: 0.8;
+  }
 `;
 
 const Viewer = ({ tokenId }) => {
@@ -154,10 +159,19 @@ return (
 
             <div className="d-flex flex-column gap-2">
               {filteredTokens.map((token) => {
+                let isDisabled = false;
+                if (sendToken === "near" && token.id !== "wrap.near") {
+                  isDisabled = true;
+                }
                 return (
                   <div
-                    className="d-flex dropdown-item justify-content-between gap-1 p-1"
-                    onClick={() => handleTokenClick(token)}
+                    className={
+                      "d-flex dropdown-item justify-content-between gap-1 p-1 " +
+                      (isDisabled && " disabled")
+                    }
+                    onClick={() => {
+                      !isDisabled && handleTokenClick(token);
+                    }}
                   >
                     <div className="flex-1">
                       <TokenWithSymbol token={token} showPrice={true} />

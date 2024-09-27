@@ -18,7 +18,7 @@ const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 const [sendTokenMetadata, setSendTokenMetadata] = useState({});
 const [sendToken, setSendToken] = useState("near");
 const [sendAmount, setSendAmount] = useState(null);
-const [receiveToken, setReceiveToken] = useState("usdt.tether-token.near");
+const [receiveToken, setReceiveToken] = useState("wrap.near");
 const [receiveAmount, setReceiveAmount] = useState(null);
 const [notes, setNotes] = useState(null);
 const [isTxnCreated, setTxnCreated] = useState(false);
@@ -26,10 +26,12 @@ const [nearStakedTokens, setNearStakedTokens] = useState(null);
 const [daoPolicy, setDaoPolicy] = useState(null);
 const [lastProposalId, setLastProposalId] = useState(null);
 const [showCancelModal, setShowCancelModal] = useState(false);
-const [priceSlippage, setPriceSlippage] = useState(0);
+const [priceSlippage, setPriceSlippage] = useState("5");
 const [txns, setTxns] = useState([]);
 const [error, setError] = useState(null);
 const [calculatingSwap, setCalculatingSwap] = useState(false);
+const [nearSwapInfo, setNearSwapInfo] = useState(null);
+const [swapLoading, setSwapLoading] = useState(false);
 
 const loading = (
   <Widget src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"} />
@@ -135,8 +137,8 @@ const Container = styled.div`
     color: #34c759;
   }
 
-  .border-right {
-    border-right: 1px solid #dee2e6;
+  .border-left {
+    border-left: 1px solid #dee2e6;
   }
 
   .input-border-radius {
@@ -149,6 +151,11 @@ const Container = styled.div`
     background-color: rgba(255, 158, 0, 0.1);
     color: #b17108;
   }
+
+  .swap-info {
+    background-color: rgba(0, 16, 61, 0.06);
+    color: #1b1b18;
+  }
 `;
 
 const SendAmountComponent = useMemo(() => {
@@ -156,8 +163,8 @@ const SendAmountComponent = useMemo(() => {
     <input
       className={`form-control input-border-radius`}
       type="number"
-      value={sendAmount}
-      onChange={(e) => setSendAmount(e.target.value)}
+      // value={sendAmount}
+      onBlur={(e) => setSendAmount(e.target.value)}
     />
   );
 }, [sendAmount]);
@@ -169,7 +176,7 @@ const ReceiveAmountComponent = useMemo(() => {
       type="number"
       disabled={true}
       value={receiveAmount}
-      onChange={(e) => setReceiveAmount(e.target.value)}
+      onChange={() => {}}
     />
   );
 }, [receiveAmount]);
@@ -181,7 +188,7 @@ const NotesComponent = useMemo(() => {
       props={{
         className: "flex-grow-1",
         key: `notes`,
-        onChange: (e) => setNotes(e.target.value),
+        onBlur: (e) => setNotes(e.target.value),
         value: notes,
         multiline: true,
       }}
@@ -197,8 +204,7 @@ const PriceSlippageComponent = useMemo(() => {
         className: "flex-grow-1",
         placeholder: "0%",
         key: `price-slippage`,
-        onChange: (e) => setPriceSlippage(e.target.value),
-        value: priceSlippage,
+        onBlur: (e) => setPriceSlippage(e.target.value),
         inputProps: {
           type: "number",
         },
@@ -228,10 +234,11 @@ const TokensOutComponent = useMemo(() => {
         tokens: whitelistedTokens,
         defaultTokenId: receiveToken,
         onChange: (v) => setReceiveToken(v),
+        sendToken: sendToken,
       }}
     />
   );
-}, [receiveToken, whitelistedTokens]);
+}, [sendToken, receiveToken, whitelistedTokens]);
 
 useEffect(() => {
   if (whitelistedTokens.length) {
@@ -239,80 +246,101 @@ useEffect(() => {
   }
 }, [sendToken, whitelistedTokens]);
 
-function fillTxn(args) {
-  const description = {
-    isAssetExchangeTxn: true,
-    notes: notes,
-    tokenIn: sendToken,
-    tokenOut: receiveToken,
-    amountIn: sendAmount,
-    slippage: priceSlippage,
-    amountOut: receiveAmount,
-  };
-  const gas = "270000000000000";
-  return {
-    contractName: treasuryDaoID,
-    methodName: "add_proposal",
-    args: {
-      proposal: {
-        description: JSON.stringify(description),
-        kind: {
-          FunctionCall: {
-            receiver_id: args.receiverId,
-            actions: args.functionCalls.map((fc) => ({
-              method_name: fc.methodName,
-              args: Buffer.from(JSON.stringify(fc.args)).toString("base64"),
-              deposit: "1",
-              gas: fc.gas,
-            })),
+function fillTxn(args, isStorageDeposit) {
+  if (isStorageDeposit) {
+    const call = args.functionCalls[0];
+    return {
+      contractName: args.receiverId,
+      methodName: call.methodName,
+      args: call.args,
+      deposit: Big(call.amount).mul(Big(10).pow(24)),
+      gas: call.gas,
+    };
+  } else {
+    const description = {
+      isAssetExchangeTxn: true,
+      notes: notes,
+      tokenIn: sendToken,
+      tokenOut: receiveToken,
+      amountIn: sendAmount,
+      slippage: priceSlippage,
+      amountOut: receiveAmount,
+    };
+    const gas = "270000000000000";
+    return {
+      contractName: treasuryDaoID,
+      methodName: "add_proposal",
+      args: {
+        proposal: {
+          description: JSON.stringify(description),
+          kind: {
+            FunctionCall: {
+              receiver_id: args.receiverId,
+              actions: args.functionCalls.map((fc) => ({
+                method_name: fc.methodName,
+                args: Buffer.from(JSON.stringify(fc.args)).toString("base64"),
+                deposit: fc.amount,
+                gas: fc.gas,
+              })),
+            },
           },
         },
       },
-    },
-    gas: gas,
-  };
+      gas: gas,
+    };
+  }
 }
 
 function onSubmitClick() {
   setTxnCreated(true);
   const calls = [];
-  txns.map((i) => calls.push(fillTxn(i)));
+  let hasStorageTxn = false;
+  // storage deposit
+  if (txns.length > 0) {
+    hasStorageTxn = true;
+  }
+  txns.map((i, index) => calls.push(fillTxn(i, hasStorageTxn && index === 0)));
   Near.call(calls);
 }
 
-function swap() {
+const swap = useCallback(() => {
+  if (!sendAmount) {
+    return;
+  }
+  setSwapLoading(true);
   asyncFetch(
     `http://localhost:3003/swap?accountId=${treasuryDaoID}&amountIn=${sendAmount}&tokenIn=${sendToken}&tokenOut=${receiveToken}&slippage=${
-      (priceSlippage ?? 0) / 100
+      (typeof priceSlippage === "string" ? parseFloat(priceSlippage) : 0) / 100
     }`
   ).then((res) => {
     const response = res.body;
     setTxns(response.transactions);
     setReceiveAmount(response.outEstimate);
-    return response;
+    setSwapLoading(false);
   });
-}
+}, [sendAmount, sendToken, receiveToken, priceSlippage]);
 
 useEffect(() => {
   if (!sendAmount && receiveAmount) {
     setReceiveAmount("");
   }
-  if (
-    sendAmount &&
-    sendToken &&
-    sendTokenMetadata &&
-    receiveToken &&
-    sendToken !== receiveToken
-  ) {
-    const timer = setTimeout(() => {
-      swap();
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }
-}, [sendAmount, sendToken, receiveToken, sendTokenMetadata, priceSlippage]);
+}, [sendAmount, receiveAmount]);
 
 useEffect(() => {
+  const isNearOrWrapNear = (token) => token === "near" || token === "wrap.near";
+  if (
+    sendToken === receiveToken ||
+    (isNearOrWrapNear(sendToken) && isNearOrWrapNear(receiveToken)) ||
+    (!isNearOrWrapNear(sendToken) && !isNearOrWrapNear(receiveToken)) ||
+    (sendToken === "wrap.near" && !isNearOrWrapNear(receiveToken)) ||
+    (receiveToken === "wrap.near" && !isNearOrWrapNear(sendToken))
+  ) {
+    setNearSwapInfo(null);
+  } else {
+    setNearSwapInfo(
+      "To exchange NEAR for another token, first swap it for wNEAR. You can then exchange wNEAR for your desired token"
+    );
+  }
   if (sendToken === receiveToken) {
     setError(`Please select different tokens for the swap.`);
   } else if (sendAmount && sendToken && sendTokenMetadata) {
@@ -329,6 +357,10 @@ useEffect(() => {
   }
 }, [receiveToken, sendAmount, sendToken, sendTokenMetadata]);
 
+useEffect(() => {
+  swap();
+}, [priceSlippage]);
+
 function cleanInputs() {
   setNotes("");
   setReceiveAmount("");
@@ -336,7 +368,11 @@ function cleanInputs() {
 }
 
 if (!whitelistedTokens) {
-  return loading;
+  return (
+    <div className="w-100 h-100 d-flex justify-content-center align-items-center">
+      {loading}
+    </div>
+  );
 }
 
 return (
@@ -344,6 +380,7 @@ return (
     <Widget
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
       props={{
+        instance,
         heading: "Are you sure you want to cancel?",
         content:
           "This action will clear all the information you have entered in the form and cannot be undone.",
@@ -366,8 +403,13 @@ return (
     />
     <div className="d-flex flex-column gap-3">
       <div className="d-flex gap-1 border border-1 rounded-3 px-2">
-        <div className="border-right flex-1">
-          <div className="d-flex gap-2 align-items-center py-3 justify-content-center">
+        <div className="flex-1">
+          <div
+            className={
+              "d-flex gap-2 align-items-center py-3 " +
+              (sendToken === "near" && "justify-content-center")
+            }
+          >
             <i class="bi bi-safe h5 mb-0"></i>
             <div>
               <div className="text-green fw-bold">Available Balance</div>
@@ -378,15 +420,17 @@ return (
             </div>
           </div>
         </div>
-        <div className="d-flex gap-2 align-items-center flex-1 py-3 justify-content-center">
-          <i class="bi bi-lock h5 mb-0"></i>
-          <div>
-            <div className="text-muted fw-bold">Staked</div>
-            <h6>
-              {nearStakedTokens} {sendTokenMetadata?.symbol}
-            </h6>
+        {sendToken === "near" && (
+          <div className="border-left d-flex gap-2 align-items-center flex-1 py-3 justify-content-center">
+            <i class="bi bi-lock h5 mb-0"></i>
+            <div>
+              <div className="text-muted fw-bold">Staked</div>
+              <h6>
+                {nearStakedTokens} {sendTokenMetadata?.symbol}
+              </h6>
+            </div>
           </div>
-        </div>
+        )}
       </div>
       <div className="d-flex flex-column gap-1">
         <label>Send</label>
@@ -396,25 +440,18 @@ return (
         </div>
       </div>
       <div className="d-flex flex-column gap-1">
-        <button
-          className="primary d-flex align-items-center rounded-3 justify-content-center gap-1"
-          onClick={() => {
-            const inToken = sendToken;
-            const outToken = receiveToken;
-            const amountIn = sendAmount;
-            const amountOut = receiveAmount;
-            setReceiveAmount(amountIn);
-            setSendAmount(amountOut);
-            setSendToken(outToken);
-            setReceiveToken(inToken);
+        <Widget
+          src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
+          props={{
+            classNames: {
+              root: "primary w-100 justify-content-center",
+            },
+            label: "Calculate",
+            onClick: swap,
+            disabled: sendToken === receiveToken || swapLoading,
+            loading: swapLoading,
           }}
-        >
-          <div className="d-flex align-items-center">
-            <i class="bi bi-arrow-up"></i>
-            <i class="bi bi-arrow-down"></i>
-          </div>
-          Change
-        </button>
+        />
       </div>
       <div className="d-flex flex-column gap-1">
         <label>Receive</label>
@@ -431,6 +468,12 @@ return (
         <label>Notes (Optional)</label>
         {NotesComponent}
       </div>
+      {nearSwapInfo && (
+        <div className="d-flex gap-3 align-items-center swap-info px-3 py-2 rounded-3">
+          <i class="bi bi-info-circle h5"></i>
+          <div>{nearSwapInfo}</div>
+        </div>
+      )}
       {error && (
         <div className="d-flex gap-3 align-items-center warning px-3 py-2 rounded-3">
           <i class="bi bi-exclamation-triangle h5"></i>
@@ -455,7 +498,8 @@ return (
           src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
           props={{
             classNames: { root: "theme-btn" },
-            disabled: !sendToken || !sendAmount || !receiveAmount,
+            disabled:
+              !sendToken || !sendAmount || !receiveAmount || nearSwapInfo,
             label: "Submit",
             onClick: onSubmitClick,
             loading: isTxnCreated,

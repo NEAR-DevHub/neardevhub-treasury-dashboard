@@ -1,6 +1,6 @@
 function getApproversAndThreshold(treasuryDaoID, kind) {
   const daoPolicy = Near.view(treasuryDaoID, "get_policy", {});
-  const groupWithTransferPermission = (daoPolicy.roles ?? []).filter((role) => {
+  const groupWithPermission = (daoPolicy.roles ?? []).filter((role) => {
     const transferPermissions = [
       "*:*",
       `${kind}:*`,
@@ -18,7 +18,7 @@ function getApproversAndThreshold(treasuryDaoID, kind) {
 
   let approversGroup = [];
   let ratios = [];
-  groupWithTransferPermission.map((i) => {
+  groupWithPermission.map((i) => {
     approversGroup = approversGroup.concat(i.kind.Group ?? []);
     if (i.vote_policy[kind].weight_kind === "RoleWeight") {
       ratios = ratios.concat(i.vote_policy[kind].threshold);
