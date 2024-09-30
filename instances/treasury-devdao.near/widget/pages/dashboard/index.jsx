@@ -30,6 +30,10 @@ const Wrapper = styled.div`
   .dashboard-item > div {
     min-width: 280px;
   }
+
+  .flex-2 {
+    flex: 2;
+  }
 `;
 
 const [nearStakedTokens, setNearStakedTokens] = useState(null);
@@ -177,15 +181,22 @@ return (
       {iframe}
       <h4 className="page-header">Dashboard</h4>
     </div>
-    <div className="card card-body" style={{ maxHeight: "100px" }}>
-      <div className="h5">Total Balance</div>
-      {balanceResp === null || nearPrice === null ? (
-        loading
-      ) : (
-        <div className="fw-bold h3">${totalBalance} USD</div>
-      )}
-    </div>
-    <div className="d-flex gap-2 flex-wrap dashboard-item">
+
+    <div
+      className="d-flex gap-2 flex-wrap dashboard-item"
+      style={{ minHeight: "450px" }}
+    >
+      <div className="flex-2">
+        <Widget
+          src={
+            "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.BalanceChart"
+          }
+          props={{
+            instance,
+            totalBalance: totalBalance,
+          }}
+        />
+      </div>
       <Widget
         src={"${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.Portfolio"}
         props={{
@@ -196,15 +207,15 @@ return (
           nearPrice: nearPrice,
         }}
       />
-      <Widget
-        src={
-          "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.TransactionHistory"
-        }
-        props={{
-          nearPrice: nearPrice,
-          ...props,
-        }}
-      />
     </div>
+    <Widget
+      src={
+        "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.TransactionHistory"
+      }
+      props={{
+        nearPrice: nearPrice,
+        ...props,
+      }}
+    />
   </Wrapper>
 );
