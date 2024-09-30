@@ -161,24 +161,34 @@ const Container = styled.div`
 
 const SendAmountComponent = useMemo(() => {
   return (
-    <input
-      className={`form-control input-border-radius`}
-      type="number"
-      tabIndex="0"
-      // value={sendAmount}
-      onBlur={(e) => setSendAmount(e.target.value)}
+    <Widget
+      src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Input`}
+      props={{
+        inputProps: {
+          className: "form-control input-border-radius",
+          type: "number",
+        },
+        key: `send-amount`,
+        onBlur: (e) => setSendAmount(e.target.value),
+        value: sendAmount,
+      }}
     />
   );
 }, [sendAmount]);
 
 const ReceiveAmountComponent = useMemo(() => {
   return (
-    <input
-      className={`form-control input-border-radius`}
-      type="number"
-      disabled={true}
-      value={receiveAmount}
-      onChange={() => {}}
+    <Widget
+      src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Input`}
+      props={{
+        inputProps: {
+          className: "form-control input-border-radius",
+          type: "number",
+          disabled: true,
+        },
+        key: `receive-amount`,
+        value: receiveAmount,
+      }}
     />
   );
 }, [receiveAmount]);
