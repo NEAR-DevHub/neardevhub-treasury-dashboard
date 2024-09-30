@@ -32,6 +32,7 @@ const [error, setError] = useState(null);
 const [calculatingSwap, setCalculatingSwap] = useState(false);
 const [nearSwapInfo, setNearSwapInfo] = useState(null);
 const [swapLoading, setSwapLoading] = useState(false);
+const [isRegisterToken, setRegisterToken] = useState(false);
 
 const loading = (
   <Widget src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"} />
@@ -163,6 +164,7 @@ const SendAmountComponent = useMemo(() => {
     <input
       className={`form-control input-border-radius`}
       type="number"
+      tabIndex="0"
       // value={sendAmount}
       onBlur={(e) => setSendAmount(e.target.value)}
     />
@@ -248,14 +250,13 @@ useEffect(() => {
 
 function fillTxn(args, isStorageDeposit) {
   if (isStorageDeposit) {
-    const call = args.functionCalls[0];
-    return {
+    return args.functionCalls.map((call) => ({
       contractName: args.receiverId,
       methodName: call.methodName,
       args: call.args,
-      deposit: Big(call.amount).mul(Big(10).pow(24)),
+      deposit: call.amount,
       gas: call.gas,
-    };
+    }));
   } else {
     const description = {
       isAssetExchangeTxn: true,
@@ -267,39 +268,40 @@ function fillTxn(args, isStorageDeposit) {
       amountOut: receiveAmount,
     };
     const gas = "270000000000000";
-    return {
-      contractName: treasuryDaoID,
-      methodName: "add_proposal",
-      args: {
-        proposal: {
-          description: JSON.stringify(description),
-          kind: {
-            FunctionCall: {
-              receiver_id: args.receiverId,
-              actions: args.functionCalls.map((fc) => ({
-                method_name: fc.methodName,
-                args: Buffer.from(JSON.stringify(fc.args)).toString("base64"),
-                deposit: fc.amount,
-                gas: fc.gas,
-              })),
+    return [
+      {
+        contractName: treasuryDaoID,
+        methodName: "add_proposal",
+        args: {
+          proposal: {
+            description: JSON.stringify(description),
+            kind: {
+              FunctionCall: {
+                receiver_id: args.receiverId,
+                actions: args.functionCalls.map((fc) => ({
+                  method_name: fc.methodName,
+                  args: Buffer.from(JSON.stringify(fc.args)).toString("base64"),
+                  deposit: fc.amount,
+                  gas: fc.gas,
+                })),
+              },
             },
           },
         },
+        gas: gas,
       },
-      gas: gas,
-    };
+    ];
   }
 }
 
 function onSubmitClick() {
   setTxnCreated(true);
-  const calls = [];
-  let hasStorageTxn = false;
-  // storage deposit
-  if (txns.length > 0) {
-    hasStorageTxn = true;
-  }
-  txns.map((i, index) => calls.push(fillTxn(i, hasStorageTxn && index === 0)));
+  let calls = [];
+  txns.map(
+    (i, index) =>
+      (calls = calls.concat(fillTxn(i, isRegisterToken && index === 0)))
+  );
+
   Near.call(calls);
 }
 
@@ -315,6 +317,11 @@ const swap = useCallback(() => {
   ).then((res) => {
     const response = res.body;
     setTxns(response.transactions);
+    if (response.transactions.length > 0) {
+      setRegisterToken(true);
+    } else {
+      setRegisterToken(false);
+    }
     setReceiveAmount(response.outEstimate);
     setSwapLoading(false);
   });
@@ -355,6 +362,7 @@ useEffect(() => {
   } else {
     setError(false);
   }
+  setReceiveAmount("");
 }, [receiveToken, sendAmount, sendToken, sendTokenMetadata]);
 
 useEffect(() => {
@@ -478,6 +486,16 @@ return (
         <div className="d-flex gap-3 align-items-center warning px-3 py-2 rounded-3">
           <i class="bi bi-exclamation-triangle h5"></i>
           <div>{error}</div>
+        </div>
+      )}
+      {isRegisterToken && (
+        <div className="d-flex gap-3 align-items-center warning px-3 py-2 rounded-3">
+          <i class="bi bi-exclamation-triangle h5"></i>
+          <div>
+            To collect this token, you must first register the DAO account with
+            the FT contract. Upon registration, an additional transaction fee of
+            0.1 NEAR will be deducted from your account.
+          </div>
         </div>
       )}
       <div className="d-flex mt-2 gap-3 justify-content-end">
