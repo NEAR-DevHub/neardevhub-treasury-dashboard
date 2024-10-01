@@ -7,7 +7,9 @@ if (!instance) {
   return <></>;
 }
 
-const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+const { treasuryDaoID, showKYC, showReferenceProposal } = VM.require(
+  `${instance}/widget/config.data`
+);
 
 const proposals = props.proposals;
 const columnsVisibility = JSON.parse(
@@ -297,27 +299,29 @@ const ProposalsComponent = () => {
                 />
               </td>
             )}
-            <td className={isVisible("Reference")}>
-              {typeof proposalId === "number" ? (
-                <Link
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  to={href({
-                    widgetSrc: `${REPL_DEVHUB}/widget/app`,
-                    params: {
-                      page: "proposal",
-                      id: proposalId,
-                    },
-                  })}
-                >
-                  <div className="d-flex gap-2 align-items-center text-underline bold text-black">
-                    #{proposalId} <i class="bi bi-box-arrow-up-right"> </i>
-                  </div>
-                </Link>
-              ) : (
-                "-"
-              )}
-            </td>
+            {showReferenceProposal && (
+              <td className={isVisible("Reference")}>
+                {typeof proposalId === "number" ? (
+                  <Link
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    to={href({
+                      widgetSrc: `${REPL_DEVHUB}/widget/app`,
+                      params: {
+                        page: "proposal",
+                        id: proposalId,
+                      },
+                    })}
+                  >
+                    <div className="d-flex gap-2 align-items-center text-underline bold text-black">
+                      #{proposalId} <i class="bi bi-box-arrow-up-right"> </i>
+                    </div>
+                  </Link>
+                ) : (
+                  "-"
+                )}
+              </td>
+            )}
 
             <td className={isVisible("Title")}>
               <Widget
@@ -353,6 +357,7 @@ const ProposalsComponent = () => {
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.ReceiverAccount`}
                 props={{
                   receiverAccount: args.receiver_id,
+                  showKYC,
                 }}
               />
             </td>
@@ -506,8 +511,9 @@ return (
                 <td>#</td>
                 <td className={isVisible("Created Date")}>Created Date</td>
                 {!isPendingRequests && <td>Status</td>}
-                <td className={isVisible("Reference")}>Reference</td>
-
+                {showReferenceProposal && (
+                  <td className={isVisible("Reference")}>Reference</td>
+                )}
                 <td className={isVisible("Title")}>Title</td>
                 <td className={isVisible("Summary")}>Summary</td>
                 <td className={isVisible("Recipient")}>Recipient</td>
