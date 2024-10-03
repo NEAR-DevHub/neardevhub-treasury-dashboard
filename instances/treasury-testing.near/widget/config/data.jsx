@@ -9,10 +9,10 @@ return {
       title: "Payments",
       href: "?page=payments",
     },
-    // {
-    //   title: "Stake Delegation",
-    //   href: "?page=stake-delegation",
-    // },
+    {
+      title: "Stake Delegation",
+      href: "?page=stake-delegation",
+    },
     // {
     //   title: "Asset Exchange",
     //   href: "?page=asset-exchange",
