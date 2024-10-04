@@ -1,7 +1,7 @@
 name: Deploy Components to Mainnet - Devhub and Testing
 
 on:
-  push:
+  pull_request:
     branches: [main]
 
 jobs:
@@ -15,8 +15,6 @@ jobs:
             deploy_command: npm run deploy:devdao
           - environment: treasury-testing.near
             deploy_command: npm run deploy:testing
-          - environment: treasury-infinex.near
-            deploy_command: npm run deploy:infinex
     environment: ${{ matrix.target_account.environment }}
     steps:
       - name: Checkout repository
