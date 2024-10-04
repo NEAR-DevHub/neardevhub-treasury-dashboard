@@ -66,6 +66,10 @@ const Theme = styled.div`
       color: black;
     }
   }
+
+  .fill-accent {
+    fill: #fe6f39;
+  }
 `;
 
 return { Theme };
