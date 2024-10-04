@@ -1,12 +1,12 @@
-function getTransferApproversAndThreshold(treasuryDaoID) {
+function getApproversAndThreshold(treasuryDaoID, kind) {
   const daoPolicy = Near.view(treasuryDaoID, "get_policy", {});
-  const groupWithTransferPermission = (daoPolicy.roles ?? []).filter((role) => {
+  const groupWithPermission = (daoPolicy.roles ?? []).filter((role) => {
     const transferPermissions = [
       "*:*",
-      "transfer:*",
-      "transfer:VoteApprove",
-      "transfer:VoteReject",
-      "transfer:VoteRemove",
+      `${kind}:*`,
+      `${kind}:VoteApprove`,
+      `${kind}:VoteReject`,
+      `${kind}:VoteRemove`,
       "*:VoteApprove",
       "*:VoteReject",
       "*:VoteRemove",
@@ -18,11 +18,11 @@ function getTransferApproversAndThreshold(treasuryDaoID) {
 
   let approversGroup = [];
   let ratios = [];
-  groupWithTransferPermission.map((i) => {
+  groupWithPermission.map((i) => {
     approversGroup = approversGroup.concat(i.kind.Group ?? []);
-    if (i.vote_policy["transfer"].weight_kind === "RoleWeight") {
-      ratios = ratios.concat(i.vote_policy["transfer"].threshold);
-      ratios = ratios.concat(i.vote_policy["transfer"].threshold);
+    if (i.vote_policy[kind].weight_kind === "RoleWeight") {
+      ratios = ratios.concat(i.vote_policy[kind].threshold);
+      ratios = ratios.concat(i.vote_policy[kind].threshold);
     }
   });
 
@@ -99,6 +99,8 @@ function getFilteredProposalsByStatusAndKind({
   offset,
   lastProposalId,
   currentPage,
+  isAssetExchange,
+  isStakeDelegation,
 }) {
   let newLastProposalId = typeof offset === "number" ? offset : lastProposalId;
   let filteredProposals = [];
@@ -129,11 +131,34 @@ function getFilteredProposalsByStatusAndKind({
     }
   }
 
+  const checkForExchangeProposals = (item) => {
+    const description = JSON.parse(item.description ?? "{}");
+    return description.isAssetExchangeTxn;
+  };
+
+  const checkForStakeProposals = (item) => {
+    const description = JSON.parse(item.description ?? "{}");
+    return description.isStakeRequest;
+  };
+
   return Promise.all(promiseArray).then((res) => {
     const proposals = [].concat(...res);
-    filteredProposals = proposals.filter((item) =>
-      filterFunction(item, filterStatusArray, filterKindArray)
-    );
+    filteredProposals = proposals.filter((item) => {
+      const kindCondition = filterFunction(
+        item,
+        filterStatusArray,
+        filterKindArray
+      );
+      // If isAssetExchange is true, check for description.isAssetExchangeTxn
+      if (isAssetExchange) {
+        return kindCondition && checkForExchangeProposals(item);
+      }
+      // If isStakeDelegation is true, check for description.isStakeRequest
+      if (isStakeDelegation) {
+        return kindCondition && checkForStakeProposals(item);
+      }
+      return kindCondition;
+    });
     const uniqueFilteredProposals = Array.from(
       new Map(filteredProposals.map((item) => [item.id, item])).values()
     );
@@ -254,10 +279,37 @@ function isBosGateway() {
     gatewayOrigin.includes("dev.near.org")
   );
 }
+function formatNearAmount(amount) {
+  return Big(amount ?? '0').div(Big(10).pow(24)).toFixed(4);
+}
+
+function getNearBalances() {
+  const balanceResp = fetch(
+    `https://api3.nearblocks.io/v1/account/${treasuryDaoID}`
+  );
+  const locked = Big(balanceResp?.body?.account?.[0]?.storage_usage ?? "0")
+    .mul(Big(10).pow(19))
+    .toFixed();
+
+  const available = Big(balanceResp?.body?.account?.[0]?.amount ?? "0").minus(
+    locked
+  );
+
+  const total = Big(balanceResp?.body?.account?.[0]?.amount ?? "0");
+
+  return {
+    total,
+    available,
+    locked,
+    totalParsed: formatNearAmount(total),
+    availableParsed: formatNearAmount(available),
+    lockedParsed: formatNearAmount(locked),
+  };
+}
 
 return {
+  getApproversAndThreshold,
   hasPermission,
-  getTransferApproversAndThreshold,
   getFilteredProposalsByStatusAndKind,
   isNearSocial,
   getMembersAndPermissions,
@@ -265,4 +317,5 @@ return {
   getPolicyApproverGroup,
   getPermissionsText,
   isBosGateway,
+  getNearBalances,
 };

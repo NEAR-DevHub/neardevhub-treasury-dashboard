@@ -1,9 +1,7 @@
-const {
-  getTransferApproversAndThreshold,
-  getFilteredProposalsByStatusAndKind,
-} = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common") || {
-  getTransferApproversAndThreshold: () => {},
-};
+const { getApproversAndThreshold, getFilteredProposalsByStatusAndKind } =
+  VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common") || {
+    getApproversAndThreshold: () => {},
+  };
 const instance = props.instance;
 if (!instance) {
   return <></>;
@@ -33,11 +31,12 @@ useEffect(() => {
         treasuryDaoID,
         resPerPage: rowsPerPage,
         isPrevPageCalled: isPrevPageCalled,
-        filterKindArray: ["Transfer"],
+        filterKindArray: ["FunctionCall"],
         filterStatusArray: ["Approved", "Rejected", "Expired", "Failed"],
         offset: typeof offset === "number" ? offset : lastProposalId,
         lastProposalId: lastProposalId,
         currentPage,
+        isStakeDelegation: true,
       }).then((r) => {
         if (currentPage === 0 && !totalLength) {
           setTotalLength(r.totalLength);
@@ -65,17 +64,20 @@ useEffect(() => {
 
 const policy = Near.view(treasuryDaoID, "get_policy", {});
 
-const transferApproversGroup = getTransferApproversAndThreshold(treasuryDaoID);
+const functionCallApproversGroup = getApproversAndThreshold(
+  treasuryDaoID,
+  "call"
+);
 
 return (
   <div className="d-flex flex-column flex-1 justify-content-between">
     <Widget
-      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.Table`}
+      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.Table`}
       props={{
         instance,
         proposals: proposals,
         isPendingRequests: false,
-        transferApproversGroup,
+        functionCallApproversGroup,
         highlightProposalId,
         loading: loading,
         policy,

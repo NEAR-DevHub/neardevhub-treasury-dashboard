@@ -22,29 +22,18 @@ const [settingsOptions, setSettingsOptions] = useState(
           show: true,
         },
         {
-          title: "Reference",
+          title: "Type",
           show: true,
         },
         {
-          title: "Title",
+          title: "Amount",
           show: true,
         },
         {
-          title: "Summary",
+          title: "Validator",
           show: true,
         },
-        {
-          title: "Recipient",
-          show: true,
-        },
-        {
-          title: "Requested Token",
-          show: true,
-        },
-        {
-          title: "Funding Ask",
-          show: true,
-        },
+
         {
           title: "Creator",
           show: true,

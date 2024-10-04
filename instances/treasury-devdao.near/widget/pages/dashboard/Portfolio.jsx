@@ -1,5 +1,11 @@
+const { getNearBalances } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+);
+
+const nearBalances = getNearBalances();
+
 const instance = props.instance;
-if (!instance) {
+if (!instance || typeof getNearBalances !== "function") {
   return <></>;
 }
 
@@ -67,24 +73,20 @@ const loading = (
   <Widget src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"} />
 );
 
-const totalNearTokens = Big(nearBalance ?? "0")
-  .plus(Big(nearStakedTokens ?? "0"))
-  .toFixed();
-
 return (
   <div className="card card-body flex-1">
     <div className="h5">Portfolio</div>
     <div>
       {ftTokens === null ||
       nearStakedTokens === null ||
-      nearBalance === null ||
+      nearBalances === null ||
       nearPrice === null ? (
         <div className="d-flex justify-content-center align-items-center w-100 h-100">
           {loading}
         </div>
       ) : (
         <div className="mt-2">
-          {!ftTokens.length && !nearBalance ? (
+          {!ftTokens.length && !nearBalances?.total ? (
             <div className="fw-bold">{treasuryDaoID} doesn't own any FTs.</div>
           ) : (
             <div className="d-flex flex-column">
@@ -95,8 +97,8 @@ return (
                     icon={nearTokenIcon}
                     symbol={"NEAR"}
                     tokenPrice={nearPrice}
-                    tokensNumber={totalNearTokens}
-                    currentAmount={getPrice(totalNearTokens, nearPrice)}
+                    tokensNumber={nearBalances.total}
+                    currentAmount={getPrice(nearBalances.total, nearPrice)}
                   />
                   <Item
                     isStakedToken={true}
@@ -104,8 +106,11 @@ return (
                     icon={nearTokenIcon}
                     symbol={"NEAR"}
                     tokenPrice={nearPrice}
-                    tokensNumber={nearBalance}
-                    currentAmount={getPrice(nearBalance, nearPrice)}
+                    tokensNumber={nearBalances.available}
+                    currentAmount={getPrice(
+                      nearBalances.available,
+                      nearPrice
+                    )}
                   />
                   <Item
                     isStakedToken={true}
@@ -123,8 +128,8 @@ return (
                   icon={nearTokenIcon}
                   symbol={"NEAR"}
                   tokenPrice={nearPrice}
-                  tokensNumber={nearBalance}
-                  currentAmount={getPrice(nearBalance, nearPrice)}
+                  tokensNumber={nearBalances.total}
+                  currentAmount={getPrice(nearBalances.total, nearPrice)}
                 />
               )}
 
