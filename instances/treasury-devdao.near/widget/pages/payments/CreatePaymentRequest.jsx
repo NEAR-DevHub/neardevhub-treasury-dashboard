@@ -398,7 +398,7 @@ return (
       {isManualRequest && (
         <div className="d-flex flex-column gap-3">
           <div className="d-flex flex-column gap-1">
-            <label>Proposal Title</label>
+            <label>{showProposalSelection &&  "Proposal"} Title</label>
             <Widget
               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
               props={{
@@ -415,7 +415,7 @@ return (
             />
           </div>
           <div className="d-flex flex-column gap-1">
-            <label>Proposal Summary</label>
+            <label>{showProposalSelection &&  "Proposal"} Summary</label>
             <Widget
               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
               props={{
