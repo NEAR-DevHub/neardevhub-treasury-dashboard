@@ -1,6 +1,10 @@
 const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
+const { getNearBalances } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+);
+
 const instance = props.instance;
 const policy = props.policy;
 if (!instance) {
@@ -186,9 +190,7 @@ const userFTTokens = fetch(
   `https://api3.nearblocks.io/v1/account/${treasuryDaoID}/inventory`
 );
 
-const balanceResp = fetch(
-  `https://api3.nearblocks.io/v1/account/${treasuryDaoID}`
-);
+const nearBalances =getNearBalances();
 
 const VoteSuccessToast = () => {
   return showToastStatus && typeof voteProposalId === "number" ? (
@@ -452,7 +454,7 @@ const ProposalsComponent = () => {
                       ...(userFTTokens?.body?.inventory?.fts ?? []),
                       {
                         contract: "near",
-                        amount: balanceResp?.body?.account?.[0]?.amount,
+                        amount: nearBalances.available,
                       },
                     ],
                     currentAmount: args.amount,

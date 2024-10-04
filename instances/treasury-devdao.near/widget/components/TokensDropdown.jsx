@@ -1,3 +1,6 @@
+const { getNearBalances } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+);
 const instance = props.instance;
 if (!instance) {
   return <></>;
@@ -14,26 +17,16 @@ const ftTokensResp = fetch(
   `https://api3.nearblocks.io/v1/account/${treasuryDaoID}/inventory`
 );
 
-const nearBalanceResp = fetch(
-  `https://api3.nearblocks.io/v1/account/${treasuryDaoID}`
-);
+const nearBalances = getNearBalances();
 
 if (
   !ftTokensResp ||
   !Array.isArray(ftTokensResp?.body?.inventory?.fts) ||
-  !nearBalanceResp
+  typeof getNearBalances !== "function"
 ) {
   return <></>;
 }
 
-const nearBalance = Big(nearBalanceResp?.body?.account?.[0]?.amount ?? "0")
-  .div(Big(10).pow(24))
-  .toFixed(4);
-const lockedStorageAmt = Big(
-  nearBalanceResp?.body?.account?.[0]?.storage_usage ?? "0"
-)
-  .div(Big(10).pow(5))
-  .toFixed(5);
 const [options, setOptions] = useState([]);
 
 const tokensWithBalance =
@@ -46,7 +39,7 @@ useEffect(() => {
       icon: nearTokenIcon,
       title: "NEAR",
       value: "NEAR",
-      tokenBalance: nearBalance,
+      tokenBalance: nearBalances.totalParsed,
     },
   ];
 
@@ -71,9 +64,7 @@ const [isOpen, setIsOpen] = useState(false);
 const [selectedOptionValue, setSelectedValue] = useState(selectedValue);
 
 function getNearAvailableBalance(tokenBalance) {
-  return Big(tokenBalance ?? "0")
-    .minus(lockedStorageAmt ?? "0")
-    .toFixed(4);
+  return Big(tokenBalance ?? "0").minus(nearBalances?.lockedParsed ?? "0").toFixed(4);
 }
 const toggleDropdown = () => {
   setIsOpen(!isOpen);
@@ -172,7 +163,7 @@ const Item = ({ option }) => {
         <div className="h6 mb-0"> {option.title}</div>
         {option.value === "NEAR" && (
           <div className="text-sm text-muted w-100 text-wrap">
-            Tokens locked for storage: {lockedStorageAmt}
+            Tokens locked for storage: {nearBalances.lockedParsed}
           </div>
         )}
         <div className="text-sm text-muted w-100 text-wrap">

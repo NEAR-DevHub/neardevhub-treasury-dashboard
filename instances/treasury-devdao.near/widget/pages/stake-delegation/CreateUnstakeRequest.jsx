@@ -2,6 +2,10 @@ const { getLinkUsingCurrentGateway } = VM.require(
   "${REPL_DEVHUB}/widget/core.lib.url"
 ) || { getLinkUsingCurrentGateway: () => {} };
 
+const { getNearBalances } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+);
+
 const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
@@ -112,12 +116,7 @@ const Container = styled.div`
   }
 `;
 
-const balanceResp = fetch(
-  `https://api3.nearblocks.io/v1/account/${treasuryDaoID}`
-);
-const nearBalance = Big(balanceResp?.body?.account?.[0]?.amount ?? "0")
-  .div(Big(10).pow(24))
-  .toFixed(4);
+const balances = getNearBalances()
 
 function getAllStakingPools() {
   return fetch("https://api.nearblocks.io/v1/validators");
@@ -180,14 +179,18 @@ function onSubmitClick() {
         kind: {
           FunctionCall: {
             receiver_id: validatorAccount,
-            actions: {
-              method_name: "unstake",
-              args: {
-                amount: Big(amount).mul(Big(10).pow(24)).toFixed(),
+            actions: [
+              {
+                method_name: "unstake",
+                args: Buffer.from(
+                  JSON.stringify({
+                    amount: Big(amount).mul(Big(10).pow(24)).toFixed(),
+                  })
+                ).toString("base64"),
+                deposit: "0",
+                gas: 200000000000000,
               },
-              deposit: "0",
-              gas: 200000000000000,
-            },
+            ],
           },
         },
       },
@@ -236,7 +239,6 @@ return (
       }}
     />
     {!Array.isArray(allValidators?.body?.validatorFullData) ||
-    nearBalance === null ||
     !nearStakedTokens ? (
       loading
     ) : (
@@ -253,7 +255,7 @@ return (
                   <i class="bi bi-safe h5 mb-0"></i>
                   <div>
                     <div className="text-green fw-bold">Available Balance</div>
-                    <h6 className="mb-0">{nearBalance}</h6>
+                    <h6 className="mb-0">{nearBalances.availableParesed}</h6>
                   </div>
                 </div>
               </div>

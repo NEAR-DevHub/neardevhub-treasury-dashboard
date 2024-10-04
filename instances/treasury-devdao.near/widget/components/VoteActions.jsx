@@ -15,6 +15,7 @@ const showRejectToast = props.showRejectToast ?? (() => {});
 const currentAmount = props.currentAmount ?? "0";
 const currentContract = props.currentContract ?? "";
 const setVoteProposalId = props.setVoteProposalId ?? (() => {});
+const avoidCheckForBalance = props.avoidCheckForBalance;
 
 const alreadyVoted = Object.keys(votes).includes(accountId);
 const userVote = votes[accountId];
@@ -32,12 +33,14 @@ const [showWarning, setShowWarning] = useState(false);
 const [showConfirmModal, setConfirmModal] = useState(null);
 
 useEffect(() => {
-  setInsufficientBal(
-    Big(
-      tokensBalance.find((i) => i.contract === currentContract)?.amount ?? "0"
-    ).lt(Big(currentAmount ?? "0"))
-  );
-}, [tokensBalance, currentAmount, currentContract]);
+  if (!avoidCheckForBalance) {
+    setInsufficientBal(
+      Big(
+        tokensBalance.find((i) => i.contract === currentContract)?.amount ?? "0"
+      ).lt(Big(currentAmount ?? "0"))
+    );
+  }
+}, [tokensBalance, currentAmount, currentContract, avoidCheckForBalance]);
 
 function actProposal() {
   setTxnCreated(true);
@@ -48,7 +51,7 @@ function actProposal() {
       id: proposalId,
       action: vote,
     },
-    gas: 200000000000000,
+    gas: 300000000000000,
   });
 }
 

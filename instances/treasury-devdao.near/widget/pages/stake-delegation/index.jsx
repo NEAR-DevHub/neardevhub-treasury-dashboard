@@ -152,6 +152,9 @@ const CreateBtn = () => {
           <div
             className="d-flex gap-2 align-items-center h6 mb-0"
             style={{ padding: "0.8rem" }}
+            onClick={() => {
+              setShowStakeRequest(true);
+            }}
           >
             <i class="bi bi-plus-circle-fill"></i>Create Request
           </div>

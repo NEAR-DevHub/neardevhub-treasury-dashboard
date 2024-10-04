@@ -2,6 +2,9 @@ const { getLinkUsingCurrentGateway } = VM.require(
   "${REPL_DEVHUB}/widget/core.lib.url"
 ) || { getLinkUsingCurrentGateway: () => {} };
 
+const { getNearBalances } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+);
 const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
@@ -9,7 +12,7 @@ const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
 const onCloseCanvas = props.onCloseCanvas ?? (() => {});
 
 const instance = props.instance;
-if (!instance) {
+if (!instance || typeof getNearBalances !== "function") {
   return <></>;
 }
 
@@ -141,12 +144,7 @@ const Container = styled.div`
   }
 `;
 
-const balanceResp = fetch(
-  `https://api3.nearblocks.io/v1/account/${treasuryDaoID}`
-);
-const nearBalance = Big(balanceResp?.body?.account?.[0]?.amount ?? "0")
-  .div(Big(10).pow(24))
-  .toFixed(4);
+const nearBalances =getNearBalances();
 
 function getAllStakingPools() {
   asyncFetch("https://rpc.mainnet.near.org/", {
@@ -201,12 +199,14 @@ function onSubmitClick() {
         kind: {
           FunctionCall: {
             receiver_id: validatorAccount,
-            actions: {
-              method_name: "deposit_and_stake",
-              args: {},
-              deposit: Big(amount).mul(Big(10).pow(24)).toFixed(),
-              gas: 200000000000000,
-            },
+            actions: [
+              {
+                method_name: "deposit_and_stake",
+                args: "",
+                deposit: Big(amount).mul(Big(10).pow(24)).toFixed(),
+                gas: "200000000000000",
+              },
+            ],
           },
         },
       },
@@ -229,9 +229,7 @@ const loading = (
 
 if (
   !Array.isArray(validators) ||
-  validators.length === 0 ||
-  nearBalance === null
-) {
+  validators.length === 0) {
   return loading;
 }
 
@@ -272,7 +270,7 @@ return (
             <i class="bi bi-safe h5 mb-0"></i>
             <div>
               <div className="text-green fw-bold">Available Balance</div>
-              <h6 className="mb-0">{nearBalance}</h6>
+              <h6 className="mb-0">{nearBalances.availableParsed - (nearStakedTokens ?? 0)}</h6>
             </div>
           </div>
         </div>
