@@ -7,6 +7,7 @@ import {
 } from "../../util/transaction";
 import { mockRpcRequest } from "../../util/rpcmock";
 import { setDontAskAgainCacheValues } from "../../util/cache";
+import { getInstanceConfig } from "../../util/config.js";
 
 test.describe("admin connected", function () {
   test.use({
@@ -18,6 +19,7 @@ test.describe("admin connected", function () {
     daoAccount,
   }) => {
     test.setTimeout(60_000);
+    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
 
     const createPaymentRequestButton = await page.getByRole("button", {
@@ -26,14 +28,17 @@ test.describe("admin connected", function () {
     await expect(createPaymentRequestButton).toBeVisible();
     await createPaymentRequestButton.click();
 
-    const proposalSelect = await page.locator(".dropdown-toggle").first();
-    await expect(proposalSelect).toBeVisible();
-    await expect(
-      await proposalSelect.getByText("Select", { exact: true })
-    ).toBeVisible();
+    if (instanceConfig.showProposalSelection === true) {
+      const proposalSelect = await page.locator(".dropdown-toggle").first();
+      await expect(proposalSelect).toBeVisible();
+      await expect(
+        await proposalSelect.getByText("Select", { exact: true })
+      ).toBeVisible();
 
-    await proposalSelect.click();
-    await page.getByText("Add manual request").click();
+      await proposalSelect.click();
+
+      await page.getByText("Add manual request").click();
+    }
     await page.getByTestId("proposal-title").fill("Test proposal title");
     await page.getByTestId("proposal-summary").fill("Test proposal summary");
 
@@ -52,8 +57,9 @@ test.describe("admin connected", function () {
 
     await expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
-        description:
-          '{"title":"Test proposal title","summary":"Test proposal summary","notes":""}',
+        description: `{"title":"Test proposal title","summary":"Test proposal summary","notes":${
+          instanceConfig.showProposalSelection ? '""' : null
+        }}`,
         kind: {
           Transfer: {
             token_id: "",
@@ -64,7 +70,18 @@ test.describe("admin connected", function () {
       },
     });
   });
-  test("create payment request", async ({ page, instanceAccount }) => {
+  test("create payment request with linked proposal", async ({
+    page,
+    instanceAccount,
+  }) => {
+    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
+
+    if (instanceConfig.showProposalSelection !== true) {
+      console.log(
+        `Instance ${instanceAccount} is configured to not support linked proposals`
+      );
+      return;
+    }
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
 
     const createPaymentRequestButton = await page.getByRole("button", {
@@ -72,6 +89,7 @@ test.describe("admin connected", function () {
     });
     await expect(createPaymentRequestButton).toBeVisible();
     await createPaymentRequestButton.click();
+
     const proposalSelect = await page.locator(".dropdown-toggle").first();
     await expect(proposalSelect).toBeVisible();
     await expect(
