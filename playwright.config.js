@@ -50,6 +50,7 @@ export default defineConfig({
       use: {
         ...devices["Desktop Chrome"],
         instanceAccount: "treasury-devdao.near",
+        daoAccount: "devdao.sputnik-dao.near",
       },
     },
     {
@@ -57,6 +58,7 @@ export default defineConfig({
       use: {
         ...devices["Desktop Chrome"],
         instanceAccount: "treasury-infinex.near",
+        daoAccount: "infinex.sputnik-dao.near",
       },
     },
     /*{

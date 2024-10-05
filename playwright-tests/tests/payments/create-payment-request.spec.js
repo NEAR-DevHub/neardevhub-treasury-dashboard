@@ -12,7 +12,7 @@ test.describe("admin connected", function () {
   test.use({
     storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
   });
-  test("create manual payment request", async ({ page, instanceAccount }) => {
+  test("create manual payment request", async ({ page, instanceAccount, daoAccount }) => {
     test.setTimeout(60_000);
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
 
@@ -108,9 +108,9 @@ test.describe("don't ask again", function () {
     storageState:
       "playwright-tests/storage-states/wallet-connected-admin-with-accesskey.json",
   });
-  test("approve payment request", async ({ page, instanceAccount }) => {
+  test("approve payment request", async ({ page, instanceAccount, daoAccount }) => {
     test.setTimeout(60_000);
-    const contractId = "devdao.sputnik-dao.near";
+    const contractId = daoAccount;
     let isTransactionCompleted = false;
     await mockRpcRequest({
       page,
