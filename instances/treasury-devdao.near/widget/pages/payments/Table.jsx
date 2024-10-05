@@ -298,6 +298,7 @@ const ProposalsComponent = () => {
                     instance,
                     isVoteStatus: false,
                     status: item.status,
+                    isPaymentsPage: true,
                   }}
                 />
               </td>

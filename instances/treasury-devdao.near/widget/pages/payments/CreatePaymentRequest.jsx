@@ -515,6 +515,7 @@ return (
             placeholder: "Enter amount",
             value: amount,
             inputProps: {
+              min: "0",
               type: "number",
             },
           }}
