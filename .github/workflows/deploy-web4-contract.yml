@@ -3,7 +3,8 @@ name: Deploy Rust web4 contract
 on:
   push:
     branches: [main]
-
+  pull_request:
+      branches: [main]
 jobs:
   test:
     uses: ./.github/workflows/test-web4-contract.yml
@@ -15,7 +16,7 @@ jobs:
     strategy:
       matrix:
         environment:
-          - treasury-devdao.near
+#          - treasury-devdao.near
           - infinex.near
     steps:
       - name: Checkout repository
