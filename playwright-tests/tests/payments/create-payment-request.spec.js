@@ -1,4 +1,6 @@
-import { test, expect } from "@playwright/test";
+import { expect } from "@playwright/test";
+import { test } from '../../util/test.js';
+
 import {
   getTransactionModalObject,
   mockTransactionSubmitRPCResponses,
@@ -10,9 +12,9 @@ test.describe("admin connected", function () {
   test.use({
     storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
   });
-  test("create manual payment request", async ({ page }) => {
+  test("create manual payment request", async ({ page, instanceAccount }) => {
     test.setTimeout(60_000);
-    await page.goto("/treasury-devdao.near/widget/app?page=payments");
+    await page.goto(`/${instanceAccount}/widget/app?page=payments`);
 
     const createPaymentRequestButton = await page.getByRole("button", {
       name: "Create Request",
@@ -58,8 +60,8 @@ test.describe("admin connected", function () {
       },
     });
   });
-  test("create payment request", async ({ page }) => {
-    await page.goto("/treasury-devdao.near/widget/app?page=payments");
+  test("create payment request", async ({ page, instanceAccount }) => {
+    await page.goto(`/${instanceAccount}/widget/app?page=payments`);
 
     const createPaymentRequestButton = await page.getByRole("button", {
       name: "Create Request",
@@ -106,7 +108,7 @@ test.describe("don't ask again", function () {
     storageState:
       "playwright-tests/storage-states/wallet-connected-admin-with-accesskey.json",
   });
-  test("approve payment request", async ({ page }) => {
+  test("approve payment request", async ({ page, instanceAccount }) => {
     test.setTimeout(60_000);
     const contractId = "devdao.sputnik-dao.near";
     let isTransactionCompleted = false;
@@ -138,7 +140,7 @@ test.describe("don't ask again", function () {
         return originalResult;
       },
     });
-    await page.goto("/treasury-devdao.near/widget/app?page=payments");
+    await page.goto(`/${instanceAccount}/widget/app?page=payments`);
     await setDontAskAgainCacheValues({
       page,
       widgetSrc: "treasury-devdao.near/widget/components.VoteActions",
