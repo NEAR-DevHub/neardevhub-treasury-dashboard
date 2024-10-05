@@ -29,6 +29,7 @@ const isPendingRequests = props.isPendingRequests;
 const transferApproversGroup = props.transferApproversGroup;
 const [showToastStatus, setToastStatus] = useState(false);
 const [voteProposalId, setVoteProposalId] = useState(null);
+const [nearStakedTokens, setNearStakedTokens] = useState(null);
 
 const accountId = context.accountId;
 
@@ -190,7 +191,7 @@ const userFTTokens = fetch(
   `https://api3.nearblocks.io/v1/account/${treasuryDaoID}/inventory`
 );
 
-const nearBalances =getNearBalances();
+const nearBalances = getNearBalances(treasuryDaoID);
 
 const VoteSuccessToast = () => {
   return showToastStatus && typeof voteProposalId === "number" ? (
@@ -454,7 +455,11 @@ const ProposalsComponent = () => {
                       ...(userFTTokens?.body?.inventory?.fts ?? []),
                       {
                         contract: "near",
-                        amount: nearBalances.available,
+                        amount: Big(nearBalances.available)
+                          .minus(
+                            Big(nearStakedTokens ?? "0").mul(Big(10).pow(24))
+                          )
+                          .toFixed(),
                       },
                     ],
                     currentAmount: args.amount,
@@ -477,10 +482,18 @@ const ProposalsComponent = () => {
 
 return (
   <Container style={{ overflowX: "auto" }}>
+    <Widget
+      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
+      props={{
+        instance,
+        setNearStakedTokens: (v) => setNearStakedTokens(Big(v).toFixed(4)),
+      }}
+    />
     <VoteSuccessToast />
     {loading === true ||
     proposals === null ||
     transferApproversGroup === null ||
+    !nearStakedTokens ||
     policy === null ? (
       <div className="d-flex justify-content-center align-items-center w-100 h-100">
         <Widget

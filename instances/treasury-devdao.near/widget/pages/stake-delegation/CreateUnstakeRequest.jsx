@@ -116,7 +116,7 @@ const Container = styled.div`
   }
 `;
 
-const balances = getNearBalances()
+const balances = getNearBalances(treasuryDaoID);
 
 function getAllStakingPools() {
   return fetch("https://api.nearblocks.io/v1/validators");

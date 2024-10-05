@@ -37,7 +37,7 @@ const Wrapper = styled.div`
 `;
 
 const [nearStakedTokens, setNearStakedTokens] = useState(null);
-const nearBalances = getNearBalances();
+const nearBalances = getNearBalances(treasuryDaoID);
 
 const nearPrice = useCache(
   () =>
@@ -163,7 +163,7 @@ const iframe = (
   />
 );
 
-const totalBalance = Big(nearBalances?.total ?? "0")
+const totalBalance = Big(nearBalances?.totalParsed ?? "0")
   .mul(nearPrice ?? 1)
   .plus(Big(userFTTokens?.totalCummulativeAmt ?? "0"))
   .toFixed(4);
@@ -176,7 +176,7 @@ return (
     </div>
     <div className="card card-body" style={{ maxHeight: "100px" }}>
       <div className="h5">Total Balance</div>
-      {typeof getNearBalances !== 'function' || nearPrice === null ? (
+      {typeof getNearBalances !== "function" || nearPrice === null ? (
         loading
       ) : (
         <div className="fw-bold h3">${totalBalance} USD</div>

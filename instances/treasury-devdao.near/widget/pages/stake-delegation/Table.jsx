@@ -7,7 +7,7 @@ const { getNearBalances } = VM.require(
 );
 const instance = props.instance;
 const policy = props.policy;
-if (!instance || typeof getNearBalances !== 'function') {
+if (!instance || typeof getNearBalances !== "function") {
   return <></>;
 }
 
@@ -188,7 +188,7 @@ const userFTTokens = fetch(
   `https://api3.nearblocks.io/v1/account/${treasuryDaoID}/inventory`
 );
 
-const nearBalances = getNearBalances()
+const nearBalances = getNearBalances(treasuryDaoID);
 const VoteSuccessToast = () => {
   return showToastStatus && typeof voteProposalId === "number" ? (
     <ToastContainer className="toast-container position-fixed bottom-0 end-0 p-3">
