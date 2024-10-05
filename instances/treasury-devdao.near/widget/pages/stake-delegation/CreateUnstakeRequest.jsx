@@ -30,6 +30,7 @@ const [isTxnCreated, setTxnCreated] = useState(false);
 const [lastProposalId, setLastProposalId] = useState(null);
 const [notes, setNotes] = useState(null);
 const [showCancelModal, setShowCancelModal] = useState(false);
+const [daoPolicy, setDaoPolicy] = useState(null);
 
 const Container = styled.div`
   font-size: 14px;
@@ -114,9 +115,14 @@ const Container = styled.div`
     background-color: rgba(0, 16, 61, 0.06);
     color: #1b1b18;
   }
+
+  .theme-btn {
+    background-color: var(--theme-color) !important;
+    color: white;
+  }
 `;
 
-const balances = getNearBalances(treasuryDaoID);
+const nearBalances = getNearBalances(treasuryDaoID);
 
 function getAllStakingPools() {
   return fetch("https://api.nearblocks.io/v1/validators");
@@ -136,6 +142,40 @@ function getNearValue(amount) {
     .mul(nearPrice ?? 1)
     .toFixed(4);
 }
+
+function getLastProposalId() {
+  return Near.asyncView(treasuryDaoID, "get_last_proposal_id").then(
+    (result) => result
+  );
+}
+
+useEffect(() => {
+  getLastProposalId().then((i) => setLastProposalId(i));
+  Near.asyncView(treasuryDaoID, "get_policy").then((policy) => {
+    setDaoPolicy(policy);
+  });
+}, []);
+
+function refreshData() {
+  Storage.set("REFRESH_STAKE_TABLE_DATA", Math.random());
+}
+
+useEffect(() => {
+  if (isTxnCreated) {
+    const checkForNewProposal = () => {
+      getLastProposalId().then((id) => {
+        if (lastProposalId !== id) {
+          onCloseCanvas();
+          refreshData();
+          setTxnCreated(false);
+        } else {
+          setTimeout(() => checkForNewProposal(), 1000);
+        }
+      });
+    };
+    checkForNewProposal();
+  }
+}, [isTxnCreated]);
 
 const allValidators = getAllStakingPools();
 let stakedValidators = [];
@@ -188,7 +228,7 @@ function onSubmitClick() {
                   })
                 ).toString("base64"),
                 deposit: "0",
-                gas: 200000000000000,
+                gas: "200000000000000",
               },
             ],
           },
@@ -210,6 +250,9 @@ const loading = (
     <Widget src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"} />
   </div>
 );
+
+const nearAvailableBalance =
+  nearBalances.availableParsed - (nearStakedTokens ?? 0);
 
 return (
   <Container>
@@ -255,7 +298,7 @@ return (
                   <i class="bi bi-safe h5 mb-0"></i>
                   <div>
                     <div className="text-green fw-bold">Available Balance</div>
-                    <h6 className="mb-0">{nearBalances.availableParesed}</h6>
+                    <h6 className="mb-0">{nearAvailableBalance}</h6>
                   </div>
                 </div>
               </div>
@@ -379,6 +422,7 @@ return (
                       placeholder: "Enter amount",
                       value: amount,
                       inputProps: {
+                        min: "0",
                         type: "number",
                         prefix: (
                           <img

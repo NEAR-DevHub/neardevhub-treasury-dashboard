@@ -231,6 +231,9 @@ if (!Array.isArray(validators) || validators.length === 0) {
   return loading;
 }
 
+const nearAvailableBalance =
+  nearBalances.availableParsed - (nearStakedTokens ?? 0);
+
 return (
   <Container>
     <Widget
@@ -268,9 +271,7 @@ return (
             <i class="bi bi-safe h5 mb-0"></i>
             <div>
               <div className="text-green fw-bold">Available Balance</div>
-              <h6 className="mb-0">
-                {nearBalances.availableParsed - (nearStakedTokens ?? 0)}
-              </h6>
+              <h6 className="mb-0">{nearAvailableBalance}</h6>
             </div>
           </div>
         </div>
@@ -340,7 +341,7 @@ return (
             <div
               className="use-max-bg px-3 py-1 rounded-2"
               onClick={() => {
-                setAmount(nearBalance);
+                setAmount(nearAvailableBalance);
               }}
             >
               Use Max
@@ -357,6 +358,7 @@ return (
             value: amount,
             inputProps: {
               type: "number",
+              min: "0",
               prefix: (
                 <img
                   src="${REPL_NEAR_TOKEN_ICON}"

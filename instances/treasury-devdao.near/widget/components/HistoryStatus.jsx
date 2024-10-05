@@ -1,4 +1,5 @@
 const status = props.status;
+const isPaymentsPage = props.isPaymentsPage;
 const Container = styled.div`
   text-align: center;
   .reject {
@@ -25,7 +26,9 @@ const Container = styled.div`
 return (
   <Container>
     {status === "Approved" ? (
-      <div className="approve rounded-2 p-2 bold">Funded</div>
+      <div className="approve rounded-2 p-2 bold">
+        {isPaymentsPage ? "Funded" : "Executed"}
+      </div>
     ) : status === "Rejected" ? (
       <div className="reject rounded-2 p-2 bold">Rejected</div>
     ) : status === "Failed" ? (

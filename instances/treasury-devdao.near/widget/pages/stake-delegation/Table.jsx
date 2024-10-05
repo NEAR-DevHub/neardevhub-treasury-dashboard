@@ -202,8 +202,8 @@ const VoteSuccessToast = () => {
         </div>
         <div className="toast-body">
           {showToastStatus === "APPROVE"
-            ? "The payment request has been successfully executed."
-            : "The payment has been rejected."}
+            ? "The request has been successfully executed."
+            : "The request has been rejected."}
           <a
             href={href({
               widgetSrc: `${instance}/widget/app`,
@@ -273,7 +273,13 @@ const ProposalsComponent = () => {
         const action = args?.actions[0];
         const isStakeRequest = action.method_name === "deposit_and_stake";
         const notes = description.notes;
-
+        let amount = action.deposit;
+        if (!isStakeRequest) {
+          let value = JSON.parse(
+            Buffer.from(action.args, "base64").toString("utf-8")
+          );
+          amount = value.amount;
+        }
         return (
           <tr className={highlightProposalId === item.id ? "bg-highlight" : ""}>
             <td className="bold">{item.id}</td>
@@ -310,7 +316,7 @@ const ProposalsComponent = () => {
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
                 props={{
                   instance,
-                  amountWithoutDecimals: action.deposit,
+                  amountWithoutDecimals: amount,
                   address: "",
                 }}
               />
@@ -399,7 +405,7 @@ const ProposalsComponent = () => {
                         amount: nearBalances.available,
                       },
                     ],
-                    currentAmount: action.deposit,
+                    currentAmount: amount,
                     currentContract: "near",
                     requiredVotes,
                     showApproverToast: () => setToastStatus("APPROVE"),
