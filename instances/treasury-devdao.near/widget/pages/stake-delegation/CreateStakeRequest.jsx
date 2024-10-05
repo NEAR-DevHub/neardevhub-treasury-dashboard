@@ -144,7 +144,7 @@ const Container = styled.div`
   }
 `;
 
-const nearBalances =getNearBalances();
+const nearBalances = getNearBalances(treasuryDaoID);
 
 function getAllStakingPools() {
   asyncFetch("https://rpc.mainnet.near.org/", {
@@ -227,9 +227,7 @@ const loading = (
   </div>
 );
 
-if (
-  !Array.isArray(validators) ||
-  validators.length === 0) {
+if (!Array.isArray(validators) || validators.length === 0) {
   return loading;
 }
 
@@ -270,7 +268,9 @@ return (
             <i class="bi bi-safe h5 mb-0"></i>
             <div>
               <div className="text-green fw-bold">Available Balance</div>
-              <h6 className="mb-0">{nearBalances.availableParsed - (nearStakedTokens ?? 0)}</h6>
+              <h6 className="mb-0">
+                {nearBalances.availableParsed - (nearStakedTokens ?? 0)}
+              </h6>
             </div>
           </div>
         </div>

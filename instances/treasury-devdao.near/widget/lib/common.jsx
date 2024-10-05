@@ -280,23 +280,22 @@ function isBosGateway() {
   );
 }
 function formatNearAmount(amount) {
-  return Big(amount ?? '0').div(Big(10).pow(24)).toFixed(4);
+  return Big(amount ?? "0")
+    .div(Big(10).pow(24))
+    .toFixed(4);
 }
 
-function getNearBalances() {
-  const balanceResp = fetch(
-    `https://api3.nearblocks.io/v1/account/${treasuryDaoID}`
+function getNearBalances(treasuryDaoID) {
+  const resp = fetch(
+    `https://api.fastnear.com/v1/account/${treasuryDaoID}/full`
   );
-  const locked = Big(balanceResp?.body?.account?.[0]?.storage_usage ?? "0")
+  const locked = Big(resp?.body?.state?.storage_bytes ?? "0")
     .mul(Big(10).pow(19))
     .toFixed();
-
-  const available = Big(balanceResp?.body?.account?.[0]?.amount ?? "0").minus(
-    locked
-  );
-
-  const total = Big(balanceResp?.body?.account?.[0]?.amount ?? "0");
-
+  const total = Big(resp?.body?.state?.balance ?? "0").toFixed();
+  const available = Big(resp?.body?.state?.balance ?? "0")
+    .minus(locked ?? "0")
+    .toFixed();
   return {
     total,
     available,
