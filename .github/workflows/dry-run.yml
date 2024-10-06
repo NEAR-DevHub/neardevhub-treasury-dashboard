@@ -13,6 +13,7 @@ jobs:
         target_account:
           - dry_run_command: npm run dry-run:devdao
           - dry_run_command: npm run dry-run:testing
+          - dry_run_command: npm run dry-run:infinex
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

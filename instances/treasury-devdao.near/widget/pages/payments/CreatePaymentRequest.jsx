@@ -19,8 +19,12 @@ if (!instance) {
   return <></>;
 }
 
-const { treasuryDaoID, proposalIndexerQueryName, proposalIndexerHasuraRole } =
-  VM.require(`${instance}/widget/config.data`);
+const {
+  treasuryDaoID,
+  proposalIndexerQueryName,
+  proposalIndexerHasuraRole,
+  showProposalSelection,
+} = VM.require(`${instance}/widget/config.data`);
 
 const [tokenId, setTokenId] = useState(null);
 const [receiver, setReceiver] = useState(null);
@@ -59,6 +63,12 @@ ${queryName}(
 }`;
 
 const [showCancelModal, setShowCancelModal] = useState(false);
+
+useEffect(() => {
+  if (!showProposalSelection) {
+    setIsManualRequest(true);
+  }
+}, [showProposalSelection]);
 function separateNumberAndText(str) {
   const numberRegex = /\d+/;
 
@@ -360,33 +370,35 @@ return (
       }}
     />
     <div className="d-flex flex-column gap-3">
-      <div className="d-flex flex-column gap-1">
-        <label>Proposal</label>
-        <Widget
-          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
-          props={{
-            selectedValue: selectedProposalId,
-            onChange: onSelectProposal,
-            options: proposalsOptions,
-            showSearch: true,
-            searchInputPlaceholder: "Search by id or title",
-            defaultLabel: isManualRequest ? "Add manual request" : "Select",
-            searchByValue: true,
-            onSearch: (value) => {
-              setSearchProposalId(value);
-            },
-            onClickOfManualRequest: () => {
-              cleanInputs();
-              setIsManualRequest(true);
-            },
-            showManualRequest: true,
-          }}
-        />
-      </div>
+      {showProposalSelection && (
+        <div className="d-flex flex-column gap-1">
+          <label>Proposal</label>
+          <Widget
+            src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
+            props={{
+              selectedValue: selectedProposalId,
+              onChange: onSelectProposal,
+              options: proposalsOptions,
+              showSearch: true,
+              searchInputPlaceholder: "Search by id or title",
+              defaultLabel: isManualRequest ? "Add manual request" : "Select",
+              searchByValue: true,
+              onSearch: (value) => {
+                setSearchProposalId(value);
+              },
+              onClickOfManualRequest: () => {
+                cleanInputs();
+                setIsManualRequest(true);
+              },
+              showManualRequest: true,
+            }}
+          />
+        </div>
+      )}
       {isManualRequest && (
         <div className="d-flex flex-column gap-3">
           <div className="d-flex flex-column gap-1">
-            <label>Proposal Title</label>
+            <label>{showProposalSelection && "Proposal"} Title</label>
             <Widget
               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
               props={{
@@ -403,7 +415,7 @@ return (
             />
           </div>
           <div className="d-flex flex-column gap-1">
-            <label>Proposal Summary</label>
+            <label>{showProposalSelection && "Proposal"} Summary</label>
             <Widget
               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
               props={{

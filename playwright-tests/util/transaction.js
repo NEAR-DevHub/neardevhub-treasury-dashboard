@@ -33,6 +33,19 @@ const access_keys = [
     },
     public_key: "ed25519:EQr7NpVYFu1XcVZ23Lb4Ga3KbDQgrYeTMTgBsYa26Bne",
   },
+  {
+    access_key: {
+      nonce: 109629226000005,
+      permission: {
+        FunctionCall: {
+          allowance: "241917078840755500000000",
+          method_names: [],
+          receiver_id: "infinex.sputnik-dao.near",
+        },
+      },
+    },
+    public_key: "ed25519:5Ubq7euoQZfb3qG3fcZ5fMF9KG5dPrmjqTjLx4CqmLc5",
+  },
 ];
 
 export function decodeResultJSON(resultArray) {
