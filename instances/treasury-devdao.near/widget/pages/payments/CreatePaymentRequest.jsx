@@ -259,7 +259,6 @@ function onSelectProposal(id) {
     }
     const receiverAccount = proposal.receiver_account;
     setReceiver(receiverAccount);
-
     setTokenId(token);
     setSelectedProposalId(id.value);
   }
@@ -522,10 +521,11 @@ return (
         />
         {tokenId === tokenMapping.NEAR && (
           <div className="d-flex gap-2 align-items-center justify-content-between">
-            <div>Price: ${Big(nearPrice).toFixed(4)}</div> USD:{" "}
+            USD:{" "}
             {Big(amount ?? "0")
               .mul(nearPrice)
               .toFixed(4)}
+            <div>Price: ${Big(nearPrice).toFixed(4)}</div>
           </div>
         )}
       </div>

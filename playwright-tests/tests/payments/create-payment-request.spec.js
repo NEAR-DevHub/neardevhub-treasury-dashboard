@@ -70,19 +70,65 @@ test.describe("admin connected", function () {
       },
     });
   });
-  test("create payment request with linked proposal", async ({
-    page,
-    instanceAccount,
-  }) => {
-    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
+  test("create NEAR transfer payment request", async ({ page }) => {
+    const nearPrice = 4;
 
-    if (instanceConfig.showProposalSelection !== true) {
-      console.log(
-        `Instance ${instanceAccount} is configured to not support linked proposals`
-      );
-      return;
-    }
-    await page.goto(`/${instanceAccount}/widget/app?page=payments`);
+    await page.route(
+      "https://api3.nearblocks.io/v1/charts/latest",
+      async (route) => {
+        const response = await route.fetch();
+        let json = await response.json();
+        json.charts[0].near_price = nearPrice.toString();
+        await route.fulfill({ response, json });
+      }
+    );
+    await page.goto("/treasury-devdao.near/widget/app?page=payments");
+
+    const createPaymentRequestButton = await page.getByRole("button", {
+      name: "Create Request",
+    });
+
+    await expect(createPaymentRequestButton).toBeVisible();
+    await createPaymentRequestButton.click();
+    const proposalSelect = await page.locator(".dropdown-toggle").first();
+    await expect(proposalSelect).toBeVisible();
+
+    await expect(
+      await proposalSelect.getByText("Select", { exact: true })
+    ).toBeVisible();
+
+    await proposalSelect.click();
+    const proposal = await page.getByText("#173 Near Contract Standards");
+    await proposal.click();
+    await expect(
+      await page.getByPlaceholder("treasury.near").inputValue()
+    ).toBe("robert.near");
+
+    const amount = 3120 / nearPrice;
+    await expect(await page.getByTestId("total-amount").inputValue()).toBe(
+      amount.toString()
+    );
+    const submitBtn = page.getByRole("button", { name: "Submit" });
+    await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
+    submitBtn.click();
+
+    await expect(await getTransactionModalObject(page)).toEqual({
+      proposal: {
+        description:
+          '{"title":"Near Contract Standards payment request by Robert","summary":"Contract Standards Work Group grant","notes":null,"proposalId":173}',
+        kind: {
+          Transfer: {
+            token_id: "",
+            receiver_id: "robert.near",
+            amount: (BigInt(amount) * 10n ** 24n).toString(),
+          },
+        },
+      },
+    });
+  });
+
+  test("create USDC transfer payment request", async ({ page }) => {
+    await page.goto("/treasury-devdao.near/widget/app?page=payments");
 
     const createPaymentRequestButton = await page.getByRole("button", {
       name: "Create Request",
@@ -97,13 +143,16 @@ test.describe("admin connected", function () {
     ).toBeVisible();
 
     await proposalSelect.click();
-    const proposal = await page.getByText("#173 Near Contract Standards");
+
+    const proposal = await page.getByText(
+      "#215 Fellowship Contributor report by Matias Benary for 2024-09-09 2024-09-29"
+    );
     await proposal.click();
     await expect(
       await page.getByPlaceholder("treasury.near").inputValue()
-    ).toBe("robert.near");
+    ).toBe("maguila.near");
     await expect(await page.getByTestId("total-amount").inputValue()).toBe(
-      "3120"
+      "3150"
     );
     const submitBtn = page.getByRole("button", { name: "Submit" });
     await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
@@ -112,12 +161,12 @@ test.describe("admin connected", function () {
     await expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
         description:
-          '{"title":"Near Contract Standards payment request by Robert","summary":"Contract Standards Work Group grant","notes":null,"proposalId":173}',
+          '{"title":"Fellowship Contributor report by Matias Benary for  2024-09-09  2024-09-29","summary":"Fellowship Contributor report by Matias Benary for  2024-09-09  2024-09-29","notes":null,"proposalId":215}',
         kind: {
           Transfer: {
-            token_id: "",
-            receiver_id: "robert.near",
-            amount: "3120000000000000000000000000",
+            amount: "3150000000",
+            receiver_id: "maguila.near",
+            token_id: "usdt.tether-token.near",
           },
         },
       },
