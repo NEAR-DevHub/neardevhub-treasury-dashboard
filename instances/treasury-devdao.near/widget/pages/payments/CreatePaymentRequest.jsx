@@ -226,6 +226,15 @@ const Container = styled.div`
   }
 `;
 
+const nearPrice = useCache(
+  () =>
+    asyncFetch(`https://api3.nearblocks.io/v1/charts/latest`).then((res) => {
+      return res.body.charts?.[0].near_price;
+    }),
+  "near-price",
+  { subscribe: false }
+);
+
 function onSelectProposal(id) {
   if (!id) {
     setSelectedProposal(null);
@@ -240,9 +249,16 @@ function onSelectProposal(id) {
       timeline: JSON.parse(proposal.timeline),
     });
     const token = tokenMapping[proposal.requested_sponsorship_paid_in_currency];
+    if (token === tokenMapping.NEAR) {
+      const nearTokens = Big(proposal.requested_sponsorship_usd_amount)
+        .div(nearPrice)
+        .toFixed();
+      setAmount(nearTokens);
+    } else {
+      setAmount(proposal.requested_sponsorship_usd_amount);
+    }
     const receiverAccount = proposal.receiver_account;
     setReceiver(receiverAccount);
-    setAmount(proposal.requested_sponsorship_usd_amount);
     setTokenId(token);
     setSelectedProposalId(id.value);
   }
@@ -503,6 +519,15 @@ return (
             },
           }}
         />
+        {tokenId === tokenMapping.NEAR && (
+          <div className="d-flex gap-2 align-items-center justify-content-between">
+            USD:{" "}
+            {Big(amount ?? "0")
+              .mul(nearPrice)
+              .toFixed(4)}
+            <div>Price: ${Big(nearPrice).toFixed(4)}</div>
+          </div>
+        )}
       </div>
       {selectedTokensAvailable &&
         amount &&
