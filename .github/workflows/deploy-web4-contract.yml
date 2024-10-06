@@ -1,10 +1,8 @@
 name: Deploy Rust web4 contract
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-      branches: [main]
+  workflow_dispatch: # This allows manual triggering
+
 jobs:
   test:
     uses: ./.github/workflows/test-web4-contract.yml
