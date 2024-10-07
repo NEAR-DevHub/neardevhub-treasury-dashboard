@@ -71,7 +71,9 @@ const [isOpen, setIsOpen] = useState(false);
 const [selectedOptionValue, setSelectedValue] = useState(selectedValue);
 
 function getNearAvailableBalance(tokenBalance) {
-  return Big(tokenBalance).minus(lockedStorageAmt).toFixed(4);
+  return Big(tokenBalance ?? "0")
+    .minus(lockedStorageAmt ?? "0")
+    .toFixed(4);
 }
 const toggleDropdown = () => {
   setIsOpen(!isOpen);
