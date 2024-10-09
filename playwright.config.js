@@ -46,10 +46,21 @@ export default defineConfig({
   /* Configure projects for major browsers */
   projects: [
     {
-      name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      name: "treasury-dashboard",
+      use: {
+        ...devices["Desktop Chrome"],
+        instanceAccount: "treasury-devdao.near",
+        daoAccount: "devdao.sputnik-dao.near",
+      },
     },
-
+    {
+      name: "infinex",
+      use: {
+        ...devices["Desktop Chrome"],
+        instanceAccount: "treasury-infinex.near",
+        daoAccount: "infinex.sputnik-dao.near",
+      },
+    },
     /*{
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },

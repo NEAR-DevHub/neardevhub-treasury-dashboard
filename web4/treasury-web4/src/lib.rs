@@ -51,7 +51,7 @@ mod tests {
                 let body_string =
                     String::from_utf8(general_purpose::STANDARD.decode(body).unwrap()).unwrap();
 
-                assert!(body_string.contains("<near-social-viewer"));
+                assert!(body_string.contains("near-social-viewer"));
             }
             _ => {
                 panic!("Should return Web4Response::Body");

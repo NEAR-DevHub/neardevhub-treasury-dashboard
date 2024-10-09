@@ -17,12 +17,20 @@
           "value": "{\"accountId\":\"theori.near\",\"allKeys\":[\"ed25519:CziSGowWUKiP5N5pqGUgXCJXtqpySAk29YAU6zEs5RAi\"]}"
         },
         {
+          "name": "infinex.sputnik-dao.near_wallet_auth_key",
+          "value": "{\"accountId\":\"theori.near\",\"allKeys\":[\"ed25519:CziSGowWUKiP5N5pqGUgXCJXtqpySAk29YAU6zEs5RAi\"]}"
+        },
+        {
           "name": "near-api-js:keystore:theori.near:mainnet",
           "value": "ed25519:67p9ygtfVNZz5AzMkeN4bqstCck8RWxWDthcTa7JaBvxkrBRTc6A43SsuPy9LdtiR6XtSRD1HiS4KQTWCZw83FKS"
         },
         {
           "name": "devdao.sputnik-dao.near:keystore:theori.near:mainnet",
           "value": "ed25519:4SViyksDtdDdCPkkyzMg4HYADEQ3t5YGEd3EBoSADxdaAzDasZ7qJbxr2wNSFkWipya6C2eVJJucK1vkyoGndiyt"
+        },
+        {
+          "name": "infinex.sputnik-dao.near:keystore:theori.near:mainnet",
+          "value": "ed25519:5DD3sQrgesSAGm4ek5VuybvC7HtLtN952tz8iyd232WGhu9JTiZqQ9ZgP29sauBrVVYXazMxF1KsbSNMab2F69FB"
         },
         {
           "name": "near-social-vm:v01::accountId:",

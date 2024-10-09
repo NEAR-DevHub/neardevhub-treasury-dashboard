@@ -3,7 +3,7 @@ const { isNearSocial } = VM.require(
 ) || {
   isNearSocial: false,
 };
-
+const showKYC = props.showKYC;
 const receiverAccount = props.receiverAccount;
 const [isVerfied, setIsVerfied] = useState(false);
 const [verificationStatus, setVerificationStatus] = useState(null);
@@ -22,9 +22,10 @@ const SuccessImg =
 
 useEffect(() => {
   if (
-    receiverAccount.length === 64 ||
-    (receiverAccount ?? "").includes(".near") ||
-    (receiverAccount ?? "").includes(".tg")
+    showKYC &&
+    (receiverAccount.length === 64 ||
+      (receiverAccount ?? "").includes(".near") ||
+      (receiverAccount ?? "").includes(".tg"))
   ) {
     asyncFetch(
       `https://neardevhub-kyc-proxy.shuttleapp.rs/kyc/${receiverAccount}`

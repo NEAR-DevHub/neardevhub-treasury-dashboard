@@ -37,7 +37,7 @@ useEffect(() => {
     setInsufficientBal(
       Big(
         tokensBalance.find((i) => i.contract === currentContract)?.amount ?? "0"
-      ).lt(Big(currentAmount))
+      ).lt(Big(currentAmount ?? "0"))
     );
   }
 }, [tokensBalance, currentAmount, currentContract, avoidCheckForBalance]);

@@ -1,7 +1,12 @@
-const { selectedValue, onChange, disabled, isPendingPage } = props;
+const { selectedValue, onChange, disabled, isPendingPage, instance } = props;
 
 onChange = onChange || (() => {});
 
+if (!instance) {
+  return <></>;
+}
+
+const { showReferenceProposal } = VM.require(`${instance}/widget/config.data`);
 const columnsVisibility = JSON.parse(
   Storage.get(
     "COLUMNS_VISIBLILITY",
@@ -158,7 +163,10 @@ return (
             <div className="text-muted text-sm">Shown in table</div>
             {settingsOptions.map((option) => {
               // hide Expiring Date for history page
-              if (!isPendingPage && option.title === "Expiring Date") {
+              if (
+                (!isPendingPage && option.title === "Expiring Date") ||
+                (!showReferenceProposal && option.title === "Reference")
+              ) {
                 return;
               }
               return (

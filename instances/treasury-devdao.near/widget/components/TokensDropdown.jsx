@@ -65,8 +65,8 @@ const [isOpen, setIsOpen] = useState(false);
 const [selectedOptionValue, setSelectedValue] = useState(selectedValue);
 
 function getNearAvailableBalance(tokenBalance) {
-  return Big(tokenBalance)
-    .minus(nearBalances.lockedParsed)
+  return Big(tokenBalance ?? "0")
+    .minus(nearBalances.lockedParsed ?? "0")
     .minus(nearStakedTokens ?? "0")
     .toFixed(4);
 }

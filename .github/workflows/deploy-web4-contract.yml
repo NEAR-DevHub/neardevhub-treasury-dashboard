@@ -1,8 +1,7 @@
 name: Deploy Rust web4 contract
 
 on:
-  push:
-    branches: [main]
+  workflow_dispatch: # This allows manual triggering
 
 jobs:
   test:
@@ -12,13 +11,17 @@ jobs:
     name: Deploy to production
     needs: [test]
     runs-on: ubuntu-latest
-    environment: treasury-devdao.near
+    strategy:
+      matrix:
+        environment:
+#          - treasury-devdao.near
+          - infinex.near
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Install cargo-near CLI
         run: curl --proto '=https' --tlsv1.2 -LsSf https://github.com/near/cargo-near/releases/latest/download/cargo-near-installer.sh | sh
-      - name: Deploy to production
+      - name: Deploy to ${{ matrix.environment }}
         run: |
           cargo near deploy --no-docker "${{ vars.NEAR_TREASURY_WEB4_ACCOUNT_ID }}" \
             without-init-call \
@@ -28,3 +31,5 @@ jobs:
               --signer-private-key "${{ secrets.NEAR_TREASURY_WEB4_PRIVATE_KEY }}" \
             send
         working-directory: ./web4/treasury-web4
+        env:
+          NEAR_TREASURY_WEB4_ACCOUNT_ID: ${{ matrix.environment }}
