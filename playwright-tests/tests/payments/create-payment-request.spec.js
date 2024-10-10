@@ -144,6 +144,7 @@ test.describe("admin connected", function () {
 
     await proposalSelect.click();
 
+    await page.getByPlaceholder("Search by id or title").fill("215 Fellowship");
     const proposal = await page.getByText(
       "#215 Fellowship Contributor report by Matias Benary for 2024-09-09 2024-09-29"
     );
