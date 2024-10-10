@@ -61,6 +61,14 @@ export default defineConfig({
         daoAccount: "infinex.sputnik-dao.near",
       },
     },
+    {
+      name: "treasury-testing",
+      use: {
+        ...devices["Desktop Chrome"],
+        instanceAccount: "treasury-testing.near",
+        daoAccount: "testing-astradao.sputnik-dao.near",
+      },
+    },
     /*{
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
