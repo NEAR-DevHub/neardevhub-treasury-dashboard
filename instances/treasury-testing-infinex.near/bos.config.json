@@ -1,0 +1,6 @@
+{
+  "account": "treasury-testing-infinex.near",
+  "aliasPrefix": "REPL",
+  "aliasesContainsPrefix": true,
+  "aliases": ["./aliases.mainnet.json"]
+}

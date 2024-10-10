@@ -234,9 +234,9 @@ function hasPermission(treasuryDaoID, accountId, kindName, actionType) {
 
 function getPermissionsText(type) {
   switch (type) {
-    case "Create Requests": {
+    case "Create Requests":
+    case "Create requests":
       return "Enables users to initiate payment requests.";
-    }
     case "Manage Members": {
       return "Allows users to control treasury adminis and their access levels.";
     }

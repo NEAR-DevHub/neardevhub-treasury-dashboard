@@ -35,6 +35,7 @@
     "bw:build:devdao": "npm run bw:build:instance --instance=treasury-devdao.near",
     "bw:build:testing": "npm run bw:build:instance --instance=treasury-testing.near",
     "bw:build:infinex": "npm run bw:build:instance --instance=treasury-infinex.near",
+    "bw:build:infinex-testing": "npm run bw:build:instance --instance=treasury-testing-infinex.near",
     "gateway": "bw ws dev -g web4/public_html",
     "dry-run:instances": "cd ./build/$npm_config_instance && bos components diff $npm_config_instance network-config mainnet",
     "deploy:devdao": "npm run bw:build:devdao && cd ./build/treasury-devdao.near && bos components deploy",
@@ -42,6 +43,7 @@
     "deploy:testing": "npm run bw:build:testing && cd ./build/treasury-testing.near && bos components deploy",
     "dry-run:testing": "npm run bw:build:testing && npm run dry-run:instances --instance=treasury-testing.near",
     "deploy:infinex": "npm run bw:build:infinex && cd ./build/treasury-infinex.near && bos components deploy",
+    "deploy:infinex-testing": "npm run bw:build:infinex-testing && cd ./build/treasury-testing-infinex.near && bos components deploy",
     "dry-run:infinex": "npm run bw:build:infinex && npm run dry-run:instances --instance=treasury-infinex.near",
     "test": "npx playwright test",
     "test:watch:codespaces": "npm test -- --ui-host=0.0.0.0"
