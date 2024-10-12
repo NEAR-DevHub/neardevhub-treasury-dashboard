@@ -70,5 +70,6 @@ test.describe("admin connected", function () {
         },
       },
     });
+    await page.waitForTimeout(500);
   });
 });
