@@ -225,6 +225,7 @@ test.describe("admin connected", function () {
       await page.getByTestId("total-amount").fill("3150");
     }
     const submitBtn = page.getByRole("button", { name: "Submit" });
+    await expect(submitBtn).toBeVisible({ timeout: 10_000 });
     await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
     submitBtn.click();
 

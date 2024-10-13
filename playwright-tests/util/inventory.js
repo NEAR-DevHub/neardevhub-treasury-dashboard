@@ -1,5 +1,30 @@
 export async function mockInventory({ page, account }) {
   await page.route(
+    `https://api3.nearblocks.io/v1/account/${account}`,
+    async (route, request) => {
+      const json = {
+        account: [
+          {
+            amount: "46802032589396149919965518",
+            block_hash: "74pTbVA5KRLkWD4JtRb2tVXCgj6FxSox6HG1CDFHMKGa",
+            block_height: 130261129,
+            code_hash: "B5rViynsu6LMA1hwFZU9DfG6iNDUGd9Lv1AiArx15H79",
+            locked: "0",
+            storage_paid_at: 0,
+            storage_usage: 31578,
+            account_id: account,
+            created: {
+              transaction_hash: "BmzxeoS22AGGeiRXE21EKsq9SGQaLsgsjNa1TNxDe9pi",
+              block_timestamp: 1621757636982896600,
+            },
+            deleted: { transaction_hash: null, block_timestamp: null },
+          },
+        ],
+      };
+      await route.fulfill({ json });
+    }
+  );
+  await page.route(
     `https://api3.nearblocks.io/v1/account/${account}/inventory`,
     async (route, request) => {
       const json = {
