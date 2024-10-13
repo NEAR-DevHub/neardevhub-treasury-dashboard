@@ -20,6 +20,7 @@ test.describe("admin connected", function () {
     daoAccount,
   }) => {
     test.setTimeout(60_000);
+    await mockInventory({ page, account: daoAccount });
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
 
@@ -74,9 +75,11 @@ test.describe("admin connected", function () {
   test("create NEAR transfer payment request", async ({
     page,
     instanceAccount,
+    daoAccount,
   }) => {
     const nearPrice = 4;
 
+    await mockInventory({ page, account: daoAccount });
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
     await page.route(
       "https://api3.nearblocks.io/v1/charts/latest",
@@ -136,6 +139,7 @@ test.describe("admin connected", function () {
       await page.getByTestId("total-amount").fill("20");
     }
     const submitBtn = page.getByRole("button", { name: "Submit" });
+    await expect(submitBtn).toBeVisible({ timeout: 10_000 });
     await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
     submitBtn.click();
 
