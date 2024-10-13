@@ -45,7 +45,10 @@ test.describe("admin connected", function () {
     await page.getByTestId("proposal-summary").fill("Test proposal summary");
 
     await page.getByPlaceholder("treasury.near").fill("webassemblymusic.near");
-    await page.getByTestId("total-amount").fill("3");
+    const totalAmountField = await page.getByTestId("total-amount");
+    await totalAmountField.focus();
+    await totalAmountField.pressSequentially("3");
+    await totalAmountField.blur();
 
     const tokenSelect = await page.getByTestId("tokens-dropdown");
     await tokenSelect.click();
@@ -54,6 +57,7 @@ test.describe("admin connected", function () {
     const submitBtn = page
       .locator(".offcanvas-body")
       .getByRole("button", { name: "Submit" });
+    await expect(submitBtn).toBeAttached({ timeout: 10_000 });
     await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
     submitBtn.click();
 
@@ -136,10 +140,13 @@ test.describe("admin connected", function () {
       await tokenSelect.click();
       await tokenSelect.getByText("NEAR").click();
 
-      await page.getByTestId("total-amount").fill("20");
+      const totalAmountField = await page.getByTestId("total-amount");
+      await totalAmountField.focus();
+      await totalAmountField.pressSequentially("20");
+      await totalAmountField.blur();
     }
     const submitBtn = page.getByRole("button", { name: "Submit" });
-    await expect(submitBtn).toBeVisible({ timeout: 10_000 });
+    await expect(submitBtn).toBeAttached({ timeout: 10_000 });
     await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
     submitBtn.click();
 
@@ -226,10 +233,13 @@ test.describe("admin connected", function () {
       await tokenSelect.click();
       await tokenSelect.getByText("USDC").click();
 
-      await page.getByTestId("total-amount").fill("3150");
+      const totalAmountField = await page.getByTestId("total-amount");
+      await totalAmountField.focus();
+      await totalAmountField.pressSequentially("3150");
+      await totalAmountField.blur();
     }
     const submitBtn = page.getByRole("button", { name: "Submit" });
-    await expect(submitBtn).toBeVisible({ timeout: 10_000 });
+    await expect(submitBtn).toBeAttached({ timeout: 10_000 });
     await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
     submitBtn.click();
 
