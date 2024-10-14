@@ -1,0 +1,5 @@
+{
+  "REPL_BASE_DEPLOYMENT_ACCOUNT": "treasury-devdao.near",
+  "REPL_INSTANCE": "treasury-testing-infinex.near",
+  "REPL_TREASURY": "testing-treasury.sputnik-dao.near"
+}

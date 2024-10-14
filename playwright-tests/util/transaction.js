@@ -2,7 +2,7 @@ import { MOCK_RPC_URL } from "./rpcmock.js";
 
 export async function getTransactionModalObject(page) {
   return await JSON.parse(
-    await page.locator("div.modal-body code").innerText()
+    await page.locator("div.modal-body code").first().innerText()
   );
 }
 
