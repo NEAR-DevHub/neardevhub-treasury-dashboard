@@ -288,11 +288,15 @@ async function updateDaoPolicyMembers(page) {
 }
 
 async function checkForVoteApproveTxn(page) {
-  await expect(await page.locator("div.modal-body code").nth(1).innerText())
-    .toEqual(`{
-"id": ${lastProposalId},
-"action": "VoteApprove"
-}`);
+  const txnLocator = await page
+    .locator("div.modal-body code")
+    .nth(1)
+    .innerText();
+  const dataReceived = JSON.parse(txnLocator);
+  await expect(dataReceived).toEqual({
+    id: lastProposalId,
+    action: "VoteApprove",
+  });
 }
 test.describe("admin connected", function () {
   test.use({
