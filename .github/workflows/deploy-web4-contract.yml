@@ -11,10 +11,7 @@ jobs:
     name: Deploy to production
     needs: [test]
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        environment:
-          - treasury-devdao.near
+    environment: treasury-devdao.near
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
