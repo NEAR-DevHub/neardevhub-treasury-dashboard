@@ -47,11 +47,18 @@ function refreshData() {
   Storage.set("REFRESH_STAKE_TABLE_DATA", Math.random());
 }
 
+function cleanInputs() {
+  setValidatorAccount("");
+  setNotes("");
+  setAmount("");
+}
+
 useEffect(() => {
   if (isTxnCreated) {
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
         if (lastProposalId !== id) {
+          cleanInputs();
           onCloseCanvas();
           refreshData();
           setTxnCreated(false);
@@ -213,12 +220,6 @@ function onSubmitClick() {
     },
     gas: 200000000000000,
   });
-}
-
-function cleanInputs() {
-  setValidatorAccount("");
-  setNotes("");
-  setAmount("");
 }
 
 const loading = (

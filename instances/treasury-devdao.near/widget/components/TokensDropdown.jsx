@@ -1,4 +1,4 @@
-const { getNearBalances } = VM.require(
+const { getNearBalances, isBosGateway } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
 const instance = props.instance;
@@ -13,26 +13,49 @@ const { selectedValue, onChange, disabled, setTokensAvailable } = props;
 
 onChange = onChange || (() => {});
 
+const pikespeakKey = isBosGateway()
+  ? "${REPL_PIKESPEAK_KEY}"
+  : props.pikespeakKey;
+
+if (!pikespeakKey) {
+  return (
+    <div className="alert alert-danger">Pikespeak key is not provided</div>
+  );
+}
+const pikespeakOptions = {
+  method: "GET",
+  headers: {
+    "Content-Type": "application/json",
+    "x-api-key": pikespeakKey,
+  },
+};
+
 const ftTokensResp = fetch(
-  `https://api3.nearblocks.io/v1/account/${treasuryDaoID}/inventory`
+  `https://api.pikespeak.ai/account/balance/${treasuryDaoID}`,
+  pikespeakOptions
 );
 
 const nearBalances = getNearBalances(treasuryDaoID);
 
 if (
   !ftTokensResp ||
-  !Array.isArray(ftTokensResp?.body?.inventory?.fts) ||
+  !Array.isArray(ftTokensResp?.body) ||
   typeof getNearBalances !== "function"
 ) {
-  return <></>;
+  return (
+    <div className="alert alert-danger">
+      There has been some issue in fetching FT tokens data.
+    </div>
+  );
 }
 
 const [options, setOptions] = useState([]);
 const [nearStakedTokens, setNearStakedTokens] = useState(null);
 
 const tokensWithBalance =
-  ftTokensResp?.body?.inventory?.fts.filter((i) => parseFloat(i.amount) > 0) ??
-  [];
+  ftTokensResp?.body.filter(
+    (i) => parseFloat(i.amount) > 0 && i.contract !== "Near"
+  ) ?? [];
 
 useEffect(() => {
   const tokens = [
@@ -44,16 +67,17 @@ useEffect(() => {
     },
   ];
 
-  if (tokensWithBalance.length > 0 && !options.length) {
+  if (
+    tokensWithBalance.length > 0 &&
+    options.length !== tokensWithBalance.length + 1
+  ) {
     tokens = tokens.concat(
       tokensWithBalance.map((i) => {
         return {
-          icon: i.ft_meta.icon,
-          title: i.ft_meta.symbol,
+          icon: i.icon,
+          title: i.symbol,
           value: i.contract,
-          tokenBalance: Big(i.amount ?? "0")
-            .div(Big(10).pow(i.ft_meta.decimals ?? "1"))
-            .toFixed(4),
+          tokenBalance: Big(i.amount ?? "0").toFixed(4),
         };
       })
     );

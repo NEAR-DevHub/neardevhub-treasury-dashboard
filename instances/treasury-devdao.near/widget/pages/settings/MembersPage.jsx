@@ -140,6 +140,7 @@ const [showDeleteModal, setShowDeleteModal] = useState(false);
 useEffect(() => {
   setLoading(true);
   if (typeof getMembersAndPermissions === "function") {
+    setAllMembers([]);
     getMembersAndPermissions(treasuryDaoID).then((res) => {
       setAllMembers(res);
     });

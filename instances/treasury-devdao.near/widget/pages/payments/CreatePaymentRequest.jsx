@@ -120,12 +120,22 @@ function refreshData() {
   Storage.set("REFRESH_TABLE_DATA", Math.random());
 }
 
+function cleanInputs() {
+  setSelectedProposalId("");
+  setSelectedProposal(null);
+  setReceiver("");
+  setAmount("");
+  setNotes("");
+  setTokenId("");
+}
+
 // close canvas after proposal is submitted
 useEffect(() => {
   if (isTxnCreated) {
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
         if (lastProposalId !== id) {
+          cleanInputs();
           onCloseCanvas();
           refreshData();
           setTxnCreated(false);
@@ -268,11 +278,17 @@ useEffect(() => {
   if (amount && tokenId) {
     const isNEAR = tokenId === tokenMapping.NEAR;
     if (isNEAR) {
-      setParsedAmount(Big(amount).mul(Big(10).pow(24)).toFixed());
+      setParsedAmount(
+        Big(amount ? amount : 0)
+          .mul(Big(10).pow(24))
+          .toFixed()
+      );
     } else {
       Near.asyncView(tokenId, "ft_metadata", {}).then((ftMetadata) => {
         setParsedAmount(
-          Big(amount).mul(Big(10).pow(ftMetadata.decimals)).toFixed()
+          Big(amount ? amount : 0)
+            .mul(Big(10).pow(ftMetadata.decimals))
+            .toFixed()
         );
       });
     }
@@ -328,15 +344,6 @@ function onSubmitClick() {
   }
 
   Near.call(calls);
-}
-
-function cleanInputs() {
-  setSelectedProposalId("");
-  setSelectedProposal(null);
-  setReceiver("");
-  setAmount("");
-  setNotes("");
-  setTokenId("");
 }
 
 function isAccountValid() {
@@ -523,7 +530,7 @@ return (
         {tokenId === tokenMapping.NEAR && (
           <div className="d-flex gap-2 align-items-center justify-content-between">
             USD:{" "}
-            {Big(amount ?? "0")
+            {Big(amount ? amount : 0)
               .mul(nearPrice)
               .toFixed(4)}
             <div>Price: ${Big(nearPrice).toFixed(4)}</div>
@@ -532,7 +539,8 @@ return (
       </div>
       {selectedTokensAvailable &&
         amount &&
-        parseFloat(selectedTokensAvailable) <= parseFloat(amount) && (
+        parseFloat(selectedTokensAvailable) <=
+          parseFloat(amount ? amount : 0) && (
           <div className="d-flex gap-3 align-items-center warning px-3 py-2 rounded-3">
             <i class="bi bi-exclamation-triangle h5"></i>
             <div>
