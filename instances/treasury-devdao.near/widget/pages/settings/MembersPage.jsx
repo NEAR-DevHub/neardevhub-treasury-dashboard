@@ -12,7 +12,7 @@ const {
 };
 
 const instance = props.instance;
-if (!instance) {
+if (!instance || typeof getMembersAndPermissions !== "function") {
   return <></>;
 }
 
