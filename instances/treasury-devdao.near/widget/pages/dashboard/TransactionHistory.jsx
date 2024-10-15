@@ -153,7 +153,9 @@ function formatRelativeDate(date) {
 
 function getImage(actionKind) {
   switch (actionKind) {
-    case true:
+    case "Staked":
+      return "https://ipfs.near.social/ipfs/bafkreica3gyix6i4pqt7nfolcmdpsi2hfgqnj6iwp2jkwixdhm3zl4if6u";
+    case "Deposit":
       return "https://ipfs.near.social/ipfs/bafkreiazt7rdkgmz2rpvloo3gjoahgxe6dtgicrgzujarf3rbmwuyk2iby";
     default:
       return "https://ipfs.near.social/ipfs/bafkreigty6dicbjdlbm6ezepuzl63tkdqebyf2rclzbwxfnd2yvkqmllda";
@@ -207,6 +209,9 @@ return (
                       let token = "NEAR";
                       let icon = "${REPL_NEAR_TOKEN_ICON}";
                       const isDeposit = txn.deposit;
+                      const isStaked =
+                        isDeposit && txn.receiver.includes("poolv1.near");
+
                       const isReceived = txn.receiver === treasuryDaoID;
                       if (txn.contract) {
                         const contractMetadata = Near.view(
@@ -224,17 +229,21 @@ return (
                           txn.amount
                         );
                       }
-
+                      const txnType = isStaked
+                        ? "Staked"
+                        : isDeposit
+                        ? "Deposit"
+                        : "Transfer";
                       return (
                         <div
                           className="d-flex gap-2 justify-content-between align-items-center flex-wrap"
                           key={txn.transaction_id}
                         >
                           <div className="d-flex gap-2 align-items-center">
-                            <img src={getImage(isDeposit)} height="50" />
+                            <img src={getImage(txnType)} height="50" />
                             <div className="text-sm text-muted">
                               <div className="fw-bold text-md mb-0">
-                                {isDeposit ? "Deposit" : "Transfer"}
+                                {txnType}
                               </div>
                               <div>
                                 {isReceived ? (

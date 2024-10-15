@@ -1,40 +1,37 @@
 const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
+
 const { getNearBalances } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
-
 const instance = props.instance;
 const policy = props.policy;
-if (!instance) {
+if (!instance || typeof getNearBalances !== "function") {
   return <></>;
 }
 
-const { treasuryDaoID, showKYC, showReferenceProposal } = VM.require(
-  `${instance}/widget/config.data`
-);
+const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 
 const proposals = props.proposals;
 const columnsVisibility = JSON.parse(
   Storage.get(
     "COLUMNS_VISIBLILITY",
-    `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.SettingsDropdown`
+    `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.SettingsDropdown`
   ) ?? "[]"
 );
 
 const highlightProposalId = props.highlightProposalId;
 const loading = props.loading;
 const isPendingRequests = props.isPendingRequests;
-const transferApproversGroup = props.transferApproversGroup;
+const functionCallApproversGroup = props.functionCallApproversGroup;
 const [showToastStatus, setToastStatus] = useState(false);
 const [voteProposalId, setVoteProposalId] = useState(null);
-const [nearStakedTokens, setNearStakedTokens] = useState(null);
 
 const accountId = context.accountId;
 
 const hasVotingPermission = (
-  transferApproversGroup?.approverAccounts ?? []
+  functionCallApproversGroup?.approverAccounts ?? []
 ).includes(accountId);
 
 const Container = styled.div`
@@ -181,8 +178,8 @@ function isVisible(column) {
 
 const requiredVotes =
   Math.floor(
-    transferApproversGroup?.threshold *
-      transferApproversGroup?.approverAccounts.length
+    functionCallApproversGroup?.threshold *
+      functionCallApproversGroup?.approverAccounts.length
   ) + 1;
 
 const hideApproversCol = isPendingRequests && requiredVotes === 1;
@@ -192,7 +189,6 @@ const userFTTokens = fetch(
 );
 
 const nearBalances = getNearBalances(treasuryDaoID);
-
 const VoteSuccessToast = () => {
   return showToastStatus && typeof voteProposalId === "number" ? (
     <ToastContainer className="toast-container position-fixed bottom-0 end-0 p-3">
@@ -206,13 +202,13 @@ const VoteSuccessToast = () => {
         </div>
         <div className="toast-body">
           {showToastStatus === "APPROVE"
-            ? "The payment request has been successfully executed."
-            : "The payment has been rejected."}
+            ? "The request has been successfully executed."
+            : "The request has been rejected."}
           <a
             href={href({
               widgetSrc: `${instance}/widget/app`,
               params: {
-                page: "payments",
+                page: "stake-delegation",
                 selectedTab: "History",
                 highlightProposalId: voteProposalId,
               },
@@ -273,12 +269,17 @@ const ProposalsComponent = () => {
     <tbody style={{ overflowX: "auto" }}>
       {proposals?.map((item, index) => {
         const description = JSON.parse(item.description);
-        const title = description.title;
-        const summary = description.summary;
-        const proposalId = description.proposalId;
+        const args = item?.kind?.FunctionCall;
+        const action = args?.actions[0];
+        const isStakeRequest = action.method_name === "deposit_and_stake";
         const notes = description.notes;
-        const args = item.kind.Transfer;
-
+        let amount = action.deposit;
+        if (!isStakeRequest) {
+          let value = JSON.parse(
+            Buffer.from(action.args, "base64").toString("utf-8")
+          );
+          amount = value.amount;
+        }
         return (
           <tr className={highlightProposalId === item.id ? "bg-highlight" : ""}>
             <td className="bold">{item.id}</td>
@@ -298,88 +299,33 @@ const ProposalsComponent = () => {
                     instance,
                     isVoteStatus: false,
                     status: item.status,
-                    isPaymentsPage: true,
                   }}
                 />
               </td>
             )}
-            {showReferenceProposal && (
-              <td className={isVisible("Reference")}>
-                {typeof proposalId === "number" ? (
-                  <Link
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    to={href({
-                      widgetSrc: `${REPL_DEVHUB}/widget/app`,
-                      params: {
-                        page: "proposal",
-                        id: proposalId,
-                      },
-                    })}
-                  >
-                    <div className="d-flex gap-2 align-items-center text-underline bold text-black">
-                      #{proposalId} <i class="bi bi-box-arrow-up-right"> </i>
-                    </div>
-                  </Link>
-                ) : (
-                  "-"
-                )}
-              </td>
-            )}
-
-            <td className={isVisible("Title")}>
+            <td className={isVisible("Type") + " text-center bold"}>
               <Widget
-                src="${REPL_MOB}/widget/N.Common.OverlayTrigger"
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.Type`}
                 props={{
-                  popup: <TooltipContent title={title} summary={summary} />,
-                  children: (
-                    <div
-                      className="custom-truncate bold"
-                      style={{ width: 180 }}
-                    >
-                      {title}
-                    </div>
-                  ),
+                  isStakeRequest,
                 }}
               />
             </td>
-            <td className={isVisible("Summary")}>
-              <Widget
-                src="${REPL_MOB}/widget/N.Common.OverlayTrigger"
-                props={{
-                  popup: <TooltipContent title={title} summary={summary} />,
-                  children: (
-                    <div className="custom-truncate" style={{ width: 180 }}>
-                      {summary}
-                    </div>
-                  ),
-                }}
-              />
-            </td>
-            <td className={"bold " + isVisible("Recipient")}>
-              <Widget
-                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.ReceiverAccount`}
-                props={{
-                  receiverAccount: args.receiver_id,
-                  showKYC,
-                }}
-              />
-            </td>
-            <td className={isVisible("Requested Token") + " text-center"}>
-              <Widget
-                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenIcon`}
-                props={{
-                  address: args.token_id,
-                }}
-              />
-            </td>
-            <td className={isVisible("Funding Ask") + " text-right"}>
+            <td className={isVisible("Amount") + " text-right"}>
               <Widget
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
                 props={{
                   instance,
-                  amountWithoutDecimals: args.amount,
-                  address: args.token_id,
+                  amountWithoutDecimals: amount,
+                  address: "",
+                }}
+              />
+            </td>
+            <td className={isVisible("Validator")}>
+              <Widget
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.Validator`}
+                props={{
+                  validatorId: args.receiver_id,
                 }}
               />
             </td>
@@ -430,8 +376,8 @@ const ProposalsComponent = () => {
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Approvers`}
                 props={{
                   votes: item.votes,
-                  transferApproversGroup:
-                    transferApproversGroup?.approverAccounts,
+                  functionCallApproversGroup:
+                    functionCallApproversGroup?.approverAccounts,
                 }}
               />
             </td>
@@ -456,20 +402,16 @@ const ProposalsComponent = () => {
                       ...(userFTTokens?.body?.inventory?.fts ?? []),
                       {
                         contract: "near",
-                        amount: Big(nearBalances.available)
-                          .minus(
-                            Big(nearStakedTokens ?? "0").mul(Big(10).pow(24))
-                          )
-                          .toFixed(),
+                        amount: nearBalances.available,
                       },
                     ],
-                    currentAmount: args.amount,
-                    currentContract:
-                      args.token_id === "" ? "near" : args.token_id,
+                    currentAmount: amount,
+                    currentContract: "near",
                     requiredVotes,
                     showApproverToast: () => setToastStatus("APPROVE"),
                     showRejectToast: () => setToastStatus("REJECT"),
                     setVoteProposalId: setVoteProposalId,
+                    avoidCheckForBalance: !isStakeRequest,
                   }}
                 />
               </td>
@@ -483,18 +425,10 @@ const ProposalsComponent = () => {
 
 return (
   <Container style={{ overflowX: "auto" }}>
-    <Widget
-      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
-      props={{
-        instance,
-        setNearStakedTokens: (v) => setNearStakedTokens(Big(v).toFixed(4)),
-      }}
-    />
     <VoteSuccessToast />
     {loading === true ||
     proposals === null ||
-    transferApproversGroup === null ||
-    !nearStakedTokens ||
+    functionCallApproversGroup === null ||
     policy === null ? (
       <div className="d-flex justify-content-center align-items-center w-100 h-100">
         <Widget
@@ -510,8 +444,8 @@ return (
           >
             {isPendingRequests ? (
               <div className="d-flex justify-content-center align-items-center flex-column gap-2">
-                <h4>No Payment Requests Found</h4>
-                <h6>There are currently no payment requests</h6>
+                <h4>No Stake Delegation Requests Found</h4>
+                <h6>There are currently no stake delegation requests</h6>
               </div>
             ) : (
               <div className="d-flex justify-content-center align-items-center flex-column gap-2">
@@ -527,21 +461,13 @@ return (
                 <td>#</td>
                 <td className={isVisible("Created Date")}>Created Date</td>
                 {!isPendingRequests && <td>Status</td>}
-                {showReferenceProposal && (
-                  <td className={isVisible("Reference")}>Reference</td>
-                )}
-                <td className={isVisible("Title")}>Title</td>
-                <td className={isVisible("Summary")}>Summary</td>
-                <td className={isVisible("Recipient")}>Recipient</td>
-                <td className={isVisible("Requested Token") + " text-center"}>
-                  Requested Token
-                </td>
-                <td className={isVisible("Funding Ask") + " text-right"}>
-                  Funding Ask
-                </td>
-                <td className={isVisible("Creator") + " text-center"}>
+                <td className={isVisible("Type") + " text-center"}>Type</td>
+                <td className={isVisible("Amount") + " text-right"}>Amount</td>
+                <td className={isVisible("Validator")}>Validator</td>
+                <td className={"text-center " + isVisible("Creator")}>
                   Created by
                 </td>
+
                 <td className={isVisible("Notes") + " text-left"}>Notes</td>
                 {isPendingRequests && (
                   <td className={isVisible("Required Votes") + " text-center"}>

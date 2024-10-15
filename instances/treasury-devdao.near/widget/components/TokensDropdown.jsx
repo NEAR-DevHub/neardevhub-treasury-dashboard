@@ -1,3 +1,6 @@
+const { getNearBalances } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+);
 const instance = props.instance;
 if (!instance) {
   return <></>;
@@ -14,27 +17,18 @@ const ftTokensResp = fetch(
   `https://api3.nearblocks.io/v1/account/${treasuryDaoID}/inventory`
 );
 
-const nearBalanceResp = fetch(
-  `https://api3.nearblocks.io/v1/account/${treasuryDaoID}`
-);
+const nearBalances = getNearBalances(treasuryDaoID);
 
 if (
   !ftTokensResp ||
   !Array.isArray(ftTokensResp?.body?.inventory?.fts) ||
-  !nearBalanceResp
+  typeof getNearBalances !== "function"
 ) {
   return <></>;
 }
 
-const nearBalance = Big(nearBalanceResp?.body?.account?.[0]?.amount ?? "0")
-  .div(Big(10).pow(24))
-  .toFixed(4);
-const lockedStorageAmt = Big(
-  nearBalanceResp?.body?.account?.[0]?.storage_usage ?? "0"
-)
-  .div(Big(10).pow(5))
-  .toFixed(5);
 const [options, setOptions] = useState([]);
+const [nearStakedTokens, setNearStakedTokens] = useState(null);
 
 const tokensWithBalance =
   ftTokensResp?.body?.inventory?.fts.filter((i) => parseFloat(i.amount) > 0) ??
@@ -46,7 +40,7 @@ useEffect(() => {
       icon: nearTokenIcon,
       title: "NEAR",
       value: "NEAR",
-      tokenBalance: nearBalance,
+      tokenBalance: nearBalances.totalParsed,
     },
   ];
 
@@ -71,8 +65,9 @@ const [isOpen, setIsOpen] = useState(false);
 const [selectedOptionValue, setSelectedValue] = useState(selectedValue);
 
 function getNearAvailableBalance(tokenBalance) {
-  return Big(tokenBalance ?? "0")
-    .minus(lockedStorageAmt ?? "0")
+  return Big(tokenBalance)
+    .minus(nearBalances.lockedParsed ?? "0")
+    .minus(nearStakedTokens ?? "0")
     .toFixed(4);
 }
 const toggleDropdown = () => {
@@ -171,8 +166,9 @@ const Item = ({ option }) => {
       <div className="d-flex flex-column gap-1 w-100 text-wrap">
         <div className="h6 mb-0"> {option.title}</div>
         {option.value === "NEAR" && (
-          <div className="text-sm text-muted w-100 text-wrap">
-            Tokens locked for storage: {lockedStorageAmt}
+          <div className="d-flex flex-column gap-1 w-100 text-wrap text-sm text-muted">
+            <div>Tokens locked for storage: {nearBalances.lockedParsed}</div>
+            {nearStakedTokens && <div>Tokens staked: {nearStakedTokens}</div>}
           </div>
         )}
         <div className="text-sm text-muted w-100 text-wrap">
@@ -191,6 +187,13 @@ const selectedOption =
 
 return (
   <Container>
+    <Widget
+      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
+      props={{
+        instance,
+        setNearStakedTokens: (v) => setNearStakedTokens(Big(v).toFixed(4)),
+      }}
+    />
     <div
       className="custom-select w-100"
       tabIndex="0"

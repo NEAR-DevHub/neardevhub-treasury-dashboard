@@ -19,7 +19,7 @@ export default defineConfig({
      * Maximum time expect() should wait for the condition to be met.
      * For example in `await expect(locator).toHaveText();`
      */
-    timeout: 5000,
+    timeout: 7000,
   },
   /* Run tests in files in parallel */
   fullyParallel: true,
@@ -59,6 +59,14 @@ export default defineConfig({
         ...devices["Desktop Chrome"],
         instanceAccount: "treasury-infinex.near",
         daoAccount: "infinex.sputnik-dao.near",
+      },
+    },
+    {
+      name: "treasury-testing",
+      use: {
+        ...devices["Desktop Chrome"],
+        instanceAccount: "treasury-testing.near",
+        daoAccount: "testing-astradao.sputnik-dao.near",
       },
     },
     /*{

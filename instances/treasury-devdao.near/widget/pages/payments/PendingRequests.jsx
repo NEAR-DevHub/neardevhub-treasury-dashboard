@@ -1,9 +1,7 @@
-const {
-  getTransferApproversAndThreshold,
-  getFilteredProposalsByStatusAndKind,
-} = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common") || {
-  getTransferApproversAndThreshold: () => {},
-};
+const { getApproversAndThreshold, getFilteredProposalsByStatusAndKind } =
+  VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common") || {
+    getApproversAndThreshold: () => {},
+  };
 const instance = props.instance;
 if (!instance) {
   return <></>;
@@ -56,7 +54,10 @@ useEffect(() => {
 
 const policy = Near.view(treasuryDaoID, "get_policy", {});
 
-const transferApproversGroup = getTransferApproversAndThreshold(treasuryDaoID);
+const transferApproversGroup = getApproversAndThreshold(
+  treasuryDaoID,
+  "transfer"
+);
 
 return (
   <div className="d-flex flex-column flex-1 justify-content-between">
