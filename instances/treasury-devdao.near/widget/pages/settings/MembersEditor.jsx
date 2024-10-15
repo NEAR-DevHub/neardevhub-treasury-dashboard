@@ -121,26 +121,25 @@ function onSubmitClick() {
   const updatedPolicy = updateDaoPolicy(
     new Map(roles.map((role) => [role.title, role.value]))
   );
-  console.log(updatedPolicy, roles);
-  // setTxnCreated(true);
-  // Near.call([
-  //   {
-  //     contractName: treasuryDaoID,
-  //     methodName: "add_proposal",
-  //     args: {
-  //       proposal: {
-  //         description: "Change policy",
-  //         kind: {
-  //           ChangePolicy: {
-  //             policy: updatedPolicy,
-  //           },
-  //         },
-  //       },
-  //     },
-  //     gas: 200000000000000,
-  //   },
-  //   getApproveTxn(),
-  // ]);
+  setTxnCreated(true);
+  Near.call([
+    {
+      contractName: treasuryDaoID,
+      methodName: "add_proposal",
+      args: {
+        proposal: {
+          description: "Change policy",
+          kind: {
+            ChangePolicy: {
+              policy: updatedPolicy,
+            },
+          },
+        },
+      },
+      gas: 200000000000000,
+    },
+    getApproveTxn(),
+  ]);
 }
 
 function cleanInputs() {
