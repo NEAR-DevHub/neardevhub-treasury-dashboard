@@ -88,7 +88,6 @@ function updateDaoPolicy(rolesMap) {
       }
       // If the role is NOT in the rolesMap but the username is in the group, remove the username
       else if (Array.isArray(group) && group.includes(username)) {
-        console.log("Removing", username, "from", role.name);
         group = group.filter((i) => i !== username);
       }
 
