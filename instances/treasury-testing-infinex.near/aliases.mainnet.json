@@ -1,5 +1,7 @@
 {
   "REPL_BASE_DEPLOYMENT_ACCOUNT": "treasury-devdao.near",
   "REPL_INSTANCE": "treasury-testing-infinex.near",
-  "REPL_TREASURY": "testing-treasury.sputnik-dao.near"
+  "REPL_TREASURY": "testing-treasury.sputnik-dao.near",
+  "REPL_STAKE_ICON": "https://ipfs.near.social/ipfs/bafkreicjylnnugawkpvhtwjqegc2y6rhdmaqrzdo3cixr2epj5wlxz6ts4",
+  "REPL_UNSTAKE_ICON": "https://ipfs.near.social/ipfs/bafkreiepl6mvtyvd4hxiy3s4jpij4ep6e5fea324bvbujitmjup63iexea"
 }
