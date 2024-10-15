@@ -19,8 +19,12 @@ if (!instance) {
   return <></>;
 }
 
-const { treasuryDaoID, proposalIndexerQueryName, proposalIndexerHasuraRole } =
-  VM.require(`${instance}/widget/config.data`);
+const {
+  treasuryDaoID,
+  proposalIndexerQueryName,
+  proposalIndexerHasuraRole,
+  showProposalSelection,
+} = VM.require(`${instance}/widget/config.data`);
 
 const [tokenId, setTokenId] = useState(null);
 const [receiver, setReceiver] = useState(null);
@@ -59,6 +63,12 @@ ${queryName}(
 }`;
 
 const [showCancelModal, setShowCancelModal] = useState(false);
+
+useEffect(() => {
+  if (!showProposalSelection) {
+    setIsManualRequest(true);
+  }
+}, [showProposalSelection]);
 function separateNumberAndText(str) {
   const numberRegex = /\d+/;
 
@@ -216,6 +226,15 @@ const Container = styled.div`
   }
 `;
 
+const nearPrice = useCache(
+  () =>
+    asyncFetch(`https://api3.nearblocks.io/v1/charts/latest`).then((res) => {
+      return res.body.charts?.[0].near_price;
+    }),
+  "near-price",
+  { subscribe: false }
+);
+
 function onSelectProposal(id) {
   if (!id) {
     setSelectedProposal(null);
@@ -230,9 +249,16 @@ function onSelectProposal(id) {
       timeline: JSON.parse(proposal.timeline),
     });
     const token = tokenMapping[proposal.requested_sponsorship_paid_in_currency];
+    if (token === tokenMapping.NEAR) {
+      const nearTokens = Big(proposal.requested_sponsorship_usd_amount)
+        .div(nearPrice)
+        .toFixed();
+      setAmount(nearTokens);
+    } else {
+      setAmount(proposal.requested_sponsorship_usd_amount);
+    }
     const receiverAccount = proposal.receiver_account;
     setReceiver(receiverAccount);
-    setAmount(proposal.requested_sponsorship_usd_amount);
     setTokenId(token);
     setSelectedProposalId(id.value);
   }
@@ -360,33 +386,35 @@ return (
       }}
     />
     <div className="d-flex flex-column gap-3">
-      <div className="d-flex flex-column gap-1">
-        <label>Proposal</label>
-        <Widget
-          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
-          props={{
-            selectedValue: selectedProposalId,
-            onChange: onSelectProposal,
-            options: proposalsOptions,
-            showSearch: true,
-            searchInputPlaceholder: "Search by id or title",
-            defaultLabel: isManualRequest ? "Add manual request" : "Select",
-            searchByValue: true,
-            onSearch: (value) => {
-              setSearchProposalId(value);
-            },
-            onClickOfManualRequest: () => {
-              cleanInputs();
-              setIsManualRequest(true);
-            },
-            showManualRequest: true,
-          }}
-        />
-      </div>
+      {showProposalSelection && (
+        <div className="d-flex flex-column gap-1">
+          <label>Proposal</label>
+          <Widget
+            src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
+            props={{
+              selectedValue: selectedProposalId,
+              onChange: onSelectProposal,
+              options: proposalsOptions,
+              showSearch: true,
+              searchInputPlaceholder: "Search by id or title",
+              defaultLabel: isManualRequest ? "Add manual request" : "Select",
+              searchByValue: true,
+              onSearch: (value) => {
+                setSearchProposalId(value);
+              },
+              onClickOfManualRequest: () => {
+                cleanInputs();
+                setIsManualRequest(true);
+              },
+              showManualRequest: true,
+            }}
+          />
+        </div>
+      )}
       {isManualRequest && (
         <div className="d-flex flex-column gap-3">
           <div className="d-flex flex-column gap-1">
-            <label>Proposal Title</label>
+            <label>{showProposalSelection && "Proposal"} Title</label>
             <Widget
               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
               props={{
@@ -403,7 +431,7 @@ return (
             />
           </div>
           <div className="d-flex flex-column gap-1">
-            <label>Proposal Summary</label>
+            <label>{showProposalSelection && "Proposal"} Summary</label>
             <Widget
               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
               props={{
@@ -487,10 +515,20 @@ return (
             placeholder: "Enter amount",
             value: amount,
             inputProps: {
+              min: "0",
               type: "number",
             },
           }}
         />
+        {tokenId === tokenMapping.NEAR && (
+          <div className="d-flex gap-2 align-items-center justify-content-between">
+            USD:{" "}
+            {Big(amount ?? "0")
+              .mul(nearPrice)
+              .toFixed(4)}
+            <div>Price: ${Big(nearPrice).toFixed(4)}</div>
+          </div>
+        )}
       </div>
       {selectedTokensAvailable &&
         amount &&

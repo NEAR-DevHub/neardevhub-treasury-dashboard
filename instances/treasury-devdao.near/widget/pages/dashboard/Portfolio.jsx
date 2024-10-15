@@ -1,9 +1,14 @@
+const { getNearBalances } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+);
+
 const instance = props.instance;
-if (!instance) {
+if (!instance || typeof getNearBalances !== "function") {
   return <></>;
 }
 
 const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+const nearBalances = getNearBalances(treasuryDaoID);
 
 const archiveNodeUrl = "https://archival-rpc.mainnet.near.org";
 const nearTokenIcon = "${REPL_NEAR_TOKEN_ICON}";
@@ -35,9 +40,9 @@ const Item = ({
           <img src={icon} height={30} width={30} />
           <div>
             <div className="h6 mb-0">{symbol}</div>
-            <div className="d-flex gap-2 text-sm text-muted">
+            <div className="d-flex gap-md-2 text-sm text-muted flex-wrap">
               <div>{formatToReadableDecimals(tokensNumber)}</div>
-              <div>･ ${tokenPrice}</div>
+              <div>･ ${Big(tokenPrice ?? "0").toFixed(4)}</div>
             </div>
           </div>
         </div>
@@ -50,7 +55,6 @@ const Item = ({
 };
 
 const { ftTokens, nearStakedTokens, nearBalance, nearPrice } = props;
-
 function convertBalanceToReadableFormat(amount, decimals) {
   return Big(amount ?? "0")
     .div(Big(10).pow(decimals ?? "1"))
@@ -67,9 +71,52 @@ const loading = (
   <Widget src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"} />
 );
 
-const totalNearTokens = Big(nearBalance ?? "0")
-  .plus(Big(nearStakedTokens ?? "0"))
-  .toFixed();
+const NearPortfolio = () => {
+  return (
+    <div className="d-flex flex-column">
+      <Item
+        showBorderBottom={true}
+        icon={nearTokenIcon}
+        symbol={"NEAR"}
+        tokenPrice={nearPrice}
+        tokensNumber={nearBalances.totalParsed}
+        currentAmount={getPrice(nearBalances.totalParsed, nearPrice)}
+      />
+      <Item
+        isStakedToken={true}
+        showBorderBottom={true}
+        icon={nearTokenIcon}
+        symbol={"Available"}
+        tokenPrice={nearPrice}
+        tokensNumber={nearBalances.availableParsed - nearStakedTokens}
+        currentAmount={getPrice(
+          nearBalances.availableParsed - nearStakedTokens,
+          nearPrice
+        )}
+      />
+      {nearStakedTokens && nearStakedTokens !== "0" && (
+        <Item
+          isStakedToken={true}
+          showBorderBottom={true}
+          icon={nearTokenIcon}
+          symbol={"Staked"}
+          tokenPrice={nearPrice}
+          tokensNumber={nearStakedTokens}
+          currentAmount={getPrice(nearStakedTokens, nearPrice)}
+        />
+      )}
+      <Item
+        isStakedToken={true}
+        showBorderBottom={true}
+        icon={nearTokenIcon}
+        symbol={"Locked"}
+        tokenPrice={nearPrice}
+        tokensNumber={nearBalances.lockedParsed}
+        currentAmount={getPrice(nearBalances.lockedParsed, nearPrice)}
+      />
+    </div>
+  );
+};
 
 return (
   <div className="card card-body flex-1">
@@ -77,56 +124,18 @@ return (
     <div>
       {ftTokens === null ||
       nearStakedTokens === null ||
-      nearBalance === null ||
+      nearBalances === null ||
       nearPrice === null ? (
         <div className="d-flex justify-content-center align-items-center w-100 h-100">
           {loading}
         </div>
       ) : (
         <div className="mt-2">
-          {!ftTokens.length && !nearBalance ? (
+          {!ftTokens.length && !nearBalances?.total ? (
             <div className="fw-bold">{treasuryDaoID} doesn't own any FTs.</div>
           ) : (
             <div className="d-flex flex-column">
-              {nearStakedTokens && nearStakedTokens !== "0" ? (
-                <div className="d-flex flex-column">
-                  <Item
-                    showBorderBottom={true}
-                    icon={nearTokenIcon}
-                    symbol={"NEAR"}
-                    tokenPrice={nearPrice}
-                    tokensNumber={totalNearTokens}
-                    currentAmount={getPrice(totalNearTokens, nearPrice)}
-                  />
-                  <Item
-                    isStakedToken={true}
-                    showBorderBottom={true}
-                    icon={nearTokenIcon}
-                    symbol={"NEAR"}
-                    tokenPrice={nearPrice}
-                    tokensNumber={nearBalance}
-                    currentAmount={getPrice(nearBalance, nearPrice)}
-                  />
-                  <Item
-                    isStakedToken={true}
-                    showBorderBottom={true}
-                    icon={nearTokenIcon}
-                    symbol={"Staked NEAR"}
-                    tokenPrice={nearPrice}
-                    tokensNumber={nearStakedTokens}
-                    currentAmount={getPrice(nearStakedTokens, nearPrice)}
-                  />
-                </div>
-              ) : (
-                <Item
-                  showBorderBottom={ftTokens.length}
-                  icon={nearTokenIcon}
-                  symbol={"NEAR"}
-                  tokenPrice={nearPrice}
-                  tokensNumber={nearBalance}
-                  currentAmount={getPrice(nearBalance, nearPrice)}
-                />
-              )}
+              <NearPortfolio />
 
               {Array.isArray(ftTokens) &&
                 ftTokens.map((item, index) => {

@@ -1,3 +1,7 @@
+const { getNearBalances } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+);
+
 const instance = props.instance;
 if (!instance) {
   return <></>;
@@ -28,18 +32,12 @@ const Wrapper = styled.div`
   }
 
   .dashboard-item > div {
-    min-width: 400px;
+    min-width: 280px;
   }
 `;
 
 const [nearStakedTokens, setNearStakedTokens] = useState(null);
-
-const balanceResp = fetch(
-  `https://api3.nearblocks.io/v1/account/${treasuryDaoID}`
-);
-const nearBalance = Big(balanceResp?.body?.account?.[0]?.amount ?? "0")
-  .div(Big(10).pow(24))
-  .toFixed();
+const nearBalances = getNearBalances(treasuryDaoID);
 
 const nearPrice = useCache(
   () =>
@@ -165,8 +163,7 @@ const iframe = (
   />
 );
 
-const totalBalance = Big(nearBalance ?? "0")
-  .plus(Big(nearStakedTokens ?? 0 ?? "0"))
+const totalBalance = Big(nearBalances?.totalParsed ?? "0")
   .mul(nearPrice ?? 1)
   .plus(Big(userFTTokens?.totalCummulativeAmt ?? "0"))
   .toFixed(4);
@@ -179,7 +176,7 @@ return (
     </div>
     <div className="card card-body" style={{ maxHeight: "100px" }}>
       <div className="h5">Total Balance</div>
-      {balanceResp === null || nearPrice === null ? (
+      {typeof getNearBalances !== "function" || nearPrice === null ? (
         loading
       ) : (
         <div className="fw-bold h3">${totalBalance} USD</div>
@@ -192,7 +189,6 @@ return (
           instance,
           ftTokens: userFTTokens.fts,
           nearStakedTokens: nearStakedTokens,
-          nearBalance: nearBalance,
           nearPrice: nearPrice,
         }}
       />

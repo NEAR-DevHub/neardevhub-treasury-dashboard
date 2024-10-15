@@ -4,7 +4,7 @@ if (!instance) {
   return <></>;
 }
 
-const { treasuryDaoID, navbarLinks } = VM.require(
+const { treasuryDaoID, navbarLinks, logo } = VM.require(
   `${instance}/widget/config.data`
 );
 
@@ -42,7 +42,7 @@ const Navbar = styled.div`
   align-items: center;
 
   @media screen and (max-width: 768px) {
-    padding: 1.875rem 1.375rem;
+    padding: 1.2rem 1rem;
   }
 
   .account-container {
@@ -114,9 +114,13 @@ function getTitle(text) {
 }
 
 return (
-  <Navbar className="position-relative d-flex justify-content-between">
+  <Navbar className="position-relative d-flex justify-content-between gap-2">
     <div className="d-flex align-items-center gap-3">
-      <div className="h4 mb-0">{getTitle(page ?? "dashboard")}</div>
+      {logo ? (
+        logo
+      ) : (
+        <div className="h4 mb-0">{getTitle(page ?? "dashboard")}</div>
+      )}
       <div className="account-container py-1 px-2 rounded-3">
         {treasuryDaoID}
       </div>

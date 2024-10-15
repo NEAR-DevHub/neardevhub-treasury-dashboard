@@ -1,13 +1,19 @@
 const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
+const { getNearBalances } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+);
+
 const instance = props.instance;
 const policy = props.policy;
 if (!instance) {
   return <></>;
 }
 
-const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+const { treasuryDaoID, showKYC, showReferenceProposal } = VM.require(
+  `${instance}/widget/config.data`
+);
 
 const proposals = props.proposals;
 const columnsVisibility = JSON.parse(
@@ -23,6 +29,7 @@ const isPendingRequests = props.isPendingRequests;
 const transferApproversGroup = props.transferApproversGroup;
 const [showToastStatus, setToastStatus] = useState(false);
 const [voteProposalId, setVoteProposalId] = useState(null);
+const [nearStakedTokens, setNearStakedTokens] = useState(null);
 
 const accountId = context.accountId;
 
@@ -184,9 +191,7 @@ const userFTTokens = fetch(
   `https://api3.nearblocks.io/v1/account/${treasuryDaoID}/inventory`
 );
 
-const balanceResp = fetch(
-  `https://api3.nearblocks.io/v1/account/${treasuryDaoID}`
-);
+const nearBalances = getNearBalances(treasuryDaoID);
 
 const VoteSuccessToast = () => {
   return showToastStatus && typeof voteProposalId === "number" ? (
@@ -293,31 +298,34 @@ const ProposalsComponent = () => {
                     instance,
                     isVoteStatus: false,
                     status: item.status,
+                    isPaymentsPage: true,
                   }}
                 />
               </td>
             )}
-            <td className={isVisible("Reference")}>
-              {typeof proposalId === "number" ? (
-                <Link
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  to={href({
-                    widgetSrc: `${REPL_DEVHUB}/widget/app`,
-                    params: {
-                      page: "proposal",
-                      id: proposalId,
-                    },
-                  })}
-                >
-                  <div className="d-flex gap-2 align-items-center text-underline bold text-black">
-                    #{proposalId} <i class="bi bi-box-arrow-up-right"> </i>
-                  </div>
-                </Link>
-              ) : (
-                "-"
-              )}
-            </td>
+            {showReferenceProposal && (
+              <td className={isVisible("Reference")}>
+                {typeof proposalId === "number" ? (
+                  <Link
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    to={href({
+                      widgetSrc: `${REPL_DEVHUB}/widget/app`,
+                      params: {
+                        page: "proposal",
+                        id: proposalId,
+                      },
+                    })}
+                  >
+                    <div className="d-flex gap-2 align-items-center text-underline bold text-black">
+                      #{proposalId} <i class="bi bi-box-arrow-up-right"> </i>
+                    </div>
+                  </Link>
+                ) : (
+                  "-"
+                )}
+              </td>
+            )}
 
             <td className={isVisible("Title")}>
               <Widget
@@ -353,6 +361,7 @@ const ProposalsComponent = () => {
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.ReceiverAccount`}
                 props={{
                   receiverAccount: args.receiver_id,
+                  showKYC,
                 }}
               />
             </td>
@@ -447,7 +456,11 @@ const ProposalsComponent = () => {
                       ...(userFTTokens?.body?.inventory?.fts ?? []),
                       {
                         contract: "near",
-                        amount: balanceResp?.body?.account?.[0]?.amount,
+                        amount: Big(nearBalances.available)
+                          .minus(
+                            Big(nearStakedTokens ?? "0").mul(Big(10).pow(24))
+                          )
+                          .toFixed(),
                       },
                     ],
                     currentAmount: args.amount,
@@ -470,10 +483,18 @@ const ProposalsComponent = () => {
 
 return (
   <Container style={{ overflowX: "auto" }}>
+    <Widget
+      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
+      props={{
+        instance,
+        setNearStakedTokens: (v) => setNearStakedTokens(Big(v).toFixed(4)),
+      }}
+    />
     <VoteSuccessToast />
     {loading === true ||
     proposals === null ||
     transferApproversGroup === null ||
+    !nearStakedTokens ||
     policy === null ? (
       <div className="d-flex justify-content-center align-items-center w-100 h-100">
         <Widget
@@ -506,8 +527,9 @@ return (
                 <td>#</td>
                 <td className={isVisible("Created Date")}>Created Date</td>
                 {!isPendingRequests && <td>Status</td>}
-                <td className={isVisible("Reference")}>Reference</td>
-
+                {showReferenceProposal && (
+                  <td className={isVisible("Reference")}>Reference</td>
+                )}
                 <td className={isVisible("Title")}>Title</td>
                 <td className={isVisible("Summary")}>Summary</td>
                 <td className={isVisible("Recipient")}>Recipient</td>

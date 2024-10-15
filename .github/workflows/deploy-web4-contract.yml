@@ -1,8 +1,7 @@
 name: Deploy Rust web4 contract
 
 on:
-  push:
-    branches: [main]
+  workflow_dispatch: # This allows manual triggering
 
 jobs:
   test:
@@ -12,7 +11,11 @@ jobs:
     name: Deploy to production
     needs: [test]
     runs-on: ubuntu-latest
-    environment: treasury-devdao.near
+    strategy:
+      matrix:
+        environment:
+#          - treasury-devdao.near
+          - infinex.near
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -22,7 +25,7 @@ jobs:
         run: echo "PIKESPEAK_API_KEY=${{ secrets.PIKESPEAK_API_KEY }}" >> $GITHUB_ENV
       - name: Set up PostHog API key
         run: echo "POSTHOG_API_KEY=${{ secrets.POSTHOG_API_KEY }}" >> $GITHUB_ENV
-      - name: Deploy to production
+      - name: Deploy to ${{ matrix.environment }}
         run: |
           cargo near deploy --no-docker "${{ vars.NEAR_TREASURY_WEB4_ACCOUNT_ID }}" \
             without-init-call \
@@ -32,3 +35,5 @@ jobs:
               --signer-private-key "${{ secrets.NEAR_TREASURY_WEB4_PRIVATE_KEY }}" \
             send
         working-directory: ./web4/treasury-web4
+        env:
+          NEAR_TREASURY_WEB4_ACCOUNT_ID: ${{ matrix.environment }}

@@ -298,10 +298,7 @@ return (
       }}
     />
 
-    <div
-      className="card rounded-3 py-3 d-flex flex-column gap-2 flex-1"
-      style={{ overflowX: "auto" }}
-    >
+    <div className="card rounded-3 py-3 d-flex flex-column gap-2 flex-1 w-100">
       <div className="d-flex justify-content-between gap-2 align-items-center border-bottom px-2">
         <div className="nav-link">All Members</div>
         {hasCreatePermission && (
@@ -320,7 +317,10 @@ return (
           />
         </div>
       ) : (
-        <div className="d-flex flex-column flex-1 justify-content-between px-2">
+        <div
+          className="d-flex flex-column flex-1 justify-content-between px-2"
+          style={{ overflow: "auto" }}
+        >
           <table className="table">
             <thead>
               <tr className="text-grey">

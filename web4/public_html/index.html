@@ -172,10 +172,6 @@
 
     </div>
   </nav>
-  <near-social-viewer 
-      src="treasury-devdao.near/widget/app"
-      initialProps='{"page":"", "pikespeakKey":"PIKESPEAK_API_KEY"}'
-    ></near-social-viewer>
 </body>
 <script
     async
@@ -379,8 +375,18 @@
       checkForLogin();
     }
   });
-  const viewer = document.querySelector("near-social-viewer");
+  const viewer = document.createElement("near-social-viewer");
+
   viewer.selector = selector;
+  viewer.setAttribute("initialProps", JSON.stringify({"page":"", "pikespeakKey":"PIKESPEAK_API_KEY"}));
+
+  if (location.host.endsWith(".page")) {
+    const instanceAccount = location.host.split(".")[0];
+    viewer.setAttribute("src", `${instanceAccount}.near/widget/app`);
+  } else if (location.port === "8080") {
+    viewer.setAttribute("rpc", "http://127.0.0.1:8080/api/proxy-rpc");
+  }
+  document.body.appendChild(viewer);
 </script>
 
 </html>

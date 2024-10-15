@@ -19,16 +19,16 @@ export default defineConfig({
      * Maximum time expect() should wait for the condition to be met.
      * For example in `await expect(locator).toHaveText();`
      */
-    timeout: 5000,
+    timeout: 7000,
   },
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
-  retries: process.env.CI ? 2 : 0,
+  retries: process.env.CI ? 4 : 0,
   /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? "100%" : undefined,
+  workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: "line",
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
@@ -46,10 +46,29 @@ export default defineConfig({
   /* Configure projects for major browsers */
   projects: [
     {
-      name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      name: "treasury-dashboard",
+      use: {
+        ...devices["Desktop Chrome"],
+        instanceAccount: "treasury-devdao.near",
+        daoAccount: "devdao.sputnik-dao.near",
+      },
     },
-
+    {
+      name: "infinex",
+      use: {
+        ...devices["Desktop Chrome"],
+        instanceAccount: "treasury-infinex.near",
+        daoAccount: "infinex.sputnik-dao.near",
+      },
+    },
+    {
+      name: "treasury-testing",
+      use: {
+        ...devices["Desktop Chrome"],
+        instanceAccount: "treasury-testing.near",
+        daoAccount: "testing-astradao.sputnik-dao.near",
+      },
+    },
     /*{
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },

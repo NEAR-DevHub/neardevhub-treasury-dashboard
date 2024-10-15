@@ -56,7 +56,7 @@ useEffect(() => {
 return (
   <Container className="card rounded-3 py-3 d-flex flex-column gap-3">
     <div
-      className="d-flex justify-content-between gap-2 align-items-center border-bottom"
+      className="d-flex justify-content-between gap-2 align-items-center border-bottom flex-wrap"
       style={{ paddingRight: "10px" }}
     >
       <NavUnderline className="nav gap-2">
@@ -82,7 +82,7 @@ return (
             )
         )}
       </NavUnderline>
-      <div>
+      <div className="px-2">
         <SidebarMenu currentTab={currentTab} />
       </div>
     </div>
