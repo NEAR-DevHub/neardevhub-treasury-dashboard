@@ -432,7 +432,7 @@ return (
                     ...prev,
                     name: e.target.value,
                   })),
-                value: selectedProposal.name,
+                value: selectedProposal?.name ?? "",
                 multiline: true,
               }}
             />
@@ -449,7 +449,7 @@ return (
                     ...prev,
                     summary: e.target.value,
                   })),
-                value: selectedProposal.summary,
+                value: selectedProposal?.summary ?? "",
                 multiline: true,
               }}
             />
