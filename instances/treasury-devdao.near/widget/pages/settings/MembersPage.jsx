@@ -267,7 +267,6 @@ return (
         isOpen: showDeleteModal && selectedMember,
         onCancelClick: () => setShowDeleteModal(false),
         onConfirmClick: () => {
-          setTxnCreated(true);
           setShowDeleteModal(false);
         },
         username: selectedMember.member,

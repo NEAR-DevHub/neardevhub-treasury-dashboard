@@ -28,14 +28,26 @@ useEffect(() => {
   getLastProposalId().then((i) => setLastProposalId(i));
 }, []);
 
+function getProposalData(id) {
+  return Near.asyncView(treasuryDaoID, "get_proposal", { id: id - 1 }).then(
+    (result) => result
+  );
+}
+
 // refresh data after proposal is submitted
 useEffect(() => {
   if (isTxnCreated && typeof onRefresh === "function") {
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
         if (lastProposalId !== id) {
-          onRefresh();
-          setTxnCreated(false);
+          getProposalData(id).then((res) => {
+            if (res.status === "Approved") {
+              onRefresh();
+              setTxnCreated(false);
+            } else {
+              setTimeout(() => checkForNewProposal(id), 1000);
+            }
+          });
         } else {
           setTimeout(() => checkForNewProposal(), 1000);
         }

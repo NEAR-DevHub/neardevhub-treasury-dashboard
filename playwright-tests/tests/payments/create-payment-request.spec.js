@@ -50,7 +50,7 @@ test.describe("admin connected", function () {
   test.use({
     storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
   });
-   // TODO
+  // TODO
   // test("different amount values should not throw any error", async ({
   //   page,
   //   instanceAccount,
