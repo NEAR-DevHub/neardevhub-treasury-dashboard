@@ -43,6 +43,7 @@
     "deploy:testing": "npm run bw:build:testing && cd ./build/treasury-testing.near && bos components deploy",
     "dry-run:testing": "npm run bw:build:testing && npm run dry-run:instances --instance=treasury-testing.near",
     "deploy:infinex": "npm run bw:build:infinex && cd ./build/treasury-infinex.near && bos components deploy",
+    "dry-run:infinex-testing": "npm run bw:build:infinex-testing && npm run dry-run:instances --instance=treasury-testing-infinex.near",
     "deploy:infinex-testing": "npm run bw:build:infinex-testing && cd ./build/treasury-testing-infinex.near && bos components deploy",
     "dry-run:infinex": "npm run bw:build:infinex && npm run dry-run:instances --instance=treasury-infinex.near",
     "test": "npx playwright test",
