@@ -10,50 +10,69 @@ import { setDontAskAgainCacheValues } from "../../util/cache";
 import { getInstanceConfig } from "../../util/config.js";
 import { mockInventory } from "../../util/inventory.js";
 
+async function fillCreateForm(page, daoAccount, instanceAccount) {
+  await mockInventory({ page, account: daoAccount });
+  const instanceConfig = await getInstanceConfig({ page, instanceAccount });
+  await page.goto(`/${instanceAccount}/widget/app?page=payments`);
+
+  const createPaymentRequestButton = await page.getByRole("button", {
+    name: "Create Request",
+  });
+  await expect(createPaymentRequestButton).toBeVisible();
+  await createPaymentRequestButton.click();
+
+  if (instanceConfig.showProposalSelection === true) {
+    const proposalSelect = await page.locator(".dropdown-toggle").first();
+    await expect(proposalSelect).toBeVisible();
+    await expect(
+      await proposalSelect.getByText("Select", { exact: true })
+    ).toBeVisible();
+
+    await proposalSelect.click();
+
+    await page.getByText("Add manual request").click();
+  }
+  await page.getByTestId("proposal-title").fill("Test proposal title");
+  await page.getByTestId("proposal-summary").fill("Test proposal summary");
+
+  await page.getByPlaceholder("treasury.near").fill("webassemblymusic.near");
+  const totalAmountField = await page.getByTestId("total-amount");
+  await totalAmountField.focus();
+  await totalAmountField.pressSequentially("3");
+  await totalAmountField.blur();
+
+  const tokenSelect = await page.getByTestId("tokens-dropdown");
+  await tokenSelect.click();
+  await tokenSelect.getByText("NEAR").click();
+}
+
 test.describe("admin connected", function () {
   test.use({
     storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
   });
+  // TODO
+  // test("different amount values should not throw any error", async ({
+  //   page,
+  //   instanceAccount,
+  //   daoAccount,
+  // }) => {
+  // });
+
+  // test("cancel form should clear existing values", async ({
+  //   page,
+  //   instanceAccount,
+  //   daoAccount,
+  // }) => {
+  //   test.setTimeout(60_000);
+  // });
+
   test("create manual payment request", async ({
     page,
     instanceAccount,
     daoAccount,
   }) => {
     test.setTimeout(60_000);
-    await mockInventory({ page, account: daoAccount });
-    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
-    await page.goto(`/${instanceAccount}/widget/app?page=payments`);
-
-    const createPaymentRequestButton = await page.getByRole("button", {
-      name: "Create Request",
-    });
-    await expect(createPaymentRequestButton).toBeVisible();
-    await createPaymentRequestButton.click();
-
-    if (instanceConfig.showProposalSelection === true) {
-      const proposalSelect = await page.locator(".dropdown-toggle").first();
-      await expect(proposalSelect).toBeVisible();
-      await expect(
-        await proposalSelect.getByText("Select", { exact: true })
-      ).toBeVisible();
-
-      await proposalSelect.click();
-
-      await page.getByText("Add manual request").click();
-    }
-    await page.getByTestId("proposal-title").fill("Test proposal title");
-    await page.getByTestId("proposal-summary").fill("Test proposal summary");
-
-    await page.getByPlaceholder("treasury.near").fill("webassemblymusic.near");
-    const totalAmountField = await page.getByTestId("total-amount");
-    await totalAmountField.focus();
-    await totalAmountField.pressSequentially("3");
-    await totalAmountField.blur();
-
-    const tokenSelect = await page.getByTestId("tokens-dropdown");
-    await tokenSelect.click();
-    await tokenSelect.getByText("NEAR").click();
-
+    await fillCreateForm(page, daoAccount, instanceAccount);
     const submitBtn = page
       .locator(".offcanvas-body")
       .getByRole("button", { name: "Submit" });
@@ -76,7 +95,9 @@ test.describe("admin connected", function () {
       },
     });
   });
-  test("create NEAR transfer payment request", async ({
+
+  // TODO: add the checks after form submission completion
+  test("create NEAR transfer payment request and should clear form after submission", async ({
     page,
     instanceAccount,
     daoAccount,

@@ -13,7 +13,7 @@ const Container = styled.div`
 
 return (
   <Container>
-    {status === "Approved" ? (
+    {status === "Approve" ? (
       <div className="d-flex gap-2 align-items-center approve rounded-2 p-2 bold">
         <i class="bi bi-check2"></i>
         You Approved

@@ -12,7 +12,7 @@ const {
 };
 
 const instance = props.instance;
-if (!instance) {
+if (!instance || typeof getMembersAndPermissions !== "function") {
   return <></>;
 }
 
@@ -140,6 +140,7 @@ const [showDeleteModal, setShowDeleteModal] = useState(false);
 useEffect(() => {
   setLoading(true);
   if (typeof getMembersAndPermissions === "function") {
+    setAllMembers([]);
     getMembersAndPermissions(treasuryDaoID).then((res) => {
       setAllMembers(res);
     });
@@ -266,7 +267,6 @@ return (
         isOpen: showDeleteModal && selectedMember,
         onCancelClick: () => setShowDeleteModal(false),
         onConfirmClick: () => {
-          setTxnCreated(true);
           setShowDeleteModal(false);
         },
         username: selectedMember.member,

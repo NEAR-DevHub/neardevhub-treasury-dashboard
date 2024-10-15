@@ -82,50 +82,48 @@ const HoverCard = () => {
   );
 };
 
+const ReceiverAccountComponent = (
+  <div className="d-flex gap-1 align-items-center" style={{ width: 180 }}>
+    <div style={{ width: "40px", height: 40, position: "relative" }}>
+      <img src={imageSrc} height={40} width={40} className="rounded-circle" />
+      {verificationStatus && (
+        <img
+          src={isVerfied ? SuccessImg : WarningImg}
+          height={20}
+          width={20}
+          style={
+            isNearSocial
+              ? { marginTop: "-35px", marginLeft: "23px" }
+              : { marginTop: "-17px", marginLeft: "19px" }
+          }
+        />
+      )}
+    </div>
+    <div
+      className="text-truncate"
+      style={{ textAlign: "left", width: "150px" }}
+    >
+      <div className="h6 mb-0"> {name}</div>
+
+      <div className={isVerfied ? "text-green" : "text-red"}>
+        @{receiverAccount}
+      </div>
+    </div>
+  </div>
+);
+
 return (
   <div>
-    <Widget
-      src="${REPL_MOB}/widget/N.Common.OverlayTrigger"
-      props={{
-        popup: verificationStatus && <HoverCard />,
-        children: (
-          <div
-            className="d-flex gap-1 align-items-center"
-            style={{ width: 180 }}
-          >
-            <div style={{ width: "40px", height: 40, position: "relative" }}>
-              <img
-                src={imageSrc}
-                height={40}
-                width={40}
-                className="rounded-circle"
-              />
-              {verificationStatus && (
-                <img
-                  src={isVerfied ? SuccessImg : WarningImg}
-                  height={20}
-                  width={20}
-                  style={
-                    isNearSocial
-                      ? { marginTop: "-35px", marginLeft: "23px" }
-                      : { marginTop: "-17px", marginLeft: "19px" }
-                  }
-                />
-              )}
-            </div>
-            <div
-              className="text-truncate"
-              style={{ textAlign: "left", width: "150px" }}
-            >
-              <div className="h6 mb-0"> {name}</div>
-
-              <div className={isVerfied ? "text-green" : "text-red"}>
-                @{receiverAccount}
-              </div>
-            </div>
-          </div>
-        ),
-      }}
-    />
+    {verificationStatus ? (
+      <Widget
+        src="${REPL_MOB}/widget/N.Common.OverlayTrigger"
+        props={{
+          popup: verificationStatus && <HoverCard />,
+          children: ReceiverAccountComponent,
+        }}
+      />
+    ) : (
+      ReceiverAccountComponent
+    )}
   </div>
 );

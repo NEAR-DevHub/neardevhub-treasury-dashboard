@@ -40,15 +40,27 @@ function refreshData() {
   Storage.set("REFRESH_MEMBERS_TABLE_DATA", Math.random());
 }
 
-// close canvas after proposal is submitted
+function getProposalData(id) {
+  return Near.asyncView(treasuryDaoID, "get_proposal", { id: id - 1 }).then(
+    (result) => result
+  );
+}
+
+// close canvas after proposal is submitted and approved
 useEffect(() => {
   if (isTxnCreated) {
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
         if (lastProposalId !== id) {
-          onCloseCanvas();
-          refreshData();
-          setTxnCreated(false);
+          getProposalData(id).then((res) => {
+            if (res.status === "Approved") {
+              onCloseCanvas();
+              refreshData();
+              setTxnCreated(false);
+            } else {
+              setTimeout(() => checkForNewProposal(id), 1000);
+            }
+          });
         } else {
           setTimeout(() => checkForNewProposal(), 1000);
         }
