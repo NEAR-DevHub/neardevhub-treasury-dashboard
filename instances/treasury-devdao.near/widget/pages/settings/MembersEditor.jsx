@@ -77,20 +77,28 @@ function updateDaoPolicy(rolesMap) {
       if (role.name === "all" && role.kind === "Everyone") {
         return role;
       }
+
+      let group = role.kind.Group;
+      // Check if the role is in the rolesMap
       if (rolesMap.has(role.name)) {
-        let group = role.kind.Group;
+        // Add the user if they are not already in the group
         if (Array.isArray(group) && !group.includes(username)) {
           group.push(username);
         }
-        // Modify the role's group
-        return {
-          ...role,
-          kind: {
-            Group: group,
-          },
-        };
       }
-      return role;
+      // If the role is NOT in the rolesMap but the username is in the group, remove the username
+      else if (Array.isArray(group) && group.includes(username)) {
+        console.log("Removing", username, "from", role.name);
+        group = group.filter((i) => i !== username);
+      }
+
+      // Return the updated role with the modified group
+      return {
+        ...role,
+        kind: {
+          Group: group,
+        },
+      };
     });
   }
 
@@ -113,26 +121,26 @@ function onSubmitClick() {
   const updatedPolicy = updateDaoPolicy(
     new Map(roles.map((role) => [role.title, role.value]))
   );
-
-  setTxnCreated(true);
-  Near.call([
-    {
-      contractName: treasuryDaoID,
-      methodName: "add_proposal",
-      args: {
-        proposal: {
-          description: "Change policy",
-          kind: {
-            ChangePolicy: {
-              policy: updatedPolicy,
-            },
-          },
-        },
-      },
-      gas: 200000000000000,
-    },
-    getApproveTxn(),
-  ]);
+  console.log(updatedPolicy, roles);
+  // setTxnCreated(true);
+  // Near.call([
+  //   {
+  //     contractName: treasuryDaoID,
+  //     methodName: "add_proposal",
+  //     args: {
+  //       proposal: {
+  //         description: "Change policy",
+  //         kind: {
+  //           ChangePolicy: {
+  //             policy: updatedPolicy,
+  //           },
+  //         },
+  //       },
+  //     },
+  //     gas: 200000000000000,
+  //   },
+  //   getApproveTxn(),
+  // ]);
 }
 
 function cleanInputs() {
