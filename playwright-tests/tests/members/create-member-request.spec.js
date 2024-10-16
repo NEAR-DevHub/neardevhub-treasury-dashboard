@@ -314,9 +314,62 @@ test.describe("admin connected", function () {
     await expect(page.getByText("Megha", { exact: true })).toBeVisible();
   });
 
-  // TODO: make sure 'submit' is disabled when incorrect account id is mentioned, no roles are selected
+  test("should disable submit button and show error when incorrect account id is mentioned", async ({
+    page,
+    instanceAccount,
+    daoAccount,
+  }) => {
+    await mockInventory({ page, account: daoAccount });
+    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
+    await page.goto(`/${instanceAccount}/widget/app?page=settings`);
+    await updateDaoPolicyMembers(page);
+    const createMemberRequestButton = page.getByRole("button", {
+      name: "New Member",
+    });
+    await createMemberRequestButton.click();
+    await expect(page.getByRole("heading", { name: "Add Member" })).toBeVisible(
+      { timeout: 10_000 }
+    );
+    const submitBtn = page
+      .locator(".offcanvas-body")
+      .getByRole("button", { name: "Submit" });
+    await expect(submitBtn).toBeAttached({ timeout: 10_000 });
+    // Submit button should be disabled
+    expect(await submitBtn.isDisabled()).toBe(true);
+    // Add member name
+    const accountInput = await page.getByPlaceholder("treasury.near");
+    await accountInput.fill("testingAccount.near");
+    // Submit button should be disabled
+    expect(await submitBtn.isDisabled()).toBe(true);
+    // Add member role
+    const permissionsSelect = await page.locator(".dropdown-toggle").first();
+    await expect(permissionsSelect).toBeVisible();
+    await permissionsSelect.click();
+    await page.locator(".dropdown-item").first().click();
+    // Submit button should be enabled
+    expect(await submitBtn.isEnabled()).toBe(true);
+    // Change member name to incorrect account id example thomasguntenaar.nea without 'r'
+    await accountInput.fill("thomasguntenaar.nea");
+    await page.waitForTimeout(1000);
+    // Submit button should be disabled & 'Please enter valid account ID' error should be visible
+    expect(await submitBtn.isDisabled()).toBe(true);
+    await expect(page.getByText("Please enter valid account ID")).toBeVisible();
+    // Fill valid account id thomasguntenaar.near
+    await accountInput.fill("thomasguntenaar.near");
+    await page.waitForTimeout(1000);
 
-  // TODO: add the check after form submission, the loader should disapper and the list should be visible
+    // Submit button should be enabled
+    expect(await submitBtn.isDisabled()).toBe(false);
+    // Remove any roles
+    const roleBtn = page.getByText("Create Requests", { exact: true });
+    const removeRoleBtn = roleBtn.locator("i").first();
+    await removeRoleBtn.click();
+    await page.waitForTimeout(1000);
+    // Submit button should be disabled
+    expect(await submitBtn.isDisabled()).toBe(true);
+  });
+
+  // TODO: add the check after form submission, the loader should disappear and the list should be visible
   test("should add new member and after submit, show in the member list", async ({
     page,
     instanceAccount,
