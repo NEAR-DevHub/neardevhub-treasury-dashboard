@@ -75,23 +75,16 @@ test.describe("admin connected", function () {
       .getByRole("button", { name: "Cancel" });
     await expect(cancelBtn).toBeAttached({ timeout: 10_000 });
 
-    // await cancelBtn.waitFor({ state: "attached", timeout: 10_000 });
-    // await cancelBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
     cancelBtn.click();
     await page.getByRole("button", { name: "Yes" }).click();
 
     await clickCreatePaymentRequestButton(page);
 
-    await expect(await page.getByTestId("proposal-title").inputValue()).toBe(
-      ""
-    );
-    await expect(await page.getByTestId("proposal-summary").inputValue()).toBe(
-      ""
-    );
-    await expect(
-      await page.getByPlaceholder("treasury.near").inputValue()
-    ).toBe("");
-    await expect(await page.getByTestId("total-amount").inputValue()).toBe("");
+    // TODO: add a case where the form is a proposal selection instead of a manual title and summary
+    expect(await page.getByTestId("proposal-title").inputValue()).toBe("");
+    expect(await page.getByTestId("proposal-summary").inputValue()).toBe("");
+    expect(await page.getByPlaceholder("treasury.near").inputValue()).toBe("");
+    expect(await page.getByTestId("total-amount").inputValue()).toBe("");
   });
 
   test("create manual payment request", async ({
