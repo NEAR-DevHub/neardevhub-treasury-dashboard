@@ -55,13 +55,18 @@ test.describe("admin connected", function () {
   test.use({
     storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
   });
-  // TODO
+
+  // TODO : like special characters, string, empty value, large values with commas, paste invalid text, selecting NEAR token should not throw any error
   // test("different amount values should not throw any error", async ({
   //   page,
   //   instanceAccount,
   //   daoAccount,
   // }) => {
   // });
+
+  // TODO : token dropdown should show all tokens, even after selecting one
+
+  // TODO: make sure 'submit' is disabled when incorrect receiver id is mentioned or empty amount or empty proposal name or empty token
 
   test("cancel form should clear existing values", async ({
     page,
