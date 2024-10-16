@@ -314,7 +314,9 @@ test.describe("admin connected", function () {
     await expect(page.getByText("Megha", { exact: true })).toBeVisible();
   });
 
-  // TODO: add the check after form submission
+  // TODO: make sure 'submit' is disabled when incorrect account id is mentioned, no roles are selected 
+
+  // TODO: add the check after form submission, the loader should disapper and the list should be visible
   test("should add new member and after submit, show in the member list", async ({
     page,
     instanceAccount,
