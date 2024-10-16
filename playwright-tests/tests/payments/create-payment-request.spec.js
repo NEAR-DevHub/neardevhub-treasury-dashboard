@@ -66,7 +66,7 @@ test.describe("admin connected", function () {
 
   // TODO : token dropdown should show all tokens, even after selecting one
 
-  // TODO: make sure 'submit' is disabled when incorrect receiver id is mentioned or empty amount or empty proposal name or empty token 
+  // TODO: make sure 'submit' is disabled when incorrect receiver id is mentioned or empty amount or empty proposal name or empty token
 
   test("cancel form should clear existing values", async ({
     page,
