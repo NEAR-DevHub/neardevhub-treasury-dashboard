@@ -10,16 +10,21 @@ import { setDontAskAgainCacheValues } from "../../util/cache";
 import { getInstanceConfig } from "../../util/config.js";
 import { mockInventory } from "../../util/inventory.js";
 
-async function fillCreateForm(page, daoAccount, instanceAccount) {
-  await mockInventory({ page, account: daoAccount });
-  const instanceConfig = await getInstanceConfig({ page, instanceAccount });
-  await page.goto(`/${instanceAccount}/widget/app?page=payments`);
-
+async function clickCreatePaymentRequestButton(page) {
   const createPaymentRequestButton = await page.getByRole("button", {
     name: "Create Request",
   });
   await expect(createPaymentRequestButton).toBeVisible();
   await createPaymentRequestButton.click();
+  return createPaymentRequestButton;
+}
+
+async function fillCreateForm(page, daoAccount, instanceAccount) {
+  await mockInventory({ page, account: daoAccount });
+  const instanceConfig = await getInstanceConfig({ page, instanceAccount });
+  await page.goto(`/${instanceAccount}/widget/app?page=payments`);
+
+  await clickCreatePaymentRequestButton(page);
 
   if (instanceConfig.showProposalSelection === true) {
     const proposalSelect = await page.locator(".dropdown-toggle").first();
@@ -58,13 +63,29 @@ test.describe("admin connected", function () {
   // }) => {
   // });
 
-  // test("cancel form should clear existing values", async ({
-  //   page,
-  //   instanceAccount,
-  //   daoAccount,
-  // }) => {
-  //   test.setTimeout(60_000);
-  // });
+  test("cancel form should clear existing values", async ({
+    page,
+    instanceAccount,
+    daoAccount,
+  }) => {
+    test.setTimeout(60_000);
+    await fillCreateForm(page, daoAccount, instanceAccount);
+    const cancelBtn = page
+      .locator(".offcanvas-body")
+      .getByRole("button", { name: "Cancel" });
+    await expect(cancelBtn).toBeAttached({ timeout: 10_000 });
+
+    cancelBtn.click();
+    await page.getByRole("button", { name: "Yes" }).click();
+
+    await clickCreatePaymentRequestButton(page);
+
+    // TODO: add a case where the form is a proposal selection instead of a manual title and summary
+    expect(await page.getByTestId("proposal-title").inputValue()).toBe("");
+    expect(await page.getByTestId("proposal-summary").inputValue()).toBe("");
+    expect(await page.getByPlaceholder("treasury.near").inputValue()).toBe("");
+    expect(await page.getByTestId("total-amount").inputValue()).toBe("");
+  });
 
   test("create manual payment request", async ({
     page,
@@ -78,7 +99,7 @@ test.describe("admin connected", function () {
       .getByRole("button", { name: "Submit" });
     await expect(submitBtn).toBeAttached({ timeout: 10_000 });
     await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
-    submitBtn.click();
+    await submitBtn.click();
 
     await expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
@@ -123,12 +144,7 @@ test.describe("admin connected", function () {
     );
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
 
-    const createPaymentRequestButton = await page.getByRole("button", {
-      name: "Create Request",
-    });
-
-    await expect(createPaymentRequestButton).toBeVisible();
-    await createPaymentRequestButton.click();
+    await clickCreatePaymentRequestButton(page);
 
     const amountFromLinkedProposal = 3120 / nearPrice;
 
@@ -169,7 +185,7 @@ test.describe("admin connected", function () {
     const submitBtn = page.getByRole("button", { name: "Submit" });
     await expect(submitBtn).toBeAttached({ timeout: 10_000 });
     await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
-    submitBtn.click();
+    await submitBtn.click();
 
     const expectedTransactionModalObject = instanceConfig.showProposalSelection
       ? {
@@ -215,11 +231,7 @@ test.describe("admin connected", function () {
     await mockInventory({ page, account: daoAccount });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
 
-    const createPaymentRequestButton = await page.getByRole("button", {
-      name: "Create Request",
-    });
-    await expect(createPaymentRequestButton).toBeVisible();
-    await createPaymentRequestButton.click();
+    await clickCreatePaymentRequestButton(page);
 
     if (instanceConfig.showProposalSelection === true) {
       const proposalSelect = await page.locator(".dropdown-toggle").first();
@@ -262,7 +274,7 @@ test.describe("admin connected", function () {
     const submitBtn = page.getByRole("button", { name: "Submit" });
     await expect(submitBtn).toBeAttached({ timeout: 10_000 });
     await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
-    submitBtn.click();
+    await submitBtn.click();
 
     const expectedTransactionModalObject = instanceConfig.showProposalSelection
       ? {
