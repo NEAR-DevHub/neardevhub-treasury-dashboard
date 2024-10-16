@@ -46,10 +46,9 @@ async function fillCreateForm(page, daoAccount, instanceAccount) {
   await totalAmountField.pressSequentially("3");
   await totalAmountField.blur();
 
-  // TODO: add this back as soon as we have the pikespeak key for infinex
-  // const tokenSelect = await page.getByTestId("tokens-dropdown");
-  // await tokenSelect.click();
-  // await tokenSelect.getByText("NEAR").click();
+  const tokenSelect = await page.getByTestId("tokens-dropdown");
+  await tokenSelect.click();
+  await tokenSelect.getByText("NEAR").click();
 }
 
 test.describe("admin connected", function () {
