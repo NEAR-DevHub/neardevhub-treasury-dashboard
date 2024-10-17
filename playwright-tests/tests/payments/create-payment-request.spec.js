@@ -179,7 +179,10 @@ test.describe("admin connected", function () {
     await checkForErrorWithAmountField(page, "=-34232[]/", false);
   });
 
-  test("should throw pikespeak error when reponse is 403", async ({ page, instanceAccount }) => {
+  test("should throw pikespeak error when reponse is 403", async ({
+    page,
+    instanceAccount,
+  }) => {
     test.setTimeout(60_000);
     await updateDaoPolicyMembers({ page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
