@@ -47,6 +47,7 @@ test.describe("admin connected", function () {
   }) => {
     test.setTimeout(60_000);
     await mockInventory({ page, account: daoAccount });
+    await updateDaoPolicyMembers({ page });
     await page.goto(`/${instanceAccount}/widget/app?page=settings`);
     await expect(page.getByText("Megha", { exact: true })).toBeVisible();
   });

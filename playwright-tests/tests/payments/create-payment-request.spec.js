@@ -20,6 +20,51 @@ async function clickCreatePaymentRequestButton(page) {
   return createPaymentRequestButton;
 }
 
+// since pikespeak has paid api key, we don't want to expose it
+export async function mockPikespeakFTTokensResponse({ page, daoAccount }) {
+  await page.route(
+    `https://api.pikespeak.ai/account/balance/${daoAccount}`,
+    async (route) => {
+      const mockResponse = {
+        status: 200,
+        contentType: "application/json; charset=utf-8",
+        body: JSON.stringify([
+          {
+            contract: "Near",
+            amount: 4.978029151809765,
+            symbol: "NEAR",
+            isParsed: true,
+            icon: "",
+          },
+          {
+            contract: "Near",
+            amount: 6.49806,
+            symbol: "NEAR [Storage]",
+            isParsed: true,
+            icon: "",
+          },
+          {
+            amount: "0.689911",
+            contract:
+              "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+            symbol: "USDC",
+            isParsed: true,
+            icon: "https://s2.coinmarketcap.com/static/img/coins/64x64/3408.png",
+          },
+          {
+            amount: "0.310327",
+            contract: "usdt.tether-token.near",
+            symbol: "USDt",
+            isParsed: true,
+            icon: "",
+          },
+        ]),
+      };
+      await route.fulfill(mockResponse);
+    }
+  );
+}
+
 async function fillCreateForm(page, daoAccount, instanceAccount) {
   await mockInventory({ page, account: daoAccount });
   const instanceConfig = await getInstanceConfig({ page, instanceAccount });
@@ -54,7 +99,12 @@ async function fillCreateForm(page, daoAccount, instanceAccount) {
 
 const isMac = os.platform() === "darwin";
 
-async function checkForErrorWithAmountField(page, value, checkCopyPaste) {
+async function checkForErrorWithAmountField(
+  page,
+  value,
+  selectNear = true,
+  checkCopyPaste
+) {
   const totalAmountField = await page.getByTestId("total-amount");
   await totalAmountField.focus();
   // clear the textfield
@@ -84,7 +134,16 @@ async function checkForErrorWithAmountField(page, value, checkCopyPaste) {
 
   const tokenSelect = await page.getByTestId("tokens-dropdown");
   await tokenSelect.click();
-  await tokenSelect.getByText("NEAR").click();
+  if (selectNear) {
+    await page.locator(".dropdown-item").first().click();
+  } else {
+    await page
+      .getByTestId("tokens-dropdown")
+      .locator("div")
+      .filter({ hasText: "USDC Tokens available:" })
+      .nth(3)
+      .click();
+  }
 
   // make sure there is no error
   const submitBtn = page
@@ -101,34 +160,45 @@ test.describe("admin connected", function () {
     storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
   });
 
-  // TODO : like special characters, string, empty value, large values with commas, paste invalid text, selecting NEAR token should not throw any error
   test("different amount values should not throw any error", async ({
     page,
     instanceAccount,
     daoAccount,
   }) => {
     test.setTimeout(60_000);
+    await mockPikespeakFTTokensResponse({ page, daoAccount });
     await updateDaoPolicyMembers({ page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
 
     await clickCreatePaymentRequestButton(page);
     await checkForErrorWithAmountField(page, "1.2342");
-    await checkForErrorWithAmountField(page, "35435435dfdsfsdfsd");
+    await checkForErrorWithAmountField(page, "35435435dfdsfsdfsd", false);
     await checkForErrorWithAmountField(page, "sdfsfdf");
-    await checkForErrorWithAmountField(page, "0");
-    await checkForErrorWithAmountField(page, "", true);
-    await checkForErrorWithAmountField(page, "=-34232[]/");
+    await checkForErrorWithAmountField(page, "0", false);
+    await checkForErrorWithAmountField(page, "", true, true);
+    await checkForErrorWithAmountField(page, "=-34232[]/", false);
   });
 
-  // TODO : token dropdown should show all tokens, even after selecting one
+  test("should throw pikespeak error", async ({ page, instanceAccount }) => {
+    test.setTimeout(60_000);
+    await updateDaoPolicyMembers({ page });
+    await page.goto(`/${instanceAccount}/widget/app?page=payments`);
+    await clickCreatePaymentRequestButton(page);
+    expect(page.getByText("There has been some issue in")).toBeVisible({
+      timeout: 30_000,
+    });
+  });
 
   test("token dropdown should show all tokens, even after selecting one", async ({
     page,
     instanceAccount,
+    daoAccount,
   }) => {
     test.setTimeout(60_000);
+    await mockPikespeakFTTokensResponse({ page, daoAccount });
     await updateDaoPolicyMembers({ page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
+    await clickCreatePaymentRequestButton(page);
     const tokenSelect = await page.getByTestId("tokens-dropdown");
     await tokenSelect.click();
     await tokenSelect.getByText("NEAR").click();
@@ -141,6 +211,7 @@ test.describe("admin connected", function () {
       .getByRole("button", { name: "Submit" });
     expect(await submitBtn.isDisabled()).toBe(true);
   });
+
   // TODO: make sure 'submit' is disabled when incorrect receiver id is mentioned or empty amount or empty proposal name or empty token
 
   test("cancel form should clear existing values", async ({
@@ -149,6 +220,7 @@ test.describe("admin connected", function () {
     daoAccount,
   }) => {
     test.setTimeout(60_000);
+    await mockPikespeakFTTokensResponse({ page, daoAccount });
     await updateDaoPolicyMembers({ page });
     await fillCreateForm(page, daoAccount, instanceAccount);
     const cancelBtn = page
@@ -174,7 +246,9 @@ test.describe("admin connected", function () {
     daoAccount,
   }) => {
     test.setTimeout(60_000);
+    await mockPikespeakFTTokensResponse({ page, daoAccount });
     await updateDaoPolicyMembers({ page });
+    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
     await fillCreateForm(page, daoAccount, instanceAccount);
     const submitBtn = page
       .locator(".offcanvas-body")
@@ -223,6 +297,7 @@ test.describe("admin connected", function () {
         await route.fulfill({ json });
       }
     );
+    await mockPikespeakFTTokensResponse({ page, daoAccount });
     await updateDaoPolicyMembers({ page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
 
@@ -311,6 +386,7 @@ test.describe("admin connected", function () {
   }) => {
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
     await mockInventory({ page, account: daoAccount });
+    await mockPikespeakFTTokensResponse({ page, daoAccount });
     await updateDaoPolicyMembers({ page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
 
@@ -354,6 +430,7 @@ test.describe("admin connected", function () {
       await totalAmountField.pressSequentially("3150");
       await totalAmountField.blur();
     }
+    await page.waitForTimeout(5_000);
     const submitBtn = page.getByRole("button", { name: "Submit" });
     await expect(submitBtn).toBeAttached({ timeout: 10_000 });
     await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
@@ -405,6 +482,7 @@ test.describe("don't ask again", function () {
     test.setTimeout(60_000);
     const contractId = daoAccount;
     let isTransactionCompleted = false;
+    await mockPikespeakFTTokensResponse({ page, daoAccount });
     await updateDaoPolicyMembers({ page });
     await page.route(
       `https://api3.nearblocks.io/v1/account/${daoAccount}/inventory`,
