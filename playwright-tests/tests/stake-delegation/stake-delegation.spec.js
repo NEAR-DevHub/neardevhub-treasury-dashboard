@@ -23,7 +23,7 @@ test.describe("admin connected", function () {
       console.log("no stake delegation page configured for instance");
       return;
     }
-
+    await updateDaoPolicyMembers({ page });
     await page.goto(`/${instanceAccount}/widget/app?page=stake-delegation`);
     await expect(
       await page.locator("div").filter({ hasText: /^Stake Delegation$/ })

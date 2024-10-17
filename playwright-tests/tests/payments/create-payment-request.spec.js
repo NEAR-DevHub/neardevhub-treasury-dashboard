@@ -5,10 +5,11 @@ import {
   getTransactionModalObject,
   mockTransactionSubmitRPCResponses,
 } from "../../util/transaction";
-import { mockRpcRequest } from "../../util/rpcmock";
+import { mockRpcRequest, updateDaoPolicyMembers } from "../../util/rpcmock";
 import { setDontAskAgainCacheValues } from "../../util/cache";
 import { getInstanceConfig } from "../../util/config.js";
 import { mockInventory } from "../../util/inventory.js";
+import os from "os";
 
 async function clickCreatePaymentRequestButton(page) {
   const createPaymentRequestButton = await page.getByRole("button", {
@@ -51,21 +52,95 @@ async function fillCreateForm(page, daoAccount, instanceAccount) {
   await tokenSelect.getByText("NEAR").click();
 }
 
+const isMac = os.platform() === "darwin";
+
+async function checkForErrorWithAmountField(page, value, checkCopyPaste) {
+  const totalAmountField = await page.getByTestId("total-amount");
+  await totalAmountField.focus();
+  // clear the textfield
+  await totalAmountField.press(isMac ? "Meta+A" : "Control+A");
+  await totalAmountField.press("Backspace");
+
+  if (checkCopyPaste) {
+    const copyText = "432rete,./.";
+    await page.evaluate(async (text) => {
+      await navigator.clipboard.writeText(text);
+    }, copyText);
+    if (isMac) {
+      await page.keyboard.down("Meta"); // Command key on macOS
+      await page.keyboard.press("a");
+      await page.keyboard.press("v");
+      await page.keyboard.up("Meta");
+    } else {
+      await page.keyboard.down("Control"); // Control key on Windows/Linux
+      await page.keyboard.press("a");
+      await page.keyboard.press("v");
+      await page.keyboard.up("Control");
+    }
+  } else {
+    await totalAmountField.pressSequentially(value);
+    await totalAmountField.blur();
+  }
+
+  const tokenSelect = await page.getByTestId("tokens-dropdown");
+  await tokenSelect.click();
+  await tokenSelect.getByText("NEAR").click();
+
+  // make sure there is no error
+  const submitBtn = page
+    .locator(".offcanvas-body")
+    .getByRole("button", { name: "Submit" });
+  expect(await submitBtn.isDisabled()).toBe(true);
+}
+
 test.describe("admin connected", function () {
   test.use({
+    contextOptions: {
+      permissions: ["clipboard-read", "clipboard-write"],
+    },
     storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
   });
 
   // TODO : like special characters, string, empty value, large values with commas, paste invalid text, selecting NEAR token should not throw any error
-  // test("different amount values should not throw any error", async ({
-  //   page,
-  //   instanceAccount,
-  //   daoAccount,
-  // }) => {
-  // });
+  test("different amount values should not throw any error", async ({
+    page,
+    instanceAccount,
+    daoAccount,
+  }) => {
+    test.setTimeout(60_000);
+    await updateDaoPolicyMembers({ page });
+    await page.goto(`/${instanceAccount}/widget/app?page=payments`);
+
+    await clickCreatePaymentRequestButton(page);
+    await checkForErrorWithAmountField(page, "1.2342");
+    await checkForErrorWithAmountField(page, "35435435dfdsfsdfsd");
+    await checkForErrorWithAmountField(page, "sdfsfdf");
+    await checkForErrorWithAmountField(page, "0");
+    await checkForErrorWithAmountField(page, "", true);
+    await checkForErrorWithAmountField(page, "=-34232[]/");
+  });
 
   // TODO : token dropdown should show all tokens, even after selecting one
 
+  test("token dropdown should show all tokens, even after selecting one", async ({
+    page,
+    instanceAccount,
+  }) => {
+    test.setTimeout(60_000);
+    await updateDaoPolicyMembers({ page });
+    await page.goto(`/${instanceAccount}/widget/app?page=payments`);
+    const tokenSelect = await page.getByTestId("tokens-dropdown");
+    await tokenSelect.click();
+    await tokenSelect.getByText("NEAR").click();
+    await tokenSelect.click();
+    await tokenSelect.getByText("USDC").click();
+    await tokenSelect.click();
+    await tokenSelect.getByText("USDT").click();
+    const submitBtn = page
+      .locator(".offcanvas-body")
+      .getByRole("button", { name: "Submit" });
+    expect(await submitBtn.isDisabled()).toBe(true);
+  });
   // TODO: make sure 'submit' is disabled when incorrect receiver id is mentioned or empty amount or empty proposal name or empty token
 
   test("cancel form should clear existing values", async ({
@@ -74,6 +149,7 @@ test.describe("admin connected", function () {
     daoAccount,
   }) => {
     test.setTimeout(60_000);
+    await updateDaoPolicyMembers({ page });
     await fillCreateForm(page, daoAccount, instanceAccount);
     const cancelBtn = page
       .locator(".offcanvas-body")
@@ -98,6 +174,7 @@ test.describe("admin connected", function () {
     daoAccount,
   }) => {
     test.setTimeout(60_000);
+    await updateDaoPolicyMembers({ page });
     await fillCreateForm(page, daoAccount, instanceAccount);
     const submitBtn = page
       .locator(".offcanvas-body")
@@ -129,7 +206,6 @@ test.describe("admin connected", function () {
     daoAccount,
   }) => {
     const nearPrice = 4;
-
     await mockInventory({ page, account: daoAccount });
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
     await page.route(
@@ -147,6 +223,7 @@ test.describe("admin connected", function () {
         await route.fulfill({ json });
       }
     );
+    await updateDaoPolicyMembers({ page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
 
     await clickCreatePaymentRequestButton(page);
@@ -234,6 +311,7 @@ test.describe("admin connected", function () {
   }) => {
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
     await mockInventory({ page, account: daoAccount });
+    await updateDaoPolicyMembers({ page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
 
     await clickCreatePaymentRequestButton(page);
@@ -327,6 +405,7 @@ test.describe("don't ask again", function () {
     test.setTimeout(60_000);
     const contractId = daoAccount;
     let isTransactionCompleted = false;
+    await updateDaoPolicyMembers({ page });
     await page.route(
       `https://api3.nearblocks.io/v1/account/${daoAccount}/inventory`,
       async (route, request) => {
