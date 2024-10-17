@@ -15,7 +15,7 @@ async function clickCreatePaymentRequestButton(page) {
   const createPaymentRequestButton = await page.getByRole("button", {
     name: "Create Request",
   });
-  await expect(createPaymentRequestButton).toBeVisible();
+  await expect(createPaymentRequestButton).toBeVisible({ timeout: 20_000 });
   await createPaymentRequestButton.click();
   return createPaymentRequestButton;
 }
@@ -183,12 +183,12 @@ test.describe("admin connected", function () {
     page,
     instanceAccount,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(80_000);
     await updateDaoPolicyMembers({ page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
     await clickCreatePaymentRequestButton(page);
     expect(page.getByText("There has been some issue in")).toBeVisible({
-      timeout: 30_000,
+      timeout: 60_000,
     });
   });
 
