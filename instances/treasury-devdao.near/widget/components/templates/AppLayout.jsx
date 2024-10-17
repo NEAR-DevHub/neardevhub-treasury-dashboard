@@ -19,6 +19,19 @@ const Theme = styled.div`
   flex-direction: column;
   padding-top: calc(-1 * var(--body-top-padding));
   background: var(--theme-bg-color) !important;
+
+  // remove up/down arrow in input of type = number
+  /* For Chrome, Safari, and Edge */
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  /* For Firefox */
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
 `;
 
 const Container = styled.div`
