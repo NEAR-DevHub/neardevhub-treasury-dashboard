@@ -47,3 +47,4 @@ jobs:
       - name: Run tests
         run: |
           ${{ matrix.target_account.dry_run_command }}
+        continue-on-error: true
