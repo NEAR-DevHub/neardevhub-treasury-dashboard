@@ -330,6 +330,37 @@ test.describe("admin connected", function () {
     await expect(firstRow).toContainText(
       expectedTransactionModalObject.proposal.kind.Transfer.receiver_id
     );
+
+    const checkThatFormIsCleared = async () => {
+      await page.getByRole("button", { name: " Create Request" }).click();
+
+      if (instanceConfig.showProposalSelection === true) {
+        const proposalSelect = await page.locator(".dropdown-toggle").first();
+        await expect(proposalSelect).toBeVisible();
+
+        await expect(
+          await proposalSelect.getByText("Select", { exact: true })
+        ).toBeVisible();
+      } else {
+        await expect(await page.getByTestId("proposal-title")).toHaveText("");
+        await expect(await page.getByTestId("proposal-summary")).toHaveText("");
+
+        await expect(
+          await page.getByPlaceholder("treasury.near")
+        ).toBeVisible();
+
+        await expect(await page.getByTestId("total-amount")).toHaveText("");
+      }
+      const submitBtn = page.getByRole("button", { name: "Submit" });
+      await expect(submitBtn).toBeAttached({ timeout: 10_000 });
+      await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
+      await expect(submitBtn).toBeDisabled({ timeout: 10_000 });
+    };
+    await checkThatFormIsCleared();
+
+    await page.reload();
+
+    await checkThatFormIsCleared();
   });
 
   test("create USDC transfer payment request", async ({
