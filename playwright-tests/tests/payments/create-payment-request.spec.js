@@ -53,7 +53,8 @@ async function fillCreateForm(page, daoAccount, instanceAccount) {
 
 test.describe("admin connected", function () {
   test.use({
-    storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
+    storageState:
+      "playwright-tests/storage-states/wallet-connected-admin-with-accesskey.json",
   });
 
   // TODO : like special characters, string, empty value, large values with commas, paste invalid text, selecting NEAR token should not throw any error
@@ -128,6 +129,7 @@ test.describe("admin connected", function () {
     instanceAccount,
     daoAccount,
   }) => {
+    test.setTimeout(60_000);
     const nearPrice = 4;
 
     await mockInventory({ page, account: daoAccount });
@@ -224,6 +226,109 @@ test.describe("admin connected", function () {
 
     await expect(await getTransactionModalObject(page)).toEqual(
       expectedTransactionModalObject
+    );
+
+    let isTransactionCompleted = false;
+    let retryCountAfterComplete = 0;
+    let newProposalId;
+    await mockTransactionSubmitRPCResponses(
+      page,
+      async ({
+        route,
+        request,
+        transaction_completed,
+        last_receiver_id,
+        requestPostData,
+      }) => {
+        isTransactionCompleted = transaction_completed;
+        if (
+          isTransactionCompleted &&
+          requestPostData.params &&
+          requestPostData.params.method_name === "get_last_proposal_id"
+        ) {
+          const response = await route.fetch();
+          const json = await response.json();
+          let result = JSON.parse(
+            new TextDecoder().decode(new Uint8Array(json.result.result))
+          );
+          if (retryCountAfterComplete === 2) {
+            result++;
+            newProposalId = result;
+          } else {
+            retryCountAfterComplete++;
+          }
+          console.log(JSON.stringify(result));
+          json.result.result = Array.from(
+            new TextEncoder().encode(JSON.stringify(result))
+          );
+          await route.fulfill({ response, json });
+        } else if (
+          isTransactionCompleted &&
+          newProposalId &&
+          requestPostData.params &&
+          requestPostData.params.method_name === "get_proposals"
+        ) {
+          const response = await route.fetch();
+          const json = await response.json();
+          let result = JSON.parse(
+            new TextDecoder().decode(new Uint8Array(json.result.result))
+          );
+
+          result.push({
+            id: newProposalId,
+            proposer: "tfdevhub.near",
+            description: expectedTransactionModalObject.proposal.description,
+            kind: {
+              Transfer: {
+                token_id:
+                  expectedTransactionModalObject.proposal.kind.Transfer
+                    .token_id,
+                receiver_id:
+                  expectedTransactionModalObject.proposal.kind.Transfer
+                    .receiver_id,
+                amount:
+                  expectedTransactionModalObject.proposal.kind.Transfer.amount,
+                msg: null,
+              },
+            },
+            status: "InProgress",
+            vote_counts: {},
+            votes: {},
+            submission_time: "1729004234137594481",
+          });
+          console.log(JSON.stringify(result));
+          json.result.result = Array.from(
+            new TextEncoder().encode(JSON.stringify(result))
+          );
+          await route.fulfill({ response, json });
+        } else {
+          await route.fallback();
+        }
+      }
+    );
+
+    await page.getByRole("button", { name: "Confirm" }).click();
+    await expect(await page.locator("div.modal-body code")).toBeAttached({
+      attached: false,
+      timeout: 10_000,
+    });
+    await expect(await page.locator(".spinner-border")).toBeAttached({
+      attached: false,
+      timeout: 10_000,
+    });
+    await expect(await page.locator(".offcanvas-body")).toBeVisible({
+      visible: false,
+    });
+    await expect(
+      await page.getByRole("cell", { name: `${newProposalId}`, exact: true })
+    ).toBeVisible({ timeout: 10_000 });
+    const firstRow = await page
+      .locator(
+        'tr[data-component="treasury-devdao.near/widget/pages.payments.Table"]'
+      )
+      .nth(1);
+    await expect(firstRow).toContainText(
+      expectedTransactionModalObject.proposal.kind.Transfer.receiver_id
     );
   });
 
