@@ -179,7 +179,7 @@ test.describe("admin connected", function () {
     await checkForErrorWithAmountField(page, "=-34232[]/", false);
   });
 
-  test("should throw pikespeak error", async ({ page, instanceAccount }) => {
+  test("should throw pikespeak error when reponse is 403", async ({ page, instanceAccount }) => {
     test.setTimeout(60_000);
     await updateDaoPolicyMembers({ page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
@@ -189,7 +189,7 @@ test.describe("admin connected", function () {
     });
   });
 
-  test("token dropdown should show all tokens, even after selecting one", async ({
+  test("tokens dropdown should show all tokens, after selecting one should allow change", async ({
     page,
     instanceAccount,
     daoAccount,
