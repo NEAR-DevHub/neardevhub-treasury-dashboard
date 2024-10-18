@@ -5,14 +5,8 @@ use web4::types::{Web4Request, Web4Response};
 
 // Define the contract structure
 #[near(contract_state)]
+#[derive(Default)]
 pub struct Contract {}
-
-// Define the default, which automatically initializes the contract
-impl Default for Contract {
-    fn default() -> Self {
-        Self {}
-    }
-}
 
 // Implement the contract structure
 #[near]
