@@ -2,7 +2,7 @@ const { getNearBalances, isBosGateway } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
 const instance = props.instance;
-if (!instance) {
+if (!instance || typeof isBosGateway !== "function") {
   return <></>;
 }
 
