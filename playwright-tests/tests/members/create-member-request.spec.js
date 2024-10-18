@@ -5,7 +5,7 @@ import {
   getTransactionModalObject,
   mockTransactionSubmitRPCResponses,
 } from "../../util/transaction.js";
-import { mockRpcRequest } from "../../util/rpcmock.js";
+import { mockRpcRequest, updateDaoPolicyMembers } from "../../util/rpcmock.js";
 import { getInstanceConfig } from "../../util/config.js";
 import { mockInventory } from "../../util/inventory.js";
 
@@ -19,269 +19,6 @@ async function updateLastProposalId(page) {
     },
     modifyOriginalResultFunction: (originalResult) => {
       originalResult = lastProposalId;
-      return originalResult;
-    },
-  });
-}
-
-async function updateDaoPolicyMembers(page) {
-  await mockRpcRequest({
-    page,
-    filterParams: {
-      method_name: "get_policy",
-    },
-    modifyOriginalResultFunction: (originalResult) => {
-      originalResult = {
-        roles: [
-          {
-            name: "Create Requests",
-            kind: {
-              Group: [
-                "theori.near",
-                "2dada969f3743a4a41cfdb1a6e39581c2844ce8fbe25948700c85c598090b3e1",
-                "freski.near",
-                "megha19.near",
-                "thomasguntenaar.near",
-                "petersalomonsen.near",
-              ],
-            },
-            permissions: [
-              "call:AddProposal",
-              "transfer:AddProposal",
-              "config:Finalize",
-            ],
-            vote_policy: {
-              transfer: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              bounty_done: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              add_bounty: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              policy: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              call: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              upgrade_self: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              config: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              set_vote_token: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              upgrade_remote: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              vote: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              add_member_to_role: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              remove_member_from_role: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-            },
-          },
-          {
-            name: "Manage Members",
-            kind: {
-              Group: [
-                "petersalomonsen.near",
-                "thomasguntenaar.near",
-                "theori.near",
-                "megha19.near",
-              ],
-            },
-            permissions: [
-              "config:*",
-              "policy:*",
-              "add_member_to_role:*",
-              "remove_member_from_role:*",
-            ],
-            vote_policy: {
-              upgrade_remote: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              upgrade_self: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              call: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              bounty_done: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              policy: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              config: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              add_member_to_role: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              set_vote_token: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              vote: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              transfer: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              add_bounty: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              remove_member_from_role: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-            },
-          },
-          {
-            name: "Vote",
-            kind: {
-              Group: [
-                "megha19.near",
-                "petersalomonsen.near",
-                "treasurytestuserledger.near",
-                "tfdevhub.near",
-                "theori.near",
-                "thomasguntenaar.near",
-                "test04.near",
-                "test03.near",
-                "test05.near",
-              ],
-            },
-            permissions: ["*:VoteReject", "*:VoteApprove", "*:VoteRemove"],
-            vote_policy: {
-              transfer: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [6, 100],
-              },
-              config: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [6, 100],
-              },
-              add_bounty: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [6, 100],
-              },
-              set_vote_token: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [6, 100],
-              },
-              upgrade_remote: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [6, 100],
-              },
-              add_member_to_role: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [6, 100],
-              },
-              upgrade_self: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [6, 100],
-              },
-              call: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [6, 100],
-              },
-              policy: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [6, 100],
-              },
-              remove_member_from_role: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [6, 100],
-              },
-              bounty_done: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [6, 100],
-              },
-              vote: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [6, 100],
-              },
-            },
-          },
-        ],
-        default_vote_policy: {
-          weight_kind: "RoleWeight",
-          quorum: "0",
-          threshold: [1, 2],
-        },
-        proposal_bond: "0",
-        proposal_period: "604800000000000",
-        bounty_bond: "100000000000000000000000",
-        bounty_forgiveness_period: "604800000000000",
-      };
       return originalResult;
     },
   });
@@ -310,11 +47,67 @@ test.describe("admin connected", function () {
   }) => {
     test.setTimeout(60_000);
     await mockInventory({ page, account: daoAccount });
+    await updateDaoPolicyMembers({ page });
     await page.goto(`/${instanceAccount}/widget/app?page=settings`);
     await expect(page.getByText("Megha", { exact: true })).toBeVisible();
   });
 
-  // TODO: add the check after form submission
+  test("should disable submit button and show error when incorrect account id is mentioned", async ({
+    page,
+    instanceAccount,
+    daoAccount,
+  }) => {
+    await mockInventory({ page, account: daoAccount });
+    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
+    await page.goto(`/${instanceAccount}/widget/app?page=settings`);
+    await updateDaoPolicyMembers(page);
+    const createMemberRequestButton = page.getByRole("button", {
+      name: "New Member",
+    });
+    await createMemberRequestButton.click();
+    await expect(page.getByRole("heading", { name: "Add Member" })).toBeVisible(
+      { timeout: 10_000 }
+    );
+    const submitBtn = page
+      .locator(".offcanvas-body")
+      .getByRole("button", { name: "Submit" });
+    await expect(submitBtn).toBeAttached({ timeout: 10_000 });
+    // Submit button should be disabled
+    expect(await submitBtn.isDisabled()).toBe(true);
+    // Add member name
+    const accountInput = await page.getByPlaceholder("treasury.near");
+    await accountInput.fill("testingAccount.near");
+    // Submit button should be disabled
+    expect(await submitBtn.isDisabled()).toBe(true);
+    // Add member role
+    const permissionsSelect = await page.locator(".dropdown-toggle").first();
+    await expect(permissionsSelect).toBeVisible();
+    await permissionsSelect.click();
+    await page.locator(".dropdown-item").first().click();
+    // Submit button should be enabled
+    expect(await submitBtn.isEnabled()).toBe(true);
+    // Change member name to incorrect account id example thomasguntenaar.nea without 'r'
+    await accountInput.fill("thomasguntenaar.nea");
+    await page.waitForTimeout(1000);
+    // Submit button should be disabled & 'Please enter valid account ID' error should be visible
+    expect(await submitBtn.isDisabled()).toBe(true);
+    await expect(page.getByText("Please enter valid account ID")).toBeVisible();
+    // Fill valid account id thomasguntenaar.near
+    await accountInput.fill("thomasguntenaar.near");
+    await page.waitForTimeout(1000);
+
+    // Submit button should be enabled
+    expect(await submitBtn.isDisabled()).toBe(false);
+    // Remove any roles
+    const roleBtn = page.getByText("Create Requests", { exact: true });
+    const removeRoleBtn = roleBtn.locator("i").first();
+    await removeRoleBtn.click();
+    await page.waitForTimeout(1000);
+    // Submit button should be disabled
+    expect(await submitBtn.isDisabled()).toBe(true);
+  });
+
+  // TODO: add the check after form submission, the loader should disappear and the list should be visible
   test("should add new member and after submit, show in the member list", async ({
     page,
     instanceAccount,
@@ -324,7 +117,7 @@ test.describe("admin connected", function () {
     await mockInventory({ page, account: daoAccount });
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
     await page.goto(`/${instanceAccount}/widget/app?page=settings`);
-    await updateDaoPolicyMembers(page);
+    await updateDaoPolicyMembers({ page });
     await updateLastProposalId(page);
     const createMemberRequestButton = await page.getByRole("button", {
       name: "New Member",
@@ -635,7 +428,7 @@ test.describe("admin connected", function () {
     test.setTimeout(60_000);
     await mockInventory({ page, account: daoAccount });
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
-    await updateDaoPolicyMembers(page);
+    await updateDaoPolicyMembers({ page });
     await updateLastProposalId(page);
     await page.goto(`/${instanceAccount}/widget/app?page=settings`);
     await page
@@ -928,7 +721,7 @@ test.describe("admin connected", function () {
     test.setTimeout(60_000);
     await mockInventory({ page, account: daoAccount });
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
-    await updateDaoPolicyMembers(page);
+    await updateDaoPolicyMembers({ page });
     await updateLastProposalId(page);
     await page.goto(`/${instanceAccount}/widget/app?page=settings`);
     await page

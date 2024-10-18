@@ -354,6 +354,21 @@ function isAccountValid() {
   );
 }
 
+function isAmountValid() {
+  const maxU128 = Big("340282366920938463463374607431768211455");
+
+  // Check if amount is not too big
+  if (Big(parsedAmount).gt(maxU128)) {
+    return false;
+  }
+
+  // Check if amount is not negative or zero
+  if (Big(parsedAmount).lte(0)) {
+    return false;
+  }
+  return true;
+}
+
 useEffect(() => {
   if (
     tokenId &&
@@ -588,7 +603,8 @@ return (
               !receiver ||
               !selectedProposal?.name ||
               !tokenId ||
-              !isAccountValid(),
+              !isAccountValid() ||
+              !isAmountValid(),
             label: "Submit",
             onClick: onSubmitClick,
             loading: isTxnCreated,
