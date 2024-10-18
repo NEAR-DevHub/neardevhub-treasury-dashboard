@@ -179,7 +179,21 @@ test.describe("admin connected", function () {
     await checkForErrorWithAmountField(page, "=-34232[]/", false);
   });
 
-  test("should throw pikespeak error when reponse is 403", async ({
+  test("should disable submit button on negative amount or numbers", async ({
+    page,
+    instanceAccount,
+    daoAccount,
+  }) => {
+    test.setTimeout(60_000);
+    await mockPikespeakFTTokensResponse({ page, daoAccount });
+    await updateDaoPolicyMembers({ page });
+    await fillCreateForm(page, daoAccount, instanceAccount);
+
+    await checkForErrorWithAmountField(page, "-34232", true);
+    await checkForErrorWithAmountField(page, "1111111111111111", true);
+  });
+
+  test("should throw pikespeak error when response is 403", async ({
     page,
     instanceAccount,
   }) => {
@@ -202,7 +216,7 @@ test.describe("admin connected", function () {
     await updateDaoPolicyMembers({ page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
     await clickCreatePaymentRequestButton(page);
-    const tokenSelect = await page.getByTestId("tokens-dropdown");
+    const tokenSelect = page.getByTestId("tokens-dropdown");
     await tokenSelect.click();
     await tokenSelect.getByText("NEAR").click();
     await tokenSelect.click();
