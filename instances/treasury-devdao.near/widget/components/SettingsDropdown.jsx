@@ -9,13 +9,13 @@ if (!instance) {
 const { showReferenceProposal } = VM.require(`${instance}/widget/config.data`);
 const columnsVisibility = JSON.parse(
   Storage.get(
-    "COLUMNS_VISIBLILITY",
+    "COLUMNS_VISIBILITY",
     `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.SettingsDropdown`
   ) ?? "[]"
 );
 
 function changeColumnsVisibility(value) {
-  Storage.set("COLUMNS_VISIBLILITY", JSON.stringify(value));
+  Storage.set("COLUMNS_VISIBILITY", JSON.stringify(value));
 }
 
 const [settingsOptions, setSettingsOptions] = useState(

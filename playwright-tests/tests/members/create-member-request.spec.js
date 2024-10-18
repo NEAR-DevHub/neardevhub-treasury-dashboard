@@ -30,7 +30,7 @@ async function checkForVoteApproveTxn(page) {
     .nth(1)
     .innerText();
   const dataReceived = JSON.parse(txnLocator);
-  await expect(dataReceived).toEqual({
+  expect(dataReceived).toEqual({
     id: lastProposalId,
     action: "VoteApprove",
   });
@@ -75,12 +75,12 @@ test.describe("admin connected", function () {
     // Submit button should be disabled
     expect(await submitBtn.isDisabled()).toBe(true);
     // Add member name
-    const accountInput = await page.getByPlaceholder("treasury.near");
+    const accountInput = page.getByPlaceholder("treasury.near");
     await accountInput.fill("testingAccount.near");
     // Submit button should be disabled
     expect(await submitBtn.isDisabled()).toBe(true);
     // Add member role
-    const permissionsSelect = await page.locator(".dropdown-toggle").first();
+    const permissionsSelect = page.locator(".dropdown-toggle").first();
     await expect(permissionsSelect).toBeVisible();
     await permissionsSelect.click();
     await page.locator(".dropdown-item").first().click();
@@ -119,7 +119,7 @@ test.describe("admin connected", function () {
     await page.goto(`/${instanceAccount}/widget/app?page=settings`);
     await updateDaoPolicyMembers({ page });
     await updateLastProposalId(page);
-    const createMemberRequestButton = await page.getByRole("button", {
+    const createMemberRequestButton = page.getByRole("button", {
       name: "New Member",
     });
     await expect(createMemberRequestButton).toBeVisible();
@@ -127,9 +127,9 @@ test.describe("admin connected", function () {
     await expect(page.getByRole("heading", { name: "Add Member" })).toBeVisible(
       { timeout: 10_000 }
     );
-    const accountInput = await page.getByPlaceholder("treasury.near");
+    const accountInput = page.getByPlaceholder("treasury.near");
     accountInput.fill("testingAccount.near");
-    const permissionsSelect = await page.locator(".dropdown-toggle").first();
+    const permissionsSelect = page.locator(".dropdown-toggle").first();
     await expect(permissionsSelect).toBeVisible();
     await permissionsSelect.click();
     await page.locator(".dropdown-item").first().click();
@@ -137,7 +137,7 @@ test.describe("admin connected", function () {
     await expect(submitBtn).toBeAttached({ timeout: 10_000 });
     await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
     await submitBtn.click();
-    await expect(await getTransactionModalObject(page)).toEqual({
+    expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
         description: "Change policy",
         kind: {
@@ -447,7 +447,7 @@ test.describe("admin connected", function () {
     await expect(submitBtn).toBeAttached({ timeout: 10_000 });
     await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
     await submitBtn.click();
-    await expect(await getTransactionModalObject(page)).toEqual({
+    expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
         description: "Change policy",
         kind: {
@@ -740,7 +740,7 @@ test.describe("admin connected", function () {
       page.getByRole("heading", { name: "Are you sure?" })
     ).toBeVisible();
     await page.getByRole("button", { name: "Remove" }).click();
-    await expect(await getTransactionModalObject(page)).toEqual({
+    expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
         description: "Remove Member",
         kind: {

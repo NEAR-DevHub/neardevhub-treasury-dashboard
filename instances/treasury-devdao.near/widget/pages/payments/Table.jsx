@@ -18,7 +18,7 @@ const { treasuryDaoID, showKYC, showReferenceProposal } = VM.require(
 const proposals = props.proposals;
 const columnsVisibility = JSON.parse(
   Storage.get(
-    "COLUMNS_VISIBLILITY",
+    "COLUMNS_VISIBILITY",
     `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.SettingsDropdown`
   ) ?? "[]"
 );
