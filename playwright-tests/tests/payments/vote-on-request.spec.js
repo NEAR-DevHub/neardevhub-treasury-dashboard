@@ -2,14 +2,16 @@ import { expect } from "@playwright/test";
 import { test } from "../../util/test.js";
 
 import { mockTransactionSubmitRPCResponses } from "../../util/transaction";
-import { mockRpcRequest } from "../../util/rpcmock";
+import { mockRpcRequest, updateDaoPolicyMembers } from "../../util/rpcmock";
 import { setDontAskAgainCacheValues } from "../../util/cache";
+import { mockPikespeakFTTokensResponse } from "../../util/pikespeak.js";
 
 test.describe("don't ask again", function () {
   test.use({
     storageState:
       "playwright-tests/storage-states/wallet-connected-admin-with-accesskey.json",
   });
+
   test("approve payment request", async ({
     page,
     instanceAccount,
@@ -18,6 +20,8 @@ test.describe("don't ask again", function () {
     test.setTimeout(60_000);
     const contractId = daoAccount;
     let isTransactionCompleted = false;
+    await mockPikespeakFTTokensResponse({ page, daoAccount });
+    await updateDaoPolicyMembers({ page });
     await page.route(
       `https://api3.nearblocks.io/v1/account/${daoAccount}/inventory`,
       async (route, request) => {
@@ -106,7 +110,7 @@ test.describe("don't ask again", function () {
         await route.fallback();
       }
     );
-    const approveButton = await page
+    const approveButton = page
       .getByRole("button", {
         name: "Approve",
       })
@@ -116,7 +120,7 @@ test.describe("don't ask again", function () {
     await page.getByRole("button", { name: "Confirm" }).click();
     await expect(approveButton).toBeDisabled();
 
-    const transaction_toast = await page.getByText(
+    const transaction_toast = page.getByText(
       `Calling contract ${contractId} with method act_proposal`
     );
     await expect(transaction_toast).toBeVisible();
@@ -128,7 +132,7 @@ test.describe("don't ask again", function () {
       .filter({ hasText: "History" })
       .locator("div")
       .click();
-    await expect(await page.getByText("Funded").first()).toBeVisible({
+    await expect(page.getByText("Funded").first()).toBeVisible({
       timeout: 10_000,
     });
     await page.waitForTimeout(1_000);
@@ -143,6 +147,8 @@ test.describe("don't ask again", function () {
     test.setTimeout(60_000);
     const contractId = daoAccount;
     let isTransactionCompleted = false;
+    await mockPikespeakFTTokensResponse({ page, daoAccount });
+    await updateDaoPolicyMembers({ page });
     await page.route(
       `https://api3.nearblocks.io/v1/account/${daoAccount}/inventory`,
       async (route, request) => {
@@ -231,7 +237,7 @@ test.describe("don't ask again", function () {
         await route.fallback();
       }
     );
-    const rejectButton = await page
+    const rejectButton = page
       .getByRole("button", {
         name: "Reject",
       })
@@ -241,7 +247,7 @@ test.describe("don't ask again", function () {
     await page.getByRole("button", { name: "Confirm" }).click();
     await expect(rejectButton).toBeDisabled();
 
-    const transaction_toast = await page.getByText(
+    const transaction_toast = page.getByText(
       `Calling contract ${contractId} with method act_proposal`
     );
     await expect(transaction_toast).toBeVisible();
@@ -253,9 +259,14 @@ test.describe("don't ask again", function () {
       .filter({ hasText: "History" })
       .locator("div")
       .click();
-    await expect(await page.getByText("Rejected").first()).toBeVisible({
+    await expect(page.getByText("Rejected").first()).toBeVisible({
       timeout: 10_000,
     });
     await page.waitForTimeout(1_000);
+  });
+
+  // TODO: add tests for multiple votes (approve and reject)
+  test("multiple votes", async ({ page, instanceAccount, daoAccount }) => {
+    test.skip();
   });
 });
