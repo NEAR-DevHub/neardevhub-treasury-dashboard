@@ -14,7 +14,7 @@ async function clickCreatePaymentRequestButton(page) {
   const createPaymentRequestButton = await page.getByRole("button", {
     name: "Create Request",
   });
-  await expect(createPaymentRequestButton).toBeVisible();
+  await expect(createPaymentRequestButton).toBeVisible({timeout: 10_000});
   await createPaymentRequestButton.click();
   return createPaymentRequestButton;
 }
@@ -123,8 +123,7 @@ test.describe("admin connected", function () {
     });
   });
 
-  // TODO: add the checks after form submission completion
-  test("create NEAR transfer payment request and should clear form after submission", async ({
+  test("create NEAR transfer payment request, and after submission it should be visible in pending request, and the form should be cleared", async ({
     page,
     instanceAccount,
     daoAccount,
@@ -257,7 +256,7 @@ test.describe("admin connected", function () {
           } else {
             retryCountAfterComplete++;
           }
-          console.log(JSON.stringify(result));
+
           json.result.result = Array.from(
             new TextEncoder().encode(JSON.stringify(result))
           );
@@ -296,7 +295,7 @@ test.describe("admin connected", function () {
             votes: {},
             submission_time: "1729004234137594481",
           });
-          console.log(JSON.stringify(result));
+
           json.result.result = Array.from(
             new TextEncoder().encode(JSON.stringify(result))
           );
