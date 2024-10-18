@@ -275,6 +275,8 @@ function getPermissionsText(type) {
 
 function isBosGateway() {
   return (
+    // for tests
+    gatewayOrigin.includes("localhost:8080") ||
     gatewayOrigin.includes("near.social") ||
     gatewayOrigin.includes("dev.near.org")
   );
