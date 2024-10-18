@@ -276,6 +276,101 @@ test.describe("admin connected", function () {
     });
   });
 
+  test("create USDC transfer payment request", async ({
+    page,
+    instanceAccount,
+    daoAccount,
+  }) => {
+    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
+    await mockInventory({ page, account: daoAccount });
+    await mockPikespeakFTTokensResponse({ page, daoAccount });
+    await updateDaoPolicyMembers({ page });
+    await page.goto(`/${instanceAccount}/widget/app?page=payments`);
+
+    await clickCreatePaymentRequestButton(page);
+
+    if (instanceConfig.showProposalSelection === true) {
+      const proposalSelect = await page.locator(".dropdown-toggle").first();
+      await expect(proposalSelect).toBeVisible();
+      await expect(
+        await proposalSelect.getByText("Select", { exact: true })
+      ).toBeVisible();
+
+      await proposalSelect.click();
+
+      await page
+        .getByPlaceholder("Search by id or title")
+        .fill("215 Fellowship");
+      const proposal = await page.getByText(
+        "#215 Fellowship Contributor report by Matias Benary for 2024-09-09 2024-09-29"
+      );
+      await proposal.click();
+      await expect(
+        await page.getByPlaceholder("treasury.near").inputValue()
+      ).toBe("maguila.near");
+      await expect(await page.getByTestId("total-amount").inputValue()).toBe(
+        "3150"
+      );
+    } else {
+      await page.getByTestId("proposal-title").fill("Test proposal title");
+      await page.getByTestId("proposal-summary").fill("Test proposal summary");
+
+      await page
+        .getByPlaceholder("treasury.near")
+        .fill("webassemblymusic.near");
+      const tokenSelect = await page.getByTestId("tokens-dropdown");
+      await tokenSelect.click();
+      await tokenSelect.getByText("USDC").click();
+
+      const totalAmountField = await page.getByTestId("total-amount");
+      await totalAmountField.focus();
+      await totalAmountField.pressSequentially("3150");
+      await totalAmountField.blur();
+    }
+    await page.waitForTimeout(5_000);
+    const submitBtn = page.getByRole("button", { name: "Submit" });
+    await expect(submitBtn).toBeAttached({ timeout: 10_000 });
+    await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
+    await submitBtn.click();
+
+    const expectedTransactionModalObject = instanceConfig.showProposalSelection
+      ? {
+          proposal: {
+            description:
+              '{"title":"Fellowship Contributor report by Matias Benary for  2024-09-09  2024-09-29","summary":"Fellowship Contributor report by Matias Benary for  2024-09-09  2024-09-29","notes":null,"proposalId":215}',
+            kind: {
+              Transfer: {
+                amount: "3150000000",
+                receiver_id: "maguila.near",
+                token_id: "usdt.tether-token.near",
+              },
+            },
+          },
+        }
+      : {
+          proposal: {
+            description: `{"title":"Test proposal title","summary":"Test proposal summary","notes":null}`,
+            kind: {
+              Transfer: {
+                amount: "3150000000",
+                receiver_id: "webassemblymusic.near",
+                token_id:
+                  "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+              },
+            },
+          },
+        };
+    await expect(await getTransactionModalObject(page)).toEqual(
+      expectedTransactionModalObject
+    );
+  });
+});
+
+test.describe("admin with function access keys", function () {
+  test.use({
+    storageState:
+      "playwright-tests/storage-states/wallet-connected-admin-with-accesskey.json",
+  });
   test("create NEAR transfer payment request, and after submission it should be visible in pending request, and the form should be cleared", async ({
     page,
     instanceAccount,
@@ -514,95 +609,6 @@ test.describe("admin connected", function () {
     await page.reload();
 
     await checkThatFormIsCleared();
-  });
-
-  test("create USDC transfer payment request", async ({
-    page,
-    instanceAccount,
-    daoAccount,
-  }) => {
-    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
-    await mockInventory({ page, account: daoAccount });
-    await mockPikespeakFTTokensResponse({ page, daoAccount });
-    await updateDaoPolicyMembers({ page });
-    await page.goto(`/${instanceAccount}/widget/app?page=payments`);
-
-    await clickCreatePaymentRequestButton(page);
-
-    if (instanceConfig.showProposalSelection === true) {
-      const proposalSelect = await page.locator(".dropdown-toggle").first();
-      await expect(proposalSelect).toBeVisible();
-      await expect(
-        await proposalSelect.getByText("Select", { exact: true })
-      ).toBeVisible();
-
-      await proposalSelect.click();
-
-      await page
-        .getByPlaceholder("Search by id or title")
-        .fill("215 Fellowship");
-      const proposal = await page.getByText(
-        "#215 Fellowship Contributor report by Matias Benary for 2024-09-09 2024-09-29"
-      );
-      await proposal.click();
-      await expect(
-        await page.getByPlaceholder("treasury.near").inputValue()
-      ).toBe("maguila.near");
-      await expect(await page.getByTestId("total-amount").inputValue()).toBe(
-        "3150"
-      );
-    } else {
-      await page.getByTestId("proposal-title").fill("Test proposal title");
-      await page.getByTestId("proposal-summary").fill("Test proposal summary");
-
-      await page
-        .getByPlaceholder("treasury.near")
-        .fill("webassemblymusic.near");
-      const tokenSelect = await page.getByTestId("tokens-dropdown");
-      await tokenSelect.click();
-      await tokenSelect.getByText("USDC").click();
-
-      const totalAmountField = await page.getByTestId("total-amount");
-      await totalAmountField.focus();
-      await totalAmountField.pressSequentially("3150");
-      await totalAmountField.blur();
-    }
-    await page.waitForTimeout(5_000);
-    const submitBtn = page.getByRole("button", { name: "Submit" });
-    await expect(submitBtn).toBeAttached({ timeout: 10_000 });
-    await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
-    await submitBtn.click();
-
-    const expectedTransactionModalObject = instanceConfig.showProposalSelection
-      ? {
-          proposal: {
-            description:
-              '{"title":"Fellowship Contributor report by Matias Benary for  2024-09-09  2024-09-29","summary":"Fellowship Contributor report by Matias Benary for  2024-09-09  2024-09-29","notes":null,"proposalId":215}',
-            kind: {
-              Transfer: {
-                amount: "3150000000",
-                receiver_id: "maguila.near",
-                token_id: "usdt.tether-token.near",
-              },
-            },
-          },
-        }
-      : {
-          proposal: {
-            description: `{"title":"Test proposal title","summary":"Test proposal summary","notes":null}`,
-            kind: {
-              Transfer: {
-                amount: "3150000000",
-                receiver_id: "webassemblymusic.near",
-                token_id:
-                  "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
-              },
-            },
-          },
-        };
-    await expect(await getTransactionModalObject(page)).toEqual(
-      expectedTransactionModalObject
-    );
   });
 });
 
