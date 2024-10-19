@@ -1,3 +1,4 @@
+use near_sdk::base64::{engine::general_purpose, Engine as _};
 use near_sdk::serde::Deserialize;
 use serde_json::json;
 
@@ -22,5 +23,10 @@ async fn test_contract_is_operational() -> Result<(), Box<dyn std::error::Error>
         .await?;
     let response = result.json::<Web4Response>().unwrap();
     assert_eq!("text/html; charset=UTF-8", response.content_type);
+
+    let body_string =
+        String::from_utf8(general_purpose::STANDARD.decode(response.body).unwrap()).unwrap();
+    assert!(body_string.contains("near-social-viewer"));
+
     Ok(())
 }

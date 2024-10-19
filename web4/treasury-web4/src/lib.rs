@@ -5,18 +5,13 @@ use web4::types::{Web4Request, Web4Response};
 
 // Define the contract structure
 #[near(contract_state)]
+#[derive(Default)]
 pub struct Contract {}
-
-// Define the default, which automatically initializes the contract
-impl Default for Contract {
-    fn default() -> Self {
-        Self {}
-    }
-}
 
 // Implement the contract structure
 #[near]
 impl Contract {
+    #[allow(unused_variables)]
     pub fn web4_get(&self, request: Web4Request) -> Web4Response {
         Web4Response::Body {
             content_type: "text/html; charset=UTF-8".to_owned(),
