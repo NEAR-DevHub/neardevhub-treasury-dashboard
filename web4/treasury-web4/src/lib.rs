@@ -11,6 +11,7 @@ pub struct Contract {}
 // Implement the contract structure
 #[near]
 impl Contract {
+    #[allow(unused_variables)]
     pub fn web4_get(&self, request: Web4Request) -> Web4Response {
         Web4Response::Body {
             content_type: "text/html; charset=UTF-8".to_owned(),
