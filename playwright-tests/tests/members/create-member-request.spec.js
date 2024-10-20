@@ -76,7 +76,7 @@ test.describe("admin connected", function () {
     expect(await submitBtn.isDisabled()).toBe(true);
     // Add member name
     const accountInput = page.getByPlaceholder("treasury.near");
-    await accountInput.fill("testingAccount.near");
+    await accountInput.fill("testingaccount.near");
     // Submit button should be disabled
     expect(await submitBtn.isDisabled()).toBe(true);
     // Add member role
@@ -127,21 +127,16 @@ test.describe("admin connected", function () {
       { timeout: 10_000 }
     );
     const accountInput = page.getByPlaceholder("treasury.near");
-    accountInput.fill("testingAccount.near");
-    const permissionsSelect = page.locator(".dropdown-toggle").first();
-    await expect(permissionsSelect).toBeVisible();
-    await permissionsSelect.click();
-    while ((await page.locator(".dropdown-item").count()) === 0) {
-      await page.waitForTimeout(500);
-    }
+    accountInput.fill("testingaccount.near");
+
+    await page.locator(".dropdown-toggle").first().click();
+
     await page.locator(".dropdown-item").first().click();
-    while (!(await page.getByRole("button", { name: "Submit" }).isVisible())) {
-      await page.waitForTimeout(500);
-    }
-    const submitBtn = await page.getByRole("button", { name: "Submit" });
-    await expect(submitBtn).toBeVisible({ timeout: 10_000 });
-    await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
-    await submitBtn.click();
+
+    await page
+      .getByRole("button", { name: "Submit" })
+      .scrollIntoViewIfNeeded({ timeout: 10_000 });
+    await page.getByRole("button", { name: "Submit" }).click();
     expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
         description: "Change policy",
@@ -159,7 +154,7 @@ test.describe("admin connected", function () {
                       "megha19.near",
                       "thomasguntenaar.near",
                       "petersalomonsen.near",
-                      "testingAccount.near",
+                      "testingaccount.near",
                     ],
                   },
                   permissions: [
