@@ -3,6 +3,7 @@ import { test } from "../../util/test.js";
 import { getInstanceConfig } from "../../util/config.js";
 import { getTransactionModalObject } from "../../util/transaction";
 import { utils } from "near-api-js";
+import { updateDaoPolicyMembers } from "../../util/rpcmock.js";
 
 test.describe("admin connected", function () {
   test.use({
