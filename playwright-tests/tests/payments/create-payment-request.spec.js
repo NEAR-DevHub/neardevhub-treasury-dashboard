@@ -202,11 +202,11 @@ test.describe("admin connected", function () {
     await fillCreateForm(page, daoAccount, instanceAccount);
     const cancelBtn = page
       .locator(".offcanvas-body")
-      .getByRole("button", { name: "Cancel" });
+      .locator("button.btn-outline", { hasText: "Cancel" });
     await expect(cancelBtn).toBeAttached({ timeout: 10_000 });
 
     cancelBtn.click();
-    await page.getByRole("button", { name: "Yes" }).click();
+    await page.locator("button", { hasText: "Yes" }).click();
 
     await clickCreatePaymentRequestButton(page);
 
