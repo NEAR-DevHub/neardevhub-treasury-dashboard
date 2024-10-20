@@ -111,7 +111,7 @@ test.describe("admin connected", function () {
   }) => {
     test.setTimeout(60_000);
     await mockInventory({ page, account: daoAccount });
-    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
+
     await page.goto(`/${instanceAccount}/widget/app?page=settings`);
     await updateDaoPolicyMembers({ page });
     await updateLastProposalId(page);
@@ -124,15 +124,18 @@ test.describe("admin connected", function () {
       { timeout: 10_000 }
     );
     const accountInput = page.getByPlaceholder("treasury.near");
-    accountInput.fill("testingaccount.near");
+    await accountInput.focus();
+    accountInput.pressSequentially("testingaccount.near");
+    await accountInput.blur();
 
-    await page.locator(".dropdown-toggle").first().click();
-    await page.locator(".dropdown-item").first().click();
-
+    await page.locator(".dropdown-toggle", { hasText: "Select" }).click();
     await page
-      .getByRole("button", { name: "Submit" })
-      .scrollIntoViewIfNeeded({ timeout: 10_000 });
-    await page.getByRole("button", { name: "Submit" }).click();
+      .locator(".dropdown-item", { hasText: "Create Requests" })
+      .click();
+
+    const submitBtn = await page.locator("button", { hasText: "Submit" });
+    await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
+    await submitBtn.click();
 
     expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
@@ -400,7 +403,6 @@ test.describe("admin connected", function () {
       },
     });
     await checkForVoteApproveTxn(page);
-    await page.getByRole("button", { name: "Confirm" }).click();
   });
 
   test("should update existing member permissions", async ({
