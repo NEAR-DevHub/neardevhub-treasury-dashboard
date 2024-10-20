@@ -1,10 +1,7 @@
 import { expect } from "@playwright/test";
 import { test } from "../../util/test.js";
 
-import {
-  getTransactionModalObject,
-  mockTransactionSubmitRPCResponses,
-} from "../../util/transaction.js";
+import { getTransactionModalObject } from "../../util/transaction.js";
 import { mockRpcRequest, updateDaoPolicyMembers } from "../../util/rpcmock.js";
 import { getInstanceConfig } from "../../util/config.js";
 import { mockInventory } from "../../util/inventory.js";
@@ -130,13 +127,13 @@ test.describe("admin connected", function () {
     accountInput.fill("testingaccount.near");
 
     await page.locator(".dropdown-toggle").first().click();
-
     await page.locator(".dropdown-item").first().click();
 
     await page
       .getByRole("button", { name: "Submit" })
       .scrollIntoViewIfNeeded({ timeout: 10_000 });
     await page.getByRole("button", { name: "Submit" }).click();
+
     expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
         description: "Change policy",
