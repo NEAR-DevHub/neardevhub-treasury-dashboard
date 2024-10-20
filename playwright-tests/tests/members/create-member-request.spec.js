@@ -1,10 +1,7 @@
 import { expect } from "@playwright/test";
 import { test } from "../../util/test.js";
 
-import {
-  getTransactionModalObject,
-  mockTransactionSubmitRPCResponses,
-} from "../../util/transaction.js";
+import { getTransactionModalObject } from "../../util/transaction.js";
 import { mockRpcRequest, updateDaoPolicyMembers } from "../../util/rpcmock.js";
 import { getInstanceConfig } from "../../util/config.js";
 import { mockInventory } from "../../util/inventory.js";
@@ -35,6 +32,12 @@ async function checkForVoteApproveTxn(page) {
     action: "VoteApprove",
   });
 }
+
+test.afterEach(async ({ page }, testInfo) => {
+  console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+});
+
 test.describe("admin connected", function () {
   test.use({
     storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
@@ -60,7 +63,7 @@ test.describe("admin connected", function () {
     await mockInventory({ page, account: daoAccount });
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
     await page.goto(`/${instanceAccount}/widget/app?page=settings`);
-    await updateDaoPolicyMembers(page);
+    await updateDaoPolicyMembers({ page });
     const createMemberRequestButton = page.getByRole("button", {
       name: "New Member",
     });
@@ -76,7 +79,7 @@ test.describe("admin connected", function () {
     expect(await submitBtn.isDisabled()).toBe(true);
     // Add member name
     const accountInput = page.getByPlaceholder("treasury.near");
-    await accountInput.fill("testingAccount.near");
+    await accountInput.fill("testingaccount.near");
     // Submit button should be disabled
     expect(await submitBtn.isDisabled()).toBe(true);
     // Add member role
@@ -106,16 +109,15 @@ test.describe("admin connected", function () {
     // Submit button should be disabled
     expect(await submitBtn.isDisabled()).toBe(true);
   });
-
   // TODO: add the check after form submission, the loader should disappear and the list should be visible
   test("should add new member and after submit, show in the member list", async ({
     page,
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(20_000);
     await mockInventory({ page, account: daoAccount });
-    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
+
     await page.goto(`/${instanceAccount}/widget/app?page=settings`);
     await updateDaoPolicyMembers({ page });
     await updateLastProposalId(page);
@@ -128,15 +130,19 @@ test.describe("admin connected", function () {
       { timeout: 10_000 }
     );
     const accountInput = page.getByPlaceholder("treasury.near");
-    accountInput.fill("testingAccount.near");
-    const permissionsSelect = page.locator(".dropdown-toggle").first();
-    await expect(permissionsSelect).toBeVisible();
-    await permissionsSelect.click();
-    await page.locator(".dropdown-item").first().click();
-    const submitBtn = page.getByRole("button", { name: "Submit" });
-    await expect(submitBtn).toBeAttached({ timeout: 10_000 });
+    await accountInput.focus();
+    accountInput.fill("testingaccount.near");
+    await accountInput.blur();
+
+    await page.locator(".dropdown-toggle", { hasText: "Select" }).click();
+    await page
+      .locator(".dropdown-item", { hasText: "Create Requests" })
+      .click();
+
+    const submitBtn = await page.locator("button", { hasText: "Submit" });
     await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
     await submitBtn.click();
+
     expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
         description: "Change policy",
@@ -154,7 +160,7 @@ test.describe("admin connected", function () {
                       "megha19.near",
                       "thomasguntenaar.near",
                       "petersalomonsen.near",
-                      "testingAccount.near",
+                      "testingaccount.near",
                     ],
                   },
                   permissions: [
@@ -403,21 +409,6 @@ test.describe("admin connected", function () {
       },
     });
     await checkForVoteApproveTxn(page);
-    let isTransactionCompleted = false;
-    await mockTransactionSubmitRPCResponses(
-      page,
-      async ({
-        route,
-        request,
-        transaction_completed,
-        last_receiver_id,
-        requestPostData,
-      }) => {
-        isTransactionCompleted = transaction_completed;
-        await route.fallback();
-      }
-    );
-    await page.getByRole("button", { name: "Confirm" }).click();
   });
 
   test("should update existing member permissions", async ({

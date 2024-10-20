@@ -6,6 +6,11 @@ import { mockRpcRequest, updateDaoPolicyMembers } from "../../util/rpcmock";
 import { setDontAskAgainCacheValues } from "../../util/cache";
 import { mockPikespeakFTTokensResponse } from "../../util/pikespeak.js";
 
+test.afterEach(async ({ page }, testInfo) => {
+  console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+});
+
 test.describe("don't ask again", function () {
   test.use({
     storageState:
