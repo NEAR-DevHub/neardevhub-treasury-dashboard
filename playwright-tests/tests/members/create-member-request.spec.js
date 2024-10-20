@@ -109,7 +109,7 @@ test.describe("admin connected", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(20_000);
     await mockInventory({ page, account: daoAccount });
 
     await page.goto(`/${instanceAccount}/widget/app?page=settings`);
@@ -125,7 +125,7 @@ test.describe("admin connected", function () {
     );
     const accountInput = page.getByPlaceholder("treasury.near");
     await accountInput.focus();
-    accountInput.pressSequentially("testingaccount.near");
+    accountInput.fill("testingaccount.near");
     await accountInput.blur();
 
     await page.locator(".dropdown-toggle", { hasText: "Select" }).click();
