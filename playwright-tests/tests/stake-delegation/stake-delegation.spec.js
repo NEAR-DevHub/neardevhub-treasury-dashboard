@@ -36,6 +36,7 @@ test.describe("admin connected", function () {
     ).toBeVisible();
     const createRequestButton = await page.getByText("Create Request");
     await createRequestButton.click();
+    await page.waitForTimeout(1000);
     const firstStakingPoolSelect = await page
       .locator("button", { hasText: "select" })
       .first();
