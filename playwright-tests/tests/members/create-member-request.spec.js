@@ -60,7 +60,7 @@ test.describe("admin connected", function () {
     await mockInventory({ page, account: daoAccount });
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
     await page.goto(`/${instanceAccount}/widget/app?page=settings`);
-    await updateDaoPolicyMembers(page);
+    await updateDaoPolicyMembers({ page });
     const createMemberRequestButton = page.getByRole("button", {
       name: "New Member",
     });
@@ -106,7 +106,6 @@ test.describe("admin connected", function () {
     // Submit button should be disabled
     expect(await submitBtn.isDisabled()).toBe(true);
   });
-
   // TODO: add the check after form submission, the loader should disappear and the list should be visible
   test("should add new member and after submit, show in the member list", async ({
     page,
@@ -132,9 +131,15 @@ test.describe("admin connected", function () {
     const permissionsSelect = page.locator(".dropdown-toggle").first();
     await expect(permissionsSelect).toBeVisible();
     await permissionsSelect.click();
+    while ((await page.locator(".dropdown-item").count()) === 0) {
+      await page.waitForTimeout(500);
+    }
     await page.locator(".dropdown-item").first().click();
-    const submitBtn = page.getByRole("button", { name: "Submit" });
-    await expect(submitBtn).toBeAttached({ timeout: 10_000 });
+    while (!(await page.getByRole("button", { name: "Submit" }).isVisible())) {
+      await page.waitForTimeout(500);
+    }
+    const submitBtn = await page.getByRole("button", { name: "Submit" });
+    await expect(submitBtn).toBeVisible({ timeout: 10_000 });
     await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
     await submitBtn.click();
     expect(await getTransactionModalObject(page)).toEqual({
@@ -403,20 +408,6 @@ test.describe("admin connected", function () {
       },
     });
     await checkForVoteApproveTxn(page);
-    let isTransactionCompleted = false;
-    await mockTransactionSubmitRPCResponses(
-      page,
-      async ({
-        route,
-        request,
-        transaction_completed,
-        last_receiver_id,
-        requestPostData,
-      }) => {
-        isTransactionCompleted = transaction_completed;
-        await route.fallback();
-      }
-    );
     await page.getByRole("button", { name: "Confirm" }).click();
   });
 
