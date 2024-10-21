@@ -18,11 +18,16 @@ function getApproversAndThreshold(treasuryDaoID, kind) {
 
   let approversGroup = [];
   let ratios = [];
+  let requiredVotes = null;
   groupWithPermission.map((i) => {
     approversGroup = approversGroup.concat(i.kind.Group ?? []);
     if (i.vote_policy[kind].weight_kind === "RoleWeight") {
-      ratios = ratios.concat(i.vote_policy[kind].threshold);
-      ratios = ratios.concat(i.vote_policy[kind].threshold);
+      if (Array.isArray(i.vote_policy[kind].threshold)) {
+        ratios = ratios.concat(i.vote_policy[kind].threshold);
+        ratios = ratios.concat(i.vote_policy[kind].threshold);
+      } else {
+        requiredVotes = parseFloat(i.vote_policy[kind].threshold);
+      }
     }
   });
 
@@ -39,14 +44,14 @@ function getApproversAndThreshold(treasuryDaoID, kind) {
         denominator += value;
       }
     });
-  } else {
-    numerator = 1;
-    denominator = 2;
   }
+  const approverAccounts = Array.from(new Set(approversGroup));
 
   return {
-    approverAccounts: Array.from(new Set(approversGroup)),
-    threshold: numerator / denominator,
+    approverAccounts,
+    requiredVotes:
+      requiredVotes ||
+      Math.floor((numerator / denominator) * approverAccounts.length) + 1,
   };
 }
 

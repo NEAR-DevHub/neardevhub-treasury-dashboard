@@ -176,11 +176,7 @@ function isVisible(column) {
     : "display-none";
 }
 
-const requiredVotes =
-  Math.floor(
-    functionCallApproversGroup?.threshold *
-      functionCallApproversGroup?.approverAccounts.length
-  ) + 1;
+const requiredVotes = functionCallApproversGroup.requiredVotes;
 
 const hideApproversCol = isPendingRequests && requiredVotes === 1;
 
