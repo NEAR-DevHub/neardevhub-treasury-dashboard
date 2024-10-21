@@ -45,13 +45,18 @@ export async function mockRpcRequest({
   });
 }
 
-export async function updateDaoPolicyMembers({ page }) {
+export async function updateDaoPolicyMembers({ page, isMultiVote = false }) {
   await mockRpcRequest({
     page,
     filterParams: {
       method_name: "get_policy",
     },
     modifyOriginalResultFunction: (originalResult) => {
+      const votePolicy = {
+        weight_kind: "RoleWeight",
+        quorum: "0",
+        threshold: isMultiVote ? [90, 100] : [0, 100],
+      };
       originalResult = {
         roles: [
           {
@@ -72,66 +77,18 @@ export async function updateDaoPolicyMembers({ page }) {
               "config:Finalize",
             ],
             vote_policy: {
-              transfer: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              bounty_done: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              add_bounty: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              policy: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              call: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              upgrade_self: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              config: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              set_vote_token: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              upgrade_remote: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              vote: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              add_member_to_role: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              remove_member_from_role: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
+              transfer: votePolicy,
+              bounty_done: votePolicy,
+              add_bounty: votePolicy,
+              policy: votePolicy,
+              call: votePolicy,
+              upgrade_self: votePolicy,
+              config: votePolicy,
+              set_vote_token: votePolicy,
+              upgrade_remote: votePolicy,
+              vote: votePolicy,
+              add_member_to_role: votePolicy,
+              remove_member_from_role: votePolicy,
             },
           },
           {
@@ -151,66 +108,18 @@ export async function updateDaoPolicyMembers({ page }) {
               "remove_member_from_role:*",
             ],
             vote_policy: {
-              upgrade_remote: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              upgrade_self: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              call: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              bounty_done: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              policy: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              config: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              add_member_to_role: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              set_vote_token: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              vote: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              transfer: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              add_bounty: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
-              remove_member_from_role: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [5, 100],
-              },
+              upgrade_remote: votePolicy,
+              upgrade_self: votePolicy,
+              call: votePolicy,
+              bounty_done: votePolicy,
+              policy: votePolicy,
+              config: votePolicy,
+              add_member_to_role: votePolicy,
+              set_vote_token: votePolicy,
+              vote: votePolicy,
+              transfer: votePolicy,
+              add_bounty: votePolicy,
+              remove_member_from_role: votePolicy,
             },
           },
           {
@@ -230,66 +139,18 @@ export async function updateDaoPolicyMembers({ page }) {
             },
             permissions: ["*:VoteReject", "*:VoteApprove", "*:VoteRemove"],
             vote_policy: {
-              transfer: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [6, 100],
-              },
-              config: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [6, 100],
-              },
-              add_bounty: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [6, 100],
-              },
-              set_vote_token: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [6, 100],
-              },
-              upgrade_remote: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [6, 100],
-              },
-              add_member_to_role: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [6, 100],
-              },
-              upgrade_self: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [6, 100],
-              },
-              call: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [6, 100],
-              },
-              policy: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [6, 100],
-              },
-              remove_member_from_role: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [6, 100],
-              },
-              bounty_done: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [6, 100],
-              },
-              vote: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [6, 100],
-              },
+              transfer: votePolicy,
+              config: votePolicy,
+              add_bounty: votePolicy,
+              set_vote_token: votePolicy,
+              upgrade_remote: votePolicy,
+              add_member_to_role: votePolicy,
+              upgrade_self: votePolicy,
+              call: votePolicy,
+              policy: votePolicy,
+              remove_member_from_role: votePolicy,
+              bounty_done: votePolicy,
+              vote: votePolicy,
             },
           },
         ],

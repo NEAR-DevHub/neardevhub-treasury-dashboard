@@ -10,8 +10,7 @@ const proposalId = props.proposalId;
 const accountId = context.accountId;
 const tokensBalance = props.tokensBalance ?? [];
 const requiredVotes = props.requiredVotes;
-const showApproverToast = props.showApproverToast ?? (() => {});
-const showRejectToast = props.showRejectToast ?? (() => {});
+const checkProposalStatus = props.checkProposalStatus;
 const currentAmount = props.currentAmount ?? "0";
 const currentContract = props.currentContract ?? "";
 const setVoteProposalId = props.setVoteProposalId ?? (() => {});
@@ -79,15 +78,9 @@ useEffect(() => {
   if (isTxnCreated) {
     const checkForVoteOnProposal = () => {
       getProposalData().then((proposal) => {
+        console.log("heree", proposal);
         if (JSON.stringify(proposal.votes) !== JSON.stringify(votes)) {
-          const { isApproved, isRejected } = getProposalStatus(proposal.votes);
-          setVoteProposalId(proposalId);
-          if (isApproved) {
-            showApproverToast();
-          }
-          if (isRejected) {
-            showRejectToast();
-          }
+          checkProposalStatus();
           refreshData();
           setTxnCreated(false);
         } else {

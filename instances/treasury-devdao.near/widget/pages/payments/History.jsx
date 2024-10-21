@@ -102,6 +102,7 @@ return (
             currentPage: currentPage,
             rowsPerPage: rowsPerPage,
             onRowsChange: (v) => {
+              setIsPrevCalled(false);
               setOffset(null);
               setPage(0);
               setRowsPerPage(parseInt(v));
