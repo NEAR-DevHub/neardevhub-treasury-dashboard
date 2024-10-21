@@ -78,7 +78,6 @@ useEffect(() => {
   if (isTxnCreated) {
     const checkForVoteOnProposal = () => {
       getProposalData().then((proposal) => {
-        console.log("heree", proposal);
         if (JSON.stringify(proposal.votes) !== JSON.stringify(votes)) {
           checkProposalStatus();
           refreshData();
