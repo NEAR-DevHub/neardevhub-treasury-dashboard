@@ -11,7 +11,7 @@ const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 
 const [rowsPerPage, setRowsPerPage] = useState(10);
 const [currentPage, setPage] = useState(0);
-
+const [offset, setOffset] = useState(null);
 const [proposals, setProposals] = useState(null);
 const [totalLength, setTotalLength] = useState(null);
 const [loading, setLoading] = useState(false);
@@ -26,12 +26,11 @@ const refreshVoteTableData = Storage.get(
   `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.VoteActions`
 );
 
-useEffect(() => {
+const fetchProposals = useCallback(() => {
   setLoading(true);
   Near.asyncView(treasuryDaoID, "get_last_proposal_id").then((i) => {
     if (typeof getFilteredProposalsByStatusAndKind == "function") {
       const lastProposalId = i;
-      const offset = currentPage === 0 ? i : proposals[proposals.length - 1].id;
       getFilteredProposalsByStatusAndKind({
         treasuryDaoID,
         resPerPage: rowsPerPage,
@@ -42,6 +41,7 @@ useEffect(() => {
         lastProposalId: lastProposalId,
         currentPage,
       }).then((r) => {
+        setOffset(r.filteredProposals[r.filteredProposals.length - 1].id);
         if (currentPage === 0 && !totalLength) {
           setTotalLength(r.totalLength);
         }
@@ -50,7 +50,21 @@ useEffect(() => {
       });
     }
   });
-}, [currentPage, rowsPerPage, refreshTableData, refreshVoteTableData]);
+}, [rowsPerPage, isPrevPageCalled, currentPage]);
+
+useEffect(() => {
+  fetchProposals();
+}, [currentPage, rowsPerPage]);
+
+useEffect(() => {
+  // need to clear all pagination related filters to fetch correct result
+  setIsPrevCalled(false);
+  setOffset(null);
+  setPage(0);
+  setTimeout(() => {
+    fetchProposals();
+  }, 500);
+}, [refreshTableData, refreshVoteTableData]);
 
 const policy = Near.view(treasuryDaoID, "get_policy", {});
 
@@ -92,6 +106,7 @@ return (
             currentPage: currentPage,
             rowsPerPage: rowsPerPage,
             onRowsChange: (v) => {
+              setIsPrevCalled(false);
               setOffset(null);
               setPage(0);
               setRowsPerPage(parseInt(v));

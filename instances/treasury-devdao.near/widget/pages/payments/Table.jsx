@@ -121,6 +121,21 @@ const ToastContainer = styled.div`
   }
 `;
 
+function checkProposalStatus(proposalId) {
+  Near.asyncView(treasuryDaoID, "get_proposal", {
+    id: proposalId,
+  }).then((result) => {
+    setToastStatus(result.status);
+    setVoteProposalId(proposalId);
+  });
+}
+
+useEffect(() => {
+  if (typeof highlightProposalId === "number") {
+    checkProposalStatus(highlightProposalId);
+  }
+}, [highlightProposalId]);
+
 useEffect(() => {
   if (props.transactionHashes) {
     asyncFetch("${REPL_RPC_URL}", {
@@ -147,16 +162,7 @@ useEffect(() => {
           const decodedArgs = JSON.parse(atob(args ?? "") ?? "{}");
           if (decodedArgs.id) {
             const proposalId = decodedArgs.id;
-            Near.asyncView(treasuryDaoID, "get_proposal", {
-              id: proposalId,
-            }).then((result) => {
-              if (result.status !== "InProgress") {
-                setToastStatus(
-                  result.status === "Approved" ? "APPROVE" : "REJECT"
-                );
-                setVoteProposalId(proposalId);
-              }
-            });
+            checkProposalStatus(proposalId);
           }
         }
       }
@@ -189,8 +195,50 @@ const userFTTokens = fetch(
 
 const nearBalances = getNearBalances(treasuryDaoID);
 
+const ToastStatusContent = () => {
+  let content = "";
+  switch (showToastStatus) {
+    case "InProgress":
+      content = "Your vote is counted, the payment request is highlighted.";
+      break;
+    case "Approved":
+      content = "The payment request has been successfully executed.";
+      break;
+    case "Rejected":
+      content = "The payment has been rejected.";
+      break;
+    default:
+      content = `The payment has ${showToastStatus}.`;
+      break;
+  }
+  return (
+    <div className="toast-body">
+      {content}
+      {showToastStatus !== "InProgress" && (
+        <a
+          href={href({
+            widgetSrc: `${instance}/widget/app`,
+            params: {
+              page: "payments",
+              selectedTab: "History",
+              highlightProposalId:
+                typeof highlightProposalId === "number"
+                  ? highlightProposalId
+                  : voteProposalId,
+            },
+          })}
+        >
+          View in History
+        </a>
+      )}
+    </div>
+  );
+};
+
 const VoteSuccessToast = () => {
-  return showToastStatus && typeof voteProposalId === "number" ? (
+  return showToastStatus &&
+    (typeof voteProposalId === "number" ||
+      typeof highlightProposalId === "number") ? (
     <ToastContainer className="toast-container position-fixed bottom-0 end-0 p-3">
       <div className={`toast ${showToastStatus ? "show" : ""}`}>
         <div className="toast-header px-2">
@@ -200,23 +248,7 @@ const VoteSuccessToast = () => {
             onClick={() => showToastStatus(null)}
           ></i>
         </div>
-        <div className="toast-body">
-          {showToastStatus === "APPROVE"
-            ? "The payment request has been successfully executed."
-            : "The payment has been rejected."}
-          <a
-            href={href({
-              widgetSrc: `${instance}/widget/app`,
-              params: {
-                page: "payments",
-                selectedTab: "History",
-                highlightProposalId: voteProposalId,
-              },
-            })}
-          >
-            View in History
-          </a>
-        </div>
+        <ToastStatusContent />
       </div>
     </ToastContainer>
   ) : null;
@@ -276,7 +308,7 @@ const ProposalsComponent = () => {
         const args = item.kind.Transfer;
 
         return (
-          <tr className={highlightProposalId === item.id ? "bg-highlight" : ""}>
+          <tr className={voteProposalId === item.id ? "bg-highlight" : ""}>
             <td className="bold">{item.id}</td>
             <td className={isVisible("Created Date")}>
               <Widget
@@ -463,9 +495,7 @@ const ProposalsComponent = () => {
                     currentContract:
                       args.token_id === "" ? "near" : args.token_id,
                     requiredVotes,
-                    showApproverToast: () => setToastStatus("APPROVE"),
-                    showRejectToast: () => setToastStatus("REJECT"),
-                    setVoteProposalId: setVoteProposalId,
+                    checkProposalStatus: () => checkProposalStatus(item.id),
                   }}
                 />
               </td>
