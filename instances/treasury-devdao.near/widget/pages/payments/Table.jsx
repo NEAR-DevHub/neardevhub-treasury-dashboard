@@ -133,7 +133,7 @@ function checkProposalStatus(proposalId) {
 }
 
 useEffect(() => {
-  if (typeof highlightProposalId === "number") {
+  if (typeof highlightProposalId === "number" && isPendingRequests) {
     checkProposalStatus(highlightProposalId);
   }
 }, [highlightProposalId]);
@@ -310,7 +310,13 @@ const ProposalsComponent = () => {
         const args = item.kind.Transfer;
 
         return (
-          <tr className={voteProposalId === item.id ? "bg-highlight" : ""}>
+          <tr
+            className={
+              voteProposalId === item.id || highlightProposalId === item.id
+                ? "bg-highlight"
+                : ""
+            }
+          >
             <td className="bold">{item.id}</td>
             <td className={isVisible("Created Date")}>
               <Widget
