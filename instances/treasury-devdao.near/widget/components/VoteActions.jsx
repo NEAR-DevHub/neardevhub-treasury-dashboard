@@ -10,8 +10,7 @@ const proposalId = props.proposalId;
 const accountId = context.accountId;
 const tokensBalance = props.tokensBalance ?? [];
 const requiredVotes = props.requiredVotes;
-const showApproverToast = props.showApproverToast ?? (() => {});
-const showRejectToast = props.showRejectToast ?? (() => {});
+const checkProposalStatus = props.checkProposalStatus;
 const currentAmount = props.currentAmount ?? "0";
 const currentContract = props.currentContract ?? "";
 const setVoteProposalId = props.setVoteProposalId ?? (() => {});
@@ -55,10 +54,6 @@ function actProposal() {
   });
 }
 
-function refreshData() {
-  Storage.set("REFRESH__VOTE_ACTION_TABLE_DATA", Math.random());
-}
-
 function getProposalData() {
   return Near.asyncView(treasuryDaoID, "get_proposal", { id: proposalId }).then(
     (result) => result
@@ -80,15 +75,7 @@ useEffect(() => {
     const checkForVoteOnProposal = () => {
       getProposalData().then((proposal) => {
         if (JSON.stringify(proposal.votes) !== JSON.stringify(votes)) {
-          const { isApproved, isRejected } = getProposalStatus(proposal.votes);
-          setVoteProposalId(proposalId);
-          if (isApproved) {
-            showApproverToast();
-          }
-          if (isRejected) {
-            showRejectToast();
-          }
-          refreshData();
+          checkProposalStatus();
           setTxnCreated(false);
         } else {
           setTimeout(() => checkForVoteOnProposal(), 1000);

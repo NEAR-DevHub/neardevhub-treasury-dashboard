@@ -50,8 +50,9 @@ function getApproversAndThreshold(treasuryDaoID, kind) {
   return {
     approverAccounts,
     requiredVotes:
-      requiredVotes ||
-      Math.floor((numerator / denominator) * approverAccounts.length) + 1,
+      typeof requiredVotes === "number"
+        ? requiredVotes
+        : Math.floor((numerator / denominator) * approverAccounts.length) + 1,
   };
 }
 
