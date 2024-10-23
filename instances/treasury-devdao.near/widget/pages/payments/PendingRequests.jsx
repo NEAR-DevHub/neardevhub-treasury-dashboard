@@ -21,10 +21,6 @@ const refreshTableData = Storage.get(
   "REFRESH_TABLE_DATA",
   `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.CreatePaymentRequest`
 );
-const refreshVoteTableData = Storage.get(
-  "REFRESH__VOTE_ACTION_TABLE_DATA",
-  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.VoteActions`
-);
 
 const fetchProposals = useCallback(() => {
   setLoading(true);
@@ -61,10 +57,8 @@ useEffect(() => {
   setIsPrevCalled(false);
   setOffset(null);
   setPage(0);
-  setTimeout(() => {
-    fetchProposals();
-  }, 500);
-}, [refreshTableData, refreshVoteTableData]);
+  fetchProposals();
+}, [refreshTableData]);
 
 const policy = Near.view(treasuryDaoID, "get_policy", {});
 
@@ -83,6 +77,7 @@ return (
         transferApproversGroup,
         loading: loading,
         policy,
+        refreshTableData: fetchProposals,
         ...props,
       }}
     />

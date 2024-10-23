@@ -54,10 +54,6 @@ function actProposal() {
   });
 }
 
-function refreshData() {
-  Storage.set("REFRESH__VOTE_ACTION_TABLE_DATA", Math.random());
-}
-
 function getProposalData() {
   return Near.asyncView(treasuryDaoID, "get_proposal", { id: proposalId }).then(
     (result) => result
@@ -80,7 +76,6 @@ useEffect(() => {
       getProposalData().then((proposal) => {
         if (JSON.stringify(proposal.votes) !== JSON.stringify(votes)) {
           checkProposalStatus();
-          refreshData();
           setTxnCreated(false);
         } else {
           setTimeout(() => checkForVoteOnProposal(), 1000);

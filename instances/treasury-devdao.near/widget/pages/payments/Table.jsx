@@ -30,6 +30,7 @@ const transferApproversGroup = props.transferApproversGroup;
 const [showToastStatus, setToastStatus] = useState(false);
 const [voteProposalId, setVoteProposalId] = useState(null);
 const [nearStakedTokens, setNearStakedTokens] = useState(null);
+const refreshTableData = props.refreshTableData;
 
 const accountId = context.accountId;
 
@@ -127,6 +128,7 @@ function checkProposalStatus(proposalId) {
   }).then((result) => {
     setToastStatus(result.status);
     setVoteProposalId(proposalId);
+    refreshTableData();
   });
 }
 
