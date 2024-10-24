@@ -64,6 +64,8 @@ export async function mockInventory({ page, account }) {
   );
 }
 
+export const CurrentTimestampInNanoseconds = `${Date.now() * 1_000_000}`;
+
 export const transferProposalData = {
   id: 10,
   proposer: "thomasguntenaar.near",
@@ -81,5 +83,5 @@ export const transferProposalData = {
   status: "InProgress",
   vote_counts: {},
   votes: {},
-  submission_time: "1728674151049926268",
+  submission_time: CurrentTimestampInNanoseconds,
 };

@@ -7,7 +7,10 @@ import {
 } from "../../util/transaction";
 import { updateDaoPolicyMembers } from "../../util/rpcmock";
 import { getInstanceConfig } from "../../util/config.js";
-import { mockInventory } from "../../util/inventory.js";
+import {
+  CurrentTimestampInNanoseconds,
+  mockInventory,
+} from "../../util/inventory.js";
 import os from "os";
 import { mockPikespeakFTTokensResponse } from "../../util/pikespeak.js";
 
@@ -515,7 +518,7 @@ test.describe("admin with function access keys", function () {
             status: "InProgress",
             vote_counts: {},
             votes: {},
-            submission_time: "1729004234137594481",
+            submission_time: CurrentTimestampInNanoseconds,
           });
 
           json.result.result = Array.from(

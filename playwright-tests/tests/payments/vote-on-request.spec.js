@@ -5,7 +5,7 @@ import { mockTransactionSubmitRPCResponses } from "../../util/transaction";
 import { mockRpcRequest, updateDaoPolicyMembers } from "../../util/rpcmock";
 import { setDontAskAgainCacheValues } from "../../util/cache";
 import { mockPikespeakFTTokensResponse } from "../../util/pikespeak.js";
-import { transferProposalData } from "../../util/inventory.js";
+import { TransferProposalData } from "../../util/inventory.js";
 
 async function mockWithFTBalance({ page, daoAccount, isSufficient }) {
   await page.route(
@@ -65,7 +65,7 @@ async function voteOnProposal({
       method_name: "get_proposals",
     },
     modifyOriginalResultFunction: (originalResult) => {
-      originalResult = transferProposalData;
+      originalResult = TransferProposalData;
       if (isTransactionCompleted && !isMultiVote) {
         originalResult.status = isReject ? "Rejected" : "Approved";
       } else {
@@ -80,7 +80,7 @@ async function voteOnProposal({
       method_name: "get_proposal",
     },
     modifyOriginalResultFunction: (originalResult) => {
-      originalResult = transferProposalData;
+      originalResult = TransferProposalData;
       if (isTransactionCompleted) {
         if (!isMultiVote) {
           originalResult.status = isReject ? "Rejected" : "Approved";

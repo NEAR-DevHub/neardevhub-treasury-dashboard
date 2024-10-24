@@ -2,7 +2,10 @@ import { expect } from "@playwright/test";
 import { test } from "../../util/test.js";
 
 import { mockRpcRequest } from "../../util/rpcmock";
-import { transferProposalData } from "../../util/inventory.js";
+import {
+  CurrentTimestampInNanoseconds,
+  TransferProposalData,
+} from "../../util/inventory.js";
 
 test.describe("payment requests feed", function () {
   test("expect expired request to be in history", async ({
@@ -28,13 +31,13 @@ test.describe("payment requests feed", function () {
       },
       modifyOriginalResultFunction: () => {
         let originalResult = [
-          JSON.parse(JSON.stringify(transferProposalData)),
-          JSON.parse(JSON.stringify(transferProposalData)),
+          JSON.parse(JSON.stringify(TransferProposalData)),
+          JSON.parse(JSON.stringify(TransferProposalData)),
         ];
         originalResult[0].id = 0;
         originalResult[1].id = 1;
         // non expired request
-        originalResult[0].submission_time = "1729783791239912448";
+        originalResult[0].submission_time = CurrentTimestampInNanoseconds;
         // expired request
         originalResult[1].submission_time = "1715761329133693174";
         return originalResult;
