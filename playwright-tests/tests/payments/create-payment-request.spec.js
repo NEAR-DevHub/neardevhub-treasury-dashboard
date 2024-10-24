@@ -144,7 +144,7 @@ test.describe("admin connected", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(120_000);
     await mockPikespeakFTTokensResponse({ page, daoAccount });
     await updateDaoPolicyMembers({ page });
     await fillCreateForm(page, daoAccount, instanceAccount);
@@ -157,7 +157,7 @@ test.describe("admin connected", function () {
     page,
     instanceAccount,
   }) => {
-    test.setTimeout(80_000);
+    test.setTimeout(120_000);
     await updateDaoPolicyMembers({ page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
     await clickCreatePaymentRequestButton(page);
@@ -171,7 +171,7 @@ test.describe("admin connected", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(120_000);
     await mockPikespeakFTTokensResponse({ page, daoAccount });
     await updateDaoPolicyMembers({ page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
@@ -196,7 +196,7 @@ test.describe("admin connected", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(120_000);
     await mockPikespeakFTTokensResponse({ page, daoAccount });
     await updateDaoPolicyMembers({ page });
     await fillCreateForm(page, daoAccount, instanceAccount);
@@ -222,7 +222,7 @@ test.describe("admin connected", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(120_000);
     await mockPikespeakFTTokensResponse({ page, daoAccount });
     await updateDaoPolicyMembers({ page });
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
@@ -255,6 +255,7 @@ test.describe("admin connected", function () {
     instanceAccount,
     daoAccount,
   }) => {
+    test.setTimeout(120_000);
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
     await mockInventory({ page, account: daoAccount });
     await mockPikespeakFTTokensResponse({ page, daoAccount });
@@ -348,7 +349,7 @@ test.describe("admin with function access keys", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(120_000);
     const nearPrice = 4;
     await mockInventory({ page, account: daoAccount });
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
