@@ -81,18 +81,57 @@ function getPolicyApproverGroup(treasuryDaoID) {
   return Array.from(new Set(approversGroup));
 }
 
-const filterFunction = (item, filterStatusArray, filterKindArray) => {
+const filterFunction = (
+  item,
+  filterStatusArray,
+  filterKindArray,
+  proposalPeriod
+) => {
   const kind =
     typeof item.kind === "string" ? item.kind : Object.keys(item.kind)[0];
+  const endTime = Big(item.submission_time).plus(proposalPeriod).toFixed();
+
+  const timestampInMilliseconds = Big(endTime) / Big(1_000_000);
+  const currentTimeInMilliseconds = Date.now();
+
+  let statusValid = true;
+
+  // Override "InProgress" if timestamp has expired
+  if (filterStatusArray.includes("Expired")) {
+    if (
+      item.status === "InProgress" &&
+      Big(timestampInMilliseconds).lt(currentTimeInMilliseconds)
+    ) {
+      item.status = "Expired"; // Treat "InProgress" as "Expired"
+    }
+  }
+
+  // Check for "InProgress" and validate timestamp if applicable
+  if (
+    filterStatusArray.includes("InProgress") &&
+    item.status === "InProgress"
+  ) {
+    statusValid = Big(timestampInMilliseconds).gt(currentTimeInMilliseconds);
+  }
+
+  // Return false if status is not valid
+  if (!statusValid) return false;
+
   if (filterStatusArray.length > 0 && filterKindArray.length > 0) {
     return (
       filterStatusArray.includes(item.status) && filterKindArray.includes(kind)
     );
-  } else if (filterKindArray.length > 0) {
+  }
+
+  if (filterKindArray.length > 0) {
     return filterKindArray.includes(kind);
-  } else if (filterStatusArray.length > 0) {
+  }
+
+  if (filterStatusArray.length > 0) {
     return filterStatusArray.includes(item.status);
   }
+
+  // Return true if no filters are applied
   return true;
 };
 
@@ -108,6 +147,7 @@ function getFilteredProposalsByStatusAndKind({
   isAssetExchange,
   isStakeDelegation,
 }) {
+  const policy = Near.view(treasuryDaoID, "get_policy", {});
   let newLastProposalId = typeof offset === "number" ? offset : lastProposalId;
   let filteredProposals = [];
   const limit = 30;
@@ -153,17 +193,16 @@ function getFilteredProposalsByStatusAndKind({
       const kindCondition = filterFunction(
         item,
         filterStatusArray,
-        filterKindArray
+        filterKindArray,
+        policy.proposal_period
       );
-      // If isAssetExchange is true, check for description.isAssetExchangeTxn
-      if (isAssetExchange) {
-        return kindCondition && checkForExchangeProposals(item);
-      }
-      // If isStakeDelegation is true, check for description.isStakeRequest
-      if (isStakeDelegation) {
-        return kindCondition && checkForStakeProposals(item);
-      }
-      return kindCondition;
+      if (!kindCondition) return false;
+
+      // Check for asset exchange or stake delegation, if applicable
+      if (isAssetExchange && !checkForExchangeProposals(item)) return false;
+      if (isStakeDelegation && !checkForStakeProposals(item)) return false;
+
+      return true;
     });
     const uniqueFilteredProposals = Array.from(
       new Map(filteredProposals.map((item) => [item.id, item])).values()

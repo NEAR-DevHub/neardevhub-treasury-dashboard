@@ -386,7 +386,7 @@ const ProposalsComponent = () => {
                   popup: <TooltipContent title={title} summary={summary} />,
                   children: (
                     <div className="custom-truncate" style={{ width: 180 }}>
-                      {summary}
+                      {summary ? summary : "-"}
                     </div>
                   ),
                 }}
@@ -436,7 +436,7 @@ const ProposalsComponent = () => {
               />
             </td>
             <td className={"text-sm text-left " + isVisible("Notes")}>
-              {notes ?? "-"}
+              {notes ? notes : "-"}
             </td>
             {isPendingRequests && (
               <td className={isVisible("Required Votes") + " text-center"}>
