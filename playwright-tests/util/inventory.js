@@ -63,3 +63,25 @@ export async function mockInventory({ page, account }) {
     }
   );
 }
+
+export const CurrentTimestampInNanoseconds = `${Date.now() * 1_000_000}`;
+
+export const TransferProposalData = {
+  id: 10,
+  proposer: "thomasguntenaar.near",
+  description:
+    '{"title":"DevHub Developer Contributor report by Megha for 09/09/2024 - 10/06/2024","summary":"Worked on integrating new features to treasury dashboard, like asset exchange using the ref-sdk API, stake delegation, made first version live for devhub, fixed some bugs with devhub and other instances.","notes":"Treasury balance insufficient","proposalId":220}',
+  kind: {
+    Transfer: {
+      token_id:
+        "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+      receiver_id: "megha19.near",
+      amount: "12",
+      msg: null,
+    },
+  },
+  status: "InProgress",
+  vote_counts: {},
+  votes: {},
+  submission_time: CurrentTimestampInNanoseconds,
+};

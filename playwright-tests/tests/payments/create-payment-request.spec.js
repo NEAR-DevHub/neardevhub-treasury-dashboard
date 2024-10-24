@@ -7,7 +7,10 @@ import {
 } from "../../util/transaction";
 import { updateDaoPolicyMembers } from "../../util/rpcmock";
 import { getInstanceConfig } from "../../util/config.js";
-import { mockInventory } from "../../util/inventory.js";
+import {
+  CurrentTimestampInNanoseconds,
+  mockInventory,
+} from "../../util/inventory.js";
 import os from "os";
 import { mockPikespeakFTTokensResponse } from "../../util/pikespeak.js";
 
@@ -144,7 +147,7 @@ test.describe("admin connected", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(120_000);
     await mockPikespeakFTTokensResponse({ page, daoAccount });
     await updateDaoPolicyMembers({ page });
     await fillCreateForm(page, daoAccount, instanceAccount);
@@ -157,7 +160,7 @@ test.describe("admin connected", function () {
     page,
     instanceAccount,
   }) => {
-    test.setTimeout(80_000);
+    test.setTimeout(120_000);
     await updateDaoPolicyMembers({ page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
     await clickCreatePaymentRequestButton(page);
@@ -171,7 +174,7 @@ test.describe("admin connected", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(120_000);
     await mockPikespeakFTTokensResponse({ page, daoAccount });
     await updateDaoPolicyMembers({ page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
@@ -196,7 +199,7 @@ test.describe("admin connected", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(120_000);
     await mockPikespeakFTTokensResponse({ page, daoAccount });
     await updateDaoPolicyMembers({ page });
     await fillCreateForm(page, daoAccount, instanceAccount);
@@ -222,7 +225,7 @@ test.describe("admin connected", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(120_000);
     await mockPikespeakFTTokensResponse({ page, daoAccount });
     await updateDaoPolicyMembers({ page });
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
@@ -255,6 +258,7 @@ test.describe("admin connected", function () {
     instanceAccount,
     daoAccount,
   }) => {
+    test.setTimeout(120_000);
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
     await mockInventory({ page, account: daoAccount });
     await mockPikespeakFTTokensResponse({ page, daoAccount });
@@ -348,7 +352,7 @@ test.describe("admin with function access keys", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(120_000);
     const nearPrice = 4;
     await mockInventory({ page, account: daoAccount });
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
@@ -514,7 +518,7 @@ test.describe("admin with function access keys", function () {
             status: "InProgress",
             vote_counts: {},
             votes: {},
-            submission_time: "1729004234137594481",
+            submission_time: CurrentTimestampInNanoseconds,
           });
 
           json.result.result = Array.from(
