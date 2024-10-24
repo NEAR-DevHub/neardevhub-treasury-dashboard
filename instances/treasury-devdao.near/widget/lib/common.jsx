@@ -147,7 +147,7 @@ function getFilteredProposalsByStatusAndKind({
   isAssetExchange,
   isStakeDelegation,
 }) {
-  const policy = Near.view(treasuryDaoID, "get_policy", {});
+  const policy = Near.asyncView(treasuryDaoID, "get_policy", {});
   let newLastProposalId = typeof offset === "number" ? offset : lastProposalId;
   let filteredProposals = [];
   const limit = 30;
@@ -187,14 +187,15 @@ function getFilteredProposalsByStatusAndKind({
     return description.isStakeRequest;
   };
 
-  return Promise.all(promiseArray).then((res) => {
-    const proposals = [].concat(...res);
+  return Promise.all([...promiseArray, policy]).then((res) => {
+    const policyResult = res[res.length - 1];
+    const proposals = res.slice(0, -1).flat();
     filteredProposals = proposals.filter((item) => {
       const kindCondition = filterFunction(
         item,
         filterStatusArray,
         filterKindArray,
-        policy.proposal_period
+        policyResult.proposal_period
       );
       if (!kindCondition) return false;
 

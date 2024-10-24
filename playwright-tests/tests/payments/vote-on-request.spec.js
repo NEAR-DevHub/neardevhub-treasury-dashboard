@@ -5,6 +5,7 @@ import { mockTransactionSubmitRPCResponses } from "../../util/transaction";
 import { mockRpcRequest, updateDaoPolicyMembers } from "../../util/rpcmock";
 import { setDontAskAgainCacheValues } from "../../util/cache";
 import { mockPikespeakFTTokensResponse } from "../../util/pikespeak.js";
+import { transferProposalData } from "../../util/inventory.js";
 
 async function mockWithFTBalance({ page, daoAccount, isSufficient }) {
   await page.route(
@@ -47,25 +48,6 @@ async function mockWithFTBalance({ page, daoAccount, isSufficient }) {
     }
   );
 }
-
-const transferProposalData = {
-  id: 10,
-  proposer: "thomasguntenaar.near",
-  description:
-    '{"title":"DevHub Developer Contributor report by Megha for 09/09/2024 - 10/06/2024","summary":"Worked on integrating new features to treasury dashboard, like asset exchange using the ref-sdk API, stake delegation, made first version live for devhub, fixed some bugs with devhub and other instances.","notes":"Treasury balance insufficient","proposalId":220}',
-  kind: {
-    Transfer: {
-      token_id:
-        "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
-      receiver_id: "megha19.near",
-      amount: "12",
-      msg: null,
-    },
-  },
-  vote_counts: {},
-  votes: {},
-  submission_time: "1728674151049926268",
-};
 
 async function voteOnProposal({
   page,
