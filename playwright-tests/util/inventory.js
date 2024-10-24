@@ -66,7 +66,7 @@ export async function mockInventory({ page, account }) {
 
 export const CurrentTimestampInNanoseconds = `${Date.now() * 1_000_000}`;
 
-export const transferProposalData = {
+export const TransferProposalData = {
   id: 10,
   proposer: "thomasguntenaar.near",
   description:
