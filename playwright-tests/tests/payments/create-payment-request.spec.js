@@ -13,6 +13,7 @@ import {
 } from "../../util/inventory.js";
 import os from "os";
 import { mockPikespeakFTTokensResponse } from "../../util/pikespeak.js";
+import { mockNearPrice } from "../../util/nearblocks.js";
 
 async function clickCreatePaymentRequestButton(page) {
   const createPaymentRequestButton = await page.getByRole("button", {
@@ -199,7 +200,6 @@ test.describe("admin connected", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(120_000);
     await mockPikespeakFTTokensResponse({ page, daoAccount });
     await updateDaoPolicyMembers({ page });
     await fillCreateForm(page, daoAccount, instanceAccount);
@@ -213,9 +213,67 @@ test.describe("admin connected", function () {
 
     await clickCreatePaymentRequestButton(page);
 
-    // TODO: add a case where the form is a proposal selection instead of a manual title and summary
     expect(await page.getByTestId("proposal-title").inputValue()).toBe("");
     expect(await page.getByTestId("proposal-summary").inputValue()).toBe("");
+    expect(await page.getByPlaceholder("treasury.near").inputValue()).toBe("");
+    expect(await page.getByTestId("total-amount").inputValue()).toBe("");
+  });
+
+  test("cancel form with linked proposal should clear existing values", async ({
+    page,
+    instanceAccount,
+    daoAccount,
+  }) => {
+    const nearPrice = 4;
+    const amountFromLinkedProposal = 3120 / nearPrice;
+
+    await mockNearPrice({ nearPrice, page });
+    await mockInventory({ page, account: daoAccount });
+    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
+    if (instanceConfig.showProposalSelection === false) {
+      console.log(
+        "Skip testing linked proposal, since instance does not support proposal selection"
+      );
+      return;
+    }
+
+    await mockPikespeakFTTokensResponse({ page, daoAccount });
+    await updateDaoPolicyMembers({ page });
+
+    await page.goto(`/${instanceAccount}/widget/app?page=payments`);
+    await clickCreatePaymentRequestButton(page);
+
+    const proposalSelect = page.locator(".dropdown-toggle").first();
+    await expect(proposalSelect).toBeVisible();
+
+    await expect(
+      proposalSelect.getByText("Select", { exact: true })
+    ).toBeVisible();
+
+    await proposalSelect.click();
+    const proposal = page.getByText("#173 Near Contract Standards");
+    await proposal.click();
+    expect(await page.getByPlaceholder("treasury.near").inputValue()).toBe(
+      "robert.near"
+    );
+
+    expect(await page.getByTestId("total-amount").inputValue()).toBe(
+      amountFromLinkedProposal.toString()
+    );
+
+    const cancelBtn = page
+      .locator(".offcanvas-body")
+      .locator("button.btn-outline", { hasText: "Cancel" });
+    await expect(cancelBtn).toBeAttached({ timeout: 10_000 });
+
+    cancelBtn.click();
+    await page.locator("button", { hasText: "Yes" }).click();
+
+    await clickCreatePaymentRequestButton(page);
+
+    await expect(await page.locator(".dropdown-toggle").first()).toHaveText(
+      "Select"
+    );
     expect(await page.getByPlaceholder("treasury.near").inputValue()).toBe("");
     expect(await page.getByTestId("total-amount").inputValue()).toBe("");
   });
@@ -356,21 +414,7 @@ test.describe("admin with function access keys", function () {
     const nearPrice = 4;
     await mockInventory({ page, account: daoAccount });
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
-    await page.route(
-      "https://api3.nearblocks.io/v1/charts/latest",
-      async (route) => {
-        let json = {
-          charts: [
-            {
-              date: "2024-10-12T00:00:00.000Z",
-              near_price: nearPrice.toString(),
-              txns: "6113720",
-            },
-          ],
-        };
-        await route.fulfill({ json });
-      }
-    );
+    await mockNearPrice({ nearPrice, page });
     await mockPikespeakFTTokensResponse({ page, daoAccount });
     await updateDaoPolicyMembers({ page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
