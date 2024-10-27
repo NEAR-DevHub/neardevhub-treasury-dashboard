@@ -14,6 +14,10 @@ import {
 import os from "os";
 import { mockPikespeakFTTokensResponse } from "../../util/pikespeak.js";
 import { mockNearPrice } from "../../util/nearblocks.js";
+import {
+  focusInputClearAndBlur,
+  focusInputReplaceAndBlur,
+} from "../../util/forms.js";
 
 async function clickCreatePaymentRequestButton(page) {
   const createPaymentRequestButton = await page.getByRole("button", {
@@ -193,7 +197,94 @@ test.describe("admin connected", function () {
     expect(await submitBtn.isDisabled()).toBe(true);
   });
 
-  // TODO: make sure 'submit' is disabled when incorrect receiver id is mentioned or empty amount or empty proposal name or empty token
+  test("submit should be disabled when incorrect receiver id is mentioned or empty amount or empty proposal name or empty token", async ({
+    page,
+    instanceAccount,
+    daoAccount,
+  }) => {
+    test.setTimeout(60_000);
+    await mockPikespeakFTTokensResponse({ page, daoAccount });
+    await updateDaoPolicyMembers({ page });
+    await mockInventory({ page, account: daoAccount });
+    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
+    await page.goto(`/${instanceAccount}/widget/app?page=payments`);
+
+    await clickCreatePaymentRequestButton(page);
+
+    if (instanceConfig.showProposalSelection === true) {
+      const proposalSelect = await page.locator(".dropdown-toggle").first();
+      await expect(proposalSelect).toBeVisible();
+      await expect(
+        await proposalSelect.getByText("Select", { exact: true })
+      ).toBeVisible();
+
+      await proposalSelect.click();
+
+      await page.getByText("Add manual request").click();
+    }
+    await page.getByTestId("proposal-title").fill("Test proposal title");
+    await page.getByTestId("proposal-summary").fill("Test proposal summary");
+
+    await page.getByPlaceholder("treasury.near").fill("webassemblymusic.near");
+    const totalAmountField = await page.getByTestId("total-amount");
+    await focusInputReplaceAndBlur({
+      inputField: totalAmountField,
+      newValue: "3",
+    });
+
+    const submitBtn = async () => {
+      const btn = page
+        .locator(".offcanvas-body")
+        .getByRole("button", { name: "Submit" });
+      await btn.scrollIntoViewIfNeeded();
+      return btn;
+    };
+    await expect(await submitBtn()).toBeDisabled();
+
+    const tokenSelect = await page.getByTestId("tokens-dropdown");
+    await tokenSelect.click();
+    await tokenSelect.getByText("NEAR").click();
+    await expect(await submitBtn()).toBeEnabled();
+
+    const proposalTitle = page.getByTestId("proposal-title");
+    await focusInputClearAndBlur({ inputField: proposalTitle });
+
+    await expect(await submitBtn()).toBeDisabled();
+    await focusInputReplaceAndBlur({
+      inputField: proposalTitle,
+      newValue: "blabla",
+    });
+    await expect(await submitBtn()).toBeEnabled();
+
+    const recipientInput = page.getByPlaceholder("treasury.near");
+    await focusInputReplaceAndBlur({
+      inputField: recipientInput,
+      newValue: "webassemblymusic.nea",
+    });
+
+    await expect(await submitBtn()).toBeDisabled();
+    await focusInputClearAndBlur({ inputField: recipientInput });
+
+    await expect(await submitBtn()).toBeDisabled();
+    await focusInputReplaceAndBlur({
+      inputField: recipientInput,
+      newValue: "webassemblymusic.near",
+    });
+    await expect(await submitBtn()).toBeEnabled();
+
+    await focusInputClearAndBlur({ inputField: totalAmountField });
+    await expect(await submitBtn()).toBeDisabled();
+    await focusInputReplaceAndBlur({
+      inputField: totalAmountField,
+      newValue: "aa",
+    });
+    await expect(await submitBtn()).toBeDisabled();
+    await focusInputReplaceAndBlur({
+      inputField: totalAmountField,
+      newValue: "1",
+    });
+    await expect(await submitBtn()).toBeEnabled();
+  });
 
   test("cancel form should clear existing values", async ({
     page,
