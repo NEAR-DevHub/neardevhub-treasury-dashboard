@@ -1,7 +1,10 @@
 import { expect } from "@playwright/test";
 import { test } from "../../util/test.js";
 
-import { getTransactionModalObject } from "../../util/transaction.js";
+import {
+  getTransactionModalObject,
+  mockTransactionSubmitRPCResponses,
+} from "../../util/transaction.js";
 import { mockRpcRequest, updateDaoPolicyMembers } from "../../util/rpcmock.js";
 import { getInstanceConfig } from "../../util/config.js";
 import { mockInventory } from "../../util/inventory.js";
@@ -115,7 +118,6 @@ test.describe("admin connected", function () {
     // Submit button should be disabled
     expect(await submitBtn.isDisabled()).toBe(true);
   });
-  // TODO: add the check after form submission, the loader should disappear and the list should be visible
   test("should add new member and after submit, show in the member list", async ({
     page,
     instanceAccount,
@@ -271,6 +273,16 @@ test.describe("admin connected", function () {
       },
     });
     await checkForVoteApproveTxn(page);
+    await mockTransactionSubmitRPCResponses(page);
+    await page.getByRole("button", { name: "Confirm" }).click();
+
+    // TODO: add the check after form submission, the loader should disappear and the list should be visible
+    await page.waitForURL(/wallet/);
+    await page.goto(
+      `/${instanceAccount}/widget/app?page=settings&transactionHashes=DBHouFvkiRBaRWsvPkBrbJnUoCSNsaM5L6cXoZAvqkj6`
+    );
+    await page.waitForTimeout(2000);
+    await expect(await page.getByText("All Members")).toBeVisible();
   });
 
   test("should update existing member permissions", async ({

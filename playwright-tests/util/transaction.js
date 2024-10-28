@@ -8,6 +8,13 @@ export async function getTransactionModalObject(page) {
 
 const access_keys = [
   {
+    public_key: "ed25519:CziSGowWUKiP5N5pqGUgXCJXtqpySAk29YAU6zEs5RAi",
+    access_key: {
+      nonce: 0,
+      permission: "FullAccess",
+    },
+  },
+  {
     access_key: {
       nonce: 109629226000005,
       permission: {
