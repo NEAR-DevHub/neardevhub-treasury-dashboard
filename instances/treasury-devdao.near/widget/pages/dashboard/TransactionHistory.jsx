@@ -258,14 +258,14 @@ return (
                               </div>
                               <div>{readableDate(txn.timestamp / 1000000)}</div>
                               <div className="text-light-grey">
-                                <Link
+                                <a
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  to={`https://nearblocks.io/txns/${txn.transaction_id}`}
+                                  href={`https://nearblocks.io/txns/${txn.transaction_id}`}
                                 >
                                   {(txn.transaction_id ?? "").substring(0, 20)}
                                   ...
-                                </Link>
+                                </a>
                               </div>
                             </div>
                           </div>
