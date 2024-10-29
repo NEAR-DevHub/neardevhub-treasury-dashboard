@@ -245,10 +245,7 @@ const VoteSuccessToast = () => {
       <div className={`toast ${showToastStatus ? "show" : ""}`}>
         <div className="toast-header px-2">
           <strong className="me-auto">Just Now</strong>
-          <i
-            className="bi bi-x-lg h6"
-            onClick={() => showToastStatus(null)}
-          ></i>
+          <i className="bi bi-x-lg h6" onClick={() => setToastStatus(null)}></i>
         </div>
         <ToastStatusContent />
       </div>
