@@ -52,16 +52,6 @@ useEffect(() => {
   }
 }, [receiverAccount]);
 
-const Container = styled.div`
-  .text-red {
-    color: #3cb179;
-  }
-
-  .text-green {
-    color: #d95c4a;
-  }
-`;
-
 const HoverCard = () => {
   return (
     <div>
@@ -105,9 +95,7 @@ const ReceiverAccountComponent = (
     >
       <div className="h6 mb-0"> {name}</div>
 
-      <div className={isVerfied ? "text-green" : "text-red"}>
-        @{receiverAccount}
-      </div>
+      <div>@{receiverAccount}</div>
     </div>
   </div>
 );

@@ -10,12 +10,11 @@ return (
             href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.MembersPage`,
             props: { instance },
           },
-          // TO BE ADDED LATER
-          // {
-          //   title: "Groups",
-          //   href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.GroupsPage`,
-          //   props: {},
-          // },
+          {
+            title: "Voting Thresholds",
+            href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.Thresholds`,
+            props: { instance },
+          },
           // {
           //   title: "Voting",
           //   href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.Voting`,
