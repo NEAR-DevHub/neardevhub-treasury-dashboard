@@ -47,76 +47,10 @@ test.afterEach(async ({ page }, testInfo) => {
   await page.unrouteAll({ behavior: "ignoreErrors" });
 });
 
-test.describe("admin connected", function () {
+test.describe("admin connected with meteor-wallet", function () {
   test.use({
-    storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
-  });
-
-  test("should show members of the DAO", async ({
-    page,
-    instanceAccount,
-    daoAccount,
-  }) => {
-    test.setTimeout(60_000);
-    await mockInventory({ page, account: daoAccount });
-    await updateDaoPolicyMembers({ page });
-    await page.goto(`/${instanceAccount}/widget/app?page=settings`);
-    await expect(page.getByText("Megha", { exact: true })).toBeVisible();
-  });
-
-  test("should disable submit button and show error when incorrect account id is mentioned", async ({
-    page,
-    instanceAccount,
-    daoAccount,
-  }) => {
-    await mockInventory({ page, account: daoAccount });
-    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
-    await page.goto(`/${instanceAccount}/widget/app?page=settings`);
-    await updateDaoPolicyMembers({ page });
-    const createMemberRequestButton = page.getByRole("button", {
-      name: "New Member",
-    });
-    await createMemberRequestButton.click();
-    await expect(page.getByRole("heading", { name: "Add Member" })).toBeVisible(
-      { timeout: 10_000 }
-    );
-    const submitBtn = page
-      .locator(".offcanvas-body")
-      .getByRole("button", { name: "Submit" });
-    await expect(submitBtn).toBeAttached({ timeout: 10_000 });
-    // Submit button should be disabled
-    expect(await submitBtn.isDisabled()).toBe(true);
-    // Add member name
-    const accountInput = page.getByPlaceholder("treasury.near");
-    await accountInput.fill("testingaccount.near");
-    // Submit button should be disabled
-    expect(await submitBtn.isDisabled()).toBe(true);
-    // Add member role
-    const permissionsSelect = page.locator(".dropdown-toggle").first();
-    await expect(permissionsSelect).toBeVisible();
-    await permissionsSelect.click();
-    await page.locator(".dropdown-item").first().click();
-    // Submit button should be enabled
-    expect(await submitBtn.isEnabled()).toBe(true);
-    // Change member name to incorrect account id example thomasguntenaar.nea without 'r'
-    await accountInput.fill("thomasguntenaar.nea");
-    await page.waitForTimeout(1000);
-    // Submit button should be disabled & 'Please enter valid account ID' error should be visible
-    expect(await submitBtn.isDisabled()).toBe(true);
-    await expect(page.getByText("Please enter valid account ID")).toBeVisible();
-    // Fill valid account id thomasguntenaar.near
-    await accountInput.fill("thomasguntenaar.near");
-    await page.waitForTimeout(1000);
-
-    // Submit button should be enabled
-    expect(await submitBtn.isDisabled()).toBe(false);
-    // Remove any roles
-    const roleBtn = page.getByText("Create Requests", { exact: true });
-    const removeRoleBtn = roleBtn.locator("i").first();
-    await removeRoleBtn.click();
-    await page.waitForTimeout(1000);
-    // Submit button should be disabled
-    expect(await submitBtn.isDisabled()).toBe(true);
+    storageState:
+      "playwright-tests/storage-states/wallet-connected-admin-meteorwallet.json",
   });
   test("should add new member and after submit, show in the member list", async ({
     page,
@@ -132,6 +66,7 @@ test.describe("admin connected", function () {
     const createMemberRequestButton = page.getByRole("button", {
       name: "New Member",
     });
+
     await expect(createMemberRequestButton).toBeVisible();
     await createMemberRequestButton.click();
     await expect(page.getByRole("heading", { name: "Add Member" })).toBeVisible(
@@ -277,12 +212,80 @@ test.describe("admin connected", function () {
     await page.getByRole("button", { name: "Confirm" }).click();
 
     // TODO: add the check after form submission, the loader should disappear and the list should be visible
-    await page.waitForURL(/wallet/);
-    await page.goto(
-      `/${instanceAccount}/widget/app?page=settings&transactionHashes=DBHouFvkiRBaRWsvPkBrbJnUoCSNsaM5L6cXoZAvqkj6`
-    );
-    await page.waitForTimeout(2000);
     await expect(await page.getByText("All Members")).toBeVisible();
+  });
+});
+
+test.describe("admin connected", function () {
+  test.use({
+    storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
+  });
+
+  test("should show members of the DAO", async ({
+    page,
+    instanceAccount,
+    daoAccount,
+  }) => {
+    test.setTimeout(60_000);
+    await mockInventory({ page, account: daoAccount });
+    await updateDaoPolicyMembers({ page });
+    await page.goto(`/${instanceAccount}/widget/app?page=settings`);
+    await expect(page.getByText("Megha", { exact: true })).toBeVisible();
+  });
+
+  test("should disable submit button and show error when incorrect account id is mentioned", async ({
+    page,
+    instanceAccount,
+    daoAccount,
+  }) => {
+    await mockInventory({ page, account: daoAccount });
+    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
+    await page.goto(`/${instanceAccount}/widget/app?page=settings`);
+    await updateDaoPolicyMembers({ page });
+    const createMemberRequestButton = page.getByRole("button", {
+      name: "New Member",
+    });
+    await createMemberRequestButton.click();
+    await expect(page.getByRole("heading", { name: "Add Member" })).toBeVisible(
+      { timeout: 10_000 }
+    );
+    const submitBtn = page
+      .locator(".offcanvas-body")
+      .getByRole("button", { name: "Submit" });
+    await expect(submitBtn).toBeAttached({ timeout: 10_000 });
+    // Submit button should be disabled
+    expect(await submitBtn.isDisabled()).toBe(true);
+    // Add member name
+    const accountInput = page.getByPlaceholder("treasury.near");
+    await accountInput.fill("testingaccount.near");
+    // Submit button should be disabled
+    expect(await submitBtn.isDisabled()).toBe(true);
+    // Add member role
+    const permissionsSelect = page.locator(".dropdown-toggle").first();
+    await expect(permissionsSelect).toBeVisible();
+    await permissionsSelect.click();
+    await page.locator(".dropdown-item").first().click();
+    // Submit button should be enabled
+    expect(await submitBtn.isEnabled()).toBe(true);
+    // Change member name to incorrect account id example thomasguntenaar.nea without 'r'
+    await accountInput.fill("thomasguntenaar.nea");
+    await page.waitForTimeout(1000);
+    // Submit button should be disabled & 'Please enter valid account ID' error should be visible
+    expect(await submitBtn.isDisabled()).toBe(true);
+    await expect(page.getByText("Please enter valid account ID")).toBeVisible();
+    // Fill valid account id thomasguntenaar.near
+    await accountInput.fill("thomasguntenaar.near");
+    await page.waitForTimeout(1000);
+
+    // Submit button should be enabled
+    expect(await submitBtn.isDisabled()).toBe(false);
+    // Remove any roles
+    const roleBtn = page.getByText("Create Requests", { exact: true });
+    const removeRoleBtn = roleBtn.locator("i").first();
+    await removeRoleBtn.click();
+    await page.waitForTimeout(1000);
+    // Submit button should be disabled
+    expect(await submitBtn.isDisabled()).toBe(true);
   });
 
   test("should update existing member permissions", async ({
