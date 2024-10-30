@@ -65,7 +65,9 @@ function getRoleWiseData(treasuryDaoID) {
         roleName: role.name,
         members: role.kind?.Group ?? [],
         isRatio,
-        threshold: role?.vote_policy?.["vote"]?.threshold,
+        threshold: isRatio
+          ? role?.vote_policy?.["vote"]?.threshold[0]
+          : role?.vote_policy?.["vote"].threshold,
         requiredVotes: isRatio
           ? Math.floor(
               (role?.vote_policy?.["vote"]?.threshold[0] /
