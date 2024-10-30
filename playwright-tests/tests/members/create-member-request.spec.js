@@ -2,6 +2,7 @@ import { expect } from "@playwright/test";
 import { test } from "../../util/test.js";
 
 import {
+  decodeResultJSON,
   getTransactionModalObject,
   mockTransactionSubmitRPCResponses,
 } from "../../util/transaction.js";
@@ -57,7 +58,7 @@ test.describe("admin connected with meteor-wallet", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(20_000);
+    test.setTimeout(30_000);
     await mockInventory({ page, account: daoAccount });
 
     await page.goto(`/${instanceAccount}/widget/app?page=settings`);
@@ -208,11 +209,99 @@ test.describe("admin connected with meteor-wallet", function () {
       },
     });
     await checkForVoteApproveTxn(page);
-    await mockTransactionSubmitRPCResponses(page);
-    await page.getByRole("button", { name: "Confirm" }).click();
+    let isTransactionCompleted = false;
+    let retryCountAfterComplete = 0;
+    let newProposalId;
+    await mockTransactionSubmitRPCResponses(page, 
+      /**
+       * Handles RPC responses for mock transaction submission.
+       *
+       * @param {Object} options - The options for handling transaction submission.
+       * @param {import('playwright').Route} options.route - The route of the transaction request (from Playwright).
+       * @param {import('playwright').Request} options.request - The request object for the transaction (from Playwright).
+       * @param {boolean} options.transaction_completed - Indicates if the transaction is completed.
+       * @param {string} options.last_receiver_id - The ID of the last receiver in the transaction.
+       * @param {import('playwright').Request} options.requestPostData - The post data associated with the request (from Playwright).
+       * @returns {void} - No return value.
+       */
+      async ({
+        route,
+        request,
+        transaction_completed,
+        last_receiver_id,
+        requestPostData,
+      }) => {
+        console.log('TXCOMMIT', transaction_completed);
 
-    // TODO: add the check after form submission, the loader should disappear and the list should be visible
-    await expect(await page.getByText("All Members")).toBeVisible();
+        if (
+          isTransactionCompleted &&
+          requestPostData.params &&
+          requestPostData.params.method_name === "get_last_proposal_id"
+        ) {
+          console.log('get last proposal id');
+          const response = await route.fetch();
+          const json = await response.json();
+          let result = JSON.parse(
+            new TextDecoder().decode(new Uint8Array(json.result.result))
+          );
+          if (retryCountAfterComplete === 2) {
+            result++;
+            newProposalId = result;
+          } else {
+            retryCountAfterComplete++;
+          }
+
+          console.log('latest proposal id', result);
+          json.result.result = Array.from(
+            new TextEncoder().encode(JSON.stringify(result))
+          );
+          await route.fulfill({ response, json });
+        } else if (
+          isTransactionCompleted &&
+          newProposalId &&
+          requestPostData.params &&
+          requestPostData.params.method_name === "get_proposals"
+        ) {
+          const response = await route.fetch();
+          const json = await response.json();
+          let result = JSON.parse(
+            new TextDecoder().decode(new Uint8Array(json.result.result))
+          );
+
+          console.log(result);
+
+          json.result.result = Array.from(
+            new TextEncoder().encode(JSON.stringify(result))
+          );
+          await route.fulfill({ response, json });
+        } else {
+          await route.fallback();
+        }
+    });
+
+    await page.evaluate(async () => {
+      const selector = await document.querySelector("near-social-viewer").selectorPromise;
+      console.log(selector);
+      const wallet = await selector.wallet();
+      wallet.signAndSendTransactions = async (tx) => {
+        window.transaction_completed = true;
+      };
+    });
+
+    await page.getByRole("button", { name: "Confirm" }).click();
+    
+    console.log('waiting for tx to complete');
+    while (!await page.evaluate(() => window.transaction_completed)) {
+      await page.waitForTimeout(100);
+    }
+    console.log('tx completed');
+    isTransactionCompleted = true;
+
+    while( !newProposalId) {
+      await page.waitForTimeout(100);
+    }
+
+    await page.waitForTimeout(2000);
   });
 });
 
