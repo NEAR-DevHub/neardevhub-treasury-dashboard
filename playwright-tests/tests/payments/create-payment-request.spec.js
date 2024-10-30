@@ -316,7 +316,7 @@ test.describe("admin connected", function () {
   }) => {
     test.setTimeout(60_000);
     const nearPrice = 4;
-    const amountFromLinkedProposal = 3120 / nearPrice;
+    const amountFromLinkedProposal = 800 / nearPrice;
 
     await mockNearPrice({ nearPrice, page });
     await mockInventory({ page, account: daoAccount });
@@ -348,7 +348,7 @@ test.describe("admin connected", function () {
     const proposal = await page.getByText("#173 Near Contract Standards");
     await proposal.click();
     expect(await page.getByPlaceholder("treasury.near").inputValue()).toBe(
-      "robert.near"
+      "9bd73bc9ba6ff289e2deb597dd6fe83dc0056af7a2937d6dec119660ba0146a4"
     );
 
     expect(await page.getByTestId("total-amount").inputValue()).toBe(
