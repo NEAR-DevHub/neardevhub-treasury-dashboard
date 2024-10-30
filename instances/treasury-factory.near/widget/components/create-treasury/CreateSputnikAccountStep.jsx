@@ -44,7 +44,7 @@ return (
 
     <div className="d-flex gap-2">
       <Link
-        className="btn text-black btn-outline-plain w-100"
+        className="btn w-100"
         href={`/${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=1`}
       >
         Back

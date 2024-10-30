@@ -1,5 +1,5 @@
 const { isNearSocial } = VM.require(
-  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+  "${REPL_DEVDAO_ACCOUNT}/widget/lib.common"
 ) || {
   isNearSocial: false,
 };
@@ -75,7 +75,7 @@ const Wrapper = ({ title, children }) => (
   <div className="d-flex flex-column align-items-center w-100 mb-4">
     <div className="d-flex w-100 align-items-center mb-2">
       <div style={{ width: "150px" }}>
-        <button className="btn-outline-plain" onClick={() => {}}>
+        <button className="btn btn-outline-plain w-100" onClick={() => {}}>
           Cancel creation
         </button>
       </div>

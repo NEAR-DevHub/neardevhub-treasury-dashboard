@@ -9,22 +9,17 @@ const { page, ...passProps } = props;
 const { AppLayout } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.templates.AppLayout"
 ) || { AppLayout: () => <></> };
-
-const instance = "${REPL_INSTANCE}";
-
-const { Theme } = VM.require(`${instance}/widget/config.css`) || {
+const { Theme } = VM.require(
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/config.css`
+) || {
   Theme: () => <></>,
 };
 
-const propsToSend = { ...passProps, instance: instance };
+const propsToSend = { ...passProps };
 
 return (
   <Theme>
-    <AppLayout
-      page={"create-treasury"}
-      instance={instance}
-      skipHeader
-    >
+    <AppLayout>
       <Widget
         src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.treasury.Create"
         props={propsToSend}

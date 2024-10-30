@@ -46,6 +46,8 @@ useEffect(() => {
   });
 }, [members]);
 
+console.log(members);
+
 const ListItem = ({ member, key }) => (
   <Item className="d-flex align-items-center justify-content-between w-100">
     <div className="w-50">
@@ -109,12 +111,28 @@ function onSubmit() {
       newMembers.map((m) => m.accountId).lastIndexOf(el.accountId) === i
   );
   setMembers(newMembers);
+  setFields({});
   onClose();
 }
 
 return (
   <>
     <div>
+      <Widget
+        src={`${REPL_DEVDAO_ACCOUNT}/widget/components.OffCanvas`}
+        props={{
+          title: "New Member",
+          children: (
+            <Widget
+              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.create-treasury.AddMemberForm`}
+              props={{ fields, setFields, onClose, onSubmit }}
+            />
+          ),
+          confirmLabel: "Confirm",
+          showCanvas: showAddMemberModal,
+          onClose,
+        }}
+      />
       <h3>Add Members</h3>
       <p>
         Set up who can access the treasury and what they can do. You can also do
@@ -137,18 +155,18 @@ return (
       </div>
     </div>
 
-    <div
+    <button
       className="btn btn-outline-plain w-100"
       onClick={() => {
-        setShowAddMemberModal(true);
         setFields({});
+        setShowAddMemberModal(true);
       }}
     >
       Add member
-    </div>
+    </button>
     <div className="d-flex gap-2">
       <Link
-        className="btn btn-outline-plain w-100"
+        className="btn w-100"
         href={`/${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=2`}
       >
         Back
@@ -160,21 +178,5 @@ return (
         Next
       </Link>
     </div>
-
-    <Widget
-      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OffCanvas`}
-      props={{
-        title: "New Member",
-        children: (
-          <Widget
-            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.create-treasury.AddMemberForm`}
-            props={{ fields, onClose, onSubmit }}
-          />
-        ),
-        confirmLabel: "Confirm",
-        showCanvas: showAddMemberModal,
-        onClose,
-      }}
-    />
   </>
 );

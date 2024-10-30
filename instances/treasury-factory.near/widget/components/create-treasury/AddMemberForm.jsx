@@ -1,4 +1,4 @@
-const { fields, onClose, onSubmit } = props;
+const { fields, setFields, onClose, onSubmit } = props;
 
 const FormFields = styled.div`
   .rbt-token {
@@ -20,44 +20,30 @@ const PERMISSIONS = {
 };
 
 const [open, setOpen] = useState(false);
-const [memberAccount, setMemberAccount] = useState(fields.accountId ?? "");
-const [permissions, setPermissions] = useState(fields.permissions ?? []);
 
 return (
   <FormFields className="d-flex flex-column gap-3">
     <div className="d-flex flex-column gap-2">
       <label>Account</label>
-      <input
-        type="text"
-        value={memberAccount}
-        onChange={(e) => {
-          setMemberAccount(e.target.value);
-          setOpen(true);
+      <Widget
+        src="${REPL_DEVHUB}/widget/devhub.entity.proposal.AccountInput"
+        props={{
+          value: fields.accountId ?? "",
+          onUpdate: (value) => {
+            fields.accountId = value ?? fields.accountId;
+            setFields(fields);
+          },
+          maxWidth: "100%",
         }}
       />
-
-      {open && (
-        <Widget
-          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.ProfileAutocomplete`}
-          props={{
-            term: memberAccount,
-            onSelect: (value) => {
-              setMemberAccount(value);
-              fields.accountId = value;
-            },
-            onClose: () => setOpen(false),
-          }}
-        />
-      )}
     </div>
     <div className="d-flex flex-column gap-2">
       <label>Permissions</label>
       <Typeahead
-        id
-        selected={permissions}
+        selected={fields.permissions ?? []}
         onChange={(value) => {
-          setPermissions(value);
-          fields.permissions = value;
+          fields.permissions = value ?? fields.permissions;
+          setFields(fields);
         }}
         options={Object.values(PERMISSIONS)}
         positionFixed
@@ -65,12 +51,14 @@ return (
       />
     </div>
     <div className="d-flex flex-row justify-content-end gap-2">
-      <div className={`btn btn-outline-plain`} onClick={onClose}>
+      <div className={`btn`} onClick={onClose}>
         Close
       </div>
       <div
         className={`btn btn-primary ${
-          memberAccount.length > 0 && permissions.length > 0 ? "" : "disabled"
+          fields.accountId?.length > 0 && fields.permissions?.length > 0
+            ? ""
+            : "disabled"
         }`}
         onClick={onSubmit}
       >

@@ -1,7 +1,5 @@
 const { formFields } = props;
 
-console.log(formFields);
-
 const Section = styled.div`
   display: flex;
   flex-direction: column;
@@ -41,8 +39,8 @@ function createDao() {
 }
 
 const ListItem = ({ member }) => (
-  <Item className="d-flex align-items-center justify-content-between w-100">
-    <div className="d-flex w-100">
+  <Item className="d-flex align-items-center w-100">
+    <div className="w-50">
       <Widget
         src="mob.near/widget/Profile.ShortInlineBlock"
         props={{
@@ -51,7 +49,7 @@ const ListItem = ({ member }) => (
       />
     </div>
 
-    <div className="d-flex gap-2 align-items-center w-100">
+    <div className="d-flex gap-2 align-items-center">
       {member.permissions.map((permission, i) => (
         <Badge key={i}>{permission}</Badge>
       ))}
@@ -126,8 +124,16 @@ return (
       )}
     </Section>
 
-    <div className="btn btn-primary w-100" onClick={createDao}>
+    <button
+      className="btn btn-primary w-100"
+      onClick={createDao}
+      disabled={
+        !formFields.members ||
+        !formFields.sputnikAccountName ||
+        !formFields.accountName
+      }
+    >
       Confirm and Create
-    </div>
+    </button>
   </div>
 );
