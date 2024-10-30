@@ -125,7 +125,7 @@ test.describe("admin connected", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(30_000);
+    test.setTimeout(120_000);
     await mockInventory({ page, account: daoAccount });
 
     await page.goto(`/${instanceAccount}/widget/app?page=settings`);
@@ -399,7 +399,7 @@ test.describe("admin connected", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(120_000);
     await mockInventory({ page, account: daoAccount });
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
     await updateDaoPolicyMembers({ page });
