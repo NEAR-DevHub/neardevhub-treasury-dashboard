@@ -48,11 +48,23 @@ test.afterEach(async ({ page }, testInfo) => {
   await page.unrouteAll({ behavior: "ignoreErrors" });
 });
 
-test.describe("admin connected with meteor-wallet", function () {
+test.describe("admin connected", function () {
   test.use({
-    storageState:
-      "playwright-tests/storage-states/wallet-connected-admin-meteorwallet.json",
+    storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
   });
+
+  test("should show members of the DAO", async ({
+    page,
+    instanceAccount,
+    daoAccount,
+  }) => {
+    test.setTimeout(60_000);
+    await mockInventory({ page, account: daoAccount });
+    await updateDaoPolicyMembers({ page });
+    await page.goto(`/${instanceAccount}/widget/app?page=settings`);
+    await expect(page.getByText("Megha", { exact: true })).toBeVisible();
+  });
+
   test("should add new member and after submit, show in the member list", async ({
     page,
     instanceAccount,
@@ -309,24 +321,6 @@ test.describe("admin connected with meteor-wallet", function () {
     await expect(await page.locator(".offcanvas-body")).not.toBeVisible();
     await page.getByText("Rows per Page").locator("select").selectOption("30");
     // await page.getByText('testingaccount.near').toBeVisible();
-  });
-});
-
-test.describe("admin connected", function () {
-  test.use({
-    storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
-  });
-
-  test("should show members of the DAO", async ({
-    page,
-    instanceAccount,
-    daoAccount,
-  }) => {
-    test.setTimeout(60_000);
-    await mockInventory({ page, account: daoAccount });
-    await updateDaoPolicyMembers({ page });
-    await page.goto(`/${instanceAccount}/widget/app?page=settings`);
-    await expect(page.getByText("Megha", { exact: true })).toBeVisible();
   });
 
   test("should disable submit button and show error when incorrect account id is mentioned", async ({
