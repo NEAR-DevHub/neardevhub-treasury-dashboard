@@ -512,7 +512,7 @@ test.describe("admin with function access keys", function () {
 
     await clickCreatePaymentRequestButton(page);
 
-    const amountFromLinkedProposal = 3120 / nearPrice;
+    const amountFromLinkedProposal = 800 / nearPrice;
 
     if (instanceConfig.showProposalSelection === true) {
       const proposalSelect = page.locator(".dropdown-toggle").first();
@@ -523,10 +523,12 @@ test.describe("admin with function access keys", function () {
       ).toBeVisible();
 
       await proposalSelect.click();
-      const proposal = page.getByText("#173 Near Contract Standards");
+      const proposal = page.getByText(
+        "#209 DevHub Fin Ops 08/26/2024 - 08/30/2024"
+      );
       await proposal.click();
       expect(await page.getByPlaceholder("treasury.near").inputValue()).toBe(
-        "robert.near"
+        "9bd73bc9ba6ff289e2deb597dd6fe83dc0056af7a2937d6dec119660ba0146a4"
       );
 
       expect(await page.getByTestId("total-amount").inputValue()).toBe(
@@ -557,11 +559,12 @@ test.describe("admin with function access keys", function () {
       ? {
           proposal: {
             description:
-              '{"title":"Near Contract Standards payment request by Robert","summary":"Contract Standards Work Group grant","notes":null,"proposalId":173}',
+              '{"title":"DevHub Fin Ops 08/26/2024 - 08/30/2024","summary":"Oversee that proposals flow thru the payment process efficiently. Continuously improve upon the process.","notes":null,"proposalId":209}',
             kind: {
               Transfer: {
                 token_id: "",
-                receiver_id: "robert.near",
+                receiver_id:
+                  "9bd73bc9ba6ff289e2deb597dd6fe83dc0056af7a2937d6dec119660ba0146a4",
                 amount: (
                   BigInt(amountFromLinkedProposal) *
                   10n ** 24n
