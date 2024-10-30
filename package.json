@@ -40,6 +40,8 @@
     "dry-run:instances": "cd ./build/$npm_config_instance && bos components diff $npm_config_instance network-config mainnet",
     "deploy:devdao": "npm run bw:build:devdao && cd ./build/treasury-devdao.near && bos components deploy",
     "dry-run:devdao": "npm run bw:build:devdao && npm run dry-run:instances --instance=treasury-devdao.near",
+    "deploy:treasury-factory": "npm run bw:build:treasury-factory && cd ./build/treasury-factory.near && bos components deploy",
+    "dry-run:treasury-factory": "npm run bw:build:treasury-factory && npm run dry-run:instances --instance=treasury-factory.near",
     "deploy:testing": "npm run bw:build:testing && cd ./build/treasury-testing.near && bos components deploy",
     "dry-run:testing": "npm run bw:build:testing && npm run dry-run:instances --instance=treasury-testing.near",
     "deploy:infinex": "npm run bw:build:infinex && cd ./build/treasury-infinex.near && bos components deploy",
