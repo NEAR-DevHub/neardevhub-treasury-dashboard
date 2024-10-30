@@ -355,9 +355,9 @@ return (
                 <div className="d-flex gap-3 warning px-3 py-2 rounded-3">
                   <i class="bi bi-exclamation-triangle h5"></i>
                   <div>
-                    Changing this setting will require {selectedVoteValue}{" "}
-                    vote(s) to approve requests. You will no longer be able to
-                    approve requests with {selectedGroup.requiredVotes} vote.
+                    Changing this setting will require {requiredVotes} vote(s)
+                    to approve requests. You will no longer be able to approve
+                    requests with {selectedGroup.requiredVotes} vote(s).
                   </div>
                 </div>
               </div>
@@ -479,18 +479,19 @@ return (
               {valueError && <div className="text-red"> {valueError}</div>}
             </div>
 
-            {isPercentageSelected && (
-              <div className="d-flex gap-3 warning px-3 py-2 rounded-3">
-                <i class="bi bi-exclamation-triangle h5"></i>
-                <div>
-                  <span className="fw-bolder">Heads up, Bro! </span> <br />
-                  If you choose a percentage-based threshold, the number of
-                  votes required could change if new members are added or
-                  existing members are removed. However, at least one vote will
-                  always be required, regardless of the percentage.
+            {isPercentageSelected &&
+              selectedGroup.threshold != selectedVoteValue && (
+                <div className="d-flex gap-3 warning px-3 py-2 rounded-3">
+                  <i class="bi bi-exclamation-triangle h5"></i>
+                  <div>
+                    <span className="fw-bolder">Heads up, Bro! </span> <br />
+                    If you choose a percentage-based threshold, the number of
+                    votes required could change if new members are added or
+                    existing members are removed. However, at least one vote
+                    will always be required, regardless of the percentage.
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
             {hasCreatePermission && (
               <div className="d-flex mt-2 gap-3 justify-content-end">
                 <Widget
@@ -522,7 +523,10 @@ return (
         </div>
       </div>
     ) : (
-      <div className="card rounded-3 d-flex justify-content-center align-items-center w-100 h-100">
+      <div
+        className="card rounded-3 d-flex justify-content-center align-items-center w-100 h-100"
+        style={{ minHeight: 300 }}
+      >
         <Widget
           src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"}
         />
