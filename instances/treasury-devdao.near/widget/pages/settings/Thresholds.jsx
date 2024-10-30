@@ -34,7 +34,7 @@ const hasCreatePermission = hasPermission(
 );
 
 useEffect(() => {
-  if (Array.isArray(rolesData) && rolesData.length && !selectedGroup) {
+  if (Array.isArray(rolesData) && rolesData.length) {
     setSelectedGroup(rolesData[0]);
   }
 }, [rolesData]);
@@ -60,6 +60,7 @@ function getLastProposalId() {
 }
 
 useEffect(() => {
+  setRolesData([]);
   getRoleWiseData(treasuryDaoID).then((resp) => {
     setRolesData(resp);
   });
@@ -76,11 +77,16 @@ function checkProposalStatus(proposalId) {
   Near.asyncView(treasuryDaoID, "get_proposal", {
     id: proposalId,
   }).then((result) => {
-    if (result.status === "Approved") {
-      setRefreshData(!refreshData);
+    if (Object.keys(result.votes).length === 1) {
+      if (result.status === "Approved") {
+        setRefreshData(!refreshData);
+      }
+      setToastStatus(result.status);
+      setVoteProposalId(proposalId);
+      setTxnCreated(false);
+    } else {
+      setTimeout(() => checkProposalStatus(proposalId), 1000);
     }
-    setToastStatus(result.status);
-    setVoteProposalId(proposalId);
   });
 }
 
