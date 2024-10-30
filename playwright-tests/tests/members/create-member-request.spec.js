@@ -87,132 +87,130 @@ test.describe("admin connected with meteor-wallet", function () {
     await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
     await submitBtn.click();
 
-    expect(await getTransactionModalObject(page)).toEqual({
-      proposal: {
-        description: "Change policy",
-        kind: {
-          ChangePolicy: {
-            policy: {
-              roles: [
-                {
-                  name: "Create Requests",
-                  kind: {
-                    Group: [
-                      "theori.near",
-                      "2dada969f3743a4a41cfdb1a6e39581c2844ce8fbe25948700c85c598090b3e1",
-                      "freski.near",
-                      "megha19.near",
-                      "thomasguntenaar.near",
-                      "petersalomonsen.near",
-                      "testingaccount.near",
-                    ],
-                  },
-                  permissions: [
-                    "call:AddProposal",
-                    "transfer:AddProposal",
-                    "config:Finalize",
+    const expectedProposalObject = {
+      description: "Change policy",
+      kind: {
+        ChangePolicy: {
+          policy: {
+            roles: [
+              {
+                name: "Create Requests",
+                kind: {
+                  Group: [
+                    "theori.near",
+                    "2dada969f3743a4a41cfdb1a6e39581c2844ce8fbe25948700c85c598090b3e1",
+                    "freski.near",
+                    "megha19.near",
+                    "thomasguntenaar.near",
+                    "petersalomonsen.near",
+                    "testingaccount.near",
                   ],
-                  vote_policy: {
-                    upgrade_remote: votePolicy,
-                    upgrade_self: votePolicy,
-                    call: votePolicy,
-                    bounty_done: votePolicy,
-                    policy: votePolicy,
-                    config: votePolicy,
-                    add_member_to_role: votePolicy,
-                    set_vote_token: votePolicy,
-                    vote: votePolicy,
-                    transfer: votePolicy,
-                    add_bounty: votePolicy,
-                    remove_member_from_role: votePolicy,
-                  },
                 },
-                {
-                  name: "Manage Members",
-                  kind: {
-                    Group: [
-                      "petersalomonsen.near",
-                      "thomasguntenaar.near",
-                      "theori.near",
-                      "megha19.near",
-                    ],
-                  },
-                  permissions: [
-                    "config:*",
-                    "policy:*",
-                    "add_member_to_role:*",
-                    "remove_member_from_role:*",
-                  ],
-                  vote_policy: {
-                    upgrade_remote: votePolicy,
-                    upgrade_self: votePolicy,
-                    call: votePolicy,
-                    bounty_done: votePolicy,
-                    policy: votePolicy,
-                    config: votePolicy,
-                    add_member_to_role: votePolicy,
-                    set_vote_token: votePolicy,
-                    vote: votePolicy,
-                    transfer: votePolicy,
-                    add_bounty: votePolicy,
-                    remove_member_from_role: votePolicy,
-                  },
+                permissions: [
+                  "call:AddProposal",
+                  "transfer:AddProposal",
+                  "config:Finalize",
+                ],
+                vote_policy: {
+                  upgrade_remote: votePolicy,
+                  upgrade_self: votePolicy,
+                  call: votePolicy,
+                  bounty_done: votePolicy,
+                  policy: votePolicy,
+                  config: votePolicy,
+                  add_member_to_role: votePolicy,
+                  set_vote_token: votePolicy,
+                  vote: votePolicy,
+                  transfer: votePolicy,
+                  add_bounty: votePolicy,
+                  remove_member_from_role: votePolicy,
                 },
-                {
-                  name: "Vote",
-                  kind: {
-                    Group: [
-                      "megha19.near",
-                      "petersalomonsen.near",
-                      "treasurytestuserledger.near",
-                      "tfdevhub.near",
-                      "theori.near",
-                      "thomasguntenaar.near",
-                      "test04.near",
-                      "test03.near",
-                      "test05.near",
-                    ],
-                  },
-                  permissions: [
-                    "*:VoteReject",
-                    "*:VoteApprove",
-                    "*:VoteRemove",
-                  ],
-                  vote_policy: {
-                    transfer: votePolicy,
-                    config: votePolicy,
-                    add_bounty: votePolicy,
-                    set_vote_token: votePolicy,
-                    upgrade_remote: votePolicy,
-                    add_member_to_role: votePolicy,
-                    upgrade_self: votePolicy,
-                    call: votePolicy,
-                    policy: votePolicy,
-                    remove_member_from_role: votePolicy,
-                    bounty_done: votePolicy,
-                    vote: votePolicy,
-                  },
-                },
-              ],
-              default_vote_policy: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [1, 2],
               },
-              proposal_bond: "0",
-              proposal_period: "604800000000000",
-              bounty_bond: "100000000000000000000000",
-              bounty_forgiveness_period: "604800000000000",
+              {
+                name: "Manage Members",
+                kind: {
+                  Group: [
+                    "petersalomonsen.near",
+                    "thomasguntenaar.near",
+                    "theori.near",
+                    "megha19.near",
+                  ],
+                },
+                permissions: [
+                  "config:*",
+                  "policy:*",
+                  "add_member_to_role:*",
+                  "remove_member_from_role:*",
+                ],
+                vote_policy: {
+                  upgrade_remote: votePolicy,
+                  upgrade_self: votePolicy,
+                  call: votePolicy,
+                  bounty_done: votePolicy,
+                  policy: votePolicy,
+                  config: votePolicy,
+                  add_member_to_role: votePolicy,
+                  set_vote_token: votePolicy,
+                  vote: votePolicy,
+                  transfer: votePolicy,
+                  add_bounty: votePolicy,
+                  remove_member_from_role: votePolicy,
+                },
+              },
+              {
+                name: "Vote",
+                kind: {
+                  Group: [
+                    "megha19.near",
+                    "petersalomonsen.near",
+                    "treasurytestuserledger.near",
+                    "tfdevhub.near",
+                    "theori.near",
+                    "thomasguntenaar.near",
+                    "test04.near",
+                    "test03.near",
+                    "test05.near",
+                  ],
+                },
+                permissions: ["*:VoteReject", "*:VoteApprove", "*:VoteRemove"],
+                vote_policy: {
+                  transfer: votePolicy,
+                  config: votePolicy,
+                  add_bounty: votePolicy,
+                  set_vote_token: votePolicy,
+                  upgrade_remote: votePolicy,
+                  add_member_to_role: votePolicy,
+                  upgrade_self: votePolicy,
+                  call: votePolicy,
+                  policy: votePolicy,
+                  remove_member_from_role: votePolicy,
+                  bounty_done: votePolicy,
+                  vote: votePolicy,
+                },
+              },
+            ],
+            default_vote_policy: {
+              weight_kind: "RoleWeight",
+              quorum: "0",
+              threshold: [1, 2],
             },
+            proposal_bond: "0",
+            proposal_period: "604800000000000",
+            bounty_bond: "100000000000000000000000",
+            bounty_forgiveness_period: "604800000000000",
           },
         },
       },
+    };
+    expect(await getTransactionModalObject(page)).toEqual({
+      proposal: expectedProposalObject,
     });
     await checkForVoteApproveTxn(page);
     let isTransactionCompleted = false;
     let retryCountAfterComplete = 0;
     let newProposalId;
-    await mockTransactionSubmitRPCResponses(page, 
+    await mockTransactionSubmitRPCResponses(
+      page,
       /**
        * Handles RPC responses for mock transaction submission.
        *
@@ -231,14 +229,14 @@ test.describe("admin connected with meteor-wallet", function () {
         last_receiver_id,
         requestPostData,
       }) => {
-        console.log('TXCOMMIT', transaction_completed);
+        console.log("TXCOMMIT", transaction_completed);
 
         if (
           isTransactionCompleted &&
           requestPostData.params &&
           requestPostData.params.method_name === "get_last_proposal_id"
         ) {
-          console.log('get last proposal id');
+          console.log("get last proposal id");
           const response = await route.fetch();
           const json = await response.json();
           let result = JSON.parse(
@@ -251,7 +249,7 @@ test.describe("admin connected with meteor-wallet", function () {
             retryCountAfterComplete++;
           }
 
-          console.log('latest proposal id', result);
+          console.log("latest proposal id", result);
           json.result.result = Array.from(
             new TextEncoder().encode(JSON.stringify(result))
           );
@@ -260,15 +258,20 @@ test.describe("admin connected with meteor-wallet", function () {
           isTransactionCompleted &&
           newProposalId &&
           requestPostData.params &&
-          requestPostData.params.method_name === "get_proposals"
+          requestPostData.params.method_name === "get_proposal"
         ) {
-          const response = await route.fetch();
+          requestPostData.params.args_base64 = btoa(JSON.stringify({ id: 1 }));
+          const response = await route.fetch({
+            postData: JSON.stringify(requestPostData),
+          });
           const json = await response.json();
           let result = JSON.parse(
             new TextDecoder().decode(new Uint8Array(json.result.result))
           );
 
-          console.log(result);
+          result = expectedProposalObject;
+          result.id = newProposalId;
+          result.status = "Approved";
 
           json.result.result = Array.from(
             new TextEncoder().encode(JSON.stringify(result))
@@ -277,10 +280,12 @@ test.describe("admin connected with meteor-wallet", function () {
         } else {
           await route.fallback();
         }
-    });
+      }
+    );
 
     await page.evaluate(async () => {
-      const selector = await document.querySelector("near-social-viewer").selectorPromise;
+      const selector = await document.querySelector("near-social-viewer")
+        .selectorPromise;
       console.log(selector);
       const wallet = await selector.wallet();
       wallet.signAndSendTransactions = async (tx) => {
@@ -289,19 +294,21 @@ test.describe("admin connected with meteor-wallet", function () {
     });
 
     await page.getByRole("button", { name: "Confirm" }).click();
-    
-    console.log('waiting for tx to complete');
-    while (!await page.evaluate(() => window.transaction_completed)) {
+
+    console.log("waiting for tx to complete");
+    while (!(await page.evaluate(() => window.transaction_completed))) {
       await page.waitForTimeout(100);
     }
-    console.log('tx completed');
+    console.log("tx completed");
     isTransactionCompleted = true;
 
-    while( !newProposalId) {
+    while (!newProposalId) {
       await page.waitForTimeout(100);
     }
 
-    await page.waitForTimeout(2000);
+    await expect(await page.locator(".offcanvas-body")).not.toBeVisible();
+    await page.getByText("Rows per Page").locator("select").selectOption("30");
+    // await page.getByText('testingaccount.near').toBeVisible();
   });
 });
 
