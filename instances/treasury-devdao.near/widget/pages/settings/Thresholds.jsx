@@ -10,6 +10,9 @@ const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
 
+if (typeof getRoleWiseData !== "function") {
+  return <></>;
+}
 const [selectedGroup, setSelectedGroup] = useState(null);
 const [selectedVoteOption, setSelectedVoteOption] = useState(null);
 const [selectedVoteValue, setSelectedVoteValue] = useState(null);
@@ -57,9 +60,9 @@ function getLastProposalId() {
 }
 
 useEffect(() => {
-  if (typeof getRoleWiseData === "function") {
-    getRoleWiseData(treasuryDaoID).then((resp) => setRolesData(resp));
-  }
+  getRoleWiseData(treasuryDaoID).then((resp) => {
+    setRolesData(resp);
+  });
 }, [refreshData]);
 
 useEffect(() => {
@@ -230,7 +233,7 @@ function updateDaoPolicy() {
             weight_kind: "RoleWeight",
             quorum: "0",
             threshold: isPercentageSelected
-              ? [selectedVoteValue, 100]
+              ? [parseInt(selectedVoteValue), 100]
               : selectedVoteValue,
           };
           return policy;
@@ -350,7 +353,7 @@ return (
             instance,
             heading: "Are you sure?",
             content: (
-              <div>
+              <div className="d-flex flex-column gap-2">
                 This action will result in significant changes to the system.
                 <div className="d-flex gap-3 warning px-3 py-2 rounded-3">
                   <i class="bi bi-exclamation-triangle h5"></i>
@@ -400,7 +403,10 @@ return (
           <div className="d-flex flex-column gap-1">
             {Array.isArray(selectedGroup.members) &&
               selectedGroup.members.map((member) => (
-                <div className="p-1 px-3">
+                <div
+                  className="p-1 px-3 text-truncate"
+                  style={{ width: "85%" }}
+                >
                   <Widget
                     src="mob.near/widget/Profile.ShortInlineBlock"
                     props={{ accountId: member, tooltip: true }}
@@ -438,9 +444,11 @@ return (
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
                 props={{
                   className: "flex-grow-1 p-0",
+                  key: `threshold-input`,
                   onChange: (e) => {
-                    setSelectedVoteValue(e.target.value);
-                    const number = parseInt(e.target.value);
+                    const value = e.target.value.replace(/[^0-9]/g, "");
+                    setSelectedVoteValue(value);
+                    const number = parseInt(value);
                     setValueError(null);
                     if (isPercentageSelected) {
                       if (number > 100)
