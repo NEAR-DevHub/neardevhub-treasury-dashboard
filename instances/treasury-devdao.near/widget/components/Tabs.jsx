@@ -38,7 +38,7 @@ function findTab(tabTitle) {
   return tabs.find((i) => normalize(i.title) === tabTitle);
 }
 
-const [currentTab, setCurrentTab] = useState(null);
+const [currentTab, setCurrentTab] = useState(selectedTab);
 
 useEffect(() => {
   const defaultTab = tabs[0].title;
