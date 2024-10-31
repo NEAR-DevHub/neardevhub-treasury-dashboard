@@ -28,4 +28,5 @@ return {
   showProposalSelection: true,
   showKYC: true,
   showReferenceProposal: true,
+  showThresholdConfiguration: false,
 };

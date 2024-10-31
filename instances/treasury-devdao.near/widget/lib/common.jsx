@@ -56,6 +56,31 @@ function getApproversAndThreshold(treasuryDaoID, kind) {
   };
 }
 
+function getRoleWiseData(treasuryDaoID) {
+  return Near.asyncView(treasuryDaoID, "get_policy", {}).then((daoPolicy) => {
+    const data = [];
+    (daoPolicy.roles ?? []).map((role) => {
+      const isRatio = Array.isArray(role?.vote_policy?.["vote"]?.threshold);
+      data.push({
+        roleName: role.name,
+        members: role.kind?.Group ?? [],
+        isRatio,
+        threshold: isRatio
+          ? role?.vote_policy?.["vote"]?.threshold[0]
+          : role?.vote_policy?.["vote"].threshold,
+        requiredVotes: isRatio
+          ? Math.floor(
+              (role?.vote_policy?.["vote"]?.threshold[0] /
+                role?.vote_policy?.["vote"]?.threshold[1]) *
+                role.kind?.Group.length
+            ) + 1
+          : role?.vote_policy?.["vote"]?.threshold ?? 1,
+      });
+    });
+    return data;
+  });
+}
+
 function getPolicyApproverGroup(treasuryDaoID) {
   const daoPolicy = Near.view(treasuryDaoID, "get_policy", {});
   const groupWithPermission = (daoPolicy.roles ?? []).filter((role) => {
@@ -365,4 +390,5 @@ return {
   getPermissionsText,
   isBosGateway,
   getNearBalances,
+  getRoleWiseData,
 };

@@ -22,6 +22,7 @@ return {
       href: "?page=settings",
     },
   ],
+  showThresholdConfiguration: true,
   treasuryDaoID: "${REPL_TREASURY}",
   proposalIndexerQueryName: "${REPL_PROPOSAL_FEED_INDEXER_QUERY_NAME}",
   proposalIndexerHasuraRole: "${REPL_X_HASURA_ROLE}",

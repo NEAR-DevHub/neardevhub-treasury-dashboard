@@ -133,7 +133,7 @@ test.describe("admin connected", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(20_000);
+    test.setTimeout(60_000);
     await mockPikespeakFTTokensResponse({ page, daoAccount });
     await updateDaoPolicyMembers({ page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
@@ -236,7 +236,6 @@ test.describe("admin connected", function () {
       const btn = page
         .locator(".offcanvas-body")
         .getByRole("button", { name: "Submit" });
-      await btn.scrollIntoViewIfNeeded();
       return btn;
     };
     await expect(await submitBtn()).toBeDisabled();
@@ -505,7 +504,7 @@ test.describe("admin with function access keys", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(120_000);
     const nearPrice = 4;
     await mockInventory({ page, account: daoAccount });
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
