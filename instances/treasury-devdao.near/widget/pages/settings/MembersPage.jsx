@@ -18,10 +18,7 @@ if (!instance || typeof getMembersAndPermissions !== "function") {
 
 const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 
-const refreshTable = Storage.get(
-  "REFRESH_MEMBERS_TABLE_DATA",
-  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.MembersEditor`
-);
+const [refreshTable, setRefreshTable] = useState(0);
 
 const [refetch, setRefetch] = useState(false);
 const policyApproverGroup = getPolicyApproverGroup(treasuryDaoID);
@@ -287,6 +284,9 @@ return (
             src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.MembersEditor`}
             props={{
               instance,
+              refreshMembersTableData: () => {
+                setRefreshTable(refreshTable + 1);
+              },
               onCloseCanvas: toggleEditor,
               availableRoles: (roles ?? []).map((i) => {
                 return { title: i, value: i };

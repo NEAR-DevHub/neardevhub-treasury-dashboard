@@ -1,6 +1,12 @@
-const { normalize } = VM.require(
-  "${REPL_DEVHUB}/widget/core.lib.stringUtils"
-) || { normalize: () => {} };
+const normalize = (text) =>
+  text
+    .replaceAll(/[- \.]/g, "_")
+    .replaceAll(/[^\w]+/g, "")
+    .replaceAll(/_+/g, "-")
+    .replace(/^-+/, "")
+    .replace(/-+$/, "")
+    .toLowerCase()
+    .trim("-");
 
 const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
