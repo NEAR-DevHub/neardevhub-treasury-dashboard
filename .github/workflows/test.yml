@@ -6,31 +6,11 @@ on:
       - main
 
 jobs:
-  sanity_checks:
-    name: Sanity Checks
+  install-dependencies:
+    name: Install Dependencies
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 20
-          cache: "npm"
-      - name: Install dependencies
-        run: npm ci
-      - name: Run code formatting check
-        run: npm run fmt:check
-      - name: Run linting
-        run: npm run lint
-
-  playwright-tests:
-    name: Playwright tests
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        target_account:
-          - dry_run_command: npx playwright test --project=treasury-dashboard
-          - dry_run_command: npx playwright test --project=infinex
-          - dry_run_command: npx playwright test --project=treasury-testing
+    outputs:
+      cache-path: ${{ steps.cache.outputs.cache-hit }}
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -42,9 +22,67 @@ jobs:
           npm ci
           npx playwright install-deps
           npx playwright install
+
+  sanity_checks:
+    name: Sanity Checks
+    runs-on: ubuntu-latest
+    needs: install-dependencies
+    steps:
+      - name: Run code formatting check
+        run: npm run fmt:check
+      - name: Run linting
+        run: npm run lint
+
+  playwright-tests-members:
+    name: Playwright tests members
+    runs-on: ubuntu-latest
+    needs: install-dependencies
+    strategy:
+      matrix:
+        target_account:
+          - test_command: npx playwright test --project=treasury-dashboard playwright-tests/tests/members
+          - test_command: npx playwright test --project=infinex playwright-tests/tests/members
+          - test_command: npx playwright test --project=treasury-testing playwright-tests/tests/members
+    steps:
       - name: Build project
         run: npm run build
       - name: Run tests
         run: |
-          ${{ matrix.target_account.dry_run_command }}
+          ${{ matrix.target_account.test_command }}
+        continue-on-error: false
+
+  playwright-tests-payments:
+    name: Playwright tests payments
+    runs-on: ubuntu-latest
+    needs: install-dependencies
+    strategy:
+      matrix:
+        target_account:
+          - test_command: npx playwright test --project=treasury-dashboard playwright-tests/tests/payments
+          - test_command: npx playwright test --project=infinex playwright-tests/tests/payments
+          - test_command: npx playwright test --project=treasury-testing playwright-tests/tests/payments
+    steps:
+      - name: Build project
+        run: npm run build
+      - name: Run tests
+        run: |
+          ${{ matrix.target_account.test_command }}
+        continue-on-error: false
+
+  playwright-tests-stake-delegation:
+    name: Playwright tests stake-delegation
+    runs-on: ubuntu-latest
+    needs: install-dependencies
+    strategy:
+      matrix:
+        target_account:
+          - test_command: npx playwright test --project=treasury-dashboard playwright-tests/tests/stake-delegation
+          - test_command: npx playwright test --project=infinex playwright-tests/tests/stake-delegation
+          - test_command: npx playwright test --project=treasury-testing playwright-tests/tests/stake-delegation
+    steps:
+      - name: Build project
+        run: npm run build
+      - name: Run tests
+        run: |
+          ${{ matrix.target_account.test_command }}
         continue-on-error: false
