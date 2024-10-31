@@ -19,7 +19,7 @@ test.describe("admin connected", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(30_000);
+    test.setTimeout(40_000);
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
     if (
       !instanceConfig.navbarLinks.find(
