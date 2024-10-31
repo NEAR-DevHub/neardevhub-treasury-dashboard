@@ -1,6 +1,12 @@
-const { normalize } = VM.require(
-  "${REPL_DEVHUB}/widget/core.lib.stringUtils"
-) || { normalize: () => {} };
+const normalize = (text) =>
+  text
+    .replaceAll(/[- \.]/g, "_")
+    .replaceAll(/[^\w]+/g, "")
+    .replaceAll(/_+/g, "-")
+    .replace(/^-+/, "")
+    .replace(/-+$/, "")
+    .toLowerCase()
+    .trim("-");
 
 const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
@@ -38,7 +44,7 @@ function findTab(tabTitle) {
   return tabs.find((i) => normalize(i.title) === tabTitle);
 }
 
-const [currentTab, setCurrentTab] = useState(selectedTab);
+const [currentTab, setCurrentTab] = useState(null);
 
 useEffect(() => {
   const defaultTab = tabs[0].title;
