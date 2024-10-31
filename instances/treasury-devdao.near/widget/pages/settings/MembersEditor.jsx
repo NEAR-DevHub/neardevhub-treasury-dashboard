@@ -37,7 +37,7 @@ useEffect(() => {
 }, []);
 
 function refreshData() {
-  Storage.set("REFRESH_MEMBERS_TABLE_DATA", Math.random());
+  props.refreshMembersTableData();
 }
 
 function getProposalData(id) {

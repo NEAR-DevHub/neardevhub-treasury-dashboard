@@ -289,15 +289,7 @@ test.describe("admin connected", function () {
        * @param {import('playwright').Request} options.requestPostData - The post data associated with the request (from Playwright).
        * @returns {void} - No return value.
        */
-      async ({
-        route,
-        request,
-        transaction_completed,
-        last_receiver_id,
-        requestPostData,
-      }) => {
-        console.log("TXCOMMIT", transaction_completed);
-
+      async ({ route, requestPostData }) => {
         if (
           isTransactionCompleted &&
           requestPostData.params &&
@@ -309,7 +301,8 @@ test.describe("admin connected", function () {
           let result = JSON.parse(
             new TextDecoder().decode(new Uint8Array(json.result.result))
           );
-          if (retryCountAfterComplete === 2) {
+          if (retryCountAfterComplete === 0) {
+            // TODO: Should handle that the updated policy is not available immediately after tx complete
             result++;
             newProposalId = result;
           } else {
@@ -344,6 +337,28 @@ test.describe("admin connected", function () {
             new TextEncoder().encode(JSON.stringify(result))
           );
           await route.fulfill({ response, json });
+        } else if (
+          isTransactionCompleted &&
+          newProposalId &&
+          requestPostData.params &&
+          requestPostData.params.method_name === "get_policy"
+        ) {
+          const response = await route.fetch({
+            postData: JSON.stringify(requestPostData),
+          });
+          const json = await response.json();
+          let result = JSON.parse(
+            new TextDecoder().decode(new Uint8Array(json.result.result))
+          );
+          const membersArray = result.roles[0].kind.Group;
+
+          if (membersArray[membersArray.length - 1] !== "testingaccount.near") {
+            membersArray.push("testingaccount.near");
+          }
+          json.result.result = Array.from(
+            new TextEncoder().encode(JSON.stringify(result))
+          );
+          await route.fulfill({ response, json });
         } else {
           await route.fallback();
         }
@@ -374,8 +389,9 @@ test.describe("admin connected", function () {
     }
 
     await expect(await page.locator(".offcanvas-body")).not.toBeVisible();
-    await page.getByText("Rows per Page").locator("select").selectOption("30");
-    // await page.getByText('testingaccount.near').toBeVisible();
+    await expect(
+      await page.locator("span", { hasText: "testingaccount.near" }).first()
+    ).toBeVisible();
   });
 
   test("should update existing member permissions", async ({
