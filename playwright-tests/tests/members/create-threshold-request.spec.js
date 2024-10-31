@@ -44,12 +44,12 @@ async function checkForVoteApproveTxn(page) {
 
 test.describe("without login", function () {
   test.beforeEach(async ({ page, instanceAccount }) => {
-    await updateDaoPolicyMembers({ page });
-    await page.goto(`/${instanceAccount}/widget/app?page=settings`);
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
     if (instanceConfig.showThresholdConfiguration === false) {
       test.skip();
     }
+    await updateDaoPolicyMembers({ page });
+    await page.goto(`/${instanceAccount}/widget/app?page=settings`);
     await page.getByText("Voting Thresholds").click({ timeout: 20_000 });
   });
 
@@ -100,13 +100,13 @@ test.describe("admin connected", function () {
   });
 
   test.beforeEach(async ({ page, instanceAccount }) => {
-    await updateLastProposalId(page);
-    await updateDaoPolicyMembers({ page });
-    await page.goto(`/${instanceAccount}/widget/app?page=settings`);
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
     if (instanceConfig.showThresholdConfiguration === false) {
       test.skip();
     }
+    await updateLastProposalId(page);
+    await updateDaoPolicyMembers({ page });
+    await page.goto(`/${instanceAccount}/widget/app?page=settings`);
     await page.getByText("Voting Thresholds").click({ timeout: 20_000 });
     await expect(page.getByText("Submit")).toBeVisible({
       timeout: 20_000,
