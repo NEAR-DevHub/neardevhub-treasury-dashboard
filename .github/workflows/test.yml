@@ -10,6 +10,7 @@ jobs:
     name: Sanity Checks
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version: 20
@@ -32,6 +33,7 @@ jobs:
           - test_command: npx playwright test --project=infinex playwright-tests/tests/members
           - test_command: npx playwright test --project=treasury-testing playwright-tests/tests/members
     steps:
+      - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version: 20
@@ -58,6 +60,7 @@ jobs:
           - test_command: npx playwright test --project=infinex playwright-tests/tests/payments
           - test_command: npx playwright test --project=treasury-testing playwright-tests/tests/payments
     steps:
+      - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version: 20
@@ -84,6 +87,7 @@ jobs:
           - test_command: npx playwright test --project=infinex playwright-tests/tests/stake-delegation
           - test_command: npx playwright test --project=treasury-testing playwright-tests/tests/stake-delegation
     steps:
+      - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version: 20
