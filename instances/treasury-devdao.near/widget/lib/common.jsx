@@ -309,7 +309,7 @@ function getPermissionsText(type) {
     case "Create requests":
       return "Enables users to initiate payment requests.";
     case "Manage Members": {
-      return "Allows users to control treasury adminis and their access levels.";
+      return "Allows users to control treasury admins and their access levels.";
     }
     case "Vote": {
       return "Allows users to approve or request proposed payment requests.";
