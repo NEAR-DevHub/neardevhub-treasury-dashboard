@@ -42,6 +42,11 @@ async function checkForVoteApproveTxn(page) {
   });
 }
 
+test.afterEach(async ({ page }, testInfo) => {
+  console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+});
+
 test.describe("without login", function () {
   test.beforeEach(async ({ page, instanceAccount }) => {
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });

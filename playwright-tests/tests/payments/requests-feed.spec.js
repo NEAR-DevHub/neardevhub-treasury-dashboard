@@ -7,6 +7,11 @@ import {
   TransferProposalData,
 } from "../../util/inventory.js";
 
+test.afterEach(async ({ page }, testInfo) => {
+  console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+});
+
 test.describe("payment requests feed", function () {
   test("expect expired request to be in history", async ({
     page,

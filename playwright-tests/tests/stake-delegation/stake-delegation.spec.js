@@ -19,7 +19,7 @@ test.describe("admin connected", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(40_000);
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
     if (
       !instanceConfig.navbarLinks.find(
@@ -37,9 +37,12 @@ test.describe("admin connected", function () {
     const createRequestButton = await page.getByText("Create Request");
     await createRequestButton.click();
     await page.waitForTimeout(1000);
-    const firstStakingPoolSelect = await page
-      .locator("button", { hasText: "select" })
-      .first();
+    const selectButtons = await page.locator("button", { hasText: "select" });
+    while (selectButtons.count() < 2 || !selectButtons.first().isEnabled()) {
+      await page.waitForTimeout(100);
+    }
+
+    const firstStakingPoolSelect = await selectButtons.first();
 
     await firstStakingPoolSelect.click();
     const stakingPoolAccount = await page
