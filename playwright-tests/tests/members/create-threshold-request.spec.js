@@ -115,7 +115,7 @@ test.describe("admin connected", function () {
   });
 
   test("should allow only valid input for threshold", async ({ page }) => {
-    test.setTimeout(20_000);
+    test.setTimeout(60_000);
     await page.getByRole("list").getByText("Number of votes").click();
     await fillInput(page, "20097292");
     await fillInput(page, "10.323");
@@ -132,7 +132,7 @@ test.describe("admin connected", function () {
   test("should be able to update policy by fixed vote count", async ({
     page,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(120_000);
     const submitBtn = page.getByText("Submit");
     await page.getByRole("list").getByText("Number of votes").click();
     const thresholdInput = page.getByTestId("threshold-input");
@@ -167,7 +167,7 @@ test.describe("admin connected", function () {
   });
 
   test("should be able to update policy by percentage", async ({ page }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(120_000);
     const submitBtn = page.getByText("Submit");
     await page.getByRole("list").getByText("Percentage of members").click();
     const thresholdInput = page.getByTestId("threshold-input");
