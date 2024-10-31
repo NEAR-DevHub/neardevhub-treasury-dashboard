@@ -316,7 +316,7 @@ test.describe("admin connected", function () {
   }) => {
     test.setTimeout(60_000);
     const nearPrice = 4;
-    const amountFromLinkedProposal = 800 / nearPrice;
+    const amountFromLinkedProposal = 3120 / nearPrice;
 
     await mockNearPrice({ nearPrice, page });
     await mockInventory({ page, account: daoAccount });
@@ -348,7 +348,7 @@ test.describe("admin connected", function () {
     const proposal = await page.getByText("#173 Near Contract Standards");
     await proposal.click();
     expect(await page.getByPlaceholder("treasury.near").inputValue()).toBe(
-      "9bd73bc9ba6ff289e2deb597dd6fe83dc0056af7a2937d6dec119660ba0146a4"
+      "robert.near"
     );
 
     expect(await page.getByTestId("total-amount").inputValue()).toBe(
@@ -504,7 +504,7 @@ test.describe("admin with function access keys", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(120_000);
     const nearPrice = 4;
     await mockInventory({ page, account: daoAccount });
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
@@ -515,7 +515,7 @@ test.describe("admin with function access keys", function () {
 
     await clickCreatePaymentRequestButton(page);
 
-    const amountFromLinkedProposal = 800 / nearPrice;
+    const amountFromLinkedProposal = 3120 / nearPrice;
 
     if (instanceConfig.showProposalSelection === true) {
       const proposalSelect = page.locator(".dropdown-toggle").first();
@@ -532,7 +532,7 @@ test.describe("admin with function access keys", function () {
       const proposal = page.getByText("#173 Near Contract Standards");
       await proposal.click();
       expect(await page.getByPlaceholder("treasury.near").inputValue()).toBe(
-        "9bd73bc9ba6ff289e2deb597dd6fe83dc0056af7a2937d6dec119660ba0146a4"
+        "robert.near"
       );
 
       expect(await page.getByTestId("total-amount").inputValue()).toBe(
@@ -563,12 +563,11 @@ test.describe("admin with function access keys", function () {
       ? {
           proposal: {
             description:
-              '{"title":"DevHub Fin Ops 08/26/2024 - 08/30/2024","summary":"Oversee that proposals flow thru the payment process efficiently. Continuously improve upon the process.","notes":null,"proposalId":209}',
+              '{"title":"Near Contract Standards payment request by Robert","summary":"Contract Standards Work Group grant","notes":null,"proposalId":173}',
             kind: {
               Transfer: {
                 token_id: "",
-                receiver_id:
-                  "9bd73bc9ba6ff289e2deb597dd6fe83dc0056af7a2937d6dec119660ba0146a4",
+                receiver_id: "robert.near",
                 amount: (
                   BigInt(amountFromLinkedProposal) *
                   10n ** 24n

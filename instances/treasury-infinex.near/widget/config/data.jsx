@@ -18,6 +18,7 @@ return {
   showProposalSelection: false,
   showKYC: false,
   showReferenceProposal: false,
+  showThresholdConfiguration: false,
   logo: (
     <svg
       aria-hidden="true"
