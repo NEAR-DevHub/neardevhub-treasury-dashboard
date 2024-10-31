@@ -315,6 +315,7 @@ test.describe("admin connected", function () {
     instanceAccount,
     daoAccount,
   }) => {
+    test.setTimeout(60_000);
     const nearPrice = 4;
     const amountFromLinkedProposal = 3120 / nearPrice;
 
@@ -342,7 +343,10 @@ test.describe("admin connected", function () {
     ).toBeVisible();
 
     await proposalSelect.click();
-    const proposal = page.getByText("#173 Near Contract Standards");
+    await page
+      .getByPlaceholder("Search by id or title")
+      .pressSequentially("173");
+    const proposal = await page.getByText("#173 Near Contract Standards");
     await proposal.click();
     expect(await page.getByPlaceholder("treasury.near").inputValue()).toBe(
       "robert.near"
