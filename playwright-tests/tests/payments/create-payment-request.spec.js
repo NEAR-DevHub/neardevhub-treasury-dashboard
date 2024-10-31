@@ -505,7 +505,7 @@ test.describe("admin with function access keys", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(120_000);
+    test.setTimeout(60_000);
     const nearPrice = 4;
     await mockInventory({ page, account: daoAccount });
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
@@ -527,6 +527,9 @@ test.describe("admin with function access keys", function () {
       ).toBeVisible();
 
       await proposalSelect.click();
+      await page
+        .getByPlaceholder("Search by id or title")
+        .pressSequentially("173");
       const proposal = page.getByText("#173 Near Contract Standards");
       await proposal.click();
       expect(await page.getByPlaceholder("treasury.near").inputValue()).toBe(
