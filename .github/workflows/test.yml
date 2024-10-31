@@ -17,6 +17,7 @@ jobs:
           cache: "npm"
       - name: Install dependencies
         run: |
+          pwd
           npm ci
           npx playwright install-deps
           npx playwright install
