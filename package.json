@@ -81,8 +81,5 @@
   "bugs": {
     "url": "https://github.com/NEAR-DevHub/neardevhub-treasury-dashboard.git"
   },
-  "homepage": "https://github.com/NEAR-DevHub/neardevhub-treasury-dashboard.git#readme",
-  "dependencies": {
-    "bos-cli": "^0.3.17"
-  }
+  "homepage": "https://github.com/NEAR-DevHub/neardevhub-treasury-dashboard.git#readme"
 }
