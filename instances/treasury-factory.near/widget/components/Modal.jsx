@@ -60,6 +60,14 @@ const ModalHeader = styled.div`
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
+
+  h5 {
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 29.05px;
+    letter-spacing: -0.02em;
+    text-align: left;
+  }
 `;
 
 const ModalContent = styled.div`

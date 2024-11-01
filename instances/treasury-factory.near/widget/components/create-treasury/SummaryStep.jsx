@@ -52,10 +52,53 @@ const Item = styled.div`
   }
 `;
 
+const WidgetItemLink = styled.div`
+  border-bottom: 1px solid #e2e6ec;
+  padding: 10px 0;
+
+  &:last-child {
+    border: 0;
+  }
+
+  small {
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 15px;
+    color: #b3b3b3;
+  }
+
+  span {
+    font-size: 14px;
+  }
+
+  a {
+    color: #060606;
+  }
+`;
+
 function createDao() {
   // Near.call(...)
   setShowCongratsModal(true);
 }
+
+const CongratsItem = ({ title, link }) => (
+  <WidgetItemLink className="d-flex flex-column gap-2">
+    <small>{title}</small>
+    <div className="d-flex justify-content-between align-items-center">
+      <span>{link}</span>
+      <div className="d-flex gap-2 align-items-center">
+        <i
+          role="button"
+          className="bi bi-copy"
+          onClick={() => clipboard.writeText(link)}
+        />
+        <a target="_blank" href={link}>
+          <i className="bi bi-box-arrow-up-right" />
+        </a>
+      </div>
+    </div>
+  </WidgetItemLink>
+);
 
 const SummaryListItem = ({ title, value, info }) => (
   <li className="d-flex align-items-center justify-content-between w-100">
@@ -208,11 +251,25 @@ return (
           isOpen: true,
           heading: "Congrats! Your Treasury is ready",
           content: (
-            <div>
+            <div className="d-flex flex-column gap-3">
               <p>
                 You can access and manage your treasury using any of these
                 gateways.
               </p>
+              <div>
+                <CongratsItem
+                  title="near.org"
+                  link={`https://near.org/${formFields.sputnikAccountName}.sputnik-dao.near/widget/app`}
+                />
+                <CongratsItem
+                  title="near.social"
+                  link={`https://social.near/${formFields.sputnikAccountName}.sputnik-dao.near/widget/app`}
+                />
+                <CongratsItem
+                  title="web4"
+                  link={`https://${formFields.sputnikAccountName}.sputnik-dao.near.app`}
+                />
+              </div>
             </div>
           ),
           onClose: () => setShowCongratsModal(false),
