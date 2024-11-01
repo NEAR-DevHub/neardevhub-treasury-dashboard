@@ -42,7 +42,6 @@ const Container = styled.div`
   justify-content: center;
   align-items: center;
   color: #1b1b18;
-  font-family: Inter;
 `;
 
 const PageWrapper = styled.div`

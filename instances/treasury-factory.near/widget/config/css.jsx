@@ -9,8 +9,6 @@ const Theme = styled.div`
   --light-grey-color: rgba(185, 185, 185, 1);
   --dark-grey-color: rgba(103, 103, 103, 1);
 
-  font-family: Inter;
-
   .btn {
     display: flex;
     align-items: center;
