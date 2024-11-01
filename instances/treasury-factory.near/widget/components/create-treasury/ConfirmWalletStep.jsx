@@ -30,7 +30,7 @@ const Section = styled.div`
   }
 `;
 
-const ListItem = ({ title, value, info }) => (
+const SummaryListItem = ({ title, value, info }) => (
   <li className="d-flex align-items-center justify-content-between w-100">
     <div>
       {title}
@@ -75,18 +75,18 @@ return (
       <div className="mt-3">
         <h4>Estimated one-time costs:</h4>
         <ul>
-          <ListItem
+          <SummaryListItem
             title="SputnikDAO"
             value={6}
             info="Estimated one-time costs to store info in SputnikDAO"
           />
-          <ListItem
+          <SummaryListItem
             title="Frontend BOS Widget Hosting"
             value={6}
             info="Estimated one-time costs to store info in BOS"
           />
           <b>
-            <ListItem title="Total" value={REQUIRED_BALANCE} />
+            <SummaryListItem title="Total" value={REQUIRED_BALANCE} />
           </b>
         </ul>
       </div>
