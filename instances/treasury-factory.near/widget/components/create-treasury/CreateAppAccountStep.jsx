@@ -1,5 +1,7 @@
 const { formFields, setFormFields } = props;
 
+const [alertMsg, setAlertMsg] = useState(null);
+
 return (
   <>
     <div>
@@ -11,17 +13,30 @@ return (
       </p>
     </div>
 
-    <input
-      type="text"
-      placeholder="app-account.near"
-      value={formFields.accountName}
-      onChange={(e) =>
-        setFormFields({
-          ...formFields,
-          accountName: e.target.value,
-        })
-      }
+    <Widget
+      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.NewAccountInput`}
+      props={{
+        alertMsg,
+        setAlertMsg,
+        defaultValue: formFields.accountName,
+        postfix: ".near",
+        onChange: (v) =>
+          setFormFields({
+            ...formFields,
+            accountName: v,
+          }),
+      }}
     />
+
+    {alertMsg && (
+      <Widget
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Info`}
+        props={{
+          type: "alert",
+          text: alertMsg,
+        }}
+      />
+    )}
 
     <div className="d-flex gap-2">
       <Link
@@ -32,13 +47,9 @@ return (
       </Link>
       <Link
         className={`btn btn-primary w-100 ${
-          formFields.accountName ? "" : "disabled"
+          !alertMsg && formFields.accountName ? "" : "disabled"
         }`}
-        href={
-          formFields.accountName
-            ? `/${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=2`
-            : ""
-        }
+        href={`/${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=2`}
       >
         Next
       </Link>

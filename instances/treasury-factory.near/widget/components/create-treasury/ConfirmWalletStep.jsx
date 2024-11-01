@@ -1,3 +1,18 @@
+const { getNearBalances } = VM.require(
+  "${REPL_DEVDAO_ACCOUNT}/widget/lib.common"
+);
+
+const baseUrl = "https://api.pikespeak.ai";
+const [balance, setBalance] = useState(null);
+const REQUIRED_BALANCE = 12;
+
+const getBalance = () => {
+  const balance = getNearBalances(context.accountId);
+  setBalance(parseFloat(balance.availableParsed));
+};
+
+getBalance();
+
 const Section = styled.div`
   ul {
     margin: 0;
@@ -71,13 +86,27 @@ return (
             info="Estimated one-time costs to store info in BOS"
           />
           <b>
-            <ListItem title="Total" value={12} />
+            <ListItem title="Total" value={REQUIRED_BALANCE} />
           </b>
         </ul>
       </div>
+      {balance < REQUIRED_BALANCE && (
+        <Widget
+          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Info`}
+          props={{
+            type: "alert",
+            text: `Your ${balance} balance is insufficient to cover the treasury creation costs. You'll need at least ${
+              REQUIRED_BALANCE - balance.toFixed(2)
+            } NEAR to continue.
+    `,
+          }}
+        />
+      )}
     </Section>
     <Link
-      className="btn btn-primary w-100"
+      className={`btn btn-primary w-100 ${
+        balance < REQUIRED_BALANCE ? "disabled" : ""
+      }`}
       href={`/${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=1`}
     >
       Yes, use this wallet and continue

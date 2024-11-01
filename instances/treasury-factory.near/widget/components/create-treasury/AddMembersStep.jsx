@@ -31,7 +31,7 @@ const [members, setMembers] = useState(
   formFields.members ?? [
     {
       accountId: context.accountId,
-      permissions: [PERMISSIONS.create, PERMISSIONS.edit, PERMISSIONS.vote],
+      permissions: [PERMISSIONS.create],
     },
   ]
 );

@@ -1,6 +1,14 @@
 const { formFields, setFormFields } = props;
 
-const LEARN_MORE_LINK = "";
+const LEARN_MORE_LINK = "https://github.com/near-daos/sputnik-dao-contract";
+
+const [alertMsg, setAlertMsg] = useState(null);
+
+if (!formFields.sputnikAccountName)
+  setFormFields({
+    ...formFields,
+    sputnikAccountName: formFields.accountName,
+  });
 
 return (
   <>
@@ -13,17 +21,31 @@ return (
     </div>
 
     <div className="d-flex flex-column gap-3">
-      <input
-        type="text"
-        placeholder="sputnik-dao-account.near"
-        value={formFields.sputnikAccountName}
-        onChange={(e) =>
-          setFormFields({
-            ...formFields,
-            sputnikAccountName: e.target.value,
-          })
-        }
+      <Widget
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.NewAccountInput`}
+        props={{
+          alertMsg,
+          setAlertMsg,
+          defaultValue: formFields.sputnikAccountName,
+          postfix: ".sputnik-dao.near",
+          onChange: (v) =>
+            setFormFields({
+              ...formFields,
+              sputnikAccountName: v,
+            }),
+        }}
       />
+
+      {alertMsg && (
+        <Widget
+          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Info`}
+          props={{
+            type: "alert",
+            text: alertMsg,
+          }}
+        />
+      )}
+
       <Widget
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Info`}
         props={{
@@ -51,13 +73,9 @@ return (
       </Link>
       <Link
         className={`btn btn-primary w-100 ${
-          formFields.sputnikAccountName ? "" : "disabled"
+          !alertMsg && formFields.sputnikAccountName ? "" : "disabled"
         }`}
-        href={
-          formFields.sputnikAccountName
-            ? `/${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=3`
-            : ""
-        }
+        href={`/${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=3`}
       >
         Next
       </Link>

@@ -79,10 +79,12 @@ return (
         <div className="d-flex justify-content-between align-items-center">
           <div>
             <label>Applicatiion Account name</label>
-            <div>{formFields.accountName ?? "No set"}</div>
+            <div>
+              {formFields.accountName ? `${formFields.accountName}.near` : "-"}
+            </div>
           </div>
           <Link
-            href={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=1`}
+            href={`/${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=1`}
           >
             <i className="bi bi-pencil" />
           </Link>
@@ -93,10 +95,14 @@ return (
         <div className="d-flex justify-content-between align-items-center">
           <div>
             <label>Sputnik Account Name</label>
-            <div>{formFields.sputnikAccountName ?? "No set"}</div>
+            <div>
+              {formFields.sputnikAccountName
+                ? `${formFields.sputnikAccountName}.sputnik-dao.near`
+                : "-"}
+            </div>
           </div>
           <Link
-            href={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=2`}
+            href={`/${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=2`}
           >
             <i className="bi bi-pencil" />
           </Link>
@@ -108,7 +114,7 @@ return (
       <div className="d-flex justify-content-between align-items-center">
         <h4>Members and permissions</h4>
         <Link
-          href={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=3`}
+          href={`/${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=3`}
         >
           <i className="bi bi-pencil" />
         </Link>
