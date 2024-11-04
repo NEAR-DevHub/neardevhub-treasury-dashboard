@@ -29,6 +29,8 @@ const [nearStakedTokens, setNearStakedTokens] = useState(null);
 const [amount, setAmount] = useState(null);
 const [validatorAccount, setValidatorAccount] = useState(null);
 const [daoPolicy, setDaoPolicy] = useState(null);
+const [validatorError, setValidatorError] = useState(null);
+const [amountError, setAmountError] = useState(null);
 
 function getLastProposalId() {
   return Near.asyncView(treasuryDaoID, "get_last_proposal_id").then(
@@ -222,6 +224,51 @@ function onSubmitClick() {
   });
 }
 
+const [displayCount, setDisplayCount] = useState(10); // Start with a small number of items
+
+const loadMoreItems = () => {
+  setDisplayCount((prevCount) => prevCount + 10); // Increment display count
+};
+
+const renderedItems = (validators ?? [])
+  .slice(0, displayCount)
+  .map((validator) => {
+    const { pool_id, fee } = validator;
+    const isSelected = validatorAccount === pool_id;
+    return (
+      <div
+        key={pool_id}
+        className="d-flex gap-2 align-items-center justify-content-between border-bottom py-2"
+      >
+        <div className="flex-1 text-truncate">
+          <div className="text-sm">
+            <span className="text-muted">{fee}% Fee </span>
+            <span className="text-green">Active</span>
+          </div>
+          <div className="fw-bold"> {pool_id} </div>
+        </div>
+        <div>
+          <button
+            className={
+              "rounded-2 border border-1 " +
+              (isSelected ? "selected-btn " : "white-btn")
+            }
+            onClick={() => setValidatorAccount(pool_id)}
+            disabled={isSelected}
+          >
+            {isSelected ? (
+              <div className="d-flex gap-2 align-items-center">
+                <i className="bi bi-check2 h6 mb-0"></i>Selected
+              </div>
+            ) : (
+              "Select"
+            )}
+          </button>
+        </div>
+      </div>
+    );
+  });
+
 const loading = (
   <div className="w-100 h-100 d-flex align-items-center justify-content-center">
     <Widget src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"} />
@@ -232,8 +279,25 @@ if (!Array.isArray(validators) || validators.length === 0) {
   return loading;
 }
 
-const nearAvailableBalance =
-  nearBalances.availableParsed - (nearStakedTokens ?? 0);
+function checkValidatorAccount(str) {
+  if (
+    !validatorAccount ||
+    validatorAccount.endsWith("poolv1.near") ||
+    validatorAccount.endsWith("pool.near")
+  ) {
+    return setValidatorError(null);
+  }
+
+  setValidatorError("Please enter a valid validator pool account.");
+}
+
+const nearAvailableBalance = Big(
+  nearBalances.availableParsed - (nearStakedTokens ?? 0) ?? "0"
+).toFixed(4);
+
+useEffect(() => {
+  checkValidatorAccount();
+}, [validatorAccount]);
 
 return (
   <Container>
@@ -292,47 +356,22 @@ return (
           props={{
             className: "flex-grow-1",
             key: `validator`,
-            onChange: (e) => setValidatorAccount(e.target.value),
+            onBlur: (e) => setValidatorAccount(e.target.value),
             placeholder: "validator-name.near",
             value: validatorAccount,
+            error: validatorError,
           }}
         />
         <div className="validators-list mt-2 rounded-3">
-          <div className="d-flex flex-column gap-2">
-            {validators.map((validator) => {
-              const { pool_id, fee } = validator;
-              const isSelected = validatorAccount === pool_id;
-              return (
-                <div className="d-flex gap-2 align-items-center justify-content-between border-bottom py-2">
-                  <div className="flex-1 text-truncate">
-                    <div className="text-sm">
-                      <span className="text-muted">{fee}% Fee </span>
-                      <span className="text-green">Active</span>
-                    </div>
-                    <div className="fw-bold"> {pool_id} </div>
-                  </div>
-                  <div>
-                    <button
-                      className={
-                        "rounded-2 border border-1 " +
-                        (isSelected ? "selected-btn " : "white-btn")
-                      }
-                      onClick={() => setValidatorAccount(pool_id)}
-                      disabled={isSelected}
-                    >
-                      {isSelected ? (
-                        <div className="d-flex gap-2 align-items-center">
-                          <i class="bi bi-check2 h6 mb-0"></i>Selected
-                        </div>
-                      ) : (
-                        "Select"
-                      )}
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <InfiniteScroll
+            pageStart={0}
+            loadMore={loadMoreItems}
+            hasMore={displayCount < validators.length}
+            loader={loading}
+            useWindow={false}
+          >
+            <div className="d-flex flex-column gap-2">{renderedItems}</div>
+          </InfiniteScroll>
         </div>
       </div>
       <div className="d-flex flex-column gap-1">
@@ -354,9 +393,18 @@ return (
           props={{
             className: "flex-grow-1",
             key: `total-amount`,
-            onChange: (e) => setAmount(e.target.value),
+            onChange: (e) => {
+              setAmount(e.target.value);
+              const parsedAmount = parseFloat(e.target.value);
+              if (parsedAmount > parseFloat(nearAvailableBalance)) {
+                setAmountError("Your account doesn't have sufficient balance.");
+              } else {
+                setAmountError(null);
+              }
+            },
             placeholder: "Enter amount",
             value: amount,
+            error: amountError,
             inputProps: {
               type: "number",
               min: "0",
@@ -401,7 +449,8 @@ return (
           src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
           props={{
             classNames: { root: "theme-btn" },
-            disabled: !validatorAccount || !amount,
+            disabled:
+              !validatorAccount || !amount || amountError || validatorError,
             label: "Submit",
             onClick: onSubmitClick,
             loading: isTxnCreated,

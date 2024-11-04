@@ -5,7 +5,7 @@ onChange = onChange || (() => {});
 const columnsVisibility = JSON.parse(
   Storage.get(
     "COLUMNS_VISIBILITY",
-    `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.SettingsDropdown`
+    `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.SettingsDropdown`
   ) ?? "[]"
 );
 
