@@ -5,7 +5,7 @@ const [value, setValue] = useState(defaultValue ?? "");
 const checkAccountAvailable = async (accountId) => {
   if (accountId.length === 0) return;
 
-  asyncFetch(`https://rpc.mainnet.near.org`, {
+  asyncFetch(`${REPL_RPC_URL}`, {
     method: "POST",
     headers: {
       Accept: "application/json",

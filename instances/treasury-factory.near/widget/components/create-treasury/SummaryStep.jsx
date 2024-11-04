@@ -76,8 +76,84 @@ const WidgetItemLink = styled.div`
   }
 `;
 
+const PERMISSIONS = {
+  create: "Create",
+  edit: "Edit",
+  vote: "Vote",
+};
+
+function filterMemberByPermission(permission) {
+  return formFields.members
+    .filter((acc) => acc.permissions.includes(permission))
+    .map((acc) => acc.accountId);
+}
+
 function createDao() {
-  // Near.call(...)
+  const createDaoConfig = {
+    config: {
+      name: formFields.sputnikAccountName,
+      purpose: `creating ${formFields.sputnikAccountName} treasury`,
+      metadata: "",
+    },
+    policy: {
+      roles: [
+        {
+          kind: {
+            Group: filterMemberByPermission(PERMISSIONS.create),
+          },
+          name: "Create Requests",
+          permissions: [
+            "call:AddProposal",
+            "transfer:AddProposal",
+            "config:Finalize",
+          ],
+          vote_policy: {},
+        },
+        {
+          kind: {
+            Group: filterMemberByPermission(PERMISSIONS.edit),
+          },
+          name: "Manage Members",
+          permissions: [
+            "config:*",
+            "policy:*",
+            "add_member_to_role:*",
+            "remove_member_from_role:*",
+          ],
+          vote_policy: {},
+        },
+        {
+          kind: {
+            Group: filterMemberByPermission(PERMISSIONS.vote),
+          },
+          name: "Vote",
+          permissions: ["*:VoteReject", "*:VoteApprove", "*:VoteRemove"],
+          vote_policy: {},
+        },
+      ],
+      default_vote_policy: {
+        weight_kind: "RoleWeight",
+        quorum: "0",
+        threshold: [1, 2],
+      },
+      proposal_bond: "100000000000000000000000",
+      proposal_period: "604800000000000",
+      bounty_bond: "100000000000000000000000",
+      bounty_forgiveness_period: "604800000000000",
+    },
+  };
+
+  Near.call([{
+    contractName: `${REPL_SPUTNIK_ACCOUNT}`,
+    methodName: "create",
+    args: {
+      name: formFields.sputnikAccountName,
+      args: btoa(JSON.stringify(createDaoConfig)),
+    },
+    gas: 300000000000000,
+    deposit: Big(6).mul(Big(10).pow(24)).toFixed(),
+  }, ]);
+
   setShowCongratsModal(true);
 }
 
