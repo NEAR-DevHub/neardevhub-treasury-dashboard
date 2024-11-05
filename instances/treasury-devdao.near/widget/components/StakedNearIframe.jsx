@@ -5,6 +5,8 @@ if (!instance) {
 
 const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 
+const setNearStakedTotalTokens = props.setNearStakedTotalTokens || (() => {});
+const setNearUnstakedTokens = props.setNearUnstakedTokens || (() => {});
 const setNearStakedTokens = props.setNearStakedTokens || (() => {});
 const setPoolWithBalance = props.setPoolWithBalance || (() => {});
 
@@ -15,7 +17,7 @@ const code = `
       <script>
         const archiveNodeUrl = "https://archival-rpc.mainnet.near.org";
         const treasuryDaoID = "${treasuryDaoID}"
-        async function getAccountBalance(stakingpool_id, account_id) {
+        async function getAccountStakedBalance(stakingpool_id, account_id) {
         return await fetch(archiveNodeUrl, {
           method: "POST",
           headers: {
@@ -29,7 +31,7 @@ const code = `
               request_type: "call_function",
               finality: 'final',
               account_id: stakingpool_id,
-              method_name: "get_account_total_balance",
+              method_name: "get_account_staked_balance",
               args_base64: btoa(
                 JSON.stringify({
                   account_id: account_id,
@@ -48,14 +50,50 @@ const code = `
             )
           );
       }
+
+      async function getAccountUnStakedBalance(stakingpool_id, account_id) {
+        return await fetch(archiveNodeUrl, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            id: "dontcare",
+            method: "query",
+            params: {
+              request_type: "call_function",
+              finality: 'final',
+              account_id: stakingpool_id,
+              method_name: "get_account_unstaked_balance",
+              args_base64: btoa(
+                JSON.stringify({
+                  account_id: account_id,
+                })
+              ),
+            },
+          }),
+        })
+          .then((r) => r.json())
+          .then((r) =>
+            parseInt(
+              r.result.result
+                .map((c) => String.fromCharCode(c))
+                .join("")
+                .replace(/\"/g, "")
+            )
+          );
+      }
+
       async function getStakingPools() {
         return await fetch("https://api.fastnear.com/v1/account/" + treasuryDaoID + "/staking").then(r => r.json())
       }
       window.onload = async () => {
         const poolResp = await getStakingPools();
         const pools = await Promise.all(poolResp.pools.map(async (i) => {
-          const balance = await getAccountBalance(i.pool_id, poolResp.account_id);
-          return {pool: i.pool_id, balance};
+          const stakedBalance = await getAccountStakedBalance(i.pool_id, poolResp.account_id);
+          const unStakedBalance = await getAccountUnStakedBalance(i.pool_id, poolResp.account_id);
+          return { pool: i.pool_id, stakedBalance, unStakedBalance };
         }));
         window.parent.postMessage({ handler: "stakedNearPool", pools }, "*");
       };
@@ -74,12 +112,20 @@ const iframe = (
       switch (e.handler) {
         case "stakedNearPool":
           const pools = e.pools;
-          let sum = new Big(0);
+          let stakedBalance = new Big(0);
+          let unstakedBalance = new Big(0);
           pools.forEach((pool) => {
-            let bigNum = new Big(pool.balance).div(1e24);
-            sum = sum.plus(bigNum);
+            stakedBalance = stakedBalance.plus(
+              new Big(pool.stakedBalance).div(1e24)
+            );
+            unstakedBalance = unstakedBalance.plus(
+              new Big(pool.unStakedBalance).div(1e24)
+            );
           });
-          setNearStakedTokens(sum.toFixed() ?? "0");
+          const totalBalance = stakedBalance.plus(unstakedBalance);
+          setNearStakedTotalTokens(totalBalance.toFixed() ?? "0");
+          setNearUnstakedTokens(unstakedBalance.toFixed() ?? "0");
+          setNearStakedTokens(stakedBalance.toFixed() ?? "0");
           setPoolWithBalance(pools);
           break;
       }

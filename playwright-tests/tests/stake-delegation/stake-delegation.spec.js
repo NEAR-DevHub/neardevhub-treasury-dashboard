@@ -19,7 +19,7 @@ test.afterEach(async ({ page }, testInfo) => {
   await page.unrouteAll({ behavior: "ignoreErrors" });
 });
 
-const stakedNear = "1.0027";
+const stakedNear = "0.3027";
 const stakedPoolAccount = "astro-stakers.poolv1.near";
 
 async function mockStakeProposals({ page }) {
@@ -46,21 +46,30 @@ async function mockStakeProposals({ page }) {
 
 async function mockStakedPoolBalances({ page }) {
   await page.route(`https://archival-rpc.mainnet.near.org/`, async (route) => {
-    const json = {
-      jsonrpc: "2.0",
-      result: {
-        block_hash: "He1auHwjAwm96aHYdXifZDVzcGAGkuGU9Ko23QVVgm2R",
-        block_height: 132005605,
-        logs: [],
-        result: [
-          34, 49, 48, 48, 50, 54, 53, 51, 54, 56, 51, 52, 51, 53, 51, 51, 57,
-          51, 50, 52, 51, 51, 53, 55, 51, 54, 34,
-        ],
-      },
-      id: "dontcare",
-    };
-
-    await route.fulfill({ json });
+    const request = await route.request();
+    const requestPostData = request.postDataJSON();
+    if (
+      requestPostData.params &&
+      requestPostData.params.request_type === "call_function" &&
+      requestPostData.params.method_name === "get_account_staked_balance"
+    ) {
+      const json = {
+        jsonrpc: "2.0",
+        result: {
+          block_hash: "GXEuJYXvoXoiDhtDJP8EiPXesQbQuwDSWadYzy2JAstV",
+          block_height: 132031112,
+          logs: [],
+          result: [
+            34, 51, 48, 50, 54, 53, 51, 54, 56, 51, 52, 51, 53, 51, 51, 57, 51,
+            50, 52, 51, 51, 53, 55, 51, 50, 34,
+          ],
+        },
+        id: "dontcare",
+      };
+      await route.fulfill({ json });
+    } else {
+      await route.continue();
+    }
   });
 }
 
@@ -118,7 +127,7 @@ async function openUnstakeForm({ page }) {
   const loader = page.getByRole("img", { name: "loader" });
   await expect(loader).toBeVisible();
   await page.waitForTimeout(10_000);
-  await expect(loader).toBeHidden();
+  await expect(loader).toBeHidden({ timeout: 20_000 });
 }
 
 async function checkForValidatorAccount({ page, callbackClickOnSelect }) {
@@ -277,7 +286,7 @@ test.describe("Have valid staked requests and sufficient token balance", functio
               actions: [
                 {
                   method_name: "unstake",
-                  args: "eyJhbW91bnQiOiIxMDAyNzAwMDAwMDAwMDAwMDAwMDAwMDAwIn0=",
+                  args: "eyJhbW91bnQiOiIzMDI3MDAwMDAwMDAwMDAwMDAwMDAwMDAifQ==",
                   deposit: "0",
                   gas: "200000000000000",
                 },

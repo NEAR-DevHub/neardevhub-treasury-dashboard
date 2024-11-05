@@ -25,6 +25,7 @@ const [isTxnCreated, setTxnCreated] = useState(false);
 const [lastProposalId, setLastProposalId] = useState(null);
 const [notes, setNotes] = useState(null);
 const [showCancelModal, setShowCancelModal] = useState(false);
+const [nearStakedTotalTokens, setNearStakedTotalTokens] = useState(null);
 const [nearStakedTokens, setNearStakedTokens] = useState(null);
 const [amount, setAmount] = useState(null);
 const [validatorAccount, setValidatorAccount] = useState(null);
@@ -292,7 +293,7 @@ function checkValidatorAccount(str) {
 }
 
 const nearAvailableBalance = Big(
-  nearBalances.availableParsed - (nearStakedTokens ?? 0) ?? "0"
+  nearBalances.availableParsed - (nearStakedTotalTokens ?? 0) ?? "0"
 ).toFixed(4);
 
 useEffect(() => {
@@ -332,6 +333,8 @@ return (
       props={{
         instance,
         setNearStakedTokens: (v) => setNearStakedTokens(Big(v).toFixed(4)),
+        setNearStakedTotalTokens: (v) =>
+          setNearStakedTotalTokens(Big(v).toFixed(4)),
       }}
     />
     <div className="d-flex flex-column gap-3">

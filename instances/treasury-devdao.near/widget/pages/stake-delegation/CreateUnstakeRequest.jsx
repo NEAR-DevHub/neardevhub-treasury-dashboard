@@ -23,6 +23,7 @@ const { treasuryDaoID, proposalIndexerQueryName, proposalIndexerHasuraRole } =
 const archiveNodeUrl = "https://rpc.mainnet.near.org/";
 
 const [nearStakedTokens, setNearStakedTokens] = useState(null);
+const [nearStakedTotalTokens, setNearStakedTotalTokens] = useState(null);
 const [poolWithBalance, setPoolWithBalance] = useState(null);
 const [amount, setAmount] = useState(null);
 const [validatorAccount, setValidatorAccount] = useState(null);
@@ -133,7 +134,7 @@ function getFeeOfStakedPools() {
       return {
         pool_id: item.pool,
         fee: i.numerator / i.denominator,
-        balance: new Big(item.balance).div(1e24).toFixed(4),
+        balance: new Big(item.stakedBalance).div(1e24).toFixed(4),
       };
     });
   });
@@ -262,7 +263,7 @@ useEffect(() => {
 }, [validatorAccount]);
 
 const nearAvailableBalance = Big(
-  nearBalances.availableParsed - (nearStakedTokens ?? 0) ?? "0"
+  nearBalances.availableParsed - (nearStakedTotalTokens ?? 0) ?? "0"
 ).toFixed(4);
 
 useEffect(() => {
@@ -299,6 +300,8 @@ return (
         instance,
         setNearStakedTokens: (v) => setNearStakedTokens(Big(v).toFixed(4)),
         setPoolWithBalance: setPoolWithBalance,
+        setNearStakedTotalTokens: (v) =>
+          setNearStakedTotalTokens(Big(v).toFixed(4)),
       }}
     />
     {!Array.isArray(poolWithBalance) || !nearStakedTokens ? (

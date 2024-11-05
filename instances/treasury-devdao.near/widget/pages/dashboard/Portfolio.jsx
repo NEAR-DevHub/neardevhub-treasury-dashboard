@@ -54,7 +54,15 @@ const Item = ({
   );
 };
 
-const { ftTokens, nearStakedTokens, nearBalance, nearPrice } = props;
+const {
+  ftTokens,
+  nearStakedTokens,
+  nearBalance,
+  nearPrice,
+  nearUnStakedTokens,
+  nearStakedTotalTokens,
+} = props;
+
 function convertBalanceToReadableFormat(amount, decimals) {
   return Big(amount ?? "0")
     .div(Big(10).pow(decimals ?? "1"))
@@ -88,9 +96,11 @@ const NearPortfolio = () => {
         icon={nearTokenIcon}
         symbol={"Available"}
         tokenPrice={nearPrice}
-        tokensNumber={nearBalances.availableParsed - nearStakedTokens}
+        tokensNumber={
+          nearBalances.availableParsed - (nearStakedTotalTokens ?? 0)
+        }
         currentAmount={getPrice(
-          nearBalances.availableParsed - nearStakedTokens,
+          nearBalances.availableParsed - (nearStakedTokens ?? 0),
           nearPrice
         )}
       />
@@ -105,11 +115,23 @@ const NearPortfolio = () => {
           currentAmount={getPrice(nearStakedTokens, nearPrice)}
         />
       )}
+      {nearUnStakedTokens && nearUnStakedTokens !== "0" && (
+        <Item
+          isStakedToken={true}
+          showBorderBottom={true}
+          icon={nearTokenIcon}
+          symbol={"Unstaked"}
+          tokenPrice={nearPrice}
+          tokensNumber={nearUnStakedTokens}
+          currentAmount={getPrice(nearUnStakedTokens, nearPrice)}
+        />
+      )}
+
       <Item
         isStakedToken={true}
         showBorderBottom={true}
         icon={nearTokenIcon}
-        symbol={"Locked"}
+        symbol={"Locked [Storage]"}
         tokenPrice={nearPrice}
         tokensNumber={nearBalances.lockedParsed}
         currentAmount={getPrice(nearBalances.lockedParsed, nearPrice)}
