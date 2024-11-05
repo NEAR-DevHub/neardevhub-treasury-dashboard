@@ -149,7 +149,7 @@ async function checkForStakeAmount({ page, availableBalance, errorText }) {
   await expect(amountErrorText).toBeHidden();
 }
 
-test.describe("Have staked requests and balance", function () {
+test.describe("Have valid staked requests and sufficient token balance", function () {
   test.beforeEach(async ({ page, instanceAccount, daoAccount }) => {
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
     if (
@@ -184,7 +184,7 @@ test.describe("Have staked requests and balance", function () {
     });
   });
 
-  test.describe("admin connected", function () {
+  test.describe("Admin connected", function () {
     test.use({
       storageState:
         "playwright-tests/storage-states/wallet-connected-admin.json",
@@ -380,7 +380,7 @@ async function voteOnProposal({
   );
 }
 
-test.describe("don't ask again connected", function () {
+test.describe("Don't ask again connected", function () {
   test.use({
     storageState:
       "playwright-tests/storage-states/wallet-connected-admin-with-accesskey.json",
@@ -498,7 +498,7 @@ test.describe("Insufficient balance ", function () {
     ).toBeVisible();
   });
 
-  test("Should throw error with approve vote when account has insufficient balance", async ({
+  test("Should throw error with approve vote when account has insufficient near balance", async ({
     page,
   }) => {
     test.setTimeout(120_000);
@@ -515,7 +515,7 @@ test.describe("Insufficient balance ", function () {
     ).toBeVisible();
   });
 
-  test("Should show warning when account has no staked tokens", async ({
+  test("Should show warning when account has no staked near tokens", async ({
     page,
   }) => {
     test.setTimeout(120_000);
