@@ -215,7 +215,7 @@ return (
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
       props={{
         instance,
-        setNearStakedTokens: (v) => setNearStakedTokens(Big(v).toFixed(4)),
+        setNearStakedTotalTokens: (v) => setNearStakedTokens(Big(v).toFixed(4)),
       }}
     />
     <div

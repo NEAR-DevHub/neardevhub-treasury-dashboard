@@ -85,3 +85,49 @@ export const TransferProposalData = {
   votes: {},
   submission_time: CurrentTimestampInNanoseconds,
 };
+
+export const StakeProposalData = {
+  id: 1,
+  proposer: "megha19.near",
+  description: '{"isStakeRequest":true,"notes":"Testing Stake"}',
+  kind: {
+    FunctionCall: {
+      receiver_id: "astro-stakers.poolv1.near",
+      actions: [
+        {
+          method_name: "deposit_and_stake",
+          args: "",
+          deposit: "1000000000000000000000000",
+          gas: "200000000000000",
+        },
+      ],
+    },
+  },
+  status: "InProgress",
+  vote_counts: {},
+  votes: {},
+  submission_time: "1728033017194722007",
+};
+
+export const UnStakeProposalData = {
+  id: 2,
+  proposer: "megha19.near",
+  description: '{"isStakeRequest":true,"notes":null}',
+  kind: {
+    FunctionCall: {
+      receiver_id: "astro-stakers.poolv1.near",
+      actions: [
+        {
+          method_name: "unstake",
+          args: "eyJhbW91bnQiOiIyMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAifQ==",
+          deposit: "0",
+          gas: "200000000000000",
+        },
+      ],
+    },
+  },
+  status: "InProgress",
+  vote_counts: {},
+  votes: {},
+  submission_time: "1728384666188444109",
+};

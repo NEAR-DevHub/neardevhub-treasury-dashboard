@@ -47,6 +47,10 @@ const Container = styled.div`
   .text-grey {
     color: #b9b9b9 !important;
   }
+
+  .text-sm {
+    font-size: 12px;
+  }
 `;
 
 return (

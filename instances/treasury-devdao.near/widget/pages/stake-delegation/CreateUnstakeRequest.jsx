@@ -23,6 +23,7 @@ const { treasuryDaoID, proposalIndexerQueryName, proposalIndexerHasuraRole } =
 const archiveNodeUrl = "https://rpc.mainnet.near.org/";
 
 const [nearStakedTokens, setNearStakedTokens] = useState(null);
+const [nearStakedTotalTokens, setNearStakedTotalTokens] = useState(null);
 const [poolWithBalance, setPoolWithBalance] = useState(null);
 const [amount, setAmount] = useState(null);
 const [validatorAccount, setValidatorAccount] = useState(null);
@@ -31,6 +32,9 @@ const [lastProposalId, setLastProposalId] = useState(null);
 const [notes, setNotes] = useState(null);
 const [showCancelModal, setShowCancelModal] = useState(false);
 const [daoPolicy, setDaoPolicy] = useState(null);
+const [amountError, setAmountError] = useState(null);
+const [validatorError, setValidatorError] = useState(null);
+const [stakedPools, setStakedPools] = useState(null);
 
 const Container = styled.div`
   font-size: 14px;
@@ -124,8 +128,19 @@ const Container = styled.div`
 
 const nearBalances = getNearBalances(treasuryDaoID);
 
-function getAllStakingPools() {
-  return fetch("https://api.nearblocks.io/v1/validators");
+function getFeeOfStakedPools() {
+  const promises = poolWithBalance.map((item) => {
+    return Near.asyncView(item.pool, "get_reward_fee_fraction").then((i) => {
+      return {
+        pool_id: item.pool,
+        fee: i.numerator / i.denominator,
+        balance: new Big(item.stakedBalance).div(1e24).toFixed(4),
+      };
+    });
+  });
+  Promise.all(promises).then((res) => {
+    setStakedPools(res);
+  });
 }
 
 const nearPrice = useCache(
@@ -177,31 +192,11 @@ useEffect(() => {
   }
 }, [isTxnCreated]);
 
-const allValidators = getAllStakingPools();
-let stakedValidators = [];
-if (
-  allValidators !== null &&
-  Array.isArray(allValidators?.body?.validatorFullData) &&
-  Array.isArray(poolWithBalance)
-) {
-  stakedValidators = allValidators.body.validatorFullData.reduce(
-    (acc, validator) => {
-      const pool = poolWithBalance.find((i) => i.pool === validator.accountId);
-      if (pool) {
-        acc.push({
-          account: validator.accountId,
-          fee:
-            validator.poolInfo.fee.numerator /
-            validator.poolInfo.fee.denominator,
-          isActive: validator.stakingStatus === "active",
-          stakedAmt: new Big(pool.balance).div(1e24).toFixed(4),
-        });
-      }
-      return acc;
-    },
-    []
-  );
-}
+useEffect(() => {
+  if (Array.isArray(poolWithBalance) && poolWithBalance.length) {
+    getFeeOfStakedPools();
+  }
+}, [poolWithBalance]);
 
 function onSubmitClick() {
   setTxnCreated(true);
@@ -251,8 +246,34 @@ const loading = (
   </div>
 );
 
-const nearAvailableBalance =
-  nearBalances.availableParsed - (nearStakedTokens ?? 0);
+function checkValidatorAccount() {
+  if (
+    !validatorAccount ||
+    validatorAccount.endsWith("poolv1.near") ||
+    validatorAccount.endsWith("pool.near")
+  ) {
+    return setValidatorError(null);
+  }
+
+  setValidatorError("Please enter a valid validator pool account.");
+}
+
+useEffect(() => {
+  checkValidatorAccount();
+}, [validatorAccount]);
+
+const nearAvailableBalance = Big(
+  nearBalances.availableParsed - (nearStakedTotalTokens ?? 0) ?? "0"
+).toFixed(4);
+
+useEffect(() => {
+  const parsedAmount = parseFloat(amount);
+  if (parsedAmount > parseFloat(nearStakedTokens)) {
+    setAmountError("The amount exceeds the balance you have staked.");
+  } else {
+    setAmountError(null);
+  }
+}, [amount]);
 
 return (
   <Container>
@@ -279,10 +300,11 @@ return (
         instance,
         setNearStakedTokens: (v) => setNearStakedTokens(Big(v).toFixed(4)),
         setPoolWithBalance: setPoolWithBalance,
+        setNearStakedTotalTokens: (v) =>
+          setNearStakedTotalTokens(Big(v).toFixed(4)),
       }}
     />
-    {!Array.isArray(allValidators?.body?.validatorFullData) ||
-    !nearStakedTokens ? (
+    {!Array.isArray(poolWithBalance) || !nearStakedTokens ? (
       loading
     ) : (
       <div>
@@ -311,7 +333,7 @@ return (
                 </div>
               </div>
             </div>
-            {!stakedValidators.length ? (
+            {!poolWithBalance?.length ? (
               <div className="no-validator d-flex gap-2 align-items-center rounded-2">
                 <img
                   src="https://ipfs.near.social/ipfs/bafkreig4jinzfotpj6yc5bo7ktqccnu6rc7g3i5wsekinqtxtyingvxf5e"
@@ -329,70 +351,75 @@ return (
                     props={{
                       className: "flex-grow-1",
                       key: `validator`,
-                      onChange: (e) => setValidatorAccount(e.target.value),
+                      onBlur: (e) => setValidatorAccount(e.target.value),
                       placeholder: "validator-name.near",
                       value: validatorAccount,
+                      error: validatorError,
                     }}
                   />
+
                   <div className="validators-list mt-2 rounded-3">
                     <div className="d-flex flex-column gap-2">
-                      {stakedValidators.map((validator) => {
-                        const { account, fee, isActive, stakedAmt } = validator;
-                        const isSelected = validatorAccount === account;
-                        return (
-                          <div className="d-flex gap-2 align-items-center justify-content-between border-bottom py-2">
-                            <div className="d-flex gap-2 align-items-center gap-2 flex-1">
-                              <div
-                                className="text-truncate"
-                                style={{ width: "50%" }}
-                              >
-                                <div className="text-sm">
-                                  <span className="text-muted">
-                                    {fee}% Fee{" "}
-                                  </span>
-                                  <span className="text-green">
-                                    {isActive && "Active"}
-                                  </span>
-                                </div>
-                                <div className="fw-bold"> {account} </div>
-                              </div>
-                              <div
-                                style={{
-                                  width: "1.5px",
-                                  backgroundColor: "#687076",
-                                  height: 50,
-                                  marginRight: 10,
-                                }}
-                              ></div>
-                              <div>
-                                <div className="text-green"> Staked</div>
-                                <div className="fw-bold"> {stakedAmt}NEAR</div>
-                                <div className="text-muted">
-                                  ${getNearValue(stakedAmt)}
-                                </div>
-                              </div>
-                            </div>
-                            <div>
-                              <button
-                                className={
-                                  "rounded-2 border border-1 " +
-                                  (isSelected ? "selected-btn " : "white-btn")
-                                }
-                                onClick={() => setValidatorAccount(account)}
-                                disabled={isSelected}
-                              >
-                                {isSelected ? (
-                                  <div className="d-flex gap-2 align-items-center">
-                                    <i class="bi bi-check2 h6 mb-0"></i>Selected
+                      {Array.isArray(stakedPools) && stakedPools.length
+                        ? (stakedPools ?? []).map((validator) => {
+                            const { pool_id, fee, balance } = validator;
+                            const isSelected = validatorAccount === pool_id;
+                            return (
+                              <div className="d-flex gap-2 align-items-center justify-content-between border-bottom py-2">
+                                <div className="d-flex gap-2 align-items-center gap-2 flex-1">
+                                  <div
+                                    className="text-truncate"
+                                    style={{ width: "50%" }}
+                                  >
+                                    <div className="text-sm">
+                                      <span className="text-muted">
+                                        {fee}% Fee{" "}
+                                      </span>
+                                      <span className="text-green">Active</span>
+                                    </div>
+                                    <div className="fw-bold"> {pool_id} </div>
                                   </div>
-                                ) : (
-                                  "Select"
-                                )}
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
+                                  <div
+                                    style={{
+                                      width: "1.5px",
+                                      backgroundColor: "#687076",
+                                      height: 50,
+                                      marginRight: 10,
+                                    }}
+                                  ></div>
+                                  <div>
+                                    <div className="text-green"> Staked</div>
+                                    <div className="fw-bold">{balance}NEAR</div>
+                                    <div className="text-muted">
+                                      ${getNearValue(balance)}
+                                    </div>
+                                  </div>
+                                </div>
+                                <div>
+                                  <button
+                                    className={
+                                      "rounded-2 border border-1 " +
+                                      (isSelected
+                                        ? "selected-btn "
+                                        : "white-btn")
+                                    }
+                                    onClick={() => setValidatorAccount(pool_id)}
+                                    disabled={isSelected}
+                                  >
+                                    {isSelected ? (
+                                      <div className="d-flex gap-2 align-items-center">
+                                        <i class="bi bi-check2 h6 mb-0"></i>
+                                        Selected
+                                      </div>
+                                    ) : (
+                                      "Select"
+                                    )}
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })
+                        : loading}
                     </div>
                   </div>
                 </div>
@@ -403,10 +430,10 @@ return (
                       <div
                         className="use-max-bg px-3 py-1 rounded-2"
                         onClick={() => {
-                          const pool = stakedValidators.find(
-                            (i) => i.account === validatorAccount
+                          const pool = stakedPools.find(
+                            (i) => i.pool_id === validatorAccount
                           );
-                          setAmount(pool?.stakedAmt);
+                          setAmount(pool?.balance);
                         }}
                       >
                         Use Max
@@ -418,9 +445,10 @@ return (
                     props={{
                       className: "flex-grow-1",
                       key: `total-amount`,
-                      onChange: (e) => setAmount(e.target.value),
+                      onBlur: (e) => setAmount(e.target.value),
                       placeholder: "Enter amount",
                       value: amount,
+                      error: amountError,
                       inputProps: {
                         min: "0",
                         type: "number",
@@ -471,7 +499,11 @@ return (
                     src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
                     props={{
                       classNames: { root: "theme-btn" },
-                      disabled: !validatorAccount || !amount,
+                      disabled:
+                        !validatorAccount ||
+                        !amount ||
+                        amountError ||
+                        validatorError,
                       label: "Submit",
                       onClick: onSubmitClick,
                       loading: isTxnCreated,
