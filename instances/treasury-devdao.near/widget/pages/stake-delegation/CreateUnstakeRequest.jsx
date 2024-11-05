@@ -265,6 +265,15 @@ const nearAvailableBalance = Big(
   nearBalances.availableParsed - (nearStakedTokens ?? 0) ?? "0"
 ).toFixed(4);
 
+useEffect(() => {
+  const parsedAmount = parseFloat(amount);
+  if (parsedAmount > parseFloat(nearStakedTokens)) {
+    setAmountError("The amount exceeds the balance you have staked.");
+  } else {
+    setAmountError(null);
+  }
+}, [amount]);
+
 return (
   <Container>
     <Widget
@@ -433,17 +442,7 @@ return (
                     props={{
                       className: "flex-grow-1",
                       key: `total-amount`,
-                      onChange: (e) => {
-                        setAmount(e.target.value);
-                        const parsedAmount = parseFloat(e.target.value);
-                        if (parsedAmount > parseFloat(nearStakedTokens)) {
-                          setAmountError(
-                            "The amount exceeds the balance you have staked."
-                          );
-                        } else {
-                          setAmountError(null);
-                        }
-                      },
+                      onBlur: (e) => setAmount(e.target.value),
                       placeholder: "Enter amount",
                       value: amount,
                       error: amountError,

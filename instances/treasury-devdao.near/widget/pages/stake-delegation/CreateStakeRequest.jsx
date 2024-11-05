@@ -299,6 +299,15 @@ useEffect(() => {
   checkValidatorAccount();
 }, [validatorAccount]);
 
+useEffect(() => {
+  const parsedAmount = parseFloat(amount);
+  if (parsedAmount > parseFloat(nearAvailableBalance)) {
+    setAmountError("Your account doesn't have sufficient balance.");
+  } else {
+    setAmountError(null);
+  }
+}, [amount]);
+
 return (
   <Container>
     <Widget
@@ -393,15 +402,7 @@ return (
           props={{
             className: "flex-grow-1",
             key: `total-amount`,
-            onChange: (e) => {
-              setAmount(e.target.value);
-              const parsedAmount = parseFloat(e.target.value);
-              if (parsedAmount > parseFloat(nearAvailableBalance)) {
-                setAmountError("Your account doesn't have sufficient balance.");
-              } else {
-                setAmountError(null);
-              }
-            },
+            onBlur: (e) => setAmount(e.target.value),
             placeholder: "Enter amount",
             value: amount,
             error: amountError,

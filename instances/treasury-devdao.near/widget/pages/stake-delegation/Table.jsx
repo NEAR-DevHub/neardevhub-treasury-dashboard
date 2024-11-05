@@ -443,7 +443,6 @@ const ProposalsComponent = () => {
                     currentContract: "near",
                     requiredVotes,
                     checkProposalStatus: () => checkProposalStatus(item.id),
-
                     avoidCheckForBalance: !isStakeRequest,
                   }}
                 />
