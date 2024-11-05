@@ -158,7 +158,7 @@ test.describe("Have valid staked requests and sufficient token balance", functio
       )
     ) {
       console.log("no stake delegation page configured for instance");
-      return;
+      return test.skip();
     }
     await mockStakeProposals({ page });
     await updateDaoPolicyMembers({ page });
@@ -306,7 +306,7 @@ async function voteOnProposal({
     )
   ) {
     console.log("no stake delegation page configured for instance");
-    return;
+    return test.skip();
   }
   await updateDaoPolicyMembers({ page });
   const contractId = daoAccount;
@@ -484,7 +484,7 @@ test.describe("Insufficient balance ", function () {
       )
     ) {
       console.log("no stake delegation page configured for instance");
-      return;
+      return test.skip();
     }
     await mockStakeProposals({ page });
     await updateDaoPolicyMembers({ page });
