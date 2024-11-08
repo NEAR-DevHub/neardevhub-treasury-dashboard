@@ -95,7 +95,7 @@ const Container = styled.div`
     border-radius: 5px !important;
   }
   .theme-btn {
-    background-color: var(--theme-color) !important;
+    background: var(--theme-color) !important;
     color: white;
   }
 
@@ -131,7 +131,7 @@ const Container = styled.div`
   }
 
   .selected-btn {
-    background-color: var(--theme-color);
+    background: var(--theme-color);
     padding-inline: 0.7rem;
     padding-block: 0.3rem;
     font-weight: 500;

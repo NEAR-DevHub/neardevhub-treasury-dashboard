@@ -34,7 +34,7 @@ const MenuIcon = () => (
 
 const Navbar = styled.div`
   padding: 1.5rem 1rem;
-  background-color: var(--theme-color);
+  background: var(--theme-color);
   color: var(--text-color);
   display: flex;
   flex-direction: row;

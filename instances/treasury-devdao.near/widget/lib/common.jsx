@@ -21,13 +21,17 @@ function getApproversAndThreshold(treasuryDaoID, kind) {
   let requiredVotes = null;
   groupWithPermission.map((i) => {
     approversGroup = approversGroup.concat(i.kind.Group ?? []);
-    if (i.vote_policy[kind].weight_kind === "RoleWeight") {
-      if (Array.isArray(i.vote_policy[kind].threshold)) {
-        ratios = ratios.concat(i.vote_policy[kind].threshold);
-        ratios = ratios.concat(i.vote_policy[kind].threshold);
-      } else {
-        requiredVotes = parseFloat(i.vote_policy[kind].threshold);
+    if (Object.values(i.vote_policy ?? {}).length > 0) {
+      if (i.vote_policy[kind].weight_kind === "RoleWeight") {
+        if (Array.isArray(i.vote_policy[kind].threshold)) {
+          ratios = ratios.concat(i.vote_policy[kind].threshold);
+          ratios = ratios.concat(i.vote_policy[kind].threshold);
+        } else {
+          requiredVotes = parseFloat(i.vote_policy[kind].threshold);
+        }
       }
+    } else {
+      ratios = [50, 100];
     }
   });
 
@@ -334,7 +338,7 @@ function getPermissionsText(type) {
     case "Create requests":
       return "Enables users to initiate payment requests.";
     case "Manage Members": {
-      return "Allows users to control treasury adminis and their access levels.";
+      return "Allows users to control treasury admins and their access levels.";
     }
     case "Vote": {
       return "Allows users to approve or request proposed payment requests.";

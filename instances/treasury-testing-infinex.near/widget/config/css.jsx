@@ -26,7 +26,7 @@ const Theme = styled.div`
 
   button {
     &.primary {
-      background-color: var(--theme-color);
+      background: var(--theme-color);
       color: white;
       border: none !important;
       padding-block: 0.7rem !important;

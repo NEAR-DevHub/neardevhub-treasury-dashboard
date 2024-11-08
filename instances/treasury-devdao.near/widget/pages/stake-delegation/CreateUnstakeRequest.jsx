@@ -90,7 +90,7 @@ const Container = styled.div`
   }
 
   .selected-btn {
-    background-color: var(--theme-color);
+    background: var(--theme-color);
     padding-inline: 0.7rem;
     padding-block: 0.3rem;
     font-weight: 500;
@@ -121,7 +121,7 @@ const Container = styled.div`
   }
 
   .theme-btn {
-    background-color: var(--theme-color) !important;
+    background: var(--theme-color) !important;
     color: white;
   }
 `;

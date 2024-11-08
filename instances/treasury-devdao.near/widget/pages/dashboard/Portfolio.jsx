@@ -104,28 +104,32 @@ const NearPortfolio = () => {
           nearPrice
         )}
       />
-      {nearStakedTokens && nearStakedTokens !== "0" && (
-        <Item
-          isStakedToken={true}
-          showBorderBottom={true}
-          icon={nearTokenIcon}
-          symbol={"Staked"}
-          tokenPrice={nearPrice}
-          tokensNumber={nearStakedTokens}
-          currentAmount={getPrice(nearStakedTokens, nearPrice)}
-        />
-      )}
-      {nearUnStakedTokens && nearUnStakedTokens !== "0" && (
-        <Item
-          isStakedToken={true}
-          showBorderBottom={true}
-          icon={nearTokenIcon}
-          symbol={"Unstaked"}
-          tokenPrice={nearPrice}
-          tokensNumber={nearUnStakedTokens}
-          currentAmount={getPrice(nearUnStakedTokens, nearPrice)}
-        />
-      )}
+      {nearStakedTokens &&
+        nearStakedTokens !== "0" &&
+        nearStakedTokens !== "0.0000" && (
+          <Item
+            isStakedToken={true}
+            showBorderBottom={true}
+            icon={nearTokenIcon}
+            symbol={"Staked"}
+            tokenPrice={nearPrice}
+            tokensNumber={nearStakedTokens}
+            currentAmount={getPrice(nearStakedTokens, nearPrice)}
+          />
+        )}
+      {nearUnStakedTokens &&
+        nearUnStakedTokens !== "0" &&
+        nearUnStakedTokens !== "0.0000" && (
+          <Item
+            isStakedToken={true}
+            showBorderBottom={true}
+            icon={nearTokenIcon}
+            symbol={"Unstaked"}
+            tokenPrice={nearPrice}
+            tokensNumber={nearUnStakedTokens}
+            currentAmount={getPrice(nearUnStakedTokens, nearPrice)}
+          />
+        )}
 
       <Item
         isStakedToken={true}

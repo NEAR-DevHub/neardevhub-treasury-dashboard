@@ -71,15 +71,17 @@ return (
   <div className="d-flex flex-column flex-1 justify-content-between">
     <Widget
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.Table`}
-      props={{
-        proposals: proposals,
-        isPendingRequests: true,
-        transferApproversGroup,
-        loading: loading,
-        policy,
-        refreshTableData: fetchProposals,
-        ...props,
-      }}
+      props={
+        {
+          // proposals: proposals,
+          // isPendingRequests: true,
+          // transferApproversGroup,
+          // loading: loading,
+          // policy,
+          // refreshTableData: fetchProposals,
+          // ...props,
+        }
+      }
     />
     {(proposals ?? [])?.length > 0 && (
       <div>
