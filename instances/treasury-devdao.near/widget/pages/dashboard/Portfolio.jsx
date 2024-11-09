@@ -131,7 +131,7 @@ const NearPortfolio = () => {
         isStakedToken={true}
         showBorderBottom={true}
         icon={nearTokenIcon}
-        symbol={"Locked [Storage]"}
+        symbol={"Treasury Storage Fees"}
         tokenPrice={nearPrice}
         tokensNumber={nearBalances.lockedParsed}
         currentAmount={getPrice(nearBalances.lockedParsed, nearPrice)}
