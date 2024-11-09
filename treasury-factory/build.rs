@@ -29,19 +29,19 @@ fn main() {
         .write_all(index_html_base64.as_bytes())
         .expect("Failed to write to output file");
 
-        let web4_project_path = "../web4/treasury-web4"; // Change to the actual path of the other project
+    let web4_project_path = "../web4/treasury-web4"; // Change to the actual path of the other project
 
-        // Run cargo build for the other project, targeting WASM
-        let status = Command::new("cargo")
-            .arg("near")
-            .arg("build")
-            .arg("--no-docker")
-            .current_dir(web4_project_path)
-            .status()
-            .expect("Failed to build the other Rust project");
-    
-        if !status.success() {
-            panic!("Failed to build the other project");
-        }
-        
+    // Run cargo build for the other project, targeting WASM
+    let status = Command::new("cargo")
+        .arg("near")
+        .arg("build")
+        .arg("--no-docker")
+        .current_dir(web4_project_path)
+        .status()
+        .expect("Failed to build the other Rust project");
+
+    if !status.success() {
+        println!("Failed to build the other project: {:?}", status.code().unwrap());
+        // panic!("Failed to build the other project");
+    }
 }

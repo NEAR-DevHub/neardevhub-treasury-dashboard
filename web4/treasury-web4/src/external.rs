@@ -7,4 +7,3 @@ trait SocialDB {
     fn set(&self, data: Value);
     fn get(&self, keys: Vec<String>);
 }
-

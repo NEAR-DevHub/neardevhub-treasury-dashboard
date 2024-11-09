@@ -47,6 +47,25 @@ async fn test_update_widgets() -> Result<(), Box<dyn std::error::Error>> {
         .transact()
         .await?;
 
-    
-    
+    let init_socialdb_result = socialdb.call("new").max_gas().transact().await?;
+    if init_socialdb_result.is_failure() {
+        panic!(
+            "Error initializing socialDB\n{:?}",
+            String::from_utf8(init_socialdb_result.raw_bytes().unwrap())
+        );
+    }
+    assert!(init_socialdb_result.is_success());
+
+    let update_widget_result = contract.call("update_widgets").transact().await?;
+    assert!(update_widget_result.is_success());
+
+    let deployed_widgets = socialdb
+        .call("get")
+        .args_json(json!({
+            "keys": [format!("{}/widget/**", contract.id().as_str())]
+        }))
+        .view()
+        .await?;
+    println!("{}", String::from_utf8(deployed_widgets.result).unwrap());
+    Ok(())
 }

@@ -1,4 +1,9 @@
 {
+  "hostRequirements": {
+    "cpus": 8,
+    "memory": "16gb",
+    "storage": "64gb"
+  },
   "features": {
     "ghcr.io/near/near-devcontainers/features/cargo-near:latest": {},
     "ghcr.io/near/near-devcontainers/features/near-cli:latest": {},
@@ -9,7 +14,11 @@
   },
   "customizations": {
     "vscode": {
-      "extensions": ["ms-playwright.playwright", "github.vscode-github-actions", "rust-lang.rust-analyzer"]
+      "extensions": [
+        "ms-playwright.playwright",
+        "github.vscode-github-actions",
+        "rust-lang.rust-analyzer"
+      ]
     }
   },
   "postCreateCommand": ".devcontainer/post-create.sh"

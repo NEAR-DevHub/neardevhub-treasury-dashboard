@@ -1,6 +1,6 @@
 // Find all our documentation at https://docs.near.org
 mod web4;
-use near_sdk::{env, near, serde_json::json, NearToken, Promise};
+use near_sdk::{env, near, serde_json::json, AccountId, NearToken, Promise};
 use web4::types::{Web4Request, Web4Response};
 pub mod external;
 pub use crate::external::*;
@@ -22,39 +22,38 @@ impl Contract {
     }
 
     #[payable]
-    pub fn create_instance(&mut self, name: String, create_dao_args: String) {
+    pub fn create_instance(&mut self, create_dao_args: String) {
         const SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT: &str = "sputnik-dao.near";
         const SOCIALDB_ACCOUNT: &str = "near.social";
 
-        let socialdb_account_id = format!("{}.near", name).parse().unwrap();
+        let signer_account_id = env::signer_account_id().as_str().to_string();
+        let dao_name = signer_account_id.split(".").next().unwrap();
+
         let socialdb_data = json!({
             "data": {
-            format!("{}.near", name): {
+            env::signer_account_id(): {
                 "widget": {
                     "app": "hello"
                 }
             }
         }
         });
-        Promise::new(socialdb_account_id)
-            .create_account()
-            .transfer(NearToken::from_near(2))
-            .add_full_access_key(env::signer_account_pk())
+
+        Promise::new(env::signer_account_id())
             .deploy_contract(
                 include_bytes!("../../web4/treasury-web4/target/near/treasury_web4.wasm").to_vec(),
             )
             .then(
-                
                 socialdb::ext(SOCIALDB_ACCOUNT.parse().unwrap())
                     .with_attached_deposit(NearToken::from_near(1))
                     .with_unused_gas_weight(1)
-                    .set(socialdb_data)
+                    .set(socialdb_data),
             )
             .then(
                 sputnik_dao::ext(SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT.parse().unwrap())
                     .with_attached_deposit(NearToken::from_near(6))
                     .with_unused_gas_weight(1)
-                    .create(name, create_dao_args)
+                    .create(dao_name.to_string(), create_dao_args),
             );
     }
 }

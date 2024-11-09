@@ -43,6 +43,7 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
     let socialdb_contract_id: AccountId = SOCIALDB_ACCOUNT.parse()?;
 
     let worker = near_workspaces::sandbox().await?;
+
     let sputnik_dao_factory = worker
         .import_contract(&sputnikdao_factory_contract_id, &mainnet)
         .initial_balance(NearToken::from_near(1000))
@@ -53,6 +54,15 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
         .initial_balance(NearToken::from_near(10000))
         .transact()
         .await?;
+
+    let instance_account = worker
+        .root_account()
+        .unwrap()
+        .create_subaccount("newinstance")
+        .initial_balance(NearToken::from_near(10))
+        .transact()
+        .await?
+        .unwrap();
 
     let init_socialdb_result = socialdb.call("new").max_gas().transact().await?;
     if init_socialdb_result.is_failure() {
@@ -132,8 +142,8 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
         },
     });
 
-    let create_treasury_instance_result = treasury_factory_contract
-        .call("create_instance")
+    let create_treasury_instance_result = instance_account
+        .call(treasury_factory_contract.id(), "create_instance")
         .args_json(json!(
             {
                 "name": instance_name,
