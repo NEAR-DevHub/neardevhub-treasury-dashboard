@@ -1,4 +1,3 @@
-use near_sdk::base64::{self, engine};
 use near_sdk::base64::{engine::general_purpose, Engine as _};
 use near_sdk::serde::Deserialize;
 
@@ -14,7 +13,7 @@ pub struct Web4Response {
 }
 
 #[tokio::test]
-async fn test_contract_is_operational() -> Result<(), Box<dyn std::error::Error>> {
+async fn test_web4() -> Result<(), Box<dyn std::error::Error>> {
     let sandbox = near_workspaces::sandbox().await?;
     let contract_wasm = near_workspaces::compile_project("./").await?;
 
@@ -34,30 +33,14 @@ async fn test_contract_is_operational() -> Result<(), Box<dyn std::error::Error>
     Ok(())
 }
 
-async fn test_basics_on(contract_wasm: &[u8]) -> Result<(), Box<dyn std::error::Error>> {
-    let sandbox = near_workspaces::sandbox().await?;
-    let contract = sandbox.dev_deploy(contract_wasm).await?;
-
-    let user_account = sandbox.dev_create_account().await?;
-
-    let outcome = user_account
-        .call(contract.id(), "set_greeting")
-        .args_json(json!({"greeting": "Hello World!"}))
-        .transact()
-        .await?;
-    assert!(outcome.is_success());
-
-    let user_message_outcome = contract.view("get_greeting").args_json(json!({})).await?;
-    assert_eq!(user_message_outcome.json::<String>()?, "Hello World!");
-
-    Ok(())
-}
-
 #[tokio::test]
 async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
     const SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT: &str = "sputnik-dao.near";
+    const SOCIALDB_ACCOUNT: &str = "social.near";
+
     let mainnet = near_workspaces::mainnet().await?;
     let sputnikdao_factory_contract_id: AccountId = SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT.parse()?;
+    let socialdb_contract_id: AccountId = SOCIALDB_ACCOUNT.parse()?;
 
     let worker = near_workspaces::sandbox().await?;
     let sputnik_dao_factory = worker
@@ -65,16 +48,29 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
         .initial_balance(NearToken::from_near(1000))
         .transact()
         .await?;
+    let socialdb = worker
+        .import_contract(&socialdb_contract_id, &mainnet)
+        .initial_balance(NearToken::from_near(10000))
+        .transact()
+        .await?;
+
+    let init_socialdb_result = socialdb.call("new").max_gas().transact().await?;
+    if init_socialdb_result.is_failure() {
+        panic!(
+            "Error initializing socialDB\n{:?}",
+            String::from_utf8(init_socialdb_result.raw_bytes().unwrap())
+        );
+    }
+    assert!(init_socialdb_result.is_success());
+
     let treasury_factory_contract_wasm = near_workspaces::compile_project("./").await?;
-
     let treasury_factory_contract = worker.dev_deploy(&treasury_factory_contract_wasm).await?;
-
 
     let init_sputnik_dao_factory_result =
         sputnik_dao_factory.call("new").max_gas().transact().await?;
     if init_sputnik_dao_factory_result.is_failure() {
         panic!(
-            "{:?}",
+            "Error initializing sputnik-dao contract: {:?}",
             String::from_utf8(init_sputnik_dao_factory_result.raw_bytes().unwrap())
         );
     }
@@ -136,7 +132,7 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
         },
     });
 
-    let create_dao_result = treasury_factory_contract
+    let create_treasury_instance_result = treasury_factory_contract
         .call("create_instance")
         .args_json(json!(
             {
@@ -149,14 +145,14 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
         .transact()
         .await?;
 
-    if create_dao_result.is_failure() {
+    if create_treasury_instance_result.is_failure() {
         panic!(
-            "{:?}",
-            String::from_utf8(create_dao_result.raw_bytes().unwrap())
+            "Error creating treasury instance {:?}",
+            String::from_utf8(create_treasury_instance_result.raw_bytes().unwrap())
         );
     }
 
-    assert!(create_dao_result.is_success());
+    assert!(create_treasury_instance_result.is_success());
 
     let get_config_result = worker
         .view(
@@ -168,7 +164,7 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
 
     let config: Value = get_config_result.json().unwrap();
-    assert_eq!(create_dao_args["config"], config );
+    assert_eq!(create_dao_args["config"], config);
 
     let get_policy_result = worker
         .view(
@@ -180,7 +176,25 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
 
     let policy: Value = get_policy_result.json().unwrap();
-    assert_eq!(create_dao_args["policy"], policy );
+    assert_eq!(create_dao_args["policy"], policy);
 
+    let get_widget_result = worker
+        .view(&SOCIALDB_ACCOUNT.parse().unwrap(), "get")
+        .args_json(json!({
+            "keys": [
+                format!("{}.near/widget/app", instance_name)
+            ]
+        }))
+        .await?;
+    let widget: Value = get_widget_result.json().unwrap();
+    let expected_widget = json!({
+        format!("{}.near", instance_name): {
+            "widget": {
+
+            }
+        }
+    });
+
+    assert_eq!(widget, expected_widget);
     Ok(())
 }
