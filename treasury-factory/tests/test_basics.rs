@@ -1,9 +1,9 @@
 use near_sdk::base64::{self, engine};
 use near_sdk::base64::{engine::general_purpose, Engine as _};
-use near_sdk::serde::{Deserialize};
+use near_sdk::serde::Deserialize;
 
 use near_sdk::{AccountId, NearToken};
-use serde_json::json;
+use serde_json::{json, Value};
 
 #[derive(Deserialize)]
 #[serde(crate = "near_sdk::serde")]
@@ -34,7 +34,6 @@ async fn test_contract_is_operational() -> Result<(), Box<dyn std::error::Error>
     Ok(())
 }
 
-
 async fn test_basics_on(contract_wasm: &[u8]) -> Result<(), Box<dyn std::error::Error>> {
     let sandbox = near_workspaces::sandbox().await?;
     let contract = sandbox.dev_deploy(contract_wasm).await?;
@@ -56,26 +55,36 @@ async fn test_basics_on(contract_wasm: &[u8]) -> Result<(), Box<dyn std::error::
 
 #[tokio::test]
 async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
-    const SPUTNIKDAO_CONTRACT_ACCOUNT: &str = "sputnik-dao.near";
+    const SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT: &str = "sputnik-dao.near";
     let mainnet = near_workspaces::mainnet().await?;
-    let contract_id: AccountId = SPUTNIKDAO_CONTRACT_ACCOUNT.parse()?;
+    let sputnikdao_factory_contract_id: AccountId = SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT.parse()?;
 
     let worker = near_workspaces::sandbox().await?;
     let sputnik_dao_factory = worker
-        .import_contract(&contract_id, &mainnet)
+        .import_contract(&sputnikdao_factory_contract_id, &mainnet)
         .initial_balance(NearToken::from_near(1000))
         .transact()
         .await?;
+    let treasury_factory_contract_wasm = near_workspaces::compile_project("./").await?;
 
-    let init_sputnik_dao_factory_result = sputnik_dao_factory.call("new").max_gas().transact().await?;
+    let treasury_factory_contract = worker.dev_deploy(&treasury_factory_contract_wasm).await?;
+
+
+    let init_sputnik_dao_factory_result =
+        sputnik_dao_factory.call("new").max_gas().transact().await?;
     if init_sputnik_dao_factory_result.is_failure() {
-        panic!("{:?}", String::from_utf8(init_sputnik_dao_factory_result.raw_bytes().unwrap()));
+        panic!(
+            "{:?}",
+            String::from_utf8(init_sputnik_dao_factory_result.raw_bytes().unwrap())
+        );
     }
     assert!(init_sputnik_dao_factory_result.is_success());
 
+    let instance_name = "the-test-instance";
+
     let create_dao_args = json!({
         "config": {
-        "name": "created-dao-name",
+        "name": instance_name,
         "purpose": "creating dao treasury",
         "metadata": "",
         },
@@ -83,7 +92,7 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
         "roles": [
             {
             "kind": {
-                "Group": ["acc1.near", "acc2.near", "acc3.near"],
+                "Group": ["acc3.near", "acc2.near", "acc1.near"],
             },
             "name": "Create Requests",
             "permissions": [
@@ -127,18 +136,51 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
         },
     });
 
-    let create_dao_result= sputnik_dao_factory.call("create").args_json(json!(
-        {
-            "name": "created-dao-name",
-            "args": general_purpose::STANDARD.encode(create_dao_args.to_string())
-        }
-    )).max_gas().deposit(NearToken::from_near(6)).transact().await?;
-
+    let create_dao_result = treasury_factory_contract
+        .call("create_instance")
+        .args_json(json!(
+            {
+                "name": instance_name,
+                "create_dao_args": general_purpose::STANDARD.encode(create_dao_args.to_string())
+            }
+        ))
+        .max_gas()
+        .deposit(NearToken::from_near(6))
+        .transact()
+        .await?;
 
     if create_dao_result.is_failure() {
-        panic!("{:?}", String::from_utf8(create_dao_result.raw_bytes().unwrap()));
+        panic!(
+            "{:?}",
+            String::from_utf8(create_dao_result.raw_bytes().unwrap())
+        );
     }
-    
+
     assert!(create_dao_result.is_success());
+
+    let get_config_result = worker
+        .view(
+            &format!("{}.sputnik-dao.near", instance_name)
+                .parse()
+                .unwrap(),
+            "get_config",
+        )
+        .await?;
+
+    let config: Value = get_config_result.json().unwrap();
+    assert_eq!(create_dao_args["config"], config );
+
+    let get_policy_result = worker
+        .view(
+            &format!("{}.sputnik-dao.near", instance_name)
+                .parse()
+                .unwrap(),
+            "get_policy",
+        )
+        .await?;
+
+    let policy: Value = get_policy_result.json().unwrap();
+    assert_eq!(create_dao_args["policy"], policy );
+
     Ok(())
 }

@@ -1,7 +1,9 @@
 // Find all our documentation at https://docs.near.org
 mod web4;
-use near_sdk::near;
+use near_sdk::{env, near, AccountId, NearToken};
 use web4::types::{Web4Request, Web4Response};
+pub mod external;
+pub use crate::external::*;
 
 // Define the contract structure
 #[near(contract_state)]
@@ -17,6 +19,15 @@ impl Contract {
             content_type: "text/html; charset=UTF-8".to_owned(),
             body: include_str!("../index.html.base64.txt").to_string(),
         }
+    }
+
+    pub fn create_instance(name: String, create_dao_args: String) {
+        const SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT: &str = "sputnik-dao.near";
+
+        sputnik_dao::ext(SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT.parse().unwrap())
+            .with_attached_deposit(NearToken::from_near(6))
+            .with_unused_gas_weight(1)
+            .create(name, create_dao_args);
     }
 }
 
