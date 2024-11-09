@@ -54,15 +54,11 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
         .initial_balance(NearToken::from_near(10000))
         .transact()
         .await?;
-
-    let instance_account = worker
-        .root_account()
-        .unwrap()
-        .create_subaccount("newinstance")
-        .initial_balance(NearToken::from_near(10))
-        .transact()
-        .await?
-        .unwrap();
+    let reference_widget_contract = worker
+    .import_contract(&"treasury-testing.near".parse().unwrap(), &mainnet)
+    .initial_balance(NearToken::from_near(20))
+    .transact()
+    .await?;
 
     let init_socialdb_result = socialdb.call("new").max_gas().transact().await?;
     if init_socialdb_result.is_failure() {
@@ -72,6 +68,41 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
         );
     }
     assert!(init_socialdb_result.is_success());
+
+    let set_socialdb_status_result = socialdb
+        .call("set_status")
+        .args_json(json!({"status": "Live"}))
+        .max_gas()
+        .transact()
+        .await?;
+    assert!(set_socialdb_status_result.is_success());
+
+    let social_set_result = reference_widget_contract
+        .as_account()
+        .call(socialdb.id(), "set")
+        .args_json(json!({
+            "data": {
+                reference_widget_contract.id().as_str(): {
+                    "widget": {
+                        "app": "Hello",
+                        "config": "Goodbye"
+                    }
+                }
+            }
+        }))
+        .deposit(NearToken::from_near(2))
+        .transact()
+        .await?;
+    assert!(social_set_result.is_success());
+
+    let reference_widgets = socialdb
+        .call("get")
+        .args_json(json!({
+            "keys": [format!("{}/widget/**", reference_widget_contract.id().as_str())]
+        }))
+        .view()
+        .await?;
+    let reference_widgets_json_string = String::from_utf8(reference_widgets.result).unwrap();
 
     let treasury_factory_contract_wasm = near_workspaces::compile_project("./").await?;
     let treasury_factory_contract = worker.dev_deploy(&treasury_factory_contract_wasm).await?;
@@ -86,7 +117,8 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
     }
     assert!(init_sputnik_dao_factory_result.is_success());
 
-    let instance_name = "the-test-instance";
+    let instance_name = "test-treasury-instance";
+    let instance_account_id = format!("{}.{}",instance_name, treasury_factory_contract.id());
 
     let create_dao_args = json!({
         "config": {
@@ -142,8 +174,8 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
         },
     });
 
-    let create_treasury_instance_result = instance_account
-        .call(treasury_factory_contract.id(), "create_instance")
+    let create_treasury_instance_result = treasury_factory_contract
+        .call("create_instance")
         .args_json(json!(
             {
                 "name": instance_name,
@@ -151,7 +183,7 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
             }
         ))
         .max_gas()
-        .deposit(NearToken::from_near(6))
+        .deposit(NearToken::from_near(10))
         .transact()
         .await?;
 
@@ -163,6 +195,19 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     assert!(create_treasury_instance_result.is_success());
+
+    let result = treasury_factory_contract.as_account()
+        .view(&instance_account_id.parse().unwrap(), "web4_get")
+        .args_json(json!({"request": {"path": "/"}}))
+        .await?;
+
+    let response = result.json::<Web4Response>().unwrap();
+    assert_eq!("text/html; charset=UTF-8", response.content_type);
+
+    let body_string =
+        String::from_utf8(general_purpose::STANDARD.decode(response.body).unwrap()).unwrap();
+    assert!(body_string.contains("near-social-viewer"));
+
 
     let get_config_result = worker
         .view(
@@ -188,23 +233,21 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
     let policy: Value = get_policy_result.json().unwrap();
     assert_eq!(create_dao_args["policy"], policy);
 
-    let get_widget_result = worker
-        .view(&SOCIALDB_ACCOUNT.parse().unwrap(), "get")
+    let deployed_widgets = socialdb
+        .call("get")
         .args_json(json!({
-            "keys": [
-                format!("{}.near/widget/app", instance_name)
-            ]
+            "keys": [format!("{}/widget/**", instance_account_id)]
         }))
+        .view()
         .await?;
-    let widget: Value = get_widget_result.json().unwrap();
-    let expected_widget = json!({
-        format!("{}.near", instance_name): {
-            "widget": {
+    let deployed_widgets_json_string = String::from_utf8(deployed_widgets.result).unwrap();
 
-            }
-        }
-    });
-
-    assert_eq!(widget, expected_widget);
+    assert_eq!(
+        reference_widgets_json_string.replace(
+            reference_widget_contract.id().as_str(),
+            instance_account_id.as_str()
+        ),
+        deployed_widgets_json_string
+    );
     Ok(())
 }

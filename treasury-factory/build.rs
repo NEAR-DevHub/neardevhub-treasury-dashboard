@@ -28,7 +28,7 @@ fn main() {
     output_file
         .write_all(index_html_base64.as_bytes())
         .expect("Failed to write to output file");
-
+/*
     let web4_project_path = "../web4/treasury-web4"; // Change to the actual path of the other project
 
     // Run cargo build for the other project, targeting WASM
@@ -41,10 +41,10 @@ fn main() {
         .expect("Failed to build the other Rust project");
 
     if !status.success() {
-        println!(
+        panic!(
             "Failed to build the other project: {:?}",
             status.code().unwrap()
         );
-        // panic!("Failed to build the other project");
     }
+     */
 }

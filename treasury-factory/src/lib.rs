@@ -22,39 +22,30 @@ impl Contract {
     }
 
     #[payable]
-    pub fn create_instance(&mut self, create_dao_args: String) {
+    pub fn create_instance(&mut self, name: String, create_dao_args: String) -> Promise {
         const SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT: &str = "sputnik-dao.near";
-        const SOCIALDB_ACCOUNT: &str = "near.social";
 
         let signer_account_id = env::signer_account_id().as_str().to_string();
-        let dao_name = signer_account_id.split(".").next().unwrap();
 
-        let socialdb_data = json!({
-            "data": {
-            env::signer_account_id(): {
-                "widget": {
-                    "app": "hello"
-                }
-            }
-        }
-        });
-
-        Promise::new(env::signer_account_id())
+        Promise::new(format!("{}.{}", name, env::current_account_id().as_str()).parse().unwrap())
+            .create_account()
+            .transfer(NearToken::from_near(2))
+            .add_full_access_key(env::signer_account_pk())
             .deploy_contract(
                 include_bytes!("../../web4/treasury-web4/target/near/treasury_web4.wasm").to_vec(),
             )
             .then(
-                socialdb::ext(SOCIALDB_ACCOUNT.parse().unwrap())
-                    .with_attached_deposit(NearToken::from_near(1))
-                    .with_unused_gas_weight(1)
-                    .set(socialdb_data),
+                instance_contract::ext(env::signer_account_id())
+                .with_attached_deposit(env::attached_deposit().saturating_sub(NearToken::from_near(6)))
+                .with_unused_gas_weight(1)
+                .update_widgets()
             )
             .then(
                 sputnik_dao::ext(SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT.parse().unwrap())
                     .with_attached_deposit(NearToken::from_near(6))
                     .with_unused_gas_weight(1)
-                    .create(dao_name.to_string(), create_dao_args),
-            );
+                    .create(name.to_string(), create_dao_args),
+            )
     }
 }
 
