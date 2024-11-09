@@ -21,7 +21,11 @@ impl Contract {
     pub fn update_widgets(&mut self) -> Promise {
         socialdb::ext(SOCIALDB_ACCOUNT_ID.parse().unwrap())
             .get([format!("{}/widget/**", WIDGET_REFERENCE_ACCOUNT_ID)].to_vec())
-            .then(Self::ext(env::current_account_id()).with_attached_deposit(env::attached_deposit()).update_widgets_callback())
+            .then(
+                Self::ext(env::current_account_id())
+                    .with_attached_deposit(env::attached_deposit())
+                    .update_widgets_callback(),
+            )
     }
 
     #[payable]
@@ -33,13 +37,18 @@ impl Contract {
             PromiseResult::Successful(result) => {
                 let mut widget: Value =
                     near_sdk::serde_json::from_slice(result.as_slice()).unwrap();
-                
+
                 if let Some(obj) = widget.as_object_mut() {
-                    obj.insert(env::current_account_id().to_string(), obj[WIDGET_REFERENCE_ACCOUNT_ID].clone());            
+                    obj.insert(
+                        env::current_account_id().to_string(),
+                        obj[WIDGET_REFERENCE_ACCOUNT_ID].clone(),
+                    );
                     obj.remove(WIDGET_REFERENCE_ACCOUNT_ID);
                 }
-                env::log_str(format!("Updating widget with data {}", widget.to_string()).as_str());
-                socialdb::ext(SOCIALDB_ACCOUNT_ID.parse().unwrap()).with_attached_deposit(env::attached_deposit()).set(json!({"data": widget}))
+
+                socialdb::ext(SOCIALDB_ACCOUNT_ID.parse().unwrap())
+                    .with_attached_deposit(env::attached_deposit())
+                    .set(widget)
             }
             _ => env::panic_str("Failed to get reference widget data"),
         }
