@@ -17,13 +17,15 @@ const WIDGET_REFERENCE_ACCOUNT_ID: &str = "treasury-testing.near";
 // Implement the contract structure
 #[near]
 impl Contract {
-    pub fn update_widgets(&mut self) {
+    #[payable]
+    pub fn update_widgets(&mut self) -> Promise {
         socialdb::ext(SOCIALDB_ACCOUNT_ID.parse().unwrap())
             .get([format!("{}/widget/**", WIDGET_REFERENCE_ACCOUNT_ID)].to_vec())
-            .then(Self::ext(env::current_account_id()).update_widgets_callback());
+            .then(Self::ext(env::current_account_id()).with_attached_deposit(env::attached_deposit()).update_widgets_callback())
     }
 
-    pub fn update_widgets_callback(&mut self) {
+    #[payable]
+    pub fn update_widgets_callback(&mut self) -> Promise {
         if env::predecessor_account_id() != env::current_account_id() {
             env::panic_str("Should not be called directly");
         }
@@ -31,12 +33,15 @@ impl Contract {
             PromiseResult::Successful(result) => {
                 let mut widget: Value =
                     near_sdk::serde_json::from_slice(result.as_slice()).unwrap();
-                widget[env::current_account_id().to_string()] =
-                    widget[WIDGET_REFERENCE_ACCOUNT_ID].clone();
-
-                socialdb::ext(SOCIALDB_ACCOUNT_ID.parse().unwrap()).set(json!({"data": widget}));
+                
+                if let Some(obj) = widget.as_object_mut() {
+                    obj.insert(env::current_account_id().to_string(), obj[WIDGET_REFERENCE_ACCOUNT_ID].clone());            
+                    obj.remove(WIDGET_REFERENCE_ACCOUNT_ID);
+                }
+                env::log_str(format!("Updating widget with data {}", widget.to_string()).as_str());
+                socialdb::ext(SOCIALDB_ACCOUNT_ID.parse().unwrap()).with_attached_deposit(env::attached_deposit()).set(json!({"data": widget}))
             }
-            _ => env::panic_str("The first call failed"),
+            _ => env::panic_str("Failed to get reference widget data"),
         }
     }
 

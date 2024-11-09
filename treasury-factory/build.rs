@@ -41,7 +41,10 @@ fn main() {
         .expect("Failed to build the other Rust project");
 
     if !status.success() {
-        println!("Failed to build the other project: {:?}", status.code().unwrap());
+        println!(
+            "Failed to build the other project: {:?}",
+            status.code().unwrap()
+        );
         // panic!("Failed to build the other project");
     }
 }
