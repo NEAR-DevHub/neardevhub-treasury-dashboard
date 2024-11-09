@@ -1,5 +1,8 @@
+use near_sdk::base64::{self, engine};
 use near_sdk::base64::{engine::general_purpose, Engine as _};
-use near_sdk::serde::Deserialize;
+use near_sdk::serde::{Deserialize};
+
+use near_sdk::{AccountId, NearToken};
 use serde_json::json;
 
 #[derive(Deserialize)]
@@ -51,4 +54,91 @@ async fn test_basics_on(contract_wasm: &[u8]) -> Result<(), Box<dyn std::error::
     Ok(())
 }
 
+#[tokio::test]
+async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
+    const SPUTNIKDAO_CONTRACT_ACCOUNT: &str = "sputnik-dao.near";
+    let mainnet = near_workspaces::mainnet().await?;
+    let contract_id: AccountId = SPUTNIKDAO_CONTRACT_ACCOUNT.parse()?;
 
+    let worker = near_workspaces::sandbox().await?;
+    let sputnik_dao_factory = worker
+        .import_contract(&contract_id, &mainnet)
+        .initial_balance(NearToken::from_near(1000))
+        .transact()
+        .await?;
+
+    let init_sputnik_dao_factory_result = sputnik_dao_factory.call("new").max_gas().transact().await?;
+    if init_sputnik_dao_factory_result.is_failure() {
+        panic!("{:?}", String::from_utf8(init_sputnik_dao_factory_result.raw_bytes().unwrap()));
+    }
+    assert!(init_sputnik_dao_factory_result.is_success());
+
+    let create_dao_args = json!({
+        "config": {
+        "name": "created-dao-name",
+        "purpose": "creating dao treasury",
+        "metadata": "",
+        },
+        "policy": {
+        "roles": [
+            {
+            "kind": {
+                "Group": ["acc1.near", "acc2.near", "acc3.near"],
+            },
+            "name": "Create Requests",
+            "permissions": [
+                "call:AddProposal",
+                "transfer:AddProposal",
+                "config:Finalize",
+            ],
+            "vote_policy": {},
+            },
+            {
+            "kind": {
+                "Group": ["acc1.near"],
+            },
+            "name": "Manage Members",
+            "permissions": [
+                "config:*",
+                "policy:*",
+                "add_member_to_role:*",
+                "remove_member_from_role:*",
+            ],
+            "vote_policy": {},
+            },
+            {
+            "kind": {
+                "Group": ["acc1.near", "acc2.near"],
+            },
+            "name": "Vote",
+            "permissions": ["*:VoteReject", "*:VoteApprove", "*:VoteRemove"],
+            "vote_policy": {},
+            },
+        ],
+        "default_vote_policy": {
+            "weight_kind": "RoleWeight",
+            "quorum": "0",
+            "threshold": [1, 2],
+        },
+        "proposal_bond": "100000000000000000000000",
+        "proposal_period": "604800000000000",
+        "bounty_bond": "100000000000000000000000",
+        "bounty_forgiveness_period": "604800000000000",
+        },
+    });
+
+    let create_dao_result= sputnik_dao_factory.call("create").args_json(json!(
+        {
+            "name": "created-dao-name",
+            "args": general_purpose::STANDARD.encode(create_dao_args.to_string())
+        }
+    )).max_gas().deposit(NearToken::from_near(6)).transact().await?;
+
+
+    if create_dao_result.is_failure() {
+        panic!("{:?}", String::from_utf8(create_dao_result.raw_bytes().unwrap()));
+    }
+    
+    assert!(create_dao_result.is_success());
+    Ok(())
+}
