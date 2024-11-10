@@ -3,7 +3,8 @@ use std::env;
 use std::fs;
 use std::io::Write;
 use std::path::Path;
-use std::process::Command;
+use cargo_near_build::extended::*;
+use cargo_near_build::BuildOpts;
 
 fn main() {
     // Change working directory to the directory of the script (similar to process.chdir)
@@ -28,23 +29,17 @@ fn main() {
     output_file
         .write_all(index_html_base64.as_bytes())
         .expect("Failed to write to output file");
-    /*
-    let web4_project_path = "../web4/treasury-web4"; // Change to the actual path of the other project
 
-    // Run cargo build for the other project, targeting WASM
-    let status = Command::new("cargo")
-        .arg("near")
-        .arg("build")
-        .arg("--no-docker")
-        .current_dir(web4_project_path)
-        .status()
-        .expect("Failed to build the other Rust project");
 
-    if !status.success() {
-        panic!(
-            "Failed to build the other project: {:?}",
-            status.code().unwrap()
-        );
-    }
-     */
+    let build_opts = BuildOpts::builder()
+        .manifest_path("../web4/treasury-web4/Cargo.toml".into())
+        .build();
+    let build_script_opts = BuildScriptOpts::builder().build();
+    let build_opts_extended = BuildOptsExtended::builder()
+        .build_opts(build_opts)
+        .build_script_opts(build_script_opts)
+        .build();
+
+    let artifact = build( build_opts_extended ).expect("Building web4 contract failed");
+    println!("Build path is {}", artifact.path);
 }
