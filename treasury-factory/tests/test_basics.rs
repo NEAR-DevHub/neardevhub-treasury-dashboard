@@ -55,10 +55,10 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
         .transact()
         .await?;
     let reference_widget_contract = worker
-    .import_contract(&"treasury-testing.near".parse().unwrap(), &mainnet)
-    .initial_balance(NearToken::from_near(20))
-    .transact()
-    .await?;
+        .import_contract(&"treasury-testing.near".parse().unwrap(), &mainnet)
+        .initial_balance(NearToken::from_near(20))
+        .transact()
+        .await?;
 
     let init_socialdb_result = socialdb.call("new").max_gas().transact().await?;
     if init_socialdb_result.is_failure() {
@@ -118,7 +118,7 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
     assert!(init_sputnik_dao_factory_result.is_success());
 
     let instance_name = "test-treasury-instance";
-    let instance_account_id = format!("{}.{}",instance_name, treasury_factory_contract.id());
+    let instance_account_id = format!("{}.{}", instance_name, treasury_factory_contract.id());
 
     let create_dao_args = json!({
         "config": {
@@ -196,7 +196,13 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
 
     assert!(create_treasury_instance_result.is_success());
 
-    let result = treasury_factory_contract.as_account()
+    println!(
+        "Total tgas burnt {:?}",
+        create_treasury_instance_result.total_gas_burnt.as_tgas()
+    );
+
+    let result = treasury_factory_contract
+        .as_account()
         .view(&instance_account_id.parse().unwrap(), "web4_get")
         .args_json(json!({"request": {"path": "/"}}))
         .await?;
@@ -207,7 +213,6 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
     let body_string =
         String::from_utf8(general_purpose::STANDARD.decode(response.body).unwrap()).unwrap();
     assert!(body_string.contains("near-social-viewer"));
-
 
     let get_config_result = worker
         .view(

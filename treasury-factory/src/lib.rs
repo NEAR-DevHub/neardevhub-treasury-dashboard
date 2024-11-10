@@ -1,6 +1,6 @@
 // Find all our documentation at https://docs.near.org
 mod web4;
-use near_sdk::{env, near, serde_json::json, AccountId, NearToken, Promise};
+use near_sdk::{env, near, serde_json::json, AccountId, Gas, NearToken, Promise};
 use web4::types::{Web4Request, Web4Response};
 pub mod external;
 pub use crate::external::*;
@@ -25,9 +25,11 @@ impl Contract {
     pub fn create_instance(&mut self, name: String, create_dao_args: String) -> Promise {
         const SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT: &str = "sputnik-dao.near";
 
-        let signer_account_id = env::signer_account_id().as_str().to_string();
-
-        Promise::new(format!("{}.{}", name, env::current_account_id().as_str()).parse().unwrap())
+        let new_instance_contract_id: AccountId =
+            format!("{}.{}", name, env::current_account_id().as_str())
+                .parse()
+                .unwrap();
+        Promise::new(new_instance_contract_id.clone())
             .create_account()
             .transfer(NearToken::from_near(2))
             .add_full_access_key(env::signer_account_pk())
@@ -35,15 +37,16 @@ impl Contract {
                 include_bytes!("../../web4/treasury-web4/target/near/treasury_web4.wasm").to_vec(),
             )
             .then(
-                instance_contract::ext(env::signer_account_id())
-                .with_attached_deposit(env::attached_deposit().saturating_sub(NearToken::from_near(6)))
-                .with_unused_gas_weight(1)
-                .update_widgets()
+                instance_contract::ext(new_instance_contract_id.clone())
+                    .with_attached_deposit(
+                        env::attached_deposit().saturating_sub(NearToken::from_near(6)),
+                    )
+                    .update_widgets(),
             )
             .then(
                 sputnik_dao::ext(SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT.parse().unwrap())
                     .with_attached_deposit(NearToken::from_near(6))
-                    .with_unused_gas_weight(1)
+                    .with_static_gas(Gas::from_tgas(50))
                     .create(name.to_string(), create_dao_args),
             )
     }
