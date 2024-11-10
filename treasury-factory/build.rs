@@ -30,15 +30,16 @@ fn main() {
         .write_all(index_html_base64.as_bytes())
         .expect("Failed to write to output file");
 
-    let build_opts = BuildOpts::builder()
-        .manifest_path("../web4/treasury-web4/Cargo.toml".into())
-        .build();
-    let build_script_opts = BuildScriptOpts::builder().build();
-    let build_opts_extended = BuildOptsExtended::builder()
-        .build_opts(build_opts)
-        .build_script_opts(build_script_opts)
-        .build();
+    if !fs::exists("../web4/treasury-web4/target/near/treasury_web4.wasm").unwrap() {
+        let build_opts = BuildOpts::builder()
+            .manifest_path("../web4/treasury-web4/Cargo.toml".into())
+            .build();
+        let build_script_opts = BuildScriptOpts::builder().build();
+        let build_opts_extended = BuildOptsExtended::builder()
+            .build_opts(build_opts)
+            .build_script_opts(build_script_opts)
+            .build();
 
-    let artifact = build(build_opts_extended).expect("Building web4 contract failed");
-    println!("Build path is {}", artifact.path);
+        build(build_opts_extended).expect("Building web4 contract failed");
+    }
 }

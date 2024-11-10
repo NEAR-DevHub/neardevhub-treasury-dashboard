@@ -1,8 +1,32 @@
+use cargo_near_build::{build, BuildOpts};
+use lazy_static::lazy_static;
 use near_sdk::base64::{engine::general_purpose, Engine as _};
 use near_sdk::serde::Deserialize;
-
 use near_sdk::{AccountId, NearToken};
 use serde_json::{json, Value};
+use std::fs;
+use std::sync::{Mutex, Once};
+
+// Ensure `build_project` only runs once
+lazy_static! {
+    static ref CONTRACT_WASM: Mutex<Vec<u8>> = Mutex::new(Vec::new());
+}
+
+static INIT: Once = Once::new();
+
+fn build_project_once() -> Vec<u8> {
+    INIT.call_once(|| {
+        let build_opts = BuildOpts::builder().build();
+        let build_artifact = cargo_near_build::build(build_opts).expect("Failed to build contract");
+
+        println!("Building contract");
+        let wasm = fs::read(build_artifact.path).expect("Unable to read contract wasm");
+        let mut contract_wasm = CONTRACT_WASM.lock().unwrap();
+        *contract_wasm = wasm;
+    });
+
+    CONTRACT_WASM.lock().unwrap().clone()
+}
 
 #[derive(Deserialize)]
 #[serde(crate = "near_sdk::serde")]
@@ -12,10 +36,12 @@ pub struct Web4Response {
     body: String,
 }
 
+fn build_wasm() {}
+
 #[tokio::test]
 async fn test_web4() -> Result<(), Box<dyn std::error::Error>> {
     let sandbox = near_workspaces::sandbox().await?;
-    let contract_wasm = near_workspaces::compile_project("./").await?;
+    let contract_wasm = build_project_once();
 
     let contract = sandbox.dev_deploy(&contract_wasm).await?;
 
@@ -104,7 +130,7 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
     let reference_widgets_json_string = String::from_utf8(reference_widgets.result).unwrap();
 
-    let treasury_factory_contract_wasm = near_workspaces::compile_project("./").await?;
+    let treasury_factory_contract_wasm = build_project_once();
     let treasury_factory_contract = worker.dev_deploy(&treasury_factory_contract_wasm).await?;
 
     let init_sputnik_dao_factory_result =
