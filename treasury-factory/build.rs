@@ -1,10 +1,10 @@
 use base64::{engine::general_purpose, Engine as _};
+use cargo_near_build::extended::*;
+use cargo_near_build::BuildOpts;
 use std::env;
 use std::fs;
 use std::io::Write;
 use std::path::Path;
-use cargo_near_build::extended::*;
-use cargo_near_build::BuildOpts;
 
 fn main() {
     // Change working directory to the directory of the script (similar to process.chdir)
@@ -30,7 +30,6 @@ fn main() {
         .write_all(index_html_base64.as_bytes())
         .expect("Failed to write to output file");
 
-
     let build_opts = BuildOpts::builder()
         .manifest_path("../web4/treasury-web4/Cargo.toml".into())
         .build();
@@ -40,6 +39,6 @@ fn main() {
         .build_script_opts(build_script_opts)
         .build();
 
-    let artifact = build( build_opts_extended ).expect("Building web4 contract failed");
+    let artifact = build(build_opts_extended).expect("Building web4 contract failed");
     println!("Build path is {}", artifact.path);
 }
