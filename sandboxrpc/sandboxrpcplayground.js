@@ -1,7 +1,7 @@
 import { exec } from 'child_process';
 import { connect, utils, keyStores } from 'near-api-js';
 
-const { rpc_url, account_id, secret_key } = await new Promise(resolve => {
+const { rpc_url, /** @type String */ account_id, secret_key } = await new Promise(resolve => {
     const sandbox = exec('cargo run', (error, stdout, stderr) => {
         if (error) {
             console.error(`Execution error: ${error}`);
@@ -56,11 +56,11 @@ const createDaoConfig = {
         roles: [
             {
                 kind: {
-                    Group: ["acc1.near", "acc2.near", "acc3.near"],
+                    Group: [account_id],
                 },
                 name: "Create Requests",
                 permissions: [
-                    "call:AddProposal",
+                    "*:AddProposal",
                     "transfer:AddProposal",
                     "config:Finalize",
                 ],
@@ -68,7 +68,7 @@ const createDaoConfig = {
             },
             {
                 kind: {
-                    Group: ["acc1.near"],
+                    Group: [account_id],
                 },
                 name: "Manage Members",
                 permissions: [
@@ -81,7 +81,7 @@ const createDaoConfig = {
             },
             {
                 kind: {
-                    Group: ["acc1.near", "acc2.near"],
+                    Group: [account_id],
                 },
                 name: "Vote",
                 permissions: ["*:VoteReject", "*:VoteApprove", "*:VoteRemove"],
@@ -110,7 +110,34 @@ const result = await account.functionCall({
 });
 console.log(result);
 
-const daoconfig = await account.viewFunction({contractId: 'testdao.sputnik-dao.near', methodName: 'get_config', args: {}});
-console.log(daoconfig);
+const daopolicy = await account.viewFunction({contractId: 'testdao.sputnik-dao.near', methodName: 'get_policy', args: {}});
+console.log(JSON.stringify(daopolicy));
+
+
+console.log(account_id);
+
+const updateParametersResult = await account.functionCall({
+    contractId: 'testdao.sputnik-dao.near', methodName: 'add_proposal', args: {
+        proposal: {
+            description: "Change proposal period",
+            kind: {
+                ChangePolicyUpdateParameters: {
+                    parameters: {
+                        proposal_period: (1_000_000_000n * 60n * 60n * 24n * 8n).toString(),
+                    }
+                }
+            }
+        }
+    },
+    attachedDeposit: "100000000000000000000000"
+});
+console.log(updateParametersResult);
+
+const proposals = await account.viewFunction({contractId: 'testdao.sputnik-dao.near', methodName: 'get_proposals', args: {
+    from_index: 0,
+    limit: 10
+}});
+console.log(JSON.stringify(proposals));
+
 
 process.exit(0);
