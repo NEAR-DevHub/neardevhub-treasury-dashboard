@@ -14,7 +14,7 @@ const [leftNavbarOptions, setLeftBarOptions] = useState([
     title: "Members",
     href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.MembersPage`,
     props: { instance },
-  },  
+  },
 ]);
 
 useEffect(() => {
