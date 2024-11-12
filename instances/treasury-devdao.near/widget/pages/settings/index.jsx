@@ -6,13 +6,13 @@ const { showThresholdConfiguration } = VM.require(
 
 const [leftNavbarOptions, setLeftBarOptions] = useState([
   {
-    title: "Voting Duration",
-    href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.VotingDurationPage`,
+    title: "Members",
+    href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.MembersPage`,
     props: { instance },
   },
   {
-    title: "Members",
-    href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.MembersPage`,
+    title: "Voting Duration",
+    href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.VotingDurationPage`,
     props: { instance },
   },
 ]);
