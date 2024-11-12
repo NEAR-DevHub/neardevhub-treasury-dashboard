@@ -12,5 +12,9 @@ trait SputnikDao {
 
 #[ext_contract(instance_contract)]
 trait InstanceContract {
-    fn update_widgets(&self) -> Promise;
+    fn update_widgets(
+        &self,
+        widget_reference_account_id: String,
+        social_db_account_id: String,
+    ) -> Promise;
 }

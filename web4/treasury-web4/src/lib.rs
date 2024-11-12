@@ -1,6 +1,6 @@
 // Find all our documentation at https://docs.near.org
 mod web4;
-use near_sdk::serde_json::{json, Value};
+use near_sdk::serde_json::Value;
 use near_sdk::{env, near, Promise, PromiseResult};
 use web4::types::{Web4Request, Web4Response};
 
@@ -11,25 +11,30 @@ pub struct Contract {}
 pub mod external;
 pub use crate::external::*;
 
-const SOCIALDB_ACCOUNT_ID: &str = "social.near";
-const WIDGET_REFERENCE_ACCOUNT_ID: &str = "treasury-testing.near";
-
 // Implement the contract structure
 #[near]
 impl Contract {
     #[payable]
-    pub fn update_widgets(&mut self) -> Promise {
-        socialdb::ext(SOCIALDB_ACCOUNT_ID.parse().unwrap())
-            .get([format!("{}/widget/**", WIDGET_REFERENCE_ACCOUNT_ID)].to_vec())
+    pub fn update_widgets(
+        &mut self,
+        widget_reference_account_id: String,
+        social_db_account_id: String,
+    ) -> Promise {
+        socialdb::ext(social_db_account_id.parse().unwrap())
+            .get([format!("{}/widget/**", widget_reference_account_id)].to_vec())
             .then(
                 Self::ext(env::current_account_id())
                     .with_attached_deposit(env::attached_deposit())
-                    .update_widgets_callback(),
+                    .update_widgets_callback(widget_reference_account_id, social_db_account_id),
             )
     }
 
     #[payable]
-    pub fn update_widgets_callback(&mut self) -> Promise {
+    pub fn update_widgets_callback(
+        &mut self,
+        widget_reference_account_id: String,
+        social_db_account_id: String,
+    ) -> Promise {
         if env::predecessor_account_id() != env::current_account_id() {
             env::panic_str("Should not be called directly");
         }
@@ -41,12 +46,12 @@ impl Contract {
                 if let Some(obj) = widget.as_object_mut() {
                     obj.insert(
                         env::current_account_id().to_string(),
-                        obj[WIDGET_REFERENCE_ACCOUNT_ID].clone(),
+                        obj[&widget_reference_account_id].clone(),
                     );
-                    obj.remove(WIDGET_REFERENCE_ACCOUNT_ID);
+                    obj.remove(&widget_reference_account_id);
                 }
 
-                socialdb::ext(SOCIALDB_ACCOUNT_ID.parse().unwrap())
+                socialdb::ext(social_db_account_id.parse().unwrap())
                     .with_attached_deposit(env::attached_deposit())
                     .set(widget)
             }

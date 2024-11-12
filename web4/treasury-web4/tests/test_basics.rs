@@ -35,6 +35,7 @@ async fn test_web4() -> Result<(), Box<dyn std::error::Error>> {
 #[tokio::test]
 async fn test_update_widgets() -> Result<(), Box<dyn std::error::Error>> {
     const SOCIALDB_ACCOUNT: &str = "social.near";
+    const WIDGET_REFERENCE_ACCOUNT_ID: &str = "treasury-testing.near";
 
     let mainnet = near_workspaces::mainnet().await?;
     let sandbox = near_workspaces::sandbox().await?;
@@ -49,7 +50,7 @@ async fn test_update_widgets() -> Result<(), Box<dyn std::error::Error>> {
     assert!(deploy_instance_contract_result.is_success());
 
     let reference_widget_contract = sandbox
-        .import_contract(&"treasury-testing.near".parse().unwrap(), &mainnet)
+        .import_contract(&WIDGET_REFERENCE_ACCOUNT_ID.parse().unwrap(), &mainnet)
         .initial_balance(NearToken::from_near(20))
         .transact()
         .await?;
@@ -100,6 +101,10 @@ async fn test_update_widgets() -> Result<(), Box<dyn std::error::Error>> {
 
     let update_widget_result = instance_account
         .call(instance_account.id(), "update_widgets")
+        .args_json(json!({
+            "widget_reference_account_id": WIDGET_REFERENCE_ACCOUNT_ID,
+            "social_db_account_id": SOCIALDB_ACCOUNT
+        }))
         .deposit(NearToken::from_near(2))
         .max_gas()
         .transact()

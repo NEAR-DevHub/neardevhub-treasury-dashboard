@@ -22,9 +22,14 @@ impl Contract {
     }
 
     #[payable]
-    pub fn create_instance(&mut self, name: String, create_dao_args: String) -> Promise {
-        const SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT: &str = "sputnik-dao.near";
-
+    pub fn create_instance(
+        &mut self,
+        name: String,
+        sputnik_dao_factory_account_id: String,
+        social_db_account_id: String,
+        widget_reference_account_id: String,
+        create_dao_args: String,
+    ) -> Promise {
         let new_instance_contract_id: AccountId =
             format!("{}.{}", name, env::current_account_id().as_str())
                 .parse()
@@ -41,10 +46,10 @@ impl Contract {
                     .with_attached_deposit(
                         env::attached_deposit().saturating_sub(NearToken::from_near(6)),
                     )
-                    .update_widgets(),
+                    .update_widgets(widget_reference_account_id, social_db_account_id),
             )
             .then(
-                sputnik_dao::ext(SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT.parse().unwrap())
+                sputnik_dao::ext(sputnik_dao_factory_account_id.parse().unwrap())
                     .with_attached_deposit(NearToken::from_near(6))
                     .with_static_gas(Gas::from_tgas(50))
                     .create(name.to_string(), create_dao_args),

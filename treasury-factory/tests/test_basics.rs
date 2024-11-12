@@ -1,4 +1,4 @@
-use cargo_near_build::{build, BuildOpts};
+use cargo_near_build::BuildOpts;
 use lazy_static::lazy_static;
 use near_sdk::base64::{engine::general_purpose, Engine as _};
 use near_sdk::serde::Deserialize;
@@ -36,8 +36,6 @@ pub struct Web4Response {
     body: String,
 }
 
-fn build_wasm() {}
-
 #[tokio::test]
 async fn test_web4() -> Result<(), Box<dyn std::error::Error>> {
     let sandbox = near_workspaces::sandbox().await?;
@@ -63,6 +61,7 @@ async fn test_web4() -> Result<(), Box<dyn std::error::Error>> {
 async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
     const SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT: &str = "sputnik-dao.near";
     const SOCIALDB_ACCOUNT: &str = "social.near";
+    const WIDGET_REFERENCE_ACCOUNT_ID: &str = "treasury-testing.near";
 
     let mainnet = near_workspaces::mainnet().await?;
     let sputnikdao_factory_contract_id: AccountId = SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT.parse()?;
@@ -81,7 +80,7 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
         .transact()
         .await?;
     let reference_widget_contract = worker
-        .import_contract(&"treasury-testing.near".parse().unwrap(), &mainnet)
+        .import_contract(&WIDGET_REFERENCE_ACCOUNT_ID.parse().unwrap(), &mainnet)
         .initial_balance(NearToken::from_near(20))
         .transact()
         .await?;
@@ -204,6 +203,9 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
         .call("create_instance")
         .args_json(json!(
             {
+                "sputnik_dao_factory_account_id": SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT,
+                "social_db_account_id": SOCIALDB_ACCOUNT,
+                "widget_reference_account_id": WIDGET_REFERENCE_ACCOUNT_ID,
                 "name": instance_name,
                 "create_dao_args": general_purpose::STANDARD.encode(create_dao_args.to_string())
             }
@@ -242,7 +244,7 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
 
     let get_config_result = worker
         .view(
-            &format!("{}.sputnik-dao.near", instance_name)
+            &format!("{}.{}", instance_name, SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT)
                 .parse()
                 .unwrap(),
             "get_config",
