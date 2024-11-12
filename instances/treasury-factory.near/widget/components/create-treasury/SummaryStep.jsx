@@ -82,6 +82,15 @@ const PERMISSIONS = {
   vote: "Vote",
 };
 
+const storageAccountName = Storage.get("accountName");
+
+useEffect(() => {
+  if (storageAccountName) {
+    setShowCongratsModal(true);
+    Storage.set("accountName", null);
+  }
+}, [storageAccountName]);
+
 function filterMemberByPermission(permission) {
   return formFields.members
     .filter((acc) => acc.permissions.includes(permission))
@@ -91,7 +100,7 @@ function filterMemberByPermission(permission) {
 function createDao() {
   const createDaoConfig = {
     config: {
-      name: formFields.sputnikAccountName,
+      name: `${formFields.sputnikAccountName}`,
       purpose: `creating ${formFields.sputnikAccountName} treasury`,
       metadata: "",
     },
@@ -143,18 +152,21 @@ function createDao() {
     },
   };
 
-  Near.call([{
-    contractName: `${REPL_SPUTNIK_ACCOUNT}`,
-    methodName: "create",
-    args: {
-      name: formFields.sputnikAccountName,
-      args: btoa(JSON.stringify(createDaoConfig)),
+  Near.call([
+    {
+      contractName: `${REPL_BASE_DEPLOYMENT_ACCOUNT}`,
+      methodName: "create_instance",
+      args: {
+        name: `${formFields.sputnikAccountName}`,
+        sputnik_dao_factory_account_id: `${REPL_SPUTNIK_ACCOUNT}`,
+        social_db_account_id: `${REPL_SOCIAL_CONTRACT}`,
+        widget_reference_account_id: `${formFields.accountName}.${REPL_NEAR}`,
+        create_dao_args: btoa(JSON.stringify(createDaoConfig)),
+      },
+      gas: 300000000000000,
+      deposit: Big(12).mul(Big(10).pow(24)).toFixed(),
     },
-    gas: 300000000000000,
-    deposit: Big(6).mul(Big(10).pow(24)).toFixed(),
-  }, ]);
-
-  setShowCongratsModal(true);
+  ]).then(() => Storage.set("accountName", formFields.accountName));
 }
 
 const CongratsItem = ({ title, link }) => (
@@ -335,15 +347,15 @@ return (
               <div>
                 <CongratsItem
                   title="near.org"
-                  link={`https://near.org/${formFields.sputnikAccountName}.sputnik-dao.near/widget/app`}
+                  link={`https://near.org/${storageAccountName}.near/widget/app`}
                 />
                 <CongratsItem
                   title="near.social"
-                  link={`https://social.near/${formFields.sputnikAccountName}.sputnik-dao.near/widget/app`}
+                  link={`https://social.near/${storageAccountName}.near/widget/app`}
                 />
                 <CongratsItem
                   title="web4"
-                  link={`https://${formFields.sputnikAccountName}.sputnik-dao.near.app`}
+                  link={`https://${storageAccountName}.near.app`}
                 />
               </div>
             </div>
