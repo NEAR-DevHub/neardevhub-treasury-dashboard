@@ -1,5 +1,5 @@
 const Theme = styled.div`
-  --theme-color: rgba(44, 62, 80, 1);
+  --theme-color: #05a36e;
   --theme-bg-color: #f4f4f4;
   --text-color: white;
   --link-inactive-color: white;
