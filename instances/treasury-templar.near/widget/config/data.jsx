@@ -21,7 +21,7 @@ return {
   showThresholdConfiguration: false,
   logo: (
     <img
-      src="https://github.com/user-attachments/assets/a1a33023-42ef-4e60-83d9-d93c71412404"
+      src="https://github.com/user-attachments/assets/d1d3da13-452a-4501-bdc6-f906598dd5a4"
       style={{ height: 40, width: 40 }}
     />
   ),

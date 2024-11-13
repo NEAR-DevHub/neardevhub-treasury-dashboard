@@ -1,7 +1,6 @@
 const Theme = styled.div`
-  --theme-color: linear-gradient(180deg, #355ec6, #963cdc);
-  --theme-bg-color: rgb(243 244 246);
-  --page-header-color: rgb(21 22 25);
+  --theme-color: #8942d9;
+  --theme-bg-color: #f4f4f4;
   --text-color: white;
   --link-inactive-color: white;
   --link-active-color: white;
@@ -31,10 +30,6 @@ const Theme = styled.div`
       border: none !important;
       padding-block: 0.7rem !important;
     }
-  }
-
-  .page-header {
-    color: var(--page-header-color);
   }
 
   .text-light-grey {

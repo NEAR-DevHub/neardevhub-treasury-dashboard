@@ -34,22 +34,24 @@ const MenuIcon = () => (
 
 const Navbar = styled.div`
   padding: 1.5rem 1rem;
-  background: var(--theme-color);
-  color: var(--text-color);
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-
+  color: #1b1b18;
   @media screen and (max-width: 768px) {
     padding: 1.2rem 1rem;
   }
 
   .account-container {
-    background-color: #e3e6e8;
-    color: #2c3e50;
+    color: var(--theme-color) !important;
     font-size: 14px;
     font-weight: 700;
+  }
+
+  .text-sm {
+    font-size: 13px;
+    color: #999999;
   }
 `;
 
@@ -59,9 +61,21 @@ const LinksContainer = styled.div`
   flex-direction: row;
   align-items: center;
   gap: 1.5rem;
-
+  color: #999999 !important;
   @media screen and (max-width: 768px) {
     display: none;
+  }
+
+  a {
+    color: inherit !important;
+
+    &:hover {
+      color: #1b1b18 !important;
+    }
+
+    &.active {
+      color: #1b1b18 !important;
+    }
   }
 `;
 
@@ -115,14 +129,14 @@ function getTitle(text) {
 
 return (
   <Navbar className="position-relative d-flex justify-content-between gap-2">
-    <div className="d-flex align-items-center gap-3">
-      {logo ? (
-        logo
-      ) : (
-        <div className="h4 mb-0">{getTitle(page ?? "dashboard")}</div>
-      )}
-      <div className="account-container py-1 px-2 rounded-3">
-        {treasuryDaoID}
+    <div className="d-flex flex-column gap-2">
+      <div className="d-flex gap-3 align-items-center">
+        {logo && logo}
+        <div className="h3 mb-0">{getTitle(page ?? "dashboard")}</div>
+      </div>
+      <div>
+        <span className="text-sm">Treasury Wallet: </span>
+        <span className="account-container">{treasuryDaoID}</span>
       </div>
     </div>
     <div className="d-flex gap-3 align-items-center">
