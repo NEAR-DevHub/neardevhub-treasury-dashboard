@@ -46,8 +46,6 @@ useEffect(() => {
   });
 }, [members]);
 
-console.log(members);
-
 const ListItem = ({ member, key }) => (
   <Item className="d-flex align-items-center justify-content-between w-100">
     <div className="w-50">

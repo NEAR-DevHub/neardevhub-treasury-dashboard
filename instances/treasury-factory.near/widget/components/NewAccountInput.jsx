@@ -22,16 +22,15 @@ const checkAccountAvailable = async (accountId) => {
       },
     }),
   }).then((resp) => {
-    if (resp) {
-      const err = resp.body?.error?.cause;
+    if (!resp) return;
 
-      if (!err)
-        return setAlertMsg(`Account ${accountId}${postfix} already been taken`);
-      else if (err.name !== "UNKNOWN_ACCOUNT")
-        return setAlertMsg(err?.info?.error_message);
+    const err = resp.body?.error?.cause;
+    let errMsg = null;
 
-      setAlertMsg();
-    }
+    if (!err) errMsg = `Account ${accountId}${postfix} already been taken`;
+    else if (err.name !== "UNKNOWN_ACCOUNT") errMsg = err?.info?.error_message;
+
+    setAlertMsg(errMsg);
   });
 };
 

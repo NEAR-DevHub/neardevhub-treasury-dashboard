@@ -1,17 +1,13 @@
 const { getNearBalances } = VM.require(
   "${REPL_DEVDAO_ACCOUNT}/widget/lib.common"
 );
+if (!getNearBalances) return <></>;
 
 const baseUrl = "https://api.pikespeak.ai";
-const [balance, setBalance] = useState(null);
 const REQUIRED_BALANCE = 12;
 
-const getBalance = () => {
-  const balance = getNearBalances(context.accountId);
-  setBalance(parseFloat(balance.availableParsed));
-};
-
-getBalance();
+let balance = getNearBalances(context.accountId);
+balance = balance ? parseFloat(balance.availableParsed) : 0;
 
 const Section = styled.div`
   ul {

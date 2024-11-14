@@ -82,12 +82,12 @@ const PERMISSIONS = {
   vote: "Vote",
 };
 
-const storageAccountName = Storage.get("accountName");
+const storageAccountName = Storage.privateGet("accountName");
 
 useEffect(() => {
   if (storageAccountName) {
     setShowCongratsModal(true);
-    Storage.set("accountName", null);
+    Storage.privateSet("accountName", null);
   }
 }, [storageAccountName]);
 
@@ -164,9 +164,11 @@ function createDao() {
         create_dao_args: btoa(JSON.stringify(createDaoConfig)),
       },
       gas: 300000000000000,
-      deposit: Big(12).mul(Big(10).pow(24)).toFixed(),
+      deposit: Big(REQUIRED_BALANCE).mul(Big(10).pow(24)).toFixed(),
     },
-  ]).then(() => Storage.set("accountName", formFields.accountName));
+  ]);
+
+  Storage.privateSet("accountName", formFields.accountName);
 }
 
 const CongratsItem = ({ title, link }) => (

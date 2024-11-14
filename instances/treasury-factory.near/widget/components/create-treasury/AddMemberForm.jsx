@@ -30,8 +30,10 @@ return (
         props={{
           value: fields.accountId ?? "",
           onUpdate: (value) => {
-            fields.accountId = value ?? fields.accountId;
-            setFields(fields);
+            setFields({
+              ...fields,
+              accountId: value ?? fields.accountId,
+            });
           },
           maxWidth: "100%",
         }}
@@ -42,8 +44,10 @@ return (
       <Typeahead
         selected={fields.permissions ?? []}
         onChange={(value) => {
-          fields.permissions = value ?? fields.permissions;
-          setFields(fields);
+          setFields({
+            ...fields,
+            permissions: value ?? fields.permissions,
+          });
         }}
         options={Object.values(PERMISSIONS)}
         positionFixed
