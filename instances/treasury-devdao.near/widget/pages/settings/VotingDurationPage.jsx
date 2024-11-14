@@ -98,6 +98,10 @@ const Container = styled.div`
   }
 `;
 
+const cancelChangeRequest = () => {
+  setDurationDays(currentDurationDays);
+};
+
 const submitChangeRequest = () => {
   Near.call([
     {
@@ -146,7 +150,9 @@ return (
             Enter number of days that a vote should be active
           </small>
         </p>
-        <button class="btn btn-light">Cancel</button>
+        <button class="btn btn-light" onClick={cancelChangeRequest}>
+          Cancel
+        </button>
         <button class="btn btn-success" onClick={submitChangeRequest}>
           Submit Request
         </button>
