@@ -19,7 +19,7 @@ test.describe("admin connected", function () {
     const currentDurationDays = await page
       .getByPlaceholder("Enter voting duration days")
       .inputValue();
-    const newDurationDays = currentDurationDays + 3;
+    const newDurationDays = Number(currentDurationDays) + 3;
     await page
       .getByPlaceholder("Enter voting duration days")
       .fill(newDurationDays.toString());
@@ -61,7 +61,7 @@ test.describe("admin connected", function () {
       .inputValue();
     await page
       .getByPlaceholder("Enter voting duration days")
-      .fill((currentDurationDays + 3).toString());
+      .fill((Number(currentDurationDays) + 3).toString());
 
     await page.waitForTimeout(500);
     await page.getByText("Cancel").click();
