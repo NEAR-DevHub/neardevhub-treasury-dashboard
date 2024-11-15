@@ -4,7 +4,7 @@ if (!instance) {
   return <></>;
 }
 
-const { treasuryDaoID, navbarLinks, logo } = VM.require(
+const { treasuryDaoID, navbarLinks, logo, isTesting } = VM.require(
   `${instance}/widget/config.data`
 );
 
@@ -130,9 +130,10 @@ function getTitle(text) {
 return (
   <Navbar className="position-relative d-flex justify-content-between gap-2">
     <div className="d-flex flex-column gap-2">
-      <div className="d-flex gap-3 align-items-center">
+      <div className="d-flex gap-2 align-items-center">
         {logo && logo}
         <div className="h3 mb-0">{getTitle(page ?? "dashboard")}</div>
+        {isTesting && <div>(Testing)</div>}
       </div>
       <div>
         <span className="text-sm">Treasury Wallet: </span>

@@ -89,50 +89,50 @@ const totalBalance = Big(nearBalances?.totalParsed ?? "0")
   .toFixed(4);
 
 return (
-  <Wrapper className="d-flex flex-column gap-3">
-    <div className="d-flex justify-content-between gap-2 mt-3">
-      <Widget
-        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
-        props={{
-          instance,
-          setNearStakedTokens: (v) => setNearStakedTokens(Big(v).toFixed(4)),
-          setNearUnstakedTokens: (v) =>
-            setNearUnStakedTokens(Big(v).toFixed(4)),
-          setNearStakedTotalTokens: (v) =>
-            setNearStakedTotalTokens(Big(v).toFixed(4)),
-        }}
-      />
-      <h4 className="page-header">Dashboard</h4>
-    </div>
-    <div className="card card-body" style={{ maxHeight: "100px" }}>
-      <div className="h5">Total Balance</div>
-      {typeof getNearBalances !== "function" || nearPrice === null ? (
-        loading
-      ) : (
-        <div className="fw-bold h3">${totalBalance} USD</div>
-      )}
-    </div>
-    <div className="d-flex gap-2 flex-wrap dashboard-item">
-      <Widget
-        src={"${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.Portfolio"}
-        props={{
-          instance,
-          ftTokens: userFTTokens.fts,
-          nearStakedTokens,
-          nearUnStakedTokens,
-          nearPrice,
-          nearStakedTotalTokens,
-        }}
-      />
-      <Widget
-        src={
-          "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.TransactionHistory"
-        }
-        props={{
-          nearPrice: nearPrice,
-          ...props,
-        }}
-      />
+  <Wrapper>
+    <Widget
+      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
+      props={{
+        instance,
+        setNearStakedTokens: (v) => setNearStakedTokens(Big(v).toFixed(4)),
+        setNearUnstakedTokens: (v) => setNearUnStakedTokens(Big(v).toFixed(4)),
+        setNearStakedTotalTokens: (v) =>
+          setNearStakedTotalTokens(Big(v).toFixed(4)),
+      }}
+    />
+    <div className="d-flex flex-column gap-3">
+      <div className="card card-body" style={{ maxHeight: "100px" }}>
+        <div className="h5">Total Balance</div>
+        {typeof getNearBalances !== "function" || nearPrice === null ? (
+          loading
+        ) : (
+          <div className="fw-bold h3">${totalBalance} USD</div>
+        )}
+      </div>
+      <div className="d-flex gap-2 flex-wrap dashboard-item">
+        <Widget
+          src={
+            "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.Portfolio"
+          }
+          props={{
+            instance,
+            ftTokens: userFTTokens.fts,
+            nearStakedTokens,
+            nearUnStakedTokens,
+            nearPrice,
+            nearStakedTotalTokens,
+          }}
+        />
+        <Widget
+          src={
+            "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.TransactionHistory"
+          }
+          props={{
+            nearPrice: nearPrice,
+            ...props,
+          }}
+        />
+      </div>
     </div>
   </Wrapper>
 );
