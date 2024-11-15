@@ -42,7 +42,7 @@ const Modal = styled.div`
   }
 
   .theme-btn {
-    background-color: var(--theme-color) !important;
+    background: var(--theme-color) !important;
     color: white;
   }
 `;

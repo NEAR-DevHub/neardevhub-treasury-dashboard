@@ -1,7 +1,6 @@
 const Theme = styled.div`
-  --theme-color: rgba(44, 62, 80, 1);
-  --theme-bg-color: rgba(226, 230, 236, 1);
-  --page-header-color: rgba(54, 61, 69, 1);
+  --theme-color: #05a36e;
+  --theme-bg-color: #f4f4f4;
   --text-color: white;
   --link-inactive-color: white;
   --link-active-color: white;
@@ -26,15 +25,11 @@ const Theme = styled.div`
 
   button {
     &.primary {
-      background-color: var(--theme-color);
+      background: var(--theme-color);
       color: var(--text-color);
       border: none !important;
       padding-block: 0.7rem !important;
     }
-  }
-
-  .page-header {
-    color: var(--page-header-color);
   }
 
   .text-light-grey {

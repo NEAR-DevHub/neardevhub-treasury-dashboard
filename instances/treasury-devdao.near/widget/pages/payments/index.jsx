@@ -29,10 +29,10 @@ const SidebarMenu = ({ currentTab }) => {
     >
       {hasCreatePermission && (
         <button
-          className="primary p-2 rounded-2 h6 fw-bold d-flex align-items-center gap-2 mb-0"
+          className="primary py-1 px-3 rounded-2 h6 fw-bold d-flex align-items-center gap-2 mb-0"
           onClick={() => setShowCreateRequest(true)}
         >
-          <i class="bi bi-plus-circle-fill"></i>Create Request
+          <i class="bi bi-plus-lg h5 mb-0"></i>Create Request
         </button>
       )}
       <Widget

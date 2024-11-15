@@ -1,5 +1,5 @@
 const Theme = styled.div`
-  --theme-color: #05a36e;
+  --theme-color: #8942d9;
   --theme-bg-color: #f4f4f4;
   --text-color: white;
   --link-inactive-color: white;
@@ -26,7 +26,7 @@ const Theme = styled.div`
   button {
     &.primary {
       background: var(--theme-color);
-      color: var(--text-color);
+      color: white;
       border: none !important;
       padding-block: 0.7rem !important;
     }
@@ -60,6 +60,10 @@ const Theme = styled.div`
       background-color: white;
       color: black;
     }
+  }
+
+  .fill-accent {
+    fill: #fe6f39;
   }
 `;
 

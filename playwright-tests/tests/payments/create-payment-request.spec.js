@@ -697,7 +697,7 @@ test.describe("admin with function access keys", function () {
     );
 
     const checkThatFormIsCleared = async () => {
-      await page.getByRole("button", { name: " Create Request" }).click();
+      await page.getByRole("button", { name: " Create Request" }).click();
 
       if (instanceConfig.showProposalSelection === true) {
         const proposalSelect = page.locator(".dropdown-toggle").first();

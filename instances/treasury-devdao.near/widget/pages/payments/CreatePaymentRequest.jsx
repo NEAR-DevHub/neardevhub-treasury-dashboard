@@ -215,7 +215,7 @@ const Container = styled.div`
     border-radius: 5px !important;
   }
   .theme-btn {
-    background-color: var(--theme-color) !important;
+    background: var(--theme-color) !important;
     color: white;
   }
 

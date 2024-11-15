@@ -156,7 +156,7 @@ const CreateBtn = () => {
               setShowStakeRequest(true);
             }}
           >
-            <i class="bi bi-plus-circle-fill"></i>Create Request
+            <i class="bi bi-plus-lg h5 mb-0"></i>Create Request
           </div>
           <div
             className="h-100 d-flex"

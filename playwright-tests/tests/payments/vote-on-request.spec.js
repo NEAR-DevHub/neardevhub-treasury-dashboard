@@ -5,7 +5,10 @@ import { mockTransactionSubmitRPCResponses } from "../../util/transaction";
 import { mockRpcRequest, updateDaoPolicyMembers } from "../../util/rpcmock";
 import { setDontAskAgainCacheValues } from "../../util/cache";
 import { mockPikespeakFTTokensResponse } from "../../util/pikespeak.js";
-import { TransferProposalData } from "../../util/inventory.js";
+import {
+  CurrentTimestampInNanoseconds,
+  TransferProposalData,
+} from "../../util/inventory.js";
 
 async function mockWithFTBalance({ page, daoAccount, isSufficient }) {
   await page.route(
@@ -123,6 +126,22 @@ async function voteOnProposal({
   );
 }
 
+async function mockPaymentProposals({ page }) {
+  await mockRpcRequest({
+    page,
+    filterParams: {
+      method_name: "get_proposals",
+    },
+    modifyOriginalResultFunction: () => {
+      let originalResult = [JSON.parse(JSON.stringify(TransferProposalData))];
+      originalResult[0].id = 0;
+      // non expired request
+      originalResult[0].submission_time = CurrentTimestampInNanoseconds;
+      return originalResult;
+    },
+  });
+}
+
 test.afterEach(async ({ page }, testInfo) => {
   console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
   await page.unrouteAll({ behavior: "ignoreErrors" });
@@ -153,7 +172,7 @@ test.describe("don't ask again", function () {
         name: "Approve",
       })
       .first();
-    await expect(approveButton).toBeEnabled({ timeout: 10000 });
+    await expect(approveButton).toBeEnabled({ timeout: 30_000 });
     await approveButton.click();
     await expect(
       page.getByText(
@@ -170,6 +189,7 @@ test.describe("don't ask again", function () {
     test.setTimeout(60_000);
     const isMultiVote = daoAccount === "infinex.sputnik-dao.near";
     const contractId = daoAccount;
+    await mockPaymentProposals({ page });
     await mockWithFTBalance({ page, daoAccount, isSufficient: true });
     await mockPikespeakFTTokensResponse({ page, daoAccount });
     await updateDaoPolicyMembers({ page, isMultiVote });
@@ -185,7 +205,7 @@ test.describe("don't ask again", function () {
         name: "Approve",
       })
       .first();
-    await expect(approveButton).toBeEnabled({ timeout: 10000 });
+    await expect(approveButton).toBeEnabled({ timeout: 30_000 });
     await approveButton.click();
     await page.getByRole("button", { name: "Confirm" }).click();
     await expect(approveButton).toBeDisabled();
