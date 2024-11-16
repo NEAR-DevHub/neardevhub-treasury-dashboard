@@ -11,6 +11,8 @@ if (!daoPolicy) {
   return <></>;
 }
 
+const deposit = daoPolicy?.proposal_bond || 100000000000000000000000;
+
 const currentDurationDays =
   Number(
     daoPolicy.proposal_period.substr(
@@ -103,26 +105,24 @@ const cancelChangeRequest = () => {
 };
 
 const submitChangeRequest = () => {
-  Near.call([
-    {
-      contractName: treasuryDaoID,
-      methodName: "add_proposal",
-      args: {
-        proposal: {
-          description: "Change proposal period",
-          kind: {
-            ChangePolicyUpdateParameters: {
-              parameters: {
-                proposal_period:
-                  (60 * 60 * 24 * durationDays).toString() + "000000000",
-              },
+  Near.call({
+    contractName: treasuryDaoID,
+    methodName: "add_proposal",
+    deposit,
+    args: {
+      proposal: {
+        description: "Change proposal period",
+        kind: {
+          ChangePolicyUpdateParameters: {
+            parameters: {
+              proposal_period:
+                (60 * 60 * 24 * durationDays).toString() + "000000000",
             },
           },
         },
       },
-      deposit: daoPolicy.proposal_bond,
     },
-  ]);
+  });
 };
 
 return (
