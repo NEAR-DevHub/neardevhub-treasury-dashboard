@@ -3,6 +3,7 @@ import { connect, utils, keyStores, Account } from "near-api-js";
 import { MOCK_RPC_URL } from "./rpcmock.js";
 
 export const SPUTNIK_DAO_CONTRACT_ID = "sputnik-dao.near";
+export const PROPOSAL_BOND = "100000000000000000000000";
 
 /**
  * @typedef SandboxRPC
@@ -149,6 +150,41 @@ export async function setupSandboxForSputnikDao({ account, daoName }) {
     gas: 300000000000000,
     attachedDeposit: utils.format.parseNearAmount("6"),
   });
+}
+
+/**
+ * 
+ * @param {object} options
+ * @param {Account} options.account
+ * @param {string} options.daoName
+ */
+export async function getProposals({account, daoName}) {
+  return account.viewFunction(
+    {contractId: `${daoName}.${SPUTNIK_DAO_CONTRACT_ID}`,
+      methodName: "get_proposals", args: {from_index: 0, limit: 10}});
+}
+
+export async function addPaymentRequestProposal({
+  account, title, summary, amount, receiver_id, daoName}) {
+    const args = {
+      proposal: {
+        description: `{"title":"${title}","summary":"${summary}","notes":null}`,
+        kind: {
+          Transfer: {
+            amount,
+            receiver_id,
+            token_id:
+              "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+          },
+        },
+      },
+    };
+    await account.functionCall({
+      contractId: `${daoName}.${SPUTNIK_DAO_CONTRACT_ID}`,
+      methodName: "add_proposal",
+      args,
+      attachedDeposit: PROPOSAL_BOND,
+    });
 }
 
 export async function killSandbox(/** @type ChildProcess */ sandbox) {

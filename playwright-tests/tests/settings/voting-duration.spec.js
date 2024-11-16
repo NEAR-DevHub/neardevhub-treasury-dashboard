@@ -8,6 +8,8 @@ import {
   getSandboxRPC,
   setupSandboxForSputnikDao,
   killSandbox,
+  addPaymentRequestProposal,
+  getProposals,
 } from "../../util/sandboxrpc.js";
 
 test.describe("admin connected", function () {
@@ -84,8 +86,12 @@ test.describe("admin connected", function () {
     instanceAccount,
     daoAccount,
   }) => {
+    const daoName = "devdao";
+
     const { account, sandbox } = await getSandboxRPC({ page });
-    await setupSandboxForSputnikDao({ account, daoName: "devdao" });
+    await setupSandboxForSputnikDao({ account, daoName });
+
+    await addPaymentRequestProposal({account, title: "Test payment", summary: "Pay something", amount: "56000000", receiver_id: "webassemblymusic.near", daoName});
 
     await page.goto(`/${instanceAccount}/widget/app?page=settings`);
     await page.getByText("Voting Duration").first().click();
@@ -128,8 +134,8 @@ test.describe("admin connected", function () {
       attachedDeposit: transactionToSend.actions[0].params.deposit,
     });
 
-    console.log(result);
-    await page.waitForTimeout(500);
+
+    console.log('proposals', await getProposals({daoName, account}));
     await killSandbox(sandbox);
   });
 });
