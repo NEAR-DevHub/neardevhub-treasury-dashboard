@@ -130,55 +130,60 @@ const submitChangeRequest = () => {
 
 const changeDurationDays = (newDurationDays) => {
   setDurationDays(newDurationDays);
-  console.log("LAST_PROPOSAL_ID", lastProposalId);
   const limit = 10;
   if (newDurationDays < currentDurationDays) {
-    Near.asyncView(treasuryDaoID, "get_proposals", {
-      from_index: lastProposalId - limit,
-      limit,
-    }).then((proposals) => {
-      const proposalsThatWillExpire = [];
-      const now = new Date().getTime();
+    const fetchProposalsThatWillExpire = (
+      lastIndex,
+      newProposalsThatWillExpire
+    ) => {
+      Near.asyncView(treasuryDaoID, "get_proposals", {
+        from_index: lastIndex - limit,
+        limit,
+      }).then((/** @type Array */ proposals) => {
+        const now = new Date().getTime();
 
-      console.log("now is", new Date(now));
-      for (const proposal of proposals) {
-        const submissionTimeMillis = Number(
-          proposal.submission_time.substr(
-            0,
-            proposal.submission_time.length - 6
-          )
-        );
-        const currentExpiryTime =
-          submissionTimeMillis + 24 * 60 * 60 * 1000 * currentDurationDays;
-        const newExpiryTime =
-          submissionTimeMillis + 24 * 60 * 60 * 1000 * newDurationDays;
-        if (currentExpiryTime >= now && newExpiryTime < now) {
-          proposalsThatWillExpire.push(proposal);
-          console.log(
-            "PROPOSAL THAT WILL EXPIRE",
-            new Date(submissionTimeMillis),
-            new Date(currentExpiryTime),
-            new Date(newExpiryTime),
-            proposal
+        let fetchMore = false;
+        for (const proposal of proposals.reverse()) {
+          const submissionTimeMillis = Number(
+            proposal.submission_time.substr(
+              0,
+              proposal.submission_time.length - 6
+            )
           );
-        } else {
-          console.log(
-            "PROPOSAL THAT WILL NOT EXPIRE",
-            new Date(submissionTimeMillis),
-            new Date(currentExpiryTime),
-            new Date(newExpiryTime),
-            proposal
+          const currentExpiryTime =
+            submissionTimeMillis + 24 * 60 * 60 * 1000 * currentDurationDays;
+          const newExpiryTime =
+            submissionTimeMillis + 24 * 60 * 60 * 1000 * newDurationDays;
+          if (
+            currentExpiryTime >= now &&
+            newExpiryTime < now &&
+            proposal.status === "InProgress"
+          ) {
+            newProposalsThatWillExpire.push({
+              currentExpiryTime,
+              newExpiryTime,
+              submissionTimeMillis,
+              ...proposal,
+            });
+          }
+          fetchMore = currentExpiryTime >= now;
+        }
+        setProposalsThatWillExpire(newProposalsThatWillExpire);
+        if (fetchMore) {
+          fetchProposalsThatWillExpire(
+            lastIndex - limit,
+            newProposalsThatWillExpire
           );
         }
-      }
-      setProposalsThatWillExpire(proposalsThatWillExpire);
-    });
+      });
+    };
+    fetchProposalsThatWillExpire(lastProposalId, []);
   }
 };
 
 return (
   <Container>
-    <div className="card rounded-3" style={{ maxWidth: "30rem" }}>
+    <div className="card rounded-3" style={{ maxWidth: "50rem" }}>
       <div className="card-title px-3">Voting Duration</div>
       <div className="card-body">
         <p>
@@ -201,7 +206,54 @@ return (
             Enter number of days that a vote should be active
           </small>
         </p>
-        <p>{JSON.stringify(proposalsThatWillExpire, null, 1)}</p>
+
+        {proposalsThatWillExpire.length > 0 ? (
+          <p>
+            <div class="alert alert-danger" role="alert">
+              The following proposals will expire because of the changed
+              duration
+            </div>
+            <table className="table table-sm">
+              <thead>
+                <tr className="text-grey">
+                  <th>Id</th>
+                  <th>Description</th>
+                  <th>Submission date</th>
+                  <th>Current expiry</th>
+                  <th>New expiry</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {proposalsThatWillExpire.map((proposal) => (
+                  <tr class="proposal-that-will-expire">
+                    <td>{proposal.id}</td>
+                    <td>{proposal.description}</td>
+                    <td>
+                      {new Date(proposal.submissionTimeMillis)
+                        .toJSON()
+                        .substring(0, "yyyy-mm-dd".length)}
+                    </td>
+                    <td>
+                      {new Date(proposal.currentExpiryTime)
+                        .toJSON()
+                        .substring(0, "yyyy-mm-dd".length)}
+                    </td>
+                    <td>
+                      {new Date(proposal.newExpiryTime)
+                        .toJSON()
+                        .substring(0, "yyyy-mm-dd".length)}
+                    </td>
+                    <td class="proposal-status">{proposal.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </p>
+        ) : (
+          ""
+        )}
+
         <button class="btn btn-light" onClick={cancelChangeRequest}>
           Cancel
         </button>

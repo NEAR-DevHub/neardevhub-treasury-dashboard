@@ -176,12 +176,12 @@ test.describe("admin connected", function () {
                   role: "council",
                 },
               },
-              status: ["InProgress", "Approved"][id % 2],
+              status: ["InProgress", "Approved", "Expired"][id % 3],
               vote_counts: { council: [1, 0, 0] },
               votes: { "neardevgov.near": "Approve" },
               submission_time: (
                 BigInt(new Date().getTime()) * 1_000_000n -
-                BigInt(lastProposalId - id) * 1_000_000_000n * 60n * 60n * 24n
+                BigInt(lastProposalId - id) * 1_000_000_000n * 60n * 60n * 4n
               ).toString(),
             });
           }
@@ -206,6 +206,12 @@ test.describe("admin connected", function () {
       .getByPlaceholder("Enter voting duration days")
       .fill(newDurationDays.toString());
 
-    await page.waitForTimeout(2000);
+    await expect(await page.locator(".alert-danger")).toBeVisible();
+    await expect(await page.locator(".alert-danger")).toHaveText(
+      "The following proposals will expire because of the changed duration"
+    );
+    await expect(await page.locator(".proposal-that-will-expire")).toHaveCount(
+      4
+    );
   });
 });
