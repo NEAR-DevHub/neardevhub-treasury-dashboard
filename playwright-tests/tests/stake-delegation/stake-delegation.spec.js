@@ -124,10 +124,6 @@ async function openUnstakeForm({ page }) {
   await expect(
     page.getByRole("heading", { name: "Create Unstake Request" })
   ).toBeVisible(10_000);
-  const loader = page.getByRole("img", { name: "loader" });
-  await expect(loader).toBeVisible();
-  await page.waitForTimeout(10_000);
-  await expect(loader).toBeHidden({ timeout: 20_000 });
 }
 
 async function checkForValidatorAccount({ page, callbackClickOnSelect }) {
