@@ -187,6 +187,15 @@ test.describe("admin connected", function () {
           return proposals.slice(args.from_index, args.from_index + args.limit);
         } else if (postData.params.method_name === "get_last_proposal_id") {
           return lastProposalId;
+        } else if (postData.params.method_name === "get_policy") {
+          originalResult.proposal_period = (
+            7n *
+            24n *
+            60n *
+            60n *
+            1_000_000_000n
+          ).toString();
+          return originalResult;
         } else {
           return originalResult;
         }
