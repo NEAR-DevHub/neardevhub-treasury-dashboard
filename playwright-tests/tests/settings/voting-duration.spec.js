@@ -153,6 +153,27 @@ test.describe("admin connected", function () {
     daoAccount,
   }) => {
     const lastProposalId = 100;
+    const proposals = [];
+    for (let id = 0; id <= lastProposalId; id++) {
+      proposals.push({
+        id,
+        proposer: "neardevgov.near",
+        description: `Add tester${id}.near as council member`,
+        kind: {
+          AddMemberToRole: {
+            member_id: `tester${id}.near`,
+            role: "council",
+          },
+        },
+        status: ["InProgress", "Approved", "Expired"][id % 3],
+        vote_counts: { council: [1, 0, 0] },
+        votes: { "neardevgov.near": "Approve" },
+        submission_time: (
+          BigInt(new Date().getTime()) * 1_000_000n -
+          BigInt(lastProposalId - id) * 1_000_000_000n * 60n * 60n * 4n
+        ).toString(),
+      });
+    }
     await mockRpcRequest({
       page,
       filterParams: {
@@ -160,32 +181,7 @@ test.describe("admin connected", function () {
       },
       modifyOriginalResultFunction: (originalResult, postData, args) => {
         if (postData.params.method_name === "get_proposals") {
-          const proposals = [];
-          for (
-            let id = args.from_index;
-            id < args.from_index + args.limit;
-            id++
-          ) {
-            proposals.push({
-              id,
-              proposer: "neardevgov.near",
-              description: `Add tester${id}.near as council member`,
-              kind: {
-                AddMemberToRole: {
-                  member_id: `tester${id}.near`,
-                  role: "council",
-                },
-              },
-              status: ["InProgress", "Approved", "Expired"][id % 3],
-              vote_counts: { council: [1, 0, 0] },
-              votes: { "neardevgov.near": "Approve" },
-              submission_time: (
-                BigInt(new Date().getTime()) * 1_000_000n -
-                BigInt(lastProposalId - id) * 1_000_000_000n * 60n * 60n * 4n
-              ).toString(),
-            });
-          }
-          return proposals;
+          return proposals.slice(args.from_index, args.from_index + args.limit);
         } else if (postData.params.method_name === "get_last_proposal_id") {
           return lastProposalId;
         } else {
@@ -201,17 +197,43 @@ test.describe("admin connected", function () {
     const currentDurationDays = await page
       .getByPlaceholder("Enter voting duration days")
       .inputValue();
-    const newDurationDays = Number(currentDurationDays) - 2;
-    await page
-      .getByPlaceholder("Enter voting duration days")
-      .fill(newDurationDays.toString());
 
-    await expect(await page.locator(".alert-danger")).toBeVisible();
-    await expect(await page.locator(".alert-danger")).toHaveText(
-      "The following proposals will expire because of the changed duration"
-    );
-    await expect(await page.locator(".proposal-that-will-expire")).toHaveCount(
-      4
-    );
+    let newDurationDays = Number(currentDurationDays) - 1;
+    while (newDurationDays > 0) {
+      await page
+        .getByPlaceholder("Enter voting duration days")
+        .fill(newDurationDays.toString());
+
+      const checkExpectedNewExpiredProposals = async () => {
+        const expectedNewExpiredProposals = proposals
+          .filter(
+            (proposal) =>
+              Number(BigInt(proposal.submission_time) / 1_000_000n) +
+                currentDurationDays * 24 * 60 * 60 * 1000 >
+                new Date().getTime() &&
+              Number(BigInt(proposal.submission_time) / 1_000_000n) +
+                newDurationDays * 24 * 60 * 60 * 1000 <
+                new Date().getTime() &&
+              proposal.status === "InProgress"
+          )
+          .reverse();
+        await expect(await page.locator(".alert-danger")).toBeVisible();
+        await expect(await page.locator(".alert-danger")).toHaveText(
+          "The following proposals will expire because of the changed duration"
+        );
+        await expect(
+          await page.locator(".proposal-that-will-expire")
+        ).toHaveCount(expectedNewExpiredProposals.length);
+        const visibleProposalIds = await page
+          .locator(".proposal-that-will-expire td:first-child")
+          .allInnerTexts();
+        expect(visibleProposalIds).toEqual(
+          expectedNewExpiredProposals.map((proposal) => proposal.id.toString())
+        );
+      };
+      await checkExpectedNewExpiredProposals();
+      await page.waitForTimeout(500);
+      newDurationDays--;
+    }
   });
 });

@@ -221,7 +221,6 @@ return (
                   <th>Submission date</th>
                   <th>Current expiry</th>
                   <th>New expiry</th>
-                  <th>Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -244,7 +243,6 @@ return (
                         .toJSON()
                         .substring(0, "yyyy-mm-dd".length)}
                     </td>
-                    <td class="proposal-status">{proposal.status}</td>
                   </tr>
                 ))}
               </tbody>
