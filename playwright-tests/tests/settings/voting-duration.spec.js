@@ -1,16 +1,7 @@
 import { expect } from "@playwright/test";
 import { test } from "../../util/test.js";
-import {
-  getTransactionModalObject,
-  mockTransactionSubmitRPCResponses,
-} from "../../util/transaction.js";
-import {
-  getSandboxRPC,
-  setupSandboxForSputnikDao,
-  killSandbox,
-  addPaymentRequestProposal,
-  getProposals,
-} from "../../util/sandboxrpc.js";
+import { getTransactionModalObject } from "../../util/transaction.js";
+import { SandboxRPC } from "../../util/sandboxrpc.js";
 
 test.describe("admin connected", function () {
   test.use({
@@ -88,10 +79,18 @@ test.describe("admin connected", function () {
   }) => {
     const daoName = "devdao";
 
-    const { account, sandbox } = await getSandboxRPC({ page });
-    await setupSandboxForSputnikDao({ account, daoName });
+    const sandbox = new SandboxRPC();
+    await sandbox.init();
+    await sandbox.attachRoutes(page);
+    await sandbox.setupSandboxForSputnikDao(daoName);
 
-    await addPaymentRequestProposal({account, title: "Test payment", summary: "Pay something", amount: "56000000", receiver_id: "webassemblymusic.near", daoName});
+    await sandbox.addPaymentRequestProposal({
+      title: "Test payment",
+      summary: "Pay something",
+      amount: "56000000",
+      receiver_id: "webassemblymusic.near",
+      daoName,
+    });
 
     await page.goto(`/${instanceAccount}/widget/app?page=settings`);
     await page.getByText("Voting Duration").first().click();
@@ -126,16 +125,14 @@ test.describe("admin connected", function () {
 
     const transactionToSend = await transactionToSendPromise;
 
-    console.log("sending tx", JSON.stringify(transactionToSend, null, 1));
-    const result = await account.functionCall({
+    await sandbox.account.functionCall({
       contractId: "devdao.sputnik-dao.near",
       methodName: "add_proposal",
       args: transactionToSend.actions[0].params.args,
       attachedDeposit: transactionToSend.actions[0].params.deposit,
     });
 
-
-    console.log('proposals', await getProposals({daoName, account}));
-    await killSandbox(sandbox);
+    console.log("proposals", await sandbox.getProposals(daoName, 0, 10));
+    await sandbox.quitSandbox();
   });
 });
