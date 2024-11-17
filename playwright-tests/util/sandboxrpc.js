@@ -14,13 +14,15 @@ export class SandboxRPC {
       );
 
       this.sandbox.stdout.on("data", (/** @type String */ data) => {
+        console.log(data);
         if (!this.rpc_url) {
           const sandboxConfig = JSON.parse(data.split("\n")[0]);
           this.rpc_url = sandboxConfig.rpc_url;
           this.account_id = sandboxConfig.account_id;
           this.secret_key = sandboxConfig.secret_key;
-
-          resolve();
+          resolve(sandboxConfig);
+        } else if (this.stdoutPromiseResolve) {
+          this.stdoutPromiseResolve(data);
         }
       });
 
@@ -161,6 +163,21 @@ export class SandboxRPC {
       args,
       attachedDeposit: PROPOSAL_BOND,
     });
+  }
+
+  /**
+   * Time travel forward with the specified number of blocks
+   * @param {number} numBlocks
+   */
+  async fastForward(numBlocks) {
+    this.sandbox.stdin.write(`fast_forward(${numBlocks})\n`);
+    while (
+      !(
+        await new Promise((resolve) => {
+          this.stdoutPromiseResolve = resolve;
+        })
+      ).includes("Fast-forwarded")
+    ) {}
   }
 
   async quitSandbox() {
