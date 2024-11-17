@@ -73,7 +73,7 @@ test.describe("admin connected", function () {
     ).toHaveValue("7");
   });
 
-  test("should show confirmation toast", async ({
+  test("should show confirmation toast when submitting voting duration change request", async ({
     page,
     instanceAccount,
     daoAccount,
@@ -93,17 +93,6 @@ test.describe("admin connected", function () {
       daoName,
     });
 
-    await mockRpcRequest({
-      page,
-      filterParams: {
-        method_name: "get_proposals",
-      },
-      modifyOriginalResultFunction: (originalResult) => {
-        console.log("GP:", originalResult);
-        return originalResult;
-      },
-    });
-
     await page.goto(`/${instanceAccount}/widget/app?page=settings`);
     await page.getByText("Voting Duration").first().click();
 
@@ -117,7 +106,7 @@ test.describe("admin connected", function () {
       .fill(newDurationDays.toString());
 
     await page.waitForTimeout(500);
-    await page.getByText("Submit").click();
+    await page.locator("button", { hasText: "Submit" }).click();
 
     const transactionToSendPromise = page.evaluate(async () => {
       const selector = await document.querySelector("near-social-viewer")
@@ -126,9 +115,14 @@ test.describe("admin connected", function () {
       const wallet = await selector.wallet();
 
       return new Promise((resolve) => {
-        wallet.signAndSendTransactions = (transactions) => {
+        wallet.signAndSendTransactions = async (transactions) => {
           console.log("sign and send tx", transactions);
           resolve(transactions.transactions[0]);
+          return await new Promise(
+            (transactionSentPromiseResolve) =>
+              (window.transactionSentPromiseResolve =
+                transactionSentPromiseResolve)
+          );
         };
       });
     });
@@ -137,12 +131,21 @@ test.describe("admin connected", function () {
 
     const transactionToSend = await transactionToSendPromise;
 
-    await sandbox.account.functionCall({
+    const transactionResult = await sandbox.account.functionCall({
       contractId: "devdao.sputnik-dao.near",
       methodName: "add_proposal",
       args: transactionToSend.actions[0].params.args,
       attachedDeposit: transactionToSend.actions[0].params.deposit,
     });
+
+    await page.evaluate((transactionResult) => {
+      window.transactionSentPromiseResolve(transactionResult);
+    }, transactionResult);
+    await expect(await page.locator(".toast-header")).toBeVisible();
+    await expect(await page.locator(".toast-body")).toBeVisible();
+    await expect(await page.locator(".toast-body")).toHaveText(
+      "Voting duration change request submitted"
+    );
 
     await sandbox.quitSandbox();
   });

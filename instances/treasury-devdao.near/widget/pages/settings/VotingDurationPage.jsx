@@ -23,8 +23,11 @@ const currentDurationDays =
     )
   ) /
   (60 * 60 * 24);
+
 const [durationDays, setDurationDays] = useState(currentDurationDays);
 const [proposalsThatWillExpire, setProposalsThatWillExpire] = useState([]);
+const [showToastStatus, setToastStatus] = useState(null);
+const [isSubmittingChangeRequest, setSubmittingChangeRequest] = useState(false);
 
 const Container = styled.div`
   font-size: 14px;
@@ -103,11 +106,22 @@ const Container = styled.div`
   }
 `;
 
+const ToastContainer = styled.div`
+  a {
+    color: black !important;
+    text-decoration: underline !important;
+    &:hover {
+      color: black !important;
+    }
+  }
+`;
+
 const cancelChangeRequest = () => {
   setDurationDays(currentDurationDays);
 };
 
 const submitChangeRequest = () => {
+  setSubmittingChangeRequest(true);
   Near.call({
     contractName: treasuryDaoID,
     methodName: "add_proposal",
@@ -127,6 +141,38 @@ const submitChangeRequest = () => {
     },
   });
 };
+
+useEffect(() => {
+  console.log("DURATION DAYS", isSubmittingChangeRequest, lastProposalId);
+  Near.asyncView(treasuryDaoID, "get_proposal", {
+    id: lastProposalId - 1,
+  }).then((proposal) => {
+    const proposal_period =
+      proposal?.kind?.ChangePolicyUpdateParameters?.parameters?.proposal_period;
+
+    console.log(
+      "PP",
+      durationDays,
+      isSubmittingChangeRequest,
+      proposal_period,
+      proposal_period
+        ? Number(proposal_period.substring(0, proposal_period.length - 9)) /
+            (24 * 60 * 60)
+        : ""
+    );
+    if (
+      proposal_period &&
+      isSubmittingChangeRequest &&
+      Number(proposal_period.substring(0, proposal_period.length - 9)) /
+        (24 * 60 * 60) ===
+        Number(durationDays)
+    ) {
+      console.log("SHOW TOAST");
+      setToastStatus(true);
+      setSubmittingChangeRequest(false);
+    }
+  });
+}, [isSubmittingChangeRequest, lastProposalId]);
 
 const changeDurationDays = (newDurationDays) => {
   setDurationDays(newDurationDays);
@@ -260,5 +306,16 @@ return (
         </button>
       </div>
     </div>
+    <ToastContainer className="toast-container position-fixed bottom-0 end-0 p-3">
+      <div className={`toast ${showToastStatus ? "show" : ""}`}>
+        <div className="toast-header px-2">
+          <strong className="me-auto">Just Now</strong>
+          <i className="bi bi-x-lg h6" onClick={() => setToastStatus(null)}></i>
+        </div>
+        <div className="toast-body">
+          <p>Voting duration change request submitted</p>
+        </div>
+      </div>
+    </ToastContainer>
   </Container>
 );
