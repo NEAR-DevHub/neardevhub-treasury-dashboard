@@ -78,7 +78,7 @@ test.describe("admin connected", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    const daoName = "devdao";
+    const daoName = daoAccount.split(".")[0];
 
     const sandbox = new SandboxRPC();
     await sandbox.init();
@@ -132,7 +132,7 @@ test.describe("admin connected", function () {
     const transactionToSend = await transactionToSendPromise;
 
     const transactionResult = await sandbox.account.functionCall({
-      contractId: "devdao.sputnik-dao.near",
+      contractId: daoAccount,
       methodName: "add_proposal",
       args: transactionToSend.actions[0].params.args,
       attachedDeposit: transactionToSend.actions[0].params.deposit,
