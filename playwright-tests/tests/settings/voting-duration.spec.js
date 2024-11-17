@@ -27,7 +27,7 @@ test.describe("admin connected", function () {
       .fill(newDurationDays.toString());
 
     await page.waitForTimeout(500);
-    await page.getByText("Submit").click();
+    await page.locator("button", { hasText: "Submit" }).click();
 
     await expect(await getTransactionModalObject(page)).toEqual({
       proposal: {

@@ -18,20 +18,24 @@ export async function mockRpcRequest({
       const json = await route.fetch().then((r) => r.json());
 
       if (modifyOriginalResultFunction) {
-        const originalResult = JSON.parse(
-          new TextDecoder().decode(new Uint8Array(json.result.result))
-        );
-        let args;
-        if (postData.params.args_base64) {
-          args = JSON.parse(
-            Buffer.from(postData.params.args_base64, "base64").toString()
+        try {
+          const originalResult = JSON.parse(
+            new TextDecoder().decode(new Uint8Array(json.result.result))
           );
+          let args;
+          if (postData.params.args_base64) {
+            args = JSON.parse(
+              Buffer.from(postData.params.args_base64, "base64").toString()
+            );
+          }
+          mockedResult = await modifyOriginalResultFunction(
+            originalResult,
+            postData,
+            args
+          );
+        } catch (e) {
+          console.error("Unable to modify original result", e);
         }
-        mockedResult = await modifyOriginalResultFunction(
-          originalResult,
-          postData,
-          args
-        );
       }
 
       const mockedResponse = {
