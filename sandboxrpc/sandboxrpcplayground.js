@@ -124,4 +124,5 @@ try {
 } catch(e) {
     console.log('should not be able to vote on an expired proposal', e);
 }
+console.log(JSON.stringify(proposals, null, 1));
 await sandbox.quitSandbox();

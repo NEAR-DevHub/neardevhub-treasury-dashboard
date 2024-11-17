@@ -11,6 +11,8 @@ if (!daoPolicy) {
   return <></>;
 }
 
+const lastProposalId = Near.view(treasuryDaoID, "get_last_proposal_id");
+
 const deposit = daoPolicy?.proposal_bond || 100000000000000000000000;
 
 const currentDurationDays =
@@ -22,6 +24,7 @@ const currentDurationDays =
   ) /
   (60 * 60 * 24);
 const [durationDays, setDurationDays] = useState(currentDurationDays);
+const [proposalsThatWillExpire, setProposalsThatWillExpire] = useState([]);
 
 const Container = styled.div`
   font-size: 14px;
@@ -125,6 +128,54 @@ const submitChangeRequest = () => {
   });
 };
 
+const changeDurationDays = (newDurationDays) => {
+  setDurationDays(newDurationDays);
+  console.log("LAST_PROPOSAL_ID", lastProposalId);
+  const limit = 10;
+  if (newDurationDays < currentDurationDays) {
+    Near.asyncView(treasuryDaoID, "get_proposals", {
+      from_index: lastProposalId - limit,
+      limit,
+    }).then((proposals) => {
+      const proposalsThatWillExpire = [];
+      const now = new Date().getTime();
+
+      console.log("now is", new Date(now));
+      for (const proposal of proposals) {
+        const submissionTimeMillis = Number(
+          proposal.submission_time.substr(
+            0,
+            proposal.submission_time.length - 6
+          )
+        );
+        const currentExpiryTime =
+          submissionTimeMillis + 24 * 60 * 60 * 1000 * currentDurationDays;
+        const newExpiryTime =
+          submissionTimeMillis + 24 * 60 * 60 * 1000 * newDurationDays;
+        if (currentExpiryTime >= now && newExpiryTime < now) {
+          proposalsThatWillExpire.push(proposal);
+          console.log(
+            "PROPOSAL THAT WILL EXPIRE",
+            new Date(submissionTimeMillis),
+            new Date(currentExpiryTime),
+            new Date(newExpiryTime),
+            proposal
+          );
+        } else {
+          console.log(
+            "PROPOSAL THAT WILL NOT EXPIRE",
+            new Date(submissionTimeMillis),
+            new Date(currentExpiryTime),
+            new Date(newExpiryTime),
+            proposal
+          );
+        }
+      }
+      setProposalsThatWillExpire(proposalsThatWillExpire);
+    });
+  }
+};
+
 return (
   <Container>
     <div className="card rounded-3" style={{ maxWidth: "30rem" }}>
@@ -144,12 +195,13 @@ return (
             aria-describedby="votingDurationHelp"
             placeholder="Enter voting duration days"
             value={durationDays}
-            onChange={(event) => setDurationDays(event.target.value)}
+            onChange={(event) => changeDurationDays(event.target.value)}
           ></input>
           <small id="votingDurationHelp" class="form-text text-muted px-3">
             Enter number of days that a vote should be active
           </small>
         </p>
+        <p>{JSON.stringify(proposalsThatWillExpire, null, 1)}</p>
         <button class="btn btn-light" onClick={cancelChangeRequest}>
           Cancel
         </button>

@@ -2,6 +2,7 @@ import { expect } from "@playwright/test";
 import { test } from "../../util/test.js";
 import { getTransactionModalObject } from "../../util/transaction.js";
 import { SandboxRPC } from "../../util/sandboxrpc.js";
+import { mockRpcRequest } from "../../util/rpcmock.js";
 
 test.describe("admin connected", function () {
   test.use({
@@ -72,7 +73,7 @@ test.describe("admin connected", function () {
     ).toHaveValue("7");
   });
 
-  test("changing voting duration should show changed expiry dates for pending proposals", async ({
+  test("should show confirmation toast", async ({
     page,
     instanceAccount,
     daoAccount,
@@ -90,6 +91,17 @@ test.describe("admin connected", function () {
       amount: "56000000",
       receiver_id: "webassemblymusic.near",
       daoName,
+    });
+
+    await mockRpcRequest({
+      page,
+      filterParams: {
+        method_name: "get_proposals",
+      },
+      modifyOriginalResultFunction: (originalResult) => {
+        console.log("GP:", originalResult);
+        return originalResult;
+      },
     });
 
     await page.goto(`/${instanceAccount}/widget/app?page=settings`);
@@ -132,7 +144,68 @@ test.describe("admin connected", function () {
       attachedDeposit: transactionToSend.actions[0].params.deposit,
     });
 
-    console.log("proposals", await sandbox.getProposals(daoName, 0, 10));
     await sandbox.quitSandbox();
+  });
+
+  test("changing voting duration should show changed expiry dates for pending proposals", async ({
+    page,
+    instanceAccount,
+    daoAccount,
+  }) => {
+    const lastProposalId = 100;
+    await mockRpcRequest({
+      page,
+      filterParams: {
+        account_id: daoAccount,
+      },
+      modifyOriginalResultFunction: (originalResult, postData, args) => {
+        if (postData.params.method_name === "get_proposals") {
+          const proposals = [];
+          for (
+            let id = args.from_index;
+            id < args.from_index + args.limit;
+            id++
+          ) {
+            proposals.push({
+              id,
+              proposer: "neardevgov.near",
+              description: `Add tester${id}.near as council member`,
+              kind: {
+                AddMemberToRole: {
+                  member_id: `tester${id}.near`,
+                  role: "council",
+                },
+              },
+              status: ["InProgress", "Approved"][id % 2],
+              vote_counts: { council: [1, 0, 0] },
+              votes: { "neardevgov.near": "Approve" },
+              submission_time: (
+                BigInt(new Date().getTime()) * 1_000_000n -
+                BigInt(lastProposalId - id) * 1_000_000_000n * 60n * 60n * 24n
+              ).toString(),
+            });
+          }
+          return proposals;
+        } else if (postData.params.method_name === "get_last_proposal_id") {
+          return lastProposalId;
+        } else {
+          return originalResult;
+        }
+      },
+    });
+
+    await page.goto(`/${instanceAccount}/widget/app?page=settings`);
+    await page.getByText("Voting Duration").first().click();
+
+    await page.waitForTimeout(500);
+    const currentDurationDays = await page
+      .getByPlaceholder("Enter voting duration days")
+      .inputValue();
+    const newDurationDays = Number(currentDurationDays) - 2;
+    await page
+      .getByPlaceholder("Enter voting duration days")
+      .fill(newDurationDays.toString());
+
+    await page.waitForTimeout(2000);
   });
 });

@@ -21,7 +21,17 @@ export async function mockRpcRequest({
         const originalResult = JSON.parse(
           new TextDecoder().decode(new Uint8Array(json.result.result))
         );
-        mockedResult = await modifyOriginalResultFunction(originalResult);
+        let args;
+        if (postData.params.args_base64) {
+          args = JSON.parse(
+            Buffer.from(postData.params.args_base64, "base64").toString()
+          );
+        }
+        mockedResult = await modifyOriginalResultFunction(
+          originalResult,
+          postData,
+          args
+        );
       }
 
       const mockedResponse = {
