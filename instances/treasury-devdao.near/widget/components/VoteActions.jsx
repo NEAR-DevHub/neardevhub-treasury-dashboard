@@ -150,11 +150,12 @@ return (
       props={{
         instance,
         heading: "Confirm your vote",
-        content: actions.REMOVE
-          ? "Do you really want to delete this request? This process cannot be undone."
-          : `Are you sure you want to vote to ${
-              vote === actions.APPROVE ? "approve" : "reject"
-            } this request? You cannot change this vote later.`,
+        content:
+          vote === actions.REMOVE
+            ? "Do you really want to delete this request? This process cannot be undone."
+            : `Are you sure you want to vote to ${
+                vote === actions.APPROVE ? "approve" : "reject"
+              } this request? You cannot change this vote later.`,
         confirmLabel: "Confirm",
         isOpen: showConfirmModal,
         onCancelClick: () => setConfirmModal(false),

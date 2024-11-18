@@ -8,10 +8,8 @@ function getApproversAndThreshold(treasuryDaoID, kind, isDeleteCheck) {
           `${kind}:*`,
           `${kind}:VoteApprove`,
           `${kind}:VoteReject`,
-          `${kind}:VoteRemove`,
           "*:VoteApprove",
           "*:VoteReject",
-          "*:VoteRemove",
         ];
     return (role?.permissions ?? []).some((i) => permissions.includes(i));
   });
