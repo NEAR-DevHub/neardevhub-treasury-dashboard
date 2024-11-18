@@ -27,6 +27,7 @@ const highlightProposalId = props.highlightProposalId;
 const loading = props.loading;
 const isPendingRequests = props.isPendingRequests;
 const transferApproversGroup = props.transferApproversGroup;
+const deleteGroup = props.transferApproversGroup;
 const [showToastStatus, setToastStatus] = useState(false);
 const [voteProposalId, setVoteProposalId] = useState(null);
 const [nearStakedTokens, setNearStakedTokens] = useState(null);
@@ -37,6 +38,10 @@ const accountId = context.accountId;
 const hasVotingPermission = (
   transferApproversGroup?.approverAccounts ?? []
 ).includes(accountId);
+
+const hasDeletePermission = (deleteGroup?.approverAccounts ?? []).includes(
+  accountId
+);
 
 const Container = styled.div`
   font-size: 13px;
@@ -125,11 +130,18 @@ const ToastContainer = styled.div`
 function checkProposalStatus(proposalId) {
   Near.asyncView(treasuryDaoID, "get_proposal", {
     id: proposalId,
-  }).then((result) => {
-    setToastStatus(result.status);
-    setVoteProposalId(proposalId);
-    refreshTableData();
-  });
+  })
+    .then((result) => {
+      setToastStatus(result.status);
+      setVoteProposalId(proposalId);
+      refreshTableData();
+    })
+    .catch(() => {
+      // deleted request (thus proposal won't exist)
+      setToastStatus("Removed");
+      setVoteProposalId(proposalId);
+      refreshTableData();
+    });
 }
 
 useEffect(() => {
@@ -207,16 +219,19 @@ const ToastStatusContent = () => {
       content = "The payment request has been successfully executed.";
       break;
     case "Rejected":
-      content = "The payment has been rejected.";
+      content = "The payment request has been rejected.";
+      break;
+    case "Removed":
+      content = "The payment request has been successfully deleted.";
       break;
     default:
-      content = `The payment has ${showToastStatus}.`;
+      content = `The payment request is ${showToastStatus}.`;
       break;
   }
   return (
     <div className="toast-body">
       {content}
-      {showToastStatus !== "InProgress" && (
+      {showToastStatus !== "InProgress" && showToastStatus !== "Removed" && (
         <a
           href={href({
             widgetSrc: `${instance}/widget/app`,
@@ -477,34 +492,37 @@ const ProposalsComponent = () => {
                 {formatSubmissionTimeStamp(item.submission_time)}
               </td>
             )}
-            {isPendingRequests && hasVotingPermission && (
-              <td className="text-right">
-                <Widget
-                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.VoteActions`}
-                  props={{
-                    instance,
-                    votes: item.votes,
-                    proposalId: item.id,
-                    tokensBalance: [
-                      ...(userFTTokens?.body?.inventory?.fts ?? []),
-                      {
-                        contract: "near",
-                        amount: Big(nearBalances.available)
-                          .minus(
-                            Big(nearStakedTokens ?? "0").mul(Big(10).pow(24))
-                          )
-                          .toFixed(),
-                      },
-                    ],
-                    currentAmount: args.amount,
-                    currentContract:
-                      args.token_id === "" ? "near" : args.token_id,
-                    requiredVotes,
-                    checkProposalStatus: () => checkProposalStatus(item.id),
-                  }}
-                />
-              </td>
-            )}
+            {isPendingRequests &&
+              (hasVotingPermission || hasDeletePermission) && (
+                <td className="text-right">
+                  <Widget
+                    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.VoteActions`}
+                    props={{
+                      instance,
+                      votes: item.votes,
+                      proposalId: item.id,
+                      hasDeletePermission,
+                      hasVotingPermission,
+                      tokensBalance: [
+                        ...(userFTTokens?.body?.inventory?.fts ?? []),
+                        {
+                          contract: "near",
+                          amount: Big(nearBalances.available)
+                            .minus(
+                              Big(nearStakedTokens ?? "0").mul(Big(10).pow(24))
+                            )
+                            .toFixed(),
+                        },
+                      ],
+                      currentAmount: args.amount,
+                      currentContract:
+                        args.token_id === "" ? "near" : args.token_id,
+                      requiredVotes,
+                      checkProposalStatus: () => checkProposalStatus(item.id),
+                    }}
+                  />
+                </td>
+              )}
           </tr>
         );
       })}
@@ -596,9 +614,10 @@ return (
                     Expiring Date
                   </td>
                 )}
-                {isPendingRequests && hasVotingPermission && (
-                  <td className="text-right">Actions</td>
-                )}
+                {isPendingRequests &&
+                  (hasVotingPermission || hasDeletePermission) && (
+                    <td className="text-right">Actions</td>
+                  )}
                 {/* {!isPendingRequests && <td>Transaction Date</td>}
           {!isPendingRequests && <td>Transaction</td>} */}
               </tr>

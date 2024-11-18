@@ -78,6 +78,19 @@ const ApproversComponent = (
   </div>
 );
 
+function getVoteStatus() {
+  switch (vote) {
+    case "Approve":
+      return "Approved";
+    case "Reject":
+      return "Rejected";
+    case "Remove":
+      return "Deleted";
+    default:
+      return "";
+  }
+}
+
 return (
   <Container className="d-flex justify-content-center">
     {showHover ? (
@@ -92,8 +105,8 @@ return (
                   const name = profile.name;
                   const imageSrc = getImage(acc);
                   const voted = !!votes[acc];
-                  const isApproved = votes[acc] === "Approve";
-                  const voteImg = isApproved ? approve : reject;
+                  const votesStatus = getVoteStatus(votes[acc]);
+                  const voteImg = votesStatus === "Approved" ? approve : reject;
                   return (
                     <div
                       className="d-flex gap-2 align-items-center"
@@ -125,8 +138,14 @@ return (
                         <div className="h6 mb-0">{name ?? acc}</div>
                         <div className="d-flex">
                           {voted ? (
-                            <span className={isApproved ? "approve" : "reject"}>
-                              {isApproved ? "Approved" : "Rejected"}{" "}
+                            <span
+                              className={
+                                votesStatus === "Approved"
+                                  ? "approve"
+                                  : "reject"
+                              }
+                            >
+                              {votesStatus}{" "}
                             </span>
                           ) : (
                             "Not Voted"

@@ -1,19 +1,19 @@
-function getApproversAndThreshold(treasuryDaoID, kind) {
+function getApproversAndThreshold(treasuryDaoID, kind, isDeleteCheck) {
   const daoPolicy = Near.view(treasuryDaoID, "get_policy", {});
   const groupWithPermission = (daoPolicy.roles ?? []).filter((role) => {
-    const transferPermissions = [
-      "*:*",
-      `${kind}:*`,
-      `${kind}:VoteApprove`,
-      `${kind}:VoteReject`,
-      `${kind}:VoteRemove`,
-      "*:VoteApprove",
-      "*:VoteReject",
-      "*:VoteRemove",
-    ];
-    return (role?.permissions ?? []).some((i) =>
-      transferPermissions.includes(i)
-    );
+    const permissions = isDeleteCheck
+      ? ["*:*", `${kind}:*`, `${kind}:VoteRemove`, "*:VoteRemove"]
+      : [
+          "*:*",
+          `${kind}:*`,
+          `${kind}:VoteApprove`,
+          `${kind}:VoteReject`,
+          `${kind}:VoteRemove`,
+          "*:VoteApprove",
+          "*:VoteReject",
+          "*:VoteRemove",
+        ];
+    return (role?.permissions ?? []).some((i) => permissions.includes(i));
   });
 
   let approversGroup = [];
