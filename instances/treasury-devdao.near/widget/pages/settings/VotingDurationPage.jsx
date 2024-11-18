@@ -156,7 +156,6 @@ useEffect(() => {
         (24 * 60 * 60) ===
         Number(durationDays)
     ) {
-      console.log("SHOW TOAST");
       setToastStatus(true);
       setSubmittingChangeRequest(false);
     }
