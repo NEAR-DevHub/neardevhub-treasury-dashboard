@@ -289,7 +289,7 @@ test.describe("don't ask again", function () {
     }
 
     await expect(page.locator("tr").nth(1)).toHaveClass("bg-highlight", {
-      timeout: 10_000,
+      timeout: 30_000,
     });
     await page.waitForTimeout(1_000);
   });

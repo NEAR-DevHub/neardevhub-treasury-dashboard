@@ -124,7 +124,7 @@ async function openUnstakeForm({ page }) {
   await expect(
     page.getByRole("heading", { name: "Create Unstake Request" })
   ).toBeVisible(10_000);
-  const loader = page.getByRole("img", { name: "loader" });
+  const loader = page.getByRole("img", { name: "loader" }).first();
   await expect(loader).toBeVisible();
   await page.waitForTimeout(10_000);
   await expect(loader).toBeHidden({ timeout: 20_000 });
@@ -206,7 +206,7 @@ test.describe("Have valid staked requests and sufficient token balance", functio
       const createRequestButton = await page.getByText("Create Request");
       await createRequestButton.click();
       await page.waitForTimeout(10_000);
-      const loader = page.getByRole("img", { name: "loader" });
+      const loader = page.getByRole("img", { name: "loader" }).first();
       await expect(loader).toBeVisible();
       await page.waitForTimeout(10_000);
       const selectButtons = await page.locator("button", { hasText: "select" });
