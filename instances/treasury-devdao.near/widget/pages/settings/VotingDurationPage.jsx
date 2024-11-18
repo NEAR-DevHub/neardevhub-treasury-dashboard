@@ -143,23 +143,12 @@ const submitChangeRequest = () => {
 };
 
 useEffect(() => {
-  console.log("DURATION DAYS", isSubmittingChangeRequest, lastProposalId);
   Near.asyncView(treasuryDaoID, "get_proposal", {
     id: lastProposalId - 1,
   }).then((proposal) => {
     const proposal_period =
       proposal?.kind?.ChangePolicyUpdateParameters?.parameters?.proposal_period;
 
-    console.log(
-      "PP",
-      durationDays,
-      isSubmittingChangeRequest,
-      proposal_period,
-      proposal_period
-        ? Number(proposal_period.substring(0, proposal_period.length - 9)) /
-            (24 * 60 * 60)
-        : ""
-    );
     if (
       proposal_period &&
       isSubmittingChangeRequest &&
