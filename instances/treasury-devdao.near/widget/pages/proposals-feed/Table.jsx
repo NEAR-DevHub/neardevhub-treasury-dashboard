@@ -208,6 +208,7 @@ const ToastStatusContent = () => {
   return (
     <div className="toast-body">
       {content}
+      <br />
       {showToastStatus !== "InProgress" && (
         <a
           href={href({

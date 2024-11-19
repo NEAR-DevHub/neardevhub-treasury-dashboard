@@ -228,6 +228,7 @@ const ToastStatusContent = () => {
   return (
     <div className="toast-body">
       {content}
+      <br />
       {showToastStatus !== "InProgress" && showToastStatus !== "Removed" && (
         <a
           href={href({
