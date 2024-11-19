@@ -331,7 +331,7 @@ return (
     <Widget
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
       props={{
-        instance,
+        accountId: treasuryDaoID,
         setNearStakedTokens: (v) => setNearStakedTokens(Big(v).toFixed(4)),
         setNearStakedTotalTokens: (v) =>
           setNearStakedTotalTokens(Big(v).toFixed(4)),

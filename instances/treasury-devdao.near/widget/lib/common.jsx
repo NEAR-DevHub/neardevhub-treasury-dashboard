@@ -354,6 +354,7 @@ function isBosGateway() {
     gatewayOrigin.includes("dev.near.org")
   );
 }
+
 function formatNearAmount(amount) {
   return Big(amount ?? "0")
     .div(Big(10).pow(24))

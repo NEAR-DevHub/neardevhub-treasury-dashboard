@@ -1,9 +1,8 @@
-const instance = props.instance;
-if (!instance) {
+const accountId = props.accountId;
+
+if (!accountId) {
   return <></>;
 }
-
-const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 
 const setNearStakedTotalTokens = props.setNearStakedTotalTokens || (() => {});
 const setNearUnstakedTokens = props.setNearUnstakedTokens || (() => {});
@@ -16,7 +15,7 @@ const code = `
     <body>
       <script>
         const archiveNodeUrl = "https://archival-rpc.mainnet.near.org";
-        const treasuryDaoID = "${treasuryDaoID}"
+        const treasuryDaoID = "${accountId}"
         async function getAccountStakedBalance(stakingpool_id, account_id) {
         return await fetch(archiveNodeUrl, {
           method: "POST",
