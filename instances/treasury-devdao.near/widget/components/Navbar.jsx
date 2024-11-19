@@ -33,7 +33,7 @@ const MenuIcon = () => (
 );
 
 const Navbar = styled.div`
-  padding: 1.5rem 1rem;
+  padding: 1rem;
   display: flex;
   flex-direction: row;
   justify-content: space-between;

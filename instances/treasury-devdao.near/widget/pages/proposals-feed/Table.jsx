@@ -24,12 +24,17 @@ const transferApproversGroup = props.transferApproversGroup;
 const [showToastStatus, setToastStatus] = useState(false);
 const [voteProposalId, setVoteProposalId] = useState(null);
 const refreshTableData = props.refreshTableData;
+const deleteGroup = props.deleteGroup;
 
 const accountId = context.accountId;
 
 const hasVotingPermission = (
   transferApproversGroup?.approverAccounts ?? []
 ).includes(accountId);
+
+const hasDeletePermission = (deleteGroup?.approverAccounts ?? []).includes(
+  accountId
+);
 
 const Container = styled.div`
   font-size: 13px;
@@ -203,6 +208,7 @@ const ToastStatusContent = () => {
   return (
     <div className="toast-body">
       {content}
+      <br />
       {showToastStatus !== "InProgress" && (
         <a
           href={href({
@@ -399,22 +405,25 @@ const ProposalsComponent = () => {
                 {formatSubmissionTimeStamp(item.submission_time)}
               </td>
             )}
-            {isPendingRequests && hasVotingPermission && (
-              <td className="text-right">
-                <Widget
-                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.VoteActions`}
-                  props={{
-                    instance,
-                    votes: item.votes,
-                    proposalId: item.id,
-
-                    avoidCheckForBalance: true,
-                    requiredVotes,
-                    checkProposalStatus: () => checkProposalStatus(item.id),
-                  }}
-                />
-              </td>
-            )}
+            {isPendingRequests &&
+              (hasVotingPermission || hasDeletePermission) && (
+                <td className="text-right">
+                  <Widget
+                    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.VoteActions`}
+                    props={{
+                      instance,
+                      votes: item.votes,
+                      proposalId: item.id,
+                      hasVotingPermission,
+                      proposalCreator: item.proposer,
+                      hasDeletePermission,
+                      avoidCheckForBalance: true,
+                      requiredVotes,
+                      checkProposalStatus: () => checkProposalStatus(item.id),
+                    }}
+                  />
+                </td>
+              )}
           </tr>
         );
       })}
@@ -514,9 +523,10 @@ ${JSON.stringify(showDetailsProposalKind, null, 2)}
                     Expiring Date
                   </td>
                 )}
-                {isPendingRequests && hasVotingPermission && (
-                  <td className="text-right">Actions</td>
-                )}
+                {isPendingRequests &&
+                  (hasVotingPermission || hasDeletePermission) && (
+                    <td className="text-right">Actions</td>
+                  )}
               </tr>
             </thead>
             <ProposalsComponent />

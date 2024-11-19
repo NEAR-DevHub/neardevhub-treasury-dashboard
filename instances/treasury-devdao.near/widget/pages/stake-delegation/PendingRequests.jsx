@@ -73,6 +73,8 @@ const functionCallApproversGroup = getApproversAndThreshold(
   "call"
 );
 
+const deleteGroup = getApproversAndThreshold(treasuryDaoID, "call", true);
+
 return (
   <div className="d-flex flex-column flex-1 justify-content-between">
     <Widget
@@ -81,6 +83,7 @@ return (
         proposals: proposals,
         isPendingRequests: true,
         functionCallApproversGroup,
+        deleteGroup,
         loading: loading,
         policy,
         refreshTableData: fetchProposals,

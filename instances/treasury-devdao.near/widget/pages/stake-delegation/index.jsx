@@ -69,7 +69,7 @@ const CreateBtn = () => {
     display: flex;
     justify-content: space-between;
     cursor: pointer;
-    background-color: #2C3E50;
+    background-color: var(--theme-color);
     border-radius: 5px;
   }
 

@@ -67,6 +67,8 @@ const transferApproversGroup = getApproversAndThreshold(
   "transfer"
 );
 
+const deleteGroup = getApproversAndThreshold(treasuryDaoID, "transfer", true);
+
 return (
   <div className="d-flex flex-column flex-1 justify-content-between">
     <Widget
@@ -75,6 +77,7 @@ return (
         proposals: proposals,
         isPendingRequests: true,
         transferApproversGroup,
+        deleteGroup,
         loading: loading,
         policy,
         refreshTableData: fetchProposals,
