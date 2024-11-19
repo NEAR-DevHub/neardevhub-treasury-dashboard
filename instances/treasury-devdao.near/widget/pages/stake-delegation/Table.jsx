@@ -457,6 +457,7 @@ const ProposalsComponent = () => {
                       ],
                       hasDeletePermission,
                       hasVotingPermission,
+                      proposalCreator: item.proposer,
                       currentAmount: amount,
                       currentContract: "near",
                       requiredVotes,

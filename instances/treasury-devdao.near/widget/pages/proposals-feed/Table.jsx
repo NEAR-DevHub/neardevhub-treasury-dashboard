@@ -414,6 +414,7 @@ const ProposalsComponent = () => {
                       votes: item.votes,
                       proposalId: item.id,
                       hasVotingPermission,
+                      proposalCreator: item.proposer,
                       hasDeletePermission,
                       avoidCheckForBalance: true,
                       requiredVotes,

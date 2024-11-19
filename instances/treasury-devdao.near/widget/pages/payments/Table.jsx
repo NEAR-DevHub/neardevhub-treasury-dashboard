@@ -503,6 +503,7 @@ const ProposalsComponent = () => {
                       proposalId: item.id,
                       hasDeletePermission,
                       hasVotingPermission,
+                      proposalCreator: item.proposer,
                       tokensBalance: [
                         ...(userFTTokens?.body?.inventory?.fts ?? []),
                         {

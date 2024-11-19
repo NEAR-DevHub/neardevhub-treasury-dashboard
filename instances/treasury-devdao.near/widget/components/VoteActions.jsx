@@ -17,6 +17,7 @@ const setVoteProposalId = props.setVoteProposalId ?? (() => {});
 const avoidCheckForBalance = props.avoidCheckForBalance;
 const hasDeletePermission = props.hasDeletePermission;
 const hasVotingPermission = props.hasVotingPermission;
+const proposalCreator = props.proposalCreator;
 
 const alreadyVoted = Object.keys(votes).includes(accountId);
 const userVote = votes[accountId];
@@ -215,7 +216,8 @@ return (
             />
           </div>
         )}
-        {hasDeletePermission && (
+        {/* currently showing delete btn only for proposal creator */}
+        {hasDeletePermission && proposalCreator === accountId && (
           <button
             className="remove-btn p-2"
             onClick={() => {
