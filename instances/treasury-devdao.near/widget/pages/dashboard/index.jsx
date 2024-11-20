@@ -65,6 +65,8 @@ const [lockupNearBalances, setLockupNearBalances] = useState(null);
 const [lockupStakedTokens, setLockupStakedTokens] = useState(null);
 const [lockupUnStakedTokens, setLockupUnStakedTokens] = useState(null);
 const [lockupStakedTotalTokens, setLockupStakedTotalTokens] = useState(null);
+const [nearWithdrawTokens, setNearWithdrawTokens] = useState(null);
+const [lockupNearWithdrawTokens, setLockupNearWithdrawTokens] = useState(null);
 
 const nearPrice = useCache(
   () =>
@@ -161,6 +163,7 @@ return (
         setNearUnstakedTokens: (v) => setNearUnStakedTokens(Big(v).toFixed(4)),
         setNearStakedTotalTokens: (v) =>
           setNearStakedTotalTokens(Big(v).toFixed(4)),
+        setNearWithdrawTokens: (v) => setNearWithdrawTokens(Big(v).toFixed(4)),
       }}
     />
     {lockupContract && (
@@ -173,6 +176,8 @@ return (
             setLockupUnStakedTokens(Big(v).toFixed(4)),
           setNearStakedTotalTokens: (v) =>
             setLockupStakedTotalTokens(Big(v).toFixed(4)),
+          setNearWithdrawTokens: (v) =>
+            setLockupNearWithdrawTokens(Big(v).toFixed(4)),
         }}
       />
     )}
@@ -197,6 +202,7 @@ return (
             nearPrice,
             nearStakedTotalTokens,
             nearBalances,
+            nearWithdrawTokens,
             heading: (
               <div className="d-flex flex-column gap-1 px-3 pt-3 pb-2">
                 <div className="h5 mb-0">Sputnik DAO</div>
@@ -221,6 +227,7 @@ return (
               nearStakedTokens: lockupStakedTokens,
               nearUnStakedTokens: lockupUnStakedTokens,
               nearPrice,
+              nearWithdrawTokens: lockupNearWithdrawTokens,
               nearBalances: lockupNearBalances,
               nearStakedTotalTokens: lockupStakedTotalTokens,
               heading: (

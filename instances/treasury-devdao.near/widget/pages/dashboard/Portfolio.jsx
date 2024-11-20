@@ -22,6 +22,7 @@ const {
   heading,
   nearBalances,
   isLockupContract,
+  nearWithdrawTokens,
 } = props;
 
 function convertBalanceToReadableFormat(amount, decimals) {
@@ -178,7 +179,7 @@ const NearPortfolio = () => {
           <BalanceDisplay
             icon={nearTokenIcon}
             label={"Staked"}
-            balance={nearStakedTokens}
+            balance={nearStakedTotalTokens}
             tooltipInfo={"dsfds"}
             price={nearPrice}
             showExpand={true}
@@ -206,7 +207,7 @@ const NearPortfolio = () => {
                 <BalanceDisplay
                   icon={nearTokenIcon}
                   label={"Available for withdrawal"}
-                  balance={nearUnStakedTokens}
+                  balance={nearWithdrawTokens}
                   tooltipInfo={"dsfds"}
                   price={nearPrice}
                 />
