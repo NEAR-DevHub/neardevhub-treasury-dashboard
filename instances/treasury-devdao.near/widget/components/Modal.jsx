@@ -10,8 +10,8 @@ const heading = props.heading;
 const content = props.content;
 const cancelLabel = props.cancelLabel;
 const confirmLabel = props.confirmLabel;
-const onCancelClick = props.onCancelClick ?? (() => {});
-const onConfirmClick = props.onConfirmClick ?? (() => {});
+const onCancelClick = props.onCancelClick;
+const onConfirmClick = props.onConfirmClick;
 
 const Modal = styled.div`
   display: ${({ hidden }) => (hidden ? "none" : "flex")};
@@ -42,7 +42,7 @@ const Modal = styled.div`
   }
 
   .theme-btn {
-    background-color: var(--theme-color) !important;
+    background: var(--theme-color) !important;
     color: white;
   }
 `;
@@ -130,22 +130,26 @@ return (
         </ModalHeader>
         <ModalContent>{content}</ModalContent>
         <div className="d-flex gap-2 align-items-center justify-content-end mt-2">
-          <Widget
-            src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
-            props={{
-              classNames: { root: "btn-outline-secondary" },
-              label: cancelLabel ?? "Cancel",
-              onClick: onCancelClick,
-            }}
-          />
-          <Widget
-            src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
-            props={{
-              classNames: { root: "theme-btn" },
-              label: confirmLabel ?? "Confirm",
-              onClick: onConfirmClick,
-            }}
-          />
+          {typeof onCancelClick === "function" && (
+            <Widget
+              src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
+              props={{
+                classNames: { root: "btn-outline-secondary" },
+                label: cancelLabel ?? "Cancel",
+                onClick: onCancelClick,
+              }}
+            />
+          )}
+          {typeof onConfirmClick === "function" && (
+            <Widget
+              src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
+              props={{
+                classNames: { root: "theme-btn" },
+                label: confirmLabel ?? "Confirm",
+                onClick: onConfirmClick,
+              }}
+            />
+          )}
         </div>
       </ModalDialog>
     </Modal>

@@ -1,0 +1,12 @@
+{
+  "REPL_DEVHUB": "devhub.near",
+  "REPL_DEVHUB_CONTRACT": "devhub.near",
+  "REPL_BASE_DEPLOYMENT_ACCOUNT": "treasury-factory.near",
+  "REPL_DEVDAO_ACCOUNT": "treasury-devdao.near",
+  "REPL_SPUTNIK_FACTORY_ACCOUNT": "sputnik-dao.near",
+  "REPL_NEAR": "near",
+  "REPL_MOB": "mob.near",
+  "REPL_SOCIAL_CONTRACT": "social.near",
+  "REPL_RPC_URL": "https://rpc.mainnet.near.org",
+  "REPL_PIKESPEAK_KEY": "36f2b87a-7ee6-40d8-80b9-5e68e587a5b5"
+}

@@ -68,7 +68,7 @@ export const CurrentTimestampInNanoseconds = `${Date.now() * 1_000_000}`;
 
 export const TransferProposalData = {
   id: 10,
-  proposer: "thomasguntenaar.near",
+  proposer: "theori.near",
   description:
     '{"title":"DevHub Developer Contributor report by Megha for 09/09/2024 - 10/06/2024","summary":"Worked on integrating new features to treasury dashboard, like asset exchange using the ref-sdk API, stake delegation, made first version live for devhub, fixed some bugs with devhub and other instances.","notes":"Treasury balance insufficient","proposalId":220}',
   kind: {
@@ -88,7 +88,7 @@ export const TransferProposalData = {
 
 export const StakeProposalData = {
   id: 1,
-  proposer: "megha19.near",
+  proposer: "theori.near",
   description: '{"isStakeRequest":true,"notes":"Testing Stake"}',
   kind: {
     FunctionCall: {

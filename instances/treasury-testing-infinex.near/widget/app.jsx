@@ -75,6 +75,17 @@ function Page() {
       );
     }
 
+    case "proposals-feed": {
+      return (
+        <Widget
+          src={
+            "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.proposals-feed.index"
+          }
+          props={propsToSend}
+        />
+      );
+    }
+
     default: {
       // TODO: 404 page
       return <p>404</p>;

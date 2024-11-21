@@ -15,6 +15,9 @@ const currentAmount = props.currentAmount ?? "0";
 const currentContract = props.currentContract ?? "";
 const setVoteProposalId = props.setVoteProposalId ?? (() => {});
 const avoidCheckForBalance = props.avoidCheckForBalance;
+const hasDeletePermission = props.hasDeletePermission;
+const hasVotingPermission = props.hasVotingPermission;
+const proposalCreator = props.proposalCreator;
 
 const alreadyVoted = Object.keys(votes).includes(accountId);
 const userVote = votes[accountId];
@@ -22,6 +25,7 @@ const userVote = votes[accountId];
 const actions = {
   APPROVE: "VoteApprove",
   REJECT: "VoteReject",
+  REMOVE: "VoteRemove",
 };
 
 const [isTxnCreated, setTxnCreated] = useState(false);
@@ -89,6 +93,7 @@ useEffect(() => {
 const Container = styled.div`
   .reject-btn {
     background-color: #2c3e50;
+    border-radius: 5px;
     color: white;
 
     &:hover {
@@ -97,8 +102,15 @@ const Container = styled.div`
     }
   }
 
+  .remove-btn {
+    background: none;
+    border: none;
+    color: red;
+  }
+
   .approve-btn {
     background-color: #04a46e;
+    border-radius: 5px;
     color: white;
 
     &:hover {
@@ -139,9 +151,12 @@ return (
       props={{
         instance,
         heading: "Confirm your vote",
-        content: `Are you sure you want to vote to ${
-          vote === actions.APPROVE ? "approve" : "reject"
-        } this request? You cannot change this vote later.`,
+        content:
+          vote === actions.REMOVE
+            ? "Do you really want to delete this request? This process cannot be undone."
+            : `Are you sure you want to vote to ${
+                vote === actions.APPROVE ? "approve" : "reject"
+              } this request? You cannot change this vote later.`,
         confirmLabel: "Confirm",
         isOpen: showConfirmModal,
         onCancelClick: () => setConfirmModal(false),
@@ -163,40 +178,61 @@ return (
       </div>
     ) : (
       <div className="d-flex gap-2 align-items-center justify-content-end">
-        <Widget
-          src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
-          props={{
-            classNames: {
-              root: "approve-btn p-2",
-            },
-            label: "Approve",
-            onClick: () => {
-              if (isInsufficientBalance) {
-                setShowWarning(true);
-              } else {
-                setVote(actions.APPROVE);
-                setConfirmModal(true);
-              }
-            },
-            loading: isTxnCreated && vote === actions.APPROVE,
-            disabled: isTxnCreated,
-          }}
-        />
-        <Widget
-          src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
-          props={{
-            classNames: {
-              root: "reject-btn p-2",
-            },
-            label: "Reject",
-            onClick: () => {
-              setVote(actions.REJECT);
+        {hasVotingPermission && (
+          <div className="d-flex gap-2 align-items-center">
+            <Widget
+              src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
+              props={{
+                classNames: {
+                  root: "approve-btn p-2",
+                },
+                label: "Approve",
+                onClick: () => {
+                  if (isInsufficientBalance) {
+                    setShowWarning(true);
+                  } else {
+                    setVote(actions.APPROVE);
+                    setConfirmModal(true);
+                  }
+                },
+                loading: isTxnCreated && vote === actions.APPROVE,
+                disabled: isTxnCreated,
+              }}
+            />
+            <Widget
+              src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
+              props={{
+                classNames: {
+                  root: "reject-btn p-2",
+                },
+                label: "Reject",
+                onClick: () => {
+                  setVote(actions.REJECT);
+                  setConfirmModal(true);
+                },
+                loading: isTxnCreated && vote === actions.REJECT,
+                disabled: isTxnCreated,
+              }}
+            />
+          </div>
+        )}
+        {/* currently showing delete btn only for proposal creator */}
+        {hasDeletePermission && proposalCreator === accountId && (
+          <button
+            className="remove-btn p-2"
+            onClick={() => {
+              setVote(actions.REMOVE);
               setConfirmModal(true);
-            },
-            loading: isTxnCreated && vote === actions.REJECT,
-            disabled: isTxnCreated,
-          }}
-        />
+            }}
+            data-testid="delete-btn"
+            disabled={isTxnCreated}
+          >
+            <img
+              style={{ height: 30 }}
+              src="https://ipfs.near.social/ipfs/bafkreieobqzwouuadj7eneei7aadwfel6ubhj7qishnqwrlv5ldgcwuyt4"
+            />
+          </button>
+        )}
       </div>
     )}
   </Container>

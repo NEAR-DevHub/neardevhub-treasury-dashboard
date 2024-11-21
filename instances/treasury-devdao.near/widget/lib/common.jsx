@@ -1,19 +1,17 @@
-function getApproversAndThreshold(treasuryDaoID, kind) {
+function getApproversAndThreshold(treasuryDaoID, kind, isDeleteCheck) {
   const daoPolicy = Near.view(treasuryDaoID, "get_policy", {});
   const groupWithPermission = (daoPolicy.roles ?? []).filter((role) => {
-    const transferPermissions = [
-      "*:*",
-      `${kind}:*`,
-      `${kind}:VoteApprove`,
-      `${kind}:VoteReject`,
-      `${kind}:VoteRemove`,
-      "*:VoteApprove",
-      "*:VoteReject",
-      "*:VoteRemove",
-    ];
-    return (role?.permissions ?? []).some((i) =>
-      transferPermissions.includes(i)
-    );
+    const permissions = isDeleteCheck
+      ? ["*:*", `${kind}:*`, `${kind}:VoteRemove`, "*:VoteRemove"]
+      : [
+          "*:*",
+          `${kind}:*`,
+          `${kind}:VoteApprove`,
+          `${kind}:VoteReject`,
+          "*:VoteApprove",
+          "*:VoteReject",
+        ];
+    return (role?.permissions ?? []).some((i) => permissions.includes(i));
   });
 
   let approversGroup = [];
@@ -21,13 +19,17 @@ function getApproversAndThreshold(treasuryDaoID, kind) {
   let requiredVotes = null;
   groupWithPermission.map((i) => {
     approversGroup = approversGroup.concat(i.kind.Group ?? []);
-    if (i.vote_policy[kind].weight_kind === "RoleWeight") {
-      if (Array.isArray(i.vote_policy[kind].threshold)) {
-        ratios = ratios.concat(i.vote_policy[kind].threshold);
-        ratios = ratios.concat(i.vote_policy[kind].threshold);
-      } else {
-        requiredVotes = parseFloat(i.vote_policy[kind].threshold);
+    if (Object.values(i.vote_policy ?? {}).length > 0) {
+      if (i.vote_policy[kind].weight_kind === "RoleWeight") {
+        if (Array.isArray(i.vote_policy[kind].threshold)) {
+          ratios = ratios.concat(i.vote_policy[kind].threshold);
+          ratios = ratios.concat(i.vote_policy[kind].threshold);
+        } else {
+          requiredVotes = parseFloat(i.vote_policy[kind].threshold);
+        }
       }
+    } else {
+      ratios = [50, 100];
     }
   });
 
@@ -334,7 +336,7 @@ function getPermissionsText(type) {
     case "Create requests":
       return "Enables users to initiate payment requests.";
     case "Manage Members": {
-      return "Allows users to control treasury adminis and their access levels.";
+      return "Allows users to control treasury admins and their access levels.";
     }
     case "Vote": {
       return "Allows users to approve or request proposed payment requests.";
