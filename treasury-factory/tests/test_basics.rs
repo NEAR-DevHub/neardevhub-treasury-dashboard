@@ -84,6 +84,21 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
         .initial_balance(NearToken::from_near(20))
         .transact()
         .await?;
+    let near_contract = worker.import_contract(&"near".parse().unwrap(), &mainnet)
+        .initial_balance(NearToken::from_near(100_000_000))
+        .transact()
+        .await?;
+
+    let deploy_result = near_contract.as_account().deploy(include_bytes!("../linkdrop.wasm")).await?;
+    assert!(deploy_result.is_success());
+
+    let init_near_result = near_contract.call("new").max_gas().transact().await?;
+    if init_near_result.is_failure() {
+        panic!(
+            "Error initializing NEAR\n{:?}",
+            String::from_utf8(init_near_result.raw_bytes().unwrap())
+        );
+    }
 
     let init_socialdb_result = socialdb.call("new").max_gas().transact().await?;
     if init_socialdb_result.is_failure() {
@@ -143,7 +158,7 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
     assert!(init_sputnik_dao_factory_result.is_success());
 
     let instance_name = "test-treasury-instance";
-    let instance_account_id = format!("{}.{}", instance_name, treasury_factory_contract.id());
+    let instance_account_id = format!("{}.near", instance_name);
 
     let create_dao_args = json!({
         "config": {

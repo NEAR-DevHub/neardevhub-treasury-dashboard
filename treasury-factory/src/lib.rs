@@ -31,16 +31,17 @@ impl Contract {
         create_dao_args: String,
     ) -> Promise {
         let new_instance_contract_id: AccountId =
-            format!("{}.{}", name, env::current_account_id().as_str())
+            format!("{}.near", name)
                 .parse()
                 .unwrap();
-        Promise::new(new_instance_contract_id.clone())
-            .create_account()
-            .transfer(NearToken::from_near(2))
-            .add_full_access_key(env::signer_account_pk())
-            .deploy_contract(
-                include_bytes!("../../web4/treasury-web4/target/near/treasury_web4.wasm").to_vec(),
-            )
+        Promise::new("near".parse().unwrap())
+            .function_call("create_account_advanced".to_string(), json!({
+                "new_account_id": new_instance_contract_id.clone(),
+                "options": {
+                    "full_access_keys": [env::signer_account_pk()],
+                    "contract_bytes_base64": include_str!("../treasury_web4.wasm.base64.txt")
+                }
+            }).to_string().as_bytes().to_vec(), NearToken::from_near(2), Gas::from_tgas(80))
             .then(
                 instance_contract::ext(new_instance_contract_id.clone())
                     .with_attached_deposit(
@@ -51,7 +52,7 @@ impl Contract {
             .then(
                 sputnik_dao::ext(sputnik_dao_factory_account_id.parse().unwrap())
                     .with_attached_deposit(NearToken::from_near(6))
-                    .with_static_gas(Gas::from_tgas(50))
+                    .with_static_gas(Gas::from_tgas(100))
                     .create(name.to_string(), create_dao_args),
             )
     }
