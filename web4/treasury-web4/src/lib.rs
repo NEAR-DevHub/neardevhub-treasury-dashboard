@@ -17,9 +17,15 @@ impl Contract {
         widget_reference_account_id: String,
         social_db_account_id: String,
     ) -> Promise {
-        let args = "{\"keys\": [\"".to_string()+widget_reference_account_id.as_str()+"/widget/**\"]}";
+        let args =
+            "{\"keys\": [\"".to_string() + widget_reference_account_id.as_str() + "/widget/**\"]}";
         Promise::new(social_db_account_id.parse().unwrap())
-            .function_call("get".to_string(), args.into_bytes(), NearToken::from_near(0), Gas::from_tgas(10))
+            .function_call(
+                "get".to_string(),
+                args.into_bytes(),
+                NearToken::from_near(0),
+                Gas::from_tgas(10),
+            )
             .then(
                 Self::ext(env::current_account_id())
                     .with_attached_deposit(env::attached_deposit())
@@ -39,11 +45,18 @@ impl Contract {
         match env::promise_result(0) {
             PromiseResult::Successful(result) => {
                 let reference_widget = String::from_utf8(result).unwrap();
-                let new_widget = reference_widget.replace(&widget_reference_account_id, env::current_account_id().as_str());
-                let args = "{\"data\": ".to_string()+ new_widget.as_str() +"}";
+                let new_widget = reference_widget.replace(
+                    &widget_reference_account_id,
+                    env::current_account_id().as_str(),
+                );
+                let args = "{\"data\": ".to_string() + new_widget.as_str() + "}";
 
-                Promise::new(social_db_account_id.parse().unwrap())
-                    .function_call("set".to_string(), args.into_bytes(), env::attached_deposit(), Gas::from_tgas(10))
+                Promise::new(social_db_account_id.parse().unwrap()).function_call(
+                    "set".to_string(),
+                    args.into_bytes(),
+                    env::attached_deposit(),
+                    Gas::from_tgas(10),
+                )
             }
             _ => env::panic_str("Failed to get reference widget data"),
         }

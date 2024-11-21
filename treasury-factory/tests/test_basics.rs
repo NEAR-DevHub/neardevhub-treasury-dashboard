@@ -84,12 +84,16 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
         .initial_balance(NearToken::from_near(20))
         .transact()
         .await?;
-    let near_contract = worker.import_contract(&"near".parse().unwrap(), &mainnet)
+    let near_contract = worker
+        .import_contract(&"near".parse().unwrap(), &mainnet)
         .initial_balance(NearToken::from_near(100_000_000))
         .transact()
         .await?;
 
-    let deploy_result = near_contract.as_account().deploy(include_bytes!("../linkdrop.wasm")).await?;
+    let deploy_result = near_contract
+        .as_account()
+        .deploy(include_bytes!("../linkdrop.wasm"))
+        .await?;
     assert!(deploy_result.is_success());
 
     let init_near_result = near_contract.call("new").max_gas().transact().await?;

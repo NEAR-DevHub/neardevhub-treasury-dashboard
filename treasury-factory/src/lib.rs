@@ -30,18 +30,23 @@ impl Contract {
         widget_reference_account_id: String,
         create_dao_args: String,
     ) -> Promise {
-        let new_instance_contract_id: AccountId =
-            format!("{}.near", name)
-                .parse()
-                .unwrap();
+        let new_instance_contract_id: AccountId = format!("{}.near", name).parse().unwrap();
         Promise::new("near".parse().unwrap())
-            .function_call("create_account_advanced".to_string(), json!({
-                "new_account_id": new_instance_contract_id.clone(),
-                "options": {
-                    "full_access_keys": [env::signer_account_pk()],
-                    "contract_bytes_base64": include_str!("../treasury_web4.wasm.base64.txt")
-                }
-            }).to_string().as_bytes().to_vec(), NearToken::from_near(2), Gas::from_tgas(80))
+            .function_call(
+                "create_account_advanced".to_string(),
+                json!({
+                    "new_account_id": new_instance_contract_id.clone(),
+                    "options": {
+                        "full_access_keys": [env::signer_account_pk()],
+                        "contract_bytes_base64": include_str!("../treasury_web4.wasm.base64.txt")
+                    }
+                })
+                .to_string()
+                .as_bytes()
+                .to_vec(),
+                NearToken::from_near(2),
+                Gas::from_tgas(80),
+            )
             .then(
                 instance_contract::ext(new_instance_contract_id.clone())
                     .with_attached_deposit(
