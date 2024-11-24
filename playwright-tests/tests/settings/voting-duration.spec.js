@@ -113,7 +113,7 @@ test.describe("admin connected", function () {
 
     await expect(
       await page.getByPlaceholder("Enter voting duration days")
-    ).toHaveValue("7");
+    ).toHaveValue(currentDurationDays);
   });
 
   test("should show confirmation toast when submitting voting duration change request", async ({
