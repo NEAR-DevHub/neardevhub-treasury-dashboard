@@ -1,15 +1,14 @@
 const { instance } = props;
 
-const { showThresholdConfiguration, showVotingDurationConfiguration } = VM.require(
-  `${instance}/widget/config.data`
-);
+const { showThresholdConfiguration, showVotingDurationConfiguration } =
+  VM.require(`${instance}/widget/config.data`);
 
 const [leftNavbarOptions, setLeftBarOptions] = useState([
   {
     title: "Members",
     href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.MembersPage`,
     props: { instance },
-  }
+  },
 ]);
 
 useEffect(() => {
