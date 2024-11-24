@@ -14,7 +14,13 @@ test.describe("admin connected", function () {
     instanceAccount,
     daoAccount,
   }) => {
+    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
+    
     await page.goto(`/${instanceAccount}/widget/app?page=settings`);
+
+    if(!instanceConfig.showVotingDurationConfiguration) {
+      await expect(await page.getByText("Voting Duration")).not.toBeVisible();
+    }
     await page.getByText("Voting Duration").first().click();
 
     await page.waitForTimeout(500);
