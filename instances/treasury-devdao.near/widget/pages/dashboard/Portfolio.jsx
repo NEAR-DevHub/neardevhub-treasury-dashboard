@@ -237,14 +237,22 @@ const NearPortfolio = () => {
   );
 };
 
+const isLoading =
+  ftTokens === null ||
+  nearStakedTokens === null ||
+  nearBalances === null ||
+  nearPrice === null;
+
 return (
-  <div className="card flex-1">
+  <div
+    className="card flex-1 overflow-hidden"
+    style={{
+      borderBottom: isLoading ? "1px solid rgb(226, 230, 236)" : "none",
+    }}
+  >
     {heading}
     <div>
-      {ftTokens === null ||
-      nearStakedTokens === null ||
-      nearBalances === null ||
-      nearPrice === null ? (
+      {isLoading ? (
         <div className="d-flex justify-content-center align-items-center w-100 h-100">
           {loading}
         </div>

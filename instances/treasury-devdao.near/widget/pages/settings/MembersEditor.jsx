@@ -112,7 +112,7 @@ function getApproveTxn() {
       id: lastProposalId,
       action: "VoteApprove",
     },
-    gas: 200000000000000,
+    gas: 300000000000000,
   };
 }
 

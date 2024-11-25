@@ -60,12 +60,13 @@ const Wrapper = styled.div`
 const [nearStakedTokens, setNearStakedTokens] = useState(null);
 const [nearUnStakedTokens, setNearUnStakedTokens] = useState(null);
 const [nearStakedTotalTokens, setNearStakedTotalTokens] = useState(null);
+const [nearWithdrawTokens, setNearWithdrawTokens] = useState(null);
 const nearBalances = getNearBalances(treasuryDaoID);
+
 const [lockupNearBalances, setLockupNearBalances] = useState(null);
 const [lockupStakedTokens, setLockupStakedTokens] = useState(null);
 const [lockupUnStakedTokens, setLockupUnStakedTokens] = useState(null);
 const [lockupStakedTotalTokens, setLockupStakedTotalTokens] = useState(null);
-const [nearWithdrawTokens, setNearWithdrawTokens] = useState(null);
 const [lockupNearWithdrawTokens, setLockupNearWithdrawTokens] = useState(null);
 
 const nearPrice = useCache(
@@ -188,7 +189,7 @@ return (
           {typeof getNearBalances !== "function" || nearPrice === null ? (
             loading
           ) : (
-            <div className="fw-bold h3">${totalBalance} USD</div>
+            <div className="fw-bold h3 mb-0">${totalBalance} USD</div>
           )}
         </div>
         <Widget

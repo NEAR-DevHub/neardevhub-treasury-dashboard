@@ -11,7 +11,9 @@ if (!instance || typeof getNearBalances !== "function") {
   return <></>;
 }
 
-const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+const { treasuryDaoID, lockupContract } = VM.require(
+  `${instance}/widget/config.data`
+);
 
 const proposals = props.proposals;
 const columnsVisibility = JSON.parse(
@@ -28,9 +30,19 @@ const functionCallApproversGroup = props.functionCallApproversGroup;
 const deleteGroup = props.deleteGroup;
 const [showToastStatus, setToastStatus] = useState(false);
 const [voteProposalId, setVoteProposalId] = useState(null);
+const [lockupStakedPoolId, setLockupStakedPoolId] = useState(null);
+
 const refreshTableData = props.refreshTableData;
 
 const accountId = context.accountId;
+
+useEffect(() => {
+  if (lockupContract) {
+    Near.asyncView(lockupContract, "get_staking_pool_account_id").then((res) =>
+      setLockupStakedPoolId(res)
+    );
+  }
+}, [lockupContract]);
 
 const hasVotingPermission = (
   functionCallApproversGroup?.approverAccounts ?? []
@@ -308,20 +320,43 @@ function formatSubmissionTimeStamp(submissionTime) {
   );
 }
 
+function decodeBase64(encodedArgs) {
+  if (!encodedArgs) return null;
+  try {
+    const jsonString = Buffer.from(encodedArgs, "base64").toString("utf8");
+    const parsedArgs = JSON.parse(jsonString);
+    return parsedArgs;
+  } catch (error) {
+    console.error("Failed to decode or parse encodedArgs:", error);
+    return null;
+  }
+}
+
 const ProposalsComponent = () => {
   return (
     <tbody style={{ overflowX: "auto" }}>
       {proposals?.map((item, index) => {
         const description = JSON.parse(item.description);
         const args = item?.kind?.FunctionCall;
-        const action = args?.actions[0];
+        const action =
+          args?.actions.length > 1
+            ? args?.actions.find((i) => i.method_name === "deposit_and_stake")
+            : args?.actions[0];
         const isStakeRequest = action.method_name === "deposit_and_stake";
         const notes = description.notes;
+        let receiverId = args.receiver_id;
+        if (receiverId === lockupContract) {
+          receiverId =
+            lockupStakedPoolId ??
+            decodeBase64(
+              args?.actions.find((i) => i.method_name === "select_staking_pool")
+                ?.args
+            )?.staking_pool_account_id ??
+            "";
+        }
         let amount = action.deposit;
-        if (!isStakeRequest) {
-          let value = JSON.parse(
-            Buffer.from(action.args, "base64").toString("utf-8")
-          );
+        if (!isStakeRequest || args.receiver_id.includes("lockup.near")) {
+          let value = decodeBase64(action.args);
           amount = value.amount;
         }
         return (
@@ -375,7 +410,7 @@ const ProposalsComponent = () => {
               <Widget
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.Validator`}
                 props={{
-                  validatorId: args.receiver_id,
+                  validatorId: receiverId,
                 }}
               />
             </td>

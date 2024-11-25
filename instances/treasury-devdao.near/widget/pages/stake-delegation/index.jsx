@@ -229,7 +229,7 @@ return (
         title: "Create Stake Request",
         children: (
           <Widget
-            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.CreateStakeRequest`}
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.CreateLockupStakeRequest`}
             props={{
               instance,
               onCloseCanvas: toggleStakePage,
