@@ -1,6 +1,7 @@
 import { exec } from "child_process";
 import { connect, utils, keyStores } from "near-api-js";
 import { MOCK_RPC_URL } from "./rpcmock.js";
+import { parseNearAmount } from "near-api-js/lib/utils/format.js";
 
 export const SPUTNIK_DAO_CONTRACT_ID = "sputnik-dao.near";
 export const PROPOSAL_BOND = "100000000000000000000000";
@@ -60,6 +61,61 @@ export class SandboxRPC {
         await route.fallback();
       }
     });
+  }
+
+  async setupLockupContract(owner_account_id) {
+    await this.account.functionCall({
+      contractId: "lockup-whitelist.near",
+      methodName: "new",
+      args: {
+        foundation_account_id: "near",
+      },
+      gas: 300000000000000,
+    });
+    await this.account.functionCall({
+      contractId: "lockup.near",
+      methodName: "new",
+      args: {
+        whitelist_account_id: "lockup-whitelist.near",
+        foundation_account_id: "near",
+        master_account_id: "near",
+        lockup_master_account_id: "lockup.near",
+      },
+      gas: 300000000000000,
+    });
+    const createLockupResult = await this.account.functionCall({
+      contractId: "lockup.near",
+      methodName: "create",
+      args: { owner_account_id, lockup_duration: "63036000000000000" },
+      attachedDeposit: parseNearAmount("40"),
+      gas: 300000000000000,
+    });
+    function findLockupContractLog(json) {
+      if (!json.receipts_outcome || !Array.isArray(json.receipts_outcome)) {
+        return "No receipts_outcome found in the data.";
+      }
+
+      for (const receipt of json.receipts_outcome) {
+        const logs = receipt.outcome?.logs || [];
+        for (const log of logs) {
+          if (
+            log.includes("The lockup contract") &&
+            log.includes("was successfully created")
+          ) {
+            // Extract the contract ID using a regular expression
+            const match = log.match(
+              /The lockup contract (.+?) was successfully created/
+            );
+            if (match && match[1]) {
+              return match[1]; // Return the extracted contract ID
+            }
+          }
+        }
+      }
+
+      return "No lockup contract creation log found.";
+    }
+    return findLockupContractLog(createLockupResult);
   }
 
   async setupSandboxForSputnikDao(daoName) {

@@ -17,6 +17,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
     assert!(sputnik_dao_init_result.is_success());
 
+    worker
+        .import_contract(&"lockup.near".parse().unwrap(), &mainnet)
+        .transact()
+        .await?;
+
+    worker.import_contract(&"lockup-whitelist.near".parse().unwrap(), &mainnet)
+        .transact()
+        .await?;
+
+    worker.import_contract(&"poolv1.near".parse().unwrap(), &mainnet)
+        .transact()
+        .await?;
+
     let dev_account = worker.dev_create_account().await?;
     println!(
         "{{\"account_id\": {:?}, \"secret_key\": {:?}, \"rpc_url\": {:?}}}",
