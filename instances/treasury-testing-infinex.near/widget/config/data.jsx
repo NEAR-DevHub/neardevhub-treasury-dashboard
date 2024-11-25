@@ -19,6 +19,7 @@ return {
   showKYC: false,
   showReferenceProposal: false,
   showThresholdConfiguration: true,
+  showVotingDurationConfiguration: false,
   logo: (
     <svg
       width="48"

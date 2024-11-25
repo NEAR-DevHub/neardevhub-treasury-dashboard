@@ -1,4 +1,5 @@
 {
+  "image": "mcr.microsoft.com/devcontainers/base:jammy",
   "features": {
     "ghcr.io/near/near-devcontainers/features/cargo-near:latest": {},
     "ghcr.io/near/near-devcontainers/features/near-cli:latest": {},
