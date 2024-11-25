@@ -38,5 +38,6 @@ await sandbox.account.functionCall({
     contractId: daoContract, methodName: 'act_proposal', args: {
         id: proposalId,
         action: "VoteApprove"
-    }
+    },
+    gas: 300000000000000
 });
