@@ -345,7 +345,7 @@ const ProposalsComponent = () => {
         const isStakeRequest = action.method_name === "deposit_and_stake";
         const notes = description.notes;
         const receiverAccount = args.receiver_id;
-        let validatorAccount = args.receiver_id;
+        let validatorAccount = receiverAccount;
         if (validatorAccount === lockupContract) {
           validatorAccount =
             lockupStakedPoolId ??
@@ -356,7 +356,7 @@ const ProposalsComponent = () => {
             "";
         }
         let amount = action.deposit;
-        if (!isStakeRequest || args.receiver_id.includes("lockup.near")) {
+        if (!isStakeRequest || receiverAccount.includes("lockup.near")) {
           let value = decodeBase64(action.args);
           amount = value.amount;
         }
@@ -393,7 +393,7 @@ const ProposalsComponent = () => {
               <Widget
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.Type`}
                 props={{
-                  isStakeRequest,
+                  type: action.method_name,
                 }}
               />
             </td>

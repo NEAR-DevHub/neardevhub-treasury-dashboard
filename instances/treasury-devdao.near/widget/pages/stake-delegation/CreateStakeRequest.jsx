@@ -449,9 +449,10 @@ return (
         <div className="d-flex flex-column gap-1">
           <label>Treasury Wallet</label>
           <Widget
-            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDown`}
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.WalletDropdown`}
             props={{
-              options: walletOptions,
+              lockupNearBalances,
+              instance,
               selectedValue: selectedWallet,
               onUpdate: (v) => {
                 setSelectedWallet(v);

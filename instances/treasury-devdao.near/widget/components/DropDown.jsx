@@ -3,6 +3,7 @@ const onUpdate = props.onUpdate ?? (() => {});
 const selectedValue = props.selectedValue;
 const disabled = props.disabled;
 const [selected, setSelected] = useState(selectedValue);
+const DropdownItemRender = props.DropdownItemRender;
 
 const StyledDropdown = styled.div`
   .drop-btn {
@@ -60,18 +61,26 @@ return (
         {selected.label}
       </button>
       <ul className="dropdown-menu dropdown-menu-end dropdown-menu-lg-start px-2 shadow w-100">
-        {options.map((item) => (
-          <li
-            className="dropdown-item cursor-pointer link-underline link-underline-opacity-0 work-break"
-            onClick={() => {
-              if (selected.label !== item.label) {
-                setSelected(item);
-              }
-            }}
-          >
-            {item.label}
-          </li>
-        ))}
+        {options.map((item) =>
+          DropdownItemRender ? (
+            <DropdownItemRender
+              item={item}
+              setSelected={setSelected}
+              selected={selected}
+            />
+          ) : (
+            <li
+              className="dropdown-item cursor-pointer link-underline link-underline-opacity-0 work-break"
+              onClick={() => {
+                if (selected.label !== item.label) {
+                  setSelected(item);
+                }
+              }}
+            >
+              {item.label}
+            </li>
+          )
+        )}
       </ul>
       {selected?.description && (
         <div classNameName="text-muted text-sm mt-1">
