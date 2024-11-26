@@ -41,3 +41,5 @@ await sandbox.account.functionCall({
     },
     gas: 300000000000000
 });
+
+await sandbox.quitSandbox();

@@ -68,7 +68,7 @@ export class SandboxRPC {
       contractId: "lockup-whitelist.near",
       methodName: "new",
       args: {
-        foundation_account_id: "near",
+        foundation_account_id: "poolv1.near",
       },
       gas: 300000000000000,
     });
@@ -77,8 +77,8 @@ export class SandboxRPC {
       methodName: "new",
       args: {
         whitelist_account_id: "lockup-whitelist.near",
-        foundation_account_id: "near",
-        master_account_id: "near",
+        foundation_account_id: "poolv1.near",
+        master_account_id: "poolv1.near",
         lockup_master_account_id: "lockup.near",
       },
       gas: 300000000000000,
@@ -90,6 +90,34 @@ export class SandboxRPC {
       attachedDeposit: parseNearAmount("40"),
       gas: 300000000000000,
     });
+
+    await this.account.functionCall({
+      contractId: "poolv1.near",
+      methodName: "new",
+      args: {
+        staking_pool_whitelist_account_id: "lockup-whitelist.near",
+      },
+      gas: 300000000000000,
+    });
+
+    await this.account.functionCall({
+      contractId: "poolv1.near",
+      methodName: "create_staking_pool",
+      args: {
+        staking_pool_id: "astro-stakers",
+        owner_id: this.account_id,
+        stake_public_key: (
+          await this.account.getAccessKeys()
+        )[0].public_key.toString(),
+        reward_fee_fraction: {
+          numerator: 10,
+          denominator: 100,
+        },
+      },
+      gas: 300000000000000,
+      attachedDeposit: parseNearAmount("32"),
+    });
+
     function findLockupContractLog(json) {
       if (!json.receipts_outcome || !Array.isArray(json.receipts_outcome)) {
         return "No receipts_outcome found in the data.";
@@ -115,6 +143,7 @@ export class SandboxRPC {
 
       return "No lockup contract creation log found.";
     }
+
     return findLockupContractLog(createLockupResult);
   }
 
