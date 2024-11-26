@@ -59,7 +59,7 @@ proposalId = Number.parseInt(Buffer.from((await sandbox.account.functionCall({
                 "method_name": "deposit_and_stake",
                 "args": Buffer.from(JSON.stringify({"amount":parseNearAmount("1")})).toString('base64'),
                 "deposit": "0",
-                "gas": "100000000000000"
+                "gas": 200000000000000n.toString()
               }
             ]
           }
