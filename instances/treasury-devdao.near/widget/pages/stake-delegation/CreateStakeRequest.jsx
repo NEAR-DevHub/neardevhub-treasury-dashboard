@@ -465,23 +465,31 @@ return (
         <BalanceDisplay
           label={"Ready to stake"}
           balance={getBalances().available}
-          tooltipInfo={""}
+          tooltipInfo={
+            "This is your spendable NEAR balance, and can be staked."
+          }
         />
         <BalanceDisplay
           label={"Staked"}
           balance={getBalances().staked}
-          tooltipInfo={""}
+          tooltipInfo={
+            "NEAR tokens currently staked with validators. These tokens are accumulating rewards. To access these tokens, you must first unstake and then withdraw them."
+          }
         />
         <BalanceDisplay
           label={"Pending release"}
           balance={getBalances().unstaked}
-          tooltipInfo={""}
+          tooltipInfo={
+            "These tokens have been unstaked, but are not yet ready to withdraw. Tokens are ready to withdraw 52 to 65 hours after unstaking."
+          }
         />
         <BalanceDisplay
           noBorder={true}
           label={"Available for withdrawal"}
           balance={getBalances().withdrawl}
-          tooltipInfo={""}
+          tooltipInfo={
+            "These tokens have been unstaked, and are ready to be withdrawn."
+          }
         />
       </div>
       <div className="d-flex flex-column gap-1">

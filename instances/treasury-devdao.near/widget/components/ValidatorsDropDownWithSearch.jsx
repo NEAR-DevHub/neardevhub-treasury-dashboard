@@ -113,6 +113,10 @@ const Container = styled.div`
     border-radius: 5px;
     opacity: inherit !important;
   }
+
+  .text-green {
+    color: #34c759;
+  }
 `;
 
 let searchFocused = false;
