@@ -55,6 +55,7 @@ const BalanceDisplay = ({
   isExpanded,
   setIsExpanded,
   expandedContent,
+  hideTooltip,
 }) => {
   return (
     <div className="d-flex flex-column">
@@ -63,12 +64,14 @@ const BalanceDisplay = ({
           <div className="h6 mb-0">
             {label}
             {"  "}{" "}
-            <OverlayTrigger
-              placement="top"
-              overlay={<Tooltip id="tooltip">{tooltipInfo}</Tooltip>}
-            >
-              <i className="bi bi-info-circle text-grey"></i>
-            </OverlayTrigger>
+            {!hideTooltip && (
+              <OverlayTrigger
+                placement="top"
+                overlay={<Tooltip id="tooltip">{tooltipInfo}</Tooltip>}
+              >
+                <i className="bi bi-info-circle text-grey"></i>
+              </OverlayTrigger>
+            )}
           </div>
           <div className="d-flex gap-3 align-items-center justify-content-end">
             <div className="d-flex flex-column align-items-end">
@@ -172,15 +175,17 @@ const NearPortfolio = () => {
             icon={nearTokenIcon}
             label={"Available Balance"}
             balance={nearBalances.availableParsed}
-            tooltipInfo={"dsfds"}
+            tooltipInfo={
+              "This is your spendable NEAR balance, and can be used or transferred immediately."
+            }
             price={nearPrice}
           />
 
           <BalanceDisplay
             icon={nearTokenIcon}
-            label={"Staked"}
+            label={"Staking"}
             balance={nearStakedTotalTokens}
-            tooltipInfo={"dsfds"}
+            hideTooltip={true}
             price={nearPrice}
             showExpand={true}
             isExpanded={isNearStakedPortfolioExpanded}
@@ -194,21 +199,27 @@ const NearPortfolio = () => {
                   icon={nearTokenIcon}
                   label={"Staked"}
                   balance={nearStakedTokens}
-                  tooltipInfo={"dsfds"}
+                  tooltipInfo={
+                    "NEAR tokens currently staked with validators. These tokens are accumulating rewards. To access these tokens, you must first unstake and then withdraw them."
+                  }
                   price={nearPrice}
                 />
                 <BalanceDisplay
                   icon={nearTokenIcon}
                   label={"Pending Release"}
                   balance={nearUnStakedTokens}
-                  tooltipInfo={"dsfds"}
+                  tooltipInfo={
+                    "These tokens have been unstaked, but are not yet ready to withdraw. Tokens are ready to withdraw 52 to 65 hours after unstaking."
+                  }
                   price={nearPrice}
                 />
                 <BalanceDisplay
                   icon={nearTokenIcon}
                   label={"Available for withdrawal"}
                   balance={nearWithdrawTokens}
-                  tooltipInfo={"dsfds"}
+                  tooltipInfo={
+                    "These tokens have been unstaked, and are ready to be withdrawn."
+                  }
                   price={nearPrice}
                 />
               </div>
@@ -219,7 +230,9 @@ const NearPortfolio = () => {
               icon={nearTokenIcon}
               label={"Locked"}
               balance={nearBalances.lockedParsed}
-              tooltipInfo={"dsfds"}
+              tooltipInfo={
+                "This is your locked NEAR balance. Until it vests, staking is the only way to use it."
+              }
               price={nearPrice}
             />
           ) : (
@@ -227,7 +240,9 @@ const NearPortfolio = () => {
               icon={nearTokenIcon}
               label={"Reserved for storage"}
               balance={nearBalances.lockedParsed}
-              tooltipInfo={"dsfds"}
+              tooltipInfo={
+                "This is the minimum NEAR balance your account must maintain to remain active. This balance represents the storage space your account is using on the NEAR blockchain (with a small buffer), and will go up or down as you use more or less space."
+              }
               price={nearPrice}
             />
           )}

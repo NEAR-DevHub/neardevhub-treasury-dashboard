@@ -3,7 +3,5 @@
   "REPL_INSTANCE": "treasury-testing.near",
   "REPL_TREASURY": "testing-astradao.sputnik-dao.near",
   "REPL_PROPOSAL_FEED_INDEXER_QUERY_NAME": "polyprogrammist_near_devhub_prod_v1_proposals_with_latest_snapshot",
-  "REPL_X_HASURA_ROLE": "polyprogrammist_near",
-  "REPL_STAKE_ICON": "https://ipfs.near.social/ipfs/bafkreicjylnnugawkpvhtwjqegc2y6rhdmaqrzdo3cixr2epj5wlxz6ts4",
-  "REPL_UNSTAKE_ICON": "https://ipfs.near.social/ipfs/bafkreiepl6mvtyvd4hxiy3s4jpij4ep6e5fea324bvbujitmjup63iexea"
+  "REPL_X_HASURA_ROLE": "polyprogrammist_near"
 }

@@ -12,6 +12,7 @@
   "REPL_X_HASURA_ROLE": "polyprogrammist_near",
   "REPL_NEAR_TOKEN_ICON": "https://ipfs.near.social/ipfs/bafkreifnyxk6cssapw7j5vc6zuzwl7vt6o5ddspoo5lcmbvtdrcmfozqyu",
   "REPL_PIKESPEAK_KEY": "36f2b87a-7ee6-40d8-80b9-5e68e587a5b5",
-  "REPL_STAKE_ICON": "https://ipfs.near.social/ipfs/bafkreicjylnnugawkpvhtwjqegc2y6rhdmaqrzdo3cixr2epj5wlxz6ts4",
-  "REPL_UNSTAKE_ICON": "https://ipfs.near.social/ipfs/bafkreiepl6mvtyvd4hxiy3s4jpij4ep6e5fea324bvbujitmjup63iexea"
+  "REPL_STAKE_ICON": "https://ipfs.near.social/ipfs/bafkreic7bmyuz7wixpmuxi4z37r3vwaix3ad2jlcl4dhes2djj22zmbez4",
+  "REPL_UNSTAKE_ICON": "https://ipfs.near.social/ipfs/bafkreihrvzrhxeggkcozrmwt7kfiqw4hy56clamfxuq7agownukcn6lfxe",
+  "REPL_WITHDRAW_ICON": "https://ipfs.near.social/ipfs/bafkreiedu2yjz7abf7b75qsq3e3yqzelyimvowkwc3hy3s4cziohjrxt2m"
 }

@@ -1,162 +1,144 @@
-const { getLinkUsingCurrentGateway } = VM.require(
-  "${REPL_DEVHUB}/widget/core.lib.url"
-) || { getLinkUsingCurrentGateway: () => {} };
-
 const { getNearBalances } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
 
-const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
-  href: () => {},
-};
-
+const instance = props.instance;
 const onCloseCanvas = props.onCloseCanvas ?? (() => {});
 
-const instance = props.instance;
 if (!instance) {
   return <></>;
 }
 
-const { treasuryDaoID, proposalIndexerQueryName, proposalIndexerHasuraRole } =
-  VM.require(`${instance}/widget/config.data`);
+const { treasuryDaoID, lockupContract } = VM.require(
+  `${instance}/widget/config.data`
+);
 
-const archiveNodeUrl = "https://rpc.mainnet.near.org/";
-
-const [nearStakedTokens, setNearStakedTokens] = useState(null);
-const [nearStakedTotalTokens, setNearStakedTotalTokens] = useState(null);
-const [poolWithBalance, setPoolWithBalance] = useState(null);
-const [amount, setAmount] = useState(null);
-const [validatorAccount, setValidatorAccount] = useState(null);
+const walletOptions = [
+  {
+    label: treasuryDaoID,
+    value: treasuryDaoID,
+  },
+  {
+    label: lockupContract,
+    value: lockupContract,
+  },
+];
+const [selectedWallet, setSelectedWallet] = useState(walletOptions[0]);
+const [validators, setValidators] = useState([]);
 const [isTxnCreated, setTxnCreated] = useState(false);
 const [lastProposalId, setLastProposalId] = useState(null);
 const [notes, setNotes] = useState(null);
 const [showCancelModal, setShowCancelModal] = useState(false);
+
+const [amount, setAmount] = useState(null);
+const [validatorAccount, setValidatorAccount] = useState(null);
 const [daoPolicy, setDaoPolicy] = useState(null);
 const [amountError, setAmountError] = useState(null);
-const [validatorError, setValidatorError] = useState(null);
-const [stakedPools, setStakedPools] = useState(null);
 
-const Container = styled.div`
-  font-size: 14px;
-  .text-grey {
-    color: #b9b9b9 !important;
-  }
-
-  .text-grey a {
-    color: inherit !important;
-  }
-  label {
-    font-weight: 600;
-    margin-bottom: 3px;
-    font-size: 15px;
-  }
-  .p-2 {
-    padding: 0px !important;
-  }
-  .rounded-pill {
-    border-radius: 5px !important;
-  }
-  .green-btn {
-    background-color: #04a46e !important;
-    color: white;
-  }
-
-  .primary-text-color a {
-    color: var(--theme-color) !important;
-  }
-
-  .balance-bg {
-    background-color: #ecf8fb !important;
-  }
-
-  .text-green {
-    color: #04a46e;
-  }
-
-  .validators-list {
-    border: 1px solid #dee2e6;
-    overflow-y: auto;
-    height: 300px;
-    padding: 10px;
-    font-size: 13px;
-  }
-
-  .white-btn {
-    background-color: white;
-    border: 0.5px solid #e3e3e0;
-    padding-inline: 0.7rem;
-    padding-block: 0.3rem;
-    font-weight: 500;
-  }
-
-  .selected-btn {
-    background: var(--theme-color);
-    padding-inline: 0.7rem;
-    padding-block: 0.3rem;
-    font-weight: 500;
-    color: white;
-    border: none !important;
-  }
-
-  .border-left {
-    border-left: 1px solid #dee2e6;
-  }
-
-  .use-max-bg {
-    background-color: #ecf8fb;
-    color: #1d62a8;
-    cursor: pointer;
-  }
-
-  .text-red {
-    color: #de4437;
-  }
-
-  .no-validator {
-    font-weight: 500;
-    font-size: 12px;
-    padding: 10px;
-    background-color: rgba(0, 16, 61, 0.06);
-    color: #1b1b18;
-  }
-
-  .theme-btn {
-    background: var(--theme-color) !important;
-    color: white;
-  }
-`;
-
+const [nearStakedTokens, setNearStakedTokens] = useState(null);
+const [nearUnStakedTokens, setNearUnStakedTokens] = useState(null);
+const [nearStakedTotalTokens, setNearStakedTotalTokens] = useState(null);
+const [nearWithdrawTokens, setNearWithdrawTokens] = useState(null);
+const [nearStakedPoolsWithBalance, setNearStakedPoolsWithBalance] =
+  useState(null);
 const nearBalances = getNearBalances(treasuryDaoID);
 
+const [lockupNearBalances, setLockupNearBalances] = useState(null);
+const [lockupStakedTokens, setLockupStakedTokens] = useState(null);
+const [lockupUnStakedTokens, setLockupUnStakedTokens] = useState(null);
+const [lockupStakedTotalTokens, setLockupStakedTotalTokens] = useState(null);
+const [lockupNearWithdrawTokens, setLockupNearWithdrawTokens] = useState(null);
+const [lockupStakedPoolsWithBalance, setLockupStakedPoolsWithBalance] =
+  useState(null);
+
+const [showWarning, setShowWarning] = useState(false);
+
+function formatNearAmount(amount) {
+  return Big(amount ?? "0")
+    .div(Big(10).pow(24))
+    .toFixed(4);
+}
+
+function refreshData() {
+  Storage.set("REFRESH_STAKE_TABLE_DATA", Math.random());
+}
+
+useEffect(() => {
+  if (lockupContract) {
+    Near.asyncView(lockupContract, "get_locked_amount").then((res) =>
+      setLockupNearBalances((prev) => ({
+        ...prev,
+        locked: res,
+        lockedParsed: formatNearAmount(res),
+      }))
+    );
+
+    Near.asyncView(lockupContract, "get_balance").then((res) =>
+      setLockupNearBalances((prev) => ({
+        ...prev,
+        total: res,
+        totalParsed: formatNearAmount(res),
+      }))
+    );
+  }
+}, [lockupContract]);
+
+useEffect(() => {
+  if (lockupNearBalances.total && lockupNearBalances.locked) {
+    const available = Big(lockupNearBalances.total)
+      .minus(lockupNearBalances.locked)
+      .toFixed();
+    setLockupNearBalances((prev) => ({
+      ...prev,
+      available: available,
+      availableParsed: formatNearAmount(available),
+    }));
+  }
+}, [lockupNearBalances]);
+
 function getFeeOfStakedPools() {
-  const promises = poolWithBalance.map((item) => {
+  const isLockupContract =
+    lockupContract && selectedWallet.value === lockupContract;
+  const promises = (
+    isLockupContract ? lockupStakedPoolsWithBalance : nearStakedPoolsWithBalance
+  ).map((item) => {
     return Near.asyncView(item.pool, "get_reward_fee_fraction").then((i) => {
       return {
         pool_id: item.pool,
         fee: i.numerator / i.denominator,
-        balance: new Big(item.stakedBalance).div(1e24).toFixed(4),
+        stakedBalance: {
+          [isLockupContract ? lockupContract : treasuryDaoID]: item,
+        },
       };
     });
   });
   Promise.all(promises).then((res) => {
-    setStakedPools(res);
+    setValidators(res);
   });
 }
 
-const nearPrice = useCache(
-  () =>
-    asyncFetch(`https://api3.nearblocks.io/v1/charts/latest`).then((res) => {
-      return res.body.charts?.[0].near_price;
-    }),
-  "near-price",
-  { subscribe: false }
-);
+useEffect(() => {
+  if (
+    Array.isArray(nearStakedPoolsWithBalance) &&
+    ((lockupContract && Array.isArray(lockupStakedPoolsWithBalance)) ||
+      !lockupContract)
+  ) {
+    getFeeOfStakedPools();
+    if (
+      (selectedWallet.value === treasuryDaoID && nearStakedTokens <= 0) ||
+      nearStakedTokens === "0.0000"
+    ) {
+      setShowWarning(true);
+    }
 
-function getNearValue(amount) {
-  return Big(amount ?? "0")
-    .mul(nearPrice ?? 1)
-    .toFixed(4);
-}
+    if (
+      (selectedWallet.value === lockupContract && lockupStakedTokens <= 0) ||
+      lockupStakedTokens === "0.0000"
+    ) {
+      setShowWarning(true);
+    }
+  }
+}, [nearStakedPoolsWithBalance, lockupStakedPoolsWithBalance, lockupContract]);
 
 function getLastProposalId() {
   return Near.asyncView(treasuryDaoID, "get_last_proposal_id").then(
@@ -171,8 +153,10 @@ useEffect(() => {
   });
 }, []);
 
-function refreshData() {
-  Storage.set("REFRESH_STAKE_TABLE_DATA", Math.random());
+function cleanInputs() {
+  setValidatorAccount("");
+  setNotes("");
+  setAmount("");
 }
 
 useEffect(() => {
@@ -180,6 +164,7 @@ useEffect(() => {
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
         if (lastProposalId !== id) {
+          cleanInputs();
           onCloseCanvas();
           refreshData();
           setTxnCreated(false);
@@ -192,11 +177,53 @@ useEffect(() => {
   }
 }, [isTxnCreated]);
 
-useEffect(() => {
-  if (Array.isArray(poolWithBalance) && poolWithBalance.length) {
-    getFeeOfStakedPools();
+const BalanceDisplay = ({ label, balance, tooltipInfo, noBorder }) => {
+  return (
+    <div className="d-flex flex-column">
+      <div className={!noBorder && "border-bottom"}>
+        <div className="py-2 d-flex gap-2 align-items-center justify-content-between px-3">
+          <div className="h6 mb-0">
+            {label}
+            {"  "}{" "}
+            <OverlayTrigger
+              placement="top"
+              overlay={<Tooltip id="tooltip">{tooltipInfo}</Tooltip>}
+            >
+              <i className="bi bi-info-circle text-dark-grey"></i>
+            </OverlayTrigger>
+          </div>
+          <div className="h6 mb-0 d-flex align-items-center gap-1">
+            {balance} NEAR
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+function getBalances() {
+  switch (selectedWallet?.value) {
+    case lockupContract: {
+      return {
+        staked: lockupStakedTokens,
+        unstaked: lockupUnStakedTokens,
+        withdrawl: lockupNearWithdrawTokens,
+        available: lockupNearBalances.totalParsed - lockupStakedTotalTokens,
+      };
+    }
+    default:
+      return {
+        staked: nearStakedTokens,
+        unstaked: nearUnStakedTokens,
+        withdrawl: nearWithdrawTokens,
+        available: nearBalances.availableParsed,
+      };
   }
-}, [poolWithBalance]);
+}
+
+function toBase64(json) {
+  return Buffer.from(JSON.stringify(json)).toString("base64");
+}
 
 function onSubmitClick() {
   setTxnCreated(true);
@@ -205,6 +232,9 @@ function onSubmitClick() {
     isStakeRequest: true,
     notes: notes,
   };
+
+  const isLockupContractSelected = lockupContract === selectedWallet.value;
+
   Near.call({
     contractName: treasuryDaoID,
     methodName: "add_proposal",
@@ -213,15 +243,15 @@ function onSubmitClick() {
         description: JSON.stringify(description),
         kind: {
           FunctionCall: {
-            receiver_id: validatorAccount,
+            receiver_id: isLockupContractSelected
+              ? lockupContract
+              : validatorAccount.pool_id,
             actions: [
               {
                 method_name: "unstake",
-                args: Buffer.from(
-                  JSON.stringify({
-                    amount: Big(amount).mul(Big(10).pow(24)).toFixed(),
-                  })
-                ).toString("base64"),
+                args: toBase64({
+                  amount: Big(amount).mul(Big(10).pow(24)).toFixed(),
+                }),
                 deposit: "0",
                 gas: "200000000000000",
               },
@@ -234,46 +264,72 @@ function onSubmitClick() {
   });
 }
 
-function cleanInputs() {
-  setValidatorAccount("");
-  setNotes("");
-  setAmount("");
-}
+const Container = styled.div`
+  font-size: 14px;
 
-const loading = (
-  <div className="w-100 h-100 d-flex align-items-center justify-content-center">
-    <Widget src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"} />
-  </div>
-);
-
-function checkValidatorAccount() {
-  if (
-    !validatorAccount ||
-    validatorAccount.endsWith("poolv1.near") ||
-    validatorAccount.endsWith("pool.near")
-  ) {
-    return setValidatorError(null);
+  .text-grey {
+    color: #b9b9b9 !important;
   }
 
-  setValidatorError("Please enter a valid validator pool account.");
-}
+  .text-grey a {
+    color: inherit !important;
+  }
 
-useEffect(() => {
-  checkValidatorAccount();
-}, [validatorAccount]);
+  label {
+    font-weight: 600;
+    margin-bottom: 3px;
+    font-size: 15px;
+  }
 
-const nearAvailableBalance = Big(
-  nearBalances.availableParsed - (nearStakedTotalTokens ?? 0) ?? "0"
-).toFixed(4);
+  .p-2 {
+    padding: 0px !important;
+  }
+
+  .theme-btn {
+    background: var(--theme-color) !important;
+    color: white;
+  }
+
+  .primary-text-color a {
+    color: var(--theme-color) !important;
+  }
+
+  .btn:hover {
+    color: black !important;
+  }
+
+  .text-sm {
+    font-size: 13px;
+  }
+
+  .use-max-bg {
+    background-color: #ecf8fb;
+    color: #1d62a8;
+    cursor: pointer;
+  }
+
+  .text-dark-grey {
+    color: rgba(85, 85, 85, 1) !important;
+  }
+
+  .bg-validator-info {
+    background: rgba(0, 16, 61, 0.06);
+    color: #1b1b18;
+    padding-inline: 0.8rem;
+    padding-block: 0.5rem;
+    font-weight: 500;
+    font-size: 13px;
+  }
+`;
 
 useEffect(() => {
   const parsedAmount = parseFloat(amount);
-  if (parsedAmount > parseFloat(nearStakedTokens)) {
+  if (parsedAmount > parseFloat(getBalances().staked)) {
     setAmountError("The amount exceeds the balance you have staked.");
   } else {
     setAmountError(null);
   }
-}, [amount]);
+}, [amount, selectedWallet]);
 
 return (
   <Container>
@@ -299,222 +355,185 @@ return (
       props={{
         accountId: treasuryDaoID,
         setNearStakedTokens: (v) => setNearStakedTokens(Big(v).toFixed(4)),
-        setPoolWithBalance: setPoolWithBalance,
+        setNearUnstakedTokens: (v) => setNearUnStakedTokens(Big(v).toFixed(4)),
         setNearStakedTotalTokens: (v) =>
           setNearStakedTotalTokens(Big(v).toFixed(4)),
+        setNearWithdrawTokens: (v) => setNearWithdrawTokens(Big(v).toFixed(4)),
+        setPoolWithBalance: setNearStakedPoolsWithBalance,
       }}
     />
-    {!Array.isArray(poolWithBalance) || !nearStakedTokens ? (
-      loading
-    ) : (
-      <div>
+
+    {lockupContract && (
+      <Widget
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
+        props={{
+          accountId: lockupContract,
+          setNearStakedTokens: (v) => setLockupStakedTokens(Big(v).toFixed(4)),
+          setNearUnstakedTokens: (v) =>
+            setLockupUnStakedTokens(Big(v).toFixed(4)),
+          setNearStakedTotalTokens: (v) =>
+            setLockupStakedTotalTokens(Big(v).toFixed(4)),
+          setNearWithdrawTokens: (v) =>
+            setLockupNearWithdrawTokens(Big(v).toFixed(4)),
+          setPoolWithBalance: setLockupStakedPoolsWithBalance,
+        }}
+      />
+    )}
+    <div className="d-flex flex-column gap-3">
+      {lockupContract && (
+        <div className="d-flex flex-column gap-1">
+          <label>Treasury Wallet</label>
+          <Widget
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDown`}
+            props={{
+              options: walletOptions,
+              selectedValue: selectedWallet,
+              onUpdate: (v) => {
+                setSelectedWallet(v);
+              },
+            }}
+          />
+        </div>
+      )}
+      <div className="d-flex flex-column gap-1 border border-1 rounded-3 p-2">
+        <BalanceDisplay
+          label={"Ready to stake"}
+          balance={getBalances().available}
+          tooltipInfo={""}
+        />
+        <BalanceDisplay
+          label={"Staked"}
+          balance={getBalances().staked}
+          tooltipInfo={""}
+        />
+        <BalanceDisplay
+          label={"Pending release"}
+          balance={getBalances().unstaked}
+          tooltipInfo={""}
+        />
+        <BalanceDisplay
+          noBorder={true}
+          label={"Available for withdrawal"}
+          balance={getBalances().withdrawl}
+          tooltipInfo={""}
+        />
+      </div>
+      {showWarning ? (
+        <div className="d-flex gap-2 align-items-center rounded-2 bg-validator-info">
+          <i class="bi bi-info-circle"></i>
+          You do not have any validators to unstake from. You must first stake
+          tokens with a validator.
+        </div>
+      ) : (
         <div className="d-flex flex-column gap-3">
-          <div className="border-line p-3 rounded-3 d-flex flex-column gap-3">
-            <div className="d-flex gap-1 border border-1 rounded-3 px-2">
-              <div className="flex-1">
+          <div className="d-flex flex-column gap-1">
+            <label>Validator</label>
+            <Widget
+              src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.ValidatorsDropDownWithSearch"
+              props={{
+                selectedValue: validatorAccount,
+                onChange: (v) => setValidatorAccount(v),
+                options: validators,
+                showSearch: true,
+                searchInputPlaceholder: "Search",
+                defaultLabel: "Select",
+                selectedWallet: selectedWallet?.value,
+              }}
+            />
+          </div>
+          <div className="d-flex flex-column gap-1">
+            <label className="d-flex align-items-center justify-content-between">
+              Amount to Unstake
+              {validatorAccount && (
                 <div
-                  className={
-                    "d-flex gap-2 align-items-center py-3 justify-content-center"
-                  }
+                  className="use-max-bg px-3 py-1 rounded-2"
+                  onClick={() => {
+                    setAmount(
+                      formatNearAmount(
+                        validatorAccount?.stakedBalance[selectedWallet.value]
+                          ?.stakedBalance ?? 0
+                      )
+                    );
+                  }}
                 >
-                  <i class="bi bi-safe h5 mb-0"></i>
-                  <div>
-                    <div className="text-green fw-bold">Available Balance</div>
-                    <h6 className="mb-0">{nearAvailableBalance}</h6>
-                  </div>
+                  Use Max
                 </div>
-              </div>
-
-              <div className="border-left d-flex gap-2 align-items-center flex-1 py-3 justify-content-center">
-                <i class="bi bi-lock h5 mb-0"></i>
+              )}
+            </label>
+            <Widget
+              src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Input`}
+              props={{
+                className: "flex-grow-1",
+                key: `total-amount`,
+                onBlur: (e) => setAmount(e.target.value),
+                placeholder: "Enter amount",
+                value: amount,
+                error: amountError,
+                inputProps: {
+                  type: "number",
+                  min: "0",
+                  prefix: (
+                    <img
+                      src="${REPL_NEAR_TOKEN_ICON}"
+                      style={{ height: 20, width: 20 }}
+                    />
+                  ),
+                },
+              }}
+            />
+            {validatorAccount && (
+              <div className="d-flex align-items-center text-sm gap-1 text-muted">
+                <div>Available to unstake:</div>
                 <div>
-                  <div className="text-muted fw-bold">Staked</div>
-                  <h6>{nearStakedTokens} NEAR</h6>
-                </div>
-              </div>
-            </div>
-            {!poolWithBalance?.length ? (
-              <div className="no-validator d-flex gap-2 align-items-center rounded-2">
-                <img
-                  src="https://ipfs.near.social/ipfs/bafkreig4jinzfotpj6yc5bo7ktqccnu6rc7g3i5wsekinqtxtyingvxf5e"
-                  height={20}
-                />
-                You do not have any validators to unstake from. You must first
-                stake tokens with a validator.
-              </div>
-            ) : (
-              <div className="d-flex flex-column gap-3">
-                <div className="d-flex flex-column gap-1">
-                  <label>Choose Validator Account ID to Unstake From</label>
-                  <Widget
-                    src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Input`}
-                    props={{
-                      className: "flex-grow-1",
-                      key: `validator`,
-                      onBlur: (e) => setValidatorAccount(e.target.value),
-                      placeholder: "validator-name.near",
-                      value: validatorAccount,
-                      error: validatorError,
-                    }}
-                  />
-
-                  <div className="validators-list mt-2 rounded-3">
-                    <div className="d-flex flex-column gap-2">
-                      {Array.isArray(stakedPools) && stakedPools.length
-                        ? (stakedPools ?? []).map((validator) => {
-                            const { pool_id, fee, balance } = validator;
-                            const isSelected = validatorAccount === pool_id;
-                            return (
-                              <div className="d-flex gap-2 align-items-center justify-content-between border-bottom py-2">
-                                <div className="d-flex gap-2 align-items-center gap-2 flex-1">
-                                  <div
-                                    className="text-truncate"
-                                    style={{ width: "50%" }}
-                                  >
-                                    <div className="text-sm">
-                                      <span className="text-muted">
-                                        {fee}% Fee{" "}
-                                      </span>
-                                      <span className="text-green">Active</span>
-                                    </div>
-                                    <div className="fw-bold"> {pool_id} </div>
-                                  </div>
-                                  <div
-                                    style={{
-                                      width: "1.5px",
-                                      backgroundColor: "#687076",
-                                      height: 50,
-                                      marginRight: 10,
-                                    }}
-                                  ></div>
-                                  <div>
-                                    <div className="text-green"> Staked</div>
-                                    <div className="fw-bold">{balance}NEAR</div>
-                                    <div className="text-muted">
-                                      ${getNearValue(balance)}
-                                    </div>
-                                  </div>
-                                </div>
-                                <div>
-                                  <button
-                                    className={
-                                      "rounded-2 border border-1 " +
-                                      (isSelected
-                                        ? "selected-btn "
-                                        : "white-btn")
-                                    }
-                                    onClick={() => setValidatorAccount(pool_id)}
-                                    disabled={isSelected}
-                                  >
-                                    {isSelected ? (
-                                      <div className="d-flex gap-2 align-items-center">
-                                        <i class="bi bi-check2 h6 mb-0"></i>
-                                        Selected
-                                      </div>
-                                    ) : (
-                                      "Select"
-                                    )}
-                                  </button>
-                                </div>
-                              </div>
-                            );
-                          })
-                        : loading}
-                    </div>
-                  </div>
-                </div>
-                <div className="d-flex flex-column gap-1">
-                  <label className="d-flex align-items-center justify-content-between">
-                    Amount to Unstake
-                    {validatorAccount && (
-                      <div
-                        className="use-max-bg px-3 py-1 rounded-2"
-                        onClick={() => {
-                          const pool = stakedPools.find(
-                            (i) => i.pool_id === validatorAccount
-                          );
-                          setAmount(pool?.balance);
-                        }}
-                      >
-                        Use Max
-                      </div>
-                    )}
-                  </label>
-                  <Widget
-                    src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Input`}
-                    props={{
-                      className: "flex-grow-1",
-                      key: `total-amount`,
-                      onBlur: (e) => setAmount(e.target.value),
-                      placeholder: "Enter amount",
-                      value: amount,
-                      error: amountError,
-                      inputProps: {
-                        min: "0",
-                        type: "number",
-                        prefix: (
-                          <img
-                            src="${REPL_NEAR_TOKEN_ICON}"
-                            style={{ height: 20, width: 20 }}
-                          />
-                        ),
-                      },
-                    }}
-                  />
-                  <div className="d-flex align-items-center text-sm gap-1">
-                    <div>Available to unstake:</div>
-                    <div>{nearStakedTokens} NEAR</div>
-                  </div>
-                </div>
-
-                <div className="d-flex flex-column gap-1">
-                  <label>Notes (Optional)</label>
-                  <Widget
-                    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
-                    props={{
-                      className: "flex-grow-1",
-                      key: `notes`,
-                      onBlur: (e) => setNotes(e.target.value),
-                      value: notes,
-                      multiline: true,
-                    }}
-                  />
-                </div>
-                <div className="d-flex mt-2 gap-3 justify-content-end">
-                  <Widget
-                    src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
-                    props={{
-                      classNames: {
-                        root: "btn-outline shadow-none border-0",
-                      },
-                      label: "Cancel",
-                      onClick: () => {
-                        setShowCancelModal(true);
-                      },
-                      disabled: isTxnCreated,
-                    }}
-                  />
-
-                  <Widget
-                    src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
-                    props={{
-                      classNames: { root: "theme-btn" },
-                      disabled:
-                        !validatorAccount ||
-                        !amount ||
-                        amountError ||
-                        validatorError,
-                      label: "Submit",
-                      onClick: onSubmitClick,
-                      loading: isTxnCreated,
-                    }}
-                  />
+                  {formatNearAmount(
+                    validatorAccount?.stakedBalance[selectedWallet.value]
+                      ?.stakedBalance ?? 0
+                  )}{" "}
+                  NEAR
                 </div>
               </div>
             )}
           </div>
+          <div className="d-flex flex-column gap-1">
+            <label>Notes (Optional)</label>
+            <Widget
+              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
+              props={{
+                className: "flex-grow-1",
+                key: `notes`,
+                onBlur: (e) => setNotes(e.target.value),
+                value: notes,
+                multiline: true,
+              }}
+            />
+          </div>
+          <div className="d-flex mt-2 gap-3 justify-content-end">
+            <Widget
+              src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
+              props={{
+                classNames: {
+                  root: "btn-outline shadow-none border-0",
+                },
+                label: "Cancel",
+                onClick: () => {
+                  setShowCancelModal(true);
+                },
+                disabled: isTxnCreated,
+              }}
+            />
+            <Widget
+              src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
+              props={{
+                classNames: { root: "theme-btn" },
+                disabled: !validatorAccount || !amount || amountError,
+                label: "Submit",
+                onClick: onSubmitClick,
+                loading: isTxnCreated,
+              }}
+            />
+          </div>
         </div>
-      </div>
-    )}
+      )}
+    </div>
   </Container>
 );

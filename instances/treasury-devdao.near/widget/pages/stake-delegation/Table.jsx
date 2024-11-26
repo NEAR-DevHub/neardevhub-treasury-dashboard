@@ -344,9 +344,10 @@ const ProposalsComponent = () => {
             : args?.actions[0];
         const isStakeRequest = action.method_name === "deposit_and_stake";
         const notes = description.notes;
-        let receiverId = args.receiver_id;
-        if (receiverId === lockupContract) {
-          receiverId =
+        const receiverAccount = args.receiver_id;
+        let validatorAccount = args.receiver_id;
+        if (validatorAccount === lockupContract) {
+          validatorAccount =
             lockupStakedPoolId ??
             decodeBase64(
               args?.actions.find((i) => i.method_name === "select_staking_pool")
@@ -406,11 +407,15 @@ const ProposalsComponent = () => {
                 }}
               />
             </td>
+            {lockupContract && (
+              <td className={"text-left"}>{receiverAccount}</td>
+            )}
+
             <td className={isVisible("Validator")}>
               <Widget
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.Validator`}
                 props={{
-                  validatorId: receiverId,
+                  validatorId: validatorAccount,
                 }}
               />
             </td>
@@ -547,9 +552,12 @@ return (
               <tr className="text-grey">
                 <td>#</td>
                 <td className={isVisible("Created Date")}>Created Date</td>
-                {!isPendingRequests && <td>Status</td>}
+                {!isPendingRequests && <td className="text-center"> Status</td>}
                 <td className={isVisible("Type") + " text-center"}>Type</td>
                 <td className={isVisible("Amount") + " text-right"}>Amount</td>
+                {lockupContract && (
+                  <td className={"text-left"}>Treasury Wallet</td>
+                )}
                 <td className={isVisible("Validator")}>Validator</td>
                 <td className={"text-center " + isVisible("Creator")}>
                   Created by

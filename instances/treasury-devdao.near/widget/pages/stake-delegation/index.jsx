@@ -14,9 +14,11 @@ const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 
 const [showStakeRequest, setShowStakeRequest] = useState(false);
 const [showUnStakeRequest, setShowUnStakeRequest] = useState(false);
+const [showWithdrawRequest, setShowWithdrawRequest] = useState(false);
 const createBtnOption = {
   STAKE: "CreateStakeRequest",
   UNSTAKE: "CreateUnstakeRequest",
+  WITHDRAW: "CreateWithdrawRequest",
 };
 const [isCreateBtnOpen, setCreateBtnOpen] = useState(false);
 const [selectedCreatePage, setSelectedCreatePage] = useState(
@@ -47,6 +49,15 @@ const CreateBtn = () => {
       value: createBtnOption.UNSTAKE,
       onClick: () => {
         setShowUnStakeRequest(true);
+        setCreateBtnOpen(false);
+      },
+    },
+    {
+      label: "Withdraw",
+      icon: "${REPL_WITHDRAW_ICON}",
+      value: createBtnOption.WITHDRAW,
+      onClick: () => {
+        setShowWithdrawRequest(true);
         setCreateBtnOpen(false);
       },
     },
@@ -213,6 +224,10 @@ function toggleUnStakePage() {
   setShowUnStakeRequest(!showUnStakeRequest);
 }
 
+function toggleWithdrawPage() {
+  setShowWithdrawRequest(!showWithdrawRequest);
+}
+
 const Container = styled.div`
   .flex-1 {
     flex: 1;
@@ -229,7 +244,7 @@ return (
         title: "Create Stake Request",
         children: (
           <Widget
-            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.CreateLockupStakeRequest`}
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.CreateStakeRequest`}
             props={{
               instance,
               onCloseCanvas: toggleStakePage,
@@ -250,6 +265,23 @@ return (
             props={{
               instance,
               onCloseCanvas: toggleUnStakePage,
+            }}
+          />
+        ),
+      }}
+    />
+    <Widget
+      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OffCanvas`}
+      props={{
+        showCanvas: showWithdrawRequest,
+        onClose: toggleWithdrawPage,
+        title: "Create Withdraw Request",
+        children: (
+          <Widget
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.CreateWithdrawRequest`}
+            props={{
+              instance,
+              onCloseCanvas: toggleWithdrawPage,
             }}
           />
         ),
