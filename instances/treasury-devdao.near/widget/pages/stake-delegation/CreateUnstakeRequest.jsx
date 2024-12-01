@@ -101,17 +101,18 @@ function getFeeOfStakedPools() {
     lockupContract && selectedWallet.value === lockupContract;
   const promises = (
     isLockupContract ? lockupStakedPoolsWithBalance : nearStakedPoolsWithBalance
-  ).map((item) => {
-    return Near.asyncView(item.pool, "get_reward_fee_fraction").then((i) => {
-      return {
+  )
+    .filter((item) => item.stakedBalance > 0) // Filter items with staked balance
+    .map((item) => {
+      return Near.asyncView(item.pool, "get_reward_fee_fraction").then((i) => ({
         pool_id: item.pool,
         fee: i.numerator / i.denominator,
         stakedBalance: {
           [isLockupContract ? lockupContract : treasuryDaoID]: item,
         },
-      };
+      }));
     });
-  });
+
   Promise.all(promises).then((res) => {
     setValidators(res);
   });
@@ -320,6 +321,15 @@ const Container = styled.div`
     font-weight: 500;
     font-size: 13px;
   }
+
+  .bg-validator-warning {
+    background: rgba(255, 158, 0, 0.1);
+    color: rgba(177, 113, 8, 1);
+    padding-inline: 0.8rem;
+    padding-block: 0.5rem;
+    font-weight: 500;
+    font-size: 13px;
+  }
 `;
 
 useEffect(() => {
@@ -428,8 +438,8 @@ return (
         />
       </div>
       {showWarning ? (
-        <div className="d-flex gap-2 align-items-center rounded-2 bg-validator-info">
-          <i class="bi bi-info-circle"></i>
+        <div className="d-flex gap-2 align-items-center rounded-2 bg-validator-warning">
+          <i class="bi bi-exclamation-triangle"></i>
           You do not have any validators to unstake from. You must first stake
           tokens with a validator.
         </div>

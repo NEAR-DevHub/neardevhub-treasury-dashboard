@@ -393,6 +393,9 @@ useEffect(() => {
       });
     }
     setLockupAlreadyStaked(isAlreadyStaked);
+  } else {
+    setLockupAlreadyStaked(false);
+    setValidatorAccount("");
   }
 }, [selectedWallet, lockupStakedPoolsWithBalance]);
 
@@ -507,7 +510,7 @@ return (
             disabled: lockupAlreadyStaked,
           }}
         />
-        {lockupAlreadyStaked && (
+        {selectedWallet.value === lockupContract && (
           <div className="d-flex gap-2 align-items-center my-2 rounded-2 bg-validator-info">
             <i class="bi bi-info-circle"></i>
             You cannot split the locked amount across multiple validators. To
