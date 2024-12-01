@@ -284,7 +284,13 @@ test.describe("admin connected", function () {
         .getByPlaceholder("Enter voting duration days")
         .fill(newDurationDays.toString());
 
+      await page.waitForTimeout(300);
+      await page.getByRole("button", { name: "Submit Request" }).click();
+
       const checkExpectedNewExpiredProposals = async () => {
+        await expect(
+          page.getByRole("heading", { name: "Changing the voting duration" })
+        ).toBeVisible();
         const expectedNewExpiredProposals = proposals
           .filter(
             (proposal) =>
@@ -297,10 +303,6 @@ test.describe("admin connected", function () {
               proposal.status === "InProgress"
           )
           .reverse();
-        await expect(await page.locator(".alert-danger")).toBeVisible();
-        await expect(await page.locator(".alert-danger")).toHaveText(
-          "The following proposals will expire because of the changed duration"
-        );
         await expect(
           await page.locator(".proposal-that-will-expire")
         ).toHaveCount(expectedNewExpiredProposals.length);
@@ -310,6 +312,12 @@ test.describe("admin connected", function () {
         expect(visibleProposalIds).toEqual(
           expectedNewExpiredProposals.map((proposal) => proposal.id.toString())
         );
+        await page
+          .locator(".modalfooter button", { hasText: "Cancel" })
+          .click();
+        await expect(
+          page.getByRole("heading", { name: "Changing the voting duration" })
+        ).not.toBeVisible();
       };
       await checkExpectedNewExpiredProposals();
       await page.waitForTimeout(500);

@@ -4,6 +4,8 @@ if (!instance) {
 }
 
 const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+const { Modal, ModalBackdrop, ModalContent, ModalDialog, ModalHeader } =
+  VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.modal");
 
 const daoPolicy = Near.view(treasuryDaoID, "get_policy", {});
 
@@ -28,6 +30,8 @@ const [durationDays, setDurationDays] = useState(currentDurationDays);
 const [proposalsThatWillExpire, setProposalsThatWillExpire] = useState([]);
 const [showToastStatus, setToastStatus] = useState(null);
 const [isSubmittingChangeRequest, setSubmittingChangeRequest] = useState(false);
+const [showProposalExpiryChangeModal, setShowProposalExpiryChangeModal] =
+  useState(false);
 
 const Container = styled.div`
   font-size: 14px;
@@ -117,10 +121,17 @@ const ToastContainer = styled.div`
 `;
 
 const cancelChangeRequest = () => {
+  setShowProposalExpiryChangeModal(false);
   setDurationDays(currentDurationDays);
 };
 
 const submitChangeRequest = () => {
+  if (!showProposalExpiryChangeModal && proposalsThatWillExpire.length > 0) {
+    setShowProposalExpiryChangeModal(true);
+    return;
+  }
+
+  setShowProposalExpiryChangeModal(false);
   setSubmittingChangeRequest(true);
   Near.call({
     contractName: treasuryDaoID,
@@ -241,47 +252,80 @@ return (
           </small>
         </p>
 
-        {proposalsThatWillExpire.length > 0 ? (
-          <p>
-            <div class="alert alert-danger" role="alert">
-              The following proposals will expire because of the changed
-              duration
-            </div>
-            <table className="table table-sm">
-              <thead>
-                <tr className="text-grey">
-                  <th>Id</th>
-                  <th>Description</th>
-                  <th>Submission date</th>
-                  <th>Current expiry</th>
-                  <th>New expiry</th>
-                </tr>
-              </thead>
-              <tbody>
-                {proposalsThatWillExpire.map((proposal) => (
-                  <tr class="proposal-that-will-expire">
-                    <td>{proposal.id}</td>
-                    <td>{proposal.description}</td>
-                    <td>
-                      {new Date(proposal.submissionTimeMillis)
-                        .toJSON()
-                        .substring(0, "yyyy-mm-dd".length)}
-                    </td>
-                    <td>
-                      {new Date(proposal.currentExpiryTime)
-                        .toJSON()
-                        .substring(0, "yyyy-mm-dd".length)}
-                    </td>
-                    <td>
-                      {new Date(proposal.newExpiryTime)
-                        .toJSON()
-                        .substring(0, "yyyy-mm-dd".length)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </p>
+        {showProposalExpiryChangeModal ? (
+          <Modal>
+            <ModalBackdrop />
+            <ModalDialog className="card">
+              <ModalHeader>
+                <h5 className="mb-0">
+                  Changing the voting duration will affect the status of some
+                  requests
+                </h5>
+              </ModalHeader>
+              <ModalContent>
+                <p>
+                  You are about to update the voting duration. This will affect
+                  the following existing requests.
+                </p>
+                <table className="table table-sm">
+                  <thead>
+                    <tr className="text-grey">
+                      <th>Id</th>
+                      <th>Description</th>
+                      <th>Submission date</th>
+                      <th>Current expiry</th>
+                      <th>New expiry</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {proposalsThatWillExpire.map((proposal) => (
+                      <tr class="proposal-that-will-expire">
+                        <td>{proposal.id}</td>
+                        <td>{proposal.description}</td>
+                        <td>
+                          {new Date(proposal.submissionTimeMillis)
+                            .toJSON()
+                            .substring(0, "yyyy-mm-dd".length)}
+                        </td>
+                        <td>
+                          {new Date(proposal.currentExpiryTime)
+                            .toJSON()
+                            .substring(0, "yyyy-mm-dd".length)}
+                        </td>
+                        <td>
+                          {new Date(proposal.newExpiryTime)
+                            .toJSON()
+                            .substring(0, "yyyy-mm-dd".length)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </ModalContent>
+              <div className="modalfooter d-flex gap-2 align-items-center justify-content-end mt-2">
+                <Widget
+                  src={
+                    "${REPL_DEVHUB}/widget/devhub.components.molecule.Button"
+                  }
+                  props={{
+                    classNames: { root: "btn-outline-secondary" },
+                    label: "Cancel",
+                    onClick: cancelChangeRequest,
+                  }}
+                />
+                <Widget
+                  src={
+                    "${REPL_DEVHUB}/widget/devhub.components.molecule.Button"
+                  }
+                  props={{
+                    classNames: { root: "theme-btn" },
+                    label: "Yes, proceed",
+                    onClick: submitChangeRequest,
+                  }}
+                />
+              </div>
+            </ModalDialog>
+          </Modal>
         ) : (
           ""
         )}
