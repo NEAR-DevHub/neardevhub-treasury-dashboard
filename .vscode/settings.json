@@ -1,6 +1,7 @@
 {
   "rust-analyzer.linkedProjects": [
     "treasury-factory/Cargo.toml",
-    "web4/treasury-web4/Cargo.toml"
+    "web4/treasury-web4/Cargo.toml",
+    "sandboxrpc/Cargo.toml"
   ]
 }

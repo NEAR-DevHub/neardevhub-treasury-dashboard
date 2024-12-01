@@ -21,7 +21,7 @@ return (
     ) : (
       <div className="d-flex gap-2 align-items-center reject rounded-2 p-2 bold">
         <i class="bi bi-x"></i>
-        You Rejected
+        You {status === "Reject" ? "Rejected" : "Deleted"}
       </div>
     )}
   </Container>

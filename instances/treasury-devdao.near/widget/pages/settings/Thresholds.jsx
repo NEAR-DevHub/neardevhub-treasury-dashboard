@@ -161,7 +161,7 @@ const Container = styled.div`
   }
 
   .theme-btn {
-    background-color: var(--theme-color) !important;
+    background: var(--theme-color) !important;
     color: white;
   }
 
@@ -295,6 +295,7 @@ const ToastStatusContent = () => {
     showToastStatus && (
       <div className="toast-body">
         {content}
+        <br />
         {showToastStatus == "InProgress" && (
           <a
             href={href({

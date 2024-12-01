@@ -69,7 +69,7 @@ const CreateBtn = () => {
     display: flex;
     justify-content: space-between;
     cursor: pointer;
-    background-color: #2C3E50;
+    background-color: var(--theme-color);
     border-radius: 5px;
   }
 
@@ -156,7 +156,7 @@ const CreateBtn = () => {
               setShowStakeRequest(true);
             }}
           >
-            <i class="bi bi-plus-circle-fill"></i>Create Request
+            <i class="bi bi-plus-lg h5 mb-0"></i>Create Request
           </div>
           <div
             className="h-100 d-flex"

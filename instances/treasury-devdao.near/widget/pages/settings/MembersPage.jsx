@@ -80,7 +80,7 @@ const Container = styled.div`
     .nav-link {
       font-size: 22px;
       font-weight: bolder;
-      color: var(--theme-color) !important;
+      color: #1B1B18 !important;
     }
   
     .text-delete {
@@ -92,7 +92,7 @@ const Container = styled.div`
     }
   
     .theme-btn {
-      background-color: var(--theme-color) !important;
+      background: var(--theme-color) !important;
       color: white;
     }
   
@@ -303,10 +303,10 @@ return (
         <div className="nav-link">All Members</div>
         {hasCreatePermission && (
           <button
-            className="primary p-2 rounded-2 h6 d-flex align-items-center gap-2"
+            className="primary py-1 px-3 rounded-2 h6 fw-bold d-flex align-items-center gap-2 "
             onClick={() => setShowEditor(true)}
           >
-            <i class="bi bi-plus-circle-fill"></i>New Member
+            <i class="bi bi-plus-lg h5 mb-0"></i>New Member
           </button>
         )}
       </div>

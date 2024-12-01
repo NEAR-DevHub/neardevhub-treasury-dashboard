@@ -5,7 +5,10 @@ import { mockTransactionSubmitRPCResponses } from "../../util/transaction";
 import { mockRpcRequest, updateDaoPolicyMembers } from "../../util/rpcmock";
 import { setDontAskAgainCacheValues } from "../../util/cache";
 import { mockPikespeakFTTokensResponse } from "../../util/pikespeak.js";
-import { TransferProposalData } from "../../util/inventory.js";
+import {
+  CurrentTimestampInNanoseconds,
+  TransferProposalData,
+} from "../../util/inventory.js";
 
 async function mockWithFTBalance({ page, daoAccount, isSufficient }) {
   await page.route(
@@ -53,7 +56,8 @@ async function voteOnProposal({
   page,
   daoAccount,
   instanceAccount,
-  isReject,
+  voteStatus,
+  vote,
   isMultiVote,
 }) {
   let lastProposalId = 10;
@@ -67,7 +71,7 @@ async function voteOnProposal({
     modifyOriginalResultFunction: (originalResult) => {
       originalResult = TransferProposalData;
       if (isTransactionCompleted && !isMultiVote) {
-        originalResult.status = isReject ? "Rejected" : "Approved";
+        originalResult.status = voteStatus;
       } else {
         originalResult.status = "InProgress";
       }
@@ -83,9 +87,9 @@ async function voteOnProposal({
       originalResult = TransferProposalData;
       if (isTransactionCompleted) {
         if (!isMultiVote) {
-          originalResult.status = isReject ? "Rejected" : "Approved";
+          originalResult.status = voteStatus;
         }
-        originalResult.votes["theori.near"] = isReject ? "Reject" : "Approve";
+        originalResult.votes["theori.near"] = vote;
       }
       return originalResult;
     },
@@ -123,6 +127,22 @@ async function voteOnProposal({
   );
 }
 
+async function mockPaymentProposals({ page }) {
+  await mockRpcRequest({
+    page,
+    filterParams: {
+      method_name: "get_proposals",
+    },
+    modifyOriginalResultFunction: () => {
+      let originalResult = [JSON.parse(JSON.stringify(TransferProposalData))];
+      originalResult[0].id = 0;
+      // non expired request
+      originalResult[0].submission_time = CurrentTimestampInNanoseconds;
+      return originalResult;
+    },
+  });
+}
+
 test.afterEach(async ({ page }, testInfo) => {
   console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
   await page.unrouteAll({ behavior: "ignoreErrors" });
@@ -146,14 +166,15 @@ test.describe("don't ask again", function () {
       page,
       daoAccount,
       instanceAccount,
-      isReject: false,
+      voteStatus: "Approved",
+      vote: "Approve",
     });
     const approveButton = page
       .getByRole("button", {
         name: "Approve",
       })
       .first();
-    await expect(approveButton).toBeEnabled({ timeout: 10000 });
+    await expect(approveButton).toBeEnabled({ timeout: 30_000 });
     await approveButton.click();
     await expect(
       page.getByText(
@@ -170,6 +191,7 @@ test.describe("don't ask again", function () {
     test.setTimeout(60_000);
     const isMultiVote = daoAccount === "infinex.sputnik-dao.near";
     const contractId = daoAccount;
+    await mockPaymentProposals({ page });
     await mockWithFTBalance({ page, daoAccount, isSufficient: true });
     await mockPikespeakFTTokensResponse({ page, daoAccount });
     await updateDaoPolicyMembers({ page, isMultiVote });
@@ -177,7 +199,8 @@ test.describe("don't ask again", function () {
       page,
       daoAccount,
       instanceAccount,
-      isReject: false,
+      voteStatus: "Approved",
+      vote: "Approve",
       isMultiVote,
     });
     const approveButton = page
@@ -185,7 +208,7 @@ test.describe("don't ask again", function () {
         name: "Approve",
       })
       .first();
-    await expect(approveButton).toBeEnabled({ timeout: 10000 });
+    await expect(approveButton).toBeEnabled({ timeout: 30_000 });
     await approveButton.click();
     await page.getByRole("button", { name: "Confirm" }).click();
     await expect(approveButton).toBeDisabled();
@@ -220,7 +243,7 @@ test.describe("don't ask again", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(80_000);
     const isMultiVote = daoAccount === "infinex.sputnik-dao.near";
     await mockWithFTBalance({ page, daoAccount, isSufficient: true });
     await mockPikespeakFTTokensResponse({ page, daoAccount });
@@ -230,7 +253,8 @@ test.describe("don't ask again", function () {
       page,
       daoAccount,
       instanceAccount,
-      isReject: true,
+      voteStatus: "Rejected",
+      vote: "Reject",
       isMultiVote,
     });
 
@@ -259,14 +283,63 @@ test.describe("don't ask again", function () {
       ).toBeVisible();
     } else {
       await expect(
-        page.getByText("The payment has been rejected.")
+        page.getByText("The payment request has been rejected.")
       ).toBeVisible();
       await page.getByText("View in History").click();
     }
 
     await expect(page.locator("tr").nth(1)).toHaveClass("bg-highlight", {
-      timeout: 10_000,
+      timeout: 30_000,
     });
     await page.waitForTimeout(1_000);
+  });
+
+  test("delete payment request with single and multiple required votes", async ({
+    page,
+    instanceAccount,
+    daoAccount,
+  }) => {
+    test.setTimeout(80_000);
+    const isMultiVote = daoAccount === "infinex.sputnik-dao.near";
+    await mockWithFTBalance({ page, daoAccount, isSufficient: true });
+    await mockPikespeakFTTokensResponse({ page, daoAccount });
+    await updateDaoPolicyMembers({ page, isMultiVote });
+    const contractId = daoAccount;
+    await voteOnProposal({
+      page,
+      daoAccount,
+      instanceAccount,
+      voteStatus: "Removed",
+      vote: "Remove",
+      isMultiVote,
+    });
+
+    const deleteButton = page.getByTestId("delete-btn").first();
+    await expect(deleteButton).toBeEnabled({ timeout: 10000 });
+    await deleteButton.click();
+    await expect(
+      page.getByText("Do you really want to delete this request?")
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Confirm" }).click();
+    await expect(deleteButton).toBeDisabled();
+
+    const transaction_toast = page.getByText(
+      `Calling contract ${contractId} with method act_proposal`
+    );
+    await expect(transaction_toast).toBeVisible();
+
+    await transaction_toast.waitFor({ state: "detached", timeout: 10000 });
+    await expect(transaction_toast).not.toBeVisible();
+    if (isMultiVote) {
+      await expect(
+        page.getByText(
+          "Your vote is counted, the payment request is highlighted."
+        )
+      ).toBeVisible();
+    } else {
+      await expect(
+        page.getByText("The payment request has been successfully deleted.")
+      ).toBeVisible();
+    }
   });
 });

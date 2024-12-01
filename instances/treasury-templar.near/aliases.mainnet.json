@@ -1,0 +1,5 @@
+{
+  "REPL_BASE_DEPLOYMENT_ACCOUNT": "treasury-devdao.near",
+  "REPL_INSTANCE": "treasury-templar.near",
+  "REPL_TREASURY": "templar.sputnik-dao.near"
+}

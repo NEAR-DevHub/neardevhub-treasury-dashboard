@@ -27,15 +27,15 @@ const NavUnderline = styled.ul`
   font-size: 16px;
   .nav-link {
     color: rgba(147, 149, 151, 1) !important;
-    padding-bottom: 15px;
+    padding-bottom: 19px;
   }
   .active {
     font-weight: bolder;
-    color: var(--theme-color) !important;
+    color: #1b1b18 !important;
     border-bottom: 3px solid var(--theme-color);
   }
   .nav-link:hover {
-    color: var(--theme-color) !important;
+    color: #1b1b18 !important;
     font-weight: bolder;
   }
 `;

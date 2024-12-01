@@ -180,7 +180,7 @@ return (
                 setIsOpen(false);
               }}
             >
-              <i class="bi bi-plus-lg"></i>Add manual request
+              <i class="bi bi-plus-lg h5 mb-0"></i>Add manual request
             </div>
           )}
         </div>
