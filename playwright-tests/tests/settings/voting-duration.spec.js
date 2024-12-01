@@ -174,7 +174,6 @@ test.describe("admin connected", function () {
 
       return new Promise((resolve) => {
         wallet.signAndSendTransactions = async (transactions) => {
-          console.log("sign and send tx", transactions);
           resolve(transactions.transactions[0]);
           return await new Promise(
             (transactionSentPromiseResolve) =>
@@ -247,7 +246,7 @@ test.describe("admin connected", function () {
           return lastProposalId;
         } else if (postData.params.method_name === "get_policy") {
           originalResult.proposal_period = (
-            7n *
+            7n * // 7 days
             24n *
             60n *
             60n *
@@ -278,7 +277,7 @@ test.describe("admin connected", function () {
       .getByPlaceholder("Enter voting duration days")
       .inputValue();
 
-    let newDurationDays = Number(currentDurationDays) - 1;
+    let newDurationDays = Number(currentDurationDays) + 3;
     while (newDurationDays > 0) {
       await page
         .getByPlaceholder("Enter voting duration days")
@@ -287,10 +286,7 @@ test.describe("admin connected", function () {
       await page.waitForTimeout(300);
       await page.getByRole("button", { name: "Submit Request" }).click();
 
-      const checkExpectedNewExpiredProposals = async () => {
-        await expect(
-          page.getByRole("heading", { name: "Changing the voting duration" })
-        ).toBeVisible();
+      const checkExpectedNewAffectedProposals = async () => {
         const expectedNewExpiredProposals = proposals
           .filter(
             (proposal) =>
@@ -303,23 +299,77 @@ test.describe("admin connected", function () {
               proposal.status === "InProgress"
           )
           .reverse();
-        await expect(
-          await page.locator(".proposal-that-will-expire")
-        ).toHaveCount(expectedNewExpiredProposals.length);
-        const visibleProposalIds = await page
-          .locator(".proposal-that-will-expire td:first-child")
-          .allInnerTexts();
-        expect(visibleProposalIds).toEqual(
-          expectedNewExpiredProposals.map((proposal) => proposal.id.toString())
-        );
-        await page
-          .locator(".modalfooter button", { hasText: "Cancel" })
-          .click();
-        await expect(
-          page.getByRole("heading", { name: "Changing the voting duration" })
-        ).not.toBeVisible();
+        const expectedNewActiveProposals = proposals
+          .filter(
+            (proposal) =>
+              Number(BigInt(proposal.submission_time) / 1_000_000n) +
+                currentDurationDays * 24 * 60 * 60 * 1000 <
+                new Date().getTime() &&
+              Number(BigInt(proposal.submission_time) / 1_000_000n) +
+                newDurationDays * 24 * 60 * 60 * 1000 >
+                new Date().getTime() &&
+              proposal.status === "InProgress"
+          )
+          .reverse();
+        if (newDurationDays > currentDurationDays) {
+          expect(expectedNewActiveProposals.length).toBeGreaterThanOrEqual(0);
+          expect(expectedNewExpiredProposals.length).toBe(0);
+        } else {
+          expect(expectedNewActiveProposals.length).toBe(0);
+          expect(expectedNewExpiredProposals.length).toBeGreaterThanOrEqual(0);
+        }
+
+        if (expectedNewExpiredProposals.length > 0) {
+          await expect(
+            page.getByRole("heading", { name: "Changing the voting duration" })
+          ).toBeVisible();
+          await expect(
+            await page.locator(".proposal-that-will-expire")
+          ).toHaveCount(expectedNewExpiredProposals.length);
+          const visibleProposalIds = await page
+            .locator(".proposal-that-will-expire td:first-child")
+            .allInnerTexts();
+          expect(visibleProposalIds).toEqual(
+            expectedNewExpiredProposals.map((proposal) =>
+              proposal.id.toString()
+            )
+          );
+          await page
+            .locator(".modalfooter button", { hasText: "Cancel" })
+            .click();
+          await expect(
+            page.getByRole("heading", { name: "Changing the voting duration" })
+          ).not.toBeVisible();
+        } else if (expectedNewActiveProposals.length > 0) {
+          await expect(
+            page.getByRole("heading", { name: "Changing the voting duration" })
+          ).toBeVisible();
+          await expect(
+            await page.locator(".proposal-that-will-be-active")
+          ).toHaveCount(expectedNewActiveProposals.length);
+          const visibleProposalIds = await page
+            .locator(".proposal-that-will-be-active td:first-child")
+            .allInnerTexts();
+          expect(visibleProposalIds).toEqual(
+            expectedNewActiveProposals.map((proposal) => proposal.id.toString())
+          );
+          await page
+            .locator(".modalfooter button", { hasText: "Cancel" })
+            .click();
+          await expect(
+            page.getByRole("heading", { name: "Changing the voting duration" })
+          ).not.toBeVisible();
+        } else {
+          await expect(
+            await page.getByText("Confirm Transaction")
+          ).toBeVisible();
+          await page.locator("button", { hasText: "Close" }).click();
+          await expect(
+            await page.getByText("Confirm Transaction")
+          ).not.toBeVisible();
+        }
       };
-      await checkExpectedNewExpiredProposals();
+      await checkExpectedNewAffectedProposals();
       await page.waitForTimeout(500);
       newDurationDays--;
     }

@@ -28,9 +28,10 @@ const currentDurationDays =
 
 const [durationDays, setDurationDays] = useState(currentDurationDays);
 const [proposalsThatWillExpire, setProposalsThatWillExpire] = useState([]);
+const [proposalsThatWillBeActive, setProposalsThatWillBeActive] = useState([]);
 const [showToastStatus, setToastStatus] = useState(null);
 const [isSubmittingChangeRequest, setSubmittingChangeRequest] = useState(false);
-const [showProposalExpiryChangeModal, setShowProposalExpiryChangeModal] =
+const [showAffectedProposalsModal, setShowAffectedProposalsModal] =
   useState(false);
 
 const Container = styled.div`
@@ -121,35 +122,144 @@ const ToastContainer = styled.div`
 `;
 
 const cancelChangeRequest = () => {
-  setShowProposalExpiryChangeModal(false);
+  setShowAffectedProposalsModal(false);
   setDurationDays(currentDurationDays);
 };
 
-const submitChangeRequest = () => {
-  if (!showProposalExpiryChangeModal && proposalsThatWillExpire.length > 0) {
-    setShowProposalExpiryChangeModal(true);
-    return;
-  }
+const findAffectedProposals = (callback) => {
+  setProposalsThatWillExpire([]);
+  setProposalsThatWillBeActive([]);
+  const limit = 10;
+  if (durationDays < currentDurationDays) {
+    const fetchProposalsThatWillExpire = (
+      lastIndex,
+      newProposalsThatWillExpire
+    ) => {
+      Near.asyncView(treasuryDaoID, "get_proposals", {
+        from_index: lastIndex - limit,
+        limit,
+      }).then((/** @type Array */ proposals) => {
+        const now = new Date().getTime();
 
-  setShowProposalExpiryChangeModal(false);
-  setSubmittingChangeRequest(true);
-  Near.call({
-    contractName: treasuryDaoID,
-    methodName: "add_proposal",
-    deposit,
-    args: {
-      proposal: {
-        description: "Change proposal period",
-        kind: {
-          ChangePolicyUpdateParameters: {
-            parameters: {
-              proposal_period:
-                (60 * 60 * 24 * durationDays).toString() + "000000000",
+        let fetchMore = false;
+        for (const proposal of proposals.reverse()) {
+          const submissionTimeMillis = Number(
+            proposal.submission_time.substr(
+              0,
+              proposal.submission_time.length - 6
+            )
+          );
+          const currentExpiryTime =
+            submissionTimeMillis + 24 * 60 * 60 * 1000 * currentDurationDays;
+          const newExpiryTime =
+            submissionTimeMillis + 24 * 60 * 60 * 1000 * durationDays;
+          if (
+            currentExpiryTime >= now &&
+            newExpiryTime < now &&
+            proposal.status === "InProgress"
+          ) {
+            newProposalsThatWillExpire.push({
+              currentExpiryTime,
+              newExpiryTime,
+              submissionTimeMillis,
+              ...proposal,
+            });
+          }
+          fetchMore = currentExpiryTime >= now;
+        }
+        setProposalsThatWillExpire(newProposalsThatWillExpire);
+        if (fetchMore) {
+          fetchProposalsThatWillExpire(
+            lastIndex - limit,
+            newProposalsThatWillExpire
+          );
+        } else {
+          callback(newProposalsThatWillExpire.length > 0);
+        }
+      });
+    };
+    fetchProposalsThatWillExpire(lastProposalId, []);
+  } else if (durationDays > currentDurationDays) {
+    const fetchProposalsThatWillBeActive = (
+      lastIndex,
+      newProposalsThatWillBeActive
+    ) => {
+      Near.asyncView(treasuryDaoID, "get_proposals", {
+        from_index: lastIndex - limit,
+        limit,
+      }).then((/** @type Array */ proposals) => {
+        const now = new Date().getTime();
+
+        let fetchMore = false;
+        for (const proposal of proposals.reverse()) {
+          const submissionTimeMillis = Number(
+            proposal.submission_time.substr(
+              0,
+              proposal.submission_time.length - 6
+            )
+          );
+          const currentExpiryTime =
+            submissionTimeMillis + 24 * 60 * 60 * 1000 * currentDurationDays;
+          const newExpiryTime =
+            submissionTimeMillis + 24 * 60 * 60 * 1000 * durationDays;
+          if (
+            currentExpiryTime <= now &&
+            newExpiryTime > now &&
+            proposal.status === "InProgress"
+          ) {
+            newProposalsThatWillBeActive.push({
+              currentExpiryTime,
+              newExpiryTime,
+              submissionTimeMillis,
+              ...proposal,
+            });
+          }
+          fetchMore = newExpiryTime >= now;
+        }
+        setProposalsThatWillBeActive(newProposalsThatWillBeActive);
+        if (fetchMore) {
+          fetchProposalsThatWillBeActive(
+            lastIndex - limit,
+            newProposalsThatWillBeActive
+          );
+        } else {
+          callback(newProposalsThatWillBeActive.length > 0);
+        }
+      });
+    };
+    fetchProposalsThatWillBeActive(lastProposalId, []);
+  } else {
+    callback(false);
+  }
+};
+
+const submitChangeRequest = () => {
+  findAffectedProposals((shouldShowAffectedProposalsModal) => {
+    if (!showAffectedProposalsModal && shouldShowAffectedProposalsModal) {
+      setShowAffectedProposalsModal(true);
+      return;
+    }
+
+    setShowAffectedProposalsModal(false);
+    setSubmittingChangeRequest(true);
+    Near.call({
+      contractName: treasuryDaoID,
+      methodName: "add_proposal",
+      deposit,
+      args: {
+        proposal: {
+          description: "Change proposal period",
+          kind: {
+            ChangePolicyUpdateParameters: {
+              parameters: {
+                proposal_period:
+                  (60 * 60 * 24 * durationDays).toString() + "000000000",
+              },
             },
           },
         },
       },
-    },
+    });
   });
 };
 
@@ -175,55 +285,6 @@ useEffect(() => {
 
 const changeDurationDays = (newDurationDays) => {
   setDurationDays(newDurationDays);
-  const limit = 10;
-  if (newDurationDays < currentDurationDays) {
-    const fetchProposalsThatWillExpire = (
-      lastIndex,
-      newProposalsThatWillExpire
-    ) => {
-      Near.asyncView(treasuryDaoID, "get_proposals", {
-        from_index: lastIndex - limit,
-        limit,
-      }).then((/** @type Array */ proposals) => {
-        const now = new Date().getTime();
-
-        let fetchMore = false;
-        for (const proposal of proposals.reverse()) {
-          const submissionTimeMillis = Number(
-            proposal.submission_time.substr(
-              0,
-              proposal.submission_time.length - 6
-            )
-          );
-          const currentExpiryTime =
-            submissionTimeMillis + 24 * 60 * 60 * 1000 * currentDurationDays;
-          const newExpiryTime =
-            submissionTimeMillis + 24 * 60 * 60 * 1000 * newDurationDays;
-          if (
-            currentExpiryTime >= now &&
-            newExpiryTime < now &&
-            proposal.status === "InProgress"
-          ) {
-            newProposalsThatWillExpire.push({
-              currentExpiryTime,
-              newExpiryTime,
-              submissionTimeMillis,
-              ...proposal,
-            });
-          }
-          fetchMore = currentExpiryTime >= now;
-        }
-        setProposalsThatWillExpire(newProposalsThatWillExpire);
-        if (fetchMore) {
-          fetchProposalsThatWillExpire(
-            lastIndex - limit,
-            newProposalsThatWillExpire
-          );
-        }
-      });
-    };
-    fetchProposalsThatWillExpire(lastProposalId, []);
-  }
 };
 
 return (
@@ -252,7 +313,7 @@ return (
           </small>
         </p>
 
-        {showProposalExpiryChangeModal ? (
+        {showAffectedProposalsModal ? (
           <Modal>
             <ModalBackdrop />
             <ModalDialog className="card">
@@ -280,6 +341,27 @@ return (
                   <tbody>
                     {proposalsThatWillExpire.map((proposal) => (
                       <tr class="proposal-that-will-expire">
+                        <td>{proposal.id}</td>
+                        <td>{proposal.description}</td>
+                        <td>
+                          {new Date(proposal.submissionTimeMillis)
+                            .toJSON()
+                            .substring(0, "yyyy-mm-dd".length)}
+                        </td>
+                        <td>
+                          {new Date(proposal.currentExpiryTime)
+                            .toJSON()
+                            .substring(0, "yyyy-mm-dd".length)}
+                        </td>
+                        <td>
+                          {new Date(proposal.newExpiryTime)
+                            .toJSON()
+                            .substring(0, "yyyy-mm-dd".length)}
+                        </td>
+                      </tr>
+                    ))}
+                    {proposalsThatWillBeActive.map((proposal) => (
+                      <tr class="proposal-that-will-be-active">
                         <td>{proposal.id}</td>
                         <td>{proposal.description}</td>
                         <td>
