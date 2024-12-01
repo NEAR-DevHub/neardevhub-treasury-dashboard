@@ -46,6 +46,7 @@ const ModalDialog = styled.div`
   max-height: 85%;
   margin-top: 5%;
   width: 35%;
+  border-radius: 20px;
 
   @media screen and (max-width: 768px) {
     margin: 2rem;
