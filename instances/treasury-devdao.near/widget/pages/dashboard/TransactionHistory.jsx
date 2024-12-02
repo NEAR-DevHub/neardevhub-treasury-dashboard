@@ -169,6 +169,12 @@ function formatRelativeDate(date) {
   }
 }
 
+function formatCurrency(amount) {
+  return Number(amount)
+    .toFixed(2)
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
 function getImage(actionKind) {
   switch (actionKind) {
     case "Staked":
@@ -365,7 +371,7 @@ return (
                         >
                           <div className="fw-bold d-flex gap-1 align-items-center justify-content-end">
                             {isReceived ? "+" : "-"}
-                            {balanceDiff}{" "}
+                            {formatCurrency(balanceDiff)}{" "}
                             <img src={icon} height={20} width={20} />
                           </div>
                         </div>
