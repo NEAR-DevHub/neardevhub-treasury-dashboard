@@ -52,6 +52,7 @@ const [lockupStakedPoolsWithBalance, setLockupStakedPoolsWithBalance] =
   useState(null);
 
 const [showWarning, setShowWarning] = useState(false);
+const [lockupStakedPoolId, setLockupStakedPoolId] = useState(null);
 
 function formatNearAmount(amount) {
   return Big(amount ?? "0")
@@ -80,6 +81,10 @@ useEffect(() => {
         totalParsed: formatNearAmount(res),
       }))
     );
+
+    Near.asyncView(lockupContract, "get_staking_pool_account_id").then((res) =>
+      setLockupStakedPoolId(res)
+    );
   }
 }, [lockupContract]);
 
@@ -102,6 +107,7 @@ function getFeeOfStakedPools() {
   const promises = (
     isLockupContract ? lockupStakedPoolsWithBalance : nearStakedPoolsWithBalance
   )
+
     .filter((item) => item.stakedBalance > 0) // Filter items with staked balance
     .map((item) => {
       return Near.asyncView(item.pool, "get_reward_fee_fraction").then((i) => ({
@@ -125,21 +131,27 @@ useEffect(() => {
       !lockupContract)
   ) {
     getFeeOfStakedPools();
+    setShowWarning(false);
     if (
-      (selectedWallet.value === treasuryDaoID && nearStakedTokens <= 0) ||
-      nearStakedTokens === "0.0000"
+      selectedWallet.value === treasuryDaoID &&
+      (nearStakedTokens <= 0 || nearStakedTokens === "0.0000")
     ) {
       setShowWarning(true);
     }
 
     if (
-      (selectedWallet.value === lockupContract && lockupStakedTokens <= 0) ||
-      lockupStakedTokens === "0.0000"
+      selectedWallet.value === lockupContract &&
+      (lockupStakedTokens <= 0 || lockupStakedTokens === "0.0000")
     ) {
       setShowWarning(true);
     }
   }
-}, [nearStakedPoolsWithBalance, lockupStakedPoolsWithBalance, lockupContract]);
+}, [
+  selectedWallet,
+  nearStakedPoolsWithBalance,
+  lockupStakedPoolsWithBalance,
+  lockupContract,
+]);
 
 function getLastProposalId() {
   return Near.asyncView(treasuryDaoID, "get_last_proposal_id").then(
@@ -341,6 +353,26 @@ useEffect(() => {
   }
 }, [amount, selectedWallet]);
 
+useEffect(() => {
+  if (selectedWallet.value === lockupContract) {
+    const pool = (lockupStakedPoolsWithBalance ?? []).find(
+      (i) => i.pool === lockupStakedPoolId
+    );
+    const isAlreadyStaked =
+      (pool.stakedBalance || 0) > 0 ||
+      (pool.unStakedBalance || 0) > 0 ||
+      (pool.availableToWithdrawBalance || 0) > 0;
+    if (isAlreadyStaked) {
+      setValidatorAccount({
+        stakedBalance: {
+          [lockupContract]: pool,
+        },
+        pool_id: lockupStakedPoolId,
+      });
+    }
+  }
+}, [selectedWallet, lockupStakedTokens]);
+
 return (
   <Container>
     <Widget
@@ -457,6 +489,7 @@ return (
                 searchInputPlaceholder: "Search",
                 defaultLabel: "Select",
                 selectedWallet: selectedWallet?.value,
+                disabled: selectedWallet?.value === lockupContract,
               }}
             />
           </div>
