@@ -212,6 +212,7 @@ test.describe("admin connected", function () {
     instanceAccount,
     daoAccount,
   }) => {
+    test.setTimeout(60_000);
     const lastProposalId = 100;
     const proposals = [];
     for (let id = 0; id <= lastProposalId; id++) {
@@ -283,9 +284,6 @@ test.describe("admin connected", function () {
         .getByPlaceholder("Enter voting duration days")
         .fill(newDurationDays.toString());
 
-      await page.waitForTimeout(300);
-      await page.getByRole("button", { name: "Submit Request" }).click();
-
       const checkExpectedNewAffectedProposals = async () => {
         const expectedNewExpiredProposals = proposals
           .filter(
@@ -311,15 +309,52 @@ test.describe("admin connected", function () {
               proposal.status === "InProgress"
           )
           .reverse();
+        const expectedUnaffectedActiveProposals = proposals
+          .filter(
+            (proposal) =>
+              Number(BigInt(proposal.submission_time) / 1_000_000n) +
+                currentDurationDays * 24 * 60 * 60 * 1000 >
+                new Date().getTime() &&
+              Number(BigInt(proposal.submission_time) / 1_000_000n) +
+                newDurationDays * 24 * 60 * 60 * 1000 >
+                new Date().getTime() &&
+              proposal.status === "InProgress"
+          )
+          .reverse();
         if (newDurationDays > currentDurationDays) {
           expect(expectedNewActiveProposals.length).toBeGreaterThanOrEqual(0);
           expect(expectedNewExpiredProposals.length).toBe(0);
-        } else {
+        } else if (newDurationDays < currentDurationDays) {
           expect(expectedNewActiveProposals.length).toBe(0);
           expect(expectedNewExpiredProposals.length).toBeGreaterThanOrEqual(0);
+        } else {
+          expect(expectedNewActiveProposals.length).toBe(0);
+          expect(expectedNewExpiredProposals.length).toBe(0);
+          await expect(
+            await page.getByRole("button", { name: "Submit Request" })
+          ).toBeDisabled();
+          return;
         }
 
+        await page.waitForTimeout(300);
+        await expect(
+          await page.getByRole("button", { name: "Submit Request" })
+        ).toBeEnabled();
+        await page.getByRole("button", { name: "Submit Request" }).click();
+
+        if (expectedUnaffectedActiveProposals.length > 0) {
+          await expect(
+            page.getByText(
+              `Pending requests: ${expectedUnaffectedActiveProposals.length} pending`
+            )
+          ).toBeVisible();
+        }
         if (expectedNewExpiredProposals.length > 0) {
+          await expect(
+            await page.getByText(
+              `Active requests: ${expectedNewExpiredProposals.length} active`
+            )
+          ).toBeVisible();
           await expect(
             page.getByRole("heading", { name: "Changing the voting duration" })
           ).toBeVisible();
@@ -341,6 +376,11 @@ test.describe("admin connected", function () {
             page.getByRole("heading", { name: "Changing the voting duration" })
           ).not.toBeVisible();
         } else if (expectedNewActiveProposals.length > 0) {
+          await expect(
+            await page.getByText(
+              `Expired requests: ${expectedNewActiveProposals.length} expired`
+            )
+          ).toBeVisible();
           await expect(
             page.getByRole("heading", { name: "Changing the voting duration" })
           ).toBeVisible();

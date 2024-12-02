@@ -29,6 +29,7 @@ const currentDurationDays =
 const [durationDays, setDurationDays] = useState(currentDurationDays);
 const [proposalsThatWillExpire, setProposalsThatWillExpire] = useState([]);
 const [proposalsThatWillBeActive, setProposalsThatWillBeActive] = useState([]);
+const [otherPendingRequests, setOtherPendingRequests] = useState([]);
 const [showToastStatus, setToastStatus] = useState(null);
 const [isSubmittingChangeRequest, setSubmittingChangeRequest] = useState(false);
 const [showAffectedProposalsModal, setShowAffectedProposalsModal] =
@@ -129,11 +130,13 @@ const cancelChangeRequest = () => {
 const findAffectedProposals = (callback) => {
   setProposalsThatWillExpire([]);
   setProposalsThatWillBeActive([]);
+  setOtherPendingRequests([]);
   const limit = 10;
   if (durationDays < currentDurationDays) {
     const fetchProposalsThatWillExpire = (
       lastIndex,
-      newProposalsThatWillExpire
+      newProposalsThatWillExpire,
+      newOtherPendingRequests
     ) => {
       Near.asyncView(treasuryDaoID, "get_proposals", {
         from_index: lastIndex - limit,
@@ -164,25 +167,38 @@ const findAffectedProposals = (callback) => {
               submissionTimeMillis,
               ...proposal,
             });
+          } else if (proposal.status === "InProgress" && newExpiryTime > now) {
+            newOtherPendingRequests.push({
+              currentExpiryTime,
+              newExpiryTime,
+              submissionTimeMillis,
+              ...proposal,
+            });
           }
           fetchMore = currentExpiryTime >= now;
         }
         setProposalsThatWillExpire(newProposalsThatWillExpire);
+        setOtherPendingRequests(newOtherPendingRequests);
         if (fetchMore) {
           fetchProposalsThatWillExpire(
             lastIndex - limit,
-            newProposalsThatWillExpire
+            newProposalsThatWillExpire,
+            newOtherPendingRequests
           );
         } else {
-          callback(newProposalsThatWillExpire.length > 0);
+          callback(
+            newProposalsThatWillExpire.length > 0 ||
+              newOtherPendingRequests.length > 0
+          );
         }
       });
     };
-    fetchProposalsThatWillExpire(lastProposalId, []);
+    fetchProposalsThatWillExpire(lastProposalId, [], []);
   } else if (durationDays > currentDurationDays) {
     const fetchProposalsThatWillBeActive = (
       lastIndex,
-      newProposalsThatWillBeActive
+      newProposalsThatWillBeActive,
+      newOtherPendingRequests
     ) => {
       Near.asyncView(treasuryDaoID, "get_proposals", {
         from_index: lastIndex - limit,
@@ -213,23 +229,33 @@ const findAffectedProposals = (callback) => {
               submissionTimeMillis,
               ...proposal,
             });
+          } else if (proposal.status === "InProgress" && newExpiryTime > now) {
+            newOtherPendingRequests.push({
+              currentExpiryTime,
+              newExpiryTime,
+              submissionTimeMillis,
+              ...proposal,
+            });
           }
           fetchMore = newExpiryTime >= now;
         }
         setProposalsThatWillBeActive(newProposalsThatWillBeActive);
+        setOtherPendingRequests(newOtherPendingRequests);
         if (fetchMore) {
           fetchProposalsThatWillBeActive(
             lastIndex - limit,
-            newProposalsThatWillBeActive
+            newProposalsThatWillBeActive,
+            newOtherPendingRequests
           );
         } else {
-          callback(newProposalsThatWillBeActive.length > 0);
+          callback(
+            newProposalsThatWillBeActive.length > 0 ||
+              newOtherPendingRequests.length > 0
+          );
         }
       });
     };
-    fetchProposalsThatWillBeActive(lastProposalId, []);
-  } else {
-    callback(false);
+    fetchProposalsThatWillBeActive(lastProposalId, [], []);
   }
 };
 
@@ -329,9 +355,23 @@ return (
                   the following existing requests.
                 </p>
                 <ul>
+                  {otherPendingRequests.length > 0 ? (
+                    <li>
+                      Pending requests:
+                      <br />
+                      <b>{otherPendingRequests.length} pending requests</b> will
+                      now follow the new voting duration policy.
+                    </li>
+                  ) : (
+                    ""
+                  )}
                   {proposalsThatWillExpire.length > 0 ? (
                     <li>
-                      <b>{proposalsThatWillExpire.length} active requests</b>{" "}
+                      Active requests:
+                      <br />
+                      <b>
+                        {proposalsThatWillExpire.length} active requests
+                      </b>{" "}
                       under the old voting duration will move to the "Archived"
                       tab and close for voting. These requests were created
                       outside the new voting period and are no longer considered
@@ -342,7 +382,11 @@ return (
                   )}
                   {proposalsThatWillBeActive.length > 0 ? (
                     <li>
-                      <b>{proposalsThatWillBeActive.length} expired requests</b>{" "}
+                      Expired requests:
+                      <br />
+                      <b>
+                        {proposalsThatWillBeActive.length} expired requests
+                      </b>{" "}
                       under the old voting duration will move back to the
                       "Pending Requests" tab and reopen for voting. These
                       requests were created within the new voting period and are
@@ -445,10 +489,18 @@ return (
           ""
         )}
 
-        <button class="btn btn-light" onClick={cancelChangeRequest}>
+        <button
+          class="btn btn-light"
+          disabled={durationDays === currentDurationDays}
+          onClick={cancelChangeRequest}
+        >
           Cancel
         </button>
-        <button class="btn btn-success" onClick={submitChangeRequest}>
+        <button
+          class="btn btn-success"
+          disabled={durationDays === currentDurationDays}
+          onClick={submitChangeRequest}
+        >
           Submit Request
         </button>
       </div>
