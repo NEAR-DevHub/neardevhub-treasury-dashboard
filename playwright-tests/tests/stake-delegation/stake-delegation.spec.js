@@ -534,9 +534,7 @@ test.describe("Lockup staking", function () {
               actions: [
                 {
                   method_name: "deposit_and_stake",
-                  args: toBase64({
-                    amount: "10697370000000000000000000000000",
-                  }),
+                  args: "eyJhbW91bnQiOiIxMDY5NzMwMDAwMDAwMDAwMDAwMDAwMDAwMCJ9",
                   deposit: "0",
                   gas: "150000000000000",
                 },
