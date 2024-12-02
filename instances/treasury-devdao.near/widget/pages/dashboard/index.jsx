@@ -7,7 +7,9 @@ if (!instance) {
   return <></>;
 }
 
-const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+const { treasuryDaoID, lockupContract } = VM.require(
+  `${instance}/widget/config.data`
+);
 
 const Wrapper = styled.div`
   min-height: 80vh;
@@ -34,12 +36,38 @@ const Wrapper = styled.div`
   .dashboard-item > div {
     min-width: 280px;
   }
+
+  .text-grey {
+    color: rgba(153, 153, 153, 1);
+  }
+
+  .text-theme {
+    color: var(--theme-color) !important;
+  }
+
+  .flex-container {
+    min-width: 400px;
+    height: fit-content;
+  }
+
+  @media screen and (max-width: 1000px) {
+    .flex-container {
+      width: 100%;
+    }
+  }
 `;
 
 const [nearStakedTokens, setNearStakedTokens] = useState(null);
 const [nearUnStakedTokens, setNearUnStakedTokens] = useState(null);
 const [nearStakedTotalTokens, setNearStakedTotalTokens] = useState(null);
+const [nearWithdrawTokens, setNearWithdrawTokens] = useState(null);
 const nearBalances = getNearBalances(treasuryDaoID);
+
+const [lockupNearBalances, setLockupNearBalances] = useState(null);
+const [lockupStakedTokens, setLockupStakedTokens] = useState(null);
+const [lockupUnStakedTokens, setLockupUnStakedTokens] = useState(null);
+const [lockupStakedTotalTokens, setLockupStakedTotalTokens] = useState(null);
+const [lockupNearWithdrawTokens, setLockupNearWithdrawTokens] = useState(null);
 
 const nearPrice = useCache(
   () =>
@@ -79,50 +107,158 @@ const userFTTokens = useCache(
   { subscribe: false }
 );
 
+function formatNearAmount(amount) {
+  return Big(amount ?? "0")
+    .div(Big(10).pow(24))
+    .toFixed(4);
+}
+
+useEffect(() => {
+  if (lockupContract) {
+    Near.asyncView(lockupContract, "get_locked_amount").then((res) =>
+      setLockupNearBalances((prev) => ({
+        ...prev,
+        locked: res,
+        lockedParsed: formatNearAmount(res),
+      }))
+    );
+    Near.asyncView(lockupContract, "get_balance").then((res) =>
+      setLockupNearBalances((prev) => ({
+        ...prev,
+        total: res,
+        totalParsed: formatNearAmount(res),
+      }))
+    );
+  }
+}, [lockupContract]);
+
+useEffect(() => {
+  if (lockupNearBalances.total && lockupNearBalances.locked) {
+    const available = Big(lockupNearBalances.total)
+      .minus(lockupNearBalances.locked)
+      .toFixed();
+    setLockupNearBalances((prev) => ({
+      ...prev,
+      available: available,
+      availableParsed: formatNearAmount(available),
+    }));
+  }
+}, [lockupNearBalances]);
+
 const loading = (
   <Widget src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"} />
 );
 
 const totalBalance = Big(nearBalances?.totalParsed ?? "0")
   .mul(nearPrice ?? 1)
+  .plus(Big(lockupNearBalances?.totalParsed ?? "0").mul(nearPrice ?? 1))
   .plus(Big(userFTTokens?.totalCummulativeAmt ?? "0"))
   .toFixed(4);
+
+function formatCurrency(amount) {
+  const formattedAmount = Number(amount)
+    .toFixed(2)
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return "$" + formattedAmount;
+}
 
 return (
   <Wrapper>
     <Widget
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
       props={{
-        instance,
+        accountId: treasuryDaoID,
         setNearStakedTokens: (v) => setNearStakedTokens(Big(v).toFixed(4)),
         setNearUnstakedTokens: (v) => setNearUnStakedTokens(Big(v).toFixed(4)),
         setNearStakedTotalTokens: (v) =>
           setNearStakedTotalTokens(Big(v).toFixed(4)),
+        setNearWithdrawTokens: (v) => setNearWithdrawTokens(Big(v).toFixed(4)),
       }}
     />
-    <div className="d-flex flex-column gap-3">
-      <div className="card card-body" style={{ maxHeight: "100px" }}>
-        <div className="h5">Total Balance</div>
-        {typeof getNearBalances !== "function" || nearPrice === null ? (
-          loading
-        ) : (
-          <div className="fw-bold h3">${totalBalance} USD</div>
-        )}
-      </div>
-      <div className="d-flex gap-2 flex-wrap dashboard-item">
+    {lockupContract && (
+      <Widget
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
+        props={{
+          accountId: lockupContract,
+          setNearStakedTokens: (v) => setLockupStakedTokens(Big(v).toFixed(4)),
+          setNearUnstakedTokens: (v) =>
+            setLockupUnStakedTokens(Big(v).toFixed(4)),
+          setNearStakedTotalTokens: (v) =>
+            setLockupStakedTotalTokens(Big(v).toFixed(4)),
+          setNearWithdrawTokens: (v) =>
+            setLockupNearWithdrawTokens(Big(v).toFixed(4)),
+        }}
+      />
+    )}
+    <div className="d-flex gap-3 flex-wrap">
+      <div className="d-flex flex-column gap-3 flex-container">
+        <div className="card card-body" style={{ maxHeight: "100px" }}>
+          <div className="h6 text-grey">Total Balance</div>
+          {typeof getNearBalances !== "function" || nearPrice === null ? (
+            loading
+          ) : (
+            <div className="fw-bold h3 mb-0">
+              {formatCurrency(totalBalance)} USD
+            </div>
+          )}
+        </div>
         <Widget
           src={
             "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.Portfolio"
           }
           props={{
-            instance,
             ftTokens: userFTTokens.fts,
             nearStakedTokens,
             nearUnStakedTokens,
             nearPrice,
             nearStakedTotalTokens,
+            nearBalances,
+            nearWithdrawTokens,
+            heading: (
+              <div className="d-flex flex-column gap-1 px-3 pt-3 pb-2">
+                <div className="h5 mb-0">Sputnik DAO</div>
+                <div>
+                  <span className="text-sm text-grey">Wallet: </span>
+                  <span className="text-theme  text-sm fw-bold">
+                    {treasuryDaoID}
+                  </span>
+                </div>
+              </div>
+            ),
           }}
         />
+        {lockupContract && (
+          <Widget
+            src={
+              "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.Portfolio"
+            }
+            props={{
+              ftTokens: [],
+              isLockupContract: true,
+              nearStakedTokens: lockupStakedTokens,
+              nearUnStakedTokens: lockupUnStakedTokens,
+              nearPrice,
+              nearWithdrawTokens: lockupNearWithdrawTokens,
+              nearBalances: lockupNearBalances,
+              nearStakedTotalTokens: lockupStakedTotalTokens,
+              heading: (
+                <div className="d-flex flex-column gap-1 px-3 pt-3 pb-2">
+                  <div className="h5 mb-0">Lockup</div>
+                  <div>
+                    <span className="text-sm text-grey">Wallet: </span>
+                    <span className="text-theme  text-sm fw-bold">
+                      {lockupContract}
+                    </span>
+                  </div>
+                </div>
+              ),
+            }}
+          />
+        )}
+      </div>
+      <div className="d-flex flex-column gap-2 flex-wrap dashboard-item flex-1 flex-container">
+        {/* <div> ADD CHART HERE </div> */}
+
         <Widget
           src={
             "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.TransactionHistory"

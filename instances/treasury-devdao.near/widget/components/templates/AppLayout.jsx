@@ -32,6 +32,12 @@ const Theme = styled.div`
   input[type="number"] {
     -moz-appearance: textfield;
   }
+
+  .card {
+    border-color: #e2e6ec !important;
+    border-width: 1px !important;
+    border-radius: 14px;
+  }
 `;
 
 const Container = styled.div`

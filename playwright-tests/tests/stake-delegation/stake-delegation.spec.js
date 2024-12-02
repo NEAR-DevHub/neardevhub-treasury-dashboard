@@ -20,6 +20,8 @@ test.afterEach(async ({ page }, testInfo) => {
 });
 
 const stakedNear = "0.3027";
+const sufficientAvailableBalance = "11000000000000000000000000";
+const inSufficientAvailableBalance = "11450";
 const stakedPoolAccount = "astro-stakers.poolv1.near";
 
 async function mockStakeProposals({ page }) {
@@ -48,6 +50,7 @@ async function mockStakedPoolBalances({ page }) {
   await page.route(`https://archival-rpc.mainnet.near.org/`, async (route) => {
     const request = await route.request();
     const requestPostData = request.postDataJSON();
+
     if (
       requestPostData.params &&
       requestPostData.params.request_type === "call_function" &&
@@ -73,7 +76,7 @@ async function mockStakedPoolBalances({ page }) {
   });
 }
 
-async function mockNearBalances({ page, daoAccount }) {
+async function mockNearBalances({ page, daoAccount, balance }) {
   await page.route(
     `https://api.fastnear.com/v1/account/${daoAccount}/full`,
     async (route) => {
@@ -82,7 +85,7 @@ async function mockNearBalances({ page, daoAccount }) {
         nfts: [],
         pools: [],
         state: {
-          balance: "11450",
+          balance: balance,
           locked: "0",
           storage_bytes: 677278,
         },
@@ -117,32 +120,73 @@ export async function mockStakedPools({ daoAccount, page, havePools = true }) {
   );
 }
 
-async function openUnstakeForm({ page }) {
-  await expect(page.getByText("Create Request")).toBeVisible();
-  await page.locator("i").nth(1).click();
+export async function mockLockupSelectedPool({ hasSelectedPool, page }) {
+  await mockRpcRequest({
+    page,
+    filterParams: {
+      method_name: "get_staking_pool_account_id",
+    },
+    modifyOriginalResultFunction: () => {
+      let originalResult = hasSelectedPool ? stakedPoolAccount : null;
+      return originalResult;
+    },
+  });
+}
+
+export async function mockLockupNearBalances({ page, balance }) {
+  await mockRpcRequest({
+    page,
+    filterParams: {
+      method_name: "get_balance",
+    },
+    modifyOriginalResultFunction: () => {
+      let originalResult = balance;
+      return originalResult;
+    },
+  });
+}
+
+async function selectLockupAccount({
+  page,
+  daoAccount,
+  lockupContract,
+  isStakeRequest,
+}) {
+  await page.getByRole("button", { name: daoAccount }).click();
+  await page
+    .getByText(lockupContract)
+    .nth(isStakeRequest ? 0 : 1)
+    .click();
+}
+
+async function openUnstakeForm({ page, isLockup, daoAccount, lockupContract }) {
+  await expect(page.getByText("Create Request", { exact: true })).toBeVisible();
+  await page.locator(".h-100 > .p-2").click();
   await page.getByText("Unstake", { exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Create Unstake Request" })
   ).toBeVisible(10_000);
+  await page.waitForTimeout(10_000);
+  if (isLockup) {
+    await selectLockupAccount({ page, daoAccount, lockupContract });
+  }
 }
 
-async function checkForValidatorAccount({ page, callbackClickOnSelect }) {
-  const submitBtn = page.getByRole("button", { name: "Submit" });
-  const validatorInput = page.getByRole("textbox", {
-    name: "validator-name.near",
-  });
-  await validatorInput.fill("wrongpool", { timeout: 10_000 });
-  await validatorInput.blur();
-  const validatorErrorText = page.getByText(
-    "Please enter a valid validator pool account."
-  );
-  await expect(validatorErrorText).toBeVisible();
-  await expect(submitBtn).toBeDisabled();
-  await callbackClickOnSelect();
-  await expect(validatorErrorText).toBeHidden();
+async function fillValidatorAccount({ page, isStakeRequest }) {
+  const poolSelector = isStakeRequest
+    ? await page.getByTestId("validator-dropdown").first()
+    : await page.getByTestId("validator-dropdown").nth(1);
+  await expect(poolSelector).toBeVisible({ timeout: 30_000 });
+  await poolSelector.click();
+  await page.waitForTimeout(5_000);
+
+  const search = await page.getByPlaceholder("Search");
+  search.focus();
+  search.fill("astro");
+  await page.getByText(stakedPoolAccount).first().click();
 }
 
-async function checkForStakeAmount({ page, availableBalance, errorText }) {
+async function checkForStakeAmount({ page, errorText, availableBalance }) {
   const submitBtn = page.getByRole("button", { name: "Submit" });
   const stakeAmount = page.getByRole("spinbutton");
   await stakeAmount.fill((parseFloat(availableBalance) + 2).toString());
@@ -152,6 +196,13 @@ async function checkForStakeAmount({ page, availableBalance, errorText }) {
   await expect(submitBtn).toBeDisabled();
   await page.getByText("Use Max").click();
   await expect(amountErrorText).toBeHidden();
+}
+
+const NEAR_DIVISOR = 10n ** 24n;
+
+function formatNearAmount(amount) {
+  const numericAmount = BigInt(amount ?? "0");
+  return numericAmount / NEAR_DIVISOR;
 }
 
 test.describe("Have valid staked requests and sufficient token balance", function () {
@@ -168,6 +219,11 @@ test.describe("Have valid staked requests and sufficient token balance", functio
     await mockStakeProposals({ page });
     await updateDaoPolicyMembers({ page });
     await mockStakedPools({ page, daoAccount });
+    await mockNearBalances({
+      page,
+      daoAccount,
+      balance: sufficientAvailableBalance,
+    });
     await mockStakedPoolBalances({ page });
 
     await page.goto(`/${instanceAccount}/widget/app?page=stake-delegation`);
@@ -198,39 +254,23 @@ test.describe("Have valid staked requests and sufficient token balance", functio
     test("Should create stake delegation request, should throw error when invalid data is provided", async ({
       page,
     }) => {
-      test.setTimeout(150_000);
-      const createRequestButton = await page.getByText("Create Request");
+      test.setTimeout(100_000);
+      const createRequestButton = await page.getByText("Create Request", {
+        exact: true,
+      });
       await createRequestButton.click();
       await page.waitForTimeout(10_000);
-      const loader = page.getByRole("img", { name: "loader" }).first();
-      await expect(loader).toBeVisible();
-      await page.waitForTimeout(10_000);
-      const selectButtons = await page.locator("button", { hasText: "select" });
-      while (selectButtons.count() < 2 || !selectButtons.first().isEnabled()) {
-        await page.waitForTimeout(100);
-      }
-      await checkForValidatorAccount({
-        page,
-        callbackClickOnSelect: async () => {
-          const firstStakingPoolSelect = await selectButtons.first();
-          await firstStakingPoolSelect.click();
-        },
-      });
-      const stakingPoolAccount = await page
-        .locator("div.fw-bold", { hasText: "poolv1.near" })
-        .first()
-        .innerText();
-      const availableBalance = await page
-        .locator("div.text-green", { hasText: "Available Balance" })
-        .locator("+h6")
-        .first()
-        .innerText();
 
+      await fillValidatorAccount({
+        page,
+        isStakeRequest: true,
+      });
       await checkForStakeAmount({
         page,
-        availableBalance,
+        availableBalance: formatNearAmount(sufficientAvailableBalance),
         errorText: "Your account doesn't have sufficient balance.",
       });
+
       const stakingAmount = await page
         .locator('input[placeholder="Enter amount"]')
         .first()
@@ -241,7 +281,7 @@ test.describe("Have valid staked requests and sufficient token balance", functio
           description: '{"isStakeRequest":true,"notes":null}',
           kind: {
             FunctionCall: {
-              receiver_id: stakingPoolAccount,
+              receiver_id: stakedPoolAccount,
               actions: [
                 {
                   method_name: "deposit_and_stake",
@@ -261,11 +301,8 @@ test.describe("Have valid staked requests and sufficient token balance", functio
     }) => {
       test.setTimeout(120_000);
       await openUnstakeForm({ page });
-      await checkForValidatorAccount({
+      await fillValidatorAccount({
         page,
-        callbackClickOnSelect: async () => {
-          await page.getByRole("button", { name: "Select" }).click();
-        },
       });
       await checkForStakeAmount({
         page,
@@ -279,6 +316,265 @@ test.describe("Have valid staked requests and sufficient token balance", functio
           kind: {
             FunctionCall: {
               receiver_id: stakedPoolAccount,
+              actions: [
+                {
+                  method_name: "unstake",
+                  args: "eyJhbW91bnQiOiIzMDI3MDAwMDAwMDAwMDAwMDAwMDAwMDAifQ==",
+                  deposit: "0",
+                  gas: "200000000000000",
+                },
+              ],
+            },
+          },
+        },
+      });
+    });
+  });
+});
+
+async function openLockupStakingForm({ page, daoAccount, lockupContract }) {
+  const createRequestButton = await page.getByText("Create Request", {
+    exact: true,
+  });
+  await createRequestButton.click();
+  await page.waitForTimeout(10_000);
+  await selectLockupAccount({
+    page,
+    daoAccount,
+    lockupContract,
+    isStakeRequest: true,
+  });
+  await expect(
+    page.getByText(
+      "You cannot split the locked amount across multiple validators."
+    )
+  ).toBeVisible({
+    timeout: 10_000,
+  });
+}
+
+function toBase64(json) {
+  return Buffer.from(JSON.stringify(json)).toString("base64");
+}
+
+test.describe("Lockup staking", function () {
+  test.use({
+    storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
+  });
+
+  test.beforeEach(async ({ page, instanceAccount, daoAccount }) => {
+    const instanceConfig = await getInstanceConfig({
+      page,
+      instanceAccount,
+    });
+    if (!instanceConfig.lockupContract) {
+      console.log("no lockup contract found for instance");
+      return test.skip();
+    }
+
+    await mockStakeProposals({ page });
+    await updateDaoPolicyMembers({ page });
+    await mockNearBalances({
+      page,
+      daoAccount,
+      balance: sufficientAvailableBalance,
+    });
+    await mockLockupNearBalances({
+      page,
+      balance: sufficientAvailableBalance,
+    });
+
+    await page.goto(`/${instanceAccount}/widget/app?page=stake-delegation`);
+    await expect(
+      await page.locator("div").filter({ hasText: /^Stake Delegation$/ })
+    ).toBeVisible();
+  });
+
+  test.describe("Without selected pool", function () {
+    const lastProposalId = 10;
+    test.beforeEach(async ({ page, lockupContract }) => {
+      await mockLockupSelectedPool({ hasSelectedPool: false, page });
+      await mockRpcRequest({
+        page,
+        filterParams: {
+          method_name: "get_last_proposal_id",
+        },
+        modifyOriginalResultFunction: (originalResult) => {
+          originalResult = lastProposalId;
+          return originalResult;
+        },
+      });
+      await mockStakedPools({
+        page,
+        daoAccount: lockupContract,
+        havePools: false,
+      });
+    });
+
+    test("Should whitelist staking pool and create stake delegation request", async ({
+      page,
+      daoAccount,
+      lockupContract,
+    }) => {
+      test.setTimeout(120_000);
+      await openLockupStakingForm({ page, daoAccount, lockupContract });
+      await fillValidatorAccount({
+        page,
+        isStakeRequest: true,
+      });
+      await checkForStakeAmount({
+        page,
+        availableBalance: formatNearAmount(sufficientAvailableBalance),
+        errorText: "Your account doesn't have sufficient balance.",
+      });
+      await page.getByRole("button", { name: "Submit" }).click();
+      await expect(await getTransactionModalObject(page)).toEqual({
+        proposal: {
+          description:
+            '{"isStakeRequest":true,"warningNotes":"Approve to continue staking with this validator"}',
+          kind: {
+            FunctionCall: {
+              receiver_id: lockupContract,
+              actions: [
+                {
+                  method_name: "select_staking_pool",
+                  args: toBase64({
+                    staking_pool_account_id: stakedPoolAccount,
+                  }),
+                  deposit: "0",
+                  gas: "100000000000000",
+                },
+              ],
+            },
+          },
+        },
+      });
+      const txnLocator = await page
+        .locator("div.modal-body code")
+        .nth(1)
+        .innerText();
+      const dataReceived = JSON.parse(txnLocator);
+      expect(dataReceived).toEqual({
+        proposal: {
+          description: `{"isStakeRequest":true,"notes":null,"showAfterProposalIdApproved":${lastProposalId}}`,
+          kind: {
+            FunctionCall: {
+              receiver_id: lockupContract,
+              actions: [
+                {
+                  method_name: "deposit_and_stake",
+                  args: toBase64({
+                    amount: sufficientAvailableBalance,
+                  }),
+                  deposit: "0",
+                  gas: "150000000000000",
+                },
+              ],
+            },
+          },
+        },
+      });
+    });
+
+    test("Create unstake request, should show no validator staked error", async ({
+      page,
+      daoAccount,
+      lockupContract,
+    }) => {
+      test.setTimeout(120_000);
+      await openUnstakeForm({
+        page,
+        isLockup: true,
+        daoAccount,
+        lockupContract,
+      });
+      await expect(
+        page.getByText(
+          "You do not have any validators to unstake from. You must first stake tokens with a validator."
+        )
+      ).toBeVisible();
+    });
+  });
+
+  test.describe("With selected pool", function () {
+    test.beforeEach(async ({ page, daoAccount, lockupContract }) => {
+      await mockLockupSelectedPool({ hasSelectedPool: true, page });
+      await mockStakedPools({
+        page,
+        daoAccount: lockupContract,
+        havePools: true,
+      });
+      await mockStakedPoolBalances({ page });
+    });
+
+    test("Already whitelisted pool, shouldn't allow pool selection, only create stake delegation request", async ({
+      page,
+      daoAccount,
+      lockupContract,
+    }) => {
+      test.setTimeout(120_000);
+      await openLockupStakingForm({ page, daoAccount, lockupContract });
+      const poolSelector = page.locator(".custom-select").first();
+      const hasDisabledClassOnChild = await poolSelector
+        .locator(".disabled")
+        .count();
+      await expect(hasDisabledClassOnChild).toBeGreaterThan(0);
+      await checkForStakeAmount({
+        page,
+        availableBalance: formatNearAmount(sufficientAvailableBalance),
+        errorText: "Your account doesn't have sufficient balance.",
+      });
+      await page.getByRole("button", { name: "Submit" }).click();
+      await expect(await getTransactionModalObject(page)).toEqual({
+        proposal: {
+          description: '{"isStakeRequest":true,"notes":null}',
+          kind: {
+            FunctionCall: {
+              receiver_id: lockupContract,
+              actions: [
+                {
+                  method_name: "deposit_and_stake",
+                  args: "eyJhbW91bnQiOiIxMDY5NzMwMDAwMDAwMDAwMDAwMDAwMDAwMCJ9",
+                  deposit: "0",
+                  gas: "150000000000000",
+                },
+              ],
+            },
+          },
+        },
+      });
+    });
+
+    test("Create unstake request", async ({
+      page,
+      daoAccount,
+      lockupContract,
+    }) => {
+      test.setTimeout(120_000);
+      await openUnstakeForm({
+        page,
+        isLockup: true,
+        daoAccount,
+        lockupContract,
+      });
+      await page.waitForTimeout(10_000);
+      const poolSelector = await page.locator(".custom-select");
+      const hasDisabledClassOnChild = await poolSelector
+        .locator(".disabled")
+        .count();
+      await expect(hasDisabledClassOnChild).toBeGreaterThan(0);
+      await checkForStakeAmount({
+        page,
+        availableBalance: stakedNear,
+        errorText: "The amount exceeds the balance you have staked.",
+      });
+      await page.getByRole("button", { name: "Submit" }).click();
+      await expect(await getTransactionModalObject(page)).toEqual({
+        proposal: {
+          description: '{"isStakeRequest":true,"notes":null}',
+          kind: {
+            FunctionCall: {
+              receiver_id: lockupContract,
               actions: [
                 {
                   method_name: "unstake",
@@ -543,7 +839,11 @@ test.describe("Insufficient balance ", function () {
 
     await mockStakedPools({ page, daoAccount, havePools: false });
     await mockStakedPoolBalances({ page });
-    await mockNearBalances({ page, daoAccount });
+    await mockNearBalances({
+      page,
+      daoAccount,
+      balance: inSufficientAvailableBalance,
+    });
     await page.goto(`/${instanceAccount}/widget/app?page=stake-delegation`);
     await expect(
       await page.locator("div").filter({ hasText: /^Stake Delegation$/ })

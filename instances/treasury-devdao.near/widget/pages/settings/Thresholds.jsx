@@ -191,6 +191,10 @@ const Container = styled.div`
     background-color: #2c3e50 !important;
     color: white !important;
   }
+
+  .dropdown-toggle:after {
+    top: 20% !important;
+  }
 `;
 
 const ToastContainer = styled.div`
@@ -211,7 +215,7 @@ function getApproveTxn() {
       id: lastProposalId,
       action: "VoteApprove",
     },
-    gas: 200000000000000,
+    gas: 300000000000000,
   };
 }
 const proposalKinds = [

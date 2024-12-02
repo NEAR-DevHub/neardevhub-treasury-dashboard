@@ -11,9 +11,23 @@ if (!instance || typeof getNearBalances !== "function") {
   return <></>;
 }
 
-const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+const { treasuryDaoID, lockupContract } = VM.require(
+  `${instance}/widget/config.data`
+);
 
 const proposals = props.proposals;
+const visibleProposals = (proposals ?? []).filter((proposal) => {
+  const description = JSON.parse(proposal.description);
+  // Check if `showAfterProposalIdApproved` exists and if the proposal ID exists in the array
+  if (description.showAfterProposalIdApproved) {
+    return !(proposals ?? []).some(
+      (p) => p.id === description.showAfterProposalIdApproved
+    );
+  }
+  // If no `showAfterProposalIdApproved`, the proposal is visible
+  return true;
+});
+
 const columnsVisibility = JSON.parse(
   Storage.get(
     "COLUMNS_VISIBILITY",
@@ -28,9 +42,19 @@ const functionCallApproversGroup = props.functionCallApproversGroup;
 const deleteGroup = props.deleteGroup;
 const [showToastStatus, setToastStatus] = useState(false);
 const [voteProposalId, setVoteProposalId] = useState(null);
+const [lockupStakedPoolId, setLockupStakedPoolId] = useState(null);
+
 const refreshTableData = props.refreshTableData;
 
 const accountId = context.accountId;
+
+useEffect(() => {
+  if (lockupContract) {
+    Near.asyncView(lockupContract, "get_staking_pool_account_id").then((res) =>
+      setLockupStakedPoolId(res)
+    );
+  }
+}, [lockupContract]);
 
 const hasVotingPermission = (
   functionCallApproversGroup?.approverAccounts ?? []
@@ -111,6 +135,10 @@ const Container = styled.div`
   .toast-header {
     background-color: #2c3e50 !important;
     color: white !important;
+  }
+
+  .text-warning {
+    color: rgba(177, 113, 8, 1) !important;
   }
 `;
 
@@ -308,20 +336,39 @@ function formatSubmissionTimeStamp(submissionTime) {
   );
 }
 
+function decodeBase64(encodedArgs) {
+  if (!encodedArgs) return null;
+  try {
+    const jsonString = Buffer.from(encodedArgs, "base64").toString("utf8");
+    const parsedArgs = JSON.parse(jsonString);
+    return parsedArgs;
+  } catch (error) {
+    console.error("Failed to decode or parse encodedArgs:", error);
+    return null;
+  }
+}
+
 const ProposalsComponent = () => {
   return (
     <tbody style={{ overflowX: "auto" }}>
-      {proposals?.map((item, index) => {
+      {visibleProposals?.map((item, index) => {
         const description = JSON.parse(item.description);
         const args = item?.kind?.FunctionCall;
         const action = args?.actions[0];
         const isStakeRequest = action.method_name === "deposit_and_stake";
         const notes = description.notes;
+        const warningNotes = description.warningNotes;
+        const receiverAccount = args.receiver_id;
+        let validatorAccount = receiverAccount;
+        if (validatorAccount === lockupContract) {
+          validatorAccount =
+            lockupStakedPoolId ??
+            decodeBase64(action.args)?.staking_pool_account_id ??
+            "";
+        }
         let amount = action.deposit;
-        if (!isStakeRequest) {
-          let value = JSON.parse(
-            Buffer.from(action.args, "base64").toString("utf-8")
-          );
+        if (!isStakeRequest || receiverAccount.includes("lockup.near")) {
+          let value = decodeBase64(action.args);
           amount = value.amount;
         }
         return (
@@ -357,7 +404,7 @@ const ProposalsComponent = () => {
               <Widget
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.Type`}
                 props={{
-                  isStakeRequest,
+                  type: action.method_name,
                 }}
               />
             </td>
@@ -371,11 +418,19 @@ const ProposalsComponent = () => {
                 }}
               />
             </td>
+            {lockupContract && (
+              <td className={"text-left"}>
+                {receiverAccount === lockupContract
+                  ? lockupContract
+                  : treasuryDaoID}
+              </td>
+            )}
+
             <td className={isVisible("Validator")}>
               <Widget
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.Validator`}
                 props={{
-                  validatorId: args.receiver_id,
+                  validatorId: validatorAccount,
                 }}
               />
             </td>
@@ -395,8 +450,14 @@ const ProposalsComponent = () => {
                 }}
               />
             </td>
-            <td className={"text-sm text-left " + isVisible("Notes")}>
-              {notes ? notes : "-"}
+            <td
+              className={
+                "text-sm text-left " +
+                isVisible("Notes") +
+                (warningNotes && " text-warning")
+              }
+            >
+              {notes || warningNotes ? warningNotes || notes : "-"}
             </td>
             {isPendingRequests && (
               <td className={isVisible("Required Votes") + " text-center"}>
@@ -489,7 +550,7 @@ return (
       </div>
     ) : (
       <div>
-        {proposals.length === 0 ? (
+        {visibleProposals.length === 0 ? (
           <div
             style={{ height: "50vh" }}
             className="d-flex justify-content-center align-items-center"
@@ -512,9 +573,12 @@ return (
               <tr className="text-grey">
                 <td>#</td>
                 <td className={isVisible("Created Date")}>Created Date</td>
-                {!isPendingRequests && <td>Status</td>}
+                {!isPendingRequests && <td className="text-center"> Status</td>}
                 <td className={isVisible("Type") + " text-center"}>Type</td>
                 <td className={isVisible("Amount") + " text-right"}>Amount</td>
+                {lockupContract && (
+                  <td className={"text-left"}>Treasury Wallet</td>
+                )}
                 <td className={isVisible("Validator")}>Validator</td>
                 <td className={"text-center " + isVisible("Creator")}>
                   Created by

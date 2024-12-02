@@ -3,6 +3,7 @@ const onUpdate = props.onUpdate ?? (() => {});
 const selectedValue = props.selectedValue;
 const disabled = props.disabled;
 const [selected, setSelected] = useState(selectedValue);
+const DropdownItemRender = props.DropdownItemRender;
 
 const StyledDropdown = styled.div`
   .drop-btn {
@@ -19,7 +20,7 @@ const StyledDropdown = styled.div`
 
   .dropdown-toggle:after {
     position: absolute;
-    top: 22%;
+    top: 45%;
     right: 5%;
   }
 
@@ -34,6 +35,12 @@ const StyledDropdown = styled.div`
   .text-muted {
     color: rgba(153, 153, 153, 1);
   }
+
+  .work-break {
+    border-radius: 5px;
+    white-space: normal;
+    word-break: break-word;
+  }
 `;
 
 useEffect(() => {
@@ -42,10 +49,10 @@ useEffect(() => {
 
 return (
   <StyledDropdown>
-    <div class="dropdown w-100" data-testid="dropdown">
+    <div className="dropdown w-100" data-testid="dropdown">
       <button
         disabled={disabled}
-        class="btn drop-btn text-truncate dropdown-toggle bg-white border rounded-2"
+        className="btn drop-btn text-truncate dropdown-toggle bg-white border rounded-2"
         type="button"
         data-bs-toggle="dropdown"
         aria-expanded="false"
@@ -53,23 +60,32 @@ return (
       >
         {selected.label}
       </button>
-      <ul class="dropdown-menu dropdown-menu-end dropdown-menu-lg-start px-2 shadow w-100">
-        {options.map((item) => (
-          <li
-            style={{ borderRadius: "5px" }}
-            class="dropdown-item cursor-pointer link-underline link-underline-opacity-0"
-            onClick={() => {
-              if (selected.label !== item.label) {
-                setSelected(item);
-              }
-            }}
-          >
-            {item.label}
-          </li>
-        ))}
+      <ul className="dropdown-menu dropdown-menu-end dropdown-menu-lg-start px-2 shadow w-100">
+        {options.map((item) =>
+          DropdownItemRender ? (
+            <DropdownItemRender
+              item={item}
+              setSelected={setSelected}
+              selected={selected}
+            />
+          ) : (
+            <li
+              className="dropdown-item cursor-pointer link-underline link-underline-opacity-0 work-break"
+              onClick={() => {
+                if (selected.label !== item.label) {
+                  setSelected(item);
+                }
+              }}
+            >
+              {item.label}
+            </li>
+          )
+        )}
       </ul>
       {selected?.description && (
-        <div className="text-muted text-sm mt-1">{selected.description}</div>
+        <div classNameName="text-muted text-sm mt-1">
+          {selected.description}
+        </div>
       )}
     </div>
   </StyledDropdown>

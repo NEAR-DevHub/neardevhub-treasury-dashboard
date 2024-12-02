@@ -14,9 +14,11 @@ const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 
 const [showStakeRequest, setShowStakeRequest] = useState(false);
 const [showUnStakeRequest, setShowUnStakeRequest] = useState(false);
+const [showWithdrawRequest, setShowWithdrawRequest] = useState(false);
 const createBtnOption = {
   STAKE: "CreateStakeRequest",
   UNSTAKE: "CreateUnstakeRequest",
+  WITHDRAW: "CreateWithdrawRequest",
 };
 const [isCreateBtnOpen, setCreateBtnOpen] = useState(false);
 const [selectedCreatePage, setSelectedCreatePage] = useState(
@@ -37,6 +39,7 @@ const CreateBtn = () => {
       icon: "${REPL_STAKE_ICON}",
       value: createBtnOption.STAKE,
       onClick: () => {
+        setShowUnStakeRequest(false);
         setShowStakeRequest(true);
         setCreateBtnOpen(false);
       },
@@ -46,10 +49,21 @@ const CreateBtn = () => {
       icon: "${REPL_UNSTAKE_ICON}",
       value: createBtnOption.UNSTAKE,
       onClick: () => {
+        setShowStakeRequest(false);
         setShowUnStakeRequest(true);
         setCreateBtnOpen(false);
       },
     },
+    // will add withdraw in next version
+    // {
+    //   label: "Withdraw",
+    //   icon: "${REPL_WITHDRAW_ICON}",
+    //   value: createBtnOption.WITHDRAW,
+    //   onClick: () => {
+    //     setShowWithdrawRequest(true);
+    //     setCreateBtnOpen(false);
+    //   },
+    // },
   ];
 
   const toggleDropdown = () => {
@@ -213,6 +227,10 @@ function toggleUnStakePage() {
   setShowUnStakeRequest(!showUnStakeRequest);
 }
 
+function toggleWithdrawPage() {
+  setShowWithdrawRequest(!showWithdrawRequest);
+}
+
 const Container = styled.div`
   .flex-1 {
     flex: 1;
@@ -250,6 +268,23 @@ return (
             props={{
               instance,
               onCloseCanvas: toggleUnStakePage,
+            }}
+          />
+        ),
+      }}
+    />
+    <Widget
+      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OffCanvas`}
+      props={{
+        showCanvas: showWithdrawRequest,
+        onClose: toggleWithdrawPage,
+        title: "Create Withdraw Request",
+        children: (
+          <Widget
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.CreateWithdrawRequest`}
+            props={{
+              instance,
+              onCloseCanvas: toggleWithdrawPage,
             }}
           />
         ),
