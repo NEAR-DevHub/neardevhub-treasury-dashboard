@@ -328,6 +328,19 @@ return (
                   You are about to update the voting duration. This will affect
                   the following existing requests.
                 </p>
+                <ul>
+                {proposalsThatWillExpire.length > 0 ? <li>
+                  <b>{proposalsThatWillExpire.length} active requests</b> under the old voting duration
+                  will move to the "Archived" tab and close for voting. These requests were
+                  created outside the new voting period and are no longer considered active. 
+                </li>: ""}
+                {proposalsThatWillBeActive.length > 0 ? <li>
+                  <b>{proposalsThatWillBeActive.length} expired requests</b> under the old voting duration
+                  will move back to the "Pending Requests" tab and reopen for voting. These requests were
+                  created within the new voting period and are no longer considered expired. 
+                </li>: ""}
+                <li>Impacted requests:</li>
+                </ul>
                 <table className="table table-sm">
                   <thead>
                     <tr className="text-grey">
@@ -383,6 +396,9 @@ return (
                     ))}
                   </tbody>
                 </table>
+                {proposalsThatWillBeActive.length > 0 ? <p>
+                  If you do not want expired proposals to be open for voting again, you may need to delete them.
+                </p> : ""}
               </ModalContent>
               <div className="modalfooter d-flex gap-2 align-items-center justify-content-end mt-2">
                 <Widget
