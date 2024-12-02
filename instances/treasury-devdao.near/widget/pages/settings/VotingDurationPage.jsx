@@ -139,7 +139,7 @@ const findAffectedProposals = (callback) => {
       newOtherPendingRequests
     ) => {
       Near.asyncView(treasuryDaoID, "get_proposals", {
-        from_index: lastIndex - limit,
+        from_index: lastIndex < limit ? 0 : lastIndex - limit,
         limit,
       }).then((/** @type Array */ proposals) => {
         const now = new Date().getTime();
@@ -175,7 +175,7 @@ const findAffectedProposals = (callback) => {
               ...proposal,
             });
           }
-          fetchMore = currentExpiryTime >= now;
+          fetchMore = proposals.length === limit && currentExpiryTime >= now;
         }
         setProposalsThatWillExpire(newProposalsThatWillExpire);
         setOtherPendingRequests(newOtherPendingRequests);
@@ -201,7 +201,7 @@ const findAffectedProposals = (callback) => {
       newOtherPendingRequests
     ) => {
       Near.asyncView(treasuryDaoID, "get_proposals", {
-        from_index: lastIndex - limit,
+        from_index: lastIndex < limit ? 0 : lastIndex - limit,
         limit,
       }).then((/** @type Array */ proposals) => {
         const now = new Date().getTime();
@@ -237,7 +237,7 @@ const findAffectedProposals = (callback) => {
               ...proposal,
             });
           }
-          fetchMore = newExpiryTime >= now;
+          fetchMore = proposals.length === limit && newExpiryTime >= now;
         }
         setProposalsThatWillBeActive(newProposalsThatWillBeActive);
         setOtherPendingRequests(newOtherPendingRequests);
@@ -312,6 +312,9 @@ useEffect(() => {
 const changeDurationDays = (newDurationDays) => {
   setDurationDays(newDurationDays);
 };
+
+const showImpactedRequests =
+  proposalsThatWillExpire.length > 0 || proposalsThatWillBeActive.length > 0;
 
 return (
   <Container>
@@ -395,63 +398,67 @@ return (
                   ) : (
                     ""
                   )}
-                  <li>Impacted requests:</li>
+                  {showImpactedRequests ? <li>Impacted requests:</li> : ""}
                 </ul>
-                <table className="table table-sm">
-                  <thead>
-                    <tr className="text-grey">
-                      <th>Id</th>
-                      <th>Description</th>
-                      <th>Submission date</th>
-                      <th>Current expiry</th>
-                      <th>New expiry</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {proposalsThatWillExpire.map((proposal) => (
-                      <tr class="proposal-that-will-expire">
-                        <td>{proposal.id}</td>
-                        <td>{proposal.description}</td>
-                        <td>
-                          {new Date(proposal.submissionTimeMillis)
-                            .toJSON()
-                            .substring(0, "yyyy-mm-dd".length)}
-                        </td>
-                        <td>
-                          {new Date(proposal.currentExpiryTime)
-                            .toJSON()
-                            .substring(0, "yyyy-mm-dd".length)}
-                        </td>
-                        <td>
-                          {new Date(proposal.newExpiryTime)
-                            .toJSON()
-                            .substring(0, "yyyy-mm-dd".length)}
-                        </td>
+                {showImpactedRequests ? (
+                  <table className="table table-sm">
+                    <thead>
+                      <tr className="text-grey">
+                        <th>Id</th>
+                        <th>Description</th>
+                        <th>Submission date</th>
+                        <th>Current expiry</th>
+                        <th>New expiry</th>
                       </tr>
-                    ))}
-                    {proposalsThatWillBeActive.map((proposal) => (
-                      <tr class="proposal-that-will-be-active">
-                        <td>{proposal.id}</td>
-                        <td>{proposal.description}</td>
-                        <td>
-                          {new Date(proposal.submissionTimeMillis)
-                            .toJSON()
-                            .substring(0, "yyyy-mm-dd".length)}
-                        </td>
-                        <td>
-                          {new Date(proposal.currentExpiryTime)
-                            .toJSON()
-                            .substring(0, "yyyy-mm-dd".length)}
-                        </td>
-                        <td>
-                          {new Date(proposal.newExpiryTime)
-                            .toJSON()
-                            .substring(0, "yyyy-mm-dd".length)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {proposalsThatWillExpire.map((proposal) => (
+                        <tr class="proposal-that-will-expire">
+                          <td>{proposal.id}</td>
+                          <td>{proposal.description}</td>
+                          <td>
+                            {new Date(proposal.submissionTimeMillis)
+                              .toJSON()
+                              .substring(0, "yyyy-mm-dd".length)}
+                          </td>
+                          <td>
+                            {new Date(proposal.currentExpiryTime)
+                              .toJSON()
+                              .substring(0, "yyyy-mm-dd".length)}
+                          </td>
+                          <td>
+                            {new Date(proposal.newExpiryTime)
+                              .toJSON()
+                              .substring(0, "yyyy-mm-dd".length)}
+                          </td>
+                        </tr>
+                      ))}
+                      {proposalsThatWillBeActive.map((proposal) => (
+                        <tr class="proposal-that-will-be-active">
+                          <td>{proposal.id}</td>
+                          <td>{proposal.description}</td>
+                          <td>
+                            {new Date(proposal.submissionTimeMillis)
+                              .toJSON()
+                              .substring(0, "yyyy-mm-dd".length)}
+                          </td>
+                          <td>
+                            {new Date(proposal.currentExpiryTime)
+                              .toJSON()
+                              .substring(0, "yyyy-mm-dd".length)}
+                          </td>
+                          <td>
+                            {new Date(proposal.newExpiryTime)
+                              .toJSON()
+                              .substring(0, "yyyy-mm-dd".length)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  ""
+                )}
                 {proposalsThatWillBeActive.length > 0 ? (
                   <p>
                     If you do not want expired proposals to be open for voting

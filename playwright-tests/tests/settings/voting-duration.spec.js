@@ -65,6 +65,10 @@ test.describe("admin connected", function () {
     await page.waitForTimeout(500);
     await page.locator("button", { hasText: "Submit" }).click();
 
+    await page
+      .locator(".modalfooter button", { hasText: "Yes, proceed" })
+      .click();
+
     await expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
         description: "Change proposal period",
@@ -126,6 +130,7 @@ test.describe("admin connected", function () {
     instanceAccount,
     daoAccount,
   }) => {
+    test.setTimeout(60_000);
     const daoName = daoAccount.split(".")[0];
 
     const sandbox = new SandboxRPC();
@@ -165,6 +170,10 @@ test.describe("admin connected", function () {
 
     await page.waitForTimeout(500);
     await page.locator("button", { hasText: "Submit" }).click();
+
+    await page
+      .locator(".modalfooter button", { hasText: "Yes, proceed" })
+      .click();
 
     const transactionToSendPromise = page.evaluate(async () => {
       const selector = await document.querySelector("near-social-viewer")
