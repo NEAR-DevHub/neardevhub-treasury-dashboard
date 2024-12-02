@@ -18,7 +18,7 @@ const Badge = () => {
       return (
         <div className={classes}>
           <img src={"${REPL_WITHDRAW_ICON}"} height={20} />
-          Unstake
+          Withdraw
         </div>
       );
     }

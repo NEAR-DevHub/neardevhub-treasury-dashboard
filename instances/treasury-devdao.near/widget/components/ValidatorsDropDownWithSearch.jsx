@@ -128,7 +128,7 @@ function formatNearAmount(amount) {
 }
 
 const BalanceDisplay = ({ balance, label }) => {
-  if (balance <= 0) return null;
+  if (balance <= 0 || balance <= 1) return null;
 
   return (
     <div className="d-flex align-items-center gap-1 text-sm">

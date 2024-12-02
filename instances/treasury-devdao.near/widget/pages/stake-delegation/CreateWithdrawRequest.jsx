@@ -182,7 +182,7 @@ function onSubmitClick() {
           method_name: "withdraw_all_from_staking_pool",
           args: "",
           deposit: "0",
-          gas: "150000000000000",
+          gas: "250000000000000",
         }
       : {
           method_name: "withdraw_all",
