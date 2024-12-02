@@ -45,6 +45,13 @@ const [isNearPortfolioExpanded, setNearPortfolioExpanded] = useState(false);
 const [isNearStakedPortfolioExpanded, setNearStakedPortfolioExpanded] =
   useState(false);
 
+function formatCurrency(amount) {
+  const formattedAmount = Number(amount)
+    .toFixed(2)
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return "$" + formattedAmount;
+}
+
 const BalanceDisplay = ({
   label,
   balance,
@@ -80,7 +87,9 @@ const BalanceDisplay = ({
                 {formatToReadableDecimals(balance)}
               </div>
               <div className="text-sm text-grey">
-                ${formatToReadableDecimals(getPrice(balance, price))}
+                {formatCurrency(
+                  formatToReadableDecimals(getPrice(balance, price))
+                )}
               </div>
             </div>
             <div style={{ width: 20 }}>
@@ -133,7 +142,9 @@ const PortfolioCard = ({
             <div className="d-flex flex-column align-items-end">
               <div className="h6 mb-0">{formatToReadableDecimals(balance)}</div>
               <div className="text-sm text-grey">
-                ${formatToReadableDecimals(getPrice(balance, price))}
+                {formatCurrency(
+                  formatToReadableDecimals(getPrice(balance, price))
+                )}
               </div>
             </div>
             <div style={{ width: 20 }}>

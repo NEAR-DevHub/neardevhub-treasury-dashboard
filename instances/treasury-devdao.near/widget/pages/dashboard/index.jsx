@@ -151,8 +151,16 @@ const loading = (
 
 const totalBalance = Big(nearBalances?.totalParsed ?? "0")
   .mul(nearPrice ?? 1)
+  .plus(Big(lockupNearBalances?.totalParsed ?? "0").mul(nearPrice ?? 1))
   .plus(Big(userFTTokens?.totalCummulativeAmt ?? "0"))
   .toFixed(4);
+
+function formatCurrency(amount) {
+  const formattedAmount = Number(amount)
+    .toFixed(2)
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return "$" + formattedAmount;
+}
 
 return (
   <Wrapper>
@@ -189,7 +197,9 @@ return (
           {typeof getNearBalances !== "function" || nearPrice === null ? (
             loading
           ) : (
-            <div className="fw-bold h3 mb-0">${totalBalance} USD</div>
+            <div className="fw-bold h3 mb-0">
+              {formatCurrency(totalBalance)} USD
+            </div>
           )}
         </div>
         <Widget
