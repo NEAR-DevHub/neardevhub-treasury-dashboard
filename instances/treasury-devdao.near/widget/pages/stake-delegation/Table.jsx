@@ -16,6 +16,18 @@ const { treasuryDaoID, lockupContract } = VM.require(
 );
 
 const proposals = props.proposals;
+const visibleProposals = (proposals ?? []).filter((proposal) => {
+  const description = JSON.parse(proposal.description);
+  // Check if `showAfterProposalIdApproved` exists and if the proposal ID exists in the array
+  if (description.showAfterProposalIdApproved) {
+    return !(proposals ?? []).some(
+      (p) => p.id === description.showAfterProposalIdApproved
+    );
+  }
+  // If no `showAfterProposalIdApproved`, the proposal is visible
+  return true;
+});
+
 const columnsVisibility = JSON.parse(
   Storage.get(
     "COLUMNS_VISIBILITY",
@@ -123,6 +135,10 @@ const Container = styled.div`
   .toast-header {
     background-color: #2c3e50 !important;
     color: white !important;
+  }
+
+  .text-warning {
+    color: rgba(177, 113, 8, 1) !important;
   }
 `;
 
@@ -335,24 +351,19 @@ function decodeBase64(encodedArgs) {
 const ProposalsComponent = () => {
   return (
     <tbody style={{ overflowX: "auto" }}>
-      {proposals?.map((item, index) => {
+      {visibleProposals?.map((item, index) => {
         const description = JSON.parse(item.description);
         const args = item?.kind?.FunctionCall;
-        const action =
-          args?.actions.length > 1
-            ? args?.actions.find((i) => i.method_name === "deposit_and_stake")
-            : args?.actions[0];
+        const action = args?.actions[0];
         const isStakeRequest = action.method_name === "deposit_and_stake";
         const notes = description.notes;
+        const warningNotes = description.warningNotes;
         const receiverAccount = args.receiver_id;
         let validatorAccount = receiverAccount;
         if (validatorAccount === lockupContract) {
           validatorAccount =
             lockupStakedPoolId ??
-            decodeBase64(
-              args?.actions.find((i) => i.method_name === "select_staking_pool")
-                ?.args
-            )?.staking_pool_account_id ??
+            decodeBase64(action.args)?.staking_pool_account_id ??
             "";
         }
         let amount = action.deposit;
@@ -408,7 +419,11 @@ const ProposalsComponent = () => {
               />
             </td>
             {lockupContract && (
-              <td className={"text-left"}>{receiverAccount}</td>
+              <td className={"text-left"}>
+                {receiverAccount === lockupContract
+                  ? lockupContract
+                  : treasuryDaoID}
+              </td>
             )}
 
             <td className={isVisible("Validator")}>
@@ -435,8 +450,14 @@ const ProposalsComponent = () => {
                 }}
               />
             </td>
-            <td className={"text-sm text-left " + isVisible("Notes")}>
-              {notes ? notes : "-"}
+            <td
+              className={
+                "text-sm text-left " +
+                isVisible("Notes") +
+                (warningNotes && " text-warning")
+              }
+            >
+              {notes || warningNotes ? warningNotes || notes : "-"}
             </td>
             {isPendingRequests && (
               <td className={isVisible("Required Votes") + " text-center"}>
@@ -529,7 +550,7 @@ return (
       </div>
     ) : (
       <div>
-        {proposals.length === 0 ? (
+        {visibleProposals.length === 0 ? (
           <div
             style={{ height: "50vh" }}
             className="d-flex justify-content-center align-items-center"

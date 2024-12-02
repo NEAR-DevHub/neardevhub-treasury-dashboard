@@ -39,6 +39,7 @@ const CreateBtn = () => {
       icon: "${REPL_STAKE_ICON}",
       value: createBtnOption.STAKE,
       onClick: () => {
+        setShowUnStakeRequest(false);
         setShowStakeRequest(true);
         setCreateBtnOpen(false);
       },
@@ -48,19 +49,21 @@ const CreateBtn = () => {
       icon: "${REPL_UNSTAKE_ICON}",
       value: createBtnOption.UNSTAKE,
       onClick: () => {
+        setShowStakeRequest(false);
         setShowUnStakeRequest(true);
         setCreateBtnOpen(false);
       },
     },
-    {
-      label: "Withdraw",
-      icon: "${REPL_WITHDRAW_ICON}",
-      value: createBtnOption.WITHDRAW,
-      onClick: () => {
-        setShowWithdrawRequest(true);
-        setCreateBtnOpen(false);
-      },
-    },
+    // will add withdraw in next version
+    // {
+    //   label: "Withdraw",
+    //   icon: "${REPL_WITHDRAW_ICON}",
+    //   value: createBtnOption.WITHDRAW,
+    //   onClick: () => {
+    //     setShowWithdrawRequest(true);
+    //     setCreateBtnOpen(false);
+    //   },
+    // },
   ];
 
   const toggleDropdown = () => {

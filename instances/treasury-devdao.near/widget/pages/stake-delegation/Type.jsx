@@ -22,6 +22,14 @@ const Badge = () => {
         </div>
       );
     }
+    case "select_staking_pool": {
+      return (
+        <div className={classes}>
+          <i class="bi bi-check2"></i>
+          Whitelist
+        </div>
+      );
+    }
     default: {
       return (
         <div className={classes}>

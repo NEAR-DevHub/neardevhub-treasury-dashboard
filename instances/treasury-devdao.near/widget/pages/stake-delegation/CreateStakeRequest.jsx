@@ -247,49 +247,42 @@ function onSubmitClick() {
   };
 
   const isLockupContractSelected = lockupContract === selectedWallet.value;
-  const actions = [];
+  const calls = [];
   if (isLockupContractSelected) {
     if (validatorAccount.pool_id !== lockupStakedPoolId) {
-      actions.push({
-        method_name: "select_staking_pool",
-        args: toBase64({ staking_pool_account_id: validatorAccount.pool_id }),
-        deposit: "0",
-        gas: "100000000000000",
-      });
-      actions.push({
-        method_name: "get_staking_pool_account_id",
-        args: "",
-        deposit: "0",
-        gas: "5000000000000",
-      });
-      actions.push({
-        method_name: "get_known_deposited_balance",
-        args: "",
-        deposit: "0",
-        gas: "5000000000000",
+      description["showAfterProposalIdApproved"] = lastProposalId;
+      calls.push({
+        contractName: treasuryDaoID,
+        methodName: "add_proposal",
+        args: {
+          proposal: {
+            description: JSON.stringify({
+              isStakeRequest: true,
+              warningNotes: "Approve to continue staking with this validator",
+            }),
+            kind: {
+              FunctionCall: {
+                receiver_id: lockupContract,
+                actions: [
+                  {
+                    method_name: "select_staking_pool",
+                    args: toBase64({
+                      staking_pool_account_id: validatorAccount.pool_id,
+                    }),
+                    deposit: "0",
+                    gas: "100000000000000",
+                  },
+                ],
+              },
+            },
+          },
+        },
+        gas: 200000000000000,
       });
     }
   }
 
-  actions.push(
-    isLockupContractSelected
-      ? {
-          method_name: "deposit_and_stake",
-          args: toBase64({
-            amount: Big(amount).mul(Big(10).pow(24)).toFixed(),
-          }),
-          deposit: "0",
-          gas: "150000000000000",
-        }
-      : {
-          method_name: "deposit_and_stake",
-          args: "",
-          deposit: Big(amount).mul(Big(10).pow(24)).toFixed(),
-          gas: "200000000000000",
-        }
-  );
-
-  Near.call({
+  calls.push({
     contractName: treasuryDaoID,
     methodName: "add_proposal",
     args: {
@@ -300,13 +293,33 @@ function onSubmitClick() {
             receiver_id: isLockupContractSelected
               ? lockupContract
               : validatorAccount.pool_id,
-            actions: actions,
+            actions: isLockupContractSelected
+              ? [
+                  {
+                    method_name: "deposit_and_stake",
+                    args: toBase64({
+                      amount: Big(amount).mul(Big(10).pow(24)).toFixed(),
+                    }),
+                    deposit: "0",
+                    gas: "150000000000000",
+                  },
+                ]
+              : [
+                  {
+                    method_name: "deposit_and_stake",
+                    args: "",
+                    deposit: Big(amount).mul(Big(10).pow(24)).toFixed(),
+                    gas: "200000000000000",
+                  },
+                ],
           },
         },
       },
     },
     gas: 200000000000000,
   });
+
+  Near.call(calls);
 }
 
 const Container = styled.div`

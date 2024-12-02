@@ -164,6 +164,7 @@ return (
           "dropdown-toggle bg-white border rounded-2 btn drop-btn " +
           (disabled && " disabled")
         }
+        data-testid="validator-dropdown"
         onClick={!disabled && toggleDropdown}
       >
         <div

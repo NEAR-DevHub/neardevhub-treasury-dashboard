@@ -60,6 +60,7 @@ export default defineConfig({
         ...devices["Desktop Chrome"],
         instanceAccount: "treasury-infinex.near",
         daoAccount: "infinex.sputnik-dao.near",
+        lockupContract: "77fa9d86aca49e758a4cb72628972a0f3135d168.lockup.near",
       },
     },
     {

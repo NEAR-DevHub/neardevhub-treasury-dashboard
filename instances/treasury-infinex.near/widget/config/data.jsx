@@ -10,6 +10,10 @@ return {
       href: "?page=payments",
     },
     {
+      title: "Stake Delegation",
+      href: "?page=stake-delegation",
+    },
+    {
       title: "Settings",
       href: "?page=settings",
     },
@@ -38,4 +42,5 @@ return {
       />
     </svg>
   ),
+  lockupContract: "77fa9d86aca49e758a4cb72628972a0f3135d168.lockup.near",
 };
