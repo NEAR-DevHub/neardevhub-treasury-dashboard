@@ -146,9 +146,17 @@ export async function mockLockupNearBalances({ page, balance }) {
   });
 }
 
-async function selectLockupAccount({ page, daoAccount, lockupContract, isStakeRequest }) {
+async function selectLockupAccount({
+  page,
+  daoAccount,
+  lockupContract,
+  isStakeRequest,
+}) {
   await page.getByRole("button", { name: daoAccount }).click();
-  await page.getByText(lockupContract).nth(isStakeRequest ? 0 : 1).click();
+  await page
+    .getByText(lockupContract)
+    .nth(isStakeRequest ? 0 : 1)
+    .click();
 }
 
 async function openUnstakeForm({ page, isLockup, daoAccount, lockupContract }) {
@@ -330,7 +338,12 @@ async function openLockupStakingForm({ page, daoAccount, lockupContract }) {
   });
   await createRequestButton.click();
   await page.waitForTimeout(10_000);
-  await selectLockupAccount({ page, daoAccount, lockupContract,isStakeRequest: true });
+  await selectLockupAccount({
+    page,
+    daoAccount,
+    lockupContract,
+    isStakeRequest: true,
+  });
   await expect(
     page.getByText(
       "You cannot split the locked amount across multiple validators."
@@ -379,7 +392,7 @@ test.describe("Lockup staking", function () {
 
   test.describe("Without selected pool", function () {
     const lastProposalId = 10;
-    test.beforeEach(async ({ page , lockupContract}) => {
+    test.beforeEach(async ({ page, lockupContract }) => {
       await mockLockupSelectedPool({ hasSelectedPool: false, page });
       await mockRpcRequest({
         page,
@@ -466,7 +479,7 @@ test.describe("Lockup staking", function () {
     test("Create unstake request, should show no validator staked error", async ({
       page,
       daoAccount,
-      lockupContract
+      lockupContract,
     }) => {
       test.setTimeout(120_000);
       await openUnstakeForm({
@@ -546,7 +559,7 @@ test.describe("Lockup staking", function () {
         daoAccount,
         lockupContract,
       });
-      await page.waitForTimeout(10_000)
+      await page.waitForTimeout(10_000);
       const poolSelector = await page.locator(".custom-select");
       const hasDisabledClassOnChild = await poolSelector
         .locator(".disabled")
