@@ -71,8 +71,10 @@ const [lockupNearWithdrawTokens, setLockupNearWithdrawTokens] = useState(null);
 
 const nearPrice = useCache(
   () =>
-    asyncFetch(`https://api3.nearblocks.io/v1/charts/latest`).then((res) => {
-      return res.body.charts?.[0].near_price;
+    asyncFetch(
+      `https://api.coingecko.com/api/v3/simple/price?ids=near&vs_currencies=usd`
+    ).then((res) => {
+      return res.body.near?.usd;
     }),
   "price",
   { subscribe: false }
