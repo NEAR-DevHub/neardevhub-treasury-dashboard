@@ -12,13 +12,13 @@ if (!isBosGateway) {
 
 const instance = props.instance;
 
-if (!instance) {
-  return <></>;
-}
-
 const { treasuryDaoID, lockupContract } = VM.require(
   `${instance}/widget/config.data`
 );
+
+if (!instance || !treasuryDaoID) {
+  return <></>;
+}
 
 const [error, setError] = useState(null);
 const [transactionWithBalances, setTransactionWithBalance] = useState(null);

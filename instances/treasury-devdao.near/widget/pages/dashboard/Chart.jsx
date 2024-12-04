@@ -1,12 +1,12 @@
-const { nearPrice, totalBalance, ftTokens, accountId } = props;
+const { nearPrice, ftTokens, accountId } = props;
 
 const [height, setHeight] = useState(200);
 const [history, setHistory] = useState([]);
-const [tokens, setTokens] = useState([]);
 const [tokenAddresses, setTokenAddresses] = useState([]);
 const [selectedPeriod, setSelectedPeriod] = useState(1);
 const [selectedToken, setSelectedToken] = useState("near");
 const [isLoading, setIsLoading] = useState(true);
+const [balance, setBalance] = useState(0);
 
 const nearTokenIcon = "${REPL_NEAR_TOKEN_ICON}";
 const nearTokenInfo = {
@@ -57,35 +57,46 @@ const code = `
     const ctx = document.getElementById("myChart").getContext("2d");
     let account_id;
     let history;
+    let hoverX = null;
 
     let gradient = ctx.createLinearGradient(0, 0, 0, 350);
-    gradient.addColorStop(0, "rgba(67, 121, 238, 0.3)")
-    gradient.addColorStop(0.3, "rgba(67, 121, 238, 0.1)")
-    gradient.addColorStop(1, "rgba(67, 121, 238, 0)")
+    gradient.addColorStop(0, "rgba(0,0,0, 0.3)")
+    gradient.addColorStop(0.3, "rgba(0,0,0, 0.1)")
+    gradient.addColorStop(1, "rgba(0,0,0, 0)")
 
-    // Initialize the chart with an empty dataset and labels
-    let myChart = new Chart(ctx, {
-      type: "line",
-      data: {
-        labels: [],
-        datasets: [
-          {
-            data: [],
-            fill: true,
-            backgroundColor: gradient,
-            borderColor: "#4379EE",
-            pointBackgroundColor: "#fff",
-            pointRadius: 0,
-            tension: 0,
-          },
-        ],
-      },
-      options: {
+    // Plugin for drawing the tracking line
+    const trackingLinePlugin = {
+        id: 'trackingLine',
+        afterDatasetsDraw(chart) {
+            const { ctx, chartArea } = chart;
+
+            if (hoverX !== null) {
+                // Draw the vertical tracking line
+                ctx.save();
+                ctx.beginPath();
+                ctx.moveTo(hoverX, chartArea.top);
+                ctx.lineTo(hoverX, chartArea.bottom);
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = 'rgba(0,0,0,1)';
+                ctx.setLineDash([5, 3]);
+                ctx.stroke();
+                ctx.restore();
+                
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.7)'; // Semi-transparent overlay
+                ctx.fillRect(hoverX, chartArea.top, chartArea.right - hoverX, chartArea.bottom - chartArea.top);
+                ctx.restore();
+            }
+        }
+    };
+
+    // Chart configuration
+    const options = {
         responsive: true,
-        maintainAspectRatio: false,
-        tooltipFillColor: "rgba(0,0,0,0.8)",
-        tooltipFontStyle: "bold",
-        tooltipTemplate: "<%= value %>",
+        plugins: {
+            tooltip: {
+                enabled: false,
+            }
+        },
         scales: {
           x: {
             grid: {
@@ -98,6 +109,7 @@ const code = `
           },
           y: {
             beginAtZero: true,
+            type: 'logarithmic',
             display: false,
             grid: {
               display: false,
@@ -109,12 +121,73 @@ const code = `
             display: false,
           },
         },
+        events: []
+    };
+
+    // Initialize the chart with an empty dataset and labels
+    let myChart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: [],
+        datasets: [
+          {
+            data: [],
+            fill: true,
+            backgroundColor: gradient,
+            borderColor: "#000",
+            pointBackgroundColor: "#fff",
+            pointRadius: 0,
+            tension: 0,
+          },
+        ],
       },
+      options,
+      plugins: [trackingLinePlugin],
+    });
+
+    const xScale = myChart.scales.x;
+    const rect = myChart.canvas.getBoundingClientRect();
+    let currIndex = xScale.getValueForPixel(rect.width);
+
+    // Track mouse movement
+    document.getElementById('myChart').addEventListener('mousemove', (event) => {
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+
+        // Check if the mouse is inside the chart area
+        const chartArea = myChart.chartArea;
+        if (x >= chartArea.left && x <= chartArea.right && y >= chartArea.top && y <= chartArea.bottom) {
+            hoverX = x;
+            const periods = myChart.data.datasets[0].data.length
+            currIndex = xScale.getValueForPixel(x-(rect.width/periods/2));
+
+            sendChartBalance()
+        } else {
+            hoverX = null; // Clear the hover position if outside chart area
+        }
+
+        myChart.update('none'); // Update chart without animation
+    });
+
+    // Clear hover position on mouse leave
+    document.getElementById('myChart').addEventListener('mouseleave', () => {
+        hoverX = null;
+        myChart.update('none');
     });
 
     function sendChartHeight() {
+      currIndex = myChart.data.datasets[0].data.length-1;
       const chartHeight = document.getElementById("myChart").offsetHeight;
       window.parent.postMessage({ handler: "chartHeight", chartHeight }, "*");
+    }
+
+    function sendChartBalance() {
+      const data = myChart.data.datasets[0].data;
+      
+      window.parent.postMessage({
+        handler: "balance",
+        balance: data[currIndex]
+      }, "*");
     }
 
     window.addEventListener(
@@ -132,6 +205,7 @@ const code = `
         myChart.data.labels = data.labels;
         myChart.update();
         sendChartHeight();
+        sendChartBalance();
       },
       false
     );
@@ -168,7 +242,14 @@ return (
       <div className="d-flex justify-content-between flex-row align-items-start">
         <div>
           <h6 className="text-grey">Total Balance</h6>
-          <div className="fw-bold h3 mb-0">{totalBalance} USD</div>
+          <div className="fw-bold h3 mb-0">
+            {balance}{" "}
+            {
+              [nearTokenInfo, ...(ftTokens ?? [])].find(
+                (t) => t.contract === selectedToken
+              )?.ft_meta?.symbol
+            }
+          </div>
         </div>
 
         <div className="d-flex gap-4">
@@ -228,6 +309,9 @@ return (
             switch (e.handler) {
               case "chartHeight": {
                 setHeight(e.chartHeight);
+              }
+              case "balance": {
+                setBalance(e.balance);
               }
             }
           }}

@@ -3,13 +3,12 @@ const { getNearBalances } = VM.require(
 );
 
 const instance = props.instance;
-if (!instance) {
-  return <></>;
-}
 
 const { treasuryDaoID, lockupContract } = VM.require(
   `${instance}/widget/config.data`
 );
+
+if (!instance || !treasuryDaoID) return <></>;
 
 const Wrapper = styled.div`
   min-height: 80vh;
@@ -261,11 +260,27 @@ return (
           src={"${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.Chart"}
           props={{
             nearPrice,
-            totalBalance: formatCurrency(totalBalance),
+            totalBalance: formatCurrency(
+              Big(nearBalances?.totalParsed ?? "0").mul(nearPrice ?? 1)
+            ),
             ftTokens: userFTTokens.fts,
             accountId: treasuryDaoID,
           }}
         />
+
+        {lockupContract && (
+          <Widget
+            src={"${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.Chart"}
+            props={{
+              nearPrice,
+              totalBalance: formatCurrency(
+                Big(lockupNearBalances?.totalParsed ?? "0").mul(nearPrice ?? 1)
+              ),
+              ftTokens: userFTTokens.fts,
+              accountId: lockupContract,
+            }}
+          />
+        )}
         <Widget
           src={
             "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.TransactionHistory"
