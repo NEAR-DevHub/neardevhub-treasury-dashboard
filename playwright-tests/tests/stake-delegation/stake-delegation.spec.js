@@ -278,7 +278,7 @@ test.describe("Have valid staked requests and sufficient token balance", functio
       await page.getByRole("button", { name: "Submit" }).click();
       await expect(await getTransactionModalObject(page)).toEqual({
         proposal: {
-          description: '{"isStakeRequest":true,"notes":null}',
+          description: "* Proposal Action: stake",
           kind: {
             FunctionCall: {
               receiver_id: stakedPoolAccount,
@@ -312,7 +312,7 @@ test.describe("Have valid staked requests and sufficient token balance", functio
       await page.getByRole("button", { name: "Submit" }).click();
       await expect(await getTransactionModalObject(page)).toEqual({
         proposal: {
-          description: '{"isStakeRequest":true,"notes":null}',
+          description: "* Proposal Action: stake",
           kind: {
             FunctionCall: {
               receiver_id: stakedPoolAccount,
@@ -527,7 +527,7 @@ test.describe("Lockup staking", function () {
       await page.getByRole("button", { name: "Submit" }).click();
       await expect(await getTransactionModalObject(page)).toEqual({
         proposal: {
-          description: '{"isStakeRequest":true,"notes":null}',
+          description: "* Proposal Action: stake",
           kind: {
             FunctionCall: {
               receiver_id: lockupContract,
@@ -571,7 +571,7 @@ test.describe("Lockup staking", function () {
       await page.getByRole("button", { name: "Submit" }).click();
       await expect(await getTransactionModalObject(page)).toEqual({
         proposal: {
-          description: '{"isStakeRequest":true,"notes":null}',
+          description: "* Proposal Action: stake",
           kind: {
             FunctionCall: {
               receiver_id: lockupContract,

@@ -89,7 +89,7 @@ export const TransferProposalData = {
 export const StakeProposalData = {
   id: 1,
   proposer: "theori.near",
-  description: '{"isStakeRequest":true,"notes":"Testing Stake"}',
+  description: "* Proposal Action: stake",
   kind: {
     FunctionCall: {
       receiver_id: "astro-stakers.poolv1.near",
@@ -112,7 +112,7 @@ export const StakeProposalData = {
 export const UnStakeProposalData = {
   id: 2,
   proposer: "megha19.near",
-  description: '{"isStakeRequest":true,"notes":null}',
+  description: "* Proposal Action: stake",
   kind: {
     FunctionCall: {
       receiver_id: "astro-stakers.poolv1.near",
