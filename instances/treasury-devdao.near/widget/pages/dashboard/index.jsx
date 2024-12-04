@@ -261,9 +261,23 @@ return (
           src={"${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.Chart"}
           props={{
             nearPrice,
-            totalBalance: formatCurrency(totalBalance),
+            totalBalance: formatCurrency(
+              Big(nearBalances?.totalParsed ?? "0").mul(nearPrice ?? 1)
+            ),
             ftTokens: userFTTokens.fts,
             accountId: treasuryDaoID,
+          }}
+        />
+
+        <Widget
+          src={"${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.Chart"}
+          props={{
+            nearPrice,
+            totalBalance: formatCurrency(
+              Big(lockupNearBalances?.totalParsed ?? "0").mul(nearPrice ?? 1)
+            ),
+            ftTokens: userFTTokens.fts,
+            accountId: lockupContract,
           }}
         />
         <Widget
