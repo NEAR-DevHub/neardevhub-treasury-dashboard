@@ -6,6 +6,10 @@ const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
 
+const { encodeToMarkdown } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+);
+
 const onCloseCanvas = props.onCloseCanvas ?? (() => {});
 
 const tokenMapping = {
@@ -318,7 +322,7 @@ function onSubmitClick() {
       methodName: "add_proposal",
       args: {
         proposal: {
-          description: JSON.stringify(description),
+          description: encodeToMarkdown(description),
           kind: {
             Transfer: {
               token_id: isNEAR ? "" : tokenId,

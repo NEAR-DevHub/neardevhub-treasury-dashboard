@@ -2,6 +2,10 @@ const { getNearBalances } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
 
+const { encodeToMarkdown } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+);
+
 const instance = props.instance;
 const onCloseCanvas = props.onCloseCanvas ?? (() => {});
 
@@ -242,44 +246,47 @@ function onSubmitClick() {
   setTxnCreated(true);
   const deposit = daoPolicy?.proposal_bond || 100000000000000000000000;
   const description = {
-    isStakeRequest: true,
+    proposal_action: "stake",
     notes: notes,
   };
 
   const isLockupContractSelected = lockupContract === selectedWallet.value;
+
+  const addSelectPoolCall =
+    isLockupContractSelected && validatorAccount.pool_id !== lockupStakedPoolId;
+
   const calls = [];
-  if (isLockupContractSelected) {
-    if (validatorAccount.pool_id !== lockupStakedPoolId) {
-      description["showAfterProposalIdApproved"] = lastProposalId;
-      calls.push({
-        contractName: treasuryDaoID,
-        methodName: "add_proposal",
-        args: {
-          proposal: {
-            description: JSON.stringify({
-              isStakeRequest: true,
-              warningNotes: "Approve to continue staking with this validator",
-            }),
-            kind: {
-              FunctionCall: {
-                receiver_id: lockupContract,
-                actions: [
-                  {
-                    method_name: "select_staking_pool",
-                    args: toBase64({
-                      staking_pool_account_id: validatorAccount.pool_id,
-                    }),
-                    deposit: "0",
-                    gas: "100000000000000",
-                  },
-                ],
-              },
+  if (addSelectPoolCall) {
+    description["showAfterProposalIdApproved"] = lastProposalId;
+
+    calls.push({
+      contractName: treasuryDaoID,
+      methodName: "add_proposal",
+      args: {
+        proposal: {
+          description: encodeToMarkdown({
+            proposal_action: "stake",
+            customNotes: "Approve to continue staking with this validator",
+          }),
+          kind: {
+            FunctionCall: {
+              receiver_id: lockupContract,
+              actions: [
+                {
+                  method_name: "select_staking_pool",
+                  args: toBase64({
+                    staking_pool_account_id: validatorAccount.pool_id,
+                  }),
+                  deposit: "0",
+                  gas: "100000000000000",
+                },
+              ],
             },
           },
         },
-        gas: 200000000000000,
-      });
-    }
+      },
+      gas: 200000000000000,
+    });
   }
 
   calls.push({
@@ -287,7 +294,7 @@ function onSubmitClick() {
     methodName: "add_proposal",
     args: {
       proposal: {
-        description: JSON.stringify(description),
+        description: encodeToMarkdown(description),
         kind: {
           FunctionCall: {
             receiver_id: isLockupContractSelected
