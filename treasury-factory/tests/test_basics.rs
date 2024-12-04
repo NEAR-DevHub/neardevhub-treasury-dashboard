@@ -90,12 +90,6 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
         .transact()
         .await?;
 
-    let deploy_result = near_contract
-        .as_account()
-        .deploy(include_bytes!("../linkdrop.wasm"))
-        .await?;
-    assert!(deploy_result.is_success());
-
     let init_near_result = near_contract.call("new").max_gas().transact().await?;
     if init_near_result.is_failure() {
         panic!(
