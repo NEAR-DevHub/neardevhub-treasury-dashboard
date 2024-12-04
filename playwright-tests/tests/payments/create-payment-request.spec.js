@@ -391,9 +391,8 @@ test.describe("admin connected", function () {
 
     expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
-        description: `{"title":"Test proposal title","summary":"Test proposal summary","notes":${
-          instanceConfig.showProposalSelection ? '""' : null
-        }}`,
+        description:
+          "* Title: Test proposal title <br>* Summary: Test proposal summary",
         kind: {
           Transfer: {
             token_id: "",
@@ -465,7 +464,7 @@ test.describe("admin connected", function () {
       ? {
           proposal: {
             description:
-              '{"title":"Fellowship Contributor report by Matias Benary for  2024-09-09  2024-09-29","summary":"Fellowship Contributor report by Matias Benary for  2024-09-09  2024-09-29","notes":null,"proposalId":215}',
+              "* Title: Fellowship Contributor report by Matias Benary for  2024-09-09  2024-09-29 <br>* Summary: Fellowship Contributor report by Matias Benary for  2024-09-09  2024-09-29 <br>* Proposal Id: 215",
             kind: {
               Transfer: {
                 amount: "3150000000",
@@ -477,7 +476,8 @@ test.describe("admin connected", function () {
         }
       : {
           proposal: {
-            description: `{"title":"Test proposal title","summary":"Test proposal summary","notes":null}`,
+            description:
+              "* Title: Test proposal title <br>* Summary: Test proposal summary",
             kind: {
               Transfer: {
                 amount: "3150000000",
@@ -563,7 +563,7 @@ test.describe("admin with function access keys", function () {
       ? {
           proposal: {
             description:
-              '{"title":"Near Contract Standards payment request by Robert","summary":"Contract Standards Work Group grant","notes":null,"proposalId":173}',
+              "* Title: Near Contract Standards payment request by Robert <br>* Summary: Contract Standards Work Group grant <br>* Proposal Id: 173",
             kind: {
               Transfer: {
                 token_id: "",
@@ -578,7 +578,8 @@ test.describe("admin with function access keys", function () {
         }
       : {
           proposal: {
-            description: `{"title":"Test proposal title","summary":"Test proposal summary","notes":null}`,
+            description:
+              "* Title: Test proposal title <br>* Summary: Test proposal summary",
             kind: {
               Transfer: {
                 amount: (20n * 10n ** 24n).toString(),

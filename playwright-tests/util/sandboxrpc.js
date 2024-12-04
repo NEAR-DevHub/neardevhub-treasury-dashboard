@@ -231,7 +231,7 @@ export class SandboxRPC {
   }) {
     const args = {
       proposal: {
-        description: `{"title":"${title}","summary":"${summary}","notes":null}`,
+        description: `* Title: ${title} <br>* Summary: ${summary}`,
         kind: {
           Transfer: {
             amount,

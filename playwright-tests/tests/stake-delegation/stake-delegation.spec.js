@@ -431,7 +431,7 @@ test.describe("Lockup staking", function () {
       await expect(await getTransactionModalObject(page)).toEqual({
         proposal: {
           description:
-            '{"isStakeRequest":true,"warningNotes":"Approve to continue staking with this validator"}',
+            "* Proposal Action: stake <br>* Custom Notes: Approve to continue staking with this validator",
           kind: {
             FunctionCall: {
               receiver_id: lockupContract,
@@ -456,7 +456,7 @@ test.describe("Lockup staking", function () {
       const dataReceived = JSON.parse(txnLocator);
       expect(dataReceived).toEqual({
         proposal: {
-          description: `{"isStakeRequest":true,"notes":null,"showAfterProposalIdApproved":${lastProposalId}}`,
+          description: `* Proposal Action: stake <br>* Show After Proposal Id Approved: ${lastProposalId}`,
           kind: {
             FunctionCall: {
               receiver_id: lockupContract,
