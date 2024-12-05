@@ -89,7 +89,7 @@ export const TransferProposalData = {
 export const StakeProposalData = {
   id: 1,
   proposer: "theori.near",
-  description: '{"isStakeRequest":true,"notes":"Testing Stake"}',
+  description: "* Proposal Action: stake",
   kind: {
     FunctionCall: {
       receiver_id: "astro-stakers.poolv1.near",
@@ -112,7 +112,30 @@ export const StakeProposalData = {
 export const UnStakeProposalData = {
   id: 2,
   proposer: "megha19.near",
-  description: '{"isStakeRequest":true,"notes":null}',
+  description: "* Proposal Action: stake",
+  kind: {
+    FunctionCall: {
+      receiver_id: "astro-stakers.poolv1.near",
+      actions: [
+        {
+          method_name: "unstake",
+          args: "eyJhbW91bnQiOiIyMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAifQ==",
+          deposit: "0",
+          gas: "200000000000000",
+        },
+      ],
+    },
+  },
+  status: "InProgress",
+  vote_counts: {},
+  votes: {},
+  submission_time: "1728384666188444109",
+};
+
+export const OldJsonProposalData = {
+  id: 2,
+  proposer: "megha19.near",
+  description: '{"isStakeRequest":true,"notes":"this is notes"}',
   kind: {
     FunctionCall: {
       receiver_id: "astro-stakers.poolv1.near",

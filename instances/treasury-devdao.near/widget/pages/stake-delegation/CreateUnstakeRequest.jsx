@@ -4,6 +4,9 @@ const { getNearBalances } = VM.require(
 
 const instance = props.instance;
 const onCloseCanvas = props.onCloseCanvas ?? (() => {});
+const { encodeToMarkdown } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+);
 
 if (!instance) {
   return <></>;
@@ -242,7 +245,7 @@ function onSubmitClick() {
   setTxnCreated(true);
   const deposit = daoPolicy?.proposal_bond || 100000000000000000000000;
   const description = {
-    isStakeRequest: true,
+    proposal_action: "stake",
     notes: notes,
   };
 
@@ -253,7 +256,7 @@ function onSubmitClick() {
     methodName: "add_proposal",
     args: {
       proposal: {
-        description: JSON.stringify(description),
+        description: encodeToMarkdown(description),
         kind: {
           FunctionCall: {
             receiver_id: isLockupContractSelected

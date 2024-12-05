@@ -3,7 +3,7 @@ const { getNearBalances } = VM.require(
 );
 
 const instance = props.instance;
-if (!instance) {
+if (!instance || typeof getNearBalances !== "function") {
   return <></>;
 }
 
@@ -46,7 +46,7 @@ const Wrapper = styled.div`
   }
 
   .flex-container {
-    min-width: 400px;
+    min-width: 300px;
     height: fit-content;
   }
 

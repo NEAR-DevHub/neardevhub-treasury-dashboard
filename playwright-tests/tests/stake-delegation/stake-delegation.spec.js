@@ -9,6 +9,7 @@ import { utils } from "near-api-js";
 import { mockRpcRequest, updateDaoPolicyMembers } from "../../util/rpcmock.js";
 import {
   CurrentTimestampInNanoseconds,
+  OldJsonProposalData,
   StakeProposalData,
   UnStakeProposalData,
 } from "../../util/inventory.js";
@@ -41,6 +42,20 @@ async function mockStakeProposals({ page }) {
       originalResult[0].submission_time = CurrentTimestampInNanoseconds;
       // expired request
       originalResult[1].submission_time = "1715761329133693174";
+      return originalResult;
+    },
+  });
+}
+
+async function mockOldJSONStakeProposals({ page }) {
+  await mockRpcRequest({
+    page,
+    filterParams: {
+      method_name: "get_proposals",
+    },
+    modifyOriginalResultFunction: () => {
+      let originalResult = [JSON.parse(JSON.stringify(OldJsonProposalData))];
+      originalResult[0].submission_time = CurrentTimestampInNanoseconds;
       return originalResult;
     },
   });
@@ -243,6 +258,14 @@ test.describe("Have valid staked requests and sufficient token balance", functio
         page.getByRole("cell", { name: "1", exact: true })
       ).toBeVisible({ timeout: 20_000 });
     });
+
+    test("Should successfully parse old JSON description", async ({ page }) => {
+      await mockOldJSONStakeProposals({ page });
+      test.setTimeout(60_000);
+      await expect(
+        page.getByRole("cell", { name: "this is notes", exact: true })
+      ).toBeVisible({ timeout: 20_000 });
+    });
   });
 
   test.describe("Admin connected", function () {
@@ -278,7 +301,7 @@ test.describe("Have valid staked requests and sufficient token balance", functio
       await page.getByRole("button", { name: "Submit" }).click();
       await expect(await getTransactionModalObject(page)).toEqual({
         proposal: {
-          description: '{"isStakeRequest":true,"notes":null}',
+          description: "* Proposal Action: stake",
           kind: {
             FunctionCall: {
               receiver_id: stakedPoolAccount,
@@ -312,7 +335,7 @@ test.describe("Have valid staked requests and sufficient token balance", functio
       await page.getByRole("button", { name: "Submit" }).click();
       await expect(await getTransactionModalObject(page)).toEqual({
         proposal: {
-          description: '{"isStakeRequest":true,"notes":null}',
+          description: "* Proposal Action: stake",
           kind: {
             FunctionCall: {
               receiver_id: stakedPoolAccount,
@@ -431,7 +454,7 @@ test.describe("Lockup staking", function () {
       await expect(await getTransactionModalObject(page)).toEqual({
         proposal: {
           description:
-            '{"isStakeRequest":true,"warningNotes":"Approve to continue staking with this validator"}',
+            "* Proposal Action: stake <br>* Custom Notes: Approve to continue staking with this validator",
           kind: {
             FunctionCall: {
               receiver_id: lockupContract,
@@ -456,7 +479,7 @@ test.describe("Lockup staking", function () {
       const dataReceived = JSON.parse(txnLocator);
       expect(dataReceived).toEqual({
         proposal: {
-          description: `{"isStakeRequest":true,"notes":null,"showAfterProposalIdApproved":${lastProposalId}}`,
+          description: `* Proposal Action: stake <br>* Show After Proposal Id Approved: ${lastProposalId}`,
           kind: {
             FunctionCall: {
               receiver_id: lockupContract,
@@ -527,7 +550,7 @@ test.describe("Lockup staking", function () {
       await page.getByRole("button", { name: "Submit" }).click();
       await expect(await getTransactionModalObject(page)).toEqual({
         proposal: {
-          description: '{"isStakeRequest":true,"notes":null}',
+          description: "* Proposal Action: stake",
           kind: {
             FunctionCall: {
               receiver_id: lockupContract,
@@ -571,7 +594,7 @@ test.describe("Lockup staking", function () {
       await page.getByRole("button", { name: "Submit" }).click();
       await expect(await getTransactionModalObject(page)).toEqual({
         proposal: {
-          description: '{"isStakeRequest":true,"notes":null}',
+          description: "* Proposal Action: stake",
           kind: {
             FunctionCall: {
               receiver_id: lockupContract,
