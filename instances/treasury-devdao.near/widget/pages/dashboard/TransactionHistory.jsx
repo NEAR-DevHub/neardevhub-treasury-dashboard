@@ -139,7 +139,7 @@ useEffect(() => {
 }, [page]);
 
 function convertBalanceToReadableFormat(amount) {
-  return Big(amount ?? "0").toFixed(4);
+  return Big(amount ?? "0").toFixed(2);
 }
 
 function formatRelativeDate(date) {
@@ -279,7 +279,8 @@ return (
                   const isStaked =
                     isDeposit && txn.receiver.includes("poolv1.near");
 
-                  const isReceived = txn.receiver === treasuryDaoID;
+                  const isReceived =
+                    txn.receiver === treasuryDaoID || lockupContract;
                   if (txn.contract) {
                     const contractMetadata = Near.view(
                       txn.contract,
