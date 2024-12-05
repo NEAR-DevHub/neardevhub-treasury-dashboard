@@ -124,7 +124,7 @@ let searchFocused = false;
 function formatNearAmount(amount) {
   return Big(amount ?? "0")
     .div(Big(10).pow(24))
-    .toFixed(4);
+    .toFixed(2);
 }
 
 const BalanceDisplay = ({ balance, label }) => {
