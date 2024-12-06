@@ -259,16 +259,34 @@ return (
         )}
       </div>
       <div className="d-flex flex-column gap-2 flex-wrap dashboard-item flex-1 flex-container">
-        {/* <div> ADD CHART HERE </div> */}
+        <Widget
+          src={"${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.Chart"}
+          props={{
+            nearPrice,
+            totalBalance: formatCurrency(
+              Big(nearBalances?.totalParsed ?? "0").mul(nearPrice ?? 1)
+            ),
+            ftTokens: userFTTokens.fts,
+            accountId: treasuryDaoID,
+          }}
+        />
 
+        <Widget
+          src={"${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.Chart"}
+          props={{
+            nearPrice,
+            totalBalance: formatCurrency(
+              Big(lockupNearBalances?.totalParsed ?? "0").mul(nearPrice ?? 1)
+            ),
+            ftTokens: userFTTokens.fts,
+            accountId: lockupContract,
+          }}
+        />
         <Widget
           src={
             "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.TransactionHistory"
           }
-          props={{
-            nearPrice: nearPrice,
-            ...props,
-          }}
+          props={{ nearPrice, ...props }}
         />
       </div>
     </div>
