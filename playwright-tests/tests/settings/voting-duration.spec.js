@@ -365,7 +365,9 @@ test.describe("admin connected", function () {
             )
           ).toBeVisible();
           await expect(
-            page.getByRole("heading", { name: "Impact of changing voting duration" })
+            page.getByRole("heading", {
+              name: "Impact of changing voting duration",
+            })
           ).toBeVisible();
           await expect(
             await page.locator(".proposal-that-will-expire")
@@ -382,16 +384,18 @@ test.describe("admin connected", function () {
             .locator(".modalfooter button", { hasText: "Cancel" })
             .click();
           await expect(
-            page.getByRole("heading", { name: "Impact of changing voting duration" })
+            page.getByRole("heading", {
+              name: "Impact of changing voting duration",
+            })
           ).not.toBeVisible();
         } else if (expectedNewActiveProposals.length > 0) {
           await expect(
-            await page.getByText(
-              `${expectedNewActiveProposals.length} expired`
-            )
+            await page.getByText(`${expectedNewActiveProposals.length} expired`)
           ).toBeVisible();
           await expect(
-            page.getByRole("heading", { name: "Impact of changing voting duration" })
+            page.getByRole("heading", {
+              name: "Impact of changing voting duration",
+            })
           ).toBeVisible();
           await expect(
             await page.locator(".proposal-that-will-be-active")
@@ -406,7 +410,9 @@ test.describe("admin connected", function () {
             .locator(".modalfooter button", { hasText: "Cancel" })
             .click();
           await expect(
-            page.getByRole("heading", { name: "Impact of changing voting duration" })
+            page.getByRole("heading", {
+              name: "Impact of changing voting duration",
+            })
           ).not.toBeVisible();
         } else {
           await expect(
