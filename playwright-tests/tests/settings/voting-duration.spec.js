@@ -354,18 +354,18 @@ test.describe("admin connected", function () {
         if (expectedUnaffectedActiveProposals.length > 0) {
           await expect(
             page.getByText(
-              `Pending requests: ${expectedUnaffectedActiveProposals.length} pending`
+              `${expectedUnaffectedActiveProposals.length} pending requests`
             )
           ).toBeVisible();
         }
         if (expectedNewExpiredProposals.length > 0) {
           await expect(
             await page.getByText(
-              `Active requests: ${expectedNewExpiredProposals.length} active`
+              `${expectedNewExpiredProposals.length} active requests`
             )
           ).toBeVisible();
           await expect(
-            page.getByRole("heading", { name: "Changing the voting duration" })
+            page.getByRole("heading", { name: "Impact of changing voting duration" })
           ).toBeVisible();
           await expect(
             await page.locator(".proposal-that-will-expire")
@@ -382,16 +382,16 @@ test.describe("admin connected", function () {
             .locator(".modalfooter button", { hasText: "Cancel" })
             .click();
           await expect(
-            page.getByRole("heading", { name: "Changing the voting duration" })
+            page.getByRole("heading", { name: "Impact of changing voting duration" })
           ).not.toBeVisible();
         } else if (expectedNewActiveProposals.length > 0) {
           await expect(
             await page.getByText(
-              `Expired requests: ${expectedNewActiveProposals.length} expired`
+              `${expectedNewActiveProposals.length} expired`
             )
           ).toBeVisible();
           await expect(
-            page.getByRole("heading", { name: "Changing the voting duration" })
+            page.getByRole("heading", { name: "Impact of changing voting duration" })
           ).toBeVisible();
           await expect(
             await page.locator(".proposal-that-will-be-active")
@@ -406,7 +406,7 @@ test.describe("admin connected", function () {
             .locator(".modalfooter button", { hasText: "Cancel" })
             .click();
           await expect(
-            page.getByRole("heading", { name: "Changing the voting duration" })
+            page.getByRole("heading", { name: "Impact of changing voting duration" })
           ).not.toBeVisible();
         } else {
           await expect(
