@@ -1213,9 +1213,9 @@ test.describe("Don't ask again connected", function () {
       ).toBeVisible();
     }
   });
-  
+
   test("Should approve a withdraw request, when amount is ready to be withdrawn", async ({
-    page, 
+    page,
     daoAccount,
     instanceAccount,
   }) => {
