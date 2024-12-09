@@ -385,6 +385,13 @@ const ProposalsComponent = () => {
           let value = decodeBase64(action.args);
           amount = value.amount;
         }
+
+        const isWithdrawRequest =
+          action.method_name === "withdraw_all_from_staking_pool" ||
+          action.method_name === "withdraw_all";
+
+        const treasuryWallet =
+          receiverAccount === lockupContract ? lockupContract : treasuryDaoID;
         return (
           <tr
             className={
@@ -433,11 +440,7 @@ const ProposalsComponent = () => {
               />
             </td>
             {lockupContract && (
-              <td className={"text-left"}>
-                {receiverAccount === lockupContract
-                  ? lockupContract
-                  : treasuryDaoID}
-              </td>
+              <td className={"text-left"}>{treasuryWallet}</td>
             )}
 
             <td className={isVisible("Validator")}>
@@ -548,6 +551,9 @@ const ProposalsComponent = () => {
                       requiredVotes,
                       checkProposalStatus: () => checkProposalStatus(item.id),
                       avoidCheckForBalance: !isStakeRequest,
+                      isWithdrawRequest,
+                      validatorAccount,
+                      treasuryWallet,
                     }}
                   />
                 </td>
