@@ -114,7 +114,7 @@ function fetchProposals() {
   const variables = {
     order: "id_desc",
     limit: FETCH_LIMIT,
-    stage: "PAYMENT_PROCESSING",
+    stage: "PAYMENT",
   };
   fetchCacheApi(variables).then((result) => {
     setProposalData(result);
