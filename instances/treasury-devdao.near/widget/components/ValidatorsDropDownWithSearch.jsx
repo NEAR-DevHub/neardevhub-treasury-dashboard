@@ -224,7 +224,7 @@ return (
                       <BalanceDisplay
                         label="Pending release:"
                         balance={
-                          stakedBalance?.[selectedWallet].unStakedBalance
+                          stakedBalance?.[selectedWallet].unstakedBalance
                         }
                       />
                       <BalanceDisplay
