@@ -112,7 +112,7 @@ export const StakeProposalData = {
 export const UnStakeProposalData = {
   id: 2,
   proposer: "megha19.near",
-  description: "* Proposal Action: stake",
+  description: "* Proposal Action: unstake",
   kind: {
     FunctionCall: {
       receiver_id: "astro-stakers.poolv1.near",

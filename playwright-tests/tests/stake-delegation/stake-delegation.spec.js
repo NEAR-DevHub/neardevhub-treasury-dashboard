@@ -24,6 +24,7 @@ const stakedNear = "0.3027";
 const sufficientAvailableBalance = "11000000000000000000000000";
 const inSufficientAvailableBalance = "11450";
 const stakedPoolAccount = "astro-stakers.poolv1.near";
+const multiStakedPoolAccount = "nearfans.poolv1.near";
 
 async function mockStakeProposals({ page }) {
   await mockRpcRequest({
@@ -58,6 +59,68 @@ async function mockOldJSONStakeProposals({ page }) {
       originalResult[0].submission_time = CurrentTimestampInNanoseconds;
       return originalResult;
     },
+  });
+}
+
+async function mockUnstakedPoolBalances({ page, hasBalance }) {
+  await page.route(`https://archival-rpc.mainnet.near.org/`, async (route) => {
+    const request = await route.request();
+    const requestPostData = request.postDataJSON();
+
+    if (
+      requestPostData.params &&
+      requestPostData.params.request_type === "call_function" &&
+      requestPostData.params.method_name === "get_account_unstaked_balance"
+    ) {
+      const json = {
+        jsonrpc: "2.0",
+        result: {
+          block_hash: "GXEuJYXvoXoiDhtDJP8EiPXesQbQuwDSWadYzy2JAstV",
+          block_height: 132031112,
+          logs: [],
+          result: hasBalance
+            ? [
+                34, 51, 48, 50, 54, 53, 51, 54, 56, 51, 52, 51, 53, 51, 51, 57,
+                51, 50, 52, 51, 51, 53, 55, 51, 50, 34,
+              ]
+            : [34, 49, 34],
+        },
+        id: "dontcare",
+      };
+      await route.fulfill({ json });
+    } else {
+      await route.continue();
+    }
+  });
+}
+
+async function mockWithdrawBalances({ page, isAvailableToWithdraw }) {
+  await page.route(`https://archival-rpc.mainnet.near.org/`, async (route) => {
+    const request = await route.request();
+    const requestPostData = request.postDataJSON();
+
+    if (
+      requestPostData.params &&
+      requestPostData.params.request_type === "call_function" &&
+      requestPostData.params.method_name ===
+        "is_account_unstaked_balance_available"
+    ) {
+      const json = {
+        jsonrpc: "2.0",
+        result: {
+          block_hash: "sx9uuhk3amZWRvkTEcj9bSUVVcPoUXpgeUV6LpHsQCe",
+          block_height: 134584005,
+          logs: [],
+          result: isAvailableToWithdraw
+            ? [116, 114, 117, 101]
+            : [102, 97, 108, 115, 101],
+        },
+        id: "dontcare",
+      };
+      await route.fulfill({ json });
+    } else {
+      await route.continue();
+    }
   });
 }
 
@@ -112,19 +175,35 @@ async function mockNearBalances({ page, daoAccount, balance }) {
   );
 }
 
-export async function mockStakedPools({ daoAccount, page, havePools = true }) {
+export async function mockStakedPools({
+  daoAccount,
+  page,
+  havePools = true,
+  multiplePools = false,
+}) {
   await page.route(
     `https://api.fastnear.com/v1/account/${daoAccount}/staking`,
     async (route) => {
       const json = havePools
         ? {
             account_id: daoAccount,
-            pools: [
-              {
-                last_update_block_height: 129849269,
-                pool_id: stakedPoolAccount,
-              },
-            ],
+            pools: multiplePools
+              ? [
+                  {
+                    last_update_block_height: 129849269,
+                    pool_id: stakedPoolAccount,
+                  },
+                  {
+                    last_update_block_height: 129849269,
+                    pool_id: multiStakedPoolAccount,
+                  },
+                ]
+              : [
+                  {
+                    last_update_block_height: 129849269,
+                    pool_id: stakedPoolAccount,
+                  },
+                ],
           }
         : {
             account_id: daoAccount,
@@ -172,6 +251,24 @@ async function selectLockupAccount({
     .getByText(lockupContract)
     .nth(isStakeRequest ? 0 : 1)
     .click();
+}
+
+async function openWithdrawForm({
+  page,
+  isLockup,
+  daoAccount,
+  lockupContract,
+}) {
+  await expect(page.getByText("Create Request", { exact: true })).toBeVisible();
+  await page.locator(".h-100 > .p-2").click();
+  await page.getByText("Withdraw", { exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Create Withdraw Request" })
+  ).toBeVisible(10_000);
+  await page.waitForTimeout(10_000);
+  if (isLockup) {
+    await selectLockupAccount({ page, daoAccount, lockupContract });
+  }
 }
 
 async function openUnstakeForm({ page, isLockup, daoAccount, lockupContract }) {
@@ -275,6 +372,20 @@ test.describe("Have valid staked requests and sufficient token balance", functio
         "playwright-tests/storage-states/wallet-connected-admin.json",
     });
 
+    const lastProposalId = 10;
+    test.beforeEach(async ({ page }) => {
+      await mockRpcRequest({
+        page,
+        filterParams: {
+          method_name: "get_last_proposal_id",
+        },
+        modifyOriginalResultFunction: (originalResult) => {
+          originalResult = lastProposalId;
+          return originalResult;
+        },
+      });
+    });
+
     test("Should create stake delegation request, should throw error when invalid data is provided", async ({
       page,
     }) => {
@@ -336,7 +447,7 @@ test.describe("Have valid staked requests and sufficient token balance", functio
       await page.getByRole("button", { name: "Submit" }).click();
       await expect(await getTransactionModalObject(page)).toEqual({
         proposal: {
-          description: "* Proposal Action: stake",
+          description: "* Proposal Action: unstake",
           kind: {
             FunctionCall: {
               receiver_id: stakedPoolAccount,
@@ -351,6 +462,173 @@ test.describe("Have valid staked requests and sufficient token balance", functio
             },
           },
         },
+      });
+      const txnLocator = await page
+        .locator("div.modal-body code")
+        .nth(1)
+        .innerText();
+      const dataReceived = JSON.parse(txnLocator);
+      expect(dataReceived).toEqual({
+        proposal: {
+          description: `* Proposal Action: withdraw <br>* Show After Proposal Id Approved: ${lastProposalId} <br>* Custom Notes: Following to [#${lastProposalId}](/treasury-testing.near/widget/app?page=stake-delegation&selectedTab=History&highlightProposalId=${lastProposalId}) unstake request`,
+          kind: {
+            FunctionCall: {
+              receiver_id: stakedPoolAccount,
+              actions: [
+                {
+                  method_name: "withdraw_all",
+                  args: "",
+                  deposit: "0",
+                  gas: "200000000000000",
+                },
+              ],
+            },
+          },
+        },
+      });
+    });
+
+    test.describe("Withdraw request", function () {
+      test("User has not unstaked tokens, show warning screen", async ({
+        page,
+      }) => {
+        test.setTimeout(120_000);
+        await mockUnstakedPoolBalances({ page, hasBalance: false });
+        await openWithdrawForm({ page });
+        await expect(
+          page.getByText(
+            "You don’t have any unstaked balance available for withdrawal."
+          )
+        ).toBeVisible({
+          timeout: 10_000,
+        });
+        await expect(
+          page.getByRole("button", { name: "Submit" })
+        ).toBeDisabled();
+      });
+      test("Unstaked tokens are not ready to be withdrawn, show warning screen", async ({
+        page,
+      }) => {
+        test.setTimeout(120_000);
+        await mockUnstakedPoolBalances({ page, hasBalance: true });
+        await mockWithdrawBalances({ page, isAvailableToWithdraw: false });
+        await openWithdrawForm({ page });
+        await expect(
+          page.getByText(
+            "Your balance is not ready for withdrawal yet. It is pending release and will take 1–2 days."
+          )
+        ).toBeVisible({
+          timeout: 10_000,
+        });
+        await expect(
+          page.getByRole("button", { name: "Submit" })
+        ).toBeDisabled();
+      });
+      test("Have valid withdraw tokens from one pool", async ({ page }) => {
+        test.setTimeout(150_000);
+        await mockUnstakedPoolBalances({ page, hasBalance: true });
+        await mockWithdrawBalances({ page, isAvailableToWithdraw: true });
+        await openWithdrawForm({ page });
+        await expect(page.getByText("Available for withdrawal:")).toBeVisible({
+          timeout: 10_000,
+        });
+        const submitBtn = page.getByRole("button", { name: "Submit" });
+        await expect(submitBtn).toBeEnabled();
+        await submitBtn.click();
+        await expect(await getTransactionModalObject(page)).toEqual({
+          proposal: {
+            description: `* Proposal Action: withdraw`,
+            kind: {
+              FunctionCall: {
+                receiver_id: stakedPoolAccount,
+                actions: [
+                  {
+                    method_name: "withdraw_all",
+                    args: "",
+                    deposit: "0",
+                    gas: "200000000000000",
+                  },
+                ],
+              },
+            },
+          },
+        });
+      });
+      test("Have valid withdraw tokens from multiple pool", async ({
+        page,
+        daoAccount,
+        instanceAccount,
+      }) => {
+        test.setTimeout(150_000);
+        const instanceConfig = await getInstanceConfig({
+          page,
+          instanceAccount,
+        });
+        if (instanceConfig.lockupContract) {
+          console.log("lockup contract found for instance");
+          return test.skip();
+        }
+        await mockStakedPools({ daoAccount, page, multiplePools: true });
+        await mockUnstakedPoolBalances({ page, hasBalance: true });
+        await mockWithdrawBalances({ page, isAvailableToWithdraw: true });
+        await page.goto(`/${instanceAccount}/widget/app?page=stake-delegation`);
+        await openWithdrawForm({ page });
+        await expect(page.getByText(stakedPoolAccount)).toBeVisible({
+          timeout: 10_000,
+        });
+        const submitBtn = page.getByRole("button", { name: "Submit" });
+        await expect(submitBtn).toBeEnabled();
+        await submitBtn.click();
+        await expect(
+          page.getByText(
+            "By submitting, you request to withdraw all available funds. A separate withdrawal request will be created for each validator"
+          )
+        ).toBeVisible({
+          timeout: 10_000,
+        });
+        // proposals for both the pools
+        await expect(await getTransactionModalObject(page)).toEqual({
+          proposal: {
+            description: `* Proposal Action: withdraw`,
+            kind: {
+              FunctionCall: {
+                receiver_id: stakedPoolAccount,
+                actions: [
+                  {
+                    method_name: "withdraw_all",
+                    args: "",
+                    deposit: "0",
+                    gas: "200000000000000",
+                  },
+                ],
+              },
+            },
+          },
+        });
+
+        const txnLocator = await page
+          .locator("div.modal-body code")
+          .nth(1)
+          .innerText();
+        const dataReceived = JSON.parse(txnLocator);
+        expect(dataReceived).toEqual({
+          proposal: {
+            description: `* Proposal Action: withdraw`,
+            kind: {
+              FunctionCall: {
+                receiver_id: multiStakedPoolAccount,
+                actions: [
+                  {
+                    method_name: "withdraw_all",
+                    args: "",
+                    deposit: "0",
+                    gas: "200000000000000",
+                  },
+                ],
+              },
+            },
+          },
+        });
       });
     });
   });
@@ -521,8 +799,20 @@ test.describe("Lockup staking", function () {
   });
 
   test.describe("With selected pool", function () {
+    const lastProposalId = 10;
+
     test.beforeEach(async ({ page, daoAccount, lockupContract }) => {
       await mockLockupSelectedPool({ hasSelectedPool: true, page });
+      await mockRpcRequest({
+        page,
+        filterParams: {
+          method_name: "get_last_proposal_id",
+        },
+        modifyOriginalResultFunction: (originalResult) => {
+          originalResult = lastProposalId;
+          return originalResult;
+        },
+      });
       await mockStakedPools({
         page,
         daoAccount: lockupContract,
@@ -595,7 +885,7 @@ test.describe("Lockup staking", function () {
       await page.getByRole("button", { name: "Submit" }).click();
       await expect(await getTransactionModalObject(page)).toEqual({
         proposal: {
-          description: "* Proposal Action: stake",
+          description: "* Proposal Action: unstake",
           kind: {
             FunctionCall: {
               receiver_id: lockupContract,
@@ -603,6 +893,29 @@ test.describe("Lockup staking", function () {
                 {
                   method_name: "unstake",
                   args: "eyJhbW91bnQiOiIzMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAifQ==",
+                  deposit: "0",
+                  gas: "200000000000000",
+                },
+              ],
+            },
+          },
+        },
+      });
+      const txnLocator = await page
+        .locator("div.modal-body code")
+        .nth(1)
+        .innerText();
+      const dataReceived = JSON.parse(txnLocator);
+      expect(dataReceived).toEqual({
+        proposal: {
+          description: `* Proposal Action: withdraw <br>* Show After Proposal Id Approved: ${lastProposalId} <br>* Custom Notes: Following to [#${lastProposalId}](/treasury-testing.near/widget/app?page=stake-delegation&selectedTab=History&highlightProposalId=${lastProposalId}) unstake request`,
+          kind: {
+            FunctionCall: {
+              receiver_id: stakedPoolAccount,
+              actions: [
+                {
+                  method_name: "withdraw_all",
+                  args: "",
                   deposit: "0",
                   gas: "200000000000000",
                 },
