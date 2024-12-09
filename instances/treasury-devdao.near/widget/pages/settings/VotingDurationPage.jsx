@@ -4,6 +4,8 @@ if (!instance) {
 }
 
 const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+const { Modal, ModalBackdrop, ModalContent, ModalDialog, ModalHeader } =
+  VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.modal");
 
 const daoPolicy = Near.view(treasuryDaoID, "get_policy", {});
 
@@ -26,8 +28,12 @@ const currentDurationDays =
 
 const [durationDays, setDurationDays] = useState(currentDurationDays);
 const [proposalsThatWillExpire, setProposalsThatWillExpire] = useState([]);
+const [proposalsThatWillBeActive, setProposalsThatWillBeActive] = useState([]);
+const [otherPendingRequests, setOtherPendingRequests] = useState([]);
 const [showToastStatus, setToastStatus] = useState(null);
 const [isSubmittingChangeRequest, setSubmittingChangeRequest] = useState(false);
+const [showAffectedProposalsModal, setShowAffectedProposalsModal] =
+  useState(false);
 
 const Container = styled.div`
   font-size: 14px;
@@ -117,28 +123,169 @@ const ToastContainer = styled.div`
 `;
 
 const cancelChangeRequest = () => {
+  setShowAffectedProposalsModal(false);
   setDurationDays(currentDurationDays);
 };
 
+const findAffectedProposals = (callback) => {
+  setProposalsThatWillExpire([]);
+  setProposalsThatWillBeActive([]);
+  setOtherPendingRequests([]);
+  const limit = 10;
+  if (durationDays < currentDurationDays) {
+    const fetchProposalsThatWillExpire = (
+      lastIndex,
+      newProposalsThatWillExpire,
+      newOtherPendingRequests
+    ) => {
+      Near.asyncView(treasuryDaoID, "get_proposals", {
+        from_index: lastIndex < limit ? 0 : lastIndex - limit,
+        limit,
+      }).then((/** @type Array */ proposals) => {
+        const now = new Date().getTime();
+
+        let fetchMore = false;
+        for (const proposal of proposals.reverse()) {
+          const submissionTimeMillis = Number(
+            proposal.submission_time.substr(
+              0,
+              proposal.submission_time.length - 6
+            )
+          );
+          const currentExpiryTime =
+            submissionTimeMillis + 24 * 60 * 60 * 1000 * currentDurationDays;
+          const newExpiryTime =
+            submissionTimeMillis + 24 * 60 * 60 * 1000 * durationDays;
+          if (
+            currentExpiryTime >= now &&
+            newExpiryTime < now &&
+            proposal.status === "InProgress"
+          ) {
+            newProposalsThatWillExpire.push({
+              currentExpiryTime,
+              newExpiryTime,
+              submissionTimeMillis,
+              ...proposal,
+            });
+          } else if (proposal.status === "InProgress" && newExpiryTime > now) {
+            newOtherPendingRequests.push({
+              currentExpiryTime,
+              newExpiryTime,
+              submissionTimeMillis,
+              ...proposal,
+            });
+          }
+          fetchMore = proposals.length === limit && currentExpiryTime >= now;
+        }
+        setProposalsThatWillExpire(newProposalsThatWillExpire);
+        setOtherPendingRequests(newOtherPendingRequests);
+        if (fetchMore) {
+          fetchProposalsThatWillExpire(
+            lastIndex - limit,
+            newProposalsThatWillExpire,
+            newOtherPendingRequests
+          );
+        } else {
+          callback(
+            newProposalsThatWillExpire.length > 0 ||
+              newOtherPendingRequests.length > 0
+          );
+        }
+      });
+    };
+    fetchProposalsThatWillExpire(lastProposalId, [], []);
+  } else if (durationDays > currentDurationDays) {
+    const fetchProposalsThatWillBeActive = (
+      lastIndex,
+      newProposalsThatWillBeActive,
+      newOtherPendingRequests
+    ) => {
+      Near.asyncView(treasuryDaoID, "get_proposals", {
+        from_index: lastIndex < limit ? 0 : lastIndex - limit,
+        limit,
+      }).then((/** @type Array */ proposals) => {
+        const now = new Date().getTime();
+
+        let fetchMore = false;
+        for (const proposal of proposals.reverse()) {
+          const submissionTimeMillis = Number(
+            proposal.submission_time.substr(
+              0,
+              proposal.submission_time.length - 6
+            )
+          );
+          const currentExpiryTime =
+            submissionTimeMillis + 24 * 60 * 60 * 1000 * currentDurationDays;
+          const newExpiryTime =
+            submissionTimeMillis + 24 * 60 * 60 * 1000 * durationDays;
+          if (
+            currentExpiryTime <= now &&
+            newExpiryTime > now &&
+            proposal.status === "InProgress"
+          ) {
+            newProposalsThatWillBeActive.push({
+              currentExpiryTime,
+              newExpiryTime,
+              submissionTimeMillis,
+              ...proposal,
+            });
+          } else if (proposal.status === "InProgress" && newExpiryTime > now) {
+            newOtherPendingRequests.push({
+              currentExpiryTime,
+              newExpiryTime,
+              submissionTimeMillis,
+              ...proposal,
+            });
+          }
+          fetchMore = proposals.length === limit && newExpiryTime >= now;
+        }
+        setProposalsThatWillBeActive(newProposalsThatWillBeActive);
+        setOtherPendingRequests(newOtherPendingRequests);
+        if (fetchMore) {
+          fetchProposalsThatWillBeActive(
+            lastIndex - limit,
+            newProposalsThatWillBeActive,
+            newOtherPendingRequests
+          );
+        } else {
+          callback(
+            newProposalsThatWillBeActive.length > 0 ||
+              newOtherPendingRequests.length > 0
+          );
+        }
+      });
+    };
+    fetchProposalsThatWillBeActive(lastProposalId, [], []);
+  }
+};
+
 const submitChangeRequest = () => {
-  setSubmittingChangeRequest(true);
-  Near.call({
-    contractName: treasuryDaoID,
-    methodName: "add_proposal",
-    deposit,
-    args: {
-      proposal: {
-        description: "Change proposal period",
-        kind: {
-          ChangePolicyUpdateParameters: {
-            parameters: {
-              proposal_period:
-                (60 * 60 * 24 * durationDays).toString() + "000000000",
+  findAffectedProposals((shouldShowAffectedProposalsModal) => {
+    if (!showAffectedProposalsModal && shouldShowAffectedProposalsModal) {
+      setShowAffectedProposalsModal(true);
+      return;
+    }
+
+    setShowAffectedProposalsModal(false);
+    setSubmittingChangeRequest(true);
+    Near.call({
+      contractName: treasuryDaoID,
+      methodName: "add_proposal",
+      deposit,
+      args: {
+        proposal: {
+          description: "Change proposal period",
+          kind: {
+            ChangePolicyUpdateParameters: {
+              parameters: {
+                proposal_period:
+                  (60 * 60 * 24 * durationDays).toString() + "000000000",
+              },
             },
           },
         },
       },
-    },
+    });
   });
 };
 
@@ -164,56 +311,10 @@ useEffect(() => {
 
 const changeDurationDays = (newDurationDays) => {
   setDurationDays(newDurationDays);
-  const limit = 10;
-  if (newDurationDays < currentDurationDays) {
-    const fetchProposalsThatWillExpire = (
-      lastIndex,
-      newProposalsThatWillExpire
-    ) => {
-      Near.asyncView(treasuryDaoID, "get_proposals", {
-        from_index: lastIndex - limit,
-        limit,
-      }).then((/** @type Array */ proposals) => {
-        const now = new Date().getTime();
-
-        let fetchMore = false;
-        for (const proposal of proposals.reverse()) {
-          const submissionTimeMillis = Number(
-            proposal.submission_time.substr(
-              0,
-              proposal.submission_time.length - 6
-            )
-          );
-          const currentExpiryTime =
-            submissionTimeMillis + 24 * 60 * 60 * 1000 * currentDurationDays;
-          const newExpiryTime =
-            submissionTimeMillis + 24 * 60 * 60 * 1000 * newDurationDays;
-          if (
-            currentExpiryTime >= now &&
-            newExpiryTime < now &&
-            proposal.status === "InProgress"
-          ) {
-            newProposalsThatWillExpire.push({
-              currentExpiryTime,
-              newExpiryTime,
-              submissionTimeMillis,
-              ...proposal,
-            });
-          }
-          fetchMore = currentExpiryTime >= now;
-        }
-        setProposalsThatWillExpire(newProposalsThatWillExpire);
-        if (fetchMore) {
-          fetchProposalsThatWillExpire(
-            lastIndex - limit,
-            newProposalsThatWillExpire
-          );
-        }
-      });
-    };
-    fetchProposalsThatWillExpire(lastProposalId, []);
-  }
 };
+
+const showImpactedRequests =
+  proposalsThatWillExpire.length > 0 || proposalsThatWillBeActive.length > 0;
 
 return (
   <Container>
@@ -241,55 +342,164 @@ return (
           </small>
         </p>
 
-        {proposalsThatWillExpire.length > 0 ? (
-          <p>
-            <div class="alert alert-danger" role="alert">
-              The following proposals will expire because of the changed
-              duration
-            </div>
-            <table className="table table-sm">
-              <thead>
-                <tr className="text-grey">
-                  <th>Id</th>
-                  <th>Description</th>
-                  <th>Submission date</th>
-                  <th>Current expiry</th>
-                  <th>New expiry</th>
-                </tr>
-              </thead>
-              <tbody>
-                {proposalsThatWillExpire.map((proposal) => (
-                  <tr class="proposal-that-will-expire">
-                    <td>{proposal.id}</td>
-                    <td>{proposal.description}</td>
-                    <td>
-                      {new Date(proposal.submissionTimeMillis)
-                        .toJSON()
-                        .substring(0, "yyyy-mm-dd".length)}
-                    </td>
-                    <td>
-                      {new Date(proposal.currentExpiryTime)
-                        .toJSON()
-                        .substring(0, "yyyy-mm-dd".length)}
-                    </td>
-                    <td>
-                      {new Date(proposal.newExpiryTime)
-                        .toJSON()
-                        .substring(0, "yyyy-mm-dd".length)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </p>
+        {showAffectedProposalsModal ? (
+          <Modal>
+            <ModalBackdrop />
+            <ModalDialog className="card">
+              <ModalHeader>
+                <h5 className="mb-0">
+                  <i class="bi bi-exclamation-triangle text-warning"></i>
+                  Impact of changing voting duration
+                </h5>
+              </ModalHeader>
+              <ModalContent>
+                <p>
+                  You are about to update the voting duration. This will affect
+                  the following existing requests.
+                </p>
+                <ul>
+                  {otherPendingRequests.length > 0 ? (
+                    <li>
+                      <b>{otherPendingRequests.length} pending requests</b> will
+                      now follow the new voting duration policy.
+                    </li>
+                  ) : (
+                    ""
+                  )}
+                  {proposalsThatWillExpire.length > 0 ? (
+                    <li>
+                      <b>{proposalsThatWillExpire.length} active requests</b>{" "}
+                      under the old voting duration will move to the "Archived"
+                      tab and close for voting. These requests were created
+                      outside the new voting period and are no longer considered
+                      active.
+                    </li>
+                  ) : (
+                    ""
+                  )}
+                  {proposalsThatWillBeActive.length > 0 ? (
+                    <li>
+                      <b>{proposalsThatWillBeActive.length} expired requests</b>{" "}
+                      under the old voting duration will move back to the
+                      "Pending Requests" tab and reopen for voting. These
+                      requests were created within the new voting period and are
+                      no longer considered expired.
+                    </li>
+                  ) : (
+                    ""
+                  )}
+                </ul>
+                {showImpactedRequests ? (
+                  <>
+                    <h4>Summary of changes</h4>
+                    <table className="table table-sm">
+                      <thead>
+                        <tr className="text-grey">
+                          <th>Id</th>
+                          <th>Description</th>
+                          <th>Submission date</th>
+                          <th>Current expiry</th>
+                          <th>New expiry</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {proposalsThatWillExpire.map((proposal) => (
+                          <tr class="proposal-that-will-expire">
+                            <td>{proposal.id}</td>
+                            <td>{proposal.description}</td>
+                            <td>
+                              {new Date(proposal.submissionTimeMillis)
+                                .toJSON()
+                                .substring(0, "yyyy-mm-dd".length)}
+                            </td>
+                            <td>
+                              {new Date(proposal.currentExpiryTime)
+                                .toJSON()
+                                .substring(0, "yyyy-mm-dd".length)}
+                            </td>
+                            <td>
+                              {new Date(proposal.newExpiryTime)
+                                .toJSON()
+                                .substring(0, "yyyy-mm-dd".length)}
+                            </td>
+                          </tr>
+                        ))}
+                        {proposalsThatWillBeActive.map((proposal) => (
+                          <tr class="proposal-that-will-be-active">
+                            <td>{proposal.id}</td>
+                            <td>{proposal.description}</td>
+                            <td>
+                              {new Date(proposal.submissionTimeMillis)
+                                .toJSON()
+                                .substring(0, "yyyy-mm-dd".length)}
+                            </td>
+                            <td>
+                              {new Date(proposal.currentExpiryTime)
+                                .toJSON()
+                                .substring(0, "yyyy-mm-dd".length)}
+                            </td>
+                            <td>
+                              {new Date(proposal.newExpiryTime)
+                                .toJSON()
+                                .substring(0, "yyyy-mm-dd".length)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </>
+                ) : (
+                  ""
+                )}
+                {proposalsThatWillBeActive.length > 0 ? (
+                  <p>
+                    If you do not want expired proposals to be open for voting
+                    again, you may need to delete them.
+                  </p>
+                ) : (
+                  ""
+                )}
+              </ModalContent>
+              <div className="modalfooter d-flex gap-2 align-items-center justify-content-end mt-2">
+                <Widget
+                  src={
+                    "${REPL_DEVHUB}/widget/devhub.components.molecule.Button"
+                  }
+                  props={{
+                    classNames: { root: "btn-outline-secondary" },
+                    label: "Cancel",
+                    onClick: cancelChangeRequest,
+                  }}
+                />
+                <Widget
+                  src={
+                    "${REPL_DEVHUB}/widget/devhub.components.molecule.Button"
+                  }
+                  props={{
+                    classNames: { root: "theme-btn" },
+                    label: "Yes, proceed",
+                    onClick: submitChangeRequest,
+                  }}
+                />
+              </div>
+            </ModalDialog>
+          </Modal>
         ) : (
           ""
         )}
 
-        <button class="btn btn-light" onClick={cancelChangeRequest}>
+        <button
+          class="btn btn-light"
+          disabled={durationDays === currentDurationDays}
+          onClick={cancelChangeRequest}
+        >
           Cancel
         </button>
-        <button class="btn btn-success" onClick={submitChangeRequest}>
+        <button
+          class="btn btn-success"
+          disabled={durationDays === currentDurationDays}
+          onClick={submitChangeRequest}
+        >
           Submit Request
         </button>
       </div>
