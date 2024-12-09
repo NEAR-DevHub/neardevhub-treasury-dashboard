@@ -782,59 +782,6 @@ test.describe("Withdraw request", function () {
       page.getByText("Voting is not available before unstaking release")
     ).toBeEnabled({ timeout: 10_000 });
   });
-
-  test("Vote on withdraw request, when amount is ready", async ({
-    page,
-    daoAccount,
-    instanceAccount,
-  }) => {
-    test.setTimeout(150_000);
-    await mockRpcRequest({
-      page,
-      filterParams: {
-        method_name: "is_account_unstaked_balance_available",
-      },
-      modifyOriginalResultFunction: () => {
-        return true;
-      },
-    });
-    const isMultiVote = daoAccount === "infinex.sputnik-dao.near";
-    await voteOnProposal({
-      page,
-      daoAccount,
-      instanceAccount,
-      voteStatus: "Approved",
-      vote: "Approve",
-      isMultiVote,
-      isWithdrawRequest: true,
-    });
-    const approveButton = page.getByRole("button", {
-      name: "Approve",
-    });
-
-    await expect(approveButton).toBeEnabled({ timeout: 40_000 });
-    await approveButton.click();
-    expect(
-      page.getByRole("heading", { name: "Confirm your vote" })
-    ).toBeVisible();
-    await page.getByRole("button", { name: "Confirm" }).click();
-    const transaction_toast = page.getByText(
-      `Calling contract ${daoAccount} with method act_proposal`
-    );
-    await expect(transaction_toast).toBeVisible();
-
-    await transaction_toast.waitFor({ state: "detached", timeout: 10000 });
-    await expect(transaction_toast).not.toBeVisible();
-    if (isMultiVote) {
-      await expect(
-        page.getByText("Your vote is counted, the request is highlighted.")
-      ).toBeVisible();
-    } else {
-      await expect(
-        page.getByText("The request has been successfully executed.")
-      ).toBeVisible();
-    }
-  });
 });
 
 async function openLockupStakingForm({ page, daoAccount, lockupContract }) {
@@ -1263,6 +1210,59 @@ test.describe("Don't ask again connected", function () {
     } else {
       await expect(
         page.getByText("The payment request has been successfully deleted.")
+      ).toBeVisible();
+    }
+  });
+  
+  test("Should approve a withdraw request, when amount is ready to be withdrawn", async ({
+    page, 
+    daoAccount,
+    instanceAccount,
+  }) => {
+    test.setTimeout(150_000);
+    await mockRpcRequest({
+      page,
+      filterParams: {
+        method_name: "is_account_unstaked_balance_available",
+      },
+      modifyOriginalResultFunction: () => {
+        return true;
+      },
+    });
+    const isMultiVote = daoAccount === "infinex.sputnik-dao.near";
+    await voteOnProposal({
+      page,
+      daoAccount,
+      instanceAccount,
+      voteStatus: "Approved",
+      vote: "Approve",
+      isMultiVote,
+      isWithdrawRequest: true,
+    });
+    const approveButton = page.getByRole("button", {
+      name: "Approve",
+    });
+
+    await expect(approveButton).toBeEnabled({ timeout: 40_000 });
+    await approveButton.click();
+    expect(
+      page.getByRole("heading", { name: "Confirm your vote" })
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Confirm" }).click();
+    const transaction_toast = page.getByText(
+      `Calling contract ${daoAccount} with method act_proposal`
+    );
+    await expect(transaction_toast).toBeVisible();
+
+    await transaction_toast.waitFor({ state: "detached", timeout: 10000 });
+    await expect(transaction_toast).not.toBeVisible();
+    if (isMultiVote) {
+      await expect(
+        page.getByText("Your vote is counted, the request is highlighted.")
+      ).toBeVisible();
+    } else {
+      await expect(
+        page.getByText("The request has been successfully executed.")
       ).toBeVisible();
     }
   });
