@@ -228,7 +228,6 @@ function onSubmitClick() {
   const deposit = daoPolicy?.proposal_bond || 100000000000000000000000;
   const description = {
     proposal_action: "withdraw",
-    notes: notes,
   };
 
   const isLockupContractSelected = lockupContract === selectedWallet.value;
