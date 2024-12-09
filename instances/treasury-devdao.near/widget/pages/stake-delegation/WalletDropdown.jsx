@@ -31,7 +31,7 @@ const nearPrice = useCache(
 function getTokenValue(amount) {
   return Big(amount ? amount : 0)
     .mul(nearPrice ?? 1)
-    .toFixed(4);
+    .toFixed(2);
 }
 
 const [walletOptions, setWalletOptions] = useState([

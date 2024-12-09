@@ -537,8 +537,8 @@ return (
             USD:{" "}
             {Big(amount ? amount : 0)
               .mul(nearPrice)
-              .toFixed(4)}
-            <div>Price: ${Big(nearPrice).toFixed(4)}</div>
+              .toFixed(2)}
+            <div>Price: ${Big(nearPrice).toFixed(2)}</div>
           </div>
         )}
       </div>
