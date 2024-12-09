@@ -601,7 +601,7 @@ test.describe("Lockup staking", function () {
               actions: [
                 {
                   method_name: "unstake",
-                  args: "eyJhbW91bnQiOiIzMDI3MDAwMDAwMDAwMDAwMDAwMDAwMDAifQ==",
+                  args: "eyJhbW91bnQiOiIzMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAifQ==",
                   deposit: "0",
                   gas: "200000000000000",
                 },
