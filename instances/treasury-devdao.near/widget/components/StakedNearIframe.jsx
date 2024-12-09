@@ -75,12 +75,17 @@ const code = `
         }),
       });
       const result = await response.json();
-      return parseInt(
-        result.result.result
-          .map((c) => String.fromCharCode(c))
-          .join("")
-          .replace(/\"/g, "")
-      );
+      const decodedResult = result.result.result
+        .map((c) => String.fromCharCode(c))
+        .join("")
+        .replace(/\"/g, "");
+    
+    
+      // Return 0 if decoded result is "1"
+      if (decodedResult === "1") {
+        return 0;
+      }
+      return parseInt(decodedResult);
     }
   
     async function isAccountUnstakedBalanceAvailable(stakingpool_id, account_id) {
