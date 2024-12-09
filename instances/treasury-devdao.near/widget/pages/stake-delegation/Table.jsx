@@ -148,6 +148,10 @@ const Container = styled.div`
   .text-warning {
     color: rgba(177, 113, 8, 1) !important;
   }
+
+  .markdown-href a {
+    color: inherit !important;
+  }
 `;
 
 const ToastContainer = styled.div`
@@ -462,21 +466,16 @@ const ProposalsComponent = () => {
             </td>
             <td
               className={
-                "text-sm text-left " +
+                "text-sm text-left markdown-href " +
                 isVisible("Notes") +
                 (customNotes && " text-warning")
               }
             >
               {notes || customNotes ? (
-                <Widget
-                  src="${REPL_MOB}/widget/N.Common.OverlayTrigger"
-                  props={{
-                    popup: <TooltipContent summary={customNotes || notes} />,
-                    children: (
-                      <div className="custom-truncate" style={{ width: 180 }}>
-                        {customNotes || notes}
-                      </div>
-                    ),
+                <Markdown
+                  text={customNotes || notes}
+                  syntaxHighlighterProps={{
+                    wrapLines: true,
                   }}
                 />
               ) : (

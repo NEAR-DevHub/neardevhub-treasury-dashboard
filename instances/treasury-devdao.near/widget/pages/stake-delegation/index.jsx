@@ -54,16 +54,15 @@ const CreateBtn = () => {
         setCreateBtnOpen(false);
       },
     },
-    // will add withdraw in next version
-    // {
-    //   label: "Withdraw",
-    //   icon: "${REPL_WITHDRAW_ICON}",
-    //   value: createBtnOption.WITHDRAW,
-    //   onClick: () => {
-    //     setShowWithdrawRequest(true);
-    //     setCreateBtnOpen(false);
-    //   },
-    // },
+    {
+      label: "Withdraw",
+      icon: "${REPL_WITHDRAW_ICON}",
+      value: createBtnOption.WITHDRAW,
+      onClick: () => {
+        setShowWithdrawRequest(true);
+        setCreateBtnOpen(false);
+      },
+    },
   ];
 
   const toggleDropdown = () => {

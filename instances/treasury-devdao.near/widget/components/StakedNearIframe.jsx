@@ -131,7 +131,7 @@ const code = `
             pool.pool_id,
             poolResp.account_id
           );
-          let unStakedBalance = await getAccountUnStakedBalance(
+          let unstakedBalance = await getAccountUnStakedBalance(
             pool.pool_id,
             poolResp.account_id
           );
@@ -142,14 +142,14 @@ const code = `
             );  
           let availableToWithdrawBalance = 0;
           if (isUnstakedBalanceAvailable) {
-            availableToWithdrawBalance = unStakedBalance;
-            unStakedBalance = 0;
+            availableToWithdrawBalance = unstakedBalance;
+            unstakedBalance = 0;
           }
   
           return {
             pool: pool.pool_id,
             stakedBalance,
-            unStakedBalance,
+            unstakedBalance,
             availableToWithdrawBalance,
           };
         })
@@ -181,7 +181,7 @@ const iframe = (
               new Big(pool.stakedBalance).div(1e24)
             );
             unstakedBalance = unstakedBalance.plus(
-              new Big(pool.unStakedBalance).div(1e24)
+              new Big(pool.unstakedBalance).div(1e24)
             );
             availableToWithdrawBalance = availableToWithdrawBalance.plus(
               new Big(pool.availableToWithdrawBalance).div(1e24)

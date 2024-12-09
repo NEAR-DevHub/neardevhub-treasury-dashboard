@@ -404,7 +404,7 @@ useEffect(() => {
     );
     const isAlreadyStaked =
       (pool.stakedBalance || 0) > 0 ||
-      (pool.unStakedBalance || 0) > 0 ||
+      (pool.unstakedBalance || 0) > 0 ||
       (pool.availableToWithdrawBalance || 0) > 0;
     if (isAlreadyStaked) {
       setValidatorAccount({
