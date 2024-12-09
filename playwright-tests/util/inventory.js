@@ -132,6 +132,29 @@ export const UnStakeProposalData = {
   submission_time: "1728384666188444109",
 };
 
+export const WithdrawProposalData = {
+  id: 55,
+  proposer: "megha19.near",
+  description: "* Proposal Action: withdraw",
+  kind: {
+    FunctionCall: {
+      receiver_id: "nearfans.poolv1.near",
+      actions: [
+        {
+          method_name: "withdraw_all",
+          args: "",
+          deposit: "0",
+          gas: "200000000000000",
+        },
+      ],
+    },
+  },
+  status: "InProgress",
+  vote_counts: {},
+  votes: {},
+  submission_time: "1733742415052919669",
+};
+
 export const OldJsonProposalData = {
   id: 2,
   proposer: "megha19.near",
