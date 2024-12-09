@@ -1,0 +1,27 @@
+name: Deploy Treasury Factory contract
+
+on:
+  workflow_dispatch: # This allows manual triggering
+
+jobs:
+  test:
+    uses: ./.github/workflows/test-treasury-fatctory-contract.yml
+
+  deploy:
+    name: Deploy to production
+    needs: [test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install cargo-near CLI
+        run: curl --proto '=https' --tlsv1.2 -LsSf https://github.com/near/cargo-near/releases/latest/download/cargo-near-installer.sh | sh
+      - name: Deploy
+        run: |
+          cargo near deploy --no-docker "${{ vars.TREASURY_FACTORY_ACCOUNT_ID }}" \
+            without-init-call \
+            network-config mainnet \
+            --signer-public-key "${{ vars.TREASURY_FACTORY_ACCOUNT_PUBLIC_KEY }}" \
+            --signer-private-key "${{ secrets.TREASURY_FACTORY_ACCOUNT_PRIVATE_KEY }}" \
+            send
+        working-directory: ./web4/treasury-factory
