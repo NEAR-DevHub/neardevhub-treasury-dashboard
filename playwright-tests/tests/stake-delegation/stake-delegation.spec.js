@@ -63,65 +63,58 @@ async function mockOldJSONStakeProposals({ page }) {
   });
 }
 
-async function mockUnstakedPoolBalances({ page, hasBalance }) {
-  await page.route(`https://archival-rpc.mainnet.near.org/`, async (route) => {
+async function mockUnstakeAndWithdrawBalance({
+  page,
+  hasUnstakeBalance,
+  hasWithdrawBalance,
+}) {
+  await page.route(`https://archival-rpc.mainnet.near.org`, async (route) => {
     const request = await route.request();
     const requestPostData = request.postDataJSON();
 
     if (
       requestPostData.params &&
-      requestPostData.params.request_type === "call_function" &&
-      requestPostData.params.method_name === "get_account_unstaked_balance"
-    ) {
-      const json = {
-        jsonrpc: "2.0",
-        result: {
-          block_hash: "GXEuJYXvoXoiDhtDJP8EiPXesQbQuwDSWadYzy2JAstV",
-          block_height: 132031112,
-          logs: [],
-          result: hasBalance
-            ? [
-                34, 51, 48, 50, 54, 53, 51, 54, 56, 51, 52, 51, 53, 51, 51, 57,
-                51, 50, 52, 51, 51, 53, 55, 51, 50, 34,
-              ]
-            : [34, 49, 34],
-        },
-        id: "dontcare",
-      };
-      await route.fulfill({ json });
-    } else {
-      await route.continue();
-    }
-  });
-}
-
-async function mockWithdrawBalances({ page, isAvailableToWithdraw }) {
-  await page.route(`https://archival-rpc.mainnet.near.org/`, async (route) => {
-    const request = await route.request();
-    const requestPostData = request.postDataJSON();
-
-    if (
-      requestPostData.params &&
-      requestPostData.params.request_type === "call_function" &&
-      requestPostData.params.method_name ===
+      requestPostData.params.request_type === "call_function"
+    )
+      if (
+        requestPostData.params.method_name === "get_account_unstaked_balance"
+      ) {
+        const json = {
+          jsonrpc: "2.0",
+          result: {
+            block_hash: "GXEuJYXvoXoiDhtDJP8EiPXesQbQuwDSWadYzy2JAstV",
+            block_height: 132031112,
+            logs: [],
+            result: hasUnstakeBalance
+              ? [
+                  34, 51, 48, 50, 54, 53, 51, 54, 56, 51, 52, 51, 53, 51, 51,
+                  57, 51, 50, 52, 51, 51, 53, 55, 51, 50, 34,
+                ]
+              : [34, 49, 34],
+          },
+          id: "dontcare",
+        };
+        await route.fulfill({ json });
+      } else if (
+        requestPostData.params.method_name ===
         "is_account_unstaked_balance_available"
-    ) {
-      const json = {
-        jsonrpc: "2.0",
-        result: {
-          block_hash: "sx9uuhk3amZWRvkTEcj9bSUVVcPoUXpgeUV6LpHsQCe",
-          block_height: 134584005,
-          logs: [],
-          result: isAvailableToWithdraw
-            ? [116, 114, 117, 101]
-            : [102, 97, 108, 115, 101],
-        },
-        id: "dontcare",
-      };
-      await route.fulfill({ json });
-    } else {
-      await route.continue();
-    }
+      ) {
+        const json = {
+          jsonrpc: "2.0",
+          result: {
+            block_hash: "sx9uuhk3amZWRvkTEcj9bSUVVcPoUXpgeUV6LpHsQCe",
+            block_height: 134584005,
+            logs: [],
+            result: hasWithdrawBalance
+              ? [116, 114, 117, 101]
+              : [102, 97, 108, 115, 101],
+          },
+          id: "dontcare",
+        };
+        await route.fulfill({ json });
+      } else {
+        await route.continue();
+      }
   });
 }
 
@@ -594,9 +587,10 @@ test.describe("Withdraw request", function () {
     storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
   });
 
-  test.beforeEach(async ({ page, instanceAccount }) => {
+  test.beforeEach(async ({ page, instanceAccount, daoAccount }) => {
     await updateDaoPolicyMembers({ page });
     await page.goto(`/${instanceAccount}/widget/app?page=stake-delegation`);
+    await mockStakedPools({ daoAccount, page, havePools: true });
     await expect(
       await page.locator("div").filter({ hasText: /^Stake Delegation$/ })
     ).toBeVisible();
@@ -606,7 +600,11 @@ test.describe("Withdraw request", function () {
     page,
   }) => {
     test.setTimeout(120_000);
-    await mockUnstakedPoolBalances({ page, hasBalance: false });
+    await mockUnstakeAndWithdrawBalance({
+      page,
+      hasUnstakeBalance: false,
+      hasWithdrawBalance: false,
+    });
     await openWithdrawForm({ page });
     await expect(
       page.getByText(
@@ -622,8 +620,11 @@ test.describe("Withdraw request", function () {
     page,
   }) => {
     test.setTimeout(120_000);
-    await mockUnstakedPoolBalances({ page, hasBalance: true });
-    await mockWithdrawBalances({ page, isAvailableToWithdraw: false });
+    await mockUnstakeAndWithdrawBalance({
+      page,
+      hasUnstakeBalance: true,
+      hasWithdrawBalance: false,
+    });
     await openWithdrawForm({ page });
     await expect(
       page.getByText(
@@ -640,9 +641,11 @@ test.describe("Withdraw request", function () {
     daoAccount,
   }) => {
     test.setTimeout(150_000);
-    await mockStakedPools({ daoAccount, page, multiplePools: false });
-    await mockUnstakedPoolBalances({ page, hasBalance: true });
-    await mockWithdrawBalances({ page, isAvailableToWithdraw: true });
+    await mockUnstakeAndWithdrawBalance({
+      page,
+      hasUnstakeBalance: true,
+      hasWithdrawBalance: true,
+    });
     await openWithdrawForm({ page });
     await expect(page.getByText("Available for withdrawal:")).toBeVisible({
       timeout: 10_000,
@@ -670,7 +673,7 @@ test.describe("Withdraw request", function () {
     });
   });
 
-  test("Have valid withdraw tokens from multiple pool", async ({
+  test("Have valid withdraw tokens from multiple pools", async ({
     page,
     daoAccount,
     instanceAccount,
@@ -684,10 +687,13 @@ test.describe("Withdraw request", function () {
       console.log("lockup contract found for instance");
       return test.skip();
     }
-    await mockStakedPools({ daoAccount, page, multiplePools: true });
-    await mockUnstakedPoolBalances({ page, hasBalance: true });
-    await mockWithdrawBalances({ page, isAvailableToWithdraw: true });
     await page.goto(`/${instanceAccount}/widget/app?page=stake-delegation`);
+    await mockStakedPools({ daoAccount, page, multiplePools: true });
+    await mockUnstakeAndWithdrawBalance({
+      page,
+      hasUnstakeBalance: true,
+      hasWithdrawBalance: true,
+    });
     await openWithdrawForm({ page });
     await expect(page.getByText(stakedPoolAccount)).toBeVisible({
       timeout: 10_000,
