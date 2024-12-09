@@ -23,12 +23,8 @@ if (!instance) {
   return <></>;
 }
 
-const {
-  treasuryDaoID,
-  proposalIndexerQueryName,
-  proposalIndexerHasuraRole,
-  showProposalSelection,
-} = VM.require(`${instance}/widget/config.data`);
+const { treasuryDaoID, proposalAPIEndpoint, showProposalSelection } =
+  VM.require(`${instance}/widget/config.data`);
 
 const [tokenId, setTokenId] = useState(null);
 const [receiver, setReceiver] = useState(null);
@@ -47,25 +43,7 @@ const [lastProposalId, setLastProposalId] = useState(null);
 const [isManualRequest, setIsManualRequest] = useState(false);
 const [selectedTokensAvailable, setSelectedTokensAvailable] = useState(null);
 const [isReceiverRegistered, setReceiverRegister] = useState(false);
-const QUERYAPI_ENDPOINT = `https://near-queryapi.api.pagoda.co/v1/graphql`;
-const queryName = proposalIndexerQueryName;
-const query = `query GetLatestSnapshot($offset: Int = 0, $limit: Int = 10, $where: ${queryName}_bool_exp = {}) {
-${queryName}(
-  offset: $offset
-  limit: $limit
-  order_by: {proposal_id: desc}
-  where: $where
-) {
-  name
-  proposal_id
-  requested_sponsorship_paid_in_currency
-  requested_sponsorship_usd_amount
-  receiver_account
-  summary
-  timeline
-}
-}`;
-
+const [isLoadingProposals, setLoadingProposals] = useState(false);
 const [showCancelModal, setShowCancelModal] = useState(false);
 
 useEffect(() => {
@@ -73,39 +51,75 @@ useEffect(() => {
     setIsManualRequest(true);
   }
 }, [showProposalSelection]);
-function separateNumberAndText(str) {
-  const numberRegex = /\d+/;
 
-  if (numberRegex.test(str)) {
-    const number = str.match(numberRegex)[0];
-    const text = str.replace(numberRegex, "").trim();
-    return { number: parseInt(number), text };
-  } else {
-    return { number: null, text: str.trim() };
-  }
+function searchCacheApi() {
+  let searchTerm = searchProposalId;
+  let searchInput = encodeURI(searchTerm);
+  let searchUrl = `${proposalAPIEndpoint}/proposals/search/${searchInput}`;
+
+  return asyncFetch(searchUrl, {
+    method: "GET",
+    headers: {
+      accept: "application/json",
+    },
+  }).catch((error) => {
+    console.log("Error searching cache api", error);
+  });
 }
 
-const buildWhereClause = () => {
-  let where = {};
-  const { number, text } = separateNumberAndText(searchProposalId);
+function setProposalData(result) {
+  const body = result.body;
+  const proposalsData = body.records;
+  const data = [];
+  for (const prop of proposalsData) {
+    data.push({
+      label: (
+        <span className="text-sm">
+          <b>#{prop.proposal_id}</b> {prop.name}{" "}
+        </span>
+      ),
+      value: prop.proposal_id,
+    });
+  }
+  setProposalsArray(proposalsData);
+  setProposalsOptions(data);
+  setLoadingProposals(false);
+}
 
-  if (typeof number === "number") {
-    where = { proposal_id: { _eq: number }, ...where };
+function searchProposals() {
+  searchCacheApi().then((result) => {
+    setProposalData(result);
+  });
+}
+
+function fetchCacheApi(variables) {
+  let fetchUrl = `${proposalAPIEndpoint}/proposals?order=${variables.order}&limit=${variables.limit}`;
+
+  if (variables.stage) {
+    fetchUrl += `&filters.stage=${variables.stage}`;
   }
 
-  if (text) {
-    where = { name: { _ilike: `%${text}%` }, ...where };
-  }
+  return asyncFetch(fetchUrl, {
+    method: "GET",
+    headers: {
+      accept: "application/json",
+    },
+  }).catch((error) => {
+    console.log("Error fetching cache api", error);
+  });
+}
 
-  if (typeof number !== "number" && !text) {
-    where = {
-      timeline: { _cast: { String: { _regex: `PAYMENT` } } },
-      ...where,
-    };
-  }
-
-  return where;
-};
+function fetchProposals() {
+  const FETCH_LIMIT = 10;
+  const variables = {
+    order: "id_desc",
+    limit: FETCH_LIMIT,
+    stage: "PAYMENT",
+  };
+  fetchCacheApi(variables).then((result) => {
+    setProposalData(result);
+  });
+}
 
 function getLastProposalId() {
   return Near.asyncView(treasuryDaoID, "get_last_proposal_id").then(
@@ -152,50 +166,19 @@ useEffect(() => {
   }
 }, [isTxnCreated]);
 
-function fetchGraphQL(operationsDoc, operationName, variables) {
-  return asyncFetch(QUERYAPI_ENDPOINT, {
-    method: "POST",
-    headers: { "x-hasura-role": proposalIndexerHasuraRole },
-    body: JSON.stringify({
-      query: operationsDoc,
-      variables: variables,
-      operationName: operationName,
-    }),
-  });
-}
-
-const fetchProposals = () => {
-  const FETCH_LIMIT = 30;
-  const variables = {
-    limit: FETCH_LIMIT,
-    offset: 0,
-    where: buildWhereClause(),
-  };
-  fetchGraphQL(query, "GetLatestSnapshot", variables).then(async (result) => {
-    if (result.status === 200) {
-      if (result.body.data) {
-        const proposalsData = result.body.data[queryName];
-
-        const data = [];
-        for (const prop of proposalsData) {
-          data.push({
-            label: (
-              <span className="text-sm">
-                <b>#{prop.proposal_id}</b> {prop.name}{" "}
-              </span>
-            ),
-            value: prop.proposal_id,
-          });
-        }
-        setProposalsArray(proposalsData);
-        setProposalsOptions(data);
-      }
-    }
-  });
-};
-
 useEffect(() => {
-  fetchProposals();
+  const handler = setTimeout(() => {
+    setLoadingProposals(true);
+    if (searchProposalId) {
+      searchProposals();
+    } else {
+      fetchProposals();
+    }
+  }, 500);
+
+  return () => {
+    clearTimeout(handler);
+  };
 }, [searchProposalId]);
 
 const Container = styled.div`
@@ -435,6 +418,7 @@ return (
                 setIsManualRequest(true);
               },
               showManualRequest: true,
+              isLoadingProposals,
             }}
           />
         </div>
