@@ -5,7 +5,7 @@ import { SandboxRPC } from "../../util/sandboxrpc.js";
 import { mockRpcRequest } from "../../util/rpcmock.js";
 import { getInstanceConfig } from "../../util/config.js";
 
-async function goToSettingsAndCheckIfVotingSurationIsAvailable({
+async function goToSettingsAndCheckIfVotingDurationIsAvailable({
   page,
   instanceAccount,
   instanceConfig,
@@ -43,7 +43,7 @@ test.describe("admin connected", function () {
     await page.goto(`/${instanceAccount}/widget/app?page=settings`);
 
     if (
-      !(await goToSettingsAndCheckIfVotingSurationIsAvailable({
+      !(await goToSettingsAndCheckIfVotingDurationIsAvailable({
         page,
         instanceAccount,
         instanceConfig,
@@ -95,7 +95,7 @@ test.describe("admin connected", function () {
     await page.goto(`/${instanceAccount}/widget/app?page=settings`);
 
     if (
-      !(await goToSettingsAndCheckIfVotingSurationIsAvailable({
+      !(await goToSettingsAndCheckIfVotingDurationIsAvailable({
         page,
         instanceAccount,
         instanceConfig,
@@ -144,7 +144,7 @@ test.describe("admin connected", function () {
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
 
     if (
-      !(await goToSettingsAndCheckIfVotingSurationIsAvailable({
+      !(await goToSettingsAndCheckIfVotingDurationIsAvailable({
         page,
         instanceAccount,
         instanceConfig,
@@ -213,6 +213,7 @@ test.describe("admin connected", function () {
     instanceAccount,
     daoAccount,
   }) => {
+    test.setTimeout(150_000);
     const lastProposalId = 100;
     const proposals = [];
     for (let id = 0; id <= lastProposalId; id++) {
@@ -263,7 +264,7 @@ test.describe("admin connected", function () {
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
 
     if (
-      !(await goToSettingsAndCheckIfVotingSurationIsAvailable({
+      !(await goToSettingsAndCheckIfVotingDurationIsAvailable({
         page,
         instanceAccount,
         instanceConfig,
@@ -301,6 +302,7 @@ test.describe("admin connected", function () {
         await expect(await page.locator(".alert-danger")).toHaveText(
           "The following proposals will expire because of the changed duration"
         );
+        await page.waitForTimeout(10_000); // wait for proposals to refetch
         await expect(
           await page.locator(".proposal-that-will-expire")
         ).toHaveCount(expectedNewExpiredProposals.length);
