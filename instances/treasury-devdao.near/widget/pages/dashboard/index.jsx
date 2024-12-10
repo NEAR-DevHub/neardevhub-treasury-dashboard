@@ -259,6 +259,7 @@ return (
         <Widget
           src={"${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.Chart"}
           props={{
+            title: "Treasury Assets: Sputnik DAO",
             nearPrice,
             totalBalance: formatCurrency(
               Big(nearBalances?.totalParsed ?? "0").mul(nearPrice ?? 1)
@@ -272,6 +273,7 @@ return (
           <Widget
             src={"${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.Chart"}
             props={{
+              title: "Treasury Assets: Lockup",
               nearPrice,
               totalBalance: formatCurrency(
                 Big(lockupNearBalances?.totalParsed ?? "0").mul(nearPrice ?? 1)

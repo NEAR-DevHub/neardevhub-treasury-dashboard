@@ -1,29 +1,35 @@
-const { nearPrice, ftTokens, accountId } = props;
+const { nearPrice, ftTokens, accountId, title } = props;
 
-const [height, setHeight] = useState(200);
+const [height, setHeight] = useState(350);
 const [history, setHistory] = useState([]);
 const [tokenAddresses, setTokenAddresses] = useState([]);
-const [selectedPeriod, setSelectedPeriod] = useState(1);
+const [selectedPeriod, setSelectedPeriod] = useState({
+  value: 1,
+  interval: 12,
+});
 const [selectedToken, setSelectedToken] = useState("near");
 const [isLoading, setIsLoading] = useState(true);
-const [balance, setBalance] = useState(0);
-
+const [balanceDate, setBalanceDate] = useState({ balance: 0, date: "" });
 const nearTokenIcon = "${REPL_NEAR_TOKEN_ICON}";
 const nearTokenInfo = {
   contract: "near",
   ft_meta: { symbol: "NEAR", icon: nearTokenIcon },
 };
+const tokens = Array.isArray(ftTokens)
+  ? [nearTokenInfo, ...ftTokens]
+  : [nearTokenInfo];
 
 const Loading = () => (
   <Widget src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"} />
 );
 
 const periodMap = [
-  { period: "1H", value: 1 },
-  { period: "24H", value: 24 },
-  { period: "1W", value: 168 },
-  { period: "1M", value: 744 },
-  { period: "1Y", value: 8664 },
+  { period: "1H", value: 1 / 6, interval: 6 },
+  { period: "1D", value: 1, interval: 12 },
+  { period: "1W", value: 24, interval: 8 },
+  { period: "1M", value: 24 * 2, interval: 15 },
+  { period: "1Y", value: 24 * 30, interval: 12 },
+  { period: "All", value: 24 * 365, interval: 10 },
 ];
 
 const code = `
@@ -97,6 +103,14 @@ const code = `
                 enabled: false,
             }
         },
+        layout: {
+          padding: {
+            top: 20,
+            bottom: 0,
+            left: 0,
+            right: 0
+          }
+        },
         scales: {
           x: {
             grid: {
@@ -104,11 +118,10 @@ const code = `
             },
             ticks: {
               display: true,
-              color: "#687076"
-            },
+              color: "#000",
+            },   
           },
           y: {
-            beginAtZero: true,
             type: 'logarithmic',
             display: false,
             grid: {
@@ -138,6 +151,7 @@ const code = `
             pointBackgroundColor: "#fff",
             pointRadius: 0,
             tension: 0,
+            borderWidth: 1.5
           },
         ],
       },
@@ -159,13 +173,13 @@ const code = `
         if (x >= chartArea.left && x <= chartArea.right && y >= chartArea.top && y <= chartArea.bottom) {
             hoverX = x;
             const periods = myChart.data.datasets[0].data.length
-            currIndex = xScale.getValueForPixel(x-(rect.width/periods/2));
-
-            sendChartBalance()
+            currIndex = xScale.getValueForPixel(x-(rect.width/periods/2-1));
         } else {
+            currIndex = xScale.getValueForPixel(chartArea.right);
             hoverX = null; // Clear the hover position if outside chart area
         }
 
+        sendChartBalance()
         myChart.update('none'); // Update chart without animation
     });
 
@@ -183,10 +197,12 @@ const code = `
 
     function sendChartBalance() {
       const data = myChart.data.datasets[0].data;
-      
+      const timestamp = myChart.data.timestamp
+
       window.parent.postMessage({
         handler: "balance",
-        balance: data[currIndex]
+        balance: data[currIndex],
+        date: timestamp[currIndex]
       }, "*");
     }
 
@@ -195,14 +211,22 @@ const code = `
       function (event) {
         account_id = event.data.account_id;
         history = event.data.history;
+        const balances = history.map((h) => h.balance)
+        const min = Math.min(...balances)
+        const max = Math.max(...balances)
 
         const data = {
-          dataset: history.map((h) => h.balance),
+          dataset: balances,
           labels: history.map((h) => h.date),
+          timestamp: history.map((h) => h.timestamp),
         };
 
         myChart.data.datasets[0].data = data.dataset;
         myChart.data.labels = data.labels;
+        myChart.data.timestamp = data.timestamp;
+        myChart.options.scales.y.min = 0;
+        myChart.options.scales.y.max = max;        
+
         myChart.update();
         sendChartHeight();
         sendChartBalance();
@@ -216,12 +240,44 @@ const code = `
   </html>
 `;
 
+const Period = styled.div`
+  font-size: 14px;
+  padding: 8px 16px;
+  color: #999999;
+  font-weight: 500;
+
+  &.selected {
+    background-color: #f7f7f7;
+    color: black;
+    border-radius: 8px;
+  }
+`;
+
+const RadioButton = styled.div`
+  .radio-btn {
+    border-radius: 50%;
+    border: 1px solid black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 14px;
+    width: 14px;
+
+    .selected {
+      background: black;
+      border-radius: 50%;
+      height: 6px;
+      width: 6px;
+    }
+  }
+`;
+
 // Function to fetch data from the API based on the selected period
 async function fetchData() {
   setIsLoading(true);
   try {
     asyncFetch(
-      `http://localhost:3003/token-balance-history?account_id=${accountId}&period=${selectedPeriod}&token_id=${selectedToken}`
+      `http://localhost:3003/token-balance-history?account_id=${accountId}&period=${selectedPeriod.value}&interval=${selectedPeriod.interval}&token_id=${selectedToken}`
     ).then((resp) => {
       if (resp?.body) setHistory(resp.body);
     });
@@ -240,57 +296,84 @@ return (
   <div className="card flex-1 w-100 card-body">
     <div>
       <div className="d-flex justify-content-between flex-row align-items-start">
-        <div>
-          <h6 className="text-grey">Total Balance</h6>
-          <div className="fw-bold h3 mb-0">
-            {balance}{" "}
-            {
-              [nearTokenInfo, ...(ftTokens ?? [])].find(
-                (t) => t.contract === selectedToken
-              )?.ft_meta?.symbol
-            }
+        <div className="d-flex flex-column gap-2">
+          <h6 className="text-grey mb-0">{title}</h6>
+          <div className="d-flex align-items-center gap-3">
+            <h3 className="fw-bold mb-0">
+              {balanceDate.balance}{" "}
+              {
+                [nearTokenInfo, ...(ftTokens ?? [])].find(
+                  (t) => t.contract === selectedToken
+                )?.ft_meta?.symbol
+              }
+            </h3>
+            {balanceDate.date && (
+              <div style={{ fontSize: 14 }}>
+                {new Date(balanceDate.date).toLocaleDateString("en-US", {
+                  dateStyle: "medium",
+                })}{" "}
+                {new Date(balanceDate.date).toLocaleTimeString("en-US", {
+                  hour: "numeric",
+                  minute: "numeric",
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="d-flex gap-4 flex-row align-items-center">
+            {tokens.map((item, _index) => {
+              const { contract, ft_meta } = item;
+              const { symbol } = ft_meta;
+
+              return (
+                <RadioButton className="d-flex align-items-center" key={idx}>
+                  <input
+                    style={{ visibility: "hidden", width: 0, padding: 0 }}
+                    id={contract}
+                    type="radio"
+                    value={contract}
+                    onClick={() => setSelectedToken(contract)}
+                    selected={contract === selectedToken}
+                  />
+                  <label
+                    htmlFor={contract}
+                    role="button"
+                    className="d-flex align-items-center gap-1"
+                  >
+                    <div className="radio-btn">
+                      <div
+                        className={contract === selectedToken ? "selected" : ""}
+                      />
+                    </div>
+                    <span
+                      className={contract === selectedToken ? "fw-bold" : ""}
+                    >
+                      {symbol}
+                    </span>
+                  </label>
+                </RadioButton>
+              );
+            })}
           </div>
         </div>
 
-        <div className="d-flex gap-4">
-          {periodMap.map(({ period, value }, idx) => (
-            <div
+        <div className="d-flex gap-1">
+          {periodMap.map(({ period, value, interval }, idx) => (
+            <Period
               role="button"
               key={idx}
-              onClick={() => setSelectedPeriod(value)}
-              className={selectedPeriod === value ? "fw-bold" : ""}
+              onClick={() => setSelectedPeriod({ value, interval })}
+              className={
+                selectedPeriod.value === value &&
+                selectedPeriod.interval === interval
+                  ? "selected"
+                  : ""
+              }
             >
               {period}
-            </div>
+            </Period>
           ))}
         </div>
-      </div>
-
-      <div className="d-flex gap-4 flex-row align-items-center">
-        {Array.isArray(ftTokens) &&
-          [nearTokenInfo, ...ftTokens].map((item, _index) => {
-            const { contract, ft_meta } = item;
-            const { symbol, icon } = ft_meta;
-
-            return (
-              <div className="d-block" key={idx}>
-                <input
-                  style={{ visibility: "hidden" }}
-                  id={contract}
-                  type="radio"
-                  value={contract}
-                  onClick={() => setSelectedToken(contract)}
-                  selected={contract === selectedToken}
-                />
-                <label htmlFor={contract} role="button">
-                  <img width={30} height={30} src={icon} alt={symbol} />
-                  <span className={contract === selectedToken ? "fw-bold" : ""}>
-                    {symbol}
-                  </span>
-                </label>
-              </div>
-            );
-          })}
       </div>
     </div>
 
@@ -311,7 +394,7 @@ return (
                 setHeight(e.chartHeight);
               }
               case "balance": {
-                setBalance(e.balance);
+                setBalanceDate({ balance: e.balance, date: e.date });
               }
             }
           }}
