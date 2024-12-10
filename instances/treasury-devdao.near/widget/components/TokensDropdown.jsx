@@ -77,7 +77,7 @@ useEffect(() => {
           icon: i.icon,
           title: i.symbol,
           value: i.contract,
-          tokenBalance: Big(i.amount ?? "0").toFixed(4),
+          tokenBalance: Big(i.amount ?? "0").toFixed(2),
         };
       })
     );
@@ -92,7 +92,7 @@ function getNearAvailableBalance(tokenBalance) {
   return Big(tokenBalance)
     .minus(nearBalances.lockedParsed ?? "0")
     .minus(nearStakedTokens ?? "0")
-    .toFixed(4);
+    .toFixed(2);
 }
 const toggleDropdown = () => {
   setIsOpen(!isOpen);
@@ -215,7 +215,7 @@ return (
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
       props={{
         accountId: treasuryDaoID,
-        setNearStakedTotalTokens: (v) => setNearStakedTokens(Big(v).toFixed(4)),
+        setNearStakedTotalTokens: (v) => setNearStakedTokens(Big(v).toFixed(2)),
       }}
     />
     <div

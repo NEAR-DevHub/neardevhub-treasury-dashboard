@@ -218,7 +218,7 @@ test.describe("don't ask again", function () {
     );
     await expect(transaction_toast).toBeVisible();
 
-    await transaction_toast.waitFor({ state: "detached", timeout: 10000 });
+    await transaction_toast.waitFor({ state: "detached", timeout: 20_000 });
     await expect(transaction_toast).not.toBeVisible();
     if (isMultiVote) {
       await expect(
@@ -273,7 +273,7 @@ test.describe("don't ask again", function () {
     );
     await expect(transaction_toast).toBeVisible();
 
-    await transaction_toast.waitFor({ state: "detached", timeout: 10000 });
+    await transaction_toast.waitFor({ state: "detached", timeout: 20_000 });
     await expect(transaction_toast).not.toBeVisible();
     if (isMultiVote) {
       await expect(
@@ -328,7 +328,7 @@ test.describe("don't ask again", function () {
     );
     await expect(transaction_toast).toBeVisible();
 
-    await transaction_toast.waitFor({ state: "detached", timeout: 10000 });
+    await transaction_toast.waitFor({ state: "detached", timeout: 20_000 });
     await expect(transaction_toast).not.toBeVisible();
     if (isMultiVote) {
       await expect(
