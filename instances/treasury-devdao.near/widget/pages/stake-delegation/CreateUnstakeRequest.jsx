@@ -2,6 +2,10 @@ const { getNearBalances } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
 
+const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
+  href: () => {},
+};
+
 const instance = props.instance;
 const onCloseCanvas = props.onCloseCanvas ?? (() => {});
 const { encodeToMarkdown } = VM.require(
@@ -245,39 +249,92 @@ function onSubmitClick() {
   setTxnCreated(true);
   const deposit = daoPolicy?.proposal_bond || 100000000000000000000000;
   const description = {
-    proposal_action: "stake",
+    proposal_action: "unstake",
     notes: notes,
   };
 
   const isLockupContractSelected = lockupContract === selectedWallet.value;
 
-  Near.call({
+  const calls = [
+    {
+      contractName: treasuryDaoID,
+      methodName: "add_proposal",
+      args: {
+        proposal: {
+          description: encodeToMarkdown(description),
+          kind: {
+            FunctionCall: {
+              receiver_id: isLockupContractSelected
+                ? lockupContract
+                : validatorAccount.pool_id,
+              actions: [
+                {
+                  method_name: "unstake",
+                  args: toBase64({
+                    amount: Big(amount).mul(Big(10).pow(24)).toFixed(),
+                  }),
+                  deposit: "0",
+                  gas: "200000000000000",
+                },
+              ],
+            },
+          },
+        },
+      },
+      gas: 200000000000000,
+    },
+  ];
+
+  const link = href({
+    widgetSrc: `${instance}/widget/app`,
+    params: {
+      page: "stake-delegation",
+      selectedTab: "History",
+      highlightProposalId: lastProposalId,
+    },
+  });
+
+  // add withdraw request along with stake
+  calls.push({
     contractName: treasuryDaoID,
     methodName: "add_proposal",
     args: {
       proposal: {
-        description: encodeToMarkdown(description),
+        description: encodeToMarkdown({
+          proposal_action: "withdraw",
+          showAfterProposalIdApproved: lastProposalId,
+          customNotes: `Following to [#${lastProposalId}](${link}) unstake request`,
+        }),
         kind: {
           FunctionCall: {
             receiver_id: isLockupContractSelected
               ? lockupContract
               : validatorAccount.pool_id,
-            actions: [
-              {
-                method_name: "unstake",
-                args: toBase64({
-                  amount: Big(amount).mul(Big(10).pow(24)).toFixed(),
-                }),
-                deposit: "0",
-                gas: "200000000000000",
-              },
-            ],
+            actions: isLockupContractSelected
+              ? [
+                  {
+                    method_name: "withdraw_all_from_staking_pool",
+                    args: "",
+                    deposit: "0",
+                    gas: "250000000000000",
+                  },
+                ]
+              : [
+                  {
+                    method_name: "withdraw_all",
+                    args: "",
+                    deposit: "0",
+                    gas: "200000000000000",
+                  },
+                ],
           },
         },
       },
     },
     gas: 200000000000000,
   });
+
+  Near.call(calls);
 }
 
 const Container = styled.div`
@@ -363,7 +420,7 @@ useEffect(() => {
     );
     const isAlreadyStaked =
       (pool.stakedBalance || 0) > 0 ||
-      (pool.unStakedBalance || 0) > 0 ||
+      (pool.unstakedBalance || 0) > 0 ||
       (pool.availableToWithdrawBalance || 0) > 0;
     if (isAlreadyStaked) {
       setValidatorAccount({
