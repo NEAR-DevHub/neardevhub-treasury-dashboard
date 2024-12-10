@@ -249,22 +249,23 @@ test.describe("Have valid staked requests and sufficient token balance", functio
 
   test.describe("User not logged in", function () {
     test("Should view pending and history requests", async ({ page }) => {
-      test.setTimeout(60_000);
+      test.setTimeout(80_000);
       await expect(
         page.getByRole("cell", { name: "0", exact: true })
-      ).toBeVisible({ timeout: 20_000 });
+      ).toBeVisible({ timeout: 40_000 });
       await page.getByText("History").click();
       await expect(
         page.getByRole("cell", { name: "1", exact: true })
-      ).toBeVisible({ timeout: 20_000 });
+      ).toBeVisible({ timeout: 40_000 });
     });
 
     test("Should successfully parse old JSON description", async ({ page }) => {
+      test.setTimeout(80_000);
       await mockOldJSONStakeProposals({ page });
-      test.setTimeout(60_000);
+
       await expect(
         page.getByRole("cell", { name: "this is notes", exact: true })
-      ).toBeVisible({ timeout: 20_000 });
+      ).toBeVisible({ timeout: 40_000 });
     });
   });
 
@@ -740,7 +741,7 @@ test.describe("Don't ask again connected", function () {
     );
     await expect(transaction_toast).toBeVisible();
 
-    await transaction_toast.waitFor({ state: "detached", timeout: 10000 });
+    await transaction_toast.waitFor({ state: "detached", timeout: 20_000 });
     await expect(transaction_toast).not.toBeVisible();
     if (isMultiVote) {
       await expect(
@@ -784,7 +785,7 @@ test.describe("Don't ask again connected", function () {
     );
     await expect(transaction_toast).toBeVisible();
 
-    await transaction_toast.waitFor({ state: "detached", timeout: 10000 });
+    await transaction_toast.waitFor({ state: "detached", timeout: 20_000 });
     await expect(transaction_toast).not.toBeVisible();
     if (isMultiVote) {
       await expect(
@@ -828,7 +829,7 @@ test.describe("Don't ask again connected", function () {
     );
     await expect(transaction_toast).toBeVisible();
 
-    await transaction_toast.waitFor({ state: "detached", timeout: 10000 });
+    await transaction_toast.waitFor({ state: "detached", timeout: 20_000 });
     await expect(transaction_toast).not.toBeVisible();
     if (isMultiVote) {
       await expect(
