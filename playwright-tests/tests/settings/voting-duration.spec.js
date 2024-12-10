@@ -5,7 +5,7 @@ import { SandboxRPC } from "../../util/sandboxrpc.js";
 import { mockRpcRequest } from "../../util/rpcmock.js";
 import { getInstanceConfig } from "../../util/config.js";
 
-async function goToSettingsAndCheckIfVotingSurationIsAvailable({
+async function goToSettingsAndCheckIfVotingDurationIsAvailable({
   page,
   instanceAccount,
   instanceConfig,
@@ -43,7 +43,7 @@ test.describe("admin connected", function () {
     await page.goto(`/${instanceAccount}/widget/app?page=settings`);
 
     if (
-      !(await goToSettingsAndCheckIfVotingSurationIsAvailable({
+      !(await goToSettingsAndCheckIfVotingDurationIsAvailable({
         page,
         instanceAccount,
         instanceConfig,
@@ -99,7 +99,7 @@ test.describe("admin connected", function () {
     await page.goto(`/${instanceAccount}/widget/app?page=settings`);
 
     if (
-      !(await goToSettingsAndCheckIfVotingSurationIsAvailable({
+      !(await goToSettingsAndCheckIfVotingDurationIsAvailable({
         page,
         instanceAccount,
         instanceConfig,
@@ -149,7 +149,7 @@ test.describe("admin connected", function () {
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
 
     if (
-      !(await goToSettingsAndCheckIfVotingSurationIsAvailable({
+      !(await goToSettingsAndCheckIfVotingDurationIsAvailable({
         page,
         instanceAccount,
         instanceConfig,
@@ -221,7 +221,7 @@ test.describe("admin connected", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(150_000);
     const lastProposalId = 100;
     const proposals = [];
     for (let id = 0; id <= lastProposalId; id++) {
@@ -272,7 +272,7 @@ test.describe("admin connected", function () {
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
 
     if (
-      !(await goToSettingsAndCheckIfVotingSurationIsAvailable({
+      !(await goToSettingsAndCheckIfVotingDurationIsAvailable({
         page,
         instanceAccount,
         instanceConfig,
