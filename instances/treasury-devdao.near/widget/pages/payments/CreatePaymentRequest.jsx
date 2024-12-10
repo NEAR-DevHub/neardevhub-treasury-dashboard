@@ -346,6 +346,9 @@ function isAccountValid() {
 function isAmountValid() {
   const maxU128 = Big("340282366920938463463374607431768211455");
 
+  if (!parsedAmount) {
+    return false;
+  }
   // Check if amount is not too big
   if (Big(parsedAmount).gt(maxU128)) {
     return false;
