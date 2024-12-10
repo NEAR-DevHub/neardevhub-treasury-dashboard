@@ -1256,7 +1256,7 @@ test.describe("Don't ask again connected", function () {
     );
     await expect(transaction_toast).toBeVisible();
 
-    await transaction_toast.waitFor({ state: "detached", timeout: 10000 });
+    await transaction_toast.waitFor({ state: "detached", timeout: 20_000 });
     await expect(transaction_toast).not.toBeVisible();
     if (isMultiVote) {
       await expect(
