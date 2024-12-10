@@ -525,6 +525,7 @@ test.describe("Have valid staked requests and sufficient token balance", functio
 
     test("Should create unstake delegation request, should throw error when invalid data is provided", async ({
       page,
+      instanceAccount,
     }) => {
       test.setTimeout(120_000);
       await openUnstakeForm({ page });
@@ -562,7 +563,7 @@ test.describe("Have valid staked requests and sufficient token balance", functio
       const dataReceived = JSON.parse(txnLocator);
       expect(dataReceived).toEqual({
         proposal: {
-          description: `* Proposal Action: withdraw <br>* Show After Proposal Id Approved: ${lastProposalId} <br>* Custom Notes: Following to [#${lastProposalId}](/treasury-testing.near/widget/app?page=stake-delegation&selectedTab=History&highlightProposalId=${lastProposalId}) unstake request`,
+          description: `* Proposal Action: withdraw <br>* Show After Proposal Id Approved: ${lastProposalId} <br>* Custom Notes: Following to [#${lastProposalId}](/${instanceAccount}/widget/app?page=stake-delegation&selectedTab=History&highlightProposalId=${lastProposalId}) unstake request`,
           kind: {
             FunctionCall: {
               receiver_id: stakedPoolAccount,
@@ -1013,6 +1014,7 @@ test.describe("Lockup staking", function () {
       page,
       daoAccount,
       lockupContract,
+      instanceAccount,
     }) => {
       test.setTimeout(120_000);
       await openUnstakeForm({
@@ -1058,16 +1060,16 @@ test.describe("Lockup staking", function () {
       const dataReceived = JSON.parse(txnLocator);
       expect(dataReceived).toEqual({
         proposal: {
-          description: `* Proposal Action: withdraw <br>* Show After Proposal Id Approved: ${lastProposalId} <br>* Custom Notes: Following to [#${lastProposalId}](/treasury-testing.near/widget/app?page=stake-delegation&selectedTab=History&highlightProposalId=${lastProposalId}) unstake request`,
+          description: `* Proposal Action: withdraw <br>* Show After Proposal Id Approved: ${lastProposalId} <br>* Custom Notes: Following to [#${lastProposalId}](/${instanceAccount}/widget/app?page=stake-delegation&selectedTab=History&highlightProposalId=${lastProposalId}) unstake request`,
           kind: {
             FunctionCall: {
-              receiver_id: stakedPoolAccount,
+              receiver_id: lockupContract,
               actions: [
                 {
-                  method_name: "withdraw_all",
+                  method_name: "withdraw_all_from_staking_pool",
                   args: "",
                   deposit: "0",
-                  gas: "200000000000000",
+                  gas: "250000000000000",
                 },
               ],
             },
