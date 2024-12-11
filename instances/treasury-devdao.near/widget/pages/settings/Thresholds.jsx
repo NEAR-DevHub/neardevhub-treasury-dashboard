@@ -503,7 +503,7 @@ return (
                 <div className="d-flex gap-3 warning px-3 py-2 rounded-3">
                   <i class="bi bi-exclamation-triangle h5"></i>
                   <div>
-                    <span className="fw-bolder">Heads up, Bro! </span> <br />
+                    <span className="fw-bolder">Warning! </span> <br />
                     If you choose a percentage-based threshold, the number of
                     votes required could change if new members are added or
                     existing members are removed. However, at least one vote
