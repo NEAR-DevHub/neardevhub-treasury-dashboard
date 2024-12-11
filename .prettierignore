@@ -1,5 +1,6 @@
 test-results
 build
+treasury-factory
 web4/treasury-web4
 package-lock.json
 sandboxrpc
