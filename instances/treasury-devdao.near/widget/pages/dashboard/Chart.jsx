@@ -122,7 +122,6 @@ const code = `
             },   
           },
           y: {
-            type: 'logarithmic',
             display: false,
             grid: {
               display: false,
@@ -211,7 +210,7 @@ const code = `
       function (event) {
         account_id = event.data.account_id;
         history = event.data.history;
-        const balances = history.map((h) => h.balance)
+        const balances = history.map((h) => parseFloat(h.balance))
         const min = Math.min(...balances)
         const max = Math.max(...balances)
 
@@ -224,8 +223,8 @@ const code = `
         myChart.data.datasets[0].data = data.dataset;
         myChart.data.labels = data.labels;
         myChart.data.timestamp = data.timestamp;
-        myChart.options.scales.y.min = min > 0 ? min*0.9 : 0;
-        myChart.options.scales.y.max = max > 0 ? max*1.1 : 0;
+        myChart.options.scales.y.min = min > 0 ? min*0.9 : -0.01;
+        myChart.options.scales.y.max = max > 0 ? max*1.1 : 10;
 
         myChart.update();
         sendChartHeight();
@@ -274,21 +273,20 @@ const RadioButton = styled.div`
 
 // Function to fetch data from the API based on the selected period
 async function fetchData() {
-  setIsLoading(true);
   try {
     asyncFetch(
       `http://localhost:3003/token-balance-history?account_id=${accountId}&period=${selectedPeriod.value}&interval=${selectedPeriod.interval}&token_id=${selectedToken}`
     ).then((resp) => {
       if (resp?.body) setHistory(resp.body);
+      setIsLoading(false);
     });
   } catch (error) {
     console.error("Error fetching data:", error);
   }
-
-  setIsLoading(false);
 }
 
 useEffect(() => {
+  setIsLoading(true);
   fetchData();
 }, [selectedToken, selectedPeriod]);
 
@@ -300,7 +298,7 @@ return (
           <h6 className="text-grey mb-0">{title}</h6>
           <div className="d-flex align-items-center gap-3">
             <h3 className="fw-bold mb-0">
-              {balanceDate.balance}{" "}
+              {isLoading ? "-" : balanceDate.balance}{" "}
               {
                 [nearTokenInfo, ...(ftTokens ?? [])].find(
                   (t) => t.contract === selectedToken
@@ -379,7 +377,7 @@ return (
 
     <div
       className="w-100 d-flex justify-content-center align-items-center"
-      style={{ height: "100%" }}
+      style={{ height: "400px" }}
     >
       {isLoading ? (
         <Loading />
