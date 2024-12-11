@@ -119,7 +119,7 @@ function getFeeOfStakedPools() {
     .map((item) => {
       return Near.asyncView(item.pool, "get_reward_fee_fraction").then((i) => ({
         pool_id: item.pool,
-        fee: i.numerator / i.denominator,
+        fee: i.numerator,
         stakedBalance: {
           [isLockupContract ? lockupContract : treasuryDaoID]: item,
         },

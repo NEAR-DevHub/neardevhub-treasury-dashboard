@@ -191,7 +191,7 @@ function getAllStakingPools() {
             );
             return {
               pool_id: item.account_id,
-              fee: feeData.numerator / feeData.denominator,
+              fee: feeData.numerator,
               stakedBalance: {
                 [treasuryDaoID]: nearpoolBalance,
                 [lockupContract]: lockupPool,
