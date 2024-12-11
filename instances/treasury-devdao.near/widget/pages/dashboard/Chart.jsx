@@ -105,8 +105,8 @@ const code = `
         },
         layout: {
           padding: {
-            top: 20,
-            bottom: 0,
+            top: 10,
+            bottom: 10,
             left: 0,
             right: 0
           }
@@ -224,8 +224,8 @@ const code = `
         myChart.data.datasets[0].data = data.dataset;
         myChart.data.labels = data.labels;
         myChart.data.timestamp = data.timestamp;
-        myChart.options.scales.y.min = 0;
-        myChart.options.scales.y.max = max;        
+        myChart.options.scales.y.min = min > 0 ? min*0.9 : 0;
+        myChart.options.scales.y.max = max > 0 ? max*1.1 : 0;
 
         myChart.update();
         sendChartHeight();
