@@ -20,21 +20,24 @@ const { treasuryDaoID, lockupContract } = VM.require(
 );
 
 const proposals = props.proposals;
-const visibleProposals = (proposals ?? []).filter((proposal, index) => {
-  const showAfterProposalIdApproved = decodeProposalDescription(
-    "showAfterProposalIdApproved",
-    proposal.description
-  );
+// search for showAfterProposalIdApproved only in pending requests
+const visibleProposals = isPendingRequests
+  ? (proposals ?? []).filter((proposal, index) => {
+      const showAfterProposalIdApproved = decodeProposalDescription(
+        "showAfterProposalIdApproved",
+        proposal.description
+      );
 
-  // Check if `showAfterProposalIdApproved` exists and if the proposal ID exists in the array
-  if (showAfterProposalIdApproved) {
-    return !(proposals ?? []).some(
-      (p) => p.id === parseInt(showAfterProposalIdApproved)
-    );
-  }
-  // If no `showAfterProposalIdApproved`, the proposal is visible
-  return true;
-});
+      // Check if `showAfterProposalIdApproved` exists and if the proposal ID exists in the array
+      if (showAfterProposalIdApproved) {
+        return !(proposals ?? []).some(
+          (p) => p.id === parseInt(showAfterProposalIdApproved)
+        );
+      }
+      // If no `showAfterProposalIdApproved`, the proposal is visible
+      return true;
+    })
+  : proposals;
 
 const columnsVisibility = JSON.parse(
   Storage.get(

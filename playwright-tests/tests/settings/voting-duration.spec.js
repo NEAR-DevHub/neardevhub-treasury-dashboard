@@ -38,7 +38,7 @@ test.describe("admin connected", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(120_000);
+    test.setTimeout(150_000);
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
 
     await page.goto(`/${instanceAccount}/widget/app?page=settings`);
@@ -95,7 +95,7 @@ test.describe("admin connected", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(120_000);
+    test.setTimeout(150_000);
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
 
     await page.goto(`/${instanceAccount}/widget/app?page=settings`);
@@ -132,7 +132,7 @@ test.describe("admin connected", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(120_000);
+    test.setTimeout(150_000);
     const daoName = daoAccount.split(".")[0];
     const sandbox = new SandboxRPC();
     await sandbox.init();

@@ -204,7 +204,9 @@ return (
               placement="top"
               overlay={
                 <Tooltip id="tooltip">
-                  Tokens are ready to withdraw 52 to 65 hours after unstaking
+                  These tokens were unstaked, but are not yet ready for
+                  withdrawl. Tokens are ready for withdrawl 52-65 hours after
+                  unstaking.{" "}
                 </Tooltip>
               }
             >
