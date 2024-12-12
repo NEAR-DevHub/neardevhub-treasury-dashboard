@@ -152,6 +152,10 @@ const Container = styled.div`
     color: rgba(177, 113, 8, 1) !important;
   }
 
+  .markdown-href p {
+    margin-bottom: 0px !important;
+  }
+
   .markdown-href a {
     color: inherit !important;
   }
