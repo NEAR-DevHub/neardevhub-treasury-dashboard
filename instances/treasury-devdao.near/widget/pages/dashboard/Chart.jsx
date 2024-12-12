@@ -1,5 +1,6 @@
 const { nearPrice, ftTokens, accountId, title } = props;
 
+const API_HOST="https://ref-sdk-api.fly.dev/api"
 const [height, setHeight] = useState(350);
 const [history, setHistory] = useState([]);
 const [tokenAddresses, setTokenAddresses] = useState([]);
@@ -275,7 +276,7 @@ const RadioButton = styled.div`
 async function fetchData() {
   try {
     asyncFetch(
-      `http://localhost:3003/token-balance-history?account_id=${accountId}&period=${selectedPeriod.value}&interval=${selectedPeriod.interval}&token_id=${selectedToken}`
+      `${API_HOST}/token-balance-history?account_id=${accountId}&period=${selectedPeriod.value}&interval=${selectedPeriod.interval}&token_id=${selectedToken}`
     ).then((resp) => {
       if (resp?.body) setHistory(resp.body);
       setIsLoading(false);
