@@ -208,7 +208,7 @@ const decodeProposalDescription = (key, description) => {
       const value = match[2];
 
       if (currentKey === markdownKey) {
-        return value;
+        return value.trim();
       }
     }
   }
@@ -266,10 +266,16 @@ function getFilteredProposalsByStatusAndKind({
   };
 
   const checkForStakeProposals = (item) => {
+    const proposalAction = decodeProposalDescription(
+      "proposal_action",
+      item.description
+    );
     const isStakeRequest =
       decodeProposalDescription("isStakeRequest", item.description) ||
-      decodeProposalDescription("proposal_action", item.description) ===
-        "stake";
+      proposalAction === "stake" ||
+      proposalAction === "unstake" ||
+      proposalAction === "withdraw";
+
     return isStakeRequest;
   };
 

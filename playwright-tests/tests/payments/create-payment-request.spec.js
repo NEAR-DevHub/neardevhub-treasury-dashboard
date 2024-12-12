@@ -169,7 +169,9 @@ test.describe("admin connected", function () {
     await updateDaoPolicyMembers({ page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
     await clickCreatePaymentRequestButton(page);
-    expect(page.getByText("There has been some issue in")).toBeVisible({
+    await expect(
+      page.getByText("There has been some issue in fetching FT tokens data.")
+    ).toBeVisible({
       timeout: 60_000,
     });
   });

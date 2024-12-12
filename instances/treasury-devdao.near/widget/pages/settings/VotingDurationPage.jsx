@@ -8,12 +8,17 @@ const { Modal, ModalBackdrop, ModalContent, ModalDialog, ModalHeader } =
   VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.modal");
 
 const daoPolicy = Near.view(treasuryDaoID, "get_policy", {});
-
-if (!daoPolicy) {
-  return <></>;
-}
-
 const lastProposalId = Near.view(treasuryDaoID, "get_last_proposal_id");
+
+if (!daoPolicy || lastProposalId === null) {
+  return (
+    <div className="card d-flex justify-content-center align-items-center w-100 h-100">
+      <Widget
+        src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"}
+      />
+    </div>
+  );
+}
 
 const deposit = daoPolicy?.proposal_bond || 100000000000000000000000;
 

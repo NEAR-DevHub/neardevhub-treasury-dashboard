@@ -20,21 +20,24 @@ const { treasuryDaoID, lockupContract } = VM.require(
 );
 
 const proposals = props.proposals;
-const visibleProposals = (proposals ?? []).filter((proposal, index) => {
-  const showAfterProposalIdApproved = decodeProposalDescription(
-    "showAfterProposalIdApproved",
-    proposal.description
-  );
+// search for showAfterProposalIdApproved only in pending requests
+const visibleProposals = isPendingRequests
+  ? (proposals ?? []).filter((proposal, index) => {
+      const showAfterProposalIdApproved = decodeProposalDescription(
+        "showAfterProposalIdApproved",
+        proposal.description
+      );
 
-  // Check if `showAfterProposalIdApproved` exists and if the proposal ID exists in the array
-  if (showAfterProposalIdApproved) {
-    return !(proposals ?? []).some(
-      (p) => p.id === parseInt(showAfterProposalIdApproved)
-    );
-  }
-  // If no `showAfterProposalIdApproved`, the proposal is visible
-  return true;
-});
+      // Check if `showAfterProposalIdApproved` exists and if the proposal ID exists in the array
+      if (showAfterProposalIdApproved) {
+        return !(proposals ?? []).some(
+          (p) => p.id === parseInt(showAfterProposalIdApproved)
+        );
+      }
+      // If no `showAfterProposalIdApproved`, the proposal is visible
+      return true;
+    })
+  : proposals;
 
 const columnsVisibility = JSON.parse(
   Storage.get(
@@ -147,6 +150,14 @@ const Container = styled.div`
 
   .text-warning {
     color: rgba(177, 113, 8, 1) !important;
+  }
+
+  .markdown-href p {
+    margin-bottom: 0px !important;
+  }
+
+  .markdown-href a {
+    color: inherit !important;
   }
 `;
 
@@ -381,6 +392,13 @@ const ProposalsComponent = () => {
           let value = decodeBase64(action.args);
           amount = value.amount;
         }
+
+        const isWithdrawRequest =
+          action.method_name === "withdraw_all_from_staking_pool" ||
+          action.method_name === "withdraw_all";
+
+        const treasuryWallet =
+          receiverAccount === lockupContract ? lockupContract : treasuryDaoID;
         return (
           <tr
             className={
@@ -429,11 +447,7 @@ const ProposalsComponent = () => {
               />
             </td>
             {lockupContract && (
-              <td className={"text-left"}>
-                {receiverAccount === lockupContract
-                  ? lockupContract
-                  : treasuryDaoID}
-              </td>
+              <td className={"text-left"}>{treasuryWallet}</td>
             )}
 
             <td className={isVisible("Validator")}>
@@ -462,21 +476,16 @@ const ProposalsComponent = () => {
             </td>
             <td
               className={
-                "text-sm text-left " +
+                "text-sm text-left markdown-href " +
                 isVisible("Notes") +
                 (customNotes && " text-warning")
               }
             >
               {notes || customNotes ? (
-                <Widget
-                  src="${REPL_MOB}/widget/N.Common.OverlayTrigger"
-                  props={{
-                    popup: <TooltipContent summary={customNotes || notes} />,
-                    children: (
-                      <div className="custom-truncate" style={{ width: 180 }}>
-                        {customNotes || notes}
-                      </div>
-                    ),
+                <Markdown
+                  text={customNotes || notes}
+                  syntaxHighlighterProps={{
+                    wrapLines: true,
                   }}
                 />
               ) : (
@@ -549,6 +558,9 @@ const ProposalsComponent = () => {
                       requiredVotes,
                       checkProposalStatus: () => checkProposalStatus(item.id),
                       avoidCheckForBalance: !isStakeRequest,
+                      isWithdrawRequest,
+                      validatorAccount,
+                      treasuryWallet,
                     }}
                   />
                 </td>

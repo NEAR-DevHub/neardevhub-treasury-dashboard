@@ -182,7 +182,7 @@ test.describe("admin connected", function () {
     ).toBeVisible();
     await expect(submitBtn).toBeDisabled();
     await thresholdInput.fill("20");
-    await expect(page.getByText("Heads up, Bro!")).toBeVisible();
+    await expect(page.getByText("Warning!")).toBeVisible();
     await submitBtn.click();
     await expect(
       page.getByText(
