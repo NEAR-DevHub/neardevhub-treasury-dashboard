@@ -85,13 +85,15 @@ const nearPrice = useCache(
 const userFTTokens = useCache(
   () =>
     asyncFetch(
-      `https://api3.nearblocks.io/v1/account/${"frol.near"}/inventory`,
+      `https://api3.nearblocks.io/v1/account/${treasuryDaoID}/inventory`,
       { headers: { Authorization: "Bearer ${REPL_NEARBLOCKS_KEY}" } }
     ).then((res) => {
       let fts = res.body.inventory.fts;
-      fts = fts.sort(
-        (a, b) => b.amount * b.ft_meta.price - a.amount * a.ft_meta.price
-      );
+      if (fts)
+        fts = fts.sort(
+          (a, b) => b.amount * b.ft_meta.price - a.amount * a.ft_meta.price
+        );
+
       const amounts = fts.map((ft) => {
         const amount = ft.amount;
         const decimals = ft.ft_meta.decimals;
