@@ -121,7 +121,7 @@ const MobileLink = styled.a`
 `;
 
 const isActive = (link) =>
-  (link ?? "").toLowerCase() === props.page ? "active" : "";
+  link.toLowerCase().replace(/ /g, "-") === props.page ? "active" : "";
 
 function getTitle(text) {
   return text.replace(/-/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());

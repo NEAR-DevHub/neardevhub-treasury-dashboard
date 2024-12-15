@@ -3,7 +3,7 @@ const { getNearBalances } = VM.require(
 );
 
 const instance = props.instance;
-if (!instance) {
+if (!instance || typeof getNearBalances !== "function") {
   return <></>;
 }
 
@@ -46,7 +46,7 @@ const Wrapper = styled.div`
   }
 
   .flex-container {
-    min-width: 400px;
+    min-width: 300px;
     height: fit-content;
   }
 
@@ -71,8 +71,10 @@ const [lockupNearWithdrawTokens, setLockupNearWithdrawTokens] = useState(null);
 
 const nearPrice = useCache(
   () =>
-    asyncFetch(`https://api3.nearblocks.io/v1/charts/latest`).then((res) => {
-      return res.body.charts?.[0].near_price;
+    asyncFetch(
+      `https://api.coingecko.com/api/v3/simple/price?ids=near&vs_currencies=usd`
+    ).then((res) => {
+      return res.body.near?.usd;
     }),
   "price",
   { subscribe: false }
@@ -110,7 +112,7 @@ const userFTTokens = useCache(
 function formatNearAmount(amount) {
   return Big(amount ?? "0")
     .div(Big(10).pow(24))
-    .toFixed(4);
+    .toFixed(2);
 }
 
 useEffect(() => {
@@ -153,7 +155,7 @@ const totalBalance = Big(nearBalances?.totalParsed ?? "0")
   .mul(nearPrice ?? 1)
   .plus(Big(lockupNearBalances?.totalParsed ?? "0").mul(nearPrice ?? 1))
   .plus(Big(userFTTokens?.totalCummulativeAmt ?? "0"))
-  .toFixed(4);
+  .toFixed(2);
 
 function formatCurrency(amount) {
   const formattedAmount = Number(amount)
@@ -168,11 +170,11 @@ return (
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
       props={{
         accountId: treasuryDaoID,
-        setNearStakedTokens: (v) => setNearStakedTokens(Big(v).toFixed(4)),
-        setNearUnstakedTokens: (v) => setNearUnStakedTokens(Big(v).toFixed(4)),
+        setNearStakedTokens: (v) => setNearStakedTokens(Big(v).toFixed(2)),
+        setNearUnstakedTokens: (v) => setNearUnStakedTokens(Big(v).toFixed(2)),
         setNearStakedTotalTokens: (v) =>
-          setNearStakedTotalTokens(Big(v).toFixed(4)),
-        setNearWithdrawTokens: (v) => setNearWithdrawTokens(Big(v).toFixed(4)),
+          setNearStakedTotalTokens(Big(v).toFixed(2)),
+        setNearWithdrawTokens: (v) => setNearWithdrawTokens(Big(v).toFixed(2)),
       }}
     />
     {lockupContract && (
@@ -180,13 +182,13 @@ return (
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
         props={{
           accountId: lockupContract,
-          setNearStakedTokens: (v) => setLockupStakedTokens(Big(v).toFixed(4)),
+          setNearStakedTokens: (v) => setLockupStakedTokens(Big(v).toFixed(2)),
           setNearUnstakedTokens: (v) =>
-            setLockupUnStakedTokens(Big(v).toFixed(4)),
+            setLockupUnStakedTokens(Big(v).toFixed(2)),
           setNearStakedTotalTokens: (v) =>
-            setLockupStakedTotalTokens(Big(v).toFixed(4)),
+            setLockupStakedTotalTokens(Big(v).toFixed(2)),
           setNearWithdrawTokens: (v) =>
-            setLockupNearWithdrawTokens(Big(v).toFixed(4)),
+            setLockupNearWithdrawTokens(Big(v).toFixed(2)),
         }}
       />
     )}

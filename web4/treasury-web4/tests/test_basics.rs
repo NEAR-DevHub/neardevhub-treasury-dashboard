@@ -1,5 +1,6 @@
 use near_sdk::base64::{engine::general_purpose, Engine as _};
 use near_sdk::serde::Deserialize;
+use near_sdk::NearToken;
 use serde_json::json;
 
 #[derive(Deserialize)]
@@ -11,7 +12,7 @@ pub struct Web4Response {
 }
 
 #[tokio::test]
-async fn test_contract_is_operational() -> Result<(), Box<dyn std::error::Error>> {
+async fn test_web4() -> Result<(), Box<dyn std::error::Error>> {
     let sandbox = near_workspaces::sandbox().await?;
     let contract_wasm = near_workspaces::compile_project("./").await?;
 
@@ -28,5 +29,110 @@ async fn test_contract_is_operational() -> Result<(), Box<dyn std::error::Error>
         String::from_utf8(general_purpose::STANDARD.decode(response.body).unwrap()).unwrap();
     assert!(body_string.contains("near-social-viewer"));
 
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_update_widgets() -> Result<(), Box<dyn std::error::Error>> {
+    const SOCIALDB_ACCOUNT: &str = "social.near";
+    const WIDGET_REFERENCE_ACCOUNT_ID: &str = "treasury-testing.near";
+
+    let mainnet = near_workspaces::mainnet().await?;
+    let sandbox = near_workspaces::sandbox().await?;
+    let contract_wasm = near_workspaces::compile_project("./").await?;
+
+    let instance_contract = sandbox
+        .import_contract(&"petersalomonsen.near".parse().unwrap(), &mainnet)
+        .transact()
+        .await?;
+    let instance_account = instance_contract.as_account();
+    let deploy_instance_contract_result = instance_account.deploy(&contract_wasm).await?;
+    assert!(deploy_instance_contract_result.is_success());
+
+    let reference_widget_contract = sandbox
+        .import_contract(&WIDGET_REFERENCE_ACCOUNT_ID.parse().unwrap(), &mainnet)
+        .initial_balance(NearToken::from_near(20))
+        .transact()
+        .await?;
+
+    let socialdb = sandbox
+        .import_contract(&SOCIALDB_ACCOUNT.parse().unwrap(), &mainnet)
+        .initial_balance(NearToken::from_near(10000))
+        .transact()
+        .await?;
+
+    let init_socialdb_result = socialdb.call("new").max_gas().transact().await?;
+    assert!(init_socialdb_result.is_success());
+
+    let init_socialdb_result = socialdb
+        .call("set_status")
+        .args_json(json!({"status": "Live"}))
+        .max_gas()
+        .transact()
+        .await?;
+    assert!(init_socialdb_result.is_success());
+
+    let social_set_result = reference_widget_contract
+        .as_account()
+        .call(socialdb.id(), "set")
+        .args_json(json!({
+            "data": {
+                reference_widget_contract.id().as_str(): {
+                    "widget": {
+                        "app": "Hello",
+                        "config": "Goodbye"
+                    }
+                }
+            }
+        }))
+        .deposit(NearToken::from_near(2))
+        .transact()
+        .await?;
+    assert!(social_set_result.is_success());
+
+    let reference_widgets = socialdb
+        .call("get")
+        .args_json(json!({
+            "keys": [format!("{}/widget/**", reference_widget_contract.id().as_str())]
+        }))
+        .view()
+        .await?;
+    let reference_widgets_json_string = String::from_utf8(reference_widgets.result).unwrap();
+
+    let update_widget_result = instance_account
+        .call(instance_account.id(), "update_widgets")
+        .args_json(json!({
+            "widget_reference_account_id": WIDGET_REFERENCE_ACCOUNT_ID,
+            "social_db_account_id": SOCIALDB_ACCOUNT
+        }))
+        .deposit(NearToken::from_near(2))
+        .max_gas()
+        .transact()
+        .await?;
+    println!("update widget {}", update_widget_result.logs().join("\n"));
+    if !update_widget_result.is_success() {
+        panic!(
+            "Failed updating widget: {:?}",
+            String::from_utf8(update_widget_result.raw_bytes().unwrap())
+        );
+    }
+    assert!(update_widget_result.is_success());
+
+    let deployed_widgets = socialdb
+        .call("get")
+        .args_json(json!({
+            "keys": [format!("{}/widget/**", instance_account.id().as_str())]
+        }))
+        .view()
+        .await?;
+    let deployed_widgets_json_string = String::from_utf8(deployed_widgets.result).unwrap();
+
+    assert_eq!(
+        reference_widgets_json_string.replace(
+            reference_widget_contract.id().as_str(),
+            instance_account.id().as_str()
+        ),
+        deployed_widgets_json_string
+    );
     Ok(())
 }

@@ -2,6 +2,10 @@ const { getNearBalances } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
 
+const { encodeToMarkdown } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+);
+
 const instance = props.instance;
 const onCloseCanvas = props.onCloseCanvas ?? (() => {});
 
@@ -56,7 +60,7 @@ const [lockupAlreadyStaked, setLockupAlreadyStaked] = useState(false);
 function formatNearAmount(amount) {
   return Big(amount ?? "0")
     .div(Big(10).pow(24))
-    .toFixed(4);
+    .toFixed(2);
 }
 
 function refreshData() {
@@ -187,7 +191,7 @@ function getAllStakingPools() {
             );
             return {
               pool_id: item.account_id,
-              fee: feeData.numerator / feeData.denominator,
+              fee: feeData.numerator,
               stakedBalance: {
                 [treasuryDaoID]: nearpoolBalance,
                 [lockupContract]: lockupPool,
@@ -242,44 +246,47 @@ function onSubmitClick() {
   setTxnCreated(true);
   const deposit = daoPolicy?.proposal_bond || 100000000000000000000000;
   const description = {
-    isStakeRequest: true,
+    proposal_action: "stake",
     notes: notes,
   };
 
   const isLockupContractSelected = lockupContract === selectedWallet.value;
+
+  const addSelectPoolCall =
+    isLockupContractSelected && validatorAccount.pool_id !== lockupStakedPoolId;
+
   const calls = [];
-  if (isLockupContractSelected) {
-    if (validatorAccount.pool_id !== lockupStakedPoolId) {
-      description["showAfterProposalIdApproved"] = lastProposalId;
-      calls.push({
-        contractName: treasuryDaoID,
-        methodName: "add_proposal",
-        args: {
-          proposal: {
-            description: JSON.stringify({
-              isStakeRequest: true,
-              warningNotes: "Approve to continue staking with this validator",
-            }),
-            kind: {
-              FunctionCall: {
-                receiver_id: lockupContract,
-                actions: [
-                  {
-                    method_name: "select_staking_pool",
-                    args: toBase64({
-                      staking_pool_account_id: validatorAccount.pool_id,
-                    }),
-                    deposit: "0",
-                    gas: "100000000000000",
-                  },
-                ],
-              },
+  if (addSelectPoolCall) {
+    description["showAfterProposalIdApproved"] = lastProposalId;
+
+    calls.push({
+      contractName: treasuryDaoID,
+      methodName: "add_proposal",
+      args: {
+        proposal: {
+          description: encodeToMarkdown({
+            proposal_action: "stake",
+            customNotes: "Approve to continue staking with this validator",
+          }),
+          kind: {
+            FunctionCall: {
+              receiver_id: lockupContract,
+              actions: [
+                {
+                  method_name: "select_staking_pool",
+                  args: toBase64({
+                    staking_pool_account_id: validatorAccount.pool_id,
+                  }),
+                  deposit: "0",
+                  gas: "100000000000000",
+                },
+              ],
             },
           },
         },
-        gas: 200000000000000,
-      });
-    }
+      },
+      gas: 200000000000000,
+    });
   }
 
   calls.push({
@@ -287,7 +294,7 @@ function onSubmitClick() {
     methodName: "add_proposal",
     args: {
       proposal: {
-        description: JSON.stringify(description),
+        description: encodeToMarkdown(description),
         kind: {
           FunctionCall: {
             receiver_id: isLockupContractSelected
@@ -397,7 +404,7 @@ useEffect(() => {
     );
     const isAlreadyStaked =
       (pool.stakedBalance || 0) > 0 ||
-      (pool.unStakedBalance || 0) > 0 ||
+      (pool.unstakedBalance || 0) > 0 ||
       (pool.availableToWithdrawBalance || 0) > 0;
     if (isAlreadyStaked) {
       setValidatorAccount({
@@ -435,11 +442,11 @@ return (
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
       props={{
         accountId: treasuryDaoID,
-        setNearStakedTokens: (v) => setNearStakedTokens(Big(v).toFixed(4)),
-        setNearUnstakedTokens: (v) => setNearUnStakedTokens(Big(v).toFixed(4)),
+        setNearStakedTokens: (v) => setNearStakedTokens(Big(v).toFixed(2)),
+        setNearUnstakedTokens: (v) => setNearUnStakedTokens(Big(v).toFixed(2)),
         setNearStakedTotalTokens: (v) =>
-          setNearStakedTotalTokens(Big(v).toFixed(4)),
-        setNearWithdrawTokens: (v) => setNearWithdrawTokens(Big(v).toFixed(4)),
+          setNearStakedTotalTokens(Big(v).toFixed(2)),
+        setNearWithdrawTokens: (v) => setNearWithdrawTokens(Big(v).toFixed(2)),
         setPoolWithBalance: setNearStakedPoolsWithBalance,
       }}
     />
@@ -449,13 +456,13 @@ return (
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
         props={{
           accountId: lockupContract,
-          setNearStakedTokens: (v) => setLockupStakedTokens(Big(v).toFixed(4)),
+          setNearStakedTokens: (v) => setLockupStakedTokens(Big(v).toFixed(2)),
           setNearUnstakedTokens: (v) =>
-            setLockupUnStakedTokens(Big(v).toFixed(4)),
+            setLockupUnStakedTokens(Big(v).toFixed(2)),
           setNearStakedTotalTokens: (v) =>
-            setLockupStakedTotalTokens(Big(v).toFixed(4)),
+            setLockupStakedTotalTokens(Big(v).toFixed(2)),
           setNearWithdrawTokens: (v) =>
-            setLockupNearWithdrawTokens(Big(v).toFixed(4)),
+            setLockupNearWithdrawTokens(Big(v).toFixed(2)),
           setPoolWithBalance: setLockupStakedPoolsWithBalance,
         }}
       />

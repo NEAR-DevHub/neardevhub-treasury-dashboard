@@ -7,17 +7,10 @@
  */
 export async function mockNearPrice({ nearPrice, page }) {
   await page.route(
-    "https://api3.nearblocks.io/v1/charts/latest",
+    "https://api.coingecko.com/api/v3/simple/price?ids=near&vs_currencies=usd",
     async (route) => {
-      let json = {
-        charts: [
-          {
-            date: "2024-10-12T00:00:00.000Z",
-            near_price: nearPrice.toString(),
-            txns: "6113720",
-          },
-        ],
-      };
+      let json = { near: { usd: nearPrice } };
+
       await route.fulfill({ json });
     }
   );

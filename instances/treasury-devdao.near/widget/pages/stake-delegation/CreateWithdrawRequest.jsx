@@ -4,8 +4,14 @@ const { getNearBalances } = VM.require(
 
 const instance = props.instance;
 const onCloseCanvas = props.onCloseCanvas ?? (() => {});
-
-if (!instance) {
+const { encodeToMarkdown } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+);
+if (
+  !instance ||
+  typeof getNearBalances !== "function" ||
+  typeof encodeToMarkdown !== "function"
+) {
   return <></>;
 }
 
@@ -24,11 +30,10 @@ const walletOptions = [
   },
 ];
 const [selectedWallet, setSelectedWallet] = useState(walletOptions[0]);
-const [validators, setValidators] = useState([]);
+const [withdrawValidators, setWithdrawValidators] = useState([]);
 const [isTxnCreated, setTxnCreated] = useState(false);
 const [lastProposalId, setLastProposalId] = useState(null);
 
-const [validatorAccount, setValidatorAccount] = useState(null);
 const [daoPolicy, setDaoPolicy] = useState(null);
 
 const [nearStakedTokens, setNearStakedTokens] = useState(null);
@@ -47,10 +52,14 @@ const [lockupNearWithdrawTokens, setLockupNearWithdrawTokens] = useState(null);
 const [lockupStakedPoolsWithBalance, setLockupStakedPoolsWithBalance] =
   useState(null);
 
+const [hasUnstakedAssets, setHasUnstakedAssets] = useState(true);
+const [isReadyToWithdraw, setIsReadyToWithdraw] = useState(true);
+const [showLoader, setShowLoader] = useState(true);
+
 function formatNearAmount(amount) {
   return Big(amount ?? "0")
     .div(Big(10).pow(24))
-    .toFixed(4);
+    .toFixed(2);
 }
 
 function refreshData() {
@@ -108,7 +117,6 @@ useEffect(() => {
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
         if (lastProposalId !== id) {
-          cleanInputs();
           onCloseCanvas();
           refreshData();
           setTxnCreated(false);
@@ -165,52 +173,162 @@ function getBalances() {
   }
 }
 
+function checkIfUnstakeBalanceExists(arrayToCheck) {
+  return arrayToCheck.find((i) => i.unstakedBalance > 0);
+}
+
+function checkIfWithdrawBalanceExists(arrayToCheck) {
+  return arrayToCheck.find((i) => i.availableToWithdrawBalance > 0);
+}
+
+function getFeeOfStakedPools(stakedPoolsWithBalance) {
+  const promises = stakedPoolsWithBalance
+    .filter((item) => item.availableToWithdrawBalance > 0) // Filter items with withdrawl balance
+    .map((item) => {
+      return Near.asyncView(item.pool, "get_reward_fee_fraction").then((i) => ({
+        pool_id: item.pool,
+        fee: i.numerator,
+        stakedBalance: {
+          [isLockupContract ? lockupContract : treasuryDaoID]: item,
+        },
+      }));
+    });
+
+  Promise.all(promises).then((res) => {
+    setWithdrawValidators(res);
+    setShowLoader(false);
+  });
+}
+
+useEffect(() => {
+  const stakedPoolsWithBalance =
+    selectedWallet.value === lockupContract
+      ? lockupStakedPoolsWithBalance
+      : nearStakedPoolsWithBalance;
+
+  if (Array.isArray(stakedPoolsWithBalance)) {
+    getFeeOfStakedPools(stakedPoolsWithBalance);
+    setHasUnstakedAssets(checkIfUnstakeBalanceExists(stakedPoolsWithBalance));
+    setIsReadyToWithdraw(checkIfWithdrawBalanceExists(stakedPoolsWithBalance));
+  }
+}, [
+  lockupStakedPoolsWithBalance,
+  nearStakedPoolsWithBalance,
+  selectedWallet.value,
+]);
+
+useEffect(() => {
+  if (!isReadyToWithdraw) {
+    setShowLoader(false);
+  }
+}, [isReadyToWithdraw, selectedWallet]);
+
 function onSubmitClick() {
   setTxnCreated(true);
   const deposit = daoPolicy?.proposal_bond || 100000000000000000000000;
   const description = {
-    isStakeRequest: true,
-    notes: notes,
+    proposal_action: "withdraw",
   };
 
   const isLockupContractSelected = lockupContract === selectedWallet.value;
-  const actions = [];
+  const calls = [];
 
-  actions.push(
-    isLockupContractSelected
-      ? {
-          method_name: "withdraw_all_from_staking_pool",
-          args: "",
-          deposit: "0",
-          gas: "250000000000000",
-        }
-      : {
-          method_name: "withdraw_all",
-          args: "",
-          deposit: "0",
-          gas: "200000000000000",
-        }
-  );
-
-  Near.call({
-    contractName: treasuryDaoID,
-    methodName: "add_proposal",
-    args: {
-      proposal: {
-        description: JSON.stringify(description),
-        kind: {
-          FunctionCall: {
-            receiver_id: isLockupContractSelected
-              ? lockupContract
-              : validatorAccount.pool_id,
-            actions: actions,
+  withdrawValidators.map((i) => {
+    calls.push({
+      contractName: treasuryDaoID,
+      methodName: "add_proposal",
+      args: {
+        proposal: {
+          description: encodeToMarkdown(description),
+          kind: {
+            FunctionCall: {
+              receiver_id: isLockupContractSelected
+                ? lockupContract
+                : i.pool_id,
+              actions: isLockupContractSelected
+                ? [
+                    {
+                      method_name: "withdraw_all_from_staking_pool",
+                      args: "",
+                      deposit: "0",
+                      gas: "250000000000000",
+                    },
+                  ]
+                : [
+                    {
+                      method_name: "withdraw_all",
+                      args: "",
+                      deposit: "0",
+                      gas: "200000000000000",
+                    },
+                  ],
+            },
           },
         },
       },
-    },
-    gas: 200000000000000,
+      gas: 200000000000000,
+    });
   });
+
+  Near.call(calls);
 }
+
+const WarningMessage = ({ message }) => {
+  return (
+    <div className="d-flex gap-2 align-items-center rounded-2 bg-withdraw-warning">
+      <i className="bi bi-exclamation-triangle"></i>
+      {message}
+    </div>
+  );
+};
+
+const Pools = () => {
+  return (
+    <div className="d-flex flex-column gap-3">
+      {Array.isArray(withdrawValidators) && withdrawValidators.length > 0 && (
+        <div className="border border-1 rounded-3">
+          {withdrawValidators.map((i, index) => {
+            const { pool_id, fee, stakedBalance } = i;
+
+            return (
+              <div
+                key={pool_id}
+                className={
+                  `w-100 text-wrap px-3 py-2 text-truncate d-flex flex-column gap-1 ` +
+                  (index > 0 && " border-top")
+                }
+              >
+                <div className="d-flex align-items-center gap-2 text-sm">
+                  <span className="text-muted">{fee}% Fee </span>
+                  <span className="text-green">Active</span>
+                </div>
+                <div className="h6 mb-0"> {pool_id} </div>
+
+                <div className="d-flex flex-column gap-1">
+                  <div className="d-flex align-items-center gap-1 text-sm">
+                    <div className="text-dark-grey">
+                      Available for withdrawal:{" "}
+                    </div>
+                    <div className="text-orange">
+                      {formatNearAmount(
+                        stakedBalance[selectedWallet.value]
+                          .availableToWithdrawBalance
+                      )}{" "}
+                      NEAR
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {withdrawValidators?.length > 1 && (
+        <WarningMessage message="By submitting, you request to withdraw all available funds. A separate withdrawal request will be created for each validator." />
+      )}
+    </div>
+  );
+};
 
 const Container = styled.div`
   font-size: 14px;
@@ -268,6 +386,23 @@ const Container = styled.div`
     font-weight: 500;
     font-size: 13px;
   }
+
+  .bg-withdraw-warning {
+    background: rgba(255, 158, 0, 0.1);
+    color: rgba(177, 113, 8, 1);
+    padding-inline: 0.8rem;
+    padding-block: 0.5rem;
+    font-weight: 500;
+    font-size: 13px;
+  }
+
+  .text-green {
+    color: #34c759;
+  }
+
+  .text-orange {
+    color: rgba(255, 149, 0, 1) !important;
+  }
 `;
 
 return (
@@ -276,11 +411,11 @@ return (
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
       props={{
         accountId: treasuryDaoID,
-        setNearStakedTokens: (v) => setNearStakedTokens(Big(v).toFixed(4)),
-        setNearUnstakedTokens: (v) => setNearUnStakedTokens(Big(v).toFixed(4)),
+        setNearStakedTokens: (v) => setNearStakedTokens(Big(v).toFixed(2)),
+        setNearUnstakedTokens: (v) => setNearUnStakedTokens(Big(v).toFixed(2)),
         setNearStakedTotalTokens: (v) =>
-          setNearStakedTotalTokens(Big(v).toFixed(4)),
-        setNearWithdrawTokens: (v) => setNearWithdrawTokens(Big(v).toFixed(4)),
+          setNearStakedTotalTokens(Big(v).toFixed(2)),
+        setNearWithdrawTokens: (v) => setNearWithdrawTokens(Big(v).toFixed(2)),
         setPoolWithBalance: setNearStakedPoolsWithBalance,
       }}
     />
@@ -290,13 +425,13 @@ return (
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
         props={{
           accountId: lockupContract,
-          setNearStakedTokens: (v) => setLockupStakedTokens(Big(v).toFixed(4)),
+          setNearStakedTokens: (v) => setLockupStakedTokens(Big(v).toFixed(2)),
           setNearUnstakedTokens: (v) =>
-            setLockupUnStakedTokens(Big(v).toFixed(4)),
+            setLockupUnStakedTokens(Big(v).toFixed(2)),
           setNearStakedTotalTokens: (v) =>
-            setLockupStakedTotalTokens(Big(v).toFixed(4)),
+            setLockupStakedTotalTokens(Big(v).toFixed(2)),
           setNearWithdrawTokens: (v) =>
-            setLockupNearWithdrawTokens(Big(v).toFixed(4)),
+            setLockupNearWithdrawTokens(Big(v).toFixed(2)),
           setPoolWithBalance: setLockupStakedPoolsWithBalance,
         }}
       />
@@ -312,6 +447,7 @@ return (
               instance,
               selectedValue: selectedWallet,
               onUpdate: (v) => {
+                setShowLoader(true);
                 setSelectedWallet(v);
               },
             }}
@@ -349,11 +485,23 @@ return (
           }
         />
       </div>
-
-      <div className="d-flex gap-2 align-items-center rounded-2 bg-validator-info">
-        <i class="bi bi-info-circle"></i>
-        By submitting you create request to withdraw all available amount.
-      </div>
+      {showLoader && (
+        <div className="d-flex flex-column justify-content-center align-items-center w-100 h-100">
+          <Widget
+            src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"}
+          />
+        </div>
+      )}
+      {!isReadyToWithdraw && (
+        <WarningMessage
+          message={
+            hasUnstakedAssets
+              ? "Your balance is not ready for withdrawal yet. It is pending release and will take 1–2 days."
+              : "You don’t have any unstaked balance available for withdrawal."
+          }
+        />
+      )}
+      <Pools />
       <div className="d-flex mt-2 gap-3 justify-content-end">
         <Widget
           src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
@@ -373,6 +521,7 @@ return (
           props={{
             classNames: { root: "theme-btn" },
             label: "Submit",
+            disabled: !withdrawValidators?.length,
             onClick: onSubmitClick,
             loading: isTxnCreated,
           }}

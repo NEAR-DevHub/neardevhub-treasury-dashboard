@@ -18,6 +18,9 @@ const avoidCheckForBalance = props.avoidCheckForBalance;
 const hasDeletePermission = props.hasDeletePermission;
 const hasVotingPermission = props.hasVotingPermission;
 const proposalCreator = props.proposalCreator;
+const isWithdrawRequest = props.isWithdrawRequest;
+const validatorAccount = props.validatorAccount;
+const treasuryWallet = props.treasuryWallet;
 
 const alreadyVoted = Object.keys(votes).includes(accountId);
 const userVote = votes[accountId];
@@ -32,7 +35,7 @@ const [isTxnCreated, setTxnCreated] = useState(false);
 const [vote, setVote] = useState(null);
 const [isInsufficientBalance, setInsufficientBal] = useState(false);
 const [showWarning, setShowWarning] = useState(false);
-
+const [isReadyToBeWithdrawn, setIsReadyToBeWithdrawn] = useState(true);
 const [showConfirmModal, setConfirmModal] = useState(null);
 
 useEffect(() => {
@@ -44,6 +47,14 @@ useEffect(() => {
     );
   }
 }, [tokensBalance, currentAmount, currentContract, avoidCheckForBalance]);
+
+// if it's a withdraw request, check if amount is ready to be withdrawn
+useEffect(() => {
+  if (isWithdrawRequest && validatorAccount)
+    Near.asyncView(validatorAccount, "is_account_unstaked_balance_available", {
+      account_id: treasuryWallet,
+    }).then((res) => setIsReadyToBeWithdrawn(res));
+}, [isWithdrawRequest, validatorAccount]);
 
 function actProposal() {
   setTxnCreated(true);
@@ -118,6 +129,14 @@ const Container = styled.div`
       color: white;
     }
   }
+
+  .fw-semi-bold {
+    font-weight: 500;
+  }
+
+  .text-dark-grey {
+    color: rgba(85, 85, 85, 1) !important;
+  }
 `;
 
 useEffect(() => {
@@ -178,43 +197,61 @@ return (
       </div>
     ) : (
       <div className="d-flex gap-2 align-items-center justify-content-end">
-        {hasVotingPermission && (
-          <div className="d-flex gap-2 align-items-center">
-            <Widget
-              src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
-              props={{
-                classNames: {
-                  root: "approve-btn p-2",
-                },
-                label: "Approve",
-                onClick: () => {
-                  if (isInsufficientBalance) {
-                    setShowWarning(true);
-                  } else {
-                    setVote(actions.APPROVE);
-                    setConfirmModal(true);
-                  }
-                },
-                loading: isTxnCreated && vote === actions.APPROVE,
-                disabled: isTxnCreated,
-              }}
-            />
-            <Widget
-              src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
-              props={{
-                classNames: {
-                  root: "reject-btn p-2",
-                },
-                label: "Reject",
-                onClick: () => {
-                  setVote(actions.REJECT);
-                  setConfirmModal(true);
-                },
-                loading: isTxnCreated && vote === actions.REJECT,
-                disabled: isTxnCreated,
-              }}
-            />
+        {!isReadyToBeWithdrawn ? (
+          <div className="text-center fw-semi-bold">
+            Voting is not available before unstaking release{" "}
+            <OverlayTrigger
+              placement="top"
+              overlay={
+                <Tooltip id="tooltip">
+                  These tokens were unstaked, but are not yet ready for
+                  withdrawl. Tokens are ready for withdrawl 52-65 hours after
+                  unstaking.{" "}
+                </Tooltip>
+              }
+            >
+              <i className="bi bi-info-circle text-dark-grey"></i>
+            </OverlayTrigger>
           </div>
+        ) : (
+          hasVotingPermission && (
+            <div className="d-flex gap-2 align-items-center">
+              <Widget
+                src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
+                props={{
+                  classNames: {
+                    root: "approve-btn p-2",
+                  },
+                  label: "Approve",
+                  onClick: () => {
+                    if (isInsufficientBalance) {
+                      setShowWarning(true);
+                    } else {
+                      setVote(actions.APPROVE);
+                      setConfirmModal(true);
+                    }
+                  },
+                  loading: isTxnCreated && vote === actions.APPROVE,
+                  disabled: isTxnCreated,
+                }}
+              />
+              <Widget
+                src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
+                props={{
+                  classNames: {
+                    root: "reject-btn p-2",
+                  },
+                  label: "Reject",
+                  onClick: () => {
+                    setVote(actions.REJECT);
+                    setConfirmModal(true);
+                  },
+                  loading: isTxnCreated && vote === actions.REJECT,
+                  disabled: isTxnCreated,
+                }}
+              />
+            </div>
+          )
         )}
         {/* currently showing delete btn only for proposal creator */}
         {hasDeletePermission && proposalCreator === accountId && (

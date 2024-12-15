@@ -10,7 +10,7 @@ const archiveNodeUrl = "https://archival-rpc.mainnet.near.org";
 const nearTokenIcon = "${REPL_NEAR_TOKEN_ICON}";
 
 function formatToReadableDecimals(number) {
-  return Big(number ?? "0").toFixed(4);
+  return Big(number ?? "0").toFixed(2);
 }
 
 const {
@@ -134,7 +134,7 @@ const PortfolioCard = ({
             <div>
               <div className="h6 mb-0">{symbol}</div>
               <div className="text-sm text-grey">
-                ${Big(price ?? "0").toFixed(4)}
+                ${Big(price ?? "0").toFixed(2)}
               </div>
             </div>
           </div>

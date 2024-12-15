@@ -2,12 +2,16 @@ const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
 
-const { getNearBalances } = VM.require(
+const { getNearBalances, decodeProposalDescription } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
 const instance = props.instance;
 const policy = props.policy;
-if (!instance || typeof getNearBalances !== "function") {
+if (
+  !instance ||
+  typeof getNearBalances !== "function" ||
+  typeof decodeProposalDescription !== "function"
+) {
   return <></>;
 }
 
@@ -16,17 +20,24 @@ const { treasuryDaoID, lockupContract } = VM.require(
 );
 
 const proposals = props.proposals;
-const visibleProposals = (proposals ?? []).filter((proposal) => {
-  const description = JSON.parse(proposal.description);
-  // Check if `showAfterProposalIdApproved` exists and if the proposal ID exists in the array
-  if (description.showAfterProposalIdApproved) {
-    return !(proposals ?? []).some(
-      (p) => p.id === description.showAfterProposalIdApproved
-    );
-  }
-  // If no `showAfterProposalIdApproved`, the proposal is visible
-  return true;
-});
+// search for showAfterProposalIdApproved only in pending requests
+const visibleProposals = isPendingRequests
+  ? (proposals ?? []).filter((proposal, index) => {
+      const showAfterProposalIdApproved = decodeProposalDescription(
+        "showAfterProposalIdApproved",
+        proposal.description
+      );
+
+      // Check if `showAfterProposalIdApproved` exists and if the proposal ID exists in the array
+      if (showAfterProposalIdApproved) {
+        return !(proposals ?? []).some(
+          (p) => p.id === parseInt(showAfterProposalIdApproved)
+        );
+      }
+      // If no `showAfterProposalIdApproved`, the proposal is visible
+      return true;
+    })
+  : proposals;
 
 const columnsVisibility = JSON.parse(
   Storage.get(
@@ -140,6 +151,14 @@ const Container = styled.div`
   .text-warning {
     color: rgba(177, 113, 8, 1) !important;
   }
+
+  .markdown-href p {
+    margin-bottom: 0px !important;
+  }
+
+  .markdown-href a {
+    color: inherit !important;
+  }
 `;
 
 const ToastContainer = styled.div`
@@ -212,7 +231,7 @@ useEffect(() => {
 const TooltipContent = ({ title, summary }) => {
   return (
     <div className="p-1">
-      <h6>{title}</h6>
+      {title && <h6>{title}</h6>}
       <div>{summary}</div>
     </div>
   );
@@ -352,12 +371,14 @@ const ProposalsComponent = () => {
   return (
     <tbody style={{ overflowX: "auto" }}>
       {visibleProposals?.map((item, index) => {
-        const description = JSON.parse(item.description);
+        const notes = decodeProposalDescription("notes", item.description);
         const args = item?.kind?.FunctionCall;
         const action = args?.actions[0];
         const isStakeRequest = action.method_name === "deposit_and_stake";
-        const notes = description.notes;
-        const warningNotes = description.warningNotes;
+        const customNotes = decodeProposalDescription(
+          "customNotes",
+          item.description
+        );
         const receiverAccount = args.receiver_id;
         let validatorAccount = receiverAccount;
         if (validatorAccount === lockupContract) {
@@ -371,6 +392,13 @@ const ProposalsComponent = () => {
           let value = decodeBase64(action.args);
           amount = value.amount;
         }
+
+        const isWithdrawRequest =
+          action.method_name === "withdraw_all_from_staking_pool" ||
+          action.method_name === "withdraw_all";
+
+        const treasuryWallet =
+          receiverAccount === lockupContract ? lockupContract : treasuryDaoID;
         return (
           <tr
             className={
@@ -419,11 +447,7 @@ const ProposalsComponent = () => {
               />
             </td>
             {lockupContract && (
-              <td className={"text-left"}>
-                {receiverAccount === lockupContract
-                  ? lockupContract
-                  : treasuryDaoID}
-              </td>
+              <td className={"text-left"}>{treasuryWallet}</td>
             )}
 
             <td className={isVisible("Validator")}>
@@ -452,12 +476,21 @@ const ProposalsComponent = () => {
             </td>
             <td
               className={
-                "text-sm text-left " +
+                "text-sm text-left markdown-href " +
                 isVisible("Notes") +
-                (warningNotes && " text-warning")
+                (customNotes && " text-warning")
               }
             >
-              {notes || warningNotes ? warningNotes || notes : "-"}
+              {notes || customNotes ? (
+                <Markdown
+                  text={customNotes || notes}
+                  syntaxHighlighterProps={{
+                    wrapLines: true,
+                  }}
+                />
+              ) : (
+                "-"
+              )}
             </td>
             {isPendingRequests && (
               <td className={isVisible("Required Votes") + " text-center"}>
@@ -525,6 +558,9 @@ const ProposalsComponent = () => {
                       requiredVotes,
                       checkProposalStatus: () => checkProposalStatus(item.id),
                       avoidCheckForBalance: !isStakeRequest,
+                      isWithdrawRequest,
+                      validatorAccount,
+                      treasuryWallet,
                     }}
                   />
                 </td>
