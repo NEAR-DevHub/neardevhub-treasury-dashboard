@@ -85,7 +85,7 @@ const nearPrice = useCache(
 const userFTTokens = useCache(
   () =>
     asyncFetch(
-      `https://api3.nearblocks.io/v1/account/${treasuryDaoID}/inventory`,
+      `https://api3.nearblocks.io/v1/account/${treasuryDaoID  }/inventory`,
       { headers: { Authorization: "Bearer ${REPL_NEARBLOCKS_KEY}" } }
     ).then((res) => {
       let fts = res.body.inventory.fts;
