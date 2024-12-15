@@ -10,7 +10,7 @@ const archiveNodeUrl = "https://archival-rpc.mainnet.near.org";
 const nearTokenIcon = "${REPL_NEAR_TOKEN_ICON}";
 
 function formatToReadableDecimals(number) {
-  return Big(number ?? "0").toFixed(4);
+  return Big(number ?? "0").toFixed(2);
 }
 
 const {
@@ -128,13 +128,17 @@ const PortfolioCard = ({
   return (
     <div className="d-flex flex-column">
       <div className="border-bottom">
-        <div className="py-2 d-flex gap-2 align-items-center justify-content-between px-3">
+        <div
+          className={`py-2 d-flex gap-2 align-items-center justify-content-between px-3 ${
+            !price ? "text-secondary" : ""
+          }`}
+        >
           <div className="d-flex align-items-center gap-2">
             <img src={icon} height={30} width={30} />
             <div>
               <div className="h6 mb-0">{symbol}</div>
               <div className="text-sm text-grey">
-                ${Big(price ?? "0").toFixed(4)}
+                ${Big(price ?? "0").toFixed()}
               </div>
             </div>
           </div>

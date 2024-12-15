@@ -1,7 +1,7 @@
 const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
-const { getNearBalances } = VM.require(
+const { getNearBalances, decodeProposalDescription } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
 
@@ -14,6 +14,14 @@ if (!instance) {
 const { treasuryDaoID, showKYC, showReferenceProposal } = VM.require(
   `${instance}/widget/config.data`
 );
+
+if (
+  !instance ||
+  typeof getNearBalances !== "function" ||
+  typeof decodeProposalDescription !== "function"
+) {
+  return <></>;
+}
 
 const proposals = props.proposals;
 const columnsVisibility = JSON.parse(
@@ -187,7 +195,7 @@ useEffect(() => {
 const TooltipContent = ({ title, summary }) => {
   return (
     <div className="p-1">
-      <h6>{title}</h6>
+      {title && <h6>{title}</h6>}
       <div>{summary}</div>
     </div>
   );
@@ -315,11 +323,11 @@ const ProposalsComponent = () => {
   return (
     <tbody style={{ overflowX: "auto" }}>
       {proposals?.map((item, index) => {
-        const description = JSON.parse(item.description);
-        const title = description.title;
-        const summary = description.summary;
-        const proposalId = description.proposalId;
-        const notes = description.notes;
+        const notes = decodeProposalDescription("notes", item.description);
+        const title = decodeProposalDescription("title", item.description);
+        const summary = decodeProposalDescription("summary", item.description);
+        const id = decodeProposalDescription("proposalId", item.description);
+        const proposalId = id ? parseInt(id, 10) : null;
         const args = item.kind.Transfer;
 
         return (
@@ -449,7 +457,21 @@ const ProposalsComponent = () => {
               />
             </td>
             <td className={"text-sm text-left " + isVisible("Notes")}>
-              {notes ? notes : "-"}
+              {notes ? (
+                <Widget
+                  src="${REPL_MOB}/widget/N.Common.OverlayTrigger"
+                  props={{
+                    popup: <TooltipContent summary={notes} />,
+                    children: (
+                      <div className="custom-truncate" style={{ width: 180 }}>
+                        {notes}
+                      </div>
+                    ),
+                  }}
+                />
+              ) : (
+                "-"
+              )}
             </td>
             {isPendingRequests && (
               <td className={isVisible("Required Votes") + " text-center"}>
@@ -538,7 +560,7 @@ return (
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
       props={{
         accountId: treasuryDaoID,
-        setNearStakedTotalTokens: (v) => setNearStakedTokens(Big(v).toFixed(4)),
+        setNearStakedTotalTokens: (v) => setNearStakedTokens(Big(v).toFixed(2)),
       }}
     />
     <VoteSuccessToast />

@@ -10,6 +10,7 @@ const {
   onSearch,
   showManualRequest,
   onClickOfManualRequest,
+  isLoadingProposals,
 } = props;
 
 const [searchTerm, setSearchTerm] = useState("");
@@ -158,19 +159,27 @@ return (
               }}
             />
           )}
-          <div className="scroll-box">
-            {filteredOptions.map((option) => (
-              <div
-                key={option.value}
-                className={`dropdown-item cursor-pointer w-100 text-wrap ${
-                  selectedOption.value === option.value ? "selected" : ""
-                }`}
-                onClick={() => handleOptionClick(option)}
-              >
-                {option.label}
-              </div>
-            ))}
-          </div>
+          {isLoadingProposals ? (
+            <div className="d-flex justify-content-center align-items-center w-100 h-100">
+              <Widget
+                src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"}
+              />
+            </div>
+          ) : (
+            <div className="scroll-box">
+              {filteredOptions.map((option) => (
+                <div
+                  key={option.value}
+                  className={`dropdown-item cursor-pointer w-100 text-wrap ${
+                    selectedOption.value === option.value ? "selected" : ""
+                  }`}
+                  onClick={() => handleOptionClick(option)}
+                >
+                  {option.label}
+                </div>
+              ))}
+            </div>
+          )}
           {showManualRequest && (
             <div
               className="btn cursor-pointer btn-link d-flex gap-2 align-items-center text-decoration-none mt-1"

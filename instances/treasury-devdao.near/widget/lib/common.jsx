@@ -162,6 +162,60 @@ const filterFunction = (
   return true;
 };
 
+function parseKeyToReadableFormat(key) {
+  return key
+    .replace(/_/g, " ") // Replace underscores with spaces
+    .replace(/([a-z])([A-Z])/g, "$1 $2") // Add spaces between camelCase or PascalCase words
+    .replace(/\b\w/g, (c) => c.toUpperCase()); // Capitalize each word
+}
+
+const encodeToMarkdown = (data) => {
+  return Object.entries(data)
+    .filter(([key, value]) => {
+      return (
+        key && // Key exists and is not null/undefined
+        value !== null &&
+        value !== undefined &&
+        value !== ""
+      );
+    })
+    .map(([key, value]) => {
+      return `* ${parseKeyToReadableFormat(key)}: ${String(value)}`;
+    })
+    .join(" <br>");
+};
+
+const decodeProposalDescription = (key, description) => {
+  // Try to parse as JSON
+  let parsedData;
+  try {
+    parsedData = JSON.parse(description);
+    if (parsedData && parsedData[key] !== undefined) {
+      return parsedData[key]; // Return value from JSON if key exists
+    }
+  } catch (error) {
+    // Not JSON, proceed to parse as markdown
+  }
+
+  // Handle as markdown
+  const markdownKey = parseKeyToReadableFormat(key);
+
+  const lines = description.split("<br>");
+  for (const line of lines) {
+    const match = line.match(/^\* (.+): (.+)$/);
+    if (match) {
+      const currentKey = match[1];
+      const value = match[2];
+
+      if (currentKey === markdownKey) {
+        return value.trim();
+      }
+    }
+  }
+
+  return null; // Return null if key not found
+};
+
 function getFilteredProposalsByStatusAndKind({
   treasuryDaoID,
   resPerPage,
@@ -205,13 +259,24 @@ function getFilteredProposalsByStatusAndKind({
   }
 
   const checkForExchangeProposals = (item) => {
-    const description = JSON.parse(item.description ?? "{}");
-    return description.isAssetExchangeTxn;
+    const isAssetExchange =
+      decodeProposalDescription("proposal_action", item.description) ===
+      "asset-exchange";
+    return isAssetExchange;
   };
 
   const checkForStakeProposals = (item) => {
-    const description = JSON.parse(item.description ?? "{}");
-    return description.isStakeRequest;
+    const proposalAction = decodeProposalDescription(
+      "proposal_action",
+      item.description
+    );
+    const isStakeRequest =
+      decodeProposalDescription("isStakeRequest", item.description) ||
+      proposalAction === "stake" ||
+      proposalAction === "unstake" ||
+      proposalAction === "withdraw";
+
+    return isStakeRequest;
   };
 
   return Promise.all([...promiseArray, policy]).then((res) => {
@@ -358,7 +423,7 @@ function isBosGateway() {
 function formatNearAmount(amount) {
   return Big(amount ?? "0")
     .div(Big(10).pow(24))
-    .toFixed(4);
+    .toFixed(2);
 }
 
 function getNearBalances(treasuryDaoID) {
@@ -394,4 +459,6 @@ return {
   isBosGateway,
   getNearBalances,
   getRoleWiseData,
+  encodeToMarkdown,
+  decodeProposalDescription,
 };

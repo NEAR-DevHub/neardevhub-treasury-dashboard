@@ -1,6 +1,6 @@
 const { nearPrice, ftTokens, accountId, title } = props;
 
-const API_HOST="https://ref-sdk-api.fly.dev/api"
+const API_HOST = "https://ref-sdk-api.fly.dev/api";
 const [height, setHeight] = useState(350);
 const [history, setHistory] = useState([]);
 const [tokenAddresses, setTokenAddresses] = useState([]);
@@ -16,6 +16,7 @@ const nearTokenInfo = {
   contract: "near",
   ft_meta: { symbol: "NEAR", icon: nearTokenIcon },
 };
+
 const tokens = Array.isArray(ftTokens)
   ? [nearTokenInfo, ...ftTokens]
   : [nearTokenInfo];
@@ -32,6 +33,12 @@ const periodMap = [
   { period: "1Y", value: 24 * 30, interval: 12 },
   { period: "All", value: 24 * 365, interval: 10 },
 ];
+
+function formatCurrency(amount) {
+  return Number(amount)
+    .toFixed(2)
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
 
 const code = `
   <!DOCTYPE html>
@@ -299,7 +306,7 @@ return (
           <h6 className="text-grey mb-0">{title}</h6>
           <div className="d-flex align-items-center gap-3">
             <h3 className="fw-bold mb-0">
-              {isLoading ? "-" : balanceDate.balance}{" "}
+              {isLoading ? "-" : formatCurrency(balanceDate.balance)}{" "}
               {
                 [nearTokenInfo, ...(ftTokens ?? [])].find(
                   (t) => t.contract === selectedToken
@@ -317,42 +324,6 @@ return (
                 })}
               </div>
             )}
-          </div>
-
-          <div className="d-flex gap-4 flex-row align-items-center">
-            {tokens.map((item, _index) => {
-              const { contract, ft_meta } = item;
-              const { symbol } = ft_meta;
-
-              return (
-                <RadioButton className="d-flex align-items-center" key={idx}>
-                  <input
-                    style={{ visibility: "hidden", width: 0, padding: 0 }}
-                    id={contract}
-                    type="radio"
-                    value={contract}
-                    onClick={() => setSelectedToken(contract)}
-                    selected={contract === selectedToken}
-                  />
-                  <label
-                    htmlFor={contract}
-                    role="button"
-                    className="d-flex align-items-center gap-1"
-                  >
-                    <div className="radio-btn">
-                      <div
-                        className={contract === selectedToken ? "selected" : ""}
-                      />
-                    </div>
-                    <span
-                      className={contract === selectedToken ? "fw-bold" : ""}
-                    >
-                      {symbol}
-                    </span>
-                  </label>
-                </RadioButton>
-              );
-            })}
           </div>
         </div>
 
@@ -373,6 +344,40 @@ return (
             </Period>
           ))}
         </div>
+      </div>
+
+      <div className="d-flex gap-4 mt-2 flex-wrap align-items-center">
+        {tokens.slice(0, 5).map((item, _index) => {
+          const { contract, ft_meta } = item;
+          const { symbol } = ft_meta;
+
+          return (
+            <RadioButton className="d-flex align-items-center" key={idx}>
+              <input
+                style={{ visibility: "hidden", width: 0, padding: 0 }}
+                id={contract}
+                type="radio"
+                value={contract}
+                onClick={() => setSelectedToken(contract)}
+                selected={contract === selectedToken}
+              />
+              <label
+                htmlFor={contract}
+                role="button"
+                className="d-flex align-items-center gap-1"
+              >
+                <div className="radio-btn">
+                  <div
+                    className={contract === selectedToken ? "selected" : ""}
+                  />
+                </div>
+                <span className={contract === selectedToken ? "fw-bold" : ""}>
+                  {symbol}
+                </span>
+              </label>
+            </RadioButton>
+          );
+        })}
       </div>
     </div>
 

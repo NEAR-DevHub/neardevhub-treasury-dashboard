@@ -54,20 +54,19 @@ const CreateBtn = () => {
         setCreateBtnOpen(false);
       },
     },
-    // will add withdraw in next version
-    // {
-    //   label: "Withdraw",
-    //   icon: "${REPL_WITHDRAW_ICON}",
-    //   value: createBtnOption.WITHDRAW,
-    //   onClick: () => {
-    //     setShowWithdrawRequest(true);
-    //     setCreateBtnOpen(false);
-    //   },
-    // },
+    {
+      label: "Withdraw",
+      icon: "${REPL_WITHDRAW_ICON}",
+      value: createBtnOption.WITHDRAW,
+      onClick: () => {
+        setShowWithdrawRequest(true);
+        setCreateBtnOpen(false);
+      },
+    },
   ];
 
   const toggleDropdown = () => {
-    setCreateBtnOpen(!isCreateBtnOpen);
+    setCreateBtnOpen((prev) => !prev);
   };
 
   const DropdowntBtnContainer = styled.div`
@@ -92,6 +91,7 @@ const CreateBtn = () => {
   }
 
   .options-card {
+    display: none;
     position: absolute;
     top: 100%;
     left: 0;
@@ -102,6 +102,15 @@ const CreateBtn = () => {
     z-index: 99;
     font-size: 13px;
     border-radius:0.375rem !important;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+
+    &.visible {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .left {
@@ -183,22 +192,18 @@ const CreateBtn = () => {
           </div>
         </div>
 
-        {isCreateBtnOpen && (
-          <div className="options-card">
-            {btnOptions.map((option) => (
-              <div
-                key={option.value}
-                className={`option`}
-                onClick={option.onClick}
-              >
-                <div className={`d-flex gap-2 align-items-center text-black`}>
-                  <img src={option.icon} height={20} />
-                  <div className="fw-bold">{option.label}</div>
-                </div>
+        <div
+          className={`options-card ${isCreateBtnOpen ? "visible" : "hidden"}`}
+        >
+          {btnOptions.map((option) => (
+            <div key={option.value} className="option" onClick={option.onClick}>
+              <div className="d-flex gap-2 align-items-center text-black">
+                <img src={option.icon} height={20} />
+                <div className="fw-bold">{option.label}</div>
               </div>
-            ))}
-          </div>
-        )}
+            </div>
+          ))}
+        </div>
       </div>
     </DropdowntBtnContainer>
   );
@@ -220,15 +225,15 @@ const SidebarMenu = ({ currentTab }) => {
 };
 
 function toggleStakePage() {
-  setShowStakeRequest(!showStakeRequest);
+  setShowStakeRequest((prev) => !prev);
 }
 
 function toggleUnStakePage() {
-  setShowUnStakeRequest(!showUnStakeRequest);
+  setShowUnStakeRequest((prev) => !prev);
 }
 
 function toggleWithdrawPage() {
-  setShowWithdrawRequest(!showWithdrawRequest);
+  setShowWithdrawRequest((prev) => !prev);
 }
 
 const Container = styled.div`
