@@ -43,6 +43,11 @@ async function checkForVoteApproveTxn(page) {
   });
 }
 
+async function navigateToMembersPage({ page, instanceAccount }) {
+  await page.goto(`/${instanceAccount}/widget/app?page=settings`);
+  await page.getByText("Members").click();
+}
+
 test.afterEach(async ({ page }, testInfo) => {
   console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
   await page.unrouteAll({ behavior: "ignoreErrors" });
@@ -61,7 +66,7 @@ test.describe("admin connected", function () {
     test.setTimeout(60_000);
     await mockInventory({ page, account: daoAccount });
     await updateDaoPolicyMembers({ page });
-    await page.goto(`/${instanceAccount}/widget/app?page=settings`);
+    await navigateToMembersPage({ page, instanceAccount });
     await expect(page.getByText("Megha", { exact: true })).toBeVisible();
   });
 
@@ -71,7 +76,7 @@ test.describe("admin connected", function () {
     daoAccount,
   }) => {
     await mockInventory({ page, account: daoAccount });
-    await page.goto(`/${instanceAccount}/widget/app?page=settings`);
+    await navigateToMembersPage({ page, instanceAccount });
     await updateDaoPolicyMembers({ page });
     const createMemberRequestButton = page.getByRole("button", {
       name: "New Member",
@@ -127,7 +132,7 @@ test.describe("admin connected", function () {
     test.setTimeout(120_000);
     await mockInventory({ page, account: daoAccount });
 
-    await page.goto(`/${instanceAccount}/widget/app?page=settings`);
+    await navigateToMembersPage({ page, instanceAccount });
     await updateDaoPolicyMembers({ page });
     await updateLastProposalId(page);
     const createMemberRequestButton = page.getByRole("button", {
@@ -402,7 +407,7 @@ test.describe("admin connected", function () {
     await mockInventory({ page, account: daoAccount });
     await updateDaoPolicyMembers({ page });
     await updateLastProposalId(page);
-    await page.goto(`/${instanceAccount}/widget/app?page=settings`);
+    await navigateToMembersPage({ page, instanceAccount });
     await page
       .getByRole("row", { name: "not defined Megha megha19.near" })
       .locator("i")
@@ -550,7 +555,7 @@ test.describe("admin connected", function () {
     await mockInventory({ page, account: daoAccount });
     await updateDaoPolicyMembers({ page });
     await updateLastProposalId(page);
-    await page.goto(`/${instanceAccount}/widget/app?page=settings`);
+    await navigateToMembersPage({ page, instanceAccount });
     await page
       .getByRole("row", { name: "not defined Megha megha19.near" })
       .locator("i")
