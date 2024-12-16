@@ -71,7 +71,6 @@ test.describe("admin connected", function () {
     daoAccount,
   }) => {
     await mockInventory({ page, account: daoAccount });
-    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
     await page.goto(`/${instanceAccount}/widget/app?page=settings`);
     await updateDaoPolicyMembers({ page });
     const createMemberRequestButton = page.getByRole("button", {
@@ -401,7 +400,6 @@ test.describe("admin connected", function () {
   }) => {
     test.setTimeout(120_000);
     await mockInventory({ page, account: daoAccount });
-    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
     await updateDaoPolicyMembers({ page });
     await updateLastProposalId(page);
     await page.goto(`/${instanceAccount}/widget/app?page=settings`);
@@ -550,7 +548,6 @@ test.describe("admin connected", function () {
   }) => {
     test.setTimeout(60_000);
     await mockInventory({ page, account: daoAccount });
-    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
     await updateDaoPolicyMembers({ page });
     await updateLastProposalId(page);
     await page.goto(`/${instanceAccount}/widget/app?page=settings`);

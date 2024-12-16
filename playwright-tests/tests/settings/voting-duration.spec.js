@@ -3,25 +3,6 @@ import { test } from "../../util/test.js";
 import { getTransactionModalObject } from "../../util/transaction.js";
 import { SandboxRPC } from "../../util/sandboxrpc.js";
 import { mockRpcRequest } from "../../util/rpcmock.js";
-import { getInstanceConfig } from "../../util/config.js";
-
-async function goToSettingsAndCheckIfVotingDurationIsAvailable({
-  page,
-  instanceAccount,
-  instanceConfig,
-}) {
-  await page.goto(`/${instanceAccount}/widget/app?page=settings`);
-
-  if (!instanceConfig.showVotingDurationConfiguration) {
-    await expect(
-      await page.locator(".link", { hasText: "Members" })
-    ).toBeVisible();
-    await expect(await page.getByText("Voting Duration")).not.toBeVisible();
-    return false;
-  } else {
-    return true;
-  }
-}
 
 test.afterEach(async ({ page }, testInfo) => {
   console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
@@ -39,19 +20,7 @@ test.describe("admin connected", function () {
     daoAccount,
   }) => {
     test.setTimeout(150_000);
-    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
-
     await page.goto(`/${instanceAccount}/widget/app?page=settings`);
-
-    if (
-      !(await goToSettingsAndCheckIfVotingDurationIsAvailable({
-        page,
-        instanceAccount,
-        instanceConfig,
-      }))
-    ) {
-      return;
-    }
     await page.getByText("Voting Duration").first().click();
 
     await page.waitForTimeout(500);
@@ -96,19 +65,7 @@ test.describe("admin connected", function () {
     daoAccount,
   }) => {
     test.setTimeout(150_000);
-    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
-
     await page.goto(`/${instanceAccount}/widget/app?page=settings`);
-
-    if (
-      !(await goToSettingsAndCheckIfVotingDurationIsAvailable({
-        page,
-        instanceAccount,
-        instanceConfig,
-      }))
-    ) {
-      return;
-    }
     await page.getByText("Voting Duration").first().click();
 
     await page.waitForTimeout(500);
@@ -147,17 +104,6 @@ test.describe("admin connected", function () {
       daoName,
     });
 
-    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
-
-    if (
-      !(await goToSettingsAndCheckIfVotingDurationIsAvailable({
-        page,
-        instanceAccount,
-        instanceConfig,
-      }))
-    ) {
-      return;
-    }
     await page.getByText("Voting Duration").first().click();
 
     await page.waitForTimeout(500);
@@ -270,17 +216,6 @@ test.describe("admin connected", function () {
       },
     });
 
-    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
-
-    if (
-      !(await goToSettingsAndCheckIfVotingDurationIsAvailable({
-        page,
-        instanceAccount,
-        instanceConfig,
-      }))
-    ) {
-      return;
-    }
     await page.getByText("Voting Duration").first().click();
 
     await page.waitForTimeout(500);

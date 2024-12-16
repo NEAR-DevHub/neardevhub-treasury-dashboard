@@ -50,7 +50,7 @@ const Wrapper = styled.div`
   }
 
   .flex-container {
-    min-width: 300px;
+    min-width: 325px;
     height: fit-content;
   }
 

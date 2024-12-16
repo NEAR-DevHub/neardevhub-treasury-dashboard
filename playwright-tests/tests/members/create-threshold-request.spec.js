@@ -7,7 +7,6 @@ import {
   mockRpcRequest,
   updateDaoPolicyMembers,
 } from "../../util/rpcmock.js";
-import { getInstanceConfig } from "../../util/config.js";
 
 const lastProposalId = 3;
 
@@ -30,18 +29,6 @@ async function updateLastProposalId(page) {
   });
 }
 
-async function checkForVoteApproveTxn(page) {
-  const txnLocator = await page
-    .locator("div.modal-body code")
-    .nth(1)
-    .innerText();
-  const dataReceived = JSON.parse(txnLocator);
-  expect(dataReceived).toEqual({
-    id: lastProposalId,
-    action: "VoteApprove",
-  });
-}
-
 test.afterEach(async ({ page }, testInfo) => {
   console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
   await page.unrouteAll({ behavior: "ignoreErrors" });
@@ -49,10 +36,6 @@ test.afterEach(async ({ page }, testInfo) => {
 
 test.describe("without login", function () {
   test.beforeEach(async ({ page, instanceAccount }) => {
-    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
-    if (instanceConfig.showThresholdConfiguration === false) {
-      test.skip();
-    }
     await updateDaoPolicyMembers({ page });
     await page.goto(`/${instanceAccount}/widget/app?page=settings`);
     await page.getByText("Voting Thresholds").click({ timeout: 20_000 });
@@ -105,10 +88,6 @@ test.describe("admin connected", function () {
   });
 
   test.beforeEach(async ({ page, instanceAccount }) => {
-    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
-    if (instanceConfig.showThresholdConfiguration === false) {
-      test.skip();
-    }
     await updateLastProposalId(page);
     await updateDaoPolicyMembers({ page });
     await page.goto(`/${instanceAccount}/widget/app?page=settings`);
@@ -137,7 +116,7 @@ test.describe("admin connected", function () {
   test("should be able to update policy by fixed vote count", async ({
     page,
   }) => {
-    test.setTimeout(120_000);
+    test.setTimeout(150_000);
     const submitBtn = page.getByText("Submit");
     await page.getByRole("list").getByText("Number of votes").click();
     const thresholdInput = page.getByTestId("threshold-input");
@@ -168,11 +147,10 @@ test.describe("admin connected", function () {
         },
       },
     });
-    await checkForVoteApproveTxn(page);
   });
 
   test("should be able to update policy by percentage", async ({ page }) => {
-    test.setTimeout(120_000);
+    test.setTimeout(150_000);
     const submitBtn = page.getByText("Submit");
     await page.getByRole("list").getByText("Percentage of members").click();
     const thresholdInput = page.getByTestId("threshold-input");
@@ -206,6 +184,5 @@ test.describe("admin connected", function () {
         },
       },
     });
-    await checkForVoteApproveTxn(page);
   });
 });

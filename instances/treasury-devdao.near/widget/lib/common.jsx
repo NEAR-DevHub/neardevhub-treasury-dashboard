@@ -450,6 +450,46 @@ function getNearBalances(treasuryDaoID) {
 // https://github.com/near/core-contracts/blob/master/lockup/src/lib.rs#L33
 const LOCKUP_MIN_BALANCE_FOR_STORAGE = Big(3.5).mul(Big(10).pow(24)).toFixed();
 
+function formatSubmissionTimeStamp(submissionTime, proposalPeriod) {
+  const endTime = Big(submissionTime).plus(proposalPeriod).toFixed();
+  const milliseconds = Number(endTime) / 1000000;
+  const date = new Date(milliseconds);
+
+  // Calculate days and minutes remaining from the timestamp
+  const now = new Date();
+  let diffTime = date - now;
+
+  // Check if the difference is negative
+  const isNegative = diffTime < 0;
+
+  // Convert the total difference into days, hours, and minutes
+  const totalMinutes = Math.floor(diffTime / (1000 * 60));
+  const totalHours = Math.floor(totalMinutes / 60);
+  const remainingMinutes = totalMinutes % 60;
+
+  const totalDays = Math.floor(totalHours / 24);
+  const remainingHours = totalHours % 24;
+
+  // Get hours, minutes, day, month, and year
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  const day = date.getDate().toString().padStart(2, "0");
+  const month = date.toLocaleString("default", { month: "short" });
+  const year = date.getFullYear();
+  return (
+    <div className="d-flex flex-column">
+      <div className="fw-bold">
+        {isNegative
+          ? "Expired"
+          : `${totalDays}d ${remainingHours}h ${remainingMinutes}m`}
+      </div>
+      <div className="text-muted text-sm">
+        {hours}:{minutes} {day} {month} {year}
+      </div>
+    </div>
+  );
+}
+
 return {
   getApproversAndThreshold,
   hasPermission,
@@ -465,4 +505,5 @@ return {
   encodeToMarkdown,
   decodeProposalDescription,
   LOCKUP_MIN_BALANCE_FOR_STORAGE,
+  formatSubmissionTimeStamp,
 };
