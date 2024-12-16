@@ -430,22 +430,25 @@ function getNearBalances(treasuryDaoID) {
   const resp = fetch(
     `https://api.fastnear.com/v1/account/${treasuryDaoID}/full`
   );
-  const locked = Big(resp?.body?.state?.storage_bytes ?? "0")
+  const storage = Big(resp?.body?.state?.storage_bytes ?? "0")
     .mul(Big(10).pow(19))
     .toFixed();
   const total = Big(resp?.body?.state?.balance ?? "0").toFixed();
   const available = Big(resp?.body?.state?.balance ?? "0")
-    .minus(locked ?? "0")
+    .minus(storage ?? "0")
     .toFixed();
   return {
     total,
     available,
-    locked,
+    storage,
     totalParsed: formatNearAmount(total),
     availableParsed: formatNearAmount(available),
-    lockedParsed: formatNearAmount(locked),
+    storageParsed: formatNearAmount(storage),
   };
 }
+
+// https://github.com/near/core-contracts/blob/master/lockup/src/lib.rs#L33
+const LOCKUP_MIN_BALANCE_FOR_STORAGE = Big(3.5).mul(Big(10).pow(24)).toFixed();
 
 return {
   getApproversAndThreshold,
@@ -461,4 +464,5 @@ return {
   getRoleWiseData,
   encodeToMarkdown,
   decodeProposalDescription,
+  LOCKUP_MIN_BALANCE_FOR_STORAGE,
 };

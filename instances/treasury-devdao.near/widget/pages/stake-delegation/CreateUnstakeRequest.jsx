@@ -1,4 +1,4 @@
-const { getNearBalances } = VM.require(
+const { getNearBalances, LOCKUP_MIN_BALANCE_FOR_STORAGE } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
 
@@ -12,7 +12,7 @@ const { encodeToMarkdown } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
 
-if (!instance) {
+if (!instance || !LOCKUP_MIN_BALANCE_FOR_STORAGE) {
   return <></>;
 }
 
@@ -228,7 +228,10 @@ function getBalances() {
         staked: lockupStakedTokens,
         unstaked: lockupUnStakedTokens,
         withdrawl: lockupNearWithdrawTokens,
-        available: lockupNearBalances.totalParsed - lockupStakedTotalTokens,
+        available: Big(lockupNearBalances.totalParsed ?? "0")
+          .minus(lockupStakedTotalTokens ?? "0")
+          .minus(formatNearAmount(LOCKUP_MIN_BALANCE_FOR_STORAGE))
+          .toFixed(2),
       };
     }
     default:

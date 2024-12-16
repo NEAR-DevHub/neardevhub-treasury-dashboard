@@ -2,16 +2,12 @@ const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
 
-const { getNearBalances, decodeProposalDescription } = VM.require(
+const { decodeProposalDescription } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
 const instance = props.instance;
 const policy = props.policy;
-if (
-  !instance ||
-  typeof getNearBalances !== "function" ||
-  typeof decodeProposalDescription !== "function"
-) {
+if (!instance || typeof decodeProposalDescription !== "function") {
   return <></>;
 }
 
@@ -246,12 +242,6 @@ function isVisible(column) {
 const requiredVotes = functionCallApproversGroup.requiredVotes;
 
 const hideApproversCol = isPendingRequests && requiredVotes === 1;
-
-const userFTTokens = fetch(
-  `https://api3.nearblocks.io/v1/account/${treasuryDaoID}/inventory`
-);
-
-const nearBalances = getNearBalances(treasuryDaoID);
 
 const ToastStatusContent = () => {
   let content = "";
@@ -543,21 +533,12 @@ const ProposalsComponent = () => {
                       instance,
                       votes: item.votes,
                       proposalId: item.id,
-                      tokensBalance: [
-                        ...(userFTTokens?.body?.inventory?.fts ?? []),
-                        {
-                          contract: "near",
-                          amount: nearBalances.available,
-                        },
-                      ],
                       hasDeletePermission,
                       hasVotingPermission,
                       proposalCreator: item.proposer,
-                      currentAmount: amount,
-                      currentContract: "near",
                       requiredVotes,
                       checkProposalStatus: () => checkProposalStatus(item.id),
-                      avoidCheckForBalance: !isStakeRequest,
+                      avoidCheckForBalance: true, // we don't allow user to create request with insufficient balance
                       isWithdrawRequest,
                       validatorAccount,
                       treasuryWallet,

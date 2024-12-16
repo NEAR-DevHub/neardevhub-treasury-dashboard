@@ -7,6 +7,7 @@
     "@playwright/test": "^1.41.1",
     "@types/react": "^18.2.21",
     "@typescript-eslint/eslint-plugin": "^6.5.0",
+    "big.js": "^6.2.2",
     "bos-workspace": "^1.0.0-alpha.27",
     "eslint": "^8.48.0",
     "http-server": "^14.1.1",
