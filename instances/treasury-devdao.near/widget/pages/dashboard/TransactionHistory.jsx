@@ -21,7 +21,7 @@ const { treasuryDaoID, lockupContract } = VM.require(
 );
 
 const [error, setError] = useState(null);
-const [transactionWithBalances, setTransactionWithBalance] = useState(null);
+const [transactionWithBalances, setTransactionWithBalance] = useState([]);
 const [page, setPage] = useState(1);
 const [showMoreLoading, setShowMoreLoading] = useState(false);
 const [hideViewMore, setHideViewMore] = useState(false);
@@ -131,7 +131,9 @@ useEffect(() => {
           setHideViewMore(true);
         }
         setError(null);
-        setTransactionWithBalance(sortByDate(nearResp.concat(ftResp)));
+        setTransactionWithBalance((prev) => {
+          return [...prev, ...sortByDate(nearResp.concat(ftResp))];
+        });
         setShowMoreLoading(false);
       }
     });
