@@ -103,7 +103,7 @@ test.describe("admin connected", function () {
       receiver_id: "webassemblymusic.near",
       daoName,
     });
-
+    await page.goto(`/${instanceAccount}/widget/app?page=settings`);
     await page.getByText("Voting Duration").first().click();
 
     await page.waitForTimeout(500);
@@ -154,11 +154,10 @@ test.describe("admin connected", function () {
     await page.evaluate((transactionResult) => {
       window.transactionSentPromiseResolve(transactionResult);
     }, transactionResult);
-    await expect(await page.locator(".toast-header")).toBeVisible();
-    await expect(await page.locator(".toast-body")).toBeVisible();
-    await expect(await page.locator(".toast-body")).toHaveText(
-      "Voting duration change request submitted"
-    );
+    await expect(page.locator(".toast-header")).toBeVisible();
+    await expect(
+      page.getByText("Voting duration change request submitted")
+    ).toBeVisible();
 
     await sandbox.quitSandbox();
   });
@@ -215,7 +214,7 @@ test.describe("admin connected", function () {
         }
       },
     });
-
+    await page.goto(`/${instanceAccount}/widget/app?page=settings`);
     await page.getByText("Voting Duration").first().click();
 
     await page.waitForTimeout(500);
