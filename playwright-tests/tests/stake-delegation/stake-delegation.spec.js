@@ -23,6 +23,7 @@ test.afterEach(async ({ page }, testInfo) => {
 
 const stakedNear = "0.3027";
 const sufficientAvailableBalance = "11000000000000000000000000";
+const minStorageBalance = "3500000000000000000000000";
 const inSufficientAvailableBalance = "11450";
 const stakedPoolAccount = "astro-stakers.poolv1.near";
 const multiStakedPoolAccount = "nearfans.poolv1.near";
@@ -917,7 +918,10 @@ test.describe("Lockup staking", function () {
                 {
                   method_name: "deposit_and_stake",
                   args: toBase64({
-                    amount: sufficientAvailableBalance,
+                    amount: (
+                      BigInt(sufficientAvailableBalance) -
+                      BigInt(minStorageBalance)
+                    ).toString(),
                   }),
                   deposit: "0",
                   gas: "150000000000000",
@@ -999,7 +1003,7 @@ test.describe("Lockup staking", function () {
               actions: [
                 {
                   method_name: "deposit_and_stake",
-                  args: "eyJhbW91bnQiOiIxMDcwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCJ9",
+                  args: "eyJhbW91bnQiOiI3MjAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwIn0=",
                   deposit: "0",
                   gas: "150000000000000",
                 },
