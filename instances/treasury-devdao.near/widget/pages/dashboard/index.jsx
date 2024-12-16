@@ -1,9 +1,13 @@
-const { getNearBalances } = VM.require(
+const { getNearBalances, LOCKUP_MIN_BALANCE_FOR_STORAGE } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
 
 const instance = props.instance;
-if (!instance || typeof getNearBalances !== "function") {
+if (
+  !instance ||
+  typeof getNearBalances !== "function" ||
+  !LOCKUP_MIN_BALANCE_FOR_STORAGE
+) {
   return <></>;
 }
 
@@ -117,13 +121,17 @@ function formatNearAmount(amount) {
 
 useEffect(() => {
   if (lockupContract) {
-    Near.asyncView(lockupContract, "get_locked_amount").then((res) =>
+    Near.asyncView(lockupContract, "get_locked_amount").then((res) => {
+      const locked = Big(res).minus(LOCKUP_MIN_BALANCE_FOR_STORAGE).toFixed(2);
       setLockupNearBalances((prev) => ({
         ...prev,
-        locked: res,
-        lockedParsed: formatNearAmount(res),
-      }))
-    );
+        locked,
+        lockedParsed: formatNearAmount(locked),
+        storage: LOCKUP_MIN_BALANCE_FOR_STORAGE,
+        storageParsed: formatNearAmount(LOCKUP_MIN_BALANCE_FOR_STORAGE),
+      }));
+    });
+
     Near.asyncView(lockupContract, "get_balance").then((res) =>
       setLockupNearBalances((prev) => ({
         ...prev,

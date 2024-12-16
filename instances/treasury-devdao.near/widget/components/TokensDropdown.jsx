@@ -90,7 +90,7 @@ const [selectedOptionValue, setSelectedValue] = useState(selectedValue);
 
 function getNearAvailableBalance(tokenBalance) {
   return Big(tokenBalance)
-    .minus(nearBalances.lockedParsed ?? "0")
+    .minus(nearBalances.storageParsed ?? "0")
     .minus(nearStakedTokens ?? "0")
     .toFixed(2);
 }
@@ -191,7 +191,7 @@ const Item = ({ option }) => {
         <div className="h6 mb-0"> {option.title}</div>
         {option.value === "NEAR" && (
           <div className="d-flex flex-column gap-1 w-100 text-wrap text-sm text-muted">
-            <div>Tokens locked for storage: {nearBalances.lockedParsed}</div>
+            <div>Tokens locked for storage: {nearBalances.storageParsed}</div>
             {nearStakedTokens && <div>Tokens staked: {nearStakedTokens}</div>}
           </div>
         )}
