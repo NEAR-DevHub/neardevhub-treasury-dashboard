@@ -15,6 +15,7 @@ import {
   WithdrawProposalData,
 } from "../../util/inventory.js";
 import { setDontAskAgainCacheValues } from "../../util/cache.js";
+import Big from "big.js";
 
 test.afterEach(async ({ page }, testInfo) => {
   console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
@@ -1003,7 +1004,9 @@ test.describe("Lockup staking", function () {
               actions: [
                 {
                   method_name: "deposit_and_stake",
-                  args: "eyJhbW91bnQiOiI3MjAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwIn0=",
+                  args: toBase64({
+                    amount: Big(7.2).mul(Big(10).pow(24)).toFixed(),
+                  }),
                   deposit: "0",
                   gas: "150000000000000",
                 },
