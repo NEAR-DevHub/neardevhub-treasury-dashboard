@@ -536,10 +536,9 @@ const ProposalsComponent = () => {
                       hasDeletePermission,
                       hasVotingPermission,
                       proposalCreator: item.proposer,
-
                       requiredVotes,
                       checkProposalStatus: () => checkProposalStatus(item.id),
-                      avoidCheckForBalance: true,
+                      avoidCheckForBalance: true, // we don't allow user to create request with insufficient balance
                       isWithdrawRequest,
                       validatorAccount,
                       treasuryWallet,

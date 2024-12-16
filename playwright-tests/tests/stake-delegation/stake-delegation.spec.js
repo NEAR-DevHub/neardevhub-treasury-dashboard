@@ -1305,23 +1305,6 @@ test.describe("Insufficient balance ", function () {
     ).toBeVisible();
   });
 
-  test("Should throw error with approve vote when account has insufficient near balance", async ({
-    page,
-  }) => {
-    test.setTimeout(120_000);
-    const approveButton = page.getByRole("button", {
-      name: "Approve",
-    });
-
-    await expect(approveButton).toBeEnabled({ timeout: 40_000 });
-    await approveButton.click();
-    await expect(
-      page.getByText(
-        "The request cannot be approved because the treasury balance is insufficient to cover the payment."
-      )
-    ).toBeVisible();
-  });
-
   test("Should show warning when account has no staked near tokens", async ({
     page,
   }) => {
