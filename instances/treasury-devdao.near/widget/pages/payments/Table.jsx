@@ -464,8 +464,7 @@ const ProposalsComponent = () => {
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Approvers`}
                 props={{
                   votes: item.votes,
-                  transferApproversGroup:
-                    transferApproversGroup?.approverAccounts,
+                  approversGroup: transferApproversGroup?.approverAccounts,
                 }}
               />
             </td>
@@ -565,7 +564,7 @@ return (
               <tr className="text-grey">
                 <td>#</td>
                 <td className={isVisible("Created Date")}>Created Date</td>
-                {!isPendingRequests && <td>Status</td>}
+                {!isPendingRequests && <td className="text-center">Status</td>}
                 {showReferenceProposal && (
                   <td className={isVisible("Reference")}>Reference</td>
                 )}

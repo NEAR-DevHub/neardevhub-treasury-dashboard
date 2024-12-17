@@ -477,8 +477,7 @@ const ProposalsComponent = () => {
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Approvers`}
                 props={{
                   votes: item.votes,
-                  functionCallApproversGroup:
-                    functionCallApproversGroup?.approverAccounts,
+                  approversGroup: functionCallApproversGroup?.approverAccounts,
                 }}
               />
             </td>
