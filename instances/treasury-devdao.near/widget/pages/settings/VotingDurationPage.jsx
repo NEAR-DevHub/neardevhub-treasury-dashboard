@@ -327,7 +327,7 @@ const showImpactedRequests =
 
 return (
   <Container>
-    <div className="card rounded-3" style={{ maxWidth: "50rem" }}>
+    <div className="card rounded-3 py-3" style={{ maxWidth: "50rem" }}>
       <div className="card-title px-3">Voting Duration</div>
       <div className="card-body">
         <p>
