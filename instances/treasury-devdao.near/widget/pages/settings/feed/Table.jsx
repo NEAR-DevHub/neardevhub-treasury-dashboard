@@ -272,7 +272,6 @@ const VoteSuccessToast = () => {
 const proposalPeriod = policy.proposal_period;
 
 const [showDetailsProposalKind, setShowDetailsProposalKind] = useState(null);
-
 const ProposalsComponent = () => {
   return (
     <tbody style={{ overflowX: "auto" }}>
@@ -304,7 +303,6 @@ const ProposalsComponent = () => {
                     instance,
                     isVoteStatus: false,
                     status: item.status,
-                    isPaymentsPage: true,
                   }}
                 />
               </td>
@@ -374,8 +372,7 @@ const ProposalsComponent = () => {
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Approvers`}
                 props={{
                   votes: item.votes,
-                  settingsApproverGroup:
-                    settingsApproverGroup?.approverAccounts,
+                  approversGroup: settingsApproverGroup?.approverAccounts,
                 }}
               />
             </td>
@@ -477,7 +474,7 @@ ${JSON.stringify(showDetailsProposalKind, null, 2)}
               <tr className="text-grey">
                 <td>#</td>
                 <td className={isVisible("Created Date")}>Created Date</td>
-                {!isPendingRequests && <td>Status</td>}
+                {!isPendingRequests && <td className="text-center">Status</td>}
 
                 <td className={isVisible("Title")}>Title</td>
 

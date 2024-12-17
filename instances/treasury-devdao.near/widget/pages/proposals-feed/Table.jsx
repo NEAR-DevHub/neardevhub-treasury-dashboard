@@ -285,7 +285,6 @@ const ProposalsComponent = () => {
                     instance,
                     isVoteStatus: false,
                     status: item.status,
-                    isPaymentsPage: true,
                   }}
                 />
               </td>
@@ -355,8 +354,7 @@ const ProposalsComponent = () => {
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Approvers`}
                 props={{
                   votes: item.votes,
-                  transferApproversGroup:
-                    transferApproversGroup?.approverAccounts,
+                  approversGroup: transferApproversGroup?.approverAccounts,
                 }}
               />
             </td>
@@ -458,7 +456,7 @@ ${JSON.stringify(showDetailsProposalKind, null, 2)}
               <tr className="text-grey">
                 <td>#</td>
                 <td className={isVisible("Created Date")}>Created Date</td>
-                {!isPendingRequests && <td>Status</td>}
+                {!isPendingRequests && <td className="text-center">Status</td>}
                 <td className={isVisible("Type") + " text-center"}>Type</td>
                 <td className={isVisible("Description")}>Description</td>
 
