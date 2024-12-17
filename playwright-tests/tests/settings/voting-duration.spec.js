@@ -34,7 +34,7 @@ test.describe("admin connected", function () {
 
     await page.waitForTimeout(500);
     await page.locator("button", { hasText: "Submit" }).click();
-    
+
     await expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
         description: "Change proposal period",
