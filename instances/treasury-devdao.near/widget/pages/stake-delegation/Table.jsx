@@ -2,12 +2,19 @@ const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
 
-const { decodeProposalDescription } = VM.require(
-  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
-);
+const {
+  getNearBalances,
+  decodeProposalDescription,
+  formatSubmissionTimeStamp,
+} = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
 const instance = props.instance;
 const policy = props.policy;
-if (!instance || typeof decodeProposalDescription !== "function") {
+if (
+  !instance ||
+  typeof getNearBalances !== "function" ||
+  typeof decodeProposalDescription !== "function" ||
+  typeof formatSubmissionTimeStamp !== "function"
+) {
   return <></>;
 }
 
@@ -305,46 +312,6 @@ const VoteSuccessToast = () => {
 
 const proposalPeriod = policy.proposal_period;
 
-function formatSubmissionTimeStamp(submissionTime) {
-  const endTime = Big(submissionTime).plus(proposalPeriod).toFixed();
-  const milliseconds = Number(endTime) / 1000000;
-  const date = new Date(milliseconds);
-
-  // Calculate days and minutes remaining from the timestamp
-  const now = new Date();
-  let diffTime = date - now;
-
-  // Check if the difference is negative
-  const isNegative = diffTime < 0;
-
-  // Convert the total difference into days, hours, and minutes
-  const totalMinutes = Math.floor(diffTime / (1000 * 60));
-  const totalHours = Math.floor(totalMinutes / 60);
-  const remainingMinutes = totalMinutes % 60;
-
-  const totalDays = Math.floor(totalHours / 24);
-  const remainingHours = totalHours % 24;
-
-  // Get hours, minutes, day, month, and year
-  const hours = date.getHours().toString().padStart(2, "0");
-  const minutes = date.getMinutes().toString().padStart(2, "0");
-  const day = date.getDate().toString().padStart(2, "0");
-  const month = date.toLocaleString("default", { month: "short" });
-  const year = date.getFullYear();
-  return (
-    <div className="d-flex flex-column">
-      <div className="fw-bold">
-        {isNegative
-          ? "Expired"
-          : `${totalDays}d ${remainingHours}h ${remainingMinutes}m`}
-      </div>
-      <div className="text-muted text-sm">
-        {hours}:{minutes} {day} {month} {year}
-      </div>
-    </div>
-  );
-}
-
 function decodeBase64(encodedArgs) {
   if (!encodedArgs) return null;
   try {
@@ -521,7 +488,10 @@ const ProposalsComponent = () => {
                 className={isVisible("Expiring Date") + " text-left"}
                 style={{ minWidth: 150 }}
               >
-                {formatSubmissionTimeStamp(item.submission_time)}
+                {formatSubmissionTimeStamp(
+                  item.submission_time,
+                  proposalPeriod
+                )}
               </td>
             )}
             {isPendingRequests &&

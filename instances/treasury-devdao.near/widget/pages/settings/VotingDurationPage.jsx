@@ -1,3 +1,7 @@
+const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
+  href: () => {},
+};
+
 const instance = props.instance;
 if (!instance) {
   return <></>;
@@ -331,7 +335,7 @@ return (
           is not completed within this period.
         </p>
         <p>
-          <label for="exampleInputEmail1" class="px-3">
+          <label for="exampleInputEmail1" className="pb-1">
             Number of days
           </label>
           <input
@@ -342,9 +346,6 @@ return (
             value={durationDays}
             onChange={(event) => changeDurationDays(event.target.value)}
           ></input>
-          <small id="votingDurationHelp" class="form-text text-muted px-3">
-            Enter number of days that a vote should be active
-          </small>
         </p>
 
         {showAffectedProposalsModal ? (
@@ -471,7 +472,7 @@ return (
                     "${REPL_DEVHUB}/widget/devhub.components.molecule.Button"
                   }
                   props={{
-                    classNames: { root: "btn-outline-secondary" },
+                    classNames: { root: "btn-outline shadow-none border-0" },
                     label: "Cancel",
                     onClick: cancelChangeRequest,
                   }}
@@ -492,21 +493,26 @@ return (
         ) : (
           ""
         )}
-
-        <button
-          class="btn btn-light"
-          disabled={durationDays === currentDurationDays}
-          onClick={cancelChangeRequest}
-        >
-          Cancel
-        </button>
-        <button
-          class="btn btn-success"
-          disabled={durationDays === currentDurationDays}
-          onClick={submitChangeRequest}
-        >
-          Submit Request
-        </button>
+        <div className="d-flex mt-2 gap-3 justify-content-end">
+          <Widget
+            src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
+            props={{
+              classNames: { root: "btn-outline shadow-none border-0" },
+              label: "Cancel",
+              onClick: cancelChangeRequest,
+              disabled: durationDays === currentDurationDays,
+            }}
+          />
+          <Widget
+            src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
+            props={{
+              classNames: { root: "theme-btn" },
+              label: "Submit Request",
+              disabled: durationDays === currentDurationDays,
+              onClick: submitChangeRequest,
+            }}
+          />
+        </div>
       </div>
     </div>
     <ToastContainer className="toast-container position-fixed bottom-0 end-0 p-3">
@@ -516,7 +522,17 @@ return (
           <i className="bi bi-x-lg h6" onClick={() => setToastStatus(null)}></i>
         </div>
         <div className="toast-body">
-          <p>Voting duration change request submitted</p>
+          <div>Voting duration change request submitted.</div>
+          <a
+            href={href({
+              widgetSrc: `${instance}/widget/app`,
+              params: {
+                page: "settings",
+              },
+            })}
+          >
+            View it
+          </a>
         </div>
       </div>
     </ToastContainer>

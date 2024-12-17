@@ -73,29 +73,12 @@ useEffect(() => {
   });
 }, []);
 
-function checkProposalStatus(proposalId) {
-  Near.asyncView(treasuryDaoID, "get_proposal", {
-    id: proposalId,
-  }).then((result) => {
-    if (Object.keys(result.votes).length === 1) {
-      if (result.status === "Approved") {
-        setRefreshData(!refreshData);
-      }
-      setToastStatus(result.status);
-      setVoteProposalId(proposalId);
-      setTxnCreated(false);
-    } else {
-      setTimeout(() => checkProposalStatus(proposalId), 1000);
-    }
-  });
-}
-
 useEffect(() => {
   if (isTxnCreated) {
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
         if (lastProposalId !== id) {
-          setTimeout(() => checkProposalStatus(id - 1), 2000);
+          setToastStatus(true);
         } else {
           setTimeout(() => checkForNewProposal(), 1000);
         }
@@ -207,17 +190,6 @@ const ToastContainer = styled.div`
   }
 `;
 
-function getApproveTxn() {
-  return {
-    contractName: treasuryDaoID,
-    methodName: "act_proposal",
-    args: {
-      id: lastProposalId,
-      action: "VoteApprove",
-    },
-    gas: 300000000000000,
-  };
-}
 const proposalKinds = [
   "config",
   "policy",
@@ -281,43 +253,8 @@ function onSubmitClick() {
       },
       gas: 200000000000000,
     },
-    getApproveTxn(),
   ]);
 }
-
-const ToastStatusContent = () => {
-  let content = "";
-  switch (showToastStatus) {
-    case "Approved":
-      content = "Vote policy is successfully updated.";
-      break;
-    default:
-      content = `Your request is created.`;
-      break;
-  }
-  return (
-    showToastStatus && (
-      <div className="toast-body">
-        {content}
-        <br />
-        {showToastStatus == "InProgress" && (
-          <a
-            href={href({
-              widgetSrc: `${instance}/widget/app`,
-              params: {
-                page: "settings",
-                selectedTab: "History",
-                highlightProposalId: voteProposalId,
-              },
-            })}
-          >
-            View it
-          </a>
-        )}
-      </div>
-    )
-  );
-};
 
 const SubmitToast = () => {
   return (
@@ -331,7 +268,19 @@ const SubmitToast = () => {
               onClick={() => setToastStatus(null)}
             ></i>
           </div>
-          <ToastStatusContent />
+          <div className="toast-body">
+            <div>Threshold change request submitted.</div>
+            <a
+              href={href({
+                widgetSrc: `${instance}/widget/app`,
+                params: {
+                  page: "settings",
+                },
+              })}
+            >
+              View it
+            </a>
+          </div>
         </div>
       </ToastContainer>
     )

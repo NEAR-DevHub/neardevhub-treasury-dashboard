@@ -18,8 +18,6 @@ return {
   showProposalSelection: false,
   showKYC: false,
   showReferenceProposal: false,
-  showThresholdConfiguration: false,
-  showVotingDurationConfiguration: false,
   logo: (
     <img
       src="https://github.com/user-attachments/assets/d1d3da13-452a-4501-bdc6-f906598dd5a4"
