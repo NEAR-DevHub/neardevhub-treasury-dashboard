@@ -1,5 +1,12 @@
 const { nearPrice, ftTokens, accountId, title } = props;
 
+const { Skeleton } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.skeleton"
+);
+
+if (!Skeleton) {
+  return <></>;
+}
 const API_HOST = "https://ref-sdk-api.fly.dev/api";
 const [height, setHeight] = useState(350);
 const [history, setHistory] = useState([]);
@@ -20,10 +27,6 @@ const nearTokenInfo = {
 const tokens = Array.isArray(ftTokens)
   ? [nearTokenInfo, ...ftTokens]
   : [nearTokenInfo];
-
-const Loading = () => (
-  <Widget src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"} />
-);
 
 const periodMap = [
   { period: "1H", value: 1 / 6, interval: 6 },
@@ -298,33 +301,70 @@ useEffect(() => {
   fetchData();
 }, [selectedToken, selectedPeriod]);
 
+const LoadingBalance = () => {
+  return (
+    <div className="mt-2">
+      <Skeleton
+        style={{ height: "32px", width: "100%" }}
+        className="rounded-1"
+      />
+    </div>
+  );
+};
+
+const LoadingTokens = () => {
+  return (
+    <div className="mt-2">
+      <Skeleton
+        style={{ height: "24px", width: "50%" }}
+        className="rounded-2"
+      />
+    </div>
+  );
+};
+
+const LoadingChart = () => {
+  return (
+    <div className="mt-2">
+      <Skeleton
+        style={{ height: "390px", width: "100%" }}
+        className="rounded-2"
+      />
+    </div>
+  );
+};
+
 return (
   <div className="card flex-1 w-100 card-body">
     <div>
       <div className="d-flex justify-content-between flex-row align-items-start">
         <div className="d-flex flex-column gap-2">
           <h6 className="text-grey mb-0">{title}</h6>
-          <div className="d-flex align-items-center gap-3">
-            <h3 className="fw-bold mb-0">
-              {isLoading ? "-" : formatCurrency(balanceDate.balance)}{" "}
-              {
-                [nearTokenInfo, ...(ftTokens ?? [])].find(
-                  (t) => t.contract === selectedToken
-                )?.ft_meta?.symbol
-              }
-            </h3>
-            {balanceDate.date && (
-              <div style={{ fontSize: 14 }}>
-                {new Date(balanceDate.date).toLocaleDateString("en-US", {
-                  dateStyle: "medium",
-                })}{" "}
-                {new Date(balanceDate.date).toLocaleTimeString("en-US", {
-                  hour: "numeric",
-                  minute: "numeric",
-                })}
-              </div>
-            )}
-          </div>
+          {balanceDate ? (
+            <div className="d-flex align-items-center gap-3">
+              <h3 className="fw-bold mb-0">
+                {formatCurrency(balanceDate.balance)}{" "}
+                {
+                  [nearTokenInfo, ...(ftTokens ?? [])].find(
+                    (t) => t.contract === selectedToken
+                  )?.ft_meta?.symbol
+                }
+              </h3>
+              {balanceDate.date && (
+                <div style={{ fontSize: 14 }}>
+                  {new Date(balanceDate.date).toLocaleDateString("en-US", {
+                    dateStyle: "medium",
+                  })}{" "}
+                  {new Date(balanceDate.date).toLocaleTimeString("en-US", {
+                    hour: "numeric",
+                    minute: "numeric",
+                  })}
+                </div>
+              )}
+            </div>
+          ) : (
+            <LoadingBalance />
+          )}
         </div>
 
         <div className="d-flex gap-1">
@@ -346,48 +386,52 @@ return (
         </div>
       </div>
 
-      <div className="d-flex gap-4 mt-2 flex-wrap align-items-center">
-        {tokens.slice(0, 5).map((item, _index) => {
-          const { contract, ft_meta } = item;
-          const { symbol } = ft_meta;
+      {tokens ? (
+        <div className="d-flex gap-4 mt-2 flex-wrap align-items-center">
+          {tokens.slice(0, 5).map((item, _index) => {
+            const { contract, ft_meta } = item;
+            const { symbol } = ft_meta;
 
-          return (
-            <RadioButton className="d-flex align-items-center" key={idx}>
-              <input
-                style={{ visibility: "hidden", width: 0, padding: 0 }}
-                id={contract}
-                type="radio"
-                value={contract}
-                onClick={() => setSelectedToken(contract)}
-                selected={contract === selectedToken}
-              />
-              <label
-                htmlFor={contract}
-                role="button"
-                className="d-flex align-items-center gap-1"
-              >
-                <div className="radio-btn">
-                  <div
-                    className={contract === selectedToken ? "selected" : ""}
-                  />
-                </div>
-                <span className={contract === selectedToken ? "fw-bold" : ""}>
-                  {symbol}
-                </span>
-              </label>
-            </RadioButton>
-          );
-        })}
-      </div>
+            return (
+              <RadioButton className="d-flex align-items-center" key={idx}>
+                <input
+                  style={{ visibility: "hidden", width: 0, padding: 0 }}
+                  id={contract}
+                  type="radio"
+                  value={contract}
+                  onClick={() => setSelectedToken(contract)}
+                  selected={contract === selectedToken}
+                />
+                <label
+                  htmlFor={contract}
+                  role="button"
+                  className="d-flex align-items-center gap-1"
+                >
+                  <div className="radio-btn">
+                    <div
+                      className={contract === selectedToken ? "selected" : ""}
+                    />
+                  </div>
+                  <span className={contract === selectedToken ? "fw-bold" : ""}>
+                    {symbol}
+                  </span>
+                </label>
+              </RadioButton>
+            );
+          })}
+        </div>
+      ) : (
+        <LoadingTokens />
+      )}
     </div>
 
-    <div
-      className="w-100 d-flex justify-content-center align-items-center"
-      style={{ height: "400px" }}
-    >
-      {isLoading ? (
-        <Loading />
-      ) : (
+    {isLoading || !history.length ? (
+      <LoadingChart />
+    ) : (
+      <div
+        className="w-100 d-flex justify-content-center align-items-center"
+        style={{ height: "400px" }}
+      >
         <iframe
           style={{ width: "100%", height: `${height}px` }}
           srcDoc={code}
@@ -403,7 +447,7 @@ return (
             }
           }}
         />
-      )}
-    </div>
+      </div>
+    )}
   </div>
 );

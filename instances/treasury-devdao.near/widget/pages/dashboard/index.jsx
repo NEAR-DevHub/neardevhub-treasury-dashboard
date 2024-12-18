@@ -2,8 +2,12 @@ const { getNearBalances } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
 
+const { Skeleton } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.skeleton"
+);
+
 const instance = props.instance;
-if (!instance || typeof getNearBalances !== "function") {
+if (!instance || typeof getNearBalances !== "function" || !Skeleton) {
   return <></>;
 }
 
@@ -11,7 +15,7 @@ const { treasuryDaoID, lockupContract } = VM.require(
   `${instance}/widget/config.data`
 );
 
-if (!instance || !treasuryDaoID) return <></>;
+if (!treasuryDaoID) return <></>;
 
 const Wrapper = styled.div`
   min-height: 80vh;
@@ -85,7 +89,7 @@ const nearPrice = useCache(
 const userFTTokens = useCache(
   () =>
     asyncFetch(
-      `https://api3.nearblocks.io/v1/account/${treasuryDaoID  }/inventory`,
+      `https://api3.nearblocks.io/v1/account/${treasuryDaoID}/inventory`,
       { headers: { Authorization: "Bearer ${REPL_NEARBLOCKS_KEY}" } }
     ).then((res) => {
       let fts = res.body.inventory.fts;
@@ -155,10 +159,6 @@ useEffect(() => {
   }
 }, [lockupNearBalances]);
 
-const loading = (
-  <Widget src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"} />
-);
-
 const totalBalance = Big(nearBalances?.totalParsed ?? "0")
   .mul(nearPrice ?? 1)
   .plus(Big(lockupNearBalances?.totalParsed ?? "0").mul(nearPrice ?? 1))
@@ -171,6 +171,25 @@ function formatCurrency(amount) {
     .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   return "$" + formattedAmount;
 }
+
+const Loading = () => {
+  return (
+    <div className="d-flex align-items-center gap-2 w-100 mt-2 mb-2">
+      <div className="d-flex flex-column gap-1 w-75">
+        <Skeleton
+          style={{ height: "32px", width: "100%" }}
+          className="rounded-2"
+        />
+      </div>
+      <div className="d-flex flex-column gap-1 w-25">
+        <Skeleton
+          style={{ height: "32px", width: "100%" }}
+          className="rounded-2"
+        />
+      </div>
+    </div>
+  );
+};
 
 return (
   <Wrapper>
@@ -205,7 +224,7 @@ return (
         <div className="card card-body" style={{ maxHeight: "100px" }}>
           <div className="h6 text-grey">Total Balance</div>
           {typeof getNearBalances !== "function" || nearPrice === null ? (
-            loading
+            <Loading />
           ) : (
             <div className="fw-bold h3 mb-0">
               {formatCurrency(totalBalance)} USD
