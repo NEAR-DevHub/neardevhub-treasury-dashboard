@@ -162,6 +162,10 @@ const Container = styled.div`
   .markdown-href a {
     color: inherit !important;
   }
+
+  .fw-semi-bold {
+    font-weight: 500;
+  }
 `;
 
 const ToastContainer = styled.div`
@@ -354,8 +358,8 @@ const ProposalsComponent = () => {
           action.method_name === "withdraw_all_from_staking_pool" ||
           action.method_name === "withdraw_all";
 
-        const treasuryWallet =
-          receiverAccount === lockupContract ? lockupContract : treasuryDaoID;
+        const isLockup = receiverAccount === lockupContract;
+        const treasuryWallet = isLockup ? lockupContract : treasuryDaoID;
         return (
           <tr
             className={
@@ -404,7 +408,26 @@ const ProposalsComponent = () => {
               />
             </td>
             {lockupContract && (
-              <td className={"text-left"}>{treasuryWallet}</td>
+              <td className={"text-left"}>
+                <div className="text-muted fw-semi-bold">
+                  {" "}
+                  {isLockup ? "Lockup" : "Sputnik DAO"}
+                </div>
+                <Widget
+                  src="${REPL_MOB}/widget/Profile.OverlayTrigger"
+                  props={{
+                    accountId: treasuryWallet,
+                    children: (
+                      <div
+                        className="text-truncate"
+                        style={{ maxWidth: "200px" }}
+                      >
+                        {treasuryWallet}
+                      </div>
+                    ),
+                  }}
+                />
+              </td>
             )}
 
             <td className={isVisible("Validator")}>
