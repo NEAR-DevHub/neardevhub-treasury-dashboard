@@ -246,17 +246,9 @@ export async function mockLockupNearBalances({ page, balance }) {
   });
 }
 
-async function selectLockupAccount({
-  page,
-  daoAccount,
-  lockupContract,
-  isStakeRequest,
-}) {
+async function selectLockupAccount({ page, daoAccount, lockupContract }) {
   await page.getByRole("button", { name: daoAccount }).click();
-  await page
-    .getByText(lockupContract)
-    .nth(isStakeRequest ? 0 : 1)
-    .click();
+  await page.getByText(lockupContract).click();
 }
 
 async function openWithdrawForm({
@@ -806,7 +798,6 @@ async function openLockupStakingForm({ page, daoAccount, lockupContract }) {
     page,
     daoAccount,
     lockupContract,
-    isStakeRequest: true,
   });
   await expect(
     page.getByText(
