@@ -55,6 +55,16 @@ async function mockOldJSONStakeProposals({ page }) {
   await mockRpcRequest({
     page,
     filterParams: {
+      method_name: "get_last_proposal_id",
+    },
+    modifyOriginalResultFunction: (originalResult) => {
+      originalResult = 3;
+      return originalResult;
+    },
+  });
+  await mockRpcRequest({
+    page,
+    filterParams: {
       method_name: "get_proposals",
     },
     modifyOriginalResultFunction: () => {
