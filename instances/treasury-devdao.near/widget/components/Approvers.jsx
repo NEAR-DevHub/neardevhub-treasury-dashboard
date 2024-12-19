@@ -6,7 +6,7 @@ const { isNearSocial } = VM.require(
 
 const votes = props.votes ?? {};
 const accounts = Object.keys(votes);
-const transferApproversGroup = props.transferApproversGroup ?? [];
+const approversGroup = props.approversGroup ?? [];
 const maxShow = 1;
 const showHover = accounts?.length > maxShow;
 const approve =
@@ -78,7 +78,7 @@ const ApproversComponent = (
   </div>
 );
 
-function getVoteStatus() {
+function getVoteStatus(vote) {
   switch (vote) {
     case "Approve":
       return "Approved";
@@ -100,7 +100,7 @@ return (
           popup: (
             <div className="p-1">
               <div className="d-flex flex-column gap-3">
-                {transferApproversGroup.map((acc) => {
+                {approversGroup.map((acc) => {
                   const profile = Social.getr(`${acc}/profile`);
                   const name = profile.name;
                   const imageSrc = getImage(acc);

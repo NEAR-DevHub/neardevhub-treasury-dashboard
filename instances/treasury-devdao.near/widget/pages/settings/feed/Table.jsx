@@ -24,7 +24,7 @@ const proposals = props.proposals;
 const highlightProposalId = props.highlightProposalId;
 const loading = props.loading;
 const isPendingRequests = props.isPendingRequests;
-const transferApproversGroup = props.transferApproversGroup;
+const settingsApproverGroup = props.settingsApproverGroup;
 const [showToastStatus, setToastStatus] = useState(false);
 const [voteProposalId, setVoteProposalId] = useState(null);
 const refreshTableData = props.refreshTableData;
@@ -33,11 +33,18 @@ const deleteGroup = props.deleteGroup;
 const accountId = context.accountId;
 
 const hasVotingPermission = (
-  transferApproversGroup?.approverAccounts ?? []
+  settingsApproverGroup?.approverAccounts ?? []
 ).includes(accountId);
 
 const hasDeletePermission = (deleteGroup?.approverAccounts ?? []).includes(
   accountId
+);
+
+const columnsVisibility = JSON.parse(
+  Storage.get(
+    "COLUMNS_VISIBILITY",
+    `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.feed.SettingsDropdown`
+  ) ?? "[]"
 );
 
 const Container = styled.div`
@@ -127,11 +134,18 @@ const ToastContainer = styled.div`
 function checkProposalStatus(proposalId) {
   Near.asyncView(treasuryDaoID, "get_proposal", {
     id: proposalId,
-  }).then((result) => {
-    setToastStatus(result.status);
-    setVoteProposalId(proposalId);
-    refreshTableData();
-  });
+  })
+    .then((result) => {
+      setToastStatus(result.status);
+      setVoteProposalId(proposalId);
+      refreshTableData();
+    })
+    .catch(() => {
+      // deleted request (thus proposal won't exist)
+      setToastStatus("Removed");
+      setVoteProposalId(proposalId);
+      refreshTableData();
+    });
 }
 
 useEffect(() => {
@@ -183,11 +197,13 @@ const TooltipContent = ({ title, summary }) => {
   );
 };
 
-function isVisible() {
-  return "";
+function isVisible(column) {
+  return columnsVisibility.find((i) => i.title === column)?.show !== false
+    ? ""
+    : "display-none";
 }
 
-const requiredVotes = transferApproversGroup?.requiredVotes;
+const requiredVotes = settingsApproverGroup?.requiredVotes;
 
 const hideApproversCol = isPendingRequests && requiredVotes === 1;
 
@@ -205,6 +221,9 @@ const ToastStatusContent = () => {
     case "Rejected":
       content = "The request has been rejected.";
       break;
+    case "Removed":
+      content = "The request has been successfully deleted.";
+      break;
     default:
       content = `The request has ${showToastStatus}.`;
       break;
@@ -218,7 +237,7 @@ const ToastStatusContent = () => {
           href={href({
             widgetSrc: `${instance}/widget/app`,
             params: {
-              page: "proposals-feed",
+              page: "settings",
               selectedTab: "History",
               highlightProposalId:
                 typeof highlightProposalId === "number"
@@ -253,7 +272,6 @@ const VoteSuccessToast = () => {
 const proposalPeriod = policy.proposal_period;
 
 const [showDetailsProposalKind, setShowDetailsProposalKind] = useState(null);
-
 const ProposalsComponent = () => {
   return (
     <tbody style={{ overflowX: "auto" }}>
@@ -289,8 +307,8 @@ const ProposalsComponent = () => {
                 />
               </td>
             )}
-            <td className="bold text-center">{kind}</td>
-            <td className={isVisible("Description")}>
+
+            <td className={isVisible("Title")}>
               <div className="custom-truncate bold" style={{ width: 180 }}>
                 {description}
               </div>
@@ -312,7 +330,7 @@ const ProposalsComponent = () => {
                 }}
               />
             </td>
-            <td className="text-center">
+            <td className={"text-center " + isVisible("Details")}>
               <Widget
                 src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
                 props={{
@@ -354,7 +372,7 @@ const ProposalsComponent = () => {
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Approvers`}
                 props={{
                   votes: item.votes,
-                  approversGroup: transferApproversGroup?.approverAccounts,
+                  approversGroup: settingsApproverGroup?.approverAccounts,
                 }}
               />
             </td>
@@ -401,7 +419,7 @@ return (
     <VoteSuccessToast />
     {loading === true ||
     proposals === null ||
-    transferApproversGroup === null ||
+    settingsApproverGroup === null ||
     policy === null ? (
       <div className="d-flex justify-content-center align-items-center w-100 h-100">
         <Widget
@@ -440,12 +458,12 @@ ${JSON.stringify(showDetailsProposalKind, null, 2)}
           >
             {isPendingRequests ? (
               <div className="d-flex justify-content-center align-items-center flex-column gap-2">
-                <h4>No proposals found</h4>
+                <h4>No settings proposals found</h4>
                 <h6>There are currently no proposals</h6>
               </div>
             ) : (
               <div className="d-flex justify-content-center align-items-center flex-column gap-2">
-                <h4>No proposals found</h4>
+                <h4>No settings proposals found</h4>
                 <h6>There are currently no history proposals</h6>
               </div>
             )}
@@ -457,8 +475,8 @@ ${JSON.stringify(showDetailsProposalKind, null, 2)}
                 <td>#</td>
                 <td className={isVisible("Created Date")}>Created Date</td>
                 {!isPendingRequests && <td className="text-center">Status</td>}
-                <td className={isVisible("Type") + " text-center"}>Type</td>
-                <td className={isVisible("Description")}>Description</td>
+
+                <td className={isVisible("Title")}>Title</td>
 
                 <td className={isVisible("Creator") + " text-center"}>
                   Created by

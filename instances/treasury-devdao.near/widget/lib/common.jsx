@@ -430,21 +430,64 @@ function getNearBalances(treasuryDaoID) {
   const resp = fetch(
     `https://api.fastnear.com/v1/account/${treasuryDaoID}/full`
   );
-  const locked = Big(resp?.body?.state?.storage_bytes ?? "0")
+  const storage = Big(resp?.body?.state?.storage_bytes ?? "0")
     .mul(Big(10).pow(19))
     .toFixed();
   const total = Big(resp?.body?.state?.balance ?? "0").toFixed();
   const available = Big(resp?.body?.state?.balance ?? "0")
-    .minus(locked ?? "0")
+    .minus(storage ?? "0")
     .toFixed();
   return {
     total,
     available,
-    locked,
+    storage,
     totalParsed: formatNearAmount(total),
     availableParsed: formatNearAmount(available),
-    lockedParsed: formatNearAmount(locked),
+    storageParsed: formatNearAmount(storage),
   };
+}
+
+// https://github.com/near/core-contracts/blob/master/lockup/src/lib.rs#L33
+const LOCKUP_MIN_BALANCE_FOR_STORAGE = Big(3.5).mul(Big(10).pow(24)).toFixed();
+
+function formatSubmissionTimeStamp(submissionTime, proposalPeriod) {
+  const endTime = Big(submissionTime).plus(proposalPeriod).toFixed();
+  const milliseconds = Number(endTime) / 1000000;
+  const date = new Date(milliseconds);
+
+  // Calculate days and minutes remaining from the timestamp
+  const now = new Date();
+  let diffTime = date - now;
+
+  // Check if the difference is negative
+  const isNegative = diffTime < 0;
+
+  // Convert the total difference into days, hours, and minutes
+  const totalMinutes = Math.floor(diffTime / (1000 * 60));
+  const totalHours = Math.floor(totalMinutes / 60);
+  const remainingMinutes = totalMinutes % 60;
+
+  const totalDays = Math.floor(totalHours / 24);
+  const remainingHours = totalHours % 24;
+
+  // Get hours, minutes, day, month, and year
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  const day = date.getDate().toString().padStart(2, "0");
+  const month = date.toLocaleString("default", { month: "short" });
+  const year = date.getFullYear();
+  return (
+    <div className="d-flex flex-column">
+      <div className="fw-bold">
+        {isNegative
+          ? "Expired"
+          : `${totalDays}d ${remainingHours}h ${remainingMinutes}m`}
+      </div>
+      <div className="text-muted text-sm">
+        {hours}:{minutes} {day} {month} {year}
+      </div>
+    </div>
+  );
 }
 
 return {
@@ -461,4 +504,6 @@ return {
   getRoleWiseData,
   encodeToMarkdown,
   decodeProposalDescription,
+  LOCKUP_MIN_BALANCE_FOR_STORAGE,
+  formatSubmissionTimeStamp,
 };

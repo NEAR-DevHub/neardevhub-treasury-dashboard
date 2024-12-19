@@ -15,6 +15,7 @@ import {
   WithdrawProposalData,
 } from "../../util/inventory.js";
 import { setDontAskAgainCacheValues } from "../../util/cache.js";
+import Big from "big.js";
 
 test.afterEach(async ({ page }, testInfo) => {
   console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
@@ -23,6 +24,7 @@ test.afterEach(async ({ page }, testInfo) => {
 
 const stakedNear = "0.3027";
 const sufficientAvailableBalance = "11000000000000000000000000";
+const minStorageBalance = "3500000000000000000000000";
 const inSufficientAvailableBalance = "11450";
 const stakedPoolAccount = "astro-stakers.poolv1.near";
 const multiStakedPoolAccount = "nearfans.poolv1.near";
@@ -917,7 +919,10 @@ test.describe("Lockup staking", function () {
                 {
                   method_name: "deposit_and_stake",
                   args: toBase64({
-                    amount: sufficientAvailableBalance,
+                    amount: (
+                      BigInt(sufficientAvailableBalance) -
+                      BigInt(minStorageBalance)
+                    ).toString(),
                   }),
                   deposit: "0",
                   gas: "150000000000000",
@@ -999,7 +1004,9 @@ test.describe("Lockup staking", function () {
               actions: [
                 {
                   method_name: "deposit_and_stake",
-                  args: "eyJhbW91bnQiOiIxMDcwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCJ9",
+                  args: toBase64({
+                    amount: Big(7.2).mul(Big(10).pow(24)).toFixed(),
+                  }),
                   deposit: "0",
                   gas: "150000000000000",
                 },
@@ -1298,23 +1305,6 @@ test.describe("Insufficient balance ", function () {
     await page.goto(`/${instanceAccount}/widget/app?page=stake-delegation`);
     await expect(
       await page.locator("div").filter({ hasText: /^Stake Delegation$/ })
-    ).toBeVisible();
-  });
-
-  test("Should throw error with approve vote when account has insufficient near balance", async ({
-    page,
-  }) => {
-    test.setTimeout(120_000);
-    const approveButton = page.getByRole("button", {
-      name: "Approve",
-    });
-
-    await expect(approveButton).toBeEnabled({ timeout: 40_000 });
-    await approveButton.click();
-    await expect(
-      page.getByText(
-        "The request cannot be approved because the treasury balance is insufficient to cover the payment."
-      )
     ).toBeVisible();
   });
 

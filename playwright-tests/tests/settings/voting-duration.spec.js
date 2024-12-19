@@ -3,25 +3,6 @@ import { test } from "../../util/test.js";
 import { getTransactionModalObject } from "../../util/transaction.js";
 import { SandboxRPC } from "../../util/sandboxrpc.js";
 import { mockRpcRequest } from "../../util/rpcmock.js";
-import { getInstanceConfig } from "../../util/config.js";
-
-async function goToSettingsAndCheckIfVotingDurationIsAvailable({
-  page,
-  instanceAccount,
-  instanceConfig,
-}) {
-  await page.goto(`/${instanceAccount}/widget/app?page=settings`);
-
-  if (!instanceConfig.showVotingDurationConfiguration) {
-    await expect(
-      await page.locator(".link", { hasText: "Members" })
-    ).toBeVisible();
-    await expect(await page.getByText("Voting Duration")).not.toBeVisible();
-    return false;
-  } else {
-    return true;
-  }
-}
 
 test.afterEach(async ({ page }, testInfo) => {
   console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
@@ -39,19 +20,7 @@ test.describe("admin connected", function () {
     daoAccount,
   }) => {
     test.setTimeout(150_000);
-    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
-
     await page.goto(`/${instanceAccount}/widget/app?page=settings`);
-
-    if (
-      !(await goToSettingsAndCheckIfVotingDurationIsAvailable({
-        page,
-        instanceAccount,
-        instanceConfig,
-      }))
-    ) {
-      return;
-    }
     await page.getByText("Voting Duration").first().click();
 
     await page.waitForTimeout(500);
@@ -66,9 +35,11 @@ test.describe("admin connected", function () {
     await page.waitForTimeout(500);
     await page.locator("button", { hasText: "Submit" }).click();
 
-    await page
-      .locator(".modalfooter button", { hasText: "Yes, proceed" })
-      .click();
+    if (daoAccount === "testing-astradao.sputnik-dao.near") {
+      await page
+        .locator(".modalfooter button", { hasText: "Yes, proceed" })
+        .click();
+    }
 
     await expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
@@ -96,19 +67,7 @@ test.describe("admin connected", function () {
     daoAccount,
   }) => {
     test.setTimeout(150_000);
-    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
-
     await page.goto(`/${instanceAccount}/widget/app?page=settings`);
-
-    if (
-      !(await goToSettingsAndCheckIfVotingDurationIsAvailable({
-        page,
-        instanceAccount,
-        instanceConfig,
-      }))
-    ) {
-      return;
-    }
     await page.getByText("Voting Duration").first().click();
 
     await page.waitForTimeout(500);
@@ -146,18 +105,7 @@ test.describe("admin connected", function () {
       receiver_id: "webassemblymusic.near",
       daoName,
     });
-
-    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
-
-    if (
-      !(await goToSettingsAndCheckIfVotingDurationIsAvailable({
-        page,
-        instanceAccount,
-        instanceConfig,
-      }))
-    ) {
-      return;
-    }
+    await page.goto(`/${instanceAccount}/widget/app?page=settings`);
     await page.getByText("Voting Duration").first().click();
 
     await page.waitForTimeout(500);
@@ -208,11 +156,10 @@ test.describe("admin connected", function () {
     await page.evaluate((transactionResult) => {
       window.transactionSentPromiseResolve(transactionResult);
     }, transactionResult);
-    await expect(await page.locator(".toast-header")).toBeVisible();
-    await expect(await page.locator(".toast-body")).toBeVisible();
-    await expect(await page.locator(".toast-body")).toHaveText(
-      "Voting duration change request submitted"
-    );
+    await expect(page.locator(".toast-header")).toBeVisible();
+    await expect(
+      page.getByText("Voting duration change request submitted")
+    ).toBeVisible();
 
     await sandbox.quitSandbox();
   });
@@ -269,18 +216,7 @@ test.describe("admin connected", function () {
         }
       },
     });
-
-    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
-
-    if (
-      !(await goToSettingsAndCheckIfVotingDurationIsAvailable({
-        page,
-        instanceAccount,
-        instanceConfig,
-      }))
-    ) {
-      return;
-    }
+    await page.goto(`/${instanceAccount}/widget/app?page=settings`);
     await page.getByText("Voting Duration").first().click();
 
     await page.waitForTimeout(500);

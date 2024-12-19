@@ -273,7 +273,7 @@ const NearPortfolio = () => {
               </div>
             }
           />
-          {isLockupContract ? (
+          {isLockupContract && (
             <BalanceDisplay
               icon={nearTokenIcon}
               label={"Locked"}
@@ -283,17 +283,16 @@ const NearPortfolio = () => {
               }
               price={nearPrice}
             />
-          ) : (
-            <BalanceDisplay
-              icon={nearTokenIcon}
-              label={"Reserved for storage"}
-              balance={nearBalances.lockedParsed}
-              tooltipInfo={
-                "This is the minimum NEAR balance your account must maintain to remain active. This balance represents the storage space your account is using on the NEAR blockchain (with a small buffer), and will go up or down as you use more or less space."
-              }
-              price={nearPrice}
-            />
           )}
+          <BalanceDisplay
+            icon={nearTokenIcon}
+            label={"Reserved for storage"}
+            balance={nearBalances.storageParsed}
+            tooltipInfo={
+              "This is the minimum NEAR balance your account must maintain to remain active. This balance represents the storage space your account is using on the NEAR blockchain (with a small buffer), and will go up or down as you use more or less space."
+            }
+            price={nearPrice}
+          />
         </div>
       }
     />

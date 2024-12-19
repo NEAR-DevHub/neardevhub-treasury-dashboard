@@ -1,16 +1,9 @@
-const { selectedValue, onChange, disabled, isPendingPage, instance } = props;
+const { isPendingPage } = props;
 
-onChange = onChange || (() => {});
-
-if (!instance) {
-  return <></>;
-}
-
-const { showReferenceProposal } = VM.require(`${instance}/widget/config.data`);
 const columnsVisibility = JSON.parse(
   Storage.get(
     "COLUMNS_VISIBILITY",
-    `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.SettingsDropdown`
+    `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.feed.SettingsDropdown`
   ) ?? "[]"
 );
 
@@ -27,27 +20,7 @@ const [settingsOptions, setSettingsOptions] = useState(
           show: true,
         },
         {
-          title: "Reference",
-          show: true,
-        },
-        {
           title: "Title",
-          show: true,
-        },
-        {
-          title: "Summary",
-          show: true,
-        },
-        {
-          title: "Recipient",
-          show: true,
-        },
-        {
-          title: "Requested Token",
-          show: true,
-        },
-        {
-          title: "Funding Ask",
           show: true,
         },
         {
@@ -55,7 +28,7 @@ const [settingsOptions, setSettingsOptions] = useState(
           show: true,
         },
         {
-          title: "Notes",
+          title: "Details",
           show: true,
         },
         {
@@ -163,11 +136,10 @@ return (
             <div className="text-muted text-sm">Shown in table</div>
             {settingsOptions.map((option) => {
               if (
-                (!isPendingPage &&
-                  (option.title === "Expiring Date" ||
-                    option.title === "Required Votes" ||
-                    option.title === "Votes")) ||
-                (!showReferenceProposal && option.title === "Reference")
+                !isPendingPage &&
+                (option.title === "Expiring Date" ||
+                  option.title === "Required Votes" ||
+                  option.title === "Votes")
               ) {
                 return;
               }

@@ -295,9 +295,7 @@ test.describe("admin connected", function () {
     await mockPikespeakFTTokensResponse({ page, daoAccount });
     await updateDaoPolicyMembers({ page });
     await fillCreateForm(page, daoAccount, instanceAccount);
-    const cancelBtn = page
-      .locator(".offcanvas-body")
-      .locator("button.btn-outline", { hasText: "Cancel" });
+    const cancelBtn = page.getByRole("button", { name: "Cancel" });
     await expect(cancelBtn).toBeAttached({ timeout: 10_000 });
 
     cancelBtn.click();
@@ -357,9 +355,7 @@ test.describe("admin connected", function () {
       amountFromLinkedProposal.toString()
     );
 
-    const cancelBtn = page
-      .locator(".offcanvas-body")
-      .locator("button.btn-outline", { hasText: "Cancel" });
+    const cancelBtn = page.getByRole("button", { name: "Cancel" });
     await expect(cancelBtn).toBeAttached({ timeout: 10_000 });
 
     cancelBtn.click();
