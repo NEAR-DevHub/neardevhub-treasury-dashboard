@@ -433,6 +433,7 @@ return (
         style={{ height: "400px" }}
       >
         <iframe
+          className="chart"
           style={{ width: "100%", height: `${height}px` }}
           srcDoc={code}
           message={{ account_id, history }}
