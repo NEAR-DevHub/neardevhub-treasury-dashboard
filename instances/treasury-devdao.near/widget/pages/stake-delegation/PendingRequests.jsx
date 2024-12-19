@@ -3,7 +3,7 @@ const { getApproversAndThreshold, getFilteredProposalsByStatusAndKind } =
     getApproversAndThreshold: () => {},
   };
 const instance = props.instance;
-if (!instance) {
+if (!instance || typeof getFilteredProposalsByStatusAndKind !== "function") {
   return <></>;
 }
 
@@ -30,27 +30,25 @@ const refreshVoteTableData = Storage.get(
 const fetchProposals = useCallback(() => {
   setLoading(true);
   Near.asyncView(treasuryDaoID, "get_last_proposal_id").then((i) => {
-    if (typeof getFilteredProposalsByStatusAndKind == "function") {
-      const lastProposalId = i;
-      getFilteredProposalsByStatusAndKind({
-        treasuryDaoID,
-        resPerPage: rowsPerPage,
-        isPrevPageCalled: isPrevPageCalled,
-        filterKindArray: ["FunctionCall"],
-        filterStatusArray: ["InProgress"],
-        offset: typeof offset === "number" ? offset : lastProposalId,
-        lastProposalId: lastProposalId,
-        currentPage,
-        isStakeDelegation: true,
-      }).then((r) => {
-        setOffset(r.filteredProposals[r.filteredProposals.length - 1].id);
-        if (currentPage === 0 && !totalLength) {
-          setTotalLength(r.totalLength);
-        }
-        setLoading(false);
-        setProposals(r.filteredProposals);
-      });
-    }
+    const lastProposalId = i;
+    getFilteredProposalsByStatusAndKind({
+      treasuryDaoID,
+      resPerPage: rowsPerPage,
+      isPrevPageCalled: isPrevPageCalled,
+      filterKindArray: ["FunctionCall"],
+      filterStatusArray: ["InProgress"],
+      offset: typeof offset === "number" ? offset : lastProposalId,
+      lastProposalId: lastProposalId,
+      currentPage,
+      isStakeDelegation: true,
+    }).then((r) => {
+      setOffset(r.filteredProposals[r.filteredProposals.length - 1].id);
+      if (currentPage === 0 && !totalLength) {
+        setTotalLength(r.totalLength);
+      }
+      setLoading(false);
+      setProposals(r.filteredProposals);
+    });
   });
 }, [rowsPerPage, isPrevPageCalled, currentPage]);
 

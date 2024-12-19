@@ -328,13 +328,13 @@ const showImpactedRequests =
 return (
   <Container>
     <div className="card rounded-3 py-3" style={{ maxWidth: "50rem" }}>
-      <div className="card-title px-3">Voting Duration</div>
-      <div className="card-body">
-        <p>
+      <div className="card-title px-3 mb-0">Voting Duration</div>
+      <div className="p-3 d-flex flex-column gap-2">
+        <div className="fw-bold text-lg">
           Set the number of days a vote is active. A decision expires if voting
           is not completed within this period.
-        </p>
-        <p>
+        </div>
+        <div>
           <label for="exampleInputEmail1" className="pb-1">
             Number of days
           </label>
@@ -346,7 +346,7 @@ return (
             value={durationDays}
             onChange={(event) => changeDurationDays(event.target.value)}
           ></input>
-        </p>
+        </div>
 
         {showAffectedProposalsModal ? (
           <Modal>

@@ -1,7 +1,11 @@
 const { getApproversAndThreshold, getFilteredProposalsByStatusAndKind } =
   VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
 const instance = props.instance;
-if (!instance || typeof getApproversAndThreshold !== "function") {
+if (
+  !instance ||
+  typeof getApproversAndThreshold !== "function" ||
+  typeof getFilteredProposalsByStatusAndKind !== "function"
+) {
   return <></>;
 }
 
@@ -23,48 +27,46 @@ const highlightProposalId = props.highlightProposalId
 useEffect(() => {
   setLoading(true);
   Near.asyncView(treasuryDaoID, "get_last_proposal_id").then((i) => {
-    if (typeof getFilteredProposalsByStatusAndKind == "function") {
-      const lastProposalId = i;
-      getFilteredProposalsByStatusAndKind({
-        treasuryDaoID,
-        resPerPage: rowsPerPage,
-        isPrevPageCalled: isPrevPageCalled,
-        filterKindArray: [
-          "ChangeConfig",
-          "ChangePolicy",
-          "AddMemberToRole",
-          "RemoveMemberFromRole",
-          "ChangePolicyAddOrUpdateRole",
-          "ChangePolicyRemoveRole",
-          "ChangePolicyUpdateDefaultVotePolicy",
-          "ChangePolicyUpdateParameters",
-        ],
-        filterStatusArray: ["Approved", "Rejected", "Expired", "Failed"],
-        offset: typeof offset === "number" ? offset : lastProposalId,
-        lastProposalId: lastProposalId,
-        currentPage,
-      }).then((r) => {
-        if (currentPage === 0 && !totalLength) {
-          setTotalLength(r.totalLength);
-        }
-        setOffset(r.filteredProposals[r.filteredProposals.length - 1].id);
-        if (typeof highlightProposalId === "number" && firstRender) {
-          const proposalExists = r.filteredProposals.find(
-            (i) => i.id === highlightProposalId
-          );
-          if (!proposalExists) {
-            setPage(currentPage + 1);
-          } else {
-            setFirstRender(false);
-            setLoading(false);
-            setProposals(r.filteredProposals);
-          }
+    const lastProposalId = i;
+    getFilteredProposalsByStatusAndKind({
+      treasuryDaoID,
+      resPerPage: rowsPerPage,
+      isPrevPageCalled: isPrevPageCalled,
+      filterKindArray: [
+        "ChangeConfig",
+        "ChangePolicy",
+        "AddMemberToRole",
+        "RemoveMemberFromRole",
+        "ChangePolicyAddOrUpdateRole",
+        "ChangePolicyRemoveRole",
+        "ChangePolicyUpdateDefaultVotePolicy",
+        "ChangePolicyUpdateParameters",
+      ],
+      filterStatusArray: ["Approved", "Rejected", "Expired", "Failed"],
+      offset: typeof offset === "number" ? offset : lastProposalId,
+      lastProposalId: lastProposalId,
+      currentPage,
+    }).then((r) => {
+      if (currentPage === 0 && !totalLength) {
+        setTotalLength(r.totalLength);
+      }
+      setOffset(r.filteredProposals[r.filteredProposals.length - 1].id);
+      if (typeof highlightProposalId === "number" && firstRender) {
+        const proposalExists = r.filteredProposals.find(
+          (i) => i.id === highlightProposalId
+        );
+        if (!proposalExists) {
+          setPage(currentPage + 1);
         } else {
+          setFirstRender(false);
           setLoading(false);
           setProposals(r.filteredProposals);
         }
-      });
-    }
+      } else {
+        setLoading(false);
+        setProposals(r.filteredProposals);
+      }
+    });
   });
 }, [currentPage, rowsPerPage]);
 

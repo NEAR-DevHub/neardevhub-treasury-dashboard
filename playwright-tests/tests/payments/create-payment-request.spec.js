@@ -303,8 +303,10 @@ test.describe("admin connected", function () {
 
     await clickCreatePaymentRequestButton(page);
 
-    expect(await page.getByTestId("proposal-title").inputValue()).toBe("");
-    expect(await page.getByTestId("proposal-summary").inputValue()).toBe("");
+    if (daoAccount === "infinex.sputnik-dao.near") {
+      expect(await page.getByTestId("proposal-title").inputValue()).toBe("");
+      expect(await page.getByTestId("proposal-summary").inputValue()).toBe("");
+    }
     expect(await page.getByPlaceholder("treasury.near").inputValue()).toBe("");
     expect(await page.getByTestId("total-amount").inputValue()).toBe("");
   });

@@ -57,9 +57,11 @@ return (
         </h5>
       </div>
 
-      <div class="offcanvas-body d-flex flex-column gap-4 h-100 w-100">
-        {children}
-      </div>
+      {showCanvas && (
+        <div class="offcanvas-body d-flex flex-column gap-4 h-100 w-100">
+          {children}
+        </div>
+      )}
     </div>
   </Container>
 );

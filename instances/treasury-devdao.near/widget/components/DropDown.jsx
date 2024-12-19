@@ -5,6 +5,12 @@ const disabled = props.disabled;
 const [selected, setSelected] = useState(selectedValue);
 const DropdownItemRender = props.DropdownItemRender;
 
+useEffect(() => {
+  if (JSON.stringify(selected) !== JSON.stringify(selectedValue)) {
+    setSelected(selectedValue);
+  }
+}, [selectedValue]);
+
 const StyledDropdown = styled.div`
   .drop-btn {
     width: 100%;
