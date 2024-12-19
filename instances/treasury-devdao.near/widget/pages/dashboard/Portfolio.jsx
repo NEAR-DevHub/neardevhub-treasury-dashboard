@@ -2,9 +2,46 @@ const { getNearBalances } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
 
-if (typeof getNearBalances !== "function") {
+const { Skeleton } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.skeleton"
+);
+
+if (typeof getNearBalances !== "function" || !Skeleton) {
   return <></>;
 }
+
+const Loading = () => {
+  return (
+    <div className="d-flex align-items-center gap-2 w-100 mx-2 mb-2">
+      <div style={{ width: "40px" }}>
+        <Skeleton
+          style={{ height: "40px", width: "40px" }}
+          className="rounded-circle"
+        />
+      </div>
+      <div className="d-flex flex-column gap-1 w-75">
+        <Skeleton
+          style={{ height: "24px", width: "100%" }}
+          className="rounded-1"
+        />
+        <Skeleton
+          style={{ height: "16px", width: "100%" }}
+          className="rounded-2"
+        />
+      </div>
+      <div className="d-flex flex-column gap-1 w-25">
+        <Skeleton
+          style={{ height: "24px", width: "100%" }}
+          className="rounded-1"
+        />
+        <Skeleton
+          style={{ height: "16px", width: "100%" }}
+          className="rounded-2"
+        />
+      </div>
+    </div>
+  );
+};
 
 const archiveNodeUrl = "https://archival-rpc.mainnet.near.org";
 const nearTokenIcon = "${REPL_NEAR_TOKEN_ICON}";
@@ -36,10 +73,6 @@ function getPrice(tokensNumber, tokenPrice) {
     .mul(tokenPrice ?? "1")
     .toFixed(2);
 }
-
-const loading = (
-  <Widget src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"} />
-);
 
 const [isNearPortfolioExpanded, setNearPortfolioExpanded] = useState(false);
 const [isNearStakedPortfolioExpanded, setNearStakedPortfolioExpanded] =
@@ -128,7 +161,11 @@ const PortfolioCard = ({
   return (
     <div className="d-flex flex-column">
       <div className="border-bottom">
-        <div className="py-2 d-flex gap-2 align-items-center justify-content-between px-3">
+        <div
+          className={`py-2 d-flex gap-2 align-items-center justify-content-between px-3 ${
+            !price ? "text-secondary" : ""
+          }`}
+        >
           <div className="d-flex align-items-center gap-2">
             <img src={icon} height={30} width={30} />
             <div>
@@ -276,13 +313,13 @@ return (
     }}
   >
     {heading}
-    <div>
+    <div className="my-2 mx-2">
       {isLoading ? (
         <div className="d-flex justify-content-center align-items-center w-100 h-100">
-          {loading}
+          <Loading />
         </div>
       ) : (
-        <div className="mt-2">
+        <div>
           {!ftTokens.length && !nearBalances?.total ? (
             <div className="fw-bold p-3">Account doesn't own any FTs.</div>
           ) : (
