@@ -498,6 +498,7 @@ test.describe("Have valid staked requests and sufficient token balance", functio
         exact: true,
       });
       await createRequestButton.click();
+      await page.getByText("Stake", { exact: true }).click();
       await page.waitForTimeout(10_000);
 
       await fillValidatorAccount({
@@ -802,6 +803,7 @@ async function openLockupStakingForm({ page, daoAccount, lockupContract }) {
     exact: true,
   });
   await createRequestButton.click();
+  await page.getByText("Stake", { exact: true }).click();
   await page.waitForTimeout(10_000);
   await selectLockupAccount({
     page,
