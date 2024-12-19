@@ -171,7 +171,7 @@ const PortfolioCard = ({
             <div>
               <div className="h6 mb-0">{symbol}</div>
               <div className="text-sm text-grey">
-                ${Big(price ?? "0").toFixed()}
+                ${Big(price ?? "0").toFixed(2)}
               </div>
             </div>
           </div>
