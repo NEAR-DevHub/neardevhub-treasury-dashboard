@@ -3,7 +3,7 @@ const { getApproversAndThreshold, getFilteredProposalsByStatusAndKind } =
     getApproversAndThreshold: () => {},
   };
 const instance = props.instance;
-if (!instance) {
+if (!instance || typeof getFilteredProposalsByStatusAndKind !== "function") {
   return <></>;
 }
 
@@ -25,40 +25,38 @@ const highlightProposalId = props.highlightProposalId
 useEffect(() => {
   setLoading(true);
   Near.asyncView(treasuryDaoID, "get_last_proposal_id").then((i) => {
-    if (typeof getFilteredProposalsByStatusAndKind == "function") {
-      const lastProposalId = i;
-      getFilteredProposalsByStatusAndKind({
-        treasuryDaoID,
-        resPerPage: rowsPerPage,
-        isPrevPageCalled: isPrevPageCalled,
-        filterKindArray: ["FunctionCall"],
-        filterStatusArray: ["Approved", "Rejected", "Expired", "Failed"],
-        offset: typeof offset === "number" ? offset : lastProposalId,
-        lastProposalId: lastProposalId,
-        currentPage,
-        isStakeDelegation: true,
-      }).then((r) => {
-        if (currentPage === 0 && !totalLength) {
-          setTotalLength(r.totalLength);
-        }
-        setOffset(r.filteredProposals[r.filteredProposals.length - 1].id);
-        if (typeof highlightProposalId === "number" && firstRender) {
-          const proposalExists = r.filteredProposals.find(
-            (i) => i.id === highlightProposalId
-          );
-          if (!proposalExists) {
-            setPage(currentPage + 1);
-          } else {
-            setFirstRender(false);
-            setLoading(false);
-            setProposals(r.filteredProposals);
-          }
+    const lastProposalId = i;
+    getFilteredProposalsByStatusAndKind({
+      treasuryDaoID,
+      resPerPage: rowsPerPage,
+      isPrevPageCalled: isPrevPageCalled,
+      filterKindArray: ["FunctionCall"],
+      filterStatusArray: ["Approved", "Rejected", "Expired", "Failed"],
+      offset: typeof offset === "number" ? offset : lastProposalId,
+      lastProposalId: lastProposalId,
+      currentPage,
+      isStakeDelegation: true,
+    }).then((r) => {
+      if (currentPage === 0 && !totalLength) {
+        setTotalLength(r.totalLength);
+      }
+      setOffset(r.filteredProposals[r.filteredProposals.length - 1].id);
+      if (typeof highlightProposalId === "number" && firstRender) {
+        const proposalExists = r.filteredProposals.find(
+          (i) => i.id === highlightProposalId
+        );
+        if (!proposalExists) {
+          setPage(currentPage + 1);
         } else {
+          setFirstRender(false);
           setLoading(false);
           setProposals(r.filteredProposals);
         }
-      });
-    }
+      } else {
+        setLoading(false);
+        setProposals(r.filteredProposals);
+      }
+    });
   });
 }, [currentPage, rowsPerPage]);
 

@@ -91,6 +91,7 @@ useEffect(() => {
 function resetForm() {
   setSelectedVoteOption(selectedGroup.isRatio ? options[1] : options[0]);
   setSelectedVoteValue(selectedGroup.threshold);
+  setValueError(null);
 }
 
 useEffect(() => {

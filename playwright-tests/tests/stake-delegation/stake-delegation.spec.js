@@ -55,6 +55,16 @@ async function mockOldJSONStakeProposals({ page }) {
   await mockRpcRequest({
     page,
     filterParams: {
+      method_name: "get_last_proposal_id",
+    },
+    modifyOriginalResultFunction: (originalResult) => {
+      originalResult = 3;
+      return originalResult;
+    },
+  });
+  await mockRpcRequest({
+    page,
+    filterParams: {
       method_name: "get_proposals",
     },
     modifyOriginalResultFunction: () => {
@@ -236,17 +246,9 @@ export async function mockLockupNearBalances({ page, balance }) {
   });
 }
 
-async function selectLockupAccount({
-  page,
-  daoAccount,
-  lockupContract,
-  isStakeRequest,
-}) {
+async function selectLockupAccount({ page, daoAccount, lockupContract }) {
   await page.getByRole("button", { name: daoAccount }).click();
-  await page
-    .getByText(lockupContract)
-    .nth(isStakeRequest ? 0 : 1)
-    .click();
+  await page.getByText(lockupContract).click();
 }
 
 async function openWithdrawForm({
@@ -280,10 +282,8 @@ async function openUnstakeForm({ page, isLockup, daoAccount, lockupContract }) {
   }
 }
 
-async function fillValidatorAccount({ page, isStakeRequest }) {
-  const poolSelector = isStakeRequest
-    ? await page.getByTestId("validator-dropdown").first()
-    : await page.getByTestId("validator-dropdown").nth(1);
+async function fillValidatorAccount({ page }) {
+  const poolSelector = await page.getByTestId("validator-dropdown");
   await expect(poolSelector).toBeVisible({ timeout: 30_000 });
   await poolSelector.click();
   await page.waitForTimeout(5_000);
@@ -488,11 +488,11 @@ test.describe("Have valid staked requests and sufficient token balance", functio
         exact: true,
       });
       await createRequestButton.click();
+      await page.getByText("Stake", { exact: true }).click();
       await page.waitForTimeout(10_000);
 
       await fillValidatorAccount({
         page,
-        isStakeRequest: true,
       });
       await checkForStakeAmount({
         page,
@@ -792,12 +792,12 @@ async function openLockupStakingForm({ page, daoAccount, lockupContract }) {
     exact: true,
   });
   await createRequestButton.click();
+  await page.getByText("Stake", { exact: true }).click();
   await page.waitForTimeout(10_000);
   await selectLockupAccount({
     page,
     daoAccount,
     lockupContract,
-    isStakeRequest: true,
   });
   await expect(
     page.getByText(
@@ -875,7 +875,6 @@ test.describe("Lockup staking", function () {
       await openLockupStakingForm({ page, daoAccount, lockupContract });
       await fillValidatorAccount({
         page,
-        isStakeRequest: true,
       });
       await checkForStakeAmount({
         page,
@@ -984,7 +983,9 @@ test.describe("Lockup staking", function () {
     }) => {
       test.setTimeout(120_000);
       await openLockupStakingForm({ page, daoAccount, lockupContract });
+      await page.waitForTimeout(20_000);
       const poolSelector = page.locator(".custom-select").first();
+      await expect(poolSelector).toBeVisible({ timeout: 20_000 });
       const hasDisabledClassOnChild = await poolSelector
         .locator(".disabled")
         .count();
