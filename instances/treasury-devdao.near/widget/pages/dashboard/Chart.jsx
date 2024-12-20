@@ -333,6 +333,15 @@ const LoadingChart = () => {
     </div>
   );
 };
+const formattedDate = (date) => {
+  const d = date.toLocaleDateString("en-US", { dateStyle: "medium" });
+  const t = date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "numeric",
+  });
+
+  return `${d} ${t}`;
+};
 
 return (
   <div className="card flex-1 w-100 card-body">
@@ -343,22 +352,20 @@ return (
           {balanceDate ? (
             <div className="d-flex align-items-center gap-3">
               <h3 className="fw-bold mb-0">
-                {formatCurrency(balanceDate.balance)}{" "}
-                {
-                  [nearTokenInfo, ...(ftTokens ?? [])].find(
-                    (t) => t.contract === selectedToken
-                  )?.ft_meta?.symbol
-                }
+                <span className="balance-value">
+                  {formatCurrency(balanceDate.balance)}
+                </span>
+                <span>
+                  {
+                    [nearTokenInfo, ...(ftTokens ?? [])].find(
+                      (t) => t.contract === selectedToken
+                    )?.ft_meta?.symbol
+                  }
+                </span>
               </h3>
               {balanceDate.date && (
-                <div style={{ fontSize: 14 }}>
-                  {new Date(balanceDate.date).toLocaleDateString("en-US", {
-                    dateStyle: "medium",
-                  })}{" "}
-                  {new Date(balanceDate.date).toLocaleTimeString("en-US", {
-                    hour: "numeric",
-                    minute: "numeric",
-                  })}
+                <div style={{ fontSize: 14 }} className="balance-date">
+                  {formattedDate(new Date(balanceDate.date))}
                 </div>
               )}
             </div>
