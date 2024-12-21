@@ -115,7 +115,7 @@ function updateDaoPolicy(rolesMap) {
 
   return {
     updatedPolicy,
-    summary: `${context.accountId} requests to ${summary}.`,
+    summary: `${context.accountId} requested to ${summary}.`,
   };
 }
 

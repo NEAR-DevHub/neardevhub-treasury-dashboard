@@ -4,6 +4,7 @@ import { setDontAskAgainCacheValues } from "../../util/cache";
 import { mockRpcRequest, updateDaoPolicyMembers } from "../../util/rpcmock";
 import {
   CurrentTimestampInNanoseconds,
+  OldSettingsProposalData,
   SettingsProposalData,
 } from "../../util/inventory.js";
 import { mockTransactionSubmitRPCResponses } from "../../util/transaction.js";
@@ -32,7 +33,7 @@ async function mockSettingsProposals({ page }) {
     modifyOriginalResultFunction: () => {
       let originalResult = [
         JSON.parse(JSON.stringify(SettingsProposalData)),
-        JSON.parse(JSON.stringify(SettingsProposalData)),
+        JSON.parse(JSON.stringify(OldSettingsProposalData)),
       ];
       originalResult[0].id = 0;
       originalResult[1].id = 1;
@@ -127,11 +128,23 @@ test.describe("User is not logged in", function () {
     await expect(
       page.getByRole("cell", { name: "0", exact: true })
     ).toBeVisible({ timeout: 20_000 });
+    const detailsBtn = page
+      .locator("tbody")
+      .getByRole("cell", { name: "Details" });
+    // check details w/ and w/o summary
+    await expect(detailsBtn).toBeVisible();
+    await detailsBtn.click();
+    await expect(page.getByText("Summary")).toBeVisible();
+    await page.getByRole("button", { name: "Cancel" }).click();
     await page.getByText("History").click();
     await expect(
       page.getByRole("cell", { name: "1", exact: true })
     ).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByText("Expired")).toBeVisible({ timeout: 20_000 });
+    await expect(detailsBtn).toBeVisible();
+    await detailsBtn.click();
+    await expect(page.getByText("Summary")).toBeHidden();
+    await expect(page.getByText("Transaction Details")).toBeVisible();
+    await expect(page.getByText("Expired")).toBeVisible();
   });
 });
 

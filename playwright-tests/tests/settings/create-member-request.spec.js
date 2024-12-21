@@ -2,13 +2,12 @@ import { expect } from "@playwright/test";
 import { test } from "../../util/test.js";
 
 import {
-  decodeResultJSON,
   getTransactionModalObject,
   mockTransactionSubmitRPCResponses,
 } from "../../util/transaction.js";
 import { mockRpcRequest, updateDaoPolicyMembers } from "../../util/rpcmock.js";
-import { getInstanceConfig } from "../../util/config.js";
 import { mockInventory } from "../../util/inventory.js";
+import { encodeToMarkdown } from "../../util/lib.js";
 
 const lastProposalId = 3;
 
@@ -31,21 +30,21 @@ async function updateLastProposalId(page) {
   });
 }
 
-async function checkForVoteApproveTxn(page) {
-  const txnLocator = await page
-    .locator("div.modal-body code")
-    .nth(1)
-    .innerText();
-  const dataReceived = JSON.parse(txnLocator);
-  expect(dataReceived).toEqual({
-    id: lastProposalId,
-    action: "VoteApprove",
-  });
-}
-
 async function navigateToMembersPage({ page, instanceAccount }) {
   await page.goto(`/${instanceAccount}/widget/app?page=settings`);
   await page.getByText("Members").click();
+}
+
+async function openAddMemberForm({ page }) {
+  const createMemberRequestButton = page.getByRole("button", {
+    name: "New Member",
+  });
+
+  await expect(createMemberRequestButton).toBeVisible();
+  await createMemberRequestButton.click();
+  await expect(page.getByRole("heading", { name: "Add Member" })).toBeVisible({
+    timeout: 10_000,
+  });
 }
 
 test.afterEach(async ({ page }, testInfo) => {
@@ -58,15 +57,19 @@ test.describe("admin connected", function () {
     storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
   });
 
+  test.beforeEach(async ({ page, daoAccount, instanceAccount }) => {
+    await mockInventory({ page, account: daoAccount });
+    await updateDaoPolicyMembers({ page });
+    await updateLastProposalId(page);
+    await navigateToMembersPage({ page, instanceAccount });
+  });
+
   test("should show members of the DAO", async ({
     page,
     instanceAccount,
     daoAccount,
   }) => {
     test.setTimeout(60_000);
-    await mockInventory({ page, account: daoAccount });
-    await updateDaoPolicyMembers({ page });
-    await navigateToMembersPage({ page, instanceAccount });
     await expect(page.getByText("Megha", { exact: true })).toBeVisible();
   });
 
@@ -124,42 +127,34 @@ test.describe("admin connected", function () {
     expect(await submitBtn.isDisabled()).toBe(true);
   });
 
-  test("should add new member and after submit, show in the member list", async ({
+  test("should add new member and after submit, show toast to view the request", async ({
     page,
     instanceAccount,
     daoAccount,
   }) => {
     test.setTimeout(120_000);
-    await mockInventory({ page, account: daoAccount });
+    const account = "testingaccount.near";
+    const permission = "Create Requests";
+    await openAddMemberForm({ page });
 
-    await navigateToMembersPage({ page, instanceAccount });
-    await updateDaoPolicyMembers({ page });
-    await updateLastProposalId(page);
-    const createMemberRequestButton = page.getByRole("button", {
-      name: "New Member",
-    });
-
-    await expect(createMemberRequestButton).toBeVisible();
-    await createMemberRequestButton.click();
-    await expect(page.getByRole("heading", { name: "Add Member" })).toBeVisible(
-      { timeout: 10_000 }
-    );
     const accountInput = page.getByPlaceholder("treasury.near");
     await accountInput.focus();
-    accountInput.fill("testingaccount.near");
+    accountInput.fill(account);
     await accountInput.blur();
 
     await page.locator(".dropdown-toggle", { hasText: "Select" }).click();
-    await page
-      .locator(".dropdown-item", { hasText: "Create Requests" })
-      .click();
+    await page.locator(".dropdown-item", { hasText: permission }).click();
 
     const submitBtn = await page.locator("button", { hasText: "Submit" });
     await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
     await submitBtn.click();
 
+    const description = {
+      title: "Update policy - Members Permissions",
+      summary: `theori.near requested to add "${account}" to "${permission}".`,
+    };
     const expectedProposalObject = {
-      description: "Change policy",
+      description: encodeToMarkdown(description),
       kind: {
         ChangePolicy: {
           policy: {
@@ -276,7 +271,6 @@ test.describe("admin connected", function () {
     expect(await getTransactionModalObject(page)).toEqual({
       proposal: expectedProposalObject,
     });
-    await checkForVoteApproveTxn(page);
     let isTransactionCompleted = false;
     let retryCountAfterComplete = 0;
     let newProposalId;
@@ -356,8 +350,8 @@ test.describe("admin connected", function () {
           );
           const membersArray = result.roles[0].kind.Group;
 
-          if (membersArray[membersArray.length - 1] !== "testingaccount.near") {
-            membersArray.push("testingaccount.near");
+          if (membersArray[membersArray.length - 1] !== account) {
+            membersArray.push(account);
           }
           json.result.result = Array.from(
             new TextEncoder().encode(JSON.stringify(result))
@@ -394,39 +388,49 @@ test.describe("admin connected", function () {
 
     await expect(await page.locator(".offcanvas-body")).not.toBeVisible();
     await expect(
-      await page.locator("span", { hasText: "testingaccount.near" }).first()
+      await page.getByText("New members policy request is submitted.")
     ).toBeVisible();
   });
 
-  test("should update existing member permissions", async ({
+  test("adding existing member to form should show warning", async ({
     page,
-    instanceAccount,
-    daoAccount,
   }) => {
     test.setTimeout(120_000);
-    await mockInventory({ page, account: daoAccount });
-    await updateDaoPolicyMembers({ page });
-    await updateLastProposalId(page);
-    await navigateToMembersPage({ page, instanceAccount });
+    await openAddMemberForm({ page });
+    const accountInput = page.getByPlaceholder("treasury.near");
+    await accountInput.focus();
+    accountInput.fill("megha19.near");
+    await accountInput.blur();
+    await expect(page.getByText("This user is already a member")).toBeVisible();
+    await expect(page.getByRole("button", { name: " Delete" })).toBeVisible();
+  });
+
+  test("should update existing member permissions", async ({ page }) => {
+    test.setTimeout(120_000);
+    const account = "megha19.near";
+    const permission = "Create Requests";
     await page
-      .getByRole("row", { name: "not defined Megha megha19.near" })
+      .getByRole("row", { name: `not defined Megha ${account}` })
       .locator("i")
       .first()
       .click();
     await expect(
       page.getByRole("heading", { name: "Edit Member" })
     ).toBeVisible();
-    await expect(
-      page.getByText("Create Requests", { exact: true })
-    ).toBeVisible();
+    await expect(page.getByText(permission, { exact: true })).toBeVisible();
+    await expect(page.getByPlaceholder("treasury.near")).toBeDisabled();
     await page.locator("i").first().click();
     const submitBtn = page.getByRole("button", { name: "Submit" });
     await expect(submitBtn).toBeAttached({ timeout: 10_000 });
     await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
     await submitBtn.click();
+    const description = {
+      title: "Update policy - Members Permissions",
+      summary: `theori.near requested to remove "${account}" from "${permission}".`,
+    };
     expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
-        description: "Change policy",
+        description: encodeToMarkdown(description),
         kind: {
           ChangePolicy: {
             policy: {
@@ -543,19 +547,10 @@ test.describe("admin connected", function () {
         },
       },
     });
-    await checkForVoteApproveTxn(page);
   });
 
-  test("should delete existing member from DAO", async ({
-    page,
-    instanceAccount,
-    daoAccount,
-  }) => {
+  test("should delete existing member from DAO", async ({ page }) => {
     test.setTimeout(60_000);
-    await mockInventory({ page, account: daoAccount });
-    await updateDaoPolicyMembers({ page });
-    await updateLastProposalId(page);
-    await navigateToMembersPage({ page, instanceAccount });
     await page
       .getByRole("row", { name: "not defined Megha megha19.near" })
       .locator("i")
@@ -572,9 +567,13 @@ test.describe("admin connected", function () {
       page.getByRole("heading", { name: "Are you sure?" })
     ).toBeVisible();
     await page.getByRole("button", { name: "Remove" }).click();
+    const description = {
+      title: "Update policy - Members Permissions",
+      summary: `theori.near requested to requested to revoke all permissions of "megha19.near".`,
+    };
     expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
-        description: "Remove Member",
+        description: encodeToMarkdown(description),
         kind: {
           ChangePolicy: {
             policy: {
@@ -689,6 +688,5 @@ test.describe("admin connected", function () {
         },
       },
     });
-    await checkForVoteApproveTxn(page);
   });
 });

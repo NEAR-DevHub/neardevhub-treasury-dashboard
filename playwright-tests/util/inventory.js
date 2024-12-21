@@ -178,10 +178,31 @@ export const OldJsonProposalData = {
   submission_time: "1728384666188444109",
 };
 
-export const SettingsProposalData = {
+export const OldSettingsProposalData = {
   id: 1,
   proposer: "theori.near",
   description: "Change proposal period",
+  kind: {
+    ChangePolicyUpdateParameters: {
+      parameters: {
+        proposal_bond: null,
+        proposal_period: "950400000000000",
+        bounty_bond: null,
+        bounty_forgiveness_period: null,
+      },
+    },
+  },
+  status: "InProgress",
+  vote_counts: {},
+  votes: {},
+  submission_time: "1728033017194722007",
+};
+
+export const SettingsProposalData = {
+  id: 1,
+  proposer: "theori.near",
+  description:
+    "* Title: Update policy - Voting Duration <br>* Summary: theori.near requested to change voting duration from 7 to 10",
   kind: {
     ChangePolicyUpdateParameters: {
       parameters: {
