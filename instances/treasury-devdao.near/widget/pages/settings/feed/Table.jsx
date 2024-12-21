@@ -1,16 +1,19 @@
 const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
-const { getNearBalances, formatSubmissionTimeStamp } = VM.require(
-  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
-);
+const {
+  getNearBalances,
+  formatSubmissionTimeStamp,
+  decodeProposalDescription,
+} = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
 
 const instance = props.instance;
 const policy = props.policy;
 if (
   !instance ||
   typeof getNearBalances !== "function" ||
-  typeof formatSubmissionTimeStamp !== "function"
+  typeof formatSubmissionTimeStamp !== "function" ||
+  typeof decodeProposalDescription !== "function"
 ) {
   return <></>;
 }
@@ -276,10 +279,11 @@ const ProposalsComponent = () => {
   return (
     <tbody style={{ overflowX: "auto" }}>
       {proposals?.map((item, index) => {
-        const description = item.description;
-        const kind = Object.keys(item.kind ?? {})?.[0];
+        const title = decodeProposalDescription("title", item.description);
+        const summary = decodeProposalDescription("summary", item.description);
         return (
           <tr
+            key={index}
             className={
               voteProposalId === item.id || highlightProposalId === item.id
                 ? "bg-highlight"
@@ -310,7 +314,7 @@ const ProposalsComponent = () => {
 
             <td className={isVisible("Title")}>
               <div className="custom-truncate bold" style={{ width: 180 }}>
-                {description}
+                {title ?? item.description}
               </div>
             </td>
 
@@ -339,7 +343,10 @@ const ProposalsComponent = () => {
                   },
                   label: "Details",
                   onClick: () => {
-                    setShowDetailsProposalKind(item.kind);
+                    setShowDetailsProposalKind({
+                      transactionDetails: item.kind,
+                      summary,
+                    });
                   },
                 }}
               />
@@ -437,8 +444,14 @@ return (
               content: (
                 <Markdown
                   text={`
+${
+  showDetailsProposalKind.summary
+    ? `###### Summary\n ${showDetailsProposalKind.summary}`
+    : ""
+}
+###### Transaction Details
 \`\`\`jsx
-${JSON.stringify(showDetailsProposalKind, null, 2)}
+${JSON.stringify(showDetailsProposalKind.transactionDetails, null, 2)}
 `}
                   syntaxHighlighterProps={{
                     wrapLines: true,

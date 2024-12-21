@@ -1,3 +1,6 @@
+const { encodeToMarkdown } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+);
 const instance = props.instance;
 if (!instance) {
   return <></>;
@@ -8,6 +11,7 @@ const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 const selectedMember = props.selectedMember;
 const availableRoles = props.availableRoles ?? [];
 const onCloseCanvas = props.onCloseCanvas ?? (() => {});
+const setToastStatus = props.setToastStatus ?? (() => {});
 
 const [username, setUsername] = useState(null);
 const [roles, setRoles] = useState([]);
@@ -15,6 +19,7 @@ const [isTxnCreated, setTxnCreated] = useState(false);
 const [lastProposalId, setLastProposalId] = useState(null);
 const [showDeleteModal, setShowDeleteModal] = useState(false);
 const [showCancelModal, setShowCancelModal] = useState(false);
+const [memberAlreadyExists, setMemberAlreadyExists] = useState(false);
 
 const daoPolicy = Near.view(treasuryDaoID, "get_policy", {});
 const deposit = daoPolicy?.proposal_bond || 100000000000000000000000;
@@ -36,31 +41,15 @@ useEffect(() => {
   getLastProposalId().then((i) => setLastProposalId(i));
 }, []);
 
-function refreshData() {
-  props.refreshMembersTableData();
-}
-
-function getProposalData(id) {
-  return Near.asyncView(treasuryDaoID, "get_proposal", { id: id - 1 }).then(
-    (result) => result
-  );
-}
-
-// close canvas after proposal is submitted and approved
+// close canvas after proposal is submitted
 useEffect(() => {
   if (isTxnCreated) {
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
         if (lastProposalId !== id) {
-          getProposalData(id).then((res) => {
-            if (res.status === "Approved") {
-              onCloseCanvas();
-              refreshData();
-              setTxnCreated(false);
-            } else {
-              setTimeout(() => checkForNewProposal(id), 1000);
-            }
-          });
+          setToastStatus(true);
+          onCloseCanvas();
+          setTxnCreated(false);
         } else {
           setTimeout(() => checkForNewProposal(), 1000);
         }
@@ -72,6 +61,9 @@ useEffect(() => {
 
 function updateDaoPolicy(rolesMap) {
   const updatedPolicy = { ...daoPolicy };
+  const additions = new Set();
+  const removals = new Set();
+
   if (Array.isArray(updatedPolicy.roles)) {
     updatedPolicy.roles = updatedPolicy.roles.map((role) => {
       if (role.name === "all" && role.kind === "Everyone") {
@@ -84,11 +76,13 @@ function updateDaoPolicy(rolesMap) {
         // Add the user if they are not already in the group
         if (Array.isArray(group) && !group.includes(username)) {
           group.push(username);
+          additions.add(role.name);
         }
       }
       // If the role is NOT in the rolesMap but the username is in the group, remove the username
       else if (Array.isArray(group) && group.includes(username)) {
         group = group.filter((i) => i !== username);
+        removals.add(role.name);
       }
 
       // Return the updated role with the modified group
@@ -101,33 +95,48 @@ function updateDaoPolicy(rolesMap) {
     });
   }
 
-  return updatedPolicy;
-}
+  // create summary of additions and removal of permisisons of a user
+  const additionText =
+    additions.size > 0
+      ? `add "${username}" to ${[...additions]
+          .map((role) => `"${role}"`)
+          .join(" and ")}`
+      : null;
+  const removalText =
+    removals.size > 0
+      ? `remove "${username}" from ${[...removals]
+          .map((role) => `"${role}"`)
+          .join(" and ")}`
+      : null;
 
-function getApproveTxn() {
+  const summary = [additionText, removalText]
+    .filter((text) => text !== null)
+    .join(" and ");
+
   return {
-    contractName: treasuryDaoID,
-    methodName: "act_proposal",
-    args: {
-      id: lastProposalId,
-      action: "VoteApprove",
-    },
-    gas: 300000000000000,
+    updatedPolicy,
+    summary: `${context.accountId} requests to ${summary}.`,
   };
 }
 
 function onSubmitClick() {
-  const updatedPolicy = updateDaoPolicy(
+  setTxnCreated(true);
+  const changes = updateDaoPolicy(
     new Map(roles.map((role) => [role.title, role.value]))
   );
-  setTxnCreated(true);
+  const updatedPolicy = changes.updatedPolicy;
+  const summary = changes.summary;
+  const description = {
+    title: "Update policy - Members Permissions",
+    summary: summary,
+  };
   Near.call([
     {
       contractName: treasuryDaoID,
       methodName: "add_proposal",
       args: {
         proposal: {
-          description: "Change policy",
+          description: encodeToMarkdown(description),
           kind: {
             ChangePolicy: {
               policy: updatedPolicy,
@@ -137,7 +146,6 @@ function onSubmitClick() {
       },
       gas: 200000000000000,
     },
-    getApproveTxn(),
   ]);
 }
 
@@ -161,6 +169,10 @@ const Container = styled.div`
     margin-bottom: 3px;
     font-size: 15px;
   }
+
+  .text-red {
+    color: red;
+  }
 `;
 
 function isAccountValid() {
@@ -170,6 +182,20 @@ function isAccountValid() {
     (username ?? "").includes(".tg")
   );
 }
+
+// check if user already exists
+useEffect(() => {
+  if (selectedMember) {
+    return;
+  }
+  const timeoutId = setTimeout(() => {
+    setMemberAlreadyExists(
+      daoPolicy?.roles?.some((role) => role?.kind?.Group?.includes(username))
+    );
+  }, 500);
+
+  return () => clearTimeout(timeoutId);
+}, [username]);
 
 return (
   <Container className="d-flex flex-column gap-2">
@@ -193,14 +219,18 @@ return (
     <div className="d-flex flex-column gap-1">
       <label>Username</label>
       <Widget
-        src="${REPL_DEVHUB}/widget/devhub.entity.proposal.AccountInput"
+        src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.AccountInput"
         props={{
           maxWidth: "100%",
           value: username,
           placeholder: "treasury.near",
           onUpdate: setUsername,
+          disabled: selectedMember,
         }}
       />
+      {!selectedMember && memberAlreadyExists && (
+        <div className="text-red text-sm">This user is already a member.</div>
+      )}
     </div>
     <div className="d-flex flex-column gap-1">
       <label>Permissions</label>
@@ -213,9 +243,10 @@ return (
         }}
       />
     </div>
+
     <div className="d-flex gap-3 align-items-center mt-2 justify-content-between">
       <div>
-        {selectedMember && (
+        {(selectedMember || memberAlreadyExists) && (
           <Widget
             src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
             props={{
@@ -243,6 +274,7 @@ return (
               setTxnCreated(true);
               setShowDeleteModal(false);
             },
+            setToastStatus,
             username: username,
             rolesMap: new Map(
               (selectedMember.roles ?? roles ?? []).map((role) => [role, role])

@@ -1,3 +1,7 @@
+const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
+  href: () => {},
+};
+
 const {
   getMembersAndPermissions,
   getDaoRoles,
@@ -123,6 +127,15 @@ const Container = styled.div`
       opacity: 1;
     }
   
+
+  .toast {
+    background: white !important;
+  }
+
+  .toast-header {
+    background-color: #2c3e50 !important;
+    color: white !important;
+  }
   `;
 
 const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -133,6 +146,7 @@ const [showEditor, setShowEditor] = useState(false);
 const [selectedMember, setSelectedMember] = useState(null);
 const [loading, setLoading] = useState(false);
 const [showDeleteModal, setShowDeleteModal] = useState(false);
+const [showToastStatus, setToastStatus] = useState(false);
 
 useEffect(() => {
   setLoading(true);
@@ -155,6 +169,47 @@ useEffect(() => {
     );
   }
 }, [currentPage, rowsPerPage, allMembers]);
+
+const ToastContainer = styled.div`
+  a {
+    color: black !important;
+    text-decoration: underline !important;
+    &:hover {
+      color: black !important;
+    }
+  }
+`;
+
+const SubmitToast = () => {
+  return (
+    showToastStatus && (
+      <ToastContainer className="toast-container position-fixed bottom-0 end-0 p-3">
+        <div className={`toast ${showToastStatus ? "show" : ""}`}>
+          <div className="toast-header px-2">
+            <strong className="me-auto">Just Now</strong>
+            <i
+              className="bi bi-x-lg h6"
+              onClick={() => setToastStatus(null)}
+            ></i>
+          </div>
+          <div className="toast-body">
+            <div>New members policy request is submitted.</div>
+            <a
+              href={href({
+                widgetSrc: `${instance}/widget/app`,
+                params: {
+                  page: "settings",
+                },
+              })}
+            >
+              View it
+            </a>
+          </div>
+        </div>
+      </ToastContainer>
+    )
+  );
+};
 
 function getImage(acc) {
   return `https://i.near.social/magic/large/https://near.social/magic/img/account/${acc}`;
@@ -257,6 +312,7 @@ const hasCreatePermission = hasPermission(
 
 return (
   <Container className="d-flex flex-column">
+    <SubmitToast />
     <Widget
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.DeleteModalConfirmation`}
       props={{
@@ -266,6 +322,7 @@ return (
         onConfirmClick: () => {
           setShowDeleteModal(false);
         },
+        setToastStatus,
         username: selectedMember.member,
         rolesMap:
           selectedMember &&
@@ -292,6 +349,7 @@ return (
                 return { title: i, value: i };
               }),
               selectedMember: selectedMember,
+              setToastStatus,
             }}
           />
         ),
