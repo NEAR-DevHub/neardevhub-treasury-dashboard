@@ -62,14 +62,6 @@ const ModalHeader = styled.div`
   padding-bottom: 4px;
 `;
 
-const ModalFooter = styled.div`
-  padding-top: 4px;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: items-center;
-`;
-
 const CloseButton = styled.button`
   display: flex;
   align-items: center;
@@ -106,4 +98,10 @@ const NoButton = styled.button`
   box-shadow: none;
 `;
 
-return { Modal, ModalBackdrop, ModalContent, ModalDialog, ModalHeader };
+const ModalFooter = ({ children }) => 
+  <div className="modalfooter d-flex gap-2 align-items-center justify-content-end mt-2">
+    {children}
+  </div>
+;
+
+return { Modal, ModalBackdrop, ModalContent, ModalDialog, ModalHeader, ModalFooter };

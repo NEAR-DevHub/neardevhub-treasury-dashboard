@@ -317,6 +317,7 @@ test.describe("admin connected", function () {
               proposal.id.toString()
             )
           );
+          await expect(await page.locator(".modalfooter")).toBeVisible();
           await page
             .locator(".modalfooter button", { hasText: "Cancel" })
             .click();

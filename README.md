@@ -7,6 +7,18 @@ This is the repository of the BOS components for the NEAR DevHub trustees dashbo
 
 Please refer to [NEAR DevHub](https://github.com/NEAR-DevHub/neardevhub-bos/blob/main/CONTRIBUTING.md) for general contribution guidelines. Details specific for this repository will be added later.
 
+## Running tests
+
+This project has many [playwright-tests](./playwright-tests/), which covers most of the functionality.
+
+Some of the tests depend on the NEAR sandbox. The NEAR sandbox is a local blockchain for testing, and allows simulating the interaction with smart contracts.
+
+To build the sandbox type the following:
+
+`npm run build:sandbox`
+
+Then you can run the tests using `npm run test` or `npm run test:watch:codespaces`. You can also add flags such as `--ui` for UI mode, or inspect the test configuration in [playwright.config.js](./playwright.config.js).
+
 ## Creating test videos
 
 Creating videos of your automated tests is a great way of showcasing the changes in your contribution. Video recording of your test can be enabled in the [playwright.config.js](./playwright.config.js) under the `use` section where there is the `video` property that you should set to `on` ( Remember to NOT commit it with the `on` setting, as we don't want to waste github action resources on recording videos).

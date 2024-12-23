@@ -8,7 +8,7 @@ if (!instance) {
 }
 
 const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
-const { Modal, ModalBackdrop, ModalContent, ModalDialog, ModalHeader } =
+const { Modal, ModalBackdrop, ModalContent, ModalDialog, ModalHeader, ModalFooter } =
   VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.modal");
 
 const daoPolicy = Near.view(treasuryDaoID, "get_policy", {});
@@ -397,6 +397,7 @@ return (
                 </ul>
                 {showImpactedRequests ? (
                   <>
+                  
                     <h4>Summary of changes</h4>
                     <table className="table table-sm">
                       <thead>
@@ -466,7 +467,7 @@ return (
                   ""
                 )}
               </ModalContent>
-              <div className="modalfooter d-flex gap-2 align-items-center justify-content-end mt-2">
+              <ModalFooter>
                 <Widget
                   src={
                     "${REPL_DEVHUB}/widget/devhub.components.molecule.Button"
@@ -487,7 +488,7 @@ return (
                     onClick: submitChangeRequest,
                   }}
                 />
-              </div>
+              </ModalFooter>
             </ModalDialog>
           </Modal>
         ) : (
