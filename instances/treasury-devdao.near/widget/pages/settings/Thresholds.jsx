@@ -1,3 +1,7 @@
+const { encodeToMarkdown } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+);
+
 const { instance } = props;
 if (!instance) {
   return <></>;
@@ -20,7 +24,6 @@ const [isTxnCreated, setTxnCreated] = useState(false);
 const [daoPolicy, setDaoPolicy] = useState(null);
 const [lastProposalId, setLastProposalId] = useState(null);
 const [showToastStatus, setToastStatus] = useState(false);
-const [voteProposalId, setVoteProposalId] = useState(null);
 const [valueError, setValueError] = useState(null);
 const [showConfirmModal, setConfirmModal] = useState(null);
 const [rolesData, setRolesData] = useState(null);
@@ -238,13 +241,17 @@ function onSubmitClick() {
   const deposit = daoPolicy?.proposal_bond || 100000000000000000000000;
   const updatedPolicy = updateDaoPolicy();
 
+  const description = {
+    title: "Update policy - Voting Thresholds",
+    summary: `${context.accountId} requested to change voting threshold from ${selectedGroup.requiredVotes} to ${requiredVotes}.`,
+  };
   Near.call([
     {
       contractName: treasuryDaoID,
       methodName: "add_proposal",
       args: {
         proposal: {
-          description: "Update Policy",
+          description: encodeToMarkdown(description),
           kind: {
             ChangePolicy: {
               policy: updatedPolicy,

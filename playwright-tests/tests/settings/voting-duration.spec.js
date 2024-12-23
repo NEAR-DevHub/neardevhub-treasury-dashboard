@@ -3,6 +3,7 @@ import { test } from "../../util/test.js";
 import { getTransactionModalObject } from "../../util/transaction.js";
 import { SandboxRPC } from "../../util/sandboxrpc.js";
 import { mockRpcRequest } from "../../util/rpcmock.js";
+import { encodeToMarkdown } from "../../util/lib.js";
 
 test.afterEach(async ({ page }, testInfo) => {
   console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
@@ -41,9 +42,14 @@ test.describe("admin connected", function () {
         .click();
     }
 
+    const description = {
+      title: "Update policy - Voting Duration",
+      summary: `theori.near requested to change voting duration from ${currentDurationDays} to ${newDurationDays}.`,
+    };
+
     await expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
-        description: "Change proposal period",
+        description: encodeToMarkdown(description),
         kind: {
           ChangePolicyUpdateParameters: {
             parameters: {

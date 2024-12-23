@@ -7,6 +7,7 @@ import {
   mockRpcRequest,
   updateDaoPolicyMembers,
 } from "../../util/rpcmock.js";
+import { encodeToMarkdown } from "../../util/lib.js";
 
 const lastProposalId = 3;
 
@@ -27,6 +28,22 @@ async function updateLastProposalId(page) {
       return originalResult;
     },
   });
+}
+
+async function checkVotingDropdownChange({ page }) {
+  await expect(
+    page.getByText(
+      "A percentage of the total group members must vote for a decision to pass"
+    )
+  ).toBeVisible();
+  await expect(page.getByText("Enter Percentage")).toBeVisible();
+  await page.getByRole("list").getByText("Number of votes").click();
+  await expect(
+    page.getByText(
+      "A fixed number of votes is required for a decision to pass."
+    )
+  ).toBeVisible();
+  await expect(page.getByText("Value")).toBeVisible();
 }
 
 test.afterEach(async ({ page }, testInfo) => {
@@ -137,9 +154,13 @@ test.describe("admin connected", function () {
       threshold: "2",
     };
 
+    const description = {
+      title: "Update policy - Voting Thresholds",
+      summary: `theori.near requested to change voting threshold from 1 to 2.`,
+    };
     expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
-        description: "Update Policy",
+        description: encodeToMarkdown(description),
         kind: {
           ChangePolicy: {
             policy: getMockedPolicy(updatedPolicy, votePolicy, votePolicy),
@@ -174,9 +195,13 @@ test.describe("admin connected", function () {
       threshold: [20, 100],
     };
 
+    const description = {
+      title: "Update policy - Voting Thresholds",
+      summary: `theori.near requested to change voting threshold from 1 to 2.`,
+    };
     await expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
-        description: "Update Policy",
+        description: encodeToMarkdown(description),
         kind: {
           ChangePolicy: {
             policy: getMockedPolicy(updatedPolicy, votePolicy, votePolicy),
@@ -184,5 +209,26 @@ test.describe("admin connected", function () {
         },
       },
     });
+  });
+
+  test("changing threshold should show correct dropdown label", async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    await checkVotingDropdownChange({ page });
+  });
+
+  test("cancel changed threshold should show correct dropdown label", async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    await checkVotingDropdownChange({ page });
+    await page.getByRole("button", { name: "Cancel" }).click();
+    await expect(
+      page.getByText(
+        "A percentage of the total group members must vote for a decision to pass"
+      )
+    ).toBeVisible();
+    await expect(page.getByText("Enter Percentage")).toBeVisible();
   });
 });

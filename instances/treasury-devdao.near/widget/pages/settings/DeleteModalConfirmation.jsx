@@ -1,3 +1,7 @@
+const { encodeToMarkdown } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+);
+
 const instance = props.instance;
 if (!instance) {
   return <></>;
@@ -8,7 +12,7 @@ const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 const isOpen = props.isOpen;
 const onCancelClick = props.onCancelClick;
 const username = props.username;
-
+const setToastStatus = props.setToastStatus || (() => {});
 const daoPolicy = Near.view(treasuryDaoID, "get_policy", {});
 const deposit = daoPolicy?.proposal_bond || 100000000000000000000000;
 const rolesMap = props.rolesMap;
@@ -28,26 +32,14 @@ useEffect(() => {
   getLastProposalId().then((i) => setLastProposalId(i));
 }, []);
 
-function getProposalData(id) {
-  return Near.asyncView(treasuryDaoID, "get_proposal", { id: id - 1 }).then(
-    (result) => result
-  );
-}
-
-// refresh data after proposal is submitted
+// show toast after proposal is submitted
 useEffect(() => {
   if (isTxnCreated && typeof onRefresh === "function") {
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
         if (lastProposalId !== id) {
-          getProposalData(id).then((res) => {
-            if (res.status === "Approved") {
-              onRefresh();
-              setTxnCreated(false);
-            } else {
-              setTimeout(() => checkForNewProposal(id), 1000);
-            }
-          });
+          setToastStatus(true);
+          setTxnCreated(false);
         } else {
           setTimeout(() => checkForNewProposal(), 1000);
         }
@@ -82,28 +74,20 @@ function updateDaoPolicy() {
   return updatedPolicy;
 }
 
-function getApproveTxn() {
-  return {
-    contractName: treasuryDaoID,
-    methodName: "act_proposal",
-    args: {
-      id: lastProposalId,
-      action: "VoteApprove",
-    },
-    gas: 200000000000000,
-  };
-}
-
 function onConfirmClick() {
   setTxnCreated(true);
   const updatedPolicy = updateDaoPolicy();
+  const description = {
+    title: "Update policy - Members Permissions",
+    summary: `${context.accountId} requested to requested to revoke all permissions of "${username}".`,
+  };
   Near.call([
     {
       contractName: treasuryDaoID,
       methodName: "add_proposal",
       args: {
         proposal: {
-          description: "Remove Member",
+          description: encodeToMarkdown(description),
           kind: {
             ChangePolicy: {
               policy: updatedPolicy,
@@ -113,7 +97,6 @@ function onConfirmClick() {
       },
       gas: 200000000000000,
     },
-    getApproveTxn(),
   ]);
   onConfirm();
 }

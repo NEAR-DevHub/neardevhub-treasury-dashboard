@@ -1,3 +1,7 @@
+const { encodeToMarkdown } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+);
+
 const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
@@ -277,13 +281,17 @@ const submitChangeRequest = () => {
 
     setShowAffectedProposalsModal(false);
     setSubmittingChangeRequest(true);
+    const description = {
+      title: "Update policy - Voting Duration",
+      summary: `${context.accountId} requested to change voting duration from ${currentDurationDays} to ${durationDays}.`,
+    };
     Near.call({
       contractName: treasuryDaoID,
       methodName: "add_proposal",
       deposit,
       args: {
         proposal: {
-          description: "Change proposal period",
+          description: encodeToMarkdown(description),
           kind: {
             ChangePolicyUpdateParameters: {
               parameters: {
