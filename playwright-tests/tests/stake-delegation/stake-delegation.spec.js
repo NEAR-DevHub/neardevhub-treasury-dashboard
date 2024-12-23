@@ -885,7 +885,7 @@ test.describe("Lockup staking", function () {
       await expect(await getTransactionModalObject(page)).toEqual({
         proposal: {
           description:
-            "* Proposal Action: stake <br>* Custom Notes: Approve to continue staking with this validator",
+            "* Proposal Action: stake <br>* Custom Notes: Approve to designate this validator with this lockup account. Lockup accounts can only have one validator.",
           kind: {
             FunctionCall: {
               receiver_id: lockupContract,
