@@ -540,13 +540,11 @@ return (
             <i class="bi bi-info-circle h6 mb-0"></i>
             {lockupStakedPoolId ? (
               <span>
-                {" "}
                 You cannot split your locked funds across multiple validators.
                 To change your validator, please contact our support team.
               </span>
             ) : (
               <span>
-                {" "}
                 You cannot split your locked funds across multiple validators.
                 Choose <span className="fw-bold">one</span> validator from the
                 list. Once you select a validator and click submit, a one-time
