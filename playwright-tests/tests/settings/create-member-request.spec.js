@@ -300,7 +300,6 @@ test.describe("admin connected", function () {
             new TextDecoder().decode(new Uint8Array(json.result.result))
           );
           if (retryCountAfterComplete === 0) {
-            // TODO: Should handle that the updated policy is not available immediately after tx complete
             result++;
             newProposalId = result;
           } else {
@@ -329,7 +328,6 @@ test.describe("admin connected", function () {
 
           result = expectedProposalObject;
           result.id = newProposalId;
-          result.status = "Approved";
 
           json.result.result = Array.from(
             new TextEncoder().encode(JSON.stringify(result))
@@ -366,9 +364,8 @@ test.describe("admin connected", function () {
     await page.evaluate(async () => {
       const selector = await document.querySelector("near-social-viewer")
         .selectorPromise;
-      console.log(selector);
       const wallet = await selector.wallet();
-      wallet.signAndSendTransactions = async (tx) => {
+      wallet.signAndSendTransaction = async (tx) => {
         window.transaction_completed = true;
       };
     });
