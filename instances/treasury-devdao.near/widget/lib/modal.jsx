@@ -1,4 +1,4 @@
-const Modal = styled.div`
+const ModalDiv = styled.div`
   display: ${({ hidden }) => (hidden ? "none" : "flex")};
   position: fixed;
   inset: 0;
@@ -54,7 +54,7 @@ const ModalDialog = styled.div`
   }
 `;
 
-const ModalHeader = styled.div`
+const ModalHeaderDiv = styled.div`
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -98,10 +98,23 @@ const NoButton = styled.button`
   box-shadow: none;
 `;
 
-const ModalFooter = ({ children }) => 
+const ModalHeader = ({ children }) => (
+  <ModalHeaderDiv>
+    <h5 className="mb-0">{children}</h5>
+  </ModalHeaderDiv>
+);
+
+const ModalFooter = ({ children }) => (
   <div className="modalfooter d-flex gap-2 align-items-center justify-content-end mt-2">
     {children}
   </div>
-;
+);
 
-return { Modal, ModalBackdrop, ModalContent, ModalDialog, ModalHeader, ModalFooter };
+const Modal = ({ children }) => (
+  <ModalDiv>
+    <ModalBackdrop />
+    <ModalDialog className="card">{children}</ModalDialog>
+  </ModalDiv>
+);
+
+return { Modal, ModalContent, ModalHeader, ModalFooter };
