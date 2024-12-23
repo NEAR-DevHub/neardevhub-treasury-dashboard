@@ -30,6 +30,22 @@ async function updateLastProposalId(page) {
   });
 }
 
+async function checkVotingDropdownChange({ page }) {
+  await expect(
+    page.getByText(
+      "A percentage of the total group members must vote for a decision to pass"
+    )
+  ).toBeVisible();
+  await expect(page.getByText("Enter Percentage")).toBeVisible();
+  await page.getByRole("list").getByText("Number of votes").click();
+  await expect(
+    page.getByText(
+      "A fixed number of votes is required for a decision to pass."
+    )
+  ).toBeVisible();
+  await expect(page.getByText("Value")).toBeVisible();
+}
+
 test.afterEach(async ({ page }, testInfo) => {
   console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
   await page.unrouteAll({ behavior: "ignoreErrors" });
@@ -193,5 +209,26 @@ test.describe("admin connected", function () {
         },
       },
     });
+  });
+
+  test("changing threshold should show correct dropdown label", async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    await checkVotingDropdownChange({ page });
+  });
+
+  test("cancel changed threshold should show correct dropdown label", async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    await checkVotingDropdownChange({ page });
+    await page.getByRole("button", { name: "Cancel" }).click();
+    await expect(
+      page.getByText(
+        "A percentage of the total group members must vote for a decision to pass"
+      )
+    ).toBeVisible();
+    await expect(page.getByText("Enter Percentage")).toBeVisible();
   });
 });
