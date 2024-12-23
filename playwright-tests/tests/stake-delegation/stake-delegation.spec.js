@@ -801,7 +801,7 @@ async function openLockupStakingForm({ page, daoAccount, lockupContract }) {
   });
   await expect(
     page.getByText(
-      "You cannot split the locked amount across multiple validators."
+      "You cannot split your locked funds across multiple validators."
     )
   ).toBeVisible({
     timeout: 10_000,
@@ -885,7 +885,7 @@ test.describe("Lockup staking", function () {
       await expect(await getTransactionModalObject(page)).toEqual({
         proposal: {
           description:
-            "* Proposal Action: stake <br>* Custom Notes: Approve to continue staking with this validator",
+            "* Proposal Action: stake <br>* Custom Notes: Approve to designate this validator with this lockup account. Lockup accounts can only have one validator.",
           kind: {
             FunctionCall: {
               receiver_id: lockupContract,
