@@ -801,7 +801,7 @@ async function openLockupStakingForm({ page, daoAccount, lockupContract }) {
   });
   await expect(
     page.getByText(
-      "You cannot split the locked amount across multiple validators."
+      "You cannot split your locked funds across multiple validators."
     )
   ).toBeVisible({
     timeout: 10_000,

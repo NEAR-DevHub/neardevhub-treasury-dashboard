@@ -269,7 +269,8 @@ function onSubmitClick() {
         proposal: {
           description: encodeToMarkdown({
             proposal_action: "stake",
-            customNotes: "Approve to continue staking with this validator",
+            customNotes:
+              "Approve to designate this validator with this lockup account. Lockup accounts can only have one validator.",
           }),
           kind: {
             FunctionCall: {
@@ -409,6 +410,7 @@ useEffect(() => {
       (pool.stakedBalance || 0) > 0 ||
       (pool.unstakedBalance || 0) > 0 ||
       (pool.availableToWithdrawBalance || 0) > 0;
+
     if (isAlreadyStaked) {
       setValidatorAccount({
         ...lockupStakedPoolsWithBalance,
@@ -535,10 +537,26 @@ return (
         />
         {selectedWallet.value === lockupContract && (
           <div className="d-flex gap-2 align-items-center my-2 rounded-2 bg-validator-info">
-            <i class="bi bi-info-circle"></i>
-            You cannot split the locked amount across multiple validators. To
-            change your validator, you must first unstake and withdraw the
-            entire amount.
+            <i class="bi bi-info-circle h6 mb-0"></i>
+            {lockupStakedPoolId ? (
+              <span>
+                {" "}
+                You cannot split your locked funds across multiple validators.
+                To change your validator, please contact our support team.
+              </span>
+            ) : (
+              <span>
+                {" "}
+                You cannot split your locked funds across multiple validators.
+                Choose <span className="fw-bold">one</span> validator from the
+                list. Once you select a validator and click submit, a one-time
+                whitelist request will be created. You'll need to approve this
+                request before you can proceed with approving the staking
+                request. <br /> <br /> Note: We currently do not support
+                changing validators through the treasury UI. If you need to
+                change your validator, please contact our team.
+              </span>
+            )}
           </div>
         )}
       </div>
