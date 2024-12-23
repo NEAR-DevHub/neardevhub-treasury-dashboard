@@ -360,8 +360,8 @@ return (
               </ModalHeader>
               <ModalContent>
                 <p>
-                  You are about to update the voting duration. This will affect
-                  the following existing requests.
+                  You are about to update the voting duration. This will impact
+                  existing requests.
                 </p>
                 <ul>
                   {otherPendingRequests.length > 0 ? (
