@@ -74,9 +74,12 @@ const Wrapper = ({ title, children }) => (
   <div className="d-flex flex-column align-items-center w-100 mb-4">
     <div className="d-flex w-100 align-items-center mb-2">
       <div style={{ width: "150px" }}>
-        <button className="btn btn-outline-plain w-100" onClick={() => {}}>
+        <a
+          className="btn btn-outline-plain w-100"
+          href={`https://near.social/${REPL_DEVDAO_ACCOUNT}/widget/app`}
+        >
           Cancel creation
-        </button>
+        </a>
       </div>
       <div
         style={{ width: "calc(100% - 300px)" }}

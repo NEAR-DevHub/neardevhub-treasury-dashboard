@@ -269,7 +269,7 @@ return (
               <label>Sputnik Account Name</label>
               <div>
                 {formFields.sputnikAccountName
-                  ? `${formFields.sputnikAccountName}.sputnik-dao.near`
+                  ? `${formFields.sputnikAccountName}.near`
                   : "-"}
               </div>
             </div>

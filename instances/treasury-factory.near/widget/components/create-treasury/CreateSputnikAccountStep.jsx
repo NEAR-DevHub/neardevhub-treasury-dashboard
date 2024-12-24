@@ -27,7 +27,7 @@ return (
           alertMsg,
           setAlertMsg,
           defaultValue: formFields.sputnikAccountName,
-          postfix: ".sputnik-dao.near",
+          postfix: ".near",
           onChange: (v) =>
             setFormFields({
               ...formFields,
