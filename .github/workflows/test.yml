@@ -72,6 +72,7 @@ jobs:
         run: npm run build
       - name: Run tests
         run: |
+          npm run build:sandbox
           ${{ matrix.target_account.test_command }}
         continue-on-error: false
 
