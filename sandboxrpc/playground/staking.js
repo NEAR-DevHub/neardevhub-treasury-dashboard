@@ -1,6 +1,4 @@
-import { exec } from 'child_process';
-import { connect, utils, keyStores } from 'near-api-js';
-import { SandboxRPC } from '../playwright-tests/util/sandboxrpc.js';
+import { SandboxRPC } from '../../playwright-tests/util/sandboxrpc.js';
 import { parseNearAmount } from 'near-api-js/lib/utils/format.js';
 
 const sandbox = new SandboxRPC();
