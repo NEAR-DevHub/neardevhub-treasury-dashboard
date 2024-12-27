@@ -124,8 +124,11 @@ jobs:
           npx playwright install
       - name: Build project
         run: npm run build
-      - name: Run tests
+      - name: Build sandbox
         run: |
           npm run build:sandbox
+        continue-on-error: false
+      - name: Run tests
+        run: |
           ${{ matrix.target_account.test_command }}
         continue-on-error: false
