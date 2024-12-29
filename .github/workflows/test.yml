@@ -53,10 +53,6 @@ jobs:
   playwright-tests-treasury-factory:
     name: Playwright tests Treasury Factory
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        target_account:
-          - test_command: npx playwright test --project=treasury-testing playwright-tests/tests/treasury-factory
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -76,7 +72,7 @@ jobs:
         continue-on-error: false
       - name: Run tests
         run: |
-          ${{ matrix.target_account.test_command }}
+          npx playwright test --project=treasury-testing playwright-tests/tests/treasury-factory
         continue-on-error: false
 
   playwright-tests-stake-delegation:
