@@ -48,6 +48,8 @@ const [isSubmittingChangeRequest, setSubmittingChangeRequest] = useState(false);
 const [showAffectedProposalsModal, setShowAffectedProposalsModal] =
   useState(false);
 
+const [showLoader, setLoading] = useState(false);
+
 const Container = styled.div`
   font-size: 14px;
   .border-right {
@@ -136,6 +138,7 @@ const ToastContainer = styled.div`
 `;
 
 const cancelChangeRequest = () => {
+  setLoading(false);
   setShowAffectedProposalsModal(false);
   setDurationDays(currentDurationDays);
 };
@@ -273,13 +276,14 @@ const findAffectedProposals = (callback) => {
 };
 
 const submitChangeRequest = () => {
+  setLoading(true);
+  setShowAffectedProposalsModal(false);
   findAffectedProposals((shouldShowAffectedProposalsModal) => {
     if (!showAffectedProposalsModal && shouldShowAffectedProposalsModal) {
       setShowAffectedProposalsModal(true);
       return;
     }
 
-    setShowAffectedProposalsModal(false);
     setSubmittingChangeRequest(true);
     const description = {
       title: "Update policy - Voting Duration",
@@ -516,7 +520,8 @@ return (
             props={{
               classNames: { root: "theme-btn" },
               label: "Submit Request",
-              disabled: durationDays === currentDurationDays,
+              loading: showLoader,
+              disabled: durationDays === currentDurationDays || showLoader,
               onClick: submitChangeRequest,
             }}
           />
