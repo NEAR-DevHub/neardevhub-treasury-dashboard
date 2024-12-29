@@ -275,39 +275,46 @@ const findAffectedProposals = (callback) => {
   }
 };
 
-const submitChangeRequest = () => {
-  setLoading(true);
+function submitVotePolicyChangeTxn() {
   setShowAffectedProposalsModal(false);
-  findAffectedProposals((shouldShowAffectedProposalsModal) => {
-    if (!showAffectedProposalsModal && shouldShowAffectedProposalsModal) {
-      setShowAffectedProposalsModal(true);
-      return;
-    }
-
-    setSubmittingChangeRequest(true);
-    const description = {
-      title: "Update policy - Voting Duration",
-      summary: `${context.accountId} requested to change voting duration from ${currentDurationDays} to ${durationDays}.`,
-    };
-    Near.call({
-      contractName: treasuryDaoID,
-      methodName: "add_proposal",
-      deposit,
-      args: {
-        proposal: {
-          description: encodeToMarkdown(description),
-          kind: {
-            ChangePolicyUpdateParameters: {
-              parameters: {
-                proposal_period:
-                  (60 * 60 * 24 * durationDays).toString() + "000000000",
-              },
+  setSubmittingChangeRequest(true);
+  const description = {
+    title: "Update policy - Voting Duration",
+    summary: `${context.accountId} requested to change voting duration from ${currentDurationDays} to ${durationDays}.`,
+  };
+  Near.call({
+    contractName: treasuryDaoID,
+    methodName: "add_proposal",
+    deposit,
+    args: {
+      proposal: {
+        description: encodeToMarkdown(description),
+        kind: {
+          ChangePolicyUpdateParameters: {
+            parameters: {
+              proposal_period:
+                (60 * 60 * 24 * durationDays).toString() + "000000000",
             },
           },
         },
       },
-    });
+    },
   });
+}
+
+const submitChangeRequest = () => {
+  setLoading(true);
+  if (showAffectedProposalsModal) {
+    submitVotePolicyChangeTxn();
+  } else {
+    findAffectedProposals((shouldShowAffectedProposalsModal) => {
+      if (!showAffectedProposalsModal && shouldShowAffectedProposalsModal) {
+        setShowAffectedProposalsModal(true);
+        return;
+      }
+      submitVotePolicyChangeTxn();
+    });
+  }
 };
 
 useEffect(() => {
