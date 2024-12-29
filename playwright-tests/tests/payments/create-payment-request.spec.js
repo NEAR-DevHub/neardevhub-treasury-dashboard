@@ -717,7 +717,6 @@ test.describe("admin with function access keys", function () {
       }
       const submitBtn = page.getByRole("button", { name: "Submit" });
       await expect(submitBtn).toBeAttached({ timeout: 10_000 });
-      await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
       await expect(submitBtn).toBeDisabled({ timeout: 10_000 });
     };
     await checkThatFormIsCleared();
