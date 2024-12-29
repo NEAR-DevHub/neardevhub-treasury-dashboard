@@ -792,7 +792,13 @@ async function openLockupStakingForm({ page, daoAccount, lockupContract }) {
     exact: true,
   });
   await createRequestButton.click();
-  await page.getByText("Stake", { exact: true }).click();
+  await page
+    .locator(
+      'div[data-component="treasury-devdao.near/widget/pages.stake-delegation.CreateButton"] .option',
+      { hasText: "Stake" }
+    )
+    .first()
+    .click();
   await page.waitForTimeout(10_000);
   await selectLockupAccount({
     page,
