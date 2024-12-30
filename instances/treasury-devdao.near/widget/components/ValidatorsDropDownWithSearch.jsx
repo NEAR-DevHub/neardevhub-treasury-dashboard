@@ -71,7 +71,7 @@ const Container = styled.div`
   }
 
   .selected {
-    background-color: #f0f0f0;
+    background-color: var(--grey-05);
   }
 
   .cursor-pointer {

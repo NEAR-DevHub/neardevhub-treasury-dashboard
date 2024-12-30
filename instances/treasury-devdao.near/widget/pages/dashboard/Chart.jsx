@@ -257,8 +257,8 @@ const Period = styled.div`
   font-weight: 500;
 
   &.selected {
-    background-color: #f7f7f7;
-    color: black;
+    background-color: var(--grey-05);
+    color: var(--text-color);
     border-radius: 8px;
   }
 `;

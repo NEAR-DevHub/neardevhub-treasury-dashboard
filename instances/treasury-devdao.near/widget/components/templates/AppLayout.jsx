@@ -30,7 +30,7 @@ const getColors = (isDarkTheme) => `
   --other-red:#D95C4A;
 
   // bootstrap theme color
-  --bs-body-bg: var(--bg-page-color);
+  --bs-body-bg: var(--bg-card-color);
   --bs-border-color:  var(--border-color);
 `;
 
@@ -83,6 +83,7 @@ const Theme = styled.div`
   .dropdown-item.active,
   .dropdown-item:active {
     background-color: var(--bg-card-color) !important;
+    color: inherit !important;
   }
 
   .offcanvas {
@@ -268,8 +269,7 @@ const Theme = styled.div`
   }
 
   .use-max-bg {
-    background-color: #ecf8fb;
-    color: #1d62a8;
+    color: #007aff;
     cursor: pointer;
   }
 
@@ -314,6 +314,10 @@ const Theme = styled.div`
     i {
       color: var(--other-red) !important;
     }
+  }
+
+  .btn-outline.btn:hover {
+    color: inherit !important;
   }
 
   .border-right {

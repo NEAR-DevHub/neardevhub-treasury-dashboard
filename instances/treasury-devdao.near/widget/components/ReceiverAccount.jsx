@@ -48,18 +48,15 @@ useEffect(() => {
 const HoverCard = () => {
   return (
     <div>
-      <div className="d-flex justify-content-between align-items-center ">
-        <div className="d-flex" style={{ gap: "12px" }}>
-          {verificationStatus === "Verified" ? (
-            <VerifiedTick />
-          ) : (
-            <NotVerfiedTick />
-          )}
-
-          <div className="d-flex flex-column justify-content-center">
-            <div className="h6 mb-0">Fractal</div>
-            <div className="text-sm text-secondary">{verificationStatus}</div>
-          </div>
+      <div className="d-flex justify-content-between align-items-center gap-2">
+        {verificationStatus === "Verified" ? (
+          <VerifiedTick />
+        ) : (
+          <NotVerfiedTick />
+        )}
+        <div className="d-flex flex-column justify-content-center">
+          <div className="h6 mb-0">Fractal</div>
+          <div className="text-sm text-secondary">{verificationStatus}</div>
         </div>
       </div>
     </div>
