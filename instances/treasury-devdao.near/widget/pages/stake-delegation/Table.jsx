@@ -368,6 +368,7 @@ const ProposalsComponent = () => {
                         {treasuryWallet}
                       </div>
                     ),
+                    instance,
                   }}
                 />
               </td>
@@ -378,6 +379,7 @@ const ProposalsComponent = () => {
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.Validator`}
                 props={{
                   validatorId: validatorAccount,
+                  instance,
                 }}
               />
             </td>
@@ -399,6 +401,7 @@ const ProposalsComponent = () => {
                       {item.proposer}
                     </div>
                   ),
+                  instance,
                 }}
               />
             </td>
@@ -449,6 +452,7 @@ const ProposalsComponent = () => {
                 props={{
                   votes: item.votes,
                   approversGroup: functionCallApproversGroup?.approverAccounts,
+                  instance,
                 }}
               />
             </td>

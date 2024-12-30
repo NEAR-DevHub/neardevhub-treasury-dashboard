@@ -1,17 +1,25 @@
-const data = fetch(`https://httpbin.org/headers`);
-const gatewayURL = data?.body?.headers?.Origin ?? "";
+const AppHeader = ({ page, instance }) => (
+  <Widget
+    src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Navbar"
+    props={{
+      page,
+      instance,
+    }}
+  />
+);
 
-const config = Near.view("${REPL_TREASURY}", "get_config");
-const metadata = JSON.parse(atob(config.metadata ?? ""));
+function AppLayout({ page, instance, children, treasuryDaoID }) {
+  const config = Near.view(treasuryDaoID, "get_config");
+  const metadata = JSON.parse(atob(config.metadata ?? ""));
 
-const isDarkTheme = true;
-// false;
+  const data = fetch(`https://httpbin.org/headers`);
+  const gatewayURL = data?.body?.headers?.Origin ?? "";
+  const isDarkTheme = metadata.theme === "dark";
 
-const getColors = (isDarkTheme) => `
+  const getColors = (isDarkTheme) => `
   --bg-header-color: ${isDarkTheme ? "#222222" : "#2C3E50"};
-  --bg-page-color: ${isDarkTheme ? "#222222" : "#f4f4f4"};
+  --bg-page-color: ${isDarkTheme ? "#222222" : "#FFFFFF"};
   --bg-system-color: ${isDarkTheme ? "#131313" : "#f4f4f4"};
-  --bg-card-color: ${isDarkTheme ? "#222222" : "#FFFFFF"};
   --text-color: ${isDarkTheme ? "#CACACA" : "#1B1B18"};
   --text-secondary-color: ${isDarkTheme ? "#878787" : "#999999"};
   --text-alt-color: ${isDarkTheme ? "#FFFFFF" : "#FFFFFF"};
@@ -30,336 +38,322 @@ const getColors = (isDarkTheme) => `
   --other-red:#D95C4A;
 
   // bootstrap theme color
-  --bs-body-bg: var(--bg-card-color);
+  --bs-body-bg: var(--bg-page-color);
   --bs-border-color:  var(--border-color);
+  --bs-dropdown-link-hover-color: var(--grey-04);
 `;
 
-const ParentContainer = styled.div`
-  ${({ isDarkTheme }) => getColors(isDarkTheme)}
-  width: 100%;
-  background: var(--bg-page-color) !important;
-  ${({ gatewayURL }) =>
-    gatewayURL.includes("near.org")
-      ? `
+  const ParentContainer = styled.div`
+    ${() => getColors(isDarkTheme)}
+    width: 100%;
+    background: var(--bg-system-color) !important;
+    ${() =>
+      gatewayURL.includes("near.org")
+        ? `
         /* Styles specific to near.org */
         position: static;
       `
-      : `
+        : `
         /* Styles specific to other URLs */
         position: fixed;
         inset: 73px 0px 0px;
         overflow-y: scroll;
       `}
-`;
+  `;
 
-const Theme = styled.div`
-  padding-top: calc(-1 * var(--body-top-padding));
+  const Theme = styled.div`
+    padding-top: calc(-1 * var(--body-top-padding));
 
-  // remove up/down arrow in input of type = number
-  /* For Chrome, Safari, and Edge */
-  input[type="number"]::-webkit-outer-spin-button,
-  input[type="number"]::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-  }
-
-  /* For Firefox */
-  input[type="number"] {
-    -moz-appearance: textfield;
-  }
-
-  .card {
-    border-color: var(--border-color) !important;
-    border-width: 1px !important;
-    border-radius: 14px;
-    background-color: var(--bg-card-color) !important;
-  }
-
-  .dropdown-menu {
-    background-color: var(--bg-card-color) !important;
-    color: var(--text-color) !important;
-  }
-
-  .dropdown-item.active,
-  .dropdown-item:active {
-    background-color: var(--bg-card-color) !important;
-    color: inherit !important;
-  }
-
-  .offcanvas {
-    background-color: var(--bg-card-color) !important;
-    color: var(--text-color) !important;
-  }
-
-  color: var(--text-color);
-
-  a {
-    text-decoration: none;
-    color: var(--link-inactive-color) !important;
-    &.active {
-      color: var(--link-active-color) !important;
-      font-weight: 700 !important;
+    // remove up/down arrow in input of type = number
+    /* For Chrome, Safari, and Edge */
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
     }
 
-    &:hover {
-      text-decoration: none;
-      color: var(--link-active-color) !important;
-      font-weight: 700 !important;
+    /* For Firefox */
+    input[type="number"] {
+      -moz-appearance: textfield;
     }
-  }
 
-  button.primary {
-    background: var(--theme-color) !important;
-    color: var(--text-alt-color) !important;
-    border: none !important;
-    padding-block: 0.7rem !important;
-    i {
-      color: var(--text-alt-color) !important;
+    .card {
+      border-color: var(--border-color) !important;
+      border-width: 1px !important;
+      border-radius: 14px;
+      background-color: var(--bg-page-color) !important;
     }
-  }
 
-  .primary-button {
-    background: var(--theme-color) !important;
-    color: var(--text-alt-color) !important;
-    border: none !important;
-    i {
-      color: var(--text-alt-color) !important;
+    .dropdown-menu {
+      background-color: var(--bg-page-color) !important;
+      color: var(--text-color) !important;
     }
-  }
 
-  .text-lg {
-    font-size: 15px;
-  }
-
-  .fw-semi-bold {
-    font-weight: 500;
-  }
-
-  .text-secondary {
-    color: var(--text-secondary-color) !important;
-  }
-
-  .max-w-100 {
-    max-width: 100%;
-  }
-
-  .custom-truncate {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    line-height: 1.5;
-    max-height: 4.5em;
-    text-align: left;
-  }
-
-  .display-none {
-    display: none;
-  }
-
-  .text-right {
-    text-align: end;
-  }
-
-  .text-left {
-    text-align: left;
-  }
-  .text-underline {
-    text-decoration: underline !important;
-  }
-
-  .bg-highlight {
-    background-color: rgb(185, 185, 185, 0.2);
-  }
-
-  .cursor-pointer {
-    cursor: pointer;
-  }
-
-  .theme-btn {
-    background: var(--theme-color) !important;
-    color: white !important;
-    border: none;
-  }
-
-  .theme-btn.btn:hover {
-    color: white !important;
-  }
-
-  .toast-container {
-    right: 10px !important;
-    bottom: 10px !important;
-  }
-  .toast {
-    border-radius: 10px;
-    overflow: hidden;
-    color: var(--text-color) !important;
-    background: var(--bg-card-color) !important;
-    border-color: var(--border-color) !important;
-
-    a {
+    .dropdown-item.active,
+    .dropdown-item:active {
+      background-color: var(--grey-04) !important;
       color: inherit !important;
-      &:active {
-        color: inherit !important;
-      }
-      &:hover {
-        color: inherit !important;
-      }
     }
-  }
 
-  .toast-header {
-    background-color: var(--bg-system-color) !important;
-    color: var(--text-secondary-color) !important;
-  }
+    .offcanvas {
+      background-color: var(--bg-page-color) !important;
+      color: var(--text-color) !important;
+    }
 
-  .text-md {
-    font-size: 15px;
-  }
+    color: var(--text-color);
 
-  .primary-text-color {
-    color: var(--theme-color);
     a {
-      color: var(--theme-color) !important;
+      text-decoration: none;
+      color: var(--link-inactive-color) !important;
+      &.active {
+        color: var(--link-active-color) !important;
+        font-weight: 700 !important;
+      }
+
+      &:hover {
+        text-decoration: none;
+        color: var(--link-active-color) !important;
+        font-weight: 700 !important;
+      }
     }
 
-    i {
-      color: var(--theme-color) !important;
+    button.primary {
+      background: var(--theme-color) !important;
+      color: var(--text-alt-color) !important;
+      border: none !important;
+      padding-block: 0.7rem !important;
+      i {
+        color: var(--text-alt-color) !important;
+      }
     }
-  }
 
-  .btn-outline.btn:hover {
-    color: inherit !important;
-  }
-
-  .btn-outline-plain {
-    padding-block: 8px !important;
-    padding-inline: 10px !important;
-    border-radius: 0.375rem !important;
-    border: 1.5px solid var(--border-color) !important;
-    background-color: var(--bg-card-color) !important;
-    color: var(--text-color) !important;
-
-    &:hover {
-      background-color: white;
-      color: black;
+    .primary-button {
+      background: var(--theme-color) !important;
+      color: var(--text-alt-color) !important;
+      border: none !important;
+      i {
+        color: var(--text-alt-color) !important;
+      }
     }
-  }
 
-  h6,
-  .h6,
-  h5,
-  .h5,
-  h4,
-  .h4,
-  h3,
-  .h3,
-  h2,
-  .h2,
-  h1,
-  .h1 {
-    color: var(--text-color) !important;
-  }
+    .text-lg {
+      font-size: 15px;
+    }
 
-  .table {
-    border-color: var(--border-color) !important;
-    color: var(--text-color) !important;
-  }
+    .fw-semi-bold {
+      font-weight: 500;
+    }
 
-  .bg-white {
-    background-color: var(--bg-page-color) !important;
-    color: var(--text-color) !important;
-  }
+    .text-secondary {
+      color: var(--text-secondary-color) !important;
+    }
 
-  .bg-dropdown {
-    background-color: var(--bg-card-color) !important;
-    color: var(--text-color) !important;
-  }
+    .max-w-100 {
+      max-width: 100%;
+    }
 
-  .bg-custom-overlay {
-    background-color: var(--bg-page-color) !important;
-    color: var(--text-color) !important;
-  }
+    .custom-truncate {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.5;
+      max-height: 4.5em;
+      text-align: left;
+    }
 
-  .fill-accent {
-    fill: var(--theme-color);
-  }
+    .display-none {
+      display: none;
+    }
 
-  .use-max-bg {
-    color: #007aff;
-    cursor: pointer;
-  }
+    .text-right {
+      text-align: end;
+    }
 
-  .bg-validator-info {
-    background: rgba(0, 16, 61, 0.06);
-    color: #1b1b18;
-    padding-inline: 0.8rem;
-    padding-block: 0.5rem;
-    font-weight: 500;
-    font-size: 13px;
-  }
+    .text-left {
+      text-align: left;
+    }
+    .text-underline {
+      text-decoration: underline !important;
+    }
 
-  .bg-validator-warning {
-    background: rgba(255, 158, 0, 0.1);
-    color: var(--other-warning);
-    padding-inline: 0.8rem;
-    padding-block: 0.5rem;
-    font-weight: 500;
-    font-size: 13px;
-  }
+    .bg-highlight {
+      background-color: rgb(185, 185, 185, 0.2);
+    }
 
-  .bg-withdraw-warning {
-    background: rgba(255, 158, 0, 0.1);
-    color: var(--other-warning);
-    padding-inline: 0.8rem;
-    padding-block: 0.5rem;
-    font-weight: 500;
-    font-size: 13px;
-  }
+    .cursor-pointer {
+      cursor: pointer;
+    }
 
-  .text-sm {
-    font-size: 13px;
-  }
+    .theme-btn {
+      background: var(--theme-color) !important;
+      color: white !important;
+      border: none;
+    }
 
-  .text-secondary a {
-    color: inherit !important;
-  }
+    .theme-btn.btn:hover {
+      color: white !important;
+    }
 
-  .text-delete {
-    color: var(--other-red) !important;
+    .toast-container {
+      right: 10px !important;
+      bottom: 10px !important;
+    }
+    .toast {
+      border-radius: 10px;
+      overflow: hidden;
+      color: var(--text-color) !important;
+      background: var(--bg-page-color) !important;
+      border-color: var(--border-color) !important;
 
-    i {
+      a {
+        color: inherit !important;
+        &:active {
+          color: inherit !important;
+        }
+        &:hover {
+          color: inherit !important;
+        }
+      }
+    }
+
+    .toast-header {
+      background-color: var(--bg-system-color) !important;
+      color: var(--text-secondary-color) !important;
+    }
+
+    .text-md {
+      font-size: 15px;
+    }
+
+    .primary-text-color {
+      color: var(--theme-color);
+      a {
+        color: var(--theme-color) !important;
+      }
+
+      i {
+        color: var(--theme-color) !important;
+      }
+    }
+
+    .btn-outline.btn:hover {
+      color: inherit !important;
+    }
+
+    .btn-outline-plain {
+      padding-block: 8px !important;
+      padding-inline: 10px !important;
+      border-radius: 0.375rem !important;
+      border: 1.5px solid var(--border-color) !important;
+      background-color: var(--bg-page-color) !important;
+      color: var(--text-color) !important;
+
+      &:hover {
+        background-color: white;
+        color: black;
+      }
+    }
+
+    h6,
+    .h6,
+    h5,
+    .h5,
+    h4,
+    .h4,
+    h3,
+    .h3,
+    h2,
+    .h2,
+    h1,
+    .h1 {
+      color: var(--text-color) !important;
+    }
+
+    .table {
+      border-color: var(--border-color) !important;
+      color: var(--text-color) !important;
+    }
+
+    .bg-white {
+      background-color: var(--bg-page-color) !important;
+      color: var(--text-color) !important;
+    }
+
+    .bg-dropdown {
+      background-color: var(--bg-page-color) !important;
+      color: var(--text-color) !important;
+    }
+
+    .bg-custom-overlay {
+      background-color: var(--bg-page-color) !important;
+      color: var(--text-color) !important;
+    }
+
+    .fill-accent {
+      fill: var(--theme-color);
+    }
+
+    .use-max-bg {
+      color: #007aff;
+      cursor: pointer;
+    }
+
+    .bg-validator-info {
+      background: rgba(0, 16, 61, 0.06);
+      color: #1b1b18;
+      padding-inline: 0.8rem;
+      padding-block: 0.5rem;
+      font-weight: 500;
+      font-size: 13px;
+    }
+
+    .bg-validator-warning {
+      background: rgba(255, 158, 0, 0.1);
+      color: var(--other-warning);
+      padding-inline: 0.8rem;
+      padding-block: 0.5rem;
+      font-weight: 500;
+      font-size: 13px;
+    }
+
+    .bg-withdraw-warning {
+      background: rgba(255, 158, 0, 0.1);
+      color: var(--other-warning);
+      padding-inline: 0.8rem;
+      padding-block: 0.5rem;
+      font-weight: 500;
+      font-size: 13px;
+    }
+
+    .text-sm {
+      font-size: 13px;
+    }
+
+    .text-secondary a {
+      color: inherit !important;
+    }
+
+    .text-delete {
       color: var(--other-red) !important;
+
+      i {
+        color: var(--other-red) !important;
+      }
     }
-  }
 
-  .btn-outline.btn:hover {
-    color: inherit !important;
-  }
+    .btn-outline.btn:hover {
+      color: inherit !important;
+    }
 
-  .border-right {
-    border-right: 1px solid var(--border-color);
-  }
-`;
+    .border-right {
+      border-right: 1px solid var(--border-color);
+    }
+  `;
 
-const AppHeader = ({ page, instance }) => (
-  <Widget
-    src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Navbar"
-    props={{
-      page,
-      instance,
-    }}
-  />
-);
-
-function AppLayout({ page, instance, children }) {
   return (
-    <ParentContainer
-      isDarkTheme={isDarkTheme}
-      gatewayURL={gatewayURL}
-      data-bs-theme={isDarkTheme ? "dark" : "light"}
-    >
+    <ParentContainer data-bs-theme={isDarkTheme ? "dark" : "light"}>
       <Theme className="h-100 w-100">
         <AppHeader page={page} instance={instance} />
         <div className="px-3 py-2 w-100 h-100">{children}</div>

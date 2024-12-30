@@ -115,7 +115,7 @@ const CreateBtn = () => {
       left: 0;
       width: 100%;
       border: 1px solid var(--border-color);
-      background-color: var(--bg-card-color) !important;
+      background-color: var(--bg-page-color) !important;
       color: var(--text-color) !important;
       padding: 0.5rem;
       z-index: 99;
@@ -162,7 +162,7 @@ const CreateBtn = () => {
     }
   
     .selected {
-      background-color: var(--grey-05);
+      background-color: var(--grey-04);
     }
   
     .disabled {

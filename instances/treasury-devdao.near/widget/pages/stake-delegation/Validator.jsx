@@ -23,6 +23,7 @@ if (!pikespeakKey) {
             {validatorId}
           </div>
         ),
+        instance: props.instance,
       }}
     />
   );

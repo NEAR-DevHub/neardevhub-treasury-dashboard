@@ -325,6 +325,7 @@ return (
                                 {formatAccount(txn.sender)}
                               </div>
                             ),
+                            instance,
                           }}
                         />
                       </td>
@@ -343,6 +344,7 @@ return (
                                 {formatAccount(txn.receiver)}
                               </div>
                             ),
+                            instance,
                           }}
                         />
                       </td>

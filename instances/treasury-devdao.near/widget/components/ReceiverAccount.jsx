@@ -91,6 +91,7 @@ return (
         props={{
           popup: verificationStatus && <HoverCard />,
           children: ReceiverAccountComponent,
+          instance: props.instance,
         }}
       />
     ) : (

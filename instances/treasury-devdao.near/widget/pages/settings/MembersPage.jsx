@@ -60,7 +60,7 @@ const Container = styled.div`
   .custom-tooltip .tooltiptext {
     display: none;
     width: 300px;
-    background-color: var(--bg-card-color);
+    background-color: var(--bg-page-color);
     color: var(--text-color) !important;
     border: 1px solid var(--border-color) !important;
     text-align: center;
@@ -204,6 +204,7 @@ const Members = () => {
                       {account}
                     </div>
                   ),
+                  instance,
                 }}
               />
             </td>

@@ -302,6 +302,7 @@ const ProposalsComponent = () => {
                       {title}
                     </div>
                   ),
+                  instance,
                 }}
               />
             </td>
@@ -315,6 +316,7 @@ const ProposalsComponent = () => {
                       {summary ? summary : "-"}
                     </div>
                   ),
+                  instance,
                 }}
               />
             </td>
@@ -324,6 +326,7 @@ const ProposalsComponent = () => {
                 props={{
                   receiverAccount: args.receiver_id,
                   showKYC,
+                  instance,
                 }}
               />
             </td>
@@ -363,6 +366,7 @@ const ProposalsComponent = () => {
                       {item.proposer}
                     </div>
                   ),
+                  instance,
                 }}
               />
             </td>
@@ -377,6 +381,7 @@ const ProposalsComponent = () => {
                         {notes}
                       </div>
                     ),
+                    instance,
                   }}
                 />
               ) : (
@@ -412,6 +417,7 @@ const ProposalsComponent = () => {
                 props={{
                   votes: item.votes,
                   approversGroup: transferApproversGroup?.approverAccounts,
+                  instance,
                 }}
               />
             </td>

@@ -8,9 +8,9 @@ const getPercentage = (value) =>
 
 const Container = styled.div`
   .bar {
-    background-color: #e2e6ec;
+    background-color: var(--grey-04);
     width: 100px;
-    height: 20px;
+    height: 10px;
     overflow: hidden;
   }
   .flex-item {

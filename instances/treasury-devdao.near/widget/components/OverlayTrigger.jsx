@@ -1,4 +1,12 @@
-const config = Near.view("${REPL_TREASURY}", "get_config");
+const { instance } = props;
+
+if (!instance) {
+  return <></>;
+}
+
+const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+
+const config = Near.view(treasuryDaoID, "get_config");
 const metadata = JSON.parse(atob(config.metadata ?? ""));
 
 const isDarkTheme = metadata.theme === "dark";
@@ -23,14 +31,13 @@ State.init({
   show: false,
 });
 
-const overlayClassName =
-  props.overlayClassName ?? "border m-3 p-3 rounded-4 shadow";
+const overlayClassName = props.overlayClassName ?? "m-3 p-2 rounded-3 shadow";
 const overlayStyle = props.overlayStyle ?? {
   maxWidth: "24em",
   zIndex: 1070,
   backgroundColor: isDarkTheme ? "#222222" : "#f4f4f4",
   color: isDarkTheme ? "#CACACA" : "#1B1B18",
-  borderColor: isDarkTheme ? "#3B3B3B" : "rgba(226, 230, 236, 1)",
+  border: "1px solid " + (isDarkTheme ? "#3B3B3B" : "rgba(226, 230, 236, 1)"),
 };
 
 const overlay = (

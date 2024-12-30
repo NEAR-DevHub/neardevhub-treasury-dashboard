@@ -25,8 +25,8 @@ const defaultImage =
   "https://github.com/user-attachments/assets/244e15fc-3fb7-4067-a2c3-013e189e8d20";
 const [image, setImage] = useState(defaultImage);
 const [color, setColor] = useState(defaultColor);
-const [selectedTheme, setSelectedTheme] = useState(null);
-const [error, setError] = useState("wewfwe");
+const [selectedTheme, setSelectedTheme] = useState(ThemeOptions[0]);
+const [error, setError] = useState(null);
 
 const Container = styled.div`
   max-width: 50rem;
@@ -103,10 +103,14 @@ function uploadImageToServer(file) {
     })
     .then((res) => {
       console.log(e);
-      setImage(res.body.cid);
+      setImage(`https://ipfs.near.social/ipfs/${res.body.cid}`);
     });
 }
 
+const daoPolicy = Near.view(treasuryDaoID, "get_policy");
+const config = Near.view(treasuryDaoID, "get_config");
+const metadata = JSON.parse(atob(config.metadata ?? ""));
+const isDarkTheme = metadata?.theme === "dark";
 const code = `
 <!DOCTYPE html>
 <html lang="en">
@@ -115,59 +119,59 @@ const code = `
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Upload Logo</title>
   <style>
+    body {
+      --bg-page-color: ${isDarkTheme ? "#222222" : "#FFFFFF"};
+      --text-color: ${isDarkTheme ? "#CACACA" : "#1B1B18"};
+      --border-color: ${isDarkTheme ? "#3B3B3B" : "rgba(226, 230, 236, 1)"};
+      --text-secondary-color: ${isDarkTheme ? "#878787" : "#999999"};
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif;
+      background-color: var(--bg-page-color);
+      color: var(--text-color);
+    }
     .upload-btn {
+     
       display: inline-block;
       padding: 10px 20px;
       font-size: 16px;
-      color: rgba(27, 27, 24, 1) !important;
+      color: var(--text-color);
       background-color: transparent;
-      border: 1px solid rgba(226, 230, 236, 1);
+      border: 1px solid var(--border-color);
       border-radius: 8px;
       cursor: pointer;
     }
     .upload-btn:hover {
       background-color: inherit;
     }
-    #imagePreview img {
-      max-width: 100px;
-      height: 100px;
-      border: 1px solid rgba(226, 230, 236, 1);
-      border-radius: 15px;
+    .btn-container {
+      width:200px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
-    .container{
-        display:flex;
-        gap:15px;
-        align-items:center;
+    .text-muted {
+      color: var(--text-secondary-color);
+      font-size: 12px;
     }
-
-    .btn-container{
-        display:flex;
-        flex-direction:column;
-        gap:10px;
-    }
-
-    .text-muted{
-        color:rgba(153, 153, 153, 1);
-        font-size:12px;
+    .text-center{
+      text-align:center;
     }
   </style>
 </head>
 <body>
-
- <div class="container">
- <div id="imagePreview"><img src="" alt="Preview" id="defaultImage" /></div>
- <div class='btn-container'>
-<button class="upload-btn" id="uploadButton">Upload Logo</button>
-  <div class="text-muted">SVG, PNG, or JPG (256x256 px)</div>
-    <input type="file" id="imageUpload" accept="image/png, image/jpeg, image/svg+xml" style="display: none;" />
-  </div>
+    <div class="btn-container">
+      <button class="upload-btn" id="uploadButton">Upload Logo</button>
+      <div class="text-muted text-center">SVG, PNG, or JPG (256x256 px)</div>
+      <input
+        type="file"
+        id="imageUpload"
+        accept="image/png, image/jpeg, image/svg+xml"
+        style="display: none;"
+      />
   </div>
 
   <script>
     const imageUpload = document.getElementById("imageUpload");
     const uploadButton = document.getElementById("uploadButton");
-    const imagePreview = document.getElementById("imagePreview");
-    const defaultImage = document.getElementById("defaultImage");
 
     // Trigger the file input when the button is clicked
     uploadButton.addEventListener("click", () => {
@@ -186,13 +190,20 @@ const code = `
 
           img.onload = async () => {
             // Check dimensions
-            console.log(img.width, img.height)
             if (img.width === 256 && img.height === 256) {
-              defaultImage.src = img.src; // Update preview
-              window.parent.postMessage({ handler: "uploadImage", file:file  }, "*");
+              window.parent.postMessage(
+                { handler: "uploadImage", file: file },
+                "*"
+              );
             } else {
-              window.parent.postMessage({ handler: "error", error:'Invalid logo. Please upload a PNG, JPG, or SVG file for your logo that is exactly 256x256 px'  }, "*");
-             
+              window.parent.postMessage(
+                {
+                  handler: "error",
+                  error:
+                    "Invalid logo. Please upload a PNG, JPG, or SVG file for your logo that is exactly 256x256 px",
+                },
+                "*"
+              );
             }
           };
         };
@@ -205,21 +216,11 @@ const code = `
       }
     });
 
-    // Listen for messages from iframe
-    window.addEventListener("message", (event) => {
-      console.log('called', event.data)
-      if (event.data?.imageSrc) {
-        defaultImage.src = event.data.imageSrc; // Set image from iframe
-      }
-    });
+
   </script>
 </body>
 </html>
 `;
-
-const daoPolicy = Near.view(treasuryDaoID, "get_policy");
-const config = Near.view(treasuryDaoID, "get_config");
-const metadata = JSON.parse(atob(config.metadata ?? ""));
 
 function toBase64(json) {
   return Buffer.from(JSON.stringify(json)).toString("base64");
@@ -247,7 +248,7 @@ function onSubmitClick() {
                   ...metadata,
                   primaryColor: color,
                   flagLogo: image,
-                  theme: selectedTheme,
+                  theme: selectedTheme.value,
                 }),
               },
             },
@@ -262,7 +263,9 @@ function onSubmitClick() {
 function setDefault() {
   setImage(metadata?.flagLogo ?? defaultImage);
   setColor(metadata?.primaryColor ?? defaultColor);
-  setSelectedTheme(metadata?.theme ?? ThemeOptions[0]);
+  setSelectedTheme(
+    ThemeOptions.find((i) => i.value === metadata?.theme) ?? ThemeOptions[0]
+  );
 }
 
 useEffect(() => {
@@ -273,7 +276,7 @@ useEffect(() => {
 
 return (
   <Container>
-    <div className="card rounded-3 w-100 h-100 p-2">
+    <div className="card rounded-3 w-100 h-100 p-3">
       {!metadata ? (
         <div
           className=" d-flex justify-content-center align-items-center w-100 h-100"
@@ -284,92 +287,95 @@ return (
           />
         </div>
       ) : (
-        <div>
-          <iframe
-            srcDoc={code}
-            style={{
-              height: "125px",
-              width: "100%",
-              backgroundColor: "inherit",
-            }}
-            message={{
-              imageSrc: image ? image : defaultImage,
-            }}
-            onMessage={(e) => {
-              switch (e.handler) {
-                case "uploadImage": {
-                  setError(null);
-                  uploadImageToServer(e.file);
+        <div className="d-flex flex-column gap-4">
+          <div class="d-flex gap-2 align-items-center flex-wrap flex-md-nowrap">
+            <img
+              src={image ? image : defaultImage}
+              height={100}
+              width={100}
+              className="object-cover rounded-3"
+            />
+            <iframe
+              srcDoc={code}
+              style={{
+                height: "110px",
+                width: "100%",
+                backgroundColor: "var(--bg-page-color)",
+              }}
+              onMessage={(e) => {
+                switch (e.handler) {
+                  case "uploadImage": {
+                    setError(null);
+                    uploadImageToServer(e.file);
+                  }
+                  case "error": {
+                    setError(e.error);
+                  }
                 }
-                case "error": {
-                  setError(e.error);
-                }
-              }
-            }}
-          />
-          <div className="d-flex flex-column gap-4 p-1">
-            {error && (
-              <div class="error-message p-3 rounded-3 d-flex gap-2 align-items-center">
-                <i class="bi bi-exclamation-octagon h4 mb-0"></i>
-                {error}
-              </div>
-            )}
-            <div className="d-flex flex-column gap-1">
-              <label>Primary color</label>
-              <div className="d-flex border border-1 align-items-center rounded-3 gap-2 p-1 px-2">
-                <input
-                  type="color"
-                  value={color}
-                  onChange={(e) => setColor(e.target.value)}
-                  style={{
-                    width: 35,
-                    height: 30,
-                    border: "none",
-                    borderRadius: 5,
-                    appearance: "none",
-                    padding: 0,
-                  }}
-                />
-                <input
-                  value={color}
-                  onChange={(e) => setColor(e.target.value)}
-                  style={{ border: "none", width: "100%", paddingInline: 0 }}
-                />
-              </div>
+              }}
+            />
+          </div>
+          {error && (
+            <div class="error-message p-3 rounded-3 d-flex gap-2 align-items-center">
+              <i class="bi bi-exclamation-octagon h4 mb-0"></i>
+              {error}
             </div>
-            <div className="d-flex flex-column gap-1">
-              <label>Theme</label>
-              <Widget
-                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDown`}
-                props={{
-                  options: ThemeOptions,
-                  selectedValue: selectedTheme ?? ThemeOptions[0],
-                  onUpdate: setSelectedTheme,
+          )}
+          <div className="d-flex flex-column gap-1">
+            <label>Primary color</label>
+            <div className="d-flex border border-1 align-items-center rounded-3 gap-2 p-1 px-2">
+              <input
+                type="color"
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                style={{
+                  width: 35,
+                  height: 30,
+                  border: "none",
+                  borderRadius: 5,
+                  appearance: "none",
+                  padding: 0,
                 }}
               />
-            </div>
-            <div className="d-flex mt-2 gap-3 justify-content-end">
-              <Widget
-                src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
-                props={{
-                  classNames: {
-                    root: "btn-outline shadow-none border-0",
-                  },
-                  label: "Cancel",
-                  onClick: setDefault,
-                }}
+              <input
+                value={color}
+                onChange={(e) => setColor(e.target.value)}
+                style={{ border: "none", width: "100%", paddingInline: 0 }}
               />
+            </div>
+          </div>
+          <div className="d-flex flex-column gap-1">
+            <label>Theme</label>
+            <Widget
+              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDown`}
+              props={{
+                options: ThemeOptions,
+                selectedValue: selectedTheme ?? ThemeOptions[0],
+                onUpdate: setSelectedTheme,
+              }}
+            />
+          </div>
+          <div className="d-flex mt-2 gap-3 justify-content-end">
+            <Widget
+              src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
+              props={{
+                classNames: {
+                  root: "btn-outline shadow-none border-0",
+                },
+                label: "Cancel",
+                onClick: setDefault,
+              }}
+            />
 
-              <Widget
-                src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
-                props={{
-                  classNames: { root: "theme-btn" },
-                  label: "Save changes",
-                  onClick: onSubmitClick,
-                  loading: isTxnCreated,
-                }}
-              />
-            </div>
+            <Widget
+              src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
+              props={{
+                classNames: { root: "theme-btn" },
+                label: "Save changes",
+                onClick: onSubmitClick,
+                loading: isTxnCreated,
+              }}
+            />
           </div>
         </div>
       )}

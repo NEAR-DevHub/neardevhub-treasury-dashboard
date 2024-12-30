@@ -95,7 +95,7 @@ const Container = styled.div`
   }
 
   .selected {
-    background-color: var(--grey-05);
+    background-color: var(--grey-04);
   }
 
   .cursor-pointer {

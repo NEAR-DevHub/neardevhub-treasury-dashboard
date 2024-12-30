@@ -1,4 +1,10 @@
-const { nearPrice, ftTokens, accountId, title } = props;
+const { nearPrice, ftTokens, accountId, title, instance } = props;
+
+if (!instance) {
+  return <></>;
+}
+
+const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 
 const { Skeleton } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.skeleton"
@@ -43,8 +49,13 @@ function formatCurrency(amount) {
     .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
+const config = Near.view(treasuryDaoID, "get_config");
+const metadata = JSON.parse(atob(config.metadata ?? ""));
+
+const isDarkTheme = metadata.theme === "dark";
+
 const code = `
-  <!DOCTYPE html>
+<!DOCTYPE html>
   <html lang="en">
   <head>
       <meta charset="UTF-8">
@@ -53,24 +64,30 @@ const code = `
       <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
       <style>
           body {
-              font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-              margin: 0;
-              padding: 0;
-              overflow: hidden;
+            --bg-page-color: ${isDarkTheme ? "#222222" : "#FFFFFF"};
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
           }
 
           canvas {
               width: 100%;
               height: 100%;
               display: block;
+              background-color: var(--bg-page-color);
           }
       </style>
   </head>
   <body>
-
-  <canvas id="myChart" height="400"></canvas>
-
-  <script>
+      <canvas id="myChart" height="400"></canvas>
+      <script>
+    const bgPageColor = ${isDarkTheme ? "'#222222'" : "'#FFFFFF'"};
+    const borderColor = ${
+      isDarkTheme ? "'#3B3B3B'" : "'rgba(226, 230, 236, 1)'"
+    };
+    const iconColor = ${isDarkTheme ? "'#CACACA'" : "'#060606'"};
+    const textColor = ${isDarkTheme ? "'#CACACA'" : "'#1B1B18'"}
     const ctx = document.getElementById("myChart").getContext("2d");
     let account_id;
     let history;
@@ -94,12 +111,16 @@ const code = `
                 ctx.moveTo(hoverX, chartArea.top);
                 ctx.lineTo(hoverX, chartArea.bottom);
                 ctx.lineWidth = 1;
-                ctx.strokeStyle = 'rgba(0,0,0,1)';
+                ctx.strokeStyle = iconColor;
                 ctx.setLineDash([5, 3]);
                 ctx.stroke();
                 ctx.restore();
                 
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.7)'; // Semi-transparent overlay
+                ctx.fillStyle = ${
+                  isDarkTheme
+                    ? "rgba(27, 27, 24, 0.7)"
+                    : "rgba(255, 255, 255, 0.7)"
+                }; // Semi-transparent overlay
                 ctx.fillRect(hoverX, chartArea.top, chartArea.right - hoverX, chartArea.bottom - chartArea.top);
                 ctx.restore();
             }
@@ -129,7 +150,7 @@ const code = `
             },
             ticks: {
               display: true,
-              color: "#000",
+              color: textColor,
             },   
           },
           y: {
@@ -157,8 +178,8 @@ const code = `
             data: [],
             fill: true,
             backgroundColor: gradient,
-            borderColor: "#000",
-            pointBackgroundColor: "#fff",
+            borderColor: borderColor,
+            pointBackgroundColor: bgPageColor,
             pointRadius: 0,
             tension: 0,
             borderWidth: 1.5
@@ -257,7 +278,7 @@ const Period = styled.div`
   font-weight: 500;
 
   &.selected {
-    background-color: var(--grey-05);
+    background-color: var(--grey-04);
     color: var(--text-color);
     border-radius: 8px;
   }
@@ -436,7 +457,7 @@ return (
       <LoadingChart />
     ) : (
       <div
-        className="w-100 d-flex justify-content-center align-items-center"
+        className="w-100 d-flex justify-content-center align-items-center mt-2 rounded-3 overflow-hidden"
         style={{ height: "400px" }}
       >
         <iframe

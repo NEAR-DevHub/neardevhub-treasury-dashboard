@@ -301,6 +301,7 @@ return (
               Big(nearBalances?.totalParsed ?? "0").mul(nearPrice ?? 1)
             ),
             ftTokens: userFTTokens.fts,
+            instance,
             accountId: treasuryDaoID,
           }}
         />
@@ -311,6 +312,7 @@ return (
             props={{
               title: "Treasury Assets: Lockup",
               nearPrice,
+              instance,
               totalBalance: formatCurrency(
                 Big(lockupNearBalances?.totalParsed ?? "0").mul(nearPrice ?? 1)
               ),

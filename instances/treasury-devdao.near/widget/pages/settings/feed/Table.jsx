@@ -281,6 +281,7 @@ const ProposalsComponent = () => {
                       {item.proposer}
                     </div>
                   ),
+                  instance,
                 }}
               />
             </td>
@@ -330,6 +331,7 @@ const ProposalsComponent = () => {
                 props={{
                   votes: item.votes,
                   approversGroup: settingsApproverGroup?.approverAccounts,
+                  instance,
                 }}
               />
             </td>
