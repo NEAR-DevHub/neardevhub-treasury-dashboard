@@ -483,7 +483,7 @@ function formatSubmissionTimeStamp(submissionTime, proposalPeriod) {
           ? "Expired"
           : `${totalDays}d ${remainingHours}h ${remainingMinutes}m`}
       </div>
-      <div className="text-muted text-sm">
+      <div className="text-secondary text-sm">
         {hours}:{minutes} {day} {month} {year}
       </div>
     </div>

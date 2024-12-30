@@ -32,49 +32,14 @@ const Container = styled.div`
     font-size: 13px;
     min-height: 75vh;
   
-    .text-grey {
-      color: #b9b9b9 !important;
-    }
-  
-    .text-size-2 {
-      font-size: 15px;
-    }
-  
-    .text-dark-grey {
-      color: #687076;
-    }
-  
-    .text-grey-100 {
-      background-color: #f5f5f5;
-    }
-  
     td {
       padding: 0.7rem;
       color: inherit;
       vertical-align: middle;
     }
   
-    .max-w-100 {
-      max-width: 100%;
-    }
-  
     table {
       overflow-x: auto;
-    }
-  
-    .bold {
-      font-weight: 500;
-    }
-  
-    .text-right {
-      text-align: end;
-    }
-  
-    .text-left {
-      text-align: left;
-    }
-    .text-underline {
-      text-decoration: underline !important;
     }
   
     .flex-1 {
@@ -89,15 +54,6 @@ const Container = styled.div`
   
     .text-delete {
       color: #ff3b30;
-    }
-  
-    .cursor-pointer {
-      cursor: pointer;
-    }
-  
-    .theme-btn {
-      background: var(--theme-color) !important;
-      color: white;
     }
   
     .custom-tooltip {
@@ -126,16 +82,6 @@ const Container = styled.div`
       display: block;
       opacity: 1;
     }
-  
-
-  .toast {
-    background: white !important;
-  }
-
-  .toast-header {
-    background-color: #2c3e50 !important;
-    color: white !important;
-  }
   `;
 
 const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -227,7 +173,7 @@ const Members = () => {
         const profile = Social.getr(`${account}/profile`);
         const imageSrc = getImage(account);
         return (
-          <tr key={index} className="bold">
+          <tr key={index} className="fw-semi-bold">
             <td>
               <div className="d-flex gap-2 align-items-center">
                 <img
@@ -381,7 +327,7 @@ return (
         >
           <table className="table">
             <thead>
-              <tr className="text-grey">
+              <tr className="text-secondary">
                 <td>Name</td>
                 <td>User name</td>
                 <td>Permissions</td>

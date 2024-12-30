@@ -195,10 +195,6 @@ const loader = (
 );
 
 const Container = styled.div`
-  .text-muted {
-    color: rgba(226, 230, 236, 1);
-  }
-
   td {
     color: inherit;
     padding: inherit;
@@ -215,10 +211,6 @@ const Container = styled.div`
 
   .text-left {
     text-align: left;
-  }
-
-  .fw-semi-bold {
-    font-weight: 500;
   }
 
   .txn-link {
@@ -239,7 +231,7 @@ const Container = styled.div`
   }
 
   .show-more-btn {
-    border: 1px solid rgba(226, 230, 236, 1) !important;
+    border: 1px solid var(--border-color) !important;
     text-align: center;
     background: none;
   }
@@ -264,7 +256,7 @@ return (
           {Array.isArray(transactionWithBalances) && (
             <table className="table">
               <thead>
-                <tr className="text-muted px-3 py-3 border-top">
+                <tr className="text-secondary px-3 py-3 border-top">
                   <td>Type</td>
                   <td>From</td>
                   <td>To</td>

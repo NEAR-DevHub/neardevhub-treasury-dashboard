@@ -38,10 +38,6 @@ const StyledDropdown = styled.div`
     font-size: 12px !important;
   }
 
-  .text-muted {
-    color: rgba(153, 153, 153, 1);
-  }
-
   .work-break {
     border-radius: 5px;
     white-space: normal;
@@ -89,7 +85,7 @@ return (
         )}
       </ul>
       {selected?.description && (
-        <div classNameName="text-muted text-sm mt-1">
+        <div classNameName="text-secondary text-sm mt-1">
           {selected.description}
         </div>
       )}

@@ -44,10 +44,6 @@ const Container = styled.div`
     color: #34c759;
   }
 
-  .text-grey {
-    color: #b9b9b9 !important;
-  }
-
   .text-sm {
     font-size: 12px;
   }
@@ -57,7 +53,7 @@ return (
   <Container className="d-flex flex-column gap-1 bold">
     <div> {validatorId}</div>
     <div className="d-flex gap-2 align-items-center text-sm">
-      <div className="text-grey">{fee}% Fee</div>
+      <div className="text-secondary">{fee}% Fee</div>
       {isActive && <div className="text-green">Active</div>}
     </div>
   </Container>

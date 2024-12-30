@@ -81,18 +81,7 @@ const hasDeletePermission = (deleteGroup?.approverAccounts ?? []).includes(
 const Container = styled.div`
   font-size: 13px;
   min-height: 60vh;
-  .text-grey {
-    color: #b9b9b9 !important;
-  }
-  .text-size-2 {
-    font-size: 15px;
-  }
-  .text-dark-grey {
-    color: #687076;
-  }
-  .text-grey-100 {
-    background-color: #f5f5f5;
-  }
+
   td {
     padding: 0.5rem;
     color: inherit;
@@ -100,55 +89,8 @@ const Container = styled.div`
     background: inherit;
   }
 
-  .max-w-100 {
-    max-width: 100%;
-  }
-
   table {
     overflow-x: auto;
-  }
-
-  .bold {
-    font-weight: 500;
-  }
-
-  .custom-truncate {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    line-height: 1.5;
-    max-height: 4.5em;
-    text-align: left;
-  }
-
-  .display-none {
-    display: none;
-  }
-
-  .text-right {
-    text-align: end;
-  }
-
-  .text-left {
-    text-align: left;
-  }
-  .text-underline {
-    text-decoration: underline !important;
-  }
-
-  .bg-highlight {
-    background-color: rgb(185, 185, 185, 0.2);
-  }
-
-  .toast {
-    background: white !important;
-  }
-
-  .toast-header {
-    background-color: #2c3e50 !important;
-    color: white !important;
   }
 
   .text-warning {
@@ -161,10 +103,6 @@ const Container = styled.div`
 
   .markdown-href a {
     color: inherit !important;
-  }
-
-  .fw-semi-bold {
-    font-weight: 500;
   }
 `;
 
@@ -368,7 +306,7 @@ const ProposalsComponent = () => {
                 : ""
             }
           >
-            <td className="bold">{item.id}</td>
+            <td className="fw-semi-bold">{item.id}</td>
             <td className={isVisible("Created Date")}>
               <Widget
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
@@ -389,7 +327,7 @@ const ProposalsComponent = () => {
                 />
               </td>
             )}
-            <td className={isVisible("Type") + " text-center bold"}>
+            <td className={isVisible("Type") + " text-center fw-semi-bold"}>
               <Widget
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.Type`}
                 props={{
@@ -409,7 +347,7 @@ const ProposalsComponent = () => {
             </td>
             {lockupContract && (
               <td className={"text-left"}>
-                <div className="text-muted fw-semi-bold">
+                <div className="text-secondary fw-semi-bold">
                   {" "}
                   {isLockup ? "Lockup" : "Sputnik DAO"}
                 </div>
@@ -438,7 +376,7 @@ const ProposalsComponent = () => {
                 }}
               />
             </td>
-            <td className={"bold text-center " + isVisible("Creator")}>
+            <td className={"fw-semi-bold text-center " + isVisible("Creator")}>
               <Widget
                 src="${REPL_MOB}/widget/Profile.OverlayTrigger"
                 props={{
@@ -579,7 +517,7 @@ return (
         ) : (
           <table className="table">
             <thead>
-              <tr className="text-grey">
+              <tr className="text-secondary">
                 <td>#</td>
                 <td className={isVisible("Created Date")}>Created Date</td>
                 {!isPendingRequests && <td className="text-center"> Status</td>}

@@ -342,11 +342,7 @@ function onSubmitClick() {
 const Container = styled.div`
   font-size: 14px;
 
-  .text-grey {
-    color: #b9b9b9 !important;
-  }
-
-  .text-grey a {
+  .text-secondary a {
     color: inherit !important;
   }
 
@@ -358,11 +354,6 @@ const Container = styled.div`
 
   .p-2 {
     padding: 0px !important;
-  }
-
-  .theme-btn {
-    background: var(--theme-color) !important;
-    color: white;
   }
 
   .primary-text-color a {
@@ -381,10 +372,6 @@ const Container = styled.div`
     background-color: #ecf8fb;
     color: #1d62a8;
     cursor: pointer;
-  }
-
-  .text-dark-grey {
-    color: rgba(85, 85, 85, 1) !important;
   }
 
   .bg-validator-info {
@@ -588,7 +575,7 @@ return (
               }}
             />
             {validatorAccount && (
-              <div className="d-flex align-items-center text-sm gap-1 text-muted">
+              <div className="d-flex align-items-center text-sm gap-1 text-secondary">
                 <div>Available to unstake:</div>
                 <div>
                   {formatNearAmount(

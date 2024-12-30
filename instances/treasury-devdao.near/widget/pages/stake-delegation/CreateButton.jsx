@@ -90,11 +90,9 @@ const CreateBtn = () => {
     }
   
     .select-header {
-      color:white;
       display: flex;
       justify-content: space-between;
       cursor: pointer;
-      background-color: var(--theme-color);
       border-radius: 5px;
     }
   
@@ -108,8 +106,9 @@ const CreateBtn = () => {
       top: 100%;
       left: 0;
       width: 100%;
-      border: 1px solid #ccc;
-      background-color: #fff;
+      border: 1px solid var(--border-color);
+      background-color: var(--card-bg-page-color) !important;
+      color: var(--text-color) !important;
       padding: 0.5rem;
       z-index: 99;
       font-size: 13px;
@@ -138,10 +137,11 @@ const CreateBtn = () => {
     }
   
     .option {
+      color: var(--text-color) !important;
       margin-block: 5px;
       padding: 10px;
       cursor: pointer;
-      border-bottom: 1px solid #f0f0f0;
+      border-bottom: 1px solid var(--border-color);
       transition: background-color 0.3s ease;
       border-radius: 0.375rem !important;
     }
@@ -183,9 +183,13 @@ const CreateBtn = () => {
         tabIndex="0"
         onBlur={() => setCreateBtnOpen(false)}
       >
-        <div className={"select-header d-flex gap-1 align-items-center h-100"}>
+        <div
+          className={
+            "primary-button select-header d-flex gap-1 align-items-center h-100"
+          }
+        >
           <div
-            className="d-flex gap-2 align-items-center h6 mb-0"
+            className="d-flex gap-2 align-items-center text-lg mb-0 fw-semi-bold"
             style={{ padding: "0.8rem" }}
             onClick={toggleDropdown}
           >

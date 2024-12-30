@@ -110,7 +110,7 @@ const Item = ({ option }) => {
   return (
     <div className="w-100 text-wrap">
       {option.title}
-      <div className="text-muted text-sm">
+      <div className="text-secondary text-sm">
         {getPermissionsText(option.title)}
       </div>
     </div>

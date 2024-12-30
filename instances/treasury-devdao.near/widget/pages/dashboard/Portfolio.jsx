@@ -109,7 +109,7 @@ const BalanceDisplay = ({
                 placement="top"
                 overlay={<Tooltip id="tooltip">{tooltipInfo}</Tooltip>}
               >
-                <i className="bi bi-info-circle text-grey"></i>
+                <i className="bi bi-info-circle text-secondary"></i>
               </OverlayTrigger>
             )}
           </div>
@@ -119,7 +119,7 @@ const BalanceDisplay = ({
                 <img src={icon} height={15} width={15} />
                 {formatToReadableDecimals(balance)}
               </div>
-              <div className="text-sm text-grey">
+              <div className="text-sm text-secondary">
                 {formatCurrency(
                   formatToReadableDecimals(getPrice(balance, price))
                 )}
@@ -134,7 +134,7 @@ const BalanceDisplay = ({
                   <i
                     className={
                       (isExpanded ? "bi bi-chevron-up" : "bi bi-chevron-down") +
-                      " text-grey h6 mb-0"
+                      " text-secondary h6 mb-0"
                     }
                   ></i>
                 </div>
@@ -170,7 +170,7 @@ const PortfolioCard = ({
             <img src={icon} height={30} width={30} />
             <div>
               <div className="h6 mb-0">{symbol}</div>
-              <div className="text-sm text-grey">
+              <div className="text-sm text-secondary">
                 ${Big(price ?? "0").toFixed(2)}
               </div>
             </div>
@@ -178,7 +178,7 @@ const PortfolioCard = ({
           <div className="d-flex gap-3 align-items-center justify-content-end">
             <div className="d-flex flex-column align-items-end">
               <div className="h6 mb-0">{formatToReadableDecimals(balance)}</div>
-              <div className="text-sm text-grey">
+              <div className="text-sm text-secondary">
                 {formatCurrency(
                   formatToReadableDecimals(getPrice(balance, price))
                 )}
@@ -193,7 +193,7 @@ const PortfolioCard = ({
                   <i
                     className={
                       (isExpanded ? "bi bi-chevron-up" : "bi bi-chevron-down") +
-                      " text-grey h6 mb-0"
+                      " text-secondary h6 mb-0"
                     }
                   ></i>
                 </div>
@@ -239,7 +239,7 @@ const NearPortfolio = () => {
             expandedContent={
               <div
                 className="d-flex flex-column"
-                style={{ backgroundColor: "rgba(244, 244, 244, 1)" }}
+                style={{ backgroundColor: "var(--bg-system-color)" }}
               >
                 <BalanceDisplay
                   icon={nearTokenIcon}
@@ -297,7 +297,7 @@ return (
   <div
     className="card flex-1 overflow-hidden"
     style={{
-      borderBottom: isLoading ? "1px solid rgb(226, 230, 236)" : "none",
+      borderBottom: isLoading ? "1px solid var(--border-color)" : "none",
     }}
   >
     {heading}

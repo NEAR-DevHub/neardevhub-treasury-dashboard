@@ -64,7 +64,7 @@ const HoverCard = () => {
           />
           <div className="d-flex flex-column justify-content-center">
             <div className="h6 mb-0">Fractal</div>
-            <div className="text-sm text-muted">{verificationStatus}</div>
+            <div className="text-sm text-secondary">{verificationStatus}</div>
           </div>
         </div>
       </div>

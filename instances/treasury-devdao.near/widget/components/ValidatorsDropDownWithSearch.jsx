@@ -93,16 +93,8 @@ const Container = styled.div`
     white-space: normal;
   }
 
-  .text-muted {
-    color: rgba(142, 142, 147, 1) !important;
-  }
-
   .text-orange {
     color: rgba(255, 149, 0, 1) !important;
-  }
-
-  .text-dark-grey {
-    color: rgba(85, 85, 85, 1) !important;
   }
 
   .disabled {
@@ -169,7 +161,7 @@ return (
       >
         <div
           className={`selected-option w-100 text-wrap ${
-            selectedOption.pool_id === defaultLabel ? "text-muted" : ""
+            selectedOption.pool_id === defaultLabel ? "text-secondary" : ""
           }`}
         >
           {selectedOption.pool_id ?? defaultLabel}
@@ -211,7 +203,7 @@ return (
                   }}
                 >
                   <div className="d-flex align-items-center gap-2 text-sm">
-                    <span className="text-muted">{fee}% Fee </span>
+                    <span className="text-secondary">{fee}% Fee </span>
                     <span className="text-green">Active</span>
                   </div>
                   <div className="h6 mb-0"> {pool_id} </div>

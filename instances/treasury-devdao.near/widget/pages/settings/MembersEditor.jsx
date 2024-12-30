@@ -156,11 +156,8 @@ function cleanInputs() {
 
 const Container = styled.div`
   font-size: 14px;
-  .text-grey {
-    color: #b9b9b9 !important;
-  }
 
-  .text-grey a {
+  .text-secondary a {
     color: inherit !important;
   }
 

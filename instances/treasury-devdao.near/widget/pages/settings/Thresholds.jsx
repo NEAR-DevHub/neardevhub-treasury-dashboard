@@ -147,11 +147,6 @@ const Container = styled.div`
     font-size: 13px;
   }
 
-  .theme-btn {
-    background: var(--theme-color) !important;
-    color: white;
-  }
-
   .warning {
     background-color: rgba(255, 158, 0, 0.1);
     color: rgba(177, 113, 8, 1);
@@ -160,10 +155,6 @@ const Container = styled.div`
 
   .text-sm {
     font-size: 12px !important;
-  }
-
-  .text-muted {
-    color: rgba(153, 153, 153, 1);
   }
 
   .text-red {
@@ -443,7 +434,7 @@ return (
               />
               <div>
                 {isPercentageSelected && (
-                  <div className="text-muted text-sm">
+                  <div className="text-secondary text-sm">
                     This is equivalent to
                     <span className="fw-bolder">
                       {requiredVotes} votes

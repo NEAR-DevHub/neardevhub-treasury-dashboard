@@ -49,10 +49,6 @@ const Wrapper = styled.div`
     min-width: 280px;
   }
 
-  .text-grey {
-    color: rgba(153, 153, 153, 1);
-  }
-
   .text-theme {
     color: var(--theme-color) !important;
   }
@@ -232,7 +228,7 @@ return (
     <div className="d-flex gap-3 flex-wrap">
       <div className="d-flex flex-column gap-3 flex-container">
         <div className="card card-body" style={{ maxHeight: "100px" }}>
-          <div className="h6 text-grey">Total Balance</div>
+          <div className="h6 text-secondary">Total Balance</div>
           {typeof getNearBalances !== "function" || nearPrice === null ? (
             <Loading />
           ) : (
@@ -257,7 +253,7 @@ return (
               <div className="d-flex flex-column gap-1 px-3 pt-3 pb-2">
                 <div className="h5 mb-0">Sputnik DAO</div>
                 <div>
-                  <span className="text-sm text-grey">Wallet: </span>
+                  <span className="text-sm text-secondary">Wallet: </span>
                   <span className="text-theme  text-sm fw-bold">
                     {treasuryDaoID}
                   </span>
@@ -284,7 +280,7 @@ return (
                 <div className="d-flex flex-column gap-1 px-3 pt-3 pb-2">
                   <div className="h5 mb-0">Lockup</div>
                   <div>
-                    <span className="text-sm text-grey">Wallet: </span>
+                    <span className="text-sm text-secondary">Wallet: </span>
                     <span className="text-theme  text-sm fw-bold">
                       {lockupContract}
                     </span>

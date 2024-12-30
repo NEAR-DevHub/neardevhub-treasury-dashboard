@@ -129,14 +129,6 @@ const Container = styled.div`
       color: white;
     }
   }
-
-  .fw-semi-bold {
-    font-weight: 500;
-  }
-
-  .text-dark-grey {
-    color: rgba(85, 85, 85, 1) !important;
-  }
 `;
 
 useEffect(() => {

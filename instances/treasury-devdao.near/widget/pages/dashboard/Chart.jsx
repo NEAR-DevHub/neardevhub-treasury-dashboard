@@ -348,7 +348,7 @@ return (
     <div>
       <div className="d-flex justify-content-between flex-row align-items-start">
         <div className="d-flex flex-column gap-2">
-          <h6 className="text-grey mb-0">{title}</h6>
+          <h6 className="text-secondary mb-0">{title}</h6>
           {balanceDate ? (
             <div className="d-flex align-items-center gap-3">
               <h3 className="fw-bold mb-0">

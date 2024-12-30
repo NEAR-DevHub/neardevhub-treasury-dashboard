@@ -1,3 +1,6 @@
+const config = Near.view("${REPL_TREASURY}", "get_config");
+const metadata = JSON.parse(atob(config.metadata ?? ""));
+
 return {
   appName: "Treasury",
   navbarLinks: [
@@ -22,7 +25,9 @@ return {
   showProposalSelection: false,
   showKYC: false,
   showReferenceProposal: false,
-  logo: (
+  logo: metadata?.flagLogo ? (
+    metadata?.flagLogo
+  ) : (
     <svg
       width="48"
       height="48"

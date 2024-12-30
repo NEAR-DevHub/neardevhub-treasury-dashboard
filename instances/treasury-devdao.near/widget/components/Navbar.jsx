@@ -67,14 +67,14 @@ const LinksContainer = styled.div`
   }
 
   a {
-    color: inherit !important;
+    color: var(--text-secondary-color) !important;
 
     &:hover {
-      color: #1b1b18 !important;
+      color: var(--text-color) !important;
     }
 
     &.active {
-      color: #1b1b18 !important;
+      color: var(--text-color) !important;
     }
   }
 `;
@@ -131,7 +131,17 @@ return (
   <Navbar className="position-relative d-flex justify-content-between gap-2">
     <div className="d-flex flex-column gap-2">
       <div className="d-flex gap-2 align-items-center">
-        {logo && logo}
+        {/* logo can be svg or src */}
+        {logo && typeof logo === "string" ? (
+          <img
+            src={logo}
+            width={50}
+            height={50}
+            className="rounded-3 object-fit-cover"
+          />
+        ) : (
+          logo
+        )}
         <div className="h3 mb-0">{getTitle(page ?? "dashboard")}</div>
         {isTesting && <div>(Testing)</div>}
       </div>

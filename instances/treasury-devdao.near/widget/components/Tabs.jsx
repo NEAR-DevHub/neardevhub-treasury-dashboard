@@ -18,7 +18,7 @@ const [currentTabProps, setCurrentTabProps] = useState(null);
 
 const Container = styled.div`
   .border-bottom {
-    border-bottom: 1px solid rgba(226, 230, 236, 1);
+    border-bottom: 1px solid var(--border-color) !important;
   }
 `;
 
@@ -26,16 +26,16 @@ const NavUnderline = styled.ul`
   cursor: pointer;
   font-size: 16px;
   .nav-link {
-    color: rgba(147, 149, 151, 1) !important;
+    color: var(--text-secondary-color) !important;
     padding-bottom: 19px;
   }
   .active {
     font-weight: bolder;
-    color: #1b1b18 !important;
+    color: var(--text-color) !important;
     border-bottom: 3px solid var(--theme-color);
   }
   .nav-link:hover {
-    color: #1b1b18 !important;
+    color: var(--text-color) !important;
     font-weight: bolder;
   }
 `;

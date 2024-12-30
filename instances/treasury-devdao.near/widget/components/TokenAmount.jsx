@@ -32,6 +32,6 @@ return (
       />
     </div>
     {/* TODO later */}
-    {/* <div className="text-muted">~1000 USD</div> */}
+    {/* <div className="text-secondary">~1000 USD</div> */}
   </div>
 );

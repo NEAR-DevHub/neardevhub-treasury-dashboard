@@ -106,13 +106,13 @@ const TextInput = ({
     ) : null,
 
     format === "markdown" ? (
-      <i class="bi bi-markdown text-muted" title="Markdown" />
+      <i class="bi bi-markdown text-secondary" title="Markdown" />
     ) : null,
 
     format === "comma-separated" ? (
       <span
         className={`d-inline-flex align-items-center ${
-          isValid() ? "text-muted" : "text-danger"
+          isValid() ? "text-secondary" : "text-danger"
         }`}
         style={{ fontSize: 12 }}
       >
@@ -122,7 +122,9 @@ const TextInput = ({
 
     (inputProps.max ?? null) !== null ? (
       <span
-        className={`d-inline-flex ${isValid() ? "text-muted" : "text-danger"}`}
+        className={`d-inline-flex ${
+          isValid() ? "text-secondary" : "text-danger"
+        }`}
         style={{ fontSize: 12 }}
       >{`${state.data?.length ?? 0} / ${inputProps.max}`}</span>
     ) : null,

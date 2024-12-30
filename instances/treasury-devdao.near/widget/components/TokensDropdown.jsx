@@ -182,7 +182,7 @@ const Container = styled.div`
 
 const Item = ({ option }) => {
   if (!option) {
-    return <div className="text-muted">Select</div>;
+    return <div className="text-secondary">Select</div>;
   }
   return (
     <div className="d-flex gap-3 align-items-center w-100">
@@ -190,12 +190,12 @@ const Item = ({ option }) => {
       <div className="d-flex flex-column gap-1 w-100 text-wrap">
         <div className="h6 mb-0"> {option.title}</div>
         {option.value === "NEAR" && (
-          <div className="d-flex flex-column gap-1 w-100 text-wrap text-sm text-muted">
+          <div className="d-flex flex-column gap-1 w-100 text-wrap text-sm text-secondary">
             <div>Tokens locked for storage: {nearBalances.storageParsed}</div>
             {nearStakedTokens && <div>Tokens staked: {nearStakedTokens}</div>}
           </div>
         )}
-        <div className="text-sm text-muted w-100 text-wrap">
+        <div className="text-sm text-secondary w-100 text-wrap">
           Tokens available:{" "}
           {option.value === "NEAR"
             ? getNearAvailableBalance(option.tokenBalance)
