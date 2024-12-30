@@ -1,4 +1,4 @@
-const { getNearBalances } = VM.require(
+const { getNearBalances, TooltipText } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
 
@@ -223,9 +223,7 @@ const NearPortfolio = () => {
             icon={nearTokenIcon}
             label={"Available Balance"}
             balance={nearBalances.availableParsed}
-            tooltipInfo={
-              "This is your spendable NEAR balance, and can be used or transferred immediately."
-            }
+            tooltipInfo={TooltipText?.available}
             price={nearPrice}
           />
 
@@ -247,27 +245,21 @@ const NearPortfolio = () => {
                   icon={nearTokenIcon}
                   label={"Staked"}
                   balance={nearStakedTokens}
-                  tooltipInfo={
-                    "NEAR tokens currently staked with validators. These tokens are accumulating rewards. To access these tokens, you must first unstake and then withdraw them."
-                  }
+                  tooltipInfo={TooltipText?.staked}
                   price={nearPrice}
                 />
                 <BalanceDisplay
                   icon={nearTokenIcon}
                   label={"Pending Release"}
                   balance={nearUnStakedTokens}
-                  tooltipInfo={
-                    "These tokens have been unstaked, but are not yet ready to withdraw. Tokens are ready to withdraw 52 to 65 hours after unstaking."
-                  }
+                  tooltipInfo={TooltipText?.pendingRelease}
                   price={nearPrice}
                 />
                 <BalanceDisplay
                   icon={nearTokenIcon}
                   label={"Available for withdrawal"}
                   balance={nearWithdrawTokens}
-                  tooltipInfo={
-                    "These tokens have been unstaked, and are ready to be withdrawn."
-                  }
+                  tooltipInfo={TooltipText?.availableForWithdraw}
                   price={nearPrice}
                 />
               </div>
@@ -278,9 +270,7 @@ const NearPortfolio = () => {
               icon={nearTokenIcon}
               label={"Locked"}
               balance={nearBalances.lockedParsed}
-              tooltipInfo={
-                "This is your locked NEAR balance. Until it vests, staking is the only way to use it."
-              }
+              tooltipInfo={TooltipText?.locked}
               price={nearPrice}
             />
           )}
@@ -288,9 +278,7 @@ const NearPortfolio = () => {
             icon={nearTokenIcon}
             label={"Reserved for storage"}
             balance={nearBalances.storageParsed}
-            tooltipInfo={
-              "This is the minimum NEAR balance your account must maintain to remain active. This balance represents the storage space your account is using on the NEAR blockchain (with a small buffer), and will go up or down as you use more or less space."
-            }
+            tooltipInfo={TooltipText?.reservedForStorage}
             price={nearPrice}
           />
         </div>

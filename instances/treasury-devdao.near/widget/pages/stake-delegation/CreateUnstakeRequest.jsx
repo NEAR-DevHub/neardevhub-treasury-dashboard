@@ -1,6 +1,5 @@
-const { getNearBalances, LOCKUP_MIN_BALANCE_FOR_STORAGE } = VM.require(
-  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
-);
+const { getNearBalances, LOCKUP_MIN_BALANCE_FOR_STORAGE, TooltipText } =
+  VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
 
 const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
@@ -505,31 +504,23 @@ return (
         <BalanceDisplay
           label={"Ready to stake"}
           balance={getBalances().available}
-          tooltipInfo={
-            "This is your spendable NEAR balance, and can be used or transferred immediately."
-          }
+          tooltipInfo={TooltipText?.readyToStake}
         />
         <BalanceDisplay
           label={"Staked"}
           balance={getBalances().staked}
-          tooltipInfo={
-            "NEAR tokens currently staked with validators. These tokens are accumulating rewards. To access these tokens, you must first unstake and then withdraw them."
-          }
+          tooltipInfo={TooltipText?.staked}
         />
         <BalanceDisplay
           label={"Pending release"}
           balance={getBalances().unstaked}
-          tooltipInfo={
-            "These tokens have been unstaked, but are not yet ready to withdraw. Tokens are ready to withdraw 52 to 65 hours after unstaking."
-          }
+          tooltipInfo={TooltipText?.pendingRelease}
         />
         <BalanceDisplay
           noBorder={true}
           label={"Available for withdrawal"}
           balance={getBalances().withdrawl}
-          tooltipInfo={
-            "These tokens have been unstaked, and are ready to be withdrawn."
-          }
+          tooltipInfo={TooltipText?.availableForWithdraw}
         />
       </div>
       {showWarning ? (
