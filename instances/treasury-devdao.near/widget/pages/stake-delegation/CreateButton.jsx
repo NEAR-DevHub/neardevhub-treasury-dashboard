@@ -1,3 +1,11 @@
+const { StakeIcon, UnstakeIcon, WithdrawIcon } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Icons"
+) || {
+  StakeIcon: () => <></>,
+  UnstakeIcon: () => <></>,
+  WithdrawIcon: () => <></>,
+};
+
 const { hasPermission } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 ) || {
@@ -48,7 +56,7 @@ const CreateBtn = () => {
   const btnOptions = [
     {
       label: "Stake",
-      icon: "${REPL_STAKE_ICON}",
+      icon: <StakeIcon />,
       value: createBtnOption.STAKE,
       onClick: () => {
         setShowUnStakeRequest(false);
@@ -58,7 +66,7 @@ const CreateBtn = () => {
     },
     {
       label: "Unstake",
-      icon: "${REPL_UNSTAKE_ICON}",
+      icon: <UnstakeIcon />,
       value: createBtnOption.UNSTAKE,
       onClick: () => {
         setShowStakeRequest(false);
@@ -68,7 +76,7 @@ const CreateBtn = () => {
     },
     {
       label: "Withdraw",
-      icon: "${REPL_WITHDRAW_ICON}",
+      icon: <WithdrawIcon />,
       value: createBtnOption.WITHDRAW,
       onClick: () => {
         setShowWithdrawRequest(true);
@@ -107,7 +115,7 @@ const CreateBtn = () => {
       left: 0;
       width: 100%;
       border: 1px solid var(--border-color);
-      background-color: var(--card-bg-page-color) !important;
+      background-color: var(--bg-card-color) !important;
       color: var(--text-color) !important;
       padding: 0.5rem;
       z-index: 99;
@@ -143,11 +151,10 @@ const CreateBtn = () => {
       cursor: pointer;
       border-bottom: 1px solid var(--border-color);
       transition: background-color 0.3s ease;
-      border-radius: 0.375rem !important;
     }
   
     .option:hover {
-      background-color: #f0f0f0; /* Custom hover effect color */
+      background-color: var(--bs-dropdown-link-hover-bg);
     }
   
     .option:last-child {
@@ -211,8 +218,8 @@ const CreateBtn = () => {
         >
           {btnOptions.map((option) => (
             <div key={option.value} className="option" onClick={option.onClick}>
-              <div className="d-flex gap-2 align-items-center text-black">
-                <img src={option.icon} height={20} />
+              <div className="d-flex gap-2 align-items-center">
+                {option.icon}
                 <div className="fw-bold">{option.label}</div>
               </div>
             </div>

@@ -10,9 +10,14 @@ const pikespeakKey = isBosGateway()
 if (!pikespeakKey) {
   return (
     <Widget
-      src="${REPL_MOB}/widget/Profile.OverlayTrigger"
+      src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
       props={{
-        accountId: validatorId,
+        popup: (
+          <Widget
+            src="${REPL_MOB}/widget/Profile.Popover"
+            props={{ accountId: validatorId }}
+          />
+        ),
         children: (
           <div className="text-truncate" style={{ maxWidth: "300px" }}>
             {validatorId}

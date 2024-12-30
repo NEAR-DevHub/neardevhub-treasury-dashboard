@@ -77,12 +77,6 @@ const Container = styled.div`
     z-index: 9999;
   }
 
-  .dropdown-item.active,
-  .dropdown-item:active {
-    background-color: #f0f0f0 !important;
-    color: black;
-  }
-
   .custom-select {
     position: relative;
   }

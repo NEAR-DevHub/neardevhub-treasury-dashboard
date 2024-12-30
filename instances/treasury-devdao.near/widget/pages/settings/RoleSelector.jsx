@@ -60,12 +60,6 @@ const Container = styled.div`
     width: 100%;
   }
 
-  .dropdown-item.active,
-  .dropdown-item:active {
-    background-color: #f0f0f0 !important;
-    color: black;
-  }
-
   .disabled {
     background-color: #f8f8f8 !important;
     cursor: not-allowed !important;
@@ -125,9 +119,9 @@ return (
           <div
             style={{
               width: "max-content",
-              border: "1px solid #e2e6ec",
+              border: "1px solid var(--border-color)",
             }}
-            className="d-flex gap-2 align-items-center rounded-pill px-2 py-1 mb-0 text-black"
+            className="d-flex gap-2 align-items-center rounded-pill px-2 py-1 mb-0"
           >
             {option.title}
             {!disabled && (
@@ -155,7 +149,7 @@ return (
       >
         <div
           className={
-            "dropdown-toggle bg-white border rounded-2 btn drop-btn w-100 " +
+            "dropdown-toggle bg-dropdown border rounded-2 btn drop-btn w-100 " +
             (disabled ? "disabled" : "")
           }
           onClick={!disabled && toggleDropdown}

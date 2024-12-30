@@ -94,7 +94,7 @@ const Container = styled.div`
   }
 
   .text-warning {
-    color: rgba(177, 113, 8, 1) !important;
+    color: var(--other-warning) !important;
   }
 
   .markdown-href p {
@@ -352,9 +352,14 @@ const ProposalsComponent = () => {
                   {isLockup ? "Lockup" : "Sputnik DAO"}
                 </div>
                 <Widget
-                  src="${REPL_MOB}/widget/Profile.OverlayTrigger"
+                  src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
                   props={{
-                    accountId: treasuryWallet,
+                    popup: (
+                      <Widget
+                        src="${REPL_MOB}/widget/Profile.Popover"
+                        props={{ accountId: treasuryWallet }}
+                      />
+                    ),
                     children: (
                       <div
                         className="text-truncate"
@@ -378,9 +383,14 @@ const ProposalsComponent = () => {
             </td>
             <td className={"fw-semi-bold text-center " + isVisible("Creator")}>
               <Widget
-                src="${REPL_MOB}/widget/Profile.OverlayTrigger"
+                src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
                 props={{
-                  accountId: item.proposer,
+                  popup: (
+                    <Widget
+                      src="${REPL_MOB}/widget/Profile.Popover"
+                      props={{ accountId: item.proposer }}
+                    />
+                  ),
                   children: (
                     <div
                       className="text-truncate"

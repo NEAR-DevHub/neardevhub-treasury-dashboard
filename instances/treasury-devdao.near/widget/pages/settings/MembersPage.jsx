@@ -29,60 +29,57 @@ const policyApproverGroup = getPolicyApproverGroup(treasuryDaoID);
 const roles = getDaoRoles(treasuryDaoID);
 
 const Container = styled.div`
-    font-size: 13px;
-    min-height: 75vh;
-  
-    td {
-      padding: 0.7rem;
-      color: inherit;
-      vertical-align: middle;
-    }
-  
-    table {
-      overflow-x: auto;
-    }
-  
-    .flex-1 {
-      flex: 1;
-    }
-  
-    .nav-link {
-      font-size: 22px;
-      font-weight: bolder;
-      color: #1B1B18 !important;
-    }
-  
-    .text-delete {
-      color: #ff3b30;
-    }
-  
-    .custom-tooltip {
-      position: relative;
-      cursor: pointer;
-    }
-  
-    .custom-tooltip .tooltiptext {
-      display: none;
-      width: 300px;
-      background-color: white;
-      color: black
-      text-align: center;
-      border-radius: 5px;
-      padding: 5px;
-      position: absolute;
-      z-index: 10000;
-      top:110%;
-      right:80%;
-      opacity: 0;
-      box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3);
-      transition: opacity 0.3s;
-    }
-  
-    .custom-tooltip:hover .tooltiptext {
-      display: block;
-      opacity: 1;
-    }
-  `;
+  font-size: 13px;
+  min-height: 75vh;
+
+  td {
+    padding: 0.7rem;
+    color: inherit;
+    vertical-align: middle;
+  }
+
+  table {
+    overflow-x: auto;
+  }
+
+  .flex-1 {
+    flex: 1;
+  }
+
+  .nav-link {
+    font-size: 22px;
+    font-weight: bolder;
+    color: var(--text-color) !important;
+  }
+
+  .custom-tooltip {
+    position: relative;
+    cursor: pointer;
+  }
+
+  .custom-tooltip .tooltiptext {
+    display: none;
+    width: 300px;
+    background-color: var(--bg-card-color);
+    color: var(--text-color) !important;
+    border: 1px solid var(--border-color) !important;
+    text-align: center;
+    border-radius: 5px;
+    padding: 5px;
+    position: absolute;
+    z-index: 10000;
+    top: 110%;
+    right: 80%;
+    opacity: 0;
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3);
+    transition: opacity 0.3s;
+  }
+
+  .custom-tooltip:hover .tooltiptext {
+    display: block;
+    opacity: 1;
+  }
+`;
 
 const [rowsPerPage, setRowsPerPage] = useState(10);
 const [currentPage, setPage] = useState(0);
@@ -162,7 +159,7 @@ function getImage(acc) {
 }
 
 const Tag = styled.div`
-  border: 1px solid #e2e6ec;
+  border: 1px solid var(--border-color);
 `;
 
 const Members = () => {
@@ -191,9 +188,14 @@ const Members = () => {
             </td>
             <td>
               <Widget
-                src="${REPL_MOB}/widget/Profile.OverlayTrigger"
+                src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
                 props={{
-                  accountId: account,
+                  popup: (
+                    <Widget
+                      src="${REPL_MOB}/widget/Profile.Popover"
+                      props={{ accountId: account }}
+                    />
+                  ),
                   children: (
                     <div
                       className="text-truncate"

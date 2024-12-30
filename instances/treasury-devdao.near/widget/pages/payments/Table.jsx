@@ -279,7 +279,7 @@ const ProposalsComponent = () => {
                       },
                     })}
                   >
-                    <div className="d-flex gap-2 align-items-center text-underline fw-semi-bold text-black">
+                    <div className="d-flex gap-2 align-items-center text-underline fw-semi-bold">
                       #{proposalId} <i class="bi bi-box-arrow-up-right"> </i>
                     </div>
                   </Link>
@@ -291,7 +291,7 @@ const ProposalsComponent = () => {
 
             <td className={isVisible("Title")}>
               <Widget
-                src="${REPL_MOB}/widget/N.Common.OverlayTrigger"
+                src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
                 props={{
                   popup: <TooltipContent title={title} summary={summary} />,
                   children: (
@@ -307,7 +307,7 @@ const ProposalsComponent = () => {
             </td>
             <td className={isVisible("Summary")}>
               <Widget
-                src="${REPL_MOB}/widget/N.Common.OverlayTrigger"
+                src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
                 props={{
                   popup: <TooltipContent title={title} summary={summary} />,
                   children: (
@@ -347,9 +347,14 @@ const ProposalsComponent = () => {
             </td>
             <td className={"fw-semi-bold text-center " + isVisible("Creator")}>
               <Widget
-                src="${REPL_MOB}/widget/Profile.OverlayTrigger"
+                src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
                 props={{
-                  accountId: item.proposer,
+                  popup: (
+                    <Widget
+                      src="${REPL_MOB}/widget/Profile.Popover"
+                      props={{ accountId: item.proposer }}
+                    />
+                  ),
                   children: (
                     <div
                       className="text-truncate"
@@ -364,7 +369,7 @@ const ProposalsComponent = () => {
             <td className={"text-sm text-left " + isVisible("Notes")}>
               {notes ? (
                 <Widget
-                  src="${REPL_MOB}/widget/N.Common.OverlayTrigger"
+                  src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
                   props={{
                     popup: <TooltipContent summary={notes} />,
                     children: (

@@ -53,19 +53,16 @@ const [showLoader, setLoading] = useState(false);
 
 const Container = styled.div`
   font-size: 14px;
-  .border-right {
-    border-right: 1px solid rgba(226, 230, 236, 1);
-  }
 
   .card-title {
     font-size: 18px;
     font-weight: 600;
     padding-block: 5px;
-    border-bottom: 1px solid rgba(226, 230, 236, 1);
+    border-bottom: 1px solid var(--border-color);
   }
 
   .selected-role {
-    background-color: rgba(244, 244, 244, 1);
+    background-color: var(--grey-04);
   }
 
   .cursor-pointer {
@@ -73,7 +70,7 @@ const Container = styled.div`
   }
 
   .tag {
-    background-color: rgba(244, 244, 244, 1);
+    background-color: var(--grey-04);
     font-size: 12px;
     padding-block: 5px;
   }
@@ -97,7 +94,7 @@ const Container = styled.div`
 
   .warning {
     background-color: rgba(255, 158, 0, 0.1);
-    color: rgba(177, 113, 8, 1);
+    color: var(--other-warning);
     font-weight: 500;
   }
 
@@ -114,7 +111,7 @@ const Container = styled.div`
   }
 
   .toast-header {
-    background-color: #2c3e50 !important;
+    background-color: var(--other-primary) !important;
     color: white !important;
   }
 `;

@@ -22,7 +22,7 @@ const Container = styled.div`
   }
 
   .green {
-    color: #04a46e;
+    color: var(--other-green);
     text-align: left;
   }
 
@@ -49,7 +49,10 @@ return (
       <div className="w-100 h-100 flex-item">
         <div
           className="h-100"
-          style={{ width: `${approvePercentage}%`, backgroundColor: "#04a46e" }}
+          style={{
+            width: `${approvePercentage}%`,
+            backgroundColor: "var(--other-green)",
+          }}
         ></div>
       </div>
 

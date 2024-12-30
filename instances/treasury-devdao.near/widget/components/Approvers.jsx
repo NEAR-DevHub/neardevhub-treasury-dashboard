@@ -95,7 +95,7 @@ return (
   <Container className="d-flex justify-content-center">
     {showHover ? (
       <Widget
-        src="${REPL_MOB}/widget/N.Common.OverlayTrigger"
+        src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
         props={{
           popup: (
             <div className="p-1">

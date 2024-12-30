@@ -18,12 +18,6 @@ const StyledDropdown = styled.div`
     padding-inline: 10px;
   }
 
-  .dropdown-item.active,
-  .dropdown-item:active {
-    background-color: #f0f0f0 !important;
-    color: black;
-  }
-
   .dropdown-toggle:after {
     position: absolute;
     top: 45%;
@@ -54,7 +48,7 @@ return (
     <div className="dropdown w-100" data-testid="dropdown">
       <button
         disabled={disabled}
-        className="btn drop-btn text-truncate dropdown-toggle bg-white border rounded-2"
+        className="btn drop-btn text-truncate dropdown-toggle bg-dropdown border rounded-2"
         type="button"
         data-bs-toggle="dropdown"
         aria-expanded="false"

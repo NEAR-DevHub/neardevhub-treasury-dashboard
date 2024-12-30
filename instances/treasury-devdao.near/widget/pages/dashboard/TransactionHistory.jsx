@@ -1,3 +1,7 @@
+const { NearToken } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Icons"
+) || { NearToken: () => <></> };
+
 const { readableDate } = VM.require(
   "${REPL_DEVHUB}/widget/core.lib.common"
 ) || { readableDate: () => {} };
@@ -214,11 +218,11 @@ const Container = styled.div`
   }
 
   .txn-link {
-    color: black !important;
+    color: var(--text-color) !important;
     text-decoration: underline;
 
     &:hover {
-      color: black !important;
+      color: inherit !important;
     }
   }
 
@@ -268,7 +272,7 @@ return (
                 {transactionWithBalances.map((txn, groupIndex) => {
                   let balanceDiff = "";
                   let token = "NEAR";
-                  let icon = "${REPL_NEAR_TOKEN_ICON}";
+                  let iconSrc = "";
                   const isDeposit = txn.deposit;
                   const isStaked =
                     isDeposit && txn.receiver.includes("poolv1.near");
@@ -281,7 +285,7 @@ return (
                       "ft_metadata"
                     );
                     token = contractMetadata?.symbol;
-                    icon = contractMetadata?.icon;
+                    iconSrc = contractMetadata?.icon;
 
                     balanceDiff = convertBalanceToReadableFormat(txn.amount);
                   } else {
@@ -308,9 +312,14 @@ return (
                       </td>
                       <td className="fw-semi-bold" style={{ minWidth: 200 }}>
                         <Widget
-                          src="${REPL_MOB}/widget/Profile.OverlayTrigger"
+                          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
                           props={{
-                            accountId: txn.sender,
+                            popup: (
+                              <Widget
+                                src="${REPL_MOB}/widget/Profile.Popover"
+                                props={{ accountId: txn.sender }}
+                              />
+                            ),
                             children: (
                               <div className="text-truncate">
                                 {formatAccount(txn.sender)}
@@ -321,9 +330,14 @@ return (
                       </td>
                       <td className="fw-semi-bold" style={{ minWidth: 200 }}>
                         <Widget
-                          src="${REPL_MOB}/widget/Profile.OverlayTrigger"
+                          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
                           props={{
-                            accountId: txn.sender,
+                            popup: (
+                              <Widget
+                                src="${REPL_MOB}/widget/Profile.Popover"
+                                props={{ accountId: txn.receiver }}
+                              />
+                            ),
                             children: (
                               <div className="text-truncate">
                                 {formatAccount(txn.receiver)}
@@ -367,7 +381,11 @@ return (
                           <div className="fw-bold d-flex gap-1 align-items-center justify-content-end">
                             {isReceived ? "+" : "-"}
                             {formatCurrency(balanceDiff)}{" "}
-                            <img src={icon} height={20} width={20} />
+                            {iconSrc ? (
+                              <img src={iconSrc} height={20} width={20} />
+                            ) : (
+                              <NearToken width={20} height={20} />
+                            )}
                           </div>
                         </div>
                       </td>

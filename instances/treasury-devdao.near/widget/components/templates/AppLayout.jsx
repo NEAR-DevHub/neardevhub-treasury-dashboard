@@ -4,26 +4,56 @@ const gatewayURL = data?.body?.headers?.Origin ?? "";
 const config = Near.view("${REPL_TREASURY}", "get_config");
 const metadata = JSON.parse(atob(config.metadata ?? ""));
 
-const isDarkTheme = false;
+const isDarkTheme = true;
+// false;
 
-// we need fixed positioning for near social and not for org
-const ParentContainer = gatewayURL.includes("near.org")
-  ? styled.div`
-      width: 100%;
-    `
-  : styled.div`
-      position: fixed;
-      inset: 73px 0px 0px;
-      width: 100%;
-      overflow-y: scroll;
-      background: var(--bg-page-color) !important;
-    `;
+const getColors = (isDarkTheme) => `
+  --bg-header-color: ${isDarkTheme ? "#222222" : "#2C3E50"};
+  --bg-page-color: ${isDarkTheme ? "#222222" : "#f4f4f4"};
+  --bg-system-color: ${isDarkTheme ? "#131313" : "#f4f4f4"};
+  --bg-card-color: ${isDarkTheme ? "#222222" : "#FFFFFF"};
+  --text-color: ${isDarkTheme ? "#CACACA" : "#1B1B18"};
+  --text-secondary-color: ${isDarkTheme ? "#878787" : "#999999"};
+  --text-alt-color: ${isDarkTheme ? "#FFFFFF" : "#FFFFFF"};
+  --link-inactive-color: ${isDarkTheme ? "" : "white"};
+  --link-active-color: ${isDarkTheme ? "" : "white"};
+  --border-color: ${isDarkTheme ? "#3B3B3B" : "rgba(226, 230, 236, 1)"};
+  --grey-01: ${isDarkTheme ? "#F4F4F4" : "#1B1B18"};
+  --grey-02: ${isDarkTheme ? "#B3B3B3" : "#555555"};
+  --grey-03: ${isDarkTheme ? "#555555" : "#B3B3B3"};
+  --grey-04: ${isDarkTheme ? "#323232" : "#F4F4F4"};
+  --grey-05: ${isDarkTheme ? "#1B1B18" : "#F7F7F7"};
+  --icon-color:  ${isDarkTheme ? "#CACACA" : "#060606"};
+  --other-primary:#2775C9;
+  --other-warning:#B17108;
+  --other-green:#3CB179;
+  --other-red:#D95C4A;
+
+  // bootstrap theme color
+  --bs-body-bg: var(--bg-page-color);
+  --bs-border-color:  var(--border-color);
+`;
+
+const ParentContainer = styled.div`
+  ${({ isDarkTheme }) => getColors(isDarkTheme)}
+  width: 100%;
+  background: var(--bg-page-color) !important;
+  ${({ gatewayURL }) =>
+    gatewayURL.includes("near.org")
+      ? `
+        /* Styles specific to near.org */
+        position: static;
+      `
+      : `
+        /* Styles specific to other URLs */
+        position: fixed;
+        inset: 73px 0px 0px;
+        overflow-y: scroll;
+      `}
+`;
 
 const Theme = styled.div`
-  display: flex;
-  flex-direction: column;
   padding-top: calc(-1 * var(--body-top-padding));
-  background: var(--bg-page-color) !important;
 
   // remove up/down arrow in input of type = number
   /* For Chrome, Safari, and Edge */
@@ -38,36 +68,25 @@ const Theme = styled.div`
     -moz-appearance: textfield;
   }
 
-  --bg-header-color: ${isDarkTheme ? "#222222" : "#2C3E50"};
-  --bg-page-color: ${isDarkTheme ? "#222222" : "#f4f4f4"};
-  --bg-system-color: ${isDarkTheme ? "#131313" : "#f4f4f4"};
-  --card-bg-page-color: ${isDarkTheme ? "#222222" : "#FFFFFF"};
-  --text-color: ${isDarkTheme ? "#CACACA" : "#1B1B18"};
-  --text-secondary-color: ${isDarkTheme ? "#878787" : "#999999"};
-  --text-alt-color: ${isDarkTheme ? "#FFFFFF" : "#FFFFFF"};
-  --link-inactive-color: ${isDarkTheme ? "" : "white"};
-  --link-active-color: ${isDarkTheme ? "" : "white"};
-  --border-color: ${isDarkTheme ? "#3B3B3B" : "rgba(226, 230, 236, 1)"};
-  --grey-01: ${isDarkTheme ? "#F4F4F4" : "#1B1B18"};
-  --grey-02: ${isDarkTheme ? "#B3B3B3" : "#555555"};
-  --grey-03: ${isDarkTheme ? "#555555" : "#B3B3B3"};
-  --grey-04: ${isDarkTheme ? "#323232" : "#F4F4F4"};
-  --grey-05: ${isDarkTheme ? "#1B1B18" : "#F7F7F7"};
-
   .card {
     border-color: var(--border-color) !important;
     border-width: 1px !important;
     border-radius: 14px;
-    background-color: var(--card-bg-page-color) !important;
+    background-color: var(--bg-card-color) !important;
   }
 
   .dropdown-menu {
-    background-color: var(--card-bg-page-color) !important;
+    background-color: var(--bg-card-color) !important;
     color: var(--text-color) !important;
   }
 
+  .dropdown-item.active,
+  .dropdown-item:active {
+    background-color: var(--bg-card-color) !important;
+  }
+
   .offcanvas {
-    background-color: var(--card-bg-page-color) !important;
+    background-color: var(--bg-card-color) !important;
     color: var(--text-color) !important;
   }
 
@@ -119,10 +138,6 @@ const Theme = styled.div`
     color: var(--text-secondary-color) !important;
   }
 
-  .text-dark-grey {
-    color: rgba(85, 85, 85, 1) !important;
-  }
-
   .max-w-100 {
     max-width: 100%;
   }
@@ -163,8 +178,12 @@ const Theme = styled.div`
 
   .theme-btn {
     background: var(--theme-color) !important;
-    color: white;
+    color: white !important;
     border: none;
+  }
+
+  .theme-btn.btn:hover {
+    color: white !important;
   }
 
   .toast {
@@ -172,7 +191,7 @@ const Theme = styled.div`
   }
 
   .toast-header {
-    background-color: #2c3e50 !important;
+    background-color: var(--other-primary) !important;
     color: white !important;
   }
 
@@ -182,6 +201,17 @@ const Theme = styled.div`
 
   .primary-text-color {
     color: var(--theme-color);
+    a {
+      color: var(--theme-color) !important;
+    }
+
+    i {
+      color: var(--theme-color) !important;
+    }
+  }
+
+  .btn-outline.btn:hover {
+    color: inherit !important;
   }
 
   .btn-outline-plain {
@@ -189,7 +219,7 @@ const Theme = styled.div`
     padding-inline: 10px !important;
     border-radius: 0.375rem !important;
     border: 1.5px solid var(--border-color) !important;
-    background-color: var(--bg-page-color) !important;
+    background-color: var(--bg-card-color) !important;
     color: var(--text-color) !important;
 
     &:hover {
@@ -223,13 +253,72 @@ const Theme = styled.div`
     color: var(--text-color) !important;
   }
 
+  .bg-dropdown {
+    background-color: var(--bg-card-color) !important;
+    color: var(--text-color) !important;
+  }
+
+  .bg-custom-overlay {
+    background-color: var(--bg-page-color) !important;
+    color: var(--text-color) !important;
+  }
+
   .fill-accent {
     fill: var(--theme-color);
   }
-`;
 
-const Container = styled.div`
-  width: 100%;
+  .use-max-bg {
+    background-color: #ecf8fb;
+    color: #1d62a8;
+    cursor: pointer;
+  }
+
+  .bg-validator-info {
+    background: rgba(0, 16, 61, 0.06);
+    color: #1b1b18;
+    padding-inline: 0.8rem;
+    padding-block: 0.5rem;
+    font-weight: 500;
+    font-size: 13px;
+  }
+
+  .bg-validator-warning {
+    background: rgba(255, 158, 0, 0.1);
+    color: var(--other-warning);
+    padding-inline: 0.8rem;
+    padding-block: 0.5rem;
+    font-weight: 500;
+    font-size: 13px;
+  }
+
+  .bg-withdraw-warning {
+    background: rgba(255, 158, 0, 0.1);
+    color: var(--other-warning);
+    padding-inline: 0.8rem;
+    padding-block: 0.5rem;
+    font-weight: 500;
+    font-size: 13px;
+  }
+
+  .text-sm {
+    font-size: 13px;
+  }
+
+  .text-secondary a {
+    color: inherit !important;
+  }
+
+  .text-delete {
+    color: var(--other-red) !important;
+
+    i {
+      color: var(--other-red) !important;
+    }
+  }
+
+  .border-right {
+    border-right: 1px solid var(--border-color);
+  }
 `;
 
 const AppHeader = ({ page, instance }) => (
@@ -244,17 +333,14 @@ const AppHeader = ({ page, instance }) => (
 
 function AppLayout({ page, instance, children }) {
   return (
-    <ParentContainer>
-      <Theme>
-        <Container>
-          <AppHeader page={page} instance={instance} />
-          <div
-            className="px-3 py-2"
-            data-bs-theme={isDarkTheme ? "dark" : "light"}
-          >
-            {children}
-          </div>
-        </Container>
+    <ParentContainer
+      isDarkTheme={isDarkTheme}
+      gatewayURL={gatewayURL}
+      data-bs-theme={isDarkTheme ? "dark" : "light"}
+    >
+      <Theme className="h-100 w-100">
+        <AppHeader page={page} instance={instance} />
+        <div className="px-3 py-2 w-100 h-100">{children}</div>
       </Theme>
     </ParentContainer>
   );

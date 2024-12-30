@@ -1,6 +1,9 @@
 const { getNearBalances, TooltipText } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
+const { NearToken } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Icons"
+) || { NearToken: () => <></> };
 
 const { Skeleton } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.skeleton"
@@ -44,7 +47,6 @@ const Loading = () => {
 };
 
 const archiveNodeUrl = "https://archival-rpc.mainnet.near.org";
-const nearTokenIcon = "${REPL_NEAR_TOKEN_ICON}";
 
 function formatToReadableDecimals(number) {
   return Big(number ?? "0").toFixed(2);
@@ -89,7 +91,6 @@ const BalanceDisplay = ({
   label,
   balance,
   price,
-  icon,
   tooltipInfo,
   showExpand,
   isExpanded,
@@ -116,7 +117,7 @@ const BalanceDisplay = ({
           <div className="d-flex gap-3 align-items-center justify-content-end">
             <div className="d-flex flex-column align-items-end">
               <div className="h6 mb-0 d-flex align-items-center gap-1">
-                <img src={icon} height={15} width={15} />
+                <NearToken height={20} width={20} />
                 {formatToReadableDecimals(balance)}
               </div>
               <div className="text-sm text-secondary">
@@ -149,7 +150,8 @@ const BalanceDisplay = ({
 };
 
 const PortfolioCard = ({
-  icon,
+  Icon,
+  src,
   balance,
   showExpand,
   price,
@@ -167,7 +169,7 @@ const PortfolioCard = ({
           }`}
         >
           <div className="d-flex align-items-center gap-2">
-            <img src={icon} height={30} width={30} />
+            {Icon ? <Icon /> : <img src={src} height={30} width={30} />}
             <div>
               <div className="h6 mb-0">{symbol}</div>
               <div className="text-sm text-secondary">
@@ -211,7 +213,7 @@ const NearPortfolio = () => {
   return (
     <PortfolioCard
       symbol={"NEAR"}
-      icon={nearTokenIcon}
+      Icon={NearToken}
       balance={nearBalances.totalParsed}
       showExpand={true}
       price={nearPrice}
@@ -220,7 +222,6 @@ const NearPortfolio = () => {
       expandedContent={
         <div className="d-flex flex-column">
           <BalanceDisplay
-            icon={nearTokenIcon}
             label={"Available Balance"}
             balance={nearBalances.availableParsed}
             tooltipInfo={TooltipText?.available}
@@ -228,7 +229,6 @@ const NearPortfolio = () => {
           />
 
           <BalanceDisplay
-            icon={nearTokenIcon}
             label={"Staking"}
             balance={nearStakedTotalTokens}
             hideTooltip={true}
@@ -242,21 +242,18 @@ const NearPortfolio = () => {
                 style={{ backgroundColor: "var(--bg-system-color)" }}
               >
                 <BalanceDisplay
-                  icon={nearTokenIcon}
                   label={"Staked"}
                   balance={nearStakedTokens}
                   tooltipInfo={TooltipText?.staked}
                   price={nearPrice}
                 />
                 <BalanceDisplay
-                  icon={nearTokenIcon}
                   label={"Pending Release"}
                   balance={nearUnStakedTokens}
                   tooltipInfo={TooltipText?.pendingRelease}
                   price={nearPrice}
                 />
                 <BalanceDisplay
-                  icon={nearTokenIcon}
                   label={"Available for withdrawal"}
                   balance={nearWithdrawTokens}
                   tooltipInfo={TooltipText?.availableForWithdraw}
@@ -267,7 +264,6 @@ const NearPortfolio = () => {
           />
           {isLockupContract && (
             <BalanceDisplay
-              icon={nearTokenIcon}
               label={"Locked"}
               balance={nearBalances.lockedParsed}
               tooltipInfo={TooltipText?.locked}
@@ -275,7 +271,6 @@ const NearPortfolio = () => {
             />
           )}
           <BalanceDisplay
-            icon={nearTokenIcon}
             label={"Reserved for storage"}
             balance={nearBalances.storageParsed}
             tooltipInfo={TooltipText?.reservedForStorage}
@@ -301,7 +296,7 @@ return (
     }}
   >
     {heading}
-    <div className="my-2 mx-2">
+    <div className="my-2">
       {isLoading ? (
         <div className="d-flex justify-content-center align-items-center w-100 h-100">
           <Loading />
@@ -325,7 +320,7 @@ return (
                   return (
                     <PortfolioCard
                       symbol={symbol}
-                      icon={icon}
+                      src={icon}
                       balance={tokensNumber}
                       showExpand={false}
                       price={tokenPrice}

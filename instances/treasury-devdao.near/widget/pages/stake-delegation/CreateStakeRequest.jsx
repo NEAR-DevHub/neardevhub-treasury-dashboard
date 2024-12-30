@@ -1,5 +1,8 @@
 const { getNearBalances, LOCKUP_MIN_BALANCE_FOR_STORAGE, TooltipText } =
   VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
+const { NearToken } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Icons"
+) || { NearToken: () => <></> };
 
 const { encodeToMarkdown } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
@@ -152,7 +155,7 @@ const BalanceDisplay = ({ label, balance, tooltipInfo, noBorder }) => {
               placement="top"
               overlay={<Tooltip id="tooltip">{tooltipInfo}</Tooltip>}
             >
-              <i className="bi bi-info-circle text-dark-grey"></i>
+              <i className="bi bi-info-circle text-secondary"></i>
             </OverlayTrigger>
           </div>
           <div className="h6 mb-0 d-flex align-items-center gap-1">
@@ -335,45 +338,10 @@ function onSubmitClick() {
 const Container = styled.div`
   font-size: 14px;
 
-  .text-secondary a {
-    color: inherit !important;
-  }
-
   label {
     font-weight: 600;
     margin-bottom: 3px;
     font-size: 15px;
-  }
-
-  .p-2 {
-    padding: 0px !important;
-  }
-
-  .primary-text-color a {
-    color: var(--theme-color) !important;
-  }
-
-  .btn:hover {
-    color: black !important;
-  }
-
-  .text-sm {
-    font-size: 13px;
-  }
-
-  .use-max-bg {
-    background-color: #ecf8fb;
-    color: #1d62a8;
-    cursor: pointer;
-  }
-
-  .bg-validator-info {
-    background: rgba(0, 16, 61, 0.06);
-    color: #1b1b18;
-    padding-inline: 0.8rem;
-    padding-block: 0.5rem;
-    font-weight: 500;
-    font-size: 13px;
   }
 `;
 
@@ -562,12 +530,7 @@ return (
             inputProps: {
               type: "number",
               min: "0",
-              prefix: (
-                <img
-                  src="${REPL_NEAR_TOKEN_ICON}"
-                  style={{ height: 20, width: 20 }}
-                />
-              ),
+              prefix: <NearToken />,
             },
           }}
         />

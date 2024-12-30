@@ -1,3 +1,12 @@
+const { StakeIcon, UnstakeIcon, WithdrawIcon, Whitelist } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Icons"
+) || {
+  StakeIcon: () => <></>,
+  UnstakeIcon: () => <></>,
+  WithdrawIcon: () => <></>,
+  Whitelist: () => <></>,
+};
+
 const type = props.type;
 
 const classes =
@@ -8,7 +17,7 @@ const Badge = () => {
     case "unstake": {
       return (
         <div className={classes}>
-          <img src={"${REPL_UNSTAKE_ICON}"} height={20} />
+          <UnstakeIcon />
           Unstake
         </div>
       );
@@ -17,7 +26,7 @@ const Badge = () => {
     case "withdraw_all_from_staking_pool": {
       return (
         <div className={classes}>
-          <img src={"${REPL_WITHDRAW_ICON}"} height={20} />
+          <WithdrawIcon />
           Withdraw
         </div>
       );
@@ -25,7 +34,7 @@ const Badge = () => {
     case "select_staking_pool": {
       return (
         <div className={classes}>
-          <i class="bi bi-check2 h6 mb-0 fw-bold"></i>
+          <Whitelist />
           Whitelist
         </div>
       );
@@ -33,7 +42,7 @@ const Badge = () => {
     default: {
       return (
         <div className={classes}>
-          <img src={"${REPL_STAKE_ICON}"} height={20} />
+          <StakeIcon />
           Stake
         </div>
       );

@@ -85,12 +85,6 @@ const Container = styled.div`
     width: 100%;
   }
 
-  .dropdown-item.active,
-  .dropdown-item:active {
-    background-color: #f0f0f0 !important;
-    color: black;
-  }
-
   .custom-select {
     position: relative;
   }
@@ -102,10 +96,6 @@ const Container = styled.div`
 
   .selected {
     background-color: #f0f0f0;
-  }
-
-  input {
-    background-color: #f8f9fa;
   }
 
   .cursor-pointer {
@@ -129,7 +119,7 @@ return (
         }, 0);
       }}
     >
-      <div className="dropdown-toggle bg-white border rounded-2 btn drop-btn">
+      <div className="dropdown-toggle bg-dropdown border rounded-2 btn drop-btn">
         <div
           className={`selected-option w-100 text-wrap ${
             selectedOption.label === defaultLabel ? "text-secondary" : ""
@@ -182,7 +172,7 @@ return (
           )}
           {showManualRequest && (
             <div
-              className="btn cursor-pointer btn-link d-flex gap-2 align-items-center text-decoration-none mt-1"
+              className="btn primary-text-color cursor-pointer btn-link d-flex gap-2 align-items-center text-decoration-none mt-1"
               onClick={() => {
                 setSelectedOption(null);
                 onClickOfManualRequest();

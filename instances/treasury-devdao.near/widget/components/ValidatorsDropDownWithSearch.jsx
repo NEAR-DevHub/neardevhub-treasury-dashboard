@@ -61,12 +61,6 @@ const Container = styled.div`
     width: 100%;
   }
 
-  .dropdown-item.active,
-  .dropdown-item:active {
-    background-color: #f0f0f0 !important;
-    color: black;
-  }
-
   .custom-select {
     position: relative;
   }
@@ -78,10 +72,6 @@ const Container = styled.div`
 
   .selected {
     background-color: #f0f0f0;
-  }
-
-  input {
-    background-color: #f8f9fa;
   }
 
   .cursor-pointer {
@@ -124,7 +114,7 @@ const BalanceDisplay = ({ balance, label }) => {
 
   return (
     <div className="d-flex align-items-center gap-1 text-sm">
-      <div className="text-dark-grey">{label}</div>
+      <div className="text-secondary">{label}</div>
       <div className="text-orange">{formatNearAmount(balance)} NEAR</div>
     </div>
   );
@@ -153,7 +143,7 @@ return (
     >
       <div
         className={
-          "dropdown-toggle bg-white border rounded-2 btn drop-btn " +
+          "dropdown-toggle bg-dropdown border rounded-2 btn drop-btn " +
           (disabled && " disabled")
         }
         data-testid="validator-dropdown"

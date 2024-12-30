@@ -166,7 +166,7 @@ const TextInput = ({
         <div className="w-100">
           <div className="input-group">
             {inputProps.prefix && (
-              <span className="input-group-text bg-white border-end-0">
+              <span className="input-group-text bg-dropdown border-end-0">
                 {inputProps.prefix}
               </span>
             )}

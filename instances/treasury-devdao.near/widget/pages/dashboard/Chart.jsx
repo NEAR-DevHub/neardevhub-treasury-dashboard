@@ -18,10 +18,10 @@ const [selectedPeriod, setSelectedPeriod] = useState({
 const [selectedToken, setSelectedToken] = useState("near");
 const [isLoading, setIsLoading] = useState(true);
 const [balanceDate, setBalanceDate] = useState({ balance: 0, date: "" });
-const nearTokenIcon = "${REPL_NEAR_TOKEN_ICON}";
+
 const nearTokenInfo = {
   contract: "near",
-  ft_meta: { symbol: "NEAR", icon: nearTokenIcon },
+  ft_meta: { symbol: "NEAR" },
 };
 
 const tokens = Array.isArray(ftTokens)
@@ -266,7 +266,7 @@ const Period = styled.div`
 const RadioButton = styled.div`
   .radio-btn {
     border-radius: 50%;
-    border: 1px solid black;
+    border: 1px solid var(--icon-color);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -274,7 +274,7 @@ const RadioButton = styled.div`
     width: 14px;
 
     .selected {
-      background: black;
+      background: var(--icon-color);
       border-radius: 50%;
       height: 6px;
       width: 6px;

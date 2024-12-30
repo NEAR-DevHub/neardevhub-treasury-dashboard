@@ -103,12 +103,12 @@ useEffect(() => {
 
 const Container = styled.div`
   .reject-btn {
-    background-color: #2c3e50;
+    background-color: var(--other-primary);
     border-radius: 5px;
     color: white;
 
     &:hover {
-      background-color: #2c3e50;
+      background-color: var(--other-primary);
       color: white;
     }
   }
@@ -120,12 +120,12 @@ const Container = styled.div`
   }
 
   .approve-btn {
-    background-color: #04a46e;
+    background-color: var(--other-green);
     border-radius: 5px;
     color: white;
 
     &:hover {
-      background-color: #04a46e;
+      background-color: var(--other-green);
       color: white;
     }
   }
@@ -202,7 +202,7 @@ return (
                 </Tooltip>
               }
             >
-              <i className="bi bi-info-circle text-dark-grey"></i>
+              <i className="bi bi-info-circle text-secondary"></i>
             </OverlayTrigger>
           </div>
         ) : (
