@@ -226,10 +226,6 @@ const Container = styled.div`
     }
   }
 
-  .cursor-pointer {
-    cursor: pointer;
-  }
-
   table {
     overflow-x: auto;
   }

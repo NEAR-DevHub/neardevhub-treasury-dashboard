@@ -350,6 +350,10 @@ function AppLayout({ page, instance, children, treasuryDaoID }) {
     .border-right {
       border-right: 1px solid var(--border-color);
     }
+
+    .cursor-pointer {
+      cursor: pointer;
+    }
   `;
 
   return (

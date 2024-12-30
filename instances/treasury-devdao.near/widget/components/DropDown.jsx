@@ -24,10 +24,6 @@ const StyledDropdown = styled.div`
     right: 5%;
   }
 
-  .cursor-pointer {
-    cursor: pointer;
-  }
-
   .text-sm {
     font-size: 12px !important;
   }

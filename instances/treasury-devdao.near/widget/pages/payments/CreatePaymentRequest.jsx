@@ -208,9 +208,6 @@ const Container = styled.div`
     color: black !important;
   }
 
-  .text-sm {
-    font-size: 13px;
-  }
   .warning {
     background-color: rgba(255, 158, 0, 0.1);
     color: #ff9e00;

@@ -113,20 +113,10 @@ useEffect(() => {
   }
 }, [currentPage, rowsPerPage, allMembers]);
 
-const ToastContainer = styled.div`
-  a {
-    color: black !important;
-    text-decoration: underline !important;
-    &:hover {
-      color: black !important;
-    }
-  }
-`;
-
 const SubmitToast = () => {
   return (
     showToastStatus && (
-      <ToastContainer className="toast-container position-fixed bottom-0 end-0 p-3">
+      <div className="toast-container position-fixed bottom-0 end-0 p-3">
         <div className={`toast ${showToastStatus ? "show" : ""}`}>
           <div className="toast-header px-2">
             <strong className="me-auto">Just Now</strong>
@@ -149,7 +139,7 @@ const SubmitToast = () => {
             </a>
           </div>
         </div>
-      </ToastContainer>
+      </div>
     )
   );
 };

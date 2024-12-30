@@ -27,57 +27,17 @@ const [image, setImage] = useState(defaultImage);
 const [color, setColor] = useState(defaultColor);
 const [selectedTheme, setSelectedTheme] = useState(ThemeOptions[0]);
 const [error, setError] = useState(null);
+const [isTxnCreated, setTxnCreated] = useState(false);
+const [showToastStatus, setToastStatus] = useState(false);
+const [lastProposalId, setLastProposalId] = useState(null);
 
 const Container = styled.div`
   max-width: 50rem;
   font-size: 14px;
 
-  .card-title {
-    font-size: 18px;
-    font-weight: 600;
-    padding-block: 5px;
-    border-bottom: 1px solid var(--border-color);
-  }
-
-  .selected-role {
-    background-color: var(--grey-04);
-  }
-
-  .cursor-pointer {
-    cursor: pointer;
-  }
-
-  .tag {
-    background-color: var(--grey-04);
-    font-size: 12px;
-    padding-block: 5px;
-  }
-
   label {
-    color: rgba(153, 153, 153, 1);
+    color: var(--text-secondary);
     font-size: 12px;
-  }
-
-  .fw-bold {
-    font-weight: 500 !important;
-  }
-
-  .p-0 {
-    padding: 0 !important;
-  }
-
-  .text-md {
-    font-size: 13px;
-  }
-
-  .warning {
-    background-color: rgba(255, 158, 0, 0.1);
-    color: var(--other-warning);
-    font-weight: 500;
-  }
-
-  .text-sm {
-    font-size: 12px !important;
   }
 
   .error-message {
@@ -222,11 +182,69 @@ const code = `
 </html>
 `;
 
+const SubmitToast = () => {
+  return (
+    showToastStatus && (
+      <div className="toast-container position-fixed bottom-0 end-0 p-3">
+        <div className={`toast ${showToastStatus ? "show" : ""}`}>
+          <div className="toast-header px-2">
+            <strong className="me-auto">Just Now</strong>
+            <i
+              className="bi bi-x-lg h6"
+              onClick={() => setToastStatus(null)}
+            ></i>
+          </div>
+          <div className="toast-body">
+            <div>Theme change request submitted.</div>
+            <a
+              href={href({
+                widgetSrc: `${instance}/widget/app`,
+                params: {
+                  page: "settings",
+                },
+              })}
+            >
+              View it
+            </a>
+          </div>
+        </div>
+      </div>
+    )
+  );
+};
+
+function getLastProposalId() {
+  return Near.asyncView(treasuryDaoID, "get_last_proposal_id").then(
+    (result) => result
+  );
+}
+
+useEffect(() => {
+  getLastProposalId().then((i) => setLastProposalId(i));
+}, []);
+
+useEffect(() => {
+  if (isTxnCreated) {
+    const checkForNewProposal = () => {
+      getLastProposalId().then((id) => {
+        if (lastProposalId !== id) {
+          setToastStatus(true);
+          setTxnCreated(false);
+        } else {
+          setTimeout(() => checkForNewProposal(), 1000);
+        }
+      });
+    };
+    checkForNewProposal();
+  }
+}, [isTxnCreated]);
+
 function toBase64(json) {
   return Buffer.from(JSON.stringify(json)).toString("base64");
 }
 
 function onSubmitClick() {
+  setTxnCreated(true);
   const deposit = daoPolicy?.proposal_bond || 100000000000000000000000;
 
   const description = {
@@ -276,6 +294,7 @@ useEffect(() => {
 
 return (
   <Container>
+    <SubmitToast />
     <div className="card rounded-3 w-100 h-100 p-3">
       {!metadata ? (
         <div

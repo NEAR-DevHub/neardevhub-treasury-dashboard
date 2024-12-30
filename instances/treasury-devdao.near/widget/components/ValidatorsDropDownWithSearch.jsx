@@ -74,10 +74,6 @@ const Container = styled.div`
     background-color: var(--grey-04);
   }
 
-  .cursor-pointer {
-    cursor: pointer;
-  }
-
   .text-wrap {
     overflow: hidden;
     white-space: normal;

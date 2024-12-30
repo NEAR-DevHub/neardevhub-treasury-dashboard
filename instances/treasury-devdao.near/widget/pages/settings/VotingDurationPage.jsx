@@ -61,68 +61,9 @@ const Container = styled.div`
     border-bottom: 1px solid var(--border-color);
   }
 
-  .selected-role {
-    background-color: var(--grey-04);
-  }
-
-  .cursor-pointer {
-    cursor: pointer;
-  }
-
-  .tag {
-    background-color: var(--grey-04);
-    font-size: 12px;
-    padding-block: 5px;
-  }
-
   label {
-    color: rgba(153, 153, 153, 1);
+    color: var(--text-secondary);
     font-size: 12px;
-  }
-
-  .fw-bold {
-    font-weight: 500 !important;
-  }
-
-  .p-0 {
-    padding: 0 !important;
-  }
-
-  .text-md {
-    font-size: 13px;
-  }
-
-  .warning {
-    background-color: rgba(255, 158, 0, 0.1);
-    color: var(--other-warning);
-    font-weight: 500;
-  }
-
-  .text-sm {
-    font-size: 12px !important;
-  }
-
-  .text-red {
-    color: #d95c4a;
-  }
-
-  .toast {
-    background: white !important;
-  }
-
-  .toast-header {
-    background-color: var(--other-primary) !important;
-    color: white !important;
-  }
-`;
-
-const ToastContainer = styled.div`
-  a {
-    color: black !important;
-    text-decoration: underline !important;
-    &:hover {
-      color: black !important;
-    }
   }
 `;
 
@@ -593,7 +534,7 @@ return (
         </div>
       </div>
     </div>
-    <ToastContainer className="toast-container position-fixed bottom-0 end-0 p-3">
+    <div className="toast-container position-fixed bottom-0 end-0 p-3">
       <div className={`toast ${showToastStatus ? "show" : ""}`}>
         <div className="toast-header px-2">
           <strong className="me-auto">Just Now</strong>
@@ -613,6 +554,6 @@ return (
           </a>
         </div>
       </div>
-    </ToastContainer>
+    </div>
   </Container>
 );

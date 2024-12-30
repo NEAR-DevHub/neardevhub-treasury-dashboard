@@ -80,14 +80,6 @@ const Container = styled.div`
   .custom-select {
     position: relative;
   }
-
-  .cursor-pointer {
-    cursor: pointer;
-  }
-
-  .text-sm {
-    font-size: 13px;
-  }
 `;
 
 const Item = ({ option }) => {

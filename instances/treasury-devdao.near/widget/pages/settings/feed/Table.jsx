@@ -66,16 +66,6 @@ const Container = styled.div`
   }
 `;
 
-const ToastContainer = styled.div`
-  a {
-    color: black !important;
-    text-decoration: underline !important;
-    &:hover {
-      color: black !important;
-    }
-  }
-`;
-
 function checkProposalStatus(proposalId) {
   Near.asyncView(treasuryDaoID, "get_proposal", {
     id: proposalId,
@@ -202,7 +192,7 @@ const VoteSuccessToast = () => {
   return showToastStatus &&
     (typeof voteProposalId === "number" ||
       typeof highlightProposalId === "number") ? (
-    <ToastContainer className="toast-container position-fixed bottom-0 end-0 p-3">
+    <div className="toast-container position-fixed bottom-0 end-0 p-3">
       <div className={`toast ${showToastStatus ? "show" : ""}`}>
         <div className="toast-header px-2">
           <strong className="me-auto">Just Now</strong>
@@ -210,7 +200,7 @@ const VoteSuccessToast = () => {
         </div>
         <ToastStatusContent />
       </div>
-    </ToastContainer>
+    </div>
   ) : null;
 };
 
