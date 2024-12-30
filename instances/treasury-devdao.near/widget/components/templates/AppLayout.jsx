@@ -187,13 +187,31 @@ const Theme = styled.div`
     color: white !important;
   }
 
+  .toast-container {
+    right: 10px !important;
+    bottom: 10px !important;
+  }
   .toast {
-    background: white !important;
+    border-radius: 10px;
+    overflow: hidden;
+    color: var(--text-color) !important;
+    background: var(--bg-card-color) !important;
+    border-color: var(--border-color) !important;
+
+    a {
+      color: inherit !important;
+      &:active {
+        color: inherit !important;
+      }
+      &:hover {
+        color: inherit !important;
+      }
+    }
   }
 
   .toast-header {
-    background-color: var(--other-primary) !important;
-    color: white !important;
+    background-color: var(--bg-system-color) !important;
+    color: var(--text-secondary-color) !important;
   }
 
   .text-md {
