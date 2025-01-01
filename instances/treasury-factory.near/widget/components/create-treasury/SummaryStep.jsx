@@ -82,12 +82,11 @@ const PERMISSIONS = {
   vote: "Vote",
 };
 
-const storageAccountName = Storage.privateGet("accountName");
+const storageAccountName = useMemo(() => Storage.privateGet("accountName"));
 
 useEffect(() => {
   if (storageAccountName) {
     setShowCongratsModal(true);
-    Storage.privateSet("accountName", null);
   }
 }, [storageAccountName]);
 
@@ -362,7 +361,10 @@ return (
               </div>
             </div>
           ),
-          onClose: () => setShowCongratsModal(false),
+          onClose: () => {
+            setShowCongratsModal(false);
+            Storage.privateSet("accountName", null);
+          },
         }}
       />
     )}
