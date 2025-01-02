@@ -275,6 +275,12 @@ function AppLayout({ page, instance, children, treasuryDaoID }) {
       color: var(--text-color) !important;
     }
 
+    .btn:disabled,
+    .btn.disabled,
+    fieldset:disabled {
+      border-color: none !important;
+    }
+
     .table {
       border-color: var(--border-color) !important;
       color: var(--text-color) !important;

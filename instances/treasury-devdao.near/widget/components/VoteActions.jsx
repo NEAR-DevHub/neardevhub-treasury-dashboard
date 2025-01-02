@@ -75,16 +75,6 @@ function getProposalData() {
   );
 }
 
-function getProposalStatus(votes) {
-  const votesArray = Object.values(votes);
-  return {
-    isApproved:
-      votesArray.filter((i) => i === "Approve").length >= requiredVotes,
-    isRejected:
-      votesArray.filter((i) => i === "Reject").length >= requiredVotes,
-  };
-}
-
 useEffect(() => {
   if (isTxnCreated) {
     const checkForVoteOnProposal = () => {
