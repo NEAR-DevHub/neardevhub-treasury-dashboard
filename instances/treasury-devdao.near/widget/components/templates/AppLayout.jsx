@@ -9,7 +9,12 @@ const AppHeader = ({ page, instance }) => (
 );
 
 function AppLayout({ page, instance, children, treasuryDaoID }) {
-  const config = Near.view(treasuryDaoID, "get_config");
+  const config = useCache(
+    () => Near.asyncView(treasuryDaoID, "get_config"),
+    "get_config",
+    { subscribe: false }
+  );
+
   const metadata = JSON.parse(atob(config.metadata ?? ""));
 
   const data = fetch(`https://httpbin.org/headers`);
@@ -17,6 +22,7 @@ function AppLayout({ page, instance, children, treasuryDaoID }) {
   const isDarkTheme = metadata.theme === "dark";
 
   const getColors = (isDarkTheme) => `
+  ${metadata.primaryColor ? `--theme-color: ${metadata.primaryColor};` : ""}
   --bg-header-color: ${isDarkTheme ? "#222222" : "#2C3E50"};
   --bg-page-color: ${isDarkTheme ? "#222222" : "#FFFFFF"};
   --bg-system-color: ${isDarkTheme ? "#131313" : "#f4f4f4"};
@@ -366,7 +372,9 @@ function AppLayout({ page, instance, children, treasuryDaoID }) {
     }
   `;
 
-  return (
+  return !config ? (
+    <></>
+  ) : (
     <ParentContainer data-bs-theme={isDarkTheme ? "dark" : "light"}>
       <Theme className="h-100 w-100">
         <AppHeader page={page} instance={instance} />
