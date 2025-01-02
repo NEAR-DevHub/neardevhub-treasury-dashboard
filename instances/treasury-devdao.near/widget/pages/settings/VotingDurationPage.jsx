@@ -1,6 +1,9 @@
-const { encodeToMarkdown } = VM.require(
+const { encodeToMarkdown, hasPermission, getRoleWiseData } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
-);
+) || {
+  encodeToMarkdown: () => {},
+  hasPermission: () => {},
+};
 
 const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
@@ -18,6 +21,13 @@ const { Modal, ModalContent, ModalHeader, ModalFooter } = VM.require(
 
 const daoPolicy = Near.view(treasuryDaoID, "get_policy", {});
 const lastProposalId = Near.view(treasuryDaoID, "get_last_proposal_id");
+
+const hasCreatePermission = hasPermission(
+  treasuryDaoID,
+  context.accountId,
+  "policy",
+  "AddProposal"
+);
 
 if (!daoPolicy || lastProposalId === null) {
   return (
@@ -294,6 +304,7 @@ return (
             placeholder="Enter voting duration days"
             value={durationDays}
             onChange={(event) => changeDurationDays(event.target.value)}
+            disabled={!hasCreatePermission}
           ></input>
         </div>
 
@@ -449,7 +460,10 @@ return (
               classNames: { root: "theme-btn" },
               label: "Submit Request",
               loading: showLoader,
-              disabled: durationDays === currentDurationDays || showLoader,
+              disabled:
+                durationDays === currentDurationDays ||
+                showLoader ||
+                !hasCreatePermission,
               onClick: submitChangeRequest,
             }}
           />

@@ -1,6 +1,9 @@
-const { encodeToMarkdown } = VM.require(
+const { encodeToMarkdown, hasPermission } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
-);
+) || {
+  encodeToMarkdown: () => {},
+  hasPermission: () => {},
+};
 
 const instance = props.instance;
 if (!instance) {
@@ -8,6 +11,13 @@ if (!instance) {
 }
 
 const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+
+const hasCreatePermission = hasPermission(
+  treasuryDaoID,
+  context.accountId,
+  "config",
+  "AddProposal"
+);
 
 const ThemeOptions = [
   {
@@ -48,6 +58,10 @@ const Container = styled.div`
     i {
       color: inherit !important;
     }
+  }
+
+  .form-control:disabled {
+    background-color: transparent !important;
   }
 `;
 
@@ -133,6 +147,8 @@ const code = `
     const imageUpload = document.getElementById("imageUpload");
     const uploadButton = document.getElementById("uploadButton");
 
+    imageUpload.disabled = ${!hasCreatePermission}
+    uploadButton.disabled = ${!hasCreatePermission}
     // Trigger the file input when the button is clicked
     uploadButton.addEventListener("click", () => {
       imageUpload.click();
@@ -355,11 +371,13 @@ return (
                   appearance: "none",
                   padding: 0,
                 }}
+                disabled={!hasCreatePermission}
               />
               <input
                 value={color}
                 onChange={(e) => setColor(e.target.value)}
                 style={{ border: "none", width: "100%", paddingInline: 0 }}
+                disabled={!hasCreatePermission}
               />
             </div>
           </div>
@@ -371,6 +389,7 @@ return (
                 options: ThemeOptions,
                 selectedValue: selectedTheme ?? ThemeOptions[0],
                 onUpdate: setSelectedTheme,
+                disabled: !hasCreatePermission,
               }}
             />
           </div>
@@ -383,6 +402,7 @@ return (
                 },
                 label: "Cancel",
                 onClick: setDefault,
+                disabled: !hasCreatePermission,
               }}
             />
 
@@ -393,6 +413,7 @@ return (
                 label: "Save changes",
                 onClick: onSubmitClick,
                 loading: isTxnCreated,
+                disabled: !hasCreatePermission,
               }}
             />
           </div>

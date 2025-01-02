@@ -1,22 +1,31 @@
-const { encodeToMarkdown } = VM.require(
+const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
+  href: () => {},
+};
+
+const { encodeToMarkdown, hasPermission, getRoleWiseData } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
-);
+) || {
+  encodeToMarkdown: () => {},
+  hasPermission: () => {},
+};
 
 const { instance } = props;
 if (!instance) {
   return <></>;
 }
 const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
-const { getRoleWiseData, hasPermission } = VM.require(
-  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
-) || { hasPermission: () => {} };
-const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
-  href: () => {},
-};
 
 if (typeof getRoleWiseData !== "function") {
   return <></>;
 }
+
+const hasEditPermission = hasPermission(
+  treasuryDaoID,
+  context.accountId,
+  "ChangeConfig",
+  "AddProposal"
+);
+
 const [selectedGroup, setSelectedGroup] = useState(null);
 const [selectedVoteOption, setSelectedVoteOption] = useState(null);
 const [selectedVoteValue, setSelectedVoteValue] = useState(null);
@@ -33,7 +42,7 @@ const hasCreatePermission = hasPermission(
   treasuryDaoID,
   context.accountId,
   "policy",
-  "vote"
+  "AddProposal"
 );
 
 useEffect(() => {
@@ -437,14 +446,15 @@ return (
                     onClick: () => {
                       resetForm();
                     },
-                    disabled: isTxnCreated,
+                    disabled: isTxnCreated || !hasCreatePermission,
                   }}
                 />
                 <Widget
                   src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
                   props={{
                     classNames: { root: "theme-btn" },
-                    disabled: !selectedVoteValue || valueError,
+                    disabled:
+                      !selectedVoteValue || valueError || !hasCreatePermission,
                     label: "Submit",
                     onClick: () => setConfirmModal(true),
                     loading: isTxnCreated,
