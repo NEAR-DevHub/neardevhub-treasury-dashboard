@@ -79,6 +79,12 @@ const Container = styled.div`
     display: block;
     opacity: 1;
   }
+
+  .card-title {
+    font-size: 20px;
+    font-weight: 600;
+    padding-block: 5px;
+  }
 `;
 
 const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -297,7 +303,7 @@ return (
 
     <div className="card rounded-3 py-3 d-flex flex-column gap-2 flex-1 w-100">
       <div className="d-flex justify-content-between gap-2 align-items-center border-bottom px-2">
-        <div className="nav-link">All Members</div>
+        <div className="card-title px-3 mb-0">All Members</div>
         {hasCreatePermission && (
           <button
             className="primary py-1 px-3 rounded-2 h6 fw-bold d-flex align-items-center gap-2 "

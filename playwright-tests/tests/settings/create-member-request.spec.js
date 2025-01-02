@@ -32,7 +32,9 @@ async function updateLastProposalId(page) {
 
 async function navigateToMembersPage({ page, instanceAccount }) {
   await page.goto(`/${instanceAccount}/widget/app?page=settings`);
+  await page.waitForTimeout(2_000);
   await page.getByText("Members").click();
+  await expect(page.getByText("All Members")).toBeVisible({ timeout: 10_000 });
 }
 
 async function openAddMemberForm({ page }) {
@@ -52,7 +54,22 @@ test.afterEach(async ({ page }, testInfo) => {
   await page.unrouteAll({ behavior: "ignoreErrors" });
 });
 
-test.describe("admin connected", function () {
+test.describe("User is not logged in", function () {
+  test.beforeEach(async ({ page, instanceAccount }) => {
+    await navigateToMembersPage({ page, instanceAccount });
+  });
+
+  test("should not be able to add member or see actions", async ({ page }) => {
+    await expect(
+      page.getByRole("button", {
+        name: "New Member",
+      })
+    ).toBeHidden();
+    await expect(page.getByText("Actions", { exact: true })).toBeHidden();
+  });
+});
+
+test.describe("User is logged in", function () {
   test.use({
     storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
   });

@@ -10,7 +10,32 @@ test.afterEach(async ({ page }, testInfo) => {
   await page.unrouteAll({ behavior: "ignoreErrors" });
 });
 
-test.describe("admin connected", function () {
+async function navigateToVotingDurationPage({ page, instanceAccount }) {
+  await page.goto(`/${instanceAccount}/widget/app?page=settings`);
+  await page.waitForTimeout(2_000);
+  await page.getByText("Voting Duration").click();
+  await expect(page.getByText("Set the number of days a vote is active.")).toBeVisible({
+    timeout: 10_000,
+  });
+}
+
+test.describe("User is not logged in", function () {
+  test("should not be able to change voting duration", async ({
+    page,
+    instanceAccount,
+  }) => {
+    await navigateToVotingDurationPage({ page, instanceAccount });
+    await expect(
+      page.getByPlaceholder("Enter voting duration days")
+    ).toBeDisabled();
+
+    await expect(
+      page.getByRole("button", { name: "Submit Request" })
+    ).toBeDisabled();
+  });
+});
+
+test.describe("User is logged in", function () {
   test.use({
     storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
   });
@@ -21,10 +46,7 @@ test.describe("admin connected", function () {
     daoAccount,
   }) => {
     test.setTimeout(150_000);
-    await page.goto(`/${instanceAccount}/widget/app?page=settings`);
-    await page.getByText("Voting Duration").first().click();
-
-    await page.waitForTimeout(500);
+    await navigateToVotingDurationPage({ page, instanceAccount });
     const currentDurationDays = await page
       .getByPlaceholder("Enter voting duration days")
       .inputValue();
@@ -73,10 +95,7 @@ test.describe("admin connected", function () {
     daoAccount,
   }) => {
     test.setTimeout(150_000);
-    await page.goto(`/${instanceAccount}/widget/app?page=settings`);
-    await page.getByText("Voting Duration").first().click();
-
-    await page.waitForTimeout(500);
+    await navigateToVotingDurationPage({ page, instanceAccount });
     const currentDurationDays = await page
       .getByPlaceholder("Enter voting duration days")
       .inputValue();
@@ -111,10 +130,8 @@ test.describe("admin connected", function () {
       receiver_id: "webassemblymusic.near",
       daoName,
     });
-    await page.goto(`/${instanceAccount}/widget/app?page=settings`);
-    await page.getByText("Voting Duration").first().click();
+    await navigateToVotingDurationPage({ page, instanceAccount });
 
-    await page.waitForTimeout(500);
     const currentDurationDays = await page
       .getByPlaceholder("Enter voting duration days")
       .inputValue();
@@ -222,8 +239,7 @@ test.describe("admin connected", function () {
         }
       },
     });
-    await page.goto(`/${instanceAccount}/widget/app?page=settings`);
-    await page.getByText("Voting Duration").first().click();
+    await navigateToVotingDurationPage({ page, instanceAccount });
 
     await page.waitForTimeout(500);
     const currentDurationDays = await page

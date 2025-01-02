@@ -63,6 +63,13 @@ const Container = styled.div`
   .form-control:disabled {
     background-color: transparent !important;
   }
+
+  .card-title {
+    font-size: 18px;
+    font-weight: 600;
+    padding-block: 5px;
+    border-bottom: 1px solid var(--border-color);
+  }
 `;
 
 function uploadImageToServer(file) {
@@ -311,7 +318,8 @@ useEffect(() => {
 return (
   <Container>
     <SubmitToast />
-    <div className="card rounded-3 w-100 h-100 p-3">
+    <div className="card rounded-3 w-100 h-100 py-3">
+      <div className="card-title px-3 mb-0">Theme & Logo</div>
       {!metadata ? (
         <div
           className=" d-flex justify-content-center align-items-center w-100 h-100"
@@ -322,7 +330,7 @@ return (
           />
         </div>
       ) : (
-        <div className="d-flex flex-column gap-4">
+        <div className="d-flex flex-column gap-4 p-3">
           <div class="d-flex gap-2 align-items-center flex-wrap flex-md-nowrap">
             <img
               src={image ? image : defaultImage}
@@ -413,7 +421,7 @@ return (
                 label: "Save changes",
                 onClick: onSubmitClick,
                 loading: isTxnCreated,
-                disabled: !hasCreatePermission,
+                disabled: !hasCreatePermission || error,
               }}
             />
           </div>
