@@ -30,6 +30,7 @@ const isPendingRequests = props.isPendingRequests;
 const settingsApproverGroup = props.settingsApproverGroup;
 const [showToastStatus, setToastStatus] = useState(false);
 const [voteProposalId, setVoteProposalId] = useState(null);
+const [showRefreshPageText, setShowRefreshPageText] = useState(false);
 const refreshTableData = props.refreshTableData;
 const deleteGroup = props.deleteGroup;
 
@@ -72,6 +73,16 @@ function checkProposalStatus(proposalId) {
   })
     .then((result) => {
       setToastStatus(result.status);
+      // if status is approved and it's a theme change request, tell user to refresh page to view changes
+      if (
+        result.status === "Approved" &&
+        Object.keys(result.kind ?? {})?.[0] &&
+        Object.keys(result.kind)[0] === "ChangeConfig"
+      ) {
+        setShowRefreshPageText(true);
+      } else {
+        setShowRefreshPageText(false);
+      }
       setVoteProposalId(proposalId);
       refreshTableData();
     })
@@ -151,7 +162,9 @@ const ToastStatusContent = () => {
       content = "Your vote is counted, the request is highlighted.";
       break;
     case "Approved":
-      content = "The request has been successfully executed.";
+      content =
+        "The request has been successfully executed." +
+        (showRefreshPageText ? " Refresh the page to see the updates." : "");
       break;
     case "Rejected":
       content = "The request has been rejected.";
@@ -169,6 +182,7 @@ const ToastStatusContent = () => {
       <br />
       {showToastStatus !== "InProgress" && (
         <a
+          className="text-underline"
           href={href({
             widgetSrc: `${instance}/widget/app`,
             params: {

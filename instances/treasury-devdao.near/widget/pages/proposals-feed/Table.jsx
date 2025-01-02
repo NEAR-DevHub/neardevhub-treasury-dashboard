@@ -59,11 +59,18 @@ const Container = styled.div`
 function checkProposalStatus(proposalId) {
   Near.asyncView(treasuryDaoID, "get_proposal", {
     id: proposalId,
-  }).then((result) => {
-    setToastStatus(result.status);
-    setVoteProposalId(proposalId);
-    refreshTableData();
-  });
+  })
+    .then((result) => {
+      setToastStatus(result.status);
+      setVoteProposalId(proposalId);
+      refreshTableData();
+    })
+    .catch(() => {
+      // deleted request (thus proposal won't exist)
+      setToastStatus("Removed");
+      setVoteProposalId(proposalId);
+      refreshTableData();
+    });
 }
 
 useEffect(() => {
@@ -147,6 +154,7 @@ const ToastStatusContent = () => {
       <br />
       {showToastStatus !== "InProgress" && (
         <a
+          className="text-underline"
           href={href({
             widgetSrc: `${instance}/widget/app`,
             params: {

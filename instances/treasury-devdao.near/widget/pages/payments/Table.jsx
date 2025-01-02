@@ -177,6 +177,7 @@ const ToastStatusContent = () => {
       <br />
       {showToastStatus !== "InProgress" && showToastStatus !== "Removed" && (
         <a
+          className="text-underline"
           href={href({
             widgetSrc: `${instance}/widget/app`,
             params: {
