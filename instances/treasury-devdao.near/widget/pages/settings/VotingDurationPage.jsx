@@ -299,110 +299,32 @@ return (
 
         {showAffectedProposalsModal ? (
           <Modal>
-            <ModalBackdrop />
-            <ModalDialog className="card">
-              <ModalHeader>
-                <h5 className="mb-0">
-                  <i class="bi bi-exclamation-triangle text-warning"></i>
-                  Impact of changing voting duration
-                </h5>
-              </ModalHeader>
-              <ModalContent>
-                <p>
-                  You are about to update the voting duration. This will impact
-                  existing requests.
-                </p>
-                <ul>
-                  {otherPendingRequests.length > 0 ? (
-                    <li>
-                      <b>{otherPendingRequests.length} pending requests</b> will
-                      now follow the new voting duration policy.
-                    </li>
-                  ) : (
-                    ""
-                  )}
-                  {proposalsThatWillExpire.length > 0 ? (
-                    <li>
-                      <b>{proposalsThatWillExpire.length} active requests</b>{" "}
-                      under the old voting duration will move to the "Archived"
-                      tab and close for voting. These requests were created
-                      outside the new voting period and are no longer considered
-                      active.
-                    </li>
-                  ) : (
-                    ""
-                  )}
-                  {proposalsThatWillBeActive.length > 0 ? (
-                    <li>
-                      <b>{proposalsThatWillBeActive.length} expired requests</b>{" "}
-                      under the old voting duration will move back to the
-                      "Pending Requests" tab and reopen for voting. These
-                      requests were created within the new voting period and are
-                      no longer considered expired.
-                    </li>
-                  ) : (
-                    ""
-                  )}
-                </ul>
-                {showImpactedRequests ? (
-                  <>
-                    <h4>Summary of changes</h4>
-                    <table className="table table-sm">
-                      <thead>
-                        <tr className="text-secondary">
-                          <th>Id</th>
-                          <th>Description</th>
-                          <th>Submission date</th>
-                          <th>Current expiry</th>
-                          <th>New expiry</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {proposalsThatWillExpire.map((proposal) => (
-                          <tr class="proposal-that-will-expire">
-                            <td>{proposal.id}</td>
-                            <td>{proposal.description}</td>
-                            <td>
-                              {new Date(proposal.submissionTimeMillis)
-                                .toJSON()
-                                .substring(0, "yyyy-mm-dd".length)}
-                            </td>
-                            <td>
-                              {new Date(proposal.currentExpiryTime)
-                                .toJSON()
-                                .substring(0, "yyyy-mm-dd".length)}
-                            </td>
-                            <td>
-                              {new Date(proposal.newExpiryTime)
-                                .toJSON()
-                                .substring(0, "yyyy-mm-dd".length)}
-                            </td>
-                          </tr>
-                        ))}
-                        {proposalsThatWillBeActive.map((proposal) => (
-                          <tr class="proposal-that-will-be-active">
-                            <td>{proposal.id}</td>
-                            <td>{proposal.description}</td>
-                            <td>
-                              {new Date(proposal.submissionTimeMillis)
-                                .toJSON()
-                                .substring(0, "yyyy-mm-dd".length)}
-                            </td>
-                            <td>
-                              {new Date(proposal.currentExpiryTime)
-                                .toJSON()
-                                .substring(0, "yyyy-mm-dd".length)}
-                            </td>
-                            <td>
-                              {new Date(proposal.newExpiryTime)
-                                .toJSON()
-                                .substring(0, "yyyy-mm-dd".length)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </>
+            <ModalHeader>
+              <i class="bi bi-exclamation-triangle text-warning"></i>
+              Impact of changing voting duration
+            </ModalHeader>
+            <ModalContent>
+              <p>
+                You are about to update the voting duration. This will impact
+                existing requests.
+              </p>
+              <ul>
+                {otherPendingRequests.length > 0 ? (
+                  <li>
+                    <b>{otherPendingRequests.length} pending requests</b> will
+                    now follow the new voting duration policy.
+                  </li>
+                ) : (
+                  ""
+                )}
+                {proposalsThatWillExpire.length > 0 ? (
+                  <li>
+                    <b>{proposalsThatWillExpire.length} active requests</b>{" "}
+                    under the old voting duration will move to the "Archived"
+                    tab and close for voting. These requests were created
+                    outside the new voting period and are no longer considered
+                    active.
+                  </li>
                 ) : (
                   ""
                 )}

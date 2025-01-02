@@ -53,6 +53,13 @@ const config = Near.view(treasuryDaoID, "get_config");
 const metadata = JSON.parse(atob(config.metadata ?? ""));
 
 const isDarkTheme = metadata.theme === "dark";
+const bgPageColor = isDarkTheme ? "#222222" : "#FFFFFF";
+const borderColor = isDarkTheme ? "#3B3B3B" : "rgba(226, 230, 236, 1)";
+const iconColor = isDarkTheme ? "#CACACA" : "#060606";
+const textColor = isDarkTheme ? "#CACACA" : "#1B1B18";
+const fillStyle = isDarkTheme
+  ? "rgba(27, 27, 24, 0.1)"
+  : "rgba(255, 255, 255, 0.7)";
 
 const code = `
 <!DOCTYPE html>
@@ -64,7 +71,6 @@ const code = `
       <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
       <style>
           body {
-            --bg-page-color: ${isDarkTheme ? "#222222" : "#FFFFFF"};
             font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif;
             margin: 0;
             padding: 0;
@@ -75,19 +81,14 @@ const code = `
               width: 100%;
               height: 100%;
               display: block;
-              background-color: var(--bg-page-color);
+              background-color:${bgPageColor};
+              color: ${textColor};
           }
       </style>
   </head>
   <body>
       <canvas id="myChart" height="400"></canvas>
       <script>
-    const bgPageColor = ${isDarkTheme ? "'#222222'" : "'#FFFFFF'"};
-    const borderColor = ${
-      isDarkTheme ? "'#3B3B3B'" : "'rgba(226, 230, 236, 1)'"
-    };
-    const iconColor = ${isDarkTheme ? "'#CACACA'" : "'#060606'"};
-    const textColor = ${isDarkTheme ? "'#CACACA'" : "'#1B1B18'"}
     const ctx = document.getElementById("myChart").getContext("2d");
     let account_id;
     let history;
@@ -111,16 +112,12 @@ const code = `
                 ctx.moveTo(hoverX, chartArea.top);
                 ctx.lineTo(hoverX, chartArea.bottom);
                 ctx.lineWidth = 1;
-                ctx.strokeStyle = iconColor;
+                ctx.strokeStyle = '${iconColor}';
                 ctx.setLineDash([5, 3]);
                 ctx.stroke();
                 ctx.restore();
                 
-                ctx.fillStyle = ${
-                  isDarkTheme
-                    ? "rgba(27, 27, 24, 0.7)"
-                    : "rgba(255, 255, 255, 0.7)"
-                }; // Semi-transparent overlay
+                ctx.fillStyle = '${fillStyle}'; // Semi-transparent overlay
                 ctx.fillRect(hoverX, chartArea.top, chartArea.right - hoverX, chartArea.bottom - chartArea.top);
                 ctx.restore();
             }
@@ -150,7 +147,7 @@ const code = `
             },
             ticks: {
               display: true,
-              color: textColor,
+              color: '${textColor}',
             },   
           },
           y: {
@@ -178,8 +175,8 @@ const code = `
             data: [],
             fill: true,
             backgroundColor: gradient,
-            borderColor: borderColor,
-            pointBackgroundColor: bgPageColor,
+            borderColor: '${borderColor}',
+            pointBackgroundColor: '${bgPageColor}',
             pointRadius: 0,
             tension: 0,
             borderWidth: 1.5
@@ -371,7 +368,7 @@ return (
         <div className="d-flex flex-column gap-2">
           <h6 className="text-secondary mb-0">{title}</h6>
           {balanceDate ? (
-            <div className="d-flex align-items-center gap-3">
+            <div className="d-flex align-items-center gap-3 flex-wrap">
               <h3 className="fw-bold mb-0">
                 <span className="balance-value">
                   {formatCurrency(balanceDate.balance)}
@@ -395,7 +392,7 @@ return (
           )}
         </div>
 
-        <div className="d-flex gap-1">
+        <div className="d-flex gap-1 flex-wrap">
           {periodMap.map(({ period, value, interval }, idx) => (
             <Period
               role="button"

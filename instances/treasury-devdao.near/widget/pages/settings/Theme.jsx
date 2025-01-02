@@ -248,7 +248,7 @@ function onSubmitClick() {
   const deposit = daoPolicy?.proposal_bond || 100000000000000000000000;
 
   const description = {
-    title: "Update Config:  Theme & logo",
+    title: "Update Config - Theme & logo",
   };
   Near.call([
     {

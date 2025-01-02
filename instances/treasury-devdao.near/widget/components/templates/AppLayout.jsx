@@ -242,6 +242,10 @@ function AppLayout({ page, instance, children, treasuryDaoID }) {
       color: inherit !important;
     }
 
+    .primary-text-color.btn:hover {
+      color: inherit !important;
+    }
+
     .btn-outline-plain {
       padding-block: 8px !important;
       padding-inline: 10px !important;
