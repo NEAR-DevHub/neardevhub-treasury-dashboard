@@ -29,114 +29,63 @@ const policyApproverGroup = getPolicyApproverGroup(treasuryDaoID);
 const roles = getDaoRoles(treasuryDaoID);
 
 const Container = styled.div`
-    font-size: 13px;
-    min-height: 75vh;
-  
-    .text-grey {
-      color: #b9b9b9 !important;
-    }
-  
-    .text-size-2 {
-      font-size: 15px;
-    }
-  
-    .text-dark-grey {
-      color: #687076;
-    }
-  
-    .text-grey-100 {
-      background-color: #f5f5f5;
-    }
-  
-    td {
-      padding: 0.7rem;
-      color: inherit;
-      vertical-align: middle;
-    }
-  
-    .max-w-100 {
-      max-width: 100%;
-    }
-  
-    table {
-      overflow-x: auto;
-    }
-  
-    .bold {
-      font-weight: 500;
-    }
-  
-    .text-right {
-      text-align: end;
-    }
-  
-    .text-left {
-      text-align: left;
-    }
-    .text-underline {
-      text-decoration: underline !important;
-    }
-  
-    .flex-1 {
-      flex: 1;
-    }
-  
-    .nav-link {
-      font-size: 22px;
-      font-weight: bolder;
-      color: #1B1B18 !important;
-    }
-  
-    .text-delete {
-      color: #ff3b30;
-    }
-  
-    .cursor-pointer {
-      cursor: pointer;
-    }
-  
-    .theme-btn {
-      background: var(--theme-color) !important;
-      color: white;
-    }
-  
-    .custom-tooltip {
-      position: relative;
-      cursor: pointer;
-    }
-  
-    .custom-tooltip .tooltiptext {
-      display: none;
-      width: 300px;
-      background-color: white;
-      color: black
-      text-align: center;
-      border-radius: 5px;
-      padding: 5px;
-      position: absolute;
-      z-index: 10000;
-      top:110%;
-      right:80%;
-      opacity: 0;
-      box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3);
-      transition: opacity 0.3s;
-    }
-  
-    .custom-tooltip:hover .tooltiptext {
-      display: block;
-      opacity: 1;
-    }
-  
+  font-size: 13px;
+  min-height: 75vh;
 
-  .toast {
-    background: white !important;
+  td {
+    padding: 0.7rem;
+    color: inherit;
+    vertical-align: middle;
   }
 
-  .toast-header {
-    background-color: #2c3e50 !important;
-    color: white !important;
+  table {
+    overflow-x: auto;
   }
-  `;
+
+  .flex-1 {
+    flex: 1;
+  }
+
+  .nav-link {
+    font-size: 22px;
+    font-weight: bolder;
+    color: var(--text-color) !important;
+  }
+
+  .custom-tooltip {
+    position: relative;
+    cursor: pointer;
+  }
+
+  .custom-tooltip .tooltiptext {
+    display: none;
+    width: 300px;
+    background-color: var(--bg-page-color);
+    color: var(--text-color) !important;
+    border: 1px solid var(--border-color) !important;
+    text-align: center;
+    border-radius: 5px;
+    padding: 5px;
+    position: absolute;
+    z-index: 10000;
+    top: 110%;
+    right: 80%;
+    opacity: 0;
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3);
+    transition: opacity 0.3s;
+  }
+
+  .custom-tooltip:hover .tooltiptext {
+    display: block;
+    opacity: 1;
+  }
+
+  .card-title {
+    font-size: 20px;
+    font-weight: 600;
+    padding-block: 5px;
+  }
+`;
 
 const [rowsPerPage, setRowsPerPage] = useState(10);
 const [currentPage, setPage] = useState(0);
@@ -170,20 +119,10 @@ useEffect(() => {
   }
 }, [currentPage, rowsPerPage, allMembers]);
 
-const ToastContainer = styled.div`
-  a {
-    color: black !important;
-    text-decoration: underline !important;
-    &:hover {
-      color: black !important;
-    }
-  }
-`;
-
 const SubmitToast = () => {
   return (
     showToastStatus && (
-      <ToastContainer className="toast-container position-fixed bottom-0 end-0 p-3">
+      <div className="toast-container position-fixed bottom-0 end-0 p-3">
         <div className={`toast ${showToastStatus ? "show" : ""}`}>
           <div className="toast-header px-2">
             <strong className="me-auto">Just Now</strong>
@@ -206,7 +145,7 @@ const SubmitToast = () => {
             </a>
           </div>
         </div>
-      </ToastContainer>
+      </div>
     )
   );
 };
@@ -216,7 +155,7 @@ function getImage(acc) {
 }
 
 const Tag = styled.div`
-  border: 1px solid #e2e6ec;
+  border: 1px solid var(--border-color);
 `;
 
 const Members = () => {
@@ -227,7 +166,7 @@ const Members = () => {
         const profile = Social.getr(`${account}/profile`);
         const imageSrc = getImage(account);
         return (
-          <tr key={index} className="bold">
+          <tr key={index} className="fw-semi-bold">
             <td>
               <div className="d-flex gap-2 align-items-center">
                 <img
@@ -245,9 +184,14 @@ const Members = () => {
             </td>
             <td>
               <Widget
-                src="${REPL_MOB}/widget/Profile.OverlayTrigger"
+                src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
                 props={{
-                  accountId: account,
+                  popup: (
+                    <Widget
+                      src="${REPL_MOB}/widget/Profile.Popover"
+                      props={{ accountId: account }}
+                    />
+                  ),
                   children: (
                     <div
                       className="text-truncate"
@@ -256,6 +200,7 @@ const Members = () => {
                       {account}
                     </div>
                   ),
+                  instance,
                 }}
               />
             </td>
@@ -358,7 +303,7 @@ return (
 
     <div className="card rounded-3 py-3 d-flex flex-column gap-2 flex-1 w-100">
       <div className="d-flex justify-content-between gap-2 align-items-center border-bottom px-2">
-        <div className="nav-link">All Members</div>
+        <div className="card-title px-3 mb-0">All Members</div>
         {hasCreatePermission && (
           <button
             className="primary py-1 px-3 rounded-2 h6 fw-bold d-flex align-items-center gap-2 "
@@ -381,7 +326,7 @@ return (
         >
           <table className="table">
             <thead>
-              <tr className="text-grey">
+              <tr className="text-secondary">
                 <td>Name</td>
                 <td>User name</td>
                 <td>Permissions</td>

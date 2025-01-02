@@ -3,23 +3,23 @@ const isPaymentsPage = props.isPaymentsPage;
 const Container = styled.div`
   text-align: center;
   .reject {
-    background-color: rgba(0, 0, 0, 0.08);
-    color: #1b1b18;
+    background-color: var(--grey-04);
+    color: var(--text-color);
   }
 
   .approve {
     background-color: rgba(0, 202, 134, 0.16);
-    color: #089968;
+    color: var(--other-green);
   }
 
   .expire {
     background-color: rgba(255, 122, 0, 0.16);
-    color: #de6a00;
+    color: var(--other-warning);
   }
 
   .failed {
     background-color: rgba(239, 56, 38, 0.1);
-    color: #ef3826;
+    color: var(--other-red);
   }
 `;
 

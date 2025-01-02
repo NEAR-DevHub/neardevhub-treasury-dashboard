@@ -1,8 +1,7 @@
-const { isNearSocial } = VM.require(
-  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
-) || {
-  isNearSocial: false,
-};
+const { VerifiedTick, NotVerfiedTick } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Icons"
+) || { VerifiedTick: () => <></>, NotVerfiedTick: () => <></> };
+
 const showKYC = props.showKYC;
 const receiverAccount = props.receiverAccount;
 const [isVerfied, setIsVerfied] = useState(false);
@@ -13,12 +12,6 @@ const imageSrc =
   `https://i.near.social/magic/large/https://near.social/magic/img/account/${receiverAccount}` ??
   "https://ipfs.near.social/ipfs/bafkreibmiy4ozblcgv3fm3gc6q62s55em33vconbavfd2ekkuliznaq3zm";
 const name = profile.name;
-
-const WarningImg =
-  "https://ipfs.near.social/ipfs/bafkreianby5lkljarqct47uofj6uxjmw7lkglnf5a4jua7aubul46aqdje";
-
-const SuccessImg =
-  "https://ipfs.near.social/ipfs/bafkreigxe4ludhipu2j46jt57iuyufkbnwkuhjixocguwjdcktfsxekghu";
 
 useEffect(() => {
   if (
@@ -55,17 +48,15 @@ useEffect(() => {
 const HoverCard = () => {
   return (
     <div>
-      <div className="d-flex text-black justify-content-between align-items-center ">
-        <div className="d-flex" style={{ gap: "12px" }}>
-          <img
-            className="align-self-center object-fit-cover"
-            src={verificationStatus === "Verified" ? SuccessImg : WarningImg}
-            height={20}
-          />
-          <div className="d-flex flex-column justify-content-center">
-            <div className="h6 mb-0">Fractal</div>
-            <div className="text-sm text-muted">{verificationStatus}</div>
-          </div>
+      <div className="d-flex justify-content-between align-items-center gap-2">
+        {verificationStatus === "Verified" ? (
+          <VerifiedTick />
+        ) : (
+          <NotVerfiedTick />
+        )}
+        <div className="d-flex flex-column justify-content-center">
+          <div className="h6 mb-0">Fractal</div>
+          <div className="text-sm text-secondary">{verificationStatus}</div>
         </div>
       </div>
     </div>
@@ -76,18 +67,10 @@ const ReceiverAccountComponent = (
   <div className="d-flex gap-1 align-items-center" style={{ width: 180 }}>
     <div style={{ width: "40px", height: 40, position: "relative" }}>
       <img src={imageSrc} height={40} width={40} className="rounded-circle" />
-      {verificationStatus && (
-        <img
-          src={isVerfied ? SuccessImg : WarningImg}
-          height={20}
-          width={20}
-          style={
-            isNearSocial
-              ? { marginTop: "-35px", marginLeft: "23px" }
-              : { marginTop: "-17px", marginLeft: "19px" }
-          }
-        />
-      )}
+      <div style={{ marginTop: "-20px", marginLeft: "22px" }}>
+        {verificationStatus &&
+          (isVerfied ? <VerifiedTick /> : <NotVerfiedTick />)}
+      </div>
     </div>
     <div
       className="text-truncate"
@@ -104,10 +87,11 @@ return (
   <div>
     {verificationStatus ? (
       <Widget
-        src="${REPL_MOB}/widget/N.Common.OverlayTrigger"
+        src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
         props={{
           popup: verificationStatus && <HoverCard />,
           children: ReceiverAccountComponent,
+          instance: props.instance,
         }}
       />
     ) : (

@@ -91,7 +91,9 @@ return (
               />
               <div className="fw-bold work-break"> {item.label}</div>
             </div>
-            {item.balance && <div className="text-muted"> ${item.balance}</div>}
+            {item.balance && (
+              <div className="text-secondary"> ${item.balance}</div>
+            )}
           </li>
         );
       },

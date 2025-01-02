@@ -1,3 +1,7 @@
+const { NearToken } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Icons"
+) || { NearToken: () => <></> };
+
 const { readableDate } = VM.require(
   "${REPL_DEVHUB}/widget/core.lib.common"
 ) || { readableDate: () => {} };
@@ -195,10 +199,6 @@ const loader = (
 );
 
 const Container = styled.div`
-  .text-muted {
-    color: rgba(226, 230, 236, 1);
-  }
-
   td {
     color: inherit;
     padding: inherit;
@@ -217,21 +217,13 @@ const Container = styled.div`
     text-align: left;
   }
 
-  .fw-semi-bold {
-    font-weight: 500;
-  }
-
   .txn-link {
-    color: black !important;
+    color: var(--text-color) !important;
     text-decoration: underline;
 
     &:hover {
-      color: black !important;
+      color: inherit !important;
     }
-  }
-
-  .cursor-pointer {
-    cursor: pointer;
   }
 
   table {
@@ -239,7 +231,7 @@ const Container = styled.div`
   }
 
   .show-more-btn {
-    border: 1px solid rgba(226, 230, 236, 1) !important;
+    border: 1px solid var(--border-color) !important;
     text-align: center;
     background: none;
   }
@@ -264,7 +256,7 @@ return (
           {Array.isArray(transactionWithBalances) && (
             <table className="table">
               <thead>
-                <tr className="text-muted px-3 py-3 border-top">
+                <tr className="text-secondary px-3 py-3 border-top">
                   <td>Type</td>
                   <td>From</td>
                   <td>To</td>
@@ -276,7 +268,7 @@ return (
                 {transactionWithBalances.map((txn, groupIndex) => {
                   let balanceDiff = "";
                   let token = "NEAR";
-                  let icon = "${REPL_NEAR_TOKEN_ICON}";
+                  let iconSrc = "";
                   const isDeposit = txn.deposit;
                   const isStaked =
                     isDeposit && txn.receiver.includes("poolv1.near");
@@ -289,7 +281,7 @@ return (
                       "ft_metadata"
                     );
                     token = contractMetadata?.symbol;
-                    icon = contractMetadata?.icon;
+                    iconSrc = contractMetadata?.icon;
 
                     balanceDiff = convertBalanceToReadableFormat(txn.amount);
                   } else {
@@ -316,27 +308,39 @@ return (
                       </td>
                       <td className="fw-semi-bold" style={{ minWidth: 200 }}>
                         <Widget
-                          src="${REPL_MOB}/widget/Profile.OverlayTrigger"
+                          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
                           props={{
-                            accountId: txn.sender,
+                            popup: (
+                              <Widget
+                                src="${REPL_MOB}/widget/Profile.Popover"
+                                props={{ accountId: txn.sender }}
+                              />
+                            ),
                             children: (
                               <div className="text-truncate">
                                 {formatAccount(txn.sender)}
                               </div>
                             ),
+                            instance,
                           }}
                         />
                       </td>
                       <td className="fw-semi-bold" style={{ minWidth: 200 }}>
                         <Widget
-                          src="${REPL_MOB}/widget/Profile.OverlayTrigger"
+                          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
                           props={{
-                            accountId: txn.sender,
+                            popup: (
+                              <Widget
+                                src="${REPL_MOB}/widget/Profile.Popover"
+                                props={{ accountId: txn.receiver }}
+                              />
+                            ),
                             children: (
                               <div className="text-truncate">
                                 {formatAccount(txn.receiver)}
                               </div>
                             ),
+                            instance,
                           }}
                         />
                       </td>
@@ -375,7 +379,11 @@ return (
                           <div className="fw-bold d-flex gap-1 align-items-center justify-content-end">
                             {isReceived ? "+" : "-"}
                             {formatCurrency(balanceDiff)}{" "}
-                            <img src={icon} height={20} width={20} />
+                            {iconSrc ? (
+                              <img src={iconSrc} height={20} width={20} />
+                            ) : (
+                              <NearToken width={20} height={20} />
+                            )}
                           </div>
                         </div>
                       </td>

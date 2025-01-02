@@ -28,7 +28,6 @@ return {
   showKYC: true,
   showReferenceProposal: true,
   isTesting: true,
-
   logo: (
     <svg
       width="48"

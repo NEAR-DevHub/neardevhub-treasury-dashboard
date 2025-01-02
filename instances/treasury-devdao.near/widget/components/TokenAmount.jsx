@@ -1,3 +1,7 @@
+const { NearToken } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Icons"
+) || { NearToken: () => <></> };
+
 const address = props.address ?? ""; // Empty string for NEAR
 const amountWithDecimals = props.amountWithDecimals ?? 0;
 const amountWithoutDecimals = props.amountWithoutDecimals;
@@ -25,13 +29,13 @@ return (
       <span className="amount h6 bolder mb-0">
         {amount.toLocaleString("en-US")}
       </span>
-      <img
-        width="17px"
-        height="17px"
-        src={isNEAR ? "${REPL_NEAR_TOKEN_ICON}" : ftMetadata.icon}
-      />
+      {isNEAR ? (
+        <NearToken width={17} height={17} />
+      ) : (
+        <img width="17px" height="17px" src={ftMetadata.icon} />
+      )}
     </div>
     {/* TODO later */}
-    {/* <div className="text-muted">~1000 USD</div> */}
+    {/* <div className="text-secondary">~1000 USD</div> */}
   </div>
 );

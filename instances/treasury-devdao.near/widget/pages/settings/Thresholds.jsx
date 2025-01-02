@@ -1,22 +1,31 @@
-const { encodeToMarkdown } = VM.require(
+const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
+  href: () => {},
+};
+
+const { encodeToMarkdown, hasPermission, getRoleWiseData } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
-);
+) || {
+  encodeToMarkdown: () => {},
+  hasPermission: () => {},
+};
 
 const { instance } = props;
 if (!instance) {
   return <></>;
 }
 const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
-const { getRoleWiseData, hasPermission } = VM.require(
-  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
-) || { hasPermission: () => {} };
-const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
-  href: () => {},
-};
 
 if (typeof getRoleWiseData !== "function") {
   return <></>;
 }
+
+const hasEditPermission = hasPermission(
+  treasuryDaoID,
+  context.accountId,
+  "ChangeConfig",
+  "AddProposal"
+);
+
 const [selectedGroup, setSelectedGroup] = useState(null);
 const [selectedVoteOption, setSelectedVoteOption] = useState(null);
 const [selectedVoteValue, setSelectedVoteValue] = useState(null);
@@ -33,7 +42,7 @@ const hasCreatePermission = hasPermission(
   treasuryDaoID,
   context.accountId,
   "policy",
-  "vote"
+  "AddProposal"
 );
 
 useEffect(() => {
@@ -105,27 +114,20 @@ useEffect(() => {
 
 const Container = styled.div`
   font-size: 14px;
-  .border-right {
-    border-right: 1px solid rgba(226, 230, 236, 1);
-  }
 
   .card-title {
     font-size: 18px;
     font-weight: 600;
     padding-block: 5px;
-    border-bottom: 1px solid rgba(226, 230, 236, 1);
+    border-bottom: 1px solid var(--border-color);
   }
 
   .selected-role {
-    background-color: rgba(244, 244, 244, 1);
-  }
-
-  .cursor-pointer {
-    cursor: pointer;
+    background-color: var(--grey-04);
   }
 
   .tag {
-    background-color: rgba(244, 244, 244, 1);
+    background-color: var(--grey-04);
     font-size: 12px;
     padding-block: 5px;
   }
@@ -133,10 +135,6 @@ const Container = styled.div`
   label {
     color: rgba(153, 153, 153, 1);
     font-size: 12px;
-  }
-
-  .fw-bold {
-    font-weight: 500 !important;
   }
 
   .p-0 {
@@ -147,14 +145,9 @@ const Container = styled.div`
     font-size: 13px;
   }
 
-  .theme-btn {
-    background: var(--theme-color) !important;
-    color: white;
-  }
-
   .warning {
     background-color: rgba(255, 158, 0, 0.1);
-    color: rgba(177, 113, 8, 1);
+    color: var(--other-warning);
     font-weight: 500;
   }
 
@@ -162,35 +155,8 @@ const Container = styled.div`
     font-size: 12px !important;
   }
 
-  .text-muted {
-    color: rgba(153, 153, 153, 1);
-  }
-
-  .text-red {
-    color: #d95c4a;
-  }
-
-  .toast {
-    background: white !important;
-  }
-
-  .toast-header {
-    background-color: #2c3e50 !important;
-    color: white !important;
-  }
-
   .dropdown-toggle:after {
     top: 20% !important;
-  }
-`;
-
-const ToastContainer = styled.div`
-  a {
-    color: black !important;
-    text-decoration: underline !important;
-    &:hover {
-      color: black !important;
-    }
   }
 `;
 
@@ -267,7 +233,7 @@ function onSubmitClick() {
 const SubmitToast = () => {
   return (
     showToastStatus && (
-      <ToastContainer className="toast-container position-fixed bottom-0 end-0 p-3">
+      <div className="toast-container position-fixed bottom-0 end-0 p-3">
         <div className={`toast ${showToastStatus ? "show" : ""}`}>
           <div className="toast-header px-2">
             <strong className="me-auto">Just Now</strong>
@@ -290,7 +256,7 @@ const SubmitToast = () => {
             </a>
           </div>
         </div>
-      </ToastContainer>
+      </div>
     )
   );
 };
@@ -443,7 +409,7 @@ return (
               />
               <div>
                 {isPercentageSelected && (
-                  <div className="text-muted text-sm">
+                  <div className="text-secondary text-sm">
                     This is equivalent to
                     <span className="fw-bolder">
                       {requiredVotes} votes
@@ -480,14 +446,15 @@ return (
                     onClick: () => {
                       resetForm();
                     },
-                    disabled: isTxnCreated,
+                    disabled: isTxnCreated || !hasCreatePermission,
                   }}
                 />
                 <Widget
                   src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
                   props={{
                     classNames: { root: "theme-btn" },
-                    disabled: !selectedVoteValue || valueError,
+                    disabled:
+                      !selectedVoteValue || valueError || !hasCreatePermission,
                     label: "Submit",
                     onClick: () => setConfirmModal(true),
                     loading: isTxnCreated,

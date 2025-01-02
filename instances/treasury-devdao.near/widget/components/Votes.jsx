@@ -8,9 +8,9 @@ const getPercentage = (value) =>
 
 const Container = styled.div`
   .bar {
-    background-color: #e2e6ec;
+    background-color: var(--grey-04);
     width: 100px;
-    height: 20px;
+    height: 10px;
     overflow: hidden;
   }
   .flex-item {
@@ -22,7 +22,7 @@ const Container = styled.div`
   }
 
   .green {
-    color: #04a46e;
+    color: var(--other-green);
     text-align: left;
   }
 
@@ -49,7 +49,10 @@ return (
       <div className="w-100 h-100 flex-item">
         <div
           className="h-100"
-          style={{ width: `${approvePercentage}%`, backgroundColor: "#04a46e" }}
+          style={{
+            width: `${approvePercentage}%`,
+            backgroundColor: "var(--other-green)",
+          }}
         ></div>
       </div>
 

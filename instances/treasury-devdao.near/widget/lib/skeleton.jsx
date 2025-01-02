@@ -1,5 +1,5 @@
 const Skeleton = styled.div`
-  background: #efefef;
+  background: var(--grey-04);
   animation: pulse 1.5s ease-in-out infinite;
 
   @keyframes pulse {

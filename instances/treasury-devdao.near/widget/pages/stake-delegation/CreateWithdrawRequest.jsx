@@ -141,7 +141,7 @@ const BalanceDisplay = ({ label, balance, tooltipInfo, noBorder }) => {
               placement="top"
               overlay={<Tooltip id="tooltip">{tooltipInfo}</Tooltip>}
             >
-              <i className="bi bi-info-circle text-dark-grey"></i>
+              <i className="bi bi-info-circle text-secondary"></i>
             </OverlayTrigger>
           </div>
           <div className="h6 mb-0 d-flex align-items-center gap-1">
@@ -302,14 +302,14 @@ const Pools = () => {
                 }
               >
                 <div className="d-flex align-items-center gap-2 text-sm">
-                  <span className="text-muted">{fee}% Fee </span>
+                  <span className="text-secondary">{fee}% Fee </span>
                   <span className="text-green">Active</span>
                 </div>
                 <div className="h6 mb-0"> {pool_id} </div>
 
                 <div className="d-flex flex-column gap-1">
                   <div className="d-flex align-items-center gap-1 text-sm">
-                    <div className="text-dark-grey">
+                    <div className="text-secondary">
                       Available for withdrawal:{" "}
                     </div>
                     <div className="text-orange">
@@ -336,14 +336,6 @@ const Pools = () => {
 const Container = styled.div`
   font-size: 14px;
 
-  .text-grey {
-    color: #b9b9b9 !important;
-  }
-
-  .text-grey a {
-    color: inherit !important;
-  }
-
   label {
     font-weight: 600;
     margin-bottom: 3px;
@@ -352,51 +344,6 @@ const Container = styled.div`
 
   .p-2 {
     padding: 0px !important;
-  }
-
-  .theme-btn {
-    background: var(--theme-color) !important;
-    color: white;
-  }
-
-  .primary-text-color a {
-    color: var(--theme-color) !important;
-  }
-
-  .btn:hover {
-    color: black !important;
-  }
-
-  .text-sm {
-    font-size: 13px;
-  }
-
-  .use-max-bg {
-    background-color: #ecf8fb;
-    color: #1d62a8;
-    cursor: pointer;
-  }
-
-  .text-dark-grey {
-    color: rgba(85, 85, 85, 1) !important;
-  }
-
-  .bg-validator-info {
-    background: rgba(0, 16, 61, 0.06);
-    color: #1b1b18;
-    padding-inline: 0.8rem;
-    padding-block: 0.5rem;
-    font-weight: 500;
-    font-size: 13px;
-  }
-
-  .bg-withdraw-warning {
-    background: rgba(255, 158, 0, 0.1);
-    color: rgba(177, 113, 8, 1);
-    padding-inline: 0.8rem;
-    padding-block: 0.5rem;
-    font-weight: 500;
-    font-size: 13px;
   }
 
   .text-green {

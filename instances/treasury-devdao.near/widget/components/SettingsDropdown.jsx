@@ -104,36 +104,16 @@ const Container = styled.div`
     z-index: 9999;
   }
 
-  .dropdown-item.active,
-  .dropdown-item:active {
-    background-color: #f0f0f0 !important;
-    color: black;
-  }
-
   .custom-select {
     position: relative;
-  }
-
-  .cursor-pointer {
-    cursor: pointer;
-  }
-
-  .text-grey {
-    color: #b3b3b3;
-  }
-
-  .text-sm {
-    font-size: 13px;
   }
 `;
 
 const Item = ({ option }) => {
   return (
     <div
-      className={
-        "d-flex align-items-center w-100 justify-content-between " +
-        (option.show ? "text-black" : "text-grey")
-      }
+      className={"d-flex align-items-center w-100 justify-content-between "}
+      style={{ opacity: option.show ? "1" : "0.3" }}
     >
       <div className="h6 mb-0"> {option.title}</div>
       <div>
@@ -160,7 +140,7 @@ return (
       {isOpen && (
         <div className="dropdown-menu rounded-2 dropdown-menu-end dropdown-menu-lg-start px-2 shadow show w-100">
           <div>
-            <div className="text-muted text-sm">Shown in table</div>
+            <div className="text-secondary text-sm">Shown in table</div>
             {settingsOptions.map((option) => {
               if (
                 (!isPendingPage &&

@@ -183,13 +183,11 @@ useEffect(() => {
 
 const Container = styled.div`
   font-size: 14px;
-  .text-grey {
-    color: #b9b9b9 !important;
-  }
 
-  .text-grey a {
+  .text-secondary a {
     color: inherit !important;
   }
+
   label {
     font-weight: 600;
     margin-bottom: 3px;
@@ -201,10 +199,6 @@ const Container = styled.div`
   .rounded-pill {
     border-radius: 5px !important;
   }
-  .theme-btn {
-    background: var(--theme-color) !important;
-    color: white;
-  }
 
   .primary-text-color a {
     color: var(--theme-color) !important;
@@ -214,9 +208,6 @@ const Container = styled.div`
     color: black !important;
   }
 
-  .text-sm {
-    font-size: 13px;
-  }
   .warning {
     background-color: rgba(255, 158, 0, 0.1);
     color: #ff9e00;

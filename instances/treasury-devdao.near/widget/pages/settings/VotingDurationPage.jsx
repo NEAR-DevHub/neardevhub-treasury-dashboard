@@ -1,6 +1,9 @@
-const { encodeToMarkdown } = VM.require(
+const { encodeToMarkdown, hasPermission, getRoleWiseData } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
-);
+) || {
+  encodeToMarkdown: () => {},
+  hasPermission: () => {},
+};
 
 const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
@@ -18,6 +21,13 @@ const { Modal, ModalContent, ModalHeader, ModalFooter } = VM.require(
 
 const daoPolicy = Near.view(treasuryDaoID, "get_policy", {});
 const lastProposalId = Near.view(treasuryDaoID, "get_last_proposal_id");
+
+const hasCreatePermission = hasPermission(
+  treasuryDaoID,
+  context.accountId,
+  "policy",
+  "AddProposal"
+);
 
 if (!daoPolicy || lastProposalId === null) {
   return (
@@ -53,88 +63,17 @@ const [showLoader, setLoading] = useState(false);
 
 const Container = styled.div`
   font-size: 14px;
-  .border-right {
-    border-right: 1px solid rgba(226, 230, 236, 1);
-  }
 
   .card-title {
     font-size: 18px;
     font-weight: 600;
     padding-block: 5px;
-    border-bottom: 1px solid rgba(226, 230, 236, 1);
-  }
-
-  .selected-role {
-    background-color: rgba(244, 244, 244, 1);
-  }
-
-  .cursor-pointer {
-    cursor: pointer;
-  }
-
-  .tag {
-    background-color: rgba(244, 244, 244, 1);
-    font-size: 12px;
-    padding-block: 5px;
+    border-bottom: 1px solid var(--border-color);
   }
 
   label {
-    color: rgba(153, 153, 153, 1);
+    color: var(--text-secondary);
     font-size: 12px;
-  }
-
-  .fw-bold {
-    font-weight: 500 !important;
-  }
-
-  .p-0 {
-    padding: 0 !important;
-  }
-
-  .text-md {
-    font-size: 13px;
-  }
-
-  .theme-btn {
-    background-color: var(--theme-color) !important;
-    color: white;
-  }
-
-  .warning {
-    background-color: rgba(255, 158, 0, 0.1);
-    color: rgba(177, 113, 8, 1);
-    font-weight: 500;
-  }
-
-  .text-sm {
-    font-size: 12px !important;
-  }
-
-  .text-muted {
-    color: rgba(153, 153, 153, 1);
-  }
-
-  .text-red {
-    color: #d95c4a;
-  }
-
-  .toast {
-    background: white !important;
-  }
-
-  .toast-header {
-    background-color: #2c3e50 !important;
-    color: white !important;
-  }
-`;
-
-const ToastContainer = styled.div`
-  a {
-    color: black !important;
-    text-decoration: underline !important;
-    &:hover {
-      color: black !important;
-    }
   }
 `;
 
@@ -365,6 +304,7 @@ return (
             placeholder="Enter voting duration days"
             value={durationDays}
             onChange={(event) => changeDurationDays(event.target.value)}
+            disabled={!hasCreatePermission}
           ></input>
         </div>
 
@@ -520,14 +460,17 @@ return (
               classNames: { root: "theme-btn" },
               label: "Submit Request",
               loading: showLoader,
-              disabled: durationDays === currentDurationDays || showLoader,
+              disabled:
+                durationDays === currentDurationDays ||
+                showLoader ||
+                !hasCreatePermission,
               onClick: submitChangeRequest,
             }}
           />
         </div>
       </div>
     </div>
-    <ToastContainer className="toast-container position-fixed bottom-0 end-0 p-3">
+    <div className="toast-container position-fixed bottom-0 end-0 p-3">
       <div className={`toast ${showToastStatus ? "show" : ""}`}>
         <div className="toast-header px-2">
           <strong className="me-auto">Just Now</strong>
@@ -547,6 +490,6 @@ return (
           </a>
         </div>
       </div>
-    </ToastContainer>
+    </div>
   </Container>
 );

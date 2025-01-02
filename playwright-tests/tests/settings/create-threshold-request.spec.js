@@ -51,7 +51,7 @@ test.afterEach(async ({ page }, testInfo) => {
   await page.unrouteAll({ behavior: "ignoreErrors" });
 });
 
-test.describe("without login", function () {
+test.describe("User is not logged in", function () {
   test.beforeEach(async ({ page, instanceAccount }) => {
     await updateDaoPolicyMembers({ page });
     await page.goto(`/${instanceAccount}/widget/app?page=settings`);
@@ -99,7 +99,7 @@ async function fillInput(page, value) {
   expect(submitBtn).toBeVisible();
 }
 
-test.describe("admin connected", function () {
+test.describe("User is logged in", function () {
   test.use({
     storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
   });
