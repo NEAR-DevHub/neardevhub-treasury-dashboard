@@ -100,7 +100,9 @@ return (
       )}
     </Section>
     <Link
-      className={`btn btn-primary w-100 ${""}`}
+      className={`btn btn-primary w-100 ${
+        balance < REQUIRED_BALANCE ? "disabled" : ""
+      }`}
       href={`/${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=1`}
     >
       Yes, use this wallet and continue
