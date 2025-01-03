@@ -594,7 +594,7 @@ test.describe("admin with function access keys", function () {
       expectedTransactionModalObject
     );
 
-    await expect(page.getByText('Processing your request ...')).toBeVisible()
+    await expect(page.getByText("Processing your request ...")).toBeVisible();
     let isTransactionCompleted = false;
     let retryCountAfterComplete = 0;
     let newProposalId;

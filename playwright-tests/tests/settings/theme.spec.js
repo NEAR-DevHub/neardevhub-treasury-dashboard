@@ -102,7 +102,7 @@ test.describe("User is logged in", function () {
     await expect(submitBtn).toBeDisabled(submitBtn);
     await logoInput.setInputFiles(path.join(__dirname, "./assets/valid.jpg"));
     await submitBtn.click();
-    await expect(page.getByText('Processing your request ...')).toBeVisible()
+    await expect(page.getByText("Processing your request ...")).toBeVisible();
 
     await expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
@@ -129,7 +129,7 @@ test.describe("User is logged in", function () {
     await page.getByTestId("dropdown-btn").click();
     await page.getByText("Light").click();
     await page.getByRole("button", { name: "Save changes" }).click();
-    await expect(page.getByText('Processing your request ...')).toBeVisible()
+    await expect(page.getByText("Processing your request ...")).toBeVisible();
 
     await expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
