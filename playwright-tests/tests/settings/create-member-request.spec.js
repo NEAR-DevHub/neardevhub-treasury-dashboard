@@ -165,7 +165,7 @@ test.describe("User is logged in", function () {
     const submitBtn = await page.locator("button", { hasText: "Submit" });
     await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
     await submitBtn.click();
-
+    await expect(page.getByText('Processing your request ...')).toBeVisible()
     const description = {
       title: "Update policy - Members Permissions",
       summary: `theori.near requested to add "${account}" to "${permission}".`,
@@ -442,6 +442,7 @@ test.describe("User is logged in", function () {
     await expect(submitBtn).toBeAttached({ timeout: 10_000 });
     await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
     await submitBtn.click();
+    await expect(page.getByText('Processing your request ...')).toBeVisible()
     const description = {
       title: "Update policy - Members Permissions",
       summary: `theori.near requested to remove "${account}" from "${permission}".`,
@@ -585,6 +586,8 @@ test.describe("User is logged in", function () {
       page.getByRole("heading", { name: "Are you sure?" })
     ).toBeVisible();
     await page.getByRole("button", { name: "Remove" }).click();
+    await expect(page.getByText('Processing your request ...')).toBeVisible()
+
     const description = {
       title: "Update policy - Members Permissions",
       summary: `theori.near requested to requested to revoke all permissions of "megha19.near".`,
