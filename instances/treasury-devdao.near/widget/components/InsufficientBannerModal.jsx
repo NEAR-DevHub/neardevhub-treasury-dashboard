@@ -55,7 +55,7 @@ const WarningModal = () => (
       </div>
     </ModalHeader>
     <ModalContent>
-      Hey {name}, your don't have enough NEAR to complete actions on your
+      Hey {name}, you don't have enough NEAR to complete actions on your
       treasury. You need at least {INSUFFICIENT_BALANCE_LIMIT}. Please add more
       funds to your account and try again.
     </ModalContent>

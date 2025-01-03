@@ -82,7 +82,7 @@ function BalanceBanner({ accountId, treasuryDaoID }) {
           <i class="bi bi-exclamation-octagon error-icon h4 mb-0"></i>
           <div>
             <h5>Insufficient Funds</h5>
-            Hey {name}, your don't have enough NEAR to complete actions on your
+            Hey {name}, you don't have enough NEAR to complete actions on your
             treasury. You need at least {INSUFFICIENT_BALANCE_LIMIT}N. Please
             add more funds to your account and try again
           </div>
