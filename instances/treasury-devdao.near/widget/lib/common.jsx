@@ -426,10 +426,8 @@ function formatNearAmount(amount) {
     .toFixed(2);
 }
 
-function getNearBalances(treasuryDaoID) {
-  const resp = fetch(
-    `https://api.fastnear.com/v1/account/${treasuryDaoID}/full`
-  );
+function getNearBalances(accountId) {
+  const resp = fetch(`https://api.fastnear.com/v1/account/${accountId}/full`);
   const storage = Big(resp?.body?.state?.storage_bytes ?? "0")
     .mul(Big(10).pow(19))
     .toFixed();
