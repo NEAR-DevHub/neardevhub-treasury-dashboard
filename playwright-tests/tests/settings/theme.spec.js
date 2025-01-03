@@ -149,4 +149,18 @@ test.describe("User is logged in", function () {
       },
     });
   });
+
+  test("should display a transaction error toast when the transaction confirmation modal is canceled", async ({
+    page,
+  }) => {
+    test.setTimeout(150_000);
+    await page.getByRole("button", { name: "Save changes" }).click();
+    await expect(page.getByText("Processing your request ...")).toBeVisible();
+    await page.getByRole("button", { name: "Cancel" }).click();
+    await expect(
+      page.getByText(
+        "Something went wrong. Please try resubmitting the request"
+      )
+    ).toBeVisible();
+  });
 });
