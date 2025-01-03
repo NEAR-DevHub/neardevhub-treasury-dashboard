@@ -481,17 +481,28 @@ return (
                   }}
                 />
                 <Widget
-                  src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
+                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
                   props={{
-                    classNames: { root: "theme-btn" },
-                    disabled:
-                      !selectedVoteValue ||
-                      valueError ||
-                      !hasCreatePermission ||
-                      isTxnCreated,
-                    label: "Submit",
-                    onClick: () => setConfirmModal(true),
-                    loading: isTxnCreated,
+                    ActionButton: () => (
+                      <Widget
+                        src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
+                        props={{
+                          classNames: { root: "theme-btn" },
+                          disabled:
+                            !selectedVoteValue ||
+                            valueError ||
+                            !hasCreatePermission ||
+                            isTxnCreated,
+                          label: "Submit",
+                          loading: isTxnCreated,
+                        }}
+                      />
+                    ),
+                    checkForDeposit: true,
+                    treasuryDaoID,
+                    callbackAction: () => {
+                      setConfirmModal(true);
+                    },
                   }}
                 />
               </div>

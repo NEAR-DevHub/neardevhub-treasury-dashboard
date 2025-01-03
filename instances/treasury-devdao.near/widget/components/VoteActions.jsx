@@ -229,13 +229,24 @@ return (
           hasVotingPermission && (
             <div className="d-flex gap-2 align-items-center">
               <Widget
-                src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
                 props={{
-                  classNames: {
-                    root: "approve-btn p-2",
-                  },
-                  label: "Approve",
-                  onClick: () => {
+                  ActionButton: () => (
+                    <Widget
+                      src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
+                      props={{
+                        classNames: {
+                          root: "approve-btn p-2",
+                        },
+                        label: "Approve",
+                        loading: isTxnCreated && vote === actions.APPROVE,
+                        disabled: isTxnCreated,
+                      }}
+                    />
+                  ),
+                  checkForDeposit: false,
+                  treasuryDaoID,
+                  callbackAction: () => {
                     if (isInsufficientBalance) {
                       setShowWarning(true);
                     } else {
@@ -243,23 +254,30 @@ return (
                       setConfirmModal(true);
                     }
                   },
-                  loading: isTxnCreated && vote === actions.APPROVE,
-                  disabled: isTxnCreated,
                 }}
               />
               <Widget
-                src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
                 props={{
-                  classNames: {
-                    root: "reject-btn p-2",
-                  },
-                  label: "Reject",
-                  onClick: () => {
+                  ActionButton: () => (
+                    <Widget
+                      src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
+                      props={{
+                        classNames: {
+                          root: "reject-btn p-2",
+                        },
+                        label: "Reject",
+                        loading: isTxnCreated && vote === actions.REJECT,
+                        disabled: isTxnCreated,
+                      }}
+                    />
+                  ),
+                  checkForDeposit: false,
+                  treasuryDaoID,
+                  callbackAction: () => {
                     setVote(actions.REJECT);
                     setConfirmModal(true);
                   },
-                  loading: isTxnCreated && vote === actions.REJECT,
-                  disabled: isTxnCreated,
                 }}
               />
             </div>
@@ -267,20 +285,29 @@ return (
         )}
         {/* currently showing delete btn only for proposal creator */}
         {hasDeletePermission && proposalCreator === accountId && (
-          <button
-            className="remove-btn p-2"
-            onClick={() => {
-              setVote(actions.REMOVE);
-              setConfirmModal(true);
+          <Widget
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
+            props={{
+              ActionButton: () => (
+                <button
+                  className="remove-btn p-2"
+                  data-testid="delete-btn"
+                  disabled={isTxnCreated}
+                >
+                  <img
+                    style={{ height: 30 }}
+                    src="https://ipfs.near.social/ipfs/bafkreieobqzwouuadj7eneei7aadwfel6ubhj7qishnqwrlv5ldgcwuyt4"
+                  />
+                </button>
+              ),
+              checkForDeposit: false,
+              treasuryDaoID,
+              callbackAction: () => {
+                setVote(actions.REMOVE);
+                setConfirmModal(true);
+              },
             }}
-            data-testid="delete-btn"
-            disabled={isTxnCreated}
-          >
-            <img
-              style={{ height: 30 }}
-              src="https://ipfs.near.social/ipfs/bafkreieobqzwouuadj7eneei7aadwfel6ubhj7qishnqwrlv5ldgcwuyt4"
-            />
-          </button>
+          />
         )}
       </div>
     )}

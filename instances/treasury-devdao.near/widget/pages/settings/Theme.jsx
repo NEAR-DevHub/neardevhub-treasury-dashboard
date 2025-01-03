@@ -444,15 +444,23 @@ return (
                 disabled: !hasCreatePermission,
               }}
             />
-
             <Widget
-              src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
+              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
               props={{
-                classNames: { root: "theme-btn" },
-                label: "Save changes",
-                onClick: onSubmitClick,
-                loading: isTxnCreated,
-                disabled: !hasCreatePermission || error || isTxnCreated,
+                ActionButton: () => (
+                  <Widget
+                    src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
+                    props={{
+                      classNames: { root: "theme-btn" },
+                      label: "Save changes",
+                      loading: isTxnCreated,
+                      disabled: !hasCreatePermission || error || isTxnCreated,
+                    }}
+                  />
+                ),
+                checkForDeposit: true,
+                treasuryDaoID,
+                callbackAction: onSubmitClick,
               }}
             />
           </div>
