@@ -5,9 +5,13 @@ import {
   getTransactionModalObject,
   mockTransactionSubmitRPCResponses,
 } from "../../util/transaction.js";
-import { mockRpcRequest, updateDaoPolicyMembers } from "../../util/rpcmock.js";
+import {
+  mockNearBalances,
+  mockRpcRequest,
+  updateDaoPolicyMembers,
+} from "../../util/rpcmock.js";
 import { mockInventory } from "../../util/inventory.js";
-import { encodeToMarkdown } from "../../util/lib.js";
+import { InsufficientBalance, encodeToMarkdown } from "../../util/lib.js";
 
 const lastProposalId = 3;
 
@@ -32,7 +36,7 @@ async function updateLastProposalId(page) {
 
 async function navigateToMembersPage({ page, instanceAccount }) {
   await page.goto(`/${instanceAccount}/widget/app?page=settings`);
-  await page.waitForTimeout(2_000);
+  await page.waitForTimeout(5_000);
   await page.getByText("Members").click();
   await expect(page.getByText("All Members")).toBeVisible({ timeout: 10_000 });
 }
@@ -74,18 +78,39 @@ test.describe("User is logged in", function () {
     storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
   });
 
-  test.beforeEach(async ({ page, daoAccount, instanceAccount }) => {
+  test.beforeEach(async ({ page, daoAccount, instanceAccount }, testInfo) => {
     await mockInventory({ page, account: daoAccount });
     await updateDaoPolicyMembers({ page });
     await updateLastProposalId(page);
+    if (testInfo.title.includes("insufficient account balance")) {
+      await mockNearBalances({
+        page,
+        accountId: "theori.near",
+        balance: InsufficientBalance,
+        storage: 8,
+      });
+    }
     await navigateToMembersPage({ page, instanceAccount });
   });
 
-  test("should show members of the DAO", async ({
+  test("insufficient account balance should show warning modal, disallow action ", async ({
     page,
-    instanceAccount,
-    daoAccount,
   }) => {
+    test.setTimeout(60_000);
+    await expect(
+      page.getByText(
+        "Hey Ori, you don't have enough NEAR to complete actions on your treasury."
+      )
+    ).toBeVisible();
+    await page.getByRole("button", { name: " New Member" }).click();
+    await expect(
+      page
+        .getByText("Please add more funds to your account and try again")
+        .nth(1)
+    ).toBeVisible();
+  });
+
+  test("should show members of the DAO", async ({ page }) => {
     test.setTimeout(60_000);
     await expect(page.getByText("Megha", { exact: true })).toBeVisible();
   });
