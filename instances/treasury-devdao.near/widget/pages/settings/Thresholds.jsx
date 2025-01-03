@@ -493,7 +493,7 @@ return (
                             valueError ||
                             !hasCreatePermission ||
                             isTxnCreated,
-                          label: "Submit",
+                          label: "Submit Request",
                           loading: isTxnCreated,
                         }}
                       />

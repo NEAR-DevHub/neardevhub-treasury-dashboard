@@ -452,7 +452,7 @@ return (
                     src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
                     props={{
                       classNames: { root: "theme-btn" },
-                      label: "Save changes",
+                      label: "Submit Request",
                       loading: isTxnCreated,
                       disabled: !hasCreatePermission || error || isTxnCreated,
                     }}

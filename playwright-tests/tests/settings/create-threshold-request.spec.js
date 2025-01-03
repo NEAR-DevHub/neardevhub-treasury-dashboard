@@ -4,10 +4,11 @@ import { test } from "../../util/test.js";
 import { getTransactionModalObject } from "../../util/transaction.js";
 import {
   getMockedPolicy,
+  mockNearBalances,
   mockRpcRequest,
   updateDaoPolicyMembers,
 } from "../../util/rpcmock.js";
-import { encodeToMarkdown } from "../../util/lib.js";
+import { InsufficientBalance, encodeToMarkdown } from "../../util/lib.js";
 
 const lastProposalId = 3;
 
@@ -51,11 +52,19 @@ test.afterEach(async ({ page }, testInfo) => {
   await page.unrouteAll({ behavior: "ignoreErrors" });
 });
 
+async function navigateToThresholdPage({ page, instanceAccount }) {
+  await page.goto(`/${instanceAccount}/widget/app?page=settings`);
+  await page.waitForTimeout(5_000);
+  await page.getByText("Voting Threshold").click();
+  await expect(page.getByText("Permission Groups")).toBeVisible({
+    timeout: 10_000,
+  });
+}
+
 test.describe("User is not logged in", function () {
   test.beforeEach(async ({ page, instanceAccount }) => {
     await updateDaoPolicyMembers({ page });
-    await page.goto(`/${instanceAccount}/widget/app?page=settings`);
-    await page.getByText("Voting Thresholds").click({ timeout: 20_000 });
+    await navigateToThresholdPage({ page, instanceAccount });
   });
 
   test("should show members of different roles", async ({ page }) => {
@@ -87,13 +96,13 @@ test.describe("User is not logged in", function () {
       timeout: 20_000,
     });
     await expect(page.getByTestId("dropdown-btn")).toBeDisabled();
-    await expect(page.getByText("Submit")).toBeHidden();
+    await expect(page.getByText("Submit Request")).toBeHidden();
     await expect(page.getByTestId("threshold-input")).toBeDisabled();
   });
 });
 
 async function fillInput(page, value) {
-  const submitBtn = page.getByText("Submit");
+  const submitBtn = page.getByText("Submit Request");
   const thresholdInput = page.getByTestId("threshold-input");
   await thresholdInput.type(value);
   expect(submitBtn).toBeVisible();
@@ -104,19 +113,46 @@ test.describe("User is logged in", function () {
     storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
   });
 
-  test.beforeEach(async ({ page, instanceAccount }) => {
+  test.beforeEach(async ({ page, instanceAccount }, testInfo) => {
     await updateLastProposalId(page);
     await updateDaoPolicyMembers({ page });
-    await page.goto(`/${instanceAccount}/widget/app?page=settings`);
-    await page.getByText("Voting Thresholds").click({ timeout: 20_000 });
-    await expect(page.getByText("Submit")).toBeVisible({
-      timeout: 20_000,
-    });
-    await page.getByTestId("dropdown-btn").click();
+    if (testInfo.title.includes("insufficient account balance")) {
+      await mockNearBalances({
+        page,
+        accountId: "theori.near",
+        balance: InsufficientBalance,
+        storage: 8,
+      });
+    }
+    await navigateToThresholdPage({ page, instanceAccount });
+  });
+
+  test("insufficient account balance should show warning modal, disallow action ", async ({
+    page,
+  }) => {
+    test.setTimeout(60_000);
+
+    await expect(
+      page.getByText(
+        "Hey Ori, you don't have enough NEAR to complete actions on your treasury."
+      )
+    ).toBeVisible();
+    await page.getByTestId("threshold-input").fill("1");
+    await page
+      .getByText("Submit Request", {
+        exact: true,
+      })
+      .click();
+    await expect(
+      page
+        .getByText("Please add more funds to your account and try again")
+        .nth(1)
+    ).toBeVisible();
   });
 
   test("should allow only valid input for threshold", async ({ page }) => {
     test.setTimeout(60_000);
+    await page.getByTestId("dropdown-btn").click();
     await page.getByRole("list").getByText("Number of votes").click();
     await fillInput(page, "20097292");
     await fillInput(page, "10.323");
@@ -134,7 +170,8 @@ test.describe("User is logged in", function () {
     page,
   }) => {
     test.setTimeout(150_000);
-    const submitBtn = page.getByText("Submit");
+    const submitBtn = page.getByText("Submit Request");
+    await page.getByTestId("dropdown-btn").click();
     await page.getByRole("list").getByText("Number of votes").click();
     const thresholdInput = page.getByTestId("threshold-input");
     await thresholdInput.fill("20");
@@ -173,7 +210,8 @@ test.describe("User is logged in", function () {
 
   test("should be able to update policy by percentage", async ({ page }) => {
     test.setTimeout(150_000);
-    const submitBtn = page.getByText("Submit");
+    const submitBtn = page.getByText("Submit Request");
+    await page.getByTestId("dropdown-btn").click();
     await page.getByRole("list").getByText("Percentage of members").click();
     const thresholdInput = page.getByTestId("threshold-input");
     await thresholdInput.fill("101");

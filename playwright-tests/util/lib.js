@@ -20,3 +20,5 @@ export const encodeToMarkdown = (data) => {
     })
     .join(" <br>");
 };
+
+export const InsufficientBalance = BigInt(0.2 * 10 ** 24).toString();
