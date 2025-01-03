@@ -5,6 +5,10 @@ const { encodeToMarkdown, hasPermission } = VM.require(
   hasPermission: () => {},
 };
 
+const { TransactionLoader } = VM.require(
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TransactionLoader`
+) || { TransactionLoader: () => <></> };
+
 const instance = props.instance;
 if (!instance) {
   return <></>;
@@ -40,6 +44,7 @@ const [error, setError] = useState(null);
 const [isTxnCreated, setTxnCreated] = useState(false);
 const [showToastStatus, setToastStatus] = useState(false);
 const [lastProposalId, setLastProposalId] = useState(null);
+const [showErrorToast, setShowErrorToast] = useState(false);
 
 const Container = styled.div`
   max-width: 50rem;
@@ -213,7 +218,7 @@ const SubmitToast = () => {
           <div className="toast-header px-2">
             <strong className="me-auto">Just Now</strong>
             <i
-              className="bi bi-x-lg h6"
+              className="bi bi-x-lg h6 mb-0 cursor-pointer"
               onClick={() => setToastStatus(null)}
             ></i>
           </div>
@@ -248,17 +253,33 @@ useEffect(() => {
 
 useEffect(() => {
   if (isTxnCreated) {
+    let checkTxnTimeout = null;
+    let errorTimeout = null;
+
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
         if (lastProposalId !== id) {
           setToastStatus(true);
           setTxnCreated(false);
+          clearTimeout(errorTimeout);
         } else {
-          setTimeout(() => checkForNewProposal(), 1000);
+          checkTxnTimeout = setTimeout(() => checkForNewProposal(), 1000);
         }
       });
     };
     checkForNewProposal();
+
+    // if in 20 seconds there is no change, show error condition
+    errorTimeout = setTimeout(() => {
+      setShowErrorToast(true);
+      setTxnCreated(false);
+      clearTimeout(checkTxnTimeout);
+    }, 20000);
+
+    return () => {
+      clearTimeout(checkTxnTimeout);
+      clearTimeout(errorTimeout);
+    };
   }
 }, [isTxnCreated]);
 
@@ -318,6 +339,11 @@ useEffect(() => {
 return (
   <Container>
     <SubmitToast />
+    <TransactionLoader
+      showInProgress={isTxnCreated}
+      showError={showErrorToast}
+      toggleToast={() => setShowErrorToast(false)}
+    />
     <div className="card rounded-3 w-100 h-100 py-3">
       <div className="card-title px-3 mb-0">Theme & Logo</div>
       {!metadata ? (
@@ -421,7 +447,7 @@ return (
                 label: "Save changes",
                 onClick: onSubmitClick,
                 loading: isTxnCreated,
-                disabled: !hasCreatePermission || error,
+                disabled: !hasCreatePermission || error || isTxnCreated,
               }}
             />
           </div>

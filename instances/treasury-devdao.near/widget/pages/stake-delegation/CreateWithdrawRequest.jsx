@@ -1,5 +1,8 @@
 const { getNearBalances, LOCKUP_MIN_BALANCE_FOR_STORAGE, TooltipText } =
   VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
+const { TransactionLoader } = VM.require(
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TransactionLoader`
+) || { TransactionLoader: () => <></> };
 
 const instance = props.instance;
 const onCloseCanvas = props.onCloseCanvas ?? (() => {});
@@ -55,6 +58,7 @@ const [lockupStakedPoolsWithBalance, setLockupStakedPoolsWithBalance] =
 const [hasUnstakedAssets, setHasUnstakedAssets] = useState(true);
 const [isReadyToWithdraw, setIsReadyToWithdraw] = useState(true);
 const [showLoader, setShowLoader] = useState(true);
+const [showErrorToast, setShowErrorToast] = useState(false);
 
 function formatNearAmount(amount) {
   return Big(amount ?? "0")
@@ -114,18 +118,35 @@ useEffect(() => {
 
 useEffect(() => {
   if (isTxnCreated) {
+    let checkTxnTimeout = null;
+    let errorTimeout = null;
+
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
         if (lastProposalId !== id) {
+          cleanInputs();
           onCloseCanvas();
           refreshData();
+          clearTimeout(errorTimeout);
           setTxnCreated(false);
         } else {
-          setTimeout(() => checkForNewProposal(), 1000);
+          checkTxnTimeout = setTimeout(() => checkForNewProposal(), 1000);
         }
       });
     };
     checkForNewProposal();
+
+    // if in 20 seconds there is no change, show error condition
+    errorTimeout = setTimeout(() => {
+      setShowErrorToast(true);
+      setTxnCreated(false);
+      clearTimeout(checkTxnTimeout);
+    }, 20000);
+
+    return () => {
+      clearTimeout(checkTxnTimeout);
+      clearTimeout(errorTimeout);
+    };
   }
 }, [isTxnCreated]);
 
@@ -357,6 +378,11 @@ const Container = styled.div`
 
 return (
   <Container>
+    <TransactionLoader
+      showInProgress={isTxnCreated}
+      showError={showErrorToast}
+      toggleToast={() => setShowErrorToast(false)}
+    />
     <Widget
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
       props={{
@@ -463,7 +489,7 @@ return (
           props={{
             classNames: { root: "theme-btn" },
             label: "Submit",
-            disabled: !withdrawValidators?.length,
+            disabled: !withdrawValidators?.length || isTxnCreated,
             onClick: onSubmitClick,
             loading: isTxnCreated,
           }}
