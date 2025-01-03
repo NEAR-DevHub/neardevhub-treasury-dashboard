@@ -285,7 +285,7 @@ function AppLayout({ page, instance, children, treasuryDaoID }) {
     .btn:disabled,
     .btn.disabled,
     fieldset:disabled {
-      border-color: none !important;
+      border-color: transparent !important;
     }
 
     .table {
@@ -370,6 +370,14 @@ function AppLayout({ page, instance, children, treasuryDaoID }) {
 
     .cursor-pointer {
       cursor: pointer;
+    }
+
+    .success-icon {
+      color: var(--other-green) !important;
+    }
+
+    .warning-icon {
+      color: var(--other-warning) !important;
     }
   `;
 

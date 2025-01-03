@@ -4,6 +4,9 @@ if (!instance) {
 }
 
 const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+const { TransactionLoader } = VM.require(
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TransactionLoader`
+) || { TransactionLoader: () => <></> };
 
 const votes = props.votes ?? {};
 const proposalId = props.proposalId;
@@ -37,6 +40,7 @@ const [isInsufficientBalance, setInsufficientBal] = useState(false);
 const [showWarning, setShowWarning] = useState(false);
 const [isReadyToBeWithdrawn, setIsReadyToBeWithdrawn] = useState(true);
 const [showConfirmModal, setConfirmModal] = useState(null);
+const [showErrorToast, setShowErrorToast] = useState(false);
 
 useEffect(() => {
   if (!avoidCheckForBalance) {
@@ -74,20 +78,36 @@ function getProposalData() {
     (result) => result
   );
 }
-
 useEffect(() => {
   if (isTxnCreated) {
+    let checkTxnTimeout = null;
+    let errorTimeout = null;
+
     const checkForVoteOnProposal = () => {
       getProposalData().then((proposal) => {
         if (JSON.stringify(proposal.votes) !== JSON.stringify(votes)) {
           checkProposalStatus();
+          clearTimeout(errorTimeout);
           setTxnCreated(false);
         } else {
-          setTimeout(() => checkForVoteOnProposal(), 1000);
+          checkTxnTimeout = setTimeout(checkForVoteOnProposal, 1000);
         }
       });
     };
+
     checkForVoteOnProposal();
+
+    // if in 20 seconds there is no change, show error condition
+    errorTimeout = setTimeout(() => {
+      setShowErrorToast(true);
+      setTxnCreated(false);
+      clearTimeout(checkTxnTimeout);
+    }, 20000);
+
+    return () => {
+      clearTimeout(checkTxnTimeout);
+      clearTimeout(errorTimeout);
+    };
   }
 }, [isTxnCreated]);
 
@@ -134,7 +154,10 @@ const InsufficientBalanceWarning = () => {
       <div className={`toast ${showWarning ? "show" : ""}`}>
         <div class="toast-header px-2">
           <strong class="me-auto">Just Now</strong>
-          <i class="bi bi-x-lg h6" onClick={() => setShowWarning(false)}></i>
+          <i
+            class="bi bi-x-lg h6 mb-0 cursor-pointer"
+            onClick={() => setShowWarning(false)}
+          ></i>
         </div>
         <div class="toast-body">
           The request cannot be approved because the treasury balance is
@@ -144,8 +167,15 @@ const InsufficientBalanceWarning = () => {
     </div>
   ) : null;
 };
+
 return (
   <Container>
+    <TransactionLoader
+      showInProgress={isTxnCreated}
+      showError={showErrorToast}
+      toggleToast={() => setShowErrorToast(false)}
+    />
+
     <InsufficientBalanceWarning />
     <Widget
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}

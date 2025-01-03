@@ -173,26 +173,34 @@ const ToastStatusContent = () => {
   }
   return (
     <div className="toast-body">
-      {content}
-      <br />
-      {showToastStatus !== "InProgress" && showToastStatus !== "Removed" && (
-        <a
-          className="text-underline"
-          href={href({
-            widgetSrc: `${instance}/widget/app`,
-            params: {
-              page: "payments",
-              selectedTab: "History",
-              highlightProposalId:
-                typeof highlightProposalId === "number"
-                  ? highlightProposalId
-                  : voteProposalId,
-            },
-          })}
-        >
-          View in History
-        </a>
-      )}
+      <div className="d-flex align-items-center gap-3">
+        {showToastStatus === "Approved" && (
+          <i class="bi bi-check2 h3 mb-0 success-icon"></i>
+        )}
+        <div>
+          {content}
+          <br />
+          {showToastStatus !== "InProgress" &&
+            showToastStatus !== "Removed" && (
+              <a
+                className="text-underline"
+                href={href({
+                  widgetSrc: `${instance}/widget/app`,
+                  params: {
+                    page: "payments",
+                    selectedTab: "History",
+                    highlightProposalId:
+                      typeof highlightProposalId === "number"
+                        ? highlightProposalId
+                        : voteProposalId,
+                  },
+                })}
+              >
+                View in History
+              </a>
+            )}
+        </div>
+      </div>
     </div>
   );
 };
@@ -205,7 +213,10 @@ const VoteSuccessToast = () => {
       <div className={`toast ${showToastStatus ? "show" : ""}`}>
         <div className="toast-header px-2">
           <strong className="me-auto">Just Now</strong>
-          <i className="bi bi-x-lg h6" onClick={() => setToastStatus(null)}></i>
+          <i
+            className="bi bi-x-lg h6 mb-0 cursor-pointer"
+            onClick={() => setToastStatus(null)}
+          ></i>
         </div>
         <ToastStatusContent />
       </div>

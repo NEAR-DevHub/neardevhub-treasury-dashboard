@@ -1,6 +1,9 @@
 const { encodeToMarkdown } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
+const { TransactionLoader } = VM.require(
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TransactionLoader`
+) || { TransactionLoader: () => <></> };
 
 const instance = props.instance;
 if (!instance) {
@@ -21,6 +24,7 @@ const onRefresh = props.onRefresh;
 
 const [isTxnCreated, setTxnCreated] = useState(false);
 const [lastProposalId, setLastProposalId] = useState(null);
+const [showErrorToast, setShowErrorToast] = useState(false);
 
 function getLastProposalId() {
   return Near.asyncView(treasuryDaoID, "get_last_proposal_id").then(
@@ -35,17 +39,33 @@ useEffect(() => {
 // show toast after proposal is submitted
 useEffect(() => {
   if (isTxnCreated && typeof onRefresh === "function") {
+    let checkTxnTimeout = null;
+    let errorTimeout = null;
+
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
         if (lastProposalId !== id) {
           setToastStatus(true);
           setTxnCreated(false);
+          clearTimeout(errorTimeout);
         } else {
-          setTimeout(() => checkForNewProposal(), 1000);
+          checkTxnTimeout = setTimeout(() => checkForNewProposal(), 1000);
         }
       });
     };
     checkForNewProposal();
+
+    // if in 20 seconds there is no change, show error condition
+    errorTimeout = setTimeout(() => {
+      setShowErrorToast(true);
+      setTxnCreated(false);
+      clearTimeout(checkTxnTimeout);
+    }, 20000);
+
+    return () => {
+      clearTimeout(checkTxnTimeout);
+      clearTimeout(errorTimeout);
+    };
   }
 }, [isTxnCreated, onRefresh]);
 
@@ -205,6 +225,13 @@ const NoButton = styled.button`
 
 return (
   <>
+    {onRefresh && (
+      <TransactionLoader
+        showInProgress={isTxnCreated}
+        showError={showErrorToast}
+        toggleToast={() => setShowErrorToast(false)}
+      />
+    )}
     <Modal hidden={!isOpen}>
       <ModalBackdrop />
       <ModalDialog className="card">

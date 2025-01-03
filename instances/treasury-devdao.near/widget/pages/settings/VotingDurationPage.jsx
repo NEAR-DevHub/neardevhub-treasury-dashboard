@@ -4,6 +4,9 @@ const { encodeToMarkdown, hasPermission, getRoleWiseData } = VM.require(
   encodeToMarkdown: () => {},
   hasPermission: () => {},
 };
+const { TransactionLoader } = VM.require(
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TransactionLoader`
+) || { TransactionLoader: () => <></> };
 
 const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
@@ -59,6 +62,7 @@ const [isSubmittingChangeRequest, setSubmittingChangeRequest] = useState(false);
 const [showAffectedProposalsModal, setShowAffectedProposalsModal] =
   useState(false);
 
+const [showErrorToast, setShowErrorToast] = useState(false);
 const [showLoader, setLoading] = useState(false);
 
 const Container = styled.div`
@@ -258,23 +262,34 @@ const submitChangeRequest = () => {
 };
 
 useEffect(() => {
-  Near.asyncView(treasuryDaoID, "get_proposal", {
-    id: lastProposalId - 1,
-  }).then((proposal) => {
-    const proposal_period =
-      proposal?.kind?.ChangePolicyUpdateParameters?.parameters?.proposal_period;
+  if (isSubmittingChangeRequest) {
+    let errorTimeout = null;
+    Near.asyncView(treasuryDaoID, "get_proposal", {
+      id: lastProposalId - 1,
+    }).then((proposal) => {
+      const proposal_period =
+        proposal?.kind?.ChangePolicyUpdateParameters?.parameters
+          ?.proposal_period;
 
-    if (
-      proposal_period &&
-      isSubmittingChangeRequest &&
-      Number(proposal_period.substring(0, proposal_period.length - 9)) /
-        (24 * 60 * 60) ===
-        Number(durationDays)
-    ) {
-      setToastStatus(true);
+      if (
+        proposal_period &&
+        isSubmittingChangeRequest &&
+        Number(proposal_period.substring(0, proposal_period.length - 9)) /
+          (24 * 60 * 60) ===
+          Number(durationDays)
+      ) {
+        setToastStatus(true);
+        setSubmittingChangeRequest(false);
+        clearTimeout(errorTimeout);
+      }
+    });
+
+    // if in 20 seconds there is no change, show error condition
+    errorTimeout = setTimeout(() => {
+      setShowErrorToast(true);
       setSubmittingChangeRequest(false);
-    }
-  });
+    }, 20000);
+  }
 }, [isSubmittingChangeRequest, lastProposalId]);
 
 const changeDurationDays = (newDurationDays) => {
@@ -286,6 +301,11 @@ const showImpactedRequests =
 
 return (
   <Container>
+    <TransactionLoader
+      showInProgress={isSubmittingChangeRequest}
+      showError={showErrorToast}
+      toggleToast={() => setShowErrorToast(false)}
+    />
     <div className="card rounded-3 py-3" style={{ maxWidth: "50rem" }}>
       <div className="card-title px-3 mb-0">Voting Duration</div>
       <div className="p-3 d-flex flex-column gap-2">
@@ -461,9 +481,11 @@ return (
               label: "Submit Request",
               loading: showLoader,
               disabled:
-                durationDays === currentDurationDays ||
+                parseFloat(durationDays ? durationDays : 0) ===
+                  currentDurationDays ||
                 showLoader ||
-                !hasCreatePermission,
+                !hasCreatePermission ||
+                isSubmittingChangeRequest,
               onClick: submitChangeRequest,
             }}
           />
@@ -474,7 +496,10 @@ return (
       <div className={`toast ${showToastStatus ? "show" : ""}`}>
         <div className="toast-header px-2">
           <strong className="me-auto">Just Now</strong>
-          <i className="bi bi-x-lg h6" onClick={() => setToastStatus(null)}></i>
+          <i
+            className="bi bi-x-lg h6 mb-0 cursor-pointer"
+            onClick={() => setToastStatus(null)}
+          ></i>
         </div>
         <div className="toast-body">
           <div>Voting duration change request submitted.</div>
