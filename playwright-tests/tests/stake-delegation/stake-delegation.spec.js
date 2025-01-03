@@ -505,6 +505,7 @@ test.describe("Have valid staked requests and sufficient token balance", functio
         .first()
         .inputValue();
       await page.getByRole("button", { name: "Submit" }).click();
+      await expect(page.getByText("Processing your request ...")).toBeVisible();
       await expect(await getTransactionModalObject(page)).toEqual({
         proposal: {
           description: "* Proposal Action: stake",
@@ -540,6 +541,8 @@ test.describe("Have valid staked requests and sufficient token balance", functio
         errorText: "The amount exceeds the balance you have staked.",
       });
       await page.getByRole("button", { name: "Submit" }).click();
+      await expect(page.getByText("Processing your request ...")).toBeVisible();
+
       await expect(await getTransactionModalObject(page)).toEqual({
         proposal: {
           description: "* Proposal Action: unstake",
@@ -656,6 +659,7 @@ test.describe("Withdraw request", function () {
     const submitBtn = page.getByRole("button", { name: "Submit" });
     await expect(submitBtn).toBeEnabled();
     await submitBtn.click();
+    await expect(page.getByText("Processing your request ...")).toBeVisible();
     await expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
         description: `* Proposal Action: withdraw`,
@@ -711,6 +715,7 @@ test.describe("Withdraw request", function () {
     ).toBeVisible({
       timeout: 10_000,
     });
+    await expect(page.getByText("Processing your request ...")).toBeVisible();
     // proposals for both the pools
     await expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
@@ -888,6 +893,8 @@ test.describe("Lockup staking", function () {
         errorText: "Your account doesn't have sufficient balance.",
       });
       await page.getByRole("button", { name: "Submit" }).click();
+      await expect(page.getByText("Processing your request ...")).toBeVisible();
+
       await expect(await getTransactionModalObject(page)).toEqual({
         proposal: {
           description:
@@ -1002,6 +1009,8 @@ test.describe("Lockup staking", function () {
         errorText: "Your account doesn't have sufficient balance.",
       });
       await page.getByRole("button", { name: "Submit" }).click();
+      await expect(page.getByText("Processing your request ...")).toBeVisible();
+
       await expect(await getTransactionModalObject(page)).toEqual({
         proposal: {
           description: "* Proposal Action: stake",
@@ -1049,6 +1058,8 @@ test.describe("Lockup staking", function () {
         errorText: "The amount exceeds the balance you have staked.",
       });
       await page.getByRole("button", { name: "Submit" }).click();
+      await expect(page.getByText("Processing your request ...")).toBeVisible();
+
       await expect(await getTransactionModalObject(page)).toEqual({
         proposal: {
           description: "* Proposal Action: unstake",

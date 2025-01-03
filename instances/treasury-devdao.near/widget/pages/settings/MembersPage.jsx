@@ -127,7 +127,7 @@ const SubmitToast = () => {
           <div className="toast-header px-2">
             <strong className="me-auto">Just Now</strong>
             <i
-              className="bi bi-x-lg h6"
+              className="bi bi-x-lg h6 mb-0 cursor-pointer"
               onClick={() => setToastStatus(null)}
             ></i>
           </div>

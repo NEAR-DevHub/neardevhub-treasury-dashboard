@@ -148,6 +148,7 @@ test.describe("User is logged in", function () {
       )
     ).toBeVisible();
     await page.getByRole("button", { name: "Confirm" }).click();
+    await expect(page.getByText("Processing your request ...")).toBeVisible();
     const updatedPolicy = {
       weight_kind: "RoleWeight",
       quorum: "0",
@@ -189,6 +190,8 @@ test.describe("User is logged in", function () {
       )
     ).toBeVisible();
     await page.getByRole("button", { name: "Confirm" }).click();
+    await expect(page.getByText("Processing your request ...")).toBeVisible();
+
     const updatedPolicy = {
       weight_kind: "RoleWeight",
       quorum: "0",

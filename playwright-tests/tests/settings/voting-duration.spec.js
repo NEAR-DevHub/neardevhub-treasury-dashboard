@@ -65,7 +65,7 @@ test.describe("User is logged in", function () {
         .locator(".modalfooter button", { hasText: "Yes, proceed" })
         .click();
     }
-
+    await expect(page.getByText("Processing your request ...")).toBeVisible();
     const description = {
       title: "Update policy - Voting Duration",
       summary: `theori.near requested to change voting duration from ${currentDurationDays} to ${newDurationDays}.`,

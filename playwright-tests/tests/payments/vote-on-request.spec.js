@@ -211,6 +211,7 @@ test.describe("don't ask again", function () {
     await expect(approveButton).toBeEnabled({ timeout: 30_000 });
     await approveButton.click();
     await page.getByRole("button", { name: "Confirm" }).click();
+    await expect(page.getByText("Processing your request ...")).toBeVisible();
     await expect(approveButton).toBeDisabled();
 
     const transaction_toast = page.getByText(
@@ -266,6 +267,7 @@ test.describe("don't ask again", function () {
     await expect(rejectButton).toBeEnabled({ timeout: 10000 });
     await rejectButton.click();
     await page.getByRole("button", { name: "Confirm" }).click();
+    await expect(page.getByText("Processing your request ...")).toBeVisible();
     await expect(rejectButton).toBeDisabled();
 
     const transaction_toast = page.getByText(
@@ -321,6 +323,8 @@ test.describe("don't ask again", function () {
       page.getByText("Do you really want to delete this request?")
     ).toBeVisible();
     await page.getByRole("button", { name: "Confirm" }).click();
+    await expect(page.getByText("Processing your request ...")).toBeVisible();
+
     await expect(deleteButton).toBeDisabled();
 
     const transaction_toast = page.getByText(
