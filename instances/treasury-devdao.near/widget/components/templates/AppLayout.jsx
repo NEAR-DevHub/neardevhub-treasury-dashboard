@@ -12,7 +12,7 @@ const AppHeader = ({ page, instance }) => (
   />
 );
 
-function AppLayout({ page, instance, children, treasuryDaoID }) {
+function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
   const config = treasuryDaoID
     ? useCache(
         () => Near.asyncView(treasuryDaoID, "get_config"),
