@@ -1,7 +1,7 @@
 import { expect } from "@playwright/test";
 import { test } from "../../util/test.js";
 import { getTransactionModalObject } from "../../util/transaction.js";
-import { mockRpcRequest } from "../../util/rpcmock.js";
+import { mockRpcRequest, updateDaoPolicyMembers } from "../../util/rpcmock.js";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -27,11 +27,10 @@ const metadata = {
 
 const config = {
   name: "testing-astradao",
-  purpose: "",
   metadata: toBase64(metadata),
 };
 
-export async function updateDaoConfig({ page }) {
+async function updateDaoConfig({ page }) {
   await mockRpcRequest({
     page,
     filterParams: {
@@ -45,8 +44,11 @@ export async function updateDaoConfig({ page }) {
 
 async function navigateToThemePage({ page, instanceAccount }) {
   await page.goto(`/${instanceAccount}/widget/app?page=settings`);
-  await page.waitForTimeout(2_000);
+  await updateDaoPolicyMembers({ page });
+  await updateDaoConfig({ page });
+  await page.waitForTimeout(5_000);
   await page.getByText("Theme & Logo", { exact: true }).click();
+  await expect(page.getByText("Theme & Logo").nth(1)).toBeVisible();
 }
 
 test.describe("User is not logged in", function () {
@@ -68,7 +70,6 @@ test.describe("User is logged in", function () {
   });
 
   test.beforeEach(async ({ page, instanceAccount }) => {
-    await updateDaoConfig({ page });
     await navigateToThemePage({ page, instanceAccount });
   });
 
@@ -76,7 +77,6 @@ test.describe("User is logged in", function () {
     page,
   }) => {
     test.setTimeout(150_000);
-
     await expect(
       page.frameLocator("iframe").getByRole("button", { name: "Upload Logo" })
     ).toBeVisible();

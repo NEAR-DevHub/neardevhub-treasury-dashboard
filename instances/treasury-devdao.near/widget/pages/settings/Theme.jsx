@@ -89,7 +89,7 @@ function uploadImageToServer(file) {
 }
 
 const daoPolicy = Near.view(treasuryDaoID, "get_policy");
-const config = Near.view(treasuryDaoID, "get_config");
+const config = treasuryDaoID ? Near.view(treasuryDaoID, "get_config") : null;
 const metadata = JSON.parse(atob(config.metadata ?? ""));
 const isDarkTheme = metadata?.theme === "dark";
 const code = `

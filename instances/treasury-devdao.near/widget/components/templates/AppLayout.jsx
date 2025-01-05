@@ -9,12 +9,13 @@ const AppHeader = ({ page, instance }) => (
 );
 
 function AppLayout({ page, instance, children, treasuryDaoID }) {
-  const config = useCache(
-    () => Near.asyncView(treasuryDaoID, "get_config"),
-    "get_config",
-    { subscribe: false }
-  );
-
+  const config = treasuryDaoID
+    ? useCache(
+        () => Near.asyncView(treasuryDaoID, "get_config"),
+        treasuryDaoID + "_get_config",
+        { subscribe: false }
+      )
+    : null;
   const metadata = JSON.parse(atob(config.metadata ?? ""));
 
   const data = fetch(`https://httpbin.org/headers`);
