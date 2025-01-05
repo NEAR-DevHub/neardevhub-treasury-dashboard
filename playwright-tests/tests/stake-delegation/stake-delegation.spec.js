@@ -488,7 +488,7 @@ test.describe("Have valid staked requests and sufficient token balance", functio
         exact: true,
       });
       await createRequestButton.click();
-      await page.getByText("Stake", { exact: true }).click();
+      await page.locator(".option").first().click();
       await page.waitForTimeout(10_000);
 
       await fillValidatorAccount({
