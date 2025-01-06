@@ -1,6 +1,9 @@
 const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
+const { TransactionLoader } = VM.require(
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TransactionLoader`
+) || { TransactionLoader: () => <></> };
 
 const { encodeToMarkdown, hasPermission, getRoleWiseData } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
@@ -37,6 +40,7 @@ const [valueError, setValueError] = useState(null);
 const [showConfirmModal, setConfirmModal] = useState(null);
 const [rolesData, setRolesData] = useState(null);
 const [refreshData, setRefreshData] = useState(false);
+const [showErrorToast, setShowErrorToast] = useState(false);
 
 const hasCreatePermission = hasPermission(
   treasuryDaoID,
@@ -87,16 +91,33 @@ useEffect(() => {
 
 useEffect(() => {
   if (isTxnCreated) {
+    let checkTxnTimeout = null;
+    let errorTimeout = null;
+
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
         if (lastProposalId !== id) {
           setToastStatus(true);
+          setTxnCreated(false);
+          clearTimeout(errorTimeout);
         } else {
-          setTimeout(() => checkForNewProposal(), 1000);
+          checkTxnTimeout = setTimeout(() => checkForNewProposal(), 1000);
         }
       });
     };
     checkForNewProposal();
+
+    // if in 20 seconds there is no change, show error condition
+    errorTimeout = setTimeout(() => {
+      setShowErrorToast(true);
+      setTxnCreated(false);
+      clearTimeout(checkTxnTimeout);
+    }, 20000);
+
+    return () => {
+      clearTimeout(checkTxnTimeout);
+      clearTimeout(errorTimeout);
+    };
   }
 }, [isTxnCreated]);
 
@@ -238,22 +259,27 @@ const SubmitToast = () => {
           <div className="toast-header px-2">
             <strong className="me-auto">Just Now</strong>
             <i
-              className="bi bi-x-lg h6"
+              className="bi bi-x-lg h6 mb-0 cursor-pointer"
               onClick={() => setToastStatus(null)}
             ></i>
           </div>
           <div className="toast-body">
-            <div>Threshold change request submitted.</div>
-            <a
-              href={href({
-                widgetSrc: `${instance}/widget/app`,
-                params: {
-                  page: "settings",
-                },
-              })}
-            >
-              View it
-            </a>
+            <div className="d-flex align-items-center gap-3">
+              <i class="bi bi-check2 h3 mb-0 success-icon"></i>
+              <div>
+                <div>Threshold change request submitted.</div>
+                <a
+                  href={href({
+                    widgetSrc: `${instance}/widget/app`,
+                    params: {
+                      page: "settings",
+                    },
+                  })}
+                >
+                  View it
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -279,6 +305,11 @@ const requiredVotes = selectedGroup
 return (
   <Container>
     <SubmitToast />
+    <TransactionLoader
+      showInProgress={isTxnCreated}
+      showError={showErrorToast}
+      toggleToast={() => setShowErrorToast(false)}
+    />
     {Array.isArray(rolesData) && rolesData.length ? (
       <div className="card rounded-3 d-flex flex-row px-0 flex-wrap">
         <Widget
@@ -454,7 +485,10 @@ return (
                   props={{
                     classNames: { root: "theme-btn" },
                     disabled:
-                      !selectedVoteValue || valueError || !hasCreatePermission,
+                      !selectedVoteValue ||
+                      valueError ||
+                      !hasCreatePermission ||
+                      isTxnCreated,
                     label: "Submit",
                     onClick: () => setConfirmModal(true),
                     loading: isTxnCreated,

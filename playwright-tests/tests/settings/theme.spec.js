@@ -102,6 +102,8 @@ test.describe("User is logged in", function () {
     await expect(submitBtn).toBeDisabled(submitBtn);
     await logoInput.setInputFiles(path.join(__dirname, "./assets/valid.jpg"));
     await submitBtn.click();
+    await expect(page.getByText("Processing your request ...")).toBeVisible();
+
     await expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
         description: "* Title: Update Config - Theme & logo",
@@ -127,6 +129,8 @@ test.describe("User is logged in", function () {
     await page.getByTestId("dropdown-btn").click();
     await page.getByText("Light").click();
     await page.getByRole("button", { name: "Save changes" }).click();
+    await expect(page.getByText("Processing your request ...")).toBeVisible();
+
     await expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
         description: "* Title: Update Config - Theme & logo",
@@ -144,5 +148,19 @@ test.describe("User is logged in", function () {
         },
       },
     });
+  });
+
+  test("should display a transaction error toast when the transaction confirmation modal is canceled", async ({
+    page,
+  }) => {
+    test.setTimeout(150_000);
+    await page.getByRole("button", { name: "Save changes" }).click();
+    await expect(page.getByText("Processing your request ...")).toBeVisible();
+    await page.getByRole("button", { name: "Close" }).nth(1).click();
+    await expect(
+      page.getByText(
+        "Something went wrong. Please try resubmitting the request"
+      )
+    ).toBeVisible({ timeout: 30_000 });
   });
 });

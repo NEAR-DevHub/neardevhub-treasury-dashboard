@@ -154,7 +154,6 @@ test.describe("User is logged in", function () {
 
       return new Promise((resolve) => {
         wallet.signAndSendTransaction = async (transaction) => {
-          console.log("transactions", JSON.stringify(transaction));
           resolve(transaction);
           return await new Promise(
             (transactionSentPromiseResolve) =>
@@ -179,7 +178,7 @@ test.describe("User is logged in", function () {
     await page.evaluate((transactionResult) => {
       window.transactionSentPromiseResolve(transactionResult);
     }, transactionResult);
-    await expect(page.locator(".toast-header")).toBeVisible();
+    await expect(page.getByText("Processing your request ...")).toBeVisible();
     await expect(
       page.getByText("Voting duration change request submitted")
     ).toBeVisible();
