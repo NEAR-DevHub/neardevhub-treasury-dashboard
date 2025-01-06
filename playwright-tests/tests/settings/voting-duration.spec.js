@@ -157,8 +157,9 @@ test.describe("User is logged in", function () {
       const wallet = await selector.wallet();
 
       return new Promise((resolve) => {
-        wallet.signAndSendTransactions = async (transactions) => {
-          resolve(transactions.transactions[0]);
+        wallet.signAndSendTransaction = async (transaction) => {
+          console.log("transactions", JSON.stringify(transaction));
+          resolve(transaction);
           return await new Promise(
             (transactionSentPromiseResolve) =>
               (window.transactionSentPromiseResolve =
