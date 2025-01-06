@@ -46,7 +46,7 @@ function BalanceBanner({ accountId, treasuryDaoID }) {
   const nearBalances = getNearBalances(accountId);
 
   const LOW_BALANCE_LIMIT = 0.7; // 0.7N
-  const INSUFFICIENT_BALANCE_LIMIT = 0.3; // 0.3N
+  const INSUFFICIENT_BALANCE_LIMIT = 0.1; // 0.1N
 
   const profile = Social.getr(`${accountId}/profile`);
   const name = profile.name ?? accountId;

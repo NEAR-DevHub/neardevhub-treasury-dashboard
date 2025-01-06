@@ -30,7 +30,7 @@ const ADDITIONAL_AMOUNT = checkForDeposit
   ? formatNearAmount(daoPolicy?.proposal_bond)
   : 0;
 
-const INSUFFICIENT_BALANCE_LIMIT = ADDITIONAL_AMOUNT + 0.3; // 0.3N
+const INSUFFICIENT_BALANCE_LIMIT = ADDITIONAL_AMOUNT + 0.1; // 0.1N
 
 function checkBalance() {
   if (parseFloat(nearBalances?.availableParsed) < INSUFFICIENT_BALANCE_LIMIT) {
