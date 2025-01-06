@@ -48,6 +48,7 @@ test.describe("User is logged in", function () {
     daoAccount,
   }) => {
     test.setTimeout(150_000);
+    await updateDaoPolicyMembers({ page });
     await navigateToVotingDurationPage({ page, instanceAccount });
     const currentDurationDays = await page
       .getByPlaceholder("Enter voting duration days")
@@ -59,12 +60,6 @@ test.describe("User is logged in", function () {
 
     await page.waitForTimeout(500);
     await page.locator("button", { hasText: "Submit" }).click();
-
-    if (daoAccount === "testing-astradao.sputnik-dao.near") {
-      await page
-        .locator(".modalfooter button", { hasText: "Yes, proceed" })
-        .click();
-    }
 
     const description = {
       title: "Update policy - Voting Duration",
@@ -97,6 +92,7 @@ test.describe("User is logged in", function () {
     daoAccount,
   }) => {
     test.setTimeout(150_000);
+    await updateDaoPolicyMembers({ page });
     await navigateToVotingDurationPage({ page, instanceAccount });
     const currentDurationDays = await page
       .getByPlaceholder("Enter voting duration days")
@@ -243,6 +239,7 @@ test.describe("User is logged in", function () {
         }
       },
     });
+    await updateDaoPolicyMembers({ page });
     await navigateToVotingDurationPage({ page, instanceAccount });
 
     await page.waitForTimeout(500);
