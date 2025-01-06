@@ -2,7 +2,7 @@ import { expect } from "@playwright/test";
 import { test } from "../../util/test.js";
 import { getTransactionModalObject } from "../../util/transaction.js";
 import { SandboxRPC } from "../../util/sandboxrpc.js";
-import { mockRpcRequest } from "../../util/rpcmock.js";
+import { mockRpcRequest, updateDaoPolicyMembers } from "../../util/rpcmock.js";
 import { encodeToMarkdown } from "../../util/lib.js";
 
 test.afterEach(async ({ page }, testInfo) => {
@@ -12,7 +12,7 @@ test.afterEach(async ({ page }, testInfo) => {
 
 async function navigateToVotingDurationPage({ page, instanceAccount }) {
   await page.goto(`/${instanceAccount}/widget/app?page=settings`);
-  await page.waitForTimeout(2_000);
+  await page.waitForTimeout(5_000);
   await page.getByText("Voting Duration").click();
   await expect(
     page.getByText("Set the number of days a vote is active.")
@@ -132,6 +132,7 @@ test.describe("User is logged in", function () {
       receiver_id: "webassemblymusic.near",
       daoName,
     });
+    await updateDaoPolicyMembers({ page });
     await navigateToVotingDurationPage({ page, instanceAccount });
 
     const currentDurationDays = await page
