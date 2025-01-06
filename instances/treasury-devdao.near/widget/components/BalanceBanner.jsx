@@ -40,6 +40,7 @@ function formatNearAmount(amount) {
 
 function BalanceBanner({ accountId, treasuryDaoID }) {
   if (
+    !treasuryDaoID ||
     typeof getNearBalances !== "function" ||
     !accountId ||
     typeof hasPermission !== "function"
