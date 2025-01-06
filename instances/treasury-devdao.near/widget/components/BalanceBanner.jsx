@@ -1,4 +1,4 @@
-const { getNearBalances, hasPermission } = VM.require(
+const { getNearBalances } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
 
@@ -39,36 +39,14 @@ function formatNearAmount(amount) {
 }
 
 function BalanceBanner({ accountId, treasuryDaoID }) {
-  if (
-    !treasuryDaoID ||
-    typeof getNearBalances !== "function" ||
-    !accountId ||
-    typeof hasPermission !== "function"
-  ) {
+  if (!treasuryDaoID || typeof getNearBalances !== "function" || !accountId) {
     return <></>;
   }
 
   const nearBalances = getNearBalances(accountId);
-  const hasCreatePermission = hasPermission(
-    treasuryDaoID,
-    accountId,
-    "transfer",
-    "AddProposal"
-  );
 
-  const daoPolicy = useCache(
-    () => Near.asyncView(treasuryDaoID, "get_policy"),
-    "get_policy",
-    { subscribe: false }
-  );
-
-  // if they have create permission they need deposit amount for add proposal
-  const ADDITIONAL_AMOUNT = hasCreatePermission
-    ? formatNearAmount(daoPolicy?.proposal_bond)
-    : 0;
-
-  const LOW_BALANCE_LIMIT = ADDITIONAL_AMOUNT + 0.7; // 0.7N
-  const INSUFFICIENT_BALANCE_LIMIT = ADDITIONAL_AMOUNT + 0.3; // 0.3N
+  const LOW_BALANCE_LIMIT = 0.7; // 0.7N
+  const INSUFFICIENT_BALANCE_LIMIT = 0.3; // 0.3N
 
   const profile = Social.getr(`${accountId}/profile`);
   const name = profile.name ?? accountId;
