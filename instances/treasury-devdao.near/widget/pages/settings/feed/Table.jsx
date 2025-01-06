@@ -162,11 +162,9 @@ const ToastStatusContent = () => {
       content = "Your vote is counted, the request is highlighted.";
       break;
     case "Approved":
-    case "Approved":
       content =
         "The request has been successfully executed." +
         (showRefreshPageText ? " Refresh the page to see the updates." : "");
-      break;
       break;
     case "Rejected":
       content = "The request has been rejected.";
