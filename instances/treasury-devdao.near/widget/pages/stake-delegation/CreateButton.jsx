@@ -129,7 +129,7 @@ const CreateBtn = () => {
         display: block;
         opacity: 1;
         transform: translateY(0);
-        z-index:9999;
+        z-index:1000;
       }
     }
   

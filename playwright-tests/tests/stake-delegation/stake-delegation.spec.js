@@ -430,6 +430,7 @@ test.describe("Have valid staked requests and sufficient token balance", functio
     await expect(
       await page.locator("div").filter({ hasText: /^Stake Delegation$/ })
     ).toBeVisible();
+    await page.waitForTimeout(5_000);
   });
 
   test.describe("User not logged in", function () {

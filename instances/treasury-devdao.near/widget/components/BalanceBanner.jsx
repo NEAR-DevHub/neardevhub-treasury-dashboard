@@ -71,12 +71,15 @@ function BalanceBanner({ accountId, treasuryDaoID }) {
 
   const profile = Social.getr(`${accountId}/profile`);
   const name = profile.name ?? accountId;
+
   return (
     <Container>
       {!nearBalances ||
-      parseFloat(nearBalances?.availableParsed) > LOW_BALANCE_LIMIT ? (
+      !nearBalances.availableParsed ||
+      nearBalances.availableParsed === "0.00" ||
+      parseFloat(nearBalances.availableParsed) > LOW_BALANCE_LIMIT ? (
         <></>
-      ) : parseFloat(nearBalances?.availableParsed) <
+      ) : parseFloat(nearBalances.availableParsed) <
         INSUFFICIENT_BALANCE_LIMIT ? (
         <div className="insufficient-balance-warning d-flex gap-3 p-3 rounded-3 m-3">
           <i class="bi bi-exclamation-octagon error-icon h4 mb-0"></i>
