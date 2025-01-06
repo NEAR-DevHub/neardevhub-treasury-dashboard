@@ -264,17 +264,22 @@ const SubmitToast = () => {
             ></i>
           </div>
           <div className="toast-body">
-            <div>Threshold change request submitted.</div>
-            <a
-              href={href({
-                widgetSrc: `${instance}/widget/app`,
-                params: {
-                  page: "settings",
-                },
-              })}
-            >
-              View it
-            </a>
+            <div className="d-flex align-items-center gap-3">
+              <i class="bi bi-check2 h3 mb-0 success-icon"></i>
+              <div>
+                <div>Threshold change request submitted.</div>
+                <a
+                  href={href({
+                    widgetSrc: `${instance}/widget/app`,
+                    params: {
+                      page: "settings",
+                    },
+                  })}
+                >
+                  View it
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       </div>
