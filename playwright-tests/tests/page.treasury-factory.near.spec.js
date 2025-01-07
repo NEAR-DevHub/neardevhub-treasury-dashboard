@@ -23,9 +23,49 @@ test.describe("admin connected", function () {
     const accName = Math.random().toString(36).slice(2, 7);
 
     const setupSandboxTxnProcessing = async () => {
-      // const sandbox = new SandboxRPC();
-      // await sandbox.init();
-      // await sandbox.attachRoutes(page);
+      const widget_reference_account_id = 'treasury-testing.near';
+      const sandbox = new SandboxRPC();
+
+      await sandbox.init();
+      await sandbox.attachRoutes(page);
+      await sandbox.setupWidgetReferenceAccount(widget_reference_account_id);
+
+      const transactionToSendPromise = page.evaluate(async () => {
+        const selector = await document.querySelector("near-social-viewer")
+          .selectorPromise;
+
+        const wallet = await selector.wallet();
+
+        return new Promise((resolve) => {
+          wallet.signAndSendTransactions = async (transactions) => {
+            resolve(transactions.transactions[0]);
+            return await new Promise(
+              (transactionSentPromiseResolve) =>
+                (window.transactionSentPromiseResolve =
+                  transactionSentPromiseResolve)
+            );
+          };
+        });
+      });
+
+      await page.getByRole("button", { name: "Confirm" }).click();
+
+      const transactionToSend = await transactionToSendPromise;
+
+      const createInstanceResult = await sandbox.account.functionCall({
+        contractId: "treasury-factory.near",
+        methodName: 'create_instance', 
+        args: transactionToSend.actions[0].params.args,
+        attachedDeposit: transactionToSend.actions[0].params.deposit,
+      });
+
+      expect(
+        createInstanceResult.receipts_outcome.filter(receipt_outcome => receipt_outcome.outcome.status.Failure).length
+      ).toBe(0);
+
+      await page.evaluate((transactionResult) => {
+        window.transactionSentPromiseResolve(transactionResult);
+      }, transactionResult);
     };
 
     // innitial step
@@ -72,7 +112,6 @@ test.describe("admin connected", function () {
     await expect(
       await page.locator(".modal-title h4", { hasText: "Confirm Transaction" })
     ).toBeVisible();
-    await page.locator("button", { hasText: "Confirm" }).click();
 
     await setupSandboxTxnProcessing();
   });
