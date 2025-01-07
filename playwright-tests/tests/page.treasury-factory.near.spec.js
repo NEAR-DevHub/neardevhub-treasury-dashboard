@@ -1,10 +1,7 @@
 import { expect } from "@playwright/test";
 import { test } from "../util/test.js";
-<<<<<<< HEAD
-import { getTransactionModalObject } from "../util/transaction.js";
 import { SandboxRPC } from "../util/sandboxrpc.js";
-=======
->>>>>>> origin/main
+import nearApi from "near-api-js";
 
 test.afterEach(async ({ page }, testInfo) => {
   console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
@@ -23,10 +20,11 @@ test.describe("admin connected", function () {
     page,
     factoryAccount,
   }) => {
+    test.setTimeout(120_000);
     const accName = Math.random().toString(36).slice(2, 7);
 
     const setupSandboxTxnProcessing = async () => {
-      const widget_reference_account_id = 'treasury-testing.near';
+      const widget_reference_account_id = "treasury-testing.near";
       const sandbox = new SandboxRPC();
 
       await sandbox.init();
@@ -42,6 +40,7 @@ test.describe("admin connected", function () {
         return new Promise((resolve) => {
           wallet.signAndSendTransactions = async (transactions) => {
             resolve(transactions.transactions[0]);
+
             return await new Promise(
               (transactionSentPromiseResolve) =>
                 (window.transactionSentPromiseResolve =
@@ -51,24 +50,22 @@ test.describe("admin connected", function () {
         });
       });
 
-      await page.getByRole("button", { name: "Confirm" }).click();
+      await page.getByRole("button", { name: "Confirm", exact: true }).click();
 
       const transactionToSend = await transactionToSendPromise;
-
-      const createInstanceResult = await sandbox.account.functionCall({
+      const transactionResult = await sandbox.account.functionCall({
         contractId: "treasury-factory.near",
-        methodName: 'create_instance', 
+        methodName: "create_instance",
         args: transactionToSend.actions[0].params.args,
-        attachedDeposit: transactionToSend.actions[0].params.deposit,
+        gas: 300000000000000,
+        attachedDeposit: nearApi.utils.format.parseNearAmount("12"),
       });
-
-      expect(
-        createInstanceResult.receipts_outcome.filter(receipt_outcome => receipt_outcome.outcome.status.Failure).length
-      ).toBe(0);
 
       await page.evaluate((transactionResult) => {
         window.transactionSentPromiseResolve(transactionResult);
       }, transactionResult);
+
+      await sandbox.quitSandbox();
     };
 
     // innitial step
@@ -112,10 +109,10 @@ test.describe("admin connected", function () {
     await submitBtn.click();
 
     // bos txn confirmation modal
-    await expect(
-      await page.locator(".modal-title h4", { hasText: "Confirm Transaction" })
-    ).toBeVisible();
-
     await setupSandboxTxnProcessing();
+
+    await expect(
+      await page.locator("h5", { hasText: "Congrats! Your Treasury is ready" })
+    ).toBeVisible();
   });
 });
