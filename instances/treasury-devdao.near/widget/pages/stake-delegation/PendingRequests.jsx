@@ -64,7 +64,9 @@ useEffect(() => {
   fetchProposals();
 }, [refreshTableData]);
 
-const policy = Near.view(treasuryDaoID, "get_policy", {});
+const policy = treasuryDaoID
+  ? Near.view(treasuryDaoID, "get_policy", {})
+  : null;
 
 const functionCallApproversGroup = getApproversAndThreshold(
   treasuryDaoID,

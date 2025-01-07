@@ -16,7 +16,10 @@ const isOpen = props.isOpen;
 const onCancelClick = props.onCancelClick;
 const username = props.username;
 const setToastStatus = props.setToastStatus || (() => {});
-const daoPolicy = Near.view(treasuryDaoID, "get_policy", {});
+const daoPolicy = treasuryDaoID
+  ? Near.view(treasuryDaoID, "get_policy", {})
+  : null;
+
 const deposit = daoPolicy?.proposal_bond || 100000000000000000000000;
 const rolesMap = props.rolesMap;
 const onConfirm = props.onConfirmClick ?? (() => {});

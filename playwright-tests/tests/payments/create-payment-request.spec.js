@@ -25,6 +25,7 @@ async function clickCreatePaymentRequestButton(page) {
     name: "Create Request",
   });
   await expect(createPaymentRequestButton).toBeVisible({ timeout: 20_000 });
+  await page.waitForTimeout(1_000);
   await createPaymentRequestButton.click();
   return createPaymentRequestButton;
 }

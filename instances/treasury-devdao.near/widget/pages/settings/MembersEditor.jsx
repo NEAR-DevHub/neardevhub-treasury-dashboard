@@ -26,7 +26,10 @@ const [showCancelModal, setShowCancelModal] = useState(false);
 const [memberAlreadyExists, setMemberAlreadyExists] = useState(false);
 const [showErrorToast, setShowErrorToast] = useState(false);
 
-const daoPolicy = Near.view(treasuryDaoID, "get_policy", {});
+const daoPolicy = treasuryDaoID
+  ? Near.view(treasuryDaoID, "get_policy", {})
+  : null;
+
 const deposit = daoPolicy?.proposal_bond || 100000000000000000000000;
 
 useEffect(() => {

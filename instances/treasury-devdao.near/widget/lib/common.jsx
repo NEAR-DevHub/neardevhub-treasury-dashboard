@@ -1,5 +1,7 @@
 function getApproversAndThreshold(treasuryDaoID, kind, isDeleteCheck) {
-  const daoPolicy = Near.view(treasuryDaoID, "get_policy", {});
+  const daoPolicy = treasuryDaoID
+    ? Near.view(treasuryDaoID, "get_policy", {})
+    : null;
   const groupWithPermission = (daoPolicy.roles ?? []).filter((role) => {
     const permissions = isDeleteCheck
       ? ["*:*", `${kind}:*`, `${kind}:VoteRemove`, "*:VoteRemove"]
@@ -84,7 +86,10 @@ function getRoleWiseData(treasuryDaoID) {
 }
 
 function getPolicyApproverGroup(treasuryDaoID) {
-  const daoPolicy = Near.view(treasuryDaoID, "get_policy", {});
+  const daoPolicy = treasuryDaoID
+    ? Near.view(treasuryDaoID, "get_policy", {})
+    : null;
+
   const groupWithPermission = (daoPolicy.roles ?? []).filter((role) => {
     const policyPermissions = [
       "*:*",
@@ -359,7 +364,10 @@ function getMembersAndPermissions(treasuryDaoID) {
 }
 
 function getDaoRoles(treasuryDaoID) {
-  const daoPolicy = Near.view(treasuryDaoID, "get_policy", {});
+  const daoPolicy = treasuryDaoID
+    ? Near.view(treasuryDaoID, "get_policy", {})
+    : null;
+
   if (Array.isArray(daoPolicy.roles)) {
     return daoPolicy.roles.map((role) => role.name);
   }
@@ -372,7 +380,10 @@ function hasPermission(treasuryDaoID, accountId, kindName, actionType) {
     return false;
   }
   const isAllowed = false;
-  const daoPolicy = Near.view(treasuryDaoID, "get_policy", {});
+  const daoPolicy = treasuryDaoID
+    ? Near.view(treasuryDaoID, "get_policy", {})
+    : null;
+
   if (Array.isArray(daoPolicy.roles)) {
     const permissions = daoPolicy.roles.map((role) => {
       if (

@@ -16,14 +16,14 @@ function formatNearAmount(amount) {
 
 const { ActionButton, checkForDeposit, treasuryDaoID, callbackAction } = props;
 
+if (!context.accountId || !treasuryDaoID) {
+  return <></>;
+}
 const nearBalances = getNearBalances(context.accountId);
 const profile = Social.getr(`${context.accountId}/profile`);
 const name = profile.name ?? context.accountId;
-const daoPolicy = useCache(
-  () => Near.asyncView(treasuryDaoID, "get_policy"),
-  "get_policy",
-  { subscribe: false }
-);
+
+const daoPolicy = Near.view(treasuryDaoID, "get_policy");
 
 const [showModal, setShowModal] = useState(false);
 const ADDITIONAL_AMOUNT = checkForDeposit
@@ -41,7 +41,7 @@ function checkBalance() {
 }
 
 const WarningModal = () => (
-  <Modal sty>
+  <Modal>
     <ModalHeader>
       <div className="d-flex align-items-center justify-content-between mb-2">
         <div className="d-flex gap-3">

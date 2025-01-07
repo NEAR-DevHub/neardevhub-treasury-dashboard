@@ -45,7 +45,9 @@ useEffect(() => {
   fetchProposals();
 }, [currentPage, rowsPerPage]);
 
-const policy = Near.view(treasuryDaoID, "get_policy", {});
+const policy = treasuryDaoID
+  ? Near.view(treasuryDaoID, "get_policy", {})
+  : null;
 
 const transferApproversGroup = getApproversAndThreshold(
   treasuryDaoID,

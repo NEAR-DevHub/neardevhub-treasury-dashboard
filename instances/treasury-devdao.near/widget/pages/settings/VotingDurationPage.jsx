@@ -22,7 +22,10 @@ const { Modal, ModalContent, ModalHeader, ModalFooter } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.modal"
 );
 
-const daoPolicy = Near.view(treasuryDaoID, "get_policy", {});
+const daoPolicy = treasuryDaoID
+  ? Near.view(treasuryDaoID, "get_policy", {})
+  : null;
+
 const lastProposalId = Near.view(treasuryDaoID, "get_last_proposal_id");
 
 const hasCreatePermission = hasPermission(

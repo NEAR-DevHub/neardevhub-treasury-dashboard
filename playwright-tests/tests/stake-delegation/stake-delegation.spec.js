@@ -406,7 +406,13 @@ test.describe("Have valid staked requests and sufficient token balance", functio
       console.log("no stake delegation page configured for instance");
       return test.skip();
     }
-    await mockStakeProposals({ page });
+    if (
+      testInfo.title.includes("Should successfully parse old JSON description")
+    ) {
+      await mockOldJSONStakeProposals({ page });
+    } else {
+      await mockStakeProposals({ page });
+    }
     await updateDaoPolicyMembers({ page });
     await mockStakedPools({ page, daoAccount });
     if (testInfo.title.includes("insufficient account balance")) {
@@ -447,8 +453,6 @@ test.describe("Have valid staked requests and sufficient token balance", functio
 
     test("Should successfully parse old JSON description", async ({ page }) => {
       test.setTimeout(80_000);
-      await mockOldJSONStakeProposals({ page });
-
       await expect(
         page.getByRole("cell", { name: "this is notes", exact: true })
       ).toBeVisible({ timeout: 40_000 });
