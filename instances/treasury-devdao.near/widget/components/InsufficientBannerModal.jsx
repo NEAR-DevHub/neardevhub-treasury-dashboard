@@ -22,6 +22,10 @@ const {
   disabled,
 } = props;
 
+if (typeof getNearBalances !== "function") {
+  return <></>;
+}
+
 const nearBalances = getNearBalances(context.accountId);
 const profile = Social.getr(`${context.accountId}/profile`);
 const name = profile.name ?? context.accountId;

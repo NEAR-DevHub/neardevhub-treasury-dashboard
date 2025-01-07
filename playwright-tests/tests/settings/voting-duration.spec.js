@@ -51,6 +51,7 @@ test.describe("User is logged in", function () {
     instanceAccount,
   }) => {
     test.setTimeout(60_000);
+    await updateDaoPolicyMembers({ page });
     await mockNearBalances({
       page,
       accountId: "theori.near",
