@@ -38,7 +38,8 @@ async function checkVotingDropdownChange({ page }) {
     )
   ).toBeVisible();
   await expect(page.getByText("Enter Percentage")).toBeVisible();
-  await page.getByRole("list").getByText("Number of votes").click();
+  await page.getByTestId("dropdown-btn").click();
+  await page.getByText("Number of votes").click();
   await expect(
     page.getByText(
       "A fixed number of votes is required for a decision to pass."

@@ -498,6 +498,11 @@ return (
                 />
               ),
               checkForDeposit: true,
+              disabled:
+                durationDays === currentDurationDays ||
+                showLoader ||
+                !hasCreatePermission ||
+                isSubmittingChangeRequest,
               treasuryDaoID,
               callbackAction: submitChangeRequest,
             }}

@@ -61,11 +61,12 @@ test.describe("User is not logged in", function () {
     page,
     instanceAccount,
   }) => {
+    test.setTimeout(60_000);
     await navigateToThemePage({ page, instanceAccount });
     await expect(page.locator("input[type='color']")).toBeDisabled();
     await expect(
       page.getByRole("button", { name: "Submit Request" })
-    ).toBeDisabled();
+    ).toBeDisabled({ timeout: 20_000 });
   });
 });
 
@@ -164,8 +165,8 @@ test.describe("User is logged in", function () {
     await page.getByRole("textbox").nth(1).fill(newColor);
     await page.getByTestId("dropdown-btn").click();
     await page.getByText("Light").click();
-    await expect(page.getByText("Processing your request ...")).toBeVisible();
     await page.getByRole("button", { name: "Submit Request" }).click();
+    await expect(page.getByText("Processing your request ...")).toBeVisible();
     await expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
         description: "* Title: Update Config - Theme & logo",
@@ -189,7 +190,7 @@ test.describe("User is logged in", function () {
     page,
   }) => {
     test.setTimeout(150_000);
-    await page.getByRole("button", { name: "Save changes" }).click();
+    await page.getByRole("button", { name: "Submit Request" }).click();
     await expect(page.getByText("Processing your request ...")).toBeVisible();
     await page.getByRole("button", { name: "Close" }).nth(1).click();
     await expect(

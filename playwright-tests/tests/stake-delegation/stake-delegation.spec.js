@@ -726,9 +726,6 @@ test.describe("Withdraw request", function () {
     await expect(page.getByText(stakedPoolAccount)).toBeVisible({
       timeout: 10_000,
     });
-    const submitBtn = page.getByRole("button", { name: "Submit" });
-    await expect(submitBtn).toBeEnabled();
-    await submitBtn.click();
     await expect(
       page.getByText(
         "By submitting, you request to withdraw all available funds. A separate withdrawal request will be created for each validator"
@@ -736,6 +733,9 @@ test.describe("Withdraw request", function () {
     ).toBeVisible({
       timeout: 10_000,
     });
+    const submitBtn = page.getByRole("button", { name: "Submit" });
+    await expect(submitBtn).toBeEnabled();
+    await submitBtn.click();
     await expect(page.getByText("Processing your request ...")).toBeVisible();
     // proposals for both the pools
     await expect(await getTransactionModalObject(page)).toEqual({

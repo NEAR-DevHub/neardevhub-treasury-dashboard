@@ -246,6 +246,7 @@ return (
                   ),
                   checkForDeposit: false,
                   treasuryDaoID,
+                  disabled: isTxnCreated,
                   callbackAction: () => {
                     if (isInsufficientBalance) {
                       setShowWarning(true);
@@ -272,6 +273,7 @@ return (
                       }}
                     />
                   ),
+                  disabled: isTxnCreated,
                   checkForDeposit: false,
                   treasuryDaoID,
                   callbackAction: () => {
@@ -302,6 +304,7 @@ return (
               ),
               checkForDeposit: false,
               treasuryDaoID,
+              disabled: isTxnCreated,
               callbackAction: () => {
                 setVote(actions.REMOVE);
                 setConfirmModal(true);

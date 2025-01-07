@@ -499,6 +499,11 @@ return (
                       />
                     ),
                     checkForDeposit: true,
+                    disabled:
+                      !selectedVoteValue ||
+                      valueError ||
+                      !hasCreatePermission ||
+                      isTxnCreated,
                     treasuryDaoID,
                     callbackAction: () => {
                       setConfirmModal(true);

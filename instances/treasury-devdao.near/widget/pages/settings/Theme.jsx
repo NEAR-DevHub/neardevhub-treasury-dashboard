@@ -460,6 +460,7 @@ return (
                 ),
                 checkForDeposit: true,
                 treasuryDaoID,
+                disabled: !hasCreatePermission || error || isTxnCreated,
                 callbackAction: onSubmitClick,
               }}
             />

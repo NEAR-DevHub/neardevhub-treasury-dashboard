@@ -14,16 +14,19 @@ function formatNearAmount(amount) {
   );
 }
 
-const { ActionButton, checkForDeposit, treasuryDaoID, callbackAction } = props;
+const {
+  ActionButton,
+  checkForDeposit,
+  treasuryDaoID,
+  callbackAction,
+  disabled,
+} = props;
 
-if (!context.accountId || !treasuryDaoID) {
-  return <></>;
-}
 const nearBalances = getNearBalances(context.accountId);
 const profile = Social.getr(`${context.accountId}/profile`);
 const name = profile.name ?? context.accountId;
 
-const daoPolicy = Near.view(treasuryDaoID, "get_policy");
+const daoPolicy = treasuryDaoID ? Near.view(treasuryDaoID, "get_policy") : null;
 
 const [showModal, setShowModal] = useState(false);
 const ADDITIONAL_AMOUNT = checkForDeposit
@@ -33,6 +36,9 @@ const ADDITIONAL_AMOUNT = checkForDeposit
 const INSUFFICIENT_BALANCE_LIMIT = ADDITIONAL_AMOUNT + 0.1; // 0.1N
 
 function checkBalance() {
+  if (disabled || !context.accountId) {
+    return;
+  }
   if (parseFloat(nearBalances?.availableParsed) < INSUFFICIENT_BALANCE_LIMIT) {
     setShowModal(true);
   } else {
