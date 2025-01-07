@@ -96,7 +96,12 @@ function Page() {
 
 return (
   <Theme>
-    <AppLayout page={page} instance={instance} treasuryDaoID={treasuryDaoID}>
+    <AppLayout
+      page={page}
+      instance={instance}
+      treasuryDaoID={treasuryDaoID}
+      accountId={context.accountId}
+    >
       <Page />
     </AppLayout>
   </Theme>

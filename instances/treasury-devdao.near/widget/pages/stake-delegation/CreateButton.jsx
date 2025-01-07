@@ -52,6 +52,10 @@ function toggleWithdrawPage() {
   setShowWithdrawRequest((prev) => !prev);
 }
 
+const toggleDropdown = () => {
+  setCreateBtnOpen((prev) => !prev);
+};
+
 const CreateBtn = () => {
   const btnOptions = [
     {
@@ -84,10 +88,6 @@ const CreateBtn = () => {
       },
     },
   ];
-
-  const toggleDropdown = () => {
-    setCreateBtnOpen((prev) => !prev);
-  };
 
   const DropdowntBtnContainer = styled.div`
     font-size: 13px;
@@ -129,7 +129,7 @@ const CreateBtn = () => {
         display: block;
         opacity: 1;
         transform: translateY(0);
-        z-index:9999;
+        z-index:1000;
       }
     }
   
@@ -199,14 +199,12 @@ const CreateBtn = () => {
           <div
             className="d-flex gap-2 align-items-center text-lg mb-0 fw-semi-bold"
             style={{ padding: "0.8rem" }}
-            onClick={toggleDropdown}
           >
             <i class="bi bi-plus-lg h5 mb-0"></i>Create Request
           </div>
           <div
             className="h-100 d-flex"
             style={{ borderLeft: "1px solid white" }}
-            onClick={toggleDropdown}
           >
             <i
               class={`p-2 bi bi-chevron-${isCreateBtnOpen ? "up" : "down"}`}
@@ -289,7 +287,17 @@ return (
       className="d-flex gap-2 align-items-center"
       style={{ paddingBottom: "7px" }}
     >
-      {hasCreatePermission && <CreateBtn />}
+      {hasCreatePermission && (
+        <Widget
+          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
+          props={{
+            ActionButton: CreateBtn,
+            checkForDeposit: true,
+            treasuryDaoID,
+            callbackAction: toggleDropdown,
+          }}
+        />
+      )}
       <Widget
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.SettingsDropdown`}
         props={{ isPendingPage: currentTab.title === "Pending Requests" }}

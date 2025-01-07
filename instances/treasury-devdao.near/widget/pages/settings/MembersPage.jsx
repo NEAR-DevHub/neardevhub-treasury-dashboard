@@ -224,20 +224,34 @@ const Members = () => {
             {hasCreatePermission && (
               <td className="text-right">
                 <div className="d-flex align-items-center gap-2 justify-content-end">
-                  <i
-                    class="bi bi-pencil-square h4 mb-0 cursor-pointer"
-                    onClick={() => {
-                      setSelectedMember(group);
-                      setShowEditor(true);
+                  <Widget
+                    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
+                    props={{
+                      ActionButton: () => (
+                        <i class="bi bi-pencil-square h4 mb-0 cursor-pointer"></i>
+                      ),
+                      checkForDeposit: true,
+                      treasuryDaoID,
+                      callbackAction: () => {
+                        setSelectedMember(group);
+                        setShowEditor(true);
+                      },
                     }}
-                  ></i>
-                  <i
-                    class="bi bi-trash3 h4 mb-0 text-delete cursor-pointer"
-                    onClick={() => {
-                      setSelectedMember(group);
-                      setShowDeleteModal(true);
+                  />
+                  <Widget
+                    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
+                    props={{
+                      ActionButton: () => (
+                        <i class="bi bi-trash3 h4 mb-0 text-delete cursor-pointer"></i>
+                      ),
+                      checkForDeposit: true,
+                      treasuryDaoID,
+                      callbackAction: () => {
+                        setSelectedMember(group);
+                        setShowDeleteModal(true);
+                      },
                     }}
-                  ></i>
+                  />
                 </div>
               </td>
             )}
@@ -310,12 +324,21 @@ return (
       <div className="d-flex justify-content-between gap-2 align-items-center border-bottom px-2">
         <div className="card-title px-3 mb-0">All Members</div>
         {hasCreatePermission && (
-          <button
-            className="primary py-1 px-3 rounded-2 h6 fw-bold d-flex align-items-center gap-2 "
-            onClick={() => setShowEditor(true)}
-          >
-            <i class="bi bi-plus-lg h5 mb-0"></i>New Member
-          </button>
+          <Widget
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
+            props={{
+              ActionButton: () => (
+                <button className="primary py-1 px-3 rounded-2 h6 fw-bold d-flex align-items-center gap-2 ">
+                  <i class="bi bi-plus-lg h5 mb-0"></i>New Member
+                </button>
+              ),
+              checkForDeposit: true,
+              treasuryDaoID,
+              callbackAction: () => {
+                setShowEditor(true);
+              },
+            }}
+          />
         )}
       </div>
       {loading ? (

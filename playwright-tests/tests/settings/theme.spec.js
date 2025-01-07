@@ -1,9 +1,14 @@
 import { expect } from "@playwright/test";
 import { test } from "../../util/test.js";
 import { getTransactionModalObject } from "../../util/transaction.js";
-import { mockRpcRequest, updateDaoPolicyMembers } from "../../util/rpcmock.js";
+import {
+  mockRpcRequest,
+  updateDaoPolicyMembers,
+  mockNearBalances,
+} from "../../util/rpcmock.js";
 import path from "path";
 import { fileURLToPath } from "url";
+import { InsufficientBalance } from "../../util/lib.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -59,7 +64,7 @@ test.describe("User is not logged in", function () {
     await navigateToThemePage({ page, instanceAccount });
     await expect(page.locator("input[type='color']")).toBeDisabled();
     await expect(
-      page.getByRole("button", { name: "Save changes" })
+      page.getByRole("button", { name: "Submit Request" })
     ).toBeDisabled();
   });
 });
@@ -69,8 +74,37 @@ test.describe("User is logged in", function () {
     storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
   });
 
-  test.beforeEach(async ({ page, instanceAccount }) => {
+  test.beforeEach(async ({ page, instanceAccount }, testInfo) => {
+    if (testInfo.title.includes("insufficient account balance")) {
+      await mockNearBalances({
+        page,
+        accountId: "theori.near",
+        balance: InsufficientBalance,
+        storage: 8,
+      });
+    }
     await navigateToThemePage({ page, instanceAccount });
+  });
+
+  test("insufficient account balance should show warning modal, disallow action ", async ({
+    page,
+  }) => {
+    test.setTimeout(60_000);
+    await expect(
+      page.getByText(
+        "Hey Ori, you don't have enough NEAR to complete actions on your treasury."
+      )
+    ).toBeVisible();
+    await page
+      .getByText("Submit Request", {
+        exact: true,
+      })
+      .click();
+    await expect(
+      page
+        .getByText("Please add more funds to your account and try again")
+        .nth(1)
+    ).toBeVisible();
   });
 
   test("should be able to upload image, should show error with incorrect width and allow correct one", async ({
@@ -91,7 +125,9 @@ test.describe("User is logged in", function () {
     const logoInput = await page
       .frameLocator("iframe")
       .locator("input[type=file]");
-    const submitBtn = await page.getByRole("button", { name: "Save changes" });
+    const submitBtn = await page.getByRole("button", {
+      name: "Submit Request",
+    });
     // invalid image
     await logoInput.setInputFiles(path.join(__dirname, "./assets/invalid.png"));
     await expect(
@@ -128,9 +164,8 @@ test.describe("User is logged in", function () {
     await page.getByRole("textbox").nth(1).fill(newColor);
     await page.getByTestId("dropdown-btn").click();
     await page.getByText("Light").click();
-    await page.getByRole("button", { name: "Save changes" }).click();
     await expect(page.getByText("Processing your request ...")).toBeVisible();
-
+    await page.getByRole("button", { name: "Submit Request" }).click();
     await expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
         description: "* Title: Update Config - Theme & logo",

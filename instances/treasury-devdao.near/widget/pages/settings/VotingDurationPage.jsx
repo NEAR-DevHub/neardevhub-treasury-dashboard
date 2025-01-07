@@ -475,18 +475,28 @@ return (
             }}
           />
           <Widget
-            src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
             props={{
-              classNames: { root: "theme-btn" },
-              label: "Submit Request",
-              loading: showLoader,
-              disabled:
-                parseFloat(durationDays ? durationDays : 0) ===
-                  currentDurationDays ||
-                showLoader ||
-                !hasCreatePermission ||
-                isSubmittingChangeRequest,
-              onClick: submitChangeRequest,
+              ActionButton: () => (
+                <Widget
+                  src={
+                    "${REPL_DEVHUB}/widget/devhub.components.molecule.Button"
+                  }
+                  props={{
+                    classNames: { root: "theme-btn" },
+                    label: "Submit Request",
+                    loading: showLoader || isSubmittingChangeRequest,
+                    disabled:
+                      durationDays === currentDurationDays ||
+                      showLoader ||
+                      !hasCreatePermission ||
+                      isSubmittingChangeRequest,
+                  }}
+                />
+              ),
+              checkForDeposit: true,
+              treasuryDaoID,
+              callbackAction: submitChangeRequest,
             }}
           />
         </div>

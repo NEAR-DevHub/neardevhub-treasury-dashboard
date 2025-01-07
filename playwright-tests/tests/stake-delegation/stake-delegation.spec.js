@@ -6,7 +6,11 @@ import {
   mockTransactionSubmitRPCResponses,
 } from "../../util/transaction";
 import { utils } from "near-api-js";
-import { mockRpcRequest, updateDaoPolicyMembers } from "../../util/rpcmock.js";
+import {
+  mockNearBalances,
+  mockRpcRequest,
+  updateDaoPolicyMembers,
+} from "../../util/rpcmock.js";
 import {
   CurrentTimestampInNanoseconds,
   OldJsonProposalData,
@@ -16,6 +20,7 @@ import {
 } from "../../util/inventory.js";
 import { setDontAskAgainCacheValues } from "../../util/cache.js";
 import Big from "big.js";
+import { InsufficientBalance } from "../../util/lib.js";
 
 test.afterEach(async ({ page }, testInfo) => {
   console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
@@ -158,27 +163,6 @@ async function mockStakedPoolBalances({ page }) {
       await route.continue();
     }
   });
-}
-
-async function mockNearBalances({ page, daoAccount, balance }) {
-  await page.route(
-    `https://api.fastnear.com/v1/account/${daoAccount}/full`,
-    async (route) => {
-      const json = {
-        account_id: daoAccount,
-        nfts: [],
-        pools: [],
-        state: {
-          balance: balance,
-          locked: "0",
-          storage_bytes: 677278,
-        },
-        tokens: [],
-      };
-
-      await route.fulfill({ json });
-    }
-  );
 }
 
 export async function mockStakedPools({
@@ -412,7 +396,7 @@ async function voteOnProposal({
 }
 
 test.describe("Have valid staked requests and sufficient token balance", function () {
-  test.beforeEach(async ({ page, instanceAccount, daoAccount }) => {
+  test.beforeEach(async ({ page, instanceAccount, daoAccount }, testInfo) => {
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
     if (
       !instanceConfig.navbarLinks.find(
@@ -425,17 +409,28 @@ test.describe("Have valid staked requests and sufficient token balance", functio
     await mockStakeProposals({ page });
     await updateDaoPolicyMembers({ page });
     await mockStakedPools({ page, daoAccount });
-    await mockNearBalances({
-      page,
-      daoAccount,
-      balance: sufficientAvailableBalance,
-    });
+    if (testInfo.title.includes("insufficient account balance")) {
+      await mockNearBalances({
+        page,
+        accountId: "theori.near",
+        balance: InsufficientBalance,
+        storage: 8,
+      });
+    } else {
+      await mockNearBalances({
+        page,
+        accountId: daoAccount,
+        balance: sufficientAvailableBalance,
+        storage: 2323,
+      });
+    }
     await mockStakedPoolBalances({ page });
 
     await page.goto(`/${instanceAccount}/widget/app?page=stake-delegation`);
     await expect(
       await page.locator("div").filter({ hasText: /^Stake Delegation$/ })
     ).toBeVisible();
+    await page.waitForTimeout(5_000);
   });
 
   test.describe("User not logged in", function () {
@@ -478,6 +473,28 @@ test.describe("Have valid staked requests and sufficient token balance", functio
           return originalResult;
         },
       });
+    });
+
+    test("insufficient account balance should show warning modal, disallow action ", async ({
+      page,
+    }) => {
+      test.setTimeout(60_000);
+
+      await expect(
+        page.getByText(
+          "Hey Ori, you don't have enough NEAR to complete actions on your treasury."
+        )
+      ).toBeVisible();
+      await page
+        .getByText("Create Request", {
+          exact: true,
+        })
+        .click();
+      await expect(
+        page
+          .getByText("Please add more funds to your account and try again")
+          .nth(1)
+      ).toBeVisible();
     });
 
     test("Should create stake delegation request, should throw error when invalid data is provided", async ({
@@ -842,9 +859,11 @@ test.describe("Lockup staking", function () {
     await updateDaoPolicyMembers({ page });
     await mockNearBalances({
       page,
-      daoAccount,
+      accountId: daoAccount,
       balance: sufficientAvailableBalance,
+      storage: 2323,
     });
+
     await mockLockupNearBalances({
       page,
       balance: sufficientAvailableBalance,
@@ -1317,9 +1336,11 @@ test.describe("Insufficient balance ", function () {
     await mockStakedPoolBalances({ page });
     await mockNearBalances({
       page,
-      daoAccount,
+      accountId: daoAccount,
       balance: inSufficientAvailableBalance,
+      storage: 2323,
     });
+
     await page.goto(`/${instanceAccount}/widget/app?page=stake-delegation`);
     await expect(
       await page.locator("div").filter({ hasText: /^Stake Delegation$/ })

@@ -95,7 +95,7 @@ const NoButton = styled.button`
 
 const ModalHeader = ({ children }) => (
   <ModalHeaderDiv>
-    <h5 className="mb-0">{children}</h5>
+    <h5 className="mb-0 w-100">{children}</h5>
   </ModalHeaderDiv>
 );
 

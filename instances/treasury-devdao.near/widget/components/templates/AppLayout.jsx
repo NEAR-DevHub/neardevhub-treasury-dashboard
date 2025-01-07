@@ -1,3 +1,7 @@
+const { BalanceBanner } = VM.require(
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.BalanceBanner`
+) || { BalanceBanner: () => <></> };
+
 const AppHeader = ({ page, instance }) => (
   <Widget
     src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Navbar"
@@ -8,7 +12,7 @@ const AppHeader = ({ page, instance }) => (
   />
 );
 
-function AppLayout({ page, instance, children, treasuryDaoID }) {
+function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
   const config = treasuryDaoID
     ? useCache(
         () => Near.asyncView(treasuryDaoID, "get_config"),
@@ -379,6 +383,10 @@ function AppLayout({ page, instance, children, treasuryDaoID }) {
     .warning-icon {
       color: var(--other-warning) !important;
     }
+
+    .error-icon {
+      color: var(--other-red) !important;
+    }
   `;
 
   return !config ? (
@@ -387,6 +395,7 @@ function AppLayout({ page, instance, children, treasuryDaoID }) {
     <ParentContainer data-bs-theme={isDarkTheme ? "dark" : "light"}>
       <Theme className="h-100 w-100">
         <AppHeader page={page} instance={instance} />
+        <BalanceBanner accountId={accountId} treasuryDaoID={treasuryDaoID} />
         <div className="px-3 py-2 w-100 h-100">{children}</div>
       </Theme>
     </ParentContainer>
