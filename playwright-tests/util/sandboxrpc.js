@@ -2,6 +2,8 @@ import { exec } from "child_process";
 import { connect, utils, keyStores } from "near-api-js";
 import { MOCK_RPC_URL } from "./rpcmock.js";
 import { parseNearAmount } from "near-api-js/lib/utils/format.js";
+import { KeyPairEd25519 } from "near-api-js/lib/utils/key_pair.js";
+import { getLocalWidgetSource } from "./bos-workspace.js";
 
 export const SPUTNIK_DAO_CONTRACT_ID = "sputnik-dao.near";
 export const PROPOSAL_BOND = "100000000000000000000000";
@@ -60,6 +62,46 @@ export class SandboxRPC {
       } else {
         await route.fallback();
       }
+    });
+  }
+
+  async setupWidgetReferenceAccount(reference_widget_account_id) {
+    const widgetReferenceAccountKeyPair = KeyPairEd25519.fromRandom();
+    await this.keyStore.setKey(
+      "sandbox",
+      reference_widget_account_id,
+      widgetReferenceAccountKeyPair
+    );
+
+    await this.account.functionCall({
+      contractId: "near",
+      methodName: "create_account",
+      args: {
+        new_account_id: reference_widget_account_id,
+        new_public_key: widgetReferenceAccountKeyPair.getPublicKey().toString(),
+      },
+      gas: 300000000000000,
+      attachedDeposit: parseNearAmount("2"),
+    });
+
+    const reference_widget_account = await this.near.account(
+      reference_widget_account_id
+    );
+    const data = {};
+    const localWidgetSources = await getLocalWidgetSource(
+      reference_widget_account_id + "/widget/**"
+    );
+
+    data[reference_widget_account_id] = {
+      widget: localWidgetSources[reference_widget_account_id].widget,
+    };
+    await reference_widget_account.functionCall({
+      contractId: "social.near",
+      methodName: "set",
+      args: {
+        data,
+      },
+      attachedDeposit: parseNearAmount("1"),
     });
   }
 

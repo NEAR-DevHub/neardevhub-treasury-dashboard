@@ -416,7 +416,11 @@ test.describe("admin connected", function () {
     ).toBeVisible();
     await expect(page.getByText(permission, { exact: true })).toBeVisible();
     await expect(page.getByPlaceholder("treasury.near")).toBeDisabled();
-    await page.locator("i").first().click();
+    await page
+      .getByText("Create Requests", { exact: true })
+      .locator(".bi")
+      .click();
+
     const submitBtn = page.getByRole("button", { name: "Submit" });
     await expect(submitBtn).toBeAttached({ timeout: 10_000 });
     await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });

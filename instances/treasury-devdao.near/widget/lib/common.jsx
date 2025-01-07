@@ -490,6 +490,22 @@ function formatSubmissionTimeStamp(submissionTime, proposalPeriod) {
   );
 }
 
+const TooltipText = {
+  available: "Spendable now. Use these tokens for payments or staking.",
+
+  staked:
+    "Earning rewards with validators. To spend these tokens, unstake them first. This takes 52-65 hours.",
+  pendingRelease:
+    "Unstaking tokens … These tokens are ready to withdraw 52 to 65 hours after unstaking.",
+  availableForWithdraw:
+    "Unstaked tokens. Withdraw these tokens to make them spendable.",
+  locked:
+    "This is your locked NEAR balance. Until it vests, staking is the only way to use it.",
+  reservedForStorage:
+    "Keeps your account active. This small amount of NEAR covers storage costs.",
+  readyToStake: "Available to stake. Earn rewards by staking these tokens",
+};
+
 return {
   getApproversAndThreshold,
   hasPermission,
@@ -506,4 +522,5 @@ return {
   decodeProposalDescription,
   LOCKUP_MIN_BALANCE_FOR_STORAGE,
   formatSubmissionTimeStamp,
+  TooltipText,
 };
