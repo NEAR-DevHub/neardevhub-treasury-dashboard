@@ -11,6 +11,7 @@ const { AppLayout } = VM.require(
 ) || { AppLayout: () => <></> };
 
 const instance = "${REPL_INSTANCE}";
+const treasuryDaoID = "${REPL_TREASURY}";
 
 const { Theme } = VM.require(`${instance}/widget/config.css`) || {
   Theme: () => <></>,
@@ -95,7 +96,12 @@ function Page() {
 
 return (
   <Theme>
-    <AppLayout page={page} instance={instance}>
+    <AppLayout
+      page={page}
+      instance={instance}
+      treasuryDaoID={treasuryDaoID}
+      accountId={context.accountId}
+    >
       <Page />
     </AppLayout>
   </Theme>

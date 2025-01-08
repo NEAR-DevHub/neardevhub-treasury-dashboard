@@ -5,7 +5,7 @@ import {
   getTransactionModalObject,
   mockTransactionSubmitRPCResponses,
 } from "../../util/transaction";
-import { updateDaoPolicyMembers } from "../../util/rpcmock";
+import { mockNearBalances, updateDaoPolicyMembers } from "../../util/rpcmock";
 import { getInstanceConfig } from "../../util/config.js";
 import {
   CurrentTimestampInNanoseconds,
@@ -18,12 +18,14 @@ import {
   focusInputClearAndBlur,
   focusInputReplaceAndBlur,
 } from "../../util/forms.js";
+import { InsufficientBalance } from "../../util/lib.js";
 
 async function clickCreatePaymentRequestButton(page) {
   const createPaymentRequestButton = await page.getByRole("button", {
     name: "Create Request",
   });
   await expect(createPaymentRequestButton).toBeVisible({ timeout: 20_000 });
+  await page.waitForTimeout(1_000);
   await createPaymentRequestButton.click();
   return createPaymentRequestButton;
 }
@@ -120,12 +122,77 @@ test.afterEach(async ({ page }, testInfo) => {
   await page.unrouteAll({ behavior: "ignoreErrors" });
 });
 
-test.describe("admin connected", function () {
+test.describe("User is not logged in", function () {
+  test("should not see 'Create Request' action", async ({
+    page,
+    instanceAccount,
+  }) => {
+    await page.goto(`/${instanceAccount}/widget/app?page=payments`);
+    await expect(page.getByText("Pending Requests")).toBeVisible();
+    await expect(
+      page.getByRole("button", {
+        name: "Create Request",
+      })
+    ).toBeHidden();
+  });
+});
+
+test.describe("User is logged in", function () {
+  const signedUser = "theori.near";
   test.use({
     contextOptions: {
       permissions: ["clipboard-read", "clipboard-write"],
     },
     storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
+  });
+
+  test("low account balance should show warning modal, and allow action ", async ({
+    page,
+    instanceAccount,
+  }) => {
+    test.setTimeout(60_000);
+    await mockNearBalances({
+      page,
+      accountId: signedUser,
+      balance: BigInt(0.6 * 10 ** 24).toString(),
+      storage: 8,
+    });
+    await page.goto(`/${instanceAccount}/widget/app?page=payments`);
+    await expect(
+      page.getByText(
+        "Please add more NEAR to your account soon to avoid any issues completing actions on your treasury"
+      )
+    ).toBeVisible();
+  });
+
+  test("insufficient account balance should show warning modal, disallow action ", async ({
+    page,
+    instanceAccount,
+  }) => {
+    test.setTimeout(60_000);
+    await updateDaoPolicyMembers({ page });
+    await mockNearBalances({
+      page,
+      accountId: signedUser,
+      balance: InsufficientBalance,
+      storage: 8,
+    });
+    await page.goto(`/${instanceAccount}/widget/app?page=payments`);
+    await expect(
+      page.getByText(
+        "Hey Ori, you don't have enough NEAR to complete actions on your treasury."
+      )
+    ).toBeVisible();
+    await page
+      .getByRole("button", {
+        name: "Create Request",
+      })
+      .click();
+    await expect(
+      page
+        .getByText("Please add more funds to your account and try again")
+        .nth(1)
+    ).toBeVisible();
   });
 
   test("different amount values should not throw any error", async ({
@@ -594,6 +661,7 @@ test.describe("admin with function access keys", function () {
       expectedTransactionModalObject
     );
 
+    await expect(page.getByText("Processing your request ...")).toBeVisible();
     let isTransactionCompleted = false;
     let retryCountAfterComplete = 0;
     let newProposalId;

@@ -2,17 +2,79 @@ import { expect } from "@playwright/test";
 import { test } from "../../util/test.js";
 import { getTransactionModalObject } from "../../util/transaction.js";
 import { SandboxRPC } from "../../util/sandboxrpc.js";
-import { mockRpcRequest } from "../../util/rpcmock.js";
-import { encodeToMarkdown } from "../../util/lib.js";
+import {
+  mockNearBalances,
+  mockRpcRequest,
+  updateDaoPolicyMembers,
+} from "../../util/rpcmock.js";
+import { InsufficientBalance, encodeToMarkdown } from "../../util/lib.js";
 
 test.afterEach(async ({ page }, testInfo) => {
   console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
   await page.unrouteAll({ behavior: "ignoreErrors" });
 });
 
-test.describe("admin connected", function () {
+async function navigateToVotingDurationPage({ page, instanceAccount }) {
+  await page.goto(`/${instanceAccount}/widget/app?page=settings`);
+  await page.waitForTimeout(5_000);
+  await page.getByText("Voting Duration").click();
+  await expect(
+    page.getByText("Set the number of days a vote is active.")
+  ).toBeVisible({
+    timeout: 10_000,
+  });
+}
+
+test.describe("User is not logged in", function () {
+  test("should not be able to change voting duration", async ({
+    page,
+    instanceAccount,
+  }) => {
+    await navigateToVotingDurationPage({ page, instanceAccount });
+    await expect(
+      page.getByPlaceholder("Enter voting duration days")
+    ).toBeDisabled();
+
+    await expect(
+      page.getByRole("button", { name: "Submit Request" })
+    ).toBeDisabled();
+  });
+});
+
+test.describe("User is logged in", function () {
   test.use({
     storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
+  });
+
+  test("insufficient account balance should show warning modal, disallow action ", async ({
+    page,
+    instanceAccount,
+  }) => {
+    test.setTimeout(60_000);
+    await updateDaoPolicyMembers({ page });
+    await mockNearBalances({
+      page,
+      accountId: "theori.near",
+      balance: InsufficientBalance,
+      storage: 8,
+    });
+    await navigateToVotingDurationPage({ page, instanceAccount });
+    await expect(
+      page.getByText(
+        "Hey Ori, you don't have enough NEAR to complete actions on your treasury."
+      )
+    ).toBeVisible();
+    await page.getByPlaceholder("Enter voting duration days").fill("2");
+    await page
+      .getByText("Submit Request", {
+        exact: true,
+      })
+      .click();
+    await expect(
+      page
+        .getByText("Please add more funds to your account and try again")
+        .nth(1)
+    ).toBeVisible();
   });
 
   test("should set voting duration", async ({
@@ -21,10 +83,8 @@ test.describe("admin connected", function () {
     daoAccount,
   }) => {
     test.setTimeout(150_000);
-    await page.goto(`/${instanceAccount}/widget/app?page=settings`);
-    await page.getByText("Voting Duration").first().click();
-
-    await page.waitForTimeout(500);
+    await updateDaoPolicyMembers({ page });
+    await navigateToVotingDurationPage({ page, instanceAccount });
     const currentDurationDays = await page
       .getByPlaceholder("Enter voting duration days")
       .inputValue();
@@ -35,12 +95,6 @@ test.describe("admin connected", function () {
 
     await page.waitForTimeout(500);
     await page.locator("button", { hasText: "Submit" }).click();
-
-    if (daoAccount === "testing-astradao.sputnik-dao.near") {
-      await page
-        .locator(".modalfooter button", { hasText: "Yes, proceed" })
-        .click();
-    }
 
     const description = {
       title: "Update policy - Voting Duration",
@@ -73,10 +127,8 @@ test.describe("admin connected", function () {
     daoAccount,
   }) => {
     test.setTimeout(150_000);
-    await page.goto(`/${instanceAccount}/widget/app?page=settings`);
-    await page.getByText("Voting Duration").first().click();
-
-    await page.waitForTimeout(500);
+    await updateDaoPolicyMembers({ page });
+    await navigateToVotingDurationPage({ page, instanceAccount });
     const currentDurationDays = await page
       .getByPlaceholder("Enter voting duration days")
       .inputValue();
@@ -111,10 +163,9 @@ test.describe("admin connected", function () {
       receiver_id: "webassemblymusic.near",
       daoName,
     });
-    await page.goto(`/${instanceAccount}/widget/app?page=settings`);
-    await page.getByText("Voting Duration").first().click();
+    await updateDaoPolicyMembers({ page });
+    await navigateToVotingDurationPage({ page, instanceAccount });
 
-    await page.waitForTimeout(500);
     const currentDurationDays = await page
       .getByPlaceholder("Enter voting duration days")
       .inputValue();
@@ -137,8 +188,8 @@ test.describe("admin connected", function () {
       const wallet = await selector.wallet();
 
       return new Promise((resolve) => {
-        wallet.signAndSendTransactions = async (transactions) => {
-          resolve(transactions.transactions[0]);
+        wallet.signAndSendTransaction = async (transaction) => {
+          resolve(transaction);
           return await new Promise(
             (transactionSentPromiseResolve) =>
               (window.transactionSentPromiseResolve =
@@ -162,7 +213,7 @@ test.describe("admin connected", function () {
     await page.evaluate((transactionResult) => {
       window.transactionSentPromiseResolve(transactionResult);
     }, transactionResult);
-    await expect(page.locator(".toast-header")).toBeVisible();
+    await expect(page.getByText("Processing your request ...")).toBeVisible();
     await expect(
       page.getByText("Voting duration change request submitted")
     ).toBeVisible();
@@ -222,8 +273,8 @@ test.describe("admin connected", function () {
         }
       },
     });
-    await page.goto(`/${instanceAccount}/widget/app?page=settings`);
-    await page.getByText("Voting Duration").first().click();
+    await updateDaoPolicyMembers({ page });
+    await navigateToVotingDurationPage({ page, instanceAccount });
 
     await page.waitForTimeout(500);
     const currentDurationDays = await page

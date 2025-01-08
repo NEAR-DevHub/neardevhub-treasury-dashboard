@@ -1,6 +1,11 @@
 const { getNearBalances, LOCKUP_MIN_BALANCE_FOR_STORAGE, TooltipText } =
   VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
-
+const { NearToken } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Icons"
+) || { NearToken: () => <></> };
+const { TransactionLoader } = VM.require(
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TransactionLoader`
+) || { TransactionLoader: () => <></> };
 const { encodeToMarkdown } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
@@ -55,6 +60,7 @@ const [lockupStakedPoolsWithBalance, setLockupStakedPoolsWithBalance] =
   useState(null);
 const [lockupStakedPoolId, setLockupStakedPoolId] = useState(null);
 const [lockupAlreadyStaked, setLockupAlreadyStaked] = useState(false);
+const [showErrorToast, setShowErrorToast] = useState(false);
 
 function formatNearAmount(amount) {
   return Big(amount ?? "0")
@@ -124,19 +130,35 @@ function cleanInputs() {
 
 useEffect(() => {
   if (isTxnCreated) {
+    let checkTxnTimeout = null;
+    let errorTimeout = null;
+
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
         if (lastProposalId !== id) {
           cleanInputs();
           onCloseCanvas();
           refreshData();
+          clearTimeout(errorTimeout);
           setTxnCreated(false);
         } else {
-          setTimeout(() => checkForNewProposal(), 1000);
+          checkTxnTimeout = setTimeout(() => checkForNewProposal(), 1000);
         }
       });
     };
     checkForNewProposal();
+
+    // if in 20 seconds there is no change, show error condition
+    errorTimeout = setTimeout(() => {
+      setShowErrorToast(true);
+      setTxnCreated(false);
+      clearTimeout(checkTxnTimeout);
+    }, 20000);
+
+    return () => {
+      clearTimeout(checkTxnTimeout);
+      clearTimeout(errorTimeout);
+    };
   }
 }, [isTxnCreated]);
 
@@ -152,7 +174,7 @@ const BalanceDisplay = ({ label, balance, tooltipInfo, noBorder }) => {
               placement="top"
               overlay={<Tooltip id="tooltip">{tooltipInfo}</Tooltip>}
             >
-              <i className="bi bi-info-circle text-dark-grey"></i>
+              <i className="bi bi-info-circle text-secondary"></i>
             </OverlayTrigger>
           </div>
           <div className="h6 mb-0 d-flex align-items-center gap-1">
@@ -335,58 +357,10 @@ function onSubmitClick() {
 const Container = styled.div`
   font-size: 14px;
 
-  .text-grey {
-    color: #b9b9b9 !important;
-  }
-
-  .text-grey a {
-    color: inherit !important;
-  }
-
   label {
     font-weight: 600;
     margin-bottom: 3px;
     font-size: 15px;
-  }
-
-  .p-2 {
-    padding: 0px !important;
-  }
-
-  .theme-btn {
-    background: var(--theme-color) !important;
-    color: white;
-  }
-
-  .primary-text-color a {
-    color: var(--theme-color) !important;
-  }
-
-  .btn:hover {
-    color: black !important;
-  }
-
-  .text-sm {
-    font-size: 13px;
-  }
-
-  .use-max-bg {
-    background-color: #ecf8fb;
-    color: #1d62a8;
-    cursor: pointer;
-  }
-
-  .text-dark-grey {
-    color: rgba(85, 85, 85, 1) !important;
-  }
-
-  .bg-validator-info {
-    background: rgba(0, 16, 61, 0.06);
-    color: #1b1b18;
-    padding-inline: 0.8rem;
-    padding-block: 0.5rem;
-    font-weight: 500;
-    font-size: 13px;
   }
 `;
 
@@ -425,6 +399,11 @@ useEffect(() => {
 
 return (
   <Container>
+    <TransactionLoader
+      showInProgress={isTxnCreated}
+      showError={showErrorToast}
+      toggleToast={() => setShowErrorToast(false)}
+    />
     <Widget
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
       props={{
@@ -575,12 +554,7 @@ return (
             inputProps: {
               type: "number",
               min: "0",
-              prefix: (
-                <img
-                  src="${REPL_NEAR_TOKEN_ICON}"
-                  style={{ height: 20, width: 20 }}
-                />
-              ),
+              prefix: <NearToken />,
             },
           }}
         />
@@ -616,7 +590,8 @@ return (
           src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
           props={{
             classNames: { root: "theme-btn" },
-            disabled: !validatorAccount || !amount || amountError,
+            disabled:
+              !validatorAccount || !amount || amountError || isTxnCreated,
             label: "Submit",
             onClick: onSubmitClick,
             loading: isTxnCreated,

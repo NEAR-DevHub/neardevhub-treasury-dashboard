@@ -1,6 +1,10 @@
 const { encodeToMarkdown } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
+const { TransactionLoader } = VM.require(
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TransactionLoader`
+) || { TransactionLoader: () => <></> };
+
 const instance = props.instance;
 if (!instance) {
   return <></>;
@@ -20,8 +24,12 @@ const [lastProposalId, setLastProposalId] = useState(null);
 const [showDeleteModal, setShowDeleteModal] = useState(false);
 const [showCancelModal, setShowCancelModal] = useState(false);
 const [memberAlreadyExists, setMemberAlreadyExists] = useState(false);
+const [showErrorToast, setShowErrorToast] = useState(false);
 
-const daoPolicy = Near.view(treasuryDaoID, "get_policy", {});
+const daoPolicy = treasuryDaoID
+  ? Near.view(treasuryDaoID, "get_policy", {})
+  : null;
+
 const deposit = daoPolicy?.proposal_bond || 100000000000000000000000;
 
 useEffect(() => {
@@ -44,18 +52,34 @@ useEffect(() => {
 // close canvas after proposal is submitted
 useEffect(() => {
   if (isTxnCreated) {
+    let checkTxnTimeout = null;
+    let errorTimeout = null;
+
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
         if (lastProposalId !== id) {
           setToastStatus(true);
           onCloseCanvas();
+          clearTimeout(errorTimeout);
           setTxnCreated(false);
         } else {
-          setTimeout(() => checkForNewProposal(), 1000);
+          checkTxnTimeout = setTimeout(() => checkForNewProposal(), 1000);
         }
       });
     };
     checkForNewProposal();
+
+    // if in 20 seconds there is no change, show error condition
+    errorTimeout = setTimeout(() => {
+      setShowErrorToast(true);
+      setTxnCreated(false);
+      clearTimeout(checkTxnTimeout);
+    }, 20000);
+
+    return () => {
+      clearTimeout(checkTxnTimeout);
+      clearTimeout(errorTimeout);
+    };
   }
 }, [isTxnCreated]);
 
@@ -156,11 +180,8 @@ function cleanInputs() {
 
 const Container = styled.div`
   font-size: 14px;
-  .text-grey {
-    color: #b9b9b9 !important;
-  }
 
-  .text-grey a {
+  .text-secondary a {
     color: inherit !important;
   }
 
@@ -199,6 +220,11 @@ useEffect(() => {
 
 return (
   <Container className="d-flex flex-column gap-2">
+    <TransactionLoader
+      showInProgress={isTxnCreated}
+      showError={showErrorToast}
+      toggleToast={() => setShowErrorToast(false)}
+    />
     <Widget
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
       props={{
@@ -245,7 +271,7 @@ return (
     </div>
 
     <div className="d-flex gap-3 align-items-center mt-2 justify-content-between">
-      <div>
+      <div className="text-delete">
         {(selectedMember || memberAlreadyExists) && (
           <Widget
             src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}

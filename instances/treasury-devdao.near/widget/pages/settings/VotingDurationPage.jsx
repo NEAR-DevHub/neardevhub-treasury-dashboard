@@ -1,6 +1,12 @@
-const { encodeToMarkdown } = VM.require(
+const { encodeToMarkdown, hasPermission, getRoleWiseData } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
-);
+) || {
+  encodeToMarkdown: () => {},
+  hasPermission: () => {},
+};
+const { TransactionLoader } = VM.require(
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TransactionLoader`
+) || { TransactionLoader: () => <></> };
 
 const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
@@ -16,8 +22,18 @@ const { Modal, ModalContent, ModalHeader, ModalFooter } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.modal"
 );
 
-const daoPolicy = Near.view(treasuryDaoID, "get_policy", {});
+const daoPolicy = treasuryDaoID
+  ? Near.view(treasuryDaoID, "get_policy", {})
+  : null;
+
 const lastProposalId = Near.view(treasuryDaoID, "get_last_proposal_id");
+
+const hasCreatePermission = hasPermission(
+  treasuryDaoID,
+  context.accountId,
+  "policy",
+  "AddProposal"
+);
 
 if (!daoPolicy || lastProposalId === null) {
   return (
@@ -49,92 +65,22 @@ const [isSubmittingChangeRequest, setSubmittingChangeRequest] = useState(false);
 const [showAffectedProposalsModal, setShowAffectedProposalsModal] =
   useState(false);
 
+const [showErrorToast, setShowErrorToast] = useState(false);
 const [showLoader, setLoading] = useState(false);
 
 const Container = styled.div`
   font-size: 14px;
-  .border-right {
-    border-right: 1px solid rgba(226, 230, 236, 1);
-  }
 
   .card-title {
     font-size: 18px;
     font-weight: 600;
     padding-block: 5px;
-    border-bottom: 1px solid rgba(226, 230, 236, 1);
-  }
-
-  .selected-role {
-    background-color: rgba(244, 244, 244, 1);
-  }
-
-  .cursor-pointer {
-    cursor: pointer;
-  }
-
-  .tag {
-    background-color: rgba(244, 244, 244, 1);
-    font-size: 12px;
-    padding-block: 5px;
+    border-bottom: 1px solid var(--border-color);
   }
 
   label {
-    color: rgba(153, 153, 153, 1);
+    color: var(--text-secondary);
     font-size: 12px;
-  }
-
-  .fw-bold {
-    font-weight: 500 !important;
-  }
-
-  .p-0 {
-    padding: 0 !important;
-  }
-
-  .text-md {
-    font-size: 13px;
-  }
-
-  .theme-btn {
-    background-color: var(--theme-color) !important;
-    color: white;
-  }
-
-  .warning {
-    background-color: rgba(255, 158, 0, 0.1);
-    color: rgba(177, 113, 8, 1);
-    font-weight: 500;
-  }
-
-  .text-sm {
-    font-size: 12px !important;
-  }
-
-  .text-muted {
-    color: rgba(153, 153, 153, 1);
-  }
-
-  .text-red {
-    color: #d95c4a;
-  }
-
-  .toast {
-    background: white !important;
-  }
-
-  .toast-header {
-    background-color: #2c3e50 !important;
-    color: white !important;
-  }
-`;
-
-const ToastContainer = styled.div`
-  a {
-    color: black !important;
-    text-decoration: underline !important;
-    &:hover {
-      color: black !important;
-    }
   }
 `;
 
@@ -319,23 +265,34 @@ const submitChangeRequest = () => {
 };
 
 useEffect(() => {
-  Near.asyncView(treasuryDaoID, "get_proposal", {
-    id: lastProposalId - 1,
-  }).then((proposal) => {
-    const proposal_period =
-      proposal?.kind?.ChangePolicyUpdateParameters?.parameters?.proposal_period;
+  if (isSubmittingChangeRequest) {
+    let errorTimeout = null;
+    Near.asyncView(treasuryDaoID, "get_proposal", {
+      id: lastProposalId - 1,
+    }).then((proposal) => {
+      const proposal_period =
+        proposal?.kind?.ChangePolicyUpdateParameters?.parameters
+          ?.proposal_period;
 
-    if (
-      proposal_period &&
-      isSubmittingChangeRequest &&
-      Number(proposal_period.substring(0, proposal_period.length - 9)) /
-        (24 * 60 * 60) ===
-        Number(durationDays)
-    ) {
-      setToastStatus(true);
+      if (
+        proposal_period &&
+        isSubmittingChangeRequest &&
+        Number(proposal_period.substring(0, proposal_period.length - 9)) /
+          (24 * 60 * 60) ===
+          Number(durationDays)
+      ) {
+        setToastStatus(true);
+        setSubmittingChangeRequest(false);
+        clearTimeout(errorTimeout);
+      }
+    });
+
+    // if in 20 seconds there is no change, show error condition
+    errorTimeout = setTimeout(() => {
+      setShowErrorToast(true);
       setSubmittingChangeRequest(false);
-    }
-  });
+    }, 20000);
+  }
 }, [isSubmittingChangeRequest, lastProposalId]);
 
 const changeDurationDays = (newDurationDays) => {
@@ -347,6 +304,11 @@ const showImpactedRequests =
 
 return (
   <Container>
+    <TransactionLoader
+      showInProgress={isSubmittingChangeRequest}
+      showError={showErrorToast}
+      toggleToast={() => setShowErrorToast(false)}
+    />
     <div className="card rounded-3 py-3" style={{ maxWidth: "50rem" }}>
       <div className="card-title px-3 mb-0">Voting Duration</div>
       <div className="p-3 d-flex flex-column gap-2">
@@ -365,6 +327,7 @@ return (
             placeholder="Enter voting duration days"
             value={durationDays}
             onChange={(event) => changeDurationDays(event.target.value)}
+            disabled={!hasCreatePermission}
           ></input>
         </div>
 
@@ -515,38 +478,66 @@ return (
             }}
           />
           <Widget
-            src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
             props={{
-              classNames: { root: "theme-btn" },
-              label: "Submit Request",
-              loading: showLoader,
-              disabled: durationDays === currentDurationDays || showLoader,
-              onClick: submitChangeRequest,
+              ActionButton: () => (
+                <Widget
+                  src={
+                    "${REPL_DEVHUB}/widget/devhub.components.molecule.Button"
+                  }
+                  props={{
+                    classNames: { root: "theme-btn" },
+                    label: "Submit Request",
+                    loading: showLoader || isSubmittingChangeRequest,
+                    disabled:
+                      durationDays === currentDurationDays ||
+                      showLoader ||
+                      !hasCreatePermission ||
+                      isSubmittingChangeRequest,
+                  }}
+                />
+              ),
+              checkForDeposit: true,
+              disabled:
+                durationDays === currentDurationDays ||
+                showLoader ||
+                !hasCreatePermission ||
+                isSubmittingChangeRequest,
+              treasuryDaoID,
+              callbackAction: submitChangeRequest,
             }}
           />
         </div>
       </div>
     </div>
-    <ToastContainer className="toast-container position-fixed bottom-0 end-0 p-3">
+    <div className="toast-container position-fixed bottom-0 end-0 p-3">
       <div className={`toast ${showToastStatus ? "show" : ""}`}>
         <div className="toast-header px-2">
           <strong className="me-auto">Just Now</strong>
-          <i className="bi bi-x-lg h6" onClick={() => setToastStatus(null)}></i>
+          <i
+            className="bi bi-x-lg h6 mb-0 cursor-pointer"
+            onClick={() => setToastStatus(null)}
+          ></i>
         </div>
         <div className="toast-body">
-          <div>Voting duration change request submitted.</div>
-          <a
-            href={href({
-              widgetSrc: `${instance}/widget/app`,
-              params: {
-                page: "settings",
-              },
-            })}
-          >
-            View it
-          </a>
+          <div className="d-flex align-items-center gap-3">
+            <i class="bi bi-check2 h3 mb-0 success-icon"></i>
+            <div>
+              <div>Voting duration change request submitted.</div>
+              <a
+                href={href({
+                  widgetSrc: `${instance}/widget/app`,
+                  params: {
+                    page: "settings",
+                  },
+                })}
+              >
+                View it
+              </a>
+            </div>
+          </div>
         </div>
       </div>
-    </ToastContainer>
+    </div>
   </Container>
 );

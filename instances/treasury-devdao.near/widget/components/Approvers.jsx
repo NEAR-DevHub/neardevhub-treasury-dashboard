@@ -20,15 +20,7 @@ const Container = styled.div`
   .grey-circle {
     width: 40px;
     height: 40px;
-    background-color: #e2e6ec;
-  }
-
-  .reject {
-    color: #d20000;
-  }
-
-  .approve {
-    color: #089968;
+    background-color: var(--grey-04);
   }
 `;
 
@@ -95,7 +87,7 @@ return (
   <Container className="d-flex justify-content-center">
     {showHover ? (
       <Widget
-        src="${REPL_MOB}/widget/N.Common.OverlayTrigger"
+        src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
         props={{
           popup: (
             <div className="p-1">
@@ -139,11 +131,12 @@ return (
                         <div className="d-flex">
                           {voted ? (
                             <span
-                              className={
-                                votesStatus === "Approved"
-                                  ? "approve"
-                                  : "reject"
-                              }
+                              style={{
+                                color:
+                                  votesStatus === "Approved"
+                                    ? "#3CB179"
+                                    : "#D95C4A",
+                              }}
                             >
                               {votesStatus}{" "}
                             </span>
@@ -159,6 +152,7 @@ return (
             </div>
           ),
           children: ApproversComponent,
+          instance: props.instance,
         }}
       />
     ) : (

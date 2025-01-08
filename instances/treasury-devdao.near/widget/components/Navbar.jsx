@@ -8,6 +8,8 @@ const { treasuryDaoID, navbarLinks, logo, isTesting } = VM.require(
   `${instance}/widget/config.data`
 );
 
+const config = treasuryDaoID ? Near.view(treasuryDaoID, "get_config") : null;
+const metadata = JSON.parse(atob(config.metadata ?? ""));
 const [showMenu, setShowMenu] = useState(false);
 
 const { href: linkHref } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
@@ -67,14 +69,14 @@ const LinksContainer = styled.div`
   }
 
   a {
-    color: inherit !important;
+    color: var(--text-secondary-color) !important;
 
     &:hover {
-      color: #1b1b18 !important;
+      color: var(--text-color) !important;
     }
 
     &.active {
-      color: #1b1b18 !important;
+      color: var(--text-color) !important;
     }
   }
 `;
@@ -127,11 +129,23 @@ function getTitle(text) {
   return text.replace(/-/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
+const treasuryLogo = metadata?.flagLogo ? metadata?.flagLogo : logo;
+
 return (
   <Navbar className="position-relative d-flex justify-content-between gap-2">
     <div className="d-flex flex-column gap-2">
       <div className="d-flex gap-2 align-items-center">
-        {logo && logo}
+        {/* logo can be svg or src */}
+        {treasuryLogo && typeof treasuryLogo === "string" ? (
+          <img
+            src={treasuryLogo}
+            width={50}
+            height={50}
+            className="rounded-3 object-fit-cover"
+          />
+        ) : (
+          treasuryLogo
+        )}
         <div className="h3 mb-0">{getTitle(page ?? "dashboard")}</div>
         {isTesting && <div>(Testing)</div>}
       </div>
@@ -152,7 +166,7 @@ return (
         className="card card-body py-1 px-2 rounded-3"
         href={`app?page=${page}`}
       >
-        <i className="bi bi-arrow-repeat h4 mb-0 text-black" />
+        <i className="bi bi-arrow-repeat h4 mb-0" />
       </a>
       <MobileMenu onClick={() => setShowMenu(!showMenu)}>
         <MenuIcon />

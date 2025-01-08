@@ -57,18 +57,7 @@ const hasDeletePermission = (deleteGroup?.approverAccounts ?? []).includes(
 const Container = styled.div`
   font-size: 13px;
   min-height: 60vh;
-  .text-grey {
-    color: #b9b9b9 !important;
-  }
-  .text-size-2 {
-    font-size: 15px;
-  }
-  .text-dark-grey {
-    color: #687076;
-  }
-  .text-grey-100 {
-    background-color: #f5f5f5;
-  }
+
   td {
     padding: 0.5rem;
     color: inherit;
@@ -76,65 +65,8 @@ const Container = styled.div`
     background: inherit;
   }
 
-  .max-w-100 {
-    max-width: 100%;
-  }
-
   table {
     overflow-x: auto;
-  }
-
-  .bold {
-    font-weight: 500;
-  }
-
-  .custom-truncate {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    line-height: 1.5;
-    max-height: 4.5em;
-    text-align: left;
-  }
-
-  .display-none {
-    display: none;
-  }
-
-  .text-right {
-    text-align: end;
-  }
-
-  .text-left {
-    text-align: left;
-  }
-  .text-underline {
-    text-decoration: underline !important;
-  }
-
-  .bg-highlight {
-    background-color: rgb(185, 185, 185, 0.2);
-  }
-
-  .toast {
-    background: white !important;
-  }
-
-  .toast-header {
-    background-color: #2c3e50 !important;
-    color: white !important;
-  }
-`;
-
-const ToastContainer = styled.div`
-  a {
-    color: black !important;
-    text-decoration: underline !important;
-    &:hover {
-      color: black !important;
-    }
   }
 `;
 
@@ -241,25 +173,34 @@ const ToastStatusContent = () => {
   }
   return (
     <div className="toast-body">
-      {content}
-      <br />
-      {showToastStatus !== "InProgress" && showToastStatus !== "Removed" && (
-        <a
-          href={href({
-            widgetSrc: `${instance}/widget/app`,
-            params: {
-              page: "payments",
-              selectedTab: "History",
-              highlightProposalId:
-                typeof highlightProposalId === "number"
-                  ? highlightProposalId
-                  : voteProposalId,
-            },
-          })}
-        >
-          View in History
-        </a>
-      )}
+      <div className="d-flex align-items-center gap-3">
+        {showToastStatus === "Approved" && (
+          <i class="bi bi-check2 h3 mb-0 success-icon"></i>
+        )}
+        <div>
+          {content}
+          <br />
+          {showToastStatus !== "InProgress" &&
+            showToastStatus !== "Removed" && (
+              <a
+                className="text-underline"
+                href={href({
+                  widgetSrc: `${instance}/widget/app`,
+                  params: {
+                    page: "payments",
+                    selectedTab: "History",
+                    highlightProposalId:
+                      typeof highlightProposalId === "number"
+                        ? highlightProposalId
+                        : voteProposalId,
+                  },
+                })}
+              >
+                View in History
+              </a>
+            )}
+        </div>
+      </div>
     </div>
   );
 };
@@ -268,15 +209,18 @@ const VoteSuccessToast = () => {
   return showToastStatus &&
     (typeof voteProposalId === "number" ||
       typeof highlightProposalId === "number") ? (
-    <ToastContainer className="toast-container position-fixed bottom-0 end-0 p-3">
+    <div className="toast-container position-fixed bottom-0 end-0 p-3">
       <div className={`toast ${showToastStatus ? "show" : ""}`}>
         <div className="toast-header px-2">
           <strong className="me-auto">Just Now</strong>
-          <i className="bi bi-x-lg h6" onClick={() => setToastStatus(null)}></i>
+          <i
+            className="bi bi-x-lg h6 mb-0 cursor-pointer"
+            onClick={() => setToastStatus(null)}
+          ></i>
         </div>
         <ToastStatusContent />
       </div>
-    </ToastContainer>
+    </div>
   ) : null;
 };
 
@@ -301,7 +245,7 @@ const ProposalsComponent = () => {
                 : ""
             }
           >
-            <td className="bold">{item.id}</td>
+            <td className="fw-semi-bold">{item.id}</td>
             <td className={isVisible("Created Date")}>
               <Widget
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
@@ -337,7 +281,7 @@ const ProposalsComponent = () => {
                       },
                     })}
                   >
-                    <div className="d-flex gap-2 align-items-center text-underline bold text-black">
+                    <div className="d-flex gap-2 align-items-center text-underline fw-semi-bold">
                       #{proposalId} <i class="bi bi-box-arrow-up-right"> </i>
                     </div>
                   </Link>
@@ -349,23 +293,24 @@ const ProposalsComponent = () => {
 
             <td className={isVisible("Title")}>
               <Widget
-                src="${REPL_MOB}/widget/N.Common.OverlayTrigger"
+                src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
                 props={{
                   popup: <TooltipContent title={title} summary={summary} />,
                   children: (
                     <div
-                      className="custom-truncate bold"
+                      className="custom-truncate fw-semi-bold"
                       style={{ width: 180 }}
                     >
                       {title}
                     </div>
                   ),
+                  instance,
                 }}
               />
             </td>
             <td className={isVisible("Summary")}>
               <Widget
-                src="${REPL_MOB}/widget/N.Common.OverlayTrigger"
+                src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
                 props={{
                   popup: <TooltipContent title={title} summary={summary} />,
                   children: (
@@ -373,15 +318,17 @@ const ProposalsComponent = () => {
                       {summary ? summary : "-"}
                     </div>
                   ),
+                  instance,
                 }}
               />
             </td>
-            <td className={"bold " + isVisible("Recipient")}>
+            <td className={"fw-semi-bold " + isVisible("Recipient")}>
               <Widget
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.ReceiverAccount`}
                 props={{
                   receiverAccount: args.receiver_id,
                   showKYC,
+                  instance,
                 }}
               />
             </td>
@@ -403,11 +350,16 @@ const ProposalsComponent = () => {
                 }}
               />
             </td>
-            <td className={"bold text-center " + isVisible("Creator")}>
+            <td className={"fw-semi-bold text-center " + isVisible("Creator")}>
               <Widget
-                src="${REPL_MOB}/widget/Profile.OverlayTrigger"
+                src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
                 props={{
-                  accountId: item.proposer,
+                  popup: (
+                    <Widget
+                      src="${REPL_MOB}/widget/Profile.Popover"
+                      props={{ accountId: item.proposer }}
+                    />
+                  ),
                   children: (
                     <div
                       className="text-truncate"
@@ -416,13 +368,14 @@ const ProposalsComponent = () => {
                       {item.proposer}
                     </div>
                   ),
+                  instance,
                 }}
               />
             </td>
             <td className={"text-sm text-left " + isVisible("Notes")}>
               {notes ? (
                 <Widget
-                  src="${REPL_MOB}/widget/N.Common.OverlayTrigger"
+                  src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
                   props={{
                     popup: <TooltipContent summary={notes} />,
                     children: (
@@ -430,6 +383,7 @@ const ProposalsComponent = () => {
                         {notes}
                       </div>
                     ),
+                    instance,
                   }}
                 />
               ) : (
@@ -465,6 +419,7 @@ const ProposalsComponent = () => {
                 props={{
                   votes: item.votes,
                   approversGroup: transferApproversGroup?.approverAccounts,
+                  instance,
                 }}
               />
             </td>
@@ -561,7 +516,7 @@ return (
         ) : (
           <table className="table">
             <thead>
-              <tr className="text-grey">
+              <tr className="text-secondary">
                 <td>#</td>
                 <td className={isVisible("Created Date")}>Created Date</td>
                 {!isPendingRequests && <td className="text-center">Status</td>}

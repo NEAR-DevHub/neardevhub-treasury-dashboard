@@ -6,7 +6,8 @@ import { KeyPairEd25519 } from "near-api-js/lib/utils/key_pair.js";
 import { getLocalWidgetSource } from "./bos-workspace.js";
 
 export const SPUTNIK_DAO_CONTRACT_ID = "sputnik-dao.near";
-export const PROPOSAL_BOND = "100000000000000000000000";
+// we don't have proposal bond for any instance (in this repo)
+export const PROPOSAL_BOND = "0";
 
 export class SandboxRPC {
   async init() {
@@ -237,7 +238,7 @@ export class SandboxRPC {
           quorum: "0",
           threshold: [1, 2],
         },
-        proposal_bond: "100000000000000000000000",
+        proposal_bond: PROPOSAL_BOND,
         proposal_period: "604800000000000",
         bounty_bond: "100000000000000000000000",
         bounty_forgiveness_period: "604800000000000",

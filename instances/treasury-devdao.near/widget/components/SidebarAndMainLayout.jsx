@@ -12,13 +12,13 @@ const Container = styled.div`
   .link.active {
     font-weight: bolder;
     color: var(--theme-color) !important;
-    background-color:#F4F4F4;
+    background-color:var(--grey-04);
   }
 
   .link:hover {
     color: var(--theme-color)) !important;
     color: var(--theme-color) !important;
-    background-color:#F4F4F4;
+    background-color:var(--grey-04);
   }
 
   .flex-1 {

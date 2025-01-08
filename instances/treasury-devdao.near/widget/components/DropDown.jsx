@@ -18,28 +18,14 @@ const StyledDropdown = styled.div`
     padding-inline: 10px;
   }
 
-  .dropdown-item.active,
-  .dropdown-item:active {
-    background-color: #f0f0f0 !important;
-    color: black;
-  }
-
   .dropdown-toggle:after {
     position: absolute;
     top: 45%;
     right: 5%;
   }
 
-  .cursor-pointer {
-    cursor: pointer;
-  }
-
   .text-sm {
     font-size: 12px !important;
-  }
-
-  .text-muted {
-    color: rgba(153, 153, 153, 1);
   }
 
   .work-break {
@@ -58,7 +44,7 @@ return (
     <div className="dropdown w-100" data-testid="dropdown">
       <button
         disabled={disabled}
-        className="btn drop-btn text-truncate dropdown-toggle bg-white border rounded-2"
+        className="btn drop-btn text-truncate dropdown-toggle bg-dropdown border rounded-2"
         type="button"
         data-bs-toggle="dropdown"
         aria-expanded="false"
@@ -89,7 +75,7 @@ return (
         )}
       </ul>
       {selected?.description && (
-        <div classNameName="text-muted text-sm mt-1">
+        <div classNameName="text-secondary text-sm mt-1">
           {selected.description}
         </div>
       )}

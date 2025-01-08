@@ -190,3 +190,24 @@ export async function updateDaoPolicyMembers({ page, isMultiVote = false }) {
     },
   });
 }
+
+export async function mockNearBalances({ page, accountId, balance, storage }) {
+  await page.route(
+    `https://api.fastnear.com/v1/account/${accountId}/full`,
+    async (route) => {
+      const json = {
+        account_id: accountId,
+        nfts: [],
+        pools: [],
+        state: {
+          balance: balance,
+          locked: "0",
+          storage: storage,
+        },
+        tokens: [],
+      };
+
+      await route.fulfill({ json });
+    }
+  );
+}

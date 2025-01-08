@@ -21,6 +21,11 @@ const [leftNavbarOptions, setLeftBarOptions] = useState([
     href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.VotingDurationPage`,
     props: { instance },
   },
+  {
+    title: "Theme & Logo",
+    href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.Theme`,
+    props: { instance },
+  },
 ]);
 
 return (

@@ -5,9 +5,13 @@ import {
   getTransactionModalObject,
   mockTransactionSubmitRPCResponses,
 } from "../../util/transaction.js";
-import { mockRpcRequest, updateDaoPolicyMembers } from "../../util/rpcmock.js";
+import {
+  mockNearBalances,
+  mockRpcRequest,
+  updateDaoPolicyMembers,
+} from "../../util/rpcmock.js";
 import { mockInventory } from "../../util/inventory.js";
-import { encodeToMarkdown } from "../../util/lib.js";
+import { InsufficientBalance, encodeToMarkdown } from "../../util/lib.js";
 
 const lastProposalId = 3;
 
@@ -32,7 +36,9 @@ async function updateLastProposalId(page) {
 
 async function navigateToMembersPage({ page, instanceAccount }) {
   await page.goto(`/${instanceAccount}/widget/app?page=settings`);
+  await page.waitForTimeout(5_000);
   await page.getByText("Members").click();
+  await expect(page.getByText("All Members")).toBeVisible({ timeout: 10_000 });
 }
 
 async function openAddMemberForm({ page }) {
@@ -52,23 +58,59 @@ test.afterEach(async ({ page }, testInfo) => {
   await page.unrouteAll({ behavior: "ignoreErrors" });
 });
 
-test.describe("admin connected", function () {
+test.describe("User is not logged in", function () {
+  test.beforeEach(async ({ page, instanceAccount }) => {
+    await navigateToMembersPage({ page, instanceAccount });
+  });
+
+  test("should not be able to add member or see actions", async ({ page }) => {
+    await expect(
+      page.getByRole("button", {
+        name: "New Member",
+      })
+    ).toBeHidden();
+    await expect(page.getByText("Actions", { exact: true })).toBeHidden();
+  });
+});
+
+test.describe("User is logged in", function () {
   test.use({
     storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
   });
 
-  test.beforeEach(async ({ page, daoAccount, instanceAccount }) => {
+  test.beforeEach(async ({ page, daoAccount, instanceAccount }, testInfo) => {
     await mockInventory({ page, account: daoAccount });
     await updateDaoPolicyMembers({ page });
     await updateLastProposalId(page);
+    if (testInfo.title.includes("insufficient account balance")) {
+      await mockNearBalances({
+        page,
+        accountId: "theori.near",
+        balance: InsufficientBalance,
+        storage: 8,
+      });
+    }
     await navigateToMembersPage({ page, instanceAccount });
   });
 
-  test("should show members of the DAO", async ({
+  test("insufficient account balance should show warning modal, disallow action ", async ({
     page,
-    instanceAccount,
-    daoAccount,
   }) => {
+    test.setTimeout(60_000);
+    await expect(
+      page.getByText(
+        "Hey Ori, you don't have enough NEAR to complete actions on your treasury."
+      )
+    ).toBeVisible();
+    await page.getByRole("button", { name: " New Member" }).click();
+    await expect(
+      page
+        .getByText("Please add more funds to your account and try again")
+        .nth(1)
+    ).toBeVisible();
+  });
+
+  test("should show members of the DAO", async ({ page }) => {
     test.setTimeout(60_000);
     await expect(page.getByText("Megha", { exact: true })).toBeVisible();
   });
@@ -148,7 +190,7 @@ test.describe("admin connected", function () {
     const submitBtn = await page.locator("button", { hasText: "Submit" });
     await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
     await submitBtn.click();
-
+    await expect(page.getByText("Processing your request ...")).toBeVisible();
     const description = {
       title: "Update policy - Members Permissions",
       summary: `theori.near requested to add "${account}" to "${permission}".`,
@@ -425,6 +467,7 @@ test.describe("admin connected", function () {
     await expect(submitBtn).toBeAttached({ timeout: 10_000 });
     await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
     await submitBtn.click();
+    await expect(page.getByText("Processing your request ...")).toBeVisible();
     const description = {
       title: "Update policy - Members Permissions",
       summary: `theori.near requested to remove "${account}" from "${permission}".`,
@@ -568,6 +611,8 @@ test.describe("admin connected", function () {
       page.getByRole("heading", { name: "Are you sure?" })
     ).toBeVisible();
     await page.getByRole("button", { name: "Remove" }).click();
+    await expect(page.getByText("Processing your request ...")).toBeVisible();
+
     const description = {
       title: "Update policy - Members Permissions",
       summary: `theori.near requested to requested to revoke all permissions of "megha19.near".`,

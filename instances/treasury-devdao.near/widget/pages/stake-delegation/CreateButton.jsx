@@ -1,3 +1,11 @@
+const { StakeIcon, UnstakeIcon, WithdrawIcon } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Icons"
+) || {
+  StakeIcon: () => <></>,
+  UnstakeIcon: () => <></>,
+  WithdrawIcon: () => <></>,
+};
+
 const { hasPermission } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 ) || {
@@ -44,11 +52,15 @@ function toggleWithdrawPage() {
   setShowWithdrawRequest((prev) => !prev);
 }
 
+const toggleDropdown = () => {
+  setCreateBtnOpen((prev) => !prev);
+};
+
 const CreateBtn = () => {
   const btnOptions = [
     {
       label: "Stake",
-      icon: "${REPL_STAKE_ICON}",
+      icon: <StakeIcon />,
       value: createBtnOption.STAKE,
       onClick: () => {
         setShowUnStakeRequest(false);
@@ -58,7 +70,7 @@ const CreateBtn = () => {
     },
     {
       label: "Unstake",
-      icon: "${REPL_UNSTAKE_ICON}",
+      icon: <UnstakeIcon />,
       value: createBtnOption.UNSTAKE,
       onClick: () => {
         setShowStakeRequest(false);
@@ -68,7 +80,7 @@ const CreateBtn = () => {
     },
     {
       label: "Withdraw",
-      icon: "${REPL_WITHDRAW_ICON}",
+      icon: <WithdrawIcon />,
       value: createBtnOption.WITHDRAW,
       onClick: () => {
         setShowWithdrawRequest(true);
@@ -76,10 +88,6 @@ const CreateBtn = () => {
       },
     },
   ];
-
-  const toggleDropdown = () => {
-    setCreateBtnOpen((prev) => !prev);
-  };
 
   const DropdowntBtnContainer = styled.div`
     font-size: 13px;
@@ -90,11 +98,9 @@ const CreateBtn = () => {
     }
   
     .select-header {
-      color:white;
       display: flex;
       justify-content: space-between;
       cursor: pointer;
-      background-color: var(--theme-color);
       border-radius: 5px;
     }
   
@@ -108,8 +114,9 @@ const CreateBtn = () => {
       top: 100%;
       left: 0;
       width: 100%;
-      border: 1px solid #ccc;
-      background-color: #fff;
+      border: 1px solid var(--border-color);
+      background-color: var(--bg-page-color) !important;
+      color: var(--text-color) !important;
       padding: 0.5rem;
       z-index: 99;
       font-size: 13px;
@@ -122,6 +129,7 @@ const CreateBtn = () => {
         display: block;
         opacity: 1;
         transform: translateY(0);
+        z-index:1000;
       }
     }
   
@@ -138,16 +146,16 @@ const CreateBtn = () => {
     }
   
     .option {
+      color: var(--text-color) !important;
       margin-block: 5px;
       padding: 10px;
       cursor: pointer;
-      border-bottom: 1px solid #f0f0f0;
+      border-bottom: 1px solid var(--border-color);
       transition: background-color 0.3s ease;
-      border-radius: 0.375rem !important;
     }
   
     .option:hover {
-      background-color: #f0f0f0; /* Custom hover effect color */
+      background-color: var(--bs-dropdown-link-hover-bg);
     }
   
     .option:last-child {
@@ -155,7 +163,7 @@ const CreateBtn = () => {
     }
   
     .selected {
-      background-color: #f0f0f0;
+      background-color: var(--grey-04);
     }
   
     .disabled {
@@ -183,18 +191,20 @@ const CreateBtn = () => {
         tabIndex="0"
         onBlur={() => setCreateBtnOpen(false)}
       >
-        <div className={"select-header d-flex gap-1 align-items-center h-100"}>
+        <div
+          className={
+            "primary-button select-header d-flex gap-1 align-items-center h-100"
+          }
+        >
           <div
-            className="d-flex gap-2 align-items-center h6 mb-0"
+            className="d-flex gap-2 align-items-center text-lg mb-0 fw-semi-bold"
             style={{ padding: "0.8rem" }}
-            onClick={toggleDropdown}
           >
             <i class="bi bi-plus-lg h5 mb-0"></i>Create Request
           </div>
           <div
             className="h-100 d-flex"
             style={{ borderLeft: "1px solid white" }}
-            onClick={toggleDropdown}
           >
             <i
               class={`p-2 bi bi-chevron-${isCreateBtnOpen ? "up" : "down"}`}
@@ -207,8 +217,8 @@ const CreateBtn = () => {
         >
           {btnOptions.map((option) => (
             <div key={option.value} className="option" onClick={option.onClick}>
-              <div className="d-flex gap-2 align-items-center text-black">
-                <img src={option.icon} height={20} />
+              <div className="d-flex gap-2 align-items-center">
+                {option.icon}
                 <div className="fw-bold">{option.label}</div>
               </div>
             </div>
@@ -277,7 +287,17 @@ return (
       className="d-flex gap-2 align-items-center"
       style={{ paddingBottom: "7px" }}
     >
-      {hasCreatePermission && <CreateBtn />}
+      {hasCreatePermission && (
+        <Widget
+          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
+          props={{
+            ActionButton: CreateBtn,
+            checkForDeposit: true,
+            treasuryDaoID,
+            callbackAction: toggleDropdown,
+          }}
+        />
+      )}
       <Widget
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.SettingsDropdown`}
         props={{ isPendingPage: currentTab.title === "Pending Requests" }}

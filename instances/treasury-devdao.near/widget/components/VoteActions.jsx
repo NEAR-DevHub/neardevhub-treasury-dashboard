@@ -4,6 +4,9 @@ if (!instance) {
 }
 
 const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+const { TransactionLoader } = VM.require(
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TransactionLoader`
+) || { TransactionLoader: () => <></> };
 
 const votes = props.votes ?? {};
 const proposalId = props.proposalId;
@@ -37,6 +40,7 @@ const [isInsufficientBalance, setInsufficientBal] = useState(false);
 const [showWarning, setShowWarning] = useState(false);
 const [isReadyToBeWithdrawn, setIsReadyToBeWithdrawn] = useState(true);
 const [showConfirmModal, setConfirmModal] = useState(null);
+const [showErrorToast, setShowErrorToast] = useState(false);
 
 useEffect(() => {
   if (!avoidCheckForBalance) {
@@ -74,41 +78,47 @@ function getProposalData() {
     (result) => result
   );
 }
-
-function getProposalStatus(votes) {
-  const votesArray = Object.values(votes);
-  return {
-    isApproved:
-      votesArray.filter((i) => i === "Approve").length >= requiredVotes,
-    isRejected:
-      votesArray.filter((i) => i === "Reject").length >= requiredVotes,
-  };
-}
-
 useEffect(() => {
   if (isTxnCreated) {
+    let checkTxnTimeout = null;
+    let errorTimeout = null;
+
     const checkForVoteOnProposal = () => {
       getProposalData().then((proposal) => {
         if (JSON.stringify(proposal.votes) !== JSON.stringify(votes)) {
           checkProposalStatus();
+          clearTimeout(errorTimeout);
           setTxnCreated(false);
         } else {
-          setTimeout(() => checkForVoteOnProposal(), 1000);
+          checkTxnTimeout = setTimeout(checkForVoteOnProposal, 1000);
         }
       });
     };
+
     checkForVoteOnProposal();
+
+    // if in 20 seconds there is no change, show error condition
+    errorTimeout = setTimeout(() => {
+      setShowErrorToast(true);
+      setTxnCreated(false);
+      clearTimeout(checkTxnTimeout);
+    }, 20000);
+
+    return () => {
+      clearTimeout(checkTxnTimeout);
+      clearTimeout(errorTimeout);
+    };
   }
 }, [isTxnCreated]);
 
 const Container = styled.div`
   .reject-btn {
-    background-color: #2c3e50;
+    background-color: var(--other-primary);
     border-radius: 5px;
     color: white;
 
     &:hover {
-      background-color: #2c3e50;
+      background-color: var(--other-primary);
       color: white;
     }
   }
@@ -120,22 +130,14 @@ const Container = styled.div`
   }
 
   .approve-btn {
-    background-color: #04a46e;
+    background-color: var(--other-green);
     border-radius: 5px;
     color: white;
 
     &:hover {
-      background-color: #04a46e;
+      background-color: var(--other-green);
       color: white;
     }
-  }
-
-  .fw-semi-bold {
-    font-weight: 500;
-  }
-
-  .text-dark-grey {
-    color: rgba(85, 85, 85, 1) !important;
   }
 `;
 
@@ -152,7 +154,10 @@ const InsufficientBalanceWarning = () => {
       <div className={`toast ${showWarning ? "show" : ""}`}>
         <div class="toast-header px-2">
           <strong class="me-auto">Just Now</strong>
-          <i class="bi bi-x-lg h6" onClick={() => setShowWarning(false)}></i>
+          <i
+            class="bi bi-x-lg h6 mb-0 cursor-pointer"
+            onClick={() => setShowWarning(false)}
+          ></i>
         </div>
         <div class="toast-body">
           The request cannot be approved because the treasury balance is
@@ -162,8 +167,15 @@ const InsufficientBalanceWarning = () => {
     </div>
   ) : null;
 };
+
 return (
   <Container>
+    <TransactionLoader
+      showInProgress={isTxnCreated}
+      showError={showErrorToast}
+      toggleToast={() => setShowErrorToast(false)}
+    />
+
     <InsufficientBalanceWarning />
     <Widget
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
@@ -210,20 +222,32 @@ return (
                 </Tooltip>
               }
             >
-              <i className="bi bi-info-circle text-dark-grey"></i>
+              <i className="bi bi-info-circle text-secondary"></i>
             </OverlayTrigger>
           </div>
         ) : (
           hasVotingPermission && (
             <div className="d-flex gap-2 align-items-center">
               <Widget
-                src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
                 props={{
-                  classNames: {
-                    root: "approve-btn p-2",
-                  },
-                  label: "Approve",
-                  onClick: () => {
+                  ActionButton: () => (
+                    <Widget
+                      src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
+                      props={{
+                        classNames: {
+                          root: "approve-btn p-2",
+                        },
+                        label: "Approve",
+                        loading: isTxnCreated && vote === actions.APPROVE,
+                        disabled: isTxnCreated,
+                      }}
+                    />
+                  ),
+                  checkForDeposit: false,
+                  treasuryDaoID,
+                  disabled: isTxnCreated,
+                  callbackAction: () => {
                     if (isInsufficientBalance) {
                       setShowWarning(true);
                     } else {
@@ -231,23 +255,31 @@ return (
                       setConfirmModal(true);
                     }
                   },
-                  loading: isTxnCreated && vote === actions.APPROVE,
-                  disabled: isTxnCreated,
                 }}
               />
               <Widget
-                src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
                 props={{
-                  classNames: {
-                    root: "reject-btn p-2",
-                  },
-                  label: "Reject",
-                  onClick: () => {
+                  ActionButton: () => (
+                    <Widget
+                      src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
+                      props={{
+                        classNames: {
+                          root: "reject-btn p-2",
+                        },
+                        label: "Reject",
+                        loading: isTxnCreated && vote === actions.REJECT,
+                        disabled: isTxnCreated,
+                      }}
+                    />
+                  ),
+                  disabled: isTxnCreated,
+                  checkForDeposit: false,
+                  treasuryDaoID,
+                  callbackAction: () => {
                     setVote(actions.REJECT);
                     setConfirmModal(true);
                   },
-                  loading: isTxnCreated && vote === actions.REJECT,
-                  disabled: isTxnCreated,
                 }}
               />
             </div>
@@ -255,20 +287,30 @@ return (
         )}
         {/* currently showing delete btn only for proposal creator */}
         {hasDeletePermission && proposalCreator === accountId && (
-          <button
-            className="remove-btn p-2"
-            onClick={() => {
-              setVote(actions.REMOVE);
-              setConfirmModal(true);
+          <Widget
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
+            props={{
+              ActionButton: () => (
+                <button
+                  className="remove-btn p-2"
+                  data-testid="delete-btn"
+                  disabled={isTxnCreated}
+                >
+                  <img
+                    style={{ height: 30 }}
+                    src="https://ipfs.near.social/ipfs/bafkreieobqzwouuadj7eneei7aadwfel6ubhj7qishnqwrlv5ldgcwuyt4"
+                  />
+                </button>
+              ),
+              checkForDeposit: false,
+              treasuryDaoID,
+              disabled: isTxnCreated,
+              callbackAction: () => {
+                setVote(actions.REMOVE);
+                setConfirmModal(true);
+              },
             }}
-            data-testid="delete-btn"
-            disabled={isTxnCreated}
-          >
-            <img
-              style={{ height: 30 }}
-              src="https://ipfs.near.social/ipfs/bafkreieobqzwouuadj7eneei7aadwfel6ubhj7qishnqwrlv5ldgcwuyt4"
-            />
-          </button>
+          />
         )}
       </div>
     )}

@@ -1,4 +1,10 @@
-const { nearPrice, ftTokens, accountId, title } = props;
+const { nearPrice, ftTokens, accountId, title, instance } = props;
+
+if (!instance) {
+  return <></>;
+}
+
+const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 
 const { Skeleton } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.skeleton"
@@ -18,10 +24,10 @@ const [selectedPeriod, setSelectedPeriod] = useState({
 const [selectedToken, setSelectedToken] = useState("near");
 const [isLoading, setIsLoading] = useState(true);
 const [balanceDate, setBalanceDate] = useState({ balance: 0, date: "" });
-const nearTokenIcon = "${REPL_NEAR_TOKEN_ICON}";
+
 const nearTokenInfo = {
   contract: "near",
-  ft_meta: { symbol: "NEAR", icon: nearTokenIcon },
+  ft_meta: { symbol: "NEAR" },
 };
 
 const tokens = Array.isArray(ftTokens)
@@ -43,8 +49,20 @@ function formatCurrency(amount) {
     .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
+const config = treasuryDaoID ? Near.view(treasuryDaoID, "get_config") : null;
+const metadata = JSON.parse(atob(config.metadata ?? ""));
+
+const isDarkTheme = metadata.theme === "dark";
+const bgPageColor = isDarkTheme ? "#222222" : "#FFFFFF";
+const borderColor = isDarkTheme ? "#3B3B3B" : "rgba(226, 230, 236, 1)";
+const iconColor = isDarkTheme ? "#CACACA" : "#060606";
+const textColor = isDarkTheme ? "#CACACA" : "#1B1B18";
+const fillStyle = isDarkTheme
+  ? "rgba(27, 27, 24, 0.1)"
+  : "rgba(255, 255, 255, 0.7)";
+
 const code = `
-  <!DOCTYPE html>
+<!DOCTYPE html>
   <html lang="en">
   <head>
       <meta charset="UTF-8">
@@ -53,24 +71,24 @@ const code = `
       <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
       <style>
           body {
-              font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-              margin: 0;
-              padding: 0;
-              overflow: hidden;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
           }
 
           canvas {
               width: 100%;
               height: 100%;
               display: block;
+              background-color:${bgPageColor};
+              color: ${textColor};
           }
       </style>
   </head>
   <body>
-
-  <canvas id="myChart" height="400"></canvas>
-
-  <script>
+      <canvas id="myChart" height="400"></canvas>
+      <script>
     const ctx = document.getElementById("myChart").getContext("2d");
     let account_id;
     let history;
@@ -94,12 +112,12 @@ const code = `
                 ctx.moveTo(hoverX, chartArea.top);
                 ctx.lineTo(hoverX, chartArea.bottom);
                 ctx.lineWidth = 1;
-                ctx.strokeStyle = 'rgba(0,0,0,1)';
+                ctx.strokeStyle = '${iconColor}';
                 ctx.setLineDash([5, 3]);
                 ctx.stroke();
                 ctx.restore();
                 
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.7)'; // Semi-transparent overlay
+                ctx.fillStyle = '${fillStyle}'; // Semi-transparent overlay
                 ctx.fillRect(hoverX, chartArea.top, chartArea.right - hoverX, chartArea.bottom - chartArea.top);
                 ctx.restore();
             }
@@ -129,7 +147,7 @@ const code = `
             },
             ticks: {
               display: true,
-              color: "#000",
+              color: '${textColor}',
             },   
           },
           y: {
@@ -157,8 +175,8 @@ const code = `
             data: [],
             fill: true,
             backgroundColor: gradient,
-            borderColor: "#000",
-            pointBackgroundColor: "#fff",
+            borderColor: '${borderColor}',
+            pointBackgroundColor: '${bgPageColor}',
             pointRadius: 0,
             tension: 0,
             borderWidth: 1.5
@@ -257,8 +275,8 @@ const Period = styled.div`
   font-weight: 500;
 
   &.selected {
-    background-color: #f7f7f7;
-    color: black;
+    background-color: var(--grey-04);
+    color: var(--text-color);
     border-radius: 8px;
   }
 `;
@@ -266,7 +284,7 @@ const Period = styled.div`
 const RadioButton = styled.div`
   .radio-btn {
     border-radius: 50%;
-    border: 1px solid black;
+    border: 1px solid var(--icon-color);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -274,7 +292,7 @@ const RadioButton = styled.div`
     width: 14px;
 
     .selected {
-      background: black;
+      background: var(--icon-color);
       border-radius: 50%;
       height: 6px;
       width: 6px;
@@ -348,9 +366,9 @@ return (
     <div>
       <div className="d-flex justify-content-between flex-row align-items-start">
         <div className="d-flex flex-column gap-2">
-          <h6 className="text-grey mb-0">{title}</h6>
+          <h6 className="text-secondary mb-0">{title}</h6>
           {balanceDate ? (
-            <div className="d-flex align-items-center gap-3">
+            <div className="d-flex align-items-center gap-3 flex-wrap">
               <h3 className="fw-bold mb-0">
                 <span className="balance-value">
                   {formatCurrency(balanceDate.balance)}
@@ -374,7 +392,7 @@ return (
           )}
         </div>
 
-        <div className="d-flex gap-1">
+        <div className="d-flex gap-1 flex-wrap">
           {periodMap.map(({ period, value, interval }, idx) => (
             <Period
               role="button"
@@ -436,7 +454,7 @@ return (
       <LoadingChart />
     ) : (
       <div
-        className="w-100 d-flex justify-content-center align-items-center"
+        className="w-100 d-flex justify-content-center align-items-center mt-2 rounded-3 overflow-hidden"
         style={{ height: "400px" }}
       >
         <iframe

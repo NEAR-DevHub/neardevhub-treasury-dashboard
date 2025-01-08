@@ -25,11 +25,6 @@ const ModalDiv = styled.div`
   .btn {
     font-size: 14px;
   }
-
-  .theme-btn {
-    background: var(--theme-color) !important;
-    color: white;
-  }
 `;
 
 const ModalBackdrop = styled.div`
@@ -100,7 +95,7 @@ const NoButton = styled.button`
 
 const ModalHeader = ({ children }) => (
   <ModalHeaderDiv>
-    <h5 className="mb-0">{children}</h5>
+    <h5 className="mb-0 w-100">{children}</h5>
   </ModalHeaderDiv>
 );
 

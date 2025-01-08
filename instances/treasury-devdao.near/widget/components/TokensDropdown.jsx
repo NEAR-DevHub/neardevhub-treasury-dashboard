@@ -1,3 +1,7 @@
+const { NearToken } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Icons"
+) || { NearToken: () => <></> };
+
 const { getNearBalances, isBosGateway } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
@@ -8,7 +12,6 @@ if (!instance || typeof isBosGateway !== "function") {
 
 const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 
-const nearTokenIcon = "${REPL_NEAR_TOKEN_ICON}";
 const { selectedValue, onChange, disabled, setTokensAvailable } = props;
 
 onChange = onChange || (() => {});
@@ -60,7 +63,7 @@ const tokensWithBalance =
 useEffect(() => {
   const tokens = [
     {
-      icon: nearTokenIcon,
+      icon: NearToken,
       title: "NEAR",
       value: "NEAR",
       tokenBalance: nearBalances.totalParsed,
@@ -141,12 +144,6 @@ const Container = styled.div`
     width: 100%;
   }
 
-  .dropdown-item.active,
-  .dropdown-item:active {
-    background-color: #f0f0f0 !important;
-    color: black;
-  }
-
   .disabled {
     background-color: #f8f8f8 !important;
     cursor: not-allowed !important;
@@ -163,11 +160,7 @@ const Container = styled.div`
   }
 
   .selected {
-    background-color: #f0f0f0;
-  }
-
-  .cursor-pointer {
-    cursor: pointer;
+    background-color: var(--grey-04);
   }
 
   .text-wrap {
@@ -182,20 +175,24 @@ const Container = styled.div`
 
 const Item = ({ option }) => {
   if (!option) {
-    return <div className="text-muted">Select</div>;
+    return <div className="text-secondary">Select</div>;
   }
   return (
     <div className="d-flex gap-3 align-items-center w-100">
-      <img src={option.icon} height={30} width={30} />
+      {typeof option.icon === "string" ? (
+        <img src={option.icon} height={30} width={30} />
+      ) : (
+        <NearToken />
+      )}
       <div className="d-flex flex-column gap-1 w-100 text-wrap">
         <div className="h6 mb-0"> {option.title}</div>
         {option.value === "NEAR" && (
-          <div className="d-flex flex-column gap-1 w-100 text-wrap text-sm text-muted">
+          <div className="d-flex flex-column gap-1 w-100 text-wrap text-sm text-secondary">
             <div>Tokens locked for storage: {nearBalances.storageParsed}</div>
             {nearStakedTokens && <div>Tokens staked: {nearStakedTokens}</div>}
           </div>
         )}
-        <div className="text-sm text-muted w-100 text-wrap">
+        <div className="text-sm text-secondary w-100 text-wrap">
           Tokens available:{" "}
           {option.value === "NEAR"
             ? getNearAvailableBalance(option.tokenBalance)
@@ -226,7 +223,7 @@ return (
     >
       <div
         className={
-          "dropdown-toggle bg-white border rounded-2 btn drop-btn w-100 " +
+          "dropdown-toggle bg-overlay border rounded-2 btn drop-btn w-100 " +
           (disabled ? "disabled" : "")
         }
         onClick={!disabled && toggleDropdown}

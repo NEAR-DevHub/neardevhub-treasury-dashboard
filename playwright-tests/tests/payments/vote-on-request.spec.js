@@ -2,13 +2,18 @@ import { expect } from "@playwright/test";
 import { test } from "../../util/test.js";
 
 import { mockTransactionSubmitRPCResponses } from "../../util/transaction";
-import { mockRpcRequest, updateDaoPolicyMembers } from "../../util/rpcmock";
+import {
+  mockNearBalances,
+  mockRpcRequest,
+  updateDaoPolicyMembers,
+} from "../../util/rpcmock";
 import { setDontAskAgainCacheValues } from "../../util/cache";
 import { mockPikespeakFTTokensResponse } from "../../util/pikespeak.js";
 import {
   CurrentTimestampInNanoseconds,
   TransferProposalData,
 } from "../../util/inventory.js";
+import { InsufficientBalance } from "../../util/lib.js";
 
 async function mockWithFTBalance({ page, daoAccount, isSufficient }) {
   await page.route(
@@ -153,7 +158,41 @@ test.describe("don't ask again", function () {
     storageState:
       "playwright-tests/storage-states/wallet-connected-admin-with-accesskey.json",
   });
-  test("should throw insufficient balance error", async ({
+
+  test("should throw insufficient signed in account balance error", async ({
+    page,
+    instanceAccount,
+    daoAccount,
+  }) => {
+    test.setTimeout(60_000);
+    await updateDaoPolicyMembers({ page });
+    await mockNearBalances({
+      page,
+      accountId: "theori.near",
+      balance: InsufficientBalance,
+      storage: 8,
+    });
+    await voteOnProposal({
+      page,
+      daoAccount,
+      instanceAccount,
+      voteStatus: "Approved",
+      vote: "Approve",
+    });
+    const approveButton = page
+      .getByRole("button", {
+        name: "Approve",
+      })
+      .first();
+    await expect(approveButton).toBeEnabled({ timeout: 30_000 });
+    await approveButton.click();
+    await expect(
+      page
+        .getByText("Please add more funds to your account and try again")
+        .nth(1)
+    ).toBeVisible();
+  });
+  test("should throw insufficient dao account balance error", async ({
     page,
     instanceAccount,
     daoAccount,
@@ -211,6 +250,7 @@ test.describe("don't ask again", function () {
     await expect(approveButton).toBeEnabled({ timeout: 30_000 });
     await approveButton.click();
     await page.getByRole("button", { name: "Confirm" }).click();
+    await expect(page.getByText("Processing your request ...")).toBeVisible();
     await expect(approveButton).toBeDisabled();
 
     const transaction_toast = page.getByText(
@@ -266,6 +306,7 @@ test.describe("don't ask again", function () {
     await expect(rejectButton).toBeEnabled({ timeout: 10000 });
     await rejectButton.click();
     await page.getByRole("button", { name: "Confirm" }).click();
+    await expect(page.getByText("Processing your request ...")).toBeVisible();
     await expect(rejectButton).toBeDisabled();
 
     const transaction_toast = page.getByText(
@@ -321,6 +362,8 @@ test.describe("don't ask again", function () {
       page.getByText("Do you really want to delete this request?")
     ).toBeVisible();
     await page.getByRole("button", { name: "Confirm" }).click();
+    await expect(page.getByText("Processing your request ...")).toBeVisible();
+
     await expect(deleteButton).toBeDisabled();
 
     const transaction_toast = page.getByText(

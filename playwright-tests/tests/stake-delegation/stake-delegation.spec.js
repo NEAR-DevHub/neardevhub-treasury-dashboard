@@ -6,7 +6,11 @@ import {
   mockTransactionSubmitRPCResponses,
 } from "../../util/transaction";
 import { utils } from "near-api-js";
-import { mockRpcRequest, updateDaoPolicyMembers } from "../../util/rpcmock.js";
+import {
+  mockNearBalances,
+  mockRpcRequest,
+  updateDaoPolicyMembers,
+} from "../../util/rpcmock.js";
 import {
   CurrentTimestampInNanoseconds,
   OldJsonProposalData,
@@ -16,6 +20,7 @@ import {
 } from "../../util/inventory.js";
 import { setDontAskAgainCacheValues } from "../../util/cache.js";
 import Big from "big.js";
+import { InsufficientBalance } from "../../util/lib.js";
 
 test.afterEach(async ({ page }, testInfo) => {
   console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
@@ -158,27 +163,6 @@ async function mockStakedPoolBalances({ page }) {
       await route.continue();
     }
   });
-}
-
-async function mockNearBalances({ page, daoAccount, balance }) {
-  await page.route(
-    `https://api.fastnear.com/v1/account/${daoAccount}/full`,
-    async (route) => {
-      const json = {
-        account_id: daoAccount,
-        nfts: [],
-        pools: [],
-        state: {
-          balance: balance,
-          locked: "0",
-          storage_bytes: 677278,
-        },
-        tokens: [],
-      };
-
-      await route.fulfill({ json });
-    }
-  );
 }
 
 export async function mockStakedPools({
@@ -412,7 +396,7 @@ async function voteOnProposal({
 }
 
 test.describe("Have valid staked requests and sufficient token balance", function () {
-  test.beforeEach(async ({ page, instanceAccount, daoAccount }) => {
+  test.beforeEach(async ({ page, instanceAccount, daoAccount }, testInfo) => {
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
     if (
       !instanceConfig.navbarLinks.find(
@@ -422,20 +406,37 @@ test.describe("Have valid staked requests and sufficient token balance", functio
       console.log("no stake delegation page configured for instance");
       return test.skip();
     }
-    await mockStakeProposals({ page });
+    if (
+      testInfo.title.includes("Should successfully parse old JSON description")
+    ) {
+      await mockOldJSONStakeProposals({ page });
+    } else {
+      await mockStakeProposals({ page });
+    }
     await updateDaoPolicyMembers({ page });
     await mockStakedPools({ page, daoAccount });
-    await mockNearBalances({
-      page,
-      daoAccount,
-      balance: sufficientAvailableBalance,
-    });
+    if (testInfo.title.includes("insufficient account balance")) {
+      await mockNearBalances({
+        page,
+        accountId: "theori.near",
+        balance: InsufficientBalance,
+        storage: 8,
+      });
+    } else {
+      await mockNearBalances({
+        page,
+        accountId: daoAccount,
+        balance: sufficientAvailableBalance,
+        storage: 2323,
+      });
+    }
     await mockStakedPoolBalances({ page });
 
     await page.goto(`/${instanceAccount}/widget/app?page=stake-delegation`);
     await expect(
       await page.locator("div").filter({ hasText: /^Stake Delegation$/ })
     ).toBeVisible();
+    await page.waitForTimeout(5_000);
   });
 
   test.describe("User not logged in", function () {
@@ -452,8 +453,6 @@ test.describe("Have valid staked requests and sufficient token balance", functio
 
     test("Should successfully parse old JSON description", async ({ page }) => {
       test.setTimeout(80_000);
-      await mockOldJSONStakeProposals({ page });
-
       await expect(
         page.getByRole("cell", { name: "this is notes", exact: true })
       ).toBeVisible({ timeout: 40_000 });
@@ -480,6 +479,28 @@ test.describe("Have valid staked requests and sufficient token balance", functio
       });
     });
 
+    test("insufficient account balance should show warning modal, disallow action ", async ({
+      page,
+    }) => {
+      test.setTimeout(60_000);
+
+      await expect(
+        page.getByText(
+          "Hey Ori, you don't have enough NEAR to complete actions on your treasury."
+        )
+      ).toBeVisible();
+      await page
+        .getByText("Create Request", {
+          exact: true,
+        })
+        .click();
+      await expect(
+        page
+          .getByText("Please add more funds to your account and try again")
+          .nth(1)
+      ).toBeVisible();
+    });
+
     test("Should create stake delegation request, should throw error when invalid data is provided", async ({
       page,
     }) => {
@@ -488,7 +509,7 @@ test.describe("Have valid staked requests and sufficient token balance", functio
         exact: true,
       });
       await createRequestButton.click();
-      await page.getByText("Stake", { exact: true }).click();
+      await page.locator(".option").first().click();
       await page.waitForTimeout(10_000);
 
       await fillValidatorAccount({
@@ -505,6 +526,7 @@ test.describe("Have valid staked requests and sufficient token balance", functio
         .first()
         .inputValue();
       await page.getByRole("button", { name: "Submit" }).click();
+      await expect(page.getByText("Processing your request ...")).toBeVisible();
       await expect(await getTransactionModalObject(page)).toEqual({
         proposal: {
           description: "* Proposal Action: stake",
@@ -540,6 +562,8 @@ test.describe("Have valid staked requests and sufficient token balance", functio
         errorText: "The amount exceeds the balance you have staked.",
       });
       await page.getByRole("button", { name: "Submit" }).click();
+      await expect(page.getByText("Processing your request ...")).toBeVisible();
+
       await expect(await getTransactionModalObject(page)).toEqual({
         proposal: {
           description: "* Proposal Action: unstake",
@@ -655,7 +679,8 @@ test.describe("Withdraw request", function () {
     });
     const submitBtn = page.getByRole("button", { name: "Submit" });
     await expect(submitBtn).toBeEnabled();
-    await submitBtn.click();
+    await submitBtn.dblclick();
+    await expect(page.getByText("Processing your request ...")).toBeVisible();
     await expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
         description: `* Proposal Action: withdraw`,
@@ -701,9 +726,6 @@ test.describe("Withdraw request", function () {
     await expect(page.getByText(stakedPoolAccount)).toBeVisible({
       timeout: 10_000,
     });
-    const submitBtn = page.getByRole("button", { name: "Submit" });
-    await expect(submitBtn).toBeEnabled();
-    await submitBtn.click();
     await expect(
       page.getByText(
         "By submitting, you request to withdraw all available funds. A separate withdrawal request will be created for each validator"
@@ -711,6 +733,10 @@ test.describe("Withdraw request", function () {
     ).toBeVisible({
       timeout: 10_000,
     });
+    const submitBtn = page.getByRole("button", { name: "Submit" });
+    await expect(submitBtn).toBeEnabled();
+    await submitBtn.dblclick();
+    await expect(page.getByText("Processing your request ...")).toBeVisible();
     // proposals for both the pools
     await expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
@@ -837,9 +863,11 @@ test.describe("Lockup staking", function () {
     await updateDaoPolicyMembers({ page });
     await mockNearBalances({
       page,
-      daoAccount,
+      accountId: daoAccount,
       balance: sufficientAvailableBalance,
+      storage: 2323,
     });
+
     await mockLockupNearBalances({
       page,
       balance: sufficientAvailableBalance,
@@ -888,6 +916,8 @@ test.describe("Lockup staking", function () {
         errorText: "Your account doesn't have sufficient balance.",
       });
       await page.getByRole("button", { name: "Submit" }).click();
+      await expect(page.getByText("Processing your request ...")).toBeVisible();
+
       await expect(await getTransactionModalObject(page)).toEqual({
         proposal: {
           description:
@@ -1002,6 +1032,8 @@ test.describe("Lockup staking", function () {
         errorText: "Your account doesn't have sufficient balance.",
       });
       await page.getByRole("button", { name: "Submit" }).click();
+      await expect(page.getByText("Processing your request ...")).toBeVisible();
+
       await expect(await getTransactionModalObject(page)).toEqual({
         proposal: {
           description: "* Proposal Action: stake",
@@ -1049,6 +1081,8 @@ test.describe("Lockup staking", function () {
         errorText: "The amount exceeds the balance you have staked.",
       });
       await page.getByRole("button", { name: "Submit" }).click();
+      await expect(page.getByText("Processing your request ...")).toBeVisible();
+
       await expect(await getTransactionModalObject(page)).toEqual({
         proposal: {
           description: "* Proposal Action: unstake",
@@ -1306,9 +1340,11 @@ test.describe("Insufficient balance ", function () {
     await mockStakedPoolBalances({ page });
     await mockNearBalances({
       page,
-      daoAccount,
+      accountId: daoAccount,
       balance: inSufficientAvailableBalance,
+      storage: 2323,
     });
+
     await page.goto(`/${instanceAccount}/widget/app?page=stake-delegation`);
     await expect(
       await page.locator("div").filter({ hasText: /^Stake Delegation$/ })

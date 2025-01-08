@@ -60,12 +60,6 @@ const Container = styled.div`
     width: 100%;
   }
 
-  .dropdown-item.active,
-  .dropdown-item:active {
-    background-color: #f0f0f0 !important;
-    color: black;
-  }
-
   .disabled {
     background-color: #f8f8f8 !important;
     cursor: not-allowed !important;
@@ -82,20 +76,12 @@ const Container = styled.div`
   }
 
   .selected {
-    background-color: #f0f0f0;
-  }
-
-  .cursor-pointer {
-    cursor: pointer;
+    background-color: var(--grey-04);
   }
 
   .text-wrap {
     overflow: hidden;
     white-space: normal;
-  }
-
-  .text-sm {
-    font-size: 13px;
   }
 `;
 
@@ -110,7 +96,7 @@ const Item = ({ option }) => {
   return (
     <div className="w-100 text-wrap">
       {option.title}
-      <div className="text-muted text-sm">
+      <div className="text-secondary text-sm">
         {getPermissionsText(option.title)}
       </div>
     </div>
@@ -125,9 +111,9 @@ return (
           <div
             style={{
               width: "max-content",
-              border: "1px solid #e2e6ec",
+              border: "1px solid var(--border-color)",
             }}
-            className="d-flex gap-2 align-items-center rounded-pill px-2 py-1 mb-0 text-black"
+            className="d-flex gap-2 align-items-center rounded-pill px-2 py-1 mb-0"
           >
             {option.title}
             {!disabled && (
@@ -155,7 +141,7 @@ return (
       >
         <div
           className={
-            "dropdown-toggle bg-white border rounded-2 btn drop-btn w-100 " +
+            "dropdown-toggle bg-dropdown border rounded-2 btn drop-btn w-100 " +
             (disabled ? "disabled" : "")
           }
           onClick={!disabled && toggleDropdown}

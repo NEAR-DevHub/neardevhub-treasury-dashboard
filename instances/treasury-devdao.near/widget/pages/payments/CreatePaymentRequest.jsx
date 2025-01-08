@@ -2,6 +2,10 @@ const { getLinkUsingCurrentGateway } = VM.require(
   "${REPL_DEVHUB}/widget/core.lib.url"
 ) || { getLinkUsingCurrentGateway: () => {} };
 
+const { TransactionLoader } = VM.require(
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TransactionLoader`
+) || { TransactionLoader: () => <></> };
+
 const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
@@ -45,6 +49,7 @@ const [selectedTokensAvailable, setSelectedTokensAvailable] = useState(null);
 const [isReceiverRegistered, setReceiverRegister] = useState(false);
 const [isLoadingProposals, setLoadingProposals] = useState(false);
 const [showCancelModal, setShowCancelModal] = useState(false);
+const [showErrorToast, setShowErrorToast] = useState(false);
 
 useEffect(() => {
   if (!showProposalSelection) {
@@ -150,19 +155,36 @@ function cleanInputs() {
 // close canvas after proposal is submitted
 useEffect(() => {
   if (isTxnCreated) {
+    let checkTxnTimeout = null;
+    let errorTimeout = null;
+
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
         if (lastProposalId !== id) {
           cleanInputs();
           onCloseCanvas();
+          clearTimeout(errorTimeout);
           refreshData();
           setTxnCreated(false);
         } else {
-          setTimeout(() => checkForNewProposal(), 1000);
+          checkTxnTimeout = setTimeout(() => checkForNewProposal(), 1000);
         }
       });
     };
+
     checkForNewProposal();
+
+    // if in 20 seconds there is no change, show error condition
+    errorTimeout = setTimeout(() => {
+      setShowErrorToast(true);
+      setTxnCreated(false);
+      clearTimeout(checkTxnTimeout);
+    }, 20000);
+
+    return () => {
+      clearTimeout(checkTxnTimeout);
+      clearTimeout(errorTimeout);
+    };
   }
 }, [isTxnCreated]);
 
@@ -183,13 +205,11 @@ useEffect(() => {
 
 const Container = styled.div`
   font-size: 14px;
-  .text-grey {
-    color: #b9b9b9 !important;
-  }
 
-  .text-grey a {
+  .text-secondary a {
     color: inherit !important;
   }
+
   label {
     font-weight: 600;
     margin-bottom: 3px;
@@ -201,10 +221,6 @@ const Container = styled.div`
   .rounded-pill {
     border-radius: 5px !important;
   }
-  .theme-btn {
-    background: var(--theme-color) !important;
-    color: white;
-  }
 
   .primary-text-color a {
     color: var(--theme-color) !important;
@@ -214,9 +230,6 @@ const Container = styled.div`
     color: black !important;
   }
 
-  .text-sm {
-    font-size: 13px;
-  }
   .warning {
     background-color: rgba(255, 158, 0, 0.1);
     color: #ff9e00;
@@ -382,6 +395,11 @@ useEffect(() => {
 
 return (
   <Container>
+    <TransactionLoader
+      showInProgress={isTxnCreated}
+      showError={showErrorToast}
+      toggleToast={() => setShowErrorToast(false)}
+    />
     <Widget
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
       props={{
@@ -597,7 +615,8 @@ return (
               !selectedProposal?.name ||
               !tokenId ||
               !isAccountValid() ||
-              !isAmountValid(),
+              !isAmountValid() ||
+              isTxnCreated,
             label: "Submit",
             onClick: onSubmitClick,
             loading: isTxnCreated,

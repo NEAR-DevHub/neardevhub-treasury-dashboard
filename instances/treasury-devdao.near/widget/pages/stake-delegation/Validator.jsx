@@ -10,14 +10,20 @@ const pikespeakKey = isBosGateway()
 if (!pikespeakKey) {
   return (
     <Widget
-      src="${REPL_MOB}/widget/Profile.OverlayTrigger"
+      src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
       props={{
-        accountId: validatorId,
+        popup: (
+          <Widget
+            src="${REPL_MOB}/widget/Profile.Popover"
+            props={{ accountId: validatorId }}
+          />
+        ),
         children: (
           <div className="text-truncate" style={{ maxWidth: "300px" }}>
             {validatorId}
           </div>
         ),
+        instance: props.instance,
       }}
     />
   );
@@ -44,10 +50,6 @@ const Container = styled.div`
     color: #34c759;
   }
 
-  .text-grey {
-    color: #b9b9b9 !important;
-  }
-
   .text-sm {
     font-size: 12px;
   }
@@ -57,7 +59,7 @@ return (
   <Container className="d-flex flex-column gap-1 bold">
     <div> {validatorId}</div>
     <div className="d-flex gap-2 align-items-center text-sm">
-      <div className="text-grey">{fee}% Fee</div>
+      <div className="text-secondary">{fee}% Fee</div>
       {isActive && <div className="text-green">Active</div>}
     </div>
   </Container>

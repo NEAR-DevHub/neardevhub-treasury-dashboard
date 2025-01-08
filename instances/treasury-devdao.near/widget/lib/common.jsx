@@ -1,5 +1,7 @@
 function getApproversAndThreshold(treasuryDaoID, kind, isDeleteCheck) {
-  const daoPolicy = Near.view(treasuryDaoID, "get_policy", {});
+  const daoPolicy = treasuryDaoID
+    ? Near.view(treasuryDaoID, "get_policy", {})
+    : null;
   const groupWithPermission = (daoPolicy.roles ?? []).filter((role) => {
     const permissions = isDeleteCheck
       ? ["*:*", `${kind}:*`, `${kind}:VoteRemove`, "*:VoteRemove"]
@@ -84,7 +86,10 @@ function getRoleWiseData(treasuryDaoID) {
 }
 
 function getPolicyApproverGroup(treasuryDaoID) {
-  const daoPolicy = Near.view(treasuryDaoID, "get_policy", {});
+  const daoPolicy = treasuryDaoID
+    ? Near.view(treasuryDaoID, "get_policy", {})
+    : null;
+
   const groupWithPermission = (daoPolicy.roles ?? []).filter((role) => {
     const policyPermissions = [
       "*:*",
@@ -359,7 +364,10 @@ function getMembersAndPermissions(treasuryDaoID) {
 }
 
 function getDaoRoles(treasuryDaoID) {
-  const daoPolicy = Near.view(treasuryDaoID, "get_policy", {});
+  const daoPolicy = treasuryDaoID
+    ? Near.view(treasuryDaoID, "get_policy", {})
+    : null;
+
   if (Array.isArray(daoPolicy.roles)) {
     return daoPolicy.roles.map((role) => role.name);
   }
@@ -372,7 +380,10 @@ function hasPermission(treasuryDaoID, accountId, kindName, actionType) {
     return false;
   }
   const isAllowed = false;
-  const daoPolicy = Near.view(treasuryDaoID, "get_policy", {});
+  const daoPolicy = treasuryDaoID
+    ? Near.view(treasuryDaoID, "get_policy", {})
+    : null;
+
   if (Array.isArray(daoPolicy.roles)) {
     const permissions = daoPolicy.roles.map((role) => {
       if (
@@ -426,10 +437,8 @@ function formatNearAmount(amount) {
     .toFixed(2);
 }
 
-function getNearBalances(treasuryDaoID) {
-  const resp = fetch(
-    `https://api.fastnear.com/v1/account/${treasuryDaoID}/full`
-  );
+function getNearBalances(accountId) {
+  const resp = fetch(`https://api.fastnear.com/v1/account/${accountId}/full`);
   const storage = Big(resp?.body?.state?.storage_bytes ?? "0")
     .mul(Big(10).pow(19))
     .toFixed();
@@ -483,7 +492,7 @@ function formatSubmissionTimeStamp(submissionTime, proposalPeriod) {
           ? "Expired"
           : `${totalDays}d ${remainingHours}h ${remainingMinutes}m`}
       </div>
-      <div className="text-muted text-sm">
+      <div className="text-secondary text-sm">
         {hours}:{minutes} {day} {month} {year}
       </div>
     </div>

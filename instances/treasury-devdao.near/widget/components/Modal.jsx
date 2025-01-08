@@ -40,11 +40,6 @@ const Modal = styled.div`
   .btn {
     font-size: 14px;
   }
-
-  .theme-btn {
-    background: var(--theme-color) !important;
-    color: white;
-  }
 `;
 
 const ModalBackdrop = styled.div`

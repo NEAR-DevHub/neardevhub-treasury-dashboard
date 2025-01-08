@@ -2,12 +2,12 @@ const status = props.status;
 const Container = styled.div`
   .reject {
     background-color: rgba(220, 102, 102, 0.16);
-    color: #d20000;
+    color: var(--other-red);
   }
 
   .approve {
     background-color: rgba(0, 202, 134, 0.16);
-    color: #089968;
+    color: var(--other-green);
   }
 `;
 

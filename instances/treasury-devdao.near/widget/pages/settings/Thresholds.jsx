@@ -1,22 +1,34 @@
-const { encodeToMarkdown } = VM.require(
+const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
+  href: () => {},
+};
+const { TransactionLoader } = VM.require(
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TransactionLoader`
+) || { TransactionLoader: () => <></> };
+
+const { encodeToMarkdown, hasPermission, getRoleWiseData } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
-);
+) || {
+  encodeToMarkdown: () => {},
+  hasPermission: () => {},
+};
 
 const { instance } = props;
 if (!instance) {
   return <></>;
 }
 const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
-const { getRoleWiseData, hasPermission } = VM.require(
-  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
-) || { hasPermission: () => {} };
-const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
-  href: () => {},
-};
 
 if (typeof getRoleWiseData !== "function") {
   return <></>;
 }
+
+const hasEditPermission = hasPermission(
+  treasuryDaoID,
+  context.accountId,
+  "ChangeConfig",
+  "AddProposal"
+);
+
 const [selectedGroup, setSelectedGroup] = useState(null);
 const [selectedVoteOption, setSelectedVoteOption] = useState(null);
 const [selectedVoteValue, setSelectedVoteValue] = useState(null);
@@ -28,12 +40,13 @@ const [valueError, setValueError] = useState(null);
 const [showConfirmModal, setConfirmModal] = useState(null);
 const [rolesData, setRolesData] = useState(null);
 const [refreshData, setRefreshData] = useState(false);
+const [showErrorToast, setShowErrorToast] = useState(false);
 
 const hasCreatePermission = hasPermission(
   treasuryDaoID,
   context.accountId,
   "policy",
-  "vote"
+  "AddProposal"
 );
 
 useEffect(() => {
@@ -78,16 +91,33 @@ useEffect(() => {
 
 useEffect(() => {
   if (isTxnCreated) {
+    let checkTxnTimeout = null;
+    let errorTimeout = null;
+
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
         if (lastProposalId !== id) {
           setToastStatus(true);
+          setTxnCreated(false);
+          clearTimeout(errorTimeout);
         } else {
-          setTimeout(() => checkForNewProposal(), 1000);
+          checkTxnTimeout = setTimeout(() => checkForNewProposal(), 1000);
         }
       });
     };
     checkForNewProposal();
+
+    // if in 20 seconds there is no change, show error condition
+    errorTimeout = setTimeout(() => {
+      setShowErrorToast(true);
+      setTxnCreated(false);
+      clearTimeout(checkTxnTimeout);
+    }, 20000);
+
+    return () => {
+      clearTimeout(checkTxnTimeout);
+      clearTimeout(errorTimeout);
+    };
   }
 }, [isTxnCreated]);
 
@@ -105,27 +135,20 @@ useEffect(() => {
 
 const Container = styled.div`
   font-size: 14px;
-  .border-right {
-    border-right: 1px solid rgba(226, 230, 236, 1);
-  }
 
   .card-title {
     font-size: 18px;
     font-weight: 600;
     padding-block: 5px;
-    border-bottom: 1px solid rgba(226, 230, 236, 1);
+    border-bottom: 1px solid var(--border-color);
   }
 
   .selected-role {
-    background-color: rgba(244, 244, 244, 1);
-  }
-
-  .cursor-pointer {
-    cursor: pointer;
+    background-color: var(--grey-04);
   }
 
   .tag {
-    background-color: rgba(244, 244, 244, 1);
+    background-color: var(--grey-04);
     font-size: 12px;
     padding-block: 5px;
   }
@@ -133,10 +156,6 @@ const Container = styled.div`
   label {
     color: rgba(153, 153, 153, 1);
     font-size: 12px;
-  }
-
-  .fw-bold {
-    font-weight: 500 !important;
   }
 
   .p-0 {
@@ -147,14 +166,9 @@ const Container = styled.div`
     font-size: 13px;
   }
 
-  .theme-btn {
-    background: var(--theme-color) !important;
-    color: white;
-  }
-
   .warning {
     background-color: rgba(255, 158, 0, 0.1);
-    color: rgba(177, 113, 8, 1);
+    color: var(--other-warning);
     font-weight: 500;
   }
 
@@ -162,35 +176,8 @@ const Container = styled.div`
     font-size: 12px !important;
   }
 
-  .text-muted {
-    color: rgba(153, 153, 153, 1);
-  }
-
-  .text-red {
-    color: #d95c4a;
-  }
-
-  .toast {
-    background: white !important;
-  }
-
-  .toast-header {
-    background-color: #2c3e50 !important;
-    color: white !important;
-  }
-
   .dropdown-toggle:after {
     top: 20% !important;
-  }
-`;
-
-const ToastContainer = styled.div`
-  a {
-    color: black !important;
-    text-decoration: underline !important;
-    &:hover {
-      color: black !important;
-    }
   }
 `;
 
@@ -267,30 +254,35 @@ function onSubmitClick() {
 const SubmitToast = () => {
   return (
     showToastStatus && (
-      <ToastContainer className="toast-container position-fixed bottom-0 end-0 p-3">
+      <div className="toast-container position-fixed bottom-0 end-0 p-3">
         <div className={`toast ${showToastStatus ? "show" : ""}`}>
           <div className="toast-header px-2">
             <strong className="me-auto">Just Now</strong>
             <i
-              className="bi bi-x-lg h6"
+              className="bi bi-x-lg h6 mb-0 cursor-pointer"
               onClick={() => setToastStatus(null)}
             ></i>
           </div>
           <div className="toast-body">
-            <div>Threshold change request submitted.</div>
-            <a
-              href={href({
-                widgetSrc: `${instance}/widget/app`,
-                params: {
-                  page: "settings",
-                },
-              })}
-            >
-              View it
-            </a>
+            <div className="d-flex align-items-center gap-3">
+              <i class="bi bi-check2 h3 mb-0 success-icon"></i>
+              <div>
+                <div>Threshold change request submitted.</div>
+                <a
+                  href={href({
+                    widgetSrc: `${instance}/widget/app`,
+                    params: {
+                      page: "settings",
+                    },
+                  })}
+                >
+                  View it
+                </a>
+              </div>
+            </div>
           </div>
         </div>
-      </ToastContainer>
+      </div>
     )
   );
 };
@@ -313,6 +305,11 @@ const requiredVotes = selectedGroup
 return (
   <Container>
     <SubmitToast />
+    <TransactionLoader
+      showInProgress={isTxnCreated}
+      showError={showErrorToast}
+      toggleToast={() => setShowErrorToast(false)}
+    />
     {Array.isArray(rolesData) && rolesData.length ? (
       <div className="card rounded-3 d-flex flex-row px-0 flex-wrap">
         <Widget
@@ -443,7 +440,7 @@ return (
               />
               <div>
                 {isPercentageSelected && (
-                  <div className="text-muted text-sm">
+                  <div className="text-secondary text-sm">
                     This is equivalent to
                     <span className="fw-bolder">
                       {requiredVotes} votes
@@ -480,17 +477,37 @@ return (
                     onClick: () => {
                       resetForm();
                     },
-                    disabled: isTxnCreated,
+                    disabled: isTxnCreated || !hasCreatePermission,
                   }}
                 />
                 <Widget
-                  src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
+                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
                   props={{
-                    classNames: { root: "theme-btn" },
-                    disabled: !selectedVoteValue || valueError,
-                    label: "Submit",
-                    onClick: () => setConfirmModal(true),
-                    loading: isTxnCreated,
+                    ActionButton: () => (
+                      <Widget
+                        src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
+                        props={{
+                          classNames: { root: "theme-btn" },
+                          disabled:
+                            !selectedVoteValue ||
+                            valueError ||
+                            !hasCreatePermission ||
+                            isTxnCreated,
+                          label: "Submit Request",
+                          loading: isTxnCreated,
+                        }}
+                      />
+                    ),
+                    checkForDeposit: true,
+                    disabled:
+                      !selectedVoteValue ||
+                      valueError ||
+                      !hasCreatePermission ||
+                      isTxnCreated,
+                    treasuryDaoID,
+                    callbackAction: () => {
+                      setConfirmModal(true);
+                    },
                   }}
                 />
               </div>

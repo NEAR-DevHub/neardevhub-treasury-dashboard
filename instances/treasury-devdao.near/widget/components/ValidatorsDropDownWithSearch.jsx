@@ -61,12 +61,6 @@ const Container = styled.div`
     width: 100%;
   }
 
-  .dropdown-item.active,
-  .dropdown-item:active {
-    background-color: #f0f0f0 !important;
-    color: black;
-  }
-
   .custom-select {
     position: relative;
   }
@@ -77,15 +71,7 @@ const Container = styled.div`
   }
 
   .selected {
-    background-color: #f0f0f0;
-  }
-
-  input {
-    background-color: #f8f9fa;
-  }
-
-  .cursor-pointer {
-    cursor: pointer;
+    background-color: var(--grey-04);
   }
 
   .text-wrap {
@@ -93,16 +79,8 @@ const Container = styled.div`
     white-space: normal;
   }
 
-  .text-muted {
-    color: rgba(142, 142, 147, 1) !important;
-  }
-
   .text-orange {
     color: rgba(255, 149, 0, 1) !important;
-  }
-
-  .text-dark-grey {
-    color: rgba(85, 85, 85, 1) !important;
   }
 
   .disabled {
@@ -132,7 +110,7 @@ const BalanceDisplay = ({ balance, label }) => {
 
   return (
     <div className="d-flex align-items-center gap-1 text-sm">
-      <div className="text-dark-grey">{label}</div>
+      <div className="text-secondary">{label}</div>
       <div className="text-orange">{formatNearAmount(balance)} NEAR</div>
     </div>
   );
@@ -161,7 +139,7 @@ return (
     >
       <div
         className={
-          "dropdown-toggle bg-white border rounded-2 btn drop-btn " +
+          "dropdown-toggle bg-dropdown border rounded-2 btn drop-btn " +
           (disabled && " disabled")
         }
         data-testid="validator-dropdown"
@@ -169,7 +147,7 @@ return (
       >
         <div
           className={`selected-option w-100 text-wrap ${
-            selectedOption.pool_id === defaultLabel ? "text-muted" : ""
+            selectedOption.pool_id === defaultLabel ? "text-secondary" : ""
           }`}
         >
           {selectedOption.pool_id ?? defaultLabel}
@@ -211,7 +189,7 @@ return (
                   }}
                 >
                   <div className="d-flex align-items-center gap-2 text-sm">
-                    <span className="text-muted">{fee}% Fee </span>
+                    <span className="text-secondary">{fee}% Fee </span>
                     <span className="text-green">Active</span>
                   </div>
                   <div className="h6 mb-0"> {pool_id} </div>
