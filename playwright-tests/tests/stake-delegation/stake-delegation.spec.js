@@ -679,7 +679,7 @@ test.describe("Withdraw request", function () {
     });
     const submitBtn = page.getByRole("button", { name: "Submit" });
     await expect(submitBtn).toBeEnabled();
-    await submitBtn.click();
+    await submitBtn.dblclick();
     await expect(page.getByText("Processing your request ...")).toBeVisible();
     await expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
@@ -735,7 +735,7 @@ test.describe("Withdraw request", function () {
     });
     const submitBtn = page.getByRole("button", { name: "Submit" });
     await expect(submitBtn).toBeEnabled();
-    await submitBtn.click();
+    await submitBtn.dblclick();
     await expect(page.getByText("Processing your request ...")).toBeVisible();
     // proposals for both the pools
     await expect(await getTransactionModalObject(page)).toEqual({
