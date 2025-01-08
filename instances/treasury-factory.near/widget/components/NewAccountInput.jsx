@@ -35,9 +35,8 @@ const checkAccountAvailable = async (accountId) => {
 };
 
 return (
-  <div className="position-relative d-flex align-items-center">
+  <div className="account-field position-relative d-flex align-items-center">
     <input
-      className="account-input"
       type="text"
       placeholder="app-account"
       value={value}
