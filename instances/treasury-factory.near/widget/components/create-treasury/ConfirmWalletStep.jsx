@@ -101,7 +101,7 @@ return (
     </Section>
     <Link
       className={`btn btn-primary w-100 ${
-        balance < REQUIRED_BALANCE ? "disabled" : ""
+        balance < REQUIRED_BALANCE ? "disabled" : "active"
       }`}
       href={`/${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=1`}
     >
