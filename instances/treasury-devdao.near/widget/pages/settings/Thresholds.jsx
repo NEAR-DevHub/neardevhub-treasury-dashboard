@@ -321,7 +321,7 @@ return (
               <div className="d-flex flex-column gap-2">
                 This action will result in significant changes to the system.
                 <div className="d-flex gap-3 warning px-3 py-2 rounded-3">
-                  <i class="bi bi-exclamation-triangle h5"></i>
+                  <i class="bi bi-exclamation-triangle warning-icon h5"></i>
                   <div>
                     Changing this setting will require {requiredVotes} vote(s)
                     to approve requests. You will no longer be able to approve
@@ -341,7 +341,7 @@ return (
         />
         <div className="flex-1 border-right py-3 ">
           <div className="card-title px-3">Permission Groups</div>
-          <div className="d-flex flex-column gap-1 fw-bold">
+          <div className="d-flex flex-column gap-1" style={{ fontWeight: 600 }}>
             {rolesData.map((role) => {
               const name = role.roleName;
               return (
@@ -455,7 +455,7 @@ return (
             {isPercentageSelected &&
               selectedGroup.threshold != selectedVoteValue && (
                 <div className="d-flex gap-3 warning px-3 py-2 rounded-3">
-                  <i class="bi bi-exclamation-triangle h5"></i>
+                  <i class="bi bi-exclamation-triangle warning-icon h5"></i>
                   <div>
                     <span className="fw-bolder">Warning! </span> <br />
                     If you choose a percentage-based threshold, the number of

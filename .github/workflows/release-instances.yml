@@ -19,6 +19,8 @@ jobs:
             deploy_command: npm run deploy:infinex
           - environment: treasury-testing-infinex.near
             deploy_command: npm run deploy:infinex-testing
+          - environment: treasury-templar.near
+            deploy_command: npm run deploy:templar
     environment: ${{ matrix.target_account.environment }}
     steps:
       - name: Checkout repository
