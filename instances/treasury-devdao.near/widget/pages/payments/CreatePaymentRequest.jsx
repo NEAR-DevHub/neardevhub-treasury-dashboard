@@ -568,7 +568,7 @@ return (
         parseFloat(selectedTokensAvailable) <=
           parseFloat(amount ? amount : 0) && (
           <div className="d-flex gap-3 align-items-center warning px-3 py-2 rounded-3">
-            <i class="bi bi-exclamation-triangle h5"></i>
+            <i class="bi bi-exclamation-triangle warning-icon h5"></i>
             <div>
               The treasury balance is insufficient to cover the payment. You can
               create the request, but it won’t be approved until the balance is

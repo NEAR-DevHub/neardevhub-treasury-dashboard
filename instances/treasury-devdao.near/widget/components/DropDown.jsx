@@ -44,7 +44,7 @@ return (
     <div className="dropdown w-100" data-testid="dropdown">
       <button
         disabled={disabled}
-        className="btn drop-btn text-truncate dropdown-toggle bg-dropdown border rounded-2"
+        className="btn drop-btn text-truncate dropdown-toggle bg-dropdown border rounded-2 no-transparent"
         type="button"
         data-bs-toggle="dropdown"
         aria-expanded="false"

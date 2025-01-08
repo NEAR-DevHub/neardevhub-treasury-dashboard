@@ -286,9 +286,9 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
       color: var(--text-color) !important;
     }
 
-    .btn:disabled,
-    .btn.disabled,
-    fieldset:disabled {
+    .btn:not(.no-transparent),
+    .btn.disabled:not(.no-transparent),
+    fieldset:disabled:not(.no-transparent) {
       border-color: transparent !important;
     }
 
