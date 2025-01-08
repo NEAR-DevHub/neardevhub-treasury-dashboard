@@ -156,10 +156,10 @@ function createDao() {
       contractName: `${REPL_BASE_DEPLOYMENT_ACCOUNT}`,
       methodName: "create_instance",
       args: {
-        name: `${formFields.sputnikAccountName}`,
+        name: `${formFields.accountName}`,
         sputnik_dao_factory_account_id: `${REPL_SPUTNIK_FACTORY_ACCOUNT}`,
         social_db_account_id: `${REPL_SOCIAL_CONTRACT}`,
-        widget_reference_account_id: `${formFields.accountName}.${REPL_NEAR}`,
+        widget_reference_account_id: `${REPL_FACTORY_REFERENCE_ACCOUNT}`,
         create_dao_args: btoa(JSON.stringify(createDaoConfig)),
       },
       gas: 300000000000000,

@@ -61,6 +61,10 @@ test.describe("admin connected", function () {
         attachedDeposit: nearApi.utils.format.parseNearAmount("12"),
       });
 
+      expect(
+        transactionToSend.actions[0].params.widget_reference_account_id
+      ).toEqual(widget_reference_account_id);
+
       await page.evaluate((transactionResult) => {
         window.transactionSentPromiseResolve(transactionResult);
       }, transactionResult);
