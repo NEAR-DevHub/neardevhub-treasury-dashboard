@@ -34,8 +34,6 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
   --text-color: ${isDarkTheme ? "#CACACA" : "#1B1B18"};
   --text-secondary-color: ${isDarkTheme ? "#878787" : "#999999"};
   --text-alt-color: ${isDarkTheme ? "#FFFFFF" : "#FFFFFF"};
-  --link-inactive-color: ${isDarkTheme ? "" : "white"};
-  --link-active-color: ${isDarkTheme ? "" : "white"};
   --border-color: ${isDarkTheme ? "#3B3B3B" : "rgba(226, 230, 236, 1)"};
   --grey-01: ${isDarkTheme ? "#F4F4F4" : "#1B1B18"};
   --grey-02: ${isDarkTheme ? "#B3B3B3" : "#555555"};
@@ -115,15 +113,15 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
 
     a {
       text-decoration: none;
-      color: var(--link-inactive-color) !important;
+      color: var(--text-color) !important;
       &.active {
-        color: var(--link-active-color) !important;
+        color: var(--text-color) !important;
         font-weight: 700 !important;
       }
 
       &:hover {
         text-decoration: none;
-        color: var(--link-active-color) !important;
+        color: var(--text-color) !important;
         font-weight: 700 !important;
       }
     }
@@ -286,7 +284,6 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
       color: var(--text-color) !important;
     }
 
-    .btn:not(.no-transparent),
     .btn.disabled:not(.no-transparent),
     fieldset:disabled:not(.no-transparent) {
       border-color: transparent !important;
