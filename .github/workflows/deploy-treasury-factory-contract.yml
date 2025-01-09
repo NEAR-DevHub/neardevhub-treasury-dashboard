@@ -5,7 +5,7 @@ on:
 
 jobs:
   test:
-    uses: ./.github/workflows/test-treasury-fatctory-contract.yml
+    uses: ./.github/workflows/test-treasury-factory-contract.yml
 
   deploy:
     name: Deploy to production
