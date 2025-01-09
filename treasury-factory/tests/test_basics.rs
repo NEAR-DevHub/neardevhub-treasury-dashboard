@@ -228,7 +228,7 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
             }
         ))
         .max_gas()
-        .deposit(NearToken::from_near(10))
+        .deposit(NearToken::from_near(9))
         .transact()
         .await?;
 

@@ -55,7 +55,7 @@ impl Contract {
             .then(
                 instance_contract::ext(new_instance_contract_id.clone())
                     .with_attached_deposit(
-                        env::attached_deposit().saturating_sub(NearToken::from_near(6)),
+                        env::attached_deposit().saturating_sub(NearToken::from_near(1)),
                     )
                     .update_widgets(widget_reference_account_id, social_db_account_id),
             )
