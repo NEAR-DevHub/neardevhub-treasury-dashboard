@@ -254,6 +254,7 @@ return (
                   : "-"}
               </div>
             </div>
+
             <Link
               href={`/${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=1`}
             >
@@ -262,13 +263,26 @@ return (
           </div>
         </Section>
 
-        <Section>
+        <Section withBorder>
           <div className="d-flex justify-content-between align-items-center">
             <div>
               <label>Sputnik Account Name</label>
               <div>
+                {formFields.accountName
+                  ? `${formFields.accountName}.sputnik-dao.near`
+                  : "-"}
+              </div>
+            </div>
+          </div>
+        </Section>
+
+        <Section>
+          <div className="d-flex justify-content-between align-items-center">
+            <div>
+              <label>Sputnik Account Display Name</label>
+              <div>
                 {formFields.sputnikAccountName
-                  ? `${formFields.sputnikAccountName}.sputnik-dao.near`
+                  ? `${formFields.sputnikAccountName}`
                   : "-"}
               </div>
             </div>
