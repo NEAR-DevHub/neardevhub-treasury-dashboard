@@ -37,6 +37,7 @@
     "bw:build:testing": "npm run bw:build:instance --instance=treasury-testing.near",
     "bw:build:infinex": "npm run bw:build:instance --instance=treasury-infinex.near",
     "bw:build:infinex-testing": "npm run bw:build:instance --instance=treasury-testing-infinex.near",
+    "bw:build:templar": "npm run bw:build:instance --instance=treasury-templar.near",
     "build:sandbox": "cd sandboxrpc && cargo build",
     "gateway": "bw ws dev -g web4/public_html",
     "dry-run:instances": "cd ./build/$npm_config_instance && bos components diff $npm_config_instance network-config mainnet",
@@ -50,6 +51,8 @@
     "dry-run:infinex-testing": "npm run bw:build:infinex-testing && npm run dry-run:instances --instance=treasury-testing-infinex.near",
     "deploy:infinex-testing": "npm run bw:build:infinex-testing && cd ./build/treasury-testing-infinex.near && bos components deploy",
     "dry-run:infinex": "npm run bw:build:infinex && npm run dry-run:instances --instance=treasury-infinex.near",
+    "deploy:templar": "npm run bw:build:templar && cd ./build/treasury-templar.near && bos components deploy",
+    "dry-run:templar": "npm run bw:build:templar && npm run dry-run:instances --instance=treasury-templar.near",
     "test": "npx playwright test",
     "test:watch:codespaces": "npm test -- --ui-host=0.0.0.0"
   },

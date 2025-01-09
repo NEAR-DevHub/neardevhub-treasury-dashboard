@@ -96,6 +96,16 @@ test.describe("User is logged in", function () {
     await page.waitForTimeout(500);
     await page.locator("button", { hasText: "Submit" }).click();
 
+    // check if there is any change in existing requests duration
+    await page.waitForTimeout(2_000);
+    const proceedButton = await page.locator(".modalfooter button", {
+      hasText: "Yes, proceed",
+    });
+
+    if (await proceedButton.isVisible({})) {
+      await proceedButton.click();
+    }
+
     const description = {
       title: "Update policy - Voting Duration",
       summary: `theori.near requested to change voting duration from ${currentDurationDays} to ${newDurationDays}.`,
