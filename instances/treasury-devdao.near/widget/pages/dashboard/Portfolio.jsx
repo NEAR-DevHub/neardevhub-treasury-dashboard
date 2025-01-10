@@ -97,10 +97,11 @@ const BalanceDisplay = ({
   setIsExpanded,
   expandedContent,
   hideTooltip,
+  last,
 }) => {
   return (
     <div className="d-flex flex-column">
-      <div className="border-bottom">
+      <div className={!last && "border-bottom"}>
         <div className="py-2 d-flex gap-2 align-items-center justify-content-between px-3">
           <div className="h6 mb-0">
             {label}
@@ -114,7 +115,7 @@ const BalanceDisplay = ({
               </OverlayTrigger>
             )}
           </div>
-          <div className="d-flex gap-3 align-items-center justify-content-end">
+          <div className="d-flex gap-2 align-items-center justify-content-end">
             <div className="d-flex flex-column align-items-end">
               <div className="h6 mb-0 d-flex align-items-center gap-1">
                 <NearToken height={20} width={20} />
@@ -159,10 +160,11 @@ const PortfolioCard = ({
   setIsExpanded,
   symbol,
   expandedContent,
+  last,
 }) => {
   return (
     <div className="d-flex flex-column">
-      <div className="border-bottom">
+      <div className={!last && "border-bottom"}>
         <div
           className={`py-2 d-flex gap-2 align-items-center justify-content-between px-3 ${
             !price ? "text-secondary" : ""
@@ -177,7 +179,7 @@ const PortfolioCard = ({
               </div>
             </div>
           </div>
-          <div className="d-flex gap-3 align-items-center justify-content-end">
+          <div className="d-flex gap-2 align-items-center justify-content-end">
             <div className="d-flex flex-column align-items-end">
               <div className="h6 mb-0">{formatToReadableDecimals(balance)}</div>
               <div className="text-sm text-secondary">
@@ -289,14 +291,9 @@ const isLoading =
   nearPrice === null;
 
 return (
-  <div
-    className="card flex-1 overflow-hidden"
-    style={{
-      borderBottom: isLoading ? "1px solid var(--border-color)" : "none",
-    }}
-  >
+  <div className="card flex-1 overflow-hidden">
     {heading}
-    <div className="my-2">
+    <div className="mb-2">
       {isLoading ? (
         <div className="d-flex justify-content-center align-items-center w-100 h-100">
           <Loading />
@@ -324,6 +321,7 @@ return (
                       balance={tokensNumber}
                       showExpand={false}
                       price={tokenPrice}
+                      last={index === ftTokens.length - 1}
                     />
                   );
                 })}

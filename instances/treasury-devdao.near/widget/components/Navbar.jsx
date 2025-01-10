@@ -48,7 +48,7 @@ const Navbar = styled.div`
   .account-container {
     color: var(--theme-color) !important;
     font-size: 14px;
-    font-weight: 700;
+    font-weight: 500;
   }
 
   .text-sm {
@@ -134,7 +134,7 @@ const treasuryLogo = metadata?.flagLogo ? metadata?.flagLogo : logo;
 return (
   <Navbar className="position-relative d-flex justify-content-between gap-2">
     <div className="d-flex flex-column gap-2">
-      <div className="d-flex gap-2 align-items-center">
+      <div className="d-flex gap-3 align-items-center">
         {/* logo can be svg or src */}
         {treasuryLogo && typeof treasuryLogo === "string" ? (
           <img
@@ -146,12 +146,15 @@ return (
         ) : (
           treasuryLogo
         )}
-        <div className="h3 mb-0">{getTitle(page ?? "dashboard")}</div>
-        {isTesting && <div>(Testing)</div>}
-      </div>
-      <div>
-        <span className="text-sm">Treasury Wallet: </span>
-        <span className="account-container">{treasuryDaoID}</span>
+        <div className="d-flex flex-column">
+          <div className="h4 mb-0">{getTitle(page ?? "dashboard")}</div>
+          {isTesting && <div>(Testing)</div>}
+
+          <div>
+            <span className="text-sm">Treasury Wallet: </span>
+            <span className="account-container">{treasuryDaoID}</span>
+          </div>
+        </div>
       </div>
     </div>
     <div className="d-flex gap-3 align-items-center">

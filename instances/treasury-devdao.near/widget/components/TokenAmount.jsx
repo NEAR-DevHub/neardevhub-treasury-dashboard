@@ -26,8 +26,8 @@ if (amountWithoutDecimals !== undefined) {
 return (
   <div className="text-center">
     <div className="d-flex gap-1 align-items-center justify-content-end">
-      <span className="amount h6 bolder mb-0">
-        {amount.toLocaleString("en-US")}
+      <span className="amount bolder mb-0">
+        {parseFloat(amount).toFixed(2).toLocaleString("en-US")}
       </span>
       {isNEAR ? (
         <NearToken width={17} height={17} />

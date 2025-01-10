@@ -54,7 +54,7 @@ const Wrapper = styled.div`
   }
 
   .flex-container {
-    min-width: 325px;
+    min-width: 400px;
     height: fit-content;
   }
 
@@ -254,7 +254,7 @@ return (
                 <div className="h5 mb-0">Sputnik DAO</div>
                 <div>
                   <span className="text-sm text-secondary">Wallet: </span>
-                  <span className="text-theme  text-sm fw-bold">
+                  <span className="text-theme text-sm fw-medium">
                     {treasuryDaoID}
                   </span>
                 </div>
@@ -281,7 +281,7 @@ return (
                   <div className="h5 mb-0">Lockup</div>
                   <div>
                     <span className="text-sm text-secondary">Wallet: </span>
-                    <span className="text-theme  text-sm fw-bold">
+                    <span className="text-theme text-sm fw-medium">
                       {lockupContract}
                     </span>
                   </div>

@@ -245,7 +245,7 @@ const ProposalsComponent = () => {
                 : ""
             }
           >
-            <td className="fw-semi-bold">{item.id}</td>
+            <td className="fw-semi-bold px-3">{item.id}</td>
             <td className={isVisible("Created Date")}>
               <Widget
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
@@ -517,7 +517,7 @@ return (
           <table className="table">
             <thead>
               <tr className="text-secondary">
-                <td>#</td>
+                <td className="px-3">#</td>
                 <td className={isVisible("Created Date")}>Created Date</td>
                 {!isPendingRequests && <td className="text-center">Status</td>}
                 {showReferenceProposal && (

@@ -114,15 +114,14 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
     a {
       text-decoration: none;
       color: var(--text-color) !important;
+      font-weight: 500;
       &.active {
         color: var(--text-color) !important;
-        font-weight: 700 !important;
       }
 
       &:hover {
         text-decoration: none;
         color: var(--text-color) !important;
-        font-weight: 700 !important;
       }
     }
 
