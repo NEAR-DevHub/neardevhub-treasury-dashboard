@@ -1,6 +1,6 @@
 const { formFields } = props;
 
-const REQUIRED_BALANCE = 12;
+const REQUIRED_BALANCE = 9;
 
 const [showCongratsModal, setShowCongratsModal] = useState(false);
 
@@ -167,7 +167,9 @@ function createDao() {
     },
   ]);
 
-  Storage.privateSet("accountName", formFields.accountName);
+  setTimeout(() => {
+    Storage.privateSet("accountName", formFields.accountName);
+  }, 1000);
 }
 
 const CongratsItem = ({ title, link }) => (
@@ -325,7 +327,7 @@ return (
           />
           <SummaryListItem
             title="Frontend BOS Widget Hosting"
-            value={6}
+            value={3}
             info="Estimated one-time costs to store info in BOS"
           />
           <b>

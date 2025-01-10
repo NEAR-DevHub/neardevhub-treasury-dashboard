@@ -3,8 +3,7 @@ const { getNearBalances } = VM.require(
 );
 if (!getNearBalances) return <></>;
 
-const baseUrl = "https://api.pikespeak.ai";
-const REQUIRED_BALANCE = 12;
+const REQUIRED_BALANCE = 9;
 
 let balance = getNearBalances(context.accountId);
 balance = balance ? parseFloat(balance.availableParsed) : 0;
@@ -78,7 +77,7 @@ return (
           />
           <SummaryListItem
             title="Frontend BOS Widget Hosting"
-            value={6}
+            value={3}
             info="Estimated one-time costs to store info in BOS"
           />
           <b>
