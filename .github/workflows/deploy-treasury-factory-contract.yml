@@ -24,4 +24,4 @@ jobs:
             --signer-public-key "${{ vars.TREASURY_FACTORY_ACCOUNT_PUBLIC_KEY }}" \
             --signer-private-key "${{ secrets.TREASURY_FACTORY_ACCOUNT_PRIVATE_KEY }}" \
             send
-        working-directory: ./web4/treasury-factory
+        working-directory: ./treasury-factory
