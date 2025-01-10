@@ -3,6 +3,8 @@ use lazy_static::lazy_static;
 use near_sdk::base64::{engine::general_purpose, Engine as _};
 use near_sdk::serde::Deserialize;
 use near_sdk::{AccountId, NearToken};
+use near_workspaces::types::AccessKeyPermission;
+use near_workspaces::types::PublicKey;
 use serde_json::{json, Value};
 use std::fs;
 use std::sync::{Mutex, Once};
@@ -212,8 +214,10 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
         },
     });
 
-    let create_treasury_instance_result = treasury_factory_contract
-        .call("create_instance")
+    let user_account = worker.dev_create_account().await?;
+
+    let create_treasury_instance_result = user_account
+        .call(treasury_factory_contract.id(), "create_instance")
         .args_json(json!(
             {
                 "sputnik_dao_factory_account_id": SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT,
@@ -224,7 +228,7 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
             }
         ))
         .max_gas()
-        .deposit(NearToken::from_near(10))
+        .deposit(NearToken::from_near(9))
         .transact()
         .await?;
 
@@ -295,5 +299,33 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
         ),
         deployed_widgets_json_string
     );
+
+    let admin_full_access_public_key: PublicKey =
+        "ed25519:DuAFUPhxv3zBDbZP8oCwC1KQPVzaUY88s5tECv8JDPMg"
+            .parse()
+            .unwrap();
+    let admin_access_key = worker
+        .view_access_key(
+            &instance_account_id.parse().unwrap(),
+            &admin_full_access_public_key,
+        )
+        .await?;
+    assert!(
+        matches!(admin_access_key.permission, AccessKeyPermission::FullAccess),
+        "Expected FullAccess permission"
+    );
+
+    let user_full_access_public_key = user_account.secret_key().public_key();
+    let user_access_key = worker
+        .view_access_key(
+            &instance_account_id.parse().unwrap(),
+            &user_full_access_public_key,
+        )
+        .await?;
+    assert!(
+        matches!(user_access_key.permission, AccessKeyPermission::FullAccess),
+        "Expected FullAccess permission"
+    );
+
     Ok(())
 }
