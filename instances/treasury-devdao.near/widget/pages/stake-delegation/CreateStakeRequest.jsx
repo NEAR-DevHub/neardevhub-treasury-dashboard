@@ -188,58 +188,83 @@ const BalanceDisplay = ({ label, balance, tooltipInfo, noBorder }) => {
   );
 };
 
-function getAllStakingPools() {
-  asyncFetch("https://rpc.mainnet.near.org/", {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      jsonrpc: "2.0",
-      id: "dontcare",
-      method: "validators",
-      params: [null],
+const allValidators = useCache(
+  () =>
+    asyncFetch("https://rpc.mainnet.near.org/", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: "dontcare",
+        method: "validators",
+        params: [null],
+      }),
+    }).then((resp) => {
+      if (Array.isArray(resp.body.result?.current_validators)) {
+        const validatorsAccounts = resp.body.result.current_validators;
+        return Promise.all(
+          validatorsAccounts.map((item) =>
+            item.account_id
+              ? Near.asyncView(item.account_id, "get_reward_fee_fraction").then(
+                  (feeData) => ({
+                    pool_id: item.account_id,
+                    fee: feeData.numerator,
+                  })
+                )
+              : null
+          )
+        ).then((results) => results.filter((result) => result !== null));
+      }
+      return [];
     }),
-  }).then((resp) => {
-    if (Array.isArray(resp.body.result.current_validators)) {
-      const validatorsAccounts = resp.body.result.current_validators;
-      const promises = validatorsAccounts.map((item) => {
-        return Near.asyncView(item.account_id, "get_reward_fee_fraction").then(
-          (feeData) => {
-            const nearpoolBalance = (nearStakedPoolsWithBalance ?? [])?.find(
-              (pool) => pool.pool === item.account_id
-            );
-            const lockupPool = (lockupStakedPoolsWithBalance ?? [])?.find(
-              (pool) => pool.pool === item.account_id
-            );
-            return {
-              pool_id: item.account_id,
-              fee: feeData.numerator,
-              stakedBalance: {
-                [treasuryDaoID]: nearpoolBalance,
-                [lockupContract]: lockupPool,
-              },
-            };
-          }
-        );
-      });
+  treasuryDaoID + "-stake-request-validators",
+  { subscribe: false }
+);
 
-      Promise.all(promises).then((res) => {
-        setValidators(res);
-      });
-    }
+function getAllStakingPools() {
+  const nearStakedMap = new Map(
+    (nearStakedPoolsWithBalance ?? []).map((pool) => [pool.pool, pool])
+  );
+
+  const lockupStakedMap = new Map(
+    (lockupStakedPoolsWithBalance ?? []).map((pool) => [pool.pool, pool])
+  );
+
+  // Update allValidators with stakedBalance
+  const updatedValidators = allValidators.map((validator) => {
+    const nearpoolBalance = nearStakedMap.get(validator.pool_id);
+    const lockupPool = lockupStakedMap.get(validator.pool_id);
+
+    return {
+      ...validator,
+      stakedBalance: {
+        [treasuryDaoID]: nearpoolBalance ?? null,
+        [lockupContract]: lockupPool ?? null,
+      },
+    };
   });
+
+  // Set the updated validators
+  setValidators(updatedValidators);
 }
 
 useEffect(() => {
   if (
     Array.isArray(nearStakedPoolsWithBalance) &&
+    Array.isArray(allValidators) &&
     ((lockupContract && Array.isArray(lockupStakedPoolsWithBalance)) ||
       !lockupContract)
   ) {
     getAllStakingPools();
   }
-}, [nearStakedPoolsWithBalance, lockupStakedPoolsWithBalance, lockupContract]);
+}, [
+  nearStakedPoolsWithBalance,
+  lockupStakedPoolsWithBalance,
+  lockupContract,
+  allValidators,
+]);
 
 function getBalances() {
   switch (selectedWallet?.value) {
@@ -364,6 +389,10 @@ const Container = styled.div`
     margin-bottom: 3px;
     font-size: 15px;
   }
+
+  .p-2 {
+    padding: 0px !important;
+  }
 `;
 
 useEffect(() => {
@@ -469,7 +498,7 @@ return (
           />
         </div>
       )}
-      <div className="d-flex flex-column gap-1 border border-1 rounded-3 p-2">
+      <div className="d-flex flex-column gap-1 border border-1 rounded-3 py-2">
         <BalanceDisplay
           label={"Ready to stake"}
           balance={getBalances().available}
