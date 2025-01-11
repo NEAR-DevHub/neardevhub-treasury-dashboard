@@ -75,7 +75,7 @@ return (
         )}
       </ul>
       {selected?.description && (
-        <div classNameName="text-secondary text-sm mt-1">
+        <div className="text-secondary text-sm mt-1">
           {selected.description}
         </div>
       )}
