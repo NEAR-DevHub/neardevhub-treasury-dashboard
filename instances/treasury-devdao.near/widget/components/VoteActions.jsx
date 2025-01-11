@@ -218,8 +218,8 @@ return (
                 popup: (
                   <div>
                     These tokens were unstaked, but are not yet ready for
-                    withdrawal. Tokens are ready for withdrawal 52-65 hours after
-                    unstaking.
+                    withdrawal. Tokens are ready for withdrawal 52-65 hours
+                    after unstaking.
                   </div>
                 ),
                 children: <i className="bi bi-info-circle text-secondary"></i>,
