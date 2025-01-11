@@ -218,7 +218,7 @@ return (
                 popup: (
                   <div>
                     These tokens were unstaked, but are not yet ready for
-                    withdrawl. Tokens are ready for withdrawl 52-65 hours after
+                    withdrawal. Tokens are ready for withdrawal 52-65 hours after
                     unstaking.
                   </div>
                 ),
