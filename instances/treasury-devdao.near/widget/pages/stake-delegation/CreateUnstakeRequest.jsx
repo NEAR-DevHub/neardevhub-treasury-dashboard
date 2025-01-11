@@ -228,12 +228,14 @@ const BalanceDisplay = ({ label, balance, tooltipInfo, noBorder }) => {
           <div className="h6 mb-0">
             {label}
             {"  "}{" "}
-            <OverlayTrigger
-              placement="top"
-              overlay={<Tooltip id="tooltip">{tooltipInfo}</Tooltip>}
-            >
-              <i className="bi bi-info-circle text-secondary"></i>
-            </OverlayTrigger>
+            <Widget
+              src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+              props={{
+                popup: tooltipInfo,
+                children: <i className="bi bi-info-circle text-secondary"></i>,
+                instance,
+              }}
+            />
           </div>
           <div className="h6 mb-0 d-flex align-items-center gap-1">
             {balance} NEAR

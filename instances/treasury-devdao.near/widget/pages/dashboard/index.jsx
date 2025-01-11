@@ -260,6 +260,7 @@ return (
                 </div>
               </div>
             ),
+            instance,
           }}
         />
         {lockupContract && (
@@ -287,6 +288,7 @@ return (
                   </div>
                 </div>
               ),
+              instance,
             }}
           />
         )}

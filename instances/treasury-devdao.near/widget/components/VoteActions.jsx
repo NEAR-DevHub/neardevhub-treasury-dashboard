@@ -212,18 +212,20 @@ return (
         {!isReadyToBeWithdrawn ? (
           <div className="text-center fw-semi-bold">
             Voting is not available before unstaking release{" "}
-            <OverlayTrigger
-              placement="top"
-              overlay={
-                <Tooltip id="tooltip">
-                  These tokens were unstaked, but are not yet ready for
-                  withdrawl. Tokens are ready for withdrawl 52-65 hours after
-                  unstaking.{" "}
-                </Tooltip>
-              }
-            >
-              <i className="bi bi-info-circle text-secondary"></i>
-            </OverlayTrigger>
+            <Widget
+              src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+              props={{
+                popup: (
+                  <div>
+                    These tokens were unstaked, but are not yet ready for
+                    withdrawl. Tokens are ready for withdrawl 52-65 hours after
+                    unstaking.
+                  </div>
+                ),
+                children: <i className="bi bi-info-circle text-secondary"></i>,
+                instance,
+              }}
+            />
           </div>
         ) : (
           hasVotingPermission && (
