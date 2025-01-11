@@ -147,7 +147,7 @@ return (
           treasuryLogo
         )}
         <div className="h3 mb-0">{getTitle(page ?? "dashboard")}</div>
-        {isTesting && <div>(Testing)</div>}
+        {isTesting && <div className="text-secondary">(Testing)</div>}
       </div>
       <div>
         <span className="text-sm">Treasury Wallet: </span>

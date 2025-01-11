@@ -35,9 +35,10 @@ const overlayClassName = props.overlayClassName ?? "m-3 p-2 rounded-3 shadow";
 const overlayStyle = props.overlayStyle ?? {
   maxWidth: "24em",
   zIndex: 1070,
-  backgroundColor: isDarkTheme ? "#222222" : "#f4f4f4",
+  backgroundColor: isDarkTheme ? "#222222" : "#FFFFFF",
   color: isDarkTheme ? "#CACACA" : "#1B1B18",
   border: "1px solid " + (isDarkTheme ? "#3B3B3B" : "rgba(226, 230, 236, 1)"),
+  fontSize: 13,
 };
 
 const overlay = (

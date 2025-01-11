@@ -582,7 +582,8 @@ test.describe("admin with function access keys", function () {
 
     await clickCreatePaymentRequestButton(page);
 
-    const amountFromLinkedProposal = 3120 / nearPrice;
+    const usdAmountFromLinkedProposal = 3120;
+    const nearAmountFromLinkedProposal = 3120 / nearPrice;
 
     if (instanceConfig.showProposalSelection === true) {
       const proposalSelect = page.locator(".dropdown-toggle").first();
@@ -603,8 +604,12 @@ test.describe("admin with function access keys", function () {
       );
 
       expect(await page.getByTestId("total-amount").inputValue()).toBe(
-        amountFromLinkedProposal.toString()
+        nearAmountFromLinkedProposal.toString()
       );
+      await expect(
+        page.getByText(`$${usdAmountFromLinkedProposal.toLocaleString()}.00`)
+      ).toBeVisible();
+      await expect(page.getByText(`$${nearPrice}.00`)).toBeVisible();
     } else {
       await page.getByTestId("proposal-title").fill("Test proposal title");
       await page.getByTestId("proposal-summary").fill("Test proposal summary");
@@ -636,7 +641,7 @@ test.describe("admin with function access keys", function () {
                 token_id: "",
                 receiver_id: "robert.near",
                 amount: (
-                  BigInt(amountFromLinkedProposal) *
+                  BigInt(nearAmountFromLinkedProposal) *
                   10n ** 24n
                 ).toString(),
               },
