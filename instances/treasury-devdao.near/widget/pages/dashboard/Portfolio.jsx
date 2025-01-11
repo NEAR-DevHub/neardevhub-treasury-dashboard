@@ -62,6 +62,7 @@ const {
   nearBalances,
   isLockupContract,
   nearWithdrawTokens,
+  instance,
 } = props;
 
 function convertBalanceToReadableFormat(amount, decimals) {
@@ -106,12 +107,16 @@ const BalanceDisplay = ({
             {label}
             {"  "}{" "}
             {!hideTooltip && (
-              <OverlayTrigger
-                placement="top"
-                overlay={<Tooltip id="tooltip">{tooltipInfo}</Tooltip>}
-              >
-                <i className="bi bi-info-circle text-secondary"></i>
-              </OverlayTrigger>
+              <Widget
+                src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+                props={{
+                  popup: tooltipInfo,
+                  children: (
+                    <i className="bi bi-info-circle text-secondary"></i>
+                  ),
+                  instance,
+                }}
+              />
             )}
           </div>
           <div className="d-flex gap-3 align-items-center justify-content-end">

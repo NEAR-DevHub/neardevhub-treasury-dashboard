@@ -456,7 +456,9 @@ test.describe("User is logged in", function () {
     await expect(
       page.getByRole("heading", { name: "Edit Member" })
     ).toBeVisible();
-    await expect(page.getByText(permission, { exact: true })).toBeVisible();
+    await expect(
+      page.locator(".offcanvas-body").getByText(permission, { exact: true })
+    ).toBeVisible();
     await expect(page.getByPlaceholder("treasury.near")).toBeDisabled();
     await page
       .getByText("Create Requests", { exact: true })
@@ -604,7 +606,9 @@ test.describe("User is logged in", function () {
       page.getByRole("heading", { name: "Edit Member" })
     ).toBeVisible();
     await expect(
-      page.getByText("Create Requests", { exact: true })
+      page
+        .locator(".offcanvas-body")
+        .getByText("Create Requests", { exact: true })
     ).toBeVisible();
     await page.getByRole("button", { name: " Delete" }).click();
     await expect(

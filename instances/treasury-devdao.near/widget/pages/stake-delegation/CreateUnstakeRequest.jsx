@@ -228,12 +228,14 @@ const BalanceDisplay = ({ label, balance, tooltipInfo, noBorder }) => {
           <div className="h6 mb-0">
             {label}
             {"  "}{" "}
-            <OverlayTrigger
-              placement="top"
-              overlay={<Tooltip id="tooltip">{tooltipInfo}</Tooltip>}
-            >
-              <i className="bi bi-info-circle text-secondary"></i>
-            </OverlayTrigger>
+            <Widget
+              src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+              props={{
+                popup: tooltipInfo,
+                children: <i className="bi bi-info-circle text-secondary"></i>,
+                instance,
+              }}
+            />
           </div>
           <div className="h6 mb-0 d-flex align-items-center gap-1">
             {balance} NEAR
@@ -250,7 +252,7 @@ function getBalances() {
       return {
         staked: lockupStakedTokens,
         unstaked: lockupUnStakedTokens,
-        withdrawl: lockupNearWithdrawTokens,
+        withdrawal: lockupNearWithdrawTokens,
         available: Big(lockupNearBalances.totalParsed ?? "0")
           .minus(lockupStakedTotalTokens ?? "0")
           .minus(formatNearAmount(LOCKUP_MIN_BALANCE_FOR_STORAGE))
@@ -261,7 +263,7 @@ function getBalances() {
       return {
         staked: nearStakedTokens,
         unstaked: nearUnStakedTokens,
-        withdrawl: nearWithdrawTokens,
+        withdrawal: nearWithdrawTokens,
         available: nearBalances.availableParsed,
       };
   }
@@ -495,7 +497,7 @@ return (
         <BalanceDisplay
           noBorder={true}
           label={"Available for withdrawal"}
-          balance={getBalances().withdrawl}
+          balance={getBalances().withdrawal}
           tooltipInfo={TooltipText?.availableForWithdraw}
         />
       </div>
