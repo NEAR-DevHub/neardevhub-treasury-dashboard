@@ -15,6 +15,7 @@ jobs:
         run: curl --proto '=https' --tlsv1.2 -LsSf https://github.com/near/cargo-near/releases/latest/download/cargo-near-installer.sh | sh
       - name: Deploy
         run: |
+          cargo build
           cargo near deploy build-non-reproducible-wasm  "${{ vars.NEAR_SOCIAL_ACCOUNT_ID }}" \
             without-init-call \
             network-config mainnet \
