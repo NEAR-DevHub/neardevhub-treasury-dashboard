@@ -76,52 +76,48 @@ const [lockupStakedTokens, setLockupStakedTokens] = useState(null);
 const [lockupUnStakedTokens, setLockupUnStakedTokens] = useState(null);
 const [lockupStakedTotalTokens, setLockupStakedTotalTokens] = useState(null);
 const [lockupNearWithdrawTokens, setLockupNearWithdrawTokens] = useState(null);
+const [nearPrice, setNearPrice] = useState(null);
+const [userFTTokens, setFTTokens] = useState(null);
 
-const nearPrice = useCache(
-  () =>
-    asyncFetch(
-      `https://api.coingecko.com/api/v3/simple/price?ids=near&vs_currencies=usd`
-    ).then((res) => {
-      return res.body.near?.usd;
-    }),
-  "price",
-  { subscribe: false }
-);
+useEffect(() => {
+  asyncFetch(
+    `https://api.coingecko.com/api/v3/simple/price?ids=near&vs_currencies=usd`
+  ).then((res) => {
+    if (res.body.near?.usd) {
+      setNearPrice(res.body.near?.usd);
+    }
+  });
 
-const userFTTokens = useCache(
-  () =>
-    asyncFetch(
-      `https://api3.nearblocks.io/v1/account/${treasuryDaoID}/inventory`,
-      { headers: { Authorization: "Bearer ${REPL_NEARBLOCKS_KEY}" } }
-    ).then((res) => {
-      let fts = res.body.inventory.fts;
-      if (fts)
-        fts = fts.sort(
-          (a, b) => b.amount * b.ft_meta.price - a.amount * a.ft_meta.price
-        );
+  asyncFetch(
+    `https://api3.nearblocks.io/v1/account/${treasuryDaoID}/inventory`,
+    { headers: { Authorization: "Bearer ${REPL_NEARBLOCKS_KEY}" } }
+  ).then((res) => {
+    let fts = res.body.inventory.fts;
+    if (fts)
+      fts = fts.sort(
+        (a, b) => b.amount * b.ft_meta.price - a.amount * a.ft_meta.price
+      );
 
-      const amounts = fts.map((ft) => {
-        const amount = ft.amount;
-        const decimals = ft.ft_meta.decimals;
-        const tokensNumber = Big(amount ?? "0")
-          .div(Big(10).pow(decimals))
-          .toFixed();
-        const tokenPrice = ft.ft_meta.price;
-        return Big(tokensNumber)
-          .mul(tokenPrice ?? 0)
-          .toFixed();
-      });
-      return {
-        totalCummulativeAmt: amounts.reduce(
-          (acc, value) => acc + parseFloat(value),
-          0
-        ),
-        fts,
-      };
-    }),
-  "all-token-amount",
-  { subscribe: false }
-);
+    const amounts = fts.map((ft) => {
+      const amount = ft.amount;
+      const decimals = ft.ft_meta.decimals;
+      const tokensNumber = Big(amount ?? "0")
+        .div(Big(10).pow(decimals))
+        .toFixed();
+      const tokenPrice = ft.ft_meta.price;
+      return Big(tokensNumber)
+        .mul(tokenPrice ?? 0)
+        .toFixed();
+    });
+    setFTTokens({
+      totalCummulativeAmt: amounts.reduce(
+        (acc, value) => acc + parseFloat(value),
+        0
+      ),
+      fts,
+    });
+  });
+}, []);
 
 function formatNearAmount(amount) {
   return Big(amount ?? "0")
@@ -229,7 +225,9 @@ return (
       <div className="d-flex flex-column gap-3 flex-container">
         <div className="card card-body" style={{ maxHeight: "100px" }}>
           <div className="h6 text-secondary">Total Balance</div>
-          {typeof getNearBalances !== "function" || nearPrice === null ? (
+          {typeof getNearBalances !== "function" ||
+          nearPrice === null ||
+          userFTTokens === null ? (
             <Loading />
           ) : (
             <div className="fw-bold h3 mb-0">

@@ -98,10 +98,11 @@ const BalanceDisplay = ({
   setIsExpanded,
   expandedContent,
   hideTooltip,
+  hideBorder,
 }) => {
   return (
     <div className="d-flex flex-column">
-      <div className="border-bottom">
+      <div className={!hideBorder && "border-bottom"}>
         <div className="py-2 d-flex gap-2 align-items-center justify-content-between px-3">
           <div className="h6 mb-0">
             {label}
@@ -164,10 +165,11 @@ const PortfolioCard = ({
   setIsExpanded,
   symbol,
   expandedContent,
+  hideBorder,
 }) => {
   return (
     <div className="d-flex flex-column">
-      <div className="border-bottom">
+      <div className={!hideBorder && "border-bottom"}>
         <div
           className={`py-2 d-flex gap-2 align-items-center justify-content-between px-3 ${
             !price ? "text-secondary" : ""
@@ -218,6 +220,7 @@ const NearPortfolio = () => {
   return (
     <PortfolioCard
       symbol={"NEAR"}
+      hideBorder={!ftTokens?.length && !isNearPortfolioExpanded}
       Icon={NearToken}
       balance={nearBalances.totalParsed}
       showExpand={true}
@@ -280,6 +283,7 @@ const NearPortfolio = () => {
             balance={nearBalances.storageParsed}
             tooltipInfo={TooltipText?.reservedForStorage}
             price={nearPrice}
+            hideBorder={!ftTokens.length}
           />
         </div>
       }
@@ -294,12 +298,7 @@ const isLoading =
   nearPrice === null;
 
 return (
-  <div
-    className="card flex-1 overflow-hidden"
-    style={{
-      borderBottom: isLoading ? "1px solid var(--border-color)" : "none",
-    }}
-  >
+  <div className="card flex-1 overflow-hidden border-bottom">
     {heading}
     <div className="my-2">
       {isLoading ? (
@@ -324,6 +323,7 @@ return (
                   const tokenPrice = price ?? 0;
                   return (
                     <PortfolioCard
+                      hideBorder={index === ftTokens.length - 1}
                       symbol={symbol}
                       src={icon}
                       balance={tokensNumber}
