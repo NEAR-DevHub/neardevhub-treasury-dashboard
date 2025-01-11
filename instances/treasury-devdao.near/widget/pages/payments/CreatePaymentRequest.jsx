@@ -50,6 +50,7 @@ const [isReceiverRegistered, setReceiverRegister] = useState(false);
 const [isLoadingProposals, setLoadingProposals] = useState(false);
 const [showCancelModal, setShowCancelModal] = useState(false);
 const [showErrorToast, setShowErrorToast] = useState(false);
+const [nearPrice, setNearPrice] = useState(null);
 
 useEffect(() => {
   if (!showProposalSelection) {
@@ -236,16 +237,24 @@ const Container = styled.div`
   }
 `;
 
-const nearPrice = useCache(
-  () =>
-    asyncFetch(
-      `https://api.coingecko.com/api/v3/simple/price?ids=near&vs_currencies=usd`
-    ).then((res) => {
-      return res.body.near?.usd;
-    }),
-  "near-price",
-  { subscribe: false }
-);
+const nearPriceAPI =
+  "https://api.coingecko.com/api/v3/simple/price?ids=near&vs_currencies=usd";
+
+useEffect(() => {
+  function fetchNearPrice() {
+    asyncFetch(nearPriceAPI).then((res) => {
+      if (res.body.near?.usd) {
+        setNearPrice(res.body.near.usd);
+      }
+    });
+  }
+  const interval = setInterval(() => {
+    fetchNearPrice();
+  }, 60_000);
+
+  fetchNearPrice();
+  return () => clearInterval(interval);
+}, []);
 
 function onSelectProposal(id) {
   if (!id) {
@@ -555,11 +564,38 @@ return (
         />
         {tokenId === tokenMapping.NEAR && (
           <div className="d-flex gap-2 align-items-center justify-content-between">
-            USD:{" "}
-            {Big(amount ? amount : 0)
-              .mul(nearPrice)
-              .toFixed(2)}
-            <div>Price: ${Big(nearPrice).toFixed(2)}</div>
+            <div className="d-flex gap-1 align-items-center">
+              {"$" +
+                Big(amount ? amount : 0)
+                  .mul(nearPrice)
+                  .toFixed(2)
+                  .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+              <Widget
+                src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+                props={{
+                  popup: (
+                    <div>
+                      The USD value is calculated based on token prices from{" "}
+                      <a
+                        href={nearPriceAPI}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="primary-text"
+                      >
+                        {" "}
+                        CoinGecko
+                      </a>{" "}
+                      and updates automatically every minute.
+                    </div>
+                  ),
+                  children: (
+                    <i className="bi bi-info-circle primary-icon h6 mb-0"></i>
+                  ),
+                  instance,
+                }}
+              />
+            </div>
+            <div>${Big(nearPrice).toFixed(2)}</div>
           </div>
         )}
       </div>
