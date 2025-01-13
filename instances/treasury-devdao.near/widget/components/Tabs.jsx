@@ -29,7 +29,7 @@ const NavUnderline = styled.ul`
 
   .nav-link {
     color: var(--text-secondary-color) !important;
-    padding-bottom: 19px;
+    padding-bottom: 24px;
   }
   .active {
     color: var(--text-color) !important;

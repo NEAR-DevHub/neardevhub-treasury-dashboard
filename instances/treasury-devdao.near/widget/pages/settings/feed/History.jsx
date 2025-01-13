@@ -91,7 +91,7 @@ return (
       }}
     />
     {(proposals ?? [])?.length > 0 && (
-      <div className="px-3">
+      <div>
         <Widget
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Pagination`}
           props={{

@@ -58,7 +58,7 @@ const Navbar = styled.div`
 `;
 
 const LinksContainer = styled.div`
-  font-size: 17px;
+  font-size: 15px;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -147,8 +147,10 @@ return (
           treasuryLogo
         )}
         <div className="d-flex flex-column">
-          <div className="h4 mb-0">{getTitle(page ?? "dashboard")}</div>
-          {isTesting && <div>(Testing)</div>}
+          <div className="h4 mb-0 d-flex flex-row gap-2 align-items-center">
+            {getTitle(page ?? "dashboard")}
+            {isTesting && <small className="badge">Testing</small>}
+          </div>
 
           <div>
             <span className="text-sm">Treasury Wallet: </span>

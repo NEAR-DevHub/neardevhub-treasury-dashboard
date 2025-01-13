@@ -25,14 +25,14 @@ const SidebarMenu = ({ currentTab }) => {
   return (
     <div
       className="d-flex gap-2 align-items-center"
-      style={{ paddingBottom: "7px" }}
+      style={{ paddingBottom: "16px" }}
     >
       {hasCreatePermission && (
         <Widget
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
           props={{
             ActionButton: () => (
-              <button className="primary py-1 px-3 rounded-2 h6 fw-bold d-flex align-items-center gap-2 mb-0">
+              <button className="btn btn-primary primary d-flex align-items-center gap-2 mb-0">
                 <i class="bi bi-plus-lg h5 mb-0"></i>Create Request
               </button>
             ),

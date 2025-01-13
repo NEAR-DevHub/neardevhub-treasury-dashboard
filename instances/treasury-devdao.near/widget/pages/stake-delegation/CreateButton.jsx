@@ -191,26 +191,11 @@ const CreateBtn = () => {
         tabIndex="0"
         onBlur={() => setCreateBtnOpen(false)}
       >
-        <div
-          className={
-            "primary-button select-header d-flex gap-1 align-items-center h-100"
-          }
-        >
-          <div
-            className="d-flex gap-2 align-items-center text-lg mb-0 fw-semi-bold"
-            style={{ padding: "0.8rem" }}
-          >
+        <button className={"btn btn-primary primary d-flex align-items-center"}>
+          <div className="d-flex gap-2 align-items-center ">
             <i class="bi bi-plus-lg h5 mb-0"></i>Create Request
           </div>
-          <div
-            className="h-100 d-flex"
-            style={{ borderLeft: "1px solid white" }}
-          >
-            <i
-              class={`p-2 bi bi-chevron-${isCreateBtnOpen ? "up" : "down"}`}
-            ></i>
-          </div>
-        </div>
+        </button>
 
         <div
           className={`options-card ${isCreateBtnOpen ? "visible" : "hidden"}`}
@@ -285,7 +270,7 @@ return (
 
     <div
       className="d-flex gap-2 align-items-center"
-      style={{ paddingBottom: "7px" }}
+      style={{ paddingBottom: "16px" }}
     >
       {hasCreatePermission && (
         <Widget

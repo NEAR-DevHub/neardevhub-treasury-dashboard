@@ -55,7 +55,6 @@ const Container = styled.div`
   .card-title {
     font-size: 20px;
     font-weight: 600;
-    padding-block: 5px;
   }
 `;
 
@@ -296,15 +295,15 @@ return (
       }}
     />
 
-    <div className="card rounded-3 py-3 d-flex flex-column gap-2 flex-1 w-100">
-      <div className="d-flex justify-content-between gap-2 align-items-center border-bottom px-2">
-        <div className="card-title px-3 mb-0">All Members</div>
+    <div className="card rounded-3 py-3 d-flex flex-column flex-1 w-100">
+      <div className="d-flex justify-content-between gap-2 align-items-center border-bottom px-3 pb-3">
+        <div className="card-title mb-0">All Members</div>
         {hasCreatePermission && (
           <Widget
             src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
             props={{
               ActionButton: () => (
-                <button className="primary py-1 px-3 rounded-2 h6 fw-bold d-flex align-items-center gap-2 ">
+                <button className="btn btn-primary primary d-flex align-items-center gap-2">
                   <i class="bi bi-plus-lg h5 mb-0"></i>New Member
                 </button>
               ),
@@ -339,7 +338,7 @@ return (
             </thead>
             <Members />
           </table>
-          <div className="px-3">
+          <div>
             <Widget
               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Pagination`}
               props={{
