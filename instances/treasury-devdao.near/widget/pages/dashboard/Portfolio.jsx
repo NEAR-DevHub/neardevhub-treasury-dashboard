@@ -329,7 +329,6 @@ return (
                       balance={tokensNumber}
                       showExpand={false}
                       price={tokenPrice}
-                      last={index === ftTokens.length - 1}
                     />
                   );
                 })}
