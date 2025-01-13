@@ -215,6 +215,7 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
     });
 
     let user_account = worker.dev_create_account().await?;
+    let treasury_factory_account_details_before = treasury_factory_contract.view_account().await?;
 
     let create_treasury_instance_result = user_account
         .call(treasury_factory_contract.id(), "create_instance")
@@ -239,7 +240,21 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
         );
     }
 
+    let treasury_factory_account_details_after = treasury_factory_contract.view_account().await?;
     assert!(create_treasury_instance_result.is_success());
+
+    assert!(
+        treasury_factory_account_details_after.balance
+            > treasury_factory_account_details_before.balance
+    );
+    assert_eq!(
+        treasury_factory_account_details_after
+            .balance
+            .as_millinear(),
+        treasury_factory_account_details_before
+            .balance
+            .as_millinear()
+    );
 
     println!(
         "Total tgas burnt {:?}",
