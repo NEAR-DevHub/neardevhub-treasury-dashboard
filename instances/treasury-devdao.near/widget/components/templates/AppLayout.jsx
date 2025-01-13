@@ -391,6 +391,10 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
     .error-icon {
       color: var(--other-red) !important;
     }
+
+    .primary-icon {
+      color: var(--theme-color) !important;
+    }
   `;
 
   return !config ? (

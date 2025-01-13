@@ -243,7 +243,8 @@ async function openWithdrawForm({
 }) {
   await expect(page.getByText("Create Request", { exact: true })).toBeVisible();
   await page.locator(".h-100 > .p-2").click();
-  await page.getByText("Withdraw", { exact: true }).click();
+
+  await page.locator(".options-card > div:nth-child(3)").click();
   await expect(
     page.getByRole("heading", { name: "Create Withdraw Request" })
   ).toBeVisible(10_000);
@@ -267,8 +268,9 @@ async function openUnstakeForm({ page, isLockup, daoAccount, lockupContract }) {
 }
 
 async function fillValidatorAccount({ page }) {
+  // validator dropdown shouldn't take more than 20 seconds
   const poolSelector = await page.getByTestId("validator-dropdown");
-  await expect(poolSelector).toBeVisible({ timeout: 30_000 });
+  await expect(poolSelector).toBeVisible({ timeout: 20_000 });
   await poolSelector.click();
   await page.waitForTimeout(5_000);
 
@@ -723,7 +725,9 @@ test.describe("Withdraw request", function () {
       hasWithdrawBalance: true,
     });
     await openWithdrawForm({ page });
-    await expect(page.getByText(stakedPoolAccount)).toBeVisible({
+    await expect(
+      page.locator(".offcanvas-body").getByText(stakedPoolAccount)
+    ).toBeVisible({
       timeout: 10_000,
     });
     await expect(

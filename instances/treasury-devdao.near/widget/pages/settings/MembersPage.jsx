@@ -52,34 +52,6 @@ const Container = styled.div`
     color: var(--text-color) !important;
   }
 
-  .custom-tooltip {
-    position: relative;
-    cursor: pointer;
-  }
-
-  .custom-tooltip .tooltiptext {
-    display: none;
-    width: 300px;
-    background-color: var(--bg-page-color);
-    color: var(--text-color) !important;
-    border: 1px solid var(--border-color) !important;
-    text-align: center;
-    border-radius: 5px;
-    padding: 5px;
-    position: absolute;
-    z-index: 10000;
-    top: 110%;
-    right: 80%;
-    opacity: 0;
-    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3);
-    transition: opacity 0.3s;
-  }
-
-  .custom-tooltip:hover .tooltiptext {
-    display: block;
-    opacity: 1;
-  }
-
   .card-title {
     font-size: 20px;
     font-weight: 600;
@@ -212,12 +184,16 @@ const Members = () => {
             <td>
               <div className="d-flex gap-3 align-items-center">
                 {(group.roles ?? []).map((i) => (
-                  <Tag className="rounded-pill px-2 py-1 custom-tooltip">
-                    {i}
-                    <div className="tooltiptext p-2">
-                      {getPermissionsText(i)}
-                    </div>
-                  </Tag>
+                  <Widget
+                    src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+                    props={{
+                      popup: getPermissionsText(i),
+                      children: (
+                        <Tag className="rounded-pill px-2 py-1">{i}</Tag>
+                      ),
+                      instance,
+                    }}
+                  />
                 ))}
               </div>
             </td>

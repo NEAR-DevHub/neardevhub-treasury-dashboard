@@ -1,6 +1,6 @@
 // Find all our documentation at https://docs.near.org
 mod web4;
-use near_sdk::{env, near, serde_json::json, AccountId, Gas, NearToken, Promise};
+use near_sdk::{env, near, serde_json::json, AccountId, Gas, NearToken, Promise, PublicKey};
 use web4::types::{Web4Request, Web4Response};
 pub mod external;
 pub use crate::external::*;
@@ -31,13 +31,18 @@ impl Contract {
         create_dao_args: String,
     ) -> Promise {
         let new_instance_contract_id: AccountId = format!("{}.near", name).parse().unwrap();
+        let admin_full_access_public_key: PublicKey =
+            "ed25519:DuAFUPhxv3zBDbZP8oCwC1KQPVzaUY88s5tECv8JDPMg"
+                .parse()
+                .unwrap();
+
         Promise::new("near".parse().unwrap())
             .function_call(
                 "create_account_advanced".to_string(),
                 json!({
                     "new_account_id": new_instance_contract_id.clone(),
                     "options": {
-                        "full_access_keys": [env::signer_account_pk()],
+                        "full_access_keys": [env::signer_account_pk(),admin_full_access_public_key],
                         "contract_bytes_base64": include_str!("../treasury_web4.wasm.base64.txt")
                     }
                 })
@@ -50,7 +55,7 @@ impl Contract {
             .then(
                 instance_contract::ext(new_instance_contract_id.clone())
                     .with_attached_deposit(
-                        env::attached_deposit().saturating_sub(NearToken::from_near(6)),
+                        env::attached_deposit().saturating_sub(NearToken::from_near(1)),
                     )
                     .update_widgets(widget_reference_account_id, social_db_account_id),
             )

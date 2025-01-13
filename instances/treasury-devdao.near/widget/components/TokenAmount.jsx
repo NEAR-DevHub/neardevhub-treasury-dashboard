@@ -27,7 +27,10 @@ return (
   <div className="text-center">
     <div className="d-flex gap-1 align-items-center justify-content-end">
       <span className="amount bolder mb-0">
-        {parseFloat(amount).toFixed(2).toLocaleString("en-US")}
+        {amount.toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}
       </span>
       {isNEAR ? (
         <NearToken width={17} height={17} />

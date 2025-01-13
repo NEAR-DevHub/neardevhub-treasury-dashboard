@@ -62,6 +62,7 @@ const {
   nearBalances,
   isLockupContract,
   nearWithdrawTokens,
+  instance,
 } = props;
 
 function convertBalanceToReadableFormat(amount, decimals) {
@@ -97,22 +98,26 @@ const BalanceDisplay = ({
   setIsExpanded,
   expandedContent,
   hideTooltip,
-  last,
+  hideBorder,
 }) => {
   return (
     <div className="d-flex flex-column">
-      <div className={!last && "border-bottom"}>
+      <div className={!hideBorder && "border-bottom"}>
         <div className="py-2 d-flex gap-2 align-items-center justify-content-between px-3">
           <div className="h6 mb-0">
             {label}
             {"  "}{" "}
             {!hideTooltip && (
-              <OverlayTrigger
-                placement="top"
-                overlay={<Tooltip id="tooltip">{tooltipInfo}</Tooltip>}
-              >
-                <i className="bi bi-info-circle text-secondary"></i>
-              </OverlayTrigger>
+              <Widget
+                src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+                props={{
+                  popup: tooltipInfo,
+                  children: (
+                    <i className="bi bi-info-circle text-secondary"></i>
+                  ),
+                  instance,
+                }}
+              />
             )}
           </div>
           <div className="d-flex gap-2 align-items-center justify-content-end">
@@ -160,11 +165,11 @@ const PortfolioCard = ({
   setIsExpanded,
   symbol,
   expandedContent,
-  last,
+  hideBorder,
 }) => {
   return (
     <div className="d-flex flex-column">
-      <div className={!last && "border-bottom"}>
+      <div className={!hideBorder && "border-bottom"}>
         <div
           className={`py-2 d-flex gap-2 align-items-center justify-content-between px-3 ${
             !price ? "text-secondary" : ""
@@ -215,6 +220,7 @@ const NearPortfolio = () => {
   return (
     <PortfolioCard
       symbol={"NEAR"}
+      hideBorder={!ftTokens?.length && !isNearPortfolioExpanded}
       Icon={NearToken}
       balance={nearBalances.totalParsed}
       showExpand={true}
@@ -277,6 +283,7 @@ const NearPortfolio = () => {
             balance={nearBalances.storageParsed}
             tooltipInfo={TooltipText?.reservedForStorage}
             price={nearPrice}
+            hideBorder={!ftTokens.length}
           />
         </div>
       }
@@ -291,7 +298,7 @@ const isLoading =
   nearPrice === null;
 
 return (
-  <div className="card flex-1 overflow-hidden">
+  <div className="card flex-1 overflow-hidden border-bottom">
     {heading}
     <div className="mb-2">
       {isLoading ? (
@@ -316,6 +323,7 @@ return (
                   const tokenPrice = price ?? 0;
                   return (
                     <PortfolioCard
+                      hideBorder={index === ftTokens.length - 1}
                       symbol={symbol}
                       src={icon}
                       balance={tokensNumber}
