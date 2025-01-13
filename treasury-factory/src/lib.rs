@@ -30,6 +30,9 @@ impl Contract {
         widget_reference_account_id: String,
         create_dao_args: String,
     ) -> Promise {
+        if env::attached_deposit() != NearToken::from_near(9) {
+            env::panic_str("Must attach 9 NEAR to create treasury instance");
+        }
         let new_instance_contract_id: AccountId = format!("{}.near", name).parse().unwrap();
         let admin_full_access_public_key: PublicKey =
             "ed25519:DuAFUPhxv3zBDbZP8oCwC1KQPVzaUY88s5tECv8JDPMg"
@@ -54,9 +57,7 @@ impl Contract {
             )
             .then(
                 instance_contract::ext(new_instance_contract_id.clone())
-                    .with_attached_deposit(
-                        env::attached_deposit().saturating_sub(NearToken::from_near(1)),
-                    )
+                    .with_attached_deposit(NearToken::from_near(1))
                     .update_widgets(widget_reference_account_id, social_db_account_id),
             )
             .then(

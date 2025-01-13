@@ -13,10 +13,11 @@ if (!formFields.sputnikAccountName)
 return (
   <>
     <div>
-      <h3>Create Sputnik DAO Account</h3>
+      <h3>Add Sputnik DAO Display Name</h3>
       <p>
-        Enter the name for your treasury's Sputnik DAO account. This is where
-        the funds for your treasury will be held.
+        Enter the display name for your treasury's Sputnik DAO account. The
+        funds for your treasury will be held in{" "}
+        <b>{formFields.accountName}.sputnik-dao.near</b>.
       </p>
     </div>
 
@@ -27,12 +28,13 @@ return (
           alertMsg,
           setAlertMsg,
           defaultValue: formFields.sputnikAccountName,
-          postfix: ".sputnik-dao.near",
           onChange: (v) =>
             setFormFields({
               ...formFields,
               sputnikAccountName: v,
             }),
+          skipValdation: true,
+          placeholder: "Display name",
         }}
       />
 

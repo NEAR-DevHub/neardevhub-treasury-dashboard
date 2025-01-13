@@ -1,6 +1,6 @@
 const { formFields } = props;
 
-const REQUIRED_BALANCE = 12;
+const REQUIRED_BALANCE = 9;
 
 const [showCongratsModal, setShowCongratsModal] = useState(false);
 
@@ -156,10 +156,10 @@ function createDao() {
       contractName: `${REPL_BASE_DEPLOYMENT_ACCOUNT}`,
       methodName: "create_instance",
       args: {
-        name: `${formFields.sputnikAccountName}`,
+        name: `${formFields.accountName}`,
         sputnik_dao_factory_account_id: `${REPL_SPUTNIK_FACTORY_ACCOUNT}`,
         social_db_account_id: `${REPL_SOCIAL_CONTRACT}`,
-        widget_reference_account_id: `${formFields.accountName}.${REPL_NEAR}`,
+        widget_reference_account_id: `${REPL_FACTORY_REFERENCE_ACCOUNT}`,
         create_dao_args: btoa(JSON.stringify(createDaoConfig)),
       },
       gas: 300000000000000,
@@ -167,7 +167,9 @@ function createDao() {
     },
   ]);
 
-  Storage.privateSet("accountName", formFields.accountName);
+  setTimeout(() => {
+    Storage.privateSet("accountName", formFields.accountName);
+  }, 1000);
 }
 
 const CongratsItem = ({ title, link }) => (
@@ -254,6 +256,7 @@ return (
                   : "-"}
               </div>
             </div>
+
             <Link
               href={`/${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=1`}
             >
@@ -262,13 +265,26 @@ return (
           </div>
         </Section>
 
-        <Section>
+        <Section withBorder>
           <div className="d-flex justify-content-between align-items-center">
             <div>
               <label>Sputnik Account Name</label>
               <div>
+                {formFields.accountName
+                  ? `${formFields.accountName}.sputnik-dao.near`
+                  : "-"}
+              </div>
+            </div>
+          </div>
+        </Section>
+
+        <Section>
+          <div className="d-flex justify-content-between align-items-center">
+            <div>
+              <label>Sputnik Account Display Name</label>
+              <div>
                 {formFields.sputnikAccountName
-                  ? `${formFields.sputnikAccountName}.sputnik-dao.near`
+                  ? `${formFields.sputnikAccountName}`
                   : "-"}
               </div>
             </div>
@@ -311,7 +327,7 @@ return (
           />
           <SummaryListItem
             title="Frontend BOS Widget Hosting"
-            value={6}
+            value={3}
             info="Estimated one-time costs to store info in BOS"
           />
           <b>

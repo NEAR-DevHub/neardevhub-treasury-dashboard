@@ -64,30 +64,24 @@ const ListItem = ({ member, key }) => (
     </div>
 
     <ActionButtons className="d-flex gap-3 align-items-center justify-content-end w-25">
-      {key > 0 && (
-        <>
-          <i
-            role="button"
-            className="bi bi-pencil"
-            onClick={() => {
-              setFields({
-                accountId: member.accountId,
-                permissions: member.permissions,
-              });
-              setShowAddMemberModal(true);
-            }}
-          />
-          <i
-            role="button"
-            className="bi bi-trash text-danger"
-            onClick={() =>
-              setMembers(
-                members.filter((m) => m.accountId !== member.accountId)
-              )
-            }
-          />
-        </>
-      )}
+      <i
+        role="button"
+        className="bi bi-pencil"
+        onClick={() => {
+          setFields({
+            accountId: member.accountId,
+            permissions: member.permissions,
+          });
+          setShowAddMemberModal(true);
+        }}
+      />
+      <i
+        role="button"
+        className="bi bi-trash text-danger"
+        onClick={() =>
+          setMembers(members.filter((m) => m.accountId !== member.accountId))
+        }
+      />
     </ActionButtons>
   </Item>
 );

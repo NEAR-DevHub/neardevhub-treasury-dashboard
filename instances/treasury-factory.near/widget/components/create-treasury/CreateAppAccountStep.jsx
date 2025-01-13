@@ -19,21 +19,21 @@ return (
         alertMsg,
         setAlertMsg,
         defaultValue: formFields.accountName,
-        postfix: ".near",
         onChange: (v) =>
           setFormFields({
             ...formFields,
             accountName: v,
           }),
+        placeholder: "app-account",
       }}
     />
 
-    {alertMsg && (
+    {(alertMsg[".near"] || alertMsg[".sputnik-dao.near"]) && (
       <Widget
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Info`}
         props={{
           type: "alert",
-          text: alertMsg,
+          text: alertMsg[".near"] || alertMsg[".sputnik-dao.near"],
         }}
       />
     )}
@@ -47,7 +47,10 @@ return (
       </Link>
       <Link
         className={`btn btn-primary w-100 ${
-          !alertMsg && formFields.accountName ? "" : "disabled"
+          !(alertMsg[".near"] || alertMsg[".sputnik-dao.near"]) &&
+          formFields.accountName
+            ? ""
+            : "disabled"
         }`}
         href={`/${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=2`}
       >
