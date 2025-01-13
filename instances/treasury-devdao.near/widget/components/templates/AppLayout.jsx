@@ -293,6 +293,14 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
       color: var(--text-color) !important;
     }
 
+    .table td:first-child {
+      padding-left: 20px;
+    }
+
+    .table td:last-child {
+      padding-right: 20px;
+    }
+
     .bg-white {
       background-color: var(--bg-page-color) !important;
       color: var(--text-color) !important;

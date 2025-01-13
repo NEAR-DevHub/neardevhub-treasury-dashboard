@@ -349,7 +349,7 @@ return (
         </div>
       ) : (
         <div
-          className="d-flex flex-column flex-1 justify-content-between px-2"
+          className="d-flex flex-column flex-1 justify-content-between"
           style={{ overflow: "auto" }}
         >
           <table className="table">
@@ -363,7 +363,7 @@ return (
             </thead>
             <Members />
           </table>
-          <div>
+          <div className="px-3">
             <Widget
               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Pagination`}
               props={{
