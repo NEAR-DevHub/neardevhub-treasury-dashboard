@@ -54,7 +54,7 @@ const metadata = JSON.parse(atob(config.metadata ?? ""));
 
 const isDarkTheme = metadata.theme === "dark";
 const bgPageColor = isDarkTheme ? "#222222" : "#FFFFFF";
-const borderColor = isDarkTheme ? "#3B3B3B" : "rgba(226, 230, 236, 1)";
+const borderColor = isDarkTheme ? "#3B3B3B" : "#000";
 const iconColor = isDarkTheme ? "#CACACA" : "#060606";
 const textColor = isDarkTheme ? "#CACACA" : "#1B1B18";
 const fillStyle = isDarkTheme
