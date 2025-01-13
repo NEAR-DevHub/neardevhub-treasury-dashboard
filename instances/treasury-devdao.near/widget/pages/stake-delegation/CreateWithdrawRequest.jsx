@@ -432,7 +432,7 @@ return (
           />
         </div>
       )}
-      <div className="d-flex flex-column gap-1 border border-1 rounded-3 p-2">
+      <div className="d-flex flex-column gap-1 border border-1 rounded-3 py-2">
         <BalanceDisplay
           label={"Ready to stake"}
           balance={getBalances().available}
