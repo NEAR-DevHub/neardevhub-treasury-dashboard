@@ -32,7 +32,7 @@ const SidebarMenu = ({ currentTab }) => {
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
           props={{
             ActionButton: () => (
-              <button className="btn btn-primary primary d-flex align-items-center gap-2 mb-0">
+              <button className="btn primary-button d-flex align-items-center gap-2 mb-0">
                 <i class="bi bi-plus-lg h5 mb-0"></i>Create Request
               </button>
             ),

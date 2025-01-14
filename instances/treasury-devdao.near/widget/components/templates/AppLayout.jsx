@@ -38,6 +38,7 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
   --grey-01: ${isDarkTheme ? "#F4F4F4" : "#1B1B18"};
   --grey-02: ${isDarkTheme ? "#B3B3B3" : "#555555"};
   --grey-03: ${isDarkTheme ? "#555555" : "#B3B3B3"};
+  --grey-035: ${isDarkTheme ? "#3E3E3E" : "#E6E6E6"};
   --grey-04: ${isDarkTheme ? "#323232" : "#F4F4F4"};
   --grey-05: ${isDarkTheme ? "#1B1B18" : "#F7F7F7"};
   --icon-color:  ${isDarkTheme ? "#CACACA" : "#060606"};

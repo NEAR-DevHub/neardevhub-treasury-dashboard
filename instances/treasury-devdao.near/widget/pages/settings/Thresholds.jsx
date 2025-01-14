@@ -145,6 +145,7 @@ const Container = styled.div`
 
   .selected-role {
     background-color: var(--grey-04);
+    font-weight: 600;
   }
 
   .tag {
@@ -311,7 +312,7 @@ return (
       toggleToast={() => setShowErrorToast(false)}
     />
     {Array.isArray(rolesData) && rolesData.length ? (
-      <div className="card rounded-3 d-flex flex-row px-0 flex-wrap">
+      <div className="card rounded-4 d-flex flex-row px-0 flex-wrap">
         <Widget
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
           props={{
@@ -340,8 +341,8 @@ return (
           }}
         />
         <div className="flex-1 border-right py-3 ">
-          <div className="card-title px-3">Permission Groups</div>
-          <div className="d-flex flex-column gap-1" style={{ fontWeight: 600 }}>
+          <div className="card-title px-3 pb-3">Permission Groups</div>
+          <div className="d-flex flex-column gap-1 py-1">
             {rolesData.map((role) => {
               const name = role.roleName;
               return (
@@ -359,13 +360,13 @@ return (
           </div>
         </div>
         <div className="flex-1 border-right py-3 ">
-          <div className="card-title px-3">
+          <div className="card-title px-3 pb-3">
             Members{" "}
             <span className="tag rounded-pill px-3">
               {selectedGroup.members.length}
             </span>
           </div>
-          <div className="d-flex flex-column gap-1">
+          <div className="d-flex flex-column gap-1 py-1">
             {Array.isArray(selectedGroup.members) &&
               selectedGroup.members.map((member) => (
                 <div
@@ -381,8 +382,8 @@ return (
           </div>
         </div>
         <div className="flex-1 border-right py-3 ">
-          <div className="card-title px-3">Voting Policy</div>
-          <div className="d-flex flex-column gap-3 px-3 w-100">
+          <div className="card-title px-3 pb-3">Voting Policy</div>
+          <div className="d-flex flex-column gap-3 px-3 w-100 py-1">
             <div className="text-md">
               How many votes are needed for decisions in the `
               {selectedGroup.roleName}` permission group?

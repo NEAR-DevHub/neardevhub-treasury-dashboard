@@ -60,7 +60,7 @@ useEffect(() => {
 }, [props]);
 
 return (
-  <Container className="card py-3 d-flex flex-column gap-3">
+  <Container className="card py-3 d-flex flex-column">
     <div
       className="d-flex justify-content-between gap-2 align-items-center border-bottom flex-wrap"
       style={{ paddingRight: "10px" }}

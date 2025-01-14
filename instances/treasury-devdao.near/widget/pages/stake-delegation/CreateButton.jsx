@@ -117,11 +117,9 @@ const CreateBtn = () => {
       border: 1px solid var(--border-color);
       background-color: var(--bg-page-color) !important;
       color: var(--text-color) !important;
-      padding: 0.5rem;
       z-index: 99;
-      font-size: 13px;
-      border-radius:0.375rem !important;
       opacity: 0;
+      font-size: 14px;
       transform: translateY(-10px);
       transition: opacity 0.2s ease, transform 0.2s ease;
   
@@ -191,20 +189,22 @@ const CreateBtn = () => {
         tabIndex="0"
         onBlur={() => setCreateBtnOpen(false)}
       >
-        <button className={"btn btn-primary primary d-flex align-items-center"}>
+        <button className={"btn primary-button d-flex align-items-center"}>
           <div className="d-flex gap-2 align-items-center ">
             <i class="bi bi-plus-lg h5 mb-0"></i>Create Request
           </div>
         </button>
 
         <div
-          className={`options-card ${isCreateBtnOpen ? "visible" : "hidden"}`}
+          className={`rounded-3 mt-1 options-card ${
+            isCreateBtnOpen ? "visible" : "hidden"
+          }`}
         >
           {btnOptions.map((option) => (
             <div key={option.value} className="option" onClick={option.onClick}>
               <div className="d-flex gap-2 align-items-center">
                 {option.icon}
-                <div className="fw-bold">{option.label}</div>
+                <div>{option.label}</div>
               </div>
             </div>
           ))}

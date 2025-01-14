@@ -57,6 +57,7 @@ const hasDeletePermission = (deleteGroup?.approverAccounts ?? []).includes(
 const Container = styled.div`
   font-size: 13px;
   min-height: 60vh;
+  display: flex;
 
   td {
     padding: 0.5rem;
@@ -489,13 +490,13 @@ return (
     transferApproversGroup === null ||
     !nearStakedTokens ||
     policy === null ? (
-      <div className="d-flex justify-content-center align-items-center w-100 h-100">
+      <div className="d-flex justify-content-center align-items-center w-100">
         <Widget
           src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"}
         />
       </div>
     ) : (
-      <div>
+      <div className="w-100">
         {proposals.length === 0 ? (
           <div
             style={{ height: "50vh" }}
