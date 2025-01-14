@@ -28,8 +28,6 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
 
   const getColors = (isDarkTheme) => `
   ${metadata.primaryColor ? `--theme-color: ${metadata.primaryColor};` : ""}
-  --theme-color-light: hsl(var(--theme-color, 40%));
-  --theme-color-dark: hsl(var(--theme-color, 25%));
   --bg-header-color: ${isDarkTheme ? "#222222" : "#2C3E50"};
   --bg-page-color: ${isDarkTheme ? "#222222" : "#FFFFFF"};
   --bg-system-color: ${isDarkTheme ? "#131313" : "#f4f4f4"};
@@ -130,6 +128,7 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
 
     button {
       height: 40px;
+      font-weight: 500;
     }
 
     button.primary {
@@ -137,10 +136,6 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
       color: var(--text-alt-color) !important;
       border: none !important;
       padding-block: 0.7rem !important;
-
-      &:hover {
-        background: var(--theme-color-dark);
-      }
 
       i {
         color: var(--text-alt-color) !important;

@@ -18,7 +18,7 @@ const [height, setHeight] = useState(350);
 const [history, setHistory] = useState([]);
 const [tokenAddresses, setTokenAddresses] = useState([]);
 const [selectedPeriod, setSelectedPeriod] = useState({
-  value: 1,
+  value: 24 * 30,
   interval: 12,
 });
 const [selectedToken, setSelectedToken] = useState("near");
@@ -273,6 +273,12 @@ const Period = styled.div`
   padding: 8px 16px;
   color: #999999;
   font-weight: 500;
+
+  &:hover {
+    background-color: var(--grey-04);
+    color: var(--text-color);
+    border-radius: 8px;
+  }
 
   &.selected {
     background-color: var(--grey-04);
