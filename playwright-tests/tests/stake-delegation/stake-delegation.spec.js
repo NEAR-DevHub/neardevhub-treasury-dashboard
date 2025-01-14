@@ -839,7 +839,7 @@ async function openLockupStakingForm({
 
   await page
     .locator(
-      `div[data-component="${widgetsAccount}widgets.treasury-factory.near/widget/pages.stake-delegation.CreateButton"] .option`,
+      `div[data-component="${widgetsAccount}/widget/pages.stake-delegation.CreateButton"] .option`,
       { hasText: "Stake" }
     )
     .first()
