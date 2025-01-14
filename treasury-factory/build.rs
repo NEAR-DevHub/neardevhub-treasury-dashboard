@@ -113,12 +113,12 @@ fn main() {
         })
     };
 
-    let web4_wasm_base64_path = base64_enocode_wasm(&build_artifact);
+    let web4_wasm_base64_path = base64_encode_wasm(&build_artifact);
 
     export_result(web4_wasm_base64_path);
 }
 
-fn base64_enocode_wasm(build_artifact: &cargo_near_build::BuildArtifact) -> std::path::PathBuf {
+fn base64_encode_wasm(build_artifact: &cargo_near_build::BuildArtifact) -> std::path::PathBuf {
     let web4_wasm_base64 = {
         let web4_wasm = fs::read(&build_artifact.path)
             .unwrap_or_else(|err| panic!("Failed to read {:?}: {:#?}", build_artifact.path, err));
