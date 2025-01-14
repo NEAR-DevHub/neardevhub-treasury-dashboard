@@ -18,10 +18,15 @@ test("should go directly to app widget for instance", async ({
     await route.continue({ url: baseURL });
   });
   await page.goto(pageOrigin);
+  const widgetsAccount =
+    (instanceAccount.includes("testing") === true
+      ? "test-widgets"
+      : "widgets") + ".treasury-factory.near";
+
   await expect(
     await page
       .locator(
-        'div[data-component="widgets.treasury-factory.near/widget/components.Navbar"]'
+        `div[data-component="${widgetsAccount}/widget/components.Navbar"]`
       )
       .first()
   ).toContainText(daoAccount);

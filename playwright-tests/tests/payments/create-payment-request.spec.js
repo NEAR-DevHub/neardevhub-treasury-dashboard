@@ -761,9 +761,12 @@ test.describe("admin with function access keys", function () {
     await expect(
       page.getByRole("cell", { name: `${newProposalId}`, exact: true })
     ).toBeVisible({ timeout: 10_000 });
+    const widgetsAccount =
+      (instanceAccount.includes("testing") ? "test-widgets" : "widgets") +
+      ".treasury-factory.near";
     const firstRow = page
       .locator(
-        'tr[data-component="widgets.treasury-factory.near/widget/pages.payments.Table"]'
+        `tr[data-component="${widgetsAccount}/widget/pages.payments.Table"]`
       )
       .nth(1);
     await expect(firstRow).toContainText(

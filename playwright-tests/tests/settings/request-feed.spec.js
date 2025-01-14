@@ -103,9 +103,14 @@ async function voteOnProposal({
   });
 
   await page.goto(`/${instanceAccount}/widget/app?page=settings`);
+  const widgetsAccount =
+    (instanceAccount.includes("testing") === true
+      ? "test-widgets"
+      : "widgets") + ".treasury-factory.near";
+
   await setDontAskAgainCacheValues({
     page,
-    widgetSrc: "widgets.treasury-factory.near/widget/components.VoteActions",
+    widgetSrc: `${widgetsAccount}/widget/components.VoteActions`,
     contractId,
     methodName: "act_proposal",
   });

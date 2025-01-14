@@ -378,13 +378,18 @@ async function voteOnProposal({
   });
 
   await page.goto(`/${instanceAccount}/widget/app?page=stake-delegation`);
+  const widgetsAccount =
+    (instanceAccount.includes("testing") === true
+      ? "test-widgets"
+      : "widgets") + ".treasury-factory.near";
 
   await setDontAskAgainCacheValues({
     page,
-    widgetSrc: "widgets.treasury-factory.near/widget/components.VoteActions",
+    widgetSrc: `${widgetsAccount}/widget/components.VoteActions`,
     contractId,
     methodName: "act_proposal",
   });
+
   await expect(
     await page.locator("div").filter({ hasText: /^Stake Delegation$/ })
   ).toBeVisible({ timeout: 20_000 });
@@ -817,14 +822,24 @@ test.describe("Withdraw request", function () {
   });
 });
 
-async function openLockupStakingForm({ page, daoAccount, lockupContract }) {
+async function openLockupStakingForm({
+  page,
+  daoAccount,
+  lockupContract,
+  instanceAccount,
+}) {
   const createRequestButton = await page.getByText("Create Request", {
     exact: true,
   });
   await createRequestButton.click();
+  const widgetsAccount =
+    (instanceAccount.includes("testing") === true
+      ? "test-widgets"
+      : "widgets") + ".treasury-factory.near";
+
   await page
     .locator(
-      'div[data-component="widgets.treasury-factory.near/widget/pages.stake-delegation.CreateButton"] .option',
+      `div[data-component="${widgetsAccount}widgets.treasury-factory.near/widget/pages.stake-delegation.CreateButton"] .option`,
       { hasText: "Stake" }
     )
     .first()
@@ -908,9 +923,15 @@ test.describe("Lockup staking", function () {
       page,
       daoAccount,
       lockupContract,
+      instanceAccount,
     }) => {
       test.setTimeout(120_000);
-      await openLockupStakingForm({ page, daoAccount, lockupContract });
+      await openLockupStakingForm({
+        page,
+        daoAccount,
+        lockupContract,
+        instanceAccount,
+      });
       await fillValidatorAccount({
         page,
       });
@@ -1020,9 +1041,15 @@ test.describe("Lockup staking", function () {
       page,
       daoAccount,
       lockupContract,
+      instanceAccount,
     }) => {
       test.setTimeout(120_000);
-      await openLockupStakingForm({ page, daoAccount, lockupContract });
+      await openLockupStakingForm({
+        page,
+        daoAccount,
+        lockupContract,
+        instanceAccount,
+      });
       await page.waitForTimeout(20_000);
       const poolSelector = page.locator(".custom-select").first();
       await expect(poolSelector).toBeVisible({ timeout: 20_000 });
