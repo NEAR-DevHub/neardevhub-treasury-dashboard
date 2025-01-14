@@ -1,5 +1,4 @@
 return {
-  appName: "Treasury",
   navbarLinks: [
     {
       title: "Dashboard",

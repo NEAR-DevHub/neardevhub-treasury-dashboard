@@ -1,8 +1,8 @@
-name: Deploy Components to Mainnet - Devhub and Testing
+name: Deploy Components to Staging
 
 on:
   push:
-    branches: [main]
+    branches: [staging]
 
 jobs:
   deploy-widgets:
@@ -11,18 +11,14 @@ jobs:
     strategy:
       matrix:
         target_account:
-          - environment: treasury-devdao.near
-            deploy_command: npm run deploy:devdao
           - environment: treasury-testing.near
             deploy_command: npm run deploy:testing
-          - environment: treasury-infinex.near
-            deploy_command: npm run deploy:infinex
           - environment: treasury-testing-infinex.near
             deploy_command: npm run deploy:infinex-testing
-          - environment: treasury-templar.near
-            deploy_command: npm run deploy:templar
-          - environment: treasury-factory.near
-            deploy_command: npm run deploy:treasury-factory
+          - environment: test-widgets.treasury-factory.near
+            deploy_command: npm run deploy:test-widgets
+          - environment: test-bootstrap.treasury-factory.near
+            deploy_command: npm run deploy:test-bootstrap
     environment: ${{ matrix.target_account.environment }}
     steps:
       - name: Checkout repository

@@ -1,5 +1,5 @@
 {
-  "REPL_BASE_DEPLOYMENT_ACCOUNT": "treasury-devdao.near",
+  "REPL_BASE_DEPLOYMENT_ACCOUNT": "widgets.treasury-factory.near",
   "REPL_INSTANCE": "treasury-infinex.near",
   "REPL_TREASURY": "infinex.sputnik-dao.near"
 }

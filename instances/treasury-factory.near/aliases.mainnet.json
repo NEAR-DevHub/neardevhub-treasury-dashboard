@@ -2,7 +2,7 @@
   "REPL_DEVHUB": "devhub.near",
   "REPL_DEVHUB_CONTRACT": "devhub.near",
   "REPL_BASE_DEPLOYMENT_ACCOUNT": "treasury-factory.near",
-  "REPL_DEVDAO_ACCOUNT": "treasury-devdao.near",
+  "REPL_DEVDAO_ACCOUNT": "widgets.treasury-factory.near",
   "REPL_SPUTNIK_FACTORY_ACCOUNT": "sputnik-dao.near",
   "REPL_FACTORY_REFERENCE_ACCOUNT": "treasury-testing.near",
   "REPL_NEAR": "near",

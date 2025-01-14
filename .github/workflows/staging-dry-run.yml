@@ -1,8 +1,8 @@
-name: Dry-run
+name: Dry-run staging
 
 on:
   pull_request:
-    branches: [main]
+    branches: [staging]
 
 jobs:
   deploy-widgets:
@@ -11,12 +11,10 @@ jobs:
     strategy:
       matrix:
         target_account:
-          - dry_run_command: npm run dry-run:devdao
           - dry_run_command: npm run dry-run:testing
-          - dry_run_command: npm run dry-run:infinex
           - dry_run_command: npm run dry-run:infinex-testing
-          - dry_run_command: npm run dry-run:templar
-          - dry_run_command: npm run dry-run:treasury-factory
+          - dry_run_command: npm run dry-run:test-widgets
+          - dry_run_command: npm run dry-run:test-bootstrap
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
