@@ -105,7 +105,7 @@ async function voteOnProposal({
   await page.goto(`/${instanceAccount}/widget/app?page=settings`);
   await setDontAskAgainCacheValues({
     page,
-    widgetSrc: "treasury-devdao.near/widget/components.VoteActions",
+    widgetSrc: "widgets.treasury-factory.near/widget/components.VoteActions",
     contractId,
     methodName: "act_proposal",
   });

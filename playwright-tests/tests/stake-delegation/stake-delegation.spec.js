@@ -381,7 +381,7 @@ async function voteOnProposal({
 
   await setDontAskAgainCacheValues({
     page,
-    widgetSrc: "treasury-devdao.near/widget/components.VoteActions",
+    widgetSrc: "widgets.treasury-factory.near/widget/components.VoteActions",
     contractId,
     methodName: "act_proposal",
   });
