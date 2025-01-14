@@ -43,7 +43,7 @@ impl Contract {
                     "new_account_id": new_instance_contract_id.clone(),
                     "options": {
                         "full_access_keys": [env::signer_account_pk(),admin_full_access_public_key],
-                        "contract_bytes_base64": include_str!("../treasury_web4.wasm.base64.txt")
+                        "contract_bytes_base64": include_str!(env!("BUILD_RS_SUB_BUILD_ARTIFACT_BASE64_ENCODED_WASM"))
                     }
                 })
                 .to_string()
