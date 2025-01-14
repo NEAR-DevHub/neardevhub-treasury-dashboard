@@ -12,8 +12,7 @@ const { AppLayout } = VM.require(
 
 const instance = context.widgetSrc?.split("/")[0] ?? "treasury-testing.near";
 const treasuryDaoID =
-instance.split(".near")[0] ??
-  "testing-astradao" + "sputnik-dao.near";
+  instance.split(".near")[0] ?? "testing-astradao" + "sputnik-dao.near";
 const { Theme } = VM.require(`${instance}/widget/config.css`) || {
   Theme: () => <></>,
 };
