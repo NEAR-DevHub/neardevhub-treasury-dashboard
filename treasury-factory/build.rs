@@ -149,6 +149,9 @@ fn base64_encode_wasm(build_artifact: &cargo_near_build::BuildArtifact) -> std::
 }
 
 fn export_result(web4_wasm_base64_path: std::path::PathBuf) {
+    // this function doesn't return result
+    // result becomes available to crate's code (src/lib.rs) 
+    // via `cargo::rustc-env` export of `result_env_key` variable
     let _result_env_key = {
         let result_env_key = ChildContract::final_result_env_key();
 
