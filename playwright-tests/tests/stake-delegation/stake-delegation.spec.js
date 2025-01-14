@@ -824,7 +824,7 @@ async function openLockupStakingForm({ page, daoAccount, lockupContract }) {
   await createRequestButton.click();
   await page
     .locator(
-      'div[data-component="treasury-devdao.near/widget/pages.stake-delegation.CreateButton"] .option',
+      'div[data-component="widgets.treasury-factory.near/widget/pages.stake-delegation.CreateButton"] .option',
       { hasText: "Stake" }
     )
     .first()

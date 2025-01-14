@@ -763,7 +763,7 @@ test.describe("admin with function access keys", function () {
     ).toBeVisible({ timeout: 10_000 });
     const firstRow = page
       .locator(
-        'tr[data-component="treasury-devdao.near/widget/pages.payments.Table"]'
+        'tr[data-component="widgets.treasury-factory.near/widget/pages.payments.Table"]'
       )
       .nth(1);
     await expect(firstRow).toContainText(
