@@ -75,7 +75,7 @@ test("should be able to create a treasury instance with sandbox", async () => {
             "create_dao_args": Buffer.from(JSON.stringify(create_dao_args)).toString('base64')
         },
         gas: 300000000000000,
-        attachedDeposit: nearApi.utils.format.parseNearAmount("12")
+        attachedDeposit: nearApi.utils.format.parseNearAmount("9")
     });
     
     expect(

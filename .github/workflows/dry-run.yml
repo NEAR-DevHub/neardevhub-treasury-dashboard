@@ -16,6 +16,7 @@ jobs:
           - dry_run_command: npm run dry-run:infinex
           - dry_run_command: npm run dry-run:infinex-testing
           - dry_run_command: npm run dry-run:templar
+          - dry_run_command: npm run dry-run:treasury-factory
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
