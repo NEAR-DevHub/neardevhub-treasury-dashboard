@@ -4,7 +4,7 @@ const { BalanceBanner } = VM.require(
 
 function hexToHsl(hex) {
   // Remove # if present
-  hex = hex ?? ''
+  hex = hex ?? "";
   hex = hex.startsWith("#") ? hex.slice(1) : hex;
 
   // Extract RGB components
