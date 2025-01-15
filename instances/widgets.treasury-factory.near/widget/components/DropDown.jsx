@@ -16,12 +16,13 @@ const StyledDropdown = styled.div`
     width: 100%;
     text-align: left;
     padding-inline: 10px;
+    padding-right: 25px;
   }
 
   .dropdown-toggle:after {
     position: absolute;
     top: 45%;
-    right: 5%;
+    right: 10px;
   }
 
   .text-sm {
