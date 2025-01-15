@@ -277,7 +277,7 @@ return (
                   disabled={isTxnCreated}
                 >
                   <img
-                    style={{ height: 35 }}
+                    style={{ height: 24 }}
                     src="https://ipfs.near.social/ipfs/bafkreieobqzwouuadj7eneei7aadwfel6ubhj7qishnqwrlv5ldgcwuyt4"
                   />
                 </button>
