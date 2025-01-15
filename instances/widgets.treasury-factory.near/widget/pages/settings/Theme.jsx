@@ -5,6 +5,9 @@ const { encodeToMarkdown, hasPermission } = VM.require(
   hasPermission: () => {},
 };
 
+const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
+  href: () => {},
+};
 const { TransactionLoader } = VM.require(
   `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TransactionLoader`
 ) || { TransactionLoader: () => <></> };
