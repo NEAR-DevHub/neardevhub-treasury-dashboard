@@ -2,6 +2,96 @@ const { BalanceBanner } = VM.require(
   `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.BalanceBanner`
 ) || { BalanceBanner: () => <></> };
 
+function hexToHsl(hex) {
+  // Remove # if present
+  hex = hex.startsWith("#") ? hex.slice(1) : hex;
+
+  // Extract RGB components
+  const r = parseInt(hex.slice(0, 2), 16);
+  const g = parseInt(hex.slice(2, 4), 16);
+  const b = parseInt(hex.slice(4, 6), 16);
+
+  // Normalize RGB values
+  const rNorm = r / 255;
+  const gNorm = g / 255;
+  const bNorm = b / 255;
+
+  const max = Math.max(rNorm, gNorm, bNorm);
+  const min = Math.min(rNorm, gNorm, bNorm);
+  const delta = max - min;
+
+  let h = 0;
+  let s = 0;
+  const l = (max + min) / 2;
+
+  if (delta !== 0) {
+    s = l < 0.5 ? delta / (max + min) : delta / (2 - max - min);
+
+    if (max === rNorm) {
+      h = (gNorm - bNorm) / delta + (gNorm < bNorm ? 6 : 0);
+    } else if (max === gNorm) {
+      h = (bNorm - rNorm) / delta + 2;
+    } else {
+      h = (rNorm - gNorm) / delta + 4;
+    }
+
+    h *= 60;
+  }
+
+  return [Math.round(h), Math.round(s * 100), Math.round(l * 100)];
+}
+
+// Function to convert HSL to HEX
+function hslToHex(h, s, l) {
+  s /= 100;
+  l /= 100;
+
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = l - c / 2;
+
+  let r = 0,
+    g = 0,
+    b = 0;
+
+  if (h >= 0 && h < 60) {
+    r = c;
+    g = x;
+    b = 0;
+  } else if (h >= 60 && h < 120) {
+    r = x;
+    g = c;
+    b = 0;
+  } else if (h >= 120 && h < 180) {
+    r = 0;
+    g = c;
+    b = x;
+  } else if (h >= 180 && h < 240) {
+    r = 0;
+    g = x;
+    b = c;
+  } else if (h >= 240 && h < 300) {
+    r = x;
+    g = 0;
+    b = c;
+  } else if (h >= 300 && h < 360) {
+    r = c;
+    g = 0;
+    b = x;
+  }
+
+  r = Math.round((r + m) * 255);
+  g = Math.round((g + m) * 255);
+  b = Math.round((b + m) * 255);
+
+  const toHex = (value) => {
+    const hex = value.toString(16);
+    return hex.length === 1 ? `0${hex}` : hex;
+  };
+
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
 const AppHeader = ({ page, instance }) => (
   <Widget
     src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Navbar"
@@ -13,6 +103,16 @@ const AppHeader = ({ page, instance }) => (
 );
 
 function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
+  const { themeColor } = VM.require(`${instance}/widget/config.data`) || {
+    themeColor: "",
+  };
+
+  // Convert HEX to HSL
+  const [h, s, l] = hexToHsl(themeColor);
+
+  // Calculate hover color (darken by reducing lightness)
+  const hoverColor = hslToHex(h, s, Math.max(l - 10, 0));
+
   const config = treasuryDaoID
     ? useCache(
         () => Near.asyncView(treasuryDaoID, "get_config"),
@@ -26,8 +126,9 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
   const gatewayURL = data?.body?.headers?.Origin ?? "";
   const isDarkTheme = metadata.theme === "dark";
 
-  const getColors = (isDarkTheme) => `
-  ${metadata.primaryColor ? `--theme-color: ${metadata.primaryColor};` : ""}
+  const getColors = (isDarkTheme, themeColor, hoverColor) => `
+  --theme-color: ${metadata?.primaryColor ?? themeColor};
+  --theme-color-dark: ${hoverColor};
   --bg-header-color: ${isDarkTheme ? "#222222" : "#2C3E50"};
   --bg-page-color: ${isDarkTheme ? "#222222" : "#FFFFFF"};
   --bg-system-color: ${isDarkTheme ? "#131313" : "#f4f4f4"};
@@ -54,7 +155,7 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
 `;
 
   const ParentContainer = styled.div`
-    ${() => getColors(isDarkTheme)}
+    ${() => getColors(isDarkTheme, themeColor, hoverColor)}
     width: 100%;
     background: var(--bg-system-color) !important;
     ${() =>
@@ -149,7 +250,7 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
       border: none !important;
 
       &:hover {
-        background: var(--theme-color-dark);
+        background: var(--theme-color-dark) !important;
       }
 
       i {
@@ -215,6 +316,7 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
 
     .theme-btn.btn:hover {
       color: white !important;
+      background: var(--theme-color-dark) !important;
     }
 
     .toast-container {
@@ -421,7 +523,7 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
     }
   `;
 
-  return !config ? (
+  return !config || themeColor === null ? (
     <></>
   ) : (
     <ParentContainer data-bs-theme={isDarkTheme ? "dark" : "light"}>

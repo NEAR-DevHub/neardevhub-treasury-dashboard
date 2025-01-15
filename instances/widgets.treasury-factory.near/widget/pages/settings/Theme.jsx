@@ -14,7 +14,9 @@ if (!instance) {
   return <></>;
 }
 
-const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+const { treasuryDaoID, themeColor } = VM.require(
+  `${instance}/widget/config.data`
+);
 
 const hasCreatePermission = hasPermission(
   treasuryDaoID,
@@ -329,7 +331,7 @@ function onSubmitClick() {
 
 function setDefault() {
   setImage(metadata?.flagLogo ?? defaultImage);
-  setColor(metadata?.primaryColor ?? defaultColor);
+  setColor(metadata?.primaryColor ?? themeColor ?? defaultColor);
   setSelectedTheme(
     ThemeOptions.find((i) => i.value === metadata?.theme) ?? ThemeOptions[0]
   );

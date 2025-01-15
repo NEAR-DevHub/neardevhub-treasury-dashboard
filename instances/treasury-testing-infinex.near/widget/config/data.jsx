@@ -41,4 +41,5 @@ return {
     </svg>
   ),
   isTesting: true,
+  themeColor: "#f76218",
 };
