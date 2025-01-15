@@ -10,6 +10,10 @@ return {
       href: "?page=payments",
     },
     {
+      title: "Stake Delegation",
+      href: "?page=stake-delegation",
+    },
+    {
       title: "Settings",
       href: "?page=settings",
     },
@@ -24,4 +28,5 @@ return {
       style={{ height: 40, width: 40 }}
     />
   ),
+  themeColor: "#8942d9",
 };

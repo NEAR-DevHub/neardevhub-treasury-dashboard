@@ -115,7 +115,7 @@ return (
       onBlur={() => setIsOpen(false)}
     >
       <div
-        className={"dropdown-toggle btn-outline-plain "}
+        className={"dropdown-toggle btn btn-outline-secondary "}
         onClick={toggleDropdown}
       >
         <i class="bi bi-gear"></i>

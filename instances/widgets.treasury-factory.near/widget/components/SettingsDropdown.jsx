@@ -130,12 +130,12 @@ return (
       tabIndex="0"
       onBlur={() => setIsOpen(false)}
     >
-      <button
-        className={"dropdown-toggle btn-outline-plain "}
+      <div
+        className={"dropdown-toggle btn btn-outline-secondary"}
         onClick={toggleDropdown}
       >
         <i class="bi bi-gear"></i>
-      </button>
+      </div>
 
       {isOpen && (
         <div className="dropdown-menu rounded-2 dropdown-menu-end dropdown-menu-lg-start px-2 shadow show w-100">

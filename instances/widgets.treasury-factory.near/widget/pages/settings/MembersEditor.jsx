@@ -271,20 +271,16 @@ return (
     </div>
 
     <div className="d-flex gap-3 align-items-center mt-2 justify-content-between">
-      <div className="text-delete">
+      <div>
         {(selectedMember || memberAlreadyExists) && (
           <Widget
             src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
             props={{
               classNames: {
-                root: "btn-outline shadow-none border-0 text-delete",
+                root: "btn btn-outline-danger shadow-none",
               },
-              label: (
-                <span className="d-flex gap-1 align-items-center">
-                  <i class="bi bi-trash3 h4 mb-0"></i>
-                  Delete
-                </span>
-              ),
+              label: "Delete",
+
               onClick: () => setShowDeleteModal(true),
               disabled: isTxnCreated || !username,
             }}
@@ -313,7 +309,7 @@ return (
           src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
           props={{
             classNames: {
-              root: "btn-outline shadow-none border-0",
+              root: "btn btn-outline-secondary shadow-none no-transparent",
             },
             label: "Cancel",
             onClick: () => {

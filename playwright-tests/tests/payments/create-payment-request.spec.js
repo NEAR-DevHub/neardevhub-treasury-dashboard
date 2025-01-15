@@ -626,9 +626,9 @@ test.describe("admin with function access keys", function () {
       await totalAmountField.pressSequentially("20");
       await totalAmountField.blur();
     }
-    const submitBtn = page.getByRole("button", { name: "Submit" });
-    await expect(submitBtn).toBeAttached({ timeout: 10_000 });
-    await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
+    const submitBtn = await page.getByRole("button", { name: "Submit" });
+    await expect(submitBtn).toBeEnabled({ timeout: 20_000 });
+    await submitBtn.scrollIntoViewIfNeeded({ timeout: 20_000 });
     await submitBtn.click();
 
     const expectedTransactionModalObject = instanceConfig.showProposalSelection
