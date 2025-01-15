@@ -55,6 +55,10 @@ const Navbar = styled.div`
     font-size: 13px;
     color: #999999;
   }
+
+  .page-title {
+    color: var(--text-color);
+  }
 `;
 
 const LinksContainer = styled.div`
@@ -148,7 +152,7 @@ return (
         )}
         <div className="d-flex flex-column">
           <div className="h4 mb-0 d-flex flex-row gap-2 align-items-center">
-            <div>{getTitle(page ?? "dashboard")}</div>
+            <div className="page-title">{getTitle(page ?? "dashboard")}</div>
             {isTesting && <small className="badge">Testing</small>}
           </div>
 
