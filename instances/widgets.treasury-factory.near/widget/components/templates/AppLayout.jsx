@@ -269,8 +269,8 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
 
     .badge {
       padding: 6px 8px;
-      background: #f7dbff;
-      color: var(--theme-color);
+      background: var(--grey-035);
+      color: var(--text-color);
       rounded: 8px;
       font-weight: 500;
       font-size: 12px;
