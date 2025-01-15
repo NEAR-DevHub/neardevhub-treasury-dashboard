@@ -10,15 +10,11 @@ const Container = styled.div`
   }
 
   .link.active {
-    font-weight: bolder;
-    color: var(--theme-color) !important;
-    background-color:var(--grey-04);
+    background-color: var(--grey-035);
   }
 
   .link:hover {
-    color: var(--theme-color)) !important;
-    color: var(--theme-color) !important;
-    background-color:var(--grey-04);
+    background-color: var(--grey-035);
   }
 
   .flex-1 {
@@ -41,10 +37,7 @@ const [currentTab, setCurrentTab] = useState(
 
 return (
   <Container className="d-flex gap-4 flex-wrap">
-    <div
-      className="card rounded-3 py-3 flex-1"
-      style={{ height: "max-content" }}
-    >
+    <div className="flex-1" style={{ height: "max-content" }}>
       <div className="d-flex gap-2 flex-column">
         {leftNavbarOptions.map((item) => {
           const { title } = item;
@@ -52,7 +45,7 @@ return (
             <div
               onClick={() => setCurrentTab(item)}
               className={[
-                "link d-inline-flex gap-2 p-2 px-3 rounded-2 pointer",
+                "link d-inline-flex gap-2 p-2 px-3 rounded-3 pointer",
                 currentTab.title === title ? "active" : "",
               ].join(" ")}
               key={title}

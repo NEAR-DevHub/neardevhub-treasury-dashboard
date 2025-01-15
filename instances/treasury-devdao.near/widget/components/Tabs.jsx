@@ -25,18 +25,18 @@ const Container = styled.div`
 const NavUnderline = styled.ul`
   cursor: pointer;
   font-size: 16px;
+  font-weight: 500;
+
   .nav-link {
     color: var(--text-secondary-color) !important;
-    padding-bottom: 19px;
+    padding-bottom: 24px;
   }
   .active {
-    font-weight: bolder;
     color: var(--text-color) !important;
     border-bottom: 3px solid var(--theme-color);
   }
   .nav-link:hover {
     color: var(--text-color) !important;
-    font-weight: bolder;
   }
 `;
 
@@ -60,7 +60,7 @@ useEffect(() => {
 }, [props]);
 
 return (
-  <Container className="card rounded-3 py-3 d-flex flex-column gap-3">
+  <Container className="card py-3 d-flex flex-column">
     <div
       className="d-flex justify-content-between gap-2 align-items-center border-bottom flex-wrap"
       style={{ paddingRight: "10px" }}
@@ -93,7 +93,7 @@ return (
       </div>
     </div>
     {currentTab && (
-      <div className="w-100 h-100 px-3" key={currentTab.title}>
+      <div className="w-100 h-100" key={currentTab.title}>
         <Widget src={currentTab.href} props={currentTabProps} />
       </div>
     )}

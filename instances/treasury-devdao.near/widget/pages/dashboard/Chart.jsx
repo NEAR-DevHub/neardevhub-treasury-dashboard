@@ -18,7 +18,7 @@ const [height, setHeight] = useState(350);
 const [history, setHistory] = useState([]);
 const [tokenAddresses, setTokenAddresses] = useState([]);
 const [selectedPeriod, setSelectedPeriod] = useState({
-  value: 1,
+  value: 24 * 30,
   interval: 12,
 });
 const [selectedToken, setSelectedToken] = useState("near");
@@ -54,7 +54,7 @@ const metadata = JSON.parse(atob(config.metadata ?? ""));
 
 const isDarkTheme = metadata.theme === "dark";
 const bgPageColor = isDarkTheme ? "#222222" : "#FFFFFF";
-const borderColor = isDarkTheme ? "#3B3B3B" : "rgba(226, 230, 236, 1)";
+const borderColor = isDarkTheme ? "#3B3B3B" : "#000";
 const iconColor = isDarkTheme ? "#CACACA" : "#060606";
 const textColor = isDarkTheme ? "#CACACA" : "#1B1B18";
 const fillStyle = isDarkTheme
@@ -273,6 +273,12 @@ const Period = styled.div`
   padding: 8px 16px;
   color: #999999;
   font-weight: 500;
+
+  &:hover {
+    background-color: var(--grey-04);
+    color: var(--text-color);
+    border-radius: 8px;
+  }
 
   &.selected {
     background-color: var(--grey-04);

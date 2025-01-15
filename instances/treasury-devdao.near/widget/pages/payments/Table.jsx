@@ -57,6 +57,7 @@ const hasDeletePermission = (deleteGroup?.approverAccounts ?? []).includes(
 const Container = styled.div`
   font-size: 13px;
   min-height: 60vh;
+  display: flex;
 
   td {
     padding: 0.5rem;
@@ -245,7 +246,7 @@ const ProposalsComponent = () => {
                 : ""
             }
           >
-            <td className="fw-semi-bold">{item.id}</td>
+            <td className="fw-semi-bold px-3">{item.id}</td>
             <td className={isVisible("Created Date")}>
               <Widget
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
@@ -489,13 +490,13 @@ return (
     transferApproversGroup === null ||
     !nearStakedTokens ||
     policy === null ? (
-      <div className="d-flex justify-content-center align-items-center w-100 h-100">
+      <div className="d-flex justify-content-center align-items-center w-100">
         <Widget
           src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"}
         />
       </div>
     ) : (
-      <div>
+      <div className="w-100">
         {proposals.length === 0 ? (
           <div
             style={{ height: "50vh" }}
@@ -517,7 +518,7 @@ return (
           <table className="table">
             <thead>
               <tr className="text-secondary">
-                <td>#</td>
+                <td className="px-3">#</td>
                 <td className={isVisible("Created Date")}>Created Date</td>
                 {!isPendingRequests && <td className="text-center">Status</td>}
                 {showReferenceProposal && (

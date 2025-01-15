@@ -309,9 +309,9 @@ return (
       showError={showErrorToast}
       toggleToast={() => setShowErrorToast(false)}
     />
-    <div className="card rounded-3 py-3" style={{ maxWidth: "50rem" }}>
-      <div className="card-title px-3 mb-0">Voting Duration</div>
-      <div className="p-3 d-flex flex-column gap-2">
+    <div className="card rounded-4 py-3" style={{ maxWidth: "50rem" }}>
+      <div className="card-title px-3 pb-3">Voting Duration</div>
+      <div className="px-3 py-1 d-flex flex-column gap-2">
         <div className="fw-semi-bold text-lg">
           Set the number of days a vote is active. A decision expires if voting
           is not completed within this period.

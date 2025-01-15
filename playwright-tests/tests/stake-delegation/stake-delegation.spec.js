@@ -242,8 +242,7 @@ async function openWithdrawForm({
   lockupContract,
 }) {
   await expect(page.getByText("Create Request", { exact: true })).toBeVisible();
-  await page.locator(".h-100 > .p-2").click();
-
+  await page.locator(".primary-button").click();
   await page.locator(".options-card > div:nth-child(3)").click();
   await expect(
     page.getByRole("heading", { name: "Create Withdraw Request" })
@@ -256,7 +255,7 @@ async function openWithdrawForm({
 
 async function openUnstakeForm({ page, isLockup, daoAccount, lockupContract }) {
   await expect(page.getByText("Create Request", { exact: true })).toBeVisible();
-  await page.locator(".h-100 > .p-2").click();
+  await page.locator(".primary-button").click();
   await page.getByText("Unstake", { exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Create Unstake Request" })

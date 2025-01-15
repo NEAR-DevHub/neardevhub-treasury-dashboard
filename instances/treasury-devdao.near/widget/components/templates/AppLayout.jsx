@@ -38,6 +38,7 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
   --grey-01: ${isDarkTheme ? "#F4F4F4" : "#1B1B18"};
   --grey-02: ${isDarkTheme ? "#B3B3B3" : "#555555"};
   --grey-03: ${isDarkTheme ? "#555555" : "#B3B3B3"};
+  --grey-035: ${isDarkTheme ? "#3E3E3E" : "#E6E6E6"};
   --grey-04: ${isDarkTheme ? "#323232" : "#F4F4F4"};
   --grey-05: ${isDarkTheme ? "#1B1B18" : "#F7F7F7"};
   --icon-color:  ${isDarkTheme ? "#CACACA" : "#060606"};
@@ -110,27 +111,33 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
     }
 
     color: var(--text-color);
+    font-weight: 500;
 
     a {
       text-decoration: none;
       color: var(--text-color) !important;
+      font-weight: 500;
       &.active {
         color: var(--text-color) !important;
-        font-weight: 700 !important;
       }
 
       &:hover {
         text-decoration: none;
         color: var(--text-color) !important;
-        font-weight: 700 !important;
       }
     }
 
+    button {
+      height: 40px;
+      font-weight: 500;
+    }
+
     button.primary {
-      background: var(--theme-color) !important;
+      background: var(--theme-color);
       color: var(--text-alt-color) !important;
       border: none !important;
       padding-block: 0.7rem !important;
+
       i {
         color: var(--text-alt-color) !important;
       }
@@ -140,6 +147,11 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
       background: var(--theme-color) !important;
       color: var(--text-alt-color) !important;
       border: none !important;
+
+      &:hover {
+        background: var(--theme-color-dark);
+      }
+
       i {
         color: var(--text-alt-color) !important;
       }
@@ -255,8 +267,18 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
       color: inherit !important;
     }
 
+    .badge {
+      padding: 6px 8px;
+      background: #f7dbff;
+      color: var(--theme-color);
+      rounded: 8px;
+      font-weight: 500;
+      font-size: 12px;
+    }
+
     .btn-outline-plain {
-      padding-block: 8px !important;
+      height: 40px;
+      padding-block: 7px !important;
       padding-inline: 10px !important;
       border-radius: 0.375rem !important;
       border: 1.5px solid var(--border-color) !important;
@@ -292,6 +314,15 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
     .table {
       border-color: var(--border-color) !important;
       color: var(--text-color) !important;
+      margin-bottom: 20px;
+    }
+
+    .table td:first-child {
+      padding-left: 20px;
+    }
+
+    .table td:last-child {
+      padding-right: 20px;
     }
 
     .bg-white {
@@ -394,10 +425,10 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
     <></>
   ) : (
     <ParentContainer data-bs-theme={isDarkTheme ? "dark" : "light"}>
-      <Theme className="h-100 w-100">
+      <Theme className="min-h-100 w-100">
         <AppHeader page={page} instance={instance} />
         <BalanceBanner accountId={accountId} treasuryDaoID={treasuryDaoID} />
-        <div className="px-3 py-2 w-100 h-100">{children}</div>
+        <div className="px-3 pb-3 w-100 h-100">{children}</div>
       </Theme>
     </ParentContainer>
   );

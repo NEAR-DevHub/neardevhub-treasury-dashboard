@@ -117,11 +117,9 @@ const CreateBtn = () => {
       border: 1px solid var(--border-color);
       background-color: var(--bg-page-color) !important;
       color: var(--text-color) !important;
-      padding: 0.5rem;
       z-index: 99;
-      font-size: 13px;
-      border-radius:0.375rem !important;
       opacity: 0;
+      font-size: 14px;
       transform: translateY(-10px);
       transition: opacity 0.2s ease, transform 0.2s ease;
   
@@ -191,35 +189,22 @@ const CreateBtn = () => {
         tabIndex="0"
         onBlur={() => setCreateBtnOpen(false)}
       >
-        <div
-          className={
-            "primary-button select-header d-flex gap-1 align-items-center h-100"
-          }
-        >
-          <div
-            className="d-flex gap-2 align-items-center text-lg mb-0 fw-semi-bold"
-            style={{ padding: "0.8rem" }}
-          >
+        <button className={"btn primary-button d-flex align-items-center"}>
+          <div className="d-flex gap-2 align-items-center ">
             <i class="bi bi-plus-lg h5 mb-0"></i>Create Request
           </div>
-          <div
-            className="h-100 d-flex"
-            style={{ borderLeft: "1px solid white" }}
-          >
-            <i
-              class={`p-2 bi bi-chevron-${isCreateBtnOpen ? "up" : "down"}`}
-            ></i>
-          </div>
-        </div>
+        </button>
 
         <div
-          className={`options-card ${isCreateBtnOpen ? "visible" : "hidden"}`}
+          className={`rounded-3 mt-1 options-card ${
+            isCreateBtnOpen ? "visible" : "hidden"
+          }`}
         >
           {btnOptions.map((option) => (
             <div key={option.value} className="option" onClick={option.onClick}>
               <div className="d-flex gap-2 align-items-center">
                 {option.icon}
-                <div className="fw-bold">{option.label}</div>
+                <div>{option.label}</div>
               </div>
             </div>
           ))}
@@ -285,7 +270,7 @@ return (
 
     <div
       className="d-flex gap-2 align-items-center"
-      style={{ paddingBottom: "7px" }}
+      style={{ paddingBottom: "16px" }}
     >
       {hasCreatePermission && (
         <Widget
