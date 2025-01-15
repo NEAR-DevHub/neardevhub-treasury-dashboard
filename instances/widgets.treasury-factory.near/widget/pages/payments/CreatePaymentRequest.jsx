@@ -227,10 +227,6 @@ const Container = styled.div`
     color: var(--theme-color) !important;
   }
 
-  .btn:hover {
-    color: black !important;
-  }
-
   .warning {
     background-color: rgba(255, 158, 0, 0.1);
     color: #ff9e00;
@@ -631,7 +627,7 @@ return (
           src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
           props={{
             classNames: {
-              root: "btn btn-outline-secondary",
+              root: "btn btn-outline-secondary shadow-none no-transparent",
             },
             label: "Cancel",
             onClick: () => {

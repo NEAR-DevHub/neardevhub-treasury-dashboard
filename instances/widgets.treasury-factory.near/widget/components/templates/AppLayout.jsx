@@ -319,6 +319,22 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
       background: var(--theme-color-dark) !important;
     }
 
+    .btn-outline-secondary {
+      border-color: var(--border-color) !important;
+      color: var(--text-color) !important;
+      border-width: 1px !important;
+
+      i {
+        color: var(--text-color) !important;
+      }
+
+      &:hover {
+        color: var(--text-color) !important;
+        border-color: var(--border-color) !important;
+        background: var(--grey-04) !important;
+      }
+    }
+
     .toast-container {
       right: 10px !important;
       bottom: 10px !important;

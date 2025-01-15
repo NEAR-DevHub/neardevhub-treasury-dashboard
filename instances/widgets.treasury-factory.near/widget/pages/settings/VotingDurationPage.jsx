@@ -449,7 +449,9 @@ return (
               <Widget
                 src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
                 props={{
-                  classNames: { root: "btn btn-outline-secondary" },
+                  classNames: {
+                    root: "btn btn-outline-secondary shadow-none no-transparent",
+                  },
                   label: "Cancel",
                   onClick: cancelChangeRequest,
                 }}
@@ -471,7 +473,9 @@ return (
           <Widget
             src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
             props={{
-              classNames: { root: "btn btn-outline-secondary" },
+              classNames: {
+                root: "btn btn-outline-secondary shadow-none no-transparent",
+              },
               label: "Cancel",
               onClick: cancelChangeRequest,
               disabled: durationDays === currentDurationDays,
