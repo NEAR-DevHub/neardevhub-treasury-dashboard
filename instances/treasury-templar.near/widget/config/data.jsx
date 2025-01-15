@@ -10,6 +10,10 @@ return {
       href: "?page=payments",
     },
     {
+      title: "Stake Delegation",
+      href: "?page=stake-delegation",
+    },
+    {
       title: "Settings",
       href: "?page=settings",
     },
