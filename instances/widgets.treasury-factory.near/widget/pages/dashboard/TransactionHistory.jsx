@@ -229,12 +229,6 @@ const Container = styled.div`
   table {
     overflow-x: auto;
   }
-
-  .show-more-btn {
-    border: 1px solid var(--border-color) !important;
-    text-align: center;
-    background: none;
-  }
 `;
 
 function formatAccount(text) {
@@ -397,13 +391,13 @@ return (
             {showMoreLoading ? (
               loader
             ) : (
-              <div className="w-100 h-100 m-2">
+              <div className="w-100 h-100 mb-3">
                 {!hideViewMore && (
                   <button
                     onClick={() => {
                       setPage(page + 1);
                     }}
-                    className="show-more-btn py-3 w-100 fw-semi-bold rounded-3"
+                    className="btn btn-outline-secondary w-100"
                   >
                     Show More
                   </button>

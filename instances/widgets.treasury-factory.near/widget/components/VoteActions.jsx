@@ -116,7 +116,6 @@ const Container = styled.div`
     background: none;
     border: none;
     color: red;
-    font-size: 24px;
   }
 `;
 
@@ -273,12 +272,12 @@ return (
             props={{
               ActionButton: () => (
                 <button
-                  className="remove-btn p-2"
+                  className="remove-btn"
                   data-testid="delete-btn"
                   disabled={isTxnCreated}
                 >
                   <img
-                    style={{ height: 30 }}
+                    style={{ height: 35 }}
                     src="https://ipfs.near.social/ipfs/bafkreieobqzwouuadj7eneei7aadwfel6ubhj7qishnqwrlv5ldgcwuyt4"
                   />
                 </button>
