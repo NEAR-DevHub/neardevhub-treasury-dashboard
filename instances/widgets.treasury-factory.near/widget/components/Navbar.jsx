@@ -167,11 +167,8 @@ return (
           </Link>
         ))}
       </LinksContainer>
-      <a
-        className="card card-body py-1 px-2 rounded-3"
-        href={`app?page=${page}`}
-      >
-        <i className="bi bi-arrow-repeat h4 mb-0" />
+      <a className="btn btn-outline-secondary" href={`app?page=${page}`}>
+        <i className="bi bi-arrow-repeat h5 mb-0" />
       </a>
       <MobileMenu onClick={() => setShowMenu(!showMenu)}>
         <MenuIcon />
