@@ -54,11 +54,11 @@ const metadata = JSON.parse(atob(config.metadata ?? ""));
 
 const isDarkTheme = metadata.theme === "dark";
 const bgPageColor = isDarkTheme ? "#222222" : "#FFFFFF";
-const borderColor = isDarkTheme ? "#3B3B3B" : "#000";
+const borderColor = isDarkTheme ? "#CACACA" : "#000";
 const iconColor = isDarkTheme ? "#CACACA" : "#060606";
 const textColor = isDarkTheme ? "#CACACA" : "#1B1B18";
 const fillStyle = isDarkTheme
-  ? "rgba(27, 27, 24, 0.1)"
+  ? "rgba(34, 34, 34, 0.7)"
   : "rgba(255, 255, 255, 0.7)";
 
 const code = `
@@ -95,9 +95,15 @@ const code = `
     let hoverX = null;
 
     let gradient = ctx.createLinearGradient(0, 0, 0, 350);
-    gradient.addColorStop(0, "rgba(0,0,0, 0.3)")
-    gradient.addColorStop(0.3, "rgba(0,0,0, 0.1)")
-    gradient.addColorStop(1, "rgba(0,0,0, 0)")
+    if (${isDarkTheme}) {
+      gradient.addColorStop(0, "rgba(255,255,255, 0.2)")
+      gradient.addColorStop(0.3, "rgba(255,255,255, 0.1)")
+      gradient.addColorStop(1, "rgba(255,255,255, 0)")
+    } else {
+      gradient.addColorStop(0, "rgba(0,0,0, 0.3)")
+      gradient.addColorStop(0.3, "rgba(0,0,0, 0.1)")
+      gradient.addColorStop(1, "rgba(0,0,0, 0)")
+    }
 
     // Plugin for drawing the tracking line
     const trackingLinePlugin = {
