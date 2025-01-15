@@ -1,5 +1,4 @@
 return {
-  appName: "Treasury",
   navbarLinks: [
     {
       title: "Dashboard",
@@ -42,4 +41,5 @@ return {
     </svg>
   ),
   isTesting: true,
+  themeColor: "#f76218",
 };

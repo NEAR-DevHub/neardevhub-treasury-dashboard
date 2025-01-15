@@ -1,0 +1,6 @@
+{
+  "account": "widgets.treasury-factory.near",
+  "aliasPrefix": "REPL",
+  "aliasesContainsPrefix": true,
+  "aliases": ["./aliases.mainnet.json"]
+}

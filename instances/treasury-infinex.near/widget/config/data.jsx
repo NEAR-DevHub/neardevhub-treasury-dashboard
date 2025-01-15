@@ -1,5 +1,4 @@
 return {
-  appName: "Treasury",
   navbarLinks: [
     {
       title: "Dashboard",
@@ -41,4 +40,5 @@ return {
     </svg>
   ),
   lockupContract: "77fa9d86aca49e758a4cb72628972a0f3135d168.lockup.near",
+  themeColor: "#f76218",
 };

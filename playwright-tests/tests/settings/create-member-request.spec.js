@@ -441,7 +441,7 @@ test.describe("User is logged in", function () {
     accountInput.fill("megha19.near");
     await accountInput.blur();
     await expect(page.getByText("This user is already a member")).toBeVisible();
-    await expect(page.getByRole("button", { name: " Delete" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Delete" })).toBeVisible();
   });
 
   test("should update existing member permissions", async ({ page }) => {
@@ -610,7 +610,7 @@ test.describe("User is logged in", function () {
         .locator(".offcanvas-body")
         .getByText("Create Requests", { exact: true })
     ).toBeVisible();
-    await page.getByRole("button", { name: " Delete" }).click();
+    await page.getByRole("button", { name: "Delete" }).click();
     await expect(
       page.getByRole("heading", { name: "Are you sure?" })
     ).toBeVisible();
