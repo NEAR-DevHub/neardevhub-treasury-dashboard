@@ -178,7 +178,7 @@ const Container = styled.div`
   }
 
   .dropdown-toggle:after {
-    top: 20% !important;
+    top: 30% !important;
   }
 `;
 
