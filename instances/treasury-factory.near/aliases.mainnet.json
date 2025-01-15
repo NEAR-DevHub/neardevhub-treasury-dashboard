@@ -4,7 +4,7 @@
   "REPL_BASE_DEPLOYMENT_ACCOUNT": "treasury-factory.near",
   "REPL_DEVDAO_ACCOUNT": "widgets.treasury-factory.near",
   "REPL_SPUTNIK_FACTORY_ACCOUNT": "sputnik-dao.near",
-  "REPL_FACTORY_REFERENCE_ACCOUNT": "treasury-testing.near",
+  "REPL_FACTORY_REFERENCE_ACCOUNT": "bootstrap.treasury-factory.near",
   "REPL_NEAR": "near",
   "REPL_MOB": "mob.near",
   "REPL_SOCIAL_CONTRACT": "social.near",
