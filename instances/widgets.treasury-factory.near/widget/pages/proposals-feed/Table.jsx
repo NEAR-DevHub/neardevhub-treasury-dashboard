@@ -277,7 +277,7 @@ const ProposalsComponent = () => {
                 src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
                 props={{
                   classNames: {
-                    root: "border p-2",
+                    root: "btn btn-outline-secondary",
                   },
                   label: "Details",
                   onClick: () => {

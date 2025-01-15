@@ -159,7 +159,6 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
   // bootstrap theme color
   --bs-body-bg: var(--bg-page-color);
   --bs-border-color:  var(--border-color);
-  --bs-dropdown-link-hover-color: var(--grey-04);
 `;
 
   const ParentContainer = styled.div`
@@ -210,6 +209,12 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
 
     .dropdown-item.active,
     .dropdown-item:active {
+      background-color: var(--grey-04) !important;
+      color: inherit !important;
+    }
+
+    .dropdown-item:hover,
+    .dropdown-item:focus {
       background-color: var(--grey-04) !important;
       color: inherit !important;
     }

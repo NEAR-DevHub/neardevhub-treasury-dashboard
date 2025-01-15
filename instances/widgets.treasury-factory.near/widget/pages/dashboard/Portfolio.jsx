@@ -101,7 +101,12 @@ const BalanceDisplay = ({
   hideBorder,
 }) => {
   return (
-    <div className="d-flex flex-column">
+    <div
+      className={
+        "d-flex flex-column " + (showExpand && "cursor-pointer dropdown-item")
+      }
+      onClick={() => showExpand && setIsExpanded(!isExpanded)}
+    >
       <div className={!hideBorder && "border-bottom"}>
         <div className="py-2 d-flex gap-2 align-items-center justify-content-between px-3">
           <div className="h6 mb-0">
@@ -134,17 +139,12 @@ const BalanceDisplay = ({
             </div>
             <div style={{ width: 20 }}>
               {showExpand && (
-                <div
-                  className="cursor-pointer"
-                  onClick={() => setIsExpanded(!isExpanded)}
-                >
-                  <i
-                    className={
-                      (isExpanded ? "bi bi-chevron-up" : "bi bi-chevron-down") +
-                      " text-secondary h6 mb-0"
-                    }
-                  ></i>
-                </div>
+                <i
+                  className={
+                    (isExpanded ? "bi bi-chevron-up" : "bi bi-chevron-down") +
+                    " text-secondary h6 mb-0"
+                  }
+                ></i>
               )}
             </div>
           </div>
@@ -169,7 +169,13 @@ const PortfolioCard = ({
 }) => {
   return (
     <div className="d-flex flex-column">
-      <div className={!hideBorder && "border-bottom"}>
+      <div
+        className={
+          (!hideBorder && "border-bottom ") +
+          (showExpand && " cursor-pointer dropdown-item")
+        }
+        onClick={() => showExpand && setIsExpanded(!isExpanded)}
+      >
         <div
           className={`py-2 d-flex gap-2 align-items-center justify-content-between px-3 ${
             !price ? "text-secondary" : ""
@@ -195,17 +201,12 @@ const PortfolioCard = ({
             </div>
             <div style={{ width: 20 }}>
               {showExpand && (
-                <div
-                  className="cursor-pointer"
-                  onClick={() => setIsExpanded(!isExpanded)}
-                >
-                  <i
-                    className={
-                      (isExpanded ? "bi bi-chevron-up" : "bi bi-chevron-down") +
-                      " text-secondary h6 mb-0"
-                    }
-                  ></i>
-                </div>
+                <i
+                  className={
+                    (isExpanded ? "bi bi-chevron-up" : "bi bi-chevron-down") +
+                    " text-secondary h6 mb-0"
+                  }
+                ></i>
               )}
             </div>
           </div>

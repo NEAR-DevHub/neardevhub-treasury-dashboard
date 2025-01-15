@@ -54,6 +54,7 @@ const columnsVisibility = JSON.parse(
 const Container = styled.div`
   font-size: 13px;
   min-height: 60vh;
+  display: flex;
 
   td {
     padding: 0.5rem;
@@ -305,7 +306,7 @@ const ProposalsComponent = () => {
                 src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
                 props={{
                   classNames: {
-                    root: "border p-2",
+                    root: "btn btn-outline-secondary",
                   },
                   label: "Details",
                   onClick: () => {
@@ -395,13 +396,13 @@ return (
     proposals === null ||
     settingsApproverGroup === null ||
     policy === null ? (
-      <div className="d-flex justify-content-center align-items-center w-100 h-100">
+      <div className="d-flex justify-content-center align-items-center w-100">
         <Widget
           src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"}
         />
       </div>
     ) : (
-      <div>
+      <div className="w-100">
         {showDetailsProposalKind && (
           <Widget
             src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}

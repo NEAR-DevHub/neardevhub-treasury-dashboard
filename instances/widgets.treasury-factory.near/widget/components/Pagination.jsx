@@ -35,14 +35,14 @@ return (
       Showing: {currentPage * rowsPerPage - rowsPerPage + 1} - {currenPageLimit}{" "}
       of {totalLength}
       <button
-        className="btn-outline-plain"
+        className="btn btn-outline-secondary"
         disabled={page === 0}
         onClick={onPrevClick}
       >
         <i class="bi bi-arrow-left h5"></i>
       </button>
       <button
-        className="btn-outline-plain"
+        className="btn btn-outline-secondary"
         disabled={currentPage === totalPages}
         onClick={onNextClick}
       >

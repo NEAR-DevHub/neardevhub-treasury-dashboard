@@ -112,32 +112,11 @@ useEffect(() => {
 }, [isTxnCreated]);
 
 const Container = styled.div`
-  .reject-btn {
-    background-color: var(--other-primary);
-    border-radius: 5px;
-    color: white;
-
-    &:hover {
-      background-color: var(--other-primary);
-      color: white;
-    }
-  }
-
   .remove-btn {
     background: none;
     border: none;
     color: red;
-  }
-
-  .approve-btn {
-    background-color: var(--other-green);
-    border-radius: 5px;
-    color: white;
-
-    &:hover {
-      background-color: var(--other-green);
-      color: white;
-    }
+    font-size: 24px;
   }
 `;
 
@@ -238,7 +217,7 @@ return (
                       src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
                       props={{
                         classNames: {
-                          root: "approve-btn p-2",
+                          root: "btn btn-success",
                         },
                         label: "Approve",
                         loading: isTxnCreated && vote === actions.APPROVE,
@@ -267,7 +246,7 @@ return (
                       src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
                       props={{
                         classNames: {
-                          root: "reject-btn p-2",
+                          root: "btn btn-secondary",
                         },
                         label: "Reject",
                         loading: isTxnCreated && vote === actions.REJECT,

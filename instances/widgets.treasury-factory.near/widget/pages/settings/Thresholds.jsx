@@ -381,7 +381,7 @@ return (
               ))}
           </div>
         </div>
-        <div className="flex-1 border-right py-3 ">
+        <div className="flex-1 py-3 ">
           <div className="card-title px-3 pb-3">Voting Policy</div>
           <div className="d-flex flex-column gap-3 px-3 w-100 py-1">
             <div className="text-md">
