@@ -4,6 +4,7 @@ const { BalanceBanner } = VM.require(
 
 function hexToHsl(hex) {
   // Remove # if present
+  hex = hex ?? ''
   hex = hex.startsWith("#") ? hex.slice(1) : hex;
 
   // Extract RGB components
@@ -107,12 +108,6 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
     themeColor: "",
   };
 
-  // Convert HEX to HSL
-  const [h, s, l] = hexToHsl(themeColor);
-
-  // Calculate hover color (darken by reducing lightness)
-  const hoverColor = hslToHex(h, s, Math.max(l - 10, 0));
-
   const config = treasuryDaoID
     ? useCache(
         () => Near.asyncView(treasuryDaoID, "get_config"),
@@ -126,8 +121,21 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
   const gatewayURL = data?.body?.headers?.Origin ?? "";
   const isDarkTheme = metadata.theme === "dark";
 
+  if (!config) {
+    return <></>;
+  }
+
+  const primaryColor = metadata?.primaryColor
+    ? metadata?.primaryColor
+    : themeColor;
+  // Convert HEX to HSL
+  const [h, s, l] = hexToHsl(primaryColor);
+
+  // Calculate hover color (darken by reducing lightness)
+  const hoverColor = hslToHex(h, s, Math.max(l - 10, 0));
+
   const getColors = (isDarkTheme, themeColor, hoverColor) => `
-  --theme-color: ${metadata?.primaryColor ?? themeColor};
+  --theme-color: ${themeColor};
   --theme-color-dark: ${hoverColor};
   --bg-header-color: ${isDarkTheme ? "#222222" : "#2C3E50"};
   --bg-page-color: ${isDarkTheme ? "#222222" : "#FFFFFF"};
@@ -155,7 +163,7 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
 `;
 
   const ParentContainer = styled.div`
-    ${() => getColors(isDarkTheme, themeColor, hoverColor)}
+    ${() => getColors(isDarkTheme, primaryColor, hoverColor)}
     width: 100%;
     background: var(--bg-system-color) !important;
     ${() =>
@@ -529,9 +537,7 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
     }
   `;
 
-  return !config || themeColor === null ? (
-    <></>
-  ) : (
+  return (
     <ParentContainer data-bs-theme={isDarkTheme ? "dark" : "light"}>
       <Theme className="min-h-100 w-100">
         <AppHeader page={page} instance={instance} />
