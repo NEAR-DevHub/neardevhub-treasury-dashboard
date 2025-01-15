@@ -393,18 +393,12 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
       }
     }
 
-    h6,
-    .h6,
-    h5,
-    .h5,
-    h4,
-    .h4,
-    h3,
-    .h3,
-    h2,
-    .h2,
     h1,
-    .h1 {
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
       color: var(--text-color) !important;
     }
 
@@ -486,12 +480,8 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
       color: inherit !important;
     }
 
-    .text-delete {
+    .text-red {
       color: var(--other-red) !important;
-
-      i {
-        color: var(--other-red) !important;
-      }
     }
 
     .btn-outline.btn:hover {

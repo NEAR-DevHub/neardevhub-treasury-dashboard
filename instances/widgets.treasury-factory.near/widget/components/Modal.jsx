@@ -129,7 +129,7 @@ return (
             <Widget
               src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
               props={{
-                classNames: { root: "btn-outline shadow-none border-0" },
+                classNames: { root: "btn btn-outline-secondary" },
                 label: cancelLabel ?? "Cancel",
                 onClick: onCancelClick,
               }}

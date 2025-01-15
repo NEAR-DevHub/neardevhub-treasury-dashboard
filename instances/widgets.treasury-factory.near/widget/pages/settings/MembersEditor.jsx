@@ -271,49 +271,48 @@ return (
     </div>
 
     <div className="d-flex gap-3 align-items-center mt-2 justify-content-between">
-      <div className="text-delete">
-        {(selectedMember || memberAlreadyExists) && (
-          <Widget
-            src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
-            props={{
-              classNames: {
-                root: "btn-outline shadow-none border-0 text-delete",
-              },
-              label: (
-                <span className="d-flex gap-1 align-items-center">
-                  <i class="bi bi-trash3 h4 mb-0"></i>
-                  Delete
-                </span>
-              ),
-              onClick: () => setShowDeleteModal(true),
-              disabled: isTxnCreated || !username,
-            }}
-          />
-        )}
+      {(selectedMember || memberAlreadyExists) && (
         <Widget
-          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.DeleteModalConfirmation`}
+          src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
           props={{
-            instance,
-            isOpen: showDeleteModal,
-            onCancelClick: () => setShowDeleteModal(false),
-            onConfirmClick: () => {
-              setTxnCreated(true);
-              setShowDeleteModal(false);
+            classNames: {
+              root: "btn btn-outline-danger",
             },
-            setToastStatus,
-            username: username,
-            rolesMap: new Map(
-              (selectedMember.roles ?? roles ?? []).map((role) => [role, role])
+            label: (
+              <span className="d-flex gap-1 align-items-center">
+                <i class="bi bi-trash3 h4 mb-0"></i>
+                Delete
+              </span>
             ),
+            onClick: () => setShowDeleteModal(true),
+            disabled: isTxnCreated || !username,
           }}
         />
-      </div>
+      )}
+      <Widget
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.DeleteModalConfirmation`}
+        props={{
+          instance,
+          isOpen: showDeleteModal,
+          onCancelClick: () => setShowDeleteModal(false),
+          onConfirmClick: () => {
+            setTxnCreated(true);
+            setShowDeleteModal(false);
+          },
+          setToastStatus,
+          username: username,
+          rolesMap: new Map(
+            (selectedMember.roles ?? roles ?? []).map((role) => [role, role])
+          ),
+        }}
+      />
+
       <div className="d-flex gap-3 justify-content-end">
         <Widget
           src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
           props={{
             classNames: {
-              root: "btn-outline shadow-none border-0",
+              root: "btn btn-outline-secondary",
             },
             label: "Cancel",
             onClick: () => {

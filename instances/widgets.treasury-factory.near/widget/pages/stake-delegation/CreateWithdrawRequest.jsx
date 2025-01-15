@@ -477,7 +477,7 @@ return (
           src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
           props={{
             classNames: {
-              root: "btn-outline shadow-none border-0",
+              root: "btn btn-outline-secondary",
             },
             label: "Cancel",
             onClick: () => {

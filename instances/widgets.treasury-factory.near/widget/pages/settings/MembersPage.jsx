@@ -217,7 +217,7 @@ const Members = () => {
                     src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
                     props={{
                       ActionButton: () => (
-                        <i class="bi bi-trash3 h4 mb-0 text-delete cursor-pointer"></i>
+                        <i class="bi bi-trash3 h4 mb-0 cursor-pointer"></i>
                       ),
                       checkForDeposit: true,
                       treasuryDaoID,
