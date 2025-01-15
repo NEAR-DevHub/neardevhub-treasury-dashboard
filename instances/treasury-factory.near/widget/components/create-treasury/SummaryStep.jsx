@@ -372,7 +372,7 @@ return (
                 />
                 <CongratsItem
                   title="web4"
-                  link={`https://${storageAccountName}.near.app`}
+                  link={`https://${storageAccountName}.near.page`}
                 />
               </div>
             </div>
