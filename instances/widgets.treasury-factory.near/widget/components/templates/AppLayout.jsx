@@ -331,7 +331,7 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
       &:hover {
         color: var(--text-color) !important;
         border-color: var(--border-color) !important;
-        background: var(--grey-04) !important;
+        background: var(--grey-035) !important;
       }
     }
 
