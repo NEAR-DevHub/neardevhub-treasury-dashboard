@@ -189,11 +189,11 @@ const CreateBtn = () => {
         tabIndex="0"
         onBlur={() => setCreateBtnOpen(false)}
       >
-        <button className={"btn primary-button d-flex align-items-center"}>
+        <div className={"btn primary-button d-flex align-items-center"}>
           <div className="d-flex gap-2 align-items-center ">
             <i class="bi bi-plus-lg h5 mb-0"></i>Create Request
           </div>
-        </button>
+        </div>
 
         <div
           className={`rounded-3 mt-1 options-card ${
