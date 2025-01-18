@@ -85,7 +85,8 @@ const PERMISSIONS = {
 const storageAccountName = useMemo(() => Storage.privateGet("accountName"));
 
 const checkAccountCreation = async () => {
-  const web4 = Near.view(`${formFields.accountName}.near`, "web4_get", {
+  console.log(storageAccountName);
+  const web4 = Near.view(`${storageAccountName}.near`, "web4_get", {
     request: { path: "/" },
   });
 
@@ -93,8 +94,8 @@ const checkAccountCreation = async () => {
 };
 
 useEffect(async () => {
-  checkAccountCreation();
-}, []);
+  if (storageAccountName) checkAccountCreation();
+}, [storageAccountName]);
 
 function filterMemberByPermission(permission) {
   return formFields.members
