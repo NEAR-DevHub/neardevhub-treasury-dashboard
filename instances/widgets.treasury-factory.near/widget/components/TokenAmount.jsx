@@ -33,9 +33,9 @@ return (
         })}
       </span>
       {isNEAR ? (
-        <NearToken width={17} height={17} />
+        <NearToken width={16} height={16} />
       ) : (
-        <img width="17px" height="17px" src={ftMetadata.icon} />
+        <img width="16" height="16" src={ftMetadata.icon} />
       )}
     </div>
     {/* TODO later */}

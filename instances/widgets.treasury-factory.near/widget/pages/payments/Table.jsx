@@ -66,6 +66,10 @@ const Container = styled.div`
     background: inherit;
   }
 
+  thead td {
+    text-wrap: nowrap;
+  }
+
   table {
     overflow-x: auto;
   }

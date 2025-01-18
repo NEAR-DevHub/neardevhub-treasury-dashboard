@@ -184,7 +184,9 @@ const PortfolioCard = ({
           <div className="d-flex align-items-center gap-2">
             {Icon ? <Icon /> : <img src={src} height={30} width={30} />}
             <div>
-              <div className="h6 mb-0">{symbol}</div>
+              <div style={{ maxWidth: "240px" }} className="h6 mb-0 text-truncate">
+                {symbol}
+              </div>
               <div className="text-sm text-secondary">
                 ${Big(price ?? "0").toFixed(2)}
               </div>
