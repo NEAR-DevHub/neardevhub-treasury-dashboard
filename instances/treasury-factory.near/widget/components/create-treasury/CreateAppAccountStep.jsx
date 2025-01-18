@@ -17,7 +17,7 @@ const AccountDisplay = ({ label, prefix, tooltipInfo, noBorder }) => {
             </OverlayTrigger>
           </div>
           <div className="h6 mb-0 d-flex align-items-center">
-            <div>{formFields.accountName}</div>
+            <div className="text-primary">{formFields.accountName}</div>
             <div>{prefix}</div>
           </div>
         </div>
