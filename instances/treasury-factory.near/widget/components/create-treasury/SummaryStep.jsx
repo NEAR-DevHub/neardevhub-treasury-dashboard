@@ -84,11 +84,17 @@ const PERMISSIONS = {
 
 const storageAccountName = useMemo(() => Storage.privateGet("accountName"));
 
-useEffect(() => {
-  if (storageAccountName) {
-    setShowCongratsModal(true);
-  }
-}, [storageAccountName]);
+const checkAccountCreation = async () => {
+  const web4 = Near.view(`${formFields.accountName}.near`, "web4_get", {
+    request: { path: "/" },
+  });
+
+  if (web4) setShowCongratsModal(true);
+};
+
+useEffect(async () => {
+  checkAccountCreation();
+}, []);
 
 function filterMemberByPermission(permission) {
   return formFields.members
@@ -99,8 +105,8 @@ function filterMemberByPermission(permission) {
 function createDao() {
   const createDaoConfig = {
     config: {
-      name: `${formFields.sputnikAccountName}`,
-      purpose: `creating ${formFields.sputnikAccountName} treasury`,
+      name: `${formFields.accountName}`,
+      purpose: `creating ${formFields.accountName} treasury`,
       metadata: "",
     },
     policy: {
@@ -167,9 +173,7 @@ function createDao() {
     },
   ]);
 
-  setTimeout(() => {
-    Storage.privateSet("accountName", formFields.accountName);
-  }, 1000);
+  Storage.privateSet("accountName", formFields.accountName);
 }
 
 const CongratsItem = ({ title, link }) => (
@@ -277,31 +281,13 @@ return (
             </div>
           </div>
         </Section>
-
-        <Section>
-          <div className="d-flex justify-content-between align-items-center">
-            <div>
-              <label>Sputnik Account Display Name</label>
-              <div>
-                {formFields.sputnikAccountName
-                  ? `${formFields.sputnikAccountName}`
-                  : "-"}
-              </div>
-            </div>
-            <Link
-              href={`/${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=2`}
-            >
-              <i className="bi bi-pencil" />
-            </Link>
-          </div>
-        </Section>
       </div>
 
       <Section>
         <div className="d-flex justify-content-between align-items-center">
           <h4>Members and permissions</h4>
           <Link
-            href={`/${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=3`}
+            href={`/${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=2`}
           >
             <i className="bi bi-pencil" />
           </Link>
@@ -339,11 +325,7 @@ return (
       <button
         className="btn btn-primary w-100"
         onClick={createDao}
-        disabled={
-          !formFields.members ||
-          !formFields.sputnikAccountName ||
-          !formFields.accountName
-        }
+        disabled={!formFields.members || !formFields.accountName}
       >
         Confirm and Create
       </button>
@@ -377,10 +359,7 @@ return (
               </div>
             </div>
           ),
-          onClose: () => {
-            setShowCongratsModal(false);
-            Storage.privateSet("accountName", null);
-          },
+          onClose: () => setShowCongratsModal(false),
         }}
       />
     )}

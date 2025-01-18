@@ -15,9 +15,7 @@ return (
     <div>
       <h3>Add Sputnik DAO Display Name</h3>
       <p>
-        Enter the display name for your treasury's Sputnik DAO account. The
-        funds for your treasury will be held in{" "}
-        <b>{formFields.accountName}.sputnik-dao.near</b>.
+        Enter the display name for your treasury's Sputnik DAO account.
       </p>
     </div>
 
