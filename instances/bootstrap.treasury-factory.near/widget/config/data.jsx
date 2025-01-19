@@ -1,6 +1,9 @@
-const sputnikAccount =
-  context.widgetSrc?.split("/")[0].split(".near")[0] ??
-  "testing-astradao" + "sputnik-dao.near";
+const widgetSrc = context.widgetSrc
+  ? context.widgetSrc
+  : "testing-app2.near/widget/app";
+const instance = widgetSrc.split("/")[0];
+const treasuryDaoID = instance.split(".near")[0] + ".sputnik-dao.near";
+
 return {
   navbarLinks: [
     {
@@ -20,7 +23,8 @@ return {
       href: "?page=settings",
     },
   ],
-  treasuryDaoID: sputnikAccount,
+  treasuryDaoID,
+  instance,
   showProposalSelection: false,
   showKYC: false,
   showReferenceProposal: false,

@@ -10,9 +10,14 @@ const { AppLayout } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.templates.AppLayout"
 ) || { AppLayout: () => <></> };
 
-const instance = context.widgetSrc?.split("/")[0] ?? "treasury-testing.near";
-const treasuryDaoID =
-  instance.split(".near")[0] ?? "testing-astradao" + "sputnik-dao.near";
+const { instance, treasuryDaoID } = VM.require(
+  `${REPL_BOOTSTRAP_ACCOUNT}/widget/config.data`
+);
+
+if (!instance || !treasuryDaoID) {
+  return <></>;
+}
+
 const { Theme } = VM.require(`${instance}/widget/config.css`) || {
   Theme: () => <></>,
 };
