@@ -73,14 +73,14 @@ const LinksContainer = styled.div`
   }
 
   a {
-    color: var(--text-color) !important;
+    color: var(--text-secondary-color) !important;
 
     &:hover {
-      color: var(--theme-color) !important;
+      color: var(--text-color) !important;
     }
 
     &.active {
-      color: var(--theme-color) !important;
+      color: var(--text-color) !important;
     }
   }
 `;
@@ -176,10 +176,10 @@ return (
         >
           <i className="bi bi-x h4"></i>
         </div>
-        <div className="d-flex flex-column gap-2 card card-body pt-3">
+        <div className="d-flex flex-column gap-4 card card-body">
           {(navbarLinks ?? []).map((link, idx) => (
             <MobileLink
-              className={isActive(link.title)}
+              className={isActive(link.title) + " mb-0"}
               key={`mobile-link-${idx}`}
               href={link.href}
             >
