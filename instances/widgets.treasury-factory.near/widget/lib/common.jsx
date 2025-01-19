@@ -378,34 +378,34 @@ function getDaoRoles(treasuryDaoID) {
 }
 
 function hasPermission(treasuryDaoID, accountId, kindName, actionType) {
-  // if (!accountId) {
-  //   return false;
-  // }
-  // const isAllowed = false;
-  // const daoPolicy = treasuryDaoID
-  //   ? Near.view(treasuryDaoID, "get_policy", {})
-  //   : null;
+  if (!accountId) {
+    return false;
+  }
+  const isAllowed = false;
+  const daoPolicy = treasuryDaoID
+    ? Near.view(treasuryDaoID, "get_policy", {})
+    : null;
 
-  // if (Array.isArray(daoPolicy.roles)) {
-  //   const permissions = daoPolicy.roles.map((role) => {
-  //     if (
-  //       Array.isArray(role.kind.Group) &&
-  //       role.kind.Group.includes(accountId)
-  //     ) {
-  //       return (
-  //         role.permissions.includes(`${kindName}:${actionType.toString()}`) ||
-  //         role.permissions.includes(`${kindName}:*`) ||
-  //         role.permissions.includes(`${kindName}:VoteApprove`) ||
-  //         role.permissions.includes(`${kindName}:VoteReject`) ||
-  //         role.permissions.includes(`${kindName}:VoteRemove`) ||
-  //         role.permissions.includes(`*:${actionType.toString()}`) ||
-  //         role.permissions.includes("*:*")
-  //       );
-  //     }
-  //   });
-  //   isAllowed = permissions.some((element) => element === true);
-  // }
-  return true;
+  if (Array.isArray(daoPolicy.roles)) {
+    const permissions = daoPolicy.roles.map((role) => {
+      if (
+        Array.isArray(role.kind.Group) &&
+        role.kind.Group.includes(accountId)
+      ) {
+        return (
+          role.permissions.includes(`${kindName}:${actionType.toString()}`) ||
+          role.permissions.includes(`${kindName}:*`) ||
+          role.permissions.includes(`${kindName}:VoteApprove`) ||
+          role.permissions.includes(`${kindName}:VoteReject`) ||
+          role.permissions.includes(`${kindName}:VoteRemove`) ||
+          role.permissions.includes(`*:${actionType.toString()}`) ||
+          role.permissions.includes("*:*")
+        );
+      }
+    });
+    isAllowed = permissions.some((element) => element === true);
+  }
+  return isAllowed;
 }
 
 function getPermissionsText(type) {
