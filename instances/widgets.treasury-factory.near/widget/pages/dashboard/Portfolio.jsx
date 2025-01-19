@@ -294,7 +294,6 @@ const NearPortfolio = () => {
 
 const isLoading =
   ftTokens === null ||
-  ftTokens === undefined ||
   nearStakedTokens === null ||
   nearBalances === null ||
   nearPrice === null;
