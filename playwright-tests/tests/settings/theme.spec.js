@@ -52,7 +52,7 @@ async function navigateToThemePage({ page, instanceAccount }) {
   await updateDaoPolicyMembers({ page });
   await updateDaoConfig({ page });
   await page.waitForTimeout(5_000);
-  await page.getByText("Theme & Logo", { exact: true }).click();
+  await page.getByTestId("Theme & Logo", { exact: true }).click();
   await expect(page.getByText("Theme & Logo").nth(1)).toBeVisible();
 }
 
