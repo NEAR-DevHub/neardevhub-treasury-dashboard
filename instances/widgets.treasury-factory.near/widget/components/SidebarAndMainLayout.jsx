@@ -49,6 +49,7 @@ return (
                 currentTab.title === title ? "active" : "",
               ].join(" ")}
               key={title}
+              data-testid={title}
             >
               <div>{title}</div>
             </div>

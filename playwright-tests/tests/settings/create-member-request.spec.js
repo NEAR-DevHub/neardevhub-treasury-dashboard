@@ -37,7 +37,7 @@ async function updateLastProposalId(page) {
 async function navigateToMembersPage({ page, instanceAccount }) {
   await page.goto(`/${instanceAccount}/widget/app?page=settings`);
   await page.waitForTimeout(5_000);
-  await page.getByText("Members").click();
+  await page.getByTestId("Members").click();
   await expect(page.getByText("All Members")).toBeVisible({ timeout: 10_000 });
 }
 
