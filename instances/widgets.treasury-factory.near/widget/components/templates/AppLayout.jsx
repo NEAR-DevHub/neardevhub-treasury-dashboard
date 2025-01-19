@@ -130,8 +130,8 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
     : themeColor
     ? themeColor
     : isDarkTheme
-    ? ""
-    : "#000000";
+    ? "#01BF7A"
+    : "#01BF7A";
 
   // Convert HEX to HSL
   const [h, s, l] = hexToHsl(primaryColor);
