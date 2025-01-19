@@ -20,10 +20,6 @@ if (!instance || !treasuryDaoID) {
   return <></>;
 }
 
-const { Theme } = VM.require(`${instance}/widget/config.css`) || {
-  Theme: () => <></>,
-};
-
 if (!page) {
   // If no page is specified, we default to the feed page TEMP
   page = "dashboard";
@@ -102,14 +98,12 @@ function Page() {
 }
 
 return (
-  <Theme>
-    <AppLayout
-      page={page}
-      instance={instance}
-      treasuryDaoID={treasuryDaoID}
-      accountId={context.accountId}
-    >
-      <Page />
-    </AppLayout>
-  </Theme>
+  <AppLayout
+    page={page}
+    instance={instance}
+    treasuryDaoID={treasuryDaoID}
+    accountId={context.accountId}
+  >
+    <Page />
+  </AppLayout>
 );
