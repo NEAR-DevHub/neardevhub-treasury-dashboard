@@ -63,22 +63,24 @@ function getApproversAndThreshold(treasuryDaoID, kind, isDeleteCheck) {
 function getRoleWiseData(treasuryDaoID) {
   return Near.asyncView(treasuryDaoID, "get_policy", {}).then((daoPolicy) => {
     const data = [];
+    const defaultPolicy = daoPolicy.default_vote_policy;
     (daoPolicy.roles ?? []).map((role) => {
-      const isRatio = Array.isArray(role?.vote_policy?.["vote"]?.threshold);
+      // if there is no role.vote_policy, default is applied
+      const threshold = Object.keys(role?.vote_policy ?? {}).length
+        ? role?.vote_policy?.["vote"]?.threshold
+        : defaultPolicy.threshold;
+      const isRatio = Array.isArray(threshold);
+
       data.push({
         roleName: role.name,
         members: role.kind?.Group ?? [],
         isRatio,
-        threshold: isRatio
-          ? role?.vote_policy?.["vote"]?.threshold[0]
-          : role?.vote_policy?.["vote"].threshold,
+        threshold: isRatio ? threshold[0] : threshold,
         requiredVotes: isRatio
           ? Math.floor(
-              (role?.vote_policy?.["vote"]?.threshold[0] /
-                role?.vote_policy?.["vote"]?.threshold[1]) *
-                role.kind?.Group.length
+              (threshold[0] / threshold[1]) * role.kind?.Group.length
             ) + 1
-          : role?.vote_policy?.["vote"]?.threshold ?? 1,
+          : threshold ?? 1,
       });
     });
     return data;
@@ -376,34 +378,34 @@ function getDaoRoles(treasuryDaoID) {
 }
 
 function hasPermission(treasuryDaoID, accountId, kindName, actionType) {
-  if (!accountId) {
-    return false;
-  }
-  const isAllowed = false;
-  const daoPolicy = treasuryDaoID
-    ? Near.view(treasuryDaoID, "get_policy", {})
-    : null;
+  // if (!accountId) {
+  //   return false;
+  // }
+  // const isAllowed = false;
+  // const daoPolicy = treasuryDaoID
+  //   ? Near.view(treasuryDaoID, "get_policy", {})
+  //   : null;
 
-  if (Array.isArray(daoPolicy.roles)) {
-    const permissions = daoPolicy.roles.map((role) => {
-      if (
-        Array.isArray(role.kind.Group) &&
-        role.kind.Group.includes(accountId)
-      ) {
-        return (
-          role.permissions.includes(`${kindName}:${actionType.toString()}`) ||
-          role.permissions.includes(`${kindName}:*`) ||
-          role.permissions.includes(`${kindName}:VoteApprove`) ||
-          role.permissions.includes(`${kindName}:VoteReject`) ||
-          role.permissions.includes(`${kindName}:VoteRemove`) ||
-          role.permissions.includes(`*:${actionType.toString()}`) ||
-          role.permissions.includes("*:*")
-        );
-      }
-    });
-    isAllowed = permissions.some((element) => element === true);
-  }
-  return isAllowed;
+  // if (Array.isArray(daoPolicy.roles)) {
+  //   const permissions = daoPolicy.roles.map((role) => {
+  //     if (
+  //       Array.isArray(role.kind.Group) &&
+  //       role.kind.Group.includes(accountId)
+  //     ) {
+  //       return (
+  //         role.permissions.includes(`${kindName}:${actionType.toString()}`) ||
+  //         role.permissions.includes(`${kindName}:*`) ||
+  //         role.permissions.includes(`${kindName}:VoteApprove`) ||
+  //         role.permissions.includes(`${kindName}:VoteReject`) ||
+  //         role.permissions.includes(`${kindName}:VoteRemove`) ||
+  //         role.permissions.includes(`*:${actionType.toString()}`) ||
+  //         role.permissions.includes("*:*")
+  //       );
+  //     }
+  //   });
+  //   isAllowed = permissions.some((element) => element === true);
+  // }
+  return true;
 }
 
 function getPermissionsText(type) {

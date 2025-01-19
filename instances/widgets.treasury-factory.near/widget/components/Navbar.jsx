@@ -73,14 +73,14 @@ const LinksContainer = styled.div`
   }
 
   a {
-    color: var(--text-secondary-color) !important;
+    color: var(--text-color) !important;
 
     &:hover {
-      color: var(--text-color) !important;
+      color: var(--theme-color) !important;
     }
 
     &.active {
-      color: var(--text-color) !important;
+      color: var(--theme-color) !important;
     }
   }
 `;
@@ -104,17 +104,7 @@ const MobileNav = styled.div`
   position: absolute;
   top: 0;
   right: 0;
-
   width: auto;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 1rem;
-  flex-shrink: 0;
-
-  border-radius: 0px 0px 0px 16px;
-  background: rgba(41, 41, 41, 0.6);
-  backdrop-filter: blur(5px);
-
   z-index: 50;
 `;
 
@@ -186,7 +176,7 @@ return (
         >
           <i className="bi bi-x h4"></i>
         </div>
-        <div className="d-flex flex-column gap-2">
+        <div className="d-flex flex-column gap-2 card card-body pt-3">
           {(navbarLinks ?? []).map((link, idx) => (
             <MobileLink
               className={isActive(link.title)}

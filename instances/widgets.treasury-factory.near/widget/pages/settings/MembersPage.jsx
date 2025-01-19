@@ -182,18 +182,25 @@ const Members = () => {
             </td>
             <td>
               <div className="d-flex gap-3 align-items-center">
-                {(group.roles ?? []).map((i) => (
-                  <Widget
-                    src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
-                    props={{
-                      popup: getPermissionsText(i),
-                      children: (
-                        <Tag className="rounded-pill px-2 py-1">{i}</Tag>
-                      ),
-                      instance,
-                    }}
-                  />
-                ))}
+                {(group.roles ?? []).map((i) => {
+                  const description = getPermissionsText(i);
+                  if (!description) {
+                    return <Tag className="rounded-pill px-2 py-1">{i}</Tag>;
+                  } else {
+                    return (
+                      <Widget
+                        src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+                        props={{
+                          popup: description,
+                          children: (
+                            <Tag className="rounded-pill px-2 py-1">{i}</Tag>
+                          ),
+                          instance,
+                        }}
+                      />
+                    );
+                  }
+                })}
               </div>
             </td>
             {hasCreatePermission && (
