@@ -2,6 +2,30 @@ const { formFields, setFormFields } = props;
 
 const [alertMsg, setAlertMsg] = useState(null);
 
+const AccountDisplay = ({ label, prefix, tooltipInfo, noBorder }) => {
+  return (
+    <div className="d-flex flex-column">
+      <div className={!noBorder && "border-bottom"}>
+        <div className="py-2 d-flex gap-2 align-items-center justify-content-between px-3">
+          <div className="h6 mb-0">
+            {label}
+            <OverlayTrigger
+              placement="top"
+              overlay={<Tooltip id="tooltip">{tooltipInfo}</Tooltip>}
+            >
+              <i className="mx-1 bi bi-info-circle text-secondary" />
+            </OverlayTrigger>
+          </div>
+          <div className="h6 mb-0 d-flex align-items-center">
+            <div className="text-primary">{formFields.accountName}</div>
+            <div>{prefix}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 return (
   <>
     <div>
@@ -27,6 +51,20 @@ return (
         placeholder: "app-account",
       }}
     />
+
+    <div className="d-flex flex-column gap-1 border border-1 rounded-3">
+      <AccountDisplay
+        label={"NEAR"}
+        prefix=".near"
+        tooltipInfo="Treasury account"
+      />
+      <AccountDisplay
+        label={"Sputnik DAO"}
+        prefix=".sputnik-dao.near"
+        tooltipInfo="The funds for your treasury will be held there"
+        noBorder
+      />
+    </div>
 
     {(alertMsg[".near"] || alertMsg[".sputnik-dao.near"]) && (
       <Widget
