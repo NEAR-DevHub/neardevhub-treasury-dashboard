@@ -240,7 +240,7 @@ return (
             "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.Portfolio"
           }
           props={{
-            ftTokens: userFTTokens.fts,
+            ftTokens: userFTTokens.fts ? userFTTokens.fts : null,
             nearStakedTokens,
             nearUnStakedTokens,
             nearPrice,
@@ -300,7 +300,7 @@ return (
             totalBalance: formatCurrency(
               Big(nearBalances?.totalParsed ?? "0").mul(nearPrice ?? 1)
             ),
-            ftTokens: userFTTokens.fts,
+            ftTokens: userFTTokens.fts ? userFTTokens.fts : null,
             instance,
             accountId: treasuryDaoID,
           }}
@@ -316,7 +316,7 @@ return (
               totalBalance: formatCurrency(
                 Big(lockupNearBalances?.totalParsed ?? "0").mul(nearPrice ?? 1)
               ),
-              ftTokens: userFTTokens.fts,
+              ftTokens: userFTTokens.fts ? userFTTokens.fts : null,
               accountId: lockupContract,
             }}
           />
