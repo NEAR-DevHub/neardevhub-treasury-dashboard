@@ -1,3 +1,4 @@
 {
-  "REPL_BASE_DEPLOYMENT_ACCOUNT": "test-widgets.treasury-factory.near"
+  "REPL_BASE_DEPLOYMENT_ACCOUNT": "test-widgets.treasury-factory.near",
+  "REPL_BOOTSTRAP_ACCOUNT": "test-bootstrap.treasury-factory.near"
 }

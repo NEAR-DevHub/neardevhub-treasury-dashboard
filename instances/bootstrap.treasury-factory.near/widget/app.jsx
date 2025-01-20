@@ -10,12 +10,15 @@ const { AppLayout } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.templates.AppLayout"
 ) || { AppLayout: () => <></> };
 
-const instance = context.widgetSrc?.split("/")[0] ?? "treasury-testing.near";
-const treasuryDaoID =
-  instance.split(".near")[0] ?? "testing-astradao" + "sputnik-dao.near";
-const { Theme } = VM.require(`${instance}/widget/config.css`) || {
-  Theme: () => <></>,
-};
+const widgetSrc = (
+  context?.widgetSrc ?? `${REPL_BOOTSTRAP_ACCOUNT}/widget/app`
+).split("/app")[0];
+
+const { instance, treasuryDaoID } = VM.require(`${widgetSrc}/config.data`);
+
+if (!instance || !treasuryDaoID) {
+  return <></>;
+}
 
 if (!page) {
   // If no page is specified, we default to the feed page TEMP
@@ -95,14 +98,12 @@ function Page() {
 }
 
 return (
-  <Theme>
-    <AppLayout
-      page={page}
-      instance={instance}
-      treasuryDaoID={treasuryDaoID}
-      accountId={context.accountId}
-    >
-      <Page />
-    </AppLayout>
-  </Theme>
+  <AppLayout
+    page={page}
+    instance={instance}
+    treasuryDaoID={treasuryDaoID}
+    accountId={context.accountId}
+  >
+    <Page />
+  </AppLayout>
 );
