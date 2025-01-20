@@ -92,6 +92,10 @@ const Container = styled.div`
 
   table {
     overflow-x: auto;
+
+    thead td {
+      text-wrap: nowrap;
+    }
   }
 
   .text-warning {

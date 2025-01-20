@@ -21,10 +21,6 @@ const STEPS = [
     props={{ formFields, setFormFields }}
   />,
   <Widget
-    src={`${widgetBasePath}.CreateSputnikAccountStep`}
-    props={{ formFields, setFormFields }}
-  />,
-  <Widget
     src={`${widgetBasePath}.AddMembersStep`}
     props={{ formFields, setFormFields }}
   />,

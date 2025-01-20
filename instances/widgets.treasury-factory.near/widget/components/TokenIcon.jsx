@@ -16,11 +16,11 @@ if (!isNEAR) {
 }
 
 return (
-  <div className="d-flex gap-1 align-items-center h6 mb-0 justify-content-center">
+  <div className="d-flex gap-1 align-items-center amount mb-0 justify-content-center">
     {isNEAR ? (
-      <NearToken width={18} height={18} />
+      <NearToken width={24} height={24} />
     ) : (
-      <img width="18px" height="18px" src={ftMetadata.icon} />
+      <img width="24" height="24" src={ftMetadata.icon} />
     )}
     {ftMetadata.symbol}
   </div>

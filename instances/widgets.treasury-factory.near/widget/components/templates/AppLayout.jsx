@@ -294,7 +294,7 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
 
     .custom-truncate {
       display: -webkit-box;
-      -webkit-line-clamp: 3;
+      -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -445,6 +445,10 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
       border-color: var(--border-color) !important;
       color: var(--text-color) !important;
       margin-bottom: 20px;
+
+      .amount {
+        font-size: 14px;
+      }
     }
 
     .table td:first-child {
