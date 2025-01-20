@@ -148,7 +148,8 @@ const requiredVotes = transferApproversGroup?.requiredVotes;
 const hideApproversCol = isPendingRequests && requiredVotes === 1;
 
 const userFTTokens = fetch(
-  `https://api3.nearblocks.io/v1/account/${treasuryDaoID}/inventory`
+  `https://api3.nearblocks.io/v1/account/${treasuryDaoID}/inventory`,
+  { headers: { Authorization: "Bearer ${REPL_NEARBLOCKS_KEY}" } }
 );
 
 const nearBalances = getNearBalances(treasuryDaoID);
@@ -234,6 +235,7 @@ const ProposalsComponent = () => {
         const notes = decodeProposalDescription("notes", item.description);
         const title = decodeProposalDescription("title", item.description);
         const summary = decodeProposalDescription("summary", item.description);
+        const description = !title && !summary && item.description;
         const id = decodeProposalDescription("proposalId", item.description);
         const proposalId = id ? parseInt(id, 10) : null;
         const args = item.kind.Transfer;
@@ -293,21 +295,25 @@ const ProposalsComponent = () => {
             )}
 
             <td className={isVisible("Title")}>
-              <Widget
-                src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
-                props={{
-                  popup: <TooltipContent title={title} summary={summary} />,
-                  children: (
-                    <div
-                      className="custom-truncate fw-semi-bold"
-                      style={{ width: 180 }}
-                    >
-                      {title}
-                    </div>
-                  ),
-                  instance,
-                }}
-              />
+              {description ? (
+                description
+              ) : (
+                <Widget
+                  src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+                  props={{
+                    popup: <TooltipContent title={title} summary={summary} />,
+                    children: (
+                      <div
+                        className="custom-truncate fw-semi-bold"
+                        style={{ width: 180 }}
+                      >
+                        {title}
+                      </div>
+                    ),
+                    instance,
+                  }}
+                />
+              )}
             </td>
             <td className={isVisible("Summary")}>
               <Widget
@@ -315,7 +321,10 @@ const ProposalsComponent = () => {
                 props={{
                   popup: <TooltipContent title={title} summary={summary} />,
                   children: (
-                    <div className="custom-truncate" style={{ width: 180 }}>
+                    <div
+                      className="custom-truncate"
+                      style={{ width: summary ? 180 : 10 }}
+                    >
                       {summary ? summary : "-"}
                     </div>
                   ),

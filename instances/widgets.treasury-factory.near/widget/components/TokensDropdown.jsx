@@ -55,9 +55,11 @@ if (
 const [options, setOptions] = useState([]);
 const [nearStakedTokens, setNearStakedTokens] = useState(null);
 
+// remove near storage, spam tokens
 const tokensWithBalance =
   ftTokensResp?.body.filter(
-    (i) => parseFloat(i.amount) > 0 && i.contract !== "Near"
+    (i) =>
+      parseFloat(i.amount) > 0 && i.contract !== "Near" && i.symbol.length < 30
   ) ?? [];
 
 useEffect(() => {

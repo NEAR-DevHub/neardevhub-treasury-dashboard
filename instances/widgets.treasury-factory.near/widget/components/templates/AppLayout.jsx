@@ -127,7 +127,12 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
 
   const primaryColor = metadata?.primaryColor
     ? metadata?.primaryColor
-    : themeColor;
+    : themeColor
+    ? themeColor
+    : isDarkTheme
+    ? "#01BF7A"
+    : "#01BF7A";
+
   // Convert HEX to HSL
   const [h, s, l] = hexToHsl(primaryColor);
 
