@@ -1,3 +1,4 @@
+use near_sdk::base64::prelude::BASE64_STANDARD;
 use near_sdk::base64::{engine::general_purpose, Engine as _};
 use near_sdk::serde::Deserialize;
 use near_sdk::NearToken;
@@ -11,6 +12,24 @@ pub struct Web4Response {
     body: String,
 }
 
+fn create_preload_result(title: String, description: String) -> serde_json::Value {
+    const PRELOAD_URL: &str = "/web4/contract/social.near/get?keys.json=%5B%22not-only-devhub.near/widget/app/metadata/**%22%5D";
+    let body_string = serde_json::json!({"not-only-devhub.near":{"widget":{"app":{"metadata":{
+        "description":description,
+        "image":{"ipfs_cid":"bafkreido4srg4aj7l7yg2tz22nbu3ytdidjczdvottfr5ek6gqorwg6v74"},
+        "name":title,
+        "tags": {"devhub":"","communities":"","developer-governance":"","app":""}}}}}})
+    .to_string();
+
+    let body_base64 = BASE64_STANDARD.encode(body_string);
+    return serde_json::json!({
+            String::from(PRELOAD_URL): {
+                "contentType": "application/json",
+                "body": body_base64
+            }
+    });
+}
+
 #[tokio::test]
 async fn test_web4() -> Result<(), Box<dyn std::error::Error>> {
     let sandbox = near_workspaces::sandbox().await?;
@@ -20,7 +39,7 @@ async fn test_web4() -> Result<(), Box<dyn std::error::Error>> {
 
     let result = contract
         .view("web4_get")
-        .args_json(json!({"request": {"path": "/"}}))
+        .args_json(json!({"request": {"path": "/", "preloads": create_preload_result(String::from("test title"), String::from("test description"))}}))
         .await?;
     let response = result.json::<Web4Response>().unwrap();
     assert_eq!("text/html; charset=UTF-8", response.content_type);
