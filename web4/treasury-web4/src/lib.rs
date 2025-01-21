@@ -151,6 +151,29 @@ mod tests {
     }
 
     #[test]
+    fn test_web4_get_without_metadata_preload_result() {
+        view_test_env();
+        let contract = Contract::default();
+
+        let response = contract.web4_get(
+            serde_json::from_value(serde_json::json!({
+                "path": "/",
+                "preloads": serde_json::Value::Null,
+            }))
+            .unwrap(),
+        );
+
+        match response {
+            Web4Response::PreloadUrls { preload_urls } => {
+                assert_eq!(preload_urls, vec![PRELOAD_URL.to_string()]);
+            }
+            _ => {
+                panic!("Should return Web4Response::PreloadUrls");
+            }
+        }
+    }
+
+    #[test]
     fn test_web4_get_with_metadata_preload_result() {
         view_test_env();
         let contract = Contract::default();
