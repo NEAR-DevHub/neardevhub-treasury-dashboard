@@ -104,7 +104,10 @@ impl Contract {
 
         let index_html = include_str!("web4/index.html").to_string();
         let index_html = index_html
-            .replace("SOCIAL_METADATA_URL", &metadata_preload_url)
+            .replace(
+                "SOCIAL_METADATA_URL",
+                format!("https://{}.near.page", current_account_id).as_str(),
+            )
             .replace("SOCIAL_METADATA_TITLE", &app_name)
             .replace("SOCIAL_METADATA_DESCRIPTION", &description)
             .replace("NEAR_SOCIAL_ACCOUNT_ID", &current_account_id);
@@ -190,6 +193,9 @@ mod tests {
 
                 let body_string = String::from_utf8(BASE64_STANDARD.decode(body).unwrap()).unwrap();
 
+                assert!(body_string.contains(
+                    "<meta property=\"og:url\" content=\"https://not-only-devhub.near.near.page\" />"
+                ));
                 assert!(body_string.contains(
                     "<meta property=\"og:description\" content=\"A description of any devhub portal instance, not just devhub itself\" />"
                 ));
