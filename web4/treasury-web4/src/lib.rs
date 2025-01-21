@@ -72,7 +72,6 @@ impl Contract {
         );
 
         let mut app_name = String::from("NEAR Treasury Dashboard");
-        let mut title = String::new();
         let mut description = String::from("Treasury management for NEAR DAOs");
 
         let Some(preloads) = request.preloads else {

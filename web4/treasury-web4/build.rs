@@ -1,4 +1,3 @@
-use base64::{engine::general_purpose, Engine as _};
 use std::env;
 use std::fs;
 use std::io::Write;
