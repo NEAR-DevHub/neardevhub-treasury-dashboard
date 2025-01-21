@@ -127,7 +127,7 @@ return (
                         )}
                       </div>
                       <div className="d-flex flex-column">
-                        <div className="h6 mb-0">{name ?? acc}</div>
+                        <div className="h6 mb-0 text-break">{name ?? acc}</div>
                         <div className="d-flex">
                           {voted ? (
                             <span

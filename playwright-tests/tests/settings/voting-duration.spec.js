@@ -17,7 +17,7 @@ test.afterEach(async ({ page }, testInfo) => {
 async function navigateToVotingDurationPage({ page, instanceAccount }) {
   await page.goto(`/${instanceAccount}/widget/app?page=settings`);
   await page.waitForTimeout(5_000);
-  await page.getByText("Voting Duration").click();
+  await page.getByTestId("Voting Duration").click();
   await expect(
     page.getByText("Set the number of days a vote is active.")
   ).toBeVisible({

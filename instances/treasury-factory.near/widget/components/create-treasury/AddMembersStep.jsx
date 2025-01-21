@@ -159,13 +159,15 @@ return (
     <div className="d-flex gap-2">
       <Link
         className="btn w-100"
-        href={`/${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=2`}
+        href={`/${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=1`}
       >
         Back
       </Link>
       <Link
-        className="btn btn-primary w-100"
-        href={`/${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=4`}
+        className={`btn btn-primary w-100 ${
+          members.length > 0 ? "" : "disabled"
+        }`}
+        href={`/${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=3`}
       >
         Next
       </Link>

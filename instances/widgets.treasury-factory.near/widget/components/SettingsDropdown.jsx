@@ -36,7 +36,7 @@ const [settingsOptions, setSettingsOptions] = useState(
         },
         {
           title: "Summary",
-          show: true,
+          show: false,
         },
         {
           title: "Recipient",
@@ -44,7 +44,7 @@ const [settingsOptions, setSettingsOptions] = useState(
         },
         {
           title: "Requested Token",
-          show: true,
+          show: false,
         },
         {
           title: "Funding Ask",

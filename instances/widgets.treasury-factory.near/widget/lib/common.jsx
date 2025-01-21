@@ -63,22 +63,24 @@ function getApproversAndThreshold(treasuryDaoID, kind, isDeleteCheck) {
 function getRoleWiseData(treasuryDaoID) {
   return Near.asyncView(treasuryDaoID, "get_policy", {}).then((daoPolicy) => {
     const data = [];
+    const defaultPolicy = daoPolicy.default_vote_policy;
     (daoPolicy.roles ?? []).map((role) => {
-      const isRatio = Array.isArray(role?.vote_policy?.["vote"]?.threshold);
+      // if there is no role.vote_policy, default is applied
+      const threshold = Object.keys(role?.vote_policy ?? {}).length
+        ? role?.vote_policy?.["vote"]?.threshold
+        : defaultPolicy.threshold;
+      const isRatio = Array.isArray(threshold);
+
       data.push({
         roleName: role.name,
         members: role.kind?.Group ?? [],
         isRatio,
-        threshold: isRatio
-          ? role?.vote_policy?.["vote"]?.threshold[0]
-          : role?.vote_policy?.["vote"].threshold,
+        threshold: isRatio ? threshold[0] : threshold,
         requiredVotes: isRatio
           ? Math.floor(
-              (role?.vote_policy?.["vote"]?.threshold[0] /
-                role?.vote_policy?.["vote"]?.threshold[1]) *
-                role.kind?.Group.length
+              (threshold[0] / threshold[1]) * role.kind?.Group.length
             ) + 1
-          : role?.vote_policy?.["vote"]?.threshold ?? 1,
+          : threshold ?? 1,
       });
     });
     return data;
@@ -324,8 +326,8 @@ const gatewayOrigin = data?.body?.headers?.Origin ?? "";
 const isNearSocial =
   gatewayOrigin.includes("near.social") ||
   gatewayOrigin.includes("127.0.0.1:8080") ||
-  gatewayOrigin.includes("treasury-devdao.testnet.page") ||
-  gatewayOrigin.includes("treasury-devdao.near.page");
+  gatewayOrigin.includes("testnet.page") ||
+  gatewayOrigin.includes("near.page");
 
 function getMembersAndPermissions(treasuryDaoID) {
   return Near.asyncView(treasuryDaoID, "get_policy", {}).then((daoPolicy) => {
