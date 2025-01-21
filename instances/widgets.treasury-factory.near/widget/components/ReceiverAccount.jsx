@@ -47,18 +47,21 @@ useEffect(() => {
 
 const HoverCard = () => {
   return (
-    <div>
-      <div className="d-flex justify-content-between align-items-center gap-2">
-        {verificationStatus === "Verified" ? (
-          <VerifiedTick />
-        ) : (
-          <NotVerfiedTick />
-        )}
-        <div className="d-flex flex-column justify-content-center">
-          <div className="h6 mb-0">Fractal</div>
-          <div className="text-sm text-secondary">{verificationStatus}</div>
+    <div style={{ width: 150 }}>
+      <div className="text-break">@{receiverAccount}</div>
+      {verificationStatus && (
+        <div className="d-flex justify-content-between align-items-center gap-2">
+          {verificationStatus === "Verified" ? (
+            <VerifiedTick />
+          ) : (
+            <NotVerfiedTick />
+          )}
+          <div className="d-flex flex-column justify-content-center">
+            <div className="h6 mb-0">Fractal</div>
+            <div className="text-sm text-secondary">{verificationStatus}</div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
@@ -77,7 +80,6 @@ const ReceiverAccountComponent = (
       style={{ textAlign: "left", width: "150px" }}
     >
       <div className="h6 mb-0"> {name}</div>
-
       <div>@{receiverAccount}</div>
     </div>
   </div>
@@ -85,17 +87,13 @@ const ReceiverAccountComponent = (
 
 return (
   <div>
-    {verificationStatus ? (
-      <Widget
-        src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
-        props={{
-          popup: verificationStatus && <HoverCard />,
-          children: ReceiverAccountComponent,
-          instance: props.instance,
-        }}
-      />
-    ) : (
-      ReceiverAccountComponent
-    )}
+    <Widget
+      src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+      props={{
+        popup: <HoverCard />,
+        children: ReceiverAccountComponent,
+        instance: props.instance,
+      }}
+    />
   </div>
 );

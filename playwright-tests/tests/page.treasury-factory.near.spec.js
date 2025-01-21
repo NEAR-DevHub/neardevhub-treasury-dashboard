@@ -90,13 +90,6 @@ test.describe("admin connected", function () {
     await page.locator(".account-field input").fill(accName);
     await page.locator("a", { hasText: "Next" }).click();
 
-    // create sputnik dao account step
-    await expect(
-      await page.locator("h3", { hasText: "Create Sputnik DAO Account" })
-    ).toBeVisible();
-    await page.locator(".account-field input").fill(accName);
-    await page.locator("a", { hasText: "Next" }).click();
-
     // add members step
     await expect(
       await page.locator("h3", { hasText: "Add Members" })
