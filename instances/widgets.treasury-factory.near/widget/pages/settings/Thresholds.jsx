@@ -518,7 +518,7 @@ return (
       </div>
     ) : (
       <div
-        className="card rounded-3 d-flex justify-content-center align-items-center w-100 h-100"
+        className="card rounded-4 d-flex justify-content-center align-items-center w-100 h-100"
         style={{ minHeight: 300 }}
       >
         <Widget

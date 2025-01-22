@@ -108,6 +108,10 @@ const code = `
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+  />   
   <title>Upload Logo</title>
   <style>
     body {
@@ -115,31 +119,25 @@ const code = `
       --text-color: ${isDarkTheme ? "#CACACA" : "#1B1B18"};
       --border-color: ${isDarkTheme ? "#3B3B3B" : "rgba(226, 230, 236, 1)"};
       --text-secondary-color: ${isDarkTheme ? "#878787" : "#999999"};
+      --grey-035: ${isDarkTheme ? "#3E3E3E" : "#E6E6E6"};
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif;
       background-color: var(--bg-page-color);
       color: var(--text-color);
     }
-    .upload-btn {
-     
-      display: inline-block;
-      padding: 10px 20px;
-      font-size: 16px;
-      color: var(--text-color);
-      background-color: transparent;
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    .upload-btn:hover {
-      background-color: inherit;
+    .btn-outline-secondary {
+      border-color: var(--border-color) !important;
+      color: var(--text-color) !important;
+      border-width: 1px !important;
+      &:hover {
+        color: var(--text-color) !important;
+        border-color: var(--border-color) !important;
+        background: var(--grey-035) !important;
+      }
     }
     .btn-container {
       width:200px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
     }
-    .text-muted {
+    .text-secondary {
       color: var(--text-secondary-color);
       font-size: 12px;
     }
@@ -149,9 +147,9 @@ const code = `
   </style>
 </head>
 <body>
-    <div class="btn-container">
-      <button class="upload-btn" id="uploadButton">Upload Logo</button>
-      <div class="text-muted text-center">SVG, PNG, or JPG (256x256 px)</div>
+    <div class="btn-container d-flex flex-column gap-2 mt-3">
+      <button class="btn btn-outline-secondary w-100" id="uploadButton">Upload Logo</button>
+      <div class="text-secondary text-center">SVG, PNG, or JPG (256x256 px)</div>
       <input
         type="file"
         id="imageUpload"
@@ -367,7 +365,7 @@ return (
         </div>
       ) : (
         <div className="d-flex flex-column gap-4 px-3 py-1">
-          <div class="d-flex gap-2 align-items-center flex-wrap flex-md-nowrap">
+          <div class="d-flex gap-3 align-items-center flex-wrap flex-md-nowrap">
             <img
               src={image ? image : defaultImage}
               height={100}

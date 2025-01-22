@@ -265,7 +265,7 @@ const Theme = styled.div`
   }
 
   .bg-highlight {
-    background-color: rgb(185, 185, 185, 0.2);
+    background-color: var(--grey-04) !important;
   }
 
   .cursor-pointer {
