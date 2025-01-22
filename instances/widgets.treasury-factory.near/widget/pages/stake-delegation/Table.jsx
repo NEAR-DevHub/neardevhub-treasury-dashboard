@@ -110,7 +110,7 @@ const Container = styled.div`
     color: inherit !important;
   }
 `;
-div;
+
 function checkProposalStatus(proposalId) {
   Near.asyncView(treasuryDaoID, "get_proposal", {
     id: proposalId,

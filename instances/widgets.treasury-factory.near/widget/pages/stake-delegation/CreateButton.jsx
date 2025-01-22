@@ -108,58 +108,11 @@ const CreateBtn = () => {
       border: none !important;
     }
   
-    .options-card {
-      display: none;
-      position: absolute;
-      top: 100%;
-      left: 0;
-      width: 100%;
-      border: 1px solid var(--border-color);
-      background-color: var(--bg-page-color) !important;
-      color: var(--text-color) !important;
-      z-index: 99;
-      opacity: 0;
-      font-size: 14px;
-      transform: translateY(-10px);
-      transition: opacity 0.2s ease, transform 0.2s ease;
-  
-      &.visible {
-        display: block;
-        opacity: 1;
-        transform: translateY(0);
-        z-index:1000;
-      }
-    }
-  
     .left {
       right: 0 !important;
       left: auto !important;
     }
-  
-    @media screen and (max-width: 768px) {
-      .options-card {
-        right: 0 !important;
-        left: auto !important;
-      }
-    }
-  
-    .option {
-      color: var(--text-color) !important;
-      margin-block: 5px;
-      padding: 10px;
-      cursor: pointer;
-      border-bottom: 1px solid var(--border-color);
-      transition: background-color 0.3s ease;
-    }
-  
-    .option:hover {
-      background-color: var(--bs-dropdown-link-hover-bg);
-    }
-  
-    .option:last-child {
-      border-bottom: none;
-    }
-  
+
     .selected {
       background-color: var(--grey-04);
     }
@@ -178,30 +131,35 @@ const CreateBtn = () => {
     a:hover {
       text-decoration: none;
     }
-  
   }
   `;
 
   return (
     <DropdowntBtnContainer>
       <div
-        className="custom-select"
+        className="custom-select "
         tabIndex="0"
         onBlur={() => setCreateBtnOpen(false)}
       >
-        <div className={"btn primary-button d-flex align-items-center"}>
+        <div
+          className={"dropdown btn primary-button d-flex align-items-center"}
+        >
           <div className="d-flex gap-2 align-items-center ">
             <i class="bi bi-plus-lg h5 mb-0"></i>Create Request
           </div>
         </div>
 
         <div
-          className={`rounded-3 mt-1 options-card ${
-            isCreateBtnOpen ? "visible" : "hidden"
+          className={`dropdown-menu dropdown-menu-end dropdown-menu-lg-start px-2 shadow ${
+            isCreateBtnOpen ? "show" : ""
           }`}
         >
           {btnOptions.map((option) => (
-            <div key={option.value} className="option" onClick={option.onClick}>
+            <div
+              key={option.value}
+              className="dropdown-item cursor-pointer py-2"
+              onClick={option.onClick}
+            >
               <div className="d-flex gap-2 align-items-center">
                 {option.icon}
                 <div>{option.label}</div>
