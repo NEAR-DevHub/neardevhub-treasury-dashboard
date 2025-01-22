@@ -252,22 +252,12 @@ const ProposalsComponent = () => {
 
             <td className={"fw-semi-bold text-center " + isVisible("Creator")}>
               <Widget
-                src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
                 props={{
-                  popup: (
-                    <Widget
-                      src="${REPL_MOB}/widget/Profile.Popover"
-                      props={{ accountId: item.proposer }}
-                    />
-                  ),
-                  children: (
-                    <div
-                      className="text-truncate"
-                      style={{ maxWidth: "300px" }}
-                    >
-                      {item.proposer}
-                    </div>
-                  ),
+                  accountId: item.proposer,
+                  showKYC: false,
+                  displayImage: false,
+                  displayName: false,
                   instance,
                 }}
               />
