@@ -31,9 +31,16 @@ fn build_project_once() -> Vec<u8> {
     CONTRACT_WASM.lock().unwrap().clone()
 }
 
-fn create_preload_result(title: String, description: String) -> serde_json::Value {
-    const PRELOAD_URL: &str = "/web4/contract/social.near/get?keys.json=%5B%22not-only-devhub.near/widget/app/metadata/**%22%5D";
-    let body_string = serde_json::json!({"not-only-devhub.near":{"widget":{"app":{"metadata":{
+fn create_preload_result(
+    account_id: String,
+    title: String,
+    description: String,
+) -> serde_json::Value {
+    let preload_url = format!(
+        "/web4/contract/social.near/get?keys.json=%5B%22{}/widget/app/metadata/**%22%5D",
+        account_id.as_str()
+    );
+    let body_string = serde_json::json!({account_id:{"widget":{"app":{"metadata":{
         "description":description,
         "image":{"ipfs_cid":"bafkreido4srg4aj7l7yg2tz22nbu3ytdidjczdvottfr5ek6gqorwg6v74"},
         "name":title,
@@ -42,7 +49,7 @@ fn create_preload_result(title: String, description: String) -> serde_json::Valu
 
     let body_base64 = BASE64_STANDARD.encode(body_string);
     return serde_json::json!({
-            String::from(PRELOAD_URL): {
+            String::from(preload_url): {
                 "contentType": "application/json",
                 "body": body_base64
             }
@@ -283,7 +290,7 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
     let result = treasury_factory_contract
         .as_account()
         .view(&instance_account_id.parse().unwrap(), "web4_get")
-        .args_json(json!({"request": {"path": "/", "preloads": create_preload_result(String::from("test title"), String::from("test description"))}}))
+        .args_json(json!({"request": {"path": "/", "preloads": create_preload_result(instance_account_id.clone(), String::from("test treasury title"), String::from("test description"))}}))
         .await?;
 
     let response = result.json::<Web4Response>().unwrap();
@@ -292,6 +299,7 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
     let body_string =
         String::from_utf8(general_purpose::STANDARD.decode(response.body).unwrap()).unwrap();
     assert!(body_string.contains("near-social-viewer"));
+    assert!(body_string.contains("\"test treasury title\""));
 
     let get_config_result = worker
         .view(

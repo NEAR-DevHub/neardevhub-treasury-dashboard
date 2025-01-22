@@ -108,8 +108,14 @@ impl Contract {
                 "SOCIAL_METADATA_URL",
                 format!("https://{}.page", current_account_id).as_str(),
             )
-            .replace("SOCIAL_METADATA_TITLE", &app_name)
-            .replace("SOCIAL_METADATA_DESCRIPTION", &description)
+            .replace(
+                "SOCIAL_METADATA_TITLE",
+                &html_escape::encode_double_quoted_attribute(&app_name),
+            )
+            .replace(
+                "SOCIAL_METADATA_DESCRIPTION",
+                &html_escape::encode_double_quoted_attribute(&description),
+            )
             .replace("NEAR_SOCIAL_ACCOUNT_ID", &current_account_id);
         Web4Response::Body {
             content_type: "text/html; charset=UTF-8".to_owned(),
