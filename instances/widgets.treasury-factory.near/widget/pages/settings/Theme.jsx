@@ -356,7 +356,7 @@ return (
     />
     <div className="card rounded-4 w-100 h-100 py-3">
       <div className="card-title px-3 pb-3">Theme & Logo</div>
-      {!metadata ? (
+      {!config ? (
         <div
           className="d-flex justify-content-center align-items-center w-100 h-100"
           style={{ minHeight: 300 }}
