@@ -394,8 +394,7 @@ function hasPermission(treasuryDaoID, accountId, kindNames, actionType) {
     const permissions = daoPolicy.roles
       .filter(
         (role) =>
-          Array.isArray(role.kind.Group) &&
-          role.kind.Group.includes(accountId)
+          Array.isArray(role.kind.Group) && role.kind.Group.includes(accountId)
       )
       .flatMap((role) =>
         kindNameArray.map((kindName) =>
