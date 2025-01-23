@@ -26,7 +26,8 @@ test("should be able to create a treasury instance with sandbox", async () => {
                     },
                     "name": "Create Requests",
                     "permissions": [
-                        "*:AddProposal",
+                        "Call:AddProposal",
+                        "Transfer:AddProposal",
                         "config:Finalize",
                     ],
                     "vote_policy": {},
@@ -38,7 +39,7 @@ test("should be able to create a treasury instance with sandbox", async () => {
                     "name": "Manage Members",
                     "permissions": [
                         "config:*",                     
-                        "policy_update_parameters:*",
+                        "policy_update_parameters:*",                        
                         "add_bounty:*",
                         "remove_member_from_role:*",
                         "upgrade_self:*",
