@@ -185,7 +185,8 @@ test.describe("User is logged in", function () {
       .fill(newDurationDays.toString());
 
     await page.waitForTimeout(500);
-    await page.locator("button", { hasText: "Submit" }).click();
+    const submitBtn = page.locator("button", { hasText: "Submit" });
+    await submitBtn.click();
 
     await page
       .locator(".modalfooter button", { hasText: "Yes, proceed" })
@@ -227,7 +228,7 @@ test.describe("User is logged in", function () {
     await expect(
       page.getByText("Voting duration change request submitted")
     ).toBeVisible();
-
+    await expect(submitBtn).toBeEnabled();
     await sandbox.quitSandbox();
   });
 
