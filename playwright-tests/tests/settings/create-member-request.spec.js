@@ -580,6 +580,8 @@ test.describe("User is logged in", function () {
                     "*:VoteReject",
                     "*:VoteApprove",
                     "*:VoteRemove",
+                    "*:RemoveProposal",
+                    "*:Finalize",
                   ],
                   vote_policy: {
                     transfer: votePolicy,
@@ -731,6 +733,8 @@ test.describe("User is logged in", function () {
                     "*:VoteReject",
                     "*:VoteApprove",
                     "*:VoteRemove",
+                    "*:RemoveProposal",
+                    "*:Finalize",
                   ],
                   vote_policy: {
                     transfer: votePolicy,

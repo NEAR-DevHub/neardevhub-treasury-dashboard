@@ -211,6 +211,7 @@ test.describe("User is logged in", function () {
     });
 
     await page.getByRole("button", { name: "Confirm" }).click();
+    await expect(page.getByText("Processing your request ...")).toBeVisible();
 
     const transactionToSend = await transactionToSendPromise;
 
@@ -220,11 +221,19 @@ test.describe("User is logged in", function () {
       args: transactionToSend.actions[0].params.args,
       attachedDeposit: transactionToSend.actions[0].params.deposit,
     });
-
+    const lastProposalId = await sandbox.getLastProposalId(daoName);
     await page.evaluate((transactionResult) => {
       window.transactionSentPromiseResolve(transactionResult);
     }, transactionResult);
-    await expect(page.getByText("Processing your request ...")).toBeVisible();
+    await mockRpcRequest({
+      page,
+      filterParams: {
+        method_name: "get_last_proposal_id",
+      },
+      modifyOriginalResultFunction: () => {
+        return lastProposalId;
+      },
+    });
     await expect(
       page.getByText("Voting duration change request submitted")
     ).toBeVisible();
