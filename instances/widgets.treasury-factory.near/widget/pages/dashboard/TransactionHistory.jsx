@@ -254,7 +254,7 @@ return (
                   <td>Type</td>
                   <td>From</td>
                   <td>To</td>
-                  <td className="text-center">Transaction</td>
+                  <td className="text-right">Transaction</td>
                   <td className="text-right">Amount</td>
                 </tr>
               </thead>
@@ -338,7 +338,7 @@ return (
                           }}
                         />
                       </td>
-                      <td className="text-center" style={{ minWidth: 200 }}>
+                      <td className="text-right" style={{ minWidth: 200 }}>
                         <div className="d-flex gap-2 align-items-center fw-semi-bold justify-content-center">
                           <a
                             target="_blank"
