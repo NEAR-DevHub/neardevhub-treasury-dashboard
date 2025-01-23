@@ -204,11 +204,7 @@ export class SandboxRPC {
               Group: [this.account.accountId],
             },
             name: "Create Requests",
-            permissions: [
-              "*:AddProposal",
-              "transfer:AddProposal",
-              "config:Finalize",
-            ],
+            permissions: ["call:AddProposal", "transfer:AddProposal"],
             vote_policy: {},
           },
           {
@@ -221,6 +217,16 @@ export class SandboxRPC {
               "policy:*",
               "add_member_to_role:*",
               "remove_member_from_role:*",
+              "upgrade_self:*",
+              "upgrade_remote:*",
+              "set_vote_token:*",
+              "add_bounty:*",
+              "bounty_done:*",
+              "factory_info_update:*",
+              "policy_add_or_update_role:*",
+              "policy_remove_role:*",
+              "policy_update_default_vote_policy:*",
+              "policy_update_parameters:*",
             ],
             vote_policy: {},
           },
@@ -229,7 +235,13 @@ export class SandboxRPC {
               Group: [this.account.accountId],
             },
             name: "Vote",
-            permissions: ["*:VoteReject", "*:VoteApprove", "*:VoteRemove"],
+            permissions: [
+              "*:VoteReject",
+              "*:VoteApprove",
+              "*:VoteRemove",
+              "*:RemoveProposal",
+              "*:Finalize",
+            ],
             vote_policy: {},
           },
         ],
@@ -253,7 +265,7 @@ export class SandboxRPC {
         args: Buffer.from(JSON.stringify(createDaoConfig)).toString("base64"),
       },
       gas: 300000000000000,
-      attachedDeposit: utils.format.parseNearAmount("6"),
+      attachedDeposit: utils.format.parseNearAmount("8"),
     });
   }
 

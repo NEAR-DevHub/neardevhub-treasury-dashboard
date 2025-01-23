@@ -52,7 +52,6 @@ const create_dao_args = {
                 "permissions": [
                     "call:AddProposal",
                     "transfer:AddProposal",
-                    "config:Finalize",
                 ],
                 "vote_policy": {},
             },
@@ -74,7 +73,7 @@ const create_dao_args = {
                     "Group": ["acc1.near", "acc2.near"],
                 },
                 "name": "Vote",
-                "permissions": ["*:VoteReject", "*:VoteApprove", "*:VoteRemove"],
+                "permissions": ["*:VoteReject", "*:VoteApprove", "*:VoteRemove", "*:RemoveProposal", "*:Finalize"],
                 "vote_policy": {},
             },
         ],
