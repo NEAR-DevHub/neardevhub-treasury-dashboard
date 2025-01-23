@@ -735,7 +735,8 @@ test.describe("Have valid staked requests and sufficient token balance", functio
 
 test.describe("Withdraw request", function () {
   test.use({
-    storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
+    storageState:
+      "playwright-tests/storage-states/wallet-connected-admin-with-accesskey.json",
   });
 
   test.beforeEach(async ({ page, instanceAccount, daoAccount }) => {
