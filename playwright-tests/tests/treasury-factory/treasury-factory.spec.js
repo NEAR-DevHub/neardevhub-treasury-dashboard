@@ -22,18 +22,18 @@ test("should be able to create a treasury instance with sandbox", async () => {
             "roles": [
                 {
                     "kind": {
-                        "Group": ["acc3.near", "acc2.near", "acc1.near"],
+                        "Group": [sandbox.account.accountId],
                     },
                     "name": "Create Requests",
                     "permissions": [
-                        "call:AddProposal",
-                        "transfer:AddProposal",
+                        "*:AddProposal",
+                        "config:Finalize",
                     ],
                     "vote_policy": {},
                 },
                 {
                     "kind": {
-                        "Group": ["acc1.near"],
+                        "Group": [sandbox.account.accountId],
                     },
                     "name": "Manage Members",
                     "permissions": [
@@ -56,7 +56,7 @@ test("should be able to create a treasury instance with sandbox", async () => {
                 },
                 {
                     "kind": {
-                        "Group": ["acc1.near", "acc2.near"],
+                        "Group": [sandbox.account.accountId],
                     },
                     "name": "Vote",
                     "permissions": ["*:VoteReject", "*:VoteApprove", "*:RemoveProposal", "*:VoteRemove","*:Finalize"],
