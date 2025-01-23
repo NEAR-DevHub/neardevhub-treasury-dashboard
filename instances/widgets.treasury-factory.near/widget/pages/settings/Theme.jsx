@@ -24,7 +24,7 @@ const { treasuryDaoID, themeColor } = VM.require(
 const hasCreatePermission = hasPermission(
   treasuryDaoID,
   context.accountId,
-  "config",
+  "policy",
   "AddProposal"
 );
 

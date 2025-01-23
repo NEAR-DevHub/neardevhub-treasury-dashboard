@@ -31,7 +31,7 @@ const lastProposalId = Near.view(treasuryDaoID, "get_last_proposal_id");
 const hasCreatePermission = hasPermission(
   treasuryDaoID,
   context.accountId,
-  "policy",
+  "policy_update_parameters",
   "AddProposal"
 );
 

@@ -25,7 +25,7 @@ if (typeof getRoleWiseData !== "function") {
 const hasEditPermission = hasPermission(
   treasuryDaoID,
   context.accountId,
-  "ChangeConfig",
+  "policy",
   "AddProposal"
 );
 
