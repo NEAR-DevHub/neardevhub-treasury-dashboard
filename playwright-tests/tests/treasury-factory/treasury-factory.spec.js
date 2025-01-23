@@ -37,20 +37,20 @@ test("should be able to create a treasury instance with sandbox", async () => {
                     },
                     "name": "Manage Members",
                     "permissions": [
-                        "config:*",
-                        "policy:*",
-                        "add_member_to_role:*",
+                        "config:*",                     
+                        "policy_update_parameters:*",
+                        "add_bounty:*",
                         "remove_member_from_role:*",
                         "upgrade_self:*",
-                        "upgrade_remote:*",
-                        "set_vote_token:*",
-                        "add_bounty:*",
-                        "bounty_done:*",
-                        "factory_info_update:*",
-                        "policy_add_or_update_role:*",
                         "policy_remove_role:*",
+                        "set_vote_token:*",
+                        "upgrade_remote:*",                                                
+                        "bounty_done:*",
+                        "add_member_to_role:*",
+                        "factory_info_update:*",
+                        "policy:*",
+                        "policy_add_or_update_role:*",                        
                         "policy_update_default_vote_policy:*",
-                        "policy_update_parameters:*",
                     ],
                     "vote_policy": {},
                 },
@@ -59,7 +59,7 @@ test("should be able to create a treasury instance with sandbox", async () => {
                         "Group": ["acc1.near", "acc2.near"],
                     },
                     "name": "Vote",
-                    "permissions": ["*:VoteReject", "*:VoteApprove", "*:VoteRemove", "*:RemoveProposal", "*:Finalize"],
+                    "permissions": ["*:VoteReject", "*:VoteApprove", "*:RemoveProposal", "*:VoteRemove","*:Finalize"],
                     "vote_policy": {},
                 },
             ],
@@ -105,5 +105,30 @@ test("should be able to create a treasury instance with sandbox", async () => {
 
     expect(JSON.stringify(socialGetResult)).toEqual(JSON.stringify(referenceWidgetSources).replaceAll(widget_reference_account_id, instance_name+".near"));
 
+    // check permissions to to add a voting duration change proposal
+
+    const addVotingDurationChangeResult = await sandbox.account.functionCall({
+        contractId: `${instance_name}.sputnik-dao.near`, methodName: 'add_proposal', args: {
+            proposal:
+            {
+            description: "test",
+            kind: {
+              ChangePolicyUpdateParameters: {
+                parameters: {
+                  proposal_period:
+                    (60 * 60 * 24 * 20).toString() + "000000000",
+                },
+              },
+            },
+            }
+          },
+        gas: 300000000000000,
+        attachedDeposit: nearApi.utils.format.parseNearAmount("0.1")
+    });
+
+    expect(
+        addVotingDurationChangeResult.receipts_outcome.filter(receipt_outcome => receipt_outcome.outcome.status.Failure).length
+    ).toBe(0);
+    
     await sandbox.quitSandbox();
 });
