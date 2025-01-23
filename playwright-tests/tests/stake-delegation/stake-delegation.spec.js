@@ -21,6 +21,7 @@ import {
 import { setDontAskAgainCacheValues } from "../../util/cache.js";
 import Big from "big.js";
 import { InsufficientBalance } from "../../util/lib.js";
+import { SandboxRPC } from "../../util/sandboxrpc.js";
 
 test.afterEach(async ({ page }, testInfo) => {
   console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
@@ -416,106 +417,54 @@ async function voteOnProposal({
 
 async function checkNewProposalSubmission({
   page,
-  expectedTransactionModalObject,
-  expectedTransaction2ModalObject,
+  sandbox,
+  checkforMultiProposals,
+  daoAccount,
+  daoName,
 }) {
-  let isTransactionCompleted = false;
-  let retryCountAfterComplete = 0;
-  let newProposalId;
+  const transactionToSendPromise = page.evaluate(async () => {
+    const selector = await document.querySelector("near-social-viewer")
+      .selectorPromise;
 
-  await mockTransactionSubmitRPCResponses(
-    page,
-    async ({
-      route,
-      request,
-      transaction_completed,
-      last_receiver_id,
-      requestPostData,
-    }) => {
-      isTransactionCompleted = transaction_completed;
-      if (
-        isTransactionCompleted &&
-        requestPostData.params &&
-        requestPostData.params.method_name === "get_last_proposal_id"
-      ) {
-        const response = await route.fetch();
-        const json = await response.json();
-        let result = JSON.parse(
-          new TextDecoder().decode(new Uint8Array(json.result.result))
-        );
-        if (retryCountAfterComplete === 2) {
-          result++;
-          newProposalId = result;
-        } else {
-          retryCountAfterComplete++;
-        }
-        json.result.result = Array.from(
-          new TextEncoder().encode(JSON.stringify(result))
-        );
-        await route.fulfill({ response, json });
-      } else if (
-        isTransactionCompleted &&
-        newProposalId &&
-        requestPostData.params &&
-        requestPostData.params.method_name === "get_proposals"
-      ) {
-        const response = await route.fetch();
-        const json = await response.json();
-        let result = JSON.parse(
-          new TextDecoder().decode(new Uint8Array(json.result.result))
-        );
+    const wallet = await selector.wallet();
 
-        result.push({
-          id: newProposalId,
-          proposer: "theori.near",
-          description: expectedTransactionModalObject.proposal.description,
-          kind: {
-            FunctionCall: {
-              receiver_id:
-                expectedTransactionModalObject.proposal.kind.FunctionCall
-                  .receiver_id,
-              actions:
-                expectedTransactionModalObject.proposal.kind.FunctionCall
-                  .actions,
-            },
-          },
-          status: "InProgress",
-          vote_counts: {},
-          votes: {},
-          submission_time: CurrentTimestampInNanoseconds,
-        });
-
-        if (expectedTransaction2ModalObject) {
-          result.push({
-            id: newProposalId + 1,
-            proposer: "theori.near",
-            description: expectedTransaction2ModalObject.proposal.description,
-            kind: {
-              FunctionCall: {
-                receiver_id:
-                  expectedTransaction2ModalObject.proposal.kind.FunctionCall
-                    .receiver_id,
-                actions:
-                  expectedTransaction2ModalObject.proposal.kind.FunctionCall
-                    .actions,
-              },
-            },
-            status: "InProgress",
-            vote_counts: {},
-            votes: {},
-            submission_time: CurrentTimestampInNanoseconds,
-          });
-        }
-        json.result.result = Array.from(
-          new TextEncoder().encode(JSON.stringify(result))
+    return new Promise((resolve) => {
+      wallet.signAndSendTransaction = async (transaction) => {
+        resolve(transaction);
+        return await new Promise(
+          (transactionSentPromiseResolve) =>
+            (window.transactionSentPromiseResolve =
+              transactionSentPromiseResolve)
         );
-        await route.fulfill({ response, json });
-      } else {
-        await route.fallback();
-      }
-    }
-  );
+      };
+    });
+  });
+
   await page.getByRole("button", { name: "Confirm" }).click();
+  await expect(page.getByText("Processing your request ...")).toBeVisible();
+
+  const transactionToSend = await transactionToSendPromise;
+
+  const transactionResult = await sandbox.account.functionCall({
+    contractId: daoAccount,
+    methodName: "add_proposal",
+    args: transactionToSend.actions[0].params.args,
+    attachedDeposit: transactionToSend.actions[0].params.deposit,
+  });
+  const lastProposalId = await sandbox.getLastProposalId(daoName);
+
+  await page.evaluate(async (transactionResult) => {
+    window.transactionSentPromiseResolve(transactionResult);
+  }, transactionResult);
+  await mockRpcRequest({
+    page,
+    filterParams: {
+      method_name: "get_last_proposal_id",
+    },
+    modifyOriginalResultFunction: () => {
+      return lastProposalId;
+    },
+  });
   await expect(page.locator("div.modal-body code").nth(0)).toBeAttached({
     attached: false,
     timeout: 10_000,
@@ -528,12 +477,16 @@ async function checkNewProposalSubmission({
     visible: false,
   });
   await expect(
-    page.getByRole("cell", { name: `${newProposalId}`, exact: true })
+    page
+      .getByRole("cell", { name: `${lastProposalId - 1}`, exact: true })
+      .first()
   ).toBeVisible({ timeout: 20_000 });
 
-  if (expectedTransaction2ModalObject) {
+  if (checkforMultiProposals) {
     await expect(
-      page.getByRole("cell", { name: `${newProposalId + 1}`, exact: true })
+      page
+        .getByRole("cell", { name: `${lastProposalId - 2}`, exact: true })
+        .first()
     ).toBeVisible({ timeout: 20_000 });
   }
 }
@@ -549,6 +502,7 @@ test.describe("Have valid staked requests and sufficient token balance", functio
       console.log("no stake delegation page configured for instance");
       return test.skip();
     }
+
     if (
       testInfo.title.includes("Should successfully parse old JSON description")
     ) {
@@ -607,21 +561,6 @@ test.describe("Have valid staked requests and sufficient token balance", functio
       storageState:
         "playwright-tests/storage-states/wallet-connected-admin-with-accesskey.json",
     });
-    const lastProposalId = 10;
-    test.beforeEach(async ({ page }, testInfo) => {
-      if (testInfo.title.includes("Should create unstake delegation request")) {
-        await mockRpcRequest({
-          page,
-          filterParams: {
-            method_name: "get_last_proposal_id",
-          },
-          modifyOriginalResultFunction: (originalResult) => {
-            originalResult = lastProposalId;
-            return originalResult;
-          },
-        });
-      }
-    });
 
     test("insufficient account balance should show warning modal, disallow action ", async ({
       page,
@@ -647,8 +586,15 @@ test.describe("Have valid staked requests and sufficient token balance", functio
 
     test("Should create stake delegation request, should throw error when invalid data is provided, should show in table after submission", async ({
       page,
+      daoAccount,
     }) => {
-      test.setTimeout(100_000);
+      test.setTimeout(200_000);
+      const daoName = daoAccount.split(".")[0];
+      const sandbox = new SandboxRPC();
+      await sandbox.init();
+      await sandbox.attachRoutes(page);
+      await sandbox.setupSandboxForSputnikDao(daoName);
+
       await openStakeForm({ page });
 
       await fillValidatorAccount({
@@ -664,8 +610,12 @@ test.describe("Have valid staked requests and sufficient token balance", functio
         .locator('input[placeholder="Enter amount"]')
         .first()
         .inputValue();
+      await sandbox.addStakeRequestProposal({
+        stakedPoolAccount,
+        stakingAmount,
+        daoName,
+      });
       await page.getByRole("button", { name: "Submit" }).click();
-      await expect(page.getByText("Processing your request ...")).toBeVisible();
       const expectedTransactionModalObject = {
         proposal: {
           description: "* Proposal Action: stake",
@@ -688,17 +638,24 @@ test.describe("Have valid staked requests and sufficient token balance", functio
         expectedTransactionModalObject
       );
 
-      await checkNewProposalSubmission({
-        page,
-        expectedTransactionModalObject,
-      });
+      await checkNewProposalSubmission({ page, sandbox, daoAccount, daoName });
+      await sandbox.quitSandbox();
     });
 
     test("Should create unstake delegation request, should throw error when invalid data is provided, should show in table after submission", async ({
       page,
+      daoAccount,
       instanceAccount,
     }) => {
-      test.setTimeout(120_000);
+      test.setTimeout(200_000);
+      const daoName = daoAccount.split(".")[0];
+      const sandbox = new SandboxRPC();
+      await sandbox.init();
+      await sandbox.attachRoutes(page);
+      await sandbox.setupSandboxForSputnikDao(daoName);
+      const args = "eyJhbW91bnQiOiIzMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAifQ==";
+      const description = `* Proposal Action: withdraw <br>* Show After Proposal Id Approved: 0 <br>* Custom Notes: Following to [#0](/${instanceAccount}/widget/app?page=stake-delegation&selectedTab=History&highlightProposalId=0) unstake request`;
+
       await openUnstakeForm({ page });
       await fillValidatorAccount({
         page,
@@ -719,7 +676,7 @@ test.describe("Have valid staked requests and sufficient token balance", functio
               actions: [
                 {
                   method_name: "unstake",
-                  args: "eyJhbW91bnQiOiIzMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAifQ==",
+                  args: args,
                   deposit: "0",
                   gas: "200000000000000",
                 },
@@ -738,7 +695,7 @@ test.describe("Have valid staked requests and sufficient token balance", functio
       const dataReceived = JSON.parse(txnLocator);
       const expectedTransaction2ModalObject = {
         proposal: {
-          description: `* Proposal Action: withdraw <br>* Show After Proposal Id Approved: ${lastProposalId} <br>* Custom Notes: Following to [#${lastProposalId}](/${instanceAccount}/widget/app?page=stake-delegation&selectedTab=History&highlightProposalId=${lastProposalId}) unstake request`,
+          description: description,
           kind: {
             FunctionCall: {
               receiver_id: stakedPoolAccount,
@@ -755,19 +712,33 @@ test.describe("Have valid staked requests and sufficient token balance", functio
         },
       };
       await expect(dataReceived).toEqual(expectedTransaction2ModalObject);
+      await sandbox.addUnstakeRequestProposal({
+        stakedPoolAccount,
+        functionCallArgs: args,
+        daoName,
+      });
+      await sandbox.addWithdrawRequestProposal({
+        stakedPoolAccount,
+        description: description,
+        daoName,
+      });
+
       await checkNewProposalSubmission({
         page,
-        expectedTransactionModalObject,
-        expectedTransaction2ModalObject,
+        sandbox,
+        daoAccount,
+        daoName,
+        checkforMultiProposals: true,
       });
+
+      await sandbox.quitSandbox();
     });
   });
 });
 
 test.describe("Withdraw request", function () {
   test.use({
-    storageState:
-      "playwright-tests/storage-states/wallet-connected-admin-with-accesskey.json",
+    storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
   });
 
   test.beforeEach(async ({ page, instanceAccount, daoAccount }) => {
@@ -823,7 +794,17 @@ test.describe("Withdraw request", function () {
     page,
     daoAccount,
   }) => {
-    test.setTimeout(150_000);
+    test.setTimeout(200_000);
+    const daoName = daoAccount.split(".")[0];
+    const sandbox = new SandboxRPC();
+    await sandbox.init();
+    await sandbox.attachRoutes(page);
+    await sandbox.setupSandboxForSputnikDao(daoName);
+    await sandbox.addWithdrawRequestProposal({
+      stakedPoolAccount,
+      description: `* Proposal Action: withdraw`,
+      daoName,
+    });
     await mockUnstakeAndWithdrawBalance({
       page,
       hasUnstakeBalance: true,
@@ -836,7 +817,6 @@ test.describe("Withdraw request", function () {
     const submitBtn = page.getByRole("button", { name: "Submit" });
     await expect(submitBtn).toBeEnabled();
     await submitBtn.dblclick();
-    await expect(page.getByText("Processing your request ...")).toBeVisible();
     const expectedTransactionModalObject = {
       proposal: {
         description: `* Proposal Action: withdraw`,
@@ -858,7 +838,8 @@ test.describe("Withdraw request", function () {
     await expect(await getTransactionModalObject(page)).toEqual(
       expectedTransactionModalObject
     );
-    await checkNewProposalSubmission({ page, expectedTransactionModalObject });
+    await checkNewProposalSubmission({ page, sandbox, daoAccount, daoName });
+    await sandbox.quitSandbox();
   });
 
   test("Have valid withdraw tokens from multiple pools", async ({
@@ -866,7 +847,24 @@ test.describe("Withdraw request", function () {
     daoAccount,
     instanceAccount,
   }) => {
-    test.setTimeout(150_000);
+    test.setTimeout(200_000);
+    const daoName = daoAccount.split(".")[0];
+    const sandbox = new SandboxRPC();
+    await sandbox.init();
+    await sandbox.attachRoutes(page);
+    await sandbox.setupSandboxForSputnikDao(daoName);
+    const description = `* Proposal Action: withdraw`;
+    await sandbox.addWithdrawRequestProposal({
+      stakedPoolAccount,
+      description,
+      daoName,
+    });
+    await sandbox.addWithdrawRequestProposal({
+      stakedPoolAccount: multiStakedPoolAccount,
+      description,
+      daoName,
+    });
+
     const instanceConfig = await getInstanceConfig({
       page,
       instanceAccount,
@@ -942,6 +940,14 @@ test.describe("Withdraw request", function () {
         },
       },
     });
+    await checkNewProposalSubmission({
+      page,
+      sandbox,
+      daoAccount,
+      daoName,
+      checkforMultiProposals: true,
+    });
+    await sandbox.quitSandbox();
   });
 
   test("Vote on withdraw request, when amount is not ready", async ({
