@@ -321,14 +321,16 @@ return (
             content: (
               <div className="d-flex flex-column gap-2">
                 This action will result in significant changes to the system.
-                <div className="d-flex gap-3 warning px-3 py-2 rounded-3">
-                  <i class="bi bi-exclamation-triangle warning-icon h5"></i>
-                  <div>
-                    Changing this setting will require {requiredVotes} vote(s)
-                    to approve requests. You will no longer be able to approve
-                    requests with {selectedGroup.requiredVotes} vote(s).
+                {requiredVotes != selectedGroup.requiredVotes && (
+                  <div className="d-flex gap-3 warning px-3 py-2 rounded-3">
+                    <i class="bi bi-exclamation-triangle warning-icon h5"></i>
+                    <div>
+                      Changing this setting will require {requiredVotes} vote(s)
+                      to approve requests. You will no longer be able to approve
+                      requests with {selectedGroup.requiredVotes} vote(s).
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             ),
             confirmLabel: "Confirm",
@@ -419,11 +421,15 @@ return (
                     if (isPercentageSelected) {
                       if (number > 100)
                         setValueError("Maximum percentage allowed is 100.");
+                      else if (number < 1)
+                        setValueError("Minimum percentage allowed is 1.");
                     } else {
                       if (number > selectedGroup.members.length)
                         setValueError(
                           `Maximum members allowed is ${selectedGroup.members.length}.`
                         );
+                      if (number < 1)
+                        setValueError("Minimum members allowed is 1.");
                     }
                   },
                   value: selectedVoteValue,
