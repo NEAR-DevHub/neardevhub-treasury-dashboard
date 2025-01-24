@@ -106,14 +106,6 @@ export class SandboxRPC {
     });
   }
 
-  async getLastProposalId(daoName) {
-    return this.account.viewFunction({
-      contractId: `${daoName}.${SPUTNIK_DAO_CONTRACT_ID}`,
-      methodName: "get_last_proposal_id",
-      args: {},
-    });
-  }
-
   async setupLockupContract(owner_account_id) {
     await this.account.functionCall({
       contractId: "lockup-whitelist.near",
