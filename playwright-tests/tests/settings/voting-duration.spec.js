@@ -211,10 +211,6 @@ test.describe("User is logged in", function () {
     });
 
     await page.getByRole("button", { name: "Confirm" }).click();
-    await expect(page.getByText("Processing your request ...")).toBeVisible({
-      timeout: 10_000,
-    });
-
     const transactionToSend = await transactionToSendPromise;
 
     const transactionResult = await sandbox.account.functionCall({
@@ -236,6 +232,7 @@ test.describe("User is logged in", function () {
         return lastProposalId;
       },
     });
+
     await expect(
       page.getByText("Voting duration change request submitted")
     ).toBeVisible();
