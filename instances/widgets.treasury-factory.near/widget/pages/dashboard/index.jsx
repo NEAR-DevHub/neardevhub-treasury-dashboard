@@ -293,7 +293,9 @@ return (
       </div>
       <div className="d-flex flex-column gap-2 flex-wrap dashboard-item flex-1 flex-container">
         <Widget
-          src={"${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.Chart"}
+          src={
+            "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.ChartParent"
+          }
           props={{
             title: "Treasury Assets: Sputnik DAO",
             nearPrice,
@@ -308,7 +310,9 @@ return (
 
         {lockupContract && (
           <Widget
-            src={"${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.Chart"}
+            src={
+              "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.ChartParent"
+            }
             props={{
               title: "Treasury Assets: Lockup",
               nearPrice,
