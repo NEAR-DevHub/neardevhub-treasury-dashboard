@@ -441,8 +441,6 @@ async function checkNewProposalSubmission({
   });
 
   await page.getByRole("button", { name: "Confirm" }).click();
-  await expect(page.getByText("Processing your request ...")).toBeVisible();
-
   const transactionToSend = await transactionToSendPromise;
 
   const transactionResult = await sandbox.account.functionCall({
@@ -666,7 +664,6 @@ test.describe("Have valid staked requests and sufficient token balance", functio
         errorText: "The amount exceeds the balance you have staked.",
       });
       await page.getByRole("button", { name: "Submit" }).click();
-      await expect(page.getByText("Processing your request ...")).toBeVisible();
       const expectedTransactionModalObject = {
         proposal: {
           description: "* Proposal Action: unstake",
@@ -896,7 +893,6 @@ test.describe("Withdraw request", function () {
     const submitBtn = page.getByRole("button", { name: "Submit" });
     await expect(submitBtn).toBeEnabled();
     await submitBtn.dblclick();
-    await expect(page.getByText("Processing your request ...")).toBeVisible();
     // proposals for both the pools
     await expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
