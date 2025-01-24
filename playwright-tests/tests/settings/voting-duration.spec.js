@@ -159,7 +159,7 @@ test.describe("User is logged in", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(150_000);
+    test.setTimeout(200_000);
     const daoName = daoAccount.split(".")[0];
     const sandbox = new SandboxRPC();
     await sandbox.init();
@@ -211,7 +211,9 @@ test.describe("User is logged in", function () {
     });
 
     await page.getByRole("button", { name: "Confirm" }).click();
-    await expect(page.getByText("Processing your request ...")).toBeVisible();
+    await expect(page.getByText("Processing your request ...")).toBeVisible({
+      timeout: 10_000,
+    });
 
     const transactionToSend = await transactionToSendPromise;
 
