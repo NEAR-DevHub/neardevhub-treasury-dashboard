@@ -424,6 +424,8 @@ return (
                         setValueError(
                           `Maximum members allowed is ${selectedGroup.members.length}.`
                         );
+                      if (number < 1)
+                        setValueError("Minimum members allowed is 1.");
                     }
                   },
                   value: selectedVoteValue,
