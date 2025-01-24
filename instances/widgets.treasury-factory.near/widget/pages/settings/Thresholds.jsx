@@ -419,6 +419,8 @@ return (
                     if (isPercentageSelected) {
                       if (number > 100)
                         setValueError("Maximum percentage allowed is 100.");
+                      else if (number < 1)
+                        setValueError("Minimum percentage allowed is 1.");
                     } else {
                       if (number > selectedGroup.members.length)
                         setValueError(
