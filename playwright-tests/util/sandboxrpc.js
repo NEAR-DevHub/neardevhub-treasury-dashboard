@@ -106,14 +106,6 @@ export class SandboxRPC {
     });
   }
 
-  async getLastProposalId(daoName) {
-    return this.account.viewFunction({
-      contractId: `${daoName}.${SPUTNIK_DAO_CONTRACT_ID}`,
-      methodName: "get_last_proposal_id",
-      args: {},
-    });
-  }
-
   async setupLockupContract(owner_account_id) {
     await this.account.functionCall({
       contractId: "lockup-whitelist.near",
@@ -285,6 +277,23 @@ export class SandboxRPC {
     });
   }
 
+  async getLastProposalId(daoName) {
+    return this.account.viewFunction({
+      contractId: `${daoName}.${SPUTNIK_DAO_CONTRACT_ID}`,
+      methodName: "get_last_proposal_id",
+      args: {},
+    });
+  }
+
+  async addProposal({ daoName, args }) {
+    await this.account.functionCall({
+      contractId: `${daoName}.${SPUTNIK_DAO_CONTRACT_ID}`,
+      methodName: "add_proposal",
+      args,
+      attachedDeposit: PROPOSAL_BOND,
+    });
+  }
+
   async addPaymentRequestProposal({
     title,
     summary,
@@ -305,14 +314,82 @@ export class SandboxRPC {
         },
       },
     };
-    await this.account.functionCall({
-      contractId: `${daoName}.${SPUTNIK_DAO_CONTRACT_ID}`,
-      methodName: "add_proposal",
-      args,
-      attachedDeposit: PROPOSAL_BOND,
-    });
+    await this.addProposal({ daoName, args });
   }
 
+  async addStakeRequestProposal({ stakedPoolAccount, stakingAmount, daoName }) {
+    const args = {
+      proposal: {
+        description: "* Proposal Action: stake",
+        kind: {
+          FunctionCall: {
+            receiver_id: stakedPoolAccount,
+            actions: [
+              {
+                method_name: "deposit_and_stake",
+                args: "",
+                deposit: utils.format.parseNearAmount(stakingAmount),
+                gas: "200000000000000",
+              },
+            ],
+          },
+        },
+      },
+    };
+    await this.addProposal({ daoName, args });
+  }
+
+  async addUnstakeRequestProposal({
+    stakedPoolAccount,
+    functionCallArgs,
+    daoName,
+  }) {
+    const args = {
+      proposal: {
+        description: "* Proposal Action: unstake",
+        kind: {
+          FunctionCall: {
+            receiver_id: stakedPoolAccount,
+            actions: [
+              {
+                method_name: "unstake",
+                args: functionCallArgs,
+                deposit: "0",
+                gas: "200000000000000",
+              },
+            ],
+          },
+        },
+      },
+    };
+    await this.addProposal({ daoName, args });
+  }
+
+  async addWithdrawRequestProposal({
+    stakedPoolAccount,
+    description,
+    daoName,
+  }) {
+    const args = {
+      proposal: {
+        description: description,
+        kind: {
+          FunctionCall: {
+            receiver_id: stakedPoolAccount,
+            actions: [
+              {
+                method_name: "withdraw_all",
+                args: "",
+                deposit: "0",
+                gas: "200000000000000",
+              },
+            ],
+          },
+        },
+      },
+    };
+    await this.addProposal({ daoName, args });
+  }
   /**
    * Time travel forward with the specified number of blocks
    * @param {number} numBlocks
