@@ -1,4 +1,14 @@
-const { nearPrice, ftTokens, accountId, title, instance } = props;
+const {
+  nearPrice,
+  ftTokens,
+  accountId,
+  title,
+  instance,
+  allPeriodData,
+  isLoading,
+  selectedToken,
+  setSelectedToken,
+} = props;
 
 if (!instance) {
   return <></>;
@@ -13,16 +23,11 @@ const { Skeleton } = VM.require(
 if (!Skeleton) {
   return <></>;
 }
-const API_HOST = "https://ref-sdk-api.fly.dev/api";
+
 const [height, setHeight] = useState(350);
 const [history, setHistory] = useState([]);
 const [tokenAddresses, setTokenAddresses] = useState([]);
-const [selectedPeriod, setSelectedPeriod] = useState({
-  value: 24 * 30,
-  interval: 12,
-});
-const [selectedToken, setSelectedToken] = useState("near");
-const [isLoading, setIsLoading] = useState(true);
+const [selectedPeriod, setSelectedPeriod] = useState("1Y");
 const [balanceDate, setBalanceDate] = useState({ balance: 0, date: "" });
 
 const nearTokenInfo = {
@@ -34,14 +39,14 @@ const tokens = Array.isArray(ftTokens)
   ? [nearTokenInfo, ...ftTokens]
   : [nearTokenInfo];
 
-const periodMap = [
-  { period: "1H", value: 1 / 6, interval: 6 },
-  { period: "1D", value: 1, interval: 12 },
-  { period: "1W", value: 24, interval: 8 },
-  { period: "1M", value: 24 * 2, interval: 15 },
-  { period: "1Y", value: 24 * 30, interval: 12 },
-  { period: "All", value: 24 * 365, interval: 10 },
-];
+const periodMap = {
+  "1H": { value: 1 / 6, interval: 6 },
+  "1D": { value: 1, interval: 12 },
+  "1W": { value: 24, interval: 8 },
+  "1M": { value: 24 * 2, interval: 15 },
+  "1Y": { value: 24 * 30, interval: 12 },
+  All: { value: 24 * 365, interval: 10 },
+};
 
 function formatCurrency(amount) {
   return Number(amount)
@@ -312,24 +317,11 @@ const RadioButton = styled.div`
   }
 `;
 
-// Function to fetch data from the API based on the selected period
-async function fetchData() {
-  try {
-    asyncFetch(
-      `${API_HOST}/token-balance-history?account_id=${accountId}&period=${selectedPeriod.value}&interval=${selectedPeriod.interval}&token_id=${selectedToken}`
-    ).then((resp) => {
-      if (resp?.body) setHistory(resp.body);
-      setIsLoading(false);
-    });
-  } catch (error) {
-    console.error("Error fetching data:", error);
-  }
-}
-
 useEffect(() => {
-  setIsLoading(true);
-  fetchData();
-}, [selectedToken, selectedPeriod]);
+  if (allPeriodData[selectedPeriod]) {
+    setHistory(allPeriodData[selectedPeriod]);
+  }
+}, [selectedPeriod, allPeriodData]);
 
 const LoadingBalance = () => {
   return (
@@ -405,21 +397,23 @@ return (
         </div>
 
         <div className="d-flex gap-1 flex-wrap">
-          {periodMap.map(({ period, value, interval }, idx) => (
-            <Period
-              role="button"
-              key={idx}
-              onClick={() => setSelectedPeriod({ value, interval })}
-              className={
-                selectedPeriod.value === value &&
-                selectedPeriod.interval === interval
-                  ? "selected"
-                  : ""
-              }
-            >
-              {period}
-            </Period>
-          ))}
+          {Object.entries(periodMap).map(
+            ([period, { value, interval }], idx) => (
+              <Period
+                role="button"
+                key={idx}
+                onClick={() => setSelectedPeriod(period)}
+                className={
+                  periodMap[selectedPeriod].value === value &&
+                  periodMap[selectedPeriod].interval === interval
+                    ? "selected"
+                    : ""
+                }
+              >
+                {period}
+              </Period>
+            )
+          )}
         </div>
       </div>
 
@@ -462,7 +456,7 @@ return (
       )}
     </div>
 
-    {isLoading || !history.length ? (
+    {isLoading || history.length === 0 ? (
       <LoadingChart />
     ) : (
       <div
