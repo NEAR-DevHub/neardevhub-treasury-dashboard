@@ -18,7 +18,8 @@
       "extensions": [
         "ms-playwright.playwright",
         "github.vscode-github-actions",
-        "rust-lang.rust-analyzer"
+        "rust-lang.rust-analyzer",
+        "github.copilot"
       ]
     }
   },

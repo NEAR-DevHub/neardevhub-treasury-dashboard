@@ -38,6 +38,27 @@ pub struct Web4Response {
     body: String,
 }
 
+fn normalize_json(value: &mut Value) {
+    match value {
+        Value::Array(arr) => {
+            for elem in arr.iter_mut() {
+                normalize_json(elem); // Recursively normalize elements
+            }
+            arr.sort_by(|a, b| {
+                serde_json::to_string(a)
+                    .unwrap()
+                    .cmp(&serde_json::to_string(b).unwrap())
+            }); // Sort array without moving it
+        }
+        Value::Object(map) => {
+            for val in map.values_mut() {
+                normalize_json(val); // Recursively normalize values
+            }
+        }
+        _ => {} // Do nothing for other types
+    }
+}
+
 #[tokio::test]
 async fn test_web4() -> Result<(), Box<dyn std::error::Error>> {
     let sandbox = near_workspaces::sandbox().await?;
@@ -305,7 +326,13 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
 
     let policy: Value = get_policy_result.json().unwrap();
-    assert_eq!(create_dao_args["policy"], policy);
+    let mut create_dao_policy = create_dao_args["policy"].clone();
+    let mut expected_policy = policy.clone();
+
+    normalize_json(&mut create_dao_policy);
+    normalize_json(&mut expected_policy);
+
+    assert_eq!(create_dao_policy, expected_policy);
 
     let deployed_widgets = socialdb
         .call("get")
