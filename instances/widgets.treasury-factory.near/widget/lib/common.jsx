@@ -381,7 +381,7 @@ function hasPermission(treasuryDaoID, accountId, kindName, actionType) {
   if (!accountId) {
     return false;
   }
-  const isAllowed = false;
+  let isAllowed = false;
   const daoPolicy = treasuryDaoID
     ? Near.view(treasuryDaoID, "get_policy", {})
     : null;

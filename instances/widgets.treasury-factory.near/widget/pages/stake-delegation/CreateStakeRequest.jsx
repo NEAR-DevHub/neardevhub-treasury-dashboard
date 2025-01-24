@@ -135,7 +135,7 @@ useEffect(() => {
 
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
-        if (lastProposalId !== id) {
+        if (typeof lastProposalId === "number" && lastProposalId !== id) {
           cleanInputs();
           onCloseCanvas();
           refreshData();
@@ -153,14 +153,14 @@ useEffect(() => {
       setShowErrorToast(true);
       setTxnCreated(false);
       clearTimeout(checkTxnTimeout);
-    }, 20000);
+    }, 25_000);
 
     return () => {
       clearTimeout(checkTxnTimeout);
       clearTimeout(errorTimeout);
     };
   }
-}, [isTxnCreated]);
+}, [isTxnCreated, lastProposalId]);
 
 const BalanceDisplay = ({ label, balance, tooltipInfo, noBorder }) => {
   return (

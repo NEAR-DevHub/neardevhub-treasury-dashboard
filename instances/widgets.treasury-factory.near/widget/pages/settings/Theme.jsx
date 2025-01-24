@@ -24,7 +24,7 @@ const { treasuryDaoID, themeColor } = VM.require(
 const hasCreatePermission = hasPermission(
   treasuryDaoID,
   context.accountId,
-  "config",
+  "policy",
   "AddProposal"
 );
 
@@ -266,7 +266,7 @@ useEffect(() => {
 
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
-        if (lastProposalId !== id) {
+        if (typeof lastProposalId === "number" && lastProposalId !== id) {
           setToastStatus(true);
           setTxnCreated(false);
           clearTimeout(errorTimeout);
@@ -282,14 +282,14 @@ useEffect(() => {
       setShowErrorToast(true);
       setTxnCreated(false);
       clearTimeout(checkTxnTimeout);
-    }, 20000);
+    }, 25_000);
 
     return () => {
       clearTimeout(checkTxnTimeout);
       clearTimeout(errorTimeout);
     };
   }
-}, [isTxnCreated]);
+}, [isTxnCreated, lastProposalId]);
 
 function toBase64(json) {
   return Buffer.from(JSON.stringify(json)).toString("base64");

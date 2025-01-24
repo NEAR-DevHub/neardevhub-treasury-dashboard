@@ -25,7 +25,7 @@ if (typeof getRoleWiseData !== "function") {
 const hasEditPermission = hasPermission(
   treasuryDaoID,
   context.accountId,
-  "ChangeConfig",
+  "policy",
   "AddProposal"
 );
 
@@ -96,7 +96,7 @@ useEffect(() => {
 
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
-        if (lastProposalId !== id) {
+        if (typeof lastProposalId === "number" && lastProposalId !== id) {
           setToastStatus(true);
           setTxnCreated(false);
           clearTimeout(errorTimeout);
@@ -112,14 +112,14 @@ useEffect(() => {
       setShowErrorToast(true);
       setTxnCreated(false);
       clearTimeout(checkTxnTimeout);
-    }, 20000);
+    }, 25_000);
 
     return () => {
       clearTimeout(checkTxnTimeout);
       clearTimeout(errorTimeout);
     };
   }
-}, [isTxnCreated]);
+}, [isTxnCreated, lastProposalId]);
 
 function resetForm() {
   setSelectedVoteOption(selectedGroup.isRatio ? options[1] : options[0]);
