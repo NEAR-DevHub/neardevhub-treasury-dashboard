@@ -242,7 +242,9 @@ async function openWithdrawForm({
   daoAccount,
   lockupContract,
 }) {
-  await expect(page.getByText("Create Request", { exact: true })).toBeVisible();
+  await expect(page.getByText("Create Request", { exact: true })).toBeVisible({
+    timeout: 10_000,
+  });
   await page.locator(".dropdown").first().click();
   await page.locator(".dropdown-menu > div:nth-child(3)").click();
   await expect(
@@ -437,51 +439,46 @@ async function voteOnProposal({
 async function checkNewProposalSubmission({
   page,
   sandbox,
-  checkforMultiProposals,
+  checkforMultiProposals = false,
   daoAccount,
   daoName,
 }) {
-  const transactionToSendPromise = page.evaluate(async () => {
+  const method = checkforMultiProposals
+    ? "signAndSendTransactions"
+    : "signAndSendTransaction";
+
+  const transactionToSendPromise = page.evaluate(async (method) => {
     const selector = await document.querySelector("near-social-viewer")
       .selectorPromise;
 
     const wallet = await selector.wallet();
 
     return new Promise((resolve) => {
-      wallet.signAndSendTransaction = async (transaction) => {
+      wallet[method] = async (transaction) => {
         resolve(transaction);
-        return await new Promise(
-          (transactionSentPromiseResolve) =>
-            (window.transactionSentPromiseResolve =
-              transactionSentPromiseResolve)
-        );
+        return new Promise((transactionSentPromiseResolve) => {
+          window.transactionSentPromiseResolve = transactionSentPromiseResolve;
+        });
       };
     });
-  });
+  }, method);
 
   await page.getByRole("button", { name: "Confirm" }).click();
   const transactionToSend = await transactionToSendPromise;
+  const transaction = checkforMultiProposals
+    ? transactionToSend.transactions[0]
+    : transactionToSend;
 
   const transactionResult = await sandbox.account.functionCall({
     contractId: daoAccount,
     methodName: "add_proposal",
-    args: transactionToSend.actions[0].params.args,
-    attachedDeposit: transactionToSend.actions[0].params.deposit,
+    args: transaction.actions[0].params.args,
+    attachedDeposit: transaction.actions[0].params.deposit,
   });
-  const lastProposalId = await sandbox.getLastProposalId(daoName);
-
   await page.evaluate(async (transactionResult) => {
     window.transactionSentPromiseResolve(transactionResult);
   }, transactionResult);
-  await mockRpcRequest({
-    page,
-    filterParams: {
-      method_name: "get_last_proposal_id",
-    },
-    modifyOriginalResultFunction: () => {
-      return lastProposalId;
-    },
-  });
+  const lastProposalId = await sandbox.getLastProposalId(daoName);
   await expect(page.locator("div.modal-body code").nth(0)).toBeAttached({
     attached: false,
     timeout: 10_000,
@@ -611,7 +608,11 @@ test.describe("Have valid staked requests and sufficient token balance", functio
       await sandbox.init();
       await sandbox.attachRoutes(page);
       await sandbox.setupSandboxForSputnikDao(daoName);
-
+      await sandbox.addStakeRequestProposal({
+        stakedPoolAccount,
+        stakingAmount: "11.00",
+        daoName,
+      });
       await openStakeForm({ page });
 
       await fillValidatorAccount({
@@ -629,11 +630,6 @@ test.describe("Have valid staked requests and sufficient token balance", functio
         .locator('input[placeholder="Enter amount"]')
         .first()
         .inputValue();
-      await sandbox.addStakeRequestProposal({
-        stakedPoolAccount,
-        stakingAmount,
-        daoName,
-      });
 
       await page
         .frameLocator("iframe")
@@ -662,7 +658,6 @@ test.describe("Have valid staked requests and sufficient token balance", functio
       await expect(await getTransactionModalObject(page)).toEqual(
         expectedTransactionModalObject
       );
-
       await checkNewProposalSubmission({ page, sandbox, daoAccount, daoName });
       await sandbox.quitSandbox();
     });
@@ -679,8 +674,17 @@ test.describe("Have valid staked requests and sufficient token balance", functio
       await sandbox.attachRoutes(page);
       await sandbox.setupSandboxForSputnikDao(daoName);
       const args = "eyJhbW91bnQiOiIzMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAifQ==";
-      const description = `* Proposal Action: withdraw <br>* Show After Proposal Id Approved: 0 <br>* Custom Notes: Following to [#0](/${instanceAccount}/widget/app?page=stake-delegation&selectedTab=History&highlightProposalId=0) unstake request`;
-
+      const description = `* Proposal Action: withdraw <br>* Show After Proposal Id Approved: 2 <br>* Custom Notes: Following to [#2](/${instanceAccount}/widget/app?page=stake-delegation&selectedTab=History&highlightProposalId=2) unstake request`;
+      await sandbox.addUnstakeRequestProposal({
+        stakedPoolAccount,
+        functionCallArgs: args,
+        daoName,
+      });
+      await sandbox.addWithdrawRequestProposal({
+        stakedPoolAccount,
+        description: description,
+        daoName,
+      });
       await openUnstakeForm({ page });
       await fillValidatorAccount({
         page,
@@ -740,16 +744,6 @@ test.describe("Have valid staked requests and sufficient token balance", functio
         },
       };
       await expect(dataReceived).toEqual(expectedTransaction2ModalObject);
-      await sandbox.addUnstakeRequestProposal({
-        stakedPoolAccount,
-        functionCallArgs: args,
-        daoName,
-      });
-      await sandbox.addWithdrawRequestProposal({
-        stakedPoolAccount,
-        description: description,
-        daoName,
-      });
 
       await checkNewProposalSubmission({
         page,
@@ -874,6 +868,14 @@ test.describe("Withdraw request", function () {
     instanceAccount,
   }) => {
     test.setTimeout(250_000);
+    const instanceConfig = await getInstanceConfig({
+      page,
+      instanceAccount,
+    });
+    if (instanceConfig.lockupContract) {
+      console.log("lockup contract found for instance");
+      return test.skip();
+    }
     const daoName = daoAccount.split(".")[0];
     const sandbox = new SandboxRPC();
     await sandbox.init();
@@ -890,17 +892,9 @@ test.describe("Withdraw request", function () {
       description,
       daoName,
     });
-
-    const instanceConfig = await getInstanceConfig({
-      page,
-      instanceAccount,
-    });
-    if (instanceConfig.lockupContract) {
-      console.log("lockup contract found for instance");
-      return test.skip();
-    }
-    await page.goto(`/${instanceAccount}/widget/app?page=stake-delegation`);
+    await updateDaoPolicyMembers({ page });
     await mockStakedPools({ daoAccount, page, multiplePools: true });
+    await page.goto(`/${instanceAccount}/widget/app?page=stake-delegation`);
     await mockUnstakeAndWithdrawBalance({
       page,
       hasUnstakeBalance: true,
