@@ -20,7 +20,11 @@ const { Skeleton } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.skeleton"
 );
 
-if (!Skeleton) {
+const { getAllColorsAsObject } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+);
+
+if (!Skeleton || typeof getAllColorsAsObject !== "function") {
   return <></>;
 }
 
@@ -58,14 +62,11 @@ const config = treasuryDaoID ? Near.view(treasuryDaoID, "get_config") : null;
 const metadata = JSON.parse(atob(config.metadata ?? ""));
 
 const isDarkTheme = metadata.theme === "dark";
-const bgPageColor = isDarkTheme ? "#222222" : "#FFFFFF";
-const borderColor = isDarkTheme ? "#CACACA" : "#000";
-const iconColor = isDarkTheme ? "#CACACA" : "#060606";
-const textColor = isDarkTheme ? "#CACACA" : "#1B1B18";
 const fillStyle = isDarkTheme
   ? "rgba(34, 34, 34, 0.7)"
   : "rgba(255, 255, 255, 0.7)";
 
+const colors = getAllColorsAsObject(isDarkTheme);
 const code = `
 <!DOCTYPE html>
   <html lang="en">
@@ -86,8 +87,8 @@ const code = `
               width: 100%;
               height: 100%;
               display: block;
-              background-color:${bgPageColor};
-              color: ${textColor};
+              background-color: ${colors["--bg-page-color"]};
+              color: ${colors["--text-color"]};
           }
       </style>
   </head>
@@ -123,7 +124,7 @@ const code = `
                 ctx.moveTo(hoverX, chartArea.top);
                 ctx.lineTo(hoverX, chartArea.bottom);
                 ctx.lineWidth = 1;
-                ctx.strokeStyle = '${iconColor}';
+                ctx.strokeStyle = '${colors["--icon-color"]}';
                 ctx.setLineDash([5, 3]);
                 ctx.stroke();
                 ctx.restore();
@@ -158,7 +159,7 @@ const code = `
             },
             ticks: {
               display: true,
-              color: '${textColor}',
+              color: '${colors["--text-color"]}',
             },   
           },
           y: {
@@ -186,8 +187,8 @@ const code = `
             data: [],
             fill: true,
             backgroundColor: gradient,
-            borderColor: '${borderColor}',
-            pointBackgroundColor: '${bgPageColor}',
+            borderColor: ' ${colors["--border-color"]}',
+            pointBackgroundColor: ' ${colors["--bg-page-color"]}',
             pointRadius: 0,
             tension: 0,
             borderWidth: 1.5

@@ -281,27 +281,46 @@ async function openStakeForm({ page, isLockup, daoAccount, lockupContract }) {
 }
 
 async function fillValidatorAccount({ page }) {
-  // validator dropdown shouldn't take more than 20 seconds
-  const poolSelector = await page.getByTestId("validator-dropdown");
-  await expect(poolSelector).toBeVisible({ timeout: 20_000 });
+  // validator dropdown shouldn't take more than 10 seconds
+  const poolSelector = await page
+    .frameLocator("iframe")
+    .nth(2)
+    .locator("#dropdown");
+  await expect(poolSelector).toBeVisible({ timeout: 10_000 });
   await poolSelector.click();
-  await page.waitForTimeout(5_000);
+  await page.waitForTimeout(1_000);
 
-  const search = await page.getByPlaceholder("Search");
+  const search = await page
+    .frameLocator("iframe")
+    .nth(2)
+    .getByPlaceholder("Search options");
   search.focus();
   search.fill("astro");
-  await page.getByText(stakedPoolAccount).first().click();
+  await page
+    .frameLocator("iframe")
+    .nth(2)
+    .getByText(stakedPoolAccount)
+    .first()
+    .click();
 }
 
 async function checkForStakeAmount({ page, errorText, availableBalance }) {
-  const submitBtn = page.getByRole("button", { name: "Submit" });
-  const stakeAmount = page.getByRole("spinbutton");
+  const submitBtn = page
+    .frameLocator("iframe")
+    .nth(2)
+    .getByRole("button", { name: "Submit" });
+  const stakeAmount = page
+    .frameLocator("iframe")
+    .nth(2)
+    .getByPlaceholder("Enter amount");
   await stakeAmount.fill((parseFloat(availableBalance) + 2).toString());
-  await stakeAmount.blur();
-  const amountErrorText = page.getByText(errorText);
-  await expect(amountErrorText).toBeVisible();
+  const amountErrorText = page
+    .frameLocator("iframe")
+    .nth(2)
+    .getByText(errorText);
+  await expect(amountErrorText).toBeVisible({ timeout: 10_000 });
   await expect(submitBtn).toBeDisabled();
-  await page.getByText("Use Max").click();
+  await page.frameLocator("iframe").nth(2).getByText("Use Max").click();
   await expect(amountErrorText).toBeHidden();
 }
 
@@ -605,6 +624,8 @@ test.describe("Have valid staked requests and sufficient token balance", functio
       });
 
       const stakingAmount = await page
+        .frameLocator("iframe")
+        .nth(2)
         .locator('input[placeholder="Enter amount"]')
         .first()
         .inputValue();
@@ -613,7 +634,12 @@ test.describe("Have valid staked requests and sufficient token balance", functio
         stakingAmount,
         daoName,
       });
-      await page.getByRole("button", { name: "Submit" }).click();
+
+      await page
+        .frameLocator("iframe")
+        .nth(2)
+        .getByRole("button", { name: "Submit" })
+        .click();
       const expectedTransactionModalObject = {
         proposal: {
           description: "* Proposal Action: stake",
@@ -632,6 +658,7 @@ test.describe("Have valid staked requests and sufficient token balance", functio
           },
         },
       };
+
       await expect(await getTransactionModalObject(page)).toEqual(
         expectedTransactionModalObject
       );
@@ -663,7 +690,11 @@ test.describe("Have valid staked requests and sufficient token balance", functio
         availableBalance: stakedNear,
         errorText: "The amount exceeds the balance you have staked.",
       });
-      await page.getByRole("button", { name: "Submit" }).click();
+      await page
+        .frameLocator("iframe")
+        .nth(2)
+        .getByRole("button", { name: "Submit" })
+        .click();
       const expectedTransactionModalObject = {
         proposal: {
           description: "* Proposal Action: unstake",
@@ -980,9 +1011,12 @@ test.describe("Withdraw request", function () {
 async function openLockupStakingForm({ page, daoAccount, lockupContract }) {
   await openStakeForm({ page, isLockup: true, daoAccount, lockupContract });
   await expect(
-    page.getByText(
-      "You cannot split your locked funds across multiple validators."
-    )
+    page
+      .frameLocator("iframe")
+      .nth(2)
+      .getByText(
+        "You cannot split your locked funds across multiple validators."
+      )
   ).toBeVisible({
     timeout: 10_000,
   });

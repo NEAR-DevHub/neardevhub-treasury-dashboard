@@ -35,13 +35,9 @@ const [selectedWallet, setSelectedWallet] = useState(walletOptions[0]);
 const [validators, setValidators] = useState([]);
 const [isTxnCreated, setTxnCreated] = useState(false);
 const [lastProposalId, setLastProposalId] = useState(null);
-const [notes, setNotes] = useState(null);
 const [showCancelModal, setShowCancelModal] = useState(false);
-
-const [amount, setAmount] = useState(null);
 const [validatorAccount, setValidatorAccount] = useState(null);
 const [daoPolicy, setDaoPolicy] = useState(null);
-const [amountError, setAmountError] = useState(null);
 
 const [nearStakedTokens, setNearStakedTokens] = useState(null);
 const [nearUnStakedTokens, setNearUnStakedTokens] = useState(null);
@@ -122,12 +118,6 @@ useEffect(() => {
   });
 }, []);
 
-function cleanInputs() {
-  setValidatorAccount("");
-  setNotes("");
-  setAmount("");
-}
-
 useEffect(() => {
   if (isTxnCreated) {
     let checkTxnTimeout = null;
@@ -188,38 +178,35 @@ const BalanceDisplay = ({ label, balance, tooltipInfo, noBorder }) => {
   );
 };
 
+const pikespeakKey = "38020cf5-d3c6-40a6-b1fe-f3428747cafc";
+// isBosGateway()
+//   ? "${REPL_PIKESPEAK_KEY}"
+// :
+props.pikespeakKey;
+
+const pikespeakOptions = {
+  method: "GET",
+  headers: {
+    "Content-Type": "application/json",
+    "x-api-key": pikespeakKey,
+  },
+};
 const allValidators = useCache(
   () =>
-    asyncFetch("https://rpc.mainnet.near.org/", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id: "dontcare",
-        method: "validators",
-        params: [null],
-      }),
-    }).then((resp) => {
-      if (Array.isArray(resp.body.result?.current_validators)) {
-        const validatorsAccounts = resp.body.result.current_validators;
-        return Promise.all(
-          validatorsAccounts.map((item) =>
-            item.account_id
-              ? Near.asyncView(item.account_id, "get_reward_fee_fraction").then(
-                  (feeData) => ({
-                    pool_id: item.account_id,
-                    fee: feeData.numerator,
-                  })
-                )
-              : null
-          )
-        ).then((results) => results.filter((result) => result !== null));
-      }
-      return [];
+    asyncFetch(
+      "https://api.pikespeak.ai/validators/current",
+      pikespeakOptions
+    ).then((resp) => {
+      return (
+        resp?.body?.map((item) => {
+          return {
+            pool_id: item.account_id,
+            fee: item.fees.numerator,
+          };
+        }) ?? []
+      );
     }),
-  treasuryDaoID + "-stake-request-validators",
+  "-stake-request-validators",
   { subscribe: false }
 );
 
@@ -293,7 +280,7 @@ function toBase64(json) {
   return Buffer.from(JSON.stringify(json)).toString("base64");
 }
 
-function onSubmitClick() {
+function onSubmitClick(validatorAccount, amount, notes) {
   setTxnCreated(true);
   const deposit = daoPolicy?.proposal_bond || 100000000000000000000000;
   const description = {
@@ -304,7 +291,7 @@ function onSubmitClick() {
   const isLockupContractSelected = lockupContract === selectedWallet.value;
 
   const addSelectPoolCall =
-    isLockupContractSelected && validatorAccount.pool_id !== lockupStakedPoolId;
+    isLockupContractSelected && validatorAccount !== lockupStakedPoolId;
 
   const calls = [];
   if (addSelectPoolCall) {
@@ -327,7 +314,7 @@ function onSubmitClick() {
                 {
                   method_name: "select_staking_pool",
                   args: toBase64({
-                    staking_pool_account_id: validatorAccount.pool_id,
+                    staking_pool_account_id: validatorAccount,
                   }),
                   deposit: "0",
                   gas: "100000000000000",
@@ -351,7 +338,7 @@ function onSubmitClick() {
           FunctionCall: {
             receiver_id: isLockupContractSelected
               ? lockupContract
-              : validatorAccount.pool_id,
+              : validatorAccount,
             actions: isLockupContractSelected
               ? [
                   {
@@ -395,15 +382,6 @@ const Container = styled.div`
   }
 `;
 
-useEffect(() => {
-  const parsedAmount = parseFloat(amount);
-  if (parsedAmount > parseFloat(getBalances().available)) {
-    setAmountError("Your account doesn't have sufficient balance.");
-  } else {
-    setAmountError(null);
-  }
-}, [amount, selectedWallet]);
-
 // check if staking pool is selected with some staked balance
 useEffect(() => {
   if (selectedWallet.value === lockupContract) {
@@ -446,7 +424,6 @@ return (
         isOpen: showCancelModal,
         onCancelClick: () => setShowCancelModal(false),
         onConfirmClick: () => {
-          cleanInputs();
           setShowCancelModal(false);
           onCloseCanvas();
         },
@@ -481,6 +458,7 @@ return (
         }}
       />
     )}
+
     <div className="d-flex flex-column gap-3">
       {lockupContract && (
         <div className="d-flex flex-column gap-1">
@@ -522,110 +500,23 @@ return (
         />
       </div>
       <div className="d-flex flex-column gap-1">
-        <label>Validator</label>
         <Widget
-          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.ValidatorsDropDownWithSearch"
+          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.ValidatorsDropDownWithSearch"
           props={{
             selectedValue: validatorAccount,
-            onChange: (v) => setValidatorAccount(v),
             options: validators,
-            showSearch: true,
-            searchInputPlaceholder: "Search",
-            defaultLabel: "Select",
             selectedWallet: selectedWallet?.value,
-            disabled: lockupAlreadyStaked,
-          }}
-        />
-        {selectedWallet.value === lockupContract && (
-          <div className="d-flex gap-2 align-items-center my-2 rounded-2 bg-validator-info">
-            <i class="bi bi-info-circle h6 mb-0"></i>
-            {lockupStakedPoolId ? (
-              <span>
-                You cannot split your locked funds across multiple validators.
-                To change your validator, please contact our support team.
-              </span>
-            ) : (
-              <span>
-                You cannot split your locked funds across multiple validators.
-                Choose <span className="fw-bold">one</span> validator from the
-                list. Once you select a validator and click submit, a one-time
-                whitelist request will be created. You'll need to approve this
-                request before you can proceed with approving the staking
-                request. <br /> <br /> Note: We currently do not support
-                changing validators through the treasury UI. If you need to
-                change your validator, please contact our team.
-              </span>
-            )}
-          </div>
-        )}
-      </div>
-      <div className="d-flex flex-column gap-1">
-        <label className="d-flex align-items-center justify-content-between">
-          Amount to Stake
-          {validatorAccount && (
-            <div
-              className="use-max-bg px-3 py-1 rounded-2"
-              onClick={() => {
-                setAmount(getBalances().available);
-              }}
-            >
-              Use Max
-            </div>
-          )}
-        </label>
-        <Widget
-          src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Input`}
-          props={{
-            className: "flex-grow-1",
-            key: `total-amount`,
-            onBlur: (e) => setAmount(e.target.value),
-            placeholder: "Enter amount",
-            value: amount,
-            error: amountError,
-            inputProps: {
-              type: "number",
-              min: "0",
-              prefix: <NearToken />,
-            },
-          }}
-        />
-      </div>
-      <div className="d-flex flex-column gap-1">
-        <label>Notes (Optional)</label>
-        <Widget
-          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
-          props={{
-            className: "flex-grow-1",
-            key: `notes`,
-            onBlur: (e) => setNotes(e.target.value),
-            value: notes,
-            multiline: true,
-          }}
-        />
-      </div>
-      <div className="d-flex mt-2 gap-3 justify-content-end">
-        <Widget
-          src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
-          props={{
-            classNames: {
-              root: "btn btn-outline-secondary shadow-none no-transparent",
-            },
-            label: "Cancel",
-            onClick: () => {
-              setShowCancelModal(true);
-            },
-            disabled: isTxnCreated,
-          }}
-        />
-        <Widget
-          src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
-          props={{
-            classNames: { root: "theme-btn" },
-            disabled:
-              !validatorAccount || !amount || amountError || isTxnCreated,
-            label: "Submit",
-            onClick: onSubmitClick,
-            loading: isTxnCreated,
+            disabledDropdown: lockupAlreadyStaked,
+            disbabledActionButtons: isTxnCreated,
+            lockupContract,
+            treasuryDaoID,
+            availableBalance: getBalances().available,
+            instance,
+            onCancel: () => setShowCancelModal(true),
+            onSubmit: (validatorAccount, amount, notes) =>
+              onSubmitClick(validatorAccount, amount, notes),
+            lockupStakedPoolId,
+            isStakePage: true,
           }}
         />
       </div>
