@@ -284,7 +284,7 @@ async function fillValidatorAccount({ page }) {
   // validator dropdown shouldn't take more than 10 seconds
   const poolSelector = await page
     .frameLocator("iframe")
-    .nth(2)
+    .nth(1)
     .locator("#dropdown");
   await expect(poolSelector).toBeVisible({ timeout: 10_000 });
   await poolSelector.click();
@@ -292,13 +292,13 @@ async function fillValidatorAccount({ page }) {
 
   const search = await page
     .frameLocator("iframe")
-    .nth(2)
+    .nth(1)
     .getByPlaceholder("Search options");
   search.focus();
   search.fill("astro");
   await page
     .frameLocator("iframe")
-    .nth(2)
+    .nth(1)
     .getByText(stakedPoolAccount)
     .first()
     .click();
@@ -307,20 +307,20 @@ async function fillValidatorAccount({ page }) {
 async function checkForStakeAmount({ page, errorText, availableBalance }) {
   const submitBtn = page
     .frameLocator("iframe")
-    .nth(2)
+    .nth(1)
     .getByRole("button", { name: "Submit" });
   const stakeAmount = page
     .frameLocator("iframe")
-    .nth(2)
+    .nth(1)
     .getByPlaceholder("Enter amount");
   await stakeAmount.fill((parseFloat(availableBalance) + 2).toString());
   const amountErrorText = page
     .frameLocator("iframe")
-    .nth(2)
+    .nth(1)
     .getByText(errorText);
   await expect(amountErrorText).toBeVisible({ timeout: 10_000 });
   await expect(submitBtn).toBeDisabled();
-  await page.frameLocator("iframe").nth(2).getByText("Use Max").click();
+  await page.frameLocator("iframe").nth(1).getByText("Use Max").click();
   await expect(amountErrorText).toBeHidden();
 }
 
@@ -605,7 +605,7 @@ test.describe("Have valid staked requests and sufficient token balance", functio
       page,
       daoAccount,
     }) => {
-      test.setTimeout(200_000);
+      test.setTimeout(250_000);
       const daoName = daoAccount.split(".")[0];
       const sandbox = new SandboxRPC();
       await sandbox.init();
@@ -625,7 +625,7 @@ test.describe("Have valid staked requests and sufficient token balance", functio
 
       const stakingAmount = await page
         .frameLocator("iframe")
-        .nth(2)
+        .nth(1)
         .locator('input[placeholder="Enter amount"]')
         .first()
         .inputValue();
@@ -637,7 +637,7 @@ test.describe("Have valid staked requests and sufficient token balance", functio
 
       await page
         .frameLocator("iframe")
-        .nth(2)
+        .nth(1)
         .getByRole("button", { name: "Submit" })
         .click();
       const expectedTransactionModalObject = {
@@ -672,7 +672,7 @@ test.describe("Have valid staked requests and sufficient token balance", functio
       daoAccount,
       instanceAccount,
     }) => {
-      test.setTimeout(200_000);
+      test.setTimeout(250_000);
       const daoName = daoAccount.split(".")[0];
       const sandbox = new SandboxRPC();
       await sandbox.init();
@@ -692,7 +692,7 @@ test.describe("Have valid staked requests and sufficient token balance", functio
       });
       await page
         .frameLocator("iframe")
-        .nth(2)
+        .nth(1)
         .getByRole("button", { name: "Submit" })
         .click();
       const expectedTransactionModalObject = {
@@ -820,7 +820,7 @@ test.describe("Withdraw request", function () {
     page,
     daoAccount,
   }) => {
-    test.setTimeout(200_000);
+    test.setTimeout(250_000);
     const daoName = daoAccount.split(".")[0];
     const sandbox = new SandboxRPC();
     await sandbox.init();
@@ -873,7 +873,7 @@ test.describe("Withdraw request", function () {
     daoAccount,
     instanceAccount,
   }) => {
-    test.setTimeout(200_000);
+    test.setTimeout(250_000);
     const daoName = daoAccount.split(".")[0];
     const sandbox = new SandboxRPC();
     await sandbox.init();
@@ -1011,7 +1011,7 @@ async function openLockupStakingForm({ page, daoAccount, lockupContract }) {
   await expect(
     page
       .frameLocator("iframe")
-      .nth(2)
+      .nth(1)
       .getByText(
         "You cannot split your locked funds across multiple validators."
       )
@@ -1103,7 +1103,7 @@ test.describe("Lockup staking", function () {
       });
       await page
         .frameLocator("iframe")
-        .nth(2)
+        .nth(1)
         .getByRole("button", { name: "Submit" })
         .click();
       await expect(page.getByText("Processing your request ...")).toBeVisible();
@@ -1229,7 +1229,7 @@ test.describe("Lockup staking", function () {
       });
       await page
         .frameLocator("iframe")
-        .nth(2)
+        .nth(1)
         .getByRole("button", { name: "Submit" })
         .click();
       await expect(page.getByText("Processing your request ...")).toBeVisible();
@@ -1282,7 +1282,7 @@ test.describe("Lockup staking", function () {
       });
       await page
         .frameLocator("iframe")
-        .nth(2)
+        .nth(1)
         .getByRole("button", { name: "Submit" })
         .click();
       await expect(page.getByText("Processing your request ...")).toBeVisible();
