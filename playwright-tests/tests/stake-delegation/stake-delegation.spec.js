@@ -1209,8 +1209,12 @@ test.describe("Lockup staking", function () {
         lockupContract,
         instanceAccount,
       });
-      await page.waitForTimeout(20_000);
-      const poolSelector = page.locator(".custom-select").first();
+      await page.waitForTimeout(2_000);
+      const poolSelector = page
+        .frameLocator("iframe")
+        .nth(1)
+        .locator(".custom-select")
+        .first();
       await expect(poolSelector).toBeVisible({ timeout: 20_000 });
       const hasDisabledClassOnChild = await poolSelector
         .locator(".disabled")
@@ -1263,8 +1267,11 @@ test.describe("Lockup staking", function () {
         daoAccount,
         lockupContract,
       });
-      await page.waitForTimeout(10_000);
-      const poolSelector = await page.locator(".custom-select");
+      await page.waitForTimeout(2_000);
+      const poolSelector = await page
+        .frameLocator("iframe")
+        .nth(1)
+        .locator(".custom-select");
       const hasDisabledClassOnChild = await poolSelector
         .locator(".disabled")
         .count();
