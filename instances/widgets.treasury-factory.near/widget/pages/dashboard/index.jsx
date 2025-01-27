@@ -6,6 +6,10 @@ const { Skeleton } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.skeleton"
 );
 
+const { Modal, ModalContent, ModalHeader, ModalFooter } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.modal"
+);
+
 const instance = props.instance;
 
 if (
@@ -78,19 +82,34 @@ const [lockupStakedTotalTokens, setLockupStakedTotalTokens] = useState(null);
 const [lockupNearWithdrawTokens, setLockupNearWithdrawTokens] = useState(null);
 const [nearPrice, setNearPrice] = useState(null);
 const [userFTTokens, setFTTokens] = useState(null);
+const [show404Modal, setShow404Modal] = useState(false);
 
 const API_HOST = "https://ref-sdk-api.fly.dev/api";
 
 useEffect(() => {
-  asyncFetch(`${API_HOST}/near-price`).then((res) => {
-    setNearPrice(res.body);
-  });
+  asyncFetch(`${API_HOST}/near-price`)
+    .then((res) => {
+      if (typeof res.body === "number") {
+        setNearPrice(res.body);
+      } else {
+        setShow404Modal(true);
+      }
+    })
+    .catch((err) => {
+      setShow404Modal(true);
+    });
 
-  asyncFetch(`${API_HOST}/ft-tokens/?account_id=${treasuryDaoID}`).then(
-    (res) => {
-      setFTTokens(res.body);
-    }
-  );
+  asyncFetch(`${API_HOST}/ft-tokens/?account_id=${treasuryDaoID}`)
+    .then((res) => {
+      if (typeof res.body.totalCumulativeAmt === "number") {
+        setFTTokens(res.body);
+      } else {
+        setShow404Modal(true);
+      }
+    })
+    .catch((err) => {
+      setShow404Modal(true);
+    });
 }, []);
 
 function formatNearAmount(amount) {
@@ -148,6 +167,59 @@ function formatCurrency(amount) {
   return "$" + formattedAmount;
 }
 
+const TooManyRequestModal = () => {
+  return (
+    <Modal>
+      <ModalHeader>
+        <div className="d-flex align-items-center justify-content-between mb-2">
+          <div className="d-flex gap-3">
+            <img
+              src="https://ipfs.near.social/ipfs/bafkreiggx7y2qhmywarmefat4bfnm3yndnrx4fsz4e67gkwkcqmggmzadq"
+              height={30}
+              width={40}
+            />
+            Whoa there, speedster! 
+          </div>
+          <i
+            className="bi bi-x-lg h4 mb-0 cursor-pointer"
+            onClick={() => setShow404Modal(false)}
+          ></i>
+        </div>
+      </ModalHeader>
+      <ModalContent>
+        You’ve been refreshing the page a bit too much, and our data provider
+        needs a moment to catch up. Some information, like token prices,
+        couldn’t load this time.
+        <br /> <br /> 🕒 Take a 30-second breather.
+        <br /> 🔄 Refresh the page afterward and continue as usual.
+        <br /> <br /> Thanks for your patience—it helps us keep things running
+        smoothly!
+      </ModalContent>
+      <ModalFooter>
+        <Widget
+          src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
+          props={{
+            classNames: {
+              root: "btn btn-outline-secondary shadow-none no-transparent",
+            },
+            label: "Close",
+            onClick: () => setShow404Modal(true),
+          }}
+        />
+        <a style={{ all: "unset" }} href={`app?page=dashboard`}>
+          <Widget
+            src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
+            props={{
+              classNames: { root: "theme-btn" },
+              label: "Refresh",
+            }}
+          />
+        </a>
+      </ModalFooter>
+    </Modal>
+  );
+};
+
 const Loading = () => {
   return (
     <div className="d-flex align-items-center gap-2 w-100 mt-2 mb-2">
@@ -169,6 +241,7 @@ const Loading = () => {
 
 return (
   <Wrapper>
+    {show404Modal && <TooManyRequestModal />}
     <Widget
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
       props={{
