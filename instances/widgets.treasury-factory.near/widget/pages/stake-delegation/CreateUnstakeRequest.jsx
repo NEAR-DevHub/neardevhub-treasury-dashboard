@@ -425,23 +425,6 @@ return (
         setPoolWithBalance: setNearStakedPoolsWithBalance,
       }}
     />
-
-    {lockupContract && (
-      <Widget
-        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
-        props={{
-          accountId: lockupContract,
-          setNearStakedTokens: (v) => setLockupStakedTokens(Big(v).toFixed(2)),
-          setNearUnstakedTokens: (v) =>
-            setLockupUnStakedTokens(Big(v).toFixed(2)),
-          setNearStakedTotalTokens: (v) =>
-            setLockupStakedTotalTokens(Big(v).toFixed(2)),
-          setNearWithdrawTokens: (v) =>
-            setLockupNearWithdrawTokens(Big(v).toFixed(2)),
-          setPoolWithBalance: setLockupStakedPoolsWithBalance,
-        }}
-      />
-    )}
     <div className="d-flex flex-column gap-3">
       {lockupContract && (
         <div className="d-flex flex-column gap-1">
@@ -510,5 +493,22 @@ return (
         />
       )}
     </div>
+
+    {lockupContract && (
+      <Widget
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
+        props={{
+          accountId: lockupContract,
+          setNearStakedTokens: (v) => setLockupStakedTokens(Big(v).toFixed(2)),
+          setNearUnstakedTokens: (v) =>
+            setLockupUnStakedTokens(Big(v).toFixed(2)),
+          setNearStakedTotalTokens: (v) =>
+            setLockupStakedTotalTokens(Big(v).toFixed(2)),
+          setNearWithdrawTokens: (v) =>
+            setLockupNearWithdrawTokens(Big(v).toFixed(2)),
+          setPoolWithBalance: setLockupStakedPoolsWithBalance,
+        }}
+      />
+    )}
   </Container>
 );
