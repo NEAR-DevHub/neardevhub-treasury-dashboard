@@ -79,44 +79,18 @@ const [lockupNearWithdrawTokens, setLockupNearWithdrawTokens] = useState(null);
 const [nearPrice, setNearPrice] = useState(null);
 const [userFTTokens, setFTTokens] = useState(null);
 
+const API_HOST = "https://ref-sdk-api.fly.dev/api";
+
 useEffect(() => {
-  asyncFetch(
-    `https://api.coingecko.com/api/v3/simple/price?ids=near&vs_currencies=usd`
-  ).then((res) => {
-    if (res.body.near?.usd) {
-      setNearPrice(res.body.near?.usd);
+  asyncFetch(`${API_HOST}/near-price`).then((res) => {
+    setNearPrice(res.body);
+  });
+
+  asyncFetch(`${API_HOST}/ft-tokens/?account_id=${treasuryDaoID}`).then(
+    (res) => {
+      setFTTokens(res.body);
     }
-  });
-
-  asyncFetch(
-    `https://api3.nearblocks.io/v1/account/${treasuryDaoID}/inventory`,
-    { headers: { Authorization: "Bearer ${REPL_NEARBLOCKS_KEY}" } }
-  ).then((res) => {
-    let fts = res.body.inventory.fts;
-    if (fts)
-      fts = fts.sort(
-        (a, b) => b.amount * b.ft_meta.price - a.amount * a.ft_meta.price
-      );
-
-    const amounts = fts.map((ft) => {
-      const amount = ft.amount;
-      const decimals = ft.ft_meta.decimals;
-      const tokensNumber = Big(amount ?? "0")
-        .div(Big(10).pow(decimals))
-        .toFixed();
-      const tokenPrice = ft.ft_meta.price;
-      return Big(tokensNumber)
-        .mul(tokenPrice ?? 0)
-        .toFixed();
-    });
-    setFTTokens({
-      totalCummulativeAmt: amounts.reduce(
-        (acc, value) => acc + parseFloat(value),
-        0
-      ),
-      fts,
-    });
-  });
+  );
 }, []);
 
 function formatNearAmount(amount) {
