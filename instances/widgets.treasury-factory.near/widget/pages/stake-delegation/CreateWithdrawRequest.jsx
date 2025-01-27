@@ -472,31 +472,33 @@ return (
         />
       )}
       <Pools />
-      <div className="d-flex mt-2 gap-3 justify-content-end">
-        <Widget
-          src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
-          props={{
-            classNames: {
-              root: "btn btn-outline-secondary shadow-none no-transparent",
-            },
-            label: "Cancel",
-            onClick: () => {
-              onCloseCanvas();
-            },
-            disabled: isTxnCreated,
-          }}
-        />
-        <Widget
-          src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
-          props={{
-            classNames: { root: "theme-btn" },
-            label: "Submit",
-            disabled: !withdrawValidators?.length || isTxnCreated,
-            onClick: onSubmitClick,
-            loading: isTxnCreated,
-          }}
-        />
-      </div>
+      {isReadyToWithdraw && (
+        <div className="d-flex mt-2 gap-3 justify-content-end">
+          <Widget
+            src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
+            props={{
+              classNames: {
+                root: "btn btn-outline-secondary shadow-none no-transparent",
+              },
+              label: "Cancel",
+              onClick: () => {
+                onCloseCanvas();
+              },
+              disabled: isTxnCreated,
+            }}
+          />
+          <Widget
+            src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
+            props={{
+              classNames: { root: "theme-btn" },
+              label: "Submit",
+              disabled: !withdrawValidators?.length || isTxnCreated,
+              onClick: onSubmitClick,
+              loading: isTxnCreated,
+            }}
+          />
+        </div>
+      )}
     </div>
   </Container>
 );

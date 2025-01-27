@@ -576,7 +576,7 @@ test.describe("Have valid staked requests and sufficient token balance", functio
   test.describe("Admin connected", function () {
     test.use({
       storageState:
-        "playwright-tests/storage-states/wallet-connected-admin-with-accesskey.json",
+        "playwright-tests/storage-states/wallet-connected-admin.json",
     });
 
     test("insufficient account balance should show warning modal, disallow action ", async ({
@@ -795,7 +795,6 @@ test.describe("Withdraw request", function () {
     ).toBeVisible({
       timeout: 10_000,
     });
-    await expect(page.getByRole("button", { name: "Submit" })).toBeDisabled();
   });
 
   test("Unstaked tokens are not ready to be withdrawn, show warning screen", async ({
@@ -815,7 +814,6 @@ test.describe("Withdraw request", function () {
     ).toBeVisible({
       timeout: 10_000,
     });
-    await expect(page.getByRole("button", { name: "Submit" })).toBeDisabled();
   });
 
   test("Have valid withdraw tokens from one pool, should show in table after submission", async ({
@@ -1103,7 +1101,11 @@ test.describe("Lockup staking", function () {
         availableBalance: formatNearAmount(sufficientAvailableBalance),
         errorText: "Your account doesn't have sufficient balance.",
       });
-      await page.getByRole("button", { name: "Submit" }).click();
+      await page
+        .frameLocator("iframe")
+        .nth(2)
+        .getByRole("button", { name: "Submit" })
+        .click();
       await expect(page.getByText("Processing your request ...")).toBeVisible();
 
       await expect(await getTransactionModalObject(page)).toEqual({
@@ -1225,7 +1227,11 @@ test.describe("Lockup staking", function () {
         availableBalance: formatNearAmount(sufficientAvailableBalance),
         errorText: "Your account doesn't have sufficient balance.",
       });
-      await page.getByRole("button", { name: "Submit" }).click();
+      await page
+        .frameLocator("iframe")
+        .nth(2)
+        .getByRole("button", { name: "Submit" })
+        .click();
       await expect(page.getByText("Processing your request ...")).toBeVisible();
 
       await expect(await getTransactionModalObject(page)).toEqual({
@@ -1274,7 +1280,11 @@ test.describe("Lockup staking", function () {
         availableBalance: stakedNear,
         errorText: "The amount exceeds the balance you have staked.",
       });
-      await page.getByRole("button", { name: "Submit" }).click();
+      await page
+        .frameLocator("iframe")
+        .nth(2)
+        .getByRole("button", { name: "Submit" })
+        .click();
       await expect(page.getByText("Processing your request ...")).toBeVisible();
 
       await expect(await getTransactionModalObject(page)).toEqual({

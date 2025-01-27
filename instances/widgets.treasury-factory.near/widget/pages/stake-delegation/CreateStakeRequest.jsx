@@ -1,5 +1,9 @@
-const { getNearBalances, LOCKUP_MIN_BALANCE_FOR_STORAGE, TooltipText } =
-  VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
+const {
+  getNearBalances,
+  LOCKUP_MIN_BALANCE_FOR_STORAGE,
+  TooltipText,
+  isBosGateway,
+} = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
 const { NearToken } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Icons"
 ) || { NearToken: () => <></> };
@@ -13,7 +17,11 @@ const { encodeToMarkdown } = VM.require(
 const instance = props.instance;
 const onCloseCanvas = props.onCloseCanvas ?? (() => {});
 
-if (!instance || !LOCKUP_MIN_BALANCE_FOR_STORAGE) {
+if (
+  !instance ||
+  !LOCKUP_MIN_BALANCE_FOR_STORAGE ||
+  typeof isBosGateway !== "function"
+) {
   return <></>;
 }
 
@@ -126,7 +134,6 @@ useEffect(() => {
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
         if (typeof lastProposalId === "number" && lastProposalId !== id) {
-          cleanInputs();
           onCloseCanvas();
           clearTimeout(errorTimeout);
           refreshData();
@@ -178,11 +185,9 @@ const BalanceDisplay = ({ label, balance, tooltipInfo, noBorder }) => {
   );
 };
 
-const pikespeakKey = "38020cf5-d3c6-40a6-b1fe-f3428747cafc";
-// isBosGateway()
-//   ? "${REPL_PIKESPEAK_KEY}"
-// :
-props.pikespeakKey;
+const pikespeakKey = isBosGateway()
+  ? "${REPL_PIKESPEAK_KEY}"
+  : props.pikespeakKey ?? "263f0c69-69e2-4919-ae02-d8ca7a696da2";
 
 const pikespeakOptions = {
   method: "GET",
