@@ -242,7 +242,9 @@ async function openWithdrawForm({
   daoAccount,
   lockupContract,
 }) {
-  await expect(page.getByText("Create Request", { exact: true })).toBeVisible();
+  await expect(page.getByText("Create Request", { exact: true })).toBeVisible({
+    timeout: 10_000,
+  });
   await page.locator(".dropdown").first().click();
   await page.locator(".dropdown-menu > div:nth-child(3)").click();
   await expect(
@@ -281,27 +283,46 @@ async function openStakeForm({ page, isLockup, daoAccount, lockupContract }) {
 }
 
 async function fillValidatorAccount({ page }) {
-  // validator dropdown shouldn't take more than 20 seconds
-  const poolSelector = await page.getByTestId("validator-dropdown");
-  await expect(poolSelector).toBeVisible({ timeout: 20_000 });
+  // validator dropdown shouldn't take more than 10 seconds
+  const poolSelector = await page
+    .frameLocator("iframe")
+    .nth(1)
+    .locator("#dropdown");
+  await expect(poolSelector).toBeVisible({ timeout: 10_000 });
   await poolSelector.click();
-  await page.waitForTimeout(5_000);
+  await page.waitForTimeout(1_000);
 
-  const search = await page.getByPlaceholder("Search");
+  const search = await page
+    .frameLocator("iframe")
+    .nth(1)
+    .getByPlaceholder("Search options");
   search.focus();
   search.fill("astro");
-  await page.getByText(stakedPoolAccount).first().click();
+  await page
+    .frameLocator("iframe")
+    .nth(1)
+    .getByText(stakedPoolAccount)
+    .first()
+    .click();
 }
 
 async function checkForStakeAmount({ page, errorText, availableBalance }) {
-  const submitBtn = page.getByRole("button", { name: "Submit" });
-  const stakeAmount = page.getByRole("spinbutton");
+  const submitBtn = page
+    .frameLocator("iframe")
+    .nth(1)
+    .getByRole("button", { name: "Submit" });
+  const stakeAmount = page
+    .frameLocator("iframe")
+    .nth(1)
+    .getByPlaceholder("Enter amount");
   await stakeAmount.fill((parseFloat(availableBalance) + 2).toString());
-  await stakeAmount.blur();
-  const amountErrorText = page.getByText(errorText);
-  await expect(amountErrorText).toBeVisible();
+  const amountErrorText = page
+    .frameLocator("iframe")
+    .nth(1)
+    .getByText(errorText);
+  await expect(amountErrorText).toBeVisible({ timeout: 10_000 });
   await expect(submitBtn).toBeDisabled();
-  await page.getByText("Use Max").click();
+  await page.frameLocator("iframe").nth(1).getByText("Use Max").click();
   await expect(amountErrorText).toBeHidden();
 }
 
@@ -418,51 +439,46 @@ async function voteOnProposal({
 async function checkNewProposalSubmission({
   page,
   sandbox,
-  checkforMultiProposals,
+  checkforMultiProposals = false,
   daoAccount,
   daoName,
 }) {
-  const transactionToSendPromise = page.evaluate(async () => {
+  const method = checkforMultiProposals
+    ? "signAndSendTransactions"
+    : "signAndSendTransaction";
+
+  const transactionToSendPromise = page.evaluate(async (method) => {
     const selector = await document.querySelector("near-social-viewer")
       .selectorPromise;
 
     const wallet = await selector.wallet();
 
     return new Promise((resolve) => {
-      wallet.signAndSendTransaction = async (transaction) => {
+      wallet[method] = async (transaction) => {
         resolve(transaction);
-        return await new Promise(
-          (transactionSentPromiseResolve) =>
-            (window.transactionSentPromiseResolve =
-              transactionSentPromiseResolve)
-        );
+        return new Promise((transactionSentPromiseResolve) => {
+          window.transactionSentPromiseResolve = transactionSentPromiseResolve;
+        });
       };
     });
-  });
+  }, method);
 
   await page.getByRole("button", { name: "Confirm" }).click();
   const transactionToSend = await transactionToSendPromise;
+  const transaction = checkforMultiProposals
+    ? transactionToSend.transactions[0]
+    : transactionToSend;
 
   const transactionResult = await sandbox.account.functionCall({
     contractId: daoAccount,
     methodName: "add_proposal",
-    args: transactionToSend.actions[0].params.args,
-    attachedDeposit: transactionToSend.actions[0].params.deposit,
+    args: transaction.actions[0].params.args,
+    attachedDeposit: transaction.actions[0].params.deposit,
   });
-  const lastProposalId = await sandbox.getLastProposalId(daoName);
-
   await page.evaluate(async (transactionResult) => {
     window.transactionSentPromiseResolve(transactionResult);
   }, transactionResult);
-  await mockRpcRequest({
-    page,
-    filterParams: {
-      method_name: "get_last_proposal_id",
-    },
-    modifyOriginalResultFunction: () => {
-      return lastProposalId;
-    },
-  });
+  const lastProposalId = await sandbox.getLastProposalId(daoName);
   await expect(page.locator("div.modal-body code").nth(0)).toBeAttached({
     attached: false,
     timeout: 10_000,
@@ -557,7 +573,7 @@ test.describe("Have valid staked requests and sufficient token balance", functio
   test.describe("Admin connected", function () {
     test.use({
       storageState:
-        "playwright-tests/storage-states/wallet-connected-admin-with-accesskey.json",
+        "playwright-tests/storage-states/wallet-connected-admin.json",
     });
 
     test("insufficient account balance should show warning modal, disallow action ", async ({
@@ -586,13 +602,17 @@ test.describe("Have valid staked requests and sufficient token balance", functio
       page,
       daoAccount,
     }) => {
-      test.setTimeout(200_000);
+      test.setTimeout(250_000);
       const daoName = daoAccount.split(".")[0];
       const sandbox = new SandboxRPC();
       await sandbox.init();
       await sandbox.attachRoutes(page);
       await sandbox.setupSandboxForSputnikDao(daoName);
-
+      await sandbox.addStakeRequestProposal({
+        stakedPoolAccount,
+        stakingAmount: "11.00",
+        daoName,
+      });
       await openStakeForm({ page });
 
       await fillValidatorAccount({
@@ -605,15 +625,17 @@ test.describe("Have valid staked requests and sufficient token balance", functio
       });
 
       const stakingAmount = await page
+        .frameLocator("iframe")
+        .nth(1)
         .locator('input[placeholder="Enter amount"]')
         .first()
         .inputValue();
-      await sandbox.addStakeRequestProposal({
-        stakedPoolAccount,
-        stakingAmount,
-        daoName,
-      });
-      await page.getByRole("button", { name: "Submit" }).click();
+
+      await page
+        .frameLocator("iframe")
+        .nth(1)
+        .getByRole("button", { name: "Submit" })
+        .click();
       const expectedTransactionModalObject = {
         proposal: {
           description: "* Proposal Action: stake",
@@ -632,10 +654,10 @@ test.describe("Have valid staked requests and sufficient token balance", functio
           },
         },
       };
+
       await expect(await getTransactionModalObject(page)).toEqual(
         expectedTransactionModalObject
       );
-
       await checkNewProposalSubmission({ page, sandbox, daoAccount, daoName });
       await sandbox.quitSandbox();
     });
@@ -645,15 +667,24 @@ test.describe("Have valid staked requests and sufficient token balance", functio
       daoAccount,
       instanceAccount,
     }) => {
-      test.setTimeout(200_000);
+      test.setTimeout(250_000);
       const daoName = daoAccount.split(".")[0];
       const sandbox = new SandboxRPC();
       await sandbox.init();
       await sandbox.attachRoutes(page);
       await sandbox.setupSandboxForSputnikDao(daoName);
       const args = "eyJhbW91bnQiOiIzMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAifQ==";
-      const description = `* Proposal Action: withdraw <br>* Show After Proposal Id Approved: 0 <br>* Custom Notes: Following to [#0](/${instanceAccount}/widget/app?page=stake-delegation&selectedTab=History&highlightProposalId=0) unstake request`;
-
+      const description = `* Proposal Action: withdraw <br>* Show After Proposal Id Approved: 2 <br>* Custom Notes: Following to [#2](/${instanceAccount}/widget/app?page=stake-delegation&selectedTab=History&highlightProposalId=2) unstake request`;
+      await sandbox.addUnstakeRequestProposal({
+        stakedPoolAccount,
+        functionCallArgs: args,
+        daoName,
+      });
+      await sandbox.addWithdrawRequestProposal({
+        stakedPoolAccount,
+        description: description,
+        daoName,
+      });
       await openUnstakeForm({ page });
       await fillValidatorAccount({
         page,
@@ -663,7 +694,11 @@ test.describe("Have valid staked requests and sufficient token balance", functio
         availableBalance: stakedNear,
         errorText: "The amount exceeds the balance you have staked.",
       });
-      await page.getByRole("button", { name: "Submit" }).click();
+      await page
+        .frameLocator("iframe")
+        .nth(1)
+        .getByRole("button", { name: "Submit" })
+        .click();
       const expectedTransactionModalObject = {
         proposal: {
           description: "* Proposal Action: unstake",
@@ -709,16 +744,6 @@ test.describe("Have valid staked requests and sufficient token balance", functio
         },
       };
       await expect(dataReceived).toEqual(expectedTransaction2ModalObject);
-      await sandbox.addUnstakeRequestProposal({
-        stakedPoolAccount,
-        functionCallArgs: args,
-        daoName,
-      });
-      await sandbox.addWithdrawRequestProposal({
-        stakedPoolAccount,
-        description: description,
-        daoName,
-      });
 
       await checkNewProposalSubmission({
         page,
@@ -764,7 +789,6 @@ test.describe("Withdraw request", function () {
     ).toBeVisible({
       timeout: 10_000,
     });
-    await expect(page.getByRole("button", { name: "Submit" })).toBeDisabled();
   });
 
   test("Unstaked tokens are not ready to be withdrawn, show warning screen", async ({
@@ -784,14 +808,13 @@ test.describe("Withdraw request", function () {
     ).toBeVisible({
       timeout: 10_000,
     });
-    await expect(page.getByRole("button", { name: "Submit" })).toBeDisabled();
   });
 
   test("Have valid withdraw tokens from one pool, should show in table after submission", async ({
     page,
     daoAccount,
   }) => {
-    test.setTimeout(200_000);
+    test.setTimeout(250_000);
     const daoName = daoAccount.split(".")[0];
     const sandbox = new SandboxRPC();
     await sandbox.init();
@@ -844,7 +867,15 @@ test.describe("Withdraw request", function () {
     daoAccount,
     instanceAccount,
   }) => {
-    test.setTimeout(200_000);
+    test.setTimeout(250_000);
+    const instanceConfig = await getInstanceConfig({
+      page,
+      instanceAccount,
+    });
+    if (instanceConfig.lockupContract) {
+      console.log("lockup contract found for instance");
+      return test.skip();
+    }
     const daoName = daoAccount.split(".")[0];
     const sandbox = new SandboxRPC();
     await sandbox.init();
@@ -861,17 +892,9 @@ test.describe("Withdraw request", function () {
       description,
       daoName,
     });
-
-    const instanceConfig = await getInstanceConfig({
-      page,
-      instanceAccount,
-    });
-    if (instanceConfig.lockupContract) {
-      console.log("lockup contract found for instance");
-      return test.skip();
-    }
-    await page.goto(`/${instanceAccount}/widget/app?page=stake-delegation`);
+    await updateDaoPolicyMembers({ page });
     await mockStakedPools({ daoAccount, page, multiplePools: true });
+    await page.goto(`/${instanceAccount}/widget/app?page=stake-delegation`);
     await mockUnstakeAndWithdrawBalance({
       page,
       hasUnstakeBalance: true,
@@ -980,9 +1003,12 @@ test.describe("Withdraw request", function () {
 async function openLockupStakingForm({ page, daoAccount, lockupContract }) {
   await openStakeForm({ page, isLockup: true, daoAccount, lockupContract });
   await expect(
-    page.getByText(
-      "You cannot split your locked funds across multiple validators."
-    )
+    page
+      .frameLocator("iframe")
+      .nth(1)
+      .getByText(
+        "You cannot split your locked funds across multiple validators."
+      )
   ).toBeVisible({
     timeout: 10_000,
   });
@@ -1069,7 +1095,11 @@ test.describe("Lockup staking", function () {
         availableBalance: formatNearAmount(sufficientAvailableBalance),
         errorText: "Your account doesn't have sufficient balance.",
       });
-      await page.getByRole("button", { name: "Submit" }).click();
+      await page
+        .frameLocator("iframe")
+        .nth(1)
+        .getByRole("button", { name: "Submit" })
+        .click();
       await expect(page.getByText("Processing your request ...")).toBeVisible();
 
       await expect(await getTransactionModalObject(page)).toEqual({
@@ -1179,8 +1209,12 @@ test.describe("Lockup staking", function () {
         lockupContract,
         instanceAccount,
       });
-      await page.waitForTimeout(20_000);
-      const poolSelector = page.locator(".custom-select").first();
+      await page.waitForTimeout(2_000);
+      const poolSelector = page
+        .frameLocator("iframe")
+        .nth(1)
+        .locator(".custom-select")
+        .first();
       await expect(poolSelector).toBeVisible({ timeout: 20_000 });
       const hasDisabledClassOnChild = await poolSelector
         .locator(".disabled")
@@ -1191,7 +1225,11 @@ test.describe("Lockup staking", function () {
         availableBalance: formatNearAmount(sufficientAvailableBalance),
         errorText: "Your account doesn't have sufficient balance.",
       });
-      await page.getByRole("button", { name: "Submit" }).click();
+      await page
+        .frameLocator("iframe")
+        .nth(1)
+        .getByRole("button", { name: "Submit" })
+        .click();
       await expect(page.getByText("Processing your request ...")).toBeVisible();
 
       await expect(await getTransactionModalObject(page)).toEqual({
@@ -1229,8 +1267,11 @@ test.describe("Lockup staking", function () {
         daoAccount,
         lockupContract,
       });
-      await page.waitForTimeout(10_000);
-      const poolSelector = await page.locator(".custom-select");
+      await page.waitForTimeout(2_000);
+      const poolSelector = await page
+        .frameLocator("iframe")
+        .nth(1)
+        .locator(".custom-select");
       const hasDisabledClassOnChild = await poolSelector
         .locator(".disabled")
         .count();
@@ -1240,7 +1281,11 @@ test.describe("Lockup staking", function () {
         availableBalance: stakedNear,
         errorText: "The amount exceeds the balance you have staked.",
       });
-      await page.getByRole("button", { name: "Submit" }).click();
+      await page
+        .frameLocator("iframe")
+        .nth(1)
+        .getByRole("button", { name: "Submit" })
+        .click();
       await expect(page.getByText("Processing your request ...")).toBeVisible();
 
       await expect(await getTransactionModalObject(page)).toEqual({

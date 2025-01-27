@@ -168,42 +168,45 @@ const code = `
   </html> 
   `;
 
-const iframe = (
-  <iframe
-    style={{
-      display: "none",
-    }}
-    srcDoc={code}
-    onMessage={(e) => {
-      switch (e.handler) {
-        case "stakedNearPool":
-          const pools = e.pools;
-          let stakedBalance = new Big(0);
-          let unstakedBalance = new Big(0);
-          let availableToWithdrawBalance = new Big(0);
-          pools.forEach((pool) => {
-            stakedBalance = stakedBalance.plus(
-              new Big(pool.stakedBalance).div(1e24)
-            );
-            unstakedBalance = unstakedBalance.plus(
-              new Big(pool.unstakedBalance).div(1e24)
-            );
-            availableToWithdrawBalance = availableToWithdrawBalance.plus(
-              new Big(pool.availableToWithdrawBalance).div(1e24)
-            );
-          });
-          const totalBalance = stakedBalance
-            .plus(unstakedBalance)
-            .plus(availableToWithdrawBalance);
-          setNearStakedTotalTokens(totalBalance.toFixed() ?? "0");
-          setNearUnstakedTokens(unstakedBalance.toFixed() ?? "0");
-          setNearWithdrawTokens(availableToWithdrawBalance.toFixed() ?? "0");
-          setNearStakedTokens(stakedBalance.toFixed() ?? "0");
-          setPoolWithBalance(pools);
-          break;
-      }
-    }}
-  />
+const iframe = useMemo(
+  () => (
+    <iframe
+      style={{
+        display: "none",
+      }}
+      srcDoc={code}
+      onMessage={(e) => {
+        switch (e.handler) {
+          case "stakedNearPool":
+            const pools = e.pools;
+            let stakedBalance = new Big(0);
+            let unstakedBalance = new Big(0);
+            let availableToWithdrawBalance = new Big(0);
+            pools.forEach((pool) => {
+              stakedBalance = stakedBalance.plus(
+                new Big(pool.stakedBalance).div(1e24)
+              );
+              unstakedBalance = unstakedBalance.plus(
+                new Big(pool.unstakedBalance).div(1e24)
+              );
+              availableToWithdrawBalance = availableToWithdrawBalance.plus(
+                new Big(pool.availableToWithdrawBalance).div(1e24)
+              );
+            });
+            const totalBalance = stakedBalance
+              .plus(unstakedBalance)
+              .plus(availableToWithdrawBalance);
+            setNearStakedTotalTokens(totalBalance.toFixed() ?? "0");
+            setNearUnstakedTokens(unstakedBalance.toFixed() ?? "0");
+            setNearWithdrawTokens(availableToWithdrawBalance.toFixed() ?? "0");
+            setNearStakedTokens(stakedBalance.toFixed() ?? "0");
+            setPoolWithBalance(pools);
+            break;
+        }
+      }}
+    />
+  ),
+  []
 );
 
 return iframe;
