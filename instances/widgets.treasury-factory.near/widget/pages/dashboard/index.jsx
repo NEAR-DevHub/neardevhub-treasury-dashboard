@@ -194,6 +194,13 @@ const TooManyRequestModal = () => {
         <br /> 🔄 Refresh the page afterward and continue as usual.
         <br /> <br /> Thanks for your patience—it helps us keep things running
         smoothly!
+        <div>
+          <img
+            src="https://ipfs.near.social/ipfs/bafkreidpa2kxo6bv543rg4uqce6ghnn6bj2c67ewh3vbuz3txymcxr7qkq"
+            height={200}
+            className="w-100 mt-2"
+          />
+        </div>
       </ModalContent>
       <ModalFooter>
         <Widget
@@ -203,7 +210,7 @@ const TooManyRequestModal = () => {
               root: "btn btn-outline-secondary shadow-none no-transparent",
             },
             label: "Close",
-            onClick: () => setShow404Modal(true),
+            onClick: () => setShow404Modal(false),
           }}
         />
         <a style={{ all: "unset" }} href={`app?page=dashboard`}>
