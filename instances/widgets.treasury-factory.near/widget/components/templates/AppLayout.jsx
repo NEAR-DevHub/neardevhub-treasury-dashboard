@@ -310,20 +310,6 @@ const Theme = styled.div`
     fill: var(--theme-color);
   }
 
-  .use-max-bg {
-    color: #007aff;
-    cursor: pointer;
-  }
-
-  .bg-validator-info {
-    background: rgba(0, 16, 61, 0.06);
-    color: var(--text-color);
-    padding-inline: 0.8rem;
-    padding-block: 0.5rem;
-    font-weight: 500;
-    font-size: 13px;
-  }
-
   .bg-validator-warning {
     background: rgba(255, 158, 0, 0.1);
     color: var(--other-warning);

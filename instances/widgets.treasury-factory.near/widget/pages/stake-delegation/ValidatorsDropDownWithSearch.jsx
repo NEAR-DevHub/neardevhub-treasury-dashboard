@@ -166,8 +166,8 @@ const code = `
     background: ${colors["--theme-color-dark"]} !important;
   }  
   .bg-validator-info {
-    background: rgba(0, 16, 61, 0.06);
-    color: ${colors["--text-color"]};
+    background:  ${colors["--grey-04"]} !important;
+    color: ${colors["--grey-02"]} !important;
     padding-inline: 0.8rem;
     padding-block: 0.5rem;
     font-weight: 500;
