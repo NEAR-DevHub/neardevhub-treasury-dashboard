@@ -153,7 +153,7 @@ const hideApproversCol = isPendingRequests && requiredVotes === 1;
 
 const userFTTokens = fetch(
   `${REPL_BACKEND_API}/ft-tokens/?account_id=${treasuryDaoID}`
-)?.fts;
+);
 
 const nearBalances = getNearBalances(treasuryDaoID);
 
@@ -451,7 +451,7 @@ const ProposalsComponent = () => {
                       hasVotingPermission,
                       proposalCreator: item.proposer,
                       tokensBalance: [
-                        ...(userFTTokens?.body?.inventory?.fts ?? []),
+                        ...(userFTTokens?.body?.fts ?? []),
                         {
                           contract: "near",
                           amount: Big(nearBalances.available)
