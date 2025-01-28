@@ -11,6 +11,7 @@ const showKYC = props.showKYC;
 const accountId = props.accountId;
 const displayName = props.displayName ?? true;
 const displayImage = props.displayImage ?? true;
+const width = props.width ?? null;
 const [isVerfied, setIsVerfied] = useState(false);
 const [verificationStatus, setVerificationStatus] = useState(null);
 
@@ -116,7 +117,7 @@ const HoverCard = () => {
 const ReceiverAccountComponent = (
   <div
     className="d-flex gap-1 align-items-center"
-    style={{ width: displayImage ? "180px" : "100px" }}
+    style={{ width: width ? width : displayImage ? "180px" : "100px" }}
   >
     {displayImage && (
       <div style={{ width: "40px", height: 40, position: "relative" }}>
@@ -130,7 +131,7 @@ const ReceiverAccountComponent = (
 
     <div
       className="text-truncate"
-      style={{ width: displayImage ? "150px" : "100px" }}
+      style={{ width: width ? width : displayImage ? "150px" : "100px" }}
     >
       {displayName && <div className="h6 mb-0"> {name}</div>}
       <div>
