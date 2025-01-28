@@ -3,9 +3,9 @@ const { instance } = props;
 if (!instance) {
   return <></>;
 }
-const { getColors } = VM.require(
-  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.templates.AppLayout"
-) || { getColors: () => {} };
+const { getAllColorsAsCSSVariables } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+) || { getAllColorsAsCSSVariables: () => {} };
 const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 
 const config = treasuryDaoID ? Near.view(treasuryDaoID, "get_config") : null;
@@ -44,7 +44,7 @@ const overlayStyle = props.overlayStyle ?? {
 };
 
 const ThemeColorsContainer = styled.div`
-  ${() => getColors(isDarkTheme, "", "")}
+  ${() => getAllColorsAsCSSVariables(isDarkTheme, "")}
 `;
 
 const overlay = (

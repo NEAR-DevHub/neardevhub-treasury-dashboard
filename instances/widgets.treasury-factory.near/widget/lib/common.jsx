@@ -427,7 +427,6 @@ function getPermissionsText(type) {
 function isBosGateway() {
   return (
     // for tests
-    gatewayOrigin.includes("localhost:8080") ||
     gatewayOrigin.includes("near.social") ||
     gatewayOrigin.includes("dev.near.org")
   );
@@ -517,6 +516,137 @@ const TooltipText = {
   readyToStake: "Available to stake. Earn rewards by staking these tokens",
 };
 
+function hexToHsl(hex) {
+  // Remove # if present
+  hex = hex ?? "";
+  hex = hex.startsWith("#") ? hex.slice(1) : hex;
+
+  // Extract RGB components
+  const r = parseInt(hex.slice(0, 2), 16);
+  const g = parseInt(hex.slice(2, 4), 16);
+  const b = parseInt(hex.slice(4, 6), 16);
+
+  // Normalize RGB values
+  const rNorm = r / 255;
+  const gNorm = g / 255;
+  const bNorm = b / 255;
+
+  const max = Math.max(rNorm, gNorm, bNorm);
+  const min = Math.min(rNorm, gNorm, bNorm);
+  const delta = max - min;
+
+  let h = 0;
+  let s = 0;
+  const l = (max + min) / 2;
+
+  if (delta !== 0) {
+    s = l < 0.5 ? delta / (max + min) : delta / (2 - max - min);
+
+    if (max === rNorm) {
+      h = (gNorm - bNorm) / delta + (gNorm < bNorm ? 6 : 0);
+    } else if (max === gNorm) {
+      h = (bNorm - rNorm) / delta + 2;
+    } else {
+      h = (rNorm - gNorm) / delta + 4;
+    }
+
+    h *= 60;
+  }
+
+  return [Math.round(h), Math.round(s * 100), Math.round(l * 100)];
+}
+
+// Function to convert HSL to HEX
+function hslToHex(h, s, l) {
+  s /= 100;
+  l /= 100;
+
+  const c = (1 - Math.abs(2 * l - 1)) * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = l - c / 2;
+
+  let r = 0,
+    g = 0,
+    b = 0;
+
+  if (h >= 0 && h < 60) {
+    r = c;
+    g = x;
+    b = 0;
+  } else if (h >= 60 && h < 120) {
+    r = x;
+    g = c;
+    b = 0;
+  } else if (h >= 120 && h < 180) {
+    r = 0;
+    g = c;
+    b = x;
+  } else if (h >= 180 && h < 240) {
+    r = 0;
+    g = x;
+    b = c;
+  } else if (h >= 240 && h < 300) {
+    r = x;
+    g = 0;
+    b = c;
+  } else if (h >= 300 && h < 360) {
+    r = c;
+    g = 0;
+    b = x;
+  }
+
+  r = Math.round((r + m) * 255);
+  g = Math.round((g + m) * 255);
+  b = Math.round((b + m) * 255);
+
+  const toHex = (value) => {
+    const hex = value.toString(16);
+    return hex.length === 1 ? `0${hex}` : hex;
+  };
+
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+
+function getAllColorsAsObject(isDarkTheme, primaryColor) {
+  const themeColor = primaryColor ? primaryColor : "#01BF7A";
+
+  const [h, s, l] = hexToHsl(themeColor);
+
+  // Calculate hover color (darken by reducing lightness)
+  const hoverColor = hslToHex(h, s, Math.max(l - 10, 0));
+
+  return {
+    "--theme-color": themeColor,
+    "--theme-color-dark": hoverColor,
+    "--bg-header-color": isDarkTheme ? "#222222" : "#2C3E50",
+    "--bg-page-color": isDarkTheme ? "#222222" : "#FFFFFF",
+    "--bg-system-color": isDarkTheme ? "#131313" : "#f4f4f4",
+    "--text-color": isDarkTheme ? "#CACACA" : "#1B1B18",
+    "--text-secondary-color": isDarkTheme ? "#878787" : "#999999",
+    "--text-alt-color": "#FFFFFF",
+    "--border-color": isDarkTheme ? "#3B3B3B" : "rgba(226, 230, 236, 1)",
+    "--grey-01": isDarkTheme ? "#F4F4F4" : "#1B1B18",
+    "--grey-02": isDarkTheme ? "#B3B3B3" : "#555555",
+    "--grey-03": isDarkTheme ? "#555555" : "#B3B3B3",
+    "--grey-035": isDarkTheme ? "#3E3E3E" : "#E6E6E6",
+    "--grey-04": isDarkTheme ? "#323232" : "#F4F4F4",
+    "--grey-05": isDarkTheme ? "#1B1B18" : "#F7F7F7",
+    "--icon-color": isDarkTheme ? "#CACACA" : "#060606",
+    "--other-primary": "#2775C9",
+    "--other-warning": "#B17108",
+    "--other-green": "#3CB179",
+    "--other-red": "#D95C4A",
+    "--bs-body-bg": "var(--bg-page-color)",
+    "--bs-border-color": "var(--border-color)",
+  };
+}
+
+function getAllColorsAsCSSVariables(isDarkTheme, themeColor) {
+  const colors = getAllColorsAsObject(isDarkTheme, themeColor);
+  return Object.entries(colors)
+    .map(([key, value]) => `${key}: ${value};`)
+    .join("\n");
+}
 return {
   getApproversAndThreshold,
   hasPermission,
@@ -534,4 +664,6 @@ return {
   LOCKUP_MIN_BALANCE_FOR_STORAGE,
   formatSubmissionTimeStamp,
   TooltipText,
+  getAllColorsAsObject,
+  getAllColorsAsCSSVariables,
 };

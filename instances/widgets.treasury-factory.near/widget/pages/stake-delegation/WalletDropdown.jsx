@@ -24,7 +24,7 @@ const nearPrice = useCache(
     ).then((res) => {
       return res.body.near?.usd;
     }),
-  "price",
+  "near-price",
   { subscribe: false }
 );
 
