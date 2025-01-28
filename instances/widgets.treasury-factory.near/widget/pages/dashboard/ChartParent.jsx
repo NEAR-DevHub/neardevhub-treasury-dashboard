@@ -1,6 +1,5 @@
 const { nearPrice, ftTokens, accountId, title, instance, totalBalance } = props;
 
-const API_HOST = "https://ref-sdk-api.fly.dev/api";
 const [allPeriodData, setAllPeriodData] = useState({});
 const [isLoading, setIsLoading] = useState(true);
 const [selectedToken, setSelectedToken] = useState("near");
@@ -10,7 +9,7 @@ const fetchAllPeriodData = async () => {
   setIsLoading(true);
   try {
     asyncFetch(
-      `${API_HOST}/all-token-balance-history?account_id=${accountId}&token_id=${selectedToken}`
+      `${REPL_BACKEND_API}/all-token-balance-history?account_id=${accountId}&token_id=${selectedToken}`
     ).then((res) => {
       setAllPeriodData(res.body);
       setIsLoading(false);

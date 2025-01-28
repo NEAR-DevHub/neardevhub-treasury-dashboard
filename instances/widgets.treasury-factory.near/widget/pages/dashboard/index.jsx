@@ -84,10 +84,8 @@ const [nearPrice, setNearPrice] = useState(null);
 const [userFTTokens, setFTTokens] = useState(null);
 const [show404Modal, setShow404Modal] = useState(false);
 
-const API_HOST = "https://ref-sdk-api.fly.dev/api";
-
 useEffect(() => {
-  asyncFetch(`${API_HOST}/near-price`)
+  asyncFetch(`${REPL_BACKEND_API}/near-price`)
     .then((res) => {
       if (typeof res.body === "number") {
         setNearPrice(res.body);
@@ -99,7 +97,7 @@ useEffect(() => {
       setShow404Modal(true);
     });
 
-  asyncFetch(`${API_HOST}/ft-tokens/?account_id=${treasuryDaoID}`)
+  asyncFetch(`${REPL_BACKEND_API}/ft-tokens/?account_id=${treasuryDaoID}`)
     .then((res) => {
       if (typeof res.body.totalCumulativeAmt === "number") {
         setFTTokens(res.body);

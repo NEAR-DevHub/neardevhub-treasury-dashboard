@@ -5,13 +5,22 @@
  * @param {import('playwright').Page} params.page - The Playwright Page instance.
  * @returns {Promise<void>} A promise that resolves when the mock is complete.
  */
-export async function mockNearPrice({ nearPrice, page }) {
+export async function mockNearPrice({ nearPrice, page, returnError }) {
   await page.route(
-    "https://api.coingecko.com/api/v3/simple/price?ids=near&vs_currencies=usd",
+    `https://ref-sdk-api.fly.dev/api/near-price`,
     async (route) => {
-      let json = { near: { usd: nearPrice } };
-
-      await route.fulfill({ json });
+      if (returnError) {
+        // Simulate an error response
+        await route.fulfill({
+          status: 500, // HTTP status code for server error
+          contentType: "application/json",
+          body: JSON.stringify({ error: "Internal Server Error" }),
+        });
+      } else {
+        // Simulate a successful response
+        let json = nearPrice;
+        await route.fulfill({ json });
+      }
     }
   );
 }

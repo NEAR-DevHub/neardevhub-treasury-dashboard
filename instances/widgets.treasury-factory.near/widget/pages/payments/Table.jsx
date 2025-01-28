@@ -152,9 +152,8 @@ const requiredVotes = transferApproversGroup?.requiredVotes;
 const hideApproversCol = isPendingRequests && requiredVotes === 1;
 
 const userFTTokens = fetch(
-  `https://api3.nearblocks.io/v1/account/${treasuryDaoID}/inventory`,
-  { method: "GET", headers: { Authorization: "Bearer ${REPL_NEARBLOCKS_KEY}" } }
-);
+  `${REPL_BACKEND_API}/ft-tokens/?account_id=${treasuryDaoID}`
+)?.fts;
 
 const nearBalances = getNearBalances(treasuryDaoID);
 

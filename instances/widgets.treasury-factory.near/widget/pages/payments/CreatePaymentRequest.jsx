@@ -233,14 +233,13 @@ const Container = styled.div`
   }
 `;
 
-const nearPriceAPI =
-  "https://api.coingecko.com/api/v3/simple/price?ids=near&vs_currencies=usd";
+const nearPriceAPI = `${REPL_BACKEND_API}/near-price`;
 
 useEffect(() => {
   function fetchNearPrice() {
     asyncFetch(nearPriceAPI).then((res) => {
-      if (res.body.near?.usd) {
-        setNearPrice(res.body.near.usd);
+      if (typeof res.body === "number") {
+        setNearPrice(res.body);
       }
     });
   }
