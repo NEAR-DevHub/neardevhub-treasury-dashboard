@@ -83,6 +83,7 @@ const [lockupNearWithdrawTokens, setLockupNearWithdrawTokens] = useState(null);
 const [nearPrice, setNearPrice] = useState(null);
 const [userFTTokens, setFTTokens] = useState(null);
 const [show404Modal, setShow404Modal] = useState(false);
+const [disableRefreshBtn, setDisableRefreshBtn] = useState(false);
 
 useEffect(() => {
   asyncFetch(`${REPL_BACKEND_API}/near-price`)
@@ -109,6 +110,27 @@ useEffect(() => {
       setShow404Modal(true);
     });
 }, []);
+
+// disable refresh btn for 30 seconds
+useEffect(() => {
+  if (show404Modal) {
+    setDisableRefreshBtn(true);
+  }
+}, [show404Modal]);
+
+useEffect(() => {
+  let timer;
+
+  if (disableRefreshBtn) {
+    timer = setTimeout(() => {
+      setDisableRefreshBtn(false);
+    }, 30_000);
+  }
+
+  return () => {
+    clearTimeout(timer);
+  };
+}, [disableRefreshBtn]);
 
 function formatNearAmount(amount) {
   return Big(amount ?? "0")
@@ -217,6 +239,7 @@ const TooManyRequestModal = () => {
             props={{
               classNames: { root: "theme-btn" },
               label: "Refresh",
+              disabled: disableRefreshBtn,
             }}
           />
         </a>
