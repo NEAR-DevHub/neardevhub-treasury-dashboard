@@ -17,8 +17,13 @@ const { treasuryDaoID, showKYC, showReferenceProposal } = VM.require(
   `${instance}/widget/config.data`
 );
 
+const { TableSkeleton } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.skeleton"
+);
+
 if (
   !instance ||
+  !TableSkeleton ||
   typeof getNearBalances !== "function" ||
   typeof decodeProposalDescription !== "function" ||
   typeof formatSubmissionTimeStamp !== "function"
@@ -494,11 +499,7 @@ return (
     transferApproversGroup === null ||
     !nearStakedTokens ||
     policy === null ? (
-      <div className="d-flex justify-content-center align-items-center w-100">
-        <Widget
-          src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"}
-        />
-      </div>
+      <TableSkeleton numberOfCols={8} numberOfRows={3} numberOfHiddenRows={4} />
     ) : (
       <div className="w-100">
         {proposals.length === 0 ? (

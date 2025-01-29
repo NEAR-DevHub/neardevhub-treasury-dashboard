@@ -19,8 +19,11 @@ const instance = props.instance;
 const { treasuryDaoID, lockupContract } = VM.require(
   `${instance}/widget/config.data`
 );
+const { TableSkeleton } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.skeleton"
+);
 
-if (!instance || !treasuryDaoID) {
+if (!instance || !treasuryDaoID || !TableSkeleton) {
   return <></>;
 }
 
@@ -119,9 +122,7 @@ function getImage(actionKind) {
 }
 
 const loader = (
-  <div className="d-flex flex-column justify-content-center align-items-center w-100 h-100">
-    {loading}
-  </div>
+  <TableSkeleton numberOfCols={5} numberOfRows={3} numberOfHiddenRows={4} />
 );
 
 const Container = styled.div`
