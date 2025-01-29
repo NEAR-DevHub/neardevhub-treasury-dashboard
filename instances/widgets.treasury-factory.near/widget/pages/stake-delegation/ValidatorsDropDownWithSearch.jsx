@@ -45,8 +45,8 @@ const code = `
   <style>
 
   :root {
-    --bs-body-bg: inherit !important;
-    --bs-border-color: inherit !important;
+    --bs-body-bg: ${colors["--bg-page-color"]} !important;
+    --bs-border-color: ${colors["--border-color"]} !important;
   }
   body {
     background-color: ${colors["--bg-page-color"]} !important;
@@ -153,8 +153,14 @@ const code = `
     border-color: ${colors["--border-color"]} !important;
     background: ${colors["--grey-035"]} !important;
   }
-  .btn{
+  .btn {
     padding: 0.5rem 1.2rem !important;
+  }
+  .btn, .input-group-text, input, textarea {
+    border-color: ${colors["--border-color"]} !important;
+  }
+  .input-icon {
+    background: ${colors["--bg-page-color"]} !important;
   }
   .theme-btn {
     background: ${colors["--theme-color"]} !important;

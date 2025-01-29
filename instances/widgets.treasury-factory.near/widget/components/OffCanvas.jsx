@@ -30,8 +30,6 @@ const Container = styled.div`
   }
 
   .offcanvas {
-    border-top-left-radius: 1rem !important;
-    border-bottom-left-radius: 1rem !important;
     overflow: auto;
   }
 `;
