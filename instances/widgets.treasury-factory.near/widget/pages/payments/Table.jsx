@@ -17,8 +17,13 @@ const { treasuryDaoID, showKYC, showReferenceProposal } = VM.require(
   `${instance}/widget/config.data`
 );
 
+const { TableSkeleton } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.skeleton"
+);
+
 if (
   !instance ||
+  !TableSkeleton ||
   typeof getNearBalances !== "function" ||
   typeof decodeProposalDescription !== "function" ||
   typeof formatSubmissionTimeStamp !== "function"
@@ -34,7 +39,9 @@ const columnsVisibility = JSON.parse(
   ) ?? "[]"
 );
 
-const highlightProposalId = props.highlightProposalId;
+const highlightProposalId = props.highlightProposalId
+  ? parseInt(props.highlightProposalId)
+  : null;
 const loading = props.loading;
 const isPendingRequests = props.isPendingRequests;
 const transferApproversGroup = props.transferApproversGroup;
@@ -152,8 +159,7 @@ const requiredVotes = transferApproversGroup?.requiredVotes;
 const hideApproversCol = isPendingRequests && requiredVotes === 1;
 
 const userFTTokens = fetch(
-  `https://api3.nearblocks.io/v1/account/${treasuryDaoID}/inventory`,
-  { headers: { Authorization: "Bearer ${REPL_NEARBLOCKS_KEY}" } }
+  `${REPL_BACKEND_API}/ft-tokens/?account_id=${treasuryDaoID}`
 );
 
 const nearBalances = getNearBalances(treasuryDaoID);
@@ -338,9 +344,9 @@ const ProposalsComponent = () => {
             </td>
             <td className={"fw-semi-bold " + isVisible("Recipient")}>
               <Widget
-                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.ReceiverAccount`}
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
                 props={{
-                  receiverAccount: args.receiver_id,
+                  accountId: args.receiver_id,
                   showKYC,
                   instance,
                 }}
@@ -366,22 +372,12 @@ const ProposalsComponent = () => {
             </td>
             <td className={"fw-semi-bold text-center " + isVisible("Creator")}>
               <Widget
-                src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
                 props={{
-                  popup: (
-                    <Widget
-                      src="${REPL_MOB}/widget/Profile.Popover"
-                      props={{ accountId: item.proposer }}
-                    />
-                  ),
-                  children: (
-                    <div
-                      className="text-truncate"
-                      style={{ maxWidth: "300px" }}
-                    >
-                      {item.proposer}
-                    </div>
-                  ),
+                  accountId: item.proposer,
+                  showKYC: false,
+                  displayImage: false,
+                  displayName: false,
                   instance,
                 }}
               />
@@ -462,7 +458,7 @@ const ProposalsComponent = () => {
                       hasVotingPermission,
                       proposalCreator: item.proposer,
                       tokensBalance: [
-                        ...(userFTTokens?.body?.inventory?.fts ?? []),
+                        ...(userFTTokens?.body?.fts ?? []),
                         {
                           contract: "near",
                           amount: Big(nearBalances.available)
@@ -503,11 +499,7 @@ return (
     transferApproversGroup === null ||
     !nearStakedTokens ||
     policy === null ? (
-      <div className="d-flex justify-content-center align-items-center w-100">
-        <Widget
-          src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"}
-        />
-      </div>
+      <TableSkeleton numberOfCols={8} numberOfRows={3} numberOfHiddenRows={4} />
     ) : (
       <div className="w-100">
         {proposals.length === 0 ? (

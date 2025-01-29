@@ -40,10 +40,8 @@ const [selectedWallet, setSelectedWallet] = useState(walletOptions[0]);
 const [validators, setValidators] = useState([]);
 const [isTxnCreated, setTxnCreated] = useState(false);
 const [lastProposalId, setLastProposalId] = useState(null);
-const [notes, setNotes] = useState(null);
 const [showCancelModal, setShowCancelModal] = useState(false);
 
-const [amount, setAmount] = useState(null);
 const [validatorAccount, setValidatorAccount] = useState(null);
 const [daoPolicy, setDaoPolicy] = useState(null);
 const [amountError, setAmountError] = useState(null);
@@ -180,12 +178,6 @@ useEffect(() => {
   });
 }, []);
 
-function cleanInputs() {
-  setValidatorAccount("");
-  setNotes("");
-  setAmount("");
-}
-
 useEffect(() => {
   if (isTxnCreated) {
     let checkTxnTimeout = null;
@@ -193,8 +185,7 @@ useEffect(() => {
 
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
-        if (lastProposalId !== id) {
-          cleanInputs();
+        if (typeof lastProposalId === "number" && lastProposalId !== id) {
           onCloseCanvas();
           refreshData();
           clearTimeout(errorTimeout);
@@ -211,14 +202,14 @@ useEffect(() => {
       setShowErrorToast(true);
       setTxnCreated(false);
       clearTimeout(checkTxnTimeout);
-    }, 20000);
+    }, 25_000);
 
     return () => {
       clearTimeout(checkTxnTimeout);
       clearTimeout(errorTimeout);
     };
   }
-}, [isTxnCreated]);
+}, [isTxnCreated, lastProposalId]);
 
 const BalanceDisplay = ({ label, balance, tooltipInfo, noBorder }) => {
   return (
@@ -273,7 +264,7 @@ function toBase64(json) {
   return Buffer.from(JSON.stringify(json)).toString("base64");
 }
 
-function onSubmitClick() {
+function onSubmitClick(validatorAccount, amount, notes) {
   setTxnCreated(true);
   const deposit = daoPolicy?.proposal_bond || 100000000000000000000000;
   const description = {
@@ -294,7 +285,7 @@ function onSubmitClick() {
             FunctionCall: {
               receiver_id: isLockupContractSelected
                 ? lockupContract
-                : validatorAccount.pool_id,
+                : validatorAccount,
               actions: [
                 {
                   method_name: "unstake",
@@ -337,7 +328,7 @@ function onSubmitClick() {
           FunctionCall: {
             receiver_id: isLockupContractSelected
               ? lockupContract
-              : validatorAccount.pool_id,
+              : validatorAccount,
             actions: isLockupContractSelected
               ? [
                   {
@@ -380,15 +371,6 @@ const Container = styled.div`
 `;
 
 useEffect(() => {
-  const parsedAmount = parseFloat(amount);
-  if (parsedAmount > parseFloat(getBalances().staked)) {
-    setAmountError("The amount exceeds the balance you have staked.");
-  } else {
-    setAmountError(null);
-  }
-}, [amount, selectedWallet]);
-
-useEffect(() => {
   if (selectedWallet.value === lockupContract) {
     const pool = (lockupStakedPoolsWithBalance ?? []).find(
       (i) => i.pool === lockupStakedPoolId
@@ -426,7 +408,6 @@ return (
         isOpen: showCancelModal,
         onCancelClick: () => setShowCancelModal(false),
         onConfirmClick: () => {
-          cleanInputs();
           setShowCancelModal(false);
           onCloseCanvas();
         },
@@ -444,23 +425,6 @@ return (
         setPoolWithBalance: setNearStakedPoolsWithBalance,
       }}
     />
-
-    {lockupContract && (
-      <Widget
-        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
-        props={{
-          accountId: lockupContract,
-          setNearStakedTokens: (v) => setLockupStakedTokens(Big(v).toFixed(2)),
-          setNearUnstakedTokens: (v) =>
-            setLockupUnStakedTokens(Big(v).toFixed(2)),
-          setNearStakedTotalTokens: (v) =>
-            setLockupStakedTotalTokens(Big(v).toFixed(2)),
-          setNearWithdrawTokens: (v) =>
-            setLockupNearWithdrawTokens(Big(v).toFixed(2)),
-          setPoolWithBalance: setLockupStakedPoolsWithBalance,
-        }}
-      />
-    )}
     <div className="d-flex flex-column gap-3">
       {lockupContract && (
         <div className="d-flex flex-column gap-1">
@@ -508,112 +472,43 @@ return (
           tokens with a validator.
         </div>
       ) : (
-        <div className="d-flex flex-column gap-3">
-          <div className="d-flex flex-column gap-1">
-            <label>Validator</label>
-            <Widget
-              src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.ValidatorsDropDownWithSearch"
-              props={{
-                selectedValue: validatorAccount,
-                onChange: (v) => setValidatorAccount(v),
-                options: validators,
-                showSearch: true,
-                searchInputPlaceholder: "Search",
-                defaultLabel: "Select",
-                selectedWallet: selectedWallet?.value,
-                disabled: selectedWallet?.value === lockupContract,
-              }}
-            />
-          </div>
-          <div className="d-flex flex-column gap-1">
-            <label className="d-flex align-items-center justify-content-between">
-              Amount to Unstake
-              {validatorAccount && (
-                <div
-                  className="use-max-bg px-3 py-1 rounded-2"
-                  onClick={() => {
-                    setAmount(
-                      formatNearAmount(
-                        validatorAccount?.stakedBalance[selectedWallet.value]
-                          ?.stakedBalance ?? 0
-                      )
-                    );
-                  }}
-                >
-                  Use Max
-                </div>
-              )}
-            </label>
-            <Widget
-              src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Input`}
-              props={{
-                className: "flex-grow-1",
-                key: `total-amount`,
-                onBlur: (e) => setAmount(e.target.value),
-                placeholder: "Enter amount",
-                value: amount,
-                error: amountError,
-                inputProps: {
-                  type: "number",
-                  min: "0",
-                  prefix: <NearToken />,
-                },
-              }}
-            />
-            {validatorAccount && (
-              <div className="d-flex align-items-center text-sm gap-1 text-secondary">
-                <div>Available to unstake:</div>
-                <div>
-                  {formatNearAmount(
-                    validatorAccount?.stakedBalance[selectedWallet.value]
-                      ?.stakedBalance ?? 0
-                  )}{" "}
-                  NEAR
-                </div>
-              </div>
-            )}
-          </div>
-          <div className="d-flex flex-column gap-1">
-            <label>Notes (Optional)</label>
-            <Widget
-              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
-              props={{
-                className: "flex-grow-1",
-                key: `notes`,
-                onBlur: (e) => setNotes(e.target.value),
-                value: notes,
-                multiline: true,
-              }}
-            />
-          </div>
-          <div className="d-flex mt-2 gap-3 justify-content-end">
-            <Widget
-              src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
-              props={{
-                classNames: {
-                  root: "btn btn-outline-secondary shadow-none no-transparent",
-                },
-                label: "Cancel",
-                onClick: () => {
-                  setShowCancelModal(true);
-                },
-                disabled: isTxnCreated,
-              }}
-            />
-            <Widget
-              src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
-              props={{
-                classNames: { root: "theme-btn" },
-                disabled:
-                  !validatorAccount || !amount || amountError || isTxnCreated,
-                label: "Submit",
-                onClick: onSubmitClick,
-                loading: isTxnCreated,
-              }}
-            />
-          </div>
-        </div>
+        <Widget
+          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.ValidatorsDropDownWithSearch"
+          props={{
+            selectedValue: validatorAccount,
+            options: validators,
+            selectedWallet: selectedWallet?.value,
+            disabledDropdown: selectedWallet?.value === lockupContract,
+            disbabledActionButtons: isTxnCreated,
+            lockupContract,
+            treasuryDaoID,
+            availableBalance: getBalances().available,
+            instance,
+            onCancel: () => setShowCancelModal(true),
+            onSubmit: (validatorAccount, amount, notes) =>
+              onSubmitClick(validatorAccount, amount, notes),
+            lockupStakedPoolId,
+            isStakePage: false,
+          }}
+        />
       )}
     </div>
+
+    {lockupContract && (
+      <Widget
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
+        props={{
+          accountId: lockupContract,
+          setNearStakedTokens: (v) => setLockupStakedTokens(Big(v).toFixed(2)),
+          setNearUnstakedTokens: (v) =>
+            setLockupUnStakedTokens(Big(v).toFixed(2)),
+          setNearStakedTotalTokens: (v) =>
+            setLockupStakedTotalTokens(Big(v).toFixed(2)),
+          setNearWithdrawTokens: (v) =>
+            setLockupNearWithdrawTokens(Big(v).toFixed(2)),
+          setPoolWithBalance: setLockupStakedPoolsWithBalance,
+        }}
+      />
+    )}
   </Container>
 );

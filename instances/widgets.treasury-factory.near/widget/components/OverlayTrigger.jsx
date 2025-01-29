@@ -3,16 +3,18 @@ const { instance } = props;
 if (!instance) {
   return <></>;
 }
-
+const { getAllColorsAsCSSVariables } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+) || { getAllColorsAsCSSVariables: () => {} };
 const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 
 const config = treasuryDaoID ? Near.view(treasuryDaoID, "get_config") : null;
 const metadata = JSON.parse(atob(config.metadata ?? ""));
-
+const rootClose = props.rootClose ?? true;
 const isDarkTheme = metadata.theme === "dark";
 
 const showTimer = 250;
-const hideTimer = 300;
+const hideTimer = 500;
 
 const handleOnMouseEnter = () => {
   clearTimeout(state.debounce);
@@ -41,6 +43,10 @@ const overlayStyle = props.overlayStyle ?? {
   fontSize: 13,
 };
 
+const ThemeColorsContainer = styled.div`
+  ${() => getAllColorsAsCSSVariables(isDarkTheme, "")}
+`;
+
 const overlay = (
   <div
     className={overlayClassName}
@@ -48,7 +54,7 @@ const overlay = (
     onMouseEnter={handleOnMouseEnter}
     onMouseLeave={handleOnMouseLeave}
   >
-    {props.popup}
+    <ThemeColorsContainer>{props.popup}</ThemeColorsContainer>
   </div>
 );
 
@@ -59,6 +65,7 @@ return (
     delay={{ show: showTimer, hide: hideTimer }}
     placement="auto"
     overlay={overlay}
+    rootClose={rootClose}
   >
     <span
       className="d-inline-flex"

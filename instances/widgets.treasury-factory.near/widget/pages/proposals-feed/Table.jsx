@@ -21,7 +21,10 @@ const { treasuryDaoID, showKYC, showReferenceProposal } = VM.require(
 
 const proposals = props.proposals;
 
-const highlightProposalId = props.highlightProposalId;
+const highlightProposalId = props.highlightProposalId
+  ? parseInt(props.highlightProposalId)
+  : null;
+
 const loading = props.loading;
 const isPendingRequests = props.isPendingRequests;
 const transferApproversGroup = props.transferApproversGroup;
@@ -252,22 +255,12 @@ const ProposalsComponent = () => {
 
             <td className={"fw-semi-bold text-center " + isVisible("Creator")}>
               <Widget
-                src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
                 props={{
-                  popup: (
-                    <Widget
-                      src="${REPL_MOB}/widget/Profile.Popover"
-                      props={{ accountId: item.proposer }}
-                    />
-                  ),
-                  children: (
-                    <div
-                      className="text-truncate"
-                      style={{ maxWidth: "300px" }}
-                    >
-                      {item.proposer}
-                    </div>
-                  ),
+                  accountId: item.proposer,
+                  showKYC: false,
+                  displayImage: false,
+                  displayName: false,
                   instance,
                 }}
               />

@@ -19,8 +19,11 @@ const instance = props.instance;
 const { treasuryDaoID, lockupContract } = VM.require(
   `${instance}/widget/config.data`
 );
+const { TableSkeleton } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.skeleton"
+);
 
-if (!instance || !treasuryDaoID) {
+if (!instance || !treasuryDaoID || !TableSkeleton) {
   return <></>;
 }
 
@@ -36,24 +39,10 @@ const loading = (
   <Widget src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"} />
 );
 
-function sortByDate(items) {
-  const groupedItems = items ? [...items] : [];
-
-  // Sort by timestamp in descending order
-  const sortedItems = groupedItems.sort((a, b) => {
-    const timestampA = parseInt(a.timestamp, 10);
-    const timestampB = parseInt(b.timestamp, 10);
-
-    return timestampB - timestampA;
-  });
-
-  return sortedItems;
-}
-
 // use BOS open API for gateway and paid for web4
 const pikespeakKey = isBosGateway()
   ? "${REPL_PIKESPEAK_KEY}"
-  : props.pikespeakKey;
+  : props.pikespeakKey ?? "263f0c69-69e2-4919-ae02-d8ca7a696da2";
 
 if (!pikespeakKey) {
   return <></>;
@@ -66,78 +55,18 @@ function setAPIError() {
 
 useEffect(() => {
   if (!showMoreLoading) {
-    const options = {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": pikespeakKey,
-      },
-    };
-    const promises = [];
     setShowMoreLoading(true);
-    promises.push(
-      asyncFetch(
-        `https://api.pikespeak.ai/account/near-transfer/${treasuryDaoID}?limit=${totalTxnsPerPage}&offset=${
-          totalTxnsPerPage * (page - 1)
-        }`,
-        options
-      )
-    );
-
-    promises.push(
-      asyncFetch(
-        `https://api.pikespeak.ai/account/ft-transfer/${treasuryDaoID}?limit=${totalTxnsPerPage}&offset=${
-          totalTxnsPerPage * (page - 1)
-        }`,
-        options
-      )
-    );
-
-    if (lockupContract) {
-      promises.push(
-        asyncFetch(
-          `https://api.pikespeak.ai/account/near-transfer/${lockupContract}?limit=${totalTxnsPerPage}&offset=${
-            totalTxnsPerPage * (page - 1)
-          }`,
-          options
-        )
-      );
-
-      promises.push(
-        asyncFetch(
-          `https://api.pikespeak.ai/account/ft-transfer/${lockupContract}?limit=${totalTxnsPerPage}&offset=${
-            totalTxnsPerPage * (page - 1)
-          }`,
-          options
-        )
-      );
-    }
-    Promise.all(promises).then((i) => {
-      if (!i[0].ok || !i[1].ok) {
+    asyncFetch(
+      `${REPL_BACKEND_API}/transactions-transfer-history?treasuryDaoID=${treasuryDaoID}&lockupContract=${lockupContract}&page=${page}`
+    ).then((res) => {
+      if (!res.body.data) {
         setAPIError();
-        return;
-      }
-      if (lockupContract && (!i[2].ok || !i[3].ok)) {
-        setAPIError();
-        return;
-      }
-      const nearResp = lockupContract
-        ? i[0]?.body.concat(i[2]?.body)
-        : i[0]?.body;
-      const ftResp = lockupContract
-        ? i[1]?.body.concat(i[3]?.body)
-        : i[1]?.body;
-      if (Array.isArray(nearResp) && Array.isArray(ftResp)) {
-        if (
-          nearResp.length < totalTxnsPerPage &&
-          ftResp.length < totalTxnsPerPage
-        ) {
+      } else {
+        if (res.body.data.length < page * totalTxnsPerPage) {
           setHideViewMore(true);
         }
         setError(null);
-        setTransactionWithBalance((prev) => {
-          return [...prev, ...sortByDate(nearResp.concat(ftResp))];
-        });
+        setTransactionWithBalance(res.body.data);
         setShowMoreLoading(false);
       }
     });
@@ -193,9 +122,7 @@ function getImage(actionKind) {
 }
 
 const loader = (
-  <div className="d-flex flex-column justify-content-center align-items-center w-100 h-100">
-    {loading}
-  </div>
+  <TableSkeleton numberOfCols={5} numberOfRows={3} numberOfHiddenRows={4} />
 );
 
 const Container = styled.div`
@@ -229,6 +156,11 @@ const Container = styled.div`
   table {
     overflow-x: auto;
   }
+
+  .account-cell {
+    min-width: 180px;
+    max-width: 180px;
+  }
 `;
 
 function formatAccount(text) {
@@ -252,9 +184,9 @@ return (
               <thead>
                 <tr className="text-secondary px-3 py-3 border-top">
                   <td>Type</td>
-                  <td>From</td>
-                  <td>To</td>
-                  <td className="text-center">Transaction</td>
+                  <td className="account-cell">From</td>
+                  <td className="account-cell">To</td>
+                  <td className="text-right">Transaction</td>
                   <td className="text-right">Amount</td>
                 </tr>
               </thead>
@@ -300,45 +232,33 @@ return (
                           </div>
                         </div>
                       </td>
-                      <td className="fw-semi-bold" style={{ minWidth: 200 }}>
+                      <td className="fw-semi-bold account-cell">
                         <Widget
-                          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+                          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
                           props={{
-                            popup: (
-                              <Widget
-                                src="${REPL_MOB}/widget/Profile.Popover"
-                                props={{ accountId: txn.sender }}
-                              />
-                            ),
-                            children: (
-                              <div className="text-truncate">
-                                {formatAccount(txn.sender)}
-                              </div>
-                            ),
+                            accountId: txn.sender,
+                            showKYC: false,
                             instance,
+                            displayImage: false,
+                            displayName: false,
+                            width: 150,
                           }}
                         />
                       </td>
-                      <td className="fw-semi-bold" style={{ minWidth: 200 }}>
+                      <td className="fw-semi-bold account-cell">
                         <Widget
-                          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+                          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
                           props={{
-                            popup: (
-                              <Widget
-                                src="${REPL_MOB}/widget/Profile.Popover"
-                                props={{ accountId: txn.receiver }}
-                              />
-                            ),
-                            children: (
-                              <div className="text-truncate">
-                                {formatAccount(txn.receiver)}
-                              </div>
-                            ),
+                            accountId: txn.receiver,
+                            showKYC: false,
                             instance,
+                            displayImage: false,
+                            displayName: false,
+                            width: 150,
                           }}
                         />
                       </td>
-                      <td className="text-center" style={{ minWidth: 200 }}>
+                      <td className="text-right" style={{ minWidth: 100 }}>
                         <div className="d-flex gap-2 align-items-center fw-semi-bold justify-content-center">
                           <a
                             target="_blank"

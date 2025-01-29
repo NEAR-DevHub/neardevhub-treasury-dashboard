@@ -18,13 +18,19 @@ const [totalLength, setTotalLength] = useState(null);
 const [loading, setLoading] = useState(false);
 const [isPrevPageCalled, setIsPrevCalled] = useState(false);
 
-const refreshTableData = Storage.get(
-  "REFRESH_TABLE_DATA",
-  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.CreatePaymentRequest`
+const refreshStakeTableData = Storage.get(
+  "REFRESH_STAKE_TABLE_DATA",
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.CreateStakeRequest`
 );
-const refreshVoteTableData = Storage.get(
-  "REFRESH__VOTE_ACTION_TABLE_DATA",
-  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.VoteActions`
+
+const refreshUnstakeTableData = Storage.get(
+  "REFRESH_STAKE_TABLE_DATA",
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.CreateUnstakeRequest`
+);
+
+const refreshWithdrawTableData = Storage.get(
+  "REFRESH_STAKE_TABLE_DATA",
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.CreateWithdrawRequest`
 );
 
 const fetchProposals = useCallback(() => {
@@ -62,7 +68,7 @@ useEffect(() => {
   setOffset(null);
   setPage(0);
   fetchProposals();
-}, [refreshTableData]);
+}, [refreshStakeTableData, refreshUnstakeTableData, refreshWithdrawTableData]);
 
 const policy = treasuryDaoID
   ? Near.view(treasuryDaoID, "get_policy", {})

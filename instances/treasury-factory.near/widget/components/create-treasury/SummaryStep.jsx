@@ -103,6 +103,7 @@ function filterMemberByPermission(permission) {
     .map((acc) => acc.accountId);
 }
 
+// Permissions are set using https://github.com/near-daos/sputnik-dao-contract/blob/main/sputnikdao2/src/proposals.rs#L119
 function createDao() {
   const createDaoConfig = {
     config: {
@@ -117,11 +118,7 @@ function createDao() {
             Group: filterMemberByPermission(PERMISSIONS.create),
           },
           name: "Create Requests",
-          permissions: [
-            "call:AddProposal",
-            "transfer:AddProposal",
-            "config:Finalize",
-          ],
+          permissions: ["call:AddProposal", "transfer:AddProposal"],
           vote_policy: {},
         },
         {
@@ -134,6 +131,16 @@ function createDao() {
             "policy:*",
             "add_member_to_role:*",
             "remove_member_from_role:*",
+            "upgrade_self:*",
+            "upgrade_remote:*",
+            "set_vote_token:*",
+            "add_bounty:*",
+            "bounty_done:*",
+            "factory_info_update:*",
+            "policy_add_or_update_role:*",
+            "policy_remove_role:*",
+            "policy_update_default_vote_policy:*",
+            "policy_update_parameters:*",
           ],
           vote_policy: {},
         },
@@ -142,7 +149,13 @@ function createDao() {
             Group: filterMemberByPermission(PERMISSIONS.vote),
           },
           name: "Vote",
-          permissions: ["*:VoteReject", "*:VoteApprove", "*:VoteRemove"],
+          permissions: [
+            "*:VoteReject",
+            "*:VoteApprove",
+            "*:VoteRemove",
+            "*:RemoveProposal",
+            "*:Finalize",
+          ],
           vote_policy: {},
         },
       ],

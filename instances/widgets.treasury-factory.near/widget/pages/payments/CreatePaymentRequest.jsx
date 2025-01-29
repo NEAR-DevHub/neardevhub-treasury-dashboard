@@ -161,7 +161,7 @@ useEffect(() => {
 
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
-        if (lastProposalId !== id) {
+        if (typeof lastProposalId === "number" && lastProposalId !== id) {
           cleanInputs();
           onCloseCanvas();
           clearTimeout(errorTimeout);
@@ -180,14 +180,14 @@ useEffect(() => {
       setShowErrorToast(true);
       setTxnCreated(false);
       clearTimeout(checkTxnTimeout);
-    }, 20000);
+    }, 25_000);
 
     return () => {
       clearTimeout(checkTxnTimeout);
       clearTimeout(errorTimeout);
     };
   }
-}, [isTxnCreated]);
+}, [isTxnCreated, lastProposalId]);
 
 useEffect(() => {
   const handler = setTimeout(() => {
@@ -233,14 +233,13 @@ const Container = styled.div`
   }
 `;
 
-const nearPriceAPI =
-  "https://api.coingecko.com/api/v3/simple/price?ids=near&vs_currencies=usd";
+const nearPriceAPI = `${REPL_BACKEND_API}/near-price`;
 
 useEffect(() => {
   function fetchNearPrice() {
     asyncFetch(nearPriceAPI).then((res) => {
-      if (res.body.near?.usd) {
-        setNearPrice(res.body.near.usd);
+      if (typeof res.body === "number") {
+        setNearPrice(res.body);
       }
     });
   }

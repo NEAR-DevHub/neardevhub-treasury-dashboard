@@ -84,15 +84,24 @@ useEffect(() => {
     let errorTimeout = null;
 
     const checkForVoteOnProposal = () => {
-      getProposalData().then((proposal) => {
-        if (JSON.stringify(proposal.votes) !== JSON.stringify(votes)) {
+      getProposalData()
+        .then((proposal) => {
+          if (JSON.stringify(proposal.votes) !== JSON.stringify(votes)) {
+            checkProposalStatus();
+            clearTimeout(errorTimeout);
+            clearTimeout(checkTxnTimeout);
+            setTxnCreated(false);
+          } else {
+            checkTxnTimeout = setTimeout(checkForVoteOnProposal, 1000);
+          }
+        })
+        .catch(() => {
+          // if proposal data doesn't exist, it means the proposal is deleted
           checkProposalStatus();
+          clearTimeout(checkTxnTimeout);
           clearTimeout(errorTimeout);
           setTxnCreated(false);
-        } else {
-          checkTxnTimeout = setTimeout(checkForVoteOnProposal, 1000);
-        }
-      });
+        });
     };
 
     checkForVoteOnProposal();
@@ -102,7 +111,7 @@ useEffect(() => {
       setShowErrorToast(true);
       setTxnCreated(false);
       clearTimeout(checkTxnTimeout);
-    }, 20000);
+    }, 25_000);
 
     return () => {
       clearTimeout(checkTxnTimeout);

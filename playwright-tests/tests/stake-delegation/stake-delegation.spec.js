@@ -21,6 +21,7 @@ import {
 import { setDontAskAgainCacheValues } from "../../util/cache.js";
 import Big from "big.js";
 import { InsufficientBalance } from "../../util/lib.js";
+import { SandboxRPC } from "../../util/sandboxrpc.js";
 
 test.afterEach(async ({ page }, testInfo) => {
   console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
@@ -241,9 +242,11 @@ async function openWithdrawForm({
   daoAccount,
   lockupContract,
 }) {
-  await expect(page.getByText("Create Request", { exact: true })).toBeVisible();
-  await page.locator(".primary-button").click();
-  await page.locator(".options-card > div:nth-child(3)").click();
+  await expect(page.getByText("Create Request", { exact: true })).toBeVisible({
+    timeout: 10_000,
+  });
+  await page.locator(".dropdown").first().click();
+  await page.locator(".dropdown-menu > div:nth-child(3)").click();
   await expect(
     page.getByRole("heading", { name: "Create Withdraw Request" })
   ).toBeVisible(10_000);
@@ -255,8 +258,8 @@ async function openWithdrawForm({
 
 async function openUnstakeForm({ page, isLockup, daoAccount, lockupContract }) {
   await expect(page.getByText("Create Request", { exact: true })).toBeVisible();
-  await page.locator(".primary-button").click();
-  await page.getByText("Unstake", { exact: true }).click();
+  await page.locator(".dropdown").first().click();
+  await page.locator(".dropdown-menu > div:nth-child(2)").click();
   await expect(
     page.getByRole("heading", { name: "Create Unstake Request" })
   ).toBeVisible(10_000);
@@ -266,28 +269,60 @@ async function openUnstakeForm({ page, isLockup, daoAccount, lockupContract }) {
   }
 }
 
-async function fillValidatorAccount({ page }) {
-  // validator dropdown shouldn't take more than 20 seconds
-  const poolSelector = await page.getByTestId("validator-dropdown");
-  await expect(poolSelector).toBeVisible({ timeout: 20_000 });
-  await poolSelector.click();
-  await page.waitForTimeout(5_000);
+async function openStakeForm({ page, isLockup, daoAccount, lockupContract }) {
+  await expect(page.getByText("Create Request", { exact: true })).toBeVisible();
+  await page.locator(".dropdown").first().click();
+  await page.locator(".dropdown-menu > div:nth-child(1)").click();
+  await expect(
+    page.getByRole("heading", { name: "Create Stake Request" })
+  ).toBeVisible(10_000);
+  await page.waitForTimeout(10_000);
+  if (isLockup) {
+    await selectLockupAccount({ page, daoAccount, lockupContract });
+  }
+}
 
-  const search = await page.getByPlaceholder("Search");
+async function fillValidatorAccount({ page }) {
+  // validator dropdown shouldn't take more than 10 seconds
+  const poolSelector = await page
+    .frameLocator("iframe")
+    .nth(1)
+    .locator("#dropdown");
+  await expect(poolSelector).toBeVisible({ timeout: 10_000 });
+  await poolSelector.click();
+  await page.waitForTimeout(1_000);
+
+  const search = await page
+    .frameLocator("iframe")
+    .nth(1)
+    .getByPlaceholder("Search options");
   search.focus();
   search.fill("astro");
-  await page.getByText(stakedPoolAccount).first().click();
+  await page
+    .frameLocator("iframe")
+    .nth(1)
+    .getByText(stakedPoolAccount)
+    .first()
+    .click();
 }
 
 async function checkForStakeAmount({ page, errorText, availableBalance }) {
-  const submitBtn = page.getByRole("button", { name: "Submit" });
-  const stakeAmount = page.getByRole("spinbutton");
+  const submitBtn = page
+    .frameLocator("iframe")
+    .nth(1)
+    .getByRole("button", { name: "Submit" });
+  const stakeAmount = page
+    .frameLocator("iframe")
+    .nth(1)
+    .getByPlaceholder("Enter amount");
   await stakeAmount.fill((parseFloat(availableBalance) + 2).toString());
-  await stakeAmount.blur();
-  const amountErrorText = page.getByText(errorText);
-  await expect(amountErrorText).toBeVisible();
+  const amountErrorText = page
+    .frameLocator("iframe")
+    .nth(1)
+    .getByText(errorText);
+  await expect(amountErrorText).toBeVisible({ timeout: 10_000 });
   await expect(submitBtn).toBeDisabled();
-  await page.getByText("Use Max").click();
+  await page.frameLocator("iframe").nth(1).getByText("Use Max").click();
   await expect(amountErrorText).toBeHidden();
 }
 
@@ -351,7 +386,13 @@ async function voteOnProposal({
     modifyOriginalResultFunction: () => {
       let originalResult = JSON.parse(JSON.stringify(StakeProposalData));
       originalResult.id = 0;
-      if (isTransactionCompleted) {
+      if (isTransactionCompleted && vote === "Remove" && !isMultiVote) {
+        return {
+          isError: true,
+          error:
+            "wasm execution failed with error: HostError(GuestPanic { panic_msg: \"panicked at 'ERR_NO_PROPOSAL', sputnikdao2/src/views.rs:102:48\" })",
+        };
+      } else if (isTransactionCompleted) {
         if (!isMultiVote) {
           originalResult.status = voteStatus;
         }
@@ -401,6 +442,75 @@ async function voteOnProposal({
   );
 }
 
+async function checkNewProposalSubmission({
+  page,
+  sandbox,
+  checkforMultiProposals = false,
+  daoAccount,
+  daoName,
+}) {
+  const method = checkforMultiProposals
+    ? "signAndSendTransactions"
+    : "signAndSendTransaction";
+
+  const transactionToSendPromise = page.evaluate(async (method) => {
+    const selector = await document.querySelector("near-social-viewer")
+      .selectorPromise;
+
+    const wallet = await selector.wallet();
+
+    return new Promise((resolve) => {
+      wallet[method] = async (transaction) => {
+        resolve(transaction);
+        return new Promise((transactionSentPromiseResolve) => {
+          window.transactionSentPromiseResolve = transactionSentPromiseResolve;
+        });
+      };
+    });
+  }, method);
+
+  await page.getByRole("button", { name: "Confirm" }).click();
+  const transactionToSend = await transactionToSendPromise;
+  const transaction = checkforMultiProposals
+    ? transactionToSend.transactions[0]
+    : transactionToSend;
+
+  const transactionResult = await sandbox.account.functionCall({
+    contractId: daoAccount,
+    methodName: "add_proposal",
+    args: transaction.actions[0].params.args,
+    attachedDeposit: transaction.actions[0].params.deposit,
+  });
+  await page.evaluate(async (transactionResult) => {
+    window.transactionSentPromiseResolve(transactionResult);
+  }, transactionResult);
+  const lastProposalId = await sandbox.getLastProposalId(daoName);
+  await expect(page.locator("div.modal-body code").nth(0)).toBeAttached({
+    attached: false,
+    timeout: 10_000,
+  });
+  await expect(page.locator(".spinner-border")).toBeAttached({
+    attached: false,
+    timeout: 10_000,
+  });
+  await expect(page.locator(".offcanvas-body")).toBeVisible({
+    visible: false,
+  });
+  await expect(
+    page
+      .getByRole("cell", { name: `${lastProposalId - 1}`, exact: true })
+      .first()
+  ).toBeVisible({ timeout: 20_000 });
+
+  if (checkforMultiProposals) {
+    await expect(
+      page
+        .getByRole("cell", { name: `${lastProposalId - 2}`, exact: true })
+        .first()
+    ).toBeVisible({ timeout: 20_000 });
+  }
+}
+
 test.describe("Have valid staked requests and sufficient token balance", function () {
   test.beforeEach(async ({ page, instanceAccount, daoAccount }, testInfo) => {
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
@@ -412,6 +522,7 @@ test.describe("Have valid staked requests and sufficient token balance", functio
       console.log("no stake delegation page configured for instance");
       return test.skip();
     }
+
     if (
       testInfo.title.includes("Should successfully parse old JSON description")
     ) {
@@ -471,20 +582,6 @@ test.describe("Have valid staked requests and sufficient token balance", functio
         "playwright-tests/storage-states/wallet-connected-admin.json",
     });
 
-    const lastProposalId = 10;
-    test.beforeEach(async ({ page }) => {
-      await mockRpcRequest({
-        page,
-        filterParams: {
-          method_name: "get_last_proposal_id",
-        },
-        modifyOriginalResultFunction: (originalResult) => {
-          originalResult = lastProposalId;
-          return originalResult;
-        },
-      });
-    });
-
     test("insufficient account balance should show warning modal, disallow action ", async ({
       page,
     }) => {
@@ -507,16 +604,22 @@ test.describe("Have valid staked requests and sufficient token balance", functio
       ).toBeVisible();
     });
 
-    test("Should create stake delegation request, should throw error when invalid data is provided", async ({
+    test("Should create stake delegation request, should throw error when invalid data is provided, should show in table after submission", async ({
       page,
+      daoAccount,
     }) => {
-      test.setTimeout(100_000);
-      const createRequestButton = await page.getByText("Create Request", {
-        exact: true,
+      test.setTimeout(250_000);
+      const daoName = daoAccount.split(".")[0];
+      const sandbox = new SandboxRPC();
+      await sandbox.init();
+      await sandbox.attachRoutes(page);
+      await sandbox.setupSandboxForSputnikDao(daoName);
+      await sandbox.addStakeRequestProposal({
+        stakedPoolAccount,
+        stakingAmount: "11.00",
+        daoName,
       });
-      await createRequestButton.click();
-      await page.locator(".option").first().click();
-      await page.waitForTimeout(10_000);
+      await openStakeForm({ page });
 
       await fillValidatorAccount({
         page,
@@ -528,12 +631,18 @@ test.describe("Have valid staked requests and sufficient token balance", functio
       });
 
       const stakingAmount = await page
+        .frameLocator("iframe")
+        .nth(1)
         .locator('input[placeholder="Enter amount"]')
         .first()
         .inputValue();
-      await page.getByRole("button", { name: "Submit" }).click();
-      await expect(page.getByText("Processing your request ...")).toBeVisible();
-      await expect(await getTransactionModalObject(page)).toEqual({
+
+      await page
+        .frameLocator("iframe")
+        .nth(1)
+        .getByRole("button", { name: "Submit" })
+        .click();
+      const expectedTransactionModalObject = {
         proposal: {
           description: "* Proposal Action: stake",
           kind: {
@@ -550,14 +659,38 @@ test.describe("Have valid staked requests and sufficient token balance", functio
             },
           },
         },
-      });
+      };
+
+      await expect(await getTransactionModalObject(page)).toEqual(
+        expectedTransactionModalObject
+      );
+      await checkNewProposalSubmission({ page, sandbox, daoAccount, daoName });
+      await sandbox.quitSandbox();
     });
 
-    test("Should create unstake delegation request, should throw error when invalid data is provided", async ({
+    test("Should create unstake delegation request, should throw error when invalid data is provided, should show in table after submission", async ({
       page,
+      daoAccount,
       instanceAccount,
     }) => {
-      test.setTimeout(120_000);
+      test.setTimeout(250_000);
+      const daoName = daoAccount.split(".")[0];
+      const sandbox = new SandboxRPC();
+      await sandbox.init();
+      await sandbox.attachRoutes(page);
+      await sandbox.setupSandboxForSputnikDao(daoName);
+      const args = "eyJhbW91bnQiOiIzMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAifQ==";
+      const description = `* Proposal Action: withdraw <br>* Show After Proposal Id Approved: 2 <br>* Custom Notes: Following to [#2](/${instanceAccount}/widget/app?page=stake-delegation&selectedTab=History&highlightProposalId=2) unstake request`;
+      await sandbox.addUnstakeRequestProposal({
+        stakedPoolAccount,
+        functionCallArgs: args,
+        daoName,
+      });
+      await sandbox.addWithdrawRequestProposal({
+        stakedPoolAccount,
+        description: description,
+        daoName,
+      });
       await openUnstakeForm({ page });
       await fillValidatorAccount({
         page,
@@ -567,10 +700,12 @@ test.describe("Have valid staked requests and sufficient token balance", functio
         availableBalance: stakedNear,
         errorText: "The amount exceeds the balance you have staked.",
       });
-      await page.getByRole("button", { name: "Submit" }).click();
-      await expect(page.getByText("Processing your request ...")).toBeVisible();
-
-      await expect(await getTransactionModalObject(page)).toEqual({
+      await page
+        .frameLocator("iframe")
+        .nth(1)
+        .getByRole("button", { name: "Submit" })
+        .click();
+      const expectedTransactionModalObject = {
         proposal: {
           description: "* Proposal Action: unstake",
           kind: {
@@ -579,7 +714,7 @@ test.describe("Have valid staked requests and sufficient token balance", functio
               actions: [
                 {
                   method_name: "unstake",
-                  args: "eyJhbW91bnQiOiIzMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAifQ==",
+                  args: args,
                   deposit: "0",
                   gas: "200000000000000",
                 },
@@ -587,15 +722,18 @@ test.describe("Have valid staked requests and sufficient token balance", functio
             },
           },
         },
-      });
+      };
+      await expect(await getTransactionModalObject(page)).toEqual(
+        expectedTransactionModalObject
+      );
       const txnLocator = await page
         .locator("div.modal-body code")
         .nth(1)
         .innerText();
       const dataReceived = JSON.parse(txnLocator);
-      expect(dataReceived).toEqual({
+      const expectedTransaction2ModalObject = {
         proposal: {
-          description: `* Proposal Action: withdraw <br>* Show After Proposal Id Approved: ${lastProposalId} <br>* Custom Notes: Following to [#${lastProposalId}](/${instanceAccount}/widget/app?page=stake-delegation&selectedTab=History&highlightProposalId=${lastProposalId}) unstake request`,
+          description: description,
           kind: {
             FunctionCall: {
               receiver_id: stakedPoolAccount,
@@ -610,7 +748,18 @@ test.describe("Have valid staked requests and sufficient token balance", functio
             },
           },
         },
+      };
+      await expect(dataReceived).toEqual(expectedTransaction2ModalObject);
+
+      await checkNewProposalSubmission({
+        page,
+        sandbox,
+        daoAccount,
+        daoName,
+        checkforMultiProposals: true,
       });
+
+      await sandbox.quitSandbox();
     });
   });
 });
@@ -646,7 +795,6 @@ test.describe("Withdraw request", function () {
     ).toBeVisible({
       timeout: 10_000,
     });
-    await expect(page.getByRole("button", { name: "Submit" })).toBeDisabled();
   });
 
   test("Unstaked tokens are not ready to be withdrawn, show warning screen", async ({
@@ -666,14 +814,23 @@ test.describe("Withdraw request", function () {
     ).toBeVisible({
       timeout: 10_000,
     });
-    await expect(page.getByRole("button", { name: "Submit" })).toBeDisabled();
   });
 
-  test("Have valid withdraw tokens from one pool", async ({
+  test("Have valid withdraw tokens from one pool, should show in table after submission", async ({
     page,
     daoAccount,
   }) => {
-    test.setTimeout(150_000);
+    test.setTimeout(250_000);
+    const daoName = daoAccount.split(".")[0];
+    const sandbox = new SandboxRPC();
+    await sandbox.init();
+    await sandbox.attachRoutes(page);
+    await sandbox.setupSandboxForSputnikDao(daoName);
+    await sandbox.addWithdrawRequestProposal({
+      stakedPoolAccount,
+      description: `* Proposal Action: withdraw`,
+      daoName,
+    });
     await mockUnstakeAndWithdrawBalance({
       page,
       hasUnstakeBalance: true,
@@ -686,8 +843,7 @@ test.describe("Withdraw request", function () {
     const submitBtn = page.getByRole("button", { name: "Submit" });
     await expect(submitBtn).toBeEnabled();
     await submitBtn.dblclick();
-    await expect(page.getByText("Processing your request ...")).toBeVisible();
-    await expect(await getTransactionModalObject(page)).toEqual({
+    const expectedTransactionModalObject = {
       proposal: {
         description: `* Proposal Action: withdraw`,
         kind: {
@@ -704,7 +860,12 @@ test.describe("Withdraw request", function () {
           },
         },
       },
-    });
+    };
+    await expect(await getTransactionModalObject(page)).toEqual(
+      expectedTransactionModalObject
+    );
+    await checkNewProposalSubmission({ page, sandbox, daoAccount, daoName });
+    await sandbox.quitSandbox();
   });
 
   test("Have valid withdraw tokens from multiple pools", async ({
@@ -712,7 +873,7 @@ test.describe("Withdraw request", function () {
     daoAccount,
     instanceAccount,
   }) => {
-    test.setTimeout(150_000);
+    test.setTimeout(250_000);
     const instanceConfig = await getInstanceConfig({
       page,
       instanceAccount,
@@ -721,8 +882,25 @@ test.describe("Withdraw request", function () {
       console.log("lockup contract found for instance");
       return test.skip();
     }
-    await page.goto(`/${instanceAccount}/widget/app?page=stake-delegation`);
+    const daoName = daoAccount.split(".")[0];
+    const sandbox = new SandboxRPC();
+    await sandbox.init();
+    await sandbox.attachRoutes(page);
+    await sandbox.setupSandboxForSputnikDao(daoName);
+    const description = `* Proposal Action: withdraw`;
+    await sandbox.addWithdrawRequestProposal({
+      stakedPoolAccount,
+      description,
+      daoName,
+    });
+    await sandbox.addWithdrawRequestProposal({
+      stakedPoolAccount: multiStakedPoolAccount,
+      description,
+      daoName,
+    });
+    await updateDaoPolicyMembers({ page });
     await mockStakedPools({ daoAccount, page, multiplePools: true });
+    await page.goto(`/${instanceAccount}/widget/app?page=stake-delegation`);
     await mockUnstakeAndWithdrawBalance({
       page,
       hasUnstakeBalance: true,
@@ -744,7 +922,6 @@ test.describe("Withdraw request", function () {
     const submitBtn = page.getByRole("button", { name: "Submit" });
     await expect(submitBtn).toBeEnabled();
     await submitBtn.dblclick();
-    await expect(page.getByText("Processing your request ...")).toBeVisible();
     // proposals for both the pools
     await expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
@@ -788,6 +965,14 @@ test.describe("Withdraw request", function () {
         },
       },
     });
+    await checkNewProposalSubmission({
+      page,
+      sandbox,
+      daoAccount,
+      daoName,
+      checkforMultiProposals: true,
+    });
+    await sandbox.quitSandbox();
   });
 
   test("Vote on withdraw request, when amount is not ready", async ({
@@ -821,38 +1006,15 @@ test.describe("Withdraw request", function () {
   });
 });
 
-async function openLockupStakingForm({
-  page,
-  daoAccount,
-  lockupContract,
-  instanceAccount,
-}) {
-  const createRequestButton = await page.getByText("Create Request", {
-    exact: true,
-  });
-  await createRequestButton.click();
-  const widgetsAccount =
-    (instanceAccount.includes("testing") === true
-      ? "test-widgets"
-      : "widgets") + ".treasury-factory.near";
-
-  await page
-    .locator(
-      `div[data-component="${widgetsAccount}/widget/pages.stake-delegation.CreateButton"] .option`,
-      { hasText: "Stake" }
-    )
-    .first()
-    .click();
-  await page.waitForTimeout(10_000);
-  await selectLockupAccount({
-    page,
-    daoAccount,
-    lockupContract,
-  });
+async function openLockupStakingForm({ page, daoAccount, lockupContract }) {
+  await openStakeForm({ page, isLockup: true, daoAccount, lockupContract });
   await expect(
-    page.getByText(
-      "You cannot split your locked funds across multiple validators."
-    )
+    page
+      .frameLocator("iframe")
+      .nth(1)
+      .getByText(
+        "You cannot split your locked funds across multiple validators."
+      )
   ).toBeVisible({
     timeout: 10_000,
   });
@@ -939,7 +1101,11 @@ test.describe("Lockup staking", function () {
         availableBalance: formatNearAmount(sufficientAvailableBalance),
         errorText: "Your account doesn't have sufficient balance.",
       });
-      await page.getByRole("button", { name: "Submit" }).click();
+      await page
+        .frameLocator("iframe")
+        .nth(1)
+        .getByRole("button", { name: "Submit" })
+        .click();
       await expect(page.getByText("Processing your request ...")).toBeVisible();
 
       await expect(await getTransactionModalObject(page)).toEqual({
@@ -1049,8 +1215,12 @@ test.describe("Lockup staking", function () {
         lockupContract,
         instanceAccount,
       });
-      await page.waitForTimeout(20_000);
-      const poolSelector = page.locator(".custom-select").first();
+      await page.waitForTimeout(2_000);
+      const poolSelector = page
+        .frameLocator("iframe")
+        .nth(1)
+        .locator(".custom-select")
+        .first();
       await expect(poolSelector).toBeVisible({ timeout: 20_000 });
       const hasDisabledClassOnChild = await poolSelector
         .locator(".disabled")
@@ -1061,7 +1231,11 @@ test.describe("Lockup staking", function () {
         availableBalance: formatNearAmount(sufficientAvailableBalance),
         errorText: "Your account doesn't have sufficient balance.",
       });
-      await page.getByRole("button", { name: "Submit" }).click();
+      await page
+        .frameLocator("iframe")
+        .nth(1)
+        .getByRole("button", { name: "Submit" })
+        .click();
       await expect(page.getByText("Processing your request ...")).toBeVisible();
 
       await expect(await getTransactionModalObject(page)).toEqual({
@@ -1099,8 +1273,11 @@ test.describe("Lockup staking", function () {
         daoAccount,
         lockupContract,
       });
-      await page.waitForTimeout(10_000);
-      const poolSelector = await page.locator(".custom-select");
+      await page.waitForTimeout(2_000);
+      const poolSelector = await page
+        .frameLocator("iframe")
+        .nth(1)
+        .locator(".custom-select");
       const hasDisabledClassOnChild = await poolSelector
         .locator(".disabled")
         .count();
@@ -1110,7 +1287,11 @@ test.describe("Lockup staking", function () {
         availableBalance: stakedNear,
         errorText: "The amount exceeds the balance you have staked.",
       });
-      await page.getByRole("button", { name: "Submit" }).click();
+      await page
+        .frameLocator("iframe")
+        .nth(1)
+        .getByRole("button", { name: "Submit" })
+        .click();
       await expect(page.getByText("Processing your request ...")).toBeVisible();
 
       await expect(await getTransactionModalObject(page)).toEqual({
