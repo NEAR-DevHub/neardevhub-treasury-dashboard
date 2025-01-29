@@ -386,7 +386,13 @@ async function voteOnProposal({
     modifyOriginalResultFunction: () => {
       let originalResult = JSON.parse(JSON.stringify(StakeProposalData));
       originalResult.id = 0;
-      if (isTransactionCompleted) {
+      if (isTransactionCompleted && vote === "Remove" && !isMultiVote) {
+        return {
+          isError: true,
+          error:
+            "wasm execution failed with error: HostError(GuestPanic { panic_msg: \"panicked at 'ERR_NO_PROPOSAL', sputnikdao2/src/views.rs:102:48\" })",
+        };
+      } else if (isTransactionCompleted) {
         if (!isMultiVote) {
           originalResult.status = voteStatus;
         }

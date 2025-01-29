@@ -41,12 +41,20 @@ export async function mockRpcRequest({
       const mockedResponse = {
         jsonrpc: "2.0",
         id: "dontcare",
-        result: {
+        result: {},
+      };
+
+      if (mockedResult?.isError) {
+        mockedResponse["result"] = {
+          error: mockedResult.error,
+        };
+      } else {
+        mockedResponse["result"] = {
           result: Array.from(
             new TextEncoder().encode(JSON.stringify(mockedResult))
           ),
-        },
-      };
+        };
+      }
 
       route.fulfill({
         status: 200,
