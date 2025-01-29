@@ -42,6 +42,7 @@ async function voteOnProposal({
       return originalResult;
     },
   });
+
   await mockRpcRequest({
     page,
     filterParams: {
@@ -49,7 +50,13 @@ async function voteOnProposal({
     },
     modifyOriginalResultFunction: (originalResult) => {
       originalResult = TransferProposalData;
-      if (isTransactionCompleted) {
+      if (isTransactionCompleted && vote === "Remove" && !isMultiVote) {
+        return {
+          isError: true,
+          error:
+            "wasm execution failed with error: HostError(GuestPanic { panic_msg: \"panicked at 'ERR_NO_PROPOSAL', sputnikdao2/src/views.rs:102:48\" })",
+        };
+      } else if (isTransactionCompleted) {
         if (!isMultiVote) {
           originalResult.status = voteStatus;
         }

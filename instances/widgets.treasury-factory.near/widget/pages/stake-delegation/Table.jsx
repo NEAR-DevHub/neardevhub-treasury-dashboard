@@ -49,7 +49,10 @@ const columnsVisibility = JSON.parse(
   ) ?? "[]"
 );
 
-const highlightProposalId = props.highlightProposalId;
+const highlightProposalId = props.highlightProposalId
+  ? parseInt(props.highlightProposalId)
+  : null;
+
 const loading = props.loading;
 const isPendingRequests = props.isPendingRequests;
 const functionCallApproversGroup = props.functionCallApproversGroup;
