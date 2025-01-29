@@ -11,8 +11,10 @@ const children = props.children;
 
 const Container = styled.div`
   opacity: 1 !important;
+
   .offcanvas.offcanvas-end {
     width: 30% !important;
+    z-index: 1060;
   }
 
   @media screen and (max-width: 1200px) {
@@ -36,6 +38,7 @@ const Container = styled.div`
 
 return (
   <Container>
+    <div className={`fade ${showCanvas ? "modal-backdrop show" : ""}`} />
     <div
       className={`offcanvas offcanvas-end ${showCanvas ? "show" : ""}`}
       tabIndex="-1"
