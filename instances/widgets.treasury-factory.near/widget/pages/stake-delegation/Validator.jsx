@@ -5,7 +5,7 @@ const { isBosGateway } = VM.require(
 const validatorId = props.validatorId;
 const pikespeakKey = isBosGateway()
   ? "${REPL_PIKESPEAK_KEY}"
-  : props.pikespeakKey;
+  : props.pikespeakKey ?? "263f0c69-69e2-4919-ae02-d8ca7a696da2";
 
 if (!pikespeakKey) {
   return (

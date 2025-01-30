@@ -13,4 +13,61 @@ const Skeleton = styled.div`
   }
 `;
 
-return { Skeleton };
+const TableSkeleton = ({ numberOfCols, numberOfRows, numberOfHiddenRows }) => {
+  const Row = ({ first, body, style, hidden }) => (
+    <tr style={style}>
+      <td style={{ width: "67px" }}>
+        {hidden ? (
+          <div style={{ height: body.height, width: body.width }} />
+        ) : (
+          <Skeleton
+            style={{ height: first.height, width: first.width }}
+            className="rounded-3"
+          />
+        )}
+      </td>
+      {[...Array(numberOfCols)].map(() => (
+        <td>
+          {hidden ? (
+            <div style={{ height: body.height, width: body.width }} />
+          ) : (
+            <Skeleton
+              style={{ height: body.height, width: body.width }}
+              className="rounded-3"
+            />
+          )}
+        </td>
+      ))}
+    </tr>
+  );
+
+  return (
+    <table className="table">
+      <thead>
+        <Row
+          first={{ height: "18px", width: "18px" }}
+          body={{ height: "18px", width: "74px" }}
+        />
+      </thead>
+      <tbody>
+        {[...Array(numberOfRows)].map(() => (
+          <Row
+            style={{ height: "57px" }}
+            first={{ height: "24px", width: "32px" }}
+            body={{ height: "30px", width: "100%" }}
+          />
+        ))}
+        {[...Array(numberOfHiddenRows)].map(() => (
+          <Row
+            style={{ height: "57px" }}
+            first={{ height: "24px", width: "32px" }}
+            body={{ height: "30px", width: "100%" }}
+            hidden
+          />
+        ))}
+      </tbody>
+    </table>
+  );
+};
+
+return { Skeleton, TableSkeleton };

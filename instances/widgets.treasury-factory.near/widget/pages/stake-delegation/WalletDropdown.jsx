@@ -19,12 +19,10 @@ const nearBalances = getNearBalances(treasuryDaoID);
 
 const nearPrice = useCache(
   () =>
-    asyncFetch(
-      `https://api.coingecko.com/api/v3/simple/price?ids=near&vs_currencies=usd`
-    ).then((res) => {
-      return res.body.near?.usd;
+    asyncFetch(`${REPL_BACKEND_API}/near-price`).then((res) => {
+      return res.body;
     }),
-  "price",
+  "near-price",
   { subscribe: false }
 );
 

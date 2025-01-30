@@ -143,7 +143,11 @@ return (
         <div className="d-flex flex-column">
           <div className="h4 mb-0 d-flex flex-row gap-2 align-items-center">
             <div className="page-title">{getTitle(page ?? "dashboard")}</div>
-            {isTesting && <small className="badge">Testing</small>}
+            {isTesting ? (
+              <small className="badge">Testing</small>
+            ) : (
+              <small className="badge">Beta</small>
+            )}
           </div>
 
           <div>

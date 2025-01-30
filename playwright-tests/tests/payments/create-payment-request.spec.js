@@ -146,6 +146,10 @@ test.describe("User is logged in", function () {
     storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
   });
 
+  test.beforeEach(async ({ page }) => {
+    await mockNearPrice({ nearPrice: 5, page });
+  });
+
   test("low account balance should show warning modal, and allow action ", async ({
     page,
     instanceAccount,

@@ -57,7 +57,7 @@ useEffect(() => {
 
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
-        if (lastProposalId !== id) {
+        if (typeof lastProposalId === "number" && lastProposalId !== id) {
           setToastStatus(true);
           onCloseCanvas();
           clearTimeout(errorTimeout);
@@ -74,14 +74,14 @@ useEffect(() => {
       setShowErrorToast(true);
       setTxnCreated(false);
       clearTimeout(checkTxnTimeout);
-    }, 20000);
+    }, 25_000);
 
     return () => {
       clearTimeout(checkTxnTimeout);
       clearTimeout(errorTimeout);
     };
   }
-}, [isTxnCreated]);
+}, [isTxnCreated, lastProposalId]);
 
 function updateDaoPolicy(rolesMap) {
   const updatedPolicy = { ...daoPolicy };

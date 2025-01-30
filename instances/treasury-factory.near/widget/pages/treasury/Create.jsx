@@ -72,7 +72,7 @@ const Wrapper = ({ title, children }) => (
       <div style={{ width: "150px" }}>
         <a
           className="btn btn-outline-plain w-100"
-          href={`https://near.social/${REPL_DEVDAO_ACCOUNT}/widget/app`}
+          href={`https://neartreasury.com/`}
         >
           Cancel creation
         </a>

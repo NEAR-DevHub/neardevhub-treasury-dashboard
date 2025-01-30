@@ -26,14 +26,24 @@ const daoPolicy = treasuryDaoID
   ? Near.view(treasuryDaoID, "get_policy", {})
   : null;
 
-const lastProposalId = Near.view(treasuryDaoID, "get_last_proposal_id");
-
 const hasCreatePermission = hasPermission(
   treasuryDaoID,
   context.accountId,
-  "policy",
+  "policy_update_parameters",
   "AddProposal"
 );
+
+const [lastProposalId, setLastProposalId] = useState(null);
+
+function getLastProposalId() {
+  return Near.asyncView(treasuryDaoID, "get_last_proposal_id").then(
+    (result) => result
+  );
+}
+
+useEffect(() => {
+  getLastProposalId().then((i) => setLastProposalId(i));
+}, []);
 
 if (!daoPolicy || lastProposalId === null) {
   return (
@@ -61,7 +71,7 @@ const [proposalsThatWillExpire, setProposalsThatWillExpire] = useState([]);
 const [proposalsThatWillBeActive, setProposalsThatWillBeActive] = useState([]);
 const [otherPendingRequests, setOtherPendingRequests] = useState([]);
 const [showToastStatus, setToastStatus] = useState(null);
-const [isSubmittingChangeRequest, setSubmittingChangeRequest] = useState(false);
+const [isTxnCreated, setTxnCreated] = useState(false);
 const [showAffectedProposalsModal, setShowAffectedProposalsModal] =
   useState(false);
 
@@ -223,8 +233,9 @@ const findAffectedProposals = (callback) => {
 };
 
 function submitVotePolicyChangeTxn() {
+  setLoading(false);
   setShowAffectedProposalsModal(false);
-  setSubmittingChangeRequest(true);
+  setTxnCreated(true);
   const description = {
     title: "Update policy - Voting Duration",
     summary: `${context.accountId} requested to change voting duration from ${currentDurationDays} to ${durationDays}.`,
@@ -265,35 +276,36 @@ const submitChangeRequest = () => {
 };
 
 useEffect(() => {
-  if (isSubmittingChangeRequest) {
+  if (isTxnCreated) {
+    let checkTxnTimeout = null;
     let errorTimeout = null;
-    Near.asyncView(treasuryDaoID, "get_proposal", {
-      id: lastProposalId - 1,
-    }).then((proposal) => {
-      const proposal_period =
-        proposal?.kind?.ChangePolicyUpdateParameters?.parameters
-          ?.proposal_period;
 
-      if (
-        proposal_period &&
-        isSubmittingChangeRequest &&
-        Number(proposal_period.substring(0, proposal_period.length - 9)) /
-          (24 * 60 * 60) ===
-          Number(durationDays)
-      ) {
-        setToastStatus(true);
-        setSubmittingChangeRequest(false);
-        clearTimeout(errorTimeout);
-      }
-    });
+    const checkForNewProposal = () => {
+      getLastProposalId().then((id) => {
+        if (typeof lastProposalId === "number" && lastProposalId === id) {
+          setToastStatus(true);
+          setTxnCreated(false);
+          clearTimeout(errorTimeout);
+        } else {
+          checkTxnTimeout = setTimeout(() => checkForNewProposal(), 1000);
+        }
+      });
+    };
+    checkForNewProposal();
 
     // if in 20 seconds there is no change, show error condition
     errorTimeout = setTimeout(() => {
       setShowErrorToast(true);
-      setSubmittingChangeRequest(false);
-    }, 20000);
+      setTxnCreated(false);
+      clearTimeout(checkTxnTimeout);
+    }, 25_000);
+
+    return () => {
+      clearTimeout(checkTxnTimeout);
+      clearTimeout(errorTimeout);
+    };
   }
-}, [isSubmittingChangeRequest, lastProposalId]);
+}, [isTxnCreated, lastProposalId]);
 
 const changeDurationDays = (newDurationDays) => {
   setDurationDays(newDurationDays);
@@ -305,7 +317,7 @@ const showImpactedRequests =
 return (
   <Container>
     <TransactionLoader
-      showInProgress={isSubmittingChangeRequest}
+      showInProgress={isTxnCreated}
       showError={showErrorToast}
       toggleToast={() => setShowErrorToast(false)}
     />
@@ -492,12 +504,12 @@ return (
                   props={{
                     classNames: { root: "theme-btn" },
                     label: "Submit Request",
-                    loading: showLoader || isSubmittingChangeRequest,
+                    loading: showLoader || isTxnCreated,
                     disabled:
                       durationDays === currentDurationDays ||
                       showLoader ||
                       !hasCreatePermission ||
-                      isSubmittingChangeRequest,
+                      isTxnCreated,
                   }}
                 />
               ),
@@ -506,7 +518,7 @@ return (
                 durationDays === currentDurationDays ||
                 showLoader ||
                 !hasCreatePermission ||
-                isSubmittingChangeRequest,
+                isTxnCreated,
               treasuryDaoID,
               callbackAction: submitChangeRequest,
             }}
