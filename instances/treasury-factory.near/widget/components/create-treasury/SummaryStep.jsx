@@ -86,11 +86,13 @@ const storageAccountName = useMemo(() => Storage.privateGet("accountName"));
 
 const checkAccountCreation = async () => {
   console.log(storageAccountName);
-  const web4 = Near.view(`${storageAccountName}.near`, "web4_get", {
-    request: { path: "/" },
-  });
 
-  if (web4) setShowCongratsModal(true);
+  Near.asyncView(`${storageAccountName}.near`, "web4_get", {
+    request: { path: "/" },
+  }).then((web4) => {
+    console.log(web4);
+    if (web4) setShowCongratsModal(true);
+  });
 };
 
 useEffect(async () => {
