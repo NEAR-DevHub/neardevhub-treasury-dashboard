@@ -274,7 +274,7 @@ test.describe("User is logged in", function () {
     await expect(page.getByText("Enter Percentage")).toBeVisible();
   });
 
-  test("should show minimum threshold 1 vote and percentage is 1", async ({ 
+  test("should show minimum threshold 1 vote and percentage is 1", async ({
     page,
   }) => {
     test.setTimeout(150_000);
@@ -310,6 +310,5 @@ test.describe("User is logged in", function () {
     ).toBeVisible();
     await page.getByRole("button", { name: "Confirm" }).click();
     await expect(page.getByText("Processing your request ...")).toBeVisible();
-
   });
 });
