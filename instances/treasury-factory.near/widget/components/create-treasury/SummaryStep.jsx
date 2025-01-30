@@ -1,8 +1,14 @@
+const { TransactionLoader } = VM.require(
+  `${REPL_DEVDAO_ACCOUNT}/widget/components.TransactionLoader`
+) || { TransactionLoader: () => <></> };
+
 const { formFields } = props;
 
 const REQUIRED_BALANCE = 9;
 
 const [showCongratsModal, setShowCongratsModal] = useState(false);
+const [showErrorToast, setShowErrorToast] = useState(false);
+const [isTxnCreated, setTxnCreated] = useState(false);
 
 const Section = styled.div`
   display: flex;
@@ -84,20 +90,44 @@ const PERMISSIONS = {
 
 const storageAccountName = useMemo(() => Storage.privateGet("accountName"));
 
-const checkAccountCreation = async () => {
-  console.log(storageAccountName);
+useEffect(() => {
+  if (isTxnCreated) {
+    let checkTxnTimeout = null;
+    let errorTimeout = null;
 
-  Near.asyncView(`${storageAccountName}.near`, "web4_get", {
-    request: { path: "/" },
-  }).then((web4) => {
-    console.log(web4);
-    if (web4) setShowCongratsModal(true);
-  });
-};
+    const checkAccountCreation = async () => {
+      Near.asyncView(`${storageAccountName}.near`, "web4_get", {
+        request: { path: "/" },
+      })
+        .then((web4) => {
+          if (web4) {
+            setTxnCreated(false);
+            setShowCongratsModal(true);
+            clearTimeout(errorTimeout);
+            clearTimeout(checkTxnTimeout);
+          } else {
+            checkTxnTimeout = setTimeout(checkAccountCreation, 1000);
+          }
+        })
+        .catch(() => {
+          checkTxnTimeout = setTimeout(checkAccountCreation, 1000);
+        });
+    };
+    checkAccountCreation();
 
-useEffect(async () => {
-  if (storageAccountName) checkAccountCreation();
-}, [storageAccountName]);
+    // if in 25 seconds there is no change, show error condition
+    errorTimeout = setTimeout(() => {
+      setShowErrorToast(true);
+      setTxnCreated(false);
+      clearTimeout(checkTxnTimeout);
+    }, 25_000);
+
+    return () => {
+      clearTimeout(checkTxnTimeout);
+      clearTimeout(errorTimeout);
+    };
+  }
+}, [isTxnCreated]);
 
 function filterMemberByPermission(permission) {
   return formFields.members
@@ -107,6 +137,7 @@ function filterMemberByPermission(permission) {
 
 // Permissions are set using https://github.com/near-daos/sputnik-dao-contract/blob/main/sputnikdao2/src/proposals.rs#L119
 function createDao() {
+  setTxnCreated(true);
   const createDaoConfig = {
     config: {
       name: `${formFields.accountName}`,
@@ -249,6 +280,11 @@ const ListItem = ({ member }) => (
 
 return (
   <>
+    <TransactionLoader
+      showInProgress={isTxnCreated}
+      showError={showErrorToast}
+      toggleToast={() => setShowErrorToast(false)}
+    />
     <div className="d-flex flex-column w-100 gap-3">
       <h3>Summary</h3>
 

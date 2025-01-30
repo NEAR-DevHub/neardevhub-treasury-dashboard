@@ -1,7 +1,4 @@
-const widgetSrc = context.widgetSrc
-  ? context.widgetSrc
-  : "testing-app2.near/widget/app";
-const instance = widgetSrc.split("/")[0];
+const instance = `${REPL_BOOTSTRAP_ACCOUNT}`;
 const treasuryDaoID = instance.split(".near")[0] + ".sputnik-dao.near";
 
 return {
