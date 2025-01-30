@@ -431,7 +431,10 @@ return (
                   id={contract}
                   type="radio"
                   value={contract}
-                  onClick={() => setSelectedToken(contract)}
+                  onClick={() => {
+                    setBalanceDate(null);
+                    setSelectedToken(contract);
+                  }}
                   selected={contract === selectedToken}
                 />
                 <label

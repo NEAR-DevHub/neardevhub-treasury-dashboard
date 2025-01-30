@@ -141,11 +141,16 @@ function formatNearAmount(amount) {
 useEffect(() => {
   if (lockupContract) {
     Near.asyncView(lockupContract, "get_locked_amount").then((res) => {
-      const locked = Big(res).minus(LOCKUP_MIN_BALANCE_FOR_STORAGE).toFixed(2);
+      let locked = Big(res).minus(LOCKUP_MIN_BALANCE_FOR_STORAGE).toFixed(2);
+      let lockedParsed = formatNearAmount(locked);
+      if (parseFloat(lockedParsed) < 0) {
+        locked = 0;
+        lockedParsed = 0;
+      }
       setLockupNearBalances((prev) => ({
         ...prev,
         locked,
-        lockedParsed: formatNearAmount(locked),
+        lockedParsed,
         storage: LOCKUP_MIN_BALANCE_FOR_STORAGE,
         storageParsed: formatNearAmount(LOCKUP_MIN_BALANCE_FOR_STORAGE),
       }));
@@ -177,7 +182,7 @@ useEffect(() => {
 const totalBalance = Big(nearBalances?.totalParsed ?? "0")
   .mul(nearPrice ?? 1)
   .plus(Big(lockupNearBalances?.totalParsed ?? "0").mul(nearPrice ?? 1))
-  .plus(Big(userFTTokens?.totalCummulativeAmt ?? "0"))
+  .plus(Big(userFTTokens?.totalCumulativeAmt ?? "0"))
   .toFixed(2);
 
 function formatCurrency(amount) {

@@ -273,4 +273,42 @@ test.describe("User is logged in", function () {
     ).toBeVisible();
     await expect(page.getByText("Enter Percentage")).toBeVisible();
   });
+
+  test("should show minimum threshold 1 vote and percentage is 1", async ({
+    page,
+  }) => {
+    test.setTimeout(150_000);
+    const submitBtn = page.getByText("Submit Request");
+    // Number of votes
+    await page.getByTestId("dropdown-btn").click();
+    await page.getByRole("list").getByText("Number of votes").click();
+    const thresholdInput = page.getByTestId("threshold-input");
+    await thresholdInput.fill("1", { force: true });
+    await thresholdInput.fill("0");
+
+    await expect(
+      page.getByText("At least 1 member is required.")
+    ).toBeVisible();
+    await expect(submitBtn).toBeDisabled();
+    // Percentage
+    await page.getByTestId("dropdown-btn").click();
+    await page.getByRole("list").getByText("Percentage of members").click();
+    await thresholdInput.fill("1");
+    await thresholdInput.fill("", { force: true });
+    await thresholdInput.pressSequentially("0", { delay: 100 });
+    await expect(
+      page.getByText("The minimum allowed percentage is 1%.")
+    ).toBeVisible();
+    await expect(submitBtn).toBeDisabled();
+    await thresholdInput.fill("20");
+    await expect(page.getByText("Warning!")).toBeVisible();
+    await submitBtn.click();
+    await expect(
+      page.getByText(
+        "Changing this setting will require 2 vote(s) to approve requests. You will no longer be able to approve requests with 1 vote(s)."
+      )
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Confirm" }).click();
+    await expect(page.getByText("Processing your request ...")).toBeVisible();
+  });
 });
