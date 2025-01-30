@@ -379,7 +379,13 @@ return (
       <button
         className="btn btn-primary w-100"
         onClick={createDao}
-        disabled={!formFields.members || !formFields.accountName}
+        disabled={
+          !formFields.members ||
+          !formFields.accountName ||
+          isTxnCreated ||
+          storageAccountName ||
+          showCongratsModal
+        }
       >
         Confirm and Create
       </button>
