@@ -13,7 +13,8 @@ const STATIC_IMAGES = {
 };
 const widgetBasePath = `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.create-treasury`;
 const alreadyCreatedATreasury = Storage.get(
-  "TreasuryAccountName"`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.create-treasury.SummaryStep`
+  "TreasuryAccountName",
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.create-treasury.SummaryStep`
 );
 
 if (alreadyCreatedATreasury) {

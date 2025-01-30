@@ -88,10 +88,9 @@ const PERMISSIONS = {
   vote: "Vote",
 };
 
-const storageAccountName = useMemo(() =>
-  Storage.get(
-    "TreasuryAccountName"`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.create-treasury.SummaryStep`
-  )
+const storageAccountName = Storage.get(
+  "TreasuryAccountName",
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.create-treasury.SummaryStep`
 );
 
 useEffect(() => {
