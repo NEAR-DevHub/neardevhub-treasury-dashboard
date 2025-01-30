@@ -406,13 +406,13 @@ return (
               <div>
                 <CongratsItem
                   title="near.org"
-                  link={`https://near.org/${
+                  link={`https://dev.near.org/${
                     storageAccountName ?? formFields.accountName
                   }.near/widget/app`}
                 />
                 <CongratsItem
                   title="near.social"
-                  link={`https://social.near/${
+                  link={`https://near.social/${
                     storageAccountName ?? formFields.accountName
                   }.near/widget/app`}
                 />
