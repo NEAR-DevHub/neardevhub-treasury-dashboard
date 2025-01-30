@@ -88,7 +88,11 @@ const PERMISSIONS = {
   vote: "Vote",
 };
 
-const storageAccountName = useMemo(() => Storage.privateGet("accountName"));
+const storageAccountName = useMemo(() =>
+  Storage.get(
+    "TreasuryAccountName"`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.create-treasury.SummaryStep`
+  )
+);
 
 useEffect(() => {
   if (isTxnCreated) {
@@ -96,7 +100,7 @@ useEffect(() => {
     let errorTimeout = null;
 
     const checkAccountCreation = async () => {
-      Near.asyncView(`${storageAccountName}.near`, "web4_get", {
+      Near.asyncView(`${formFields.accountName}.near`, "web4_get", {
         request: { path: "/" },
       })
         .then((web4) => {
@@ -105,6 +109,7 @@ useEffect(() => {
             setShowCongratsModal(true);
             clearTimeout(errorTimeout);
             clearTimeout(checkTxnTimeout);
+            Storage.set("TreasuryAccountName", formFields.accountName);
           } else {
             checkTxnTimeout = setTimeout(checkAccountCreation, 1000);
           }
@@ -115,12 +120,12 @@ useEffect(() => {
     };
     checkAccountCreation();
 
-    // if in 25 seconds there is no change, show error condition
+    // if in 40 seconds there is no change, show error condition
     errorTimeout = setTimeout(() => {
       setShowErrorToast(true);
       setTxnCreated(false);
       clearTimeout(checkTxnTimeout);
-    }, 25_000);
+    }, 40_000);
 
     return () => {
       clearTimeout(checkTxnTimeout);
@@ -219,8 +224,6 @@ function createDao() {
       deposit: Big(REQUIRED_BALANCE).mul(Big(10).pow(24)).toFixed(),
     },
   ]);
-
-  Storage.privateSet("accountName", formFields.accountName);
 }
 
 const CongratsItem = ({ title, link }) => (
@@ -383,7 +386,7 @@ return (
       </button>
     </div>
 
-    {showCongratsModal && (
+    {(showCongratsModal || storageAccountName) && (
       <Widget
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
         props={{
@@ -398,17 +401,30 @@ return (
               <div>
                 <CongratsItem
                   title="near.org"
-                  link={`https://near.org/${storageAccountName}.near/widget/app`}
+                  link={`https://near.org/${
+                    storageAccountName ?? formFields.accountName
+                  }.near/widget/app`}
                 />
                 <CongratsItem
                   title="near.social"
-                  link={`https://social.near/${storageAccountName}.near/widget/app`}
+                  link={`https://social.near/${
+                    storageAccountName ?? formFields.accountName
+                  }.near/widget/app`}
                 />
                 <CongratsItem
                   title="web4"
-                  link={`https://${storageAccountName}.near.page`}
+                  link={`https://${
+                    storageAccountName ?? formFields.accountName
+                  }.near.page`}
                 />
               </div>
+              <a
+                href="?page=create-treasury"
+                className="btn btn-primary w-100"
+                onClick={() => Storage.set("TreasuryAccountName", null)}
+              >
+                Create another Treasury
+              </a>
             </div>
           ),
           onClose: () => setShowCongratsModal(false),
