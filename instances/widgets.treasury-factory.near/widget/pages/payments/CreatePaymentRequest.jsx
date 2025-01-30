@@ -50,7 +50,7 @@ const [isReceiverRegistered, setReceiverRegister] = useState(false);
 const [isLoadingProposals, setLoadingProposals] = useState(false);
 const [showCancelModal, setShowCancelModal] = useState(false);
 const [showErrorToast, setShowErrorToast] = useState(false);
-const [nearPrice, setNearPrice] = useState(null);
+const [nearPrice, setNearPrice] = useState('1'); // setting 1 as default, so VM doesn't throw any error 
 
 useEffect(() => {
   if (!showProposalSelection) {
