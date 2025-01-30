@@ -1,5 +1,4 @@
 // Find all our documentation at https://docs.near.org
-use near_sdk::serde_json::Value;
 use near_sdk::{ext_contract, Promise};
 pub const NO_DEPOSIT: u128 = 0;
 pub const XCC_SUCCESS: u64 = 1;

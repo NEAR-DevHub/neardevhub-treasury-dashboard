@@ -1,4 +1,3 @@
-use base64::{engine::general_purpose, Engine as _};
 use std::env;
 use std::fs;
 use std::io::Write;
@@ -21,14 +20,10 @@ fn main() {
         index_html = index_html.replace("PIKESPEAK_API_KEY", &pikespeak_api_key);
     }
 
-    // Convert the modified HTML content to base64 using near-sdk base64 engine
-    let index_html_base64 = general_purpose::STANDARD.encode(&index_html);
-
-    // Write the base64 string to the output file
-    let output_path = Path::new(env!("CARGO_MANIFEST_DIR")).join("index.html.base64.txt");
+    let output_path = Path::new(env!("CARGO_MANIFEST_DIR")).join("src/web4/index.html");
     let mut output_file = fs::File::create(output_path).expect("Failed to create output file");
 
     output_file
-        .write_all(index_html_base64.as_bytes())
+        .write_all(index_html.as_bytes())
         .expect("Failed to write to output file");
 }
