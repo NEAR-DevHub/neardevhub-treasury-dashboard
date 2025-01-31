@@ -14,7 +14,7 @@ const Container = styled.div`
 
   .offcanvas.offcanvas-end {
     width: 30% !important;
-    z-index: 1060;
+    z-index: 1054; // 1055 is the confirmation modal z-index
   }
 
   @media screen and (max-width: 1200px) {
