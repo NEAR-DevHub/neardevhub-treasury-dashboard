@@ -305,12 +305,12 @@ const Approval = ({ height, width }) => (
       cy="10"
       r="9"
       fill="#3CB179"
-      stroke="var(--icon-color)"
+      stroke="var(--bg-page-color)"
       stroke-width="2"
     />
     <path
       d="M14 7L8.5 12.5L6 10"
-      stroke="var(--icon-color)"
+      stroke="var(--bg-page-color)"
       stroke-width="2"
       stroke-linecap="round"
       stroke-linejoin="round"
@@ -331,19 +331,19 @@ const Reject = ({ height, width }) => (
       cy="10"
       r="9"
       fill="#D95C4A"
-      stroke="var(--icon-color)"
+      stroke="var(--bg-page-color)"
       stroke-width="2"
     />
     <path
       d="M13.5 7L7.5 13"
-      stroke="var(--icon-color)"
+      stroke="var(--bg-page-color)"
       stroke-width="2"
       stroke-linecap="round"
       stroke-linejoin="round"
     />
     <path
       d="M7.5 7L13.5 13"
-      stroke="var(--icon-color)"
+      stroke="var(--bg-page-color)"
       stroke-width="2"
       stroke-linecap="round"
       stroke-linejoin="round"
