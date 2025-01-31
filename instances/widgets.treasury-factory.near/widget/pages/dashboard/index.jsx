@@ -197,13 +197,13 @@ const TooManyRequestModal = () => {
     <Modal>
       <ModalHeader>
         <div className="d-flex align-items-center justify-content-between mb-2">
-          <div className="d-flex gap-3">
+          <div className="d-flex gap-3 align-items-center">
             <img
               src="https://ipfs.near.social/ipfs/bafkreiggx7y2qhmywarmefat4bfnm3yndnrx4fsz4e67gkwkcqmggmzadq"
               height={30}
-              width={40}
+              width={50}
             />
-            Whoa there, speedster! 
+            Please wait a moment... 
           </div>
           <i
             className="bi bi-x-lg h4 mb-0 cursor-pointer"
@@ -212,20 +212,9 @@ const TooManyRequestModal = () => {
         </div>
       </ModalHeader>
       <ModalContent>
-        You’ve been refreshing the page a bit too much, and our data provider
-        needs a moment to catch up. Some information, like token prices,
-        couldn’t load this time.
-        <br /> <br /> 🕒 Take a 30-second breather.
-        <br /> 🔄 Refresh the page afterward and continue as usual.
-        <br /> <br /> Thanks for your patience—it helps us keep things running
-        smoothly!
-        <div>
-          <img
-            src="https://ipfs.near.social/ipfs/bafkreidpa2kxo6bv543rg4uqce6ghnn6bj2c67ewh3vbuz3txymcxr7qkq"
-            height={200}
-            className="w-100 mt-2"
-          />
-        </div>
+        We're experiencing a high volume of requests right now. Some
+        information, such as token prices, might be temporarily unavailable.
+        Please wait a few minutes before refreshing. Thanks for your patience.
       </ModalContent>
       <ModalFooter>
         <Widget
