@@ -20,7 +20,7 @@ const daoPolicy = treasuryDaoID
   ? Near.view(treasuryDaoID, "get_policy", {})
   : null;
 
-const deposit = daoPolicy?.proposal_bond || 100000000000000000000000;
+const deposit = daoPolicy?.proposal_bond || 0;
 const rolesMap = props.rolesMap;
 const onConfirm = props.onConfirmClick ?? (() => {});
 const onRefresh = props.onRefresh;
@@ -119,6 +119,7 @@ function onConfirmClick() {
         },
       },
       gas: 200000000000000,
+      deposit,
     },
   ]);
   onConfirm();

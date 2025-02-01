@@ -297,7 +297,7 @@ function toBase64(json) {
 
 function onSubmitClick() {
   setTxnCreated(true);
-  const deposit = daoPolicy?.proposal_bond || 100000000000000000000000;
+  const deposit = daoPolicy?.proposal_bond || 0;
 
   const description = {
     title: "Update Config - Theme & logo",
@@ -326,6 +326,7 @@ function onSubmitClick() {
         },
       },
       gas: 200000000000000,
+      deposit,
     },
   ]);
 }
