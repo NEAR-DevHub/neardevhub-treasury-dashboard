@@ -7,6 +7,7 @@ const instance = props.instance;
 const [account, setAccount] = useState(value);
 const [showAccountAutocomplete, setAutoComplete] = useState(false);
 const [isValidAccount, setValidAccount] = useState(true);
+const [selectedFromAutoComplete, setSelectedFromAuto] = useState(false);
 const maxWidth = props.maxWidth;
 const AutoComplete = styled.div`
   max-width: ${maxWidth ?? "400px"};
@@ -33,7 +34,7 @@ useEffect(() => {
       (account ?? "").includes(".tg") ||
       (account ?? "").includes(".aurora");
     setValidAccount(valid);
-    setAutoComplete(!valid);
+    setAutoComplete(true);
   }, 100);
 
   return () => {
@@ -50,6 +51,7 @@ return (
         value: account,
         onChange: (e) => {
           setAccount(e.target.value);
+          setSelectedFromAuto(false);
         },
         skipPaddingGap: true,
         placeholder: placeholder,
@@ -65,7 +67,7 @@ return (
         Please enter valid account ID
       </div>
     )}
-    {showAccountAutocomplete && account && (
+    {showAccountAutocomplete && !selectedFromAutoComplete && account && (
       <AutoComplete>
         <Widget
           src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.AccountAutocomplete"
@@ -74,6 +76,7 @@ return (
             onSelect: (id) => {
               setAccount(id);
               setAutoComplete(false);
+              setSelectedFromAuto(true);
             },
             onClose: () => setAutoComplete(false),
             instance,

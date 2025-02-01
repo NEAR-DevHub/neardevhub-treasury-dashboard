@@ -9,7 +9,10 @@ const followingData = Social.get(
 );
 if (!profilesData) return <></>;
 const profiles = Object.entries(profilesData);
-const term = (props.term || "").replace(/\W/g, "").toLowerCase();
+const term = props.term;
+const parsedTerm = (term || "").replace(/\W/g, "").toLowerCase();
+const isValidAccount =
+  term.includes(".near") || term.includes(".aurora") || term.includes(".tg");
 const limit = 5;
 
 for (let i = 0; i < profiles.length; i++) {
@@ -19,8 +22,8 @@ for (let i = 0; i < profiles.length; i++) {
   const nameSearch = (profiles[i][1]?.profile?.name || "")
     .replace(/\W/g, "")
     .toLowerCase();
-  const accountIdSearchIndex = accountIdSearch.indexOf(term);
-  const nameSearchIndex = nameSearch.indexOf(term);
+  const accountIdSearchIndex = accountIdSearch.indexOf(parsedTerm);
+  const nameSearchIndex = nameSearch.indexOf(parsedTerm);
 
   if (accountIdSearchIndex > -1 || nameSearchIndex > -1) {
     score += 10;
@@ -98,7 +101,27 @@ const CloseButton = styled.button`
   transition: all 200ms;
 `;
 
-if (results.length === 0) return <></>;
+if (!isValidAccount && results.length === 0) return <></>;
+
+const Account = ({ accountId }) => {
+  return (
+    <div
+      className="item cursor-pointer"
+      onClick={() => onResultClick(accountId)}
+    >
+      <Widget
+        key={accountId}
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
+        props={{
+          accountId: accountId,
+          showKYC: false,
+          instance: props.instance,
+          width: 160,
+        }}
+      />
+    </div>
+  );
+};
 
 return (
   <Wrapper>
@@ -106,26 +129,13 @@ return (
       <CloseButton tabIndex={-1} type="button" onClick={props.onClose}>
         <i class="bi bi-x-circle-fill h5 mb-0"></i>
       </CloseButton>
-
-      {results.map((result) => {
-        return (
-          <div
-            className="item cursor-pointer"
-            onClick={() => onResultClick(result.accountId)}
-          >
-            <Widget
-              key={result.accountId}
-              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
-              props={{
-                accountId: result.accountId,
-                showKYC: false,
-                instance: props.instance,
-                width: 160,
-              }}
-            />
-          </div>
-        );
-      })}
+      {isValidAccount ? (
+        <Account accountId={term} />
+      ) : (
+        results.map((result) => {
+          return <Account accountId={result.accountId} />;
+        })
+      )}
     </Scroller>
   </Wrapper>
 );
