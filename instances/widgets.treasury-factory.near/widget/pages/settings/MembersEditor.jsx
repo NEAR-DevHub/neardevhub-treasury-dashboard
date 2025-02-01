@@ -30,7 +30,7 @@ const daoPolicy = treasuryDaoID
   ? Near.view(treasuryDaoID, "get_policy", {})
   : null;
 
-const deposit = daoPolicy?.proposal_bond || 100000000000000000000000;
+const deposit = daoPolicy?.proposal_bond || 0;
 
 useEffect(() => {
   if (selectedMember && !username) {
@@ -169,6 +169,7 @@ function onSubmitClick() {
         },
       },
       gas: 200000000000000,
+      deposit,
     },
   ]);
 }
@@ -252,6 +253,7 @@ return (
           placeholder: "treasury.near",
           onUpdate: setUsername,
           disabled: selectedMember,
+          instance,
         }}
       />
       {!selectedMember && memberAlreadyExists && (

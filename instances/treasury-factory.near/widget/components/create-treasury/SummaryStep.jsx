@@ -432,7 +432,6 @@ return (
               </a>
             </div>
           ),
-          onClose: () => setShowCongratsModal(false),
         }}
       />
     )}

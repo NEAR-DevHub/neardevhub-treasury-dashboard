@@ -126,11 +126,35 @@ test("should be able to create a treasury instance with sandbox, and create/exec
     ).length,
   ).toBe(0);
 
+  const preload_content = {};
+  preload_content[`${instance_name}.near`] = 
+  {"widget":
+    {"app":
+      {"metadata":
+        {
+          "description": "test description",
+          "image":{"ipfs_cid":"bafkreido4srg4aj7l7yg2tz22nbu3ytdidjczdvottfr5ek6gqorwg6v74"},
+          "name": "test title",
+          "tags": {"devhub":"","communities":"","developer-governance":"","app":""}
+        }
+      }
+    }
+  };
+  
+  const preloads = {};
+  preloads[`/web4/contract/social.near/get?keys.json=%5B%22${instance_name}.near/widget/app/metadata/**%22%5D`] = {
+"contentType": "application/json",    
+"body":Buffer.from(JSON.stringify(preload_content)).toString('base64')
+  }; 
+
   const web4GetResult = await sandbox.account.viewFunction({
     contractId: `${instance_name}.near`,
     methodName: "web4_get",
-    args: { request: { path: "/" } },
+    args: {
+      request: { path: "/", preloads }      
+    }
   });
+
   expect(
     Buffer.from(web4GetResult.body, "base64")
       .toString()

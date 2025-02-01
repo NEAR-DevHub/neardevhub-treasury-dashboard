@@ -305,7 +305,7 @@ function onSubmitClick() {
   setTxnCreated(true);
   const isNEAR = tokenId === tokenMapping.NEAR;
   const gas = 270000000000000;
-  const deposit = daoPolicy?.proposal_bond || 100000000000000000000000;
+  const deposit = daoPolicy?.proposal_bond || 0;
   const description = {
     title: selectedProposal.name,
     summary: selectedProposal.summary,
@@ -333,6 +333,7 @@ function onSubmitClick() {
         },
       },
       gas: gas,
+      deposit,
     },
   ];
   if (!isReceiverRegistered && !isNEAR) {
@@ -520,12 +521,13 @@ return (
       <div className="d-flex flex-column gap-1">
         <label>Recipient</label>
         <Widget
-          src="${REPL_DEVHUB}/widget/devhub.entity.proposal.AccountInput"
+          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.AccountInput"
           props={{
             value: receiver,
             placeholder: "treasury.near",
             onUpdate: setReceiver,
             maxWidth: "100%",
+            instance,
           }}
         />
       </div>

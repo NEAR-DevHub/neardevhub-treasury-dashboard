@@ -51,6 +51,7 @@ const code = `
   body {
     background-color: ${colors["--bg-page-color"]} !important;
     color: ${colors["--text-color"]} !important;
+    overflow-y: hidden;
   }
   label {
     font-weight: 500;
@@ -286,6 +287,7 @@ const code = `
       }
       
     }
+    updateIframeHeight()
   }
 
   // Add event listener to the Amount input field
@@ -376,7 +378,14 @@ const code = `
       scrollBox.appendChild(optionElement);
     });
   }
-  
+
+    
+  function updateIframeHeight() {
+    const height = document.documentElement.scrollHeight || document.body.scrollHeight;
+    // Send the new height to the parent window
+    window.parent.postMessage({ handler: 'updateIframeHeight', height: height }, '*');
+  }    
+
 
   // Select an option from the dropdown
   function selectOption(option) {
@@ -400,7 +409,7 @@ const code = `
       useMaxBtn.style.display = 'none';
       availableBalance.style.display = 'none';
     }
-    
+    updateIframeHeight()
   }
 
   function submitForm() {
@@ -420,14 +429,6 @@ const code = `
     function cancelForm() {
         window.parent.postMessage({ handler: "onCancel" }, "*");
     }
-
-    
-    function updateIframeHeight() {
-      const height = document.documentElement.scrollHeight || document.body.scrollHeight;
-      // Send the new height to the parent window
-      window.parent.postMessage({ handler: 'updateIframeHeight', height: height }, '*');
-    }    
-
 
    window.addEventListener(
       "message",
