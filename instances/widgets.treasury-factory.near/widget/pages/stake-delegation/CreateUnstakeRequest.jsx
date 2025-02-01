@@ -266,7 +266,7 @@ function toBase64(json) {
 
 function onSubmitClick(validatorAccount, amount, notes) {
   setTxnCreated(true);
-  const deposit = daoPolicy?.proposal_bond || 100000000000000000000000;
+  const deposit = daoPolicy?.proposal_bond || 0;
   const description = {
     proposal_action: "unstake",
     notes: notes,
@@ -301,6 +301,7 @@ function onSubmitClick(validatorAccount, amount, notes) {
         },
       },
       gas: 200000000000000,
+      deposit,
     },
   ];
 
@@ -351,6 +352,7 @@ function onSubmitClick(validatorAccount, amount, notes) {
       },
     },
     gas: 200000000000000,
+    deposit,
   });
 
   Near.call(calls);

@@ -250,7 +250,7 @@ useEffect(() => {
 
 function onSubmitClick() {
   setTxnCreated(true);
-  const deposit = daoPolicy?.proposal_bond || 100000000000000000000000;
+  const deposit = daoPolicy?.proposal_bond || 0;
   const description = {
     proposal_action: "withdraw",
   };
@@ -292,6 +292,7 @@ function onSubmitClick() {
         },
       },
       gas: 200000000000000,
+      deposit,
     });
   });
 
