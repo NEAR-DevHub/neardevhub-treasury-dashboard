@@ -2,6 +2,7 @@ const value = props.value;
 const placeholder = props.placeholder;
 const onUpdate = props.onUpdate;
 const disabled = props.disabled;
+const instance = props.instance;
 
 const [account, setAccount] = useState(value);
 const [showAccountAutocomplete, setAutoComplete] = useState(false);
@@ -29,7 +30,8 @@ useEffect(() => {
     const valid =
       account.length === 64 ||
       (account ?? "").includes(".near") ||
-      (account ?? "").includes(".tg");
+      (account ?? "").includes(".tg") ||
+      (account ?? "").includes(".aurora");
     setValidAccount(valid);
     setAutoComplete(!valid);
   }, 100);
@@ -66,7 +68,7 @@ return (
     {showAccountAutocomplete && account && (
       <AutoComplete>
         <Widget
-          src="${REPL_DEVHUB}/widget/devhub.components.molecule.AccountAutocomplete"
+          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.AccountAutocomplete"
           props={{
             term: account,
             onSelect: (id) => {
@@ -74,6 +76,7 @@ return (
               setAutoComplete(false);
             },
             onClose: () => setAutoComplete(false),
+            instance,
           }}
         />
       </AutoComplete>

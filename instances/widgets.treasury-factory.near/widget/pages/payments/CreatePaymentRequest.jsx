@@ -520,12 +520,13 @@ return (
       <div className="d-flex flex-column gap-1">
         <label>Recipient</label>
         <Widget
-          src="${REPL_DEVHUB}/widget/devhub.entity.proposal.AccountInput"
+          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.AccountInput"
           props={{
             value: receiver,
             placeholder: "treasury.near",
             onUpdate: setReceiver,
             maxWidth: "100%",
+            instance,
           }}
         />
       </div>
