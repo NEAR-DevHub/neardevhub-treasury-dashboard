@@ -305,7 +305,7 @@ function onSubmitClick() {
   setTxnCreated(true);
   const isNEAR = tokenId === tokenMapping.NEAR;
   const gas = 270000000000000;
-  const deposit = daoPolicy?.proposal_bond || 100000000000000000000000;
+  const deposit = daoPolicy?.proposal_bond || 0;
   const description = {
     title: selectedProposal.name,
     summary: selectedProposal.summary,
@@ -333,6 +333,7 @@ function onSubmitClick() {
         },
       },
       gas: gas,
+      deposit,
     },
   ];
   if (!isReceiverRegistered && !isNEAR) {

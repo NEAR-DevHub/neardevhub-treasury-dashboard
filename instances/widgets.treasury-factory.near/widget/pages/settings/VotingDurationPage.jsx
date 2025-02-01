@@ -55,7 +55,7 @@ if (!daoPolicy || lastProposalId === null) {
   );
 }
 
-const deposit = daoPolicy?.proposal_bond || 100000000000000000000000;
+const deposit = daoPolicy?.proposal_bond || 0;
 
 const currentDurationDays =
   Number(
@@ -244,6 +244,7 @@ function submitVotePolicyChangeTxn() {
     contractName: treasuryDaoID,
     methodName: "add_proposal",
     deposit,
+    gas: 200000000000000,
     args: {
       proposal: {
         description: encodeToMarkdown(description),
@@ -282,7 +283,7 @@ useEffect(() => {
 
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
-        if (typeof lastProposalId === "number" && lastProposalId === id) {
+        if (typeof lastProposalId === "number" && lastProposalId !== id) {
           setToastStatus(true);
           setTxnCreated(false);
           clearTimeout(errorTimeout);
