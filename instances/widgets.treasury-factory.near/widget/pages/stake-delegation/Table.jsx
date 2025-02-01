@@ -9,8 +9,14 @@ const {
 } = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
 const instance = props.instance;
 const policy = props.policy;
+
+const { TableSkeleton } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.skeleton"
+);
+
 if (
   !instance ||
+  !TableSkeleton ||
   typeof getNearBalances !== "function" ||
   typeof decodeProposalDescription !== "function" ||
   typeof formatSubmissionTimeStamp !== "function"
@@ -49,7 +55,10 @@ const columnsVisibility = JSON.parse(
   ) ?? "[]"
 );
 
-const highlightProposalId = props.highlightProposalId;
+const highlightProposalId = props.highlightProposalId
+  ? parseInt(props.highlightProposalId)
+  : null;
+
 const loading = props.loading;
 const isPendingRequests = props.isPendingRequests;
 const functionCallApproversGroup = props.functionCallApproversGroup;
@@ -110,7 +119,7 @@ const Container = styled.div`
     color: inherit !important;
   }
 `;
-div;
+
 function checkProposalStatus(proposalId) {
   Near.asyncView(treasuryDaoID, "get_proposal", {
     id: proposalId,
@@ -392,22 +401,12 @@ const ProposalsComponent = () => {
             </td>
             <td className={"fw-semi-bold text-center " + isVisible("Creator")}>
               <Widget
-                src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
                 props={{
-                  popup: (
-                    <Widget
-                      src="${REPL_MOB}/widget/Profile.Popover"
-                      props={{ accountId: item.proposer }}
-                    />
-                  ),
-                  children: (
-                    <div
-                      className="text-truncate"
-                      style={{ maxWidth: "300px" }}
-                    >
-                      {item.proposer}
-                    </div>
-                  ),
+                  accountId: item.proposer,
+                  showKYC: false,
+                  displayImage: false,
+                  displayName: false,
                   instance,
                 }}
               />
@@ -511,11 +510,7 @@ return (
     proposals === null ||
     functionCallApproversGroup === null ||
     policy === null ? (
-      <div className="d-flex justify-content-center align-items-center w-100">
-        <Widget
-          src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"}
-        />
-      </div>
+      <TableSkeleton numberOfCols={8} numberOfRows={3} numberOfHiddenRows={4} />
     ) : (
       <div className="w-100">
         {visibleProposals.length === 0 ? (

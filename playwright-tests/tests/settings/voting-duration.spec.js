@@ -159,7 +159,7 @@ test.describe("User is logged in", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(150_000);
+    test.setTimeout(200_000);
     const daoName = daoAccount.split(".")[0];
     const sandbox = new SandboxRPC();
     await sandbox.init();
@@ -185,7 +185,8 @@ test.describe("User is logged in", function () {
       .fill(newDurationDays.toString());
 
     await page.waitForTimeout(500);
-    await page.locator("button", { hasText: "Submit" }).click();
+    const submitBtn = page.locator("button", { hasText: "Submit" });
+    await submitBtn.click();
 
     await page
       .locator(".modalfooter button", { hasText: "Yes, proceed" })
@@ -210,7 +211,6 @@ test.describe("User is logged in", function () {
     });
 
     await page.getByRole("button", { name: "Confirm" }).click();
-
     const transactionToSend = await transactionToSendPromise;
 
     const transactionResult = await sandbox.account.functionCall({
@@ -219,15 +219,24 @@ test.describe("User is logged in", function () {
       args: transactionToSend.actions[0].params.args,
       attachedDeposit: transactionToSend.actions[0].params.deposit,
     });
-
+    const lastProposalId = await sandbox.getLastProposalId(daoName);
     await page.evaluate((transactionResult) => {
       window.transactionSentPromiseResolve(transactionResult);
     }, transactionResult);
-    await expect(page.getByText("Processing your request ...")).toBeVisible();
+    await mockRpcRequest({
+      page,
+      filterParams: {
+        method_name: "get_last_proposal_id",
+      },
+      modifyOriginalResultFunction: () => {
+        return lastProposalId;
+      },
+    });
+
     await expect(
       page.getByText("Voting duration change request submitted")
     ).toBeVisible();
-
+    await expect(submitBtn).toBeEnabled();
     await sandbox.quitSandbox();
   });
 

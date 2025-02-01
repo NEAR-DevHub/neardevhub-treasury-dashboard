@@ -1,7 +1,8 @@
-const { isNearSocial } = VM.require(
-  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+const { Approval, Reject } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Icons"
 ) || {
-  isNearSocial: false,
+  Approval: () => <></>,
+  Reject: () => <></>,
 };
 
 const votes = props.votes ?? {};
@@ -9,11 +10,6 @@ const accounts = Object.keys(votes);
 const approversGroup = props.approversGroup ?? [];
 const maxShow = 1;
 const showHover = accounts?.length > maxShow;
-const approve =
-  "https://ipfs.near.social/ipfs/bafkreib52fq4kw7gyfsupz4mrtrexbusc2lplxnopqswa5awtnlqmenena";
-const reject =
-  "https://ipfs.near.social/ipfs/bafkreihrwi2nzl7d2dyij3tstr6tdr7fnioq7vu37en3dxt4faihxreabm";
-
 const maxIndex = 100;
 
 const Container = styled.div`
@@ -28,35 +24,37 @@ function getImage(acc) {
   return `https://i.near.social/magic/large/https://near.social/magic/img/account/${acc}`;
 }
 
+const ApprovalImage = styled.div`
+  position: relative;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  height: 40px;
+  width: 40px;
+  .status {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+  }
+`;
+
 const ApproversComponent = (
   <div className="d-flex align-items-center">
     {accounts.slice(0, maxShow).map((acc, index) => {
       const imageSrc = getImage(acc);
-      const voteImg = votes[acc] === "Approve" ? approve : reject;
       return (
-        <div
+        <ApprovalImage
           style={{
             marginLeft: index > 0 ? "-10px" : 0,
             zIndex: maxIndex - index,
-            position: "relative",
+            backgroundImage: `url("${imageSrc}")`,
           }}
+          className="rounded-circle"
         >
-          <img
-            src={imageSrc}
-            height={40}
-            width={40}
-            className="rounded-circle"
-          />
-          <img
-            src={voteImg}
-            height={20}
-            style={
-              isNearSocial
-                ? { marginTop: 25, marginLeft: "-20px" }
-                : { marginTop: "-17px", marginLeft: "23px" }
-            }
-          />
-        </div>
+          <div className="status">
+            {votes[acc] === "Approve" ? <Approval /> : <Reject />}
+          </div>
+        </ApprovalImage>
       );
     })}
     {accounts.length > maxShow && (
@@ -108,23 +106,22 @@ return (
                       }}
                     >
                       <div>
-                        <img
-                          src={imageSrc}
-                          height={40}
-                          width={40}
+                        <ApprovalImage
+                          style={{
+                            backgroundImage: `url("${imageSrc}")`,
+                          }}
                           className="rounded-circle"
-                        />
-                        {voted && (
-                          <img
-                            src={voteImg}
-                            height={20}
-                            style={
-                              isNearSocial
-                                ? { marginTop: 17, marginLeft: "-15px" }
-                                : { marginTop: "-19px", marginLeft: "21px" }
-                            }
-                          />
-                        )}
+                        >
+                          {voted && (
+                            <div className="status">
+                              {votes[acc] === "Approve" ? (
+                                <Approval />
+                              ) : (
+                                <Reject />
+                              )}
+                            </div>
+                          )}
+                        </ApprovalImage>
                       </div>
                       <div className="d-flex flex-column">
                         <div className="h6 mb-0 text-break">{name ?? acc}</div>

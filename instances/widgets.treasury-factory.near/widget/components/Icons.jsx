@@ -235,6 +235,122 @@ const NotVerfiedTick = ({ height, width }) => (
   </svg>
 );
 
+const User = ({ height, width }) => (
+  <svg
+    width={width ?? 20}
+    height={height ?? 20}
+    viewBox="0 0 20 20"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M16.6666 17.5V15.8333C16.6666 14.9493 16.3155 14.1014 15.6903 13.4763C15.0652 12.8512 14.2174 12.5 13.3333 12.5H6.66665C5.78259 12.5 4.93474 12.8512 4.30962 13.4763C3.6845 14.1014 3.33331 14.9493 3.33331 15.8333V17.5"
+      stroke="var(--icon-color)"
+      stroke-width="1.66667"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M10 9.16667C11.841 9.16667 13.3334 7.67428 13.3334 5.83333C13.3334 3.99238 11.841 2.5 10 2.5C8.15907 2.5 6.66669 3.99238 6.66669 5.83333C6.66669 7.67428 8.15907 9.16667 10 9.16667Z"
+      stroke="var(--icon-color)"
+      stroke-width="1.66667"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  </svg>
+);
+
+const Copy = ({ height, width }) => (
+  <svg
+    width={width ?? 20}
+    height={height ?? 20}
+    viewBox="0 0 20 20"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <g clip-path="url(#clip0_4358_31006)">
+      <path
+        d="M16.6667 7.5H9.16667C8.24619 7.5 7.5 8.24619 7.5 9.16667V16.6667C7.5 17.5871 8.24619 18.3333 9.16667 18.3333H16.6667C17.5871 18.3333 18.3333 17.5871 18.3333 16.6667V9.16667C18.3333 8.24619 17.5871 7.5 16.6667 7.5Z"
+        stroke="var(--icon-color)"
+        stroke-width="1.66667"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+      <path
+        d="M4.16669 12.4998H3.33335C2.89133 12.4998 2.4674 12.3242 2.15484 12.0117C1.84228 11.6991 1.66669 11.2752 1.66669 10.8332V3.33317C1.66669 2.89114 1.84228 2.46722 2.15484 2.15466C2.4674 1.8421 2.89133 1.6665 3.33335 1.6665H10.8334C11.2754 1.6665 11.6993 1.8421 12.0119 2.15466C12.3244 2.46722 12.5 2.89114 12.5 3.33317V4.1665"
+        stroke="var(--icon-color)"
+        stroke-width="1.66667"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </g>
+    <defs>
+      <clipPath id="clip0_4358_31006">
+        <rect width="20" height="20" fill="white" />
+      </clipPath>
+    </defs>
+  </svg>
+);
+
+const Approval = ({ height, width }) => (
+  <svg
+    width={width ?? 20}
+    height={height ?? 20}
+    viewBox="0 0 20 20"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <circle
+      cx="10"
+      cy="10"
+      r="9"
+      fill="#3CB179"
+      stroke="var(--bg-page-color)"
+      stroke-width="2"
+    />
+    <path
+      d="M14 7L8.5 12.5L6 10"
+      stroke="var(--bg-page-color)"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  </svg>
+);
+
+const Reject = ({ height, width }) => (
+  <svg
+    width={width ?? 21}
+    height={height ?? 20}
+    viewBox="0 0 21 20"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <circle
+      cx="10.5"
+      cy="10"
+      r="9"
+      fill="#D95C4A"
+      stroke="var(--bg-page-color)"
+      stroke-width="2"
+    />
+    <path
+      d="M13.5 7L7.5 13"
+      stroke="var(--bg-page-color)"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M7.5 7L13.5 13"
+      stroke="var(--bg-page-color)"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  </svg>
+);
+
 return {
   NearToken,
   WithdrawIcon,
@@ -244,4 +360,8 @@ return {
   Whitelist,
   VerifiedTick,
   NotVerfiedTick,
+  User,
+  Copy,
+  Approval,
+  Reject,
 };

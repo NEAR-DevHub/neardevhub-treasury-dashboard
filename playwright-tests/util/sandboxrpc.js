@@ -204,11 +204,7 @@ export class SandboxRPC {
               Group: [this.account.accountId],
             },
             name: "Create Requests",
-            permissions: [
-              "*:AddProposal",
-              "transfer:AddProposal",
-              "config:Finalize",
-            ],
+            permissions: ["call:AddProposal", "transfer:AddProposal"],
             vote_policy: {},
           },
           {
@@ -221,6 +217,16 @@ export class SandboxRPC {
               "policy:*",
               "add_member_to_role:*",
               "remove_member_from_role:*",
+              "upgrade_self:*",
+              "upgrade_remote:*",
+              "set_vote_token:*",
+              "add_bounty:*",
+              "bounty_done:*",
+              "factory_info_update:*",
+              "policy_add_or_update_role:*",
+              "policy_remove_role:*",
+              "policy_update_default_vote_policy:*",
+              "policy_update_parameters:*",
             ],
             vote_policy: {},
           },
@@ -229,7 +235,13 @@ export class SandboxRPC {
               Group: [this.account.accountId],
             },
             name: "Vote",
-            permissions: ["*:VoteReject", "*:VoteApprove", "*:VoteRemove"],
+            permissions: [
+              "*:VoteReject",
+              "*:VoteApprove",
+              "*:VoteRemove",
+              "*:RemoveProposal",
+              "*:Finalize",
+            ],
             vote_policy: {},
           },
         ],
@@ -253,7 +265,7 @@ export class SandboxRPC {
         args: Buffer.from(JSON.stringify(createDaoConfig)).toString("base64"),
       },
       gas: 300000000000000,
-      attachedDeposit: utils.format.parseNearAmount("6"),
+      attachedDeposit: utils.format.parseNearAmount("8"),
     });
   }
 
@@ -262,6 +274,23 @@ export class SandboxRPC {
       contractId: `${daoName}.${SPUTNIK_DAO_CONTRACT_ID}`,
       methodName: "get_proposals",
       args: { from_index, limit },
+    });
+  }
+
+  async getLastProposalId(daoName) {
+    return this.account.viewFunction({
+      contractId: `${daoName}.${SPUTNIK_DAO_CONTRACT_ID}`,
+      methodName: "get_last_proposal_id",
+      args: {},
+    });
+  }
+
+  async addProposal({ daoName, args }) {
+    await this.account.functionCall({
+      contractId: `${daoName}.${SPUTNIK_DAO_CONTRACT_ID}`,
+      methodName: "add_proposal",
+      args,
+      attachedDeposit: PROPOSAL_BOND,
     });
   }
 
@@ -285,14 +314,82 @@ export class SandboxRPC {
         },
       },
     };
-    await this.account.functionCall({
-      contractId: `${daoName}.${SPUTNIK_DAO_CONTRACT_ID}`,
-      methodName: "add_proposal",
-      args,
-      attachedDeposit: PROPOSAL_BOND,
-    });
+    await this.addProposal({ daoName, args });
   }
 
+  async addStakeRequestProposal({ stakedPoolAccount, stakingAmount, daoName }) {
+    const args = {
+      proposal: {
+        description: "* Proposal Action: stake",
+        kind: {
+          FunctionCall: {
+            receiver_id: stakedPoolAccount,
+            actions: [
+              {
+                method_name: "deposit_and_stake",
+                args: "",
+                deposit: utils.format.parseNearAmount(stakingAmount),
+                gas: "200000000000000",
+              },
+            ],
+          },
+        },
+      },
+    };
+    await this.addProposal({ daoName, args });
+  }
+
+  async addUnstakeRequestProposal({
+    stakedPoolAccount,
+    functionCallArgs,
+    daoName,
+  }) {
+    const args = {
+      proposal: {
+        description: "* Proposal Action: unstake",
+        kind: {
+          FunctionCall: {
+            receiver_id: stakedPoolAccount,
+            actions: [
+              {
+                method_name: "unstake",
+                args: functionCallArgs,
+                deposit: "0",
+                gas: "200000000000000",
+              },
+            ],
+          },
+        },
+      },
+    };
+    await this.addProposal({ daoName, args });
+  }
+
+  async addWithdrawRequestProposal({
+    stakedPoolAccount,
+    description,
+    daoName,
+  }) {
+    const args = {
+      proposal: {
+        description: description,
+        kind: {
+          FunctionCall: {
+            receiver_id: stakedPoolAccount,
+            actions: [
+              {
+                method_name: "withdraw_all",
+                args: "",
+                deposit: "0",
+                gas: "200000000000000",
+              },
+            ],
+          },
+        },
+      },
+    };
+    await this.addProposal({ daoName, args });
+  }
   /**
    * Time travel forward with the specified number of blocks
    * @param {number} numBlocks

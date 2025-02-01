@@ -1,4 +1,14 @@
-const { nearPrice, ftTokens, accountId, title, instance } = props;
+const {
+  nearPrice,
+  ftTokens,
+  accountId,
+  title,
+  instance,
+  allPeriodData,
+  isLoading,
+  selectedToken,
+  setSelectedToken,
+} = props;
 
 if (!instance) {
   return <></>;
@@ -10,19 +20,18 @@ const { Skeleton } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.skeleton"
 );
 
-if (!Skeleton) {
+const { getAllColorsAsObject } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+);
+
+if (!Skeleton || typeof getAllColorsAsObject !== "function") {
   return <></>;
 }
-const API_HOST = "https://ref-sdk-api.fly.dev/api";
+
 const [height, setHeight] = useState(350);
 const [history, setHistory] = useState([]);
 const [tokenAddresses, setTokenAddresses] = useState([]);
-const [selectedPeriod, setSelectedPeriod] = useState({
-  value: 24 * 30,
-  interval: 12,
-});
-const [selectedToken, setSelectedToken] = useState("near");
-const [isLoading, setIsLoading] = useState(true);
+const [selectedPeriod, setSelectedPeriod] = useState("1Y");
 const [balanceDate, setBalanceDate] = useState({ balance: 0, date: "" });
 
 const nearTokenInfo = {
@@ -34,14 +43,14 @@ const tokens = Array.isArray(ftTokens)
   ? [nearTokenInfo, ...ftTokens]
   : [nearTokenInfo];
 
-const periodMap = [
-  { period: "1H", value: 1 / 6, interval: 6 },
-  { period: "1D", value: 1, interval: 12 },
-  { period: "1W", value: 24, interval: 8 },
-  { period: "1M", value: 24 * 2, interval: 15 },
-  { period: "1Y", value: 24 * 30, interval: 12 },
-  { period: "All", value: 24 * 365, interval: 10 },
-];
+const periodMap = {
+  "1H": { value: 1 / 6, interval: 6 },
+  "1D": { value: 1, interval: 12 },
+  "1W": { value: 24, interval: 8 },
+  "1M": { value: 24 * 2, interval: 15 },
+  "1Y": { value: 24 * 30, interval: 12 },
+  All: { value: 24 * 365, interval: 10 },
+};
 
 function formatCurrency(amount) {
   return Number(amount)
@@ -53,14 +62,11 @@ const config = treasuryDaoID ? Near.view(treasuryDaoID, "get_config") : null;
 const metadata = JSON.parse(atob(config.metadata ?? ""));
 
 const isDarkTheme = metadata.theme === "dark";
-const bgPageColor = isDarkTheme ? "#222222" : "#FFFFFF";
-const borderColor = isDarkTheme ? "#CACACA" : "#000";
-const iconColor = isDarkTheme ? "#CACACA" : "#060606";
-const textColor = isDarkTheme ? "#CACACA" : "#1B1B18";
 const fillStyle = isDarkTheme
   ? "rgba(34, 34, 34, 0.7)"
   : "rgba(255, 255, 255, 0.7)";
 
+const colors = getAllColorsAsObject(isDarkTheme);
 const code = `
 <!DOCTYPE html>
   <html lang="en">
@@ -81,8 +87,8 @@ const code = `
               width: 100%;
               height: 100%;
               display: block;
-              background-color:${bgPageColor};
-              color: ${textColor};
+              background-color: ${colors["--bg-page-color"]};
+              color: ${colors["--text-color"]};
           }
       </style>
   </head>
@@ -118,7 +124,7 @@ const code = `
                 ctx.moveTo(hoverX, chartArea.top);
                 ctx.lineTo(hoverX, chartArea.bottom);
                 ctx.lineWidth = 1;
-                ctx.strokeStyle = '${iconColor}';
+                ctx.strokeStyle = '${colors["--icon-color"]}';
                 ctx.setLineDash([5, 3]);
                 ctx.stroke();
                 ctx.restore();
@@ -153,7 +159,7 @@ const code = `
             },
             ticks: {
               display: true,
-              color: '${textColor}',
+              color: '${colors["--text-color"]}',
             },   
           },
           y: {
@@ -181,8 +187,8 @@ const code = `
             data: [],
             fill: true,
             backgroundColor: gradient,
-            borderColor: '${borderColor}',
-            pointBackgroundColor: '${bgPageColor}',
+            borderColor: ' ${colors["--border-color"]}',
+            pointBackgroundColor: ' ${colors["--bg-page-color"]}',
             pointRadius: 0,
             tension: 0,
             borderWidth: 1.5
@@ -312,24 +318,11 @@ const RadioButton = styled.div`
   }
 `;
 
-// Function to fetch data from the API based on the selected period
-async function fetchData() {
-  try {
-    asyncFetch(
-      `${API_HOST}/token-balance-history?account_id=${accountId}&period=${selectedPeriod.value}&interval=${selectedPeriod.interval}&token_id=${selectedToken}`
-    ).then((resp) => {
-      if (resp?.body) setHistory(resp.body);
-      setIsLoading(false);
-    });
-  } catch (error) {
-    console.error("Error fetching data:", error);
-  }
-}
-
 useEffect(() => {
-  setIsLoading(true);
-  fetchData();
-}, [selectedToken, selectedPeriod]);
+  if (allPeriodData[selectedPeriod]) {
+    setHistory(allPeriodData[selectedPeriod]);
+  }
+}, [selectedPeriod, allPeriodData]);
 
 const LoadingBalance = () => {
   return (
@@ -405,21 +398,23 @@ return (
         </div>
 
         <div className="d-flex gap-1 flex-wrap">
-          {periodMap.map(({ period, value, interval }, idx) => (
-            <Period
-              role="button"
-              key={idx}
-              onClick={() => setSelectedPeriod({ value, interval })}
-              className={
-                selectedPeriod.value === value &&
-                selectedPeriod.interval === interval
-                  ? "selected"
-                  : ""
-              }
-            >
-              {period}
-            </Period>
-          ))}
+          {Object.entries(periodMap).map(
+            ([period, { value, interval }], idx) => (
+              <Period
+                role="button"
+                key={idx}
+                onClick={() => setSelectedPeriod(period)}
+                className={
+                  periodMap[selectedPeriod].value === value &&
+                  periodMap[selectedPeriod].interval === interval
+                    ? "selected"
+                    : ""
+                }
+              >
+                {period}
+              </Period>
+            )
+          )}
         </div>
       </div>
 
@@ -436,7 +431,10 @@ return (
                   id={contract}
                   type="radio"
                   value={contract}
-                  onClick={() => setSelectedToken(contract)}
+                  onClick={() => {
+                    setBalanceDate(null);
+                    setSelectedToken(contract);
+                  }}
                   selected={contract === selectedToken}
                 />
                 <label
@@ -462,7 +460,7 @@ return (
       )}
     </div>
 
-    {isLoading || !history.length ? (
+    {isLoading || history.length === 0 ? (
       <LoadingChart />
     ) : (
       <div

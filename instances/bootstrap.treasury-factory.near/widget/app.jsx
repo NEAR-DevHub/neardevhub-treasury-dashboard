@@ -10,11 +10,9 @@ const { AppLayout } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.templates.AppLayout"
 ) || { AppLayout: () => <></> };
 
-const widgetSrc = (
-  context?.widgetSrc ?? `${REPL_BOOTSTRAP_ACCOUNT}/widget/app`
-).split("/app")[0];
-
-const { instance, treasuryDaoID } = VM.require(`${widgetSrc}/config.data`);
+const { instance, treasuryDaoID } = VM.require(
+  `${REPL_BOOTSTRAP_ACCOUNT}/widget/config.data`
+);
 
 if (!instance || !treasuryDaoID) {
   return <></>;

@@ -298,10 +298,7 @@ const NearPortfolio = () => {
 };
 
 const isLoading =
-  ftTokens === null ||
-  nearStakedTokens === null ||
-  nearBalances === null ||
-  nearPrice === null;
+  ftTokens === null || nearBalances === null || nearPrice === null;
 
 return (
   <div className="card flex-1 overflow-hidden border-bottom">

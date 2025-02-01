@@ -30,7 +30,7 @@ const daoPolicy = treasuryDaoID
   ? Near.view(treasuryDaoID, "get_policy", {})
   : null;
 
-const deposit = daoPolicy?.proposal_bond || 100000000000000000000000;
+const deposit = daoPolicy?.proposal_bond || 0;
 
 useEffect(() => {
   if (selectedMember && !username) {
@@ -57,7 +57,7 @@ useEffect(() => {
 
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
-        if (lastProposalId !== id) {
+        if (typeof lastProposalId === "number" && lastProposalId !== id) {
           setToastStatus(true);
           onCloseCanvas();
           clearTimeout(errorTimeout);
@@ -74,14 +74,14 @@ useEffect(() => {
       setShowErrorToast(true);
       setTxnCreated(false);
       clearTimeout(checkTxnTimeout);
-    }, 20000);
+    }, 25_000);
 
     return () => {
       clearTimeout(checkTxnTimeout);
       clearTimeout(errorTimeout);
     };
   }
-}, [isTxnCreated]);
+}, [isTxnCreated, lastProposalId]);
 
 function updateDaoPolicy(rolesMap) {
   const updatedPolicy = { ...daoPolicy };
@@ -169,6 +169,7 @@ function onSubmitClick() {
         },
       },
       gas: 200000000000000,
+      deposit,
     },
   ]);
 }

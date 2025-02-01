@@ -6,6 +6,10 @@ const { Skeleton } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.skeleton"
 );
 
+const { Modal, ModalContent, ModalHeader, ModalFooter } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.modal"
+);
+
 const instance = props.instance;
 
 if (
@@ -78,46 +82,55 @@ const [lockupStakedTotalTokens, setLockupStakedTotalTokens] = useState(null);
 const [lockupNearWithdrawTokens, setLockupNearWithdrawTokens] = useState(null);
 const [nearPrice, setNearPrice] = useState(null);
 const [userFTTokens, setFTTokens] = useState(null);
+const [show404Modal, setShow404Modal] = useState(false);
+const [disableRefreshBtn, setDisableRefreshBtn] = useState(false);
 
 useEffect(() => {
-  asyncFetch(
-    `https://api.coingecko.com/api/v3/simple/price?ids=near&vs_currencies=usd`
-  ).then((res) => {
-    if (res.body.near?.usd) {
-      setNearPrice(res.body.near?.usd);
-    }
-  });
-
-  asyncFetch(
-    `https://api3.nearblocks.io/v1/account/${treasuryDaoID}/inventory`,
-    { headers: { Authorization: "Bearer ${REPL_NEARBLOCKS_KEY}" } }
-  ).then((res) => {
-    let fts = res.body.inventory.fts;
-    if (fts)
-      fts = fts.sort(
-        (a, b) => b.amount * b.ft_meta.price - a.amount * a.ft_meta.price
-      );
-
-    const amounts = fts.map((ft) => {
-      const amount = ft.amount;
-      const decimals = ft.ft_meta.decimals;
-      const tokensNumber = Big(amount ?? "0")
-        .div(Big(10).pow(decimals))
-        .toFixed();
-      const tokenPrice = ft.ft_meta.price;
-      return Big(tokensNumber)
-        .mul(tokenPrice ?? 0)
-        .toFixed();
+  asyncFetch(`${REPL_BACKEND_API}/near-price`)
+    .then((res) => {
+      if (typeof res.body === "number") {
+        setNearPrice(res.body);
+      } else {
+        setShow404Modal(true);
+      }
+    })
+    .catch((err) => {
+      setShow404Modal(true);
     });
-    setFTTokens({
-      totalCummulativeAmt: amounts.reduce(
-        (acc, value) => acc + parseFloat(value),
-        0
-      ),
-      fts,
+
+  asyncFetch(`${REPL_BACKEND_API}/ft-tokens/?account_id=${treasuryDaoID}`)
+    .then((res) => {
+      if (typeof res.body.totalCumulativeAmt === "number") {
+        setFTTokens(res.body);
+      } else {
+        setShow404Modal(true);
+      }
+    })
+    .catch((err) => {
+      setShow404Modal(true);
     });
-  });
 }, []);
+
+// disable refresh btn for 30 seconds
+useEffect(() => {
+  if (show404Modal) {
+    setDisableRefreshBtn(true);
+  }
+}, [show404Modal]);
+
+useEffect(() => {
+  let timer;
+
+  if (disableRefreshBtn) {
+    timer = setTimeout(() => {
+      setDisableRefreshBtn(false);
+    }, 30_000);
+  }
+
+  return () => {
+    clearTimeout(timer);
+  };
+}, [disableRefreshBtn]);
 
 function formatNearAmount(amount) {
   return Big(amount ?? "0")
@@ -128,11 +141,16 @@ function formatNearAmount(amount) {
 useEffect(() => {
   if (lockupContract) {
     Near.asyncView(lockupContract, "get_locked_amount").then((res) => {
-      const locked = Big(res).minus(LOCKUP_MIN_BALANCE_FOR_STORAGE).toFixed(2);
+      let locked = Big(res).minus(LOCKUP_MIN_BALANCE_FOR_STORAGE).toFixed(2);
+      let lockedParsed = formatNearAmount(locked);
+      if (parseFloat(lockedParsed) < 0) {
+        locked = 0;
+        lockedParsed = 0;
+      }
       setLockupNearBalances((prev) => ({
         ...prev,
         locked,
-        lockedParsed: formatNearAmount(locked),
+        lockedParsed,
         storage: LOCKUP_MIN_BALANCE_FOR_STORAGE,
         storageParsed: formatNearAmount(LOCKUP_MIN_BALANCE_FOR_STORAGE),
       }));
@@ -164,7 +182,7 @@ useEffect(() => {
 const totalBalance = Big(nearBalances?.totalParsed ?? "0")
   .mul(nearPrice ?? 1)
   .plus(Big(lockupNearBalances?.totalParsed ?? "0").mul(nearPrice ?? 1))
-  .plus(Big(userFTTokens?.totalCummulativeAmt ?? "0"))
+  .plus(Big(userFTTokens?.totalCumulativeAmt ?? "0"))
   .toFixed(2);
 
 function formatCurrency(amount) {
@@ -173,6 +191,56 @@ function formatCurrency(amount) {
     .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   return "$" + formattedAmount;
 }
+
+const TooManyRequestModal = () => {
+  return (
+    <Modal>
+      <ModalHeader>
+        <div className="d-flex align-items-center justify-content-between mb-2">
+          <div className="d-flex gap-3 align-items-center">
+            <img
+              src="https://ipfs.near.social/ipfs/bafkreiggx7y2qhmywarmefat4bfnm3yndnrx4fsz4e67gkwkcqmggmzadq"
+              height={30}
+              width={50}
+            />
+            Please wait a moment... 
+          </div>
+          <i
+            className="bi bi-x-lg h4 mb-0 cursor-pointer"
+            onClick={() => setShow404Modal(false)}
+          ></i>
+        </div>
+      </ModalHeader>
+      <ModalContent>
+        We're experiencing a high volume of requests right now. Some
+        information, such as token prices, might be temporarily unavailable.
+        Please wait a few minutes before refreshing. Thanks for your patience.
+      </ModalContent>
+      <ModalFooter>
+        <Widget
+          src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
+          props={{
+            classNames: {
+              root: "btn btn-outline-secondary shadow-none no-transparent",
+            },
+            label: "Close",
+            onClick: () => setShow404Modal(false),
+          }}
+        />
+        <a style={{ all: "unset" }} href={`app?page=dashboard`}>
+          <Widget
+            src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
+            props={{
+              classNames: { root: "theme-btn" },
+              label: "Refresh",
+              disabled: disableRefreshBtn,
+            }}
+          />
+        </a>
+      </ModalFooter>
+    </Modal>
+  );
+};
 
 const Loading = () => {
   return (
@@ -195,6 +263,7 @@ const Loading = () => {
 
 return (
   <Wrapper>
+    {show404Modal && <TooManyRequestModal />}
     <Widget
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
       props={{
@@ -293,7 +362,9 @@ return (
       </div>
       <div className="d-flex flex-column gap-2 flex-wrap dashboard-item flex-1 flex-container">
         <Widget
-          src={"${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.Chart"}
+          src={
+            "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.ChartParent"
+          }
           props={{
             title: "Treasury Assets: Sputnik DAO",
             nearPrice,
@@ -308,7 +379,9 @@ return (
 
         {lockupContract && (
           <Widget
-            src={"${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.Chart"}
+            src={
+              "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.ChartParent"
+            }
             props={{
               title: "Treasury Assets: Lockup",
               nearPrice,

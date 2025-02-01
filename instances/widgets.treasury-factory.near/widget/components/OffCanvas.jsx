@@ -11,8 +11,10 @@ const children = props.children;
 
 const Container = styled.div`
   opacity: 1 !important;
+
   .offcanvas.offcanvas-end {
     width: 30% !important;
+    z-index: 1054; // 1055 is the confirmation modal z-index
   }
 
   @media screen and (max-width: 1200px) {
@@ -28,14 +30,13 @@ const Container = styled.div`
   }
 
   .offcanvas {
-    border-top-left-radius: 1rem !important;
-    border-bottom-left-radius: 1rem !important;
     overflow: auto;
   }
 `;
 
 return (
   <Container>
+    <div className={`fade ${showCanvas ? "modal-backdrop show" : ""}`} />
     <div
       className={`offcanvas offcanvas-end ${showCanvas ? "show" : ""}`}
       tabIndex="-1"

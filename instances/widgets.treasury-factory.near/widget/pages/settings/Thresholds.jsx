@@ -25,7 +25,7 @@ if (typeof getRoleWiseData !== "function") {
 const hasEditPermission = hasPermission(
   treasuryDaoID,
   context.accountId,
-  "ChangeConfig",
+  "policy",
   "AddProposal"
 );
 
@@ -96,7 +96,7 @@ useEffect(() => {
 
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
-        if (lastProposalId !== id) {
+        if (typeof lastProposalId === "number" && lastProposalId !== id) {
           setToastStatus(true);
           setTxnCreated(false);
           clearTimeout(errorTimeout);
@@ -112,14 +112,14 @@ useEffect(() => {
       setShowErrorToast(true);
       setTxnCreated(false);
       clearTimeout(checkTxnTimeout);
-    }, 20000);
+    }, 25_000);
 
     return () => {
       clearTimeout(checkTxnTimeout);
       clearTimeout(errorTimeout);
     };
   }
-}, [isTxnCreated]);
+}, [isTxnCreated, lastProposalId]);
 
 function resetForm() {
   setSelectedVoteOption(selectedGroup.isRatio ? options[1] : options[0]);
@@ -226,7 +226,7 @@ function updateDaoPolicy() {
 
 function onSubmitClick() {
   setTxnCreated(true);
-  const deposit = daoPolicy?.proposal_bond || 100000000000000000000000;
+  const deposit = daoPolicy?.proposal_bond || 0;
   const updatedPolicy = updateDaoPolicy();
 
   const description = {
@@ -248,6 +248,7 @@ function onSubmitClick() {
         },
       },
       gas: 200000000000000,
+      deposit,
     },
   ]);
 }
@@ -321,14 +322,16 @@ return (
             content: (
               <div className="d-flex flex-column gap-2">
                 This action will result in significant changes to the system.
-                <div className="d-flex gap-3 warning px-3 py-2 rounded-3">
-                  <i class="bi bi-exclamation-triangle warning-icon h5"></i>
-                  <div>
-                    Changing this setting will require {requiredVotes} vote(s)
-                    to approve requests. You will no longer be able to approve
-                    requests with {selectedGroup.requiredVotes} vote(s).
+                {requiredVotes != selectedGroup.requiredVotes && (
+                  <div className="d-flex gap-3 warning px-3 py-2 rounded-3">
+                    <i class="bi bi-exclamation-triangle warning-icon h5"></i>
+                    <div>
+                      Changing this setting will require {requiredVotes} vote(s)
+                      to approve requests. You will no longer be able to approve
+                      requests with {selectedGroup.requiredVotes} vote(s).
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             ),
             confirmLabel: "Confirm",
@@ -419,11 +422,15 @@ return (
                     if (isPercentageSelected) {
                       if (number > 100)
                         setValueError("Maximum percentage allowed is 100.");
+                      else if (number < 1)
+                        setValueError("The minimum allowed percentage is 1%.");
                     } else {
                       if (number > selectedGroup.members.length)
                         setValueError(
                           `Maximum members allowed is ${selectedGroup.members.length}.`
                         );
+                      if (number < 1)
+                        setValueError("At least 1 member is required.");
                     }
                   },
                   value: selectedVoteValue,
@@ -518,7 +525,7 @@ return (
       </div>
     ) : (
       <div
-        className="card rounded-3 d-flex justify-content-center align-items-center w-100 h-100"
+        className="card rounded-4 d-flex justify-content-center align-items-center w-100 h-100"
         style={{ minHeight: 300 }}
       >
         <Widget

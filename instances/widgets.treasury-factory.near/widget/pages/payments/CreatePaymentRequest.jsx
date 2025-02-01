@@ -50,7 +50,7 @@ const [isReceiverRegistered, setReceiverRegister] = useState(false);
 const [isLoadingProposals, setLoadingProposals] = useState(false);
 const [showCancelModal, setShowCancelModal] = useState(false);
 const [showErrorToast, setShowErrorToast] = useState(false);
-const [nearPrice, setNearPrice] = useState(null);
+const [nearPrice, setNearPrice] = useState("1"); // setting 1 as default, so VM doesn't throw any error
 
 useEffect(() => {
   if (!showProposalSelection) {
@@ -161,7 +161,7 @@ useEffect(() => {
 
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
-        if (lastProposalId !== id) {
+        if (typeof lastProposalId === "number" && lastProposalId !== id) {
           cleanInputs();
           onCloseCanvas();
           clearTimeout(errorTimeout);
@@ -180,14 +180,14 @@ useEffect(() => {
       setShowErrorToast(true);
       setTxnCreated(false);
       clearTimeout(checkTxnTimeout);
-    }, 20000);
+    }, 25_000);
 
     return () => {
       clearTimeout(checkTxnTimeout);
       clearTimeout(errorTimeout);
     };
   }
-}, [isTxnCreated]);
+}, [isTxnCreated, lastProposalId]);
 
 useEffect(() => {
   const handler = setTimeout(() => {
@@ -233,14 +233,13 @@ const Container = styled.div`
   }
 `;
 
-const nearPriceAPI =
-  "https://api.coingecko.com/api/v3/simple/price?ids=near&vs_currencies=usd";
+const nearPriceAPI = `${REPL_BACKEND_API}/near-price`;
 
 useEffect(() => {
   function fetchNearPrice() {
     asyncFetch(nearPriceAPI).then((res) => {
-      if (res.body.near?.usd) {
-        setNearPrice(res.body.near.usd);
+      if (typeof res.body === "number") {
+        setNearPrice(res.body);
       }
     });
   }
@@ -306,7 +305,7 @@ function onSubmitClick() {
   setTxnCreated(true);
   const isNEAR = tokenId === tokenMapping.NEAR;
   const gas = 270000000000000;
-  const deposit = daoPolicy?.proposal_bond || 100000000000000000000000;
+  const deposit = daoPolicy?.proposal_bond || 0;
   const description = {
     title: selectedProposal.name,
     summary: selectedProposal.summary,
@@ -334,6 +333,7 @@ function onSubmitClick() {
         },
       },
       gas: gas,
+      deposit,
     },
   ];
   if (!isReceiverRegistered && !isNEAR) {

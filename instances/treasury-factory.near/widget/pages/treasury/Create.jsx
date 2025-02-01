@@ -4,7 +4,7 @@ const { isNearSocial } = VM.require(
   isNearSocial: false,
 };
 
-const { step } = props;
+let { step } = props;
 
 const STATIC_IMAGES = {
   social:
@@ -12,6 +12,14 @@ const STATIC_IMAGES = {
   near: "https://ipfs.near.social/ipfs/bafkreihfzqpk2t3663foue7bgarjpnpp75pfohr2f7isgm4h6izieqi6ui",
 };
 const widgetBasePath = `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.create-treasury`;
+const alreadyCreatedATreasury = Storage.get(
+  "TreasuryAccountName",
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.create-treasury.SummaryStep`
+);
+
+if (alreadyCreatedATreasury) {
+  step = 3;
+}
 const [formFields, setFormFields] = useState({});
 
 const STEPS = [
@@ -72,7 +80,7 @@ const Wrapper = ({ title, children }) => (
       <div style={{ width: "150px" }}>
         <a
           className="btn btn-outline-plain w-100"
-          href={`https://near.social/${REPL_DEVDAO_ACCOUNT}/widget/app`}
+          href={`https://neartreasury.com/`}
         >
           Cancel creation
         </a>

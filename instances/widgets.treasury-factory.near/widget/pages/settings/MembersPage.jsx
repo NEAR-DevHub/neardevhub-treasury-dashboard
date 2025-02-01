@@ -16,7 +16,14 @@ const {
 };
 
 const instance = props.instance;
-if (!instance || typeof getMembersAndPermissions !== "function") {
+const { TableSkeleton } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.skeleton"
+);
+if (
+  !instance ||
+  !TableSkeleton ||
+  typeof getMembersAndPermissions !== "function"
+) {
   return <></>;
 }
 
@@ -324,11 +331,11 @@ return (
         )}
       </div>
       {loading ? (
-        <div className="d-flex justify-content-center align-items-center w-100 h-100">
-          <Widget
-            src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"}
-          />
-        </div>
+        <TableSkeleton
+          numberOfCols={6}
+          numberOfRows={3}
+          numberOfHiddenRows={4}
+        />
       ) : (
         <div
           className="d-flex flex-column flex-1 justify-content-between"

@@ -77,7 +77,13 @@ async function voteOnProposal({
     },
     modifyOriginalResultFunction: (originalResult) => {
       originalResult = JSON.parse(JSON.stringify(SettingsProposalData));
-      if (isTransactionCompleted) {
+      if (isTransactionCompleted && vote === "Remove" && !isMultiVote) {
+        return {
+          isError: true,
+          error:
+            "wasm execution failed with error: HostError(GuestPanic { panic_msg: \"panicked at 'ERR_NO_PROPOSAL', sputnikdao2/src/views.rs:102:48\" })",
+        };
+      } else if (isTransactionCompleted) {
         if (!isMultiVote) {
           originalResult.status = voteStatus;
         }
@@ -158,7 +164,7 @@ test.describe("don't ask again", function () {
     storageState:
       "playwright-tests/storage-states/wallet-connected-admin-with-accesskey.json",
   });
-  test("approve payment request with single and multiple required votes", async ({
+  test("approve settings config request with single and multiple required votes", async ({
     page,
     instanceAccount,
     daoAccount,
@@ -208,7 +214,7 @@ test.describe("don't ask again", function () {
     });
   });
 
-  test("reject payment request with single and multiple required votes", async ({
+  test("reject settings config request with single and multiple required votes", async ({
     page,
     instanceAccount,
     daoAccount,
@@ -260,7 +266,7 @@ test.describe("don't ask again", function () {
     await page.waitForTimeout(1_000);
   });
 
-  test("delete payment request with single and multiple required votes", async ({
+  test("delete settings config request with single and multiple required votes", async ({
     page,
     instanceAccount,
     daoAccount,
