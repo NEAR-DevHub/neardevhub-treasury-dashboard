@@ -14,7 +14,7 @@ const rootClose = props.rootClose ?? true;
 const isDarkTheme = metadata.theme === "dark";
 
 const showTimer = 250;
-const hideTimer = 500;
+const hideTimer = 300;
 
 const handleOnMouseEnter = () => {
   clearTimeout(state.debounce);

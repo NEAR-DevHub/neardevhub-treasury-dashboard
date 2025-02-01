@@ -45,7 +45,7 @@ useEffect(() => {
           displayableText = "Not Verfied";
           break;
         default:
-          displayableText = "Failed to get status";
+          displayableText = ": Failed to get status";
           break;
       }
       setVerificationStatus(displayableText);
@@ -84,7 +84,7 @@ const HoverCard = () => {
             ) : (
               <NotVerfiedTick width={30} height={30} />
             )}
-            <div className="h6 mb-0">Fractal {verificationStatus}</div>
+            <div>Fractal {verificationStatus}</div>
           </div>
         )}
         <div

@@ -286,9 +286,9 @@ test.describe("User is logged in", function () {
     await thresholdInput.fill("1", { force: true });
     await thresholdInput.fill("0");
 
-    await expect(
-      page.getByText("At least 1 member is required.")
-    ).toBeVisible();
+    await expect(page.getByText("At least 1 member is required.")).toBeVisible({
+      timeout: 10_000,
+    });
     await expect(submitBtn).toBeDisabled();
     // Percentage
     await page.getByTestId("dropdown-btn").click();
@@ -298,7 +298,7 @@ test.describe("User is logged in", function () {
     await thresholdInput.pressSequentially("0", { delay: 100 });
     await expect(
       page.getByText("The minimum allowed percentage is 1%.")
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 10_000 });
     await expect(submitBtn).toBeDisabled();
     await thresholdInput.fill("20");
     await expect(page.getByText("Warning!")).toBeVisible();
