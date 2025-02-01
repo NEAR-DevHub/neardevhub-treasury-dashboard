@@ -89,7 +89,9 @@ return (
     <ModalDialog className="card d-flex flex-column gap-2">
       <ModalHeader className="d-flex justify-content-between align-items-center">
         <h5 className="m-0">{heading}</h5>
-        <i role="button" className="bi bi-x-lg" onClick={onClose} />
+        {typeof onClose === "function" && (
+          <i role="button" className="bi bi-x-lg" onClick={onClose} />
+        )}
       </ModalHeader>
       <ModalContent>{content}</ModalContent>
     </ModalDialog>
