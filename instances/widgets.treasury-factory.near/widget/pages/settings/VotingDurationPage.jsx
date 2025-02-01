@@ -491,7 +491,7 @@ return (
               },
               label: "Cancel",
               onClick: cancelChangeRequest,
-              disabled: durationDays === currentDurationDays,
+              disabled: durationDays === currentDurationDays || isTxnCreated,
             }}
           />
           <Widget

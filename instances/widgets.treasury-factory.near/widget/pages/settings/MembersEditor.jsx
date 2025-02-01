@@ -253,6 +253,7 @@ return (
           placeholder: "treasury.near",
           onUpdate: setUsername,
           disabled: selectedMember,
+          instance,
         }}
       />
       {!selectedMember && memberAlreadyExists && (
