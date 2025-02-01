@@ -445,7 +445,7 @@ return (
                 },
                 label: "Cancel",
                 onClick: setDefault,
-                disabled: !hasCreatePermission,
+                disabled: !hasCreatePermission || isTxnCreated,
               }}
             />
             <Widget
