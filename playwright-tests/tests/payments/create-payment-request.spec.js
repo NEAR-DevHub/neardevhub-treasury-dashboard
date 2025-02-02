@@ -20,6 +20,8 @@ import {
 } from "../../util/forms.js";
 import { InsufficientBalance } from "../../util/lib.js";
 
+test.describe.configure({ mode: "serial" });
+
 async function clickCreatePaymentRequestButton(page) {
   const createPaymentRequestButton = await page.getByRole("button", {
     name: "Create Request",

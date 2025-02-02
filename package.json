@@ -43,6 +43,7 @@
     "bw:build:bootstrap": "npm run bw:build:instance --instance=bootstrap.treasury-factory.near",
     "bw:build:test-bootstrap": "npm run bw:build:instance --instance=test-bootstrap.treasury-factory.near",
     "build:sandbox": "cd sandboxrpc && cargo build",
+    "rpcproxy": "node playwright-tests/server/rpcproxy.js",
     "gateway": "bw ws dev -g web4/public_html",
     "dry-run:instances": "cd ./build/$npm_config_instance && bos components diff $npm_config_instance network-config mainnet",
     "deploy:devdao": "npm run bw:build:devdao && cd ./build/treasury-devdao.near && bos components deploy",
