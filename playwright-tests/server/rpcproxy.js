@@ -4,6 +4,16 @@ import http from "http";
 
 const SOCIAL_CONTRACT = "social.near";
 
+const RPCS = [
+  "https://rpc.mainnet.fastnear.com/",
+  "https://free.rpc.fastnear.com",
+  "https://1rpc.io/near",
+  "https://rpc.mainnet.near.org",
+  "https://near.lava.build",
+];
+
+let rpcIndex = 0;
+
 const server = http.createServer((req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
@@ -19,24 +29,38 @@ const server = http.createServer((req, res) => {
       const { params } = req.body;
 
       const forwardToRealRPC = async () => {
-        try {
-          const proxyResponse = await fetch("https://free.rpc.fastnear.com", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: body,
-          });
+        const MAX_RETRIES = RPCS.length;
+        for (let n = 0; n < MAX_RETRIES; n++) {
+          const nextRPC = RPCS[rpcIndex++ % RPCS.length];
+          try {
+            const proxyResponse = await fetch(nextRPC, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: body,
+            });
 
-          const proxyData = await proxyResponse.text();
-          res.statusCode = proxyResponse.status;
-          res.setHeader("Content-Type", "application/json");
-          res.end(proxyData);
-        } catch (error) {
-          console.error("Error fetching from proxy:", error);
-          res.statusCode = 500;
-          res.setHeader("Content-Type", "application/json");
-          res.end(JSON.stringify({ error: "Internal Server Error" }));
+            const proxyData = await proxyResponse.text();
+            res.statusCode = proxyResponse.status;
+            res.setHeader("Content-Type", "application/json");
+            res.end(proxyData);
+            break;
+          } catch (error) {
+            if (n === MAX_RETRIES - 1) {
+              console.error("Error fetching from proxy:", error);
+              res.statusCode = 500;
+              res.setHeader("Content-Type", "application/json");
+              res.end(JSON.stringify({ error: "Internal Server Error" }));
+            } else {
+              console.warning(
+                "Failed fetching from rpc",
+                nextRPC,
+                error.message,
+                "trying next one"
+              );
+            }
+          }
         }
       };
 
@@ -46,8 +70,6 @@ const server = http.createServer((req, res) => {
         params.method_name === "get"
       ) {
         const social_get_key = JSON.parse(atob(params.args_base64)).keys[0];
-
-        console.log(`Looking for local widget: ${social_get_key}`);
 
         const localWidgetFilename = `./build/instances/${social_get_key.replace(
           "/widget/",
@@ -91,7 +113,6 @@ const server = http.createServer((req, res) => {
             id: "dontcare",
           })
         );
-        console.log(`Responded with local widget: ${social_get_key}`);
       } else {
         forwardToRealRPC();
       }
