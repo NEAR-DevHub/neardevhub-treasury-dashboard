@@ -16,8 +16,6 @@ import {
 } from "../../util/inventory.js";
 import { InsufficientBalance } from "../../util/lib.js";
 
-test.describe.configure({ mode: "serial" });
-
 async function voteOnProposal({
   page,
   daoAccount,
