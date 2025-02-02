@@ -24,7 +24,8 @@ async function voteOnProposal({
   vote,
   isMultiVote,
 }) {
-  let lastProposalId = 10;
+  const transferProposalData = JSON.parse(JSON.stringify(TransferProposalData));
+  let lastProposalId = transferProposalData.id;
   let isTransactionCompleted = false;
   const contractId = daoAccount;
   await mockRpcRequest({
@@ -33,7 +34,7 @@ async function voteOnProposal({
       method_name: "get_proposals",
     },
     modifyOriginalResultFunction: (originalResult) => {
-      originalResult = TransferProposalData;
+      originalResult = transferProposalData;
       if (isTransactionCompleted && !isMultiVote) {
         originalResult.status = voteStatus;
       } else {
@@ -49,7 +50,7 @@ async function voteOnProposal({
       method_name: "get_proposal",
     },
     modifyOriginalResultFunction: (originalResult) => {
-      originalResult = TransferProposalData;
+      originalResult = transferProposalData;
       if (isTransactionCompleted && vote === "Remove" && !isMultiVote) {
         return {
           isError: true,

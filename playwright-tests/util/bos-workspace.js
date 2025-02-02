@@ -1,5 +1,5 @@
 export async function getLocalWidgetSource(path) {
-  const json = await fetch("http://127.0.0.1:8080/api/proxy-rpc", {
+  const json = await fetch("http://127.0.0.1:14500", {
     method: "POST",
     headers: {
       "content-type": "application/json",

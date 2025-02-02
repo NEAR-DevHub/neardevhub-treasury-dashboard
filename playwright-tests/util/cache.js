@@ -3,6 +3,13 @@ export async function findKeysInCache(page, searchFor) {
     const dbName = "cacheDb";
     const storeName = "cache-v1";
 
+    while (
+      (await indexedDB.databases()).find((db) => db.name === dbName) ===
+      undefined
+    ) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+
     return await new Promise((resolve) => {
       // Opening the database
       request = indexedDB.open(dbName);
@@ -51,10 +58,16 @@ export async function findKeysInCache(page, searchFor) {
 export async function setCacheValue({ page, key, value }) {
   await page.evaluate(
     async ({ key, value }) => {
-      await new Promise((resolve) => {
+      await new Promise(async (resolve) => {
         const dbName = "cacheDb";
         const storeName = "cache-v1";
 
+        while (
+          (await indexedDB.databases()).find((db) => db.name === dbName) ===
+          undefined
+        ) {
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
         const request = indexedDB.open(dbName);
 
         request.onerror = function (event) {
@@ -86,9 +99,16 @@ export async function setCacheValue({ page, key, value }) {
 
 export async function getCacheValue(key) {
   const storedData = await page.evaluate(async (key) => {
-    return await new Promise((resolve) => {
+    return await new Promise(async (resolve) => {
       const dbName = "cacheDb";
       const storeName = "cache-v1";
+
+      while (
+        (await indexedDB.databases()).find((db) => db.name === dbName) ===
+        undefined
+      ) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
 
       // Opening the database
       const request = indexedDB.open(dbName);
@@ -178,7 +198,7 @@ export async function getDontAskAgainCacheValues({
 }) {
   const storedData = await page.evaluate(
     async ({ widgetSrc, contractId }) => {
-      return await new Promise((resolve) => {
+      return await new Promise(async (resolve) => {
         const dbName = "cacheDb";
         const storeName = "cache-v1";
         const key = JSON.stringify({
@@ -191,6 +211,12 @@ export async function getDontAskAgainCacheValues({
           },
         });
 
+        while (
+          (await indexedDB.databases()).find((db) => db.name === dbName) ===
+          undefined
+        ) {
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
         // Opening the database
         const request = indexedDB.open(dbName);
 
