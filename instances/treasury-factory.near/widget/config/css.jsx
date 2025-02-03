@@ -26,7 +26,7 @@ const Theme = styled.div`
     &:hover {
       text-decoration: none;
       color: black !important;
-      font-weight: 700 !important;
+      background-color: #e6e6e6;
     }
   }
 
@@ -42,9 +42,12 @@ const Theme = styled.div`
   }
 
   .btn-primary {
+    background-color: #007bff;
+    border: 1px solid #0062cc;
+
     &:hover {
-      font-weight: 500 !important;
       color: white !important;
+      background-color: #0069d9;
     }
   }
 

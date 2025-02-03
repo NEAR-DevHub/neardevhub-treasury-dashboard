@@ -46,7 +46,8 @@ const Section = styled.div`
 const Badge = styled.div`
   border: 1px solid #e2e6ec;
   border-radius: 32px;
-  padding: 4px 10px;
+  font-size: 12px;
+  padding: 4px 8px;
 `;
 
 const Item = styled.div`
@@ -83,8 +84,8 @@ const WidgetItemLink = styled.div`
 `;
 
 const PERMISSIONS = {
-  create: "Create",
-  edit: "Edit",
+  create: "Create Requests",
+  edit: "Manage Members",
   vote: "Vote",
 };
 
@@ -262,17 +263,15 @@ const SummaryListItem = ({ title, value, info }) => (
 );
 
 const ListItem = ({ member }) => (
-  <Item className="d-flex align-items-center w-100">
-    <div className="w-50">
+  <Item className="d-flex align-items-center justify-content-between w-100 gap-3">
+    <div style={{ width: "40%" }}>
       <Widget
-        src="mob.near/widget/Profile.ShortInlineBlock"
-        props={{
-          accountId: member.accountId,
-        }}
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
+        props={{ accountId: member.accountId }}
       />
     </div>
 
-    <div className="d-flex gap-2 align-items-center">
+    <div className="d-flex gap-2 align-items-center" style={{ width: "292px" }}>
       {member.permissions.map((permission, i) => (
         <Badge key={i}>{permission}</Badge>
       ))}
@@ -295,10 +294,8 @@ return (
         <Section withBorder>
           <label>Your Wallet</label>
           <Widget
-            src="mob.near/widget/Profile.ShortInlineBlock"
-            props={{
-              accountId: context.accountId,
-            }}
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
+            props={{ accountId: context.accountId }}
           />
         </Section>
       </div>
@@ -307,7 +304,7 @@ return (
         <Section withBorder>
           <div className="d-flex justify-content-between align-items-center">
             <div>
-              <label>Applicatiion Account name</label>
+              <label>Applicatiion Account Name</label>
               <div>
                 {formFields.accountName
                   ? `${formFields.accountName}.near`
@@ -339,7 +336,7 @@ return (
 
       <Section>
         <div className="d-flex justify-content-between align-items-center">
-          <h4>Members and permissions</h4>
+          <h4>Members and Permissions</h4>
           <Link
             href={`/${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=2`}
           >

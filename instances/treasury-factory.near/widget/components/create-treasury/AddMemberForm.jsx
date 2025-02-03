@@ -14,8 +14,8 @@ const FormFields = styled.div`
 `;
 
 const PERMISSIONS = {
-  create: "Create",
-  edit: "Edit",
+  create: "Create Requests",
+  edit: "Manage Members",
   vote: "Vote",
 };
 

@@ -3,7 +3,8 @@ const { formFields, setFormFields } = props;
 const Badge = styled.div`
   border: 1px solid #e2e6ec;
   border-radius: 32px;
-  padding: 4px 10px;
+  font-size: 12px;
+  padding: 4px 8px;
 `;
 
 const Item = styled.div`
@@ -22,8 +23,8 @@ const ActionButtons = styled.div`
 `;
 
 const PERMISSIONS = {
-  create: "Create",
-  edit: "Edit",
+  create: "Create Requests",
+  edit: "Manage Members",
   vote: "Vote",
 };
 
@@ -47,42 +48,51 @@ useEffect(() => {
 }, [members]);
 
 const ListItem = ({ member, key }) => (
-  <Item className="d-flex align-items-center justify-content-between w-100">
-    <div className="w-50">
+  <Item className="d-flex align-items-center gap-3 justify-content-between w-100">
+    <div className="w-25">
       <Widget
-        src="mob.near/widget/Profile.ShortInlineBlock"
-        props={{
-          accountId: member.accountId,
-        }}
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
+        props={{ accountId: member.accountId }}
       />
     </div>
 
-    <div className="d-flex gap-2 align-items-center w-25">
-      {member.permissions.map((permission, i) => (
-        <Badge key={i}>{permission}</Badge>
-      ))}
-    </div>
+    <div className="d-flex flex-row" style={{ width: "380px" }}>
+      <div
+        className="d-flex gap-1 align-items-center"
+        style={{ width: "315px" }}
+      >
+        {member.permissions.map((permission, i) => (
+          <Badge key={i}>{permission}</Badge>
+        ))}
+      </div>
 
-    <ActionButtons className="d-flex gap-3 align-items-center justify-content-end w-25">
-      <i
-        role="button"
-        className="bi bi-pencil"
-        onClick={() => {
-          setFields({
-            accountId: member.accountId,
-            permissions: member.permissions,
-          });
-          setShowAddMemberModal(true);
-        }}
-      />
-      <i
-        role="button"
-        className="bi bi-trash text-danger"
-        onClick={() =>
-          setMembers(members.filter((m) => m.accountId !== member.accountId))
-        }
-      />
-    </ActionButtons>
+      <div className="d-flex flex-row" style={{ width: "70px" }}>
+        {member.accountId !== context.accountId && (
+          <ActionButtons className="d-flex gap-3 align-items-center justify-content-end">
+            <i
+              role="button"
+              className="bi bi-pencil"
+              onClick={() => {
+                setFields({
+                  accountId: member.accountId,
+                  permissions: member.permissions,
+                });
+                setShowAddMemberModal(true);
+              }}
+            />
+            <i
+              role="button"
+              className="bi bi-trash text-danger"
+              onClick={() =>
+                setMembers(
+                  members.filter((m) => m.accountId !== member.accountId)
+                )
+              }
+            />
+          </ActionButtons>
+        )}
+      </div>
+    </div>
   </Item>
 );
 
@@ -127,18 +137,27 @@ return (
       />
       <h3>Add Members</h3>
       <p>
-        Set up who can access the treasury and what they can do. You can also do
+        Add members to your treasury and define their roles. You can also do
         this later.
       </p>
     </div>
     <div>
       <Item
         style={{ fontSize: "12px" }}
-        className="d-flex justify-content-between align-items-center"
+        className="d-flex justify-content-between align-items-center gap-3"
       >
-        <div className="w-50">Account</div>
-        <div className="w-25">Permissions</div>
-        <div className="w-25 d-flex justify-content-end">Actions</div>
+        <div className="w-25">Account</div>
+        <div className="d-flex flex-row gap-3" style={{ width: "380px" }}>
+          <div
+            className="d-flex gap-1 align-items-center"
+            style={{ width: "290px" }}
+          >
+            Permissions
+          </div>
+          <div className="d-flex flex-row" style={{ width: "60px" }}>
+            Actions
+          </div>
+        </div>
       </Item>
       <div className="d-flex flex-column">
         {members.map((member, i) => (
@@ -169,7 +188,7 @@ return (
         }`}
         href={`/${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=3`}
       >
-        Next
+        Continue
       </Link>
     </div>
   </>

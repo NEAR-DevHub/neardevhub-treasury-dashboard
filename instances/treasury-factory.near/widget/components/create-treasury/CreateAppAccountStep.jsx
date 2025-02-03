@@ -29,26 +29,27 @@ const AccountDisplay = ({ label, prefix, tooltipInfo, noBorder }) => {
 return (
   <>
     <div>
-      <h3>Create Application Account</h3>
+      <h3>Create Treasury Accounts</h3>
       <p>
-        Enter a name for your treasury application. This name will be used for
-        the application's URL and other management purposes, not the actual
-        account where the funds will be held.
+        Enter a name for your treasury. This will be used for both the
+        application's URL and your treasury's Sputnik DAO account.
       </p>
     </div>
 
     <Widget
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.NewAccountInput`}
       props={{
+        id: "treasury-account",
         alertMsg,
         setAlertMsg,
+        label: "Treasury Name",
         defaultValue: formFields.accountName,
         onChange: (v) =>
           setFormFields({
             ...formFields,
             accountName: v,
           }),
-        placeholder: "app-account",
+        placeholder: "my-treasury",
       }}
     />
 
@@ -56,12 +57,12 @@ return (
       <AccountDisplay
         label={"NEAR"}
         prefix=".near"
-        tooltipInfo="Treasury account"
+        tooltipInfo="This NEAR account name will be used for the application's URL and other management purposes, not the actual account where the funds will be held."
       />
       <AccountDisplay
         label={"Sputnik DAO"}
         prefix=".sputnik-dao.near"
-        tooltipInfo="The funds for your treasury will be held there"
+        tooltipInfo="This is the name of your treasury's account on the Sputnik DAO platform, where your funds will be held."
         noBorder
       />
     </div>
@@ -92,7 +93,7 @@ return (
         }`}
         href={`/${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=2`}
       >
-        Next
+        Continue
       </Link>
     </div>
   </>
