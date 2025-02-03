@@ -186,8 +186,8 @@ const BalanceDisplay = ({ label, balance, tooltipInfo, noBorder }) => {
 };
 
 const pikespeakKey = isBosGateway()
-  ? "${REPL_PIKESPEAK_KEY}"
-  : props.pikespeakKey ?? "263f0c69-69e2-4919-ae02-d8ca7a696da2";
+  ? "${REPL_GATEWAY_PIKESPEAK_KEY}"
+  : props.pikespeakKey ?? "${REPL_INDIVIDUAL_PIKESPEAK_KEY}";
 
 const pikespeakOptions = {
   method: "GET",

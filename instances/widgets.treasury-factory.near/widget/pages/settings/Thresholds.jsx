@@ -377,8 +377,13 @@ return (
                   style={{ width: "85%" }}
                 >
                   <Widget
-                    src="mob.near/widget/Profile.ShortInlineBlock"
-                    props={{ accountId: member, tooltip: true }}
+                    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
+                    props={{
+                      accountId: member,
+                      showKYC: false,
+                      instance,
+                      width: 150,
+                    }}
                   />
                 </div>
               ))}

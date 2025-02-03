@@ -4,26 +4,20 @@ const { isBosGateway } = VM.require(
 
 const validatorId = props.validatorId;
 const pikespeakKey = isBosGateway()
-  ? "${REPL_PIKESPEAK_KEY}"
-  : props.pikespeakKey ?? "263f0c69-69e2-4919-ae02-d8ca7a696da2";
+  ? "${REPL_GATEWAY_PIKESPEAK_KEY}"
+  : props.pikespeakKey ?? "${REPL_INDIVIDUAL_PIKESPEAK_KEY}";
 
 if (!pikespeakKey) {
   return (
     <Widget
-      src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
       props={{
-        popup: (
-          <Widget
-            src="${REPL_MOB}/widget/Profile.Popover"
-            props={{ accountId: validatorId }}
-          />
-        ),
-        children: (
-          <div className="text-truncate" style={{ maxWidth: "300px" }}>
-            {validatorId}
-          </div>
-        ),
+        accountId: validatorId,
+        showKYC: false,
         instance: props.instance,
+        displayImage: false,
+        displayName: false,
+        width: 200,
       }}
     />
   );

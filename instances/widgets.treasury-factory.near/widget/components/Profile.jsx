@@ -134,9 +134,7 @@ const ReceiverAccountComponent = (
       style={{ width: width ? width : displayImage ? "150px" : "100px" }}
     >
       {displayName && <div className="h6 mb-0"> {name}</div>}
-      <div>
-        {displayName && "@"} {accountId}
-      </div>
+      <div>{displayName ? "@" + accountId : accountId}</div>
     </div>
   </div>
 );
