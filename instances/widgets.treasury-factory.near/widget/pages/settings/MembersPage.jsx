@@ -260,7 +260,7 @@ const hasCreatePermission = hasPermission(
   treasuryDaoID,
   context.accountId,
   "policy",
-  "vote"
+  "AddProposal"
 );
 
 return (

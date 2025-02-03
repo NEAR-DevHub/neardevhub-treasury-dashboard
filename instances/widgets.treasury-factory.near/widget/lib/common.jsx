@@ -381,31 +381,45 @@ function hasPermission(treasuryDaoID, accountId, kindName, actionType) {
   if (!accountId) {
     return false;
   }
-  let isAllowed = false;
+
   const daoPolicy = treasuryDaoID
     ? Near.view(treasuryDaoID, "get_policy", {})
     : null;
 
-  if (Array.isArray(daoPolicy.roles)) {
-    const permissions = daoPolicy.roles.map((role) => {
-      if (
-        Array.isArray(role.kind.Group) &&
-        role.kind.Group.includes(accountId)
-      ) {
-        return (
-          role.permissions.includes(`${kindName}:${actionType.toString()}`) ||
-          role.permissions.includes(`${kindName}:*`) ||
-          role.permissions.includes(`${kindName}:VoteApprove`) ||
-          role.permissions.includes(`${kindName}:VoteReject`) ||
-          role.permissions.includes(`${kindName}:VoteRemove`) ||
-          role.permissions.includes(`*:${actionType.toString()}`) ||
-          role.permissions.includes("*:*")
-        );
-      }
-    });
-    isAllowed = permissions.some((element) => element === true);
+  if (!daoPolicy || !Array.isArray(daoPolicy.roles)) {
+    return false;
   }
-  return isAllowed;
+
+  const kindNames = Array.isArray(kindName) ? kindName : [kindName];
+  const actionTypes = Array.isArray(actionType) ? actionType : [actionType];
+
+  for (const role of daoPolicy.roles) {
+    if (
+      !Array.isArray(role.kind.Group) ||
+      !role.kind.Group.includes(accountId)
+    ) {
+      continue;
+    }
+
+    for (const kind of kindNames) {
+      for (const action of actionTypes) {
+        const permissionVariants = [
+          `${kind}:${action}`,
+          `${kind}:*`,
+          `*:${action}`,
+          "*:*",
+        ];
+
+        if (
+          permissionVariants.some((perm) => role.permissions.includes(perm))
+        ) {
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
 }
 
 function getPermissionsText(type) {
