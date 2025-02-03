@@ -576,6 +576,22 @@ test.describe("Have valid staked requests and sufficient token balance", functio
     });
   });
 
+  test.describe("User with 'Vote' role logged in", function () {
+    test.use({
+      storageState:
+        "playwright-tests/storage-states/wallet-connected-vote-role.json",
+    });
+
+    test("should not see 'Create Request' action", async ({ page }) => {
+      await expect(page.getByText("Pending Requests")).toBeVisible();
+      await expect(
+        page.getByRole("button", {
+          name: "Create Request",
+        })
+      ).toBeHidden();
+    });
+  });
+
   test.describe("Admin connected", function () {
     test.use({
       storageState:
