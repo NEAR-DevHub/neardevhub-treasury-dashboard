@@ -137,6 +137,27 @@ test.describe("User is not logged in", function () {
   });
 });
 
+test.describe("User with 'Vote' role logged in", function () {
+  test.use({
+    storageState:
+      "playwright-tests/storage-states/wallet-connected-vote-role.json",
+  });
+
+  test("should not see 'Create Request' action", async ({
+    page,
+    instanceAccount,
+  }) => {
+    await updateDaoPolicyMembers({ page });
+    await page.goto(`/${instanceAccount}/widget/app?page=payments`);
+    await expect(page.getByText("Pending Requests")).toBeVisible();
+    await expect(
+      page.getByRole("button", {
+        name: "Create Request",
+      })
+    ).toBeHidden();
+  });
+});
+
 test.describe("User is logged in", function () {
   const signedUser = "theori.near";
   test.use({
