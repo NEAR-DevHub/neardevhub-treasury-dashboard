@@ -295,6 +295,7 @@ test.describe("User is logged in", function () {
     await page.getByRole("list").getByText("Percentage of members").click();
     await thresholdInput.fill("1");
     await thresholdInput.fill("", { force: true });
+    await thresholdInput.focus();
     await thresholdInput.pressSequentially("0", { delay: 100 });
     await expect(
       page.getByText("The minimum allowed percentage is 1%.")

@@ -2,6 +2,12 @@ name: Deploy Rust web4 contract
 
 on:
   workflow_dispatch: # This allows manual triggering
+  push:
+    branches:
+      - main
+      - staging
+    paths:
+      - 'web4/**'
 
 jobs:
   test:
