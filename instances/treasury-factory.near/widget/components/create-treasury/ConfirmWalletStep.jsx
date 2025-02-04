@@ -45,30 +45,28 @@ const SummaryListItem = ({ title, value, info }) => (
 return (
   <>
     <Section>
-      <h3>Confirm your wallet</h3>
+      <h3>Confirm Your Wallet</h3>
       <p>
         This is the account that will be used to pay for creating the treasury
-        and managing it at first. You'll need to have enough funds in this
-        wallet to cover the setup costs.
+        and managing it initially. Ensure it has sufficient funds to cover the
+        setup costs below.
       </p>
     </Section>
     <Section className="d-flex flex-column gap-3">
       <h4>Connected Wallet</h4>
       <Widget
-        src="mob.near/widget/Profile.ShortInlineBlock"
-        props={{
-          accountId: context.accountId,
-        }}
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
+        props={{ accountId: context.accountId }}
       />
       <Widget
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Info`}
         props={{
           type: "info",
-          text: "This is your personal NEAR Wallet, not the treasury wallet",
+          text: "This is your personal NEAR wallet used for setup. The treasury will have its own separate wallet.",
         }}
       />
       <div className="mt-3">
-        <h4>Estimated one-time costs:</h4>
+        <h4>Estimated One-Time Costs</h4>
         <ul>
           <SummaryListItem
             title="SputnikDAO"
@@ -104,7 +102,7 @@ return (
       }`}
       href={`/${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=1`}
     >
-      Yes, use this wallet and continue
+      Continue
     </Link>
   </>
 );
