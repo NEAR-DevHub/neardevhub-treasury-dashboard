@@ -35,9 +35,9 @@ async function updateLastProposalId(page) {
 }
 
 async function navigateToMembersPage({ page, instanceAccount }) {
-  await page.goto(`/${instanceAccount}/widget/app?page=settings`);
-  await page.waitForTimeout(5_000);
-  await page.getByTestId("Members").click();
+  await page.goto(
+    `/${instanceAccount}/widget/app?page=settings&selectedTab=members`
+  );
   await expect(page.getByText("All Members")).toBeVisible({ timeout: 10_000 });
 }
 

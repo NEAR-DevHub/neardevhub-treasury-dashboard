@@ -115,6 +115,7 @@ const SubmitToast = () => {
               <div>
                 <div>New members policy request is submitted.</div>
                 <a
+                  className="text-underline"
                   href={href({
                     widgetSrc: `${instance}/widget/app`,
                     params: {
