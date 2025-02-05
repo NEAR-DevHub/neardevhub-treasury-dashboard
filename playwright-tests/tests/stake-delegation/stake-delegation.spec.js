@@ -86,7 +86,7 @@ async function mockUnstakeAndWithdrawBalance({
   hasUnstakeBalance,
   hasWithdrawBalance,
 }) {
-  await page.route(`https://archival-rpc.mainnet.near.org`, async (route) => {
+  await page.route(`https://archival-rpc.mainnet.fastnear.com`, async (route) => {
     const request = await route.request();
     const requestPostData = request.postDataJSON();
 
@@ -137,7 +137,7 @@ async function mockUnstakeAndWithdrawBalance({
 }
 
 async function mockStakedPoolBalances({ page }) {
-  await page.route(`https://archival-rpc.mainnet.near.org/`, async (route) => {
+  await page.route(`https://archival-rpc.mainnet.fastnear.com/`, async (route) => {
     const request = await route.request();
     const requestPostData = request.postDataJSON();
 
@@ -284,6 +284,11 @@ async function openStakeForm({ page, isLockup, daoAccount, lockupContract }) {
 
 async function fillValidatorAccount({ page }) {
   // validator dropdown shouldn't take more than 10 seconds
+  const submitBtn = page
+  .frameLocator("iframe")
+  .nth(1)
+  .getByRole("button", { name: "Submit" });
+  await expect(submitBtn).toBeDisabled()
   const poolSelector = await page
     .frameLocator("iframe")
     .nth(1)
