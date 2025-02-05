@@ -368,23 +368,14 @@ const ProposalsComponent = () => {
                   {isLockup ? "Lockup" : "Sputnik DAO"}
                 </div>
                 <Widget
-                  src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
                   props={{
-                    popup: (
-                      <Widget
-                        src="${REPL_MOB}/widget/Profile.Popover"
-                        props={{ accountId: treasuryWallet }}
-                      />
-                    ),
-                    children: (
-                      <div
-                        className="text-truncate"
-                        style={{ maxWidth: "200px" }}
-                      >
-                        {treasuryWallet}
-                      </div>
-                    ),
+                    accountId: treasuryWallet,
+                    showKYC: false,
                     instance,
+                    displayImage: false,
+                    displayName: false,
+                    width: 200,
                   }}
                 />
               </td>

@@ -375,11 +375,16 @@ return (
               selectedGroup.members.map((member) => (
                 <div
                   className="p-1 px-3 text-truncate"
-                  style={{ width: "85%" }}
+                  style={{ width: "95%" }}
                 >
                   <Widget
-                    src="mob.near/widget/Profile.ShortInlineBlock"
-                    props={{ accountId: member, tooltip: true }}
+                    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
+                    props={{
+                      accountId: member,
+                      showKYC: false,
+                      instance,
+                      width: "100%",
+                    }}
                   />
                 </div>
               ))}

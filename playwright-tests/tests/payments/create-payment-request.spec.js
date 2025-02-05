@@ -137,6 +137,44 @@ test.describe("User is not logged in", function () {
   });
 });
 
+test.describe.parallel("User logged in with different roles", function () {
+  const roles = [
+    {
+      name: "Vote role",
+      storageState:
+        "playwright-tests/storage-states/wallet-connected-admin-with-vote-role.json",
+    },
+    {
+      name: "Settings role",
+      storageState:
+        "playwright-tests/storage-states/wallet-connected-admin-with-settings-role.json",
+    },
+  ];
+
+  for (const role of roles) {
+    test.describe(`User with '${role.name}'`, function () {
+      test.use({ storageState: role.storageState });
+
+      test("should not see 'Create Request' action", async ({
+        page,
+        instanceAccount,
+      }) => {
+        test.setTimeout(60_000);
+        await updateDaoPolicyMembers({ page });
+        await page.goto(`/${instanceAccount}/widget/app?page=payments`);
+        await expect(page.getByText("Pending Requests")).toBeVisible({
+          timeout: 20_000,
+        });
+        await expect(
+          page.getByRole("button", {
+            name: "Create Request",
+          })
+        ).toBeHidden();
+      });
+    });
+  }
+});
+
 test.describe("User is logged in", function () {
   const signedUser = "theori.near";
   test.use({
