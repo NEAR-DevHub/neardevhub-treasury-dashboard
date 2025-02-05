@@ -480,7 +480,7 @@ test.describe("User is logged in", function () {
     const account = "theori.near";
     const permission = "Create Requests";
     await page
-      .getByRole("row", { name: `not defined Megha ${account}` })
+      .getByRole("row", { name: `not defined Ori ${account}` })
       .locator("i")
       .first()
       .click();
@@ -635,7 +635,7 @@ test.describe("User is logged in", function () {
   test("should delete existing member from DAO", async ({ page }) => {
     test.setTimeout(60_000);
     await page
-      .getByRole("row", { name: "not defined Megha megha19.near" })
+      .getByRole("row", { name: "not defined Ori theori.near" })
       .locator("i")
       .first()
       .click();
@@ -656,7 +656,7 @@ test.describe("User is logged in", function () {
 
     const description = {
       title: "Update policy - Members Permissions",
-      summary: `theori.near requested to requested to revoke all permissions of "megha19.near".`,
+      summary: `theori.near requested to requested to revoke all permissions of "theori.near".`,
     };
     expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
@@ -669,7 +669,6 @@ test.describe("User is logged in", function () {
                   name: "Create Requests",
                   kind: {
                     Group: [
-                      "theori.near",
                       "2dada969f3743a4a41cfdb1a6e39581c2844ce8fbe25948700c85c598090b3e1",
                       "freski.near",
                       "thomasguntenaar.near",
@@ -698,7 +697,7 @@ test.describe("User is logged in", function () {
                     Group: [
                       "petersalomonsen.near",
                       "thomasguntenaar.near",
-                      "theori.near",
+                      "megha19.near",
                     ],
                   },
                   permissions: [
@@ -739,7 +738,7 @@ test.describe("User is logged in", function () {
                       "petersalomonsen.near",
                       "treasurytestuserledger.near",
                       "tfdevhub.near",
-                      "theori.near",
+
                       "thomasguntenaar.near",
                       "test04.near",
                       "test03.near",
