@@ -501,12 +501,15 @@ return (
       switch (e.handler) {
         case "onCancel": {
           onCancel();
+          break;
         }
         case "onSubmit": {
           onSubmit(e.validatorAccount, e.amount, e.notes);
+          break;
         }
         case "updateIframeHeight": {
           State.update({ height: e.height });
+          break;
         }
       }
     }}
