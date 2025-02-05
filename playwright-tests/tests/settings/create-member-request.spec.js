@@ -229,7 +229,6 @@ test.describe("User is logged in", function () {
                     "theori.near",
                     "2dada969f3743a4a41cfdb1a6e39581c2844ce8fbe25948700c85c598090b3e1",
                     "freski.near",
-                    "megha19.near",
                     "thomasguntenaar.near",
                     "petersalomonsen.near",
                     "testingaccount.near",
@@ -296,7 +295,6 @@ test.describe("User is logged in", function () {
                 name: "Vote",
                 kind: {
                   Group: [
-                    "megha19.near",
                     "petersalomonsen.near",
                     "treasurytestuserledger.near",
                     "tfdevhub.near",
@@ -479,7 +477,7 @@ test.describe("User is logged in", function () {
 
   test("should update existing member permissions", async ({ page }) => {
     test.setTimeout(120_000);
-    const account = "megha19.near";
+    const account = "theori.near";
     const permission = "Create Requests";
     await page
       .getByRole("row", { name: `not defined Megha ${account}` })
@@ -518,7 +516,6 @@ test.describe("User is logged in", function () {
                   name: "Create Requests",
                   kind: {
                     Group: [
-                      "theori.near",
                       "2dada969f3743a4a41cfdb1a6e39581c2844ce8fbe25948700c85c598090b3e1",
                       "freski.near",
                       "thomasguntenaar.near",
@@ -586,7 +583,6 @@ test.describe("User is logged in", function () {
                   name: "Vote",
                   kind: {
                     Group: [
-                      "megha19.near",
                       "petersalomonsen.near",
                       "treasurytestuserledger.near",
                       "tfdevhub.near",

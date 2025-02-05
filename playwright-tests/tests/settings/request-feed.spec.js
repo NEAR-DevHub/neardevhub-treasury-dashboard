@@ -200,7 +200,7 @@ test.describe.parallel("User logged in with different roles", function () {
           timeout: 20_000,
         });
         await expect(
-          page.getByRole("cell", { name: 1, exact: true })
+          page.getByRole("cell", { name: 1, exact: true }).first()
         ).toBeVisible({ timeout: 10_000 });
         await expect(
           page

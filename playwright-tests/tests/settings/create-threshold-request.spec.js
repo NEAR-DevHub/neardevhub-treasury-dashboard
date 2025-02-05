@@ -73,7 +73,7 @@ test.describe("User is not logged in", function () {
     await expect(page.getByText("Permission Groups")).toBeVisible({
       timeout: 20_000,
     });
-    await expect(page.getByText("Members 6")).toBeVisible();
+    await expect(page.getByText("Members 5")).toBeVisible();
     await expect(page.getByText("Voting Policy")).toBeVisible();
     await expect(
       page.getByText(
