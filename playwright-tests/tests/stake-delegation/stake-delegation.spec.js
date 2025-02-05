@@ -86,16 +86,70 @@ async function mockUnstakeAndWithdrawBalance({
   hasUnstakeBalance,
   hasWithdrawBalance,
 }) {
-  await page.route(`https://archival-rpc.mainnet.fastnear.com`, async (route) => {
-    const request = await route.request();
-    const requestPostData = request.postDataJSON();
+  await page.route(
+    `https://archival-rpc.mainnet.fastnear.com`,
+    async (route) => {
+      const request = await route.request();
+      const requestPostData = request.postDataJSON();
 
-    if (
-      requestPostData.params &&
-      requestPostData.params.request_type === "call_function"
-    )
       if (
-        requestPostData.params.method_name === "get_account_unstaked_balance"
+        requestPostData.params &&
+        requestPostData.params.request_type === "call_function"
+      )
+        if (
+          requestPostData.params.method_name === "get_account_unstaked_balance"
+        ) {
+          const json = {
+            jsonrpc: "2.0",
+            result: {
+              block_hash: "GXEuJYXvoXoiDhtDJP8EiPXesQbQuwDSWadYzy2JAstV",
+              block_height: 132031112,
+              logs: [],
+              result: hasUnstakeBalance
+                ? [
+                    34, 51, 48, 50, 54, 53, 51, 54, 56, 51, 52, 51, 53, 51, 51,
+                    57, 51, 50, 52, 51, 51, 53, 55, 51, 50, 34,
+                  ]
+                : [34, 49, 34],
+            },
+            id: "dontcare",
+          };
+          await route.fulfill({ json });
+        } else if (
+          requestPostData.params.method_name ===
+          "is_account_unstaked_balance_available"
+        ) {
+          const json = {
+            jsonrpc: "2.0",
+            result: {
+              block_hash: "sx9uuhk3amZWRvkTEcj9bSUVVcPoUXpgeUV6LpHsQCe",
+              block_height: 134584005,
+              logs: [],
+              result: hasWithdrawBalance
+                ? [116, 114, 117, 101]
+                : [102, 97, 108, 115, 101],
+            },
+            id: "dontcare",
+          };
+          await route.fulfill({ json });
+        } else {
+          await route.continue();
+        }
+    }
+  );
+}
+
+async function mockStakedPoolBalances({ page }) {
+  await page.route(
+    `https://archival-rpc.mainnet.fastnear.com/`,
+    async (route) => {
+      const request = await route.request();
+      const requestPostData = request.postDataJSON();
+
+      if (
+        requestPostData.params &&
+        requestPostData.params.request_type === "call_function" &&
+        requestPostData.params.method_name === "get_account_staked_balance"
       ) {
         const json = {
           jsonrpc: "2.0",
@@ -103,29 +157,10 @@ async function mockUnstakeAndWithdrawBalance({
             block_hash: "GXEuJYXvoXoiDhtDJP8EiPXesQbQuwDSWadYzy2JAstV",
             block_height: 132031112,
             logs: [],
-            result: hasUnstakeBalance
-              ? [
-                  34, 51, 48, 50, 54, 53, 51, 54, 56, 51, 52, 51, 53, 51, 51,
-                  57, 51, 50, 52, 51, 51, 53, 55, 51, 50, 34,
-                ]
-              : [34, 49, 34],
-          },
-          id: "dontcare",
-        };
-        await route.fulfill({ json });
-      } else if (
-        requestPostData.params.method_name ===
-        "is_account_unstaked_balance_available"
-      ) {
-        const json = {
-          jsonrpc: "2.0",
-          result: {
-            block_hash: "sx9uuhk3amZWRvkTEcj9bSUVVcPoUXpgeUV6LpHsQCe",
-            block_height: 134584005,
-            logs: [],
-            result: hasWithdrawBalance
-              ? [116, 114, 117, 101]
-              : [102, 97, 108, 115, 101],
+            result: [
+              34, 51, 48, 50, 54, 53, 51, 54, 56, 51, 52, 51, 53, 51, 51, 57,
+              51, 50, 52, 51, 51, 53, 55, 51, 50, 34,
+            ],
           },
           id: "dontcare",
         };
@@ -133,37 +168,8 @@ async function mockUnstakeAndWithdrawBalance({
       } else {
         await route.continue();
       }
-  });
-}
-
-async function mockStakedPoolBalances({ page }) {
-  await page.route(`https://archival-rpc.mainnet.fastnear.com/`, async (route) => {
-    const request = await route.request();
-    const requestPostData = request.postDataJSON();
-
-    if (
-      requestPostData.params &&
-      requestPostData.params.request_type === "call_function" &&
-      requestPostData.params.method_name === "get_account_staked_balance"
-    ) {
-      const json = {
-        jsonrpc: "2.0",
-        result: {
-          block_hash: "GXEuJYXvoXoiDhtDJP8EiPXesQbQuwDSWadYzy2JAstV",
-          block_height: 132031112,
-          logs: [],
-          result: [
-            34, 51, 48, 50, 54, 53, 51, 54, 56, 51, 52, 51, 53, 51, 51, 57, 51,
-            50, 52, 51, 51, 53, 55, 51, 50, 34,
-          ],
-        },
-        id: "dontcare",
-      };
-      await route.fulfill({ json });
-    } else {
-      await route.continue();
     }
-  });
+  );
 }
 
 export async function mockStakedPools({
@@ -285,10 +291,10 @@ async function openStakeForm({ page, isLockup, daoAccount, lockupContract }) {
 async function fillValidatorAccount({ page }) {
   // validator dropdown shouldn't take more than 10 seconds
   const submitBtn = page
-  .frameLocator("iframe")
-  .nth(1)
-  .getByRole("button", { name: "Submit" });
-  await expect(submitBtn).toBeDisabled()
+    .frameLocator("iframe")
+    .nth(1)
+    .getByRole("button", { name: "Submit" });
+  await expect(submitBtn).toBeDisabled();
   const poolSelector = await page
     .frameLocator("iframe")
     .nth(1)
