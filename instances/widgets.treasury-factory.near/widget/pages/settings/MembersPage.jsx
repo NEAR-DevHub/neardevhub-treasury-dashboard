@@ -115,6 +115,7 @@ const SubmitToast = () => {
               <div>
                 <div>New members policy request is submitted.</div>
                 <a
+                  className="text-underline"
                   href={href({
                     widgetSrc: `${instance}/widget/app`,
                     params: {
@@ -167,23 +168,14 @@ const Members = () => {
             </td>
             <td>
               <Widget
-                src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
                 props={{
-                  popup: (
-                    <Widget
-                      src="${REPL_MOB}/widget/Profile.Popover"
-                      props={{ accountId: account }}
-                    />
-                  ),
-                  children: (
-                    <div
-                      className="text-truncate"
-                      style={{ maxWidth: "300px" }}
-                    >
-                      {account}
-                    </div>
-                  ),
+                  accountId: account,
+                  showKYC: false,
+                  displayImage: false,
+                  displayName: false,
                   instance,
+                  width: 300,
                 }}
               />
             </td>
@@ -260,7 +252,7 @@ const hasCreatePermission = hasPermission(
   treasuryDaoID,
   context.accountId,
   "policy",
-  "vote"
+  "AddProposal"
 );
 
 return (

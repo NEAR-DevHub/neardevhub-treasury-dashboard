@@ -15,7 +15,9 @@ test.afterEach(async ({ page }, testInfo) => {
 });
 
 async function navigateToVotingDurationPage({ page, instanceAccount }) {
-  await page.goto(`/${instanceAccount}/widget/app?page=settings`);
+  await page.goto(
+    `/${instanceAccount}/widget/app?page=settings&selectedTab=voting-duration`
+  );
   await page.waitForTimeout(5_000);
   await page.getByTestId("Voting Duration").click();
   await expect(
@@ -25,20 +27,41 @@ async function navigateToVotingDurationPage({ page, instanceAccount }) {
   });
 }
 
-test.describe("User is not logged in", function () {
-  test("should not be able to change voting duration", async ({
-    page,
-    instanceAccount,
-  }) => {
-    await navigateToVotingDurationPage({ page, instanceAccount });
-    await expect(
-      page.getByPlaceholder("Enter voting duration days")
-    ).toBeDisabled();
+test.describe.parallel("User logged in with different roles", function () {
+  const roles = [
+    {
+      name: "Create role",
+      storageState:
+        "playwright-tests/storage-states/wallet-connected-admin-with-create-role.json",
+    },
+    {
+      name: "Vote role",
+      storageState:
+        "playwright-tests/storage-states/wallet-connected-admin-with-vote-role.json",
+    },
+  ];
 
-    await expect(
-      page.getByRole("button", { name: "Submit Request" })
-    ).toBeDisabled();
-  });
+  for (const role of roles) {
+    test.describe(`User with '${role.name}'`, function () {
+      test.use({ storageState: role.storageState });
+
+      test("should not be able to change voting duration", async ({
+        page,
+        instanceAccount,
+      }) => {
+        test.setTimeout(60_000);
+        await updateDaoPolicyMembers({ page });
+        await navigateToVotingDurationPage({ page, instanceAccount });
+        await expect(
+          page.getByPlaceholder("Enter voting duration days")
+        ).toBeDisabled();
+
+        await expect(
+          page.getByRole("button", { name: "Submit Request" })
+        ).toBeDisabled();
+      });
+    });
+  }
 });
 
 test.describe("User is logged in", function () {

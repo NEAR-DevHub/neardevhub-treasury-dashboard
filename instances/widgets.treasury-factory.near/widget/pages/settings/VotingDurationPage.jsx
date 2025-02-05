@@ -542,6 +542,7 @@ return (
             <div>
               <div>Voting duration change request submitted.</div>
               <a
+                className="text-underline"
                 href={href({
                   widgetSrc: `${instance}/widget/app`,
                   params: {

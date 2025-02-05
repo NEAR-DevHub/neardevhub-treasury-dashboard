@@ -18,6 +18,8 @@ const onCloseCanvas = props.onCloseCanvas ?? (() => {});
 const setToastStatus = props.setToastStatus ?? (() => {});
 
 const [username, setUsername] = useState(null);
+const [isUsernameValid, setIsUsernameValid] = useState(null);
+
 const [roles, setRoles] = useState([]);
 const [isTxnCreated, setTxnCreated] = useState(false);
 const [lastProposalId, setLastProposalId] = useState(null);
@@ -197,14 +199,6 @@ const Container = styled.div`
   }
 `;
 
-function isAccountValid() {
-  return (
-    username.length === 64 ||
-    (username ?? "").includes(".near") ||
-    (username ?? "").includes(".tg")
-  );
-}
-
 // check if user already exists
 useEffect(() => {
   if (selectedMember) {
@@ -253,6 +247,8 @@ return (
           placeholder: "treasury.near",
           onUpdate: setUsername,
           disabled: selectedMember,
+          setParentAccountValid: setIsUsernameValid,
+
           instance,
         }}
       />
@@ -326,7 +322,7 @@ return (
           props={{
             classNames: { root: "theme-btn" },
             disabled:
-              !username || !roles?.length || isTxnCreated || !isAccountValid(),
+              !username || !roles?.length || isTxnCreated || !isUsernameValid,
             label: "Submit",
             onClick: onSubmitClick,
             loading: isTxnCreated,

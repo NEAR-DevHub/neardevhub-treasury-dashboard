@@ -7,7 +7,7 @@ const { page, ...passProps } = props;
 
 // Import our modules
 const { AppLayout } = VM.require(
-  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.templates.AppLayout"
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.templates.AppLayout`
 ) || { AppLayout: () => <></> };
 const { Theme } = VM.require(
   `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/config.css`

@@ -24,7 +24,8 @@ async function voteOnProposal({
   vote,
   isMultiVote,
 }) {
-  let lastProposalId = 10;
+  const transferProposalData = JSON.parse(JSON.stringify(TransferProposalData));
+  let lastProposalId = transferProposalData.id;
   let isTransactionCompleted = false;
   const contractId = daoAccount;
   await mockRpcRequest({
@@ -33,7 +34,7 @@ async function voteOnProposal({
       method_name: "get_proposals",
     },
     modifyOriginalResultFunction: (originalResult) => {
-      originalResult = TransferProposalData;
+      originalResult = transferProposalData;
       if (isTransactionCompleted && !isMultiVote) {
         originalResult.status = voteStatus;
       } else {
@@ -49,7 +50,7 @@ async function voteOnProposal({
       method_name: "get_proposal",
     },
     modifyOriginalResultFunction: (originalResult) => {
-      originalResult = TransferProposalData;
+      originalResult = transferProposalData;
       if (isTransactionCompleted && vote === "Remove" && !isMultiVote) {
         return {
           isError: true,
@@ -121,6 +122,61 @@ async function mockPaymentProposals({ page }) {
 test.afterEach(async ({ page }, testInfo) => {
   console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
   await page.unrouteAll({ behavior: "ignoreErrors" });
+});
+
+test.describe.parallel("User logged in with different roles", function () {
+  const roles = [
+    {
+      name: "Create role",
+      storageState:
+        "playwright-tests/storage-states/wallet-connected-admin-with-create-role.json",
+    },
+    {
+      name: "Settings role",
+      storageState:
+        "playwright-tests/storage-states/wallet-connected-admin-with-settings-role.json",
+    },
+  ];
+
+  for (const role of roles) {
+    test.describe(`User with '${role.name}'`, function () {
+      test.use({ storageState: role.storageState });
+
+      test("should not see 'Vote' action", async ({
+        page,
+        instanceAccount,
+      }) => {
+        test.setTimeout(60_000);
+        await updateDaoPolicyMembers({ page });
+        await mockRpcRequest({
+          page,
+          filterParams: {
+            method_name: "get_proposals",
+          },
+          modifyOriginalResultFunction: (originalResult) => {
+            originalResult = JSON.parse(JSON.stringify(TransferProposalData));
+            originalResult.submission_time = CurrentTimestampInNanoseconds;
+            originalResult.status = "InProgress";
+            return originalResult;
+          },
+        });
+        await page.goto(`/${instanceAccount}/widget/app?page=payments`);
+        await expect(page.getByText("Pending Requests")).toBeVisible({
+          timeout: 20_000,
+        });
+        await expect(
+          page.getByRole("cell", { name: 10, exact: true })
+        ).toBeVisible({ timeout: 10_000 });
+        await expect(
+          page
+            .getByRole("button", {
+              name: "Approve",
+            })
+            .first()
+        ).toBeHidden();
+      });
+    });
+  }
 });
 
 test.describe("don't ask again", function () {

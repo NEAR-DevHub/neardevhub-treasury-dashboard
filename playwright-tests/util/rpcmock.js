@@ -1,4 +1,4 @@
-export const MOCK_RPC_URL = "http://127.0.0.1:8080/api/proxy-rpc";
+export const MOCK_RPC_URL = "http://127.0.0.1:14500";
 
 export async function mockRpcRequest({
   page,
@@ -81,7 +81,6 @@ export function getMockedPolicy(
             "theori.near",
             "2dada969f3743a4a41cfdb1a6e39581c2844ce8fbe25948700c85c598090b3e1",
             "freski.near",
-            "megha19.near",
             "thomasguntenaar.near",
             "petersalomonsen.near",
           ],
@@ -147,7 +146,6 @@ export function getMockedPolicy(
         name: "Vote",
         kind: {
           Group: [
-            "megha19.near",
             "petersalomonsen.near",
             "treasurytestuserledger.near",
             "tfdevhub.near",

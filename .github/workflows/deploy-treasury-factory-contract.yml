@@ -2,6 +2,13 @@ name: Deploy Treasury Factory contract
 
 on:
   workflow_dispatch: # This allows manual triggering
+  push:
+    branches:
+      - main
+      - staging
+    paths:
+      - 'treasury-factory/**'
+      - 'web4/**'
 
 jobs:
   deploy:

@@ -1,12 +1,13 @@
 const value = props.value;
 const placeholder = props.placeholder;
 const onUpdate = props.onUpdate;
+const setParentAccountValid = props.setParentAccountValid;
 const disabled = props.disabled;
 const instance = props.instance;
 
 const [account, setAccount] = useState(value);
 const [showAccountAutocomplete, setAutoComplete] = useState(false);
-const [isValidAccount, setValidAccount] = useState(true);
+const [isValidAccount, setValidAccount] = useState(false);
 const [selectedFromAutoComplete, setSelectedFromAuto] = useState(false);
 const maxWidth = props.maxWidth;
 const AutoComplete = styled.div`
@@ -34,6 +35,9 @@ useEffect(() => {
       (account ?? "").includes(".tg") ||
       (account ?? "").includes(".aurora");
     setValidAccount(valid);
+    if (valid) {
+      checkAccountAvailability();
+    }
     setAutoComplete(true);
   }, 100);
 
@@ -41,6 +45,35 @@ useEffect(() => {
     clearTimeout(handler);
   };
 }, [account]);
+
+useEffect(() => {
+  setParentAccountValid(isValidAccount);
+}, [isValidAccount]);
+
+const checkAccountAvailability = async () => {
+  asyncFetch(`${REPL_RPC_URL}`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: "dontcare",
+      method: "query",
+      params: {
+        request_type: "view_account",
+        finality: "final",
+        account_id: account,
+      },
+    }),
+  }).then((resp) => {
+    if (resp.body?.error?.cause.name === "UNKNOWN_ACCOUNT") {
+      setValidAccount(false);
+      setAutoComplete(false);
+    }
+  });
+};
 
 return (
   <div>

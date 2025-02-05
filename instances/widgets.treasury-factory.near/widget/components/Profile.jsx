@@ -92,6 +92,9 @@ const HoverCard = () => {
           style={{ gap: "0.7rem" }}
         >
           <ProfileLink
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
             target="_blank"
             rel="noopener noreferrer"
             href={`https://near.social/mob.near/widget/ProfilePage?accountId=${accountId}`}
@@ -103,7 +106,10 @@ const HoverCard = () => {
           <div
             className="d-flex gap-2 align-items-center"
             style={{ cursor: "pointer" }}
-            onClick={() => clipboard.writeText(accountId)}
+            onClick={(e) => {
+              e.stopPropagation();
+              clipboard.writeText(accountId);
+            }}
           >
             <Copy width={25} height={25} />
             Copy wallet address
@@ -134,9 +140,7 @@ const ReceiverAccountComponent = (
       style={{ width: width ? width : displayImage ? "150px" : "100px" }}
     >
       {displayName && <div className="h6 mb-0"> {name}</div>}
-      <div>
-        {displayName && "@"} {accountId}
-      </div>
+      <div>{displayName ? "@" + accountId : accountId}</div>
     </div>
   </div>
 );

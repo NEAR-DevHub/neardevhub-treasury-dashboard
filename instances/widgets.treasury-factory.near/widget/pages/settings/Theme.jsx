@@ -39,7 +39,7 @@ const ThemeOptions = [
   },
 ];
 
-const defaultColor = "#0000";
+const defaultColor = "#01BF7A";
 const defaultImage =
   "https://github.com/user-attachments/assets/244e15fc-3fb7-4067-a2c3-013e189e8d20";
 const [image, setImage] = useState(defaultImage);
@@ -231,6 +231,7 @@ const SubmitToast = () => {
               <div>
                 <div>Theme change request submitted.</div>
                 <a
+                  className="text-underline"
                   href={href({
                     widgetSrc: `${instance}/widget/app`,
                     params: {

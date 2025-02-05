@@ -106,9 +106,16 @@ export default defineConfig({
   //outputDir: 'test-results/',
 
   /* Run your local dev server before starting the tests */
-  webServer: {
-    command: "npm run gateway",
-    port: 8080,
-    reuseExistingServer: !process.env.CI,
-  },
+  webServer: [
+    {
+      command: "npm run rpcproxy",
+      port: 14500,
+      reuseExistingServer: !process.env.CI,
+    },
+    {
+      command: "npm run gateway",
+      port: 8080,
+      reuseExistingServer: !process.env.CI,
+    },
+  ],
 });

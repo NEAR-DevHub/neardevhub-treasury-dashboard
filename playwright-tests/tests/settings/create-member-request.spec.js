@@ -35,9 +35,9 @@ async function updateLastProposalId(page) {
 }
 
 async function navigateToMembersPage({ page, instanceAccount }) {
-  await page.goto(`/${instanceAccount}/widget/app?page=settings`);
-  await page.waitForTimeout(5_000);
-  await page.getByTestId("Members").click();
+  await page.goto(
+    `/${instanceAccount}/widget/app?page=settings&selectedTab=members`
+  );
   await expect(page.getByText("All Members")).toBeVisible({ timeout: 10_000 });
 }
 
@@ -58,19 +58,40 @@ test.afterEach(async ({ page }, testInfo) => {
   await page.unrouteAll({ behavior: "ignoreErrors" });
 });
 
-test.describe("User is not logged in", function () {
-  test.beforeEach(async ({ page, instanceAccount }) => {
-    await navigateToMembersPage({ page, instanceAccount });
-  });
+test.describe.parallel("User logged in with different roles", function () {
+  const roles = [
+    {
+      name: "Create role",
+      storageState:
+        "playwright-tests/storage-states/wallet-connected-admin-with-create-role.json",
+    },
+    {
+      name: "Vote role",
+      storageState:
+        "playwright-tests/storage-states/wallet-connected-admin-with-vote-role.json",
+    },
+  ];
 
-  test("should not be able to add member or see actions", async ({ page }) => {
-    await expect(
-      page.getByRole("button", {
-        name: "New Member",
-      })
-    ).toBeHidden();
-    await expect(page.getByText("Actions", { exact: true })).toBeHidden();
-  });
+  for (const role of roles) {
+    test.describe(`User with '${role.name}'`, function () {
+      test.use({ storageState: role.storageState });
+
+      test("should not be able to add member or see actions", async ({
+        page,
+        instanceAccount,
+      }) => {
+        test.setTimeout(60_000);
+        await updateDaoPolicyMembers({ page });
+        await navigateToMembersPage({ page, instanceAccount });
+        await expect(
+          page.getByRole("button", {
+            name: "New Member",
+          })
+        ).toBeHidden();
+        await expect(page.getByText("Actions", { exact: true })).toBeHidden();
+      });
+    });
+  }
 });
 
 test.describe("User is logged in", function () {
@@ -208,7 +229,6 @@ test.describe("User is logged in", function () {
                     "theori.near",
                     "2dada969f3743a4a41cfdb1a6e39581c2844ce8fbe25948700c85c598090b3e1",
                     "freski.near",
-                    "megha19.near",
                     "thomasguntenaar.near",
                     "petersalomonsen.near",
                     "testingaccount.near",
@@ -275,7 +295,6 @@ test.describe("User is logged in", function () {
                 name: "Vote",
                 kind: {
                   Group: [
-                    "megha19.near",
                     "petersalomonsen.near",
                     "treasurytestuserledger.near",
                     "tfdevhub.near",
@@ -458,10 +477,10 @@ test.describe("User is logged in", function () {
 
   test("should update existing member permissions", async ({ page }) => {
     test.setTimeout(120_000);
-    const account = "megha19.near";
+    const account = "theori.near";
     const permission = "Create Requests";
     await page
-      .getByRole("row", { name: `not defined Megha ${account}` })
+      .getByRole("row", { name: `not defined Ori ${account}` })
       .locator("i")
       .first()
       .click();
@@ -497,7 +516,6 @@ test.describe("User is logged in", function () {
                   name: "Create Requests",
                   kind: {
                     Group: [
-                      "theori.near",
                       "2dada969f3743a4a41cfdb1a6e39581c2844ce8fbe25948700c85c598090b3e1",
                       "freski.near",
                       "thomasguntenaar.near",
@@ -565,7 +583,6 @@ test.describe("User is logged in", function () {
                   name: "Vote",
                   kind: {
                     Group: [
-                      "megha19.near",
                       "petersalomonsen.near",
                       "treasurytestuserledger.near",
                       "tfdevhub.near",
@@ -618,7 +635,7 @@ test.describe("User is logged in", function () {
   test("should delete existing member from DAO", async ({ page }) => {
     test.setTimeout(60_000);
     await page
-      .getByRole("row", { name: "not defined Megha megha19.near" })
+      .getByRole("row", { name: "not defined Ori theori.near" })
       .locator("i")
       .first()
       .click();
@@ -639,7 +656,7 @@ test.describe("User is logged in", function () {
 
     const description = {
       title: "Update policy - Members Permissions",
-      summary: `theori.near requested to requested to revoke all permissions of "megha19.near".`,
+      summary: `theori.near requested to requested to revoke all permissions of "theori.near".`,
     };
     expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
@@ -652,7 +669,6 @@ test.describe("User is logged in", function () {
                   name: "Create Requests",
                   kind: {
                     Group: [
-                      "theori.near",
                       "2dada969f3743a4a41cfdb1a6e39581c2844ce8fbe25948700c85c598090b3e1",
                       "freski.near",
                       "thomasguntenaar.near",
@@ -681,7 +697,7 @@ test.describe("User is logged in", function () {
                     Group: [
                       "petersalomonsen.near",
                       "thomasguntenaar.near",
-                      "theori.near",
+                      "megha19.near",
                     ],
                   },
                   permissions: [
@@ -722,7 +738,7 @@ test.describe("User is logged in", function () {
                       "petersalomonsen.near",
                       "treasurytestuserledger.near",
                       "tfdevhub.near",
-                      "theori.near",
+
                       "thomasguntenaar.near",
                       "test04.near",
                       "test03.near",

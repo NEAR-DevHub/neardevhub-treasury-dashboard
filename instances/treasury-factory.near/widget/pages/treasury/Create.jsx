@@ -82,7 +82,7 @@ const Wrapper = ({ title, children }) => (
           className="btn btn-outline-plain w-100"
           href={`https://neartreasury.com/`}
         >
-          Cancel creation
+          Cancel Creation
         </a>
       </div>
       <div
