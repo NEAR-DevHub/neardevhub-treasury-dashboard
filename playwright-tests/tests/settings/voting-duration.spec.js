@@ -15,7 +15,9 @@ test.afterEach(async ({ page }, testInfo) => {
 });
 
 async function navigateToVotingDurationPage({ page, instanceAccount }) {
-  await page.goto(`/${instanceAccount}/widget/app?page=settings`);
+  await page.goto(
+    `/${instanceAccount}/widget/app?page=settings&selectedTab=voting-duration`
+  );
   await page.waitForTimeout(5_000);
   await page.getByTestId("Voting Duration").click();
   await expect(

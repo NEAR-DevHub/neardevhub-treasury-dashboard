@@ -1,6 +1,12 @@
-const { normalize } = VM.require(
-  "${REPL_DEVHUB}/widget/core.lib.stringUtils"
-) || { normalize: () => {} };
+const normalize = (text) =>
+  text
+    .replaceAll(/[- \.]/g, "_")
+    .replaceAll(/[^\w]+/g, "")
+    .replaceAll(/_+/g, "-")
+    .replace(/^-+/, "")
+    .replace(/-+$/, "")
+    .toLowerCase()
+    .trim("-");
 
 const { selectedTab, page, leftNavbarOptions } = props;
 
@@ -27,13 +33,20 @@ const Container = styled.div`
   }
 `;
 
-const currentTabTitle =
-  props.selectedTab ?? normalize(leftNavbarOptions?.[0].title);
+const defaultTab = leftNavbarOptions?.[0];
 
-const [currentTab, setCurrentTab] = useState(
-  leftNavbarOptions.find((i) => normalize(i.title) === currentTabTitle) ??
-    leftNavbarOptions?.[0]
-);
+const currentTabKey = selectedTab
+  ? normalize(selectedTab)
+  : normalize(defaultTab?.key);
+
+const [currentTab, setCurrentTab] = useState(defaultTab);
+
+useEffect(() => {
+  setCurrentTab(
+    leftNavbarOptions.find((i) => normalize(i.key) === currentTabKey) ??
+      defaultTab
+  );
+}, [selectedTab]);
 
 return (
   <Container className="d-flex gap-4 flex-wrap">
@@ -59,7 +72,7 @@ return (
     </div>
     <div className="flex-5 w-100">
       {currentTab && (
-        <div className="w-100 h-100" key={currentTab.title}>
+        <div className="w-100 h-100" key={currentTab.key}>
           <Widget
             src={currentTab.href}
             props={{ ...props, ...currentTab.props }}

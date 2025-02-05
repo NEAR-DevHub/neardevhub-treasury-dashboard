@@ -48,7 +48,9 @@ async function updateDaoConfig({ page }) {
 }
 
 async function navigateToThemePage({ page, instanceAccount }) {
-  await page.goto(`/${instanceAccount}/widget/app?page=settings`);
+  await page.goto(
+    `/${instanceAccount}/widget/app?page=settings&selectedTab=theme-logo`
+  );
   await updateDaoPolicyMembers({ page });
   await updateDaoConfig({ page });
   await page.waitForTimeout(5_000);
