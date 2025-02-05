@@ -12,7 +12,10 @@ const profiles = Object.entries(profilesData);
 const term = props.term;
 const parsedTerm = (term || "").replace(/\W/g, "").toLowerCase();
 const isValidAccount =
-  term.includes(".near") || term.includes(".aurora") || term.includes(".tg");
+  term.includes(".near") ||
+  term.includes(".aurora") ||
+  term.includes(".tg") ||
+  (term ?? "").length == 64;
 const limit = 5;
 
 for (let i = 0; i < profiles.length; i++) {
