@@ -32,6 +32,7 @@ const { treasuryDaoID, proposalAPIEndpoint, showProposalSelection } =
 
 const [tokenId, setTokenId] = useState(null);
 const [receiver, setReceiver] = useState(null);
+const [isReceiverAccountValid, setIsReceiverAccountValid] = useState(false);
 const [notes, setNotes] = useState(null);
 const [selectedProposalId, setSelectedProposalId] = useState("");
 const [amount, setAmount] = useState(null);
@@ -353,14 +354,6 @@ function onSubmitClick() {
   Near.call(calls);
 }
 
-function isAccountValid() {
-  return (
-    receiver.length === 64 ||
-    (receiver ?? "").includes(".near") ||
-    (receiver ?? "").includes(".tg")
-  );
-}
-
 function isAmountValid() {
   const maxU128 = Big("340282366920938463463374607431768211455");
 
@@ -384,7 +377,7 @@ useEffect(() => {
     tokenId &&
     tokenId !== tokenMapping.NEAR &&
     receiver &&
-    isAccountValid(receiver)
+    isReceiverAccountValid
   ) {
     Near.asyncView(tokenId, "storage_balance_of", {
       account_id: receiver,
@@ -526,6 +519,7 @@ return (
             value: receiver,
             placeholder: "treasury.near",
             onUpdate: setReceiver,
+            setParentAccountValid: setIsReceiverAccountValid,
             maxWidth: "100%",
             instance,
           }}
@@ -647,7 +641,7 @@ return (
               !receiver ||
               !selectedProposal?.name ||
               !tokenId ||
-              !isAccountValid() ||
+              !isReceiverAccountValid ||
               !isAmountValid() ||
               isTxnCreated,
             label: "Submit",
