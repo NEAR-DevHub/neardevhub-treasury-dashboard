@@ -576,20 +576,36 @@ test.describe("Have valid staked requests and sufficient token balance", functio
     });
   });
 
-  test.describe("User with 'Vote' role logged in", function () {
-    test.use({
-      storageState:
-        "playwright-tests/storage-states/wallet-connected-vote-role.json",
-    });
+  test.describe.parallel("User logged in with different roles", function () {
+    const roles = [
+      {
+        name: "Settings role",
+        storageState:
+          "playwright-tests/storage-states/wallet-connected-admin-with-settings-role.json",
+      },
+      {
+        name: "Vote role",
+        storageState:
+          "playwright-tests/storage-states/wallet-connected-admin-with-vote-role.json",
+      },
+    ];
 
-    test("should not see 'Create Request' action", async ({ page }) => {
-      await expect(page.getByText("Pending Requests")).toBeVisible();
-      await expect(
-        page.getByRole("button", {
-          name: "Create Request",
-        })
-      ).toBeHidden();
-    });
+    for (const role of roles) {
+      test.describe(`User with '${role.name}'`, function () {
+        test.use({ storageState: role.storageState });
+
+        test("should not see 'Create Request' action", async ({ page }) => {
+          test.setTimeout(60_000);
+          await updateDaoPolicyMembers({ page });
+          await expect(page.getByText("Pending Requests")).toBeVisible();
+          await expect(
+            page.getByRole("button", {
+              name: "Create Request",
+            })
+          ).toBeHidden();
+        });
+      });
+    }
   });
 
   test.describe("Admin connected", function () {

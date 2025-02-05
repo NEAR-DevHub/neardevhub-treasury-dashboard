@@ -81,7 +81,6 @@ export function getMockedPolicy(
             "theori.near",
             "2dada969f3743a4a41cfdb1a6e39581c2844ce8fbe25948700c85c598090b3e1",
             "freski.near",
-            "megha19.near",
             "thomasguntenaar.near",
             "petersalomonsen.near",
           ],
@@ -147,7 +146,6 @@ export function getMockedPolicy(
         name: "Vote",
         kind: {
           Group: [
-            "megha19.near",
             "petersalomonsen.near",
             "treasurytestuserledger.near",
             "tfdevhub.near",

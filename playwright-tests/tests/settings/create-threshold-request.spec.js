@@ -88,18 +88,42 @@ test.describe("User is not logged in", function () {
     await page.getByText("Vote", { exact: true }).click();
     await expect(page.getByText("@test04.near", { exact: true })).toBeVisible();
   });
+});
 
-  test("should disable input and hide submit button for non authorised people", async ({
-    page,
-  }) => {
-    test.setTimeout(60_000);
-    await expect(page.getByText("Permission Groups")).toBeVisible({
-      timeout: 20_000,
+test.describe.parallel("User logged in with different roles", function () {
+  const roles = [
+    {
+      name: "Create role",
+      storageState:
+        "playwright-tests/storage-states/wallet-connected-admin-with-create-role.json",
+    },
+    {
+      name: "Vote role",
+      storageState:
+        "playwright-tests/storage-states/wallet-connected-admin-with-vote-role.json",
+    },
+  ];
+
+  for (const role of roles) {
+    test.describe(`User with '${role.name}'`, function () {
+      test.use({ storageState: role.storageState });
+
+      test("should disable input and hide submit button for non authorised people", async ({
+        page,
+        instanceAccount,
+      }) => {
+        test.setTimeout(60_000);
+        await updateDaoPolicyMembers({ page });
+        await navigateToThresholdPage({ page, instanceAccount });
+        await expect(page.getByText("Permission Groups")).toBeVisible({
+          timeout: 20_000,
+        });
+        await expect(page.getByTestId("dropdown-btn")).toBeDisabled();
+        await expect(page.getByText("Submit Request")).toBeHidden();
+        await expect(page.getByTestId("threshold-input")).toBeDisabled();
+      });
     });
-    await expect(page.getByTestId("dropdown-btn")).toBeDisabled();
-    await expect(page.getByText("Submit Request")).toBeHidden();
-    await expect(page.getByTestId("threshold-input")).toBeDisabled();
-  });
+  }
 });
 
 async function fillInput(page, value) {

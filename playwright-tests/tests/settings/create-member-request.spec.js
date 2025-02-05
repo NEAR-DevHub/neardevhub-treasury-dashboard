@@ -58,19 +58,40 @@ test.afterEach(async ({ page }, testInfo) => {
   await page.unrouteAll({ behavior: "ignoreErrors" });
 });
 
-test.describe("User is not logged in", function () {
-  test.beforeEach(async ({ page, instanceAccount }) => {
-    await navigateToMembersPage({ page, instanceAccount });
-  });
+test.describe.parallel("User logged in with different roles", function () {
+  const roles = [
+    {
+      name: "Create role",
+      storageState:
+        "playwright-tests/storage-states/wallet-connected-admin-with-create-role.json",
+    },
+    {
+      name: "Vote role",
+      storageState:
+        "playwright-tests/storage-states/wallet-connected-admin-with-vote-role.json",
+    },
+  ];
 
-  test("should not be able to add member or see actions", async ({ page }) => {
-    await expect(
-      page.getByRole("button", {
-        name: "New Member",
-      })
-    ).toBeHidden();
-    await expect(page.getByText("Actions", { exact: true })).toBeHidden();
-  });
+  for (const role of roles) {
+    test.describe(`User with '${role.name}'`, function () {
+      test.use({ storageState: role.storageState });
+
+      test("should not be able to add member or see actions", async ({
+        page,
+        instanceAccount,
+      }) => {
+        test.setTimeout(60_000);
+        await updateDaoPolicyMembers({ page });
+        await navigateToMembersPage({ page, instanceAccount });
+        await expect(
+          page.getByRole("button", {
+            name: "New Member",
+          })
+        ).toBeHidden();
+        await expect(page.getByText("Actions", { exact: true })).toBeHidden();
+      });
+    });
+  }
 });
 
 test.describe("User is logged in", function () {

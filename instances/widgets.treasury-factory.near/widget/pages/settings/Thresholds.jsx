@@ -374,7 +374,7 @@ return (
               selectedGroup.members.map((member) => (
                 <div
                   className="p-1 px-3 text-truncate"
-                  style={{ width: "85%" }}
+                  style={{ width: "95%" }}
                 >
                   <Widget
                     src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
@@ -382,7 +382,7 @@ return (
                       accountId: member,
                       showKYC: false,
                       instance,
-                      width: 150,
+                      width: "100%",
                     }}
                   />
                 </div>

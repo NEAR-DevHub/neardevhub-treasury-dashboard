@@ -56,18 +56,38 @@ async function navigateToThemePage({ page, instanceAccount }) {
   await expect(page.getByText("Theme & Logo").nth(1)).toBeVisible();
 }
 
-test.describe("User is not logged in", function () {
-  test("should not be able to change config", async ({
-    page,
-    instanceAccount,
-  }) => {
-    test.setTimeout(60_000);
-    await navigateToThemePage({ page, instanceAccount });
-    await expect(page.locator("input[type='color']")).toBeDisabled();
-    await expect(
-      page.getByRole("button", { name: "Submit Request" })
-    ).toBeDisabled({ timeout: 20_000 });
-  });
+test.describe.parallel("User logged in with different roles", function () {
+  const roles = [
+    {
+      name: "Create role",
+      storageState:
+        "playwright-tests/storage-states/wallet-connected-admin-with-create-role.json",
+    },
+    {
+      name: "Vote role",
+      storageState:
+        "playwright-tests/storage-states/wallet-connected-admin-with-vote-role.json",
+    },
+  ];
+
+  for (const role of roles) {
+    test.describe(`User with '${role.name}'`, function () {
+      test.use({ storageState: role.storageState });
+
+      test("should not be able to change config", async ({
+        page,
+        instanceAccount,
+      }) => {
+        test.setTimeout(60_000);
+        await updateDaoPolicyMembers({ page });
+        await navigateToThemePage({ page, instanceAccount });
+        await expect(page.locator("input[type='color']")).toBeDisabled();
+        await expect(
+          page.getByRole("button", { name: "Submit Request" })
+        ).toBeDisabled({ timeout: 20_000 });
+      });
+    });
+  }
 });
 
 test.describe("User is logged in", function () {
