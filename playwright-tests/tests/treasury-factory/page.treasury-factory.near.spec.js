@@ -22,6 +22,9 @@ test.describe("admin connected", function () {
   }) => {
     test.setTimeout(120_000);
 
+    const sandbox = new SandboxRPC();
+    await sandbox.init();
+    
     // innitial step
     await page.goto(`/${factoryAccount}/widget/app`);
     await expect(
@@ -58,9 +61,7 @@ test.describe("admin connected", function () {
 
     // bos txn confirmation modal
     const widget_reference_account_id = "bootstrap.treasury-factory.near";
-    const sandbox = new SandboxRPC();
 
-    await sandbox.init();
     await sandbox.attachRoutes(page);
     console.log("sandbox initialized");
     await sandbox.setupDefaultWidgetReferenceAccount();
@@ -80,6 +81,7 @@ test.describe("admin connected", function () {
               (window.transactionSentPromiseResolve =
                 transactionSentPromiseResolve)
           );
+          console.log('transaction completed');
           return transactionResult;
         };
       });
@@ -97,6 +99,7 @@ test.describe("admin connected", function () {
       attachedDeposit: transactionToSend.actions[0].params.deposit,
     });
 
+    await page.waitForTimeout(2_000);
     expect(
       transactionToSend.actions[0].params.args.widget_reference_account_id
     ).toEqual(widget_reference_account_id);
