@@ -187,7 +187,7 @@ const code = `
             data: [],
             fill: true,
             backgroundColor: gradient,
-            borderColor: ' ${colors["--border-color"]}',
+            borderColor: '${colors["--text-color"]}',
             pointBackgroundColor: ' ${colors["--bg-page-color"]}',
             pointRadius: 0,
             tension: 0,
