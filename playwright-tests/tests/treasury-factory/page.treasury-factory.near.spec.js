@@ -21,63 +21,6 @@ test.describe("admin connected", function () {
     factoryAccount,
   }) => {
     test.setTimeout(120_000);
-    const setupSandboxTxnProcessing = async () => {
-      const widget_reference_account_id = "bootstrap.treasury-factory.near";
-      const sandbox = new SandboxRPC();
-
-      await sandbox.init();
-      await sandbox.attachRoutes(page);
-      console.log("sandbox initialized");
-      await sandbox.setupDefaultWidgetReferenceAccount();
-
-      const transactionToSendPromise = page.evaluate(async () => {
-        const selector = await document.querySelector("near-social-viewer")
-          .selectorPromise;
-
-        const wallet = await selector.wallet();
-
-        return new Promise((resolve) => {
-          wallet.signAndSendTransactions = async (transactions) => {
-            resolve(transactions.transactions[0]);
-
-            return await new Promise(
-              (transactionSentPromiseResolve) =>
-                (window.transactionSentPromiseResolve =
-                  transactionSentPromiseResolve)
-            );
-          };
-        });
-      });
-
-      await page.getByRole("button", { name: "Confirm", exact: true }).click();
-
-      const transactionToSend = await transactionToSendPromise;
-
-      console.log(JSON.stringify(transactionToSend));
-      expect(
-        transactionToSend.actions[0].params.args.widget_reference_account_id
-      ).toEqual(widget_reference_account_id);
-
-      const accessKey = await sandbox.getDevUserAccountAccessKey();
-      const transaction = await nearApi.transactions.createTransaction(
-          sandbox.account_id,
-          accessKey.publicKey,
-          "treasury-factory.near",
-          accessKey.accessKey.nonce+1n,
-          [nearApi.transactions.functionCall("create_instance", transactionToSend.actions[0].params.args, 300000000000000, nearApi.utils.format.parseNearAmount("9"))],
-          nearApi.utils.serialize.base_decode(accessKey.accessKey.block_hash)
-      );
-      const [txHash, signedTx] = await nearApi.transactions.signTransaction(transaction, sandbox.account.connection.signer, sandbox.account_id, sandbox.account.connection.networkId);
-
-
-      await page.evaluate(async (signedTx) => {
-        const nearApi = await import("near-api-js");
-        const transactionResult = await nearApi.connection.sendTransaction(signedTx);
-        window.transactionSentPromiseResolve(transactionResult);
-      }, signedTx);
-
-      await sandbox.quitSandbox();
-    };
 
     // innitial step
     await page.goto(`/${factoryAccount}/widget/app`);
@@ -114,10 +57,57 @@ test.describe("admin connected", function () {
     await submitBtn.click();
 
     // bos txn confirmation modal
-    await setupSandboxTxnProcessing();
+    const widget_reference_account_id = "bootstrap.treasury-factory.near";
+    const sandbox = new SandboxRPC();
+
+    await sandbox.init();
+    await sandbox.attachRoutes(page);
+    console.log("sandbox initialized");
+    await sandbox.setupDefaultWidgetReferenceAccount();
+
+    const transactionToSendPromise = page.evaluate(async () => {
+      const selector = await document.querySelector("near-social-viewer")
+        .selectorPromise;
+
+      const wallet = await selector.wallet();
+
+      return new Promise((resolve) => {
+        wallet.signAndSendTransactions = async (transactions) => {
+          resolve(transactions.transactions[0]);
+
+          const transactionResult = await new Promise(
+            (transactionSentPromiseResolve) =>
+              (window.transactionSentPromiseResolve =
+                transactionSentPromiseResolve)
+          );
+          return transactionResult;
+        };
+      });
+    });
+
+    await page.getByRole("button", { name: "Confirm", exact: true }).click();
+
+    const transactionToSend = await transactionToSendPromise;
+
+    const transactionResult = await sandbox.account.functionCall({
+      contractId: transactionToSend.receiverId,
+      methodName: transactionToSend.actions[0].params.methodName,
+      args: transactionToSend.actions[0].params.args,
+      gas: transactionToSend.actions[0].params.gas,
+      attachedDeposit: transactionToSend.actions[0].params.deposit,
+    });
+
+    expect(
+      transactionToSend.actions[0].params.args.widget_reference_account_id
+    ).toEqual(widget_reference_account_id);
+
+    await page.evaluate((transactionResult) => {
+      window.transactionSentPromiseResolve(transactionResult);
+    }, transactionResult);
 
     await expect(
       await page.locator("h5", { hasText: "Congrats! Your Treasury is ready" })
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 20_000 });
+    await sandbox.quitSandbox();
   });
 });
