@@ -1,0 +1,27 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "http://localhost:8080",
+      "localStorage": [
+        {
+          "name": "near-wallet-selector:selectedWalletId",
+          "value": "\"ledger\""
+        },
+        {
+          "name": "near-wallet-selector:contract",
+          "value": "{\"contractId\":\"social.near\",\"methodNames\":[]}"
+        },
+        {
+          "name": "near-wallet-selector:ledger:accounts",
+          "value": "[{\"accountId\":\"theori.near\",\"derivationPath\":\"44'/397'/0'/0'/1'\"}]"
+        },
+        {
+          "name": "near-social-vm:v01::accountId:",
+          "value": "theori.near"
+        }
+      ]
+    }
+  ],
+  "sessionStorage": []
+}

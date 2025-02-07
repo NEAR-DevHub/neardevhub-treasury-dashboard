@@ -8,12 +8,12 @@ test.afterEach(async ({ page }, testInfo) => {
   await page.unrouteAll({ behavior: "ignoreErrors" });
 });
 
-test.describe("admin connected", function () {
+test.describe("connected with ledger", function () {
   test.use({
     contextOptions: {
       permissions: ["clipboard-read", "clipboard-write"],
     },
-    storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
+    storageState: "playwright-tests/storage-states/wallet-connected-ledger.json",
   });
 
   test("should go to treasury self creation page", async ({
@@ -22,14 +22,16 @@ test.describe("admin connected", function () {
   }) => {
     test.setTimeout(120_000);
 
-    const sandbox = new SandboxRPC();
-    await sandbox.init();
     
     // innitial step
     await page.goto(`/${factoryAccount}/widget/app`);
     await expect(
       await page.locator("h3", { hasText: "Confirm your wallet" })
     ).toBeVisible();
+
+    const sandbox = new SandboxRPC();
+    await sandbox.init();
+
     await page.getByRole('link', { name: 'Continue' }).click();
 
     // create application account name step
