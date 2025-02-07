@@ -89,6 +89,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let dev_account = worker.dev_create_account().await?;
+
+    let _ = treasury_factory_contract
+        .as_account()
+        .create_subaccount("bootstrap")
+        .keys(dev_account.secret_key().clone())
+        .initial_balance(NearToken::from_near(2))
+        .transact()
+        .await?;
+
     println!(
         "{{\"account_id\": {:?}, \"secret_key\": {:?}, \"rpc_url\": {:?}}}",
         dev_account.id().to_string(),
