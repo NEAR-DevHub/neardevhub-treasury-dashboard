@@ -56,10 +56,13 @@ export class SandboxRPC {
    * Use from playwright tests to redirect RPC sputnikdao contract calls to the sandbox
    * @param {import('playwright').Page} page - Playwright page object
    */
-  async attachRoutes(page) {
+  async attachRoutes(page, accounts = []) {
     await page.route(MOCK_RPC_URL, async (route, request) => {
       const postData = request.postDataJSON();
-      if (postData.params.account_id.endsWith(SPUTNIK_DAO_CONTRACT_ID)) {
+      if (
+        postData.params.account_id.endsWith(SPUTNIK_DAO_CONTRACT_ID) ||
+        accounts.includes(postData.params.account_id)
+      ) {
         await route.continue({ url: this.rpc_url });
       } else {
         await route.fallback();

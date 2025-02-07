@@ -109,12 +109,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let ft_new_result = itlx_2
         .call("new_default_meta")
-        .args_json(
-            json!({
-                "owner_id": dev_account.id().to_string(),
-                "total_supply": "10000000000000000000000000000"
-            })
-        )
+        .args_json(json!({
+            "owner_id": dev_account.id().to_string(),
+            "total_supply": "10000000000000000000000000000"
+        }))
         .transact()
         .await?;
 

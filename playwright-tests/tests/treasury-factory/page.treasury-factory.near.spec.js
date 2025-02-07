@@ -62,7 +62,7 @@ test.describe("admin connected", function () {
     // bos txn confirmation modal
     const widget_reference_account_id = "bootstrap.treasury-factory.near";
 
-    await sandbox.attachRoutes(page);
+    await sandbox.attachRoutes(page, [`${treasuryName}.near`, widget_reference_account_id]);
     console.log("sandbox initialized");
     await sandbox.setupDefaultWidgetReferenceAccount();
 
@@ -99,7 +99,7 @@ test.describe("admin connected", function () {
       attachedDeposit: transactionToSend.actions[0].params.deposit,
     });
 
-    await page.waitForTimeout(2_000);
+    console.log(JSON.stringify(transactionToSend));
     expect(
       transactionToSend.actions[0].params.args.widget_reference_account_id
     ).toEqual(widget_reference_account_id);
