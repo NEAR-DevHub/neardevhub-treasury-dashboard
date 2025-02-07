@@ -1,6 +1,6 @@
 import { expect } from "@playwright/test";
-import { test } from "../util/test.js";
-import { SandboxRPC } from "../util/sandboxrpc.js";
+import { test } from "../../util/test.js";
+import { SandboxRPC } from "../../util/sandboxrpc.js";
 import nearApi from "near-api-js";
 
 test.afterEach(async ({ page }, testInfo) => {
@@ -21,15 +21,14 @@ test.describe("admin connected", function () {
     factoryAccount,
   }) => {
     test.setTimeout(120_000);
-    const accName = Math.random().toString(36).slice(2, 7);
-
     const setupSandboxTxnProcessing = async () => {
-      const widget_reference_account_id = "treasury-testing.near";
+      const widget_reference_account_id = "bootstrap.treasury-factory.near";
       const sandbox = new SandboxRPC();
 
       await sandbox.init();
       await sandbox.attachRoutes(page);
-      await sandbox.setupWidgetReferenceAccount(widget_reference_account_id);
+      console.log("sandbox initialized");
+      await sandbox.setupDefaultWidgetReferenceAccount();
 
       const transactionToSendPromise = page.evaluate(async () => {
         const selector = await document.querySelector("near-social-viewer")
@@ -53,21 +52,29 @@ test.describe("admin connected", function () {
       await page.getByRole("button", { name: "Confirm", exact: true }).click();
 
       const transactionToSend = await transactionToSendPromise;
-      const transactionResult = await sandbox.account.functionCall({
-        contractId: "treasury-factory.near",
-        methodName: "create_instance",
-        args: transactionToSend.actions[0].params.args,
-        gas: 300000000000000,
-        attachedDeposit: nearApi.utils.format.parseNearAmount("12"),
-      });
 
+      console.log(JSON.stringify(transactionToSend));
       expect(
-        transactionToSend.actions[0].params.widget_reference_account_id
+        transactionToSend.actions[0].params.args.widget_reference_account_id
       ).toEqual(widget_reference_account_id);
 
-      await page.evaluate((transactionResult) => {
+      const accessKey = await sandbox.getDevUserAccountAccessKey();
+      const transaction = await nearApi.transactions.createTransaction(
+          sandbox.account_id,
+          accessKey.publicKey,
+          "treasury-factory.near",
+          accessKey.accessKey.nonce+1n,
+          [nearApi.transactions.functionCall("create_instance", transactionToSend.actions[0].params.args, 300000000000000, nearApi.utils.format.parseNearAmount("9"))],
+          nearApi.utils.serialize.base_decode(accessKey.accessKey.block_hash)
+      );
+      const [txHash, signedTx] = await nearApi.transactions.signTransaction(transaction, sandbox.account.connection.signer, sandbox.account_id, sandbox.account.connection.networkId);
+
+
+      await page.evaluate(async (signedTx) => {
+        const nearApi = await import("near-api-js");
+        const transactionResult = await nearApi.connection.sendTransaction(signedTx);
         window.transactionSentPromiseResolve(transactionResult);
-      }, transactionResult);
+      }, signedTx);
 
       await sandbox.quitSandbox();
     };
@@ -77,24 +84,25 @@ test.describe("admin connected", function () {
     await expect(
       await page.locator("h3", { hasText: "Confirm your wallet" })
     ).toBeVisible();
-    await page
-      .locator("a.active", {
-        hasText: "Yes, use this wallet and continue",
-      })
-      .click();
+    await page.getByRole('link', { name: 'Continue' }).click();
 
     // create application account name step
     await expect(
-      await page.locator("h3", { hasText: "Create Application Account" })
+      await page.getByRole('heading', { name: 'Create Treasury Accounts' })
     ).toBeVisible();
-    await page.locator(".account-field input").fill(accName);
-    await page.locator("a", { hasText: "Next" }).click();
+    const treasuryName = "new-treasury";
+    await page.getByPlaceholder('my-treasury').fill(treasuryName);
+    await expect(await page.getByText(`NEAR ${treasuryName} .near`)).toBeVisible();
+    await expect(await page.getByText(`Sputnik DAO  ${treasuryName} .`)).toBeVisible();
+    await page.getByRole('link', { name: 'Continue' }).click();
 
     // add members step
     await expect(
-      await page.locator("h3", { hasText: "Add Members" })
+      await page.getByRole('heading', { name: 'Add Members' })
     ).toBeVisible();
-    await page.locator("a", { hasText: "Next" }).click();
+    await expect(await page.getByText('Ori theori.near Create')).toBeVisible();
+
+    await page.getByRole('link', { name: 'Continue' }).click();
 
     // confirm transaction step
     await expect(
