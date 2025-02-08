@@ -7,6 +7,8 @@ use web4::types::{Web4Request, Web4Response};
 pub mod external;
 pub use crate::external::*;
 
+static CREATE_SPUTNIK_DAO_DEPOSIT: NearToken = NearToken::from_near(6);
+
 // Define the contract structure
 #[near(contract_state)]
 #[derive(Default)]
@@ -95,18 +97,49 @@ impl Contract {
         if create_account_result {
             Promise::new(new_instance_contract_id.clone())
                 .then(
-                    instance_contract::ext(new_instance_contract_id.clone())
-                        .with_attached_deposit(NearToken::from_near(1))
-                        .update_widgets(widget_reference_account_id, social_db_account_id),
-                )
-                .then(
                     sputnik_dao::ext(sputnik_dao_factory_account_id.parse().unwrap())
-                        .with_attached_deposit(NearToken::from_near(6))
+                        .with_attached_deposit(CREATE_SPUTNIK_DAO_DEPOSIT)
                         .with_static_gas(Gas::from_tgas(100))
                         .create(name.to_string(), create_dao_args),
                 )
+                .then(
+                    Self::ext(env::current_account_id())
+                        .with_attached_deposit(env::attached_deposit())
+                        .create_dao_callback(
+                            refund_on_failure_account,
+                            new_instance_contract_id,
+                            social_db_account_id,
+                            widget_reference_account_id,
+                        ),
+                )
         } else {
             Promise::new(refund_on_failure_account).transfer(refund_on_failure_amount)
+        }
+    }
+
+    pub fn create_dao_callback(
+        &self,
+        refund_on_failure_account: AccountId,
+        new_instance_contract_id: AccountId,
+        social_db_account_id: String,
+        widget_reference_account_id: String,
+    ) -> Promise {
+        let create_dao_result = env::promise_result(env::promise_results_count() - 1);
+        let create_dao_result: bool = match create_dao_result {
+            PromiseResult::Successful(result) => {
+                near_sdk::serde_json::from_slice::<bool>(&result).unwrap_or(false)
+            }
+            _ => false,
+        };
+
+        if create_dao_result {
+            Promise::new(new_instance_contract_id.clone()).then(
+                instance_contract::ext(new_instance_contract_id.clone())
+                    .with_attached_deposit(NearToken::from_near(1))
+                    .update_widgets(widget_reference_account_id, social_db_account_id),
+            )
+        } else {
+            Promise::new(refund_on_failure_account).transfer(CREATE_SPUTNIK_DAO_DEPOSIT)
         }
     }
 }
