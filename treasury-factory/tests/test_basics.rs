@@ -272,6 +272,7 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
 
     let user_account = worker.dev_create_account().await?;
     let treasury_factory_account_details_before = treasury_factory_contract.view_account().await?;
+    let user_account_details_before = user_account.view_account().await?;
 
     let create_treasury_instance_result = user_account
         .call(treasury_factory_contract.id(), "create_instance")
@@ -296,13 +297,26 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
         );
     }
 
+    let user_account_details_after = user_account.view_account().await?;
     let treasury_factory_account_details_after = treasury_factory_contract.view_account().await?;
     assert!(create_treasury_instance_result.is_success());
 
+    let failed_outcomes: Vec<_> = create_treasury_instance_result
+        .receipt_outcomes()
+        .iter()
+        .filter(|outcome| outcome.is_failure())
+        .collect();
+
+    assert_eq!(failed_outcomes.len(), 0);
+    assert_eq!(create_treasury_instance_result.receipt_failures().len(), 0);
+
     assert!(
-        treasury_factory_account_details_after.balance
-            > treasury_factory_account_details_before.balance
+        user_account_details_after.balance
+            < (user_account_details_before
+                .balance
+                .saturating_sub(NearToken::from_near(9)))
     );
+
     assert_eq!(
         treasury_factory_account_details_after
             .balance
@@ -310,6 +324,11 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
         treasury_factory_account_details_before
             .balance
             .as_millinear()
+    );
+
+    assert!(
+        treasury_factory_account_details_after.balance
+            > treasury_factory_account_details_before.balance
     );
 
     println!(
@@ -328,6 +347,7 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
 
     let body_string =
         String::from_utf8(general_purpose::STANDARD.decode(response.body).unwrap()).unwrap();
+
     assert!(body_string.contains("near-social-viewer"));
     assert!(body_string.contains("\"test treasury title\""));
 
@@ -491,15 +511,6 @@ async fn test_factory_should_refund_if_failing_because_of_existing_account(
         .await?;
     assert!(social_set_result.is_success());
 
-    let reference_widgets = socialdb
-        .call("get")
-        .args_json(json!({
-            "keys": [format!("{}/widget/**", reference_widget_contract.id().as_str())]
-        }))
-        .view()
-        .await?;
-    let reference_widgets_json_string = String::from_utf8(reference_widgets.result).unwrap();
-
     let treasury_factory_contract_wasm = build_project_once();
     let treasury_factory_contract = worker.dev_deploy(&treasury_factory_contract_wasm).await?;
 
@@ -598,6 +609,8 @@ async fn test_factory_should_refund_if_failing_because_of_existing_account(
         .transact()
         .await?;
 
+    let treasury_factory_account_details_after = treasury_factory_contract.view_account().await?;
+
     let failed_outcomes: Vec<_> = create_treasury_instance_result
         .receipt_outcomes()
         .iter()
@@ -607,12 +620,22 @@ async fn test_factory_should_refund_if_failing_because_of_existing_account(
     assert!(failed_outcomes.len() > 0);
     println!("{:?}", failed_outcomes);
 
+    assert_eq!(
+        "Failed creating treasury web4 account intellex.near",
+        create_treasury_instance_result.logs().join("\n")
+    );
+
     let user_account_details_after = user_account.view_account().await?;
 
     assert!(
         user_account_details_before.balance.as_millinear()
             - user_account_details_after.balance.as_millinear()
             < 10
+    );
+
+    assert!(
+        treasury_factory_account_details_after.balance
+            > treasury_factory_account_details_before.balance
     );
 
     Ok(())
@@ -701,15 +724,6 @@ async fn test_factory_should_refund_if_failing_because_of_existing_dao(
         .await?;
     assert!(social_set_result.is_success());
 
-    let reference_widgets = socialdb
-        .call("get")
-        .args_json(json!({
-            "keys": [format!("{}/widget/**", reference_widget_contract.id().as_str())]
-        }))
-        .view()
-        .await?;
-    let reference_widgets_json_string = String::from_utf8(reference_widgets.result).unwrap();
-
     let treasury_factory_contract_wasm = build_project_once();
     let treasury_factory_contract = worker.dev_deploy(&treasury_factory_contract_wasm).await?;
 
@@ -808,6 +822,7 @@ async fn test_factory_should_refund_if_failing_because_of_existing_dao(
         .transact()
         .await?;
 
+    let treasury_factory_account_details_after = treasury_factory_contract.view_account().await?;
     let failed_outcomes: Vec<_> = create_treasury_instance_result
         .receipt_outcomes()
         .iter()
@@ -817,6 +832,12 @@ async fn test_factory_should_refund_if_failing_because_of_existing_dao(
     assert!(failed_outcomes.len() > 0);
     println!("{:?}", failed_outcomes);
 
+    println!("{:?}", create_treasury_instance_result.logs());
+
+    assert_eq!(
+        "Succeeded creating and funding web4 account intellex.near, but failed creating treasury account intellex.sputnik-dao.near.",
+        create_treasury_instance_result.logs().join("\n")
+    );
     let user_account_details_after = user_account.view_account().await?;
 
     assert_eq!(
@@ -828,6 +849,11 @@ async fn test_factory_should_refund_if_failing_because_of_existing_dao(
         user_account_details_before.balance.as_millinear()
             - user_account_details_after.balance.as_millinear()
             < 3020
+    );
+
+    assert!(
+        treasury_factory_account_details_after.balance
+            > treasury_factory_account_details_before.balance
     );
 
     Ok(())
