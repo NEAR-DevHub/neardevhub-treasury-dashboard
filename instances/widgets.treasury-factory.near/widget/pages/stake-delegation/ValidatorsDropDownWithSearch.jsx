@@ -254,7 +254,7 @@ const code = `
 
   <div class="d-flex gap-3 align-items-center justify-content-end">
     <button id="cancelBtn" class="btn btn-outline-secondary" onclick="cancelForm()">Cancel</button>
-    <button id="submitBtn" class="btn theme-btn" onclick="submitForm()" disabled>Submit</button>
+    <button id="submitBtn" class="btn theme-btn" onclick="submitForm()">Submit</button>
   </div>
 </div>
 
@@ -275,14 +275,13 @@ const code = `
     const amountInput = document.getElementById("amount");
     const amountError = document.getElementById("amountError");
     const amountValue = parseFloat(amountInput.value);
-
+    document.getElementById("submitBtn").disabled = true;
     if (typeof maxAmount === "number" &&  amountValue > maxAmount) {
       amountError.textContent = isStakePage ? "Your account doesn't have sufficient balance." : "The amount exceeds the balance you have staked.";
       amountError.style.display = 'block';
-      document.getElementById("submitBtn").disabled = true;
     } else {
       amountError.style.display = 'none';
-      if(selectedOption){
+      if(selectedOption && amountInput.value){
         document.getElementById("submitBtn").disabled = false;
       }
       
@@ -430,6 +429,13 @@ const code = `
         window.parent.postMessage({ handler: "onCancel" }, "*");
     }
 
+    function checkSubmitDisable() {
+      const amountInput = document.getElementById("amount");
+      if (!selectedOption || !amountInput.value) {
+        document.getElementById("submitBtn").disabled = true;
+      }
+    }    
+
    window.addEventListener(
       "message",
       function (event) {
@@ -451,7 +457,7 @@ const code = `
           selectedOption = null; // Reset selectedOption
           selectOption();
         }
-        
+        checkSubmitDisable()
         const dropdown = document.getElementById('dropdown');
         if (event.data.disabledDropdown) {
           // Disable the dropdown

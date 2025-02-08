@@ -5,9 +5,16 @@
  * @param {import('playwright').Page} params.page - The Playwright Page instance.
  * @returns {Promise<void>} A promise that resolves when the mock is complete.
  */
-export async function mockNearPrice({ nearPrice, page, returnError }) {
+export async function mockNearPrice({
+  daoAccount,
+  nearPrice,
+  page,
+  returnError,
+}) {
   await page.route(
-    `https://ref-sdk-api.fly.dev/api/near-price`,
+    (daoAccount.includes("testing")
+      ? `https://ref-sdk-test-cold-haze-1300.fly.dev`
+      : `https://ref-sdk-api.fly.dev`) + `/api/near-price`,
     async (route) => {
       if (returnError) {
         // Simulate an error response

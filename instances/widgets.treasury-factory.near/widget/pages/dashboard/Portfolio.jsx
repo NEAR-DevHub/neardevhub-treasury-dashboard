@@ -46,7 +46,7 @@ const Loading = () => {
   );
 };
 
-const archiveNodeUrl = "https://archival-rpc.mainnet.near.org";
+const archiveNodeUrl = "https://archival-rpc.mainnet.fastnear.com";
 
 function formatToReadableDecimals(number) {
   return Big(number ?? "0").toFixed(2);
