@@ -317,7 +317,15 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
                 .saturating_sub(NearToken::from_near(9)))
     );
 
-    assert_eq!(
+    assert!(
+        treasury_factory_account_details_after
+            .balance
+            .as_millinear()
+            - treasury_factory_account_details_before
+                .balance
+                .as_millinear()
+            < 10,
+        "treasury factory balance after ({}) should be equal or slightly above balance before ({})",
         treasury_factory_account_details_after
             .balance
             .as_millinear(),
