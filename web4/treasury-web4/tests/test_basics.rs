@@ -1,8 +1,10 @@
+use std::str::FromStr;
+
 use near_sdk::base64::prelude::BASE64_STANDARD;
 use near_sdk::base64::{engine::general_purpose, Engine as _};
 use near_sdk::serde::Deserialize;
 use near_sdk::NearToken;
-use serde_json::json;
+use serde_json::{json, Value};
 
 #[derive(Deserialize)]
 #[serde(crate = "near_sdk::serde")]
@@ -58,6 +60,77 @@ async fn test_web4() -> Result<(), Box<dyn std::error::Error>> {
     assert!(body_string.contains("\"test title\""));
     assert!(body_string.contains("test &amp; description. &quot;Cool stuff&quot; &lt;script&gt;should not work&lt;/script&gt;"));
 
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_social_metadata() -> Result<(), Box<dyn std::error::Error>> {
+    const SOCIALDB_ACCOUNT: &str = "social.near";
+
+    let mainnet = near_workspaces::mainnet().await?;
+    let sandbox = near_workspaces::sandbox().await?;
+    let contract_wasm = near_workspaces::compile_project("./").await?;
+
+    let contract = sandbox.dev_deploy(&contract_wasm).await?;
+    let socialdb = sandbox
+        .import_contract(&SOCIALDB_ACCOUNT.parse().unwrap(), &mainnet)
+        .initial_balance(NearToken::from_near(10000))
+        .transact()
+        .await?;
+
+    let _ = socialdb.call("new").max_gas().transact().await?;
+    let _ = socialdb
+        .call("set_status")
+        .args_json(json!({"status": "Live"}))
+        .max_gas()
+        .transact()
+        .await?;
+
+    let _ = contract
+        .as_account()
+        .call(socialdb.id(), "set")
+        .args_json(json!({
+            "data": {
+                contract.id().as_str(): {
+                    "widget": {
+                        "app": "Hello",
+                        "config": "Goodbye"
+                    }
+                }
+            }
+        }))
+        .deposit(NearToken::from_near(2))
+        .transact()
+        .await?;
+
+    let set_social_metadata_result = contract
+        .call("set_social_metadata")
+        .args_json(json!({}))
+        .max_gas()
+        .transact()
+        .await?;
+
+    println!("{:?}", set_social_metadata_result.logs());
+    println!("{:?}", set_social_metadata_result.failures());
+    assert!(set_social_metadata_result.is_success());
+    let social_metadata = socialdb
+        .call("get")
+        .args_json(json!({
+            "keys": [format!("{}/widget/app/metadata/**", contract.id().as_str())]
+        }))
+        .view()
+        .await?;
+    println!(
+        "{:?}",
+        String::from_utf8(social_metadata.result.clone())
+            .unwrap()
+            .as_str()
+    );
+
+    let social_metadata_json: Value =
+        Value::from_str(String::from_utf8(social_metadata.result).unwrap().as_str()).unwrap();
+    let metadata = &social_metadata_json[contract.id().as_str()]["widget"]["app"]["metadata"];
+    assert_eq!(metadata["name"], "NEAR treasury");
     Ok(())
 }
 

@@ -64,6 +64,60 @@ impl Contract {
         }
     }
 
+    pub fn set_social_metadata(
+        &mut self,
+        social_db_account_id: Option<String>,
+        name: Option<String>,
+        description: Option<String>,
+        ipfs_cid: Option<String>,
+    ) -> Promise {
+        let social_db_account_id =
+            social_db_account_id.unwrap_or_else(|| "social.near".to_string());
+        let name = name.unwrap_or_else(|| "NEAR treasury".to_string());
+        let description = description
+            .unwrap_or_else(|| format!("NEAR treasury for {}", env::current_account_id().as_str()));
+        let ipfs_cid = ipfs_cid.unwrap_or_else(|| {
+            "bafkreiboarigt5w26y5jyxyl4au7r2dl76o5lrm2jqjgqpooakck5xsojq".to_string()
+        });
+
+        if env::predecessor_account_id() != env::current_account_id() {
+            env::panic_str(
+                format!("Should only be called by {:?}", env::current_account_id()).as_str(),
+            );
+        }
+        let args = format!(
+            "
+        {{\"data\":
+            {{\"{}\":
+                {{\"widget\":
+                    {{\"app\":
+                        {{\"metadata\":
+                            {{
+                                \"name\": \"{}\",
+                                \"description\": \"{}\",
+                                \"image\": {{
+                                    \"ipfs_cid\": \"{}\"
+                                }}
+                            }}
+                        }}
+                    }}
+                }}
+            }}
+        }}",
+            env::current_account_id(),
+            name,
+            description,
+            ipfs_cid
+        );
+
+        Promise::new(social_db_account_id.parse().unwrap()).function_call(
+            "set".to_string(),
+            args.into_bytes(),
+            NearToken::from_near(0),
+            Gas::from_tgas(10),
+        )
+    }
+
     pub fn web4_get(&self, request: Web4Request) -> Web4Response {
         let current_account_id = env::current_account_id().to_string();
         let metadata_preload_url = format!(
