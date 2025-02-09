@@ -8,6 +8,7 @@ use near_workspaces::types::AccessKeyPermission;
 use near_workspaces::types::PublicKey;
 use serde_json::{json, Value};
 use std::fs;
+use std::str::FromStr;
 use std::sync::{Mutex, Once};
 
 // Ensure `build_project` only runs once
@@ -164,32 +165,24 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
     assert!(set_socialdb_status_result.is_success());
 
+    let reference_widget_data = json!({
+        reference_widget_contract.id().as_str(): {
+            "widget": {
+                "app": "Hello",
+                "config": "Goodbye"
+            }
+        }
+    });
     let social_set_result = reference_widget_contract
         .as_account()
         .call(socialdb.id(), "set")
         .args_json(json!({
-            "data": {
-                reference_widget_contract.id().as_str(): {
-                    "widget": {
-                        "app": "Hello",
-                        "config": "Goodbye"
-                    }
-                }
-            }
+            "data": reference_widget_data
         }))
         .deposit(NearToken::from_near(2))
         .transact()
         .await?;
     assert!(social_set_result.is_success());
-
-    let reference_widgets = socialdb
-        .call("get")
-        .args_json(json!({
-            "keys": [format!("{}/widget/**", reference_widget_contract.id().as_str())]
-        }))
-        .view()
-        .await?;
-    let reference_widgets_json_string = String::from_utf8(reference_widgets.result).unwrap();
 
     let treasury_factory_contract_wasm = build_project_once();
     let treasury_factory_contract = worker.dev_deploy(&treasury_factory_contract_wasm).await?;
@@ -396,14 +389,17 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
         }))
         .view()
         .await?;
-    let deployed_widgets_json_string = String::from_utf8(deployed_widgets.result).unwrap();
+
+    let deployed_widgets_json =
+        Value::from_str(String::from_utf8(deployed_widgets.result).unwrap().as_str()).unwrap();
 
     assert_eq!(
-        reference_widgets_json_string.replace(
-            reference_widget_contract.id().as_str(),
-            instance_account_id.as_str()
-        ),
-        deployed_widgets_json_string
+        deployed_widgets_json[instance_account_id.clone()]["widget"]["app"][""],
+        reference_widget_data[reference_widget_contract.id().as_str()]["widget"]["app"]
+    );
+    assert_eq!(
+        deployed_widgets_json[instance_account_id.clone()]["widget"]["config"],
+        reference_widget_data[reference_widget_contract.id().as_str()]["widget"]["config"]
     );
 
     let admin_full_access_public_key: PublicKey =
@@ -431,6 +427,33 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
     assert!(
         matches!(user_access_key.permission, AccessKeyPermission::FullAccess),
         "Expected FullAccess permission"
+    );
+
+    let social_metadata = socialdb
+        .call("get")
+        .args_json(json!({
+            "keys": [format!("{}/widget/app/metadata/**", instance_account_id)]
+        }))
+        .view()
+        .await?;
+    println!(
+        "{:?}",
+        String::from_utf8(social_metadata.result.clone())
+            .unwrap()
+            .as_str()
+    );
+
+    let social_metadata_json: Value =
+        Value::from_str(String::from_utf8(social_metadata.result).unwrap().as_str()).unwrap();
+    let metadata = &social_metadata_json[instance_account_id.clone()]["widget"]["app"]["metadata"];
+    assert_eq!(metadata["name"], "NEAR treasury");
+    assert_eq!(
+        metadata["description"],
+        format!("NEAR treasury for {}", instance_account_id)
+    );
+    assert_eq!(
+        metadata["image"]["ipfs_cid"],
+        "bafkreiboarigt5w26y5jyxyl4au7r2dl76o5lrm2jqjgqpooakck5xsojq"
     );
 
     Ok(())

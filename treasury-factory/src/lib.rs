@@ -140,7 +140,11 @@ impl Contract {
                 .then(
                     instance_contract::ext(new_instance_contract_id.clone())
                         .with_attached_deposit(NearToken::from_near(1))
-                        .update_widgets(widget_reference_account_id, social_db_account_id),
+                        .update_widgets(
+                            widget_reference_account_id,
+                            social_db_account_id.clone(),
+                            true,
+                        ),
                 ),
             PromiseResult::Failed => {
                 env::log_str(format!("Succeeded creating and funding web4 account {}, but failed creating treasury account {}.",

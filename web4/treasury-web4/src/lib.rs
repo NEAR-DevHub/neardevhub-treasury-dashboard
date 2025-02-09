@@ -18,10 +18,11 @@ impl Contract {
         &mut self,
         widget_reference_account_id: String,
         social_db_account_id: String,
+        set_social_metadata_defaults: Option<bool>,
     ) -> Promise {
         let args =
             "{\"keys\": [\"".to_string() + widget_reference_account_id.as_str() + "/widget/**\"]}";
-        Promise::new(social_db_account_id.parse().unwrap())
+        let mut promise = Promise::new(social_db_account_id.parse().unwrap())
             .function_call(
                 "get".to_string(),
                 args.into_bytes(),
@@ -31,8 +32,21 @@ impl Contract {
             .then(
                 Self::ext(env::current_account_id())
                     .with_attached_deposit(env::attached_deposit())
-                    .update_widgets_callback(widget_reference_account_id, social_db_account_id),
-            )
+                    .update_widgets_callback(
+                        widget_reference_account_id,
+                        social_db_account_id.clone(),
+                    ),
+            );
+
+        if set_social_metadata_defaults.unwrap_or(false) {
+            promise = promise.then(self.internal_set_social_metadata(
+                Some(String::from(social_db_account_id)),
+                None,
+                None,
+                None,
+            ));
+        }
+        return promise;
     }
 
     #[payable]
@@ -71,6 +85,21 @@ impl Contract {
         description: Option<String>,
         ipfs_cid: Option<String>,
     ) -> Promise {
+        if env::predecessor_account_id() != env::current_account_id() {
+            env::panic_str(
+                format!("Should only be called by {:?}", env::current_account_id()).as_str(),
+            );
+        }
+        self.internal_set_social_metadata(social_db_account_id, name, description, ipfs_cid)
+    }
+
+    fn internal_set_social_metadata(
+        &mut self,
+        social_db_account_id: Option<String>,
+        name: Option<String>,
+        description: Option<String>,
+        ipfs_cid: Option<String>,
+    ) -> Promise {
         let social_db_account_id =
             social_db_account_id.unwrap_or_else(|| "social.near".to_string());
         let name = name.unwrap_or_else(|| "NEAR treasury".to_string());
@@ -80,11 +109,6 @@ impl Contract {
             "bafkreiboarigt5w26y5jyxyl4au7r2dl76o5lrm2jqjgqpooakck5xsojq".to_string()
         });
 
-        if env::predecessor_account_id() != env::current_account_id() {
-            env::panic_str(
-                format!("Should only be called by {:?}", env::current_account_id()).as_str(),
-            );
-        }
         let args = format!(
             "
         {{\"data\":
