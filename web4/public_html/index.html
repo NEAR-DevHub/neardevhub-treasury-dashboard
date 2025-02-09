@@ -258,7 +258,7 @@
         display: flex;
         gap: 0.5rem;
         padding-inline: 8px;
-        height: 48;
+        height: 48px;
         border-radius: 48px;
         padding: 4px;
         padding-right: 10px;
@@ -368,6 +368,7 @@
   <body>
     <nav class="custom-navbar">
       <img
+        id="logo"
         src="https://ipfs.near.social/ipfs/bafkreigxfb2vzetfzsunqgukiux3og23vcomofvxekiqx4zizihgntgqdi"
         alt="treasury logo"
       />
@@ -409,6 +410,34 @@
       </div>
     </nav>
   </body>
+
+  <script>
+    const isDarkTheme =
+      document
+        .querySelector("[data-bs-theme]")
+        .getAttribute("data-bs-theme") === "dark";
+
+    const navbar = document.querySelector(".custom-navbar");
+    navbar.style.backgroundColor = isDarkTheme ? "#131313" : "#f4f4f4";
+    navbar.style.borderColor = isDarkTheme
+      ? "#3B3B3B"
+      : "rgba(226, 230, 236, 1)";
+
+    const btn = document.querySelector(".custom-logout button");
+    btn.style.color = isDarkTheme ? "#CACACA" : "#1B1B18";
+    btn.addEventListener("mouseover", () => {
+      btn.style.backgroundColor = isDarkTheme ? "#3E3E3E" : "#E6E6E6";
+    });
+    btn.addEventListener("mouseout", () => {
+      btn.style.backgroundColor = isDarkTheme ? "#131313" : "#f4f4f4";
+    });
+
+    const logo = document.getElementById("logo");
+    logo.src =
+      theme === "dark"
+        ? "https://ipfs.near.social/ipfs/bafkreiffyplx5yrnrgplij3gt6iqcolj27e4adgc7d5tzoo34xxjbbxtxe"
+        : "https://ipfs.near.social/ipfs/bafkreigxfb2vzetfzsunqgukiux3og23vcomofvxekiqx4zizihgntgqdi";
+  </script>
 
   <script type="module">
     import { setupWalletSelector } from "@near-wallet-selector/core";
@@ -552,6 +581,7 @@
     } else if (location.port === "8080") {
       viewer.setAttribute("rpc", "http://127.0.0.1:14500");
     }
+
     document.body.appendChild(viewer);
   </script>
 </html>
