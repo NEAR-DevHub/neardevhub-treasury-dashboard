@@ -232,7 +232,10 @@ export async function mockNearBalances({ page, accountId, balance, storage }) {
 
 export async function mockWithFTBalance({ page, daoAccount, isSufficient }) {
   await page.route(
-    `https://ref-sdk-api.fly.dev/api/ft-tokens/?account_id=${daoAccount}`,
+    (daoAccount.includes("testing")
+      ? `https://ref-sdk-test-cold-haze-1300.fly.dev`
+      : `https://ref-sdk-api.fly.dev`) +
+      `/api/ft-tokens/?account_id=${daoAccount}`,
     async (route) => {
       await route.fulfill({
         json: {
