@@ -294,14 +294,12 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
     let treasury_factory_account_details_after = treasury_factory_contract.view_account().await?;
     assert!(create_treasury_instance_result.is_success());
 
-    let failed_outcomes: Vec<_> = create_treasury_instance_result
-        .receipt_outcomes()
-        .iter()
-        .filter(|outcome| outcome.is_failure())
-        .collect();
-
-    assert_eq!(failed_outcomes.len(), 0);
-    assert_eq!(create_treasury_instance_result.receipt_failures().len(), 0);
+    assert_eq!(
+        create_treasury_instance_result.receipt_failures().len(),
+        0,
+        "Should not be receipt failures: {:?}",
+        create_treasury_instance_result.receipt_failures()
+    );
 
     assert!(
         user_account_details_after.balance

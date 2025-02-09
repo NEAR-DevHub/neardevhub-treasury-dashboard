@@ -56,7 +56,7 @@ impl Contract {
                 .to_string()
                 .as_bytes()
                 .to_vec(),
-                NearToken::from_near(2),
+                NearToken::from_millinear(2200),
                 Gas::from_tgas(80),
             )
             .then(
@@ -139,7 +139,7 @@ impl Contract {
             PromiseResult::Successful(_result) => Promise::new(new_instance_contract_id.clone())
                 .then(
                     instance_contract::ext(new_instance_contract_id.clone())
-                        .with_attached_deposit(NearToken::from_near(1))
+                        .with_attached_deposit(NearToken::from_millinear(800))
                         .update_widgets(
                             widget_reference_account_id,
                             social_db_account_id.clone(),
