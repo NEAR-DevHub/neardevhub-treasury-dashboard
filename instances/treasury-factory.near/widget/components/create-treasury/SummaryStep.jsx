@@ -155,15 +155,31 @@ function createDao() {
           kind: {
             Group: filterMemberByPermission(PERMISSIONS.create),
           },
-          name: "Create Requests",
-          permissions: ["call:AddProposal", "transfer:AddProposal"],
-          vote_policy: {},
+          name: "Treasury Requestor",
+          permissions: [
+            "call:AddProposal",
+            "transfer:AddProposal",
+            "call:VoteRemove",
+            "transfer:VoteRemove",
+          ],
+          vote_policy: {
+            transfer: {
+              weight_kind: "RoleWeight",
+              quorum: "0",
+              threshold: "1",
+            },
+            call: {
+              weight_kind: "RoleWeight",
+              quorum: "0",
+              threshold: "1",
+            },
+          },
         },
         {
           kind: {
             Group: filterMemberByPermission(PERMISSIONS.edit),
           },
-          name: "Manage Members",
+          name: "Treasury Admin",
           permissions: [
             "config:*",
             "policy:*",
@@ -186,13 +202,16 @@ function createDao() {
           kind: {
             Group: filterMemberByPermission(PERMISSIONS.vote),
           },
-          name: "Vote",
+          name: "Treasury Approver",
           permissions: [
-            "*:VoteReject",
-            "*:VoteApprove",
-            "*:VoteRemove",
-            "*:RemoveProposal",
-            "*:Finalize",
+            "call:VoteReject",
+            "call:VoteApprove",
+            "call:RemoveProposal",
+            "call:Finalize",
+            "transfer:VoteReject",
+            "transfer:VoteApprove",
+            "transfer:RemoveProposal",
+            "transfer:Finalize",
           ],
           vote_policy: {},
         },

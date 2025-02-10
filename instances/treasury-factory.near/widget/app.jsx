@@ -9,8 +9,14 @@ const { page, ...passProps } = props;
 const { AppLayout } = VM.require(
   `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.templates.AppLayout`
 ) || { AppLayout: () => <></> };
-const { Theme } = VM.require(
+const { ThemeContainer } = VM.require(
   `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/config.css`
+) || {
+  ThemeContainer: () => <></>,
+};
+
+const { Theme } = VM.require(
+  `${REPL_DEVDAO_ACCOUNT}/widget/components.templates.AppLayout`
 ) || {
   Theme: () => <></>,
 };
@@ -19,11 +25,13 @@ const propsToSend = { ...passProps };
 
 return (
   <Theme>
-    <AppLayout>
-      <Widget
-        src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.treasury.Create"
-        props={propsToSend}
-      />
-    </AppLayout>
+    <ThemeContainer>
+      <AppLayout>
+        <Widget
+          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.treasury.Create"
+          props={propsToSend}
+        />
+      </AppLayout>
+    </ThemeContainer>
   </Theme>
 );
