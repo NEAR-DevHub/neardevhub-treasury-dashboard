@@ -30,7 +30,7 @@ const fetchProposals = useCallback(() => {
       treasuryDaoID,
       resPerPage: rowsPerPage,
       isPrevPageCalled: isPrevPageCalled,
-      filterKindArray: ["Transfer"],
+      filterKindArray: ["Transfer", "FunctionCall"],
       filterStatusArray: ["InProgress"],
       offset: typeof offset === "number" ? offset : lastProposalId,
       lastProposalId: lastProposalId,

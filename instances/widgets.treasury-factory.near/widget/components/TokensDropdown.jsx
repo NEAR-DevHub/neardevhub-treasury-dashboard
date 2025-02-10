@@ -5,14 +5,18 @@ const { NearToken } = VM.require(
 const { getNearBalances, isBosGateway } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
-const instance = props.instance;
-if (!instance || typeof isBosGateway !== "function") {
+const daoAccount = props.daoAccount;
+if (typeof isBosGateway !== "function") {
   return <></>;
 }
 
-const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
-
-const { selectedValue, onChange, disabled, setTokensAvailable } = props;
+const {
+  selectedValue,
+  onChange,
+  disabled,
+  setTokensAvailable,
+  lockupNearBalances,
+} = props;
 
 onChange = onChange || (() => {});
 
@@ -33,12 +37,18 @@ const pikespeakOptions = {
   },
 };
 
-const ftTokensResp = fetch(
-  `https://api.pikespeak.ai/account/balance/${treasuryDaoID}`,
-  pikespeakOptions
-);
+const isLockupContract = daoAccount.includes("lockup.near");
 
-const nearBalances = getNearBalances(treasuryDaoID);
+const ftTokensResp = isLockupContract
+  ? { body: [] }
+  : fetch(
+      `https://api.pikespeak.ai/account/balance/${daoAccount}`,
+      pikespeakOptions
+    );
+
+const nearBalances = isLockupContract
+  ? lockupNearBalances
+  : getNearBalances(daoAccount);
 
 if (
   !ftTokensResp ||
@@ -68,7 +78,9 @@ useEffect(() => {
       icon: NearToken,
       title: "NEAR",
       value: "NEAR",
-      tokenBalance: nearBalances.totalParsed,
+      tokenBalance: isLockupContract
+        ? nearBalances.availableParsed
+        : nearBalances.totalParsed,
     },
   ];
 
@@ -106,7 +118,9 @@ const toggleDropdown = () => {
 function sendTokensAvailable(value) {
   const balance = options.find((i) => i.value === value)?.tokenBalance;
   return setTokensAvailable(
-    value === "NEAR" ? getNearAvailableBalance(balance) : balance
+    value === "NEAR" && !isLockupContract
+      ? getNearAvailableBalance(balance)
+      : balance
   );
 }
 
@@ -196,7 +210,7 @@ const Item = ({ option }) => {
         )}
         <div className="text-sm text-secondary w-100 text-wrap">
           Tokens available:{" "}
-          {option.value === "NEAR"
+          {option.value === "NEAR" && !isLockupContract
             ? getNearAvailableBalance(option.tokenBalance)
             : option.tokenBalance}
         </div>
@@ -213,7 +227,7 @@ return (
     <Widget
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
       props={{
-        accountId: treasuryDaoID,
+        accountId: daoAccount,
         setNearStakedTotalTokens: (v) => setNearStakedTokens(Big(v).toFixed(2)),
       }}
     />

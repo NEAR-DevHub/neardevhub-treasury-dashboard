@@ -4,6 +4,7 @@ const selectedValue = props.selectedValue;
 const disabled = props.disabled;
 const [selected, setSelected] = useState(selectedValue);
 const DropdownItemRender = props.DropdownItemRender;
+const SelectedValueRender = props.SelectedValueRender;
 
 useEffect(() => {
   if (JSON.stringify(selected) !== JSON.stringify(selectedValue)) {
@@ -51,7 +52,7 @@ return (
         aria-expanded="false"
         data-testid="dropdown-btn"
       >
-        {selected.label}
+        {SelectedValueRender ? <SelectedValueRender /> : selected.label}
       </button>
       <ul className="dropdown-menu dropdown-menu-end dropdown-menu-lg-start px-2 shadow w-100">
         {options.map((item) =>
