@@ -238,6 +238,18 @@ const VoteSuccessToast = () => {
 
 const proposalPeriod = policy.proposal_period;
 
+function decodeBase64(encodedArgs) {
+  if (!encodedArgs) return null;
+  try {
+    const jsonString = Buffer.from(encodedArgs, "base64").toString("utf8");
+    const parsedArgs = JSON.parse(jsonString);
+    return parsedArgs;
+  } catch (error) {
+    console.error("Failed to decode or parse encodedArgs:", error);
+    return null;
+  }
+}
+
 const ProposalsComponent = () => {
   return (
     <tbody style={{ overflowX: "auto" }}>
@@ -248,7 +260,18 @@ const ProposalsComponent = () => {
         const description = !title && !summary && item.description;
         const id = decodeProposalDescription("proposalId", item.description);
         const proposalId = id ? parseInt(id, 10) : null;
-        const args = item.kind.Transfer;
+        const isFunctionType =
+          Object.values(item?.kind?.FunctionCall ?? {})?.length > 0;
+        const decodedArgs =
+          isFunctionType &&
+          decodeBase64(item.kind.FunctionCall?.actions[0].args);
+        const args = isFunctionType
+          ? {
+              token_id: "",
+              receiver_id: decodedArgs?.receiver_id,
+              amount: decodedArgs?.amount,
+            }
+          : item.kind.Transfer;
 
         return (
           <tr
