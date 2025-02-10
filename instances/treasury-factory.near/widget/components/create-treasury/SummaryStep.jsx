@@ -9,6 +9,19 @@ const REQUIRED_BALANCE = 9;
 const [showCongratsModal, setShowCongratsModal] = useState(false);
 const [showErrorToast, setShowErrorToast] = useState(false);
 const [isTxnCreated, setTxnCreated] = useState(false);
+const [treasuryAlreadyCreated, setTreasuryCreated] = useState(false);
+
+const Container = styled.div`
+  .text-red {
+    color: #d95c4a !important;
+  }
+
+  .inline-link-btn {
+    all: unset;
+    color: #007bff;
+    cursor: pointer;
+  }
+`;
 
 const Section = styled.div`
   display: flex;
@@ -94,15 +107,19 @@ const storageAccountName = Storage.get(
   `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.create-treasury.SummaryStep`
 );
 
+function checkWeb4Account() {
+  return Near.asyncView(`${formFields.accountName}.near`, "web4_get", {
+    request: { path: "/" },
+  });
+}
+
 useEffect(() => {
   if (isTxnCreated) {
     let checkTxnTimeout = null;
     let errorTimeout = null;
 
     const checkAccountCreation = async () => {
-      Near.asyncView(`${formFields.accountName}.near`, "web4_get", {
-        request: { path: "/" },
-      })
+      checkWeb4Account()
         .then((web4) => {
           if (web4) {
             setTxnCreated(false);
@@ -133,6 +150,16 @@ useEffect(() => {
     };
   }
 }, [isTxnCreated]);
+
+useEffect(() => {
+  if (formFields.accountName) {
+    checkWeb4Account(formFields.accountName).then((web4) => {
+      if (web4) {
+        setTreasuryCreated(true);
+      }
+    });
+  }
+}, [formFields.accountName]);
 
 function filterMemberByPermission(permission) {
   return formFields.members
@@ -299,7 +326,7 @@ const ListItem = ({ member }) => (
 );
 
 return (
-  <>
+  <Container>
     <TransactionLoader
       showInProgress={isTxnCreated}
       showError={showErrorToast}
@@ -391,7 +418,26 @@ return (
           </b>
         </ul>
       </Section>
-
+      {treasuryAlreadyCreated && (
+        <div className="text-red fw-bold">
+          This treasury already exists. Click{" "}
+          <a
+            href="?page=create-treasury"
+            className="inline-link-btn"
+            onClick={() => Storage.set("TreasuryAccountName", null)}
+          >
+            here
+          </a>
+          to create a new one or{" "}
+          <button
+            className="inline-link-btn"
+            onClick={() => setShowCongratsModal(true)}
+          >
+            here
+          </button>{" "}
+          to view existing treasuries
+        </div>
+      )}
       <button
         className="btn btn-primary w-100"
         onClick={createDao}
@@ -400,7 +446,8 @@ return (
           !formFields.accountName ||
           isTxnCreated ||
           storageAccountName ||
-          showCongratsModal
+          showCongratsModal ||
+          treasuryAlreadyCreated
         }
       >
         Confirm and Create
@@ -451,5 +498,5 @@ return (
         }}
       />
     )}
-  </>
+  </Container>
 );
