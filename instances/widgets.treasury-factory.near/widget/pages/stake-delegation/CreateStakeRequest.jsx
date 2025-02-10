@@ -453,7 +453,7 @@ return (
         <div className="d-flex flex-column gap-1">
           <label>Treasury Wallet</label>
           <Widget
-            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.WalletDropdown`}
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.WalletDropdown`}
             props={{
               lockupNearBalances,
               instance,
