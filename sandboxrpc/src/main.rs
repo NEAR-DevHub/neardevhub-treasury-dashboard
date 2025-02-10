@@ -36,6 +36,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .transact()
         .await?;
 
+    let itlx_2 = worker
+        .import_contract(
+            &"itlx_2.intellex_agents_owner_1.near".parse().unwrap(),
+            &mainnet,
+        )
+        .initial_balance(NearToken::from_near(10000))
+        .transact()
+        .await?;
+
     let socialdb = worker
         .import_contract(&socialdb_contract_id, &mainnet)
         .initial_balance(NearToken::from_near(10000))
@@ -89,6 +98,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let dev_account = worker.dev_create_account().await?;
+
+    let _ = treasury_factory_contract
+        .as_account()
+        .create_subaccount("bootstrap")
+        .keys(dev_account.secret_key().clone())
+        .initial_balance(NearToken::from_near(10))
+        .transact()
+        .await?;
+
+    let ft_new_result = itlx_2
+        .call("new_default_meta")
+        .args_json(json!({
+            "owner_id": dev_account.id().to_string(),
+            "total_supply": "10000000000000000000000000000"
+        }))
+        .transact()
+        .await?;
+
     println!(
         "{{\"account_id\": {:?}, \"secret_key\": {:?}, \"rpc_url\": {:?}}}",
         dev_account.id().to_string(),
