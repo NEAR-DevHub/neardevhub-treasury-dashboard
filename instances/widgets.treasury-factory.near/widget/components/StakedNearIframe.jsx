@@ -16,7 +16,7 @@ const code = `
   <html>
     <body>
     <script>
-    const archiveNodeUrl = "https://archival-rpc.mainnet.near.org";
+    const archiveNodeUrl = "https://archival-rpc.mainnet.fastnear.com";
     const treasuryDaoID = "${accountId}";
   
     async function getAccountStakedBalance(stakingpool_id, account_id) {

@@ -184,8 +184,8 @@ test.describe("User is logged in", function () {
     storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
   });
 
-  test.beforeEach(async ({ page }) => {
-    await mockNearPrice({ nearPrice: 5, page });
+  test.beforeEach(async ({ page, daoAccount }) => {
+    await mockNearPrice({ daoAccount, nearPrice: 5, page });
   });
 
   test("low account balance should show warning modal, and allow action ", async ({
@@ -429,7 +429,7 @@ test.describe("User is logged in", function () {
     const nearPrice = 4;
     const amountFromLinkedProposal = 3120 / nearPrice;
 
-    await mockNearPrice({ nearPrice, page });
+    await mockNearPrice({ daoAccount, nearPrice, page });
     await mockInventory({ page, account: daoAccount });
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
     if (instanceConfig.showProposalSelection === false) {
@@ -617,7 +617,7 @@ test.describe("admin with function access keys", function () {
     const nearPrice = 4;
     await mockInventory({ page, account: daoAccount });
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
-    await mockNearPrice({ nearPrice, page });
+    await mockNearPrice({ daoAccount, nearPrice, page });
     await mockPikespeakFTTokensResponse({ page, daoAccount });
     await updateDaoPolicyMembers({ page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);

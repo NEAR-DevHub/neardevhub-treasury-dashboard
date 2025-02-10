@@ -17,9 +17,9 @@ const nearPrice = 5;
 test.describe("Dashboard Page", function () {
   test.beforeEach(async ({ page, instanceAccount, daoAccount }, testInfo) => {
     if (testInfo.title.includes("Should see 404 modal")) {
-      await mockNearPrice({ nearPrice, page, returnError: true });
+      await mockNearPrice({ daoAccount, nearPrice, page, returnError: true });
     } else {
-      await mockNearPrice({ nearPrice, page });
+      await mockNearPrice({ daoAccount, nearPrice, page });
     }
 
     await mockWithFTBalance({ page, daoAccount, isSufficient: true });
