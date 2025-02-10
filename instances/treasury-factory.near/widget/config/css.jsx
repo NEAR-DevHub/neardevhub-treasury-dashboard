@@ -1,14 +1,24 @@
-const Theme = styled.div`
+const { getAllColorsAsCSSVariables } = VM.require(
+  "${REPL_DEVDAO_ACCOUNT}/widget/lib.common"
+) || { getAllColorsAsCSSVariables: () => {} };
+
+const ThemeContainer = styled.div`
   --theme-color: rgba(44, 62, 80, 1);
   --theme-bg-color: #f4f4f4;
   --page-header-color: rgba(54, 61, 69, 1);
-  --text-color: white;
   --link-inactive-color: white;
   --link-active-color: white;
   --border-color: rgba(226, 230, 236, 1);
   --light-grey-color: rgba(185, 185, 185, 1);
-  --dark-grey-color: rgba(103, 103, 103, 1);
 
+  ${() => getAllColorsAsCSSVariables(false, "#007bff")}
+
+  a.btn-primary {
+    color: white !important;
+  }
+  a.btn-primary.active {
+    color: white !important;
+  }
   .btn {
     display: flex;
     align-items: center;
@@ -84,4 +94,4 @@ const Theme = styled.div`
   }
 `;
 
-return { Theme };
+return { ThemeContainer };

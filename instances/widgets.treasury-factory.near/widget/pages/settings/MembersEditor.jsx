@@ -5,8 +5,9 @@ const { TransactionLoader } = VM.require(
   `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TransactionLoader`
 ) || { TransactionLoader: () => <></> };
 
+const isTreasuryFactory = props.isTreasuryFactory;
 const instance = props.instance;
-if (!instance) {
+if (!instance && !isTreasuryFactory) {
   return <></>;
 }
 
@@ -28,9 +29,10 @@ const [showCancelModal, setShowCancelModal] = useState(false);
 const [memberAlreadyExists, setMemberAlreadyExists] = useState(false);
 const [showErrorToast, setShowErrorToast] = useState(false);
 
-const daoPolicy = treasuryDaoID
-  ? Near.view(treasuryDaoID, "get_policy", {})
-  : null;
+const daoPolicy =
+  treasuryDaoID && !isTreasuryFactory
+    ? Near.view(treasuryDaoID, "get_policy", {})
+    : null;
 
 const deposit = daoPolicy?.proposal_bond || 0;
 
@@ -48,8 +50,10 @@ function getLastProposalId() {
 }
 
 useEffect(() => {
-  getLastProposalId().then((i) => setLastProposalId(i));
-}, []);
+  if (!isTreasuryFactory) {
+    getLastProposalId().then((i) => setLastProposalId(i));
+  }
+}, [isTreasuryFactory]);
 
 // close canvas after proposal is submitted
 useEffect(() => {
@@ -146,34 +150,41 @@ function updateDaoPolicy(rolesMap) {
 }
 
 function onSubmitClick() {
-  setTxnCreated(true);
-  const changes = updateDaoPolicy(
-    new Map(roles.map((role) => [role.title, role.value]))
-  );
-  const updatedPolicy = changes.updatedPolicy;
-  const summary = changes.summary;
-  const description = {
-    title: "Update policy - Members Permissions",
-    summary: summary,
-  };
-  Near.call([
-    {
-      contractName: treasuryDaoID,
-      methodName: "add_proposal",
-      args: {
-        proposal: {
-          description: encodeToMarkdown(description),
-          kind: {
-            ChangePolicy: {
-              policy: updatedPolicy,
+  if (isTreasuryFactory) {
+    props.onSubmit({
+      accountId: username,
+      permissions: roles.map((i) => i.value),
+    });
+  } else {
+    setTxnCreated(true);
+    const changes = updateDaoPolicy(
+      new Map(roles.map((role) => [role.title, role.value]))
+    );
+    const updatedPolicy = changes.updatedPolicy;
+    const summary = changes.summary;
+    const description = {
+      title: "Update policy - Members Permissions",
+      summary: summary,
+    };
+    Near.call([
+      {
+        contractName: treasuryDaoID,
+        methodName: "add_proposal",
+        args: {
+          proposal: {
+            description: encodeToMarkdown(description),
+            kind: {
+              ChangePolicy: {
+                policy: updatedPolicy,
+              },
             },
           },
         },
+        gas: 200000000000000,
+        deposit,
       },
-      gas: 200000000000000,
-      deposit,
-    },
-  ]);
+    ]);
+  }
 }
 
 function cleanInputs() {
@@ -201,7 +212,7 @@ const Container = styled.div`
 
 // check if user already exists
 useEffect(() => {
-  if (selectedMember) {
+  if (selectedMember || isTreasuryFactory) {
     return;
   }
   const timeoutId = setTimeout(() => {
@@ -248,7 +259,6 @@ return (
           onUpdate: setUsername,
           disabled: selectedMember,
           setParentAccountValid: setIsUsernameValid,
-
           instance,
         }}
       />
@@ -270,7 +280,7 @@ return (
 
     <div className="d-flex gap-3 align-items-center mt-2 justify-content-between">
       <div>
-        {(selectedMember || memberAlreadyExists) && (
+        {(selectedMember || memberAlreadyExists) && !isTreasuryFactory && (
           <Widget
             src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
             props={{
@@ -278,7 +288,6 @@ return (
                 root: "btn btn-outline-danger shadow-none",
               },
               label: "Delete",
-
               onClick: () => setShowDeleteModal(true),
               disabled: isTxnCreated || !username,
             }}

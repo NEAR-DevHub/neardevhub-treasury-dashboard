@@ -7,12 +7,10 @@ const {
   getDaoRoles,
   getPolicyApproverGroup,
   hasPermission,
-  getPermissionsText,
 } = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common") || {
   getDaoRoles: () => {},
   getPolicyApproverGroup: () => {},
   hasPermission: () => {},
-  getPermissionsText: () => {},
 };
 
 const instance = props.instance;
@@ -182,23 +180,7 @@ const Members = () => {
             <td>
               <div className="d-flex gap-3 align-items-center">
                 {(group.roles ?? []).map((i) => {
-                  const description = getPermissionsText(i);
-                  if (!description) {
-                    return <Tag className="rounded-pill px-2 py-1">{i}</Tag>;
-                  } else {
-                    return (
-                      <Widget
-                        src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
-                        props={{
-                          popup: description,
-                          children: (
-                            <Tag className="rounded-pill px-2 py-1">{i}</Tag>
-                          ),
-                          instance,
-                        }}
-                      />
-                    );
-                  }
+                  return <Tag className="rounded-pill px-2 py-1">{i}</Tag>;
                 })}
               </div>
             </td>
