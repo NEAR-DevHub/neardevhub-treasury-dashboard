@@ -411,34 +411,6 @@
     </nav>
   </body>
 
-  <script>
-    const isDarkTheme =
-      document
-        .querySelector("[data-bs-theme]")
-        .getAttribute("data-bs-theme") === "dark";
-
-    const navbar = document.querySelector(".custom-navbar");
-    navbar.style.backgroundColor = isDarkTheme ? "#131313" : "#f4f4f4";
-    navbar.style.borderColor = isDarkTheme
-      ? "#3B3B3B"
-      : "rgba(226, 230, 236, 1)";
-
-    const btn = document.querySelector(".custom-logout button");
-    btn.style.color = isDarkTheme ? "#CACACA" : "#1B1B18";
-    btn.addEventListener("mouseover", () => {
-      btn.style.backgroundColor = isDarkTheme ? "#3E3E3E" : "#E6E6E6";
-    });
-    btn.addEventListener("mouseout", () => {
-      btn.style.backgroundColor = isDarkTheme ? "#131313" : "#f4f4f4";
-    });
-
-    const logo = document.getElementById("logo");
-    logo.src =
-      theme === "dark"
-        ? "https://ipfs.near.social/ipfs/bafkreiffyplx5yrnrgplij3gt6iqcolj27e4adgc7d5tzoo34xxjbbxtxe"
-        : "https://ipfs.near.social/ipfs/bafkreigxfb2vzetfzsunqgukiux3og23vcomofvxekiqx4zizihgntgqdi";
-  </script>
-
   <script type="module">
     import { setupWalletSelector } from "@near-wallet-selector/core";
     import { setupModal } from "@near-wallet-selector/modal-ui-js";
@@ -583,5 +555,37 @@
     }
 
     document.body.appendChild(viewer);
+
+    const waitForTheme = setInterval(() => {
+      const theme = document.querySelector("[data-bs-theme]");
+
+      if (theme) {
+        clearInterval(waitForTheme);
+
+        const isDarkTheme = theme.getAttribute("data-bs-theme") === "dark";
+
+        const navbar = document.querySelector(".custom-navbar");
+        navbar.style.backgroundColor = isDarkTheme ? "#131313" : "#f4f4f4";
+        navbar.style.borderColor = isDarkTheme
+          ? "#3B3B3B"
+          : "rgba(226, 230, 236, 1)";
+
+        const btn = document.querySelector(".custom-logout button");
+        btn.style.color = isDarkTheme ? "#CACACA" : "#1B1B18";
+        btn.addEventListener("mouseover", () => {
+          btn.style.backgroundColor = isDarkTheme ? "#3E3E3E" : "#E6E6E6";
+        });
+        btn.addEventListener("mouseout", () => {
+          btn.style.backgroundColor = isDarkTheme ? "#131313" : "#f4f4f4";
+        });
+
+        const logo = document.getElementById("logo");
+        logo.src =
+          theme === "dark"
+            ? "https://ipfs.near.social/ipfs/bafkreiffyplx5yrnrgplij3gt6iqcolj27e4adgc7d5tzoo34xxjbbxtxe"
+            : "https://ipfs.near.social/ipfs/bafkreigxfb2vzetfzsunqgukiux3og23vcomofvxekiqx4zizihgntgqdi";
+      }
+      console.log("tick");
+    }, 500);
   </script>
 </html>
