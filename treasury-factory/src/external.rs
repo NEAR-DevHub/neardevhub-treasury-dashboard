@@ -15,5 +15,6 @@ trait InstanceContract {
         &self,
         widget_reference_account_id: String,
         social_db_account_id: String,
+        set_social_metadata_defaults: bool,
     ) -> Promise;
 }
