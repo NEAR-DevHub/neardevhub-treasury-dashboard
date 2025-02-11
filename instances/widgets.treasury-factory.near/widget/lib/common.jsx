@@ -95,7 +95,6 @@ function getPolicyApproverGroup(treasuryDaoID) {
   const groupWithPermission = (daoPolicy.roles ?? []).filter((role) => {
     const policyPermissions = [
       "*:*",
-      "policy:AddProposal",
       "policy:*",
       "policy:VoteApprove",
       "policy:VoteReject",
@@ -422,17 +421,27 @@ function hasPermission(treasuryDaoID, accountId, kindName, actionType) {
   return false;
 }
 
-function getPermissionsText(type) {
+function getRolesDescription(type) {
   switch (type) {
-    case "Create Requests":
-    case "Create requests":
-      return "Enables users to initiate payment requests.";
-    case "Manage Members": {
-      return "Allows users to control treasury admins and their access levels.";
+    case "Requestor":
+      return "Allows to create transaction requests (payments, stake delegation, and asset exchange).";
+    case "Approver": {
+      return "Allows to vote on transaction requests (payments, stake delegation, and asset exchange).";
     }
-    case "Vote": {
-      return "Allows users to approve or request proposed payment requests.";
+    case "Admin": {
+      return "Allows to both create and vote on treasury settings (members and permissions, voting policies and duration, and appearance).";
     }
+    default:
+      return "";
+  }
+}
+
+function getRolesThresholdDescription(type) {
+  switch (type) {
+    case "Approver":
+      return "Vote for Payments, Stake Delegation, and Asset Exchange.";
+    case "Admin":
+      return "Vote for Members and Settings.";
     default:
       return "";
   }
@@ -669,7 +678,7 @@ return {
   getMembersAndPermissions,
   getDaoRoles,
   getPolicyApproverGroup,
-  getPermissionsText,
+  getRolesDescription,
   isBosGateway,
   getNearBalances,
   getRoleWiseData,
@@ -680,4 +689,5 @@ return {
   TooltipText,
   getAllColorsAsObject,
   getAllColorsAsCSSVariables,
+  getRolesThresholdDescription,
 };

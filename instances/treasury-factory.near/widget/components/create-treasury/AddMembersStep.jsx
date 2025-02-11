@@ -14,6 +14,14 @@ const Item = styled.div`
   &:last-child {
     border: 0;
   }
+
+  .flex-1 {
+    flex: 1;
+  }
+
+  .w-15 {
+    width: 15%;
+  }
 `;
 
 const ActionButtons = styled.div`
@@ -23,9 +31,9 @@ const ActionButtons = styled.div`
 `;
 
 const PERMISSIONS = {
-  create: "Create Requests",
-  edit: "Manage Members",
-  vote: "Vote",
+  create: "Requestor",
+  edit: "Admin",
+  vote: "Approver",
 };
 
 const [members, setMembers] = useState(
@@ -56,42 +64,37 @@ const ListItem = ({ member, key }) => (
       />
     </div>
 
-    <div className="d-flex flex-row" style={{ width: "380px" }}>
-      <div
-        className="d-flex gap-1 align-items-center"
-        style={{ width: "315px" }}
-      >
-        {member.permissions.map((permission, i) => (
-          <Badge key={i}>{permission}</Badge>
-        ))}
-      </div>
+    <div className="d-flex gap-1 align-items-center flex-wrap flex-1">
+      {member.permissions.map((permission, i) => (
+        <Badge key={i}>{permission}</Badge>
+      ))}
+    </div>
 
-      <div className="d-flex flex-row" style={{ width: "70px" }}>
-        {member.accountId !== context.accountId && (
-          <ActionButtons className="d-flex gap-3 align-items-center justify-content-end">
-            <i
-              role="button"
-              className="bi bi-pencil"
-              onClick={() => {
-                setFields({
-                  accountId: member.accountId,
-                  permissions: member.permissions,
-                });
-                setShowAddMemberModal(true);
-              }}
-            />
-            <i
-              role="button"
-              className="bi bi-trash text-danger"
-              onClick={() =>
-                setMembers(
-                  members.filter((m) => m.accountId !== member.accountId)
-                )
-              }
-            />
-          </ActionButtons>
-        )}
-      </div>
+    <div className="d-flex w-15">
+      {member.accountId !== context.accountId && (
+        <ActionButtons className="d-flex gap-3 align-items-center justify-content-end">
+          <i
+            role="button"
+            className="bi bi-pencil"
+            onClick={() => {
+              setFields({
+                accountId: member.accountId,
+                permissions: member.permissions,
+              });
+              setShowAddMemberModal(true);
+            }}
+          />
+          <i
+            role="button"
+            className="bi bi-trash text-danger"
+            onClick={() =>
+              setMembers(
+                members.filter((m) => m.accountId !== member.accountId)
+              )
+            }
+          />
+        </ActionButtons>
+      )}
     </div>
   </Item>
 );
@@ -100,12 +103,12 @@ function onClose() {
   setShowAddMemberModal(false);
 }
 
-function onSubmit() {
+function onSubmit(newData) {
   let newMembers = [
     ...members,
     {
-      accountId: fields.accountId,
-      permissions: fields.permissions,
+      accountId: newData.accountId,
+      permissions: newData.permissions,
     },
   ];
   newMembers = newMembers.filter(
@@ -126,8 +129,24 @@ return (
           title: "New Member",
           children: (
             <Widget
-              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.create-treasury.AddMemberForm`}
-              props={{ fields, setFields, onClose, onSubmit }}
+              src={`${REPL_DEVDAO_ACCOUNT}/widget/pages.settings.MembersEditor`}
+              props={{
+                instance: "${REPL_BASE_DEPLOYMENT_ACCOUNT}",
+                refreshMembersTableData: () => {},
+                onCloseCanvas: onClose,
+                availableRoles: Object.values(PERMISSIONS).map((i) => {
+                  return { title: i, value: i };
+                }),
+                selectedMember: fields.accountId
+                  ? {
+                      member: fields.accountId,
+                      roles: fields.permissions,
+                    }
+                  : null,
+                setToastStatus: () => {},
+                isTreasuryFactory: true,
+                onSubmit: onSubmit,
+              }}
             />
           ),
           confirmLabel: "Confirm",

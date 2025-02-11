@@ -150,9 +150,16 @@ return (
             )}
           </div>
 
-          <div>
-            <span className="text-sm">Treasury Wallet: </span>
-            <span className="account-container">{treasuryDaoID}</span>
+          <div className="text-sm">
+            <span className="text-secondary">Powered by</span>
+            <a
+              className="primary-text-color fw-semi-bold"
+              target="_blank"
+              rel="noopener noreferrer"
+              href={`https://neartreasury.com/`}
+            >
+              Near Treasury <i class="bi bi-box-arrow-up-right"></i>
+            </a>
           </div>
         </div>
       </div>
