@@ -605,7 +605,10 @@ test.describe("Have valid staked requests and sufficient token balance", functio
       test.describe(`User with '${role.name}'`, function () {
         test.use({ storageState: role.storageState });
 
-        test("should not see 'Create Request' action", async ({ page }) => {
+        test("should not see 'Create Request' action", async ({
+          page,
+          instanceAccount,
+        }) => {
           test.setTimeout(60_000);
           await updateDaoPolicyMembers({ instanceAccount, page });
           await expect(page.getByText("Pending Requests")).toBeVisible();

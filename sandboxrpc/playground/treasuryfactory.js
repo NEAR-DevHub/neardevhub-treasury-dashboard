@@ -145,7 +145,7 @@ const createInstanceResult = await sandbox.account.functionCall({
     ),
   },
   gas: 300000000000000,
-  attachedDeposit: parseNearAmount("12"),
+  attachedDeposit: parseNearAmount("9"),
 });
 
 console.log(
