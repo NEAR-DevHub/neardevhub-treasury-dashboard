@@ -272,6 +272,7 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
 
     let user_account = worker.dev_create_account().await?;
     let treasury_factory_account_details_before = treasury_factory_contract.view_account().await?;
+    let user_account_details_before = user_account.view_account().await?;
 
     let create_treasury_instance_result = user_account
         .call(treasury_factory_contract.id(), "create_instance")
@@ -296,13 +297,24 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
         );
     }
 
+    let user_account_details_after = user_account.view_account().await?;
     let treasury_factory_account_details_after = treasury_factory_contract.view_account().await?;
     assert!(create_treasury_instance_result.is_success());
 
-    assert!(
-        treasury_factory_account_details_after.balance
-            > treasury_factory_account_details_before.balance
+    assert_eq!(
+        create_treasury_instance_result.receipt_failures().len(),
+        0,
+        "{:?}",
+        create_treasury_instance_result.receipt_failures()
     );
+
+    assert!(
+        user_account_details_after.balance
+            < (user_account_details_before
+                .balance
+                .saturating_sub(NearToken::from_near(9)))
+    );
+
     assert_eq!(
         treasury_factory_account_details_after
             .balance
@@ -310,6 +322,11 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
         treasury_factory_account_details_before
             .balance
             .as_millinear()
+    );
+
+    assert!(
+        treasury_factory_account_details_after.balance
+            > treasury_factory_account_details_before.balance
     );
 
     println!(
@@ -328,6 +345,7 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
 
     let body_string =
         String::from_utf8(general_purpose::STANDARD.decode(response.body).unwrap()).unwrap();
+
     assert!(body_string.contains("near-social-viewer"));
     assert!(body_string.contains("\"test treasury title\""));
 
@@ -403,6 +421,437 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
     assert!(
         matches!(user_access_key.permission, AccessKeyPermission::FullAccess),
         "Expected FullAccess permission"
+    );
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_factory_should_refund_if_failing_because_of_existing_account(
+) -> Result<(), Box<dyn std::error::Error>> {
+    const SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT: &str = "sputnik-dao.near";
+    const SOCIALDB_ACCOUNT: &str = "social.near";
+    const WIDGET_REFERENCE_ACCOUNT_ID: &str = "treasury-testing.near";
+
+    let mainnet = near_workspaces::mainnet().await?;
+    let sputnikdao_factory_contract_id: AccountId = SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT.parse()?;
+    let socialdb_contract_id: AccountId = SOCIALDB_ACCOUNT.parse()?;
+
+    let worker = near_workspaces::sandbox().await?;
+
+    let sputnik_dao_factory = worker
+        .import_contract(&sputnikdao_factory_contract_id, &mainnet)
+        .initial_balance(NearToken::from_near(1000))
+        .transact()
+        .await?;
+    let socialdb = worker
+        .import_contract(&socialdb_contract_id, &mainnet)
+        .initial_balance(NearToken::from_near(10000))
+        .transact()
+        .await?;
+    let reference_widget_contract = worker
+        .import_contract(&WIDGET_REFERENCE_ACCOUNT_ID.parse().unwrap(), &mainnet)
+        .initial_balance(NearToken::from_near(20))
+        .transact()
+        .await?;
+    let near_contract = worker
+        .import_contract(&"near".parse().unwrap(), &mainnet)
+        .initial_balance(NearToken::from_near(100_000_000))
+        .transact()
+        .await?;
+
+    let _ = worker
+        .import_contract(&"intellex.near".parse().unwrap(), &mainnet)
+        .initial_balance(NearToken::from_near(100_000_000))
+        .transact()
+        .await?;
+
+    let init_near_result = near_contract.call("new").max_gas().transact().await?;
+    if init_near_result.is_failure() {
+        panic!(
+            "Error initializing NEAR\n{:?}",
+            String::from_utf8(init_near_result.raw_bytes().unwrap())
+        );
+    }
+
+    let init_socialdb_result = socialdb.call("new").max_gas().transact().await?;
+    if init_socialdb_result.is_failure() {
+        panic!(
+            "Error initializing socialDB\n{:?}",
+            String::from_utf8(init_socialdb_result.raw_bytes().unwrap())
+        );
+    }
+    assert!(init_socialdb_result.is_success());
+
+    let set_socialdb_status_result = socialdb
+        .call("set_status")
+        .args_json(json!({"status": "Live"}))
+        .max_gas()
+        .transact()
+        .await?;
+    assert!(set_socialdb_status_result.is_success());
+
+    let social_set_result = reference_widget_contract
+        .as_account()
+        .call(socialdb.id(), "set")
+        .args_json(json!({
+            "data": {
+                reference_widget_contract.id().as_str(): {
+                    "widget": {
+                        "app": "Hello",
+                        "config": "Goodbye"
+                    }
+                }
+            }
+        }))
+        .deposit(NearToken::from_near(2))
+        .transact()
+        .await?;
+    assert!(social_set_result.is_success());
+
+    let treasury_factory_contract_wasm = build_project_once();
+    let treasury_factory_contract = worker.dev_deploy(&treasury_factory_contract_wasm).await?;
+
+    let init_sputnik_dao_factory_result =
+        sputnik_dao_factory.call("new").max_gas().transact().await?;
+    if init_sputnik_dao_factory_result.is_failure() {
+        panic!(
+            "Error initializing sputnik-dao contract: {:?}",
+            String::from_utf8(init_sputnik_dao_factory_result.raw_bytes().unwrap())
+        );
+    }
+    assert!(init_sputnik_dao_factory_result.is_success());
+
+    let instance_name = "intellex";
+
+    let create_dao_args = json!({
+        "config": {
+        "name": instance_name,
+        "purpose": "creating dao treasury",
+        "metadata": "",
+        },
+        "policy": {
+        "roles": [
+            {
+            "kind": {
+                "Group": ["acc3.near", "acc2.near", "acc1.near"],
+            },
+            "name": "Create Requests",
+            "permissions": [
+                "call:AddProposal",
+                "transfer:AddProposal",
+            ],
+            "vote_policy": {},
+            },
+            {
+            "kind": {
+                "Group": ["acc1.near"],
+            },
+            "name": "Manage Members",
+            "permissions": [
+                "config:*",
+                "policy_update_parameters:*",
+                "add_bounty:*",
+                "remove_member_from_role:*",
+                "upgrade_self:*",
+                "policy_remove_role:*",
+                "set_vote_token:*",
+                "upgrade_remote:*",
+                "bounty_done:*",
+                "add_member_to_role:*",
+                "factory_info_update:*",
+                "policy:*",
+                "policy_add_or_update_role:*",
+                "policy_update_default_vote_policy:*"
+            ],
+            "vote_policy": {},
+            },
+            {
+            "kind": {
+                "Group": ["acc1.near", "acc2.near"],
+            },
+            "name": "Vote",
+            "permissions": ["*:VoteReject", "*:VoteApprove", "*:VoteRemove", "*:RemoveProposal", "*:Finalize"],
+            "vote_policy": {},
+            },
+        ],
+        "default_vote_policy": {
+            "weight_kind": "RoleWeight",
+            "quorum": "0",
+            "threshold": [1, 2],
+        },
+        "proposal_bond": "100000000000000000000000",
+        "proposal_period": "604800000000000",
+        "bounty_bond": "100000000000000000000000",
+        "bounty_forgiveness_period": "604800000000000",
+        },
+    });
+
+    let user_account = worker.dev_create_account().await?;
+    let treasury_factory_account_details_before = treasury_factory_contract.view_account().await?;
+
+    let user_account_details_before = user_account.view_account().await?;
+    let create_treasury_instance_result = user_account
+        .call(treasury_factory_contract.id(), "create_instance")
+        .args_json(json!(
+            {
+                "sputnik_dao_factory_account_id": SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT,
+                "social_db_account_id": SOCIALDB_ACCOUNT,
+                "widget_reference_account_id": WIDGET_REFERENCE_ACCOUNT_ID,
+                "name": instance_name,
+                "create_dao_args": general_purpose::STANDARD.encode(create_dao_args.to_string())
+            }
+        ))
+        .max_gas()
+        .deposit(NearToken::from_near(9))
+        .transact()
+        .await?;
+
+    let treasury_factory_account_details_after = treasury_factory_contract.view_account().await?;
+
+    let failed_outcomes: Vec<_> = create_treasury_instance_result
+        .receipt_outcomes()
+        .iter()
+        .filter(|outcome| outcome.is_failure())
+        .collect();
+
+    assert!(failed_outcomes.len() > 0);
+    println!("{:?}", failed_outcomes);
+
+    assert_eq!(
+        "Failed creating treasury web4 account intellex.near",
+        create_treasury_instance_result.logs().join("\n")
+    );
+
+    let user_account_details_after = user_account.view_account().await?;
+
+    assert!(
+        user_account_details_before.balance.as_millinear()
+            - user_account_details_after.balance.as_millinear()
+            < 10
+    );
+
+    assert!(
+        treasury_factory_account_details_after.balance
+            > treasury_factory_account_details_before.balance
+    );
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_factory_should_refund_if_failing_because_of_existing_dao(
+) -> Result<(), Box<dyn std::error::Error>> {
+    const SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT: &str = "sputnik-dao.near";
+    const SOCIALDB_ACCOUNT: &str = "social.near";
+    const WIDGET_REFERENCE_ACCOUNT_ID: &str = "treasury-testing.near";
+
+    let mainnet = near_workspaces::mainnet().await?;
+    let sputnikdao_factory_contract_id: AccountId = SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT.parse()?;
+    let socialdb_contract_id: AccountId = SOCIALDB_ACCOUNT.parse()?;
+
+    let worker = near_workspaces::sandbox().await?;
+
+    let sputnik_dao_factory = worker
+        .import_contract(&sputnikdao_factory_contract_id, &mainnet)
+        .initial_balance(NearToken::from_near(1000))
+        .transact()
+        .await?;
+    let socialdb = worker
+        .import_contract(&socialdb_contract_id, &mainnet)
+        .initial_balance(NearToken::from_near(10000))
+        .transact()
+        .await?;
+    let reference_widget_contract = worker
+        .import_contract(&WIDGET_REFERENCE_ACCOUNT_ID.parse().unwrap(), &mainnet)
+        .initial_balance(NearToken::from_near(20))
+        .transact()
+        .await?;
+    let near_contract = worker
+        .import_contract(&"near".parse().unwrap(), &mainnet)
+        .initial_balance(NearToken::from_near(100_000_000))
+        .transact()
+        .await?;
+
+    let _ = worker
+        .import_contract(&"intellex.sputnik-dao.near".parse().unwrap(), &mainnet)
+        .initial_balance(NearToken::from_near(100_000_000))
+        .transact()
+        .await?;
+
+    let init_near_result = near_contract.call("new").max_gas().transact().await?;
+    if init_near_result.is_failure() {
+        panic!(
+            "Error initializing NEAR\n{:?}",
+            String::from_utf8(init_near_result.raw_bytes().unwrap())
+        );
+    }
+
+    let init_socialdb_result = socialdb.call("new").max_gas().transact().await?;
+    if init_socialdb_result.is_failure() {
+        panic!(
+            "Error initializing socialDB\n{:?}",
+            String::from_utf8(init_socialdb_result.raw_bytes().unwrap())
+        );
+    }
+    assert!(init_socialdb_result.is_success());
+
+    let set_socialdb_status_result = socialdb
+        .call("set_status")
+        .args_json(json!({"status": "Live"}))
+        .max_gas()
+        .transact()
+        .await?;
+    assert!(set_socialdb_status_result.is_success());
+
+    let social_set_result = reference_widget_contract
+        .as_account()
+        .call(socialdb.id(), "set")
+        .args_json(json!({
+            "data": {
+                reference_widget_contract.id().as_str(): {
+                    "widget": {
+                        "app": "Hello",
+                        "config": "Goodbye"
+                    }
+                }
+            }
+        }))
+        .deposit(NearToken::from_near(2))
+        .transact()
+        .await?;
+    assert!(social_set_result.is_success());
+
+    let treasury_factory_contract_wasm = build_project_once();
+    let treasury_factory_contract = worker.dev_deploy(&treasury_factory_contract_wasm).await?;
+
+    let init_sputnik_dao_factory_result =
+        sputnik_dao_factory.call("new").max_gas().transact().await?;
+    if init_sputnik_dao_factory_result.is_failure() {
+        panic!(
+            "Error initializing sputnik-dao contract: {:?}",
+            String::from_utf8(init_sputnik_dao_factory_result.raw_bytes().unwrap())
+        );
+    }
+    assert!(init_sputnik_dao_factory_result.is_success());
+
+    let instance_name = "intellex";
+
+    let create_dao_args = json!({
+        "config": {
+        "name": instance_name,
+        "purpose": "creating dao treasury",
+        "metadata": "",
+        },
+        "policy": {
+        "roles": [
+            {
+            "kind": {
+                "Group": ["acc3.near", "acc2.near", "acc1.near"],
+            },
+            "name": "Create Requests",
+            "permissions": [
+                "call:AddProposal",
+                "transfer:AddProposal",
+            ],
+            "vote_policy": {},
+            },
+            {
+            "kind": {
+                "Group": ["acc1.near"],
+            },
+            "name": "Manage Members",
+            "permissions": [
+                "config:*",
+                "policy_update_parameters:*",
+                "add_bounty:*",
+                "remove_member_from_role:*",
+                "upgrade_self:*",
+                "policy_remove_role:*",
+                "set_vote_token:*",
+                "upgrade_remote:*",
+                "bounty_done:*",
+                "add_member_to_role:*",
+                "factory_info_update:*",
+                "policy:*",
+                "policy_add_or_update_role:*",
+                "policy_update_default_vote_policy:*"
+            ],
+            "vote_policy": {},
+            },
+            {
+            "kind": {
+                "Group": ["acc1.near", "acc2.near"],
+            },
+            "name": "Vote",
+            "permissions": ["*:VoteReject", "*:VoteApprove", "*:VoteRemove", "*:RemoveProposal", "*:Finalize"],
+            "vote_policy": {},
+            },
+        ],
+        "default_vote_policy": {
+            "weight_kind": "RoleWeight",
+            "quorum": "0",
+            "threshold": [1, 2],
+        },
+        "proposal_bond": "100000000000000000000000",
+        "proposal_period": "604800000000000",
+        "bounty_bond": "100000000000000000000000",
+        "bounty_forgiveness_period": "604800000000000",
+        },
+    });
+
+    let user_account = worker.dev_create_account().await?;
+    let treasury_factory_account_details_before = treasury_factory_contract.view_account().await?;
+
+    let user_account_details_before = user_account.view_account().await?;
+    let create_treasury_instance_result = user_account
+        .call(treasury_factory_contract.id(), "create_instance")
+        .args_json(json!(
+            {
+                "sputnik_dao_factory_account_id": SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT,
+                "social_db_account_id": SOCIALDB_ACCOUNT,
+                "widget_reference_account_id": WIDGET_REFERENCE_ACCOUNT_ID,
+                "name": instance_name,
+                "create_dao_args": general_purpose::STANDARD.encode(create_dao_args.to_string())
+            }
+        ))
+        .max_gas()
+        .deposit(NearToken::from_near(9))
+        .transact()
+        .await?;
+
+    let treasury_factory_account_details_after = treasury_factory_contract.view_account().await?;
+    let failed_outcomes: Vec<_> = create_treasury_instance_result
+        .receipt_outcomes()
+        .iter()
+        .filter(|outcome| outcome.is_failure())
+        .collect();
+
+    assert!(failed_outcomes.len() > 0);
+    println!("{:?}", failed_outcomes);
+
+    println!("{:?}", create_treasury_instance_result.logs());
+
+    assert_eq!(
+        "Succeeded creating and funding web4 account intellex.near, but failed creating treasury account intellex.sputnik-dao.near.",
+        create_treasury_instance_result.logs().join("\n")
+    );
+    let user_account_details_after = user_account.view_account().await?;
+
+    assert_eq!(
+        user_account_details_before.balance.as_near() - 3,
+        user_account_details_after.balance.as_near()
+    );
+
+    assert!(
+        user_account_details_before.balance.as_millinear()
+            - user_account_details_after.balance.as_millinear()
+            < 3020
+    );
+
+    assert!(
+        treasury_factory_account_details_after.balance
+            > treasury_factory_account_details_before.balance
     );
 
     Ok(())
