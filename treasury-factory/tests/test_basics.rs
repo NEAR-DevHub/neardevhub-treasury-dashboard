@@ -301,14 +301,12 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
     let treasury_factory_account_details_after = treasury_factory_contract.view_account().await?;
     assert!(create_treasury_instance_result.is_success());
 
-    let failed_outcomes: Vec<_> = create_treasury_instance_result
-        .receipt_outcomes()
-        .iter()
-        .filter(|outcome| outcome.is_failure())
-        .collect();
-
-    assert_eq!(failed_outcomes.len(), 0);
-    assert_eq!(create_treasury_instance_result.receipt_failures().len(), 0);
+    assert_eq!(
+        create_treasury_instance_result.receipt_failures().len(),
+        0,
+        "{:?}",
+        create_treasury_instance_result.receipt_failures()
+    );
 
     assert!(
         user_account_details_after.balance
@@ -841,7 +839,7 @@ async fn test_factory_should_refund_if_failing_because_of_existing_dao(
     let user_account_details_after = user_account.view_account().await?;
 
     assert_eq!(
-        user_account_details_before.balance.as_near() - 4,
+        user_account_details_before.balance.as_near() - 3,
         user_account_details_after.balance.as_near()
     );
 

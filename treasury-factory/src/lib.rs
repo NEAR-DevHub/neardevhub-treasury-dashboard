@@ -8,6 +8,7 @@ pub mod external;
 pub use crate::external::*;
 
 static CREATE_SPUTNIK_DAO_DEPOSIT: NearToken = NearToken::from_near(6);
+static SOCIAL_DB_DEPOSIT: NearToken = NearToken::from_near(1);
 
 // Define the contract structure
 #[near(contract_state)]
@@ -73,6 +74,7 @@ impl Contract {
             )
     }
 
+    #[private]
     pub fn create_account_callback(
         &self,
         refund_on_failure_account: AccountId,
@@ -84,9 +86,6 @@ impl Contract {
         widget_reference_account_id: String,
         create_dao_args: String,
     ) -> Promise {
-        if env::predecessor_account_id() != env::current_account_id() {
-            env::panic_str("Should not be called directly");
-        }
         let create_account_result = env::promise_result(env::promise_results_count() - 1);
         let create_account_result: bool = match create_account_result {
             PromiseResult::Successful(result) => {
@@ -122,6 +121,7 @@ impl Contract {
         }
     }
 
+    #[private]
     pub fn create_dao_callback(
         &self,
         refund_on_failure_account: AccountId,
@@ -130,9 +130,6 @@ impl Contract {
         social_db_account_id: String,
         widget_reference_account_id: String,
     ) -> Promise {
-        if env::predecessor_account_id() != env::current_account_id() {
-            env::panic_str("Should not be called directly");
-        }
         let create_dao_result = env::promise_result(env::promise_results_count() - 1);
 
         match create_dao_result {
@@ -145,7 +142,8 @@ impl Contract {
             PromiseResult::Failed => {
                 env::log_str(format!("Succeeded creating and funding web4 account {}, but failed creating treasury account {}.",
                     new_instance_contract_id, sputnik_dao_contract_id).as_str());
-                Promise::new(refund_on_failure_account).transfer(CREATE_SPUTNIK_DAO_DEPOSIT)
+                Promise::new(refund_on_failure_account)
+                    .transfer(CREATE_SPUTNIK_DAO_DEPOSIT.saturating_add(SOCIAL_DB_DEPOSIT))
             }
         }
     }
