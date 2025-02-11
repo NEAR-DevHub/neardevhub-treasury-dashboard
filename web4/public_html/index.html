@@ -563,9 +563,9 @@
     document.body.appendChild(viewer);
 
     const waitForTheme = setInterval(() => {
-      const theme = document.querySelector("[data-bs-theme]");
+      const theme = document?.querySelector("[data-bs-theme]");
 
-      if (theme && document) {
+      if (theme) {
         clearInterval(waitForTheme);
 
         const isDarkTheme = theme.getAttribute("data-bs-theme") === "dark";
@@ -573,16 +573,16 @@
         const btn = document.querySelector(".custom-logout button");
         const logo = document.getElementById("logo");
 
-        navbar?.style?.backgroundColor = isDarkTheme ? "#131313" : "#f4f4f4";
-        navbar?.style?.borderColor = isDarkTheme
+        navbar.style.backgroundColor = isDarkTheme ? "#131313" : "#f4f4f4";
+        navbar.style.borderColor = isDarkTheme
           ? "#3B3B3B"
           : "rgba(226, 230, 236, 1)";
 
-        btn?.style?.color = isDarkTheme ? "#CACACA" : "#1B1B18";
-        btn?.addEventListener("mouseover", () => {
+        btn.style.color = isDarkTheme ? "#CACACA" : "#1B1B18";
+        btn.addEventListener("mouseover", () => {
           btn.style.backgroundColor = isDarkTheme ? "#3E3E3E" : "#E6E6E6";
         });
-        btn?.addEventListener("mouseout", () => {
+        btn.addEventListener("mouseout", () => {
           btn.style.backgroundColor = isDarkTheme ? "#131313" : "#f4f4f4";
         });
 
