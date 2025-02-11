@@ -28,7 +28,7 @@ function toBase64(json) {
 }
 
 test("should be able to create a treasury instance with sandbox, and create/execute all types of proposals", async () => {
-  test.setTimeout(200_000)
+  test.setTimeout(200_000);
   const sandbox = new SandboxRPC();
   await sandbox.init();
 
@@ -43,15 +43,31 @@ test("should be able to create a treasury instance with sandbox, and create/exec
         kind: {
           Group: [sandbox.account.accountId],
         },
-        name: "Create Requests",
-        permissions: ["call:AddProposal", "transfer:AddProposal"],
-        vote_policy: {},
+        name: "Requestor",
+        permissions: [
+          "call:AddProposal",
+          "transfer:VoteRemove",
+          "transfer:AddProposal",
+          "call:VoteRemove",
+        ],
+        vote_policy: {
+          transfer: {
+            weight_kind: "RoleWeight",
+            quorum: "0",
+            threshold: "1",
+          },
+          call: {
+            weight_kind: "RoleWeight",
+            quorum: "0",
+            threshold: "1",
+          },
+        },
       },
       {
         kind: {
           Group: [sandbox.account.accountId],
         },
-        name: "Manage Members",
+        name: "Admin",
         permissions: [
           "config:*",
           "policy_update_parameters:*",
@@ -74,13 +90,16 @@ test("should be able to create a treasury instance with sandbox, and create/exec
         kind: {
           Group: [sandbox.account.accountId],
         },
-        name: "Vote",
+        name: "Approver",
         permissions: [
-          "*:VoteReject",
-          "*:VoteApprove",
-          "*:RemoveProposal",
-          "*:VoteRemove",
-          "*:Finalize",
+          "transfer:VoteApprove",
+          "call:VoteApprove",
+          "transfer:RemoveProposal",
+          "call:VoteReject",
+          "transfer:VoteReject",
+          "transfer:Finalize",
+          "call:Finalize",
+          "call:RemoveProposal",
         ],
         vote_policy: {},
       },
@@ -127,32 +146,41 @@ test("should be able to create a treasury instance with sandbox, and create/exec
   ).toBe(0);
 
   const preload_content = {};
-  preload_content[`${instance_name}.near`] = 
-  {"widget":
-    {"app":
-      {"metadata":
-        {
-          "description": "test description",
-          "image":{"ipfs_cid":"bafkreido4srg4aj7l7yg2tz22nbu3ytdidjczdvottfr5ek6gqorwg6v74"},
-          "name": "test title",
-          "tags": {"devhub":"","communities":"","developer-governance":"","app":""}
-        }
-      }
-    }
+  preload_content[`${instance_name}.near`] = {
+    widget: {
+      app: {
+        metadata: {
+          description: "test description",
+          image: {
+            ipfs_cid:
+              "bafkreido4srg4aj7l7yg2tz22nbu3ytdidjczdvottfr5ek6gqorwg6v74",
+          },
+          name: "test title",
+          tags: {
+            devhub: "",
+            communities: "",
+            "developer-governance": "",
+            app: "",
+          },
+        },
+      },
+    },
   };
-  
+
   const preloads = {};
-  preloads[`/web4/contract/social.near/get?keys.json=%5B%22${instance_name}.near/widget/app/metadata/**%22%5D`] = {
-"contentType": "application/json",    
-"body":Buffer.from(JSON.stringify(preload_content)).toString('base64')
-  }; 
+  preloads[
+    `/web4/contract/social.near/get?keys.json=%5B%22${instance_name}.near/widget/app/metadata/**%22%5D`
+  ] = {
+    contentType: "application/json",
+    body: Buffer.from(JSON.stringify(preload_content)).toString("base64"),
+  };
 
   const web4GetResult = await sandbox.account.viewFunction({
     contractId: `${instance_name}.near`,
     methodName: "web4_get",
     args: {
-      request: { path: "/", preloads }      
-    }
+      request: { path: "/", preloads },
+    },
   });
 
   expect(

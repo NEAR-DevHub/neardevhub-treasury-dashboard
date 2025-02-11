@@ -50,7 +50,7 @@ test.describe.parallel("User logged in with different roles", function () {
         instanceAccount,
       }) => {
         test.setTimeout(60_000);
-        await updateDaoPolicyMembers({ page });
+        await updateDaoPolicyMembers({ instanceAccount, page });
         await navigateToVotingDurationPage({ page, instanceAccount });
         await expect(
           page.getByPlaceholder("Enter voting duration days")
@@ -74,7 +74,7 @@ test.describe("User is logged in", function () {
     instanceAccount,
   }) => {
     test.setTimeout(60_000);
-    await updateDaoPolicyMembers({ page });
+    await updateDaoPolicyMembers({ instanceAccount, page });
     await mockNearBalances({
       page,
       accountId: "theori.near",
@@ -106,7 +106,7 @@ test.describe("User is logged in", function () {
     daoAccount,
   }) => {
     test.setTimeout(150_000);
-    await updateDaoPolicyMembers({ page });
+    await updateDaoPolicyMembers({ instanceAccount, page });
     await navigateToVotingDurationPage({ page, instanceAccount });
     const currentDurationDays = await page
       .getByPlaceholder("Enter voting duration days")
@@ -160,7 +160,7 @@ test.describe("User is logged in", function () {
     daoAccount,
   }) => {
     test.setTimeout(150_000);
-    await updateDaoPolicyMembers({ page });
+    await updateDaoPolicyMembers({ instanceAccount, page });
     await navigateToVotingDurationPage({ page, instanceAccount });
     const currentDurationDays = await page
       .getByPlaceholder("Enter voting duration days")
@@ -196,7 +196,7 @@ test.describe("User is logged in", function () {
       receiver_id: "webassemblymusic.near",
       daoName,
     });
-    await updateDaoPolicyMembers({ page });
+    await updateDaoPolicyMembers({ instanceAccount, page });
     await navigateToVotingDurationPage({ page, instanceAccount });
 
     const currentDurationDays = await page
@@ -315,7 +315,7 @@ test.describe("User is logged in", function () {
         }
       },
     });
-    await updateDaoPolicyMembers({ page });
+    await updateDaoPolicyMembers({ instanceAccount, page });
     await navigateToVotingDurationPage({ page, instanceAccount });
 
     await page.waitForTimeout(500);
