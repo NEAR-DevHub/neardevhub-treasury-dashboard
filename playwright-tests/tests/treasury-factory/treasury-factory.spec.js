@@ -186,8 +186,8 @@ test("should be able to create a treasury instance with sandbox, and create/exec
   expect(
     Buffer.from(web4GetResult.body, "base64")
       .toString()
-      .substring(0, "<!DOCTYPE html>".length),
-  ).toEqual("<!DOCTYPE html>");
+      .substring(0, "<!doctype html>".length),
+  ).toEqual("<!doctype html>");
 
   const daoGetPolicyResult = await sandbox.account.viewFunction({
     contractId: `${instance_name}.sputnik-dao.near`,
