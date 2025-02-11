@@ -64,14 +64,12 @@ impl Contract {
     }
 
     #[payable]
+    #[private]
     pub fn update_widgets_callback(
         &mut self,
         widget_reference_account_id: String,
         social_db_account_id: String,
     ) -> Promise {
-        if env::predecessor_account_id() != env::current_account_id() {
-            env::panic_str("Should not be called directly");
-        }
         match env::promise_result(0) {
             PromiseResult::Successful(result) => {
                 let reference_widget = String::from_utf8(result).unwrap();
