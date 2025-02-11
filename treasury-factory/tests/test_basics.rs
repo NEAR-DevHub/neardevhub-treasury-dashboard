@@ -209,65 +209,87 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
 
     let create_dao_args = json!({
         "config": {
-        "name": instance_name,
-        "purpose": "creating dao treasury",
-        "metadata": "",
+            "name": instance_name,
+            "purpose": "creating dao treasury",
+            "metadata": "",
         },
         "policy": {
-        "roles": [
-            {
-            "kind": {
-                "Group": ["acc3.near", "acc2.near", "acc1.near"],
-            },
-            "name": "Create Requests",
-            "permissions": [
-                "call:AddProposal",
-                "transfer:AddProposal",
+            "roles": [
+                {
+                    "kind": {
+                        "Group": ["acc3.near", "acc2.near", "acc1.near"]
+                    },
+                    "name": "Requestor",
+                    "permissions": [
+                        "call:AddProposal",
+                        "transfer:AddProposal",
+                        "call:VoteRemove",
+                        "transfer:VoteRemove"
+                    ],
+                    "vote_policy": {
+                        "transfer": {
+                            "weight_kind": "RoleWeight",
+                            "quorum": "0",
+                            "threshold": "1"
+                        },
+                        "call": {
+                            "weight_kind": "RoleWeight",
+                            "quorum": "0",
+                            "threshold": "1"
+                        }
+                    }
+                },
+                {
+                    "kind": {
+                        "Group": ["acc1.near"]
+                    },
+                    "name": "Admin",
+                    "permissions": [
+                        "config:*",
+                        "policy_update_parameters:*",
+                        "add_bounty:*",
+                        "remove_member_from_role:*",
+                        "upgrade_self:*",
+                        "policy_remove_role:*",
+                        "set_vote_token:*",
+                        "upgrade_remote:*",
+                        "bounty_done:*",
+                        "add_member_to_role:*",
+                        "factory_info_update:*",
+                        "policy:*",
+                        "policy_add_or_update_role:*",
+                        "policy_update_default_vote_policy:*"
+                    ],
+                    "vote_policy": {}
+                },
+                {
+                    "kind": {
+                        "Group": ["acc1.near", "acc2.near"]
+                    },
+                    "name": "Approver",
+                    "permissions": [
+                        "call:VoteReject",
+                        "call:VoteApprove",
+                        "call:RemoveProposal",
+                        "call:Finalize",
+                        "transfer:VoteReject",
+                        "transfer:VoteApprove",
+                        "transfer:RemoveProposal",
+                        "transfer:Finalize"
+                    ],
+                    "vote_policy": {}
+                }
             ],
-            "vote_policy": {},
+            "default_vote_policy": {
+                "weight_kind": "RoleWeight",
+                "quorum": "0",
+                "threshold": [1, 2]
             },
-            {
-            "kind": {
-                "Group": ["acc1.near"],
-            },
-            "name": "Manage Members",
-            "permissions": [
-                "config:*",
-                "policy_update_parameters:*",
-                "add_bounty:*",
-                "remove_member_from_role:*",
-                "upgrade_self:*",
-                "policy_remove_role:*",
-                "set_vote_token:*",
-                "upgrade_remote:*",
-                "bounty_done:*",
-                "add_member_to_role:*",
-                "factory_info_update:*",
-                "policy:*",
-                "policy_add_or_update_role:*",
-                "policy_update_default_vote_policy:*"
-            ],
-            "vote_policy": {},
-            },
-            {
-            "kind": {
-                "Group": ["acc1.near", "acc2.near"],
-            },
-            "name": "Vote",
-            "permissions": ["*:VoteReject", "*:VoteApprove", "*:VoteRemove", "*:RemoveProposal", "*:Finalize"],
-            "vote_policy": {},
-            },
-        ],
-        "default_vote_policy": {
-            "weight_kind": "RoleWeight",
-            "quorum": "0",
-            "threshold": [1, 2],
-        },
-        "proposal_bond": "100000000000000000000000",
-        "proposal_period": "604800000000000",
-        "bounty_bond": "100000000000000000000000",
-        "bounty_forgiveness_period": "604800000000000",
-        },
+            "proposal_bond": "100000000000000000000000",
+            "proposal_period": "604800000000000",
+            "bounty_bond": "100000000000000000000000",
+            "bounty_forgiveness_period": "604800000000000"
+        }
     });
 
     let user_account = worker.dev_create_account().await?;

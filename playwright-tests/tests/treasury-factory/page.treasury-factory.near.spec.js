@@ -21,9 +21,7 @@ test.describe("connected with ledger", function () {
     factoryAccount,
   }) => {
     test.setTimeout(120_000);
-
-    
-    // innitial step
+    // initial step
     await page.goto(`/${factoryAccount}/widget/app`);
     await expect(
       await page.locator("h3", { hasText: "Confirm your wallet" })
@@ -40,15 +38,15 @@ test.describe("connected with ledger", function () {
     ).toBeVisible();
     const treasuryName = "new-treasury";
     await page.getByPlaceholder('my-treasury').fill(treasuryName);
-    await expect(await page.getByText(`NEAR ${treasuryName} .near`)).toBeVisible();
-    await expect(await page.getByText(`Sputnik DAO  ${treasuryName} .`)).toBeVisible();
+    await expect(page.getByText(`NEAR ${treasuryName} .near`)).toBeVisible();
+    await expect(page.getByText(`Sputnik DAO  ${treasuryName} .`)).toBeVisible();
     await page.getByRole('link', { name: 'Continue' }).click();
 
     // add members step
     await expect(
-      await page.getByRole('heading', { name: 'Add Members' })
+       page.getByRole('heading', { name: 'Add Members' })
     ).toBeVisible();
-    await expect(await page.getByText('Ori theori.near Create')).toBeVisible();
+    await expect( page.getByText('Ori theori.near Requestor')).toBeVisible();
 
     await page.getByRole('link', { name: 'Continue' }).click();
 

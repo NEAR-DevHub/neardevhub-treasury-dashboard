@@ -81,7 +81,7 @@ test.describe.parallel("User logged in with different roles", function () {
         instanceAccount,
       }) => {
         test.setTimeout(60_000);
-        await updateDaoPolicyMembers({ page });
+        await updateDaoPolicyMembers({ instanceAccount, page });
         await navigateToMembersPage({ page, instanceAccount });
         await expect(
           page.getByRole("button", {
@@ -101,7 +101,7 @@ test.describe("User is logged in", function () {
 
   test.beforeEach(async ({ page, daoAccount, instanceAccount }, testInfo) => {
     await mockInventory({ page, account: daoAccount });
-    await updateDaoPolicyMembers({ page });
+    await updateDaoPolicyMembers({ instanceAccount, page });
     await updateLastProposalId(page);
     if (testInfo.title.includes("insufficient account balance")) {
       await mockNearBalances({
@@ -143,7 +143,7 @@ test.describe("User is logged in", function () {
   }) => {
     await mockInventory({ page, account: daoAccount });
     await navigateToMembersPage({ page, instanceAccount });
-    await updateDaoPolicyMembers({ page });
+    await updateDaoPolicyMembers({ instanceAccount, page });
     const createMemberRequestButton = page.getByRole("button", {
       name: "New Member",
     });

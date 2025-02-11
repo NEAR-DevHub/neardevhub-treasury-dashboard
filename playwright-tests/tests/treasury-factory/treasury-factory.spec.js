@@ -43,15 +43,29 @@ test("should be able to create a treasury instance with sandbox, and create/exec
         kind: {
           Group: [sandbox.account.accountId],
         },
-        name: "Create Requests",
-        permissions: ["call:AddProposal", "transfer:AddProposal"],
-        vote_policy: {},
+        name: "Requestor",
+        permissions: ["call:AddProposal",
+        "transfer:AddProposal",
+        "call:VoteRemove",
+        "transfer:VoteRemove",],
+        vote_policy: {
+          transfer: {
+            weight_kind: "RoleWeight",
+            quorum: "0",
+            threshold: "1",
+          },
+          call: {
+            weight_kind: "RoleWeight",
+            quorum: "0",
+            threshold: "1",
+          },
+        },
       },
       {
         kind: {
           Group: [sandbox.account.accountId],
         },
-        name: "Manage Members",
+        name: "Admin",
         permissions: [
           "config:*",
           "policy_update_parameters:*",
@@ -74,13 +88,16 @@ test("should be able to create a treasury instance with sandbox, and create/exec
         kind: {
           Group: [sandbox.account.accountId],
         },
-        name: "Vote",
+        name: "Approver",
         permissions: [
-          "*:VoteReject",
-          "*:VoteApprove",
-          "*:RemoveProposal",
-          "*:VoteRemove",
-          "*:Finalize",
+          "call:VoteReject",
+          "call:VoteApprove",
+          "call:RemoveProposal",
+          "call:Finalize",
+          "transfer:VoteReject",
+          "transfer:VoteApprove",
+          "transfer:RemoveProposal",
+          "transfer:Finalize",
         ],
         vote_policy: {},
       },

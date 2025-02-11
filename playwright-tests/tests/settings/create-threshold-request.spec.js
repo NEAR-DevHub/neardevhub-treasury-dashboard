@@ -64,7 +64,7 @@ async function navigateToThresholdPage({ page, instanceAccount }) {
 
 test.describe("User is not logged in", function () {
   test.beforeEach(async ({ page, instanceAccount }) => {
-    await updateDaoPolicyMembers({ page });
+    await updateDaoPolicyMembers({ instanceAccount, page });
     await navigateToThresholdPage({ page, instanceAccount });
   });
 
@@ -113,7 +113,7 @@ test.describe.parallel("User logged in with different roles", function () {
         instanceAccount,
       }) => {
         test.setTimeout(60_000);
-        await updateDaoPolicyMembers({ page });
+        await updateDaoPolicyMembers({ instanceAccount, page });
         await navigateToThresholdPage({ page, instanceAccount });
         await expect(page.getByText("Permission Groups")).toBeVisible({
           timeout: 20_000,
@@ -140,7 +140,7 @@ test.describe("User is logged in", function () {
 
   test.beforeEach(async ({ page, instanceAccount }, testInfo) => {
     await updateLastProposalId(page);
-    await updateDaoPolicyMembers({ page });
+    await updateDaoPolicyMembers({ instanceAccount, page });
     if (testInfo.title.includes("insufficient account balance")) {
       await mockNearBalances({
         page,

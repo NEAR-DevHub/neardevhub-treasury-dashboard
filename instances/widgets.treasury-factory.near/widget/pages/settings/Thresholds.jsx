@@ -87,7 +87,7 @@ useEffect(() => {
       resp.filter(
         (i) =>
           i.roleName !== "Create Requests" &&
-          i.roleName !== "Treasury Requestor" &&
+          i.roleName !== "Requestor" &&
           i.roleName !== "Create requests"
       )
     );

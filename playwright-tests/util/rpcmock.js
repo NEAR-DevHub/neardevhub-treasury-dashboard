@@ -67,11 +67,7 @@ export async function mockRpcRequest({
   });
 }
 
-export function getMockedPolicy(
-  createRequestPolicy,
-  membersPolicy,
-  votePolicy
-) {
+export function getOldPolicy(createRequestPolicy, membersPolicy, votePolicy) {
   return {
     roles: [
       {
@@ -191,7 +187,128 @@ export function getMockedPolicy(
   };
 }
 
-export async function updateDaoPolicyMembers({ page, isMultiVote = false }) {
+export function getNewPolicy(createRequestPolicy, membersPolicy, votePolicy) {
+  return {
+    roles: [
+      {
+        name: "Requestor",
+        kind: {
+          Group: [
+            "theori.near",
+            "2dada969f3743a4a41cfdb1a6e39581c2844ce8fbe25948700c85c598090b3e1",
+            "freski.near",
+            "thomasguntenaar.near",
+            "petersalomonsen.near",
+          ],
+        },
+        permissions: [
+          "call:AddProposal",
+          "transfer:AddProposal",
+          "call:VoteRemove",
+          "transfer:VoteRemove",
+        ],
+        vote_policy: {
+          transfer: createRequestPolicy,
+          call: createRequestPolicy,
+        },
+      },
+      {
+        name: "Admin",
+        kind: {
+          Group: [
+            "petersalomonsen.near",
+            "thomasguntenaar.near",
+            "theori.near",
+            "megha19.near",
+          ],
+        },
+        permissions: [
+          "config:*",
+          "policy:*",
+          "add_member_to_role:*",
+          "remove_member_from_role:*",
+          "upgrade_self:*",
+          "upgrade_remote:*",
+          "set_vote_token:*",
+          "add_bounty:*",
+          "bounty_done:*",
+          "factory_info_update:*",
+          "policy_add_or_update_role:*",
+          "policy_remove_role:*",
+          "policy_update_default_vote_policy:*",
+          "policy_update_parameters:*",
+        ],
+        vote_policy: {
+          upgrade_remote: membersPolicy,
+          upgrade_self: membersPolicy,
+          call: membersPolicy,
+          bounty_done: membersPolicy,
+          policy: membersPolicy,
+          config: membersPolicy,
+          add_member_to_role: membersPolicy,
+          set_vote_token: membersPolicy,
+          vote: membersPolicy,
+          transfer: membersPolicy,
+          add_bounty: membersPolicy,
+          remove_member_from_role: membersPolicy,
+        },
+      },
+      {
+        name: "Approver",
+        kind: {
+          Group: [
+            "petersalomonsen.near",
+            "treasurytestuserledger.near",
+            "tfdevhub.near",
+            "theori.near",
+            "thomasguntenaar.near",
+            "test04.near",
+            "test03.near",
+            "test05.near",
+          ],
+        },
+        permissions: [
+          "call:VoteReject",
+          "call:VoteApprove",
+          "call:RemoveProposal",
+          "call:Finalize",
+          "transfer:VoteReject",
+          "transfer:VoteApprove",
+          "transfer:RemoveProposal",
+          "transfer:Finalize",
+        ],
+        vote_policy: {
+          transfer: votePolicy,
+          config: votePolicy,
+          add_bounty: votePolicy,
+          set_vote_token: votePolicy,
+          upgrade_remote: votePolicy,
+          add_member_to_role: votePolicy,
+          upgrade_self: votePolicy,
+          call: votePolicy,
+          policy: votePolicy,
+          remove_member_from_role: votePolicy,
+          bounty_done: votePolicy,
+          vote: votePolicy,
+        },
+      },
+    ],
+    default_vote_policy: {
+      weight_kind: "RoleWeight",
+      quorum: "0",
+      threshold: [1, 2],
+    },
+    proposal_bond: "0",
+    proposal_period: "604800000000000",
+    bounty_bond: "100000000000000000000000",
+    bounty_forgiveness_period: "604800000000000",
+  };
+}
+export async function updateDaoPolicyMembers({
+  instanceAccount,
+  page,
+  isMultiVote = false,
+}) {
   await mockRpcRequest({
     page,
     filterParams: {
@@ -203,7 +320,9 @@ export async function updateDaoPolicyMembers({ page, isMultiVote = false }) {
         quorum: "0",
         threshold: isMultiVote ? [90, 100] : [0, 100],
       };
-      originalResult = getMockedPolicy(votePolicy, votePolicy, votePolicy);
+      originalResult = instanceAccount.includes("testing")
+        ? getNewPolicy(votePolicy, votePolicy, votePolicy)
+        : getOldPolicy(votePolicy, votePolicy, votePolicy);
       return originalResult;
     },
   });

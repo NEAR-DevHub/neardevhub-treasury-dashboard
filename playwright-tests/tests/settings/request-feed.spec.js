@@ -182,7 +182,7 @@ test.describe.parallel("User logged in with different roles", function () {
         instanceAccount,
       }) => {
         test.setTimeout(60_000);
-        await updateDaoPolicyMembers({ page });
+        await updateDaoPolicyMembers({ instanceAccount, page });
         await mockRpcRequest({
           page,
           filterParams: {
@@ -227,7 +227,7 @@ test.describe("don't ask again", function () {
     test.setTimeout(60_000);
     const isMultiVote = daoAccount === "infinex.sputnik-dao.near";
     const contractId = daoAccount;
-    await updateDaoPolicyMembers({ page, isMultiVote });
+    await updateDaoPolicyMembers({ instanceAccount, page, isMultiVote });
     await voteOnProposal({
       page,
       daoAccount,
@@ -276,7 +276,7 @@ test.describe("don't ask again", function () {
   }) => {
     test.setTimeout(80_000);
     const isMultiVote = daoAccount === "infinex.sputnik-dao.near";
-    await updateDaoPolicyMembers({ page, isMultiVote });
+    await updateDaoPolicyMembers({ instanceAccount, page, isMultiVote });
     const contractId = daoAccount;
     await voteOnProposal({
       page,
@@ -328,7 +328,7 @@ test.describe("don't ask again", function () {
   }) => {
     test.setTimeout(80_000);
     const isMultiVote = daoAccount === "infinex.sputnik-dao.near";
-    await updateDaoPolicyMembers({ page, isMultiVote });
+    await updateDaoPolicyMembers({ instanceAccount, page, isMultiVote });
     const contractId = daoAccount;
     await voteOnProposal({
       page,

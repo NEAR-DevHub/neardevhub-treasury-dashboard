@@ -84,9 +84,9 @@ const WidgetItemLink = styled.div`
 `;
 
 const PERMISSIONS = {
-  create: "Create Requests",
-  edit: "Manage Members",
-  vote: "Vote",
+  create: "Requestor",
+  edit: "Admin",
+  vote: "Approver",
 };
 
 const storageAccountName = Storage.get(
@@ -155,7 +155,7 @@ function createDao() {
           kind: {
             Group: filterMemberByPermission(PERMISSIONS.create),
           },
-          name: "Treasury Requestor",
+          name: "Requestor",
           permissions: [
             "call:AddProposal",
             "transfer:AddProposal",
@@ -179,7 +179,7 @@ function createDao() {
           kind: {
             Group: filterMemberByPermission(PERMISSIONS.edit),
           },
-          name: "Treasury Admin",
+          name: "Admin",
           permissions: [
             "config:*",
             "policy:*",
@@ -202,7 +202,7 @@ function createDao() {
           kind: {
             Group: filterMemberByPermission(PERMISSIONS.vote),
           },
-          name: "Treasury Approver",
+          name: "Approver",
           permissions: [
             "call:VoteReject",
             "call:VoteApprove",

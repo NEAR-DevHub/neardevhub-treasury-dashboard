@@ -252,15 +252,31 @@ export class SandboxRPC {
             kind: {
               Group: [this.account.accountId],
             },
-            name: "Create Requests",
-            permissions: ["call:AddProposal", "transfer:AddProposal"],
-            vote_policy: {},
+            name: "Requestor",
+            permissions: [
+              "call:AddProposal",
+              "transfer:AddProposal",
+              "call:VoteRemove",
+              "transfer:VoteRemove",
+            ],
+            vote_policy: {
+              transfer: {
+                weight_kind: "RoleWeight",
+                quorum: "0",
+                threshold: "1",
+              },
+              call: {
+                weight_kind: "RoleWeight",
+                quorum: "0",
+                threshold: "1",
+              },
+            },
           },
           {
             kind: {
               Group: [this.account.accountId],
             },
-            name: "Manage Members",
+            name: "Admin",
             permissions: [
               "config:*",
               "policy:*",
@@ -283,13 +299,16 @@ export class SandboxRPC {
             kind: {
               Group: [this.account.accountId],
             },
-            name: "Vote",
+            name: "Approver",
             permissions: [
-              "*:VoteReject",
-              "*:VoteApprove",
-              "*:VoteRemove",
-              "*:RemoveProposal",
-              "*:Finalize",
+              "call:VoteReject",
+              "call:VoteApprove",
+              "call:RemoveProposal",
+              "call:Finalize",
+              "transfer:VoteReject",
+              "transfer:VoteApprove",
+              "transfer:RemoveProposal",
+              "transfer:Finalize",
             ],
             vote_policy: {},
           },

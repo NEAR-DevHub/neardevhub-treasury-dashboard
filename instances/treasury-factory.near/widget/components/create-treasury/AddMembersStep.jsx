@@ -31,9 +31,9 @@ const ActionButtons = styled.div`
 `;
 
 const PERMISSIONS = {
-  create: "Treasury Requestor",
-  edit: "Treasury Admin",
-  vote: "Treasury Approver",
+  create: "Requestor",
+  edit: "Admin",
+  vote: "Approver",
 };
 
 const [members, setMembers] = useState(

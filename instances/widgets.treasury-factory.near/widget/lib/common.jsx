@@ -423,13 +423,13 @@ function hasPermission(treasuryDaoID, accountId, kindName, actionType) {
 
 function getRolesDescription(type) {
   switch (type) {
-    case "Treasury Requestor":
-      return "Enables users to initiate payment requests.";
-    case "Treasury Approver": {
-      return "Allows users to control treasury admins and their access levels.";
+    case "Requestor":
+      return "Allows to create transaction requests (payments, stake delegation, and asset exchange).";
+    case "Approver": {
+      return "Allows to vote on transaction requests (payments, stake delegation, and asset exchange).";
     }
-    case "Treasury Admin": {
-      return "Allows users to approve or request proposed payment requests.";
+    case "Admin": {
+      return "Allows to both create and vote on treasury settings (members and permissions, voting policies and duration, and appearance).";
     }
     default:
       return "";
@@ -438,9 +438,9 @@ function getRolesDescription(type) {
 
 function getRolesThresholdDescription(type) {
   switch (type) {
-    case "Treasury Approver":
+    case "Approver":
       return "Vote for Payments, Stake Delegation, and Asset Exchange.";
-    case "Treasury Admin":
+    case "Admin":
       return "Vote for Members and Settings.";
     default:
       return "";
