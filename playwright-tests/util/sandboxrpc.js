@@ -239,7 +239,11 @@ export class SandboxRPC {
     return findLockupContractLog(createLockupResult);
   }
 
-  async setupSandboxForSputnikDao(daoName) {
+  async setupSandboxForSputnikDao(daoName, memberAccountId) {
+    const group = [this.account.accountId];
+    if (memberAccountId) {
+      group.push(memberAccountId);
+    }
     const createDaoConfig = {
       config: {
         name: daoName,
@@ -250,7 +254,7 @@ export class SandboxRPC {
         roles: [
           {
             kind: {
-              Group: [this.account.accountId],
+              Group: group,
             },
             name: "Requestor",
             permissions: [
@@ -274,7 +278,7 @@ export class SandboxRPC {
           },
           {
             kind: {
-              Group: [this.account.accountId],
+              Group: group,
             },
             name: "Admin",
             permissions: [
@@ -297,7 +301,7 @@ export class SandboxRPC {
           },
           {
             kind: {
-              Group: [this.account.accountId],
+              Group: group,
             },
             name: "Approver",
             permissions: [
@@ -378,6 +382,34 @@ export class SandboxRPC {
             receiver_id,
             token_id:
               "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+          },
+        },
+      },
+    };
+    await this.addProposal({ daoName, args });
+  }
+
+  async addFunctionCallProposal({
+    method_name,
+    description,
+    receiver_id,
+    functionArgs,
+    daoName,
+  }) {
+    const args = {
+      proposal: {
+        description: description,
+        kind: {
+          FunctionCall: {
+            receiver_id: receiver_id,
+            actions: [
+              {
+                method_name: method_name,
+                args: functionArgs,
+                deposit: "0",
+                gas: "270000000000000",
+              },
+            ],
           },
         },
       },

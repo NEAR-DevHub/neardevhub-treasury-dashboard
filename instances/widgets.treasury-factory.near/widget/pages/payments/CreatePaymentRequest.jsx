@@ -384,7 +384,7 @@ function onSubmitClick() {
                         receiver_id: receiver,
                       }),
                       deposit: "0",
-                      gas: "50000000000000",
+                      gas: gas,
                     },
                   ],
                 },
