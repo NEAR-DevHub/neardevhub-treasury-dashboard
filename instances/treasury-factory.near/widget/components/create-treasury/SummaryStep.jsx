@@ -317,40 +317,40 @@ return (
             props={{ accountId: context.accountId }}
           />
         </Section>
-      </div>
 
-      <div>
-        <Section withBorder>
-          <div className="d-flex justify-content-between align-items-center">
-            <div>
-              <label>Applicatiion Account Name</label>
+        <div>
+          <Section withBorder>
+            <div className="d-flex justify-content-between align-items-center">
               <div>
-                {formFields.accountName
-                  ? `${formFields.accountName}.near`
-                  : "-"}
+                <label>Applicatiion Account Name</label>
+                <div>
+                  {formFields.accountName
+                    ? `${formFields.accountName}.near`
+                    : "-"}
+                </div>
+              </div>
+
+              <Link
+                href={`/${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=1`}
+              >
+                <i className="bi bi-pencil" />
+              </Link>
+            </div>
+          </Section>
+
+          <Section withBorder>
+            <div className="d-flex justify-content-between align-items-center">
+              <div>
+                <label>Sputnik Account Name</label>
+                <div>
+                  {formFields.accountName
+                    ? `${formFields.accountName}.sputnik-dao.near`
+                    : "-"}
+                </div>
               </div>
             </div>
-
-            <Link
-              href={`/${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=1`}
-            >
-              <i className="bi bi-pencil" />
-            </Link>
-          </div>
-        </Section>
-
-        <Section withBorder>
-          <div className="d-flex justify-content-between align-items-center">
-            <div>
-              <label>Sputnik Account Name</label>
-              <div>
-                {formFields.accountName
-                  ? `${formFields.accountName}.sputnik-dao.near`
-                  : "-"}
-              </div>
-            </div>
-          </div>
-        </Section>
+          </Section>
+        </div>
       </div>
 
       <Section>
