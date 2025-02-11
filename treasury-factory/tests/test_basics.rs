@@ -109,6 +109,7 @@ async fn test_web4() -> Result<(), Box<dyn std::error::Error>> {
 
 #[tokio::test]
 async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
+    const TREASURY_FACTORY_CONTRACT_ACCOUNT: &str = "treasury-factory.near";
     const SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT: &str = "sputnik-dao.near";
     const SOCIALDB_ACCOUNT: &str = "social.near";
     const WIDGET_REFERENCE_ACCOUNT_ID: &str = "treasury-testing.near";
@@ -116,8 +117,15 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
     let mainnet = near_workspaces::mainnet().await?;
     let sputnikdao_factory_contract_id: AccountId = SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT.parse()?;
     let socialdb_contract_id: AccountId = SOCIALDB_ACCOUNT.parse()?;
+    let treasury_factory_contract_id: AccountId = TREASURY_FACTORY_CONTRACT_ACCOUNT.parse()?;
 
     let worker = near_workspaces::sandbox().await?;
+
+    let treasury_factory_contract: near_workspaces::Contract = worker
+        .import_contract(&treasury_factory_contract_id, &mainnet)
+        .initial_balance(NearToken::from_near(1000))
+        .transact()
+        .await?;
 
     let sputnik_dao_factory = worker
         .import_contract(&sputnikdao_factory_contract_id, &mainnet)
@@ -185,7 +193,11 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
     assert!(social_set_result.is_success());
 
     let treasury_factory_contract_wasm = build_project_once();
-    let treasury_factory_contract = worker.dev_deploy(&treasury_factory_contract_wasm).await?;
+    let treasury_factory_contract = treasury_factory_contract
+        .as_account()
+        .deploy(&treasury_factory_contract_wasm)
+        .await?
+        .result;
 
     let init_sputnik_dao_factory_result =
         sputnik_dao_factory.call("new").max_gas().transact().await?;

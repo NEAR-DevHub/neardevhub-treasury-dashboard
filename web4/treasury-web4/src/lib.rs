@@ -5,6 +5,8 @@ use near_sdk::{base64::prelude::*, env};
 use near_sdk::{near, serde_json, Gas, NearToken, Promise, PromiseResult};
 use web4::types::{Web4Request, Web4Response};
 
+const TREASURY_FACTORY_ACCOUNT_ID: &str = "treasury-factory.near";
+
 // Define the contract structure
 #[near(contract_state)]
 #[derive(Default)]
@@ -20,6 +22,18 @@ impl Contract {
         social_db_account_id: String,
         set_social_metadata_defaults: Option<bool>,
     ) -> Promise {
+        if !(env::predecessor_account_id() == TREASURY_FACTORY_ACCOUNT_ID
+            || env::predecessor_account_id() == env::current_account_id())
+        {
+            env::panic_str(
+                format!(
+                    "Should only be called by {} or {}",
+                    TREASURY_FACTORY_ACCOUNT_ID,
+                    env::current_account_id()
+                )
+                .as_str(),
+            );
+        }
         let args =
             "{\"keys\": [\"".to_string() + widget_reference_account_id.as_str() + "/widget/**\"]}";
         let mut promise = Promise::new(social_db_account_id.parse().unwrap())
@@ -78,6 +92,7 @@ impl Contract {
         }
     }
 
+    #[private]
     pub fn set_social_metadata(
         &mut self,
         social_db_account_id: Option<String>,
@@ -85,11 +100,6 @@ impl Contract {
         description: Option<String>,
         ipfs_cid: Option<String>,
     ) -> Promise {
-        if env::predecessor_account_id() != env::current_account_id() {
-            env::panic_str(
-                format!("Should only be called by {:?}", env::current_account_id()).as_str(),
-            );
-        }
         self.internal_set_social_metadata(social_db_account_id, name, description, ipfs_cid)
     }
 
@@ -109,30 +119,25 @@ impl Contract {
             "bafkreiboarigt5w26y5jyxyl4au7r2dl76o5lrm2jqjgqpooakck5xsojq".to_string()
         });
 
-        let args = format!(
-            "
-        {{\"data\":
-            {{\"{}\":
-                {{\"widget\":
-                    {{\"app\":
-                        {{\"metadata\":
-                            {{
-                                \"name\": \"{}\",
-                                \"description\": \"{}\",
-                                \"image\": {{
-                                    \"ipfs_cid\": \"{}\"
-                                }}
-                            }}
-                        }}
-                    }}
-                }}
-            }}
-        }}",
-            env::current_account_id(),
-            name,
-            description,
-            ipfs_cid
-        );
+        let args = near_sdk::serde_json::json!(
+        {"data":
+            {env::current_account_id():
+                {"widget":
+                    {"app":
+                        {"metadata":
+                            {
+                                "name": name,
+                                "description": description,
+                                "image": {
+                                    "ipfs_cid": ipfs_cid
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        })
+        .to_string();
 
         Promise::new(social_db_account_id.parse().unwrap()).function_call(
             "set".to_string(),
