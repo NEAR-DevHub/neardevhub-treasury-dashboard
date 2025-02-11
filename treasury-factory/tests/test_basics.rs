@@ -870,20 +870,35 @@ async fn test_factory_should_refund_if_failing_because_of_existing_dao(
     let user_account_details_after = user_account.view_account().await?;
 
     assert_eq!(
-        user_account_details_before.balance.as_near() - 4,
+        user_account_details_before.balance.as_near() - 3,
         user_account_details_after.balance.as_near()
     );
 
     assert!(
         user_account_details_before.balance.as_millinear()
             - user_account_details_after.balance.as_millinear()
-            < 3020
+            < 2220
     );
 
     assert!(
         treasury_factory_account_details_after.balance
             > treasury_factory_account_details_before.balance
     );
+
+    assert!(
+        treasury_factory_account_details_after
+            .balance
+            .as_millinear()
+            - treasury_factory_account_details_before
+                .balance
+                .as_millinear()
+            < 100
+    );
+
+    let instance_account_details = worker
+        .view_account(&format!("{}.near", instance_name).parse().unwrap())
+        .await?;
+    assert_eq!(instance_account_details.balance.as_millinear(), 2200);
 
     Ok(())
 }
