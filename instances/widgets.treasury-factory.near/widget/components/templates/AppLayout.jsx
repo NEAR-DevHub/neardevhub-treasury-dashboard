@@ -217,7 +217,7 @@ const Theme = styled.div`
   }
 
   .primary-text-color {
-    color: var(--theme-color);
+    color: var(--theme-color) !important;
     a {
       color: var(--theme-color) !important;
     }
@@ -227,6 +227,10 @@ const Theme = styled.div`
     }
   }
 
+  a.primary-text-color:hover {
+    color: var(--theme-color-dark) !important;
+  }
+  
   .btn-outline.btn:hover {
     color: inherit !important;
   }
