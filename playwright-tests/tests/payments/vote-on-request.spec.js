@@ -490,7 +490,7 @@ test.describe("Vote on Lockup payment request", function () {
     await sandbox.quitSandbox();
   });
 
-  test("approve payment request with single vote", async ({
+  test("approve payment request with multiple votes", async ({
     page,
     instanceAccount,
     daoAccount,
@@ -506,7 +506,7 @@ test.describe("Vote on Lockup payment request", function () {
 
       daoAccount,
     });
-    await updateDaoPolicyMembers({ instanceAccount, page });
+    await updateDaoPolicyMembers({ instanceAccount, page, isMultiVote: true });
     await mockLockupLiquidAmount({ page, isSufficient: true });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
     const approveButton = page
