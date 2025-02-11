@@ -230,7 +230,7 @@ const Theme = styled.div`
   a.primary-text-color:hover {
     color: var(--theme-color-dark) !important;
   }
-  
+
   .btn-outline.btn:hover {
     color: inherit !important;
   }
