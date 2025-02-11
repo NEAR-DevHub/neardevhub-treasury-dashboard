@@ -117,17 +117,20 @@ impl Contract {
             "bafkreiboarigt5w26y5jyxyl4au7r2dl76o5lrm2jqjgqpooakck5xsojq".to_string()
         });
 
-        let args = near_sdk::serde_json::json!(
-        {"data":
-            {env::current_account_id():
-                {"widget":
-                    {"app":
-                        {"metadata":
-                            {
+        let args = near_sdk::serde_json::json!({"data":
+            {
+                env::current_account_id(): {
+                        "widget": {
+                        "app": {
+                            "metadata": {
                                 "name": name,
                                 "description": description,
                                 "image": {
                                     "ipfs_cid": ipfs_cid
+                                },
+                                "tags": {
+                                    "app": "",
+                                    "neartreasury": ""
                                 }
                             }
                         }
