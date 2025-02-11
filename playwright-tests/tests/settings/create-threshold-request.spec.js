@@ -3,7 +3,8 @@ import { test } from "../../util/test.js";
 
 import { getTransactionModalObject } from "../../util/transaction.js";
 import {
-  getMockedPolicy,
+  getNewPolicy,
+  getOldPolicy,
   mockNearBalances,
   mockRpcRequest,
   updateDaoPolicyMembers,
@@ -68,24 +69,27 @@ test.describe("User is not logged in", function () {
     await navigateToThresholdPage({ page, instanceAccount });
   });
 
-  test("should show members of different roles", async ({ page }) => {
+  test("should show members of different roles", async ({
+    page,
+    instanceAccount,
+  }) => {
     test.setTimeout(60_000);
+    const hasNewPolicy = instanceAccount.includes("testing");
+    const groups = hasNewPolicy
+      ? ["Admin", "Approver"]
+      : ["Manage Members", "Vote"];
     await expect(page.getByText("Permission Groups")).toBeVisible({
       timeout: 20_000,
     });
-    await expect(page.getByText("Members 5")).toBeVisible();
+    await expect(page.getByText(groups[0]).nth(0)).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(page.getByText("Who Can Vote 4")).toBeVisible();
     await expect(page.getByText("Voting Policy")).toBeVisible();
-    await expect(
-      page.getByText(
-        "@2dada969f3743a4a41cfdb1a6e39581c2844ce8fbe25948700c85c598090b3e1",
-        { exact: true }
-      )
-    ).toBeVisible();
-    await page.getByText("Manage Members").click();
     await expect(
       page.getByText("@megha19.near", { exact: true })
     ).toBeVisible();
-    await page.getByText("Vote", { exact: true }).click();
+    await page.getByText(groups[1], { exact: true }).click();
     await expect(page.getByText("@test04.near", { exact: true })).toBeVisible();
   });
 });
@@ -193,7 +197,9 @@ test.describe("User is logged in", function () {
 
   test("should be able to update policy by fixed vote count", async ({
     page,
+    instanceAccount,
   }) => {
+    const hasNewPolicy = instanceAccount.includes("testing");
     test.setTimeout(150_000);
     const submitBtn = page.getByText("Submit Request");
     await page.getByTestId("dropdown-btn").click();
@@ -221,20 +227,28 @@ test.describe("User is logged in", function () {
       title: "Update policy - Voting Thresholds",
       summary: `theori.near requested to change voting threshold from 1 to 2.`,
     };
+
+    const commonParams = [votePolicy, updatedPolicy, votePolicy];
     expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
         description: encodeToMarkdown(description),
         kind: {
           ChangePolicy: {
-            policy: getMockedPolicy(updatedPolicy, votePolicy, votePolicy),
+            policy: hasNewPolicy
+              ? getNewPolicy(...commonParams)
+              : getOldPolicy(...commonParams),
           },
         },
       },
     });
   });
 
-  test("should be able to update policy by percentage", async ({ page }) => {
+  test("should be able to update policy by percentage", async ({
+    page,
+    instanceAccount,
+  }) => {
     test.setTimeout(150_000);
+    const hasNewPolicy = instanceAccount.includes("testing");
     const submitBtn = page.getByText("Submit Request");
     await page.getByTestId("dropdown-btn").click();
     await page.getByRole("list").getByText("Percentage of members").click();
@@ -247,11 +261,7 @@ test.describe("User is logged in", function () {
     await thresholdInput.fill("20");
     await expect(page.getByText("Warning!")).toBeVisible();
     await submitBtn.click();
-    await expect(
-      page.getByText(
-        "Changing this setting will require 2 vote(s) to approve requests. You will no longer be able to approve requests with 1 vote(s)."
-      )
-    ).toBeVisible();
+    await expect(page.getByText("Are you sure?")).toBeVisible();
     await page.getByRole("button", { name: "Confirm" }).click();
     await expect(page.getByText("Processing your request ...")).toBeVisible();
 
@@ -263,14 +273,18 @@ test.describe("User is logged in", function () {
 
     const description = {
       title: "Update policy - Voting Thresholds",
-      summary: `theori.near requested to change voting threshold from 1 to 2.`,
+      summary: `theori.near requested to change voting threshold from 1 to 1.`,
     };
+    const commonParams = [votePolicy, updatedPolicy, votePolicy];
+
     await expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
         description: encodeToMarkdown(description),
         kind: {
           ChangePolicy: {
-            policy: getMockedPolicy(updatedPolicy, votePolicy, votePolicy),
+            policy: hasNewPolicy
+              ? getNewPolicy(...commonParams)
+              : getOldPolicy(...commonParams),
           },
         },
       },
@@ -328,11 +342,7 @@ test.describe("User is logged in", function () {
     await thresholdInput.fill("20");
     await expect(page.getByText("Warning!")).toBeVisible();
     await submitBtn.click();
-    await expect(
-      page.getByText(
-        "Changing this setting will require 2 vote(s) to approve requests. You will no longer be able to approve requests with 1 vote(s)."
-      )
-    ).toBeVisible();
+    await expect(page.getByText("Are you sure?")).toBeVisible();
     await page.getByRole("button", { name: "Confirm" }).click();
     await expect(page.getByText("Processing your request ...")).toBeVisible();
   });

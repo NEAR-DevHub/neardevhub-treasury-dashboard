@@ -13,7 +13,8 @@ test.describe("connected with ledger", function () {
     contextOptions: {
       permissions: ["clipboard-read", "clipboard-write"],
     },
-    storageState: "playwright-tests/storage-states/wallet-connected-ledger.json",
+    storageState:
+      "playwright-tests/storage-states/wallet-connected-ledger.json",
   });
 
   test("should go to treasury self creation page", async ({
@@ -24,35 +25,37 @@ test.describe("connected with ledger", function () {
     // initial step
     await page.goto(`/${factoryAccount}/widget/app`);
     await expect(
-      await page.locator("h3", { hasText: "Confirm your wallet" })
+      await page.locator("h3", { hasText: "Confirm your wallet" }),
     ).toBeVisible();
 
     const sandbox = new SandboxRPC();
     await sandbox.init();
 
-    await page.getByRole('link', { name: 'Continue' }).click();
+    await page.getByRole("link", { name: "Continue" }).click();
 
     // create application account name step
     await expect(
-      await page.getByRole('heading', { name: 'Create Treasury Accounts' })
+      await page.getByRole("heading", { name: "Create Treasury Accounts" }),
     ).toBeVisible();
     const treasuryName = "new-treasury";
-    await page.getByPlaceholder('my-treasury').fill(treasuryName);
+    await page.getByPlaceholder("my-treasury").fill(treasuryName);
     await expect(page.getByText(`NEAR ${treasuryName} .near`)).toBeVisible();
-    await expect(page.getByText(`Sputnik DAO  ${treasuryName} .`)).toBeVisible();
-    await page.getByRole('link', { name: 'Continue' }).click();
+    await expect(
+      page.getByText(`Sputnik DAO  ${treasuryName} .`),
+    ).toBeVisible();
+    await page.getByRole("link", { name: "Continue" }).click();
 
     // add members step
     await expect(
-       page.getByRole('heading', { name: 'Add Members' })
+      page.getByRole("heading", { name: "Add Members" }),
     ).toBeVisible();
-    await expect( page.getByText('Ori theori.near Requestor')).toBeVisible();
+    await expect(page.getByText("Ori theori.near Requestor")).toBeVisible();
 
-    await page.getByRole('link', { name: 'Continue' }).click();
+    await page.getByRole("link", { name: "Continue" }).click();
 
     // confirm transaction step
     await expect(
-      await page.locator("h3", { hasText: "Summary" })
+      await page.locator("h3", { hasText: "Summary" }),
     ).toBeVisible();
 
     const submitBtn = page.locator("button", { hasText: "Confirm and Create" });
@@ -62,13 +65,16 @@ test.describe("connected with ledger", function () {
     // bos txn confirmation modal
     const widget_reference_account_id = "bootstrap.treasury-factory.near";
 
-    await sandbox.attachRoutes(page, [`${treasuryName}.near`, widget_reference_account_id]);
+    await sandbox.attachRoutes(page, [
+      `${treasuryName}.near`,
+      widget_reference_account_id,
+    ]);
     console.log("sandbox initialized");
     await sandbox.setupDefaultWidgetReferenceAccount();
 
     const transactionToSendPromise = page.evaluate(async () => {
-      const selector = await document.querySelector("near-social-viewer")
-        .selectorPromise;
+      const selector =
+        await document.querySelector("near-social-viewer").selectorPromise;
 
       const wallet = await selector.wallet();
 
@@ -79,9 +85,9 @@ test.describe("connected with ledger", function () {
           const transactionResult = await new Promise(
             (transactionSentPromiseResolve) =>
               (window.transactionSentPromiseResolve =
-                transactionSentPromiseResolve)
+                transactionSentPromiseResolve),
           );
-          console.log('transaction completed');
+          console.log("transaction completed");
           return transactionResult;
         };
       });
@@ -101,7 +107,7 @@ test.describe("connected with ledger", function () {
 
     console.log(JSON.stringify(transactionToSend));
     expect(
-      transactionToSend.actions[0].params.args.widget_reference_account_id
+      transactionToSend.actions[0].params.args.widget_reference_account_id,
     ).toEqual(widget_reference_account_id);
 
     await page.evaluate((transactionResult) => {
@@ -109,7 +115,7 @@ test.describe("connected with ledger", function () {
     }, transactionResult);
 
     await expect(
-      await page.locator("h5", { hasText: "Congrats! Your Treasury is ready" })
+      await page.locator("h5", { hasText: "Congrats! Your Treasury is ready" }),
     ).toBeVisible({ timeout: 20_000 });
     await sandbox.quitSandbox();
   });

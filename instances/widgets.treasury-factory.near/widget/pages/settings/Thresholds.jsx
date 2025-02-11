@@ -409,6 +409,8 @@ return (
                   selectedValue: selectedVoteOption,
                   onUpdate: (v) => {
                     setSelectedVoteOption(v);
+                    setSelectedVoteValue("");
+                    setValueError(null);
                   },
                   disabled: !hasCreatePermission,
                 }}

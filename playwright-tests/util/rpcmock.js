@@ -67,19 +67,40 @@ export async function mockRpcRequest({
   });
 }
 
-export function getOldPolicy(createRequestPolicy, membersPolicy, votePolicy) {
+export function getOldPolicy(
+  createRequestPolicy,
+  membersPolicy,
+  votePolicy,
+  creatorsGroup = [
+    "theori.near",
+    "2dada969f3743a4a41cfdb1a6e39581c2844ce8fbe25948700c85c598090b3e1",
+    "freski.near",
+    "thomasguntenaar.near",
+    "petersalomonsen.near",
+  ],
+  adminGroup = [
+    "petersalomonsen.near",
+    "thomasguntenaar.near",
+    "theori.near",
+    "megha19.near",
+  ],
+  voteGroup = [
+    "petersalomonsen.near",
+    "treasurytestuserledger.near",
+    "tfdevhub.near",
+    "theori.near",
+    "thomasguntenaar.near",
+    "test04.near",
+    "test03.near",
+    "test05.near",
+  ]
+) {
   return {
     roles: [
       {
         name: "Create Requests",
         kind: {
-          Group: [
-            "theori.near",
-            "2dada969f3743a4a41cfdb1a6e39581c2844ce8fbe25948700c85c598090b3e1",
-            "freski.near",
-            "thomasguntenaar.near",
-            "petersalomonsen.near",
-          ],
+          Group: creatorsGroup,
         },
         permissions: ["call:AddProposal", "transfer:AddProposal"],
         vote_policy: {
@@ -100,12 +121,7 @@ export function getOldPolicy(createRequestPolicy, membersPolicy, votePolicy) {
       {
         name: "Manage Members",
         kind: {
-          Group: [
-            "petersalomonsen.near",
-            "thomasguntenaar.near",
-            "theori.near",
-            "megha19.near",
-          ],
+          Group: adminGroup,
         },
         permissions: [
           "config:*",
@@ -141,16 +157,7 @@ export function getOldPolicy(createRequestPolicy, membersPolicy, votePolicy) {
       {
         name: "Vote",
         kind: {
-          Group: [
-            "petersalomonsen.near",
-            "treasurytestuserledger.near",
-            "tfdevhub.near",
-            "theori.near",
-            "thomasguntenaar.near",
-            "test04.near",
-            "test03.near",
-            "test05.near",
-          ],
+          Group: voteGroup,
         },
         permissions: [
           "*:VoteReject",
@@ -187,19 +194,40 @@ export function getOldPolicy(createRequestPolicy, membersPolicy, votePolicy) {
   };
 }
 
-export function getNewPolicy(createRequestPolicy, membersPolicy, votePolicy) {
+export function getNewPolicy(
+  createRequestPolicy,
+  membersPolicy,
+  votePolicy,
+  requestorGroup = [
+    "theori.near",
+    "2dada969f3743a4a41cfdb1a6e39581c2844ce8fbe25948700c85c598090b3e1",
+    "freski.near",
+    "thomasguntenaar.near",
+    "petersalomonsen.near",
+  ],
+  adminGroup = [
+    "petersalomonsen.near",
+    "thomasguntenaar.near",
+    "theori.near",
+    "megha19.near",
+  ],
+  approverGroup = [
+    "petersalomonsen.near",
+    "treasurytestuserledger.near",
+    "tfdevhub.near",
+    "theori.near",
+    "thomasguntenaar.near",
+    "test04.near",
+    "test03.near",
+    "test05.near",
+  ]
+) {
   return {
     roles: [
       {
         name: "Requestor",
         kind: {
-          Group: [
-            "theori.near",
-            "2dada969f3743a4a41cfdb1a6e39581c2844ce8fbe25948700c85c598090b3e1",
-            "freski.near",
-            "thomasguntenaar.near",
-            "petersalomonsen.near",
-          ],
+          Group: requestorGroup,
         },
         permissions: [
           "call:AddProposal",
@@ -215,12 +243,7 @@ export function getNewPolicy(createRequestPolicy, membersPolicy, votePolicy) {
       {
         name: "Admin",
         kind: {
-          Group: [
-            "petersalomonsen.near",
-            "thomasguntenaar.near",
-            "theori.near",
-            "megha19.near",
-          ],
+          Group: adminGroup,
         },
         permissions: [
           "config:*",
@@ -256,16 +279,7 @@ export function getNewPolicy(createRequestPolicy, membersPolicy, votePolicy) {
       {
         name: "Approver",
         kind: {
-          Group: [
-            "petersalomonsen.near",
-            "treasurytestuserledger.near",
-            "tfdevhub.near",
-            "theori.near",
-            "thomasguntenaar.near",
-            "test04.near",
-            "test03.near",
-            "test05.near",
-          ],
+          Group: approverGroup,
         },
         permissions: [
           "call:VoteReject",

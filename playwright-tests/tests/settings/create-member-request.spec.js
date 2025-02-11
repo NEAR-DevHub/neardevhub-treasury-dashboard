@@ -6,6 +6,8 @@ import {
   mockTransactionSubmitRPCResponses,
 } from "../../util/transaction.js";
 import {
+  getNewPolicy,
+  getOldPolicy,
   mockNearBalances,
   mockRpcRequest,
   updateDaoPolicyMembers,
@@ -182,7 +184,10 @@ test.describe("User is logged in", function () {
     // Submit button should be enabled
     expect(await submitBtn.isDisabled()).toBe(false);
     // Remove any roles
-    const roleBtn = page.getByText("Create Requests", { exact: true });
+    const roleBtn = page.getByText(
+      instanceAccount.includes("testing") ? "Requestor" : "Create Requests",
+      { exact: true }
+    );
     const removeRoleBtn = roleBtn.locator("i").first();
     await removeRoleBtn.click();
     await page.waitForTimeout(1000);
@@ -197,7 +202,9 @@ test.describe("User is logged in", function () {
   }) => {
     test.setTimeout(120_000);
     const account = "testingaccount.near";
-    const permission = "Create Requests";
+    const hasNewPolicy = instanceAccount.includes("testing");
+
+    const permission = hasNewPolicy ? "Requestor" : "Create Requests";
     await openAddMemberForm({ page });
 
     const accountInput = page.getByPlaceholder("treasury.near");
@@ -216,128 +223,28 @@ test.describe("User is logged in", function () {
       title: "Update policy - Members Permissions",
       summary: `theori.near requested to add "${account}" to "${permission}".`,
     };
+    const commonParams = [
+      votePolicy,
+      votePolicy,
+      votePolicy,
+      [
+        "theori.near",
+        "2dada969f3743a4a41cfdb1a6e39581c2844ce8fbe25948700c85c598090b3e1",
+        "freski.near",
+        "thomasguntenaar.near",
+        "petersalomonsen.near",
+        "testingaccount.near",
+      ],
+    ];
+    const updatedPolicy = hasNewPolicy
+      ? getNewPolicy(...commonParams)
+      : getOldPolicy(...commonParams);
+
     const expectedProposalObject = {
       description: encodeToMarkdown(description),
       kind: {
         ChangePolicy: {
-          policy: {
-            roles: [
-              {
-                name: "Create Requests",
-                kind: {
-                  Group: [
-                    "theori.near",
-                    "2dada969f3743a4a41cfdb1a6e39581c2844ce8fbe25948700c85c598090b3e1",
-                    "freski.near",
-                    "thomasguntenaar.near",
-                    "petersalomonsen.near",
-                    "testingaccount.near",
-                  ],
-                },
-                permissions: ["call:AddProposal", "transfer:AddProposal"],
-                vote_policy: {
-                  upgrade_remote: votePolicy,
-                  upgrade_self: votePolicy,
-                  call: votePolicy,
-                  bounty_done: votePolicy,
-                  policy: votePolicy,
-                  config: votePolicy,
-                  add_member_to_role: votePolicy,
-                  set_vote_token: votePolicy,
-                  vote: votePolicy,
-                  transfer: votePolicy,
-                  add_bounty: votePolicy,
-                  remove_member_from_role: votePolicy,
-                },
-              },
-              {
-                name: "Manage Members",
-                kind: {
-                  Group: [
-                    "petersalomonsen.near",
-                    "thomasguntenaar.near",
-                    "theori.near",
-                    "megha19.near",
-                  ],
-                },
-                permissions: [
-                  "config:*",
-                  "policy:*",
-                  "add_member_to_role:*",
-                  "remove_member_from_role:*",
-                  "upgrade_self:*",
-                  "upgrade_remote:*",
-                  "set_vote_token:*",
-                  "add_bounty:*",
-                  "bounty_done:*",
-                  "factory_info_update:*",
-                  "policy_add_or_update_role:*",
-                  "policy_remove_role:*",
-                  "policy_update_default_vote_policy:*",
-                  "policy_update_parameters:*",
-                ],
-                vote_policy: {
-                  upgrade_remote: votePolicy,
-                  upgrade_self: votePolicy,
-                  call: votePolicy,
-                  bounty_done: votePolicy,
-                  policy: votePolicy,
-                  config: votePolicy,
-                  add_member_to_role: votePolicy,
-                  set_vote_token: votePolicy,
-                  vote: votePolicy,
-                  transfer: votePolicy,
-                  add_bounty: votePolicy,
-                  remove_member_from_role: votePolicy,
-                },
-              },
-              {
-                name: "Vote",
-                kind: {
-                  Group: [
-                    "petersalomonsen.near",
-                    "treasurytestuserledger.near",
-                    "tfdevhub.near",
-                    "theori.near",
-                    "thomasguntenaar.near",
-                    "test04.near",
-                    "test03.near",
-                    "test05.near",
-                  ],
-                },
-                permissions: [
-                  "*:VoteReject",
-                  "*:VoteApprove",
-                  "*:VoteRemove",
-                  "*:RemoveProposal",
-                  "*:Finalize",
-                ],
-                vote_policy: {
-                  transfer: votePolicy,
-                  config: votePolicy,
-                  add_bounty: votePolicy,
-                  set_vote_token: votePolicy,
-                  upgrade_remote: votePolicy,
-                  add_member_to_role: votePolicy,
-                  upgrade_self: votePolicy,
-                  call: votePolicy,
-                  policy: votePolicy,
-                  remove_member_from_role: votePolicy,
-                  bounty_done: votePolicy,
-                  vote: votePolicy,
-                },
-              },
-            ],
-            default_vote_policy: {
-              weight_kind: "RoleWeight",
-              quorum: "0",
-              threshold: [1, 2],
-            },
-            proposal_bond: "0",
-            proposal_period: "604800000000000",
-            bounty_bond: "100000000000000000000000",
-            bounty_forgiveness_period: "604800000000000",
-          },
+          policy: updatedPolicy,
         },
       },
     };
@@ -475,10 +382,14 @@ test.describe("User is logged in", function () {
     await expect(page.getByRole("button", { name: "Delete" })).toBeVisible();
   });
 
-  test("should update existing member permissions", async ({ page }) => {
+  test("should update existing member permissions", async ({
+    page,
+    instanceAccount,
+  }) => {
     test.setTimeout(120_000);
     const account = "theori.near";
-    const permission = "Create Requests";
+    const hasNewPolicy = instanceAccount.includes("testing");
+    const permission = hasNewPolicy ? "Requestor" : "Create Requests";
     await page
       .getByRole("row", { name: `not defined Ori ${account}` })
       .locator("i")
@@ -491,10 +402,7 @@ test.describe("User is logged in", function () {
       page.locator(".offcanvas-body").getByText(permission, { exact: true })
     ).toBeVisible();
     await expect(page.getByPlaceholder("treasury.near")).toBeDisabled();
-    await page
-      .getByText("Create Requests", { exact: true })
-      .locator(".bi")
-      .click();
+    await page.getByText(permission, { exact: true }).locator(".bi").click();
 
     const submitBtn = page.getByRole("button", { name: "Submit" });
     await expect(submitBtn).toBeAttached({ timeout: 10_000 });
@@ -505,135 +413,40 @@ test.describe("User is logged in", function () {
       title: "Update policy - Members Permissions",
       summary: `theori.near requested to remove "${account}" from "${permission}".`,
     };
+    const commonParams = [
+      votePolicy,
+      votePolicy,
+      votePolicy,
+      [
+        "2dada969f3743a4a41cfdb1a6e39581c2844ce8fbe25948700c85c598090b3e1",
+        "freski.near",
+        "thomasguntenaar.near",
+        "petersalomonsen.near",
+      ],
+    ];
+    const updatedPolicy = hasNewPolicy
+      ? getNewPolicy(...commonParams)
+      : getOldPolicy(...commonParams);
+
     expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
         description: encodeToMarkdown(description),
         kind: {
           ChangePolicy: {
-            policy: {
-              roles: [
-                {
-                  name: "Create Requests",
-                  kind: {
-                    Group: [
-                      "2dada969f3743a4a41cfdb1a6e39581c2844ce8fbe25948700c85c598090b3e1",
-                      "freski.near",
-                      "thomasguntenaar.near",
-                      "petersalomonsen.near",
-                    ],
-                  },
-                  permissions: ["call:AddProposal", "transfer:AddProposal"],
-                  vote_policy: {
-                    transfer: votePolicy,
-                    bounty_done: votePolicy,
-                    add_bounty: votePolicy,
-                    policy: votePolicy,
-                    call: votePolicy,
-                    upgrade_self: votePolicy,
-                    config: votePolicy,
-                    set_vote_token: votePolicy,
-                    upgrade_remote: votePolicy,
-                    vote: votePolicy,
-                    add_member_to_role: votePolicy,
-                    remove_member_from_role: votePolicy,
-                  },
-                },
-                {
-                  name: "Manage Members",
-                  kind: {
-                    Group: [
-                      "petersalomonsen.near",
-                      "thomasguntenaar.near",
-                      "theori.near",
-                      "megha19.near",
-                    ],
-                  },
-                  permissions: [
-                    "config:*",
-                    "policy:*",
-                    "add_member_to_role:*",
-                    "remove_member_from_role:*",
-                    "upgrade_self:*",
-                    "upgrade_remote:*",
-                    "set_vote_token:*",
-                    "add_bounty:*",
-                    "bounty_done:*",
-                    "factory_info_update:*",
-                    "policy_add_or_update_role:*",
-                    "policy_remove_role:*",
-                    "policy_update_default_vote_policy:*",
-                    "policy_update_parameters:*",
-                  ],
-                  vote_policy: {
-                    upgrade_remote: votePolicy,
-                    upgrade_self: votePolicy,
-                    call: votePolicy,
-                    bounty_done: votePolicy,
-                    policy: votePolicy,
-                    config: votePolicy,
-                    add_member_to_role: votePolicy,
-                    set_vote_token: votePolicy,
-                    vote: votePolicy,
-                    transfer: votePolicy,
-                    add_bounty: votePolicy,
-                    remove_member_from_role: votePolicy,
-                  },
-                },
-                {
-                  name: "Vote",
-                  kind: {
-                    Group: [
-                      "petersalomonsen.near",
-                      "treasurytestuserledger.near",
-                      "tfdevhub.near",
-                      "theori.near",
-                      "thomasguntenaar.near",
-                      "test04.near",
-                      "test03.near",
-                      "test05.near",
-                    ],
-                  },
-                  permissions: [
-                    "*:VoteReject",
-                    "*:VoteApprove",
-                    "*:VoteRemove",
-                    "*:RemoveProposal",
-                    "*:Finalize",
-                  ],
-                  vote_policy: {
-                    transfer: votePolicy,
-                    config: votePolicy,
-                    add_bounty: votePolicy,
-                    set_vote_token: votePolicy,
-                    upgrade_remote: votePolicy,
-                    add_member_to_role: votePolicy,
-                    upgrade_self: votePolicy,
-                    call: votePolicy,
-                    policy: votePolicy,
-                    remove_member_from_role: votePolicy,
-                    bounty_done: votePolicy,
-                    vote: votePolicy,
-                  },
-                },
-              ],
-              default_vote_policy: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [1, 2],
-              },
-              proposal_bond: "0",
-              proposal_period: "604800000000000",
-              bounty_bond: "100000000000000000000000",
-              bounty_forgiveness_period: "604800000000000",
-            },
+            policy: updatedPolicy,
           },
         },
       },
     });
   });
 
-  test("should delete existing member from DAO", async ({ page }) => {
+  test("should delete existing member from DAO", async ({
+    page,
+    instanceAccount,
+  }) => {
     test.setTimeout(60_000);
+    const hasNewPolicy = instanceAccount.includes("testing");
+
     await page
       .getByRole("row", { name: "not defined Ori theori.near" })
       .locator("i")
@@ -645,7 +458,9 @@ test.describe("User is logged in", function () {
     await expect(
       page
         .locator(".offcanvas-body")
-        .getByText("Create Requests", { exact: true })
+        .getByText(hasNewPolicy ? "Requestor" : "Create Requests", {
+          exact: true,
+        })
     ).toBeVisible();
     await page.getByRole("button", { name: "Delete" }).click();
     await expect(
@@ -658,126 +473,39 @@ test.describe("User is logged in", function () {
       title: "Update policy - Members Permissions",
       summary: `theori.near requested to requested to revoke all permissions of "theori.near".`,
     };
+
+    const commonParams = [
+      votePolicy,
+      votePolicy,
+      votePolicy,
+      [
+        "2dada969f3743a4a41cfdb1a6e39581c2844ce8fbe25948700c85c598090b3e1",
+        "freski.near",
+        "thomasguntenaar.near",
+        "petersalomonsen.near",
+      ],
+      ["petersalomonsen.near", "thomasguntenaar.near", "megha19.near"],
+      [
+        "petersalomonsen.near",
+        "treasurytestuserledger.near",
+        "tfdevhub.near",
+        "thomasguntenaar.near",
+        "test04.near",
+        "test03.near",
+        "test05.near",
+      ],
+    ];
+
+    const updatedPolicy = hasNewPolicy
+      ? getNewPolicy(...commonParams)
+      : getOldPolicy(...commonParams);
+
     expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
         description: encodeToMarkdown(description),
         kind: {
           ChangePolicy: {
-            policy: {
-              roles: [
-                {
-                  name: "Create Requests",
-                  kind: {
-                    Group: [
-                      "2dada969f3743a4a41cfdb1a6e39581c2844ce8fbe25948700c85c598090b3e1",
-                      "freski.near",
-                      "thomasguntenaar.near",
-                      "petersalomonsen.near",
-                    ],
-                  },
-                  permissions: ["call:AddProposal", "transfer:AddProposal"],
-                  vote_policy: {
-                    transfer: votePolicy,
-                    bounty_done: votePolicy,
-                    add_bounty: votePolicy,
-                    policy: votePolicy,
-                    call: votePolicy,
-                    upgrade_self: votePolicy,
-                    config: votePolicy,
-                    set_vote_token: votePolicy,
-                    upgrade_remote: votePolicy,
-                    vote: votePolicy,
-                    add_member_to_role: votePolicy,
-                    remove_member_from_role: votePolicy,
-                  },
-                },
-                {
-                  name: "Manage Members",
-                  kind: {
-                    Group: [
-                      "petersalomonsen.near",
-                      "thomasguntenaar.near",
-                      "megha19.near",
-                    ],
-                  },
-                  permissions: [
-                    "config:*",
-                    "policy:*",
-                    "add_member_to_role:*",
-                    "remove_member_from_role:*",
-                    "upgrade_self:*",
-                    "upgrade_remote:*",
-                    "set_vote_token:*",
-                    "add_bounty:*",
-                    "bounty_done:*",
-                    "factory_info_update:*",
-                    "policy_add_or_update_role:*",
-                    "policy_remove_role:*",
-                    "policy_update_default_vote_policy:*",
-                    "policy_update_parameters:*",
-                  ],
-                  vote_policy: {
-                    upgrade_remote: votePolicy,
-                    upgrade_self: votePolicy,
-                    call: votePolicy,
-                    bounty_done: votePolicy,
-                    policy: votePolicy,
-                    config: votePolicy,
-                    add_member_to_role: votePolicy,
-                    set_vote_token: votePolicy,
-                    vote: votePolicy,
-                    transfer: votePolicy,
-                    add_bounty: votePolicy,
-                    remove_member_from_role: votePolicy,
-                  },
-                },
-                {
-                  name: "Vote",
-                  kind: {
-                    Group: [
-                      "petersalomonsen.near",
-                      "treasurytestuserledger.near",
-                      "tfdevhub.near",
-
-                      "thomasguntenaar.near",
-                      "test04.near",
-                      "test03.near",
-                      "test05.near",
-                    ],
-                  },
-                  permissions: [
-                    "*:VoteReject",
-                    "*:VoteApprove",
-                    "*:VoteRemove",
-                    "*:RemoveProposal",
-                    "*:Finalize",
-                  ],
-                  vote_policy: {
-                    transfer: votePolicy,
-                    config: votePolicy,
-                    add_bounty: votePolicy,
-                    set_vote_token: votePolicy,
-                    upgrade_remote: votePolicy,
-                    add_member_to_role: votePolicy,
-                    upgrade_self: votePolicy,
-                    call: votePolicy,
-                    policy: votePolicy,
-                    remove_member_from_role: votePolicy,
-                    bounty_done: votePolicy,
-                    vote: votePolicy,
-                  },
-                },
-              ],
-              default_vote_policy: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: [1, 2],
-              },
-              proposal_bond: "0",
-              proposal_period: "604800000000000",
-              bounty_bond: "100000000000000000000000",
-              bounty_forgiveness_period: "604800000000000",
-            },
+            policy: updatedPolicy,
           },
         },
       },
