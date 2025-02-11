@@ -120,7 +120,7 @@ impl Contract {
         let args = near_sdk::serde_json::json!({"data":
             {
                 env::current_account_id(): {
-                        "widget": {
+                    "widget": {
                         "app": {
                             "metadata": {
                                 "name": name,
