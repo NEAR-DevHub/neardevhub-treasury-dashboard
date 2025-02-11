@@ -51,7 +51,7 @@ async function navigateToThemePage({ page, instanceAccount }) {
   await page.goto(
     `/${instanceAccount}/widget/app?page=settings&selectedTab=theme-logo`
   );
-  await updateDaoPolicyMembers({ page });
+  await updateDaoPolicyMembers({ instanceAccount, page });
   await updateDaoConfig({ page });
   await page.waitForTimeout(5_000);
   await page.getByTestId("Theme & Logo", { exact: true }).click();
@@ -81,7 +81,7 @@ test.describe.parallel("User logged in with different roles", function () {
         instanceAccount,
       }) => {
         test.setTimeout(60_000);
-        await updateDaoPolicyMembers({ page });
+        await updateDaoPolicyMembers({ instanceAccount, page });
         await navigateToThemePage({ page, instanceAccount });
         await expect(page.locator("input[type='color']")).toBeDisabled();
         await expect(

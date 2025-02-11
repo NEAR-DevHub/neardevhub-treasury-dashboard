@@ -364,7 +364,7 @@ async function voteOnProposal({
     console.log("no stake delegation page configured for instance");
     return test.skip();
   }
-  await updateDaoPolicyMembers({ page });
+  await updateDaoPolicyMembers({ instanceAccount, page });
   const contractId = daoAccount;
   await mockRpcRequest({
     page,
@@ -541,7 +541,7 @@ test.describe("Have valid staked requests and sufficient token balance", functio
     } else {
       await mockStakeProposals({ page });
     }
-    await updateDaoPolicyMembers({ page });
+    await updateDaoPolicyMembers({ instanceAccount, page });
     await mockStakedPools({ page, daoAccount });
     if (testInfo.title.includes("insufficient account balance")) {
       await mockNearBalances({
@@ -605,9 +605,12 @@ test.describe("Have valid staked requests and sufficient token balance", functio
       test.describe(`User with '${role.name}'`, function () {
         test.use({ storageState: role.storageState });
 
-        test("should not see 'Create Request' action", async ({ page }) => {
+        test("should not see 'Create Request' action", async ({
+          page,
+          instanceAccount,
+        }) => {
           test.setTimeout(60_000);
-          await updateDaoPolicyMembers({ page });
+          await updateDaoPolicyMembers({ instanceAccount, page });
           await expect(page.getByText("Pending Requests")).toBeVisible();
           await expect(
             page.getByRole("button", {
@@ -813,7 +816,7 @@ test.describe("Withdraw request", function () {
   });
 
   test.beforeEach(async ({ page, instanceAccount, daoAccount }) => {
-    await updateDaoPolicyMembers({ page });
+    await updateDaoPolicyMembers({ instanceAccount, page });
     await page.goto(`/${instanceAccount}/widget/app?page=stake-delegation`);
     await mockStakedPools({ daoAccount, page, havePools: true });
     await expect(
@@ -941,7 +944,7 @@ test.describe("Withdraw request", function () {
       description,
       daoName,
     });
-    await updateDaoPolicyMembers({ page });
+    await updateDaoPolicyMembers({ instanceAccount, page });
     await mockStakedPools({ daoAccount, page, multiplePools: true });
     await page.goto(`/${instanceAccount}/widget/app?page=stake-delegation`);
     await mockUnstakeAndWithdrawBalance({
@@ -1083,7 +1086,7 @@ test.describe("Lockup staking", function () {
     }
 
     await mockStakeProposals({ page });
-    await updateDaoPolicyMembers({ page });
+    await updateDaoPolicyMembers({ instanceAccount, page });
     await mockNearBalances({
       page,
       accountId: daoAccount,
@@ -1588,7 +1591,7 @@ test.describe("Insufficient balance ", function () {
       return test.skip();
     }
     await mockStakeProposals({ page });
-    await updateDaoPolicyMembers({ page });
+    await updateDaoPolicyMembers({ instanceAccount, page });
 
     await mockStakedPools({ page, daoAccount, havePools: false });
     await mockStakedPoolBalances({ page });

@@ -147,7 +147,7 @@ test.describe.parallel("User logged in with different roles", function () {
         instanceAccount,
       }) => {
         test.setTimeout(60_000);
-        await updateDaoPolicyMembers({ page });
+        await updateDaoPolicyMembers({ instanceAccount, page });
         await mockRpcRequest({
           page,
           filterParams: {
@@ -191,7 +191,7 @@ test.describe("don't ask again", function () {
     daoAccount,
   }) => {
     test.setTimeout(60_000);
-    await updateDaoPolicyMembers({ page });
+    await updateDaoPolicyMembers({ instanceAccount, page });
     await mockNearBalances({
       page,
       accountId: "theori.near",
@@ -226,7 +226,7 @@ test.describe("don't ask again", function () {
     test.setTimeout(60_000);
     await mockWithFTBalance({ page, daoAccount, isSufficient: false });
     await mockPikespeakFTTokensResponse({ page, daoAccount });
-    await updateDaoPolicyMembers({ page });
+    await updateDaoPolicyMembers({ instanceAccount, page });
     await voteOnProposal({
       page,
       daoAccount,
@@ -259,7 +259,7 @@ test.describe("don't ask again", function () {
     await mockPaymentProposals({ page });
     await mockWithFTBalance({ page, daoAccount, isSufficient: true });
     await mockPikespeakFTTokensResponse({ page, daoAccount });
-    await updateDaoPolicyMembers({ page, isMultiVote });
+    await updateDaoPolicyMembers({ instanceAccount, page, isMultiVote });
     await voteOnProposal({
       page,
       daoAccount,
@@ -313,7 +313,7 @@ test.describe("don't ask again", function () {
     const isMultiVote = daoAccount === "infinex.sputnik-dao.near";
     await mockWithFTBalance({ page, daoAccount, isSufficient: true });
     await mockPikespeakFTTokensResponse({ page, daoAccount });
-    await updateDaoPolicyMembers({ page, isMultiVote });
+    await updateDaoPolicyMembers({ instanceAccount, page, isMultiVote });
     const contractId = daoAccount;
     await voteOnProposal({
       page,
@@ -370,7 +370,7 @@ test.describe("don't ask again", function () {
     const isMultiVote = daoAccount === "infinex.sputnik-dao.near";
     await mockWithFTBalance({ page, daoAccount, isSufficient: true });
     await mockPikespeakFTTokensResponse({ page, daoAccount });
-    await updateDaoPolicyMembers({ page, isMultiVote });
+    await updateDaoPolicyMembers({ instanceAccount, page, isMultiVote });
     const contractId = daoAccount;
     await voteOnProposal({
       page,

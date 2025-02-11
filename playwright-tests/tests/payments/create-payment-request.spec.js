@@ -160,7 +160,7 @@ test.describe.parallel("User logged in with different roles", function () {
         instanceAccount,
       }) => {
         test.setTimeout(60_000);
-        await updateDaoPolicyMembers({ page });
+        await updateDaoPolicyMembers({ instanceAccount, page });
         await page.goto(`/${instanceAccount}/widget/app?page=payments`);
         await expect(page.getByText("Pending Requests")).toBeVisible({
           timeout: 20_000,
@@ -212,7 +212,7 @@ test.describe("User is logged in", function () {
     instanceAccount,
   }) => {
     test.setTimeout(60_000);
-    await updateDaoPolicyMembers({ page });
+    await updateDaoPolicyMembers({ instanceAccount, page });
     await mockNearBalances({
       page,
       accountId: signedUser,
@@ -244,7 +244,7 @@ test.describe("User is logged in", function () {
   }) => {
     test.setTimeout(60_000);
     await mockPikespeakFTTokensResponse({ page, daoAccount });
-    await updateDaoPolicyMembers({ page });
+    await updateDaoPolicyMembers({ instanceAccount, page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
 
     await clickCreatePaymentRequestButton(page);
@@ -263,7 +263,7 @@ test.describe("User is logged in", function () {
   }) => {
     test.setTimeout(120_000);
     await mockPikespeakFTTokensResponse({ page, daoAccount });
-    await updateDaoPolicyMembers({ page });
+    await updateDaoPolicyMembers({ instanceAccount, page });
     await fillCreateForm(page, daoAccount, instanceAccount);
 
     await checkForErrorWithAmountField(page, "-34232", true);
@@ -275,7 +275,7 @@ test.describe("User is logged in", function () {
     instanceAccount,
   }) => {
     test.setTimeout(120_000);
-    await updateDaoPolicyMembers({ page });
+    await updateDaoPolicyMembers({ instanceAccount, page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
     await clickCreatePaymentRequestButton(page);
     await expect(
@@ -292,7 +292,7 @@ test.describe("User is logged in", function () {
   }) => {
     test.setTimeout(120_000);
     await mockPikespeakFTTokensResponse({ page, daoAccount });
-    await updateDaoPolicyMembers({ page });
+    await updateDaoPolicyMembers({ instanceAccount, page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
     await clickCreatePaymentRequestButton(page);
     const tokenSelect = page.getByTestId("tokens-dropdown");
@@ -315,7 +315,7 @@ test.describe("User is logged in", function () {
   }) => {
     test.setTimeout(60_000);
     await mockPikespeakFTTokensResponse({ page, daoAccount });
-    await updateDaoPolicyMembers({ page });
+    await updateDaoPolicyMembers({ instanceAccount, page });
     await mockInventory({ page, account: daoAccount });
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
@@ -402,7 +402,7 @@ test.describe("User is logged in", function () {
     daoAccount,
   }) => {
     await mockPikespeakFTTokensResponse({ page, daoAccount });
-    await updateDaoPolicyMembers({ page });
+    await updateDaoPolicyMembers({ instanceAccount, page });
     await fillCreateForm(page, daoAccount, instanceAccount);
     const cancelBtn = page.getByRole("button", { name: "Cancel" });
     await expect(cancelBtn).toBeAttached({ timeout: 10_000 });
@@ -440,7 +440,7 @@ test.describe("User is logged in", function () {
     }
 
     await mockPikespeakFTTokensResponse({ page, daoAccount });
-    await updateDaoPolicyMembers({ page });
+    await updateDaoPolicyMembers({ instanceAccount, page });
 
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
     await clickCreatePaymentRequestButton(page);
@@ -488,7 +488,7 @@ test.describe("User is logged in", function () {
   }) => {
     test.setTimeout(120_000);
     await mockPikespeakFTTokensResponse({ page, daoAccount });
-    await updateDaoPolicyMembers({ page });
+    await updateDaoPolicyMembers({ instanceAccount, page });
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
     await fillCreateForm(page, daoAccount, instanceAccount);
     const submitBtn = page
@@ -522,7 +522,7 @@ test.describe("User is logged in", function () {
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
     await mockInventory({ page, account: daoAccount });
     await mockPikespeakFTTokensResponse({ page, daoAccount });
-    await updateDaoPolicyMembers({ page });
+    await updateDaoPolicyMembers({ instanceAccount, page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
 
     await clickCreatePaymentRequestButton(page);
@@ -619,7 +619,7 @@ test.describe("admin with function access keys", function () {
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
     await mockNearPrice({ daoAccount, nearPrice, page });
     await mockPikespeakFTTokensResponse({ page, daoAccount });
-    await updateDaoPolicyMembers({ page });
+    await updateDaoPolicyMembers({ instanceAccount, page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
 
     await clickCreatePaymentRequestButton(page);

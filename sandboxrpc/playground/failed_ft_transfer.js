@@ -57,7 +57,7 @@ const create_dao_args = {
     roles: [
       {
         kind: {
-          Group: ["acc3.near", "acc2.near", "acc1.near"],
+          Group: [sandbox.account_id],
         },
         name: "Requestor",
         permissions: [
@@ -81,7 +81,7 @@ const create_dao_args = {
       },
       {
         kind: {
-          Group: ["acc1.near"],
+          Group: [sandbox.account_id],
         },
         name: "Admin",
         permissions: [
@@ -104,7 +104,7 @@ const create_dao_args = {
       },
       {
         kind: {
-          Group: ["acc1.near", "acc2.near"],
+          Group: [sandbox.account_id],
         },
         name: "Approver",
         permissions: [
@@ -132,7 +132,7 @@ const create_dao_args = {
   },
 };
 
-const createInstanceResult = await sandbox.account.functionCall({
+await sandbox.account.functionCall({
   contractId: treasuryFactoryContractId,
   methodName: "create_instance",
   args: {
@@ -148,48 +148,70 @@ const createInstanceResult = await sandbox.account.functionCall({
   attachedDeposit: parseNearAmount("9"),
 });
 
-console.log(
-  "All receipts should have a successvalue. The list below of failed receipts should be empty",
-);
-console.log(
-  createInstanceResult.receipts_outcome
-    .filter((receipt_outcome) => receipt_outcome.outcome.status.Failure)
-    .map((receipt_outcome) => JSON.stringify(receipt_outcome)),
-);
+const daoContractId = `${instance_name}.sputnik-dao.near`;
 
-console.log(
-  `Calling the web4_get of the new instance account ${instance_name}.near. You should see the web page html contents`,
-);
-
-const web4GetResult = await sandbox.account.viewFunction({
-  contractId: `${instance_name}.near`,
-  methodName: "web4_get",
-  args: { request: { path: "/" } },
-});
-console.log(
-  Buffer.from(web4GetResult.body, "base64").toString().substring(0, 200) +
-    ".... and there is more, but too long to show here",
-);
-
-console.log(
-  `Calling get_policy of the newly created dao ${instance_name}.sputnik-dao.near. You should see the policy`,
-);
-const daoGetPolicyResult = await sandbox.account.viewFunction({
-  contractId: `${instance_name}.sputnik-dao.near`,
-  methodName: "get_policy",
-  args: {},
-});
-console.log(daoGetPolicyResult);
-
-console.log(
-  `Calling socialdb get to see the deployed widgets for the newly created instance. You should see the same contents of the reference widget.`,
-);
-const socialGetResult = await sandbox.account.viewFunction({
-  contractId: "social.near",
-  methodName: "get",
+console.log("register dao contract");
+await sandbox.account.functionCall({
+  contractId: "itlx_2.intellex_agents_owner_1.near",
+  methodName: "storage_deposit",
+  attachedDeposit: parseNearAmount("0.1"),
   args: {
-    keys: [`${instance_name}.near/widget/**`],
+    account_id: daoContractId,
   },
 });
-console.log(socialGetResult);
+
+console.log("transfer to dao");
+await sandbox.account.functionCall({
+  contractId: "itlx_2.intellex_agents_owner_1.near",
+  methodName: "ft_transfer",
+  attachedDeposit: "1",
+  args: {
+    amount: "2000000000000000000000000000",
+    receiver_id: daoContractId,
+  },
+});
+console.log("add the proposal");
+await sandbox.account.functionCall({
+  contractId: daoContractId,
+  methodName: "add_proposal",
+  gas: 300000000000000,
+  attachedDeposit: "100000000000000000000000",
+  args: {
+    proposal: {
+      description:
+        "* Title: Send itlx_2 test tokens <br>* Summary: Send tokens testing multisig",
+      kind: {
+        Transfer: {
+          token_id: "itlx_2.intellex_agents_owner_1.near",
+          receiver_id:
+            "f78e6f670ba196e2d270c089fb921ddf17ad0e204f5c63375eb27b07c67330be",
+          amount: "1000000000000000000000000000",
+        },
+      },
+    },
+  },
+});
+console.log("register receiver");
+await sandbox.account.functionCall({
+  contractId: "itlx_2.intellex_agents_owner_1.near",
+  methodName: "storage_deposit",
+  attachedDeposit: parseNearAmount("0.1"),
+  args: {
+    account_id:
+      "f78e6f670ba196e2d270c089fb921ddf17ad0e204f5c63375eb27b07c67330be",
+  },
+});
+
+console.log("act on the proposal");
+const result = await sandbox.account.functionCall({
+  contractId: daoContractId,
+  methodName: "act_proposal",
+  gas: 300000000000000,
+  args: {
+    id: 0,
+    action: "VoteApprove",
+  },
+});
+
+console.log(JSON.stringify(result));
 await sandbox.quitSandbox();

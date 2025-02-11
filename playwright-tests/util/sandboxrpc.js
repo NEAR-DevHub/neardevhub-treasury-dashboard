@@ -4,6 +4,7 @@ import { MOCK_RPC_URL } from "./rpcmock.js";
 import { parseNearAmount } from "near-api-js/lib/utils/format.js";
 import { KeyPairEd25519 } from "near-api-js/lib/utils/key_pair.js";
 import { getLocalWidgetSource } from "./bos-workspace.js";
+import { expect } from "@playwright/test";
 
 export const SPUTNIK_DAO_CONTRACT_ID = "sputnik-dao.near";
 // we don't have proposal bond for any instance (in this repo)
@@ -54,15 +55,63 @@ export class SandboxRPC {
   /**
    * Use from playwright tests to redirect RPC sputnikdao contract calls to the sandbox
    * @param {import('playwright').Page} page - Playwright page object
+   * @param {string[]} accounts - List of account IDs to redirect to the sandbox
    */
-  async attachRoutes(page) {
+  async attachRoutes(page, accounts = []) {
     await page.route(MOCK_RPC_URL, async (route, request) => {
       const postData = request.postDataJSON();
-      if (postData.params.account_id.endsWith(SPUTNIK_DAO_CONTRACT_ID)) {
+      if (
+        postData.params.account_id.endsWith(SPUTNIK_DAO_CONTRACT_ID) ||
+        accounts.includes(postData.params.account_id)
+      ) {
         await route.continue({ url: this.rpc_url });
       } else {
         await route.fallback();
       }
+    });
+  }
+
+  /**
+   *
+   *
+   */
+  async getDevUserAccountAccessKey() {
+    const accessKeyView = this.account.findAccessKey(this.account_id, []);
+    return accessKeyView;
+  }
+
+  async setupDefaultWidgetReferenceAccount() {
+    const reference_widget_account_id = "bootstrap.treasury-factory.near";
+
+    const keyPair = utils.KeyPair.fromString(this.secret_key);
+
+    await this.keyStore.setKey("sandbox", reference_widget_account_id, keyPair);
+
+    const reference_widget_account = await this.near.account(
+      reference_widget_account_id
+    );
+
+    const access_keys = await reference_widget_account.getAccessKeys();
+    expect(
+      access_keys.find((accessKeyView) => accessKeyView.public_key).public_key
+    ).toEqual(keyPair.getPublicKey().toString());
+
+    const data = {};
+    const localWidgetSources = await getLocalWidgetSource(
+      reference_widget_account_id + "/widget/**"
+    );
+
+    data[reference_widget_account_id] = {
+      widget: localWidgetSources[reference_widget_account_id].widget,
+    };
+
+    await reference_widget_account.functionCall({
+      contractId: "social.near",
+      methodName: "set",
+      args: {
+        data,
+      },
+      attachedDeposit: parseNearAmount("1"),
     });
   }
 
@@ -203,15 +252,31 @@ export class SandboxRPC {
             kind: {
               Group: [this.account.accountId],
             },
-            name: "Create Requests",
-            permissions: ["call:AddProposal", "transfer:AddProposal"],
-            vote_policy: {},
+            name: "Requestor",
+            permissions: [
+              "call:AddProposal",
+              "transfer:AddProposal",
+              "call:VoteRemove",
+              "transfer:VoteRemove",
+            ],
+            vote_policy: {
+              transfer: {
+                weight_kind: "RoleWeight",
+                quorum: "0",
+                threshold: "1",
+              },
+              call: {
+                weight_kind: "RoleWeight",
+                quorum: "0",
+                threshold: "1",
+              },
+            },
           },
           {
             kind: {
               Group: [this.account.accountId],
             },
-            name: "Manage Members",
+            name: "Admin",
             permissions: [
               "config:*",
               "policy:*",
@@ -234,13 +299,16 @@ export class SandboxRPC {
             kind: {
               Group: [this.account.accountId],
             },
-            name: "Vote",
+            name: "Approver",
             permissions: [
-              "*:VoteReject",
-              "*:VoteApprove",
-              "*:VoteRemove",
-              "*:RemoveProposal",
-              "*:Finalize",
+              "call:VoteReject",
+              "call:VoteApprove",
+              "call:RemoveProposal",
+              "call:Finalize",
+              "transfer:VoteReject",
+              "transfer:VoteApprove",
+              "transfer:RemoveProposal",
+              "transfer:Finalize",
             ],
             vote_policy: {},
           },

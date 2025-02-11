@@ -28,6 +28,8 @@
     "build": "npm run fmt",
     "bw": "bos-workspace",
     "prepare": "husky install",
+    "web4:treasury-factory:generateimportmap": "cd treasury-factory/public_html && npx jspm link index.html -o index.html",
+    "web4:treasury-app:generateimportmap": "cd web4/public_html/ && npx jspm link index.html -o index.html",
     "bw:dev:instances": "bw ws dev",
     "bw:dev:devdao": "bw dev instances/treasury-devdao.near",
     "bw:dev:treasury-factory": "bw dev instances/treasury-factory.near",
