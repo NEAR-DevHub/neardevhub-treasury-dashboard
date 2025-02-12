@@ -244,6 +244,11 @@ export class SandboxRPC {
     if (memberAccountId) {
       group.push(memberAccountId);
     }
+    const oneRequiredVote = {
+      weight_kind: "RoleWeight",
+      quorum: "0",
+      threshold: "1",
+    };
     const createDaoConfig = {
       config: {
         name: daoName,
@@ -264,16 +269,8 @@ export class SandboxRPC {
               "transfer:VoteRemove",
             ],
             vote_policy: {
-              transfer: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: "1",
-              },
-              call: {
-                weight_kind: "RoleWeight",
-                quorum: "0",
-                threshold: "1",
-              },
+              transfer: oneRequiredVote,
+              call: oneRequiredVote,
             },
           },
           {
@@ -297,7 +294,22 @@ export class SandboxRPC {
               "policy_update_default_vote_policy:*",
               "policy_update_parameters:*",
             ],
-            vote_policy: {},
+            vote_policy: {
+              config: oneRequiredVote,
+              policy: oneRequiredVote,
+              add_member_to_role: oneRequiredVote,
+              remove_member_from_role: oneRequiredVote,
+              upgrade_self: oneRequiredVote,
+              upgrade_remote: oneRequiredVote,
+              set_vote_token: oneRequiredVote,
+              add_bounty: oneRequiredVote,
+              bounty_done: oneRequiredVote,
+              factory_info_update: oneRequiredVote,
+              policy_add_or_update_role: oneRequiredVote,
+              policy_remove_role: oneRequiredVote,
+              policy_update_default_vote_policy: oneRequiredVote,
+              policy_update_parameters: oneRequiredVote,
+            },
           },
           {
             kind: {
@@ -314,7 +326,10 @@ export class SandboxRPC {
               "transfer:RemoveProposal",
               "transfer:Finalize",
             ],
-            vote_policy: {},
+            vote_policy: {
+              transfer: oneRequiredVote,
+              call: oneRequiredVote,
+            },
           },
         ],
         default_vote_policy: {

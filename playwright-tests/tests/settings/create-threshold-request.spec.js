@@ -144,7 +144,19 @@ test.describe("User is logged in", function () {
 
   test.beforeEach(async ({ page, instanceAccount }, testInfo) => {
     await updateLastProposalId(page);
-    await updateDaoPolicyMembers({ instanceAccount, page });
+    if (
+      testInfo.title.includes(
+        "should show correct threshold with default policy"
+      )
+    ) {
+      await updateDaoPolicyMembers({
+        instanceAccount,
+        page,
+        isDefaultPolicy: true,
+      });
+    } else {
+      await updateDaoPolicyMembers({ instanceAccount, page });
+    }
     if (testInfo.title.includes("insufficient account balance")) {
       await mockNearBalances({
         page,
@@ -345,5 +357,30 @@ test.describe("User is logged in", function () {
     await expect(page.getByText("Are you sure?")).toBeVisible();
     await page.getByRole("button", { name: "Confirm" }).click();
     await expect(page.getByText("Processing your request ...")).toBeVisible();
+  });
+
+  test("should show correct threshold with default policy", async ({
+    page,
+  }) => {
+    test.setTimeout(150_000);
+    const thresholdAmt = page.getByTestId("threshold-input");
+    await expect(thresholdAmt).toHaveValue("50");
+    await expect(
+      page.getByText(
+        "This is equivalent to 3 votes with the current number of members."
+      )
+    ).toBeVisible();
+    await thresholdAmt.fill("20");
+    await expect(
+      page.getByText(
+        "This is equivalent to 1 votes with the current number of members."
+      )
+    ).toBeVisible();
+    await thresholdAmt.fill("90");
+    await expect(
+      page.getByText(
+        "This is equivalent to 4 votes with the current number of members."
+      )
+    ).toBeVisible();
   });
 });

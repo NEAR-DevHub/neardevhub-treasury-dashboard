@@ -1,3 +1,9 @@
+const { getRolesDescription } = VM.require(
+  "${REPL_DEVDAO_ACCOUNT}/widget/lib.common"
+) || {
+  getRolesDescription: () => {},
+};
+
 const { formFields, setFormFields } = props;
 
 const Badge = styled.div`
@@ -65,9 +71,17 @@ const ListItem = ({ member, key }) => (
     </div>
 
     <div className="d-flex gap-1 align-items-center flex-wrap flex-1">
-      {member.permissions.map((permission, i) => (
-        <Badge key={i}>{permission}</Badge>
-      ))}
+      {member.permissions.map((permission, i) => {
+        const description = getRolesDescription(permission);
+        return (
+          <OverlayTrigger
+            placement="top"
+            overlay={<Tooltip id="tooltip">{description}</Tooltip>}
+          >
+            <Badge key={i}>{permission}</Badge>
+          </OverlayTrigger>
+        );
+      })}
     </div>
 
     <div className="d-flex w-15">
@@ -171,7 +185,7 @@ return (
             className="d-flex gap-1 align-items-center"
             style={{ width: "290px" }}
           >
-            Permissions
+            Permission Group(s)
           </div>
           <div className="d-flex flex-row" style={{ width: "60px" }}>
             Actions

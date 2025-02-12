@@ -37,6 +37,12 @@ test("should be able to create a treasury instance with sandbox, and create/exec
   await sandbox.setupWidgetReferenceAccount(widget_reference_account_id);
 
   const instance_name = "test-factory-created-instance";
+  const oneRequiredVote = {
+    weight_kind: "RoleWeight",
+    quorum: "0",
+    threshold: "1",
+  };
+
   const policy = {
     roles: [
       {
@@ -51,16 +57,8 @@ test("should be able to create a treasury instance with sandbox, and create/exec
           "call:VoteRemove",
         ],
         vote_policy: {
-          transfer: {
-            weight_kind: "RoleWeight",
-            quorum: "0",
-            threshold: "1",
-          },
-          call: {
-            weight_kind: "RoleWeight",
-            quorum: "0",
-            threshold: "1",
-          },
+          transfer: oneRequiredVote,
+          call: oneRequiredVote,
         },
       },
       {
@@ -84,7 +82,22 @@ test("should be able to create a treasury instance with sandbox, and create/exec
           "policy_add_or_update_role:*",
           "policy_update_default_vote_policy:*",
         ],
-        vote_policy: {},
+        vote_policy: {
+          config: oneRequiredVote,
+          policy: oneRequiredVote,
+          add_member_to_role: oneRequiredVote,
+          remove_member_from_role: oneRequiredVote,
+          upgrade_self: oneRequiredVote,
+          upgrade_remote: oneRequiredVote,
+          set_vote_token: oneRequiredVote,
+          add_bounty: oneRequiredVote,
+          bounty_done: oneRequiredVote,
+          factory_info_update: oneRequiredVote,
+          policy_add_or_update_role: oneRequiredVote,
+          policy_remove_role: oneRequiredVote,
+          policy_update_default_vote_policy: oneRequiredVote,
+          policy_update_parameters: oneRequiredVote,
+        },
       },
       {
         kind: {
@@ -101,7 +114,10 @@ test("should be able to create a treasury instance with sandbox, and create/exec
           "call:Finalize",
           "call:RemoveProposal",
         ],
-        vote_policy: {},
+        vote_policy: {
+          transfer: oneRequiredVote,
+          call: oneRequiredVote,
+        },
       },
     ],
     default_vote_policy: {
