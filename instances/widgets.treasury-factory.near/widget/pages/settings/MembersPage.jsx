@@ -309,7 +309,7 @@ return (
             props={{
               ActionButton: () => (
                 <button className="btn primary-button d-flex align-items-center gap-2">
-                  <i class="bi bi-plus-lg h5 mb-0"></i>New Member
+                  <i class="bi bi-plus-lg h5 mb-0"></i>Add Member
                 </button>
               ),
               checkForDeposit: true,
@@ -346,6 +346,8 @@ return (
                         <span>
                           Refer to
                           <a
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="text-underline"
                             href={"https://docs.neartreasury.com/permissions"}
                           >

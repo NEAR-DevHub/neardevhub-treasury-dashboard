@@ -186,6 +186,28 @@ return (
             style={{ width: "290px" }}
           >
             Permission Group(s)
+            <OverlayTrigger
+              placement="top"
+              delay={{ show: 200, hide: 500 }}
+              overlay={
+                <Tooltip id="tooltip">
+                  <span>
+                    Refer to
+                    <a
+                      className="text-underline"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      href={"https://docs.neartreasury.com/permissions"}
+                    >
+                      Permission Group(s)
+                    </a>
+                    to learn more about each group can and cannot do.
+                  </span>
+                </Tooltip>
+              }
+            >
+              <i className="bi bi-info-circle text-secondary"></i>
+            </OverlayTrigger>
           </div>
           <div className="d-flex flex-row" style={{ width: "60px" }}>
             Actions
@@ -206,7 +228,8 @@ return (
         setShowAddMemberModal(true);
       }}
     >
-      Add member
+      <i class="bi bi-plus h5 mb-0"></i>
+      Add Member
     </button>
     <div className="d-flex gap-2">
       <Link
