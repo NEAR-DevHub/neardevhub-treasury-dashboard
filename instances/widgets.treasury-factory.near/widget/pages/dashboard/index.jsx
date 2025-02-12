@@ -261,6 +261,9 @@ const Loading = () => {
   );
 };
 
+const getWhitelistedFTs = (tokens) =>
+  tokens.filter((token) => token.ft_meta.price > 0);
+
 return (
   <Wrapper>
     {show404Modal && <TooManyRequestModal />}
@@ -368,10 +371,13 @@ return (
           props={{
             title: "Treasury Assets: Sputnik DAO",
             nearPrice,
+            nearBalance: nearBalances?.totalParsed ?? "0",
             totalBalance: formatCurrency(
               Big(nearBalances?.totalParsed ?? "0").mul(nearPrice ?? 1)
             ),
-            ftTokens: userFTTokens.fts ? userFTTokens.fts : null,
+            ftTokens: userFTTokens.fts
+              ? getWhitelistedFTs(userFTTokens.fts)
+              : null,
             instance,
             accountId: treasuryDaoID,
           }}
@@ -386,10 +392,13 @@ return (
               title: "Treasury Assets: Lockup",
               nearPrice,
               instance,
+              nearBalance: lockupNearBalances?.totalParsed ?? "0",
               totalBalance: formatCurrency(
                 Big(lockupNearBalances?.totalParsed ?? "0").mul(nearPrice ?? 1)
               ),
-              ftTokens: userFTTokens.fts ? userFTTokens.fts : null,
+              ftTokens: userFTTokens.fts
+                ? getWhitelistedFTs(userFTTokens.fts)
+                : null,
               accountId: lockupContract,
             }}
           />
