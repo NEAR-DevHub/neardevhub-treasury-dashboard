@@ -9,18 +9,6 @@ const REQUIRED_BALANCE = 9;
 const [showErrorToast, setShowErrorToast] = useState(false);
 const [isTxnCreated, setTxnCreated] = useState(false);
 
-const Container = styled.div`
-  .text-red {
-    color: #d95c4a !important;
-  }
-
-  .inline-link-btn {
-    all: unset;
-    color: #007bff;
-    cursor: pointer;
-  }
-`;
-
 const Section = styled.div`
   display: flex;
   flex-direction: column;
@@ -76,19 +64,15 @@ const PERMISSIONS = {
   vote: "Approver",
 };
 
-function checkWeb4Account() {
-  return Near.asyncView(`${formFields.accountName}.near`, "web4_get", {
-    request: { path: "/" },
-  });
-}
-
 useEffect(() => {
   if (isTxnCreated) {
     let checkTxnTimeout = null;
     let errorTimeout = null;
 
     const checkAccountCreation = async () => {
-      checkWeb4Account()
+      Near.asyncView(`${formFields.accountName}.near`, "web4_get", {
+        request: { path: "/" },
+      })
         .then((web4) => {
           if (web4) {
             setTxnCreated(false);
@@ -266,7 +250,7 @@ const ListItem = ({ member }) => (
 );
 
 return (
-  <Container>
+  <>
     <TransactionLoader
       showInProgress={isTxnCreated}
       showError={showErrorToast}
@@ -369,5 +353,5 @@ return (
         Confirm and Create
       </button>
     </div>
-  </Container>
+  </>
 );
