@@ -563,9 +563,9 @@
     document.body.appendChild(viewer);
 
     const waitForTheme = setInterval(() => {
-      const theme = document.querySelector("[data-bs-theme]");
+      const theme = document?.querySelector("[data-bs-theme]");
 
-      if (theme && document) {
+      if (theme) {
         clearInterval(waitForTheme);
 
         const isDarkTheme = theme.getAttribute("data-bs-theme") === "dark";
