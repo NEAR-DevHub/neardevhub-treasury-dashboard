@@ -30,7 +30,7 @@ useEffect(() => {
       treasuryDaoID,
       resPerPage: rowsPerPage,
       isPrevPageCalled: isPrevPageCalled,
-      filterKindArray: ["Transfer"],
+      filterKindArray: ["Transfer", "FunctionCall"],
       filterStatusArray: ["Approved", "Rejected", "Expired", "Failed"],
       offset: typeof offset === "number" ? offset : lastProposalId,
       lastProposalId: lastProposalId,

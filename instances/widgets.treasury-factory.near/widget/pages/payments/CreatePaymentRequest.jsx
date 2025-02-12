@@ -10,7 +10,7 @@ const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
 
-const { encodeToMarkdown } = VM.require(
+const { encodeToMarkdown, LOCKUP_MIN_BALANCE_FOR_STORAGE } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
 
@@ -27,8 +27,25 @@ if (!instance) {
   return <></>;
 }
 
-const { treasuryDaoID, proposalAPIEndpoint, showProposalSelection } =
-  VM.require(`${instance}/widget/config.data`);
+const {
+  treasuryDaoID,
+  proposalAPIEndpoint,
+  showProposalSelection,
+  lockupContract,
+} = VM.require(`${instance}/widget/config.data`);
+
+const walletOptions = [
+  {
+    label: treasuryDaoID,
+    value: treasuryDaoID,
+  },
+  {
+    label: lockupContract,
+    value: lockupContract,
+  },
+];
+
+const [selectedWallet, setSelectedWallet] = useState(walletOptions[0]);
 
 const [tokenId, setTokenId] = useState(null);
 const [receiver, setReceiver] = useState(null);
@@ -53,11 +70,33 @@ const [showCancelModal, setShowCancelModal] = useState(false);
 const [showErrorToast, setShowErrorToast] = useState(false);
 const [nearPrice, setNearPrice] = useState("1"); // setting 1 as default, so VM doesn't throw any error
 
+const [lockupNearBalances, setLockupNearBalances] = useState(null);
+
 useEffect(() => {
   if (!showProposalSelection) {
     setIsManualRequest(true);
   }
 }, [showProposalSelection]);
+
+function formatNearAmount(amount) {
+  return Big(amount ?? "0")
+    .div(Big(10).pow(24))
+    .toFixed(2);
+}
+
+useEffect(() => {
+  if (lockupContract) {
+    Near.asyncView(lockupContract, "get_liquid_owners_balance").then((res) => {
+      setLockupNearBalances((prev) => ({
+        ...prev,
+        available: res,
+        availableParsed: formatNearAmount(res),
+        storage: LOCKUP_MIN_BALANCE_FOR_STORAGE,
+        storageParsed: formatNearAmount(LOCKUP_MIN_BALANCE_FOR_STORAGE),
+      }));
+    });
+  }
+}, [lockupContract]);
 
 function searchCacheApi() {
   let searchTerm = searchProposalId;
@@ -317,6 +356,15 @@ function onSubmitClick() {
     description["proposalId"] = selectedProposalId;
   }
 
+  const isLockupTransfer = selectedWallet.value === lockupContract;
+  if (isLockupTransfer) {
+    description["proposal_action"] = "transfer";
+  }
+
+  function toBase64(json) {
+    return Buffer.from(JSON.stringify(json)).toString("base64");
+  }
+
   const calls = [
     {
       contractName: treasuryDaoID,
@@ -324,13 +372,30 @@ function onSubmitClick() {
       args: {
         proposal: {
           description: encodeToMarkdown(description),
-          kind: {
-            Transfer: {
-              token_id: isNEAR ? "" : tokenId,
-              receiver_id: receiver,
-              amount: parsedAmount,
-            },
-          },
+          kind: isLockupTransfer
+            ? {
+                FunctionCall: {
+                  receiver_id: lockupContract,
+                  actions: [
+                    {
+                      method_name: "transfer",
+                      args: toBase64({
+                        amount: parsedAmount,
+                        receiver_id: receiver,
+                      }),
+                      deposit: "0",
+                      gas: gas,
+                    },
+                  ],
+                },
+              }
+            : {
+                Transfer: {
+                  token_id: isNEAR ? "" : tokenId,
+                  receiver_id: receiver,
+                  amount: parsedAmount,
+                },
+              },
         },
       },
       gas: gas,
@@ -415,7 +480,25 @@ return (
         },
       }}
     />
+
     <div className="d-flex flex-column gap-3">
+      {lockupContract && (
+        <div className="d-flex flex-column gap-1">
+          <label>Treasury Wallet</label>
+          <Widget
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.WalletDropdown`}
+            props={{
+              lockupNearBalances,
+              instance,
+              selectedValue: selectedWallet,
+              onUpdate: (v) => {
+                cleanInputs();
+                setSelectedWallet(v);
+              },
+            }}
+          />
+        </div>
+      )}
       {showProposalSelection && (
         <div className="d-flex flex-column gap-1">
           <label>Proposal</label>
@@ -530,10 +613,11 @@ return (
         <Widget
           src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokensDropdown"
           props={{
-            instance,
+            daoAccount: selectedWallet.value,
             selectedValue: tokenId,
             onChange: (v) => setTokenId(v),
             setTokensAvailable: setSelectedTokensAvailable,
+            lockupNearBalances,
           }}
         />
       </div>
@@ -592,7 +676,7 @@ return (
       </div>
       {selectedTokensAvailable &&
         amount &&
-        parseFloat(selectedTokensAvailable) <=
+        parseFloat(selectedTokensAvailable) <
           parseFloat(amount ? amount : 0) && (
           <div className="d-flex gap-3 align-items-center warning px-3 py-2 rounded-3">
             <i class="bi bi-exclamation-triangle warning-icon h5"></i>

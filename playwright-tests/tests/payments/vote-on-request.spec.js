@@ -14,7 +14,9 @@ import {
   CurrentTimestampInNanoseconds,
   TransferProposalData,
 } from "../../util/inventory.js";
-import { InsufficientBalance } from "../../util/lib.js";
+import { InsufficientBalance, toBase64 } from "../../util/lib.js";
+import { SandboxRPC } from "../../util/sandboxrpc.js";
+import { getInstanceConfig } from "../../util/config.js";
 
 async function voteOnProposal({
   page,
@@ -410,5 +412,166 @@ test.describe("don't ask again", function () {
         page.getByText("The payment request has been successfully deleted.")
       ).toBeVisible();
     }
+  });
+});
+
+async function createSandboxAndLockupRequest({ page, daoAccount }) {
+  const daoName = daoAccount.split(".")[0];
+  const sandbox = new SandboxRPC();
+  const proposalTitle = "Test proposal title";
+  const proposalSummary = "Test proposal summary";
+  const receiverAccount = daoAccount;
+  const description = `* Title: ${proposalTitle} <br>* Summary: ${proposalSummary} <br>* Proposal Action: transfer`;
+  await sandbox.init();
+  await sandbox.attachRoutes(page);
+  await sandbox.setupSandboxForSputnikDao(daoName, "theori.near");
+  const lockupContractId = await sandbox.setupLockupContract(daoName);
+  await sandbox.addFunctionCallProposal({
+    method_name: "transfer",
+    functionArgs: toBase64({
+      amount: "3000000000000000000000000",
+      receiver_id: receiverAccount,
+    }),
+    receiver_id: lockupContractId,
+    description,
+    daoName,
+  });
+  return { sandbox, lockupContractId };
+}
+
+async function mockLockupLiquidAmount({ page, isSufficient }) {
+  await mockRpcRequest({
+    page,
+    filterParams: {
+      method_name: "get_liquid_owners_balance",
+    },
+    modifyOriginalResultFunction: () => {
+      return isSufficient ? "3500000000000000000000000" : "0";
+    },
+  });
+}
+
+test.describe("Vote on Lockup payment request", function () {
+  test.use({
+    storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
+  });
+
+  test("should throw insufficient lockup account balance error", async ({
+    page,
+    instanceAccount,
+    daoAccount,
+  }) => {
+    test.setTimeout(250_000);
+    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
+    if (!instanceConfig.lockupContract) {
+      console.log("no lockup contract found for instance");
+      return test.skip();
+    }
+    const { sandbox, lockupContractId } = await createSandboxAndLockupRequest({
+      page,
+
+      daoAccount,
+    });
+    await updateDaoPolicyMembers({ instanceAccount, page });
+    await mockLockupLiquidAmount({ page, isSufficient: false });
+    await page.goto(`/${instanceAccount}/widget/app?page=payments`);
+    const approveButton = page
+      .getByRole("button", {
+        name: "Approve",
+      })
+      .first();
+    await expect(approveButton).toBeEnabled({ timeout: 30_000 });
+    await approveButton.click();
+    await expect(
+      page.getByText(
+        "The request cannot be approved because the treasury balance is insufficient to cover the payment."
+      )
+    ).toBeVisible();
+    await sandbox.quitSandbox();
+  });
+
+  test("approve payment request with multiple votes", async ({
+    page,
+    instanceAccount,
+    daoAccount,
+  }) => {
+    test.setTimeout(250_000);
+    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
+    if (!instanceConfig.lockupContract) {
+      console.log("no lockup contract found for instance");
+      return test.skip();
+    }
+    const { sandbox } = await createSandboxAndLockupRequest({
+      page,
+
+      daoAccount,
+    });
+    await updateDaoPolicyMembers({ instanceAccount, page, isMultiVote: true });
+    await mockLockupLiquidAmount({ page, isSufficient: true });
+    await page.goto(`/${instanceAccount}/widget/app?page=payments`);
+    const approveButton = page
+      .getByRole("button", {
+        name: "Approve",
+      })
+      .first();
+    await expect(approveButton).toBeEnabled({ timeout: 30_000 });
+    await approveButton.click();
+
+    page.evaluate(async () => {
+      const selector = await document.querySelector("near-social-viewer")
+        .selectorPromise;
+
+      const wallet = await selector.wallet();
+
+      return new Promise((resolve) => {
+        wallet["signAndSendTransaction"] = async (transaction) => {
+          resolve(transaction);
+          return new Promise((transactionSentPromiseResolve) => {
+            window.transactionSentPromiseResolve =
+              transactionSentPromiseResolve;
+          });
+        };
+      });
+    });
+
+    await expect(
+      page.getByRole("heading", { name: "Confirm your vote" })
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Confirm" }).click();
+    await page.getByRole("button", { name: "Confirm" }).click();
+    const transactionResult = await sandbox.account.functionCall({
+      contractId: daoAccount,
+      methodName: "act_proposal",
+      args: {
+        id: 0,
+        action: "VoteApprove",
+      },
+      gas: "300000000000000",
+      attachedDeposit: "0",
+    });
+    await page.evaluate(async (transactionResult) => {
+      window.transactionSentPromiseResolve(transactionResult);
+    }, transactionResult);
+    await expect(page.locator("div.modal-body code").nth(0)).toBeAttached({
+      attached: false,
+      timeout: 10_000,
+    });
+    await expect(page.locator(".spinner-border")).toBeAttached({
+      attached: false,
+      timeout: 10_000,
+    });
+    await expect(page.locator(".offcanvas-body")).toBeVisible({
+      visible: false,
+    });
+    await expect(
+      page.getByText(
+        "Your vote is counted, the payment request is highlighted."
+      )
+    ).toBeVisible();
+
+    await expect(page.locator("tr").nth(1)).toHaveClass("bg-highlight", {
+      timeout: 10_000,
+    });
+    await sandbox.quitSandbox();
   });
 });

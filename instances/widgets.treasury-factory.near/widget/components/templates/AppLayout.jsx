@@ -135,6 +135,16 @@ const Theme = styled.div`
     text-align: left;
   }
 
+  .text-truncate {
+    display: -webkit-box !important;
+    -webkit-line-clamp: 1 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    text-align: left !important;
+    white-space: normal !important;
+  }
+
   .display-none {
     display: none;
   }
