@@ -47,7 +47,12 @@ return (
           <span>
             We currently only support creating new SputnikDAO accounts. To
             import an existing account,{" "}
-            <a href="https://support.neartreasury.com/" target="_blank">
+            <a
+              style={{ color: "#01BF7A" }}
+              rel="noopener noreferrer"
+              href="https://support.neartreasury.com/"
+              target="_blank"
+            >
               contact our team
             </a>
             .
