@@ -101,7 +101,7 @@ async function checkForErrorWithAmountField(
   const tokenSelect = await page.getByTestId("tokens-dropdown");
   await tokenSelect.click();
   if (selectNear) {
-    await page.locator(".dropdown-item").first().click();
+    await tokenSelect.locator(".dropdown-item").first().click();
   } else {
     await page
       .getByTestId("tokens-dropdown")
