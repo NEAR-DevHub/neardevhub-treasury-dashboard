@@ -22,3 +22,7 @@ export const encodeToMarkdown = (data) => {
 };
 
 export const InsufficientBalance = BigInt(0.05 * 10 ** 24).toString();
+
+export function toBase64(json) {
+  return Buffer.from(JSON.stringify(json)).toString("base64");
+}

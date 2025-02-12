@@ -264,6 +264,13 @@ function getFilteredProposalsByStatusAndKind({
     }
   }
 
+  const checkForTransferProposals = (item) => {
+    return (
+      decodeProposalDescription("proposal_action", item.description) ===
+        "transfer" || item.kind?.Transfer
+    );
+  };
+
   const checkForExchangeProposals = (item) => {
     const isAssetExchange =
       decodeProposalDescription("proposal_action", item.description) ===
@@ -298,6 +305,11 @@ function getFilteredProposalsByStatusAndKind({
       if (!kindCondition) return false;
 
       // Check for asset exchange or stake delegation, if applicable
+      if (
+        filterKindArray.includes("Transfer") &&
+        !checkForTransferProposals(item)
+      )
+        return false;
       if (isAssetExchange && !checkForExchangeProposals(item)) return false;
       if (isStakeDelegation && !checkForStakeProposals(item)) return false;
 
