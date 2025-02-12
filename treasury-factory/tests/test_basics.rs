@@ -8,6 +8,7 @@ use near_workspaces::types::AccessKeyPermission;
 use near_workspaces::types::PublicKey;
 use serde_json::{json, Value};
 use std::fs;
+use std::str::FromStr;
 use std::sync::{Mutex, Once};
 
 // Ensure `build_project` only runs once
@@ -108,6 +109,7 @@ async fn test_web4() -> Result<(), Box<dyn std::error::Error>> {
 
 #[tokio::test]
 async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
+    const TREASURY_FACTORY_CONTRACT_ACCOUNT: &str = "treasury-factory.near";
     const SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT: &str = "sputnik-dao.near";
     const SOCIALDB_ACCOUNT: &str = "social.near";
     const WIDGET_REFERENCE_ACCOUNT_ID: &str = "treasury-testing.near";
@@ -115,8 +117,15 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
     let mainnet = near_workspaces::mainnet().await?;
     let sputnikdao_factory_contract_id: AccountId = SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT.parse()?;
     let socialdb_contract_id: AccountId = SOCIALDB_ACCOUNT.parse()?;
+    let treasury_factory_contract_id: AccountId = TREASURY_FACTORY_CONTRACT_ACCOUNT.parse()?;
 
     let worker = near_workspaces::sandbox().await?;
+
+    let treasury_factory_contract: near_workspaces::Contract = worker
+        .import_contract(&treasury_factory_contract_id, &mainnet)
+        .initial_balance(NearToken::from_near(1000))
+        .transact()
+        .await?;
 
     let sputnik_dao_factory = worker
         .import_contract(&sputnikdao_factory_contract_id, &mainnet)
@@ -164,35 +173,31 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
     assert!(set_socialdb_status_result.is_success());
 
+    let reference_widget_data = json!({
+        reference_widget_contract.id().as_str(): {
+            "widget": {
+                "app": "Hello",
+                "config": "Goodbye"
+            }
+        }
+    });
     let social_set_result = reference_widget_contract
         .as_account()
         .call(socialdb.id(), "set")
         .args_json(json!({
-            "data": {
-                reference_widget_contract.id().as_str(): {
-                    "widget": {
-                        "app": "Hello",
-                        "config": "Goodbye"
-                    }
-                }
-            }
+            "data": reference_widget_data
         }))
         .deposit(NearToken::from_near(2))
         .transact()
         .await?;
     assert!(social_set_result.is_success());
 
-    let reference_widgets = socialdb
-        .call("get")
-        .args_json(json!({
-            "keys": [format!("{}/widget/**", reference_widget_contract.id().as_str())]
-        }))
-        .view()
-        .await?;
-    let reference_widgets_json_string = String::from_utf8(reference_widgets.result).unwrap();
-
     let treasury_factory_contract_wasm = build_project_once();
-    let treasury_factory_contract = worker.dev_deploy(&treasury_factory_contract_wasm).await?;
+    let treasury_factory_contract = treasury_factory_contract
+        .as_account()
+        .deploy(&treasury_factory_contract_wasm)
+        .await?
+        .result;
 
     let init_sputnik_dao_factory_result =
         sputnik_dao_factory.call("new").max_gas().transact().await?;
@@ -326,7 +331,7 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
     assert_eq!(
         create_treasury_instance_result.receipt_failures().len(),
         0,
-        "{:?}",
+        "Should not be receipt failures: {:?}",
         create_treasury_instance_result.receipt_failures()
     );
 
@@ -337,7 +342,15 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
                 .saturating_sub(NearToken::from_near(9)))
     );
 
-    assert_eq!(
+    assert!(
+        treasury_factory_account_details_after
+            .balance
+            .as_millinear()
+            - treasury_factory_account_details_before
+                .balance
+                .as_millinear()
+            < 10,
+        "treasury factory balance after ({}) should be equal or slightly above balance before ({})",
         treasury_factory_account_details_after
             .balance
             .as_millinear(),
@@ -408,14 +421,17 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
         }))
         .view()
         .await?;
-    let deployed_widgets_json_string = String::from_utf8(deployed_widgets.result).unwrap();
+
+    let deployed_widgets_json =
+        Value::from_str(String::from_utf8(deployed_widgets.result).unwrap().as_str()).unwrap();
 
     assert_eq!(
-        reference_widgets_json_string.replace(
-            reference_widget_contract.id().as_str(),
-            instance_account_id.as_str()
-        ),
-        deployed_widgets_json_string
+        deployed_widgets_json[instance_account_id.clone()]["widget"]["app"][""],
+        reference_widget_data[reference_widget_contract.id().as_str()]["widget"]["app"]
+    );
+    assert_eq!(
+        deployed_widgets_json[instance_account_id.clone()]["widget"]["config"],
+        reference_widget_data[reference_widget_contract.id().as_str()]["widget"]["config"]
     );
 
     let admin_full_access_public_key: PublicKey =
@@ -443,6 +459,33 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
     assert!(
         matches!(user_access_key.permission, AccessKeyPermission::FullAccess),
         "Expected FullAccess permission"
+    );
+
+    let social_metadata = socialdb
+        .call("get")
+        .args_json(json!({
+            "keys": [format!("{}/widget/app/metadata/**", instance_account_id)]
+        }))
+        .view()
+        .await?;
+    println!(
+        "{:?}",
+        String::from_utf8(social_metadata.result.clone())
+            .unwrap()
+            .as_str()
+    );
+
+    let social_metadata_json: Value =
+        Value::from_str(String::from_utf8(social_metadata.result).unwrap().as_str()).unwrap();
+    let metadata = &social_metadata_json[instance_account_id.clone()]["widget"]["app"]["metadata"];
+    assert_eq!(metadata["name"], "NEAR treasury");
+    assert_eq!(
+        metadata["description"],
+        format!("NEAR treasury for {}", instance_account_id)
+    );
+    assert_eq!(
+        metadata["image"]["ipfs_cid"],
+        "bafkreiboarigt5w26y5jyxyl4au7r2dl76o5lrm2jqjgqpooakck5xsojq"
     );
 
     Ok(())
@@ -868,13 +911,28 @@ async fn test_factory_should_refund_if_failing_because_of_existing_dao(
     assert!(
         user_account_details_before.balance.as_millinear()
             - user_account_details_after.balance.as_millinear()
-            < 3020
+            < 2220
     );
 
     assert!(
         treasury_factory_account_details_after.balance
             > treasury_factory_account_details_before.balance
     );
+
+    assert!(
+        treasury_factory_account_details_after
+            .balance
+            .as_millinear()
+            - treasury_factory_account_details_before
+                .balance
+                .as_millinear()
+            < 100
+    );
+
+    let instance_account_details = worker
+        .view_account(&format!("{}.near", instance_name).parse().unwrap())
+        .await?;
+    assert_eq!(instance_account_details.balance.as_millinear(), 2200);
 
     Ok(())
 }

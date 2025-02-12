@@ -5,6 +5,8 @@ use near_sdk::{base64::prelude::*, env};
 use near_sdk::{near, serde_json, Gas, NearToken, Promise, PromiseResult};
 use web4::types::{Web4Request, Web4Response};
 
+const TREASURY_FACTORY_ACCOUNT_ID: &str = "treasury-factory.near";
+
 // Define the contract structure
 #[near(contract_state)]
 #[derive(Default)]
@@ -18,10 +20,23 @@ impl Contract {
         &mut self,
         widget_reference_account_id: String,
         social_db_account_id: String,
+        set_social_metadata_defaults: Option<bool>,
     ) -> Promise {
+        if !(env::predecessor_account_id() == TREASURY_FACTORY_ACCOUNT_ID
+            || env::predecessor_account_id() == env::current_account_id())
+        {
+            env::panic_str(
+                format!(
+                    "Should only be called by {} or {}",
+                    TREASURY_FACTORY_ACCOUNT_ID,
+                    env::current_account_id()
+                )
+                .as_str(),
+            );
+        }
         let args =
             "{\"keys\": [\"".to_string() + widget_reference_account_id.as_str() + "/widget/**\"]}";
-        Promise::new(social_db_account_id.parse().unwrap())
+        let mut promise = Promise::new(social_db_account_id.parse().unwrap())
             .function_call(
                 "get".to_string(),
                 args.into_bytes(),
@@ -31,19 +46,30 @@ impl Contract {
             .then(
                 Self::ext(env::current_account_id())
                     .with_attached_deposit(env::attached_deposit())
-                    .update_widgets_callback(widget_reference_account_id, social_db_account_id),
-            )
+                    .update_widgets_callback(
+                        widget_reference_account_id,
+                        social_db_account_id.clone(),
+                    ),
+            );
+
+        if set_social_metadata_defaults.unwrap_or(false) {
+            promise = promise.then(self.internal_set_social_metadata(
+                Some(String::from(social_db_account_id)),
+                None,
+                None,
+                None,
+            ));
+        }
+        return promise;
     }
 
     #[payable]
+    #[private]
     pub fn update_widgets_callback(
         &mut self,
         widget_reference_account_id: String,
         social_db_account_id: String,
     ) -> Promise {
-        if env::predecessor_account_id() != env::current_account_id() {
-            env::panic_str("Should not be called directly");
-        }
         match env::promise_result(0) {
             PromiseResult::Successful(result) => {
                 let reference_widget = String::from_utf8(result).unwrap();
@@ -64,6 +90,64 @@ impl Contract {
         }
     }
 
+    #[private]
+    pub fn set_social_metadata(
+        &mut self,
+        social_db_account_id: Option<String>,
+        name: Option<String>,
+        description: Option<String>,
+        ipfs_cid: Option<String>,
+    ) -> Promise {
+        self.internal_set_social_metadata(social_db_account_id, name, description, ipfs_cid)
+    }
+
+    fn internal_set_social_metadata(
+        &mut self,
+        social_db_account_id: Option<String>,
+        name: Option<String>,
+        description: Option<String>,
+        ipfs_cid: Option<String>,
+    ) -> Promise {
+        let social_db_account_id =
+            social_db_account_id.unwrap_or_else(|| "social.near".to_string());
+        let name = name.unwrap_or_else(|| "NEAR treasury".to_string());
+        let description = description
+            .unwrap_or_else(|| format!("NEAR treasury for {}", env::current_account_id().as_str()));
+        let ipfs_cid = ipfs_cid.unwrap_or_else(|| {
+            "bafkreiboarigt5w26y5jyxyl4au7r2dl76o5lrm2jqjgqpooakck5xsojq".to_string()
+        });
+
+        let args = near_sdk::serde_json::json!({"data":
+            {
+                env::current_account_id(): {
+                    "widget": {
+                        "app": {
+                            "metadata": {
+                                "name": name,
+                                "description": description,
+                                "image": {
+                                    "ipfs_cid": ipfs_cid
+                                },
+                                "tags": {
+                                    "app": "",
+                                    "neartreasury": ""
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        })
+        .to_string();
+
+        Promise::new(social_db_account_id.parse().unwrap()).function_call(
+            "set".to_string(),
+            args.into_bytes(),
+            NearToken::from_near(0),
+            Gas::from_tgas(10),
+        )
+    }
+
     pub fn web4_get(&self, request: Web4Request) -> Web4Response {
         let current_account_id = env::current_account_id().to_string();
         let metadata_preload_url = format!(
@@ -73,6 +157,8 @@ impl Contract {
 
         let mut app_name = String::from("NEAR Treasury Dashboard");
         let mut description = String::from("Treasury management for NEAR DAOs");
+        let mut image_ipfs_cid =
+            String::from("bafkreiboarigt5w26y5jyxyl4au7r2dl76o5lrm2jqjgqpooakck5xsojq");
 
         let Some(preloads) = request.preloads else {
             return Web4Response::PreloadUrls {
@@ -99,6 +185,13 @@ impl Contract {
                 {
                     description = description_str.to_string();
                 }
+
+                if let Some(image_ipfs_cid_str) = body_value[&current_account_id]["widget"]["app"]
+                    ["metadata"]["image"]["ipfs_cid"]
+                    .as_str()
+                {
+                    image_ipfs_cid = image_ipfs_cid_str.to_string();
+                }
             }
         }
 
@@ -116,7 +209,7 @@ impl Contract {
                 "SOCIAL_METADATA_DESCRIPTION",
                 &html_escape::encode_double_quoted_attribute(&description),
             )
-            .replace("NEAR_SOCIAL_ACCOUNT_ID", &current_account_id);
+            .replace("SOCIAL_IMAGE_IPFS_CID", &image_ipfs_cid);
         Web4Response::Body {
             content_type: "text/html; charset=UTF-8".to_owned(),
             body: general_purpose::STANDARD.encode(&index_html),
@@ -205,8 +298,17 @@ mod tests {
                 assert!(body_string.contains(
                     "<meta property=\"og:description\" content=\"A description of any devhub portal instance, not just devhub itself\" />"
                 ));
+                assert!(body_string.contains(
+                    "<meta name=\"twitter:description\" content=\"A description of any devhub portal instance, not just devhub itself\" />"
+                ));
                 assert!(body_string
                     .contains("<meta property=\"og:title\" content=\"NotOnlyDevHub\" />"));
+                assert!(body_string
+                    .contains("<meta name=\"twitter:title\" content=\"NotOnlyDevHub\" />"));
+                assert!(body_string
+                    .contains("<meta property=\"og:image\" content=\"https://ipfs.near.social/ipfs/bafkreido4srg4aj7l7yg2tz22nbu3ytdidjczdvottfr5ek6gqorwg6v74\" />"));
+                assert!(body_string
+                    .contains("<meta name=\"twitter:image\" content=\"https://ipfs.near.social/ipfs/bafkreido4srg4aj7l7yg2tz22nbu3ytdidjczdvottfr5ek6gqorwg6v74\" />"));
             }
             _ => {
                 panic!("Should return Web4Response::Body");
