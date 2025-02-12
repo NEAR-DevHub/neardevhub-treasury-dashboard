@@ -8,9 +8,11 @@ const {
   skipValdation,
   label,
   id,
+  info,
 } = props;
 
 const [value, setValue] = useState(defaultValue ?? "");
+const [show, setShow] = useState(false);
 
 const checkAccountAvailability = async (accountId, postfix) => {
   if (accountId.length === 0) return;
@@ -64,9 +66,29 @@ useEffect(() => {
 return (
   <div className="account-field position-relative d-flex flex-column">
     {label && (
-      <label className="fw-semibold mb-1" for={id}>
-        {label}
-      </label>
+      <div className="d-flex gap-1 align-items-center">
+        <label className="fw-semibold mb-1" for={id}>
+          {label}
+        </label>
+        {info && (
+          <OverlayTrigger
+            show={show}
+            placement="top"
+            onToggle={setShow}
+            overlay={
+              <Tooltip
+                onMouseEnter={() => setShow(true)}
+                onMouseLeave={() => setShow(false)}
+                id="tooltip"
+              >
+                {info}
+              </Tooltip>
+            }
+          >
+            <i className="mx-1 h6 mb-1 bi bi-info-circle text-secondary" />
+          </OverlayTrigger>
+        )}
+      </div>
     )}
     <input
       id={id}
