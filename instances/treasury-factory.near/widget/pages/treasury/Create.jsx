@@ -17,10 +17,14 @@ const alreadyCreatedATreasury = Storage.get(
   `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.create-treasury.SummaryStep`
 );
 
-if (alreadyCreatedATreasury) {
-  step = 3;
-}
 const [formFields, setFormFields] = useState({});
+const [showCongratsModal, setShowCongratsModal] = useState(false);
+
+useEffect(() => {
+  if (alreadyCreatedATreasury && !showCongratsModal) {
+    setShowCongratsModal(true);
+  }
+}, [alreadyCreatedATreasury]);
 
 const STEPS = [
   <Widget src={`${widgetBasePath}.ConfirmWalletStep`} />,
@@ -32,7 +36,10 @@ const STEPS = [
     src={`${widgetBasePath}.AddMembersStep`}
     props={{ formFields, setFormFields }}
   />,
-  <Widget src={`${widgetBasePath}.SummaryStep`} props={{ formFields }} />,
+  <Widget
+    src={`${widgetBasePath}.SummaryStep`}
+    props={{ formFields, setShowCongratsModal }}
+  />,
 ];
 
 const Container = styled.div`
@@ -138,17 +145,30 @@ const loading = (
 );
 
 return (
-  <Wrapper title={context.accountId ? "Treasury Creation" : "Sign In"}>
-    {context.accountId ? (
-      <Widget
-        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.create-treasury.Stepper`}
-        props={{
-          steps: STEPS,
-          activeStep: step ?? 0,
-        }}
-      />
+  <div>
+    {showCongratsModal ? (
+      <PageWrapper style={{ margin: "auto" }}>
+        <Widget
+          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.SuccessPage`}
+          props={{ formFields }}
+        />
+      </PageWrapper>
     ) : (
-      <>{isNearSocial ? <SocalSignIn /> : <NearSignIn />}</>
+      <Wrapper title={context.accountId ? "Treasury Creation" : "Sign In"}>
+        {context.accountId ? (
+          <div>
+            <Widget
+              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.create-treasury.Stepper`}
+              props={{
+                steps: STEPS,
+                activeStep: step ?? 0,
+              }}
+            />
+          </div>
+        ) : (
+          <>{isNearSocial ? <SocalSignIn /> : <NearSignIn />}</>
+        )}
+      </Wrapper>
     )}
-  </Wrapper>
+  </div>
 );
