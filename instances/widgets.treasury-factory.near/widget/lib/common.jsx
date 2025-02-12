@@ -64,7 +64,13 @@ function getRoleWiseData(treasuryDaoID) {
   return Near.asyncView(treasuryDaoID, "get_policy", {}).then((daoPolicy) => {
     const data = [];
     const defaultPolicy = daoPolicy.default_vote_policy;
+
     (daoPolicy.roles ?? []).map((role) => {
+      // Sort members alphabetically
+      const members = (role.kind?.Group ?? []).sort((a, b) =>
+        a.localeCompare(b)
+      );
+
       // if there is no role.vote_policy, default is applied
       const threshold = Object.keys(role?.vote_policy ?? {}).length
         ? role?.vote_policy?.["vote"]?.threshold
@@ -73,7 +79,7 @@ function getRoleWiseData(treasuryDaoID) {
 
       data.push({
         roleName: role.name,
-        members: role.kind?.Group ?? [],
+        members,
         isRatio,
         threshold: isRatio
           ? threshold[1] === 100
@@ -368,12 +374,14 @@ function getMembersAndPermissions(treasuryDaoID) {
         });
       });
 
-      // Convert map to array and remove duplicates
-      return Array.from(memberMap.values()).map((data) => ({
-        member: data.member,
-        permissions: Array.from(new Set(data.permissions)), // Remove duplicate permissions
-        roles: Array.from(new Set(data.roles)), // Remove duplicate role names
-      }));
+      // Convert map to array, remove duplicates, and sort by member name
+      return Array.from(memberMap.values())
+        .map((data) => ({
+          member: data.member,
+          permissions: Array.from(new Set(data.permissions)), // Remove duplicate permissions
+          roles: Array.from(new Set(data.roles)), // Remove duplicate role names
+        }))
+        .sort((a, b) => a.member.localeCompare(b.member)); // Sort alphabetically
     }
 
     return memberData;
