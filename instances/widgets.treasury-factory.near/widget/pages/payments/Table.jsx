@@ -13,9 +13,8 @@ if (!instance) {
   return <></>;
 }
 
-const { treasuryDaoID, showKYC, showReferenceProposal } = VM.require(
-  `${instance}/widget/config.data`
-);
+const { treasuryDaoID, showKYC, showReferenceProposal, lockupContract } =
+  VM.require(`${instance}/widget/config.data`);
 
 const { TableSkeleton } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.skeleton"
@@ -49,6 +48,7 @@ const deleteGroup = props.deleteGroup;
 const [showToastStatus, setToastStatus] = useState(false);
 const [voteProposalId, setVoteProposalId] = useState(null);
 const [nearStakedTokens, setNearStakedTokens] = useState(null);
+const [lockupNearBalances, setLockupNearBalances] = useState(null);
 const refreshTableData = props.refreshTableData;
 
 const accountId = context.accountId;
@@ -238,6 +238,29 @@ const VoteSuccessToast = () => {
 
 const proposalPeriod = policy.proposal_period;
 
+function decodeBase64(encodedArgs) {
+  if (!encodedArgs) return null;
+  try {
+    const jsonString = Buffer.from(encodedArgs, "base64").toString("utf8");
+    const parsedArgs = JSON.parse(jsonString);
+    return parsedArgs;
+  } catch (error) {
+    console.error("Failed to decode or parse encodedArgs:", error);
+    return null;
+  }
+}
+
+useEffect(() => {
+  if (lockupContract) {
+    Near.asyncView(lockupContract, "get_liquid_owners_balance").then((res) => {
+      setLockupNearBalances((prev) => ({
+        ...prev,
+        available: res,
+      }));
+    });
+  }
+}, [lockupContract]);
+
 const ProposalsComponent = () => {
   return (
     <tbody style={{ overflowX: "auto" }}>
@@ -248,7 +271,18 @@ const ProposalsComponent = () => {
         const description = !title && !summary && item.description;
         const id = decodeProposalDescription("proposalId", item.description);
         const proposalId = id ? parseInt(id, 10) : null;
-        const args = item.kind.Transfer;
+        const isFunctionType =
+          Object.values(item?.kind?.FunctionCall ?? {})?.length > 0;
+        const decodedArgs =
+          isFunctionType &&
+          decodeBase64(item.kind.FunctionCall?.actions[0].args);
+        const args = isFunctionType
+          ? {
+              token_id: "",
+              receiver_id: decodedArgs?.receiver_id,
+              amount: decodedArgs?.amount,
+            }
+          : item.kind.Transfer;
 
         return (
           <tr
@@ -276,6 +310,24 @@ const ProposalsComponent = () => {
                     isVoteStatus: false,
                     status: item.status,
                     isPaymentsPage: true,
+                  }}
+                />
+              </td>
+            )}
+            {lockupContract && (
+              <td className={"text-left"}>
+                <div className="text-secondary fw-semi-bold">
+                  {isFunctionType ? "Lockup" : "Sputnik DAO"}
+                </div>
+                <Widget
+                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
+                  props={{
+                    accountId: isFunctionType ? lockupContract : treasuryDaoID,
+                    showKYC: false,
+                    instance,
+                    displayImage: false,
+                    displayName: false,
+                    width: 200,
                   }}
                 />
               </td>
@@ -457,17 +509,28 @@ const ProposalsComponent = () => {
                       hasDeletePermission,
                       hasVotingPermission,
                       proposalCreator: item.proposer,
-                      tokensBalance: [
-                        ...(userFTTokens?.body?.fts ?? []),
-                        {
-                          contract: "near",
-                          amount: Big(nearBalances.available)
-                            .minus(
-                              Big(nearStakedTokens ?? "0").mul(Big(10).pow(24))
-                            )
-                            .toFixed(),
-                        },
-                      ],
+                      tokensBalance: isFunctionType
+                        ? [
+                            {
+                              contract: "near",
+                              amount: Big(lockupNearBalances.available).toFixed(
+                                2
+                              ),
+                            },
+                          ]
+                        : [
+                            ...(userFTTokens?.body?.fts ?? []),
+                            {
+                              contract: "near",
+                              amount: Big(nearBalances.available)
+                                .minus(
+                                  Big(nearStakedTokens ?? "0").mul(
+                                    Big(10).pow(24)
+                                  )
+                                )
+                                .toFixed(),
+                            },
+                          ],
                       currentAmount: args.amount,
                       currentContract:
                         args.token_id === "" ? "near" : args.token_id,
@@ -526,6 +589,9 @@ return (
                 <td className="px-3">#</td>
                 <td className={isVisible("Created Date")}>Created Date</td>
                 {!isPendingRequests && <td className="text-center">Status</td>}
+                {lockupContract && (
+                  <td className={"text-left"}>Treasury Wallet</td>
+                )}
                 {showReferenceProposal && (
                   <td className={isVisible("Reference")}>Reference</td>
                 )}

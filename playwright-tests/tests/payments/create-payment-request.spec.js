@@ -18,7 +18,8 @@ import {
   focusInputClearAndBlur,
   focusInputReplaceAndBlur,
 } from "../../util/forms.js";
-import { InsufficientBalance } from "../../util/lib.js";
+import { InsufficientBalance, toBase64 } from "../../util/lib.js";
+import { SandboxRPC } from "../../util/sandboxrpc.js";
 
 async function clickCreatePaymentRequestButton(page) {
   const createPaymentRequestButton = await page.getByRole("button", {
@@ -100,7 +101,7 @@ async function checkForErrorWithAmountField(
   const tokenSelect = await page.getByTestId("tokens-dropdown");
   await tokenSelect.click();
   if (selectNear) {
-    await page.locator(".dropdown-item").first().click();
+    await tokenSelect.locator(".dropdown-item").first().click();
   } else {
     await page
       .getByTestId("tokens-dropdown")
@@ -137,6 +138,14 @@ test.describe("User is not logged in", function () {
   });
 });
 
+async function selectLockupAccount({ page, daoAccount, lockupContract }) {
+  await page
+    .locator(".offcanvas-body")
+    .getByRole("button", { name: daoAccount })
+    .click();
+  await page.locator(".offcanvas-body").getByText(lockupContract).click();
+}
+
 test.describe.parallel("User logged in with different roles", function () {
   const roles = [
     {
@@ -160,7 +169,7 @@ test.describe.parallel("User logged in with different roles", function () {
         instanceAccount,
       }) => {
         test.setTimeout(60_000);
-        await updateDaoPolicyMembers({ page });
+        await updateDaoPolicyMembers({ instanceAccount, page });
         await page.goto(`/${instanceAccount}/widget/app?page=payments`);
         await expect(page.getByText("Pending Requests")).toBeVisible({
           timeout: 20_000,
@@ -184,8 +193,8 @@ test.describe("User is logged in", function () {
     storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
   });
 
-  test.beforeEach(async ({ page }) => {
-    await mockNearPrice({ nearPrice: 5, page });
+  test.beforeEach(async ({ page, daoAccount }) => {
+    await mockNearPrice({ daoAccount, nearPrice: 5, page });
   });
 
   test("low account balance should show warning modal, and allow action ", async ({
@@ -212,7 +221,7 @@ test.describe("User is logged in", function () {
     instanceAccount,
   }) => {
     test.setTimeout(60_000);
-    await updateDaoPolicyMembers({ page });
+    await updateDaoPolicyMembers({ instanceAccount, page });
     await mockNearBalances({
       page,
       accountId: signedUser,
@@ -244,7 +253,7 @@ test.describe("User is logged in", function () {
   }) => {
     test.setTimeout(60_000);
     await mockPikespeakFTTokensResponse({ page, daoAccount });
-    await updateDaoPolicyMembers({ page });
+    await updateDaoPolicyMembers({ instanceAccount, page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
 
     await clickCreatePaymentRequestButton(page);
@@ -263,7 +272,7 @@ test.describe("User is logged in", function () {
   }) => {
     test.setTimeout(120_000);
     await mockPikespeakFTTokensResponse({ page, daoAccount });
-    await updateDaoPolicyMembers({ page });
+    await updateDaoPolicyMembers({ instanceAccount, page });
     await fillCreateForm(page, daoAccount, instanceAccount);
 
     await checkForErrorWithAmountField(page, "-34232", true);
@@ -275,7 +284,7 @@ test.describe("User is logged in", function () {
     instanceAccount,
   }) => {
     test.setTimeout(120_000);
-    await updateDaoPolicyMembers({ page });
+    await updateDaoPolicyMembers({ instanceAccount, page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
     await clickCreatePaymentRequestButton(page);
     await expect(
@@ -292,7 +301,7 @@ test.describe("User is logged in", function () {
   }) => {
     test.setTimeout(120_000);
     await mockPikespeakFTTokensResponse({ page, daoAccount });
-    await updateDaoPolicyMembers({ page });
+    await updateDaoPolicyMembers({ instanceAccount, page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
     await clickCreatePaymentRequestButton(page);
     const tokenSelect = page.getByTestId("tokens-dropdown");
@@ -315,7 +324,7 @@ test.describe("User is logged in", function () {
   }) => {
     test.setTimeout(60_000);
     await mockPikespeakFTTokensResponse({ page, daoAccount });
-    await updateDaoPolicyMembers({ page });
+    await updateDaoPolicyMembers({ instanceAccount, page });
     await mockInventory({ page, account: daoAccount });
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
@@ -402,7 +411,7 @@ test.describe("User is logged in", function () {
     daoAccount,
   }) => {
     await mockPikespeakFTTokensResponse({ page, daoAccount });
-    await updateDaoPolicyMembers({ page });
+    await updateDaoPolicyMembers({ instanceAccount, page });
     await fillCreateForm(page, daoAccount, instanceAccount);
     const cancelBtn = page.getByRole("button", { name: "Cancel" });
     await expect(cancelBtn).toBeAttached({ timeout: 10_000 });
@@ -429,7 +438,7 @@ test.describe("User is logged in", function () {
     const nearPrice = 4;
     const amountFromLinkedProposal = 3120 / nearPrice;
 
-    await mockNearPrice({ nearPrice, page });
+    await mockNearPrice({ daoAccount, nearPrice, page });
     await mockInventory({ page, account: daoAccount });
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
     if (instanceConfig.showProposalSelection === false) {
@@ -440,7 +449,7 @@ test.describe("User is logged in", function () {
     }
 
     await mockPikespeakFTTokensResponse({ page, daoAccount });
-    await updateDaoPolicyMembers({ page });
+    await updateDaoPolicyMembers({ instanceAccount, page });
 
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
     await clickCreatePaymentRequestButton(page);
@@ -488,8 +497,7 @@ test.describe("User is logged in", function () {
   }) => {
     test.setTimeout(120_000);
     await mockPikespeakFTTokensResponse({ page, daoAccount });
-    await updateDaoPolicyMembers({ page });
-    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
+    await updateDaoPolicyMembers({ instanceAccount, page });
     await fillCreateForm(page, daoAccount, instanceAccount);
     const submitBtn = page
       .locator(".offcanvas-body")
@@ -522,7 +530,7 @@ test.describe("User is logged in", function () {
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
     await mockInventory({ page, account: daoAccount });
     await mockPikespeakFTTokensResponse({ page, daoAccount });
-    await updateDaoPolicyMembers({ page });
+    await updateDaoPolicyMembers({ instanceAccount, page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
 
     await clickCreatePaymentRequestButton(page);
@@ -601,6 +609,122 @@ test.describe("User is logged in", function () {
       expectedTransactionModalObject
     );
   });
+
+  test("create lockup payment request using sandboxRPC", async ({
+    page,
+    instanceAccount,
+    daoAccount,
+    lockupContract,
+  }) => {
+    test.setTimeout(250_000);
+    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
+    if (!instanceConfig.lockupContract) {
+      console.log("no lockup contract found for instance");
+      return test.skip();
+    }
+    const daoName = daoAccount.split(".")[0];
+    const sandbox = new SandboxRPC();
+    const proposalTitle = "Test proposal title";
+    const proposalSummary = "Test proposal summary";
+    const receiverAccount = daoAccount;
+    const description = `* Title: ${proposalTitle} <br>* Summary: ${proposalSummary} <br>* Proposal Action: transfer`;
+    await sandbox.init();
+    await sandbox.attachRoutes(page);
+    await sandbox.setupSandboxForSputnikDao(daoName);
+    await sandbox.setupLockupContract(daoName);
+    await updateDaoPolicyMembers({ instanceAccount, page });
+    await page.goto(`/${instanceAccount}/widget/app?page=payments`);
+    await clickCreatePaymentRequestButton(page);
+    await selectLockupAccount({ page, daoAccount, lockupContract });
+    await page.getByTestId("proposal-title").fill(proposalTitle);
+    await page.getByTestId("proposal-summary").fill(proposalSummary);
+
+    await page.getByPlaceholder("treasury.near").fill(receiverAccount);
+    const totalAmountField = await page.getByTestId("total-amount");
+    await totalAmountField.focus();
+    await totalAmountField.pressSequentially("3");
+    await totalAmountField.blur();
+
+    const tokenSelect = await page.getByTestId("tokens-dropdown");
+    await tokenSelect.click();
+    await tokenSelect.getByText("NEAR").click();
+    const submitBtn = page
+      .locator(".offcanvas-body")
+      .getByRole("button", { name: "Submit" });
+    await expect(submitBtn).toBeAttached({ timeout: 10_000 });
+    await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
+    await submitBtn.click();
+
+    expect(await getTransactionModalObject(page)).toEqual({
+      proposal: {
+        description,
+        kind: {
+          FunctionCall: {
+            receiver_id: lockupContract,
+            actions: [
+              {
+                method_name: "transfer",
+                args: toBase64({
+                  amount: "3000000000000000000000000",
+                  receiver_id: receiverAccount,
+                }),
+                deposit: "0",
+                gas: 270000000000000,
+              },
+            ],
+          },
+        },
+      },
+    });
+    page.evaluate(async () => {
+      const selector = await document.querySelector("near-social-viewer")
+        .selectorPromise;
+
+      const wallet = await selector.wallet();
+
+      return new Promise((resolve) => {
+        wallet["signAndSendTransaction"] = async (transaction) => {
+          resolve(transaction);
+          return new Promise((transactionSentPromiseResolve) => {
+            window.transactionSentPromiseResolve =
+              transactionSentPromiseResolve;
+          });
+        };
+      });
+    });
+    const transactionResult = await sandbox.addFunctionCallProposal({
+      method_name: "transfer",
+      functionArgs: toBase64({
+        amount: "3000000000000000000000000",
+        receiver_id: receiverAccount,
+      }),
+      receiver_id: lockupContract,
+      description,
+      daoName,
+    });
+    await page.getByRole("button", { name: "Confirm" }).click();
+    await page.evaluate(async (transactionResult) => {
+      window.transactionSentPromiseResolve(transactionResult);
+    }, transactionResult);
+    const lastProposalId = await sandbox.getLastProposalId(daoName);
+    await expect(page.locator("div.modal-body code").nth(0)).toBeAttached({
+      attached: false,
+      timeout: 10_000,
+    });
+    await expect(page.locator(".spinner-border")).toBeAttached({
+      attached: false,
+      timeout: 10_000,
+    });
+    await expect(page.locator(".offcanvas-body")).toBeVisible({
+      visible: false,
+    });
+    await expect(
+      page
+        .getByRole("cell", { name: `${lastProposalId - 1}`, exact: true })
+        .first()
+    ).toBeVisible({ timeout: 20_000 });
+    await sandbox.quitSandbox();
+  });
 });
 
 test.describe("admin with function access keys", function () {
@@ -617,9 +741,9 @@ test.describe("admin with function access keys", function () {
     const nearPrice = 4;
     await mockInventory({ page, account: daoAccount });
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
-    await mockNearPrice({ nearPrice, page });
+    await mockNearPrice({ daoAccount, nearPrice, page });
     await mockPikespeakFTTokensResponse({ page, daoAccount });
-    await updateDaoPolicyMembers({ page });
+    await updateDaoPolicyMembers({ instanceAccount, page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
 
     await clickCreatePaymentRequestButton(page);

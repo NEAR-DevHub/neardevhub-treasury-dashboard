@@ -5,11 +5,15 @@ const { TransactionLoader } = VM.require(
   `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TransactionLoader`
 ) || { TransactionLoader: () => <></> };
 
-const { encodeToMarkdown, hasPermission, getRoleWiseData } = VM.require(
-  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
-) || {
+const {
+  encodeToMarkdown,
+  hasPermission,
+  getRoleWiseData,
+  getRolesThresholdDescription,
+} = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common") || {
   encodeToMarkdown: () => {},
   hasPermission: () => {},
+  getRolesThresholdDescription: () => {},
 };
 
 const { instance } = props;
@@ -78,7 +82,15 @@ function getLastProposalId() {
 useEffect(() => {
   setRolesData([]);
   getRoleWiseData(treasuryDaoID).then((resp) => {
-    setRolesData(resp);
+    // remove Create request and Treasury Creator permission group, since we don't need to set threshold for them
+    setRolesData(
+      resp.filter(
+        (i) =>
+          i.roleName !== "Create Requests" &&
+          i.roleName !== "Requestor" &&
+          i.roleName !== "Create requests"
+      )
+    );
   });
 }, [refreshData]);
 
@@ -345,10 +357,22 @@ return (
           }}
         />
         <div className="flex-1 border-right py-3 ">
-          <div className="card-title px-3 pb-3">Permission Groups</div>
+          <div className="card-title px-3 pb-3">
+            Permission Groups{" "}
+            <Widget
+              src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+              props={{
+                popup:
+                  "Select the permission group you want to apply the voting threshold to:",
+                children: <i className="bi bi-info-circle text-secondary"></i>,
+                instance,
+              }}
+            />
+          </div>
           <div className="d-flex flex-column gap-1 py-1">
             {rolesData.map((role) => {
               const name = role.roleName;
+              const description = getRolesThresholdDescription(name);
               return (
                 <div
                   onClick={() => setSelectedGroup(role)}
@@ -358,40 +382,19 @@ return (
                   }
                 >
                   <span className="px-3">{name}</span>
+                  {description && (
+                    <div className="text-secondary px-3 text-sm">
+                      {description}
+                    </div>
+                  )}
                 </div>
               );
             })}
           </div>
         </div>
-        <div className="flex-1 border-right py-3 ">
-          <div className="card-title px-3 pb-3">
-            Members{" "}
-            <span className="tag rounded-pill px-3">
-              {selectedGroup.members.length}
-            </span>
-          </div>
-          <div className="d-flex flex-column gap-1 py-1">
-            {Array.isArray(selectedGroup.members) &&
-              selectedGroup.members.map((member) => (
-                <div
-                  className="p-1 px-3 text-truncate"
-                  style={{ width: "95%" }}
-                >
-                  <Widget
-                    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
-                    props={{
-                      accountId: member,
-                      showKYC: false,
-                      instance,
-                      width: "100%",
-                    }}
-                  />
-                </div>
-              ))}
-          </div>
-        </div>
-        <div className="flex-1 py-3 ">
-          <div className="card-title px-3 pb-3">Voting Policy</div>
+
+        <div className="flex-1 py-3 border-right ">
+          <div className="card-title px-3 pb-3">Voting Policy </div>
           <div className="d-flex flex-column gap-3 px-3 w-100 py-1">
             <div className="text-md">
               How many votes are needed for decisions in the `
@@ -406,6 +409,8 @@ return (
                   selectedValue: selectedVoteOption,
                   onUpdate: (v) => {
                     setSelectedVoteOption(v);
+                    setSelectedVoteValue("");
+                    setValueError(null);
                   },
                   disabled: !hasCreatePermission,
                 }}
@@ -467,6 +472,7 @@ return (
             </div>
 
             {isPercentageSelected &&
+              selectedVoteValue &&
               selectedGroup.threshold != selectedVoteValue && (
                 <div className="d-flex gap-3 warning px-3 py-2 rounded-3">
                   <i class="bi bi-exclamation-triangle warning-icon h5"></i>
@@ -526,6 +532,33 @@ return (
                 />
               </div>
             )}
+          </div>
+        </div>
+        <div className="flex-1 py-3 ">
+          <div className="card-title px-3 pb-3 d-flex align-items-center gap-2">
+            <div>Who Can Vote</div>
+            <span className="tag rounded-pill px-3">
+              {selectedGroup.members.length}
+            </span>
+          </div>
+          <div className="d-flex flex-column gap-1 py-1">
+            {Array.isArray(selectedGroup.members) &&
+              selectedGroup.members.map((member) => (
+                <div
+                  className="p-1 px-3 text-truncate"
+                  style={{ width: "95%" }}
+                >
+                  <Widget
+                    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
+                    props={{
+                      accountId: member,
+                      showKYC: false,
+                      instance,
+                      width: "100%",
+                    }}
+                  />
+                </div>
+              ))}
           </div>
         </div>
       </div>

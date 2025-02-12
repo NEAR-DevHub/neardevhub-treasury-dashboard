@@ -135,6 +135,16 @@ const Theme = styled.div`
     text-align: left;
   }
 
+  .text-truncate {
+    display: -webkit-box !important;
+    -webkit-line-clamp: 1 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    text-align: left !important;
+    white-space: normal !important;
+  }
+
   .display-none {
     display: none;
   }
@@ -217,7 +227,7 @@ const Theme = styled.div`
   }
 
   .primary-text-color {
-    color: var(--theme-color);
+    color: var(--theme-color) !important;
     a {
       color: var(--theme-color) !important;
     }
@@ -225,6 +235,10 @@ const Theme = styled.div`
     i {
       color: var(--theme-color) !important;
     }
+  }
+
+  a.primary-text-color:hover {
+    color: var(--theme-color-dark) !important;
   }
 
   .btn-outline.btn:hover {

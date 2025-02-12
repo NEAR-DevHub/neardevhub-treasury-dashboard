@@ -1,7 +1,7 @@
-const { getPermissionsText } = VM.require(
+const { getRolesDescription } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 ) || {
-  getPermissionsText: () => {},
+  getRolesDescription: () => {},
 };
 
 const { href } = VM.require(`${REPL_DEVHUB}/widget/core.lib.url`);
@@ -97,7 +97,7 @@ const Item = ({ option }) => {
     <div className="w-100 text-wrap">
       {option.title}
       <div className="text-secondary text-sm">
-        {getPermissionsText(option.title)}
+        {getRolesDescription(option.title)}
       </div>
     </div>
   );
@@ -141,7 +141,7 @@ return (
       >
         <div
           className={
-            "dropdown-toggle bg-dropdown border rounded-2 btn drop-btn w-100 " +
+            "dropdown-toggle bg-dropdown border rounded-2 btn drop-btn w-100 justify-content-start " +
             (disabled ? "disabled" : "")
           }
           onClick={!disabled && toggleDropdown}

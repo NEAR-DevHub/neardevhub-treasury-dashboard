@@ -31,7 +31,7 @@ return (
         />
       ))}
     </div>
-    <Container className="shadow-sm gap-4 d-flex flex-column">
+    <Container className="gap-4 d-flex flex-column">
       {steps[parseInt(activeStep)]}
     </Container>
   </>
