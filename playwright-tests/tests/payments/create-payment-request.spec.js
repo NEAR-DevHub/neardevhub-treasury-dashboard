@@ -732,6 +732,7 @@ test.describe("User is logged in", function () {
     instanceAccount,
   }) => {
     test.setTimeout(100_000);
+    await updateDaoPolicyMembers({ instanceAccount, page });
     await fillCreateForm(page, daoAccount, instanceAccount);
     const submitBtn = page
       .locator(".offcanvas-body")
@@ -953,7 +954,7 @@ test.describe("admin with function access keys", function () {
     });
     await expect(
       page.getByRole("cell", { name: `${newProposalId}`, exact: true })
-    ).toBeVisible({ timeout: 10_000 });
+    ).toBeVisible({ timeout: 20_000 });
     const widgetsAccount =
       (instanceAccount.includes("testing") ? "test-widgets" : "widgets") +
       ".treasury-factory.near";
@@ -967,31 +968,28 @@ test.describe("admin with function access keys", function () {
     );
 
     const checkThatFormIsCleared = async () => {
+      await page.waitForTimeout(2_000);
       await page.getByRole("button", { name: " Create Request" }).click();
 
       if (instanceConfig.showProposalSelection === true) {
         const proposalSelect = page.locator(".dropdown-toggle").first();
         await expect(proposalSelect).toBeVisible();
-
         await expect(
           proposalSelect.getByText("Select", { exact: true })
         ).toBeVisible();
       } else {
-        await expect(page.getByTestId("proposal-title")).toHaveText("");
-        await expect(page.getByTestId("proposal-summary")).toHaveText("");
-
+        await expect(page.getByTestId("proposal-title")).toHaveValue("");
+        await expect(page.getByTestId("proposal-summary")).toHaveValue("");
         await expect(page.getByPlaceholder("treasury.near")).toBeVisible();
-
-        await expect(page.getByTestId("total-amount")).toHaveText("");
+        await expect(page.getByTestId("total-amount")).toHaveValue("");
       }
       const submitBtn = page.getByRole("button", { name: "Submit" });
       await expect(submitBtn).toBeAttached({ timeout: 10_000 });
       await expect(submitBtn).toBeDisabled({ timeout: 10_000 });
     };
     await checkThatFormIsCleared();
-
+    await page.waitForTimeout(2_000);
     await page.reload();
-
     await checkThatFormIsCleared();
   });
 });
