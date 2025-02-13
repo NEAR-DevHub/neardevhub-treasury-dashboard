@@ -1,4 +1,12 @@
-const { nearPrice, ftTokens, accountId, title, instance, totalBalance } = props;
+const {
+  nearPrice,
+  ftTokens,
+  accountId,
+  title,
+  instance,
+  totalBalance,
+  nearBalance,
+} = props;
 
 const [allPeriodData, setAllPeriodData] = useState({});
 const [isLoading, setIsLoading] = useState(true);
@@ -38,6 +46,7 @@ return (
       selectedToken,
       setSelectedToken,
       totalBalance,
+      nearBalance,
     }}
   />
 );

@@ -80,6 +80,7 @@ function getPrice(tokensNumber, tokenPrice) {
 const [isNearPortfolioExpanded, setNearPortfolioExpanded] = useState(false);
 const [isNearStakedPortfolioExpanded, setNearStakedPortfolioExpanded] =
   useState(false);
+const [showHiddenTokens, setShowHiddenTokens] = useState(false);
 
 function formatCurrency(amount) {
   const formattedAmount = Number(amount)
@@ -300,6 +301,35 @@ const NearPortfolio = () => {
 const isLoading =
   ftTokens === null || nearBalances === null || nearPrice === null;
 
+const unlistedTokens = Array.isArray(ftTokens)
+  ? ftTokens.filter(
+      (token) =>
+        token.ft_meta.symbol.length > 6 && /\./.test(token.ft_meta.symbol)
+    )
+  : [];
+
+const TokensList = ({ tokens, filterFn }) => {
+  if (!Array.isArray(tokens)) return <></>;
+  if (tokens.filter(filterFn)?.length <= 0) return <></>;
+
+  return tokens.filter(filterFn)?.map((item, index) => {
+    const { ft_meta, amount } = item;
+    const { decimals, symbol, icon, price } = ft_meta;
+    const tokensNumber = convertBalanceToReadableFormat(amount, decimals);
+
+    return (
+      <PortfolioCard
+        hideBorder={index === ftTokens.length - 1}
+        symbol={symbol}
+        src={icon}
+        balance={tokensNumber}
+        showExpand={false}
+        price={price ?? 0}
+      />
+    );
+  });
+};
+
 return (
   <div className="card flex-1 overflow-hidden border-bottom">
     {heading}
@@ -315,26 +345,43 @@ return (
           ) : (
             <div className="d-flex flex-column">
               <NearPortfolio />
-              {Array.isArray(ftTokens) &&
-                ftTokens.map((item, index) => {
-                  const { ft_meta, amount } = item;
-                  const { decimals, symbol, icon, price } = ft_meta;
-                  const tokensNumber = convertBalanceToReadableFormat(
-                    amount,
-                    decimals
-                  );
-                  const tokenPrice = price ?? 0;
-                  return (
-                    <PortfolioCard
-                      hideBorder={index === ftTokens.length - 1}
-                      symbol={symbol}
-                      src={icon}
-                      balance={tokensNumber}
-                      showExpand={false}
-                      price={tokenPrice}
+              <TokensList
+                tokens={ftTokens}
+                filterFn={(token) =>
+                  token.ft_meta.symbol.length <= 6 &&
+                  !/\./.test(token.ft_meta.symbol)
+                }
+              />
+
+              {unlistedTokens.length > 0 && (
+                <>
+                  {showHiddenTokens && (
+                    <TokensList
+                      tokens={ftTokens}
+                      filterFn={(token) =>
+                        token.ft_meta.symbol.length > 6 &&
+                        /\./.test(token.ft_meta.symbol)
+                      }
                     />
-                  );
-                })}
+                  )}
+                  <div
+                    role="button"
+                    className="d-flex align-items-center justify-content-between px-3 py-2"
+                    onClick={() => setShowHiddenTokens(!showHiddenTokens)}
+                  >
+                    <div>
+                      {showHiddenTokens ? "Hide" : "Show"} unlisted tokens
+                    </div>
+                    <i
+                      className={
+                        (showHiddenTokens
+                          ? "bi bi-chevron-up"
+                          : "bi bi-chevron-down") + " text-secondary h6 mb-0"
+                      }
+                    ></i>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>

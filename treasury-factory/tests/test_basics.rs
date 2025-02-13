@@ -212,11 +212,17 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
     let instance_name = "test-treasury-instance";
     let instance_account_id = format!("{}.near", instance_name);
 
+    let one_required_vote_policy = json!({
+        "weight_kind": "RoleWeight",
+        "quorum": "0",
+        "threshold": "1"
+    });
+
     let create_dao_args = json!({
         "config": {
             "name": instance_name,
             "purpose": "creating dao treasury",
-            "metadata": "",
+            "metadata": ""
         },
         "policy": {
             "roles": [
@@ -232,16 +238,8 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
                         "transfer:VoteRemove"
                     ],
                     "vote_policy": {
-                        "transfer": {
-                            "weight_kind": "RoleWeight",
-                            "quorum": "0",
-                            "threshold": "1"
-                        },
-                        "call": {
-                            "weight_kind": "RoleWeight",
-                            "quorum": "0",
-                            "threshold": "1"
-                        }
+                        "transfer": one_required_vote_policy,
+                        "call": one_required_vote_policy
                     }
                 },
                 {
@@ -265,7 +263,22 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
                         "policy_add_or_update_role:*",
                         "policy_update_default_vote_policy:*"
                     ],
-                    "vote_policy": {}
+                    "vote_policy": {
+                        "config": one_required_vote_policy,
+                        "policy": one_required_vote_policy,
+                        "add_member_to_role": one_required_vote_policy,
+                        "remove_member_from_role": one_required_vote_policy,
+                        "upgrade_self": one_required_vote_policy,
+                        "upgrade_remote": one_required_vote_policy,
+                        "set_vote_token": one_required_vote_policy,
+                        "add_bounty": one_required_vote_policy,
+                        "bounty_done": one_required_vote_policy,
+                        "factory_info_update": one_required_vote_policy,
+                        "policy_add_or_update_role": one_required_vote_policy,
+                        "policy_remove_role": one_required_vote_policy,
+                        "policy_update_default_vote_policy": one_required_vote_policy,
+                        "policy_update_parameters": one_required_vote_policy
+                    }
                 },
                 {
                     "kind": {
@@ -282,7 +295,10 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
                         "transfer:RemoveProposal",
                         "transfer:Finalize"
                     ],
-                    "vote_policy": {}
+                    "vote_policy": {
+                        "transfer": one_required_vote_policy,
+                        "call": one_required_vote_policy
+                    }
                 }
             ],
             "default_vote_policy": {

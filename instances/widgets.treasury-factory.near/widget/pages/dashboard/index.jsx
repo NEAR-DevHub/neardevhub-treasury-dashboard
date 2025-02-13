@@ -368,6 +368,7 @@ return (
           props={{
             title: "Treasury Assets: Sputnik DAO",
             nearPrice,
+            nearBalance: nearBalances?.totalParsed ?? "0",
             totalBalance: formatCurrency(
               Big(nearBalances?.totalParsed ?? "0").mul(nearPrice ?? 1)
             ),
@@ -386,6 +387,7 @@ return (
               title: "Treasury Assets: Lockup",
               nearPrice,
               instance,
+              nearBalance: lockupNearBalances?.totalParsed ?? "0",
               totalBalance: formatCurrency(
                 Big(lockupNearBalances?.totalParsed ?? "0").mul(nearPrice ?? 1)
               ),

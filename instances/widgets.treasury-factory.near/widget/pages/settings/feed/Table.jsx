@@ -29,9 +29,12 @@ const { treasuryDaoID, showKYC, showReferenceProposal } = VM.require(
 
 const proposals = props.proposals;
 
-const highlightProposalId = props.highlightProposalId
-  ? parseInt(props.highlightProposalId)
-  : null;
+const highlightProposalId =
+  props.highlightProposalId ||
+  props.highlightProposalId === "0" ||
+  props.highlightProposalId === 0
+    ? parseInt(props.highlightProposalId)
+    : null;
 
 const loading = props.loading;
 const isPendingRequests = props.isPendingRequests;

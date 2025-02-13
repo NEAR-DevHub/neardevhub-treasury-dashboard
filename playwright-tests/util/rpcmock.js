@@ -322,6 +322,7 @@ export async function updateDaoPolicyMembers({
   instanceAccount,
   page,
   isMultiVote = false,
+  isDefaultPolicy = false,
 }) {
   await mockRpcRequest({
     page,
@@ -332,7 +333,11 @@ export async function updateDaoPolicyMembers({
       const votePolicy = {
         weight_kind: "RoleWeight",
         quorum: "0",
-        threshold: isMultiVote ? [90, 100] : [0, 100],
+        threshold: isDefaultPolicy
+          ? [1, 2]
+          : isMultiVote
+          ? [90, 100]
+          : [0, 100],
       };
       originalResult = instanceAccount.includes("testing")
         ? getNewPolicy(votePolicy, votePolicy, votePolicy)
