@@ -325,7 +325,7 @@ return (
       showError={showErrorToast}
       toggleToast={() => setShowErrorToast(false)}
     />
-    {Array.isArray(rolesData) && rolesData.length ? (
+    {Array.isArray(rolesData) && rolesData.length && selectedGroup ? (
       <div className="card rounded-4 d-flex flex-row px-0 flex-wrap">
         <Widget
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
@@ -363,7 +363,7 @@ return (
               src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
               props={{
                 popup:
-                  "Select the permission group you want to apply the voting threshold to:",
+                  "Select the permission group you want to apply the voting threshold to.",
                 children: <i className="bi bi-info-circle text-secondary"></i>,
                 instance,
               }}
@@ -409,8 +409,10 @@ return (
                   selectedValue: selectedVoteOption,
                   onUpdate: (v) => {
                     setSelectedVoteOption(v);
-                    setSelectedVoteValue("");
-                    setValueError(null);
+                    if (v?.value !== selectedVoteOption.value) {
+                      setSelectedVoteValue("");
+                      setValueError(null);
+                    }
                   },
                   disabled: !hasCreatePermission,
                 }}

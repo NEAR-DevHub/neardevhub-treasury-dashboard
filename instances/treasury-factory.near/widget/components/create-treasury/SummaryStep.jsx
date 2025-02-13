@@ -112,6 +112,11 @@ function filterMemberByPermission(permission) {
 
 // Permissions are set using https://github.com/near-daos/sputnik-dao-contract/blob/main/sputnikdao2/src/proposals.rs#L119
 function createDao() {
+  const oneRequiredVote = {
+    weight_kind: "RoleWeight",
+    quorum: "0",
+    threshold: "1",
+  };
   setTxnCreated(true);
   const createDaoConfig = {
     config: {
@@ -133,16 +138,8 @@ function createDao() {
             "transfer:VoteRemove",
           ],
           vote_policy: {
-            transfer: {
-              weight_kind: "RoleWeight",
-              quorum: "0",
-              threshold: "1",
-            },
-            call: {
-              weight_kind: "RoleWeight",
-              quorum: "0",
-              threshold: "1",
-            },
+            transfer: oneRequiredVote,
+            call: oneRequiredVote,
           },
         },
         {
@@ -166,7 +163,22 @@ function createDao() {
             "policy_update_default_vote_policy:*",
             "policy_update_parameters:*",
           ],
-          vote_policy: {},
+          vote_policy: {
+            config: oneRequiredVote,
+            policy: oneRequiredVote,
+            add_member_to_role: oneRequiredVote,
+            remove_member_from_role: oneRequiredVote,
+            upgrade_self: oneRequiredVote,
+            upgrade_remote: oneRequiredVote,
+            set_vote_token: oneRequiredVote,
+            add_bounty: oneRequiredVote,
+            bounty_done: oneRequiredVote,
+            factory_info_update: oneRequiredVote,
+            policy_add_or_update_role: oneRequiredVote,
+            policy_remove_role: oneRequiredVote,
+            policy_update_default_vote_policy: oneRequiredVote,
+            policy_update_parameters: oneRequiredVote,
+          },
         },
         {
           kind: {
@@ -183,7 +195,10 @@ function createDao() {
             "transfer:RemoveProposal",
             "transfer:Finalize",
           ],
-          vote_policy: {},
+          vote_policy: {
+            transfer: oneRequiredVote,
+            call: oneRequiredVote,
+          },
         },
       ],
       default_vote_policy: {
