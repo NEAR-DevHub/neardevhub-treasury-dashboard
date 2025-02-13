@@ -425,7 +425,7 @@ async function createSandboxAndLockupRequest({ page, daoAccount }) {
   await sandbox.init();
   await sandbox.attachRoutes(page);
   await sandbox.setupSandboxForSputnikDao(daoName, "theori.near");
-  const lockupContractId = await sandbox.setupLockupContract(daoName);
+  const lockupContractId = await sandbox.setupLockupContract(daoAccount);
   await sandbox.addFunctionCallProposal({
     method_name: "transfer",
     functionArgs: toBase64({
@@ -564,11 +564,9 @@ test.describe("Vote on Lockup payment request", function () {
       visible: false,
     });
     await expect(
-      page.getByText(
-        "Your vote is counted, the payment request is highlighted."
-      )
+      page.getByText("The payment request has been successfully executed.")
     ).toBeVisible();
-
+    await page.getByText("View in History").click();
     await expect(page.locator("tr").nth(1)).toHaveClass("bg-highlight", {
       timeout: 10_000,
     });
