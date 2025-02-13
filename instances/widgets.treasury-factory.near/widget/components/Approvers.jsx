@@ -7,7 +7,9 @@ const { Approval, Reject } = VM.require(
 
 const votes = props.votes ?? {};
 const accounts = Object.keys(votes);
-const approversGroup = props.approversGroup ?? [];
+const approversGroup = (props.approversGroup ?? []).sort((a, b) =>
+  a.localeCompare(b)
+);
 const maxShow = 1;
 const showHover = accounts?.length > maxShow;
 const maxIndex = 100;
@@ -96,7 +98,6 @@ return (
                   const imageSrc = getImage(acc);
                   const voted = !!votes[acc];
                   const votesStatus = getVoteStatus(votes[acc]);
-                  const voteImg = votesStatus === "Approved" ? approve : reject;
                   return (
                     <div
                       className="d-flex gap-2 align-items-center"

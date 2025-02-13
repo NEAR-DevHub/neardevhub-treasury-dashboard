@@ -7,10 +7,12 @@ const {
   getDaoRoles,
   getPolicyApproverGroup,
   hasPermission,
+  getRolesDescription,
 } = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common") || {
   getDaoRoles: () => {},
   getPolicyApproverGroup: () => {},
   hasPermission: () => {},
+  getRolesDescription: () => {},
 };
 
 const instance = props.instance;
@@ -180,7 +182,22 @@ const Members = () => {
             <td>
               <div className="d-flex gap-3 align-items-center">
                 {(group.roles ?? []).map((i) => {
-                  return <Tag className="rounded-pill px-2 py-1">{i}</Tag>;
+                  const description = getRolesDescription(i);
+                  const tag = <Tag className="rounded-pill px-2 py-1">{i}</Tag>;
+                  if (!description) {
+                    return tag;
+                  } else {
+                    return (
+                      <Widget
+                        src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+                        props={{
+                          popup: description,
+                          children: tag,
+                          instance,
+                        }}
+                      />
+                    );
+                  }
                 })}
               </div>
             </td>
@@ -292,7 +309,7 @@ return (
             props={{
               ActionButton: () => (
                 <button className="btn primary-button d-flex align-items-center gap-2">
-                  <i class="bi bi-plus-lg h5 mb-0"></i>New Member
+                  <i class="bi bi-plus-lg h5 mb-0"></i>Add Member
                 </button>
               ),
               checkForDeposit: true,
@@ -320,7 +337,32 @@ return (
               <tr className="text-secondary">
                 <td>Name</td>
                 <td>User name</td>
-                <td>Permissions</td>
+                <td>
+                  Permission Group(s){" "}
+                  <Widget
+                    src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+                    props={{
+                      popup: (
+                        <span>
+                          Refer to
+                          <a
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-underline"
+                            href={"https://docs.neartreasury.com/permissions"}
+                          >
+                            Permission Group(s)
+                          </a>
+                          to learn more about each group can and cannot do.
+                        </span>
+                      ),
+                      children: (
+                        <i className="bi bi-info-circle text-secondary"></i>
+                      ),
+                      instance,
+                    }}
+                  />
+                </td>
                 {hasCreatePermission && <td className="text-right">Actions</td>}
               </tr>
             </thead>

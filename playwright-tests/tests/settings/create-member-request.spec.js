@@ -45,7 +45,7 @@ async function navigateToMembersPage({ page, instanceAccount }) {
 
 async function openAddMemberForm({ page }) {
   const createMemberRequestButton = page.getByRole("button", {
-    name: "New Member",
+    name: "Add Member",
   });
 
   await expect(createMemberRequestButton).toBeVisible();
@@ -87,7 +87,7 @@ test.describe.parallel("User logged in with different roles", function () {
         await navigateToMembersPage({ page, instanceAccount });
         await expect(
           page.getByRole("button", {
-            name: "New Member",
+            name: "Add Member",
           })
         ).toBeHidden();
         await expect(page.getByText("Actions", { exact: true })).toBeHidden();
@@ -125,7 +125,7 @@ test.describe("User is logged in", function () {
         "Hey Ori, you don't have enough NEAR to complete actions on your treasury."
       )
     ).toBeVisible();
-    await page.getByRole("button", { name: " New Member" }).click();
+    await page.getByRole("button", { name: " Add Member" }).click();
     await expect(
       page
         .getByText("Please add more funds to your account and try again")
@@ -147,7 +147,7 @@ test.describe("User is logged in", function () {
     await navigateToMembersPage({ page, instanceAccount });
     await updateDaoPolicyMembers({ instanceAccount, page });
     const createMemberRequestButton = page.getByRole("button", {
-      name: "New Member",
+      name: "Add Member",
     });
     await createMemberRequestButton.click();
     await expect(page.getByRole("heading", { name: "Add Member" })).toBeVisible(
