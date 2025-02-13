@@ -9,7 +9,6 @@
     <meta property="og:title" content="SOCIAL_METADATA_TITLE" />
     <meta property="og:description" content="SOCIAL_METADATA_DESCRIPTION" />
     <meta property="og:image" content="https://ipfs.near.social/ipfs/SOCIAL_IMAGE_IPFS_CID" />
-
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="SOCIAL_METADATA_TITLE" />
     <meta name="twitter:description" content="SOCIAL_METADATA_DESCRIPTION" />
@@ -236,8 +235,8 @@
         align-items: center;
         width: 100%;
         padding: 0 1rem;
-        background-color: var(--bg-system-color);
-        border-bottom: 1px solid var(--bs-border-color);
+        background-color: #f4f4f4;
+        border-bottom: 1px solid rgba(226, 230, 236, 1);
         font-size: 15px;
         font-weight: 500;
       }
@@ -259,11 +258,11 @@
         margin: 10px;
         background: none;
         border: none;
-        color: var(--text-color);
+        color: #1b1b18;
       }
 
       .custom-logout button:hover {
-        background: var(--grey-035);
+        background: #e6e6e6;
       }
 
       button.btn-primary {
@@ -368,7 +367,7 @@
       <a href="https://neartreasury.com/">
         <img
           id="logo"
-          src="https://ipfs.near.social/ipfs/bafkreigxfb2vzetfzsunqgukiux3og23vcomofvxekiqx4zizihgntgqdi"
+          src="https://ipfs.near.social/ipfs/bafkreibm63lijt7qs3dzlmrrdbhqgxkt55k5daswgrq5z4stqp4zk46kc4"
           alt="treasury logo"
         />
       </a>
@@ -572,18 +571,20 @@
           ? "#3B3B3B"
           : "rgba(226, 230, 236, 1)";
 
-        btn.style.color = isDarkTheme ? "#CACACA" : "#1B1B18";
-        btn.addEventListener("mouseover", () => {
-          btn.style.backgroundColor = isDarkTheme ? "#3E3E3E" : "#E6E6E6";
-        });
-        btn.addEventListener("mouseout", () => {
-          btn.style.backgroundColor = isDarkTheme ? "#131313" : "#f4f4f4";
-        });
+        if (btn) {
+          btn.style.color = isDarkTheme ? "#CACACA" : "#1B1B18";
+          btn.addEventListener("mouseover", () => {
+            btn.style.backgroundColor = isDarkTheme ? "#3E3E3E" : "#E6E6E6";
+          });
+          btn.addEventListener("mouseout", () => {
+            btn.style.backgroundColor = isDarkTheme ? "#131313" : "#f4f4f4";
+          });
+        }
 
         logo.src = isDarkTheme
           ? "https://ipfs.near.social/ipfs/bafkreighuyf2wcsc3nyey64536craz2ffis45fnjelh4gqxigugasalcwy"
           : "https://ipfs.near.social/ipfs/bafkreibm63lijt7qs3dzlmrrdbhqgxkt55k5daswgrq5z4stqp4zk46kc4";
       }
-    }, 1000);
+    }, 500);
   </script>
 </html>
