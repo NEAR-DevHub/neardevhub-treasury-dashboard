@@ -490,7 +490,7 @@ test.describe("Vote on Lockup payment request", function () {
     await sandbox.quitSandbox();
   });
 
-  test("approve payment request with multiple votes", async ({
+  test("approve lockup transfer payment request with single vote", async ({
     page,
     instanceAccount,
     daoAccount,
