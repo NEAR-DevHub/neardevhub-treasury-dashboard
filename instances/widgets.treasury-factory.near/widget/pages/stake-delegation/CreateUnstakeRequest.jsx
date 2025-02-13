@@ -181,14 +181,13 @@ useEffect(() => {
 useEffect(() => {
   if (isTxnCreated) {
     let checkTxnTimeout = null;
-    let errorTimeout = null;
 
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
         if (typeof lastProposalId === "number" && lastProposalId !== id) {
           onCloseCanvas();
           refreshData();
-          clearTimeout(errorTimeout);
+          clearTimeout(checkTxnTimeout);
           setTxnCreated(false);
         } else {
           checkTxnTimeout = setTimeout(() => checkForNewProposal(), 1000);
@@ -197,16 +196,8 @@ useEffect(() => {
     };
     checkForNewProposal();
 
-    // if in 20 seconds there is no change, show error condition
-    errorTimeout = setTimeout(() => {
-      setShowErrorToast(true);
-      setTxnCreated(false);
-      clearTimeout(checkTxnTimeout);
-    }, 25_000);
-
     return () => {
       clearTimeout(checkTxnTimeout);
-      clearTimeout(errorTimeout);
     };
   }
 }, [isTxnCreated, lastProposalId]);
@@ -396,8 +387,7 @@ return (
   <Container>
     <TransactionLoader
       showInProgress={isTxnCreated}
-      showError={showErrorToast}
-      toggleToast={() => setShowErrorToast(false)}
+      cancelTxn={() => setTxnCreated(false)}
     />
     <Widget
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
@@ -438,6 +428,7 @@ return (
               instance,
               selectedValue: selectedWallet,
               onUpdate: (v) => {
+                setValidatorAccount(null);
                 setSelectedWallet(v);
               },
             }}
@@ -487,8 +478,10 @@ return (
             availableBalance: getBalances().available,
             instance,
             onCancel: () => setShowCancelModal(true),
-            onSubmit: (validatorAccount, amount, notes) =>
-              onSubmitClick(validatorAccount, amount, notes),
+            onSubmit: (validatorAccount, amount, notes, selectedOption) => {
+              onSubmitClick(validatorAccount, amount, notes);
+              setValidatorAccount(selectedOption);
+            },
             lockupStakedPoolId,
             isStakePage: false,
           }}
