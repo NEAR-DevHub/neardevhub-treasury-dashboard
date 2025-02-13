@@ -437,6 +437,17 @@ test.describe("don't ask again", function () {
       })
       .first();
     await expect(approveButton).toBeEnabled({ timeout: 30_000 });
+    await mockRpcRequest({
+      page,
+      filterParams: {
+        method_name: "get_proposal",
+      },
+      modifyOriginalResultFunction: (originalResult) => {
+        originalResult = TransferProposalData;
+        originalResult.status = "InProgress";
+        return originalResult;
+      },
+    });
     await approveButton.click();
     await page.getByRole("button", { name: "Confirm" }).click();
     const loader = page.getByText("Awaiting transaction confirmation...");
