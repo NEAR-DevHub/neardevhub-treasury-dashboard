@@ -324,11 +324,13 @@ return (
             </div>
           </Section>
         )}
-        <div className="d-flex gap-3 info-panel rounded-3 align-items-center">
-          <i class="bi bi-info-circle h6 mb-0"></i>
-          The voting thresholds policy will be set to one vote by default for
-          all permission groups. You can modify those later in the Settings.
-        </div>
+        <Widget
+          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Info`}
+          props={{
+            type: "info",
+            text: "The voting thresholds policy will be set to one vote by default for all permission groups. You can modify those later in the Settings.",
+          }}
+        />
       </Section>
 
       <Section>

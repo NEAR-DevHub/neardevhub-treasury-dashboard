@@ -83,9 +83,10 @@ const [isNearStakedPortfolioExpanded, setNearStakedPortfolioExpanded] =
 const [showHiddenTokens, setShowHiddenTokens] = useState(false);
 
 function formatCurrency(amount) {
-  const formattedAmount = Number(amount)
-    .toFixed(2)
-    .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  const formattedAmount = Number(amount).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
   return "$" + formattedAmount;
 }
 
@@ -130,7 +131,10 @@ const BalanceDisplay = ({
             <div className="d-flex flex-column align-items-end">
               <div className="h6 mb-0 d-flex align-items-center gap-1">
                 <NearToken height={20} width={20} />
-                {formatToReadableDecimals(balance)}
+                {Number(balance).toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
               </div>
               <div className="text-sm text-secondary">
                 {formatCurrency(
@@ -198,7 +202,12 @@ const PortfolioCard = ({
           </div>
           <div className="d-flex gap-2 align-items-center justify-content-end">
             <div className="d-flex flex-column align-items-end">
-              <div className="h6 mb-0">{formatToReadableDecimals(balance)}</div>
+              <div className="h6 mb-0">
+                {Number(balance).toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </div>
               <div className="text-sm text-secondary">
                 {formatCurrency(
                   formatToReadableDecimals(getPrice(balance, price))
