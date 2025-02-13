@@ -462,7 +462,12 @@ return (
                       className={contract === selectedToken ? "selected" : ""}
                     />
                   </div>
-                  <span className={contract === selectedToken ? "fw-bold" : ""}>
+                  <span
+                    style={{ maxWidth: 100 }}
+                    className={`text-truncate${
+                      contract === selectedToken ? "fw-bold" : ""
+                    }`}
+                  >
                     {symbol}
                   </span>
                 </label>

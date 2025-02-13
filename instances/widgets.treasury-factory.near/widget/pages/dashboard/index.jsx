@@ -261,9 +261,6 @@ const Loading = () => {
   );
 };
 
-const getWhitelistedFTs = (tokens) =>
-  tokens.filter((token) => token.ft_meta.price > 0);
-
 return (
   <Wrapper>
     {show404Modal && <TooManyRequestModal />}
@@ -376,7 +373,7 @@ return (
               Big(nearBalances?.totalParsed ?? "0").mul(nearPrice ?? 1)
             ),
             ftTokens: userFTTokens.fts
-              ? getWhitelistedFTs(userFTTokens.fts)
+              ? userFTTokens.fts
               : null,
             instance,
             accountId: treasuryDaoID,
@@ -397,7 +394,7 @@ return (
                 Big(lockupNearBalances?.totalParsed ?? "0").mul(nearPrice ?? 1)
               ),
               ftTokens: userFTTokens.fts
-                ? getWhitelistedFTs(userFTTokens.fts)
+                ? userFTTokens.fts
                 : null,
               accountId: lockupContract,
             }}
