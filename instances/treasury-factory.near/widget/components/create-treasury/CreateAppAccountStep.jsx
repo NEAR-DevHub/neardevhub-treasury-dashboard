@@ -37,18 +37,14 @@ return (
     </div>
 
     <Widget
-      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.NewAccountInput`}
+      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Info`}
       props={{
-        id: "treasury-account",
-        alertMsg,
-        setAlertMsg,
-        label: "Treasury Name",
-        info: (
+        type: "info",
+        text: (
           <span>
             We currently only support creating new SputnikDAO accounts. To
             import an existing account,{" "}
             <a
-              style={{ color: "#01BF7A" }}
               rel="noopener noreferrer"
               href="https://support.neartreasury.com/"
               target="_blank"
@@ -58,6 +54,16 @@ return (
             .
           </span>
         ),
+      }}
+    />
+
+    <Widget
+      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.NewAccountInput`}
+      props={{
+        id: "treasury-account",
+        alertMsg,
+        setAlertMsg,
+        label: "Treasury Name",
         defaultValue: formFields.accountName,
         onChange: (v) =>
           setFormFields({

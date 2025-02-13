@@ -365,4 +365,52 @@ test.describe("don't ask again", function () {
       ).toBeVisible();
     }
   });
+
+  test("submit action should show transaction loader and handle cancellation correctly", async ({
+    page,
+    instanceAccount,
+  }) => {
+    test.setTimeout(100_000);
+    await updateDaoPolicyMembers({ instanceAccount, page });
+    const proposalData = JSON.parse(JSON.stringify(SettingsProposalData));
+    proposalData.submission_time = CurrentTimestampInNanoseconds;
+    proposalData.status = "InProgress";
+    await mockRpcRequest({
+      page,
+      filterParams: {
+        method_name: "get_proposals",
+      },
+      modifyOriginalResultFunction: () => {
+        return [proposalData];
+      },
+    });
+    await mockRpcRequest({
+      page,
+      filterParams: {
+        method_name: "get_proposal",
+      },
+      modifyOriginalResultFunction: () => {
+        return proposalData;
+      },
+    });
+    await page.goto(`/${instanceAccount}/widget/app?page=settings`);
+    const approveButton = page
+      .getByRole("button", {
+        name: "Approve",
+      })
+      .first();
+    await expect(approveButton).toBeEnabled({ timeout: 30_000 });
+    await approveButton.click();
+    await page.getByRole("button", { name: "Confirm" }).click();
+    const loader = page.getByText("Awaiting transaction confirmation...");
+    await expect(loader).toBeVisible();
+    await expect(approveButton).toBeDisabled();
+    await page.getByRole("button", { name: "Close" }).nth(1).click();
+    await page
+      .locator(".toast-body")
+      .getByRole("button", { name: "Cancel" })
+      .click();
+    await expect(loader).toBeHidden();
+    await expect(approveButton).toBeEnabled();
+  });
 });

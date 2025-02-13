@@ -218,7 +218,9 @@ test.describe("User is logged in", function () {
     const submitBtn = await page.locator("button", { hasText: "Submit" });
     await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
     await submitBtn.click();
-    await expect(page.getByText("Processing your request ...")).toBeVisible();
+    await expect(
+      page.getByText("Awaiting transaction confirmation...")
+    ).toBeVisible();
     const description = {
       title: "Update policy - Members Permissions",
       summary: `theori.near requested to add "${account}" to "${permission}".`,
@@ -408,7 +410,9 @@ test.describe("User is logged in", function () {
     await expect(submitBtn).toBeAttached({ timeout: 10_000 });
     await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
     await submitBtn.click();
-    await expect(page.getByText("Processing your request ...")).toBeVisible();
+    await expect(
+      page.getByText("Awaiting transaction confirmation...")
+    ).toBeVisible();
     const description = {
       title: "Update policy - Members Permissions",
       summary: `theori.near requested to remove "${account}" from "${permission}".`,
@@ -467,7 +471,9 @@ test.describe("User is logged in", function () {
       page.getByRole("heading", { name: "Are you sure?" })
     ).toBeVisible();
     await page.getByRole("button", { name: "Remove" }).click();
-    await expect(page.getByText("Processing your request ...")).toBeVisible();
+    await expect(
+      page.getByText("Awaiting transaction confirmation...")
+    ).toBeVisible();
 
     const description = {
       title: "Update policy - Members Permissions",
@@ -510,5 +516,34 @@ test.describe("User is logged in", function () {
         },
       },
     });
+  });
+  test("submit action should show transaction loader and handle cancellation correctly", async ({
+    page,
+    instanceAccount,
+  }) => {
+    test.setTimeout(100_000);
+    const account = "testingaccount.near";
+    const hasNewPolicy = instanceAccount.includes("testing");
+    const permission = hasNewPolicy ? "Requestor" : "Create Requests";
+    await openAddMemberForm({ page });
+    const accountInput = page.getByPlaceholder("treasury.near");
+    await accountInput.focus();
+    accountInput.fill(account);
+    await accountInput.blur();
+    await page.locator(".dropdown-toggle", { hasText: "Select" }).click();
+    await page.locator(".dropdown-item", { hasText: permission }).click();
+    const submitBtn = await page.locator("button", { hasText: "Submit" });
+    await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
+    await submitBtn.click();
+    const loader = page.getByText("Awaiting transaction confirmation...");
+    await expect(loader).toBeVisible();
+    await expect(submitBtn).toBeDisabled();
+    await page.getByRole("button", { name: "Close" }).nth(1).click();
+    await page
+      .locator(".toast-body")
+      .getByRole("button", { name: "Cancel" })
+      .click();
+    await expect(loader).toBeHidden();
+    await expect(submitBtn).toBeEnabled();
   });
 });

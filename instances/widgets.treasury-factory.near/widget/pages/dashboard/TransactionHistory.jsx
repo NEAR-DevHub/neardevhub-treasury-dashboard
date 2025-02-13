@@ -105,9 +105,10 @@ function formatRelativeDate(date) {
 }
 
 function formatCurrency(amount) {
-  return Number(amount)
-    .toFixed(2)
-    .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return Number(amount).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 }
 
 function getImage(actionKind) {

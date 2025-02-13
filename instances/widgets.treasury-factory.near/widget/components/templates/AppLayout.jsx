@@ -139,6 +139,13 @@ const Theme = styled.div`
     display: none;
   }
 
+  .btn-transparent {
+    border: 1px solid var(--border-color);
+    :hover {
+      border: 1px solid var(--border-color);
+    }
+  }
+
   .text-right {
     text-align: end;
   }

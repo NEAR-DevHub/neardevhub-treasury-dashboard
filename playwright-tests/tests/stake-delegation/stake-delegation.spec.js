@@ -807,6 +807,36 @@ test.describe("Have valid staked requests and sufficient token balance", functio
 
       await sandbox.quitSandbox();
     });
+
+    test("submit action should show transaction loader and handle cancellation correctly", async ({
+      page,
+    }) => {
+      test.setTimeout(150_000);
+      await openUnstakeForm({ page });
+      await fillValidatorAccount({
+        page,
+      });
+      await checkForStakeAmount({
+        page,
+        availableBalance: stakedNear,
+        errorText: "The amount exceeds the balance you have staked.",
+      });
+      const submitBtn = await page
+        .frameLocator("iframe")
+        .nth(1)
+        .getByRole("button", { name: "Submit" });
+      await submitBtn.click();
+      const loader = page.getByText("Awaiting transaction confirmation...");
+      await expect(loader).toBeVisible();
+      await expect(submitBtn).toBeDisabled();
+      await page.getByRole("button", { name: "Close" }).nth(1).click();
+      await page
+        .locator(".toast-body")
+        .getByRole("button", { name: "Cancel" })
+        .click();
+      await expect(loader).toBeHidden();
+      await expect(submitBtn).toBeEnabled();
+    });
   });
 });
 
@@ -1152,7 +1182,9 @@ test.describe("Lockup staking", function () {
         .nth(1)
         .getByRole("button", { name: "Submit" })
         .click();
-      await expect(page.getByText("Processing your request ...")).toBeVisible();
+      await expect(
+        page.getByText("Awaiting transaction confirmation...")
+      ).toBeVisible();
 
       await expect(await getTransactionModalObject(page)).toEqual({
         proposal: {
@@ -1282,7 +1314,9 @@ test.describe("Lockup staking", function () {
         .nth(1)
         .getByRole("button", { name: "Submit" })
         .click();
-      await expect(page.getByText("Processing your request ...")).toBeVisible();
+      await expect(
+        page.getByText("Awaiting transaction confirmation...")
+      ).toBeVisible();
 
       await expect(await getTransactionModalObject(page)).toEqual({
         proposal: {
@@ -1338,7 +1372,9 @@ test.describe("Lockup staking", function () {
         .nth(1)
         .getByRole("button", { name: "Submit" })
         .click();
-      await expect(page.getByText("Processing your request ...")).toBeVisible();
+      await expect(
+        page.getByText("Awaiting transaction confirmation...")
+      ).toBeVisible();
 
       await expect(await getTransactionModalObject(page)).toEqual({
         proposal: {

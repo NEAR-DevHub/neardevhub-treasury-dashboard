@@ -27,7 +27,7 @@ return (
   <div className="text-center">
     <div className="d-flex gap-1 align-items-center justify-content-end">
       <span className="amount bolder mb-0">
-        {amount.toLocaleString("en-US", {
+        {Number(amount).toLocaleString("en-US", {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         })}

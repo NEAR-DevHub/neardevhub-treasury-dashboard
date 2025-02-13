@@ -278,7 +278,9 @@ test.describe("don't ask again", function () {
     await expect(approveButton).toBeEnabled({ timeout: 30_000 });
     await approveButton.click();
     await page.getByRole("button", { name: "Confirm" }).click();
-    await expect(page.getByText("Processing your request ...")).toBeVisible();
+    await expect(
+      page.getByText("Awaiting transaction confirmation...")
+    ).toBeVisible();
     await expect(approveButton).toBeDisabled();
 
     const transaction_toast = page.getByText(
@@ -334,7 +336,9 @@ test.describe("don't ask again", function () {
     await expect(rejectButton).toBeEnabled({ timeout: 10000 });
     await rejectButton.click();
     await page.getByRole("button", { name: "Confirm" }).click();
-    await expect(page.getByText("Processing your request ...")).toBeVisible();
+    await expect(
+      page.getByText("Awaiting transaction confirmation...")
+    ).toBeVisible();
     await expect(rejectButton).toBeDisabled();
 
     const transaction_toast = page.getByText(
@@ -390,7 +394,9 @@ test.describe("don't ask again", function () {
       page.getByText("Do you really want to delete this request?")
     ).toBeVisible();
     await page.getByRole("button", { name: "Confirm" }).click();
-    await expect(page.getByText("Processing your request ...")).toBeVisible();
+    await expect(
+      page.getByText("Awaiting transaction confirmation...")
+    ).toBeVisible();
 
     await expect(deleteButton).toBeDisabled();
 
@@ -412,6 +418,48 @@ test.describe("don't ask again", function () {
         page.getByText("The payment request has been successfully deleted.")
       ).toBeVisible();
     }
+  });
+
+  test("submit action should show transaction loader and handle cancellation correctly", async ({
+    page,
+    daoAccount,
+    instanceAccount,
+  }) => {
+    test.setTimeout(100_000);
+    await mockPaymentProposals({ page });
+    await mockWithFTBalance({ page, daoAccount, isSufficient: true });
+    await mockPikespeakFTTokensResponse({ page, daoAccount });
+    await updateDaoPolicyMembers({ instanceAccount, page, isMultiVote: false });
+    await page.goto(`/${instanceAccount}/widget/app?page=payments`);
+    const approveButton = page
+      .getByRole("button", {
+        name: "Approve",
+      })
+      .first();
+    await expect(approveButton).toBeEnabled({ timeout: 30_000 });
+    await mockRpcRequest({
+      page,
+      filterParams: {
+        method_name: "get_proposal",
+      },
+      modifyOriginalResultFunction: (originalResult) => {
+        originalResult = TransferProposalData;
+        originalResult.status = "InProgress";
+        return originalResult;
+      },
+    });
+    await approveButton.click();
+    await page.getByRole("button", { name: "Confirm" }).click();
+    const loader = page.getByText("Awaiting transaction confirmation...");
+    await expect(loader).toBeVisible();
+    await expect(approveButton).toBeDisabled();
+    await page.getByRole("button", { name: "Close" }).nth(1).click();
+    await page
+      .locator(".toast-body")
+      .getByRole("button", { name: "Cancel" })
+      .click();
+    await expect(loader).toBeHidden();
+    await expect(approveButton).toBeEnabled();
   });
 });
 

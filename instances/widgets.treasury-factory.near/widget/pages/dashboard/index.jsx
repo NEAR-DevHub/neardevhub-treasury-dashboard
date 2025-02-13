@@ -186,9 +186,10 @@ const totalBalance = Big(nearBalances?.totalParsed ?? "0")
   .toFixed(2);
 
 function formatCurrency(amount) {
-  const formattedAmount = Number(amount)
-    .toFixed(2)
-    .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  const formattedAmount = Number(amount).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
   return "$" + formattedAmount;
 }
 
@@ -368,6 +369,7 @@ return (
           props={{
             title: "Treasury Assets: Sputnik DAO",
             nearPrice,
+            nearBalance: nearBalances?.totalParsed ?? "0",
             totalBalance: formatCurrency(
               Big(nearBalances?.totalParsed ?? "0").mul(nearPrice ?? 1)
             ),
@@ -386,6 +388,7 @@ return (
               title: "Treasury Assets: Lockup",
               nearPrice,
               instance,
+              nearBalance: lockupNearBalances?.totalParsed ?? "0",
               totalBalance: formatCurrency(
                 Big(lockupNearBalances?.totalParsed ?? "0").mul(nearPrice ?? 1)
               ),

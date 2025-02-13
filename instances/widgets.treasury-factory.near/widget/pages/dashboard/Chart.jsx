@@ -8,6 +8,7 @@ const {
   isLoading,
   selectedToken,
   setSelectedToken,
+  nearBalance,
 } = props;
 
 if (!instance) {
@@ -32,15 +33,24 @@ const [height, setHeight] = useState(350);
 const [history, setHistory] = useState([]);
 const [tokenAddresses, setTokenAddresses] = useState([]);
 const [selectedPeriod, setSelectedPeriod] = useState("1Y");
-const [balanceDate, setBalanceDate] = useState({ balance: 0, date: "" });
+const [balanceDate, setBalanceDate] = useState(null);
 
 const nearTokenInfo = {
   contract: "near",
-  ft_meta: { symbol: "NEAR" },
+  amount: nearBalance,
+  ft_meta: { symbol: "NEAR", price: nearPrice },
+};
+
+const sortTokens = (tokens) => {
+  const tokenEvaluation = (token) =>
+    (parseInt(token.amount) * token.ft_meta.price) /
+    Math.pow(10, token.ft_meta.decimals ?? 1);
+
+  return tokens.sort((a, b) => tokenEvaluation(b) - tokenEvaluation(a));
 };
 
 const tokens = Array.isArray(ftTokens)
-  ? [nearTokenInfo, ...ftTokens]
+  ? [nearTokenInfo, ...sortTokens(ftTokens)]
   : [nearTokenInfo];
 
 const periodMap = {
@@ -53,9 +63,10 @@ const periodMap = {
 };
 
 function formatCurrency(amount) {
-  return Number(amount)
-    .toFixed(2)
-    .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return Number(amount).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 }
 
 const config = treasuryDaoID ? Near.view(treasuryDaoID, "get_config") : null;
@@ -84,16 +95,16 @@ const code = `
           }
 
           canvas {
-              width: 100%;
-              height: 100%;
-              display: block;
-              background-color: ${colors["--bg-page-color"]};
-              color: ${colors["--text-color"]};
+            width: 100%;
+            height: 400px;
+            display: block;
+            background-color: ${colors["--bg-page-color"]};
+            color: ${colors["--text-color"]};
           }
       </style>
   </head>
   <body>
-      <canvas id="myChart" height="400"></canvas>
+      <canvas id="myChart"></canvas>
       <script>
     const ctx = document.getElementById("myChart").getContext("2d");
     let account_id;
@@ -139,6 +150,7 @@ const code = `
     // Chart configuration
     const options = {
         responsive: true,
+        maintainAspectRatio: false,
         plugins: {
             tooltip: {
                 enabled: false,
@@ -227,6 +239,10 @@ const code = `
     document.getElementById('myChart').addEventListener('mouseleave', () => {
         hoverX = null;
         myChart.update('none');
+    });
+
+    window.addEventListener('resize', () => {
+      myChart.resize();
     });
 
     function sendChartHeight() {
@@ -447,7 +463,12 @@ return (
                       className={contract === selectedToken ? "selected" : ""}
                     />
                   </div>
-                  <span className={contract === selectedToken ? "fw-bold" : ""}>
+                  <span
+                    style={{ maxWidth: 100 }}
+                    className={`text-truncate${
+                      contract === selectedToken ? "fw-bold" : ""
+                    }`}
+                  >
                     {symbol}
                   </span>
                 </label>

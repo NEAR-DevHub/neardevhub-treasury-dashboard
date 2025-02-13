@@ -59,14 +59,13 @@ useEffect(() => {
 useEffect(() => {
   if (isTxnCreated) {
     let checkTxnTimeout = null;
-    let errorTimeout = null;
 
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
         if (typeof lastProposalId === "number" && lastProposalId !== id) {
           setToastStatus(true);
           onCloseCanvas();
-          clearTimeout(errorTimeout);
+          clearTimeout(checkTxnTimeout);
           setTxnCreated(false);
         } else {
           checkTxnTimeout = setTimeout(() => checkForNewProposal(), 1000);
@@ -75,16 +74,8 @@ useEffect(() => {
     };
     checkForNewProposal();
 
-    // if in 20 seconds there is no change, show error condition
-    errorTimeout = setTimeout(() => {
-      setShowErrorToast(true);
-      setTxnCreated(false);
-      clearTimeout(checkTxnTimeout);
-    }, 25_000);
-
     return () => {
       clearTimeout(checkTxnTimeout);
-      clearTimeout(errorTimeout);
     };
   }
 }, [isTxnCreated, lastProposalId]);
@@ -228,8 +219,7 @@ return (
   <Container className="d-flex flex-column gap-2">
     <TransactionLoader
       showInProgress={isTxnCreated}
-      showError={showErrorToast}
-      toggleToast={() => setShowErrorToast(false)}
+      cancelTxn={() => setTxnCreated(false)}
     />
     <Widget
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
