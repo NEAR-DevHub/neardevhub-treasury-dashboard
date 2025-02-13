@@ -1,12 +1,14 @@
 const normalize = (text) =>
   text
-    .replaceAll(/[- \.]/g, "_")
-    .replaceAll(/[^\w]+/g, "")
-    .replaceAll(/_+/g, "-")
-    .replace(/^-+/, "")
-    .replace(/-+$/, "")
-    .toLowerCase()
-    .trim("-");
+    ? text
+        .replaceAll(/[- \.]/g, "_")
+        .replaceAll(/[^\w]+/g, "")
+        .replaceAll(/_+/g, "-")
+        .replace(/^-+/, "")
+        .replace(/-+$/, "")
+        .toLowerCase()
+        .trim("-")
+    : "";
 
 const { selectedTab, page, leftNavbarOptions } = props;
 

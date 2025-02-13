@@ -109,15 +109,12 @@ const Wrapper = ({ title, children }) => (
 const SocalSignIn = () => (
   <Container className="shadow-sm gap-3">
     <div className="d-flex flex-column gap-2">
-      <h4>
-        Click the 'Sign In' button at the top-right corner of the Near.Social
-        gateway
-      </h4>
+      <h4>Click the 'Sign In' button at the top-right corner</h4>
       <Widget
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Info`}
         props={{
           type: "info",
-          text: "This is the account that will be used to pay for creating the treasury and managing it at first",
+          text: "This account will be used to pay for creating the treasury and managing it at first.",
         }}
       />
     </div>
@@ -154,7 +151,13 @@ return (
         />
       </PageWrapper>
     ) : (
-      <Wrapper title={context.accountId ? "Treasury Creation" : "Sign In"}>
+      <Wrapper
+        title={
+          context.accountId
+            ? "Treasury Creation"
+            : "Sign In with your NEAR account"
+        }
+      >
         {context.accountId ? (
           <div>
             <Widget
