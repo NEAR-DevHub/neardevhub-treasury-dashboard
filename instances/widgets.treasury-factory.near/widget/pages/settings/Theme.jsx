@@ -263,14 +263,13 @@ useEffect(() => {
 useEffect(() => {
   if (isTxnCreated) {
     let checkTxnTimeout = null;
-    let errorTimeout = null;
 
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
         if (typeof lastProposalId === "number" && lastProposalId !== id) {
           setToastStatus(true);
           setTxnCreated(false);
-          clearTimeout(errorTimeout);
+          clearTimeout(checkTxnTimeout);
         } else {
           checkTxnTimeout = setTimeout(() => checkForNewProposal(), 1000);
         }
@@ -278,16 +277,8 @@ useEffect(() => {
     };
     checkForNewProposal();
 
-    // if in 20 seconds there is no change, show error condition
-    errorTimeout = setTimeout(() => {
-      setShowErrorToast(true);
-      setTxnCreated(false);
-      clearTimeout(checkTxnTimeout);
-    }, 25_000);
-
     return () => {
       clearTimeout(checkTxnTimeout);
-      clearTimeout(errorTimeout);
     };
   }
 }, [isTxnCreated, lastProposalId]);
@@ -351,8 +342,7 @@ return (
     <SubmitToast />
     <TransactionLoader
       showInProgress={isTxnCreated}
-      showError={showErrorToast}
-      toggleToast={() => setShowErrorToast(false)}
+      cancelTxn={() => setTxnCreated(false)}
     />
     <div className="card rounded-4 w-100 h-100 py-3">
       <div className="card-title px-3 pb-3">Theme & Logo</div>

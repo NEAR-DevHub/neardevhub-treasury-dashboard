@@ -466,4 +466,27 @@ test.describe("User is logged in", function () {
       newDurationDays--;
     }
   });
+
+  test("submit action should show transaction loader and handle cancellation correctly", async ({
+    page,
+    instanceAccount,
+  }) => {
+    test.setTimeout(100_000);
+    await updateDaoPolicyMembers({ instanceAccount, page });
+    await navigateToVotingDurationPage({ page, instanceAccount });
+    const durationInput = page.getByPlaceholder("Enter voting duration days");
+    await durationInput.fill("3");
+    const submitBtn = page.getByRole("button", { name: "Submit Request" });
+    await submitBtn.click();
+    const loader = page.getByText("Awaiting transaction confirmation...");
+    await expect(loader).toBeVisible();
+    await expect(submitBtn).toBeDisabled();
+    await page.getByRole("button", { name: "Close" }).nth(1).click();
+    await page
+      .locator(".toast-body")
+      .getByRole("button", { name: "Cancel" })
+      .click();
+    await expect(loader).toBeHidden();
+    await expect(submitBtn).toBeEnabled();
+  });
 });

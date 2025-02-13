@@ -6,7 +6,6 @@ const { formFields, setShowCongratsModal } = props;
 
 const REQUIRED_BALANCE = 9;
 
-const [showErrorToast, setShowErrorToast] = useState(false);
 const [isTxnCreated, setTxnCreated] = useState(false);
 
 const Section = styled.div`
@@ -67,7 +66,6 @@ const PERMISSIONS = {
 useEffect(() => {
   if (isTxnCreated) {
     let checkTxnTimeout = null;
-    let errorTimeout = null;
 
     const checkAccountCreation = async () => {
       Near.asyncView(`${formFields.accountName}.near`, "web4_get", {
@@ -77,7 +75,6 @@ useEffect(() => {
           if (web4) {
             setTxnCreated(false);
             setShowCongratsModal(true);
-            clearTimeout(errorTimeout);
             clearTimeout(checkTxnTimeout);
             Storage.set("TreasuryAccountName", formFields.accountName);
           } else {
@@ -90,16 +87,8 @@ useEffect(() => {
     };
     checkAccountCreation();
 
-    // if in 40 seconds there is no change, show error condition
-    errorTimeout = setTimeout(() => {
-      setShowErrorToast(true);
-      setTxnCreated(false);
-      clearTimeout(checkTxnTimeout);
-    }, 40_000);
-
     return () => {
       clearTimeout(checkTxnTimeout);
-      clearTimeout(errorTimeout);
     };
   }
 }, [isTxnCreated]);
@@ -267,9 +256,8 @@ const ListItem = ({ member }) => (
 return (
   <>
     <TransactionLoader
-      showInProgress={isTxnCreated}
-      showError={showErrorToast}
-      toggleToast={() => setShowErrorToast(false)}
+      cancelTxn={() => setTxnCreated(false)}
+      showInProgress={true}
     />
     <div className="d-flex flex-column w-100 gap-3">
       <h3>Summary</h3>
