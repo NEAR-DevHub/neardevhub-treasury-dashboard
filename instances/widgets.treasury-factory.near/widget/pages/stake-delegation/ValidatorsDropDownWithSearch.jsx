@@ -419,7 +419,8 @@ const code = `
             handler: "onSubmit", 
             notes: notesInput.value, 
             amount: amountInput.value, 
-            validatorAccount: selectedOption.pool_id 
+            validatorAccount: selectedOption.pool_id,
+            selectedOption 
         }, 
             "*"
         );
@@ -510,7 +511,7 @@ return (
           break;
         }
         case "onSubmit": {
-          onSubmit(e.validatorAccount, e.amount, e.notes);
+          onSubmit(e.validatorAccount, e.amount, e.notes, e.selectedOption);
           break;
         }
         case "updateIframeHeight": {
