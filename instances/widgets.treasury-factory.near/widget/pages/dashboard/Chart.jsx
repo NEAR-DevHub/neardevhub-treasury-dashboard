@@ -50,7 +50,7 @@ const sortTokens = (tokens) => {
 };
 
 const tokens = Array.isArray(ftTokens)
-  ? sortTokens([nearTokenInfo, ...ftTokens])
+  ? [nearTokenInfo, ...sortTokens(ftTokens)]
   : [nearTokenInfo];
 
 const periodMap = {

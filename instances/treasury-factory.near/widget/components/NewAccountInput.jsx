@@ -8,7 +8,6 @@ const {
   skipValdation,
   label,
   id,
-  info,
 } = props;
 
 const [value, setValue] = useState(defaultValue ?? "");
@@ -70,24 +69,6 @@ return (
         <label className="fw-semibold mb-1" for={id}>
           {label}
         </label>
-        {info && (
-          <OverlayTrigger
-            show={show}
-            placement="top"
-            onToggle={setShow}
-            overlay={
-              <Tooltip
-                onMouseEnter={() => setShow(true)}
-                onMouseLeave={() => setShow(false)}
-                id="tooltip"
-              >
-                {info}
-              </Tooltip>
-            }
-          >
-            <i className="mx-1 h6 mb-1 bi bi-info-circle text-secondary" />
-          </OverlayTrigger>
-        )}
       </div>
     )}
     <input
