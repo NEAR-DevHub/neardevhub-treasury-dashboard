@@ -356,6 +356,68 @@ function PermissionGroupFixedNumber({ group }) {
   );
 }
 
+// TODO: warning You will no longer be able to vote with a single vote.
+const Table = ({ currentGroup, newGroup }) => {
+  // TODO: Format the data from group1 and group2
+  let data = [
+    {
+      label: "Permission Group Size",
+      current: currentGroup.members.length,
+      new: currentGroup.members.length,
+    },
+    {
+      label: "Based On",
+      current:
+        currentGroup.option === "number"
+          ? "Number of Votes"
+          : "Percentage of Members",
+      new:
+        newGroup.option === "number"
+          ? "Number of Votes"
+          : "Percentage of Members",
+    },
+    {
+      label: "Selected Value",
+      current: `${
+        currentGroup.option === "percentage"
+          ? currentGroup.threshold[0]
+          : currentGroup.threshold
+      } ${currentGroup.option === "percentage" ? "%" : ""}`,
+      new: `${
+        newGroup.option === "percentage"
+          ? newGroup.threshold[0]
+          : newGroup.threshold
+      } ${newGroup.option === "percentage" ? "%" : ""}`,
+    },
+    {
+      label: "Required Vote(s) for Approval",
+      //  TODO not requiredVotes but what I used in the list
+      current: currentGroup.requiredVotes,
+      new: newGroup.requiredVotes,
+    },
+  ];
+  return (
+    <table className="table table-sm">
+      <thead>
+        <tr className="text-grey">
+          <th></th>
+          <th>Current Setup</th>
+          <th>New Setup</th>
+        </tr>
+      </thead>
+      <tbody>
+        {data.map((config) => (
+          <tr class="proposal-that-will-expire">
+            <td>{config.label}</td>
+            <td>{config.current}</td>
+            <td>{config.new}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+};
+
 const requiredVotes = selectedGroup
   ? computeRequiredVotes(
       selectedGroup,
@@ -381,33 +443,70 @@ return (
             instance,
             heading: "Please Confirm Your Change",
             content: (
-              <div className="d-flex flex-column gap-2 mt-1">
-                <p>Current Setup:</p>
-                {selectedGroup.isRatio ? (
-                  <PermissionGroupPercentage
-                    group={{
-                      ...selectedGroup,
-                      threshold: [selectedGroup.threshold, 100],
-                    }}
-                  />
-                ) : (
-                  <PermissionGroupFixedNumber group={selectedGroup} />
-                )}
-                <p>New Setup:</p>
-                {selectedVoteOption.value === options[1].value ? (
-                  <PermissionGroupPercentage
-                    group={{
-                      members: selectedGroup.members,
-                      threshold: [selectedVoteValue, 100],
-                      requiredVotes,
-                    }}
-                  />
-                ) : (
-                  <PermissionGroupFixedNumber
-                    group={{ threshold: requiredVotes, requiredVotes }}
-                  />
-                )}
-              </div>
+              <>
+                <div className="d-flex gap-3 warning px-3 py-2 rounded-3">
+                  <i class="bi bi-exclamation-triangle warning-icon h5"></i>
+                  <div>
+                    You will no longer be able to vote with a single vote.
+                  </div>
+                </div>
+                <Table
+                  currentGroup={
+                    selectedGroup.isRatio
+                      ? {
+                          ...selectedGroup,
+                          threshold: [selectedGroup.threshold, 100],
+                          option: "percentage",
+                        }
+                      : {
+                          ...selectedGroup,
+                          option: "number",
+                        }
+                  }
+                  newGroup={
+                    selectedVoteOption.value === options[1].value
+                      ? {
+                          option: "percentage",
+                          members: selectedGroup.members,
+                          threshold: [selectedVoteValue, 100],
+                          requiredVotes,
+                        }
+                      : {
+                          option: "number",
+                          threshold: requiredVotes,
+                          requiredVotes,
+                        }
+                  }
+                />
+                {/* TODO: remove below once the right data is passed to the table */}
+                {/* <div className="d-flex flex-column gap-2 mt-1">
+                  <p>Current Setup:</p>
+                  {selectedGroup.isRatio ? (
+                    <PermissionGroupPercentage
+                      group={{
+                        ...selectedGroup,
+                        threshold: [selectedGroup.threshold, 100],
+                      }}
+                    />
+                  ) : (
+                    <PermissionGroupFixedNumber group={selectedGroup} />
+                  )}
+                  <p>New Setup:</p>
+                  {selectedVoteOption.value === options[1].value ? (
+                    <PermissionGroupPercentage
+                      group={{
+                        members: selectedGroup.members,
+                        threshold: [selectedVoteValue, 100],
+                        requiredVotes,
+                      }}
+                    />
+                  ) : (
+                    <PermissionGroupFixedNumber
+                      group={{ threshold: requiredVotes, requiredVotes }}
+                    />
+                  )}
+                </div> */}
+              </>
             ),
             confirmLabel: "Confirm",
             isOpen: showConfirmModal,
@@ -490,7 +589,6 @@ return (
                     const value = e.target.value.replace(/[^0-9]/g, "");
                     setSelectedVoteValue(value);
                     const number = parseInt(value);
-                    console.log({ number });
                     setValueError(null);
                     if (isPercentageSelected) {
                       if (number > 100)
