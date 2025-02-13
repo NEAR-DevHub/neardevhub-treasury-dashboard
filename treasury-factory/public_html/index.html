@@ -291,18 +291,15 @@
   <style>
     .custom-navbar {
       display: flex;
-      justify-content: end;
+      justify-content: space-between;
+      height: 73px;
+      align-items: center;
       width: 100%;
+      padding: 0 1rem;
       background-color: #f4f4f4;
-    }
-
-    .custom-login {
-      background-color: rgba(44, 62, 80, 1);
-      color: white;
-      padding-inline: 8px;
-      padding-block: 10px;
-      border-radius: 10px;
-      margin: 10px;
+      border-bottom: 1px solid rgba(226, 230, 236, 1);
+      font-size: 15px;
+      font-weight: 500;
     }
 
     .custom-logout {
@@ -315,11 +312,28 @@
       display: flex;
       gap: 0.5rem;
       padding-inline: 8px;
-      padding-block: 10px;
-      border-radius: 10px;
+      height: 48px;
+      border-radius: 48px;
+      padding: 4px;
+      padding-right: 10px;
       margin: 10px;
       background: none;
       border: none;
+      color: #1b1b18;
+    }
+
+    button.btn-primary {
+      background: #3cb179 !important;
+      border-color: #3cb179 !important;
+    }
+
+    button.btn-primary:hover {
+      border-color: #018e5a !important;
+      background: #018e5a !important;
+    }
+
+    .custom-logout button:hover {
+      background: #e6e6e6;
     }
 
     .custom-logout img {
@@ -417,25 +431,48 @@
 
 <body>
   <nav class="custom-navbar">
-    <button id="login-walletselector-btn" type="button" class="custom-login">
-      Connect Wallet
-    </button>
+    <a href="https://neartreasury.com/">
+      <img
+        id="logo"
+        src="https://ipfs.near.social/ipfs/bafkreibm63lijt7qs3dzlmrrdbhqgxkt55k5daswgrq5z4stqp4zk46kc4"
+        alt="treasury logo"
+      />
+    </a>
 
-    <div id="logout-dropdown-btn" type="button" class="custom-logout">
-      <div id="logout-btn"></div>
-      <div id="logout-dropdown" class="dropdown-content">
-        <div id="logout-walletselector-btn">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-            class="bi bi-box-arrow-right" viewBox="0 0 16 16">
-            <path fill-rule="evenodd"
-              d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0z" />
-            <path fill-rule="evenodd"
-              d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z" />
-          </svg>
-          &nbsp; Log out
+    <div class="d-flex flex-row align-items-center">
+      <button
+        id="login-walletselector-btn"
+        type="button"
+        class="btn btn-primary"
+      >
+        Sign in
+      </button>
+
+      <div id="logout-dropdown-btn" type="button" class="custom-logout">
+        <div id="logout-btn"></div>
+        <div id="logout-dropdown" class="dropdown-content">
+          <div id="logout-walletselector-btn">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              fill="currentColor"
+              class="bi bi-box-arrow-right"
+              viewBox="0 0 16 16"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0z"
+              />
+              <path
+                fill-rule="evenodd"
+                d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z"
+              />
+            </svg>
+            &nbsp; Sign out
+          </div>
         </div>
       </div>
-
     </div>
   </nav>
 </body>

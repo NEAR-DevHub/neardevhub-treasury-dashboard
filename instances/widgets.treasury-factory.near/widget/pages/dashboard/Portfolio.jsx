@@ -312,22 +312,32 @@ const TokensList = ({ tokens, filterFn }) => {
   if (!Array.isArray(tokens)) return <></>;
   if (tokens.filter(filterFn)?.length <= 0) return <></>;
 
-  return tokens.filter(filterFn)?.map((item, index) => {
-    const { ft_meta, amount } = item;
-    const { decimals, symbol, icon, price } = ft_meta;
-    const tokensNumber = convertBalanceToReadableFormat(amount, decimals);
+  const sortTokens = (tokens) => {
+    const tokenEvaluation = (token) =>
+      (parseInt(token.amount) * token.ft_meta.price) /
+      Math.pow(10, token.ft_meta.decimals ?? 1);
 
-    return (
-      <PortfolioCard
-        hideBorder={index === ftTokens.length - 1}
-        symbol={symbol}
-        src={icon}
-        balance={tokensNumber}
-        showExpand={false}
-        price={price ?? 0}
-      />
-    );
-  });
+    return tokens.sort((a, b) => tokenEvaluation(b) - tokenEvaluation(a));
+  };
+
+  return sortTokens(tokens)
+    ?.filter(filterFn)
+    ?.map((item, index) => {
+      const { ft_meta, amount } = item;
+      const { decimals, symbol, icon, price } = ft_meta;
+      const tokensNumber = convertBalanceToReadableFormat(amount, decimals);
+
+      return (
+        <PortfolioCard
+          hideBorder={index === ftTokens.length - 1}
+          symbol={symbol}
+          src={icon}
+          balance={tokensNumber}
+          showExpand={false}
+          price={price ?? 0}
+        />
+      );
+    });
 };
 
 return (
