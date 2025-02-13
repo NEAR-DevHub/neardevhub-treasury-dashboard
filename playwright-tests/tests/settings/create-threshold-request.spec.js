@@ -222,16 +222,8 @@ test.describe("User is logged in", function () {
     await expect(submitBtn).toBeDisabled();
     await thresholdInput.fill("2");
     await submitBtn.click();
-    await expect(
-      page.getByText(
-        "Required Vote(s) for Approval"
-      )
-    ).toBeVisible();
-    await expect(
-      page.getByText(
-        "Required Vote(s) for Approval"
-      )
-    ).toBeVisible();
+    await expect(page.getByText("Required Vote(s) for Approval")).toBeVisible();
+    await expect(page.getByText("Required Vote(s) for Approval")).toBeVisible();
     await page.getByRole("button", { name: "Confirm" }).click();
     await expect(page.getByText("Processing your request ...")).toBeVisible();
     const updatedPolicy = {
@@ -349,10 +341,10 @@ test.describe("User is logged in", function () {
     await page.getByTestId("dropdown-btn").click();
     await page.getByRole("list").getByText("Percentage of members").click();
     await thresholdInput.click();
-    await page.keyboard.down('Control');
-    await page.keyboard.press('A');
-    await page.keyboard.up('Control');
-    await page.keyboard.press('Backspace');
+    await page.keyboard.down("Control");
+    await page.keyboard.press("A");
+    await page.keyboard.up("Control");
+    await page.keyboard.press("Backspace");
     await thresholdInput.type("0", { delay: 100 });
     await expect(
       page.getByText("The minimum allowed percentage is 1%.")
