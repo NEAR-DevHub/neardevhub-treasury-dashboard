@@ -228,7 +228,9 @@ test.describe("User is logged in", function () {
       )
     ).toBeVisible();
     await page.getByRole("button", { name: "Confirm" }).click();
-    await expect(page.getByText("Processing your request ...")).toBeVisible();
+    await expect(
+      page.getByText("Awaiting transaction confirmation...")
+    ).toBeVisible();
     const updatedPolicy = {
       weight_kind: "RoleWeight",
       quorum: "0",
@@ -275,7 +277,9 @@ test.describe("User is logged in", function () {
     await submitBtn.click();
     await expect(page.getByText("Are you sure?")).toBeVisible();
     await page.getByRole("button", { name: "Confirm" }).click();
-    await expect(page.getByText("Processing your request ...")).toBeVisible();
+    await expect(
+      page.getByText("Awaiting transaction confirmation...")
+    ).toBeVisible();
 
     const updatedPolicy = {
       weight_kind: "RoleWeight",
@@ -356,7 +360,30 @@ test.describe("User is logged in", function () {
     await submitBtn.click();
     await expect(page.getByText("Are you sure?")).toBeVisible();
     await page.getByRole("button", { name: "Confirm" }).click();
-    await expect(page.getByText("Processing your request ...")).toBeVisible();
+    await expect(
+      page.getByText("Awaiting transaction confirmation...")
+    ).toBeVisible();
+  });
+
+  test("submit action should show transaction loader and handle cancellation correctly", async ({
+    page,
+  }) => {
+    test.setTimeout(100_000);
+    const thresholdInput = page.getByTestId("threshold-input");
+    await thresholdInput.fill("3");
+    const submitBtn = page.getByRole("button", { name: "Submit Request" });
+    await submitBtn.click();
+    await page.getByRole("button", { name: "Confirm" }).click();
+    const loader = page.getByText("Awaiting transaction confirmation...");
+    await expect(loader).toBeVisible();
+    await expect(submitBtn).toBeDisabled();
+    await page.getByRole("button", { name: "Close" }).nth(1).click();
+    await page
+      .locator(".toast-body")
+      .getByRole("button", { name: "Cancel" })
+      .click();
+    await expect(loader).toBeHidden();
+    await expect(submitBtn).toBeEnabled();
   });
 
   test("should show correct threshold with default policy", async ({

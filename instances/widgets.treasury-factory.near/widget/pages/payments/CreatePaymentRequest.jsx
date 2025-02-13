@@ -197,14 +197,13 @@ function cleanInputs() {
 useEffect(() => {
   if (isTxnCreated) {
     let checkTxnTimeout = null;
-    let errorTimeout = null;
 
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
         if (typeof lastProposalId === "number" && lastProposalId !== id) {
           cleanInputs();
           onCloseCanvas();
-          clearTimeout(errorTimeout);
+          clearTimeout(checkTxnTimeout);
           refreshData();
           setTxnCreated(false);
         } else {
@@ -215,16 +214,8 @@ useEffect(() => {
 
     checkForNewProposal();
 
-    // if in 20 seconds there is no change, show error condition
-    errorTimeout = setTimeout(() => {
-      setShowErrorToast(true);
-      setTxnCreated(false);
-      clearTimeout(checkTxnTimeout);
-    }, 25_000);
-
     return () => {
       clearTimeout(checkTxnTimeout);
-      clearTimeout(errorTimeout);
     };
   }
 }, [isTxnCreated, lastProposalId]);
@@ -460,8 +451,7 @@ return (
   <Container>
     <TransactionLoader
       showInProgress={isTxnCreated}
-      showError={showErrorToast}
-      toggleToast={() => setShowErrorToast(false)}
+      cancelTxn={() => setTxnCreated(false)}
     />
     <Widget
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
@@ -492,7 +482,9 @@ return (
               instance,
               selectedValue: selectedWallet,
               onUpdate: (v) => {
-                cleanInputs();
+                if (v.value !== selectedWallet.value) {
+                  cleanInputs();
+                }
                 setSelectedWallet(v);
               },
             }}

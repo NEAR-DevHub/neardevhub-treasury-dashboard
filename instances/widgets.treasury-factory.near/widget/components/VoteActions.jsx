@@ -81,14 +81,12 @@ function getProposalData() {
 useEffect(() => {
   if (isTxnCreated) {
     let checkTxnTimeout = null;
-    let errorTimeout = null;
 
     const checkForVoteOnProposal = () => {
       getProposalData()
         .then((proposal) => {
           if (JSON.stringify(proposal.votes) !== JSON.stringify(votes)) {
             checkProposalStatus();
-            clearTimeout(errorTimeout);
             clearTimeout(checkTxnTimeout);
             setTxnCreated(false);
           } else {
@@ -99,23 +97,14 @@ useEffect(() => {
           // if proposal data doesn't exist, it means the proposal is deleted
           checkProposalStatus();
           clearTimeout(checkTxnTimeout);
-          clearTimeout(errorTimeout);
           setTxnCreated(false);
         });
     };
 
     checkForVoteOnProposal();
 
-    // if in 20 seconds there is no change, show error condition
-    errorTimeout = setTimeout(() => {
-      setShowErrorToast(true);
-      setTxnCreated(false);
-      clearTimeout(checkTxnTimeout);
-    }, 25_000);
-
     return () => {
       clearTimeout(checkTxnTimeout);
-      clearTimeout(errorTimeout);
     };
   }
 }, [isTxnCreated]);
@@ -158,9 +147,8 @@ const InsufficientBalanceWarning = () => {
 return (
   <Container>
     <TransactionLoader
+      cancelTxn={() => setTxnCreated(false)}
       showInProgress={isTxnCreated}
-      showError={showErrorToast}
-      toggleToast={() => setShowErrorToast(false)}
     />
 
     <InsufficientBalanceWarning />

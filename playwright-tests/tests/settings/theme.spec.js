@@ -161,7 +161,9 @@ test.describe("User is logged in", function () {
     await expect(submitBtn).toBeDisabled(submitBtn);
     await logoInput.setInputFiles(path.join(__dirname, "./assets/valid.jpg"));
     await submitBtn.click();
-    await expect(page.getByText("Processing your request ...")).toBeVisible();
+    await expect(
+      page.getByText("Awaiting transaction confirmation...")
+    ).toBeVisible();
 
     await expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
@@ -188,7 +190,9 @@ test.describe("User is logged in", function () {
     await page.getByTestId("dropdown-btn").click();
     await page.getByText("Light").click();
     await page.getByRole("button", { name: "Submit Request" }).click();
-    await expect(page.getByText("Processing your request ...")).toBeVisible();
+    await expect(
+      page.getByText("Awaiting transaction confirmation...")
+    ).toBeVisible();
     await expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
         description: "* Title: Update Config - Theme & logo",
@@ -208,17 +212,21 @@ test.describe("User is logged in", function () {
     });
   });
 
-  test("should display a transaction error toast when the transaction confirmation modal is canceled", async ({
+  test("submit action should show transaction loader and handle cancellation correctly", async ({
     page,
   }) => {
-    test.setTimeout(150_000);
-    await page.getByRole("button", { name: "Submit Request" }).click();
-    await expect(page.getByText("Processing your request ...")).toBeVisible();
+    test.setTimeout(100_000);
+    const submitBtn = page.getByRole("button", { name: "Submit Request" });
+    await submitBtn.click();
+    const loader = page.getByText("Awaiting transaction confirmation...");
+    await expect(loader).toBeVisible();
+    await expect(submitBtn).toBeDisabled();
     await page.getByRole("button", { name: "Close" }).nth(1).click();
-    await expect(
-      page.getByText(
-        "Something went wrong. Please try resubmitting the request"
-      )
-    ).toBeVisible({ timeout: 30_000 });
+    await page
+      .locator(".toast-body")
+      .getByRole("button", { name: "Cancel" })
+      .click();
+    await expect(loader).toBeHidden();
+    await expect(submitBtn).toBeEnabled();
   });
 });
