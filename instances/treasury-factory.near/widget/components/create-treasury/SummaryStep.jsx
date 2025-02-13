@@ -257,11 +257,10 @@ return (
   <>
     <TransactionLoader
       cancelTxn={() => setTxnCreated(false)}
-      showInProgress={true}
+      showInProgress={isTxnCreated}
     />
     <div className="d-flex flex-column w-100 gap-3">
       <h3>Summary</h3>
-
       <div>
         <h4>General</h4>
         <Section withBorder>
@@ -325,6 +324,11 @@ return (
             </div>
           </Section>
         )}
+        <div className="d-flex gap-3 info-panel rounded-3 align-items-center">
+          <i class="bi bi-info-circle h6 mb-0"></i>
+          The voting thresholds policy will be set to one vote by default for
+          all permission groups. You can modify those later in the Settings.
+        </div>
       </Section>
 
       <Section>

@@ -482,7 +482,9 @@ return (
               instance,
               selectedValue: selectedWallet,
               onUpdate: (v) => {
-                cleanInputs();
+                if (v.value !== selectedWallet.value) {
+                  cleanInputs();
+                }
                 setSelectedWallet(v);
               },
             }}
