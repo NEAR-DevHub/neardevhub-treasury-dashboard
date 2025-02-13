@@ -472,6 +472,7 @@ return (
             </div>
 
             {isPercentageSelected &&
+              selectedVoteValue &&
               selectedGroup.threshold != selectedVoteValue && (
                 <div className="d-flex gap-3 warning px-3 py-2 rounded-3">
                   <i class="bi bi-exclamation-triangle warning-icon h5"></i>
