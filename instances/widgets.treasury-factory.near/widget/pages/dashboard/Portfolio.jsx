@@ -301,8 +301,11 @@ const NearPortfolio = () => {
 const isLoading =
   ftTokens === null || nearBalances === null || nearPrice === null;
 
-const notWhitetlistedTokens = Array.isArray(ftTokens)
-  ? ftTokens.filter((token) => !token.ft_meta.price)
+const unlistedTokens = Array.isArray(ftTokens)
+  ? ftTokens.filter(
+      (token) =>
+        token.ft_meta.symbol.length > 6 && /\./.test(token.ft_meta.symbol)
+    )
   : [];
 
 const TokensList = ({ tokens, filterFn }) => {
@@ -344,15 +347,21 @@ return (
               <NearPortfolio />
               <TokensList
                 tokens={ftTokens}
-                filterFn={(token) => token.ft_meta.price > 0}
+                filterFn={(token) =>
+                  token.ft_meta.symbol.length <= 6 &&
+                  !/\./.test(token.ft_meta.symbol)
+                }
               />
 
-              {notWhitetlistedTokens.length > 0 && (
+              {unlistedTokens.length > 0 && (
                 <>
                   {showHiddenTokens && (
                     <TokensList
                       tokens={ftTokens}
-                      filterFn={(token) => !token.ft_meta.price}
+                      filterFn={(token) =>
+                        token.ft_meta.symbol.length > 6 &&
+                        /\./.test(token.ft_meta.symbol)
+                      }
                     />
                   )}
                   <div
@@ -360,7 +369,9 @@ return (
                     className="d-flex align-items-center justify-content-between px-3 py-2"
                     onClick={() => setShowHiddenTokens(!showHiddenTokens)}
                   >
-                    <div>{showHiddenTokens ? "Hide" : "Show"} other tokens</div>
+                    <div>
+                      {showHiddenTokens ? "Hide" : "Show"} unlisted tokens
+                    </div>
                     <i
                       className={
                         (showHiddenTokens
