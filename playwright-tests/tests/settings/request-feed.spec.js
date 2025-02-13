@@ -372,16 +372,25 @@ test.describe("don't ask again", function () {
   }) => {
     test.setTimeout(100_000);
     await updateDaoPolicyMembers({ instanceAccount, page });
+    const proposalData = JSON.parse(JSON.stringify(SettingsProposalData));
+    proposalData.submission_time = CurrentTimestampInNanoseconds;
+    proposalData.status = "InProgress";
     await mockRpcRequest({
       page,
       filterParams: {
         method_name: "get_proposals",
       },
-      modifyOriginalResultFunction: (originalResult) => {
-        originalResult = JSON.parse(JSON.stringify(SettingsProposalData));
-        originalResult.submission_time = CurrentTimestampInNanoseconds;
-        originalResult.status = "InProgress";
-        return originalResult;
+      modifyOriginalResultFunction: () => {
+        return [proposalData];
+      },
+    });
+    await mockRpcRequest({
+      page,
+      filterParams: {
+        method_name: "get_proposal",
+      },
+      modifyOriginalResultFunction: () => {
+        return proposalData;
       },
     });
     await page.goto(`/${instanceAccount}/widget/app?page=settings`);
