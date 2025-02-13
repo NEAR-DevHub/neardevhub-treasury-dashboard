@@ -394,7 +394,7 @@ const Table = ({ currentGroup, newGroup }) => {
     },
   ];
   return (
-    <table className="table">
+    <table className="table mt-2">
       <thead className="">
         <tr className="">
           <th className="fw-bold"></th>
@@ -404,7 +404,7 @@ const Table = ({ currentGroup, newGroup }) => {
       </thead>
       <tbody>
         {data.map((config, index) => (
-          <tr key={index} className="proposal-that-will-expire">
+          <tr key={index}>
             <td className="text-left fw-semibold">{config.label}</td>
             <td className="text-center">{config.current}</td>
             <td className="text-center">{config.new}</td>
