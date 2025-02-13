@@ -362,8 +362,8 @@ const Table = ({ currentGroup, newGroup }) => {
   let data = [
     {
       label: "Permission Group Size",
-      current: currentGroup.members.length,
-      new: currentGroup.members.length,
+      current: `${currentGroup.members.length} members`,
+      new: `${newGroup.members.length} members`,
     },
     {
       label: "Based On",
