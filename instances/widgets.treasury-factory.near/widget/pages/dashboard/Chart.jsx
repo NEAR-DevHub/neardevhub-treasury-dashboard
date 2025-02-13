@@ -33,7 +33,7 @@ const [height, setHeight] = useState(350);
 const [history, setHistory] = useState([]);
 const [tokenAddresses, setTokenAddresses] = useState([]);
 const [selectedPeriod, setSelectedPeriod] = useState("1Y");
-const [balanceDate, setBalanceDate] = useState({ balance: 0, date: "" });
+const [balanceDate, setBalanceDate] = useState(null);
 
 const nearTokenInfo = {
   contract: "near",

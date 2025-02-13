@@ -372,9 +372,7 @@ return (
             totalBalance: formatCurrency(
               Big(nearBalances?.totalParsed ?? "0").mul(nearPrice ?? 1)
             ),
-            ftTokens: userFTTokens.fts
-              ? userFTTokens.fts
-              : null,
+            ftTokens: userFTTokens.fts ? userFTTokens.fts : null,
             instance,
             accountId: treasuryDaoID,
           }}
@@ -393,9 +391,7 @@ return (
               totalBalance: formatCurrency(
                 Big(lockupNearBalances?.totalParsed ?? "0").mul(nearPrice ?? 1)
               ),
-              ftTokens: userFTTokens.fts
-                ? userFTTokens.fts
-                : null,
+              ftTokens: userFTTokens.fts ? userFTTokens.fts : null,
               accountId: lockupContract,
             }}
           />
