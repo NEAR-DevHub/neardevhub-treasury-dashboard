@@ -116,15 +116,6 @@ const ThemeContainer = styled.div`
   .primary-text-color {
     color: var(--theme-color);
   }
-
- .info-panel {
-  background:  var(--grey-04) !important;
-  color: var(--grey-02)  !important;
-  padding-inline: 0.8rem;
-  padding-block: 0.5rem;
-  font-weight: 500;
-  font-size: 13px;
- }
 `;
 
 return { ThemeContainer };
