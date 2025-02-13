@@ -266,7 +266,7 @@ test.describe("User is logged in", function () {
     await thresholdInput.fill("20");
     await expect(page.getByText("Warning!")).toBeVisible();
     await submitBtn.click();
-    await expect(page.getByText("Please Confirm Your Change")).toBeVisible();
+    await expect(page.getByText("Confirm Your Change")).toBeVisible();
     await page.getByRole("button", { name: "Confirm" }).click();
     await expect(page.getByText("Processing your request ...")).toBeVisible();
 
@@ -349,7 +349,7 @@ test.describe("User is logged in", function () {
     await thresholdInput.fill("20");
     await expect(page.getByText("Warning!")).toBeVisible();
     await submitBtn.click();
-    await expect(page.getByText("Please Confirm Your Change")).toBeVisible();
+    await expect(page.getByText("Confirm Your Change")).toBeVisible();
     await page.getByRole("button", { name: "Confirm" }).click();
     await expect(page.getByText("Processing your request ...")).toBeVisible();
   });

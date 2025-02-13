@@ -356,9 +356,7 @@ function PermissionGroupFixedNumber({ group }) {
   );
 }
 
-// TODO: warning You will no longer be able to vote with a single vote.
 const Table = ({ currentGroup, newGroup }) => {
-  // TODO: Format the data from group1 and group2
   let data = [
     {
       label: "Permission Group Size",
@@ -391,26 +389,25 @@ const Table = ({ currentGroup, newGroup }) => {
     },
     {
       label: "Required Vote(s) for Approval",
-      //  TODO not requiredVotes but what I used in the list
       current: currentGroup.requiredVotes,
       new: newGroup.requiredVotes,
     },
   ];
   return (
-    <table className="table table-sm">
-      <thead>
-        <tr className="text-grey">
-          <th></th>
-          <th>Current Setup</th>
-          <th>New Setup</th>
+    <table className="table">
+      <thead className="">
+        <tr className="">
+          <th className="fw-bold"></th>
+          <th className="fw-bold text-center ">Current Setup</th>
+          <th className="fw-bold text-center ">New Setup</th>
         </tr>
       </thead>
       <tbody>
-        {data.map((config) => (
-          <tr class="proposal-that-will-expire">
-            <td>{config.label}</td>
-            <td>{config.current}</td>
-            <td>{config.new}</td>
+        {data.map((config, index) => (
+          <tr key={index} className="proposal-that-will-expire">
+            <td className="text-left fw-semibold">{config.label}</td>
+            <td className="text-center">{config.current}</td>
+            <td className="text-center">{config.new}</td>
           </tr>
         ))}
       </tbody>
@@ -441,13 +438,13 @@ return (
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
           props={{
             instance,
-            heading: "Please Confirm Your Change",
+            heading: "Confirm Your Change",
             content: (
               <>
                 {requiredVotes > 1 &&
                   parseInt(selectedGroup.threshold) === 1 && (
-                    <div className="d-flex gap-3 warning px-3 py-2 rounded-3">
-                      <i class="bi bi-exclamation-triangle warning-icon h5"></i>
+                    <div className="d-flex align-items-center gap-3 warning px-3 py-2 rounded-3">
+                      <i className="bi bi-exclamation-triangle warning-icon h5"></i>
                       <div>
                         You will no longer be able to vote with a single vote.
                       </div>
@@ -469,46 +466,19 @@ return (
                   newGroup={
                     selectedVoteOption.value === options[1].value
                       ? {
-                          option: "percentage",
                           members: selectedGroup.members,
                           threshold: [selectedVoteValue, 100],
                           requiredVotes,
+                          option: "percentage",
                         }
                       : {
+                          members: selectedGroup.members,
                           option: "number",
                           threshold: requiredVotes,
                           requiredVotes,
                         }
                   }
                 />
-                {/* TODO: remove below once the right data is passed to the table */}
-                {/* <div className="d-flex flex-column gap-2 mt-1">
-                  <p>Current Setup:</p>
-                  {selectedGroup.isRatio ? (
-                    <PermissionGroupPercentage
-                      group={{
-                        ...selectedGroup,
-                        threshold: [selectedGroup.threshold, 100],
-                      }}
-                    />
-                  ) : (
-                    <PermissionGroupFixedNumber group={selectedGroup} />
-                  )}
-                  <p>New Setup:</p>
-                  {selectedVoteOption.value === options[1].value ? (
-                    <PermissionGroupPercentage
-                      group={{
-                        members: selectedGroup.members,
-                        threshold: [selectedVoteValue, 100],
-                        requiredVotes,
-                      }}
-                    />
-                  ) : (
-                    <PermissionGroupFixedNumber
-                      group={{ threshold: requiredVotes, requiredVotes }}
-                    />
-                  )}
-                </div> */}
               </>
             ),
             confirmLabel: "Confirm",
@@ -689,7 +659,16 @@ return (
                       isTxnCreated,
                     treasuryDaoID,
                     callbackAction: () => {
-                      setConfirmModal(true);
+                      if (
+                        !isPercentageSelected &&
+                        selectedVoteValue > selectedGroup.members.length
+                      ) {
+                        setValueError(
+                          `Maximum members allowed is ${selectedGroup.members.length}.`
+                        );
+                      } else {
+                        setConfirmModal(true);
+                      }
                     },
                   }}
                 />
