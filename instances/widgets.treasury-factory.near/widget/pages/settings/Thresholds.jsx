@@ -550,7 +550,7 @@ return (
               />
             </div>
             <div className="d-flex flex-column gap-1">
-              <label>
+              <label data-testid="threshold-value-label">
                 {isPercentageSelected ? "Enter percentage" : "Value"}
               </label>
               <Widget

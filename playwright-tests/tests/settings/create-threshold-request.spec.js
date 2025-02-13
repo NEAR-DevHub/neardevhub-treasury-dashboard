@@ -46,7 +46,7 @@ async function checkVotingDropdownChange({ page }) {
       "A fixed number of votes is required for a decision to pass."
     )
   ).toBeVisible();
-  await expect(page.getByText("Value")).toBeVisible();
+  await expect(page.getByTestId("threshold-value-label")).toBeVisible();
 }
 
 test.afterEach(async ({ page }, testInfo) => {
@@ -212,12 +212,12 @@ test.describe("User is logged in", function () {
     await submitBtn.click();
     await expect(
       page.getByText(
-        "Required Votes for Approval: 1"
+        "Required Vote(s) for Approval"
       )
     ).toBeVisible();
     await expect(
       page.getByText(
-        "Required Votes for Approval: 2"
+        "Required Vote(s) for Approval"
       )
     ).toBeVisible();
     await page.getByRole("button", { name: "Confirm" }).click();
