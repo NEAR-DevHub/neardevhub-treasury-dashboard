@@ -478,10 +478,20 @@ test.describe("User is logged in", function () {
     await durationInput.fill("3");
     const submitBtn = page.getByRole("button", { name: "Submit Request" });
     await submitBtn.click();
+    await expect(submitBtn).toBeDisabled();
+    await page.waitForTimeout(2_000);
+    const proceedButton = await page.locator(".modalfooter button", {
+      hasText: "Yes, proceed",
+    });
+
+    if (await proceedButton.isVisible({})) {
+      await proceedButton.click();
+    }
+
+    await page.getByRole("button", { name: "Close" }).nth(1).click();
+
     const loader = page.getByText("Awaiting transaction confirmation...");
     await expect(loader).toBeVisible();
-    await expect(submitBtn).toBeDisabled();
-    await page.getByRole("button", { name: "Close" }).nth(1).click();
     await page
       .locator(".toast-body")
       .getByRole("button", { name: "Cancel" })
