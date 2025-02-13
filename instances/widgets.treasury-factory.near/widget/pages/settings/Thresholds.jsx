@@ -35,7 +35,7 @@ const hasEditPermission = hasPermission(
 
 const [selectedGroup, setSelectedGroup] = useState(null);
 const [selectedVoteOption, setSelectedVoteOption] = useState(null);
-const [selectedVoteValue, setSelectedVoteValue] = useState(null);
+const [selectedVoteValue, setSelectedVoteValue] = useState("");
 const [isTxnCreated, setTxnCreated] = useState(false);
 const [daoPolicy, setDaoPolicy] = useState(null);
 const [lastProposalId, setLastProposalId] = useState(null);
@@ -43,7 +43,6 @@ const [showToastStatus, setToastStatus] = useState(false);
 const [valueError, setValueError] = useState(null);
 const [showConfirmModal, setConfirmModal] = useState(null);
 const [rolesData, setRolesData] = useState(null);
-const [refreshData, setRefreshData] = useState(false);
 const [showErrorToast, setShowErrorToast] = useState(false);
 
 const hasCreatePermission = hasPermission(
@@ -92,7 +91,7 @@ useEffect(() => {
       )
     );
   });
-}, [refreshData]);
+}, []);
 
 useEffect(() => {
   getLastProposalId().then((i) => setLastProposalId(i));
@@ -135,7 +134,7 @@ useEffect(() => {
 
 function resetForm() {
   setSelectedVoteOption(selectedGroup.isRatio ? options[1] : options[0]);
-  setSelectedVoteValue(selectedGroup.threshold);
+  setSelectedVoteValue(parseInt(selectedGroup.threshold));
   setValueError(null);
 }
 
@@ -304,17 +303,66 @@ const SubmitToast = () => {
 
 const isPercentageSelected = selectedVoteOption?.value === options[1].value;
 
+function computeRequiredVotes(
+  selectedGroup,
+  selectedVoteOption,
+  options,
+  selectedVoteValue
+) {
+  if (!selectedGroup) return 0;
+
+  const isPercentageSelected = selectedVoteOption?.value === options[1].value;
+
+  if (isPercentageSelected) {
+    // Parse the input percentage; if the value is not a number, default to 0
+    const inputPercentage = parseInt(selectedVoteValue) || 0;
+    const totalMembers = selectedGroup.members?.length || 0;
+
+    // Calculate votes: (percentage of total members) and always require at least one extra vote.
+    const calculatedVotes =
+      Math.floor((inputPercentage / 100) * totalMembers) + 1;
+
+    // Limit the required votes to the total number of group members.
+    return Math.min(calculatedVotes, totalMembers);
+  } else {
+    // When a fixed number is required, simply use the provided value.
+    return parseInt(selectedVoteValue);
+  }
+}
+
+// threshold with be percentage based [1, 100] or a fixed number 1 vote
+function PermissionGroupPercentage({ group }) {
+  if (!group) return null;
+
+  return (
+    <ul>
+      <li>Decision Based On: % of Members</li>
+      <li>Permission Group Size: {group.members.length} members</li>
+      <li>Proposal Approved If: {group.threshold[0]}% of Members Vote Yes</li>
+      <li>Required Votes for Approval: {group.requiredVotes}</li>
+    </ul>
+  );
+}
+
+function PermissionGroupFixedNumber({ group }) {
+  if (!group) return null;
+
+  return (
+    <ul>
+      <li>Decision Based On: Number of Votes</li>
+      <li>Proposal Approved If: {group.threshold} Members Vote Yes</li>
+      <li>Required Votes for Approval: {group.requiredVotes}</li>
+    </ul>
+  );
+}
+
 const requiredVotes = selectedGroup
-  ? isPercentageSelected
-    ? Math.min(
-        Math.floor(
-          (parseInt(selectedVoteValue ? selectedVoteValue : 0) / 100) *
-            selectedGroup.members?.length +
-            1
-        ),
-        selectedGroup.members.length
-      )
-    : selectedVoteValue
+  ? computeRequiredVotes(
+      selectedGroup,
+      selectedVoteOption,
+      options,
+      selectedVoteValue
+    )
   : 0;
 
 return (
@@ -331,19 +379,33 @@ return (
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
           props={{
             instance,
-            heading: "Are you sure?",
+            heading: "Please Confirm Your Change",
             content: (
-              <div className="d-flex flex-column gap-2">
-                This action will result in significant changes to the system.
-                {requiredVotes != selectedGroup.requiredVotes && (
-                  <div className="d-flex gap-3 warning px-3 py-2 rounded-3">
-                    <i class="bi bi-exclamation-triangle warning-icon h5"></i>
-                    <div>
-                      Changing this setting will require {requiredVotes} vote(s)
-                      to approve requests. You will no longer be able to approve
-                      requests with {selectedGroup.requiredVotes} vote(s).
-                    </div>
-                  </div>
+              <div className="d-flex flex-column gap-2 mt-1">
+                <p>Current Setup:</p>
+                {selectedGroup.isRatio ? (
+                  <PermissionGroupPercentage
+                    group={{
+                      ...selectedGroup,
+                      threshold: [selectedGroup.threshold, 100],
+                    }}
+                  />
+                ) : (
+                  <PermissionGroupFixedNumber group={selectedGroup} />
+                )}
+                <p>New Setup:</p>
+                {selectedVoteOption.value === options[1].value ? (
+                  <PermissionGroupPercentage
+                    group={{
+                      members: selectedGroup.members,
+                      threshold: [selectedVoteValue, 100],
+                      requiredVotes,
+                    }}
+                  />
+                ) : (
+                  <PermissionGroupFixedNumber
+                    group={{ threshold: requiredVotes, requiredVotes }}
+                  />
                 )}
               </div>
             ),
@@ -431,6 +493,7 @@ return (
                     const value = e.target.value.replace(/[^0-9]/g, "");
                     setSelectedVoteValue(value);
                     const number = parseInt(value);
+                    console.log({ number });
                     setValueError(null);
                     if (isPercentageSelected) {
                       if (number > 100)
