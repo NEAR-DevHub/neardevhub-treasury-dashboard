@@ -347,7 +347,6 @@ useEffect(() => {
   const tokenEvaluation = (token) =>
     parseInt(token.amount) / Math.pow(10, token.ft_meta.decimals ?? 1);
 
-  // Single pass to separate tokens with and without price
   const { tokensWithPrice, tokensWithoutPrice } = ftTokens.reduce(
     (acc, token) => {
       (token.ft_meta.price ? acc.tokensWithPrice : acc.tokensWithoutPrice).push(
@@ -368,7 +367,6 @@ useEffect(() => {
     (a, b) => tokenEvaluation(b) - tokenEvaluation(a)
   );
 
-  // Merge sorted lists
   const sortedTokens = [...sortedWithPrice, ...sortedWithoutPrice];
 
   // Separate validTokens (max 7) and remainingTokens
