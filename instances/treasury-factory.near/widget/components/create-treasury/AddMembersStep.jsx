@@ -63,52 +63,54 @@ useEffect(() => {
 
 const ListItem = ({ member, key }) => (
   <Item className="d-flex align-items-center gap-3 justify-content-between w-100">
-    <div className="w-25">
+    <div style={{ width: "150px" }}>
       <Widget
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
         props={{ accountId: member.accountId }}
       />
     </div>
 
-    <div className="d-flex gap-1 align-items-center flex-wrap flex-1">
-      {member.permissions.map((permission, i) => {
-        const description = getRolesDescription(permission);
-        return (
-          <OverlayTrigger
-            placement="top"
-            overlay={<Tooltip id="tooltip">{description}</Tooltip>}
-          >
-            <Badge key={i}>{permission}</Badge>
-          </OverlayTrigger>
-        );
-      })}
-    </div>
+    <div className="w-100 d-flex flex-1 flex-row gap-3 justify-content-between">
+      <div className="d-flex gap-1 align-items-center flex-wrap flex-1">
+        {member.permissions.map((permission, i) => {
+          const description = getRolesDescription(permission);
+          return (
+            <OverlayTrigger
+              placement="top"
+              overlay={<Tooltip id="tooltip">{description}</Tooltip>}
+            >
+              <Badge key={i}>{permission}</Badge>
+            </OverlayTrigger>
+          );
+        })}
+      </div>
 
-    <div className="d-flex w-15">
-      {member.accountId !== context.accountId && (
-        <ActionButtons className="d-flex gap-3 align-items-center justify-content-end">
-          <i
-            role="button"
-            className="bi bi-pencil"
-            onClick={() => {
-              setFields({
-                accountId: member.accountId,
-                permissions: member.permissions,
-              });
-              setShowAddMemberModal(true);
-            }}
-          />
-          <i
-            role="button"
-            className="bi bi-trash text-danger"
-            onClick={() =>
-              setMembers(
-                members.filter((m) => m.accountId !== member.accountId)
-              )
-            }
-          />
-        </ActionButtons>
-      )}
+      <div className="d-flex">
+        {member.accountId !== context.accountId && (
+          <ActionButtons className="d-flex gap-3 align-items-center justify-content-end">
+            <i
+              role="button"
+              className="bi bi-pencil"
+              onClick={() => {
+                setFields({
+                  accountId: member.accountId,
+                  permissions: member.permissions,
+                });
+                setShowAddMemberModal(true);
+              }}
+            />
+            <i
+              role="button"
+              className="bi bi-trash text-danger"
+              onClick={() =>
+                setMembers(
+                  members.filter((m) => m.accountId !== member.accountId)
+                )
+              }
+            />
+          </ActionButtons>
+        )}
+      </div>
     </div>
   </Item>
 );
@@ -177,14 +179,11 @@ return (
     <div>
       <Item
         style={{ fontSize: "12px" }}
-        className="d-flex justify-content-between align-items-center gap-3"
+        className="d-flex align-items-center gap-3"
       >
-        <div className="w-25">Account</div>
-        <div className="d-flex flex-row gap-3" style={{ width: "380px" }}>
-          <div
-            className="d-flex gap-1 align-items-center"
-            style={{ width: "290px" }}
-          >
+        <div style={{ width: "150px" }}>Account</div>
+        <div className="w-100 d-flex flex-1 flex-row gap-3 justify-content-between">
+          <div className="d-flex gap-1 align-items-center">
             Permission Group(s)
             <OverlayTrigger
               placement="top"
@@ -210,9 +209,7 @@ return (
               <i className="bi bi-info-circle text-secondary"></i>
             </OverlayTrigger>
           </div>
-          <div className="d-flex flex-row" style={{ width: "60px" }}>
-            Actions
-          </div>
+          <div className="d-flex">Actions</div>
         </div>
       </Item>
       <div className="d-flex flex-column">
