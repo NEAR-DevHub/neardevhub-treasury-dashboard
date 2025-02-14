@@ -56,7 +56,8 @@ const Container = styled.div`
 `;
 
 const PageWrapper = styled.div`
-  width: 560px;
+  max-width: 560px;
+  width: 100%;
   font-size: 14px;
 
   p {
@@ -83,8 +84,8 @@ const PageWrapper = styled.div`
 
 const Wrapper = ({ title, children }) => (
   <div className="d-flex flex-column align-items-center w-100 mb-4">
-    <div className="d-flex w-100 align-items-center mb-2">
-      <div style={{ width: "150px" }}>
+    <div className="position-relative d-flex flex-row align-items-center w-100 pt-2 pb-4">
+      <div className="position-absolute left-0" style={{ width: "150px" }}>
         <a
           className="btn btn-outline-plain w-100"
           href={`https://neartreasury.com/`}
@@ -92,11 +93,8 @@ const Wrapper = ({ title, children }) => (
           Cancel Creation
         </a>
       </div>
-      <div
-        style={{ width: "calc(100% - 300px)" }}
-        className="d-flex justify-content-center"
-      >
-        <h3 className="my-3 d-flex justify-content-center">{title}</h3>
+      <div className="d-flex flex-row w-100 align-items-center justify-content-md-center justify-content-end">
+        <h3 className="mb-0">{title}</h3>
       </div>
     </div>
 
@@ -107,36 +105,37 @@ const Wrapper = ({ title, children }) => (
 );
 
 const SocalSignIn = () => (
-  <Container className="shadow-sm gap-3">
-    <div className="d-flex flex-column gap-2">
-      <h4>
-        Click the 'Sign In' button at the top-right corner of the Near.Social
-        gateway
-      </h4>
+  <Container className="d-flex shadow-sm flex-column flex-sm-row gap-3">
+    <div className="d-flex flex-1 flex-column gap-2">
+      <h4>Click the 'Sign In' button at the top-right corner</h4>
       <Widget
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Info`}
         props={{
           type: "info",
-          text: "This is the account that will be used to pay for creating the treasury and managing it at first",
+          text: "This account will be used to pay for creating the treasury and managing it at first.",
         }}
       />
     </div>
-    <img
-      style={{ width: "252px", height: "183px" }}
-      src={STATIC_IMAGES.social}
-    />
+    <div className="flex-1">
+      <img
+        style={{ width: "100%", height: "100%" }}
+        src={STATIC_IMAGES.social}
+      />
+    </div>
   </Container>
 );
 
 const NearSignIn = () => (
-  <Container className="shadow-sm gap-3">
-    <div className="d-flex flex-column gap-2">
+  <Container className="d-flex shadow-sm flex-column flex-sm-row gap-3">
+    <div className="d-flex flex-1 flex-column gap-2">
       <h4>
         Click the 'Sign-up or Login' button located at the bottom-left corner of
         the Near gateway
       </h4>
     </div>
-    <img style={{ width: "252px", height: "183px" }} src={STATIC_IMAGES.near} />
+    <div className="flex-1">
+      <img style={{ width: "100%", height: "100%" }} src={STATIC_IMAGES.near} />
+    </div>
   </Container>
 );
 

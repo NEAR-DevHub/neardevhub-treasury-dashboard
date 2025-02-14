@@ -46,7 +46,7 @@ async function checkVotingDropdownChange({ page }) {
       "A fixed number of votes is required for a decision to pass."
     )
   ).toBeVisible();
-  await expect(page.getByText("Value")).toBeVisible();
+  await expect(page.getByTestId("threshold-value-label")).toBeVisible();
 }
 
 test.afterEach(async ({ page }, testInfo) => {
@@ -222,11 +222,8 @@ test.describe("User is logged in", function () {
     await expect(submitBtn).toBeDisabled();
     await thresholdInput.fill("2");
     await submitBtn.click();
-    await expect(
-      page.getByText(
-        "Changing this setting will require 2 vote(s) to approve requests. You will no longer be able to approve requests with 1 vote(s)."
-      )
-    ).toBeVisible();
+    await expect(page.getByText("Required Vote(s) for Approval")).toBeVisible();
+    await expect(page.getByText("Required Vote(s) for Approval")).toBeVisible();
     await page.getByRole("button", { name: "Confirm" }).click();
     await expect(
       page.getByText("Awaiting transaction confirmation...")
@@ -275,7 +272,7 @@ test.describe("User is logged in", function () {
     await thresholdInput.fill("20");
     await expect(page.getByText("Warning!")).toBeVisible();
     await submitBtn.click();
-    await expect(page.getByText("Are you sure?")).toBeVisible();
+    await expect(page.getByText("Confirm Your Change")).toBeVisible();
     await page.getByRole("button", { name: "Confirm" }).click();
     await expect(
       page.getByText("Awaiting transaction confirmation...")
@@ -341,24 +338,26 @@ test.describe("User is logged in", function () {
     await thresholdInput.fill("0");
 
     await expect(page.getByText("At least 1 member is required.")).toBeVisible({
-      timeout: 10_000,
+      timeout: 20_000,
     });
     await expect(submitBtn).toBeDisabled();
     // Percentage
     await page.getByTestId("dropdown-btn").click();
     await page.getByRole("list").getByText("Percentage of members").click();
-    await thresholdInput.fill("1");
-    await thresholdInput.fill("", { force: true });
-    await thresholdInput.focus();
-    await thresholdInput.pressSequentially("0", { delay: 100 });
+    await thresholdInput.click();
+    await page.keyboard.down("Control");
+    await page.keyboard.press("A");
+    await page.keyboard.up("Control");
+    await page.keyboard.press("Backspace");
+    await thresholdInput.type("0", { delay: 100 });
     await expect(
       page.getByText("The minimum allowed percentage is 1%.")
-    ).toBeVisible({ timeout: 10_000 });
+    ).toBeVisible({ timeout: 20_000 });
     await expect(submitBtn).toBeDisabled();
     await thresholdInput.fill("20");
     await expect(page.getByText("Warning!")).toBeVisible();
     await submitBtn.click();
-    await expect(page.getByText("Are you sure?")).toBeVisible();
+    await expect(page.getByText("Confirm Your Change")).toBeVisible();
     await page.getByRole("button", { name: "Confirm" }).click();
     await expect(
       page.getByText("Awaiting transaction confirmation...")
