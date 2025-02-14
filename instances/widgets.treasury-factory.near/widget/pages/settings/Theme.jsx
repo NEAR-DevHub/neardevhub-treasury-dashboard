@@ -324,7 +324,9 @@ function onSubmitClick() {
 }
 
 function setDefault() {
-  setImage(metadata?.flagLogo ?? defaultImage);
+  setImage(
+    metadata?.flagLogo?.includes("ipfs") ? metadata.flagLogo : defaultImage
+  );
   setColor(metadata?.primaryColor ?? themeColor ?? defaultColor);
   setSelectedTheme(
     ThemeOptions.find((i) => i.value === metadata?.theme) ?? ThemeOptions[0]

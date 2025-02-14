@@ -123,7 +123,9 @@ function getTitle(text) {
   return text.replace(/-/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-const treasuryLogo = metadata?.flagLogo ? metadata?.flagLogo : logo;
+const treasuryLogo = metadata?.flagLogo?.includes("ipfs")
+  ? metadata?.flagLogo
+  : logo;
 
 return (
   <Navbar className="position-relative d-flex justify-content-between gap-2">

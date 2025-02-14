@@ -318,44 +318,46 @@ const NearPortfolio = () => {
 const isLoading =
   ftTokens === null || nearBalances === null || nearPrice === null;
 
-const unlistedTokens = Array.isArray(ftTokens)
-  ? ftTokens.filter(
-      (token) =>
-        token.ft_meta.symbol.length > 6 && /\./.test(token.ft_meta.symbol)
-    )
-  : [];
-
-const TokensList = ({ tokens, filterFn }) => {
+const TokensList = ({ tokens }) => {
   if (!Array.isArray(tokens)) return <></>;
-  if (tokens.filter(filterFn)?.length <= 0) return <></>;
 
   const sortTokens = (tokens) => {
     const tokenEvaluation = (token) =>
-      (parseInt(token.amount) * token.ft_meta.price) /
+      (parseInt(token.amount) * token.ft_meta.price ?? 0) /
       Math.pow(10, token.ft_meta.decimals ?? 1);
 
     return tokens.sort((a, b) => tokenEvaluation(b) - tokenEvaluation(a));
   };
 
-  return sortTokens(tokens)
-    ?.filter(filterFn)
-    ?.map((item, index) => {
-      const { ft_meta, amount } = item;
-      const { decimals, symbol, icon, price } = ft_meta;
-      const tokensNumber = convertBalanceToReadableFormat(amount, decimals);
+  return sortTokens(tokens)?.map((item, index) => {
+    const { ft_meta, amount } = item;
+    const { decimals, symbol, icon, price } = ft_meta;
+    const tokensNumber = convertBalanceToReadableFormat(amount, decimals);
 
-      return (
-        <PortfolioCard
-          hideBorder={index === ftTokens.length - 1}
-          symbol={symbol}
-          src={icon}
-          balance={tokensNumber}
-          showExpand={false}
-          price={price ?? 0}
-        />
-      );
-    });
+    return (
+      <PortfolioCard
+        hideBorder={index === ftTokens.length - 1}
+        symbol={symbol}
+        src={icon}
+        balance={tokensNumber}
+        showExpand={false}
+        price={price ?? 0}
+      />
+    );
+  });
 };
+
+const { validTokens, remainingTokens } = (ftTokens ?? []).reduce(
+  (acc, token) => {
+    if (token?.ft_meta?.symbol?.length <= 12 && !/\./.test(token?.ft_meta?.symbol)) {
+      acc.validTokens.push(token);
+    } else {
+      acc.remainingTokens.push(token);
+    }
+    return acc;
+  },
+  { validTokens: [], remainingTokens: [] }
+);
 
 return (
   <div className="card flex-1 overflow-hidden border-bottom">
@@ -372,25 +374,10 @@ return (
           ) : (
             <div className="d-flex flex-column">
               <NearPortfolio />
-              <TokensList
-                tokens={ftTokens}
-                filterFn={(token) =>
-                  token.ft_meta.symbol.length <= 6 &&
-                  !/\./.test(token.ft_meta.symbol)
-                }
-              />
-
-              {unlistedTokens.length > 0 && (
+              <TokensList tokens={validTokens} />
+              {remainingTokens.length > 0 && (
                 <>
-                  {showHiddenTokens && (
-                    <TokensList
-                      tokens={ftTokens}
-                      filterFn={(token) =>
-                        token.ft_meta.symbol.length > 6 &&
-                        /\./.test(token.ft_meta.symbol)
-                      }
-                    />
-                  )}
+                  {showHiddenTokens && <TokensList tokens={remainingTokens} />}
                   <div
                     role="button"
                     className="d-flex align-items-center justify-content-between px-3 py-2"
