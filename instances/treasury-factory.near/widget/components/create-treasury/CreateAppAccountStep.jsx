@@ -6,7 +6,7 @@ const AccountDisplay = ({ label, prefix, tooltipInfo, noBorder }) => {
   return (
     <div className="d-flex flex-column">
       <div className={!noBorder && "border-bottom"}>
-        <div className="py-2 d-flex gap-2 align-items-center justify-content-between px-3">
+        <div className="py-2 d-flex gap-2 align-items-center justify-content-between flex-wrap px-3">
           <div className="h6 mb-0">
             {label}
             <OverlayTrigger
@@ -16,10 +16,10 @@ const AccountDisplay = ({ label, prefix, tooltipInfo, noBorder }) => {
               <i className="mx-1 bi bi-info-circle text-secondary" />
             </OverlayTrigger>
           </div>
-          <div className="h6 mb-0 d-flex align-items-center">
-            <div className="text-primary">{formFields.accountName}</div>
-            <div>{prefix}</div>
-          </div>
+          <span className="h6 mb-0 align-items-center">
+            <span className="text-primary">{formFields.accountName}</span>
+            <span>{prefix}</span>
+          </span>
         </div>
       </div>
     </div>
