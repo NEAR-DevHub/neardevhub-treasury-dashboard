@@ -233,9 +233,12 @@ const PortfolioCard = ({
 };
 
 const NearPortfolio = () => {
-  const available = Big(nearBalances?.availableParsed ?? "0")
+  let available = Big(nearBalances?.availableParsed ?? "0")
     .minus(nearStakedTotalTokens ?? "0")
     .toFixed(2);
+  if (parseFloat(available) < 0) {
+    available = 0;
+  }
   return (
     <PortfolioCard
       symbol={"NEAR"}
