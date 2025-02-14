@@ -2,7 +2,7 @@ const { instance, selectedTab } = props;
 
 const [leftNavbarOptions, setLeftBarOptions] = useState([
   {
-    title: "Requests",
+    title: "Pending Requests",
     key: "requests",
     href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.feed.index`,
     props: { instance, ...props },

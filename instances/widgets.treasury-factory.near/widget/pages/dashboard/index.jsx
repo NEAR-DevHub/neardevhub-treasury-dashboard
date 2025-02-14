@@ -167,10 +167,17 @@ useEffect(() => {
 }, [lockupContract]);
 
 useEffect(() => {
-  if (lockupNearBalances.total && lockupNearBalances.locked) {
-    const available = Big(lockupNearBalances.total)
+  if (
+    lockupNearBalances.total &&
+    (lockupNearBalances.locked || lockupNearBalances.locked === 0)
+  ) {
+    let available = Big(lockupNearBalances.total)
       .minus(lockupNearBalances.locked)
+      .minus(LOCKUP_MIN_BALANCE_FOR_STORAGE)
       .toFixed();
+    if (parseFloat(available) < 0) {
+      available = 0;
+    }
     setLockupNearBalances((prev) => ({
       ...prev,
       available: available,

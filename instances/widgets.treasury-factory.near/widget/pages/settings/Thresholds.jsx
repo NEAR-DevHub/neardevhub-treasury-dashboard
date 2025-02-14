@@ -434,7 +434,7 @@ return (
                 {requiredVotes > 1 &&
                   parseInt(selectedGroup.threshold) === 1 && (
                     <div className="d-flex align-items-center gap-3 warning px-3 py-2 rounded-3">
-                      <i className="bi bi-exclamation-triangle warning-icon h5"></i>
+                      <i className="bi bi-exclamation-triangle warning-icon h5 mb-0"></i>
                       <div>
                         You will no longer be able to vote with a single vote.
                       </div>
