@@ -237,15 +237,15 @@ const SummaryListItem = ({ title, value, info }) => (
 );
 
 const ListItem = ({ member }) => (
-  <Item className="d-flex align-items-center justify-content-between w-100 gap-3">
-    <div style={{ width: "40%" }}>
+  <Item className="d-flex align-items-center w-100 gap-3">
+    <div style={{ minWidth: "200px", width: "200px" }}>
       <Widget
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
         props={{ accountId: member.accountId }}
       />
     </div>
 
-    <div className="d-flex gap-2 align-items-center" style={{ width: "292px" }}>
+    <div className="d-flex gap-2 flex-wrap flex-1 align-items-center">
       {member.permissions.map((permission, i) => (
         <Badge key={i}>{permission}</Badge>
       ))}
