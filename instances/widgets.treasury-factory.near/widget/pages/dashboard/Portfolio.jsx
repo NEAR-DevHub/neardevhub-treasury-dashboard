@@ -81,6 +81,8 @@ const [isNearPortfolioExpanded, setNearPortfolioExpanded] = useState(false);
 const [isNearStakedPortfolioExpanded, setNearStakedPortfolioExpanded] =
   useState(false);
 const [showHiddenTokens, setShowHiddenTokens] = useState(false);
+const [displayableTokens, setDisplayableTokens] = useState([]);
+const [hiddenTokens, setHiddenTokens] = useState([]);
 
 function formatCurrency(amount) {
   const formattedAmount = Number(amount).toLocaleString("en-US", {
@@ -321,15 +323,7 @@ const isLoading =
 const TokensList = ({ tokens }) => {
   if (!Array.isArray(tokens)) return <></>;
 
-  const sortTokens = (tokens) => {
-    const tokenEvaluation = (token) =>
-      (parseInt(token.amount) * token.ft_meta.price ?? 0) /
-      Math.pow(10, token.ft_meta.decimals ?? 1);
-
-    return tokens.sort((a, b) => tokenEvaluation(b) - tokenEvaluation(a));
-  };
-
-  return sortTokens(tokens)?.map((item, index) => {
+  return tokens?.map((item, index) => {
     const { ft_meta, amount } = item;
     const { decimals, symbol, icon, price } = ft_meta;
     const tokensNumber = convertBalanceToReadableFormat(amount, decimals);
@@ -347,17 +341,57 @@ const TokensList = ({ tokens }) => {
   });
 };
 
-const { validTokens, remainingTokens } = (ftTokens ?? []).reduce(
-  (acc, token) => {
-    if (token?.ft_meta?.symbol?.length <= 12 && !/\./.test(token?.ft_meta?.symbol)) {
-      acc.validTokens.push(token);
-    } else {
-      acc.remainingTokens.push(token);
-    }
-    return acc;
-  },
-  { validTokens: [], remainingTokens: [] }
-);
+useEffect(() => {
+  if (!Array.isArray(ftTokens)) return;
+
+  const tokenEvaluation = (token) =>
+    parseInt(token.amount) / Math.pow(10, token.ft_meta.decimals ?? 1);
+
+  // Single pass to separate tokens with and without price
+  const { tokensWithPrice, tokensWithoutPrice } = ftTokens.reduce(
+    (acc, token) => {
+      (token.ft_meta.price ? acc.tokensWithPrice : acc.tokensWithoutPrice).push(
+        token
+      );
+      return acc;
+    },
+    { tokensWithPrice: [], tokensWithoutPrice: [] }
+  );
+
+  const sortedWithPrice = [...tokensWithPrice].sort(
+    (a, b) =>
+      b.ft_meta.price * tokenEvaluation(b) -
+      a.ft_meta.price * tokenEvaluation(a)
+  );
+
+  const sortedWithoutPrice = [...tokensWithoutPrice].sort(
+    (a, b) => tokenEvaluation(b) - tokenEvaluation(a)
+  );
+
+  // Merge sorted lists
+  const sortedTokens = [...sortedWithPrice, ...sortedWithoutPrice];
+
+  // Separate validTokens (max 7) and remainingTokens
+  const { validTokens, remainingTokens } = sortedTokens.reduce(
+    (acc, token) => {
+      if (
+        acc.validTokens.length < 7 &&
+        ((token?.ft_meta?.symbol?.length <= 6 &&
+          !/\./.test(token?.ft_meta?.symbol)) ||
+          token?.ft_meta.price)
+      ) {
+        acc.validTokens.push(token);
+      } else {
+        acc.remainingTokens.push(token);
+      }
+      return acc;
+    },
+    { validTokens: [], remainingTokens: [] }
+  );
+
+  setDisplayableTokens(validTokens);
+  setHiddenTokens(remainingTokens);
+}, [ftTokens]);
 
 return (
   <div className="card flex-1 overflow-hidden border-bottom">
@@ -374,18 +408,16 @@ return (
           ) : (
             <div className="d-flex flex-column">
               <NearPortfolio />
-              <TokensList tokens={validTokens} />
-              {remainingTokens.length > 0 && (
+              <TokensList tokens={displayableTokens} />
+              {hiddenTokens.length > 0 && (
                 <>
-                  {showHiddenTokens && <TokensList tokens={remainingTokens} />}
+                  {showHiddenTokens && <TokensList tokens={hiddenTokens} />}
                   <div
                     role="button"
                     className="d-flex align-items-center justify-content-between px-3 py-2"
                     onClick={() => setShowHiddenTokens(!showHiddenTokens)}
                   >
-                    <div>
-                      {showHiddenTokens ? "Hide" : "Show"} unlisted tokens
-                    </div>
+                    <div>{showHiddenTokens ? "Hide" : "Show more"} tokens</div>
                     <i
                       className={
                         (showHiddenTokens

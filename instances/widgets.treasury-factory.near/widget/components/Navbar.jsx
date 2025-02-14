@@ -123,7 +123,7 @@ function getTitle(text) {
   return text.replace(/-/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-const treasuryLogo = metadata?.flagLogo?.includes("ipfs")
+const treasuryLogo = (metadata?.flagLogo ?? "")?.includes("ipfs")
   ? metadata?.flagLogo
   : logo;
 
