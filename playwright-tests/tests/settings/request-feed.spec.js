@@ -196,7 +196,7 @@ test.describe.parallel("User logged in with different roles", function () {
           },
         });
         await page.goto(`/${instanceAccount}/widget/app?page=settings`);
-        await expect(page.getByText("Pending Requests")).toBeVisible({
+        await expect(page.getByText("Pending Requests").nth(1)).toBeVisible({
           timeout: 20_000,
         });
         await expect(
