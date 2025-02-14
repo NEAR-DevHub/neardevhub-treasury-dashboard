@@ -233,6 +233,9 @@ const PortfolioCard = ({
 };
 
 const NearPortfolio = () => {
+  const available = Big(nearBalances?.availableParsed ?? "0")
+    .minus(nearStakedTotalTokens ?? "0")
+    .toFixed(2);
   return (
     <PortfolioCard
       symbol={"NEAR"}
@@ -247,7 +250,9 @@ const NearPortfolio = () => {
         <div className="d-flex flex-column">
           <BalanceDisplay
             label={"Available Balance"}
-            balance={nearBalances.availableParsed}
+            balance={
+              isLockupContract ? nearBalances.availableParsed : available
+            }
             tooltipInfo={TooltipText?.available}
             price={nearPrice}
           />
