@@ -22,6 +22,10 @@ const Containet = styled.div`
     font-size: 12px;
     line-height: 15px;
   }
+
+  a {
+    color: #01bf7a !important;
+  }
 `;
 
 return (

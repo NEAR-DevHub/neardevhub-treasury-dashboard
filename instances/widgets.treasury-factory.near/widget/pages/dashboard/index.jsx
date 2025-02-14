@@ -186,9 +186,10 @@ const totalBalance = Big(nearBalances?.totalParsed ?? "0")
   .toFixed(2);
 
 function formatCurrency(amount) {
-  const formattedAmount = Number(amount)
-    .toFixed(2)
-    .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  const formattedAmount = Number(amount).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
   return "$" + formattedAmount;
 }
 

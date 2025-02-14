@@ -119,14 +119,13 @@ useEffect(() => {
 useEffect(() => {
   if (isTxnCreated) {
     let checkTxnTimeout = null;
-    let errorTimeout = null;
 
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
         if (typeof lastProposalId === "number" && lastProposalId !== id) {
           onCloseCanvas();
           refreshData();
-          clearTimeout(errorTimeout);
+          clearTimeout(checkTxnTimeout);
           setTxnCreated(false);
         } else {
           checkTxnTimeout = setTimeout(() => checkForNewProposal(), 1000);
@@ -135,16 +134,8 @@ useEffect(() => {
     };
     checkForNewProposal();
 
-    // if in 20 seconds there is no change, show error condition
-    errorTimeout = setTimeout(() => {
-      setShowErrorToast(true);
-      setTxnCreated(false);
-      clearTimeout(checkTxnTimeout);
-    }, 25_000);
-
     return () => {
       clearTimeout(checkTxnTimeout);
-      clearTimeout(errorTimeout);
     };
   }
 }, [isTxnCreated, lastProposalId]);
@@ -167,7 +158,11 @@ const BalanceDisplay = ({ label, balance, tooltipInfo, noBorder }) => {
             />
           </div>
           <div className="h6 mb-0 d-flex align-items-center gap-1">
-            {balance} NEAR
+            {Number(balance).toLocaleString("en-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}{" "}
+            NEAR
           </div>
         </div>
       </div>
@@ -178,14 +173,16 @@ const BalanceDisplay = ({ label, balance, tooltipInfo, noBorder }) => {
 function getBalances() {
   switch (selectedWallet?.value) {
     case lockupContract: {
+      let available = Big(lockupNearBalances.totalParsed ?? "0")
+        .minus(lockupStakedTotalTokens ?? "0")
+        .minus(formatNearAmount(LOCKUP_MIN_BALANCE_FOR_STORAGE))
+        .toFixed(2);
+      available = parseFloat(available) < 0 ? 0 : available;
       return {
         staked: lockupStakedTokens,
         unstaked: lockupUnStakedTokens,
         withdrawal: lockupNearWithdrawTokens,
-        available: Big(lockupNearBalances.totalParsed ?? "0")
-          .minus(lockupStakedTotalTokens ?? "0")
-          .minus(formatNearAmount(LOCKUP_MIN_BALANCE_FOR_STORAGE))
-          .toFixed(2),
+        available,
       };
     }
     default:
@@ -382,8 +379,7 @@ return (
   <Container>
     <TransactionLoader
       showInProgress={isTxnCreated}
-      showError={showErrorToast}
-      toggleToast={() => setShowErrorToast(false)}
+      cancelTxn={() => setTxnCreated(false)}
     />
     <Widget
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}

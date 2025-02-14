@@ -83,9 +83,10 @@ const [isNearStakedPortfolioExpanded, setNearStakedPortfolioExpanded] =
 const [showHiddenTokens, setShowHiddenTokens] = useState(false);
 
 function formatCurrency(amount) {
-  const formattedAmount = Number(amount)
-    .toFixed(2)
-    .replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  const formattedAmount = Number(amount).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
   return "$" + formattedAmount;
 }
 
@@ -130,7 +131,10 @@ const BalanceDisplay = ({
             <div className="d-flex flex-column align-items-end">
               <div className="h6 mb-0 d-flex align-items-center gap-1">
                 <NearToken height={20} width={20} />
-                {formatToReadableDecimals(balance)}
+                {Number(balance).toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
               </div>
               <div className="text-sm text-secondary">
                 {formatCurrency(
@@ -198,7 +202,12 @@ const PortfolioCard = ({
           </div>
           <div className="d-flex gap-2 align-items-center justify-content-end">
             <div className="d-flex flex-column align-items-end">
-              <div className="h6 mb-0">{formatToReadableDecimals(balance)}</div>
+              <div className="h6 mb-0">
+                {Number(balance).toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </div>
               <div className="text-sm text-secondary">
                 {formatCurrency(
                   formatToReadableDecimals(getPrice(balance, price))
@@ -312,22 +321,32 @@ const TokensList = ({ tokens, filterFn }) => {
   if (!Array.isArray(tokens)) return <></>;
   if (tokens.filter(filterFn)?.length <= 0) return <></>;
 
-  return tokens.filter(filterFn)?.map((item, index) => {
-    const { ft_meta, amount } = item;
-    const { decimals, symbol, icon, price } = ft_meta;
-    const tokensNumber = convertBalanceToReadableFormat(amount, decimals);
+  const sortTokens = (tokens) => {
+    const tokenEvaluation = (token) =>
+      (parseInt(token.amount) * token.ft_meta.price) /
+      Math.pow(10, token.ft_meta.decimals ?? 1);
 
-    return (
-      <PortfolioCard
-        hideBorder={index === ftTokens.length - 1}
-        symbol={symbol}
-        src={icon}
-        balance={tokensNumber}
-        showExpand={false}
-        price={price ?? 0}
-      />
-    );
-  });
+    return tokens.sort((a, b) => tokenEvaluation(b) - tokenEvaluation(a));
+  };
+
+  return sortTokens(tokens)
+    ?.filter(filterFn)
+    ?.map((item, index) => {
+      const { ft_meta, amount } = item;
+      const { decimals, symbol, icon, price } = ft_meta;
+      const tokensNumber = convertBalanceToReadableFormat(amount, decimals);
+
+      return (
+        <PortfolioCard
+          hideBorder={index === ftTokens.length - 1}
+          symbol={symbol}
+          src={icon}
+          balance={tokensNumber}
+          showExpand={false}
+          price={price ?? 0}
+        />
+      );
+    });
 };
 
 return (
