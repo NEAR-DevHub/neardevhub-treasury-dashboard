@@ -1,7 +1,6 @@
 use cargo_near_build::BuildOpts;
 use lazy_static::lazy_static;
-use near_sdk::base64::prelude::BASE64_STANDARD;
-use near_sdk::base64::{engine::general_purpose, Engine as _};
+use near_sdk::base64::{engine::general_purpose::STANDARD as BASE64_STANDARD, Engine as _};
 use near_sdk::serde::Deserialize;
 use near_sdk::{AccountId, NearToken};
 use near_workspaces::types::AccessKeyPermission;
@@ -39,7 +38,7 @@ fn create_preload_result(
 ) -> serde_json::Value {
     let preload_url = format!(
         "/web4/contract/social.near/get?keys.json=%5B%22{}/widget/app/metadata/**%22%5D",
-        account_id.as_str()
+        account_id
     );
     let body_string = serde_json::json!({account_id:{"widget":{"app":{"metadata":{
         "description":description,
@@ -50,10 +49,10 @@ fn create_preload_result(
 
     let body_base64 = BASE64_STANDARD.encode(body_string);
     return serde_json::json!({
-            String::from(preload_url): {
-                "contentType": "application/json",
-                "body": body_base64
-            }
+        preload_url: {
+            "contentType": "application/json",
+            "body": body_base64
+        }
     });
 }
 
@@ -100,8 +99,7 @@ async fn test_web4() -> Result<(), Box<dyn std::error::Error>> {
     let response = result.json::<Web4Response>().unwrap();
     assert_eq!("text/html; charset=UTF-8", response.content_type);
 
-    let body_string =
-        String::from_utf8(general_purpose::STANDARD.decode(response.body).unwrap()).unwrap();
+    let body_string = String::from_utf8(BASE64_STANDARD.decode(response.body).unwrap()).unwrap();
     assert!(body_string.contains("near-social-viewer"));
 
     Ok(())
@@ -325,7 +323,7 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
                 "social_db_account_id": SOCIALDB_ACCOUNT,
                 "widget_reference_account_id": WIDGET_REFERENCE_ACCOUNT_ID,
                 "name": instance_name,
-                "create_dao_args": general_purpose::STANDARD.encode(create_dao_args.to_string())
+                "create_dao_args": BASE64_STANDARD.encode(create_dao_args.to_string())
             }
         ))
         .max_gas()
@@ -394,8 +392,7 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
     let response = result.json::<Web4Response>().unwrap();
     assert_eq!("text/html; charset=UTF-8", response.content_type);
 
-    let body_string =
-        String::from_utf8(general_purpose::STANDARD.decode(response.body).unwrap()).unwrap();
+    let body_string = String::from_utf8(BASE64_STANDARD.decode(response.body).unwrap()).unwrap();
 
     assert!(body_string.contains("near-social-viewer"));
     assert!(body_string.contains("\"test treasury title\""));
@@ -494,14 +491,14 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
     let social_metadata_json: Value =
         Value::from_str(String::from_utf8(social_metadata.result).unwrap().as_str()).unwrap();
     let metadata = &social_metadata_json[instance_account_id.clone()]["widget"]["app"]["metadata"];
-    assert_eq!(metadata["name"], "NEAR treasury");
+    assert_eq!(metadata["name"], "NEAR Treasury");
     assert_eq!(
         metadata["description"],
-        format!("NEAR treasury for {}", instance_account_id)
+        format!("NEAR Treasury / {}", instance_account_id)
     );
     assert_eq!(
         metadata["image"]["ipfs_cid"],
-        "bafkreiboarigt5w26y5jyxyl4au7r2dl76o5lrm2jqjgqpooakck5xsojq"
+        "bafkreiefdkigadpkpccreqfnhut2li2nmf3alhz7c3wadveconelisnksu"
     );
 
     Ok(())
@@ -680,7 +677,7 @@ async fn test_factory_should_refund_if_failing_because_of_existing_account(
                 "social_db_account_id": SOCIALDB_ACCOUNT,
                 "widget_reference_account_id": WIDGET_REFERENCE_ACCOUNT_ID,
                 "name": instance_name,
-                "create_dao_args": general_purpose::STANDARD.encode(create_dao_args.to_string())
+                "create_dao_args": BASE64_STANDARD.encode(create_dao_args.to_string())
             }
         ))
         .max_gas()
@@ -893,7 +890,7 @@ async fn test_factory_should_refund_if_failing_because_of_existing_dao(
                 "social_db_account_id": SOCIALDB_ACCOUNT,
                 "widget_reference_account_id": WIDGET_REFERENCE_ACCOUNT_ID,
                 "name": instance_name,
-                "create_dao_args": general_purpose::STANDARD.encode(create_dao_args.to_string())
+                "create_dao_args": BASE64_STANDARD.encode(create_dao_args.to_string())
             }
         ))
         .max_gas()
