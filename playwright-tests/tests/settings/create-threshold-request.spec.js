@@ -345,11 +345,13 @@ test.describe("User is logged in", function () {
     await page.getByTestId("dropdown-btn").click();
     await page.getByRole("list").getByText("Percentage of members").click();
     await thresholdInput.click();
+    await page.waitForTimeout(200);
     await page.keyboard.down("Control");
     await page.keyboard.press("A");
     await page.keyboard.up("Control");
     await page.keyboard.press("Backspace");
-    await thresholdInput.type("0", { delay: 100 });
+    await page.waitForTimeout(200);
+    await thresholdInput.pressSequentially("0", { delay: 100 });
     await expect(
       page.getByText("The minimum allowed percentage is 1%.")
     ).toBeVisible({ timeout: 20_000 });
