@@ -130,14 +130,14 @@ async fn test_social_metadata() -> Result<(), Box<dyn std::error::Error>> {
     let social_metadata_json: Value =
         Value::from_str(String::from_utf8(social_metadata.result).unwrap().as_str()).unwrap();
     let metadata = &social_metadata_json[contract.id().as_str()]["widget"]["app"]["metadata"];
-    assert_eq!(metadata["name"], "NEAR treasury");
+    assert_eq!(metadata["name"], "NEAR Treasury");
     assert_eq!(
         metadata["description"],
-        format!("NEAR treasury for {}", contract.id().as_str())
+        format!("NEAR Treasury / {}", contract.id().as_str())
     );
     assert_eq!(
         metadata["image"]["ipfs_cid"],
-        "bafkreiboarigt5w26y5jyxyl4au7r2dl76o5lrm2jqjgqpooakck5xsojq"
+        "bafkreiefdkigadpkpccreqfnhut2li2nmf3alhz7c3wadveconelisnksu"
     );
 
     Ok(())
@@ -210,7 +210,7 @@ async fn test_update_widgets() -> Result<(), Box<dyn std::error::Error>> {
         .await?;
     let reference_widgets_json_string = String::from_utf8(reference_widgets.result).unwrap();
 
-    let update_widget_result = instance_account
+    instance_account
         .call(instance_account.id(), "update_widgets")
         .args_json(json!({
             "widget_reference_account_id": WIDGET_REFERENCE_ACCOUNT_ID,
@@ -219,15 +219,9 @@ async fn test_update_widgets() -> Result<(), Box<dyn std::error::Error>> {
         .deposit(NearToken::from_near(2))
         .max_gas()
         .transact()
-        .await?;
-    println!("update widget {}", update_widget_result.logs().join("\n"));
-    if !update_widget_result.is_success() {
-        panic!(
-            "Failed updating widget: {:?}",
-            String::from_utf8(update_widget_result.raw_bytes().unwrap())
-        );
-    }
-    assert!(update_widget_result.is_success());
+        .await?
+        .into_result()
+        .unwrap();
 
     let deployed_widgets = socialdb
         .call("get")
@@ -308,7 +302,7 @@ async fn test_update_widgets_and_set_social_metadata_defaults(
         .await?;
     assert!(social_set_result.is_success());
 
-    let update_widget_result = instance_account
+    instance_account
         .call(instance_account.id(), "update_widgets")
         .args_json(json!({
             "widget_reference_account_id": WIDGET_REFERENCE_ACCOUNT_ID,
@@ -318,20 +312,14 @@ async fn test_update_widgets_and_set_social_metadata_defaults(
         .deposit(NearToken::from_near(2))
         .max_gas()
         .transact()
-        .await?;
-    println!("update widget {}", update_widget_result.logs().join("\n"));
-    if !update_widget_result.is_success() {
-        panic!(
-            "Failed updating widget: {:?}",
-            String::from_utf8(update_widget_result.raw_bytes().unwrap())
-        );
-    }
-    assert!(update_widget_result.is_success());
+        .await?
+        .into_result()
+        .unwrap();
 
     let deployed_widgets = socialdb
         .call("get")
         .args_json(json!({
-            "keys": [format!("{}/widget/**", instance_account.id().as_str())]
+            "keys": [format!("{}/widget/**", instance_account.id())]
         }))
         .view()
         .await?;
@@ -362,14 +350,14 @@ async fn test_update_widgets_and_set_social_metadata_defaults(
     .unwrap();
     let metadata =
         &social_metadata_json[instance_contract.id().as_str()]["widget"]["app"]["metadata"];
-    assert_eq!(metadata["name"], "NEAR treasury");
+    assert_eq!(metadata["name"], "NEAR Treasury");
     assert_eq!(
         metadata["description"],
-        format!("NEAR treasury for {}", instance_contract.id().as_str())
+        format!("NEAR Treasury / {}", instance_contract.id())
     );
     assert_eq!(
         metadata["image"]["ipfs_cid"],
-        "bafkreiboarigt5w26y5jyxyl4au7r2dl76o5lrm2jqjgqpooakck5xsojq"
+        "bafkreiefdkigadpkpccreqfnhut2li2nmf3alhz7c3wadveconelisnksu"
     );
 
     let preload_url = format!(
@@ -404,24 +392,24 @@ async fn test_update_widgets_and_set_social_metadata_defaults(
     ));
     assert!(body_string.contains(
         format!(
-            "<meta property=\"og:description\" content=\"NEAR treasury for {}\" />",
+            "<meta property=\"og:description\" content=\"NEAR Treasury / {}\" />",
             instance_contract.id()
         )
         .as_str()
     ));
     assert!(body_string.contains(
         format!(
-            "<meta name=\"twitter:description\" content=\"NEAR treasury for {}\" />",
+            "<meta name=\"twitter:description\" content=\"NEAR Treasury / {}\" />",
             instance_contract.id()
         )
         .as_str()
     ));
-    assert!(body_string.contains("<meta property=\"og:title\" content=\"NEAR treasury\" />"));
-    assert!(body_string.contains("<meta name=\"twitter:title\" content=\"NEAR treasury\" />"));
+    assert!(body_string.contains("<meta property=\"og:title\" content=\"NEAR Treasury\" />"));
+    assert!(body_string.contains("<meta name=\"twitter:title\" content=\"NEAR Treasury\" />"));
     assert!(body_string
-        .contains("<meta property=\"og:image\" content=\"https://ipfs.near.social/ipfs/bafkreiboarigt5w26y5jyxyl4au7r2dl76o5lrm2jqjgqpooakck5xsojq\" />"));
+        .contains("<meta property=\"og:image\" content=\"https://ipfs.near.social/ipfs/bafkreiefdkigadpkpccreqfnhut2li2nmf3alhz7c3wadveconelisnksu\" />"));
     assert!(body_string
-        .contains("<meta name=\"twitter:image\" content=\"https://ipfs.near.social/ipfs/bafkreiboarigt5w26y5jyxyl4au7r2dl76o5lrm2jqjgqpooakck5xsojq\" />"));
+        .contains("<meta name=\"twitter:image\" content=\"https://ipfs.near.social/ipfs/bafkreiefdkigadpkpccreqfnhut2li2nmf3alhz7c3wadveconelisnksu\" />"));
 
     Ok(())
 }
