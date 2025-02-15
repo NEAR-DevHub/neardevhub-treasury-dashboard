@@ -78,9 +78,7 @@ useEffect(() => {
       icon: NearToken,
       title: "NEAR",
       value: "NEAR",
-      tokenBalance: isLockupContract
-        ? nearBalances.availableParsed
-        : nearBalances.totalParsed,
+      tokenBalance: nearBalances.availableParsed,
     },
   ];
 
@@ -105,23 +103,13 @@ useEffect(() => {
 const [isOpen, setIsOpen] = useState(false);
 const [selectedOptionValue, setSelectedValue] = useState(selectedValue);
 
-function getNearAvailableBalance(tokenBalance) {
-  return Big(tokenBalance)
-    .minus(nearBalances.storageParsed ?? "0")
-    .minus(nearStakedTokens ?? "0")
-    .toFixed(2);
-}
 const toggleDropdown = () => {
   setIsOpen(!isOpen);
 };
 
 function sendTokensAvailable(value) {
   const balance = options.find((i) => i.value === value)?.tokenBalance;
-  return setTokensAvailable(
-    value === "NEAR" && !isLockupContract
-      ? getNearAvailableBalance(balance)
-      : balance
-  );
+  return setTokensAvailable(balance);
 }
 
 useEffect(() => {
@@ -209,10 +197,7 @@ const Item = ({ option }) => {
           </div>
         )}
         <div className="text-sm text-secondary w-100 text-wrap">
-          Tokens available:{" "}
-          {option.value === "NEAR" && !isLockupContract
-            ? getNearAvailableBalance(option.tokenBalance)
-            : option.tokenBalance}
+          Tokens available: {option.tokenBalance}
         </div>
       </div>
     </div>
