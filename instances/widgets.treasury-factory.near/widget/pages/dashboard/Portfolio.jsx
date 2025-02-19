@@ -235,18 +235,15 @@ const PortfolioCard = ({
 };
 
 const NearPortfolio = () => {
-  let available = Big(nearBalances?.availableParsed ?? "0")
-    .minus(nearStakedTotalTokens ?? "0")
+  let total = Big(nearBalances?.totalParsed ?? "0")
+    .plus(nearStakedTotalTokens ?? "0")
     .toFixed(2);
-  if (parseFloat(available) < 0) {
-    available = 0;
-  }
   return (
     <PortfolioCard
       symbol={"NEAR"}
       hideBorder={!ftTokens?.length && !isNearPortfolioExpanded}
       Icon={NearToken}
-      balance={nearBalances.totalParsed}
+      balance={isLockupContract ? nearBalances.totalParsed : total}
       showExpand={true}
       price={nearPrice}
       isExpanded={isNearPortfolioExpanded}
@@ -255,9 +252,7 @@ const NearPortfolio = () => {
         <div className="d-flex flex-column">
           <BalanceDisplay
             label={"Available Balance"}
-            balance={
-              isLockupContract ? nearBalances.availableParsed : available
-            }
+            balance={nearBalances?.availableParsed}
             tooltipInfo={TooltipText?.available}
             price={nearPrice}
           />
