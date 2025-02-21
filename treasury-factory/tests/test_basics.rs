@@ -333,13 +333,13 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
 
     let user_account_details_after = user_account.view_account().await?;
     let treasury_factory_account_details_after = treasury_factory_contract.view_account().await?;
-    
+
     assert_eq!(
         create_treasury_instance_result.receipt_failures().len(),
         0,
         "Total tgas burnt {:?}, Receipt failures: {:?}",
         create_treasury_instance_result.total_gas_burnt.as_tgas(),
-        create_treasury_instance_result.receipt_failures()        
+        create_treasury_instance_result.receipt_failures()
     );
 
     assert!(create_treasury_instance_result.is_success());
@@ -705,7 +705,10 @@ async fn test_factory_should_refund_if_failing_because_of_existing_account(
         user_account_details_before.balance.as_millinear()
             - user_account_details_after.balance.as_millinear()
             < 10
-    );
+    , "User account balance after ( {} mNEAR) should be almost the same as user balance before ( {} mNEAR)", 
+    user_account_details_after.balance.as_millinear(),
+    user_account_details_before.balance.as_millinear()
+);
 
     assert!(
         treasury_factory_account_details_after.balance
@@ -914,20 +917,21 @@ async fn test_factory_should_refund_if_failing_because_of_existing_dao(
     );
     let user_account_details_after = user_account.view_account().await?;
 
-    assert_eq!(
-        user_account_details_before.balance.as_near() - 3,
-        user_account_details_after.balance.as_near()
-    );
-
+    let user_balance_diff = user_account_details_before.balance.as_millinear()
+        - user_account_details_after.balance.as_millinear();
     assert!(
+        user_balance_diff > 3000 && user_balance_diff < 3100,
+        "User balance after ( {} mNEAR ) should be 3 NEAR less than balance before ( {} mNEAR )",
+        user_account_details_after.balance.as_millinear(),
         user_account_details_before.balance.as_millinear()
-            - user_account_details_after.balance.as_millinear()
-            < 2220
     );
 
     assert!(
         treasury_factory_account_details_after.balance
-            > treasury_factory_account_details_before.balance
+            > treasury_factory_account_details_before.balance,
+        "Treasury factory balance after ( {} mNEAR ) should be slightly more than balance before ( {} mNEAR )",
+        treasury_factory_account_details_after.balance.as_millinear(),
+        treasury_factory_account_details_before.balance.as_millinear()
     );
 
     assert!(
@@ -937,7 +941,10 @@ async fn test_factory_should_refund_if_failing_because_of_existing_dao(
             - treasury_factory_account_details_before
                 .balance
                 .as_millinear()
-            < 100
+            < 100,
+        "Treasury factory balance after ( {} mNEAR ) should be slightly more than balance before ( {} mNEAR )",
+            treasury_factory_account_details_after.balance.as_millinear(),
+            treasury_factory_account_details_before.balance.as_millinear()
     );
 
     let instance_account_details = worker
