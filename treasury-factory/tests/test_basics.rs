@@ -353,7 +353,9 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
         user_account_details_after.balance
             < (user_account_details_before
                 .balance
-                .saturating_sub(NearToken::from_near(9)))
+                .saturating_sub(NearToken::from_near(9))),
+        "User balance after ( {} mNEAR) should be at least 9 NEAR less than before creating instance ( {} mNEAR ). {:?}", user_account_details_after.balance.as_millinear(), user_account_details_before.balance.as_millinear(),
+        create_treasury_instance_result.logs()
     );
 
     assert!(
@@ -491,7 +493,7 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
     let social_metadata_json: Value =
         Value::from_str(String::from_utf8(social_metadata.result).unwrap().as_str()).unwrap();
     let metadata = &social_metadata_json[instance_account_id.clone()]["widget"]["app"]["metadata"];
-    assert_eq!(metadata["name"], "NEAR Treasury");
+    assert_eq!(metadata["name"].as_str().unwrap(), "NEAR Treasury");
     assert_eq!(
         metadata["description"],
         format!("NEAR Treasury / {}", instance_account_id)
