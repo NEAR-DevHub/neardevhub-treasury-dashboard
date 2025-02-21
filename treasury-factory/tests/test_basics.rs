@@ -331,23 +331,18 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
         .transact()
         .await?;
 
-    if create_treasury_instance_result.is_failure() {
-        panic!(
-            "Error creating treasury instance {:?}",
-            String::from_utf8(create_treasury_instance_result.raw_bytes().unwrap())
-        );
-    }
-
     let user_account_details_after = user_account.view_account().await?;
     let treasury_factory_account_details_after = treasury_factory_contract.view_account().await?;
-    assert!(create_treasury_instance_result.is_success());
-
+    
     assert_eq!(
         create_treasury_instance_result.receipt_failures().len(),
         0,
-        "Should not be receipt failures: {:?}",
-        create_treasury_instance_result.receipt_failures()
+        "Total tgas burnt {:?}, Receipt failures: {:?}",
+        create_treasury_instance_result.total_gas_burnt.as_tgas(),
+        create_treasury_instance_result.receipt_failures()        
     );
+
+    assert!(create_treasury_instance_result.is_success());
 
     assert!(
         user_account_details_after.balance
@@ -366,13 +361,14 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
                 .balance
                 .as_millinear()
             < 10,
-        "treasury factory balance after ({}) should be equal or slightly above balance before ({})",
+        "treasury factory balance after ({}) should be equal or slightly above balance before ({}). {:?}",
         treasury_factory_account_details_after
             .balance
             .as_millinear(),
         treasury_factory_account_details_before
             .balance
-            .as_millinear()
+            .as_millinear(),
+        create_treasury_instance_result.logs()
     );
 
     assert!(
