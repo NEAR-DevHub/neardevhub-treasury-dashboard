@@ -148,22 +148,19 @@ impl Contract {
         );*/
         let create_dao_result = env::promise_result(0);
 
-        match (create_dao_result) {
-            PromiseResult::Successful(_) => {
-                instance_contract::ext(new_instance_contract_id.clone())
-                    .with_attached_deposit(SOCIAL_DB_DEPOSIT)
-                    .update_widgets(
-                        widget_reference_account_id.clone(),
-                        social_db_account_id.clone(),
-                        true,
-                    )
-            }
-            PromiseResult::Failed => {
-                env::log_str(format!("Succeeded creating and funding web4 account {}, but failed creating treasury account {}",new_instance_contract_id, sputnik_dao_contract_id).as_str());
-                Promise::new(refund_on_failure_account)
-                    .transfer(CREATE_SPUTNIK_DAO_DEPOSIT.saturating_add(SOCIAL_DB_DEPOSIT))
-            }
+        let mut promise = instance_contract::ext(new_instance_contract_id.clone())
+            .with_attached_deposit(SOCIAL_DB_DEPOSIT)
+            .update_widgets(
+                widget_reference_account_id.clone(),
+                social_db_account_id.clone(),
+                true,
+            );
+        if create_dao_result == PromiseResult::Failed {
+            env::log_str(format!("Succeeded creating and funding web4 account {}, but failed creating treasury account {}",new_instance_contract_id, sputnik_dao_contract_id).as_str());
+            promise = promise
+                .then(Promise::new(refund_on_failure_account).transfer(CREATE_SPUTNIK_DAO_DEPOSIT))
         }
+        promise
     }
 }
 

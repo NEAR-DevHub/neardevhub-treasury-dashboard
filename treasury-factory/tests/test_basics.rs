@@ -724,7 +724,7 @@ async fn test_factory_should_refund_if_failing_because_of_existing_account(
 }
 
 #[tokio::test]
-async fn test_factory_should_refund_if_failing_because_of_existing_dao(
+async fn test_factory_should_refund_if_failing_because_of_existing_dao_but_still_create_web4_and_set_social_metadata(
 ) -> Result<(), Box<dyn std::error::Error>> {
     const SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT: &str = "sputnik-dao.near";
     const SOCIALDB_ACCOUNT: &str = "social.near";
@@ -788,18 +788,19 @@ async fn test_factory_should_refund_if_failing_because_of_existing_dao(
         .await?;
     assert!(set_socialdb_status_result.is_success());
 
+    let reference_widget_data = json!({
+        reference_widget_contract.id().as_str(): {
+            "widget": {
+                "app": "Hello there",
+                "config": "Goodbye for now"
+            }
+        }
+    });
     let social_set_result = reference_widget_contract
         .as_account()
         .call(socialdb.id(), "set")
         .args_json(json!({
-            "data": {
-                reference_widget_contract.id().as_str(): {
-                    "widget": {
-                        "app": "Hello",
-                        "config": "Goodbye"
-                    }
-                }
-            }
+            "data": reference_widget_data
         }))
         .deposit(NearToken::from_near(2))
         .transact()
@@ -820,6 +821,7 @@ async fn test_factory_should_refund_if_failing_because_of_existing_dao(
     assert!(init_sputnik_dao_factory_result.is_success());
 
     let instance_name = "intellex";
+    let instance_account_id = format!("{}.near", instance_name);
 
     let create_dao_args = json!({
         "config": {
@@ -956,6 +958,67 @@ async fn test_factory_should_refund_if_failing_because_of_existing_dao(
         .view_account(&format!("{}.near", instance_name).parse().unwrap())
         .await?;
     assert_eq!(instance_account_details.balance.as_millinear(), 2200);
+
+    let result = treasury_factory_contract
+        .as_account()
+        .view(&instance_account_id.parse().unwrap(), "web4_get")
+        .args_json(json!({"request": {"path": "/", "preloads": create_preload_result(instance_account_id.clone(), String::from("test treasury title"), String::from("test description"))}}))
+        .await?;
+
+    let response = result.json::<Web4Response>().unwrap();
+    assert_eq!("text/html; charset=UTF-8", response.content_type);
+
+    let body_string = String::from_utf8(BASE64_STANDARD.decode(response.body).unwrap()).unwrap();
+
+    assert!(body_string.contains("near-social-viewer"));
+    assert!(body_string.contains("\"test treasury title\""));
+
+    let deployed_widgets = socialdb
+        .call("get")
+        .args_json(json!({
+            "keys": [format!("{}/widget/**", instance_account_id)]
+        }))
+        .view()
+        .await?;
+
+    let deployed_widgets_json =
+        Value::from_str(String::from_utf8(deployed_widgets.result).unwrap().as_str()).unwrap();
+
+    assert_eq!(
+        deployed_widgets_json[instance_account_id.clone()]["widget"]["app"][""],
+        reference_widget_data[reference_widget_contract.id().as_str()]["widget"]["app"]
+    );
+    assert_eq!(
+        deployed_widgets_json[instance_account_id.clone()]["widget"]["config"],
+        reference_widget_data[reference_widget_contract.id().as_str()]["widget"]["config"]
+    );
+
+    let social_metadata = socialdb
+        .call("get")
+        .args_json(json!({
+            "keys": [format!("{}/widget/app/metadata/**", instance_account_id)]
+        }))
+        .view()
+        .await?;
+    println!(
+        "{:?}",
+        String::from_utf8(social_metadata.result.clone())
+            .unwrap()
+            .as_str()
+    );
+
+    let social_metadata_json: Value =
+        Value::from_str(String::from_utf8(social_metadata.result).unwrap().as_str()).unwrap();
+    let metadata = &social_metadata_json[instance_account_id.clone()]["widget"]["app"]["metadata"];
+    assert_eq!(metadata["name"].as_str().unwrap(), "NEAR Treasury");
+    assert_eq!(
+        metadata["description"],
+        format!("NEAR Treasury / {}", instance_account_id)
+    );
+    assert_eq!(
+        metadata["image"]["ipfs_cid"],
+        "bafkreiefdkigadpkpccreqfnhut2li2nmf3alhz7c3wadveconelisnksu"
+    );
 
     Ok(())
 }
