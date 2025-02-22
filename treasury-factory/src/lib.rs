@@ -8,8 +8,8 @@ pub mod external;
 pub use crate::external::*;
 
 static CREATE_SPUTNIK_DAO_DEPOSIT: NearToken = NearToken::from_near(6);
-static SOCIAL_DB_DEPOSIT: NearToken = NearToken::from_millinear(800);
-static NEW_INSTANCE_ACCOUNT_DEPOSIT: NearToken = NearToken::from_millinear(2200);
+static SOCIAL_DB_DEPOSIT: NearToken = NearToken::from_millinear(500);
+static NEW_INSTANCE_ACCOUNT_DEPOSIT: NearToken = NearToken::from_millinear(2500);
 
 // Define the contract structure
 #[near(contract_state)]
@@ -62,17 +62,15 @@ impl Contract {
                 Gas::from_tgas(80),
             )
             .then(
-                Self::ext(env::current_account_id())
-                    .with_static_gas(Gas::from_tgas(180))
-                    .create_account_callback(
-                        env::predecessor_account_id(),
-                        name,
-                        new_instance_contract_id,
-                        sputnik_dao_factory_account_id,
-                        social_db_account_id,
-                        widget_reference_account_id,
-                        create_dao_args,
-                    ),
+                Self::ext(env::current_account_id()).create_account_callback(
+                    env::predecessor_account_id(),
+                    name,
+                    new_instance_contract_id,
+                    sputnik_dao_factory_account_id,
+                    social_db_account_id,
+                    widget_reference_account_id,
+                    create_dao_args,
+                ),
             )
     }
 
@@ -87,20 +85,6 @@ impl Contract {
         widget_reference_account_id: String,
         create_dao_args: String,
     ) -> Promise {
-        env::log_str(
-            format!(
-                "remaining gas after creating account {}",
-                env::prepaid_gas().as_tgas()
-            )
-            .as_str(),
-        );
-        env::log_str(
-            format!(
-                "predecessor account after creating web4 account {}",
-                env::predecessor_account_id()
-            )
-            .as_str(),
-        );
         let create_account_result = env::promise_result(0);
         let create_account_result: bool = match create_account_result {
             PromiseResult::Successful(result) => {
@@ -146,20 +130,6 @@ impl Contract {
         widget_reference_account_id: String,
         social_db_account_id: String,
     ) -> Promise {
-        env::log_str(
-            format!(
-                "remaining gas after creating DAO {}",
-                env::prepaid_gas().as_tgas()
-            )
-            .as_str(),
-        );
-        env::log_str(
-            format!(
-                "predecessor account after creating DAO {}",
-                env::predecessor_account_id()
-            )
-            .as_str(),
-        );
         let create_dao_result = env::promise_result(0);
 
         let mut promise = instance_contract::ext(new_instance_contract_id.clone())

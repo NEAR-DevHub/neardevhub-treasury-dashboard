@@ -29,10 +29,9 @@ impl Contract {
             || env::predecessor_account_id() == current_account_id)
         {
             env::panic_str(&format!(
-                "Should only be called by {} or {}. Was called by {}",
+                "Should only be called by {} or {}",
                 TREASURY_FACTORY_ACCOUNT_ID,
-                current_account_id,
-                env::predecessor_account_id()
+                current_account_id
             ));
         }
         let mut promise = Promise::new(social_db_account_id.clone())

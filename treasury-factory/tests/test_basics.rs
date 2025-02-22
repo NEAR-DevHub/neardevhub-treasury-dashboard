@@ -971,7 +971,7 @@ async fn test_factory_should_refund_if_failing_because_of_existing_dao_but_still
     let instance_account_details = worker
         .view_account(&format!("{}.near", instance_name).parse().unwrap())
         .await?;
-    assert_eq!(instance_account_details.balance.as_millinear(), 2200);
+    assert_eq!(instance_account_details.balance.as_millinear(), 2500);
 
     let result = treasury_factory_contract
         .as_account()
