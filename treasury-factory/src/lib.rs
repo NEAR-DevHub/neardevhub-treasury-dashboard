@@ -87,13 +87,20 @@ impl Contract {
         widget_reference_account_id: String,
         create_dao_args: String,
     ) -> Promise {
-        /*env::log_str(
+        env::log_str(
             format!(
                 "remaining gas after creating account {}",
                 env::prepaid_gas().as_tgas()
             )
             .as_str(),
-        );*/
+        );
+        env::log_str(
+            format!(
+                "predecessor account after creating web4 account {}",
+                env::predecessor_account_id()
+            )
+            .as_str(),
+        );
         let create_account_result = env::promise_result(0);
         let create_account_result: bool = match create_account_result {
             PromiseResult::Successful(result) => {
@@ -139,13 +146,20 @@ impl Contract {
         widget_reference_account_id: String,
         social_db_account_id: String,
     ) -> Promise {
-        /*env::log_str(
+        env::log_str(
             format!(
                 "remaining gas after creating DAO {}",
                 env::prepaid_gas().as_tgas()
             )
             .as_str(),
-        );*/
+        );
+        env::log_str(
+            format!(
+                "predecessor account after creating DAO {}",
+                env::predecessor_account_id()
+            )
+            .as_str(),
+        );
         let create_dao_result = env::promise_result(0);
 
         let mut promise = instance_contract::ext(new_instance_contract_id.clone())

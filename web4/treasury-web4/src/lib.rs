@@ -25,14 +25,14 @@ impl Contract {
         set_social_metadata_defaults: Option<bool>,
     ) -> Promise {
         let current_account_id = env::current_account_id();
-        /*if !(env::predecessor_account_id() == TREASURY_FACTORY_ACCOUNT_ID
+        if !(env::predecessor_account_id() == TREASURY_FACTORY_ACCOUNT_ID
             || env::predecessor_account_id() == current_account_id)
         {
             env::panic_str(&format!(
                 "Should only be called by {} or {}. Was called by {}",
                 TREASURY_FACTORY_ACCOUNT_ID, current_account_id, env::predecessor_account_id()
             ));
-        }*/
+        }
         let mut promise = Promise::new(social_db_account_id.clone())
             .function_call(
                 "get".to_string(),
