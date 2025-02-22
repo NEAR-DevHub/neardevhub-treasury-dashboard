@@ -697,7 +697,11 @@ async fn test_factory_should_refund_if_failing_because_of_existing_account(
 
     assert_eq!(
         "Failed creating treasury web4 account intellex.near",
-        create_treasury_instance_result.logs().join("\n")
+        create_treasury_instance_result
+            .logs()
+            .last()
+            .unwrap()
+            .to_owned()
     );
 
     let user_account_details_after = user_account.view_account().await?;
@@ -913,8 +917,8 @@ async fn test_factory_should_refund_if_failing_because_of_existing_dao(
     println!("{:?}", create_treasury_instance_result.logs());
 
     assert_eq!(
-        "Succeeded creating and funding web4 account intellex.near, but failed creating treasury account intellex.sputnik-dao.near.",
-        create_treasury_instance_result.logs().join("\n")
+        "Succeeded creating and funding web4 account intellex.near, but failed creating treasury account intellex.sputnik-dao.near",
+        create_treasury_instance_result.logs().last().unwrap().to_owned()
     );
     let user_account_details_after = user_account.view_account().await?;
 
