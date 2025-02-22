@@ -30,7 +30,9 @@ impl Contract {
         {
             env::panic_str(&format!(
                 "Should only be called by {} or {}. Was called by {}",
-                TREASURY_FACTORY_ACCOUNT_ID, current_account_id, env::predecessor_account_id()
+                TREASURY_FACTORY_ACCOUNT_ID,
+                current_account_id,
+                env::predecessor_account_id()
             ));
         }
         let mut promise = Promise::new(social_db_account_id.clone())
@@ -44,14 +46,11 @@ impl Contract {
                 NearToken::from_near(0),
                 Gas::from_tgas(10),
             )
-            .then(
-                Self::ext(current_account_id)
-                    .update_widgets_callback(
-                        widget_reference_account_id,
-                        social_db_account_id.clone(),
-                        env::attached_deposit()
-                    ),
-            );
+            .then(Self::ext(current_account_id).update_widgets_callback(
+                widget_reference_account_id,
+                social_db_account_id.clone(),
+                env::attached_deposit(),
+            ));
 
         if set_social_metadata_defaults.unwrap_or(false) {
             promise = promise.then(self.internal_set_social_metadata(
@@ -69,7 +68,7 @@ impl Contract {
         &mut self,
         widget_reference_account_id: near_sdk::AccountId,
         social_db_account_id: near_sdk::AccountId,
-        deposit_amount: NearToken
+        deposit_amount: NearToken,
     ) -> Promise {
         match env::promise_result(0) {
             PromiseResult::Successful(result) => {
