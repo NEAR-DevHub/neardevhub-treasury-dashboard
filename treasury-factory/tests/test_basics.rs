@@ -18,6 +18,9 @@ lazy_static! {
 static INIT: Once = Once::new();
 
 const TREASURY_FACTORY_CONTRACT_ACCOUNT: &str = "treasury-factory.near";
+const SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT: &str = "sputnik-dao.near";
+const SOCIALDB_ACCOUNT: &str = "social.near";
+const WIDGET_REFERENCE_ACCOUNT_ID: &str = "treasury-testing.near";
 
 fn build_project_once() -> Vec<u8> {
     INIT.call_once(|| {
@@ -109,10 +112,6 @@ async fn test_web4() -> Result<(), Box<dyn std::error::Error>> {
 
 #[tokio::test]
 async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
-    const SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT: &str = "sputnik-dao.near";
-    const SOCIALDB_ACCOUNT: &str = "social.near";
-    const WIDGET_REFERENCE_ACCOUNT_ID: &str = "treasury-testing.near";
-
     let mainnet = near_workspaces::mainnet().await?;
     let sputnikdao_factory_contract_id: AccountId = SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT.parse()?;
     let socialdb_contract_id: AccountId = SOCIALDB_ACCOUNT.parse()?;
@@ -507,10 +506,6 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
 #[tokio::test]
 async fn test_factory_should_refund_if_failing_because_of_existing_account(
 ) -> Result<(), Box<dyn std::error::Error>> {
-    const SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT: &str = "sputnik-dao.near";
-    const SOCIALDB_ACCOUNT: &str = "social.near";
-    const WIDGET_REFERENCE_ACCOUNT_ID: &str = "treasury-testing.near";
-
     let mainnet = near_workspaces::mainnet().await?;
     let sputnikdao_factory_contract_id: AccountId = SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT.parse()?;
     let socialdb_contract_id: AccountId = SOCIALDB_ACCOUNT.parse()?;
@@ -594,7 +589,6 @@ async fn test_factory_should_refund_if_failing_because_of_existing_account(
         .await?;
     assert!(social_set_result.is_success());
 
-    let treasury_factory_contract_wasm = build_project_once();
     let treasury_factory_contract_wasm = build_project_once();
     let treasury_factory_contract = treasury_factory_contract
         .as_account()
@@ -739,10 +733,6 @@ async fn test_factory_should_refund_if_failing_because_of_existing_account(
 #[tokio::test]
 async fn test_factory_should_refund_if_failing_because_of_existing_dao_but_still_create_web4_and_set_social_metadata(
 ) -> Result<(), Box<dyn std::error::Error>> {
-    const SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT: &str = "sputnik-dao.near";
-    const SOCIALDB_ACCOUNT: &str = "social.near";
-    const WIDGET_REFERENCE_ACCOUNT_ID: &str = "treasury-testing.near";
-
     let mainnet = near_workspaces::mainnet().await?;
     let sputnikdao_factory_contract_id: AccountId = SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT.parse()?;
     let socialdb_contract_id: AccountId = SOCIALDB_ACCOUNT.parse()?;
