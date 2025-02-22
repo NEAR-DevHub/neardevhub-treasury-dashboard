@@ -64,7 +64,6 @@ impl Contract {
             .then(
                 Self::ext(env::current_account_id()).create_account_callback(
                     env::predecessor_account_id(),
-                    CREATE_SPUTNIK_DAO_DEPOSIT,
                     name,
                     new_instance_contract_id,
                     sputnik_dao_factory_account_id,
@@ -79,7 +78,6 @@ impl Contract {
     pub fn create_account_callback(
         &self,
         refund_on_failure_account: AccountId,
-        refund_on_failure_amount: NearToken,
         name: String,
         new_instance_contract_id: AccountId,
         sputnik_dao_factory_account_id: String,
@@ -87,6 +85,7 @@ impl Contract {
         widget_reference_account_id: String,
         create_dao_args: String,
     ) -> Promise {
+        env::log_str(format!("remaining gas after creating account {}", env::prepaid_gas().as_tgas()).as_str());
         let create_account_result = env::promise_result(env::promise_results_count() - 1);
         let create_account_result: bool = match create_account_result {
             PromiseResult::Successful(result) => {
@@ -96,26 +95,67 @@ impl Contract {
         };
 
         if create_account_result {
-                sputnik_dao::ext(sputnik_dao_factory_account_id.parse().unwrap())
-                        .with_attached_deposit(CREATE_SPUTNIK_DAO_DEPOSIT)
-                        .with_static_gas(Gas::from_tgas(100))
-                        .create(name.to_string(), create_dao_args)
-                .then(Self::ext(env::current_account_id()).create_dao_callback(
-                    refund_on_failure_account,
-                    new_instance_contract_id,
-                    format!("{}.{}", name, sputnik_dao_factory_account_id),
-                    social_db_account_id,
-                    widget_reference_account_id,
-                ))
-        } else {
-            env::log_str(
-                format!(
-                    "Failed creating treasury web4 account {}",
-                    new_instance_contract_id
+            instance_contract::ext(new_instance_contract_id.clone())
+                .with_attached_deposit(SOCIAL_DB_DEPOSIT)
+                .with_static_gas(Gas::from_tgas(40))
+                .update_widgets(
+                    widget_reference_account_id.clone(),
+                    social_db_account_id.clone(),
+                    true,
                 )
-                .as_str(),
-            );
-            Promise::new(refund_on_failure_account).transfer(refund_on_failure_amount)
+                .then(
+                    Self::ext(env::current_account_id())
+                        .with_static_gas(Gas::from_tgas(140))
+                        .update_widgets_callback(
+                        env::predecessor_account_id(),
+                        name,
+                        new_instance_contract_id,
+                        sputnik_dao_factory_account_id,
+                        create_dao_args,
+                    ),
+                )
+        } else {
+            Promise::new(refund_on_failure_account).transfer(
+                CREATE_SPUTNIK_DAO_DEPOSIT.saturating_add(SOCIAL_DB_DEPOSIT).saturating_add(NEW_INSTANCE_ACCOUNT_DEPOSIT)
+            )
+        }
+    }
+
+    #[private]
+    pub fn update_widgets_callback(
+        &self,
+        refund_on_failure_account: AccountId,
+        name: String,
+        new_instance_contract_id: AccountId,
+        sputnik_dao_factory_account_id: String,
+        create_dao_args: String
+    ) -> Promise {
+        env::log_str(format!("remaining gas after updating widgets {}", env::prepaid_gas().as_tgas()).as_str());
+        let create_account_result = env::promise_result(env::promise_results_count() - 1);
+        match create_account_result {
+            PromiseResult::Successful(_) => {
+                sputnik_dao::ext(sputnik_dao_factory_account_id.parse().unwrap())
+                    .with_static_gas(Gas::from_tgas(60))
+                    .with_attached_deposit(CREATE_SPUTNIK_DAO_DEPOSIT)                    
+                    .create(name.to_string(), create_dao_args)
+                /*.then(Self::ext(env::current_account_id())
+                    .create_dao_callback(
+                        refund_on_failure_account,
+                        new_instance_contract_id,
+                        format!("{}.{}", name, sputnik_dao_factory_account_id)
+                    )
+                ) */
+            }
+            _ => {
+                env::log_str(
+                    format!(
+                        "Failed updating social metadata on treasury web4 account {}",
+                        new_instance_contract_id
+                    )
+                    .as_str(),
+                );
+                Promise::new(refund_on_failure_account).transfer(CREATE_SPUTNIK_DAO_DEPOSIT.saturating_add(SOCIAL_DB_DEPOSIT))
+            }
         }
     }
 
@@ -124,27 +164,18 @@ impl Contract {
         &self,
         refund_on_failure_account: AccountId,
         new_instance_contract_id: AccountId,
-        sputnik_dao_contract_id: String,
-        social_db_account_id: String,
-        widget_reference_account_id: String,
-    ) -> Promise {
+        sputnik_dao_contract_id: String
+    ) {
+        env::log_str(format!("remaining gas after creating DAO {}", env::prepaid_gas().as_tgas()).as_str());
         let create_dao_result = env::promise_result(env::promise_results_count() - 1);
 
-        let update_widgets_promise = instance_contract::ext(new_instance_contract_id.clone())
-            .with_attached_deposit(SOCIAL_DB_DEPOSIT)
-            .update_widgets(
-                widget_reference_account_id,
-                social_db_account_id.clone(),
-                true,
-            );
         match create_dao_result {
-            PromiseResult::Successful(_result) => update_widgets_promise,
+            PromiseResult::Successful(_result) => {}
             PromiseResult::Failed => {
                 env::log_str(format!("Succeeded creating and funding web4 account {}, but failed creating treasury account {}.",
                     new_instance_contract_id, sputnik_dao_contract_id).as_str());
-                Promise::new(refund_on_failure_account)                    
-                    .transfer(CREATE_SPUTNIK_DAO_DEPOSIT)
-                    .then(update_widgets_promise)
+
+                Promise::new(refund_on_failure_account).transfer(CREATE_SPUTNIK_DAO_DEPOSIT);
             }
         }
     }

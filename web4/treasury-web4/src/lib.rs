@@ -46,10 +46,10 @@ impl Contract {
             )
             .then(
                 Self::ext(current_account_id)
-                    .with_attached_deposit(env::attached_deposit())
                     .update_widgets_callback(
                         widget_reference_account_id,
                         social_db_account_id.clone(),
+                        env::attached_deposit()
                     ),
             );
 
@@ -64,12 +64,12 @@ impl Contract {
         promise
     }
 
-    #[payable]
     #[private]
     pub fn update_widgets_callback(
         &mut self,
         widget_reference_account_id: near_sdk::AccountId,
         social_db_account_id: near_sdk::AccountId,
+        deposit_amount: NearToken
     ) -> Promise {
         match env::promise_result(0) {
             PromiseResult::Successful(result) => {
@@ -83,7 +83,7 @@ impl Contract {
                 Promise::new(social_db_account_id).function_call(
                     "set".to_string(),
                     args.into_bytes(),
-                    env::attached_deposit(),
+                    deposit_amount,
                     Gas::from_tgas(10),
                 )
             }
