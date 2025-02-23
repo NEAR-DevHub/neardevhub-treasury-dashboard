@@ -176,19 +176,25 @@ useEffect(() => {
   if (
     lockupAccountBalances &&
     (lockupNearBalances.locked || lockupNearBalances.locked === 0) &&
-    lockupStakedTotalTokens
+    lockupStakedTotalTokens &&
+    !lockupNearBalances.total
   ) {
     const stakedTokensYoctoNear = Big(lockupStakedTotalTokens)
       .mul(Big(10).pow(24))
       .toFixed();
-    let locked = Big(lockupStakedTotalTokens)
-      .minus(lockupNearBalances.lockedParsed)
-      .abs()
-      .toFixed();
+    const allLockedStaked = Big(lockupStakedTotalTokens).gte(
+      lockupNearBalances.lockedParsed
+    );
+    let locked = allLockedStaked
+      ? 0
+      : Big(lockupStakedTotalTokens)
+          .minus(lockupNearBalances.lockedParsed)
+          .abs()
+          .mul(Big(10).pow(24))
+          .toFixed();
 
     let total = Big(lockupAccountBalances.total)
       .plus(stakedTokensYoctoNear)
-      .plus(locked)
       .toFixed();
 
     let available = Big(total)
