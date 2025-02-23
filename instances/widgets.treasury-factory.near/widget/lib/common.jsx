@@ -486,6 +486,9 @@ function formatNearAmount(amount) {
 }
 
 function getNearBalances(accountId) {
+  if (!accountId) {
+    return {};
+  }
   const resp = fetch(`https://api.fastnear.com/v1/account/${accountId}/full`);
   const storage = Big(resp?.body?.state?.storage_bytes ?? "0")
     .mul(Big(10).pow(19))
