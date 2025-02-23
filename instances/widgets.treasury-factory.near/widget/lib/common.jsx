@@ -64,9 +64,9 @@ const roleOrder = [
   "Requestor",
   "Create Requests",
   "Approver",
-  "Manage Members",
-  "Admin",
   "Vote",
+  "Admin",
+  "Manage Members",
 ];
 
 function fetchDaoPolicy(treasuryDaoID) {

@@ -69,8 +69,8 @@ export async function mockRpcRequest({
 
 export function getOldPolicy(
   createRequestPolicy,
-  membersPolicy,
   votePolicy,
+  membersPolicy,
   creatorsGroup = [
     "theori.near",
     "2dada969f3743a4a41cfdb1a6e39581c2844ce8fbe25948700c85c598090b3e1",
@@ -196,8 +196,8 @@ export function getOldPolicy(
 
 export function getNewPolicy(
   createRequestPolicy,
-  membersPolicy,
   votePolicy,
+  membersPolicy,
   requestorGroup = [
     "theori.near",
     "2dada969f3743a4a41cfdb1a6e39581c2844ce8fbe25948700c85c598090b3e1",

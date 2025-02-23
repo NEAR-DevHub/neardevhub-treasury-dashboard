@@ -286,7 +286,7 @@ test.describe("User is logged in", function () {
 
     const description = {
       title: "Update policy - Voting Thresholds",
-      summary: `theori.near requested to change voting threshold from 1 to 1.`,
+      summary: `theori.near requested to change voting threshold from 1 to 2.`,
     };
     const commonParams = [votePolicy, updatedPolicy, votePolicy];
 
@@ -395,19 +395,19 @@ test.describe("User is logged in", function () {
     await expect(thresholdAmt).toHaveValue("50");
     await expect(
       page.getByText(
-        "This is equivalent to 3 votes with the current number of members."
+        "This is equivalent to 5 votes with the current number of members."
       )
     ).toBeVisible();
     await thresholdAmt.fill("20");
     await expect(
       page.getByText(
-        "This is equivalent to 1 votes with the current number of members."
+        "This is equivalent to 2 votes with the current number of members."
       )
     ).toBeVisible();
     await thresholdAmt.fill("90");
     await expect(
       page.getByText(
-        "This is equivalent to 4 votes with the current number of members."
+        "This is equivalent to 8 votes with the current number of members."
       )
     ).toBeVisible();
   });
