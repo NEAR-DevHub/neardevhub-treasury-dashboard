@@ -641,34 +641,13 @@ function convertToDate(nanoseconds) {
   return formattedDate;
 }
 
-function calculateTotalAllocation(lockedToday, startDate, endDate) {
-  const start = new Date(startDate).getTime();
-  const end = new Date(endDate).getTime();
-  const today = Date.now();
-
-  if (Big(lockedToday).eq(0)) {
-    return Big(0); // Fully vested, nothing locked
-  }
-
-  if (today <= start) {
-    return Big(lockedToday); // Before start date, everything is locked
-  }
-
-  const totalDuration = Big(end - start);
-  const elapsedDuration = Big(today - start);
-
-  if (elapsedDuration.gte(totalDuration)) {
-    return Big(lockedToday); // End date reached, no more locked tokens
-  }
-
-  const fractionElapsed = elapsedDuration.div(totalDuration);
-  const totalAllocation = Big(lockedToday).div(Big(1).minus(fractionElapsed));
-
-  return totalAllocation;
-}
-
 useEffect(() => {
-  if (isLockupContract && lockupState && !lockupStartDate) {
+  if (
+    isLockupContract &&
+    lockupState &&
+    !lockupStartDate &&
+    nearBalances.contractLocked
+  ) {
     const deserialized = deserializeLockupContract(
       new Uint8Array([...lockupState].map((c) => c.charCodeAt(0)))
     );
@@ -676,29 +655,20 @@ useEffect(() => {
       deserialized.lockup_information.lockup_timestamp.toString();
     const releaseDuration =
       deserialized.lockup_information.release_duration.toString();
-    setLockupStartDate(convertToDate(lockupTimestamp));
-    setLockupEndDate(
-      convertToDate(Big(lockupTimestamp).plus(releaseDuration).toFixed())
-    );
-  }
-}, [isLockupContract, lockupState]);
-
-useEffect(() => {
-  if (isLockupContract && nearBalances.contractLocked && lockupStartDate) {
-    // fetch initial allocated amount
+    const totalAllocated =
+      deserialized.lockup_information.lockup_amount.toString();
     const locked = nearBalances.contractLocked;
-    const totalAllocated = calculateTotalAllocation(
-      locked,
-      lockupStartDate,
-      lockupEndDate
-    ).toFixed();
     setLockupTotalAllocated(formatNearAmount(totalAllocated));
     setLockupVested(
       formatNearAmount(Big(totalAllocated).minus(locked).toFixed())
     );
     setLockupUnvested(formatNearAmount(locked));
+    setLockupStartDate(convertToDate(lockupTimestamp));
+    setLockupEndDate(
+      convertToDate(Big(lockupTimestamp).plus(releaseDuration).toFixed())
+    );
   }
-}, [isLockupContract, nearBalances, lockupStartDate]);
+}, [isLockupContract, lockupState, nearBalances]);
 
 return (
   <div className="card flex-1 overflow-hidden border-bottom">

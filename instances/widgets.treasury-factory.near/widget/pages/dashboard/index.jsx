@@ -1,4 +1,4 @@
-const { getNearBalances, LOCKUP_MIN_BALANCE_FOR_STORAGE } = VM.require(
+const { getNearBalances } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
 
@@ -12,12 +12,7 @@ const { Modal, ModalContent, ModalHeader, ModalFooter } = VM.require(
 
 const instance = props.instance;
 
-if (
-  !instance ||
-  typeof getNearBalances !== "function" ||
-  !LOCKUP_MIN_BALANCE_FOR_STORAGE ||
-  !Skeleton
-) {
+if (!instance || typeof getNearBalances !== "function" || !Skeleton) {
   return <></>;
 }
 
@@ -207,9 +202,19 @@ useEffect(() => {
       available = 0;
     }
 
+    let storage = lockupAccountBalances.storage;
+    if (
+      Big(total).lt(
+        Big(locked).plus(available).plus(stakedTokensYoctoNear).plus(storage)
+      )
+    ) {
+      storage = Big(lockupAccountBalances.storage).minus(locked).toFixed();
+    }
     setLockupNearBalances((prev) => ({
       ...lockupAccountBalances,
       ...prev,
+      storage,
+      storageParsed: formatNearAmount(storage),
       available: available,
       availableParsed: formatNearAmount(available),
       total: total,
