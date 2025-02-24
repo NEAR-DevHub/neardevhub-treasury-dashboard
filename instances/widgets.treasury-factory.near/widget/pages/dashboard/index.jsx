@@ -203,13 +203,14 @@ useEffect(() => {
     }
 
     let storage = lockupAccountBalances.storage;
-    if (
-      Big(total).lt(
-        Big(locked).plus(available).plus(stakedTokensYoctoNear).plus(storage)
-      )
-    ) {
-      storage = Big(lockupAccountBalances.storage).minus(locked).toFixed();
+    const sumTotal = Big(locked)
+      .plus(available)
+      .plus(stakedTokensYoctoNear)
+      .plus(storage);
+    if (Big(total).lt(sumTotal)) {
+      storage = Big(storage).minus(sumTotal.minus(total)).toFixed();
     }
+
     setLockupNearBalances((prev) => ({
       ...lockupAccountBalances,
       ...prev,
