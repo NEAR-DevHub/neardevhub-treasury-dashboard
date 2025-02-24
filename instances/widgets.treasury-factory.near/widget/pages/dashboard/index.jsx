@@ -1,4 +1,4 @@
-const { getNearBalances, LOCKUP_MIN_BALANCE_FOR_STORAGE } = VM.require(
+const { getNearBalances } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
 
@@ -12,12 +12,7 @@ const { Modal, ModalContent, ModalHeader, ModalFooter } = VM.require(
 
 const instance = props.instance;
 
-if (
-  !instance ||
-  typeof getNearBalances !== "function" ||
-  !LOCKUP_MIN_BALANCE_FOR_STORAGE ||
-  !Skeleton
-) {
+if (!instance || typeof getNearBalances !== "function" || !Skeleton) {
   return <></>;
 }
 
@@ -74,6 +69,7 @@ const [nearUnStakedTokens, setNearUnStakedTokens] = useState(null);
 const [nearStakedTotalTokens, setNearStakedTotalTokens] = useState(null);
 const [nearWithdrawTokens, setNearWithdrawTokens] = useState(null);
 const nearBalances = getNearBalances(treasuryDaoID);
+const lockupAccountBalances = getNearBalances(lockupContract);
 
 const [lockupNearBalances, setLockupNearBalances] = useState(null);
 const [lockupStakedTokens, setLockupStakedTokens] = useState(null);
@@ -84,6 +80,7 @@ const [nearPrice, setNearPrice] = useState(null);
 const [userFTTokens, setFTTokens] = useState(null);
 const [show404Modal, setShow404Modal] = useState(false);
 const [disableRefreshBtn, setDisableRefreshBtn] = useState(false);
+const [lockupState, setLockupState] = useState(false);
 
 useEffect(() => {
   asyncFetch(`${REPL_BACKEND_API}/near-price`)
@@ -141,50 +138,93 @@ function formatNearAmount(amount) {
 useEffect(() => {
   if (lockupContract) {
     Near.asyncView(lockupContract, "get_locked_amount").then((res) => {
-      let locked = Big(res).minus(LOCKUP_MIN_BALANCE_FOR_STORAGE).toFixed(2);
-      let lockedParsed = formatNearAmount(locked);
-      if (parseFloat(lockedParsed) < 0) {
-        locked = 0;
-        lockedParsed = 0;
-      }
       setLockupNearBalances((prev) => ({
         ...prev,
-        locked,
-        lockedParsed,
-        storage: LOCKUP_MIN_BALANCE_FOR_STORAGE,
-        storageParsed: formatNearAmount(LOCKUP_MIN_BALANCE_FOR_STORAGE),
+        contractLocked: res,
+        locked: res,
+        lockedParsed: formatNearAmount(res),
       }));
     });
 
-    Near.asyncView(lockupContract, "get_balance").then((res) =>
-      setLockupNearBalances((prev) => ({
-        ...prev,
-        total: res,
-        totalParsed: formatNearAmount(res),
-      }))
-    );
+    asyncFetch(`${REPL_RPC_URL}`, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: "dontcare",
+        method: "query",
+        params: {
+          request_type: "view_state",
+          finality: "final",
+          account_id: lockupContract,
+          prefix_base64: "",
+        },
+      }),
+    }).then((res) => setLockupState(atob(res.body?.result?.values?.[0].value)));
   }
 }, [lockupContract]);
 
 useEffect(() => {
   if (
-    lockupNearBalances.total &&
-    (lockupNearBalances.locked || lockupNearBalances.locked === 0)
+    lockupAccountBalances &&
+    (lockupNearBalances.locked || lockupNearBalances.locked === 0) &&
+    lockupStakedTotalTokens &&
+    !lockupNearBalances.total
   ) {
-    let available = Big(lockupNearBalances.total)
-      .minus(lockupNearBalances.locked)
-      .minus(LOCKUP_MIN_BALANCE_FOR_STORAGE)
+    const stakedTokensYoctoNear = Big(lockupStakedTotalTokens)
+      .mul(Big(10).pow(24))
       .toFixed();
-    if (parseFloat(available) < 0) {
+    const allLockedStaked = Big(lockupStakedTotalTokens).gte(
+      lockupNearBalances.lockedParsed
+    );
+    let locked = allLockedStaked
+      ? 0
+      : Big(lockupStakedTotalTokens)
+          .minus(lockupNearBalances.lockedParsed)
+          .abs()
+          .mul(Big(10).pow(24))
+          .toFixed();
+
+    let total = Big(lockupAccountBalances.total)
+      .plus(stakedTokensYoctoNear)
+      .toFixed();
+
+    let available = Big(total)
+      .minus(stakedTokensYoctoNear)
+      .minus(locked)
+      .minus(lockupAccountBalances.storage)
+      .toFixed();
+
+    if (available < 0) {
       available = 0;
     }
+
+    let storage = lockupAccountBalances.storage;
+    const sumTotal = Big(locked)
+      .plus(available)
+      .plus(stakedTokensYoctoNear)
+      .plus(storage);
+    if (Big(total).lt(sumTotal)) {
+      storage = Big(storage).minus(sumTotal.minus(total)).toFixed();
+    }
+
     setLockupNearBalances((prev) => ({
+      ...lockupAccountBalances,
       ...prev,
+      storage,
+      storageParsed: formatNearAmount(storage),
       available: available,
       availableParsed: formatNearAmount(available),
+      total: total,
+      totalParsed: formatNearAmount(total),
+      locked,
+      lockedParsed: formatNearAmount(locked),
     }));
   }
-}, [lockupNearBalances]);
+}, [lockupNearBalances, lockupAccountBalances, lockupStakedTotalTokens]);
 
 const totalBalance = Big(nearBalances?.totalParsed ?? "0")
   .mul(nearPrice ?? 1)
@@ -346,6 +386,7 @@ return (
             props={{
               ftTokens: [],
               isLockupContract: true,
+              lockupState,
               nearStakedTokens: lockupStakedTokens,
               nearUnStakedTokens: lockupUnStakedTokens,
               nearPrice,
