@@ -358,7 +358,7 @@ export async function mockNearBalances({ page, accountId, balance, storage }) {
         state: {
           balance: balance,
           locked: "0",
-          storage: storage,
+          storage_bytes: storage,
         },
         tokens: [],
       };
