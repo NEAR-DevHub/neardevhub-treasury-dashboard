@@ -86,7 +86,7 @@ function fetchDaoPolicy(treasuryDaoID) {
           }),
         };
       })
-    : [];
+    : { roles: [], default_vote_policy: {} };
 }
 
 function getRoleWiseData(treasuryDaoID) {
