@@ -87,7 +87,8 @@ useEffect(() => {
         (i) =>
           i.roleName !== "Create Requests" &&
           i.roleName !== "Requestor" &&
-          i.roleName !== "Create requests"
+          i.roleName !== "Create requests" &&
+          i.roleName !== "all"
       )
     );
   });
