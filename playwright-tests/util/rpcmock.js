@@ -69,8 +69,8 @@ export async function mockRpcRequest({
 
 export function getOldPolicy(
   createRequestPolicy,
-  membersPolicy,
   votePolicy,
+  membersPolicy,
   creatorsGroup = [
     "theori.near",
     "2dada969f3743a4a41cfdb1a6e39581c2844ce8fbe25948700c85c598090b3e1",
@@ -196,8 +196,8 @@ export function getOldPolicy(
 
 export function getNewPolicy(
   createRequestPolicy,
-  membersPolicy,
   votePolicy,
+  membersPolicy,
   requestorGroup = [
     "theori.near",
     "2dada969f3743a4a41cfdb1a6e39581c2844ce8fbe25948700c85c598090b3e1",
@@ -241,6 +241,36 @@ export function getNewPolicy(
         },
       },
       {
+        name: "Approver",
+        kind: {
+          Group: approverGroup,
+        },
+        permissions: [
+          "call:VoteReject",
+          "call:VoteApprove",
+          "call:RemoveProposal",
+          "call:Finalize",
+          "transfer:VoteReject",
+          "transfer:VoteApprove",
+          "transfer:RemoveProposal",
+          "transfer:Finalize",
+        ],
+        vote_policy: {
+          transfer: votePolicy,
+          config: votePolicy,
+          add_bounty: votePolicy,
+          set_vote_token: votePolicy,
+          upgrade_remote: votePolicy,
+          add_member_to_role: votePolicy,
+          upgrade_self: votePolicy,
+          call: votePolicy,
+          policy: votePolicy,
+          remove_member_from_role: votePolicy,
+          bounty_done: votePolicy,
+          vote: votePolicy,
+        },
+      },
+      {
         name: "Admin",
         kind: {
           Group: adminGroup,
@@ -274,36 +304,6 @@ export function getNewPolicy(
           transfer: membersPolicy,
           add_bounty: membersPolicy,
           remove_member_from_role: membersPolicy,
-        },
-      },
-      {
-        name: "Approver",
-        kind: {
-          Group: approverGroup,
-        },
-        permissions: [
-          "call:VoteReject",
-          "call:VoteApprove",
-          "call:RemoveProposal",
-          "call:Finalize",
-          "transfer:VoteReject",
-          "transfer:VoteApprove",
-          "transfer:RemoveProposal",
-          "transfer:Finalize",
-        ],
-        vote_policy: {
-          transfer: votePolicy,
-          config: votePolicy,
-          add_bounty: votePolicy,
-          set_vote_token: votePolicy,
-          upgrade_remote: votePolicy,
-          add_member_to_role: votePolicy,
-          upgrade_self: votePolicy,
-          call: votePolicy,
-          policy: votePolicy,
-          remove_member_from_role: votePolicy,
-          bounty_done: votePolicy,
-          vote: votePolicy,
         },
       },
     ],

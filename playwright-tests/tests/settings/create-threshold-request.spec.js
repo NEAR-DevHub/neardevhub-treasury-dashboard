@@ -76,21 +76,23 @@ test.describe("User is not logged in", function () {
     test.setTimeout(60_000);
     const hasNewPolicy = instanceAccount.includes("testing");
     const groups = hasNewPolicy
-      ? ["Admin", "Approver"]
-      : ["Manage Members", "Vote"];
+      ? ["Approver", "Admin"]
+      : ["Vote", "Manage Members"];
     await expect(page.getByText("Permission Groups")).toBeVisible({
       timeout: 20_000,
     });
-    await expect(page.getByText(groups[0]).nth(0)).toBeVisible({
-      timeout: 20_000,
-    });
-    await expect(page.getByText("Who Can Vote 4")).toBeVisible();
+    await expect(page.getByText(groups[0], { exact: true }).nth(0)).toBeVisible(
+      {
+        timeout: 20_000,
+      }
+    );
+    await expect(page.getByText("Who Can Vote 8")).toBeVisible();
     await expect(page.getByText("Voting Policy")).toBeVisible();
+    await expect(page.getByText("@test04.near", { exact: true })).toBeVisible();
+    await page.getByText(groups[1], { exact: true }).click();
     await expect(
       page.getByText("@megha19.near", { exact: true })
     ).toBeVisible();
-    await page.getByText(groups[1], { exact: true }).click();
-    await expect(page.getByText("@test04.near", { exact: true })).toBeVisible();
   });
 });
 
@@ -286,7 +288,7 @@ test.describe("User is logged in", function () {
 
     const description = {
       title: "Update policy - Voting Thresholds",
-      summary: `theori.near requested to change voting threshold from 1 to 1.`,
+      summary: `theori.near requested to change voting threshold from 1 to 2.`,
     };
     const commonParams = [votePolicy, updatedPolicy, votePolicy];
 
@@ -395,19 +397,19 @@ test.describe("User is logged in", function () {
     await expect(thresholdAmt).toHaveValue("50");
     await expect(
       page.getByText(
-        "This is equivalent to 3 votes with the current number of members."
+        "This is equivalent to 5 votes with the current number of members."
       )
     ).toBeVisible();
     await thresholdAmt.fill("20");
     await expect(
       page.getByText(
-        "This is equivalent to 1 votes with the current number of members."
+        "This is equivalent to 2 votes with the current number of members."
       )
     ).toBeVisible();
     await thresholdAmt.fill("90");
     await expect(
       page.getByText(
-        "This is equivalent to 4 votes with the current number of members."
+        "This is equivalent to 8 votes with the current number of members."
       )
     ).toBeVisible();
   });

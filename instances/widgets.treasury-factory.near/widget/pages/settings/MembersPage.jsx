@@ -289,9 +289,9 @@ return (
                 setRefreshTable(refreshTable + 1);
               },
               onCloseCanvas: toggleEditor,
-              availableRoles: (roles ?? []).map((i) => {
-                return { title: i, value: i };
-              }),
+              availableRoles: (roles ?? [])
+                .filter((i) => i !== "all")
+                .map((i) => ({ title: i, value: i })),
               selectedMember: selectedMember,
               setToastStatus,
             }}
