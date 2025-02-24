@@ -60,12 +60,41 @@ function getApproversAndThreshold(treasuryDaoID, kind, isDeleteCheck) {
   };
 }
 
+const roleOrder = [
+  "Requestor",
+  "Create Requests",
+  "Approver",
+  "Vote",
+  "Admin",
+  "Manage Members",
+];
+
+function fetchDaoPolicy(treasuryDaoID) {
+  return treasuryDaoID
+    ? Near.asyncView(treasuryDaoID, "get_policy", {}).then((daoPolicy) => {
+        return {
+          ...daoPolicy,
+          roles: daoPolicy.roles.sort((a, b) => {
+            return (
+              (roleOrder.indexOf(a.name) !== -1
+                ? roleOrder.indexOf(a.name)
+                : Infinity) -
+              (roleOrder.indexOf(b.name) !== -1
+                ? roleOrder.indexOf(b.name)
+                : Infinity)
+            );
+          }),
+        };
+      })
+    : { roles: [], default_vote_policy: {} };
+}
+
 function getRoleWiseData(treasuryDaoID) {
-  return Near.asyncView(treasuryDaoID, "get_policy", {}).then((daoPolicy) => {
+  return fetchDaoPolicy(treasuryDaoID).then((daoPolicy) => {
     const data = [];
     const defaultPolicy = daoPolicy.default_vote_policy;
 
-    (daoPolicy.roles ?? []).map((role) => {
+    daoPolicy.roles.forEach((role) => {
       // Sort members alphabetically
       const members = (role.kind?.Group ?? []).sort((a, b) =>
         a.localeCompare(b)
@@ -351,40 +380,32 @@ const isNearSocial =
   gatewayOrigin.includes("near.page");
 
 function getMembersAndPermissions(treasuryDaoID) {
-  return Near.asyncView(treasuryDaoID, "get_policy", {}).then((daoPolicy) => {
-    const memberData = [];
+  return fetchDaoPolicy(treasuryDaoID).then((daoPolicy) => {
+    const memberMap = new Map();
 
-    if (Array.isArray(daoPolicy.roles)) {
-      // Use a map to collect permissions and role names for each member
-      const memberMap = new Map();
+    daoPolicy.roles.forEach((role) => {
+      (role.kind?.Group ?? []).forEach((member) => {
+        if (!memberMap.has(member)) {
+          memberMap.set(member, {
+            member: member,
+            permissions: [],
+            roles: [],
+          });
+        }
 
-      daoPolicy.roles.forEach((role) => {
-        (role.kind.Group ?? []).forEach((member) => {
-          if (!memberMap.has(member)) {
-            memberMap.set(member, {
-              member: member,
-              permissions: [],
-              roles: [],
-            });
-          }
-
-          // Add permissions and role names
-          memberMap.get(member).permissions.push(...role.permissions);
-          memberMap.get(member).roles.push(role.name);
-        });
+        memberMap.get(member).permissions.push(...role.permissions);
+        memberMap.get(member).roles.push(role.name);
       });
+    });
 
-      // Convert map to array, remove duplicates, and sort by member name
-      return Array.from(memberMap.values())
-        .map((data) => ({
-          member: data.member,
-          permissions: Array.from(new Set(data.permissions)), // Remove duplicate permissions
-          roles: Array.from(new Set(data.roles)), // Remove duplicate role names
-        }))
-        .sort((a, b) => a.member.localeCompare(b.member)); // Sort alphabetically
-    }
-
-    return memberData;
+    // Convert map to array, remove duplicates, and sort by member name
+    return Array.from(memberMap.values())
+      .map((data) => ({
+        member: data.member,
+        permissions: Array.from(new Set(data.permissions)), // Remove duplicate permissions
+        roles: Array.from(new Set(data.roles)), // Remove duplicate role names
+      }))
+      .sort((a, b) => a.member.localeCompare(b.member)); // Sort alphabetically
   });
 }
 
@@ -394,7 +415,9 @@ function getDaoRoles(treasuryDaoID) {
     : null;
 
   if (Array.isArray(daoPolicy.roles)) {
-    return daoPolicy.roles.map((role) => role.name);
+    return daoPolicy.roles
+      .map((role) => role.name)
+      .sort((a, b) => roleOrder.indexOf(a) - roleOrder.indexOf(b));
   }
 
   return [];
@@ -486,6 +509,9 @@ function formatNearAmount(amount) {
 }
 
 function getNearBalances(accountId) {
+  if (!accountId) {
+    return {};
+  }
   const resp = fetch(`https://api.fastnear.com/v1/account/${accountId}/full`);
   const storage = Big(resp?.body?.state?.storage_bytes ?? "0")
     .mul(Big(10).pow(19))

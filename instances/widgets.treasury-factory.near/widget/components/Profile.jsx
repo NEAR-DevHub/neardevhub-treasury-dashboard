@@ -29,20 +29,23 @@ useEffect(() => {
       (accountId ?? "").includes(".tg"))
   ) {
     asyncFetch(
-      `https://neardevhub-kyc-proxy.shuttleapp.rs/kyc/${accountId}`
+      `https://neardevhub-kyc-proxy-gvbr.shuttle.app/kyc/${accountId}`
     ).then((res) => {
       let displayableText = "";
       switch (res.body.kyc_status) {
-        case "Approved":
+        case "APPROVED":
           displayableText = "Verified";
           setIsVerfied(true);
           break;
-        case "Pending":
+        case "PENDING":
           displayableText = "Pending";
           break;
-        case "NotSubmitted":
-        case "Rejected":
+        case "NOT_SUBMITTED":
+        case "REJECTED":
           displayableText = "Not Verfied";
+          break;
+        case "EXPIRED":
+          displayableText = "Expired";
           break;
         default:
           displayableText = ": Failed to get status";
