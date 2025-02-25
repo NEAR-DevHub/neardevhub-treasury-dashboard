@@ -619,12 +619,11 @@ test.describe("Have valid staked requests and sufficient token balance", functio
 
         test("should only allow authorized users to see 'Create Request' action", async ({
           page,
-          instanceAccount,
         }) => {
           test.setTimeout(60_000);
           await expect(page.getByText("Pending Requests")).toBeVisible();
-          const createRequestButton = page.getByRole("button", {
-            name: "Create Request",
+          const createRequestButton = page.getByText("Create Request", {
+            exact: true,
           });
 
           if (hasAllRole) {
