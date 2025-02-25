@@ -541,7 +541,13 @@ test.describe("Have valid staked requests and sufficient token balance", functio
     } else {
       await mockStakeProposals({ page });
     }
-    await updateDaoPolicyMembers({ instanceAccount, page });
+
+    await updateDaoPolicyMembers({
+      instanceAccount,
+      page,
+      hasAllRole: testInfo.titlePath.includes("User with 'All role'"),
+    });
+
     await mockStakedPools({ page, daoAccount });
     if (testInfo.title.includes("insufficient account balance")) {
       await mockNearBalances({
@@ -599,24 +605,33 @@ test.describe("Have valid staked requests and sufficient token balance", functio
         storageState:
           "playwright-tests/storage-states/wallet-connected-admin-with-vote-role.json",
       },
+      {
+        name: "All role",
+        storageState:
+          "playwright-tests/storage-states/wallet-connected-admin-with-all-role.json",
+        hasAllRole: true,
+      },
     ];
 
-    for (const role of roles) {
-      test.describe(`User with '${role.name}'`, function () {
-        test.use({ storageState: role.storageState });
+    for (const { name, storageState, hasAllRole } of roles) {
+      test.describe(`User with '${name}'`, function () {
+        test.use({ storageState: storageState });
 
-        test("should not see 'Create Request' action", async ({
+        test("should only allow authorized users to see 'Create Request' action", async ({
           page,
           instanceAccount,
         }) => {
           test.setTimeout(60_000);
-          await updateDaoPolicyMembers({ instanceAccount, page });
           await expect(page.getByText("Pending Requests")).toBeVisible();
-          await expect(
-            page.getByRole("button", {
-              name: "Create Request",
-            })
-          ).toBeHidden();
+          const createRequestButton = page.getByRole("button", {
+            name: "Create Request",
+          });
+
+          if (hasAllRole) {
+            await expect(createRequestButton).toBeVisible();
+          } else {
+            await expect(createRequestButton).toBeHidden();
+          }
         });
       });
     }

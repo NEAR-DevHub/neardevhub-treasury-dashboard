@@ -108,25 +108,50 @@ test.describe.parallel("User logged in with different roles", function () {
       storageState:
         "playwright-tests/storage-states/wallet-connected-admin-with-vote-role.json",
     },
+    {
+      name: "All role",
+      storageState:
+        "playwright-tests/storage-states/wallet-connected-admin-with-all-role.json",
+      hasAllRole: true,
+    },
   ];
 
-  for (const role of roles) {
-    test.describe(`User with '${role.name}'`, function () {
-      test.use({ storageState: role.storageState });
+  for (const { name, storageState, hasAllRole } of roles) {
+    test.describe(`User with '${name}'`, function () {
+      test.use({ storageState: storageState });
 
-      test("should disable input and hide submit button for non authorised people", async ({
-        page,
-        instanceAccount,
-      }) => {
+      test(`should ${
+        hasAllRole ? "enable" : "disable"
+      } input and hide submit button for ${
+        hasAllRole ? "" : "non"
+      } authorised people`, async ({ page, instanceAccount }) => {
         test.setTimeout(60_000);
-        await updateDaoPolicyMembers({ instanceAccount, page });
-        await navigateToThresholdPage({ page, instanceAccount });
+        await updateDaoPolicyMembers({
+          instanceAccount,
+          page,
+          hasAllRole: hasAllRole,
+        });
+
+        await navigateToThresholdPage({
+          page,
+          instanceAccount,
+        });
         await expect(page.getByText("Permission Groups")).toBeVisible({
           timeout: 20_000,
         });
-        await expect(page.getByTestId("dropdown-btn")).toBeDisabled();
-        await expect(page.getByText("Submit Request")).toBeHidden();
-        await expect(page.getByTestId("threshold-input")).toBeDisabled();
+        const dropdownButton = page.getByTestId("dropdown-btn");
+        const submitRequestButton = page.getByText("Submit Request");
+        const thresholdInput = page.getByTestId("threshold-input");
+
+        if (hasAllRole) {
+          await expect(dropdownButton).toBeEnabled();
+          await expect(submitRequestButton).toBeVisible();
+          await expect(thresholdInput).toBeEnabled();
+        } else {
+          await expect(dropdownButton).toBeDisabled();
+          await expect(submitRequestButton).toBeHidden();
+          await expect(thresholdInput).toBeDisabled();
+        }
       });
     });
   }

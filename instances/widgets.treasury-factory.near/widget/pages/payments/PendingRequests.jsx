@@ -64,10 +64,16 @@ const policy = treasuryDaoID
 
 const transferApproversGroup = getApproversAndThreshold(
   treasuryDaoID,
-  "transfer"
+  "transfer",
+  context.accountId
 );
 
-const deleteGroup = getApproversAndThreshold(treasuryDaoID, "transfer", true);
+const deleteGroup = getApproversAndThreshold(
+  treasuryDaoID,
+  "transfer",
+  context.accountId,
+  true
+);
 
 return (
   <div className="d-flex flex-column flex-1 justify-content-between">

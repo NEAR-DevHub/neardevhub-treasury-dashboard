@@ -58,9 +58,18 @@ const policy = treasuryDaoID
   ? Near.view(treasuryDaoID, "get_policy", {})
   : null;
 
-const settingsApproverGroup = getApproversAndThreshold(treasuryDaoID, "policy");
+const settingsApproverGroup = getApproversAndThreshold(
+  treasuryDaoID,
+  "policy",
+  context.accountId
+);
 
-const deleteGroup = getApproversAndThreshold(treasuryDaoID, "transfer", true);
+const deleteGroup = getApproversAndThreshold(
+  treasuryDaoID,
+  "transfer",
+  context.accountId,
+  true
+);
 
 return (
   <div className="d-flex flex-column flex-1 justify-content-between">
