@@ -24,22 +24,22 @@ function getApproversAndThreshold(
   let approversGroup = [];
   let ratios = [];
   let requiredVotes = null;
+  let everyoneHasAccess = false;
   // if group kind is everyone, current user will have access
   groupWithPermission.map((i) => {
-    approversGroup = approversGroup.concat(
-      i.kind === "Everyone" && accountId ? [accountId] : i.kind.Group ?? []
-    );
-    if (Object.values(i.vote_policy ?? {}).length > 0) {
-      if (i.vote_policy[kind].weight_kind === "RoleWeight") {
-        if (Array.isArray(i.vote_policy[kind].threshold)) {
-          ratios = ratios.concat(i.vote_policy[kind].threshold);
-          ratios = ratios.concat(i.vote_policy[kind].threshold);
-        } else {
-          requiredVotes = parseFloat(i.vote_policy[kind].threshold);
-        }
+    approversGroup = approversGroup.concat(i?.kind?.Group ?? []);
+    everyoneHasAccess = i.kind === "Everyone";
+    const votePolicy =
+      Object.values(i?.vote_policy?.[kind] ?? {}).length > 0
+        ? i.vote_policy[kind]
+        : daoPolicy.default_vote_policy;
+    if (votePolicy.weight_kind === "RoleWeight") {
+      if (Array.isArray(votePolicy.threshold)) {
+        ratios = ratios.concat(votePolicy.threshold);
+        ratios = ratios.concat(votePolicy.threshold);
+      } else {
+        requiredVotes = parseFloat(votePolicy.threshold);
       }
-    } else {
-      ratios = [50, 100];
     }
   });
 
@@ -60,7 +60,11 @@ function getApproversAndThreshold(
   const approverAccounts = Array.from(new Set(approversGroup));
 
   return {
-    approverAccounts,
+    // if everyoneHasAccess, current account doesn't change the requiredVotes
+    approverAccounts:
+      everyoneHasAccess && accountId
+        ? [...approverAccounts, accountId]
+        : approverAccounts,
     requiredVotes:
       typeof requiredVotes === "number"
         ? requiredVotes
