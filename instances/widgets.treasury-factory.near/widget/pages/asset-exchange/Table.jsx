@@ -255,7 +255,6 @@ const ProposalsComponent = () => {
           "amountOut",
           item.description
         );
-
         return (
           <tr
             className={
