@@ -164,6 +164,9 @@ const code = `
                 border-color: ${colors["--border-color"]} !important;
                 background: ${colors["--grey-035"]} !important;
               }
+              .ms-auto {
+                font-size:12px;
+              }
         </style>
     </head>
     <body data-bs-theme=${isDarkTheme ? "dark" : "light"}>
@@ -177,10 +180,14 @@ const code = `
                         <button id="selectedSendToken" class="border border-1 dropdown-btn d-flex align-items-center gap-2">
                             <img id="sendTokenIcon" src="" width="20" height="20" style="display:none;">
                             <span id="sendTokenSymbol">Select</span>
-                            <span class="ms-auto">&#9662;</span>
+                            <span class="ms-auto"><i class="bi bi-chevron-down"></i></span>
                         </button>
                         <div id="sendDropdownMenu" class="dropdown-menu dropdown-menu-end dropdown-menu-lg-start px-2">
                             <input id="sendSearchInput" type="text" class="form-control mb-2" placeholder="Search token" onkeyup="handleSearch(event, 'send')" />
+                            <div class="text-secondary d-flex justify-content-between px-1">
+                                <div>Token</div>
+                                <div>Balance</div>
+                            </div>
                             <div id="sendScrollBox" class="scroll-box">
                                 <!-- Loader/Error/Token List will be inserted here -->
                             </div>
@@ -199,10 +206,14 @@ const code = `
                         <button id="selectedReceiveToken" class="border border-1 dropdown-btn d-flex align-items-center gap-2">
                             <img id="receiveTokenIcon" src="" width="20" height="20" style="display:none;">
                             <span id="receiveTokenSymbol">Select</span>
-                            <span class="ms-auto">&#9662;</span>
+                            <span class="ms-auto"><i class="bi bi-chevron-down"></i></span>
                         </button>
                         <div id="receiveDropdownMenu" class="dropdown-menu dropdown-menu-end dropdown-menu-lg-start px-2">
                             <input id="receiveSearchInput" type="text" class="form-control mb-2" placeholder="Search token" onkeyup="handleSearch(event, 'receive')" />
+                            <div class="text-secondary d-flex justify-content-between px-1">
+                                <div>Token</div>
+                                <div>Balance</div>
+                            </div>
                             <div id="receiveScrollBox" class="scroll-box">
                                 <!-- Loader/Error/Token List will be inserted here -->
                             </div>
@@ -467,10 +478,10 @@ const code = `
           
               tokenList.forEach(function (token) {
                   var item = document.createElement("div");
-                  item.className = "d-flex dropdown-item justify-content-between gap-1 p-1 cursor-pointer";
+                  item.className = "d-flex dropdown-item justify-content-between gap-1 px-1 py-2 cursor-pointer";
           
                   var tokenInfo = document.createElement("div");
-                  tokenInfo.className = "d-flex gap-1 align-items-center";
+                  tokenInfo.className = "d-flex gap-2 align-items-center";
           
                   var img = document.createElement("img");
                   img.src = token.icon;
@@ -493,7 +504,10 @@ const code = `
           
                   var balanceText = document.createElement("div");
                   balanceText.className = "text-muted";
-                  balanceText.innerText = parseFloat(token.parsedBalance).toFixed(4);
+                  balanceText.innerText = Number(token.parsedBalance ?? 0).toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  });
           
                   item.appendChild(tokenInfo);
                   item.appendChild(balanceText);
