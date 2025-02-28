@@ -1,0 +1,23 @@
+{
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "http://localhost:8080",
+      "localStorage": [
+        {
+          "name": "near-wallet-selector:selectedWalletId",
+          "value": "\"my-near-wallet\""
+        },
+        {
+          "name": "near_app_wallet_auth_key",
+          "value": "{\"accountId\":\"all.near\",\"allKeys\":[\"ed25519:CziSGowWUKiP5N5pqGUgXCJXtqpySAk29YAU6zEs5RAi\"]}"
+        },
+        {
+          "name": "near-social-vm:v01::accountId:",
+          "value": "all.near"
+        }
+      ]
+    }
+  ],
+  "sessionStorage": []
+}

@@ -526,13 +526,7 @@ const ProposalsComponent = () => {
                             ...(userFTTokens?.body?.fts ?? []),
                             {
                               contract: "near",
-                              amount: Big(nearBalances.available)
-                                .minus(
-                                  Big(nearStakedTokens ?? "0").mul(
-                                    Big(10).pow(24)
-                                  )
-                                )
-                                .toFixed(),
+                              amount: nearBalances.available,
                             },
                           ],
                       currentAmount: args.amount,

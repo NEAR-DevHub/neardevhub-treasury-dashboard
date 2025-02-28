@@ -47,11 +47,11 @@ async function updateDaoConfig({ page }) {
   });
 }
 
-async function navigateToThemePage({ page, instanceAccount }) {
+async function navigateToThemePage({ page, instanceAccount, hasAllRole }) {
   await page.goto(
     `/${instanceAccount}/widget/app?page=settings&selectedTab=theme-logo`
   );
-  await updateDaoPolicyMembers({ instanceAccount, page });
+  await updateDaoPolicyMembers({ instanceAccount, page, hasAllRole });
   await updateDaoConfig({ page });
   await page.waitForTimeout(5_000);
   await page.getByTestId("Theme & Logo", { exact: true }).click();
@@ -70,23 +70,36 @@ test.describe.parallel("User logged in with different roles", function () {
       storageState:
         "playwright-tests/storage-states/wallet-connected-admin-with-vote-role.json",
     },
+    {
+      name: "All role",
+      storageState:
+        "playwright-tests/storage-states/wallet-connected-admin-with-all-role.json",
+      hasAllRole: true,
+    },
   ];
 
-  for (const role of roles) {
-    test.describe(`User with '${role.name}'`, function () {
-      test.use({ storageState: role.storageState });
+  for (const { name, storageState, hasAllRole } of roles) {
+    test.describe(`User with '${name}'`, function () {
+      test.use({ storageState: storageState });
 
-      test("should not be able to change config", async ({
+      test("should only allow authorized users to change config", async ({
         page,
         instanceAccount,
       }) => {
         test.setTimeout(60_000);
-        await updateDaoPolicyMembers({ instanceAccount, page });
-        await navigateToThemePage({ page, instanceAccount });
-        await expect(page.locator("input[type='color']")).toBeDisabled();
-        await expect(
-          page.getByRole("button", { name: "Submit Request" })
-        ).toBeDisabled({ timeout: 20_000 });
+        await navigateToThemePage({ page, instanceAccount, hasAllRole });
+        const colorInput = page.locator("input[type='color']");
+        const submitButton = page.getByRole("button", {
+          name: "Submit Request",
+        });
+
+        if (hasAllRole) {
+          await expect(colorInput).toBeEnabled();
+          await expect(submitButton).toBeEnabled();
+        } else {
+          await expect(colorInput).toBeDisabled();
+          await expect(submitButton).toBeDisabled({ timeout: 20_000 });
+        }
       });
     });
   }

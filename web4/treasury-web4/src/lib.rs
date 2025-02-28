@@ -44,14 +44,11 @@ impl Contract {
                 NearToken::from_near(0),
                 Gas::from_tgas(10),
             )
-            .then(
-                Self::ext(current_account_id)
-                    .with_attached_deposit(env::attached_deposit())
-                    .update_widgets_callback(
-                        widget_reference_account_id,
-                        social_db_account_id.clone(),
-                    ),
-            );
+            .then(Self::ext(current_account_id).update_widgets_callback(
+                widget_reference_account_id,
+                social_db_account_id.clone(),
+                env::attached_deposit(),
+            ));
 
         if set_social_metadata_defaults.unwrap_or(false) {
             promise = promise.then(self.internal_set_social_metadata(
@@ -64,12 +61,12 @@ impl Contract {
         promise
     }
 
-    #[payable]
     #[private]
     pub fn update_widgets_callback(
         &mut self,
         widget_reference_account_id: near_sdk::AccountId,
         social_db_account_id: near_sdk::AccountId,
+        deposit_amount: NearToken,
     ) -> Promise {
         match env::promise_result(0) {
             PromiseResult::Successful(result) => {
@@ -83,7 +80,7 @@ impl Contract {
                 Promise::new(social_db_account_id).function_call(
                     "set".to_string(),
                     args.into_bytes(),
-                    env::attached_deposit(),
+                    deposit_amount,
                     Gas::from_tgas(10),
                 )
             }
