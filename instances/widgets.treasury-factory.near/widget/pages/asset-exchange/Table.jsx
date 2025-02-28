@@ -234,20 +234,15 @@ const userFTTokens = fetch(
 
 const nearBalances = getNearBalances(treasuryDaoID);
 
-console.log("yeahhhh");
 const ProposalsComponent = () => {
   return (
     <tbody style={{ overflowX: "auto" }}>
       {proposals?.map((item, index) => {
-        console.log("1", item);
-
         const notes = decodeProposalDescription("notes", item.description);
-
-        const amountIn = 1;
-        // decodeProposalDescription(
-        //   "amountIn",
-        //   item.description
-        // );
+        const amountIn = decodeProposalDescription(
+          "amountIn",
+          item.description
+        );
         const tokenIn = decodeProposalDescription("tokenIn", item.description);
         const tokenOut = decodeProposalDescription(
           "tokenOut",

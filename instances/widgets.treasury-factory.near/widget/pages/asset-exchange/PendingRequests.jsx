@@ -51,7 +51,6 @@ useEffect(() => {
   fetchProposals();
 }, [currentPage, rowsPerPage]);
 
-console.log(proposals);
 useEffect(() => {
   // need to clear all pagination related filters to fetch correct result
   setIsPrevCalled(false);
