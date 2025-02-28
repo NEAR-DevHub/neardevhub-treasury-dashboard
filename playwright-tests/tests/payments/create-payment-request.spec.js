@@ -60,7 +60,7 @@ async function fillCreateForm(page, daoAccount, instanceAccount) {
 
   const tokenSelect = await page.getByTestId("tokens-dropdown");
   await tokenSelect.click();
-  await tokenSelect.getByText("NEAR").click();
+  await tokenSelect.getByText("NEAR").first().click();
 }
 
 const isMac = os.platform() === "darwin";
@@ -324,7 +324,7 @@ test.describe("User is logged in", function () {
     await clickCreatePaymentRequestButton(page);
     const tokenSelect = page.getByTestId("tokens-dropdown");
     await tokenSelect.click();
-    await tokenSelect.getByText("NEAR").click();
+    await tokenSelect.getByText("NEAR").first().click();
     await tokenSelect.click();
     await tokenSelect.getByText("USDC").click();
     await tokenSelect.click();
@@ -380,7 +380,7 @@ test.describe("User is logged in", function () {
 
     const tokenSelect = await page.getByTestId("tokens-dropdown");
     await tokenSelect.click();
-    await tokenSelect.getByText("NEAR").click();
+    await tokenSelect.getByText("NEAR").first().click();
     await expect(await submitBtn()).toBeEnabled();
 
     const proposalTitle = page.getByTestId("proposal-title");
@@ -665,7 +665,7 @@ test.describe("User is logged in", function () {
 
     const tokenSelect = await page.getByTestId("tokens-dropdown");
     await tokenSelect.click();
-    await tokenSelect.getByText("NEAR").click();
+    await tokenSelect.getByText("NEAR").first().click();
     const submitBtn = page
       .locator(".offcanvas-body")
       .getByRole("button", { name: "Submit" });
@@ -829,7 +829,7 @@ test.describe("admin with function access keys", function () {
         .fill("webassemblymusic.near");
       const tokenSelect = page.getByTestId("tokens-dropdown");
       await tokenSelect.click();
-      await tokenSelect.getByText("NEAR").click();
+      await tokenSelect.getByText("NEAR").first().click();
 
       const totalAmountField = page.getByTestId("total-amount");
       await totalAmountField.focus();
