@@ -45,7 +45,6 @@ const functionCallApproversGroup = props.functionCallApproversGroup;
 const deleteGroup = props.deleteGroup;
 const [showToastStatus, setToastStatus] = useState(false);
 const [voteProposalId, setVoteProposalId] = useState(null);
-const [currentSlippages, setCurrentSlippages] = useState({});
 const refreshTableData = props.refreshTableData;
 
 const accountId = context.accountId;
@@ -229,7 +228,7 @@ const VoteSuccessToast = () => {
 const proposalPeriod = policy.proposal_period;
 
 const userFTTokens = fetch(
-  `https://api3.nearblocks.io/v1/account/${treasuryDaoID}/inventory`
+  `${REPL_BACKEND_API}/ft-tokens/?account_id=${treasuryDaoID}`
 );
 
 const nearBalances = getNearBalances(treasuryDaoID);
@@ -237,7 +236,7 @@ const nearBalances = getNearBalances(treasuryDaoID);
 const ProposalsComponent = () => {
   return (
     <tbody style={{ overflowX: "auto" }}>
-      {proposals?.map((item, index) => {
+      {proposals?.map((item) => {
         const notes = decodeProposalDescription("notes", item.description);
         const amountIn = decodeProposalDescription(
           "amountIn",
@@ -256,29 +255,7 @@ const ProposalsComponent = () => {
           "amountOut",
           item.description
         );
-        if (isPendingRequests) {
-          asyncFetch(
-            `${REPL_BACKEND_API}/swap?accountId=${treasuryDaoID}&amountIn=${amountIn}&tokenIn=${tokenIn}&tokenOut=${tokenOut}&slippage=${
-              slippage / 100
-            }`
-          ).then((r) => {
-            const outEstimate = r?.body?.outEstimate ?? amountOut;
-            let currentSlippage = Big(amountOut ?? "0")
-              .minus(outEstimate ?? "1")
-              .div(outEstimate ?? "1")
-              .times(100)
-              .toFixed(2);
-            if (currentSlippage == "-0.00") {
-              currentSlippage = "0.00";
-            }
-            setCurrentSlippages((prev) => ({
-              ...prev,
-              [item.id]: currentSlippage,
-            }));
-          });
-        }
 
-        const currentSlippage = currentSlippages?.[item.id];
         return (
           <tr
             className={
@@ -331,13 +308,6 @@ const ProposalsComponent = () => {
             </td>
             <td className={isVisible("Slippage Limit") + " text-center"}>
               <b>{slippage}%</b>
-              {isPendingRequests && currentSlippage && (
-                <div
-                  className={currentSlippage >= 0 ? "text-green" : "text-red"}
-                >
-                  {currentSlippage >= 0 && "+"} {currentSlippage}%
-                </div>
-              )}
             </td>
             <td className={"fw-semi-bold text-center " + isVisible("Creator")}>
               <Widget
@@ -411,10 +381,13 @@ const ProposalsComponent = () => {
                       hasVotingPermission,
                       proposalCreator: item.proposer,
                       tokensBalance: [
-                        ...(userFTTokens?.body?.inventory?.fts ?? []),
+                        ...(userFTTokens?.body?.fts ?? []),
                         {
                           contract: "near",
                           amount: nearBalances.available,
+                          ft_meta: {
+                            decimals: 24,
+                          },
                         },
                       ],
                       currentAmount: amountIn,
