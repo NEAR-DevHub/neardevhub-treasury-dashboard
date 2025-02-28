@@ -323,6 +323,7 @@ export async function updateDaoPolicyMembers({
   page,
   isMultiVote = false,
   isDefaultPolicy = false,
+  hasAllRole = false,
 }) {
   await mockRpcRequest({
     page,
@@ -342,6 +343,30 @@ export async function updateDaoPolicyMembers({
       originalResult = instanceAccount.includes("testing")
         ? getNewPolicy(votePolicy, votePolicy, votePolicy)
         : getOldPolicy(votePolicy, votePolicy, votePolicy);
+      if (hasAllRole) {
+        originalResult.roles.push({
+          name: "all",
+          kind: "Everyone",
+          permissions: [
+            "call:AddProposal",
+            "transfer:AddProposal",
+            "call:VoteRemove",
+            "transfer:VoteRemove",
+            "call:VoteReject",
+            "call:VoteApprove",
+            "call:RemoveProposal",
+            "call:Finalize",
+            "transfer:VoteReject",
+            "transfer:VoteApprove",
+            "transfer:RemoveProposal",
+            "transfer:Finalize",
+            "config:*",
+            "policy:*",
+            "policy_update_parameters:*",
+          ],
+          vote_policy: {},
+        });
+      }
       return originalResult;
     },
   });

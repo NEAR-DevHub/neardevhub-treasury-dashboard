@@ -72,25 +72,41 @@ test.describe.parallel("User logged in with different roles", function () {
       storageState:
         "playwright-tests/storage-states/wallet-connected-admin-with-vote-role.json",
     },
+    {
+      name: "All role",
+      storageState:
+        "playwright-tests/storage-states/wallet-connected-admin-with-all-role.json",
+      canManageMembers: true,
+    },
   ];
 
-  for (const role of roles) {
-    test.describe(`User with '${role.name}'`, function () {
-      test.use({ storageState: role.storageState });
+  for (const { name, storageState, canManageMembers } of roles) {
+    test.describe(`User with '${name}'`, function () {
+      test.use({ storageState: storageState });
 
-      test("should not be able to add member or see actions", async ({
-        page,
-        instanceAccount,
-      }) => {
+      test(`should ${
+        canManageMembers ? "see" : "not see"
+      } 'Add Member' and 'Actions'`, async ({ page, instanceAccount }) => {
         test.setTimeout(60_000);
-        await updateDaoPolicyMembers({ instanceAccount, page });
+        await updateDaoPolicyMembers({
+          instanceAccount,
+          page,
+          hasAllRole: canManageMembers,
+        });
         await navigateToMembersPage({ page, instanceAccount });
-        await expect(
-          page.getByRole("button", {
-            name: "Add Member",
-          })
-        ).toBeHidden();
-        await expect(page.getByText("Actions", { exact: true })).toBeHidden();
+
+        const addMemberButton = page.getByRole("button", {
+          name: "Add Member",
+        });
+        const actionsText = page.getByText("Actions", { exact: true });
+
+        if (canManageMembers) {
+          await expect(addMemberButton).toBeVisible();
+          await expect(actionsText).toBeVisible();
+        } else {
+          await expect(addMemberButton).toBeHidden();
+          await expect(actionsText).toBeHidden();
+        }
       });
     });
   }

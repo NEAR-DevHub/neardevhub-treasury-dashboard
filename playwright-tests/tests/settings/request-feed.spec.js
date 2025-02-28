@@ -171,18 +171,29 @@ test.describe.parallel("User logged in with different roles", function () {
       storageState:
         "playwright-tests/storage-states/wallet-connected-admin-with-settings-role.json",
     },
+    {
+      name: "All role",
+      storageState:
+        "playwright-tests/storage-states/wallet-connected-admin-with-all-role.json",
+      hasAllRole: true,
+    },
   ];
 
-  for (const role of roles) {
-    test.describe(`User with '${role.name}'`, function () {
-      test.use({ storageState: role.storageState });
+  for (const { name, storageState, hasAllRole } of roles) {
+    test.describe(`User with '${name}'`, function () {
+      test.use({ storageState: storageState });
 
-      test("should not see 'Vote' action", async ({
+      test("should only see 'Vote' action if authorized", async ({
         page,
         instanceAccount,
       }) => {
         test.setTimeout(60_000);
-        await updateDaoPolicyMembers({ instanceAccount, page });
+        await updateDaoPolicyMembers({
+          instanceAccount,
+          page,
+          hasAllRole: hasAllRole,
+        });
+
         await mockRpcRequest({
           page,
           filterParams: {
@@ -195,20 +206,24 @@ test.describe.parallel("User logged in with different roles", function () {
             return originalResult;
           },
         });
+
         await page.goto(`/${instanceAccount}/widget/app?page=settings`);
         await expect(page.getByText("Pending Requests").nth(1)).toBeVisible({
           timeout: 20_000,
         });
+
         await expect(
           page.getByRole("cell", { name: 1, exact: true }).first()
         ).toBeVisible({ timeout: 10_000 });
-        await expect(
-          page
-            .getByRole("button", {
-              name: "Approve",
-            })
-            .first()
-        ).toBeHidden();
+        const approveButton = page
+          .getByRole("button", { name: "Approve" })
+          .first();
+
+        if (hasAllRole) {
+          await expect(approveButton).toBeVisible();
+        } else {
+          await expect(approveButton).toBeHidden();
+        }
       });
     });
   }

@@ -39,26 +39,44 @@ test.describe.parallel("User logged in with different roles", function () {
       storageState:
         "playwright-tests/storage-states/wallet-connected-admin-with-vote-role.json",
     },
+    {
+      name: "All role",
+      storageState:
+        "playwright-tests/storage-states/wallet-connected-admin-with-all-role.json",
+      hasAllRole: true,
+    },
   ];
 
-  for (const role of roles) {
-    test.describe(`User with '${role.name}'`, function () {
-      test.use({ storageState: role.storageState });
+  for (const { name, storageState, hasAllRole } of roles) {
+    test.describe(`User with '${name}'`, function () {
+      test.use({ storageState: storageState });
 
-      test("should not be able to change voting duration", async ({
+      test("should only allow authorized users to change voting duration", async ({
         page,
         instanceAccount,
       }) => {
         test.setTimeout(60_000);
-        await updateDaoPolicyMembers({ instanceAccount, page });
-        await navigateToVotingDurationPage({ page, instanceAccount });
-        await expect(
-          page.getByPlaceholder("Enter voting duration days")
-        ).toBeDisabled();
+        await updateDaoPolicyMembers({
+          instanceAccount,
+          page,
+          hasAllRole: hasAllRole,
+        });
 
-        await expect(
-          page.getByRole("button", { name: "Submit Request" })
-        ).toBeDisabled();
+        await navigateToVotingDurationPage({ page, instanceAccount });
+
+        const votingDurationInput = page.getByPlaceholder(
+          "Enter voting duration days"
+        );
+        const submitButton = page.getByRole("button", {
+          name: "Submit Request",
+        });
+
+        if (hasAllRole) {
+          await expect(votingDurationInput).toBeEnabled();
+        } else {
+          await expect(votingDurationInput).toBeDisabled();
+          await expect(submitButton).toBeDisabled();
+        }
       });
     });
   }
