@@ -2,7 +2,7 @@ import { expect } from "@playwright/test";
 import { test } from "../../util/test.js";
 import { getTransactionModalObject } from "../../util/transaction";
 import { mockNearBalances, updateDaoPolicyMembers } from "../../util/rpcmock";
-import { InsufficientBalance } from "../../util/lib.js";
+import { InsufficientBalance, toBase64 } from "../../util/lib.js";
 
 async function mockSwapResponse({ page, response, daoAccount }) {
   await page.route(
@@ -305,7 +305,10 @@ test.describe("User is logged in", function () {
           FunctionCall: {
             actions: [
               {
-                args: "eyJyZWdpc3RyYXRpb25fb25seSI6dHJ1ZSwiYWNjb3VudF9pZCI6ImluZmluZXguc3B1dG5pay1kYW8ubmVhciJ9",
+                args: toBase64({
+                  registration_only: true,
+                  account_id: daoAccount,
+                }),
                 deposit: "100000000000000000000000",
                 gas: "30000000000000",
                 method_name: "storage_deposit",

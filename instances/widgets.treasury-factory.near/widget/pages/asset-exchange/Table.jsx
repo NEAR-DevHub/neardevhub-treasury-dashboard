@@ -158,10 +158,10 @@ const ToastStatusContent = () => {
       content = "The request has been successfully executed.";
       break;
     case "Rejected":
-      content = "The swap request has been rejected.";
+      content = "The request has been rejected.";
       break;
     case "Removed":
-      content = "The swap request has been successfully deleted.";
+      content = "The request has been successfully deleted.";
       break;
     case "Failed":
       content =

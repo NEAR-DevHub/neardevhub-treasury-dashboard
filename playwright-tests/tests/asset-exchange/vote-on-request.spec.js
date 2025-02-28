@@ -376,7 +376,7 @@ test.describe("don't ask again", function () {
     daoAccount,
     instanceAccount,
   }) => {
-    test.setTimeout(100_000);
+    test.setTimeout(60_000);
     await setupMocks({ page, daoAccount, isSufficient: true });
     await page.goto(`/${instanceAccount}/widget/app?page=asset-exchange`);
     const approveButton = page.getByRole("button", { name: "Approve" }).first();
