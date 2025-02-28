@@ -15,6 +15,30 @@ const [showMenu, setShowMenu] = useState(false);
 const { href: linkHref } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
+const [navbarWithAssetExchange, setNavbarWithAssetExchange] = useState([]);
+
+// we can't update all existing instances to have asset exchange so adding it here for all
+useEffect(() => {
+  if (Array.isArray(navbarLinks) && !navbarWithAssetExchange?.length) {
+    const updatedNavbarLinks = [...(navbarLinks ?? [])];
+    const settingsIndex = updatedNavbarLinks.findIndex(
+      (link) => link.title === "Settings"
+    );
+
+    const assetExchangeLink = {
+      title: "Asset Exchange",
+      href: "?page=asset-exchange",
+    };
+
+    if (settingsIndex !== -1) {
+      updatedNavbarLinks.splice(settingsIndex, 0, assetExchangeLink);
+    } else {
+      updatedNavbarLinks.push(assetExchangeLink);
+    }
+
+    setNavbarWithAssetExchange(updatedNavbarLinks);
+  }
+}, [navbarLinks]);
 
 const MenuIcon = () => (
   <svg
@@ -168,7 +192,7 @@ return (
     </div>
     <div className="d-flex gap-3 align-items-center">
       <LinksContainer>
-        {(navbarLinks ?? []).map((link) => (
+        {navbarWithAssetExchange.map((link) => (
           <Link className={isActive(link.title)} href={link.href}>
             {link.title}
           </Link>
@@ -190,7 +214,7 @@ return (
           <i className="bi bi-x h4"></i>
         </div>
         <div className="d-flex flex-column gap-4 card card-body">
-          {(navbarLinks ?? []).map((link, idx) => (
+          {(navbarWithAssetExchange ?? []).map((link, idx) => (
             <MobileLink
               className={isActive(link.title) + " mb-0"}
               key={`mobile-link-${idx}`}
