@@ -44,7 +44,7 @@ fn main() {
         let build_artifact = build(build_opts_extended).expect("Building web4 contract failed");
 
         let web4_wasm = fs::read(build_artifact.path)
-            .expect(format!("Failed to read {}", web4_wasm_path).as_str());
+            .unwrap_or_else(|_| panic!("Failed to read {}", web4_wasm_path));
 
         let web4_wasm_base64 = general_purpose::STANDARD.encode(&web4_wasm);
 
