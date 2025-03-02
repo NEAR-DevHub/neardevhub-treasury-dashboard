@@ -20,6 +20,10 @@ return {
       title: "Settings",
       href: "?page=settings",
     },
+    {
+      title: "Lockup",
+      href: "?page=lockup",
+    },
   ],
   treasuryDaoID: "${REPL_TREASURY}",
   proposalAPIEndpoint: "${REPL_PROPOSALS_CACHE_URL}",

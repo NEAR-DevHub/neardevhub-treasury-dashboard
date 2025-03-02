@@ -22,7 +22,7 @@ const formattedTime = date.toLocaleTimeString("en-GB", {
 
 return (
   <div className="text-left">
-    <div className="bold">{formattedTime}</div>
-    <div className="text-secondary text-sm">{formattedDate}</div>
+    <div>{formattedDate}</div>
+    <div className="text-secondary text-sm">{formattedTime}</div>
   </div>
 );

@@ -340,7 +340,7 @@ const Theme = styled.div`
   }
 
   .text-sm {
-    font-size: 13px;
+    font-size: 12px;
   }
 
   .text-secondary a {
