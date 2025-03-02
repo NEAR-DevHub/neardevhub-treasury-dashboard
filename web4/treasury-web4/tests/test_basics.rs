@@ -31,12 +31,12 @@ fn create_preload_result(
     .to_string();
 
     let body_base64 = BASE64_STANDARD.encode(body_string);
-    return serde_json::json!({
-            String::from(preload_url): {
+    serde_json::json!({
+            preload_url: {
                 "contentType": "application/json",
                 "body": body_base64
             }
-    });
+    })
 }
 
 #[tokio::test]
@@ -370,7 +370,7 @@ async fn test_update_widgets_and_set_social_metadata_defaults(
     let result = instance_contract
         .view("web4_get")
         .args_json(json!({"request": {"path": "/", "preloads": {
-                String::from(preload_url): {
+                preload_url: {
                     "contentType": "application/json",
                     "body": body_base64
                 }

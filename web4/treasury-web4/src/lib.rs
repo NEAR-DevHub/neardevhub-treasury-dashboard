@@ -1,7 +1,6 @@
 // Find all our documentation at https://docs.near.org
 mod web4;
 use near_sdk::base64::{engine::general_purpose::STANDARD as BASE64_STANDARD, Engine as _};
-use near_sdk::store::vec;
 use near_sdk::{env, near, serde_json, Gas, NearToken, Promise, PromiseResult};
 use web4::types::{Web4Request, Web4Response};
 
