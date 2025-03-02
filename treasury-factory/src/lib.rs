@@ -11,6 +11,8 @@ static CREATE_SPUTNIK_DAO_DEPOSIT: NearToken = NearToken::from_near(6);
 static SOCIAL_DB_DEPOSIT: NearToken = NearToken::from_millinear(500);
 static NEW_INSTANCE_ACCOUNT_DEPOSIT: NearToken = NearToken::from_millinear(2500);
 
+const WEB4_CONTRACT_BYTES: &[u8] = include_bytes!("../../web4/treasury-web4/target/near/treasury_web4.wasm");
+
 // Define the contract structure
 #[near(contract_state)]
 #[derive(Default)]
@@ -145,6 +147,10 @@ impl Contract {
                 .then(Promise::new(refund_on_failure_account).transfer(CREATE_SPUTNIK_DAO_DEPOSIT))
         }
         promise
+    }
+
+    pub fn get_web4_contract_bytes(&self) {
+        env::value_return(WEB4_CONTRACT_BYTES);
     }
 }
 
