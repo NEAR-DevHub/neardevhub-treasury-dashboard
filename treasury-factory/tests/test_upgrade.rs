@@ -13,7 +13,10 @@ async fn test_get_web4_contract_bytes() -> Result<(), Box<dyn std::error::Error>
 
     let contract = sandbox.dev_deploy(&contract_wasm).await?;
     let web4_contract_bytes = contract.view("get_web4_contract_bytes").await?.result;
-    assert_eq!(web4_contract_bytes, include_bytes!("../../web4/treasury-web4/target/near/treasury_web4.wasm"));
+    assert_eq!(
+        web4_contract_bytes,
+        include_bytes!("../../web4/treasury-web4/target/near/treasury_web4.wasm")
+    );
 
     Ok(())
 }
