@@ -36,7 +36,10 @@ jobs:
         uses: actions/checkout@v4
       - name: Install cargo-near CLI
         run: curl --proto '=https' --tlsv1.2 -LsSf https://github.com/near/cargo-near/releases/latest/download/cargo-near-installer.sh | sh
-      - name: Run cargo build
+      - name: Build web4 contract
+        run: cargo near build reproducible-wasm
+        working-directory: ./web4/treasury-web4
+      - name: Build treasury-factory
         run: cargo near build reproducible-wasm
         working-directory: ./treasury-factory
       - name: Run cargo test
