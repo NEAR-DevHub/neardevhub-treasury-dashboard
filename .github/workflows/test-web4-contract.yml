@@ -28,22 +28,17 @@ jobs:
           cargo clippy --all-features --workspace --tests -- --warn clippy::all --warn clippy::nursery
         working-directory: ./web4/treasury-web4
 
-  build-treasury-factory:
-    name: Build Treasury Factory
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Run cargo build
-        run: cargo near build reproducible-wasm
-        working-directory: ./treasury-factory
-
   tests:
     name: Tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      - name: Install cargo-near CLI
+        run: curl --proto '=https' --tlsv1.2 -LsSf https://github.com/near/cargo-near/releases/latest/download/cargo-near-installer.sh | sh
+      - name: Run cargo build
+        run: cargo near build reproducible-wasm
+        working-directory: ./treasury-factory
       - name: Run cargo test
         run: cargo test
         working-directory: ./web4/treasury-web4
