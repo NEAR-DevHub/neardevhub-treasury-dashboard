@@ -28,6 +28,16 @@ jobs:
           cargo clippy --all-features --workspace --tests -- --warn clippy::all --warn clippy::nursery
         working-directory: ./web4/treasury-web4
 
+  build-treasury-factory:
+    name: Build Treasury Factory
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Run cargo build
+        run: cargo near build reproducible-wasm
+        working-directory: ./treasury-factory
+
   tests:
     name: Tests
     runs-on: ubuntu-latest
