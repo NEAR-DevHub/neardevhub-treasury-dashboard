@@ -16,20 +16,8 @@ jobs:
       - run: cargo fmt --check
         working-directory: ./web4/treasury-web4
 
-  code-linter:
-    name: Code Linter
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Run cargo clippy
-        run: |
-          rustup component add clippy
-          cargo clippy --all-features --workspace --tests -- --warn clippy::all --warn clippy::nursery
-        working-directory: ./web4/treasury-web4
-
-  tests:
-    name: Tests
+  tests-and-lint:
+    name: Tests and linting
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -42,6 +30,11 @@ jobs:
       - name: Build treasury-factory
         run: cargo near build reproducible-wasm
         working-directory: ./treasury-factory
+      - name: Run cargo clippy
+        run: |
+          rustup component add clippy
+          cargo clippy --all-features --workspace --tests -- --warn clippy::all --warn clippy::nursery
+        working-directory: ./web4/treasury-web4
       - name: Run cargo test
         run: cargo test
         working-directory: ./web4/treasury-web4
