@@ -70,7 +70,8 @@ const policy = treasuryDaoID
 
 const functionCallApproversGroup = getApproversAndThreshold(
   treasuryDaoID,
-  "transfer"
+  "transfer",
+  context.accountId
 );
 
 return (

@@ -65,10 +65,16 @@ const policy = treasuryDaoID
 
 const functionCallApproversGroup = getApproversAndThreshold(
   treasuryDaoID,
-  "call"
+  "call",
+  context.accountId
 );
 
-const deleteGroup = getApproversAndThreshold(treasuryDaoID, "call", true);
+const deleteGroup = getApproversAndThreshold(
+  treasuryDaoID,
+  "call",
+  context.accountId,
+  true
+);
 
 return (
   <div className="d-flex flex-column flex-1 justify-content-between">
