@@ -34,23 +34,24 @@ fn main() {
     let web4_wasm = match fs::exists(web4_wasm_path) {
         Ok(true) => fs::read(web4_wasm_path).unwrap(),
         Ok(false) => {
-                        let build_opts = BuildOpts::builder()
-                            .manifest_path("../web4/treasury-web4/Cargo.toml".into())
-                            .build();
-                        let build_script_opts = BuildScriptOpts::builder().build();
-                        let build_opts_extended = BuildOptsExtended::builder()
-                            .build_opts(build_opts)
-                            .build_script_opts(build_script_opts)
-                            .build();
-        
-                        let build_artifact = build(build_opts_extended).expect("Building web4 contract failed");
-        
-                        fs::read(build_artifact.path).unwrap()
-            }
+            let build_opts = BuildOpts::builder()
+                .manifest_path("../web4/treasury-web4/Cargo.toml".into())
+                .build();
+            let build_script_opts = BuildScriptOpts::builder().build();
+            let build_opts_extended = BuildOptsExtended::builder()
+                .build_opts(build_opts)
+                .build_script_opts(build_script_opts)
+                .build();
+
+            let build_artifact = build(build_opts_extended).expect("Building web4 contract failed");
+
+            fs::read(build_artifact.path).unwrap()
+        }
         Err(_) => todo!(),
     };
-     
-    let web4_wasm_base64_path = Path::new(env!("CARGO_MANIFEST_DIR")).join("treasury_web4.wasm.base64.txt");
+
+    let web4_wasm_base64_path =
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("treasury_web4.wasm.base64.txt");
     if !web4_wasm_base64_path.exists() {
         let web4_wasm_base64 = general_purpose::STANDARD.encode(&web4_wasm);
         let mut output_file =
