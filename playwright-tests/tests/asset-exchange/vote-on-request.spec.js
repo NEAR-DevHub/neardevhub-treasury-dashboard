@@ -210,6 +210,46 @@ test.describe.parallel("User logged in with different roles", () => {
   }
 });
 
+test.describe("User is logged in", function () {
+  test.use({
+    storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
+  });
+
+  test("submit action should show transaction loader and handle cancellation correctly", async ({
+    page,
+    daoAccount,
+    instanceAccount,
+  }) => {
+    test.setTimeout(60_000);
+    await updateDaoPolicyMembers({
+      instanceAccount,
+      page,
+      isMultiVote: daoAccount === "infinex.sputnik-dao.near",
+    });
+    await mockAssetExchangeProposals({ page });
+    await setupMocks({ page, daoAccount, isSufficient: true });
+    await page.goto(`/${instanceAccount}/widget/app?page=asset-exchange`);
+    const approveButton = page.getByRole("button", { name: "Approve" }).first();
+    await expect(approveButton).toBeEnabled({ timeout: 30_000 });
+
+    await approveButton.click();
+    await page.getByRole("button", { name: "Confirm" }).click();
+
+    const loader = page.getByText("Awaiting transaction confirmation...");
+    await expect(loader).toBeVisible();
+    await expect(approveButton).toBeDisabled();
+
+    await page.getByRole("button", { name: "Close" }).nth(1).click();
+    await page
+      .locator(".toast-body")
+      .getByRole("button", { name: "Cancel" })
+      .click();
+
+    await expect(loader).toBeHidden();
+    await expect(approveButton).toBeEnabled();
+  });
+});
+
 test.describe("don't ask again", function () {
   test.use({
     storageState:
@@ -369,33 +409,5 @@ test.describe("don't ask again", function () {
         page.getByText("The request has been successfully deleted.")
       ).toBeVisible();
     }
-  });
-
-  test("submit action should show transaction loader and handle cancellation correctly", async ({
-    page,
-    daoAccount,
-    instanceAccount,
-  }) => {
-    test.setTimeout(60_000);
-    await setupMocks({ page, daoAccount, isSufficient: true });
-    await page.goto(`/${instanceAccount}/widget/app?page=asset-exchange`);
-    const approveButton = page.getByRole("button", { name: "Approve" }).first();
-    await expect(approveButton).toBeEnabled({ timeout: 30_000 });
-
-    await approveButton.click();
-    await page.getByRole("button", { name: "Confirm" }).click();
-
-    const loader = page.getByText("Awaiting transaction confirmation...");
-    await expect(loader).toBeVisible();
-    await expect(approveButton).toBeDisabled();
-
-    await page.getByRole("button", { name: "Close" }).nth(1).click();
-    await page
-      .locator(".toast-body")
-      .getByRole("button", { name: "Cancel" })
-      .click();
-
-    await expect(loader).toBeHidden();
-    await expect(approveButton).toBeEnabled();
   });
 });
