@@ -32,6 +32,30 @@ fn main() {
 
     let web4_wasm_path = "../web4/treasury-web4/target/near/treasury_web4.wasm";
     if !fs::exists(web4_wasm_path).unwrap() {
-        panic!("Web4 contract wasm not found at {}. Try building the web4 contract first.", web4_wasm_path);
+        let build_opts = BuildOpts::builder()
+            .manifest_path("../web4/treasury-web4/Cargo.toml".into())
+            .build();
+        let build_script_opts = BuildScriptOpts::builder().build();
+        let build_opts_extended = BuildOptsExtended::builder()
+            .build_opts(build_opts)
+            .build_script_opts(build_script_opts)
+            .build();
+
+        let build_artifact = build(build_opts_extended).expect("Building web4 contract failed");
+
+        let web4_wasm = fs::read(build_artifact.path)
+            .unwrap_or_else(|_| panic!("Failed to read {}", web4_wasm_path));
+
+        let web4_wasm_base64 = general_purpose::STANDARD.encode(&web4_wasm);
+
+        let web4_wasm_base64_path =
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("treasury_web4.wasm.base64.txt");
+
+        let mut output_file =
+            fs::File::create(web4_wasm_base64_path).expect("Failed to create output file");
+
+        output_file
+            .write_all(web4_wasm_base64.as_bytes())
+            .expect("Failed to write to output file");
     }
 }
