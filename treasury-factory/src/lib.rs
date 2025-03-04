@@ -11,6 +11,9 @@ static CREATE_SPUTNIK_DAO_DEPOSIT: NearToken = NearToken::from_near(6);
 static SOCIAL_DB_DEPOSIT: NearToken = NearToken::from_millinear(500);
 static NEW_INSTANCE_ACCOUNT_DEPOSIT: NearToken = NearToken::from_millinear(2500);
 
+const WEB4_CONTRACT_BYTES: &[u8] =
+    include_bytes!("../../web4/treasury-web4/target/near/treasury_web4.wasm");
+
 // Define the contract structure
 #[near(contract_state)]
 #[derive(Default)]
@@ -52,14 +55,15 @@ impl Contract {
                     "new_account_id": new_instance_contract_id.clone(),
                     "options": {
                         "full_access_keys": [env::signer_account_pk(),admin_full_access_public_key],
-                        "contract_bytes_base64": include_str!("../treasury_web4.wasm.base64.txt")
+                        // This is the base64 encoded wasm binary of the WebAssembly Text format file here: https://github.com/petersalomonsen/quickjs-rust-near/blob/main/factory/min_self_upgrade_contract.wat
+                        "contract_bytes_base64": "AGFzbQEAAAABHgZgAX4AYAJ+fgBgAX4BfmACfn4BfmADfn5+AGAAAAKTAQYDZW52EmN1cnJlbnRfYWNjb3VudF9pZAAAA2VudgVpbnB1dAAAA2Vudg1yZWFkX3JlZ2lzdGVyAAEDZW52DHJlZ2lzdGVyX2xlbgACA2VudhRwcm9taXNlX2JhdGNoX2NyZWF0ZQADA2VudiRwcm9taXNlX2JhdGNoX2FjdGlvbl9kZXBsb3lfY29udHJhY3QABAMCAQUFAwEAIAcLAQd1cGdyYWRlAAYKMgEwAQF+QgAQAEIAQoAIEAJCABADQoAIEAQhAEIAEAFCAEKAEBACIABCABADQoAQEAUL"
                     }
                 })
                 .to_string()
                 .as_bytes()
                 .to_vec(),
                 NEW_INSTANCE_ACCOUNT_DEPOSIT,
-                Gas::from_tgas(80),
+                Gas::from_tgas(30),
             )
             .then(
                 Self::ext(env::current_account_id()).create_account_callback(
@@ -94,10 +98,19 @@ impl Contract {
         };
 
         if create_account_result {
-            sputnik_dao::ext(sputnik_dao_factory_account_id.parse().unwrap())
-                .with_static_gas(Gas::from_tgas(100))
-                .with_attached_deposit(CREATE_SPUTNIK_DAO_DEPOSIT)
-                .create(name.to_string(), create_dao_args)
+            Promise::new(new_instance_contract_id.clone())
+                .function_call(
+                    String::from("upgrade"),
+                    WEB4_CONTRACT_BYTES.to_vec(),
+                    NearToken::from_near(0),
+                    Gas::from_tgas(30),
+                )
+                .then(
+                    sputnik_dao::ext(sputnik_dao_factory_account_id.parse().unwrap())
+                        .with_static_gas(Gas::from_tgas(100))
+                        .with_attached_deposit(CREATE_SPUTNIK_DAO_DEPOSIT)
+                        .create(name.to_string(), create_dao_args),
+                )
                 .then(Self::ext(env::current_account_id()).create_dao_callback(
                     refund_on_failure_account,
                     new_instance_contract_id,
@@ -145,6 +158,10 @@ impl Contract {
                 .then(Promise::new(refund_on_failure_account).transfer(CREATE_SPUTNIK_DAO_DEPOSIT))
         }
         promise
+    }
+
+    pub fn get_web4_contract_bytes(&self) {
+        env::value_return(WEB4_CONTRACT_BYTES);
     }
 }
 
