@@ -245,6 +245,13 @@ useEffect(() => {
   }
 }, [isReadyToWithdraw, selectedWallet]);
 
+function formatBalance(amount) {
+  const parsedAmount = Big(amount ?? "0")
+  .div(Big(10).pow(24))
+  .toFixed(2);
+  return  Number(parsedAmount) <0.01 ? "<0.01" : parsedAmount;
+}
+
 function onSubmitClick() {
   setTxnCreated(true);
   const deposit = daoPolicy?.proposal_bond || 0;
@@ -333,7 +340,7 @@ const Pools = () => {
                       Available for withdrawal:{" "}
                     </div>
                     <div className="text-orange">
-                      {formatNearAmount(
+                      {formatBalance(
                         stakedBalance[selectedWallet.value]
                           .availableToWithdrawBalance
                       )}{" "}
