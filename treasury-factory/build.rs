@@ -31,7 +31,7 @@ fn main() {
         .expect("Failed to write to output file");
 
     let web4_wasm_path = "../web4/treasury-web4/target/near/treasury_web4.wasm";
-    let web4_wasm = match fs::exists(web4_wasm_path) {
+    let _web4_wasm = match fs::exists(web4_wasm_path) {
         Ok(true) => fs::read(web4_wasm_path).unwrap(),
         Ok(false) => {
             let build_opts = BuildOpts::builder()
@@ -47,18 +47,6 @@ fn main() {
 
             fs::read(build_artifact.path).unwrap()
         }
-        Err(_) => todo!(),
+        Err(err) => panic!("Not able to build {}. Error: {}", web4_wasm_path, err),
     };
-
-    let web4_wasm_base64_path =
-        Path::new(env!("CARGO_MANIFEST_DIR")).join("treasury_web4.wasm.base64.txt");
-    if !web4_wasm_base64_path.exists() {
-        let web4_wasm_base64 = general_purpose::STANDARD.encode(&web4_wasm);
-        let mut output_file =
-            fs::File::create(web4_wasm_base64_path).expect("Failed to create output file");
-
-        output_file
-            .write_all(web4_wasm_base64.as_bytes())
-            .expect("Failed to write to output file");
-    }
 }
