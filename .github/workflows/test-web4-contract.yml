@@ -28,7 +28,7 @@ jobs:
         run: cargo near build reproducible-wasm
         working-directory: ./web4/treasury-web4
       - name: Build treasury-factory
-        run: cargo near build non-reproducible-wasm
+        run: cargo near build reproducible-wasm
         working-directory: ./treasury-factory
       - name: Run cargo clippy
         run: |
