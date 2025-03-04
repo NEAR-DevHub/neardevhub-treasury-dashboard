@@ -233,6 +233,16 @@ test.describe("User is logged in", function () {
     await expect(approveButton).toBeEnabled({ timeout: 30_000 });
 
     await approveButton.click();
+    await mockRpcRequest({
+      page,
+      filterParams: { method_name: "get_proposal" },
+      modifyOriginalResultFunction: () => {
+        const result = JSON.parse(JSON.stringify(SwapProposalData));
+        result.submission_time = CurrentTimestampInNanoseconds;
+        result.status = "InProgress";
+        return result;
+      },
+    });
     await page.getByRole("button", { name: "Confirm" }).click();
 
     const loader = page.getByText("Awaiting transaction confirmation...");
