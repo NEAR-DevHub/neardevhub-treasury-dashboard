@@ -183,6 +183,7 @@ test.describe("User is logged in", function () {
         "Hey Ori, you don't have enough NEAR to complete actions on your treasury."
       )
     ).toBeVisible();
+    await page.waitForTimeout(1_000);
     await page
       .getByRole("button", {
         name: "Create Request",

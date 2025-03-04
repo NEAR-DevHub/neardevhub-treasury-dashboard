@@ -148,7 +148,6 @@ const Container = styled.div`
 
   .selected-role {
     background-color: var(--grey-04);
-    font-weight: 600;
   }
 
   .tag {
