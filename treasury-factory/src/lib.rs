@@ -98,24 +98,26 @@ impl Contract {
         };
 
         if create_account_result {
-            Promise::new(new_instance_contract_id.clone()).function_call(
-                String::from("upgrade"),
-                WEB4_CONTRACT_BYTES.to_vec(),
-                NearToken::from_near(0),
-                Gas::from_tgas(30)
-            )
-            .then(
-                sputnik_dao::ext(sputnik_dao_factory_account_id.parse().unwrap())
-                    .with_static_gas(Gas::from_tgas(100))
-                    .with_attached_deposit(CREATE_SPUTNIK_DAO_DEPOSIT)
-                    .create(name.to_string(), create_dao_args)                    
-            ).then(Self::ext(env::current_account_id()).create_dao_callback(
-                refund_on_failure_account,
-                new_instance_contract_id,
-                format!("{}.{}", name, sputnik_dao_factory_account_id),
-                widget_reference_account_id,
-                social_db_account_id,
-            ))
+            Promise::new(new_instance_contract_id.clone())
+                .function_call(
+                    String::from("upgrade"),
+                    WEB4_CONTRACT_BYTES.to_vec(),
+                    NearToken::from_near(0),
+                    Gas::from_tgas(30),
+                )
+                .then(
+                    sputnik_dao::ext(sputnik_dao_factory_account_id.parse().unwrap())
+                        .with_static_gas(Gas::from_tgas(100))
+                        .with_attached_deposit(CREATE_SPUTNIK_DAO_DEPOSIT)
+                        .create(name.to_string(), create_dao_args),
+                )
+                .then(Self::ext(env::current_account_id()).create_dao_callback(
+                    refund_on_failure_account,
+                    new_instance_contract_id,
+                    format!("{}.{}", name, sputnik_dao_factory_account_id),
+                    widget_reference_account_id,
+                    social_db_account_id,
+                ))
         } else {
             env::log_str(
                 format!(
