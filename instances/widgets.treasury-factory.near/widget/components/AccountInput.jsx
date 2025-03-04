@@ -4,6 +4,7 @@ const onUpdate = props.onUpdate;
 const setParentAccountValid = props.setParentAccountValid;
 const disabled = props.disabled;
 const instance = props.instance;
+const allowNonExistentImplicit = props.allowNonExistentImplicit;
 
 const [account, setAccount] = useState(value);
 const [showAccountAutocomplete, setAutoComplete] = useState(false);
@@ -51,6 +52,10 @@ useEffect(() => {
 }, [isValidAccount]);
 
 const checkAccountAvailability = async () => {
+  // skip check if it's implicit account
+  if (allowNonExistentImplicit && (account ?? "").length === 64) {
+    return;
+  }
   asyncFetch(`${REPL_RPC_URL}`, {
     method: "POST",
     headers: {
