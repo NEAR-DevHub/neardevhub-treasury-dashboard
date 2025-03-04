@@ -378,15 +378,14 @@ dependencies = [
 
 [[package]]
 name = "cargo-near-build"
-version = "0.4.2"
+version = "0.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5e79fd27a64c34c965d14a81c28c93e512f77439fa4a8a501bb6c262e9e792fe"
+checksum = "d0d99372ac468801d1cc7688f718693d18d6a855b1022caae75d00d2e37dd0e5"
 dependencies = [
  "bon",
  "bs58 0.5.1",
  "camino",
  "cargo_metadata",
- "cc",
  "colored",
  "dunce",
  "eyre",
@@ -3883,7 +3882,7 @@ name = "treasury-factory"
 version = "0.1.0"
 dependencies = [
  "base64 0.22.1",
- "cargo-near-build 0.4.2",
+ "cargo-near-build 0.4.4",
  "lazy_static",
  "near-sdk",
  "near-workspaces",
