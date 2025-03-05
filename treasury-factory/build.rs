@@ -37,6 +37,15 @@ fn main() {
         .expect(format!("Failed to read {}", min_self_upgrade_contract_wat_path).as_str());
     let min_self_upgrade_contract_wasm = wat2wasm(min_self_upgrade_contract_wat).unwrap();
 
+    // write wasm file to use for inspection if needed
+    let mut min_self_upgrade_wasm_file = fs::File::create(
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("min_self_upgrade_contract.wasm"),
+    )
+    .expect("Failed to create output file");
+    min_self_upgrade_wasm_file
+        .write_all(&min_self_upgrade_contract_wasm)
+        .expect("Unable to write min self upgrade wasm");
+
     let data_section_offset = min_self_upgrade_contract_wasm.len() - 72;
 
     let min_self_upgrade_contract_wasm_base64 =

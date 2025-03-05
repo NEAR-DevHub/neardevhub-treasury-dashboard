@@ -28,9 +28,10 @@ async fn test_minimum_self_upgrade_wasm() -> Result<(), Box<dyn std::error::Erro
     let minimum_self_upgrade_contract_wasm =
         general_purpose::STANDARD.decode(final_wasm_base64).unwrap();
 
-    let contract = sandbox
-        .dev_deploy(&minimum_self_upgrade_contract_wasm)
-        .await?;
+    let contract = account
+        .deploy(&minimum_self_upgrade_contract_wasm)
+        .await?
+        .result;
 
     let new_contract_wasm = wabt::wat2wasm(
         "
