@@ -358,7 +358,8 @@ const isLoading =
   ftTokens === null ||
   nearBalances === null ||
   nearPrice === null ||
-  !nearBalances.total;
+  !nearBalances.total ||
+  (isLockupContract && !lockupStartDate);
 
 const TokensList = ({ tokens }) => {
   if (!Array.isArray(tokens)) return <></>;
