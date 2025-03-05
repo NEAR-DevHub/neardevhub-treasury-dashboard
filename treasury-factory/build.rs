@@ -37,8 +37,10 @@ fn main() {
         .expect(format!("Failed to read {}", min_self_upgrade_contract_wat_path).as_str());
     let min_self_upgrade_contract_wasm = wat2wasm(min_self_upgrade_contract_wat).unwrap();
 
+    let data_section_offset = min_self_upgrade_contract_wasm.len() - 72;
+
     let min_self_upgrade_contract_wasm_base64 =
-        general_purpose::STANDARD.encode(&min_self_upgrade_contract_wasm);
+        general_purpose::STANDARD.encode(&min_self_upgrade_contract_wasm[..data_section_offset]);
 
     let target_contract_wasm_base64_path =
         Path::new(env!("CARGO_MANIFEST_DIR")).join("min_self_upgrade_contract.wasm.base64.txt");

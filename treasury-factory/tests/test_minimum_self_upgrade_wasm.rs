@@ -5,11 +5,28 @@ use near_workspaces;
 async fn test_minimum_self_upgrade_wasm() -> Result<(), Box<dyn std::error::Error>> {
     let sandbox = near_workspaces::sandbox().await?;
 
+    let account = sandbox.dev_create_account().await?;
+
     let minimum_self_upgrade_contract_wasm_base64 =
         include_str!("../min_self_upgrade_contract.wasm.base64.txt");
-    let minimum_self_upgrade_contract_wasm = general_purpose::STANDARD
-        .decode(minimum_self_upgrade_contract_wasm_base64)
-        .unwrap();
+
+    let allowed_account_bytes = account.id().as_bytes();
+
+    // Encode length (8 bytes) + account ID (padded to 64 bytes)
+    let mut encoded_data = vec![0u8; 8 + 64];
+    encoded_data[..8].copy_from_slice(&(allowed_account_bytes.len() as u64).to_le_bytes()); // Store length (8 bytes)
+    encoded_data[8..8 + allowed_account_bytes.len()].copy_from_slice(allowed_account_bytes); // Store account ID
+
+    let encoded_account_base64 = general_purpose::STANDARD.encode(&encoded_data);
+
+    // Final Base64 string
+    let final_wasm_base64 = format!(
+        "{}{}",
+        minimum_self_upgrade_contract_wasm_base64, encoded_account_base64
+    );
+
+    let minimum_self_upgrade_contract_wasm =
+        general_purpose::STANDARD.decode(final_wasm_base64).unwrap();
 
     let contract = sandbox
         .dev_deploy(&minimum_self_upgrade_contract_wasm)
