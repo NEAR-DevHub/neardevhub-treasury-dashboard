@@ -51,9 +51,17 @@ useEffect(() => {
   setParentAccountValid(isValidAccount);
 }, [isValidAccount]);
 
+function isHexString(str) {
+  return /^[0-9a-fA-F]+$/.test(str);
+}
+
 const checkAccountAvailability = async () => {
   // skip check if it's implicit account
-  if (allowNonExistentImplicit && (account ?? "").length === 64) {
+  if (
+    allowNonExistentImplicit &&
+    (account ?? "").length === 64 &&
+    isHexString(account)
+  ) {
     return;
   }
   asyncFetch(`${REPL_RPC_URL}`, {
@@ -73,7 +81,10 @@ const checkAccountAvailability = async () => {
       },
     }),
   }).then((resp) => {
-    if (resp.body?.error?.cause.name === "UNKNOWN_ACCOUNT") {
+    if (
+      resp.body?.error?.cause.name === "UNKNOWN_ACCOUNT" ||
+      resp?.status === 400
+    ) {
       setValidAccount(false);
       setAutoComplete(false);
     }
