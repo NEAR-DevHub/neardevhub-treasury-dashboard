@@ -1,7 +1,10 @@
-// Find all our documentation at https://docs.near.org
 mod web4;
 use near_sdk::{
-    env, near, serde_json::json, AccountId, Gas, NearToken, Promise, PromiseResult, PublicKey,
+    base64::{engine::general_purpose, Engine},
+    env::{self},
+    near,
+    serde_json::json,
+    AccountId, Gas, NearToken, Promise, PromiseResult, PublicKey,
 };
 use web4::types::{Web4Request, Web4Response};
 pub mod external;
@@ -48,6 +51,27 @@ impl Contract {
                 .parse()
                 .unwrap();
 
+        let minimum_self_upgrade_contract_wasm_base64 =
+            include_str!("../min_self_upgrade_contract.wasm.base64.txt");
+
+        let allowed_self_upgrade_account_id = env::current_account_id();
+        let allowed_self_upgrade_account_bytes = allowed_self_upgrade_account_id.as_bytes();
+
+        // Encode length (8 bytes) + account ID (padded to 64 bytes)
+        let mut encoded_data = vec![0u8; 8 + 64];
+        encoded_data[..8]
+            .copy_from_slice(&(allowed_self_upgrade_account_bytes.len() as u64).to_le_bytes()); // Store length (8 bytes)
+        encoded_data[8..8 + allowed_self_upgrade_account_bytes.len()]
+            .copy_from_slice(allowed_self_upgrade_account_bytes); // Store account ID
+
+        let encoded_account_base64 = general_purpose::STANDARD.encode(&encoded_data);
+
+        // Final Base64 string
+        let final_wasm_base64 = format!(
+            "{}{}",
+            minimum_self_upgrade_contract_wasm_base64, encoded_account_base64
+        );
+
         Promise::new("near".parse().unwrap())
             .function_call(
                 "create_account_advanced".to_string(),
@@ -55,7 +79,7 @@ impl Contract {
                     "new_account_id": new_instance_contract_id.clone(),
                     "options": {
                         "full_access_keys": [env::signer_account_pk(),admin_full_access_public_key],
-                        "contract_bytes_base64": include_str!("../min_self_upgrade_contract.wasm.base64.txt")
+                        "contract_bytes_base64": final_wasm_base64
                     }
                 })
                 .to_string()
