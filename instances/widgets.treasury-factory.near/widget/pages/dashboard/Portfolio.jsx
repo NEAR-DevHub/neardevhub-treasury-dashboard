@@ -24,6 +24,14 @@ function formatNearAmount(amount) {
   });
 }
 
+function formatPrice(price) {
+  const numAmount = Number(price ?? 0);
+  if (numAmount > 0 && numAmount < 0.01) {
+    return "< $0.01";
+  }
+  return "$" + Big(price ?? "0").toFixed(2);
+}
+
 const Loading = () => {
   return (
     <div className="d-flex align-items-center gap-2 w-100 mx-2 mb-2">
@@ -215,9 +223,7 @@ const PortfolioCard = ({
               >
                 {symbol}
               </div>
-              <div className="text-sm text-secondary">
-                ${Big(price ?? "0").toFixed(2)}
-              </div>
+              <div className="text-sm text-secondary">{formatPrice(price)}</div>
             </div>
           </div>
           <div className="d-flex gap-2 align-items-center justify-content-end">
@@ -352,7 +358,8 @@ const isLoading =
   ftTokens === null ||
   nearBalances === null ||
   nearPrice === null ||
-  !nearBalances.total;
+  !nearBalances.total ||
+  (isLockupContract && !lockupStartDate);
 
 const TokensList = ({ tokens }) => {
   if (!Array.isArray(tokens)) return <></>;

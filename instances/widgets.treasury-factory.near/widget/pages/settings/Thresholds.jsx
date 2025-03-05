@@ -146,9 +146,12 @@ const Container = styled.div`
     border-bottom: 1px solid var(--border-color);
   }
 
+  .font-auto {
+    font-size: var(--bs-body-font-size);
+  }
+
   .selected-role {
     background-color: var(--grey-04);
-    font-weight: 600;
   }
 
   .tag {
@@ -502,7 +505,7 @@ return (
                 <div
                   onClick={() => setSelectedGroup(role)}
                   className={
-                    "py-2 cursor-pointer " +
+                    "py-2 cursor-pointer font-auto " +
                     (name === selectedGroup.roleName && "selected-role")
                   }
                 >

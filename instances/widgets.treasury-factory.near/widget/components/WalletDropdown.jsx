@@ -66,9 +66,11 @@ useEffect(() => {
 
 const Container = styled.div`
   .custom-tag {
+    width: 80px;
     background-color: var(--grey-035);
     color: var(--text-color);
-    padding: 3px;
+    padding-block: 3px;
+    padding-inline: 10px;
   }
 
   .w-40 {
@@ -86,7 +88,7 @@ return (
         SelectedValueRender: () => {
           return (
             <div className="d-flex gap-2 align-items-center">
-              <div className="custom-tag rounded-3 text-sm w-25 text-center">
+              <div className="custom-tag rounded-3 text-sm text-center">
                 {selectedValue?.value === treasuryDaoID
                   ? "SputnikDAO"
                   : "Lockup"}
@@ -107,7 +109,7 @@ return (
                 }
               }}
             >
-              <div className="custom-tag rounded-3 text-sm w-25 text-center">
+              <div className="custom-tag rounded-3 text-sm text-center">
                 {item.label === treasuryDaoID ? "SputnikDAO" : "Lockup"}
               </div>
               <div className="fw-bold work-break text-left flex-1">

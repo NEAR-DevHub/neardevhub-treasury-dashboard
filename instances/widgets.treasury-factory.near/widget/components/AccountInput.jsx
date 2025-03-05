@@ -4,6 +4,7 @@ const onUpdate = props.onUpdate;
 const setParentAccountValid = props.setParentAccountValid;
 const disabled = props.disabled;
 const instance = props.instance;
+const allowNonExistentImplicit = props.allowNonExistentImplicit;
 
 const [account, setAccount] = useState(value);
 const [showAccountAutocomplete, setAutoComplete] = useState(false);
@@ -50,7 +51,19 @@ useEffect(() => {
   setParentAccountValid(isValidAccount);
 }, [isValidAccount]);
 
+function isHexString(str) {
+  return /^[0-9a-fA-F]+$/.test(str);
+}
+
 const checkAccountAvailability = async () => {
+  // skip check if it's implicit account
+  if (
+    allowNonExistentImplicit &&
+    (account ?? "").length === 64 &&
+    isHexString(account)
+  ) {
+    return;
+  }
   asyncFetch(`${REPL_RPC_URL}`, {
     method: "POST",
     headers: {
@@ -68,7 +81,10 @@ const checkAccountAvailability = async () => {
       },
     }),
   }).then((resp) => {
-    if (resp.body?.error?.cause.name === "UNKNOWN_ACCOUNT") {
+    if (
+      resp.body?.error?.cause.name === "UNKNOWN_ACCOUNT" ||
+      resp?.status === 400
+    ) {
       setValidAccount(false);
       setAutoComplete(false);
     }

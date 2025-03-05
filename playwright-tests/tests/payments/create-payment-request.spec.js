@@ -264,6 +264,23 @@ test.describe("User is logged in", function () {
     ).toBeVisible();
   });
 
+  test("should allow non existent implicit account as receiver account ", async ({
+    page,
+    instanceAccount,
+  }) => {
+    test.setTimeout(60_000);
+    await updateDaoPolicyMembers({ instanceAccount, page });
+    await page.goto(`/${instanceAccount}/widget/app?page=payments`);
+    await clickCreatePaymentRequestButton(page);
+    const receiveInput = page.getByPlaceholder("treasury.near");
+    await receiveInput.fill("webass");
+    const errorText = page.getByText("Please enter valid account ID");
+    await expect(errorText).toBeVisible();
+    receiveInput.fill(
+      "e915ea0c6d5f8ccc417db891490246c6bcd8d0a2214cbcbfa3618a7ee6abe26b"
+    );
+    await expect(errorText).toBeHidden();
+  });
   test("different amount values should not throw any error", async ({
     page,
     instanceAccount,

@@ -311,9 +311,10 @@ const code = `
   }
 
   function formatNearAmount(amount) {
-    return Big(amount ?? "0")
-      .div(Big(10).pow(24))
-      .toFixed(2);
+    const parsedAmount = Big(amount ?? "0")
+    .div(Big(10).pow(24))
+    .toFixed(2);
+    return  Number(parsedAmount) <0.01 ? "<0.01" : parsedAmount;
   }
 
   // Display filtered options in the dropdown
