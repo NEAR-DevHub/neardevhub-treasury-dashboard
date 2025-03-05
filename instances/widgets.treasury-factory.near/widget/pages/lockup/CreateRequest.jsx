@@ -1,9 +1,6 @@
-const {
-  getNearBalances,
-  LOCKUP_MIN_BALANCE_FOR_STORAGE,
-  TooltipText,
-  isBosGateway,
-} = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
+const { getNearBalances, TooltipText, isBosGateway } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+);
 const { NearToken } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Icons"
 ) || { NearToken: () => <></> };
@@ -14,371 +11,14 @@ const { encodeToMarkdown } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
 
+if (!getNearBalances) return <></>;
+
+let balance = getNearBalances(context.accountId);
+balance = balance ? parseFloat(balance.availableParsed) : 0;
 const instance = props.instance;
 const onCloseCanvas = props.onCloseCanvas ?? (() => {});
 
-if (
-  !instance ||
-  !LOCKUP_MIN_BALANCE_FOR_STORAGE ||
-  typeof isBosGateway !== "function"
-) {
-  return <></>;
-}
-
-const { treasuryDaoID, lockupContract } = VM.require(
-  `${instance}/widget/config.data`
-);
-
-const walletOptions = [
-  {
-    label: treasuryDaoID,
-    value: treasuryDaoID,
-  },
-  {
-    label: lockupContract,
-    value: lockupContract,
-  },
-];
-const [selectedWallet, setSelectedWallet] = useState(walletOptions[0]);
-const [validators, setValidators] = useState([]);
-const [isTxnCreated, setTxnCreated] = useState(false);
-const [lastProposalId, setLastProposalId] = useState(null);
-const [showCancelModal, setShowCancelModal] = useState(false);
-const [validatorAccount, setValidatorAccount] = useState(null);
-const [daoPolicy, setDaoPolicy] = useState(null);
-
-const [nearStakedTokens, setNearStakedTokens] = useState(null);
-const [nearUnStakedTokens, setNearUnStakedTokens] = useState(null);
-const [nearStakedTotalTokens, setNearStakedTotalTokens] = useState(null);
-const [nearWithdrawTokens, setNearWithdrawTokens] = useState(null);
-const [nearStakedPoolsWithBalance, setNearStakedPoolsWithBalance] =
-  useState(null);
-const nearBalances = getNearBalances(treasuryDaoID);
-
-const [lockupNearBalances, setLockupNearBalances] = useState(null);
-const [lockupStakedTokens, setLockupStakedTokens] = useState(null);
-const [lockupUnStakedTokens, setLockupUnStakedTokens] = useState(null);
-const [lockupStakedTotalTokens, setLockupStakedTotalTokens] = useState(null);
-const [lockupNearWithdrawTokens, setLockupNearWithdrawTokens] = useState(null);
-const [lockupStakedPoolsWithBalance, setLockupStakedPoolsWithBalance] =
-  useState(null);
-const [lockupStakedPoolId, setLockupStakedPoolId] = useState(null);
-const [lockupAlreadyStaked, setLockupAlreadyStaked] = useState(false);
-const [showErrorToast, setShowErrorToast] = useState(false);
-const [formData, setFormData] = useState({
-  receiverAccount: "",
-  amount: "",
-  startDate: "",
-  endDate: "",
-  allowCancellation: true,
-  cliffDate: "",
-});
-
-function formatNearAmount(amount) {
-  return Big(amount ?? "0")
-    .div(Big(10).pow(24))
-    .toFixed(2);
-}
-
-function refreshData() {
-  Storage.set("REFRESH_STAKE_TABLE_DATA", Math.random());
-}
-
-useEffect(() => {
-  if (lockupContract) {
-    Near.asyncView(lockupContract, "get_locked_amount").then((res) =>
-      setLockupNearBalances((prev) => ({
-        ...prev,
-        locked: res,
-        lockedParsed: formatNearAmount(res),
-      }))
-    );
-
-    Near.asyncView(lockupContract, "get_balance").then((res) =>
-      setLockupNearBalances((prev) => ({
-        ...prev,
-        total: res,
-        totalParsed: formatNearAmount(res),
-      }))
-    );
-
-    Near.asyncView(lockupContract, "get_staking_pool_account_id").then((res) =>
-      setLockupStakedPoolId(res)
-    );
-  }
-}, [lockupContract]);
-
-useEffect(() => {
-  if (lockupNearBalances.total && lockupNearBalances.locked) {
-    const available = Big(lockupNearBalances.total)
-      .minus(lockupNearBalances.locked)
-      .toFixed();
-    setLockupNearBalances((prev) => ({
-      ...prev,
-      available: available,
-      availableParsed: formatNearAmount(available),
-    }));
-  }
-}, [lockupNearBalances]);
-
-function getLastProposalId() {
-  return Near.asyncView(treasuryDaoID, "get_last_proposal_id").then(
-    (result) => result
-  );
-}
-
-useEffect(() => {
-  getLastProposalId().then((i) => setLastProposalId(i));
-  Near.asyncView(treasuryDaoID, "get_policy").then((policy) => {
-    setDaoPolicy(policy);
-  });
-}, []);
-
-useEffect(() => {
-  if (isTxnCreated) {
-    let checkTxnTimeout = null;
-
-    const checkForNewProposal = () => {
-      getLastProposalId().then((id) => {
-        if (typeof lastProposalId === "number" && lastProposalId !== id) {
-          onCloseCanvas();
-          clearTimeout(checkTxnTimeout);
-          refreshData();
-          setTxnCreated(false);
-        } else {
-          checkTxnTimeout = setTimeout(() => checkForNewProposal(), 1000);
-        }
-      });
-    };
-    checkForNewProposal();
-
-    return () => {
-      clearTimeout(checkTxnTimeout);
-    };
-  }
-}, [isTxnCreated, lastProposalId]);
-
-const BalanceDisplay = ({ label, balance, tooltipInfo, noBorder }) => {
-  return (
-    <div className="d-flex flex-column">
-      <div className={!noBorder && "border-bottom"}>
-        <div className="py-2 d-flex gap-2 align-items-center justify-content-between px-3">
-          <div className="h6 mb-0">
-            {label}
-            {"  "}{" "}
-            <Widget
-              src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
-              props={{
-                popup: tooltipInfo,
-                children: <i className="bi bi-info-circle text-secondary"></i>,
-                instance,
-              }}
-            />
-          </div>
-          <div className="h6 mb-0 d-flex align-items-center gap-1">
-            {Number(balance).toLocaleString("en-US", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}{" "}
-            NEAR
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const pikespeakKey = isBosGateway()
-  ? "${REPL_GATEWAY_PIKESPEAK_KEY}"
-  : props.pikespeakKey ?? "${REPL_INDIVIDUAL_PIKESPEAK_KEY}";
-
-const pikespeakOptions = {
-  method: "GET",
-  headers: {
-    "Content-Type": "application/json",
-    "x-api-key": pikespeakKey,
-  },
-};
-const allValidators = useCache(
-  () =>
-    asyncFetch(
-      "https://api.pikespeak.ai/validators/current",
-      pikespeakOptions
-    ).then((resp) => {
-      return (
-        resp?.body?.map((item) => {
-          return {
-            pool_id: item.account_id,
-            fee: item.fees.numerator,
-          };
-        }) ?? []
-      );
-    }),
-  "-stake-request-validators",
-  { subscribe: false }
-);
-
-function getAllStakingPools() {
-  const nearStakedMap = new Map(
-    (nearStakedPoolsWithBalance ?? []).map((pool) => [pool.pool, pool])
-  );
-
-  const lockupStakedMap = new Map(
-    (lockupStakedPoolsWithBalance ?? []).map((pool) => [pool.pool, pool])
-  );
-
-  // Update allValidators with stakedBalance
-  const updatedValidators = allValidators.map((validator) => {
-    const nearpoolBalance = nearStakedMap.get(validator.pool_id);
-    const lockupPool = lockupStakedMap.get(validator.pool_id);
-
-    return {
-      ...validator,
-      stakedBalance: {
-        [treasuryDaoID]: nearpoolBalance ?? null,
-        [lockupContract]: lockupPool ?? null,
-      },
-    };
-  });
-
-  // Set the updated validators
-  setValidators(updatedValidators);
-}
-
-useEffect(() => {
-  if (
-    Array.isArray(nearStakedPoolsWithBalance) &&
-    Array.isArray(allValidators) &&
-    ((lockupContract && Array.isArray(lockupStakedPoolsWithBalance)) ||
-      !lockupContract)
-  ) {
-    getAllStakingPools();
-  }
-}, [
-  nearStakedPoolsWithBalance,
-  lockupStakedPoolsWithBalance,
-  lockupContract,
-  allValidators,
-]);
-
-function getBalances() {
-  switch (selectedWallet?.value) {
-    case lockupContract: {
-      let available = Big(lockupNearBalances.totalParsed ?? "0")
-        .minus(lockupStakedTotalTokens ?? "0")
-        .minus(formatNearAmount(LOCKUP_MIN_BALANCE_FOR_STORAGE))
-        .toFixed(2);
-      available = parseFloat(available) < 0 ? 0 : available;
-      return {
-        staked: lockupStakedTokens,
-        unstaked: lockupUnStakedTokens,
-        withdrawal: lockupNearWithdrawTokens,
-        available,
-      };
-    }
-    default:
-      return {
-        staked: nearStakedTokens,
-        unstaked: nearUnStakedTokens,
-        withdrawal: nearWithdrawTokens,
-        available: nearBalances.availableParsed,
-      };
-  }
-}
-
-function toBase64(json) {
-  return Buffer.from(JSON.stringify(json)).toString("base64");
-}
-
-function onSubmitClick(validatorAccount, amount, notes) {
-  setTxnCreated(true);
-  const deposit = daoPolicy?.proposal_bond || 0;
-  const description = {
-    proposal_action: "stake",
-    notes: notes,
-  };
-
-  const isLockupContractSelected = lockupContract === selectedWallet.value;
-
-  const addSelectPoolCall =
-    isLockupContractSelected && validatorAccount !== lockupStakedPoolId;
-
-  const calls = [];
-  if (addSelectPoolCall) {
-    description["showAfterProposalIdApproved"] = lastProposalId;
-
-    calls.push({
-      contractName: treasuryDaoID,
-      methodName: "add_proposal",
-      args: {
-        proposal: {
-          description: encodeToMarkdown({
-            proposal_action: "stake",
-            customNotes:
-              "Approve to designate this validator with this lockup account. Lockup accounts can only have one validator.",
-          }),
-          kind: {
-            FunctionCall: {
-              receiver_id: lockupContract,
-              actions: [
-                {
-                  method_name: "select_staking_pool",
-                  args: toBase64({
-                    staking_pool_account_id: validatorAccount,
-                  }),
-                  deposit: "0",
-                  gas: "100000000000000",
-                },
-              ],
-            },
-          },
-        },
-      },
-      gas: 200000000000000,
-      deposit,
-    });
-  }
-
-  calls.push({
-    contractName: treasuryDaoID,
-    methodName: "add_proposal",
-    args: {
-      proposal: {
-        description: encodeToMarkdown(description),
-        kind: {
-          FunctionCall: {
-            receiver_id: isLockupContractSelected
-              ? lockupContract
-              : validatorAccount,
-            actions: isLockupContractSelected
-              ? [
-                  {
-                    method_name: "deposit_and_stake",
-                    args: toBase64({
-                      amount: Big(amount).mul(Big(10).pow(24)).toFixed(),
-                    }),
-                    deposit: "0",
-                    gas: "150000000000000",
-                  },
-                ]
-              : [
-                  {
-                    method_name: "deposit_and_stake",
-                    args: "",
-                    deposit: Big(amount).mul(Big(10).pow(24)).toFixed(),
-                    gas: "200000000000000",
-                  },
-                ],
-          },
-        },
-      },
-    },
-    gas: 200000000000000,
-    deposit,
-  });
-
-  Near.call(calls);
-}
+if (!instance || typeof isBosGateway !== "function") return <></>;
 
 const Container = styled.div`
   font-size: 14px;
@@ -394,29 +34,144 @@ const Container = styled.div`
   }
 `;
 
-// check if staking pool is selected with some staked balance
-useEffect(() => {
-  if (selectedWallet.value === lockupContract) {
-    const pool = (lockupStakedPoolsWithBalance ?? []).find(
-      (i) => i.pool === lockupStakedPoolId
-    );
-    const isAlreadyStaked =
-      (pool.stakedBalance || 0) > 0 ||
-      (pool.unstakedBalance || 0) > 0 ||
-      (pool.availableToWithdrawBalance || 0) > 0;
+const tokenMapping = {
+  NEAR: "NEAR",
+  USDT: "usdt.tether-token.near",
+  USDC: "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+};
 
-    if (isAlreadyStaked) {
-      setValidatorAccount({
-        ...lockupStakedPoolsWithBalance,
-        pool_id: lockupStakedPoolId,
-      });
-    }
-    setLockupAlreadyStaked(isAlreadyStaked);
-  } else {
-    setLockupAlreadyStaked(false);
-    setValidatorAccount("");
+const MINIMUM_AMOUNT = 4;
+const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+
+const [isTxnCreated, setTxnCreated] = useState(false);
+const [showCancelModal, setShowCancelModal] = useState(false);
+const [showErrorToast, setShowErrorToast] = useState(false);
+const [parsedAmount, setParsedAmount] = useState(0);
+const [isReceiverAccountValid, setIsReceiverAccountValid] = useState(false);
+const [isReceiverRegistered, setReceiverRegister] = useState(false);
+
+const [receiver, setReceiver] = useState(null);
+const [startDate, setStartDate] = useState("");
+const [endDate, setEndDate] = useState("");
+const [amount, setAmount] = useState("");
+const [cliffDate, setCliffDate] = useState("");
+const [allowCancellation, setAllowCancellation] = useState(true);
+const [allowStaking, setAllowStaking] = useState(true);
+
+function formatTimestamp(date) {
+  return new Date(date).getTime() * 1000000;
+}
+
+function toBase64(json) {
+  return Buffer.from(JSON.stringify(json)).toString("base64");
+}
+
+function onSubmitClick() {
+  setTxnCreated(true);
+  const deposit = Big(isNaN(amount) ? 0 : parseInt(amount))
+    .mul(Big(10).pow(24))
+    .toFixed();
+  const gas = 270000000000000;
+  const vestingArgs = allowCancellation
+    ? {
+        vesting_schedule: {
+          VestingSchedule: {
+            cliff_timestamp: formatTimestamp(cliffDate || startDate).toString(),
+            end_timestamp: formatTimestamp(endDate).toString(),
+            start_timestamp: formatTimestamp(startDate).toString(),
+          },
+        },
+      }
+    : {
+        lockup_timestamp: formatTimestamp(startDate).toString(),
+        release_duration: (
+          formatTimestamp(endDate) - formatTimestamp(startDate)
+        ).toString(),
+      };
+
+  const calls = [
+    {
+      contractName: treasuryDaoID,
+      methodName: "add_proposal",
+      args: {
+        proposal: {
+          description: `Create lockup for ${receiver}`,
+          kind: {
+            FunctionCall: {
+              receiver_id: "lockup.near",
+              actions: [
+                {
+                  method_name: "create",
+                  args: toBase64(
+                    allowStaking
+                      ? {
+                          lockup_duration: "0",
+                          owner_account_id: receiver,
+                          ...vestingArgs,
+                        }
+                      : {
+                          lockup_duration: "0",
+                          owner_account_id: receiver,
+                          whitelist_account_id: "system",
+                          ...vestingArgs,
+                        }
+                  ),
+                  deposit,
+                  gas: "150000000000000",
+                },
+              ],
+            },
+          },
+        },
+      },
+      gas,
+    },
+  ];
+
+  if (!isReceiverRegistered) {
+    const depositInYocto = Big(0.125).mul(Big(10).pow(24)).toFixed();
+
+    calls.push({
+      contractName: tokenMapping.NEAR,
+      methodName: "storage_deposit",
+      args: {
+        account_id: receiver,
+        registration_only: true,
+      },
+      gas,
+      deposit: depositInYocto,
+    });
   }
-}, [selectedWallet, lockupStakedPoolsWithBalance]);
+
+  Near.call(calls);
+}
+
+function cleanInputs() {
+  setReceiver("");
+  setAmount("");
+  setStartDate("");
+  setEndDate("");
+  setCliffDate("");
+}
+
+function isValidAmount() {
+  if (
+    isNaN(amount) ||
+    amount === "" ||
+    parseInt(amount) > balance ||
+    parseInt(amount) < MINIMUM_AMOUNT
+  )
+    return false;
+
+  return true;
+}
+
+useEffect(() => {
+  if (receiver && isReceiverAccountValid)
+    Near.asyncView(tokenMapping.NEAR, "storage_balance_of", {
+      account_id: receiver,
+    }).then((storage) => setReceiverRegister(!!storage));
+}, [receiver]);
 
 return (
   <Container>
@@ -435,6 +190,7 @@ return (
         isOpen: showCancelModal,
         onCancelClick: () => setShowCancelModal(false),
         onConfirmClick: () => {
+          cleanInputs();
           setShowCancelModal(false);
           onCloseCanvas();
         },
@@ -442,128 +198,168 @@ return (
     />
 
     <div className="d-flex flex-column gap-3">
-      <div className="d-flex flex-column gap-1 border border-1 rounded-3 py-2">
-        <BalanceDisplay
-          label={"Ready to stake"}
-          balance={getBalances().available}
-          tooltipInfo={TooltipText?.readyToStake}
+      <div className="d-flex flex-column gap-1">
+        <label className="form-label">Recipient</label>
+        <Widget
+          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.AccountInput"
+          props={{
+            value: receiver,
+            onUpdate: setReceiver,
+            setParentAccountValid: setIsReceiverAccountValid,
+            maxWidth: "100%",
+            instance,
+          }}
         />
       </div>
-    </div>
 
-    <div>
-      <label className="form-label fw-semibold">Receiver Account</label>
-      <Widget
-        src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.AccountInput"
-        props={{
-          value: formData.receiverAccount,
-          placeholder: "treasury.near",
-          onUpdate: setFormData((prev) => ({ ...prev, receiverAccount })),
-          setParentAccountValid: setIsReceiverAccountValid,
-          maxWidth: "100%",
-          instance,
-        }}
-      />
-      <div className="form-text text-secondary">
-        Select the account to receive the lockup
-      </div>
-    </div>
-
-    <div>
-      <div className="col">
-        <label className="form-label fw-semibold">Amount</label>
-        <div className="input-group">
-          <Widget
-            src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenIcon"
-            className="input-group-text"
-          />
+      <div className="d-flex flex-column gap-1">
+        <div>
+          <label className="form-label">Amount</label>
+          <span className="text-secondary text-sm">
+            Minimum amount is {MINIMUM_AMOUNT} NEAR
+          </span>
+        </div>
+        <div class="input-group">
+          <span class="input-group-text input-icon">
+            <NearToken />
+          </span>
           <input
             type="number"
-            className="form-control"
-            placeholder="0"
-            value={formData.amount}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, amount: e.target.value }))
-            }
+            id="amount"
+            class="form-control amount-input"
+            placeholder="Enter amount"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
           />
         </div>
-        <div className="form-text text-secondary">Balance: 21,241.41</div>
+        <div className="d-flex">
+          <span className="text-secondary text-sm">
+            Balance: {balance} NEAR
+          </span>
+        </div>
       </div>
-    </div>
 
-    <div>
-      <label className="form-label fw-semibold">Start Date</label>
-      <Widget
-        src="near/widget/DateInput"
-        props={{
-          value: formData.startDate,
-          onChange: (startDate) =>
-            setFormData((prev) => ({ ...prev, startDate })),
-          calendarIcon: true,
-        }}
-      />
-      <div className="form-text text-secondary">
-        Select the start date of the lockup
+      <div className="d-flex flex-column gap-1">
+        <label className="form-label">Start Date</label>
+        <Widget
+          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input"
+          props={{
+            type: "date",
+            value: startDate,
+            onChange: (e) => setStartDate(e.target.value),
+          }}
+        />
+        <div className="form-text text-secondary">
+          Select the start date of the lockup
+        </div>
       </div>
-    </div>
 
-    <div>
-      <label className="form-label fw-semibold">End Date</label>
-      <Widget
-        src="near/widget/DateInput"
-        props={{
-          value: formData.endDate,
-          onChange: (endDate) => setFormData((prev) => ({ ...prev, endDate })),
-          calendarIcon: true,
-        }}
-      />
-      <div className="form-text text-secondary">
-        Select the end date of the lockup
+      <div className="d-flex flex-column gap-1">
+        <label className="form-label fw-semibold">End Date</label>
+        <Widget
+          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input"
+          props={{
+            type: "date",
+            value: endDate,
+            onChange: (e) => setEndDate(e.target.value),
+          }}
+        />
+        <div className="form-text text-secondary">
+          Select the end date of the lockup
+        </div>
       </div>
-    </div>
 
-    <div>
-      <div className="d-flex justify-content-between align-items-start">
-        <div>
-          <label className="form-label fw-semibold mb-0">
-            Allow Cancellation
-          </label>
-          <div className="form-text text-secondary">
-            Allows the NEAR Foundation to cancel the lockup at any time.
-            Non-cancellable lockups are not compatible with cliff dates.
+      <div className="d-flex flex-column gap-1">
+        <div className="d-flex justify-content-between align-items-center gap-2">
+          <div>
+            <label className="form-label">Allow Cancellation</label>
+            <div className="form-text text-secondary">
+              Allows the NEAR Foundation to cancel the lockup at any time.
+              Non-cancellable lockups are not compatible with cliff dates.
+            </div>
+          </div>
+          <div className="form-check form-switch">
+            <input
+              className="form-check-input"
+              style={{ width: "38px", height: "24px" }}
+              type="checkbox"
+              role="switch"
+              checked={allowCancellation}
+              onChange={(e) => setAllowCancellation(e.target.checked)}
+            />
           </div>
         </div>
-        <div className="form-check form-switch">
-          <input
-            className="form-check-input"
-            type="checkbox"
-            role="switch"
-            checked={formData.allowCancellation}
-            onChange={(e) =>
-              setFormData((prev) => ({
-                ...prev,
-                allowCancellation: e.target.checked,
-              }))
-            }
+      </div>
+
+      {allowCancellation && (
+        <div className="d-flex flex-column gap-1">
+          <label className="form-label fw-semibold">Cliff Date</label>
+          <Widget
+            src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input"
+            props={{
+              type: "date",
+              value: cliffDate,
+              onChange: (e) => setCliffDate(e.target.value),
+            }}
           />
+          <div className="form-text text-secondary">
+            Select the date when the receiver can start withdrawing tokens
+          </div>
+        </div>
+      )}
+
+      <div className="d-flex flex-column gap-1">
+        <div className="d-flex justify-content-between align-items-center gap-2">
+          <div>
+            <label className="form-label">Allow Staking</label>
+            <div className="form-text text-secondary">
+              Allows the owner of the lockup to stake the full amount of tokens
+              in the lockup (even before the cliff date).
+            </div>
+          </div>
+          <div className="form-check form-switch">
+            <input
+              className="form-check-input"
+              style={{ width: "38px", height: "24px" }}
+              type="checkbox"
+              role="switch"
+              checked={allowStaking}
+              onChange={(e) => setAllowStaking(e.target.checked)}
+            />
+          </div>
         </div>
       </div>
-    </div>
 
-    <div>
-      <label className="form-label fw-semibold">Cliff Date</label>
-      <Widget
-        src="near/widget/DateInput"
-        props={{
-          value: formData.cliffDate,
-          onChange: (cliffDate) =>
-            setFormData((prev) => ({ ...prev, cliffDate })),
-          placeholder: "Optional: Select a date",
-          calendarIcon: true,
-        }}
-      />
-      <div className="form-text text-secondary">
-        Select the date when the receiver can start withdrawing tokens
+      <div className="d-flex mt-2 gap-3 justify-content-end">
+        <Widget
+          src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
+          props={{
+            classNames: {
+              root: "btn btn-outline-secondary shadow-none no-transparent",
+            },
+            label: "Cancel",
+            onClick: () => {
+              setShowCancelModal(true);
+            },
+            disabled: isTxnCreated,
+          }}
+        />
+
+        <Widget
+          src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
+          props={{
+            classNames: { root: "theme-btn" },
+            disabled:
+              !receiver ||
+              !isValidAmount() ||
+              !startDate ||
+              !endDate ||
+              isTxnCreated,
+            label: "Submit",
+            onClick: onSubmitClick,
+            loading: isTxnCreated,
+          }}
+        />
       </div>
     </div>
   </Container>

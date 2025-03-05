@@ -734,6 +734,19 @@ function getAllColorsAsCSSVariables(isDarkTheme, themeColor) {
     .map(([key, value]) => `${key}: ${value};`)
     .join("\n");
 }
+
+function decodeBase64(encodedArgs) {
+  if (!encodedArgs) return null;
+  try {
+    const jsonString = Buffer.from(encodedArgs, "base64").toString("utf8");
+    const parsedArgs = JSON.parse(jsonString);
+    return parsedArgs;
+  } catch (error) {
+    console.error("Failed to decode or parse encodedArgs:", error);
+    return null;
+  }
+}
+
 return {
   getApproversAndThreshold,
   hasPermission,
@@ -754,4 +767,5 @@ return {
   getAllColorsAsObject,
   getAllColorsAsCSSVariables,
   getRolesThresholdDescription,
+  decodeBase64,
 };

@@ -17,54 +17,20 @@ const [settingsOptions, setSettingsOptions] = useState(
   columnsVisibility.length
     ? columnsVisibility
     : [
-        {
-          title: "Created Date",
-          show: true,
-        },
-        {
-          title: "Funding wallet",
-          show: true,
-        },
-        {
-          title: "Receiver account",
-          show: true,
-        },
-        {
-          title: "Amount",
-          show: true,
-        },
-        {
-          title: "Start date",
-          show: true,
-        },
-        {
-          title: "End date",
-          show: true,
-        },
-        {
-          title: "Cliff date",
-          show: true,
-        },
-        {
-          title: "Allow cancellation",
-          show: true,
-        },
-        {
-          title: "Allow staking",
-          show: true,
-        },
-        {
-          title: "Require votes",
-          show: true,
-        },
-        {
-          title: "Approvers",
-          show: true,
-        },
-        {
-          title: "Actions",
-          show: true,
-        },
+        { title: "Created Date", show: true },
+        { title: "Funding wallet", show: true },
+        { title: "Status", show: !isPendingPage },
+        { title: "Receiver account", show: true },
+        { title: "Amount", show: true },
+        { title: "Start date", show: true },
+        { title: "End date", show: true },
+        { title: "Cliff date", show: true },
+        { title: "Allow cancellation", show: true },
+        { title: "Allow staking", show: true },
+        { title: "Required votes", show: true },
+        { title: "Votes", show: isPendingPage },
+        { title: "Approvers", show: true },
+        { title: "Actions", show: isPendingPage },
       ]
 );
 

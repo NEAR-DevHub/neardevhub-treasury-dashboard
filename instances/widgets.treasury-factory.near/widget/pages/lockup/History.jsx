@@ -30,6 +30,7 @@ useEffect(() => {
   setLoading(true);
   Near.asyncView(treasuryDaoID, "get_last_proposal_id").then((i) => {
     const lastProposalId = i;
+
     getFilteredProposalsByStatusAndKind({
       treasuryDaoID,
       resPerPage: rowsPerPage,
@@ -39,27 +40,16 @@ useEffect(() => {
       offset: typeof offset === "number" ? offset : lastProposalId,
       lastProposalId: lastProposalId,
       currentPage,
-      isStakeDelegation: true,
     }).then((r) => {
-      if (currentPage === 0 && !totalLength) {
-        setTotalLength(r.totalLength);
-      }
-      setOffset(r.filteredProposals[r.filteredProposals.length - 1].id);
-      if (typeof highlightProposalId === "number" && firstRender) {
-        const proposalExists = r.filteredProposals.find(
-          (i) => i.id === highlightProposalId
-        );
-        if (!proposalExists) {
-          setPage(currentPage + 1);
-        } else {
-          setFirstRender(false);
-          setLoading(false);
-          setProposals(r.filteredProposals);
-        }
-      } else {
-        setLoading(false);
-        setProposals(r.filteredProposals);
-      }
+      const proposals = r.filteredProposals.filter(
+        (item) => item.kind.FunctionCall.receiver_id === "lockup.near"
+      );
+      console.log(r.filteredProposals);
+      setOffset(proposals[proposals.length - 1].id);
+      if (currentPage === 0 && !totalLength) setTotalLength(proposals.length);
+
+      setLoading(false);
+      setProposals(proposals);
     });
   });
 }, [currentPage, rowsPerPage]);
@@ -77,15 +67,16 @@ const functionCallApproversGroup = getApproversAndThreshold(
 return (
   <div className="d-flex flex-column flex-1 justify-content-between">
     <Widget
-      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.Table`}
+      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.lockup.Table`}
       props={{
-        instance,
-        proposals: proposals,
+        proposals,
         isPendingRequests: false,
-        functionCallApproversGroup,
-        highlightProposalId,
-        loading: loading,
+        loading,
         policy,
+        transferApproversGroup,
+        deleteGroup,
+        refreshTableData: fetchProposals,
+        ...props,
       }}
     />
     {(proposals ?? [])?.length > 0 && (

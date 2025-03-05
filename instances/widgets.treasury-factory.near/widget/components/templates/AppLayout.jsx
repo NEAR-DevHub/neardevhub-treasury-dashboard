@@ -108,6 +108,15 @@ const Theme = styled.div`
     }
   }
 
+  .form-check-input {
+    border-color: var(--border-color) !important;
+    box-shadow: none !important;
+
+    &:checked {
+      background-color: var(--theme-color) !important;
+    }
+  }
+
   .text-lg {
     font-size: 15px;
   }
