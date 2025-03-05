@@ -49,8 +49,20 @@ async fn test_minimum_self_upgrade_wasm() -> Result<(), Box<dyn std::error::Erro
     )
     .unwrap();
 
-    let upgrade_result = contract
-        .call("upgrade")
+    let other_account = sandbox.dev_create_account().await?;
+    let upgrade_result = other_account
+        .call(contract.id(), "upgrade")
+        .args(new_contract_wasm.clone())
+        .max_gas()
+        .transact()
+        .await?;
+    assert!(
+        upgrade_result.is_failure(),
+        "Another account should not be able to upgrade the contract"
+    );
+
+    let upgrade_result = account
+        .call(contract.id(), "upgrade")
         .args(new_contract_wasm)
         .max_gas()
         .transact()
