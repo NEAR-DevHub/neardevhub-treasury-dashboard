@@ -13,6 +13,7 @@ let ftMetadata = {
   symbol: "NEAR",
   decimals: 24,
 };
+// ft_metadata for wrap.near doesn't provide icon, so hardcoding the icon here
 if (isWrapNear) {
   ftMetadata = {
     symbol: "wNEAR",

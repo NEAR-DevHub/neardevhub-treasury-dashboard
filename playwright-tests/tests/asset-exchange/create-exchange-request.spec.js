@@ -4,6 +4,9 @@ import { getTransactionModalObject } from "../../util/transaction";
 import { mockNearBalances, updateDaoPolicyMembers } from "../../util/rpcmock";
 import { InsufficientBalance, toBase64 } from "../../util/lib.js";
 
+const swapPool =
+  '{"force":0,"actions":[{"pool_id":5516,"token_in":"usdt.tether-token.near","token_out":"a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.factory.bridge.near","amount_in":"1000000","amount_out":"0","min_amount_out":"0"},{"pool_id":4179,"token_in":"a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.factory.bridge.near","token_out":"17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1","amount_out":"0","min_amount_out":"989412"}]}';
+
 async function mockSwapResponse({ page, response, daoAccount }) {
   await page.route(
     new RegExp(
@@ -352,7 +355,7 @@ test.describe("User is logged in", function () {
               args: {
                 receiver_id: "v2.ref-finance.near",
                 amount: "1000000",
-                msg: '{"force":0,"actions":[{"pool_id":5516,"token_in":"usdt.tether-token.near","token_out":"a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.factory.bridge.near","amount_in":"1000000","amount_out":"0","min_amount_out":"0"},{"pool_id":4179,"token_in":"a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.factory.bridge.near","token_out":"17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1","amount_out":"0","min_amount_out":"989412"}]}',
+                msg: swapPool,
               },
               gas: "180000000000000",
               amount: "1",
@@ -374,7 +377,11 @@ test.describe("User is logged in", function () {
           FunctionCall: {
             actions: [
               {
-                args: "eyJyZWNlaXZlcl9pZCI6InYyLnJlZi1maW5hbmNlLm5lYXIiLCJhbW91bnQiOiIxMDAwMDAwIiwibXNnIjoie1wiZm9yY2VcIjowLFwiYWN0aW9uc1wiOlt7XCJwb29sX2lkXCI6NTUxNixcInRva2VuX2luXCI6XCJ1c2R0LnRldGhlci10b2tlbi5uZWFyXCIsXCJ0b2tlbl9vdXRcIjpcImEwYjg2OTkxYzYyMThiMzZjMWQxOWQ0YTJlOWViMGNlMzYwNmViNDguZmFjdG9yeS5icmlkZ2UubmVhclwiLFwiYW1vdW50X2luXCI6XCIxMDAwMDAwXCIsXCJhbW91bnRfb3V0XCI6XCIwXCIsXCJtaW5fYW1vdW50X291dFwiOlwiMFwifSx7XCJwb29sX2lkXCI6NDE3OSxcInRva2VuX2luXCI6XCJhMGI4Njk5MWM2MjE4YjM2YzFkMTlkNGEyZTllYjBjZTM2MDZlYjQ4LmZhY3RvcnkuYnJpZGdlLm5lYXJcIixcInRva2VuX291dFwiOlwiMTcyMDg2MjhmODRmNWQ2YWQzM2YwZGEzYmJiZWIyN2ZmY2IzOThlYWM1MDFhMzFiZDZhZDIwMTFlMzYxMzNhMVwiLFwiYW1vdW50X291dFwiOlwiMFwiLFwibWluX2Ftb3VudF9vdXRcIjpcIjk4OTQxMlwifV19In0=",
+                args: toBase64({
+                  receiver_id: "v2.ref-finance.near",
+                  amount: "1000000",
+                  msg: swapPool,
+                }),
                 deposit: "1",
                 gas: "180000000000000",
                 method_name: "ft_transfer_call",
