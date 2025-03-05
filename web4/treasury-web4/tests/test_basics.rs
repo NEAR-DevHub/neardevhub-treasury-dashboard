@@ -2,42 +2,10 @@ use std::str::FromStr;
 
 use near_sdk::base64::prelude::BASE64_STANDARD;
 use near_sdk::base64::{engine::general_purpose, Engine as _};
-use near_sdk::serde::Deserialize;
 use near_sdk::NearToken;
 use serde_json::{json, Value};
-
-#[derive(Deserialize)]
-#[serde(crate = "near_sdk::serde")]
-pub struct Web4Response {
-    #[serde(rename = "contentType")]
-    content_type: String,
-    body: String,
-}
-
-fn create_preload_result(
-    account_id: String,
-    title: String,
-    description: String,
-) -> serde_json::Value {
-    let preload_url = format!(
-        "/web4/contract/social.near/get?keys.json=%5B%22{}/widget/app/metadata/**%22%5D",
-        account_id.as_str()
-    );
-    let body_string = serde_json::json!({account_id:{"widget":{"app":{"metadata":{
-        "description":description,
-        "image":{"ipfs_cid":"bafkreido4srg4aj7l7yg2tz22nbu3ytdidjczdvottfr5ek6gqorwg6v74"},
-        "name":title,
-        "tags": {"devhub":"","communities":"","developer-governance":"","app":""}}}}}})
-    .to_string();
-
-    let body_base64 = BASE64_STANDARD.encode(body_string);
-    return serde_json::json!({
-            String::from(preload_url): {
-                "contentType": "application/json",
-                "body": body_base64
-            }
-    });
-}
+mod web4_utils;
+use web4_utils::{create_preload_result, Web4Response};
 
 #[tokio::test]
 async fn test_web4() -> Result<(), Box<dyn std::error::Error>> {
@@ -370,7 +338,7 @@ async fn test_update_widgets_and_set_social_metadata_defaults(
     let result = instance_contract
         .view("web4_get")
         .args_json(json!({"request": {"path": "/", "preloads": {
-                String::from(preload_url): {
+                preload_url: {
                     "contentType": "application/json",
                     "body": body_base64
                 }

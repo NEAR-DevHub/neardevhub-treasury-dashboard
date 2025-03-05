@@ -53,12 +53,12 @@ fn create_preload_result(
     .to_string();
 
     let body_base64 = BASE64_STANDARD.encode(body_string);
-    return serde_json::json!({
+    serde_json::json!({
         preload_url: {
             "contentType": "application/json",
             "body": body_base64
         }
-    });
+    })
 }
 
 #[derive(Deserialize)]
@@ -699,7 +699,7 @@ async fn test_factory_should_refund_if_failing_because_of_existing_account(
         .filter(|outcome| outcome.is_failure())
         .collect();
 
-    assert!(failed_outcomes.len() > 0);
+    assert!(!failed_outcomes.is_empty());
     println!("{:?}", failed_outcomes);
 
     assert_eq!(
@@ -927,7 +927,7 @@ async fn test_factory_should_refund_if_failing_because_of_existing_dao_but_still
         .filter(|outcome| outcome.is_failure())
         .collect();
 
-    assert!(failed_outcomes.len() > 0);
+    assert!(!failed_outcomes.is_empty());
     println!("{:?}", failed_outcomes);
 
     println!("{:?}", create_treasury_instance_result.logs());

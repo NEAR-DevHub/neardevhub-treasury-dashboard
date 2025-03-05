@@ -29,8 +29,7 @@ jobs:
         run: echo "POSTHOG_API_KEY=${{ secrets.POSTHOG_API_KEY }}" >> $GITHUB_ENV
       - name: Deploy to ${{ matrix.environment }}
         run: |
-          cargo build # TODO: Remove this step once https://github.com/near/cargo-near/issues/287 is fixed
-          cargo near deploy build-non-reproducible-wasm "${{ vars.NEAR_SOCIAL_ACCOUNT_ID }}" \
+          cargo near deploy build-reproducible-wasm "${{ vars.NEAR_SOCIAL_ACCOUNT_ID }}" \
             without-init-call \
             network-config mainnet \
             sign-with-plaintext-private-key \
