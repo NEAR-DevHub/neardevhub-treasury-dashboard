@@ -1,3 +1,4 @@
 /target
 index.html.base64.txt
 treasury_web4.wasm.base64.txt
+min_self_upgrade_contract.wasm.base64.txt

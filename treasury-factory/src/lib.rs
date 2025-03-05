@@ -55,8 +55,7 @@ impl Contract {
                     "new_account_id": new_instance_contract_id.clone(),
                     "options": {
                         "full_access_keys": [env::signer_account_pk(),admin_full_access_public_key],
-                        // This is the base64 encoded wasm binary of the WebAssembly Text format file here: https://github.com/petersalomonsen/quickjs-rust-near/blob/main/factory/min_self_upgrade_contract.wat
-                        "contract_bytes_base64": "AGFzbQEAAAABHgZgAX4AYAJ+fgBgAX4BfmACfn4BfmADfn5+AGAAAAKTAQYDZW52EmN1cnJlbnRfYWNjb3VudF9pZAAAA2VudgVpbnB1dAAAA2Vudg1yZWFkX3JlZ2lzdGVyAAEDZW52DHJlZ2lzdGVyX2xlbgACA2VudhRwcm9taXNlX2JhdGNoX2NyZWF0ZQADA2VudiRwcm9taXNlX2JhdGNoX2FjdGlvbl9kZXBsb3lfY29udHJhY3QABAMCAQUFAwEAIAcLAQd1cGdyYWRlAAYKMgEwAQF+QgAQAEIAQoAIEAJCABADQoAIEAQhAEIAEAFCAEKAEBACIABCABADQoAQEAUL"
+                        "contract_bytes_base64": include_str!("../min_self_upgrade_contract.wasm.base64.txt")
                     }
                 })
                 .to_string()
