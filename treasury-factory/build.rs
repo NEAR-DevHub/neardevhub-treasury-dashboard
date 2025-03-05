@@ -1,11 +1,11 @@
 use base64::{engine::general_purpose, Engine as _};
 use cargo_near_build::extended::*;
 use cargo_near_build::BuildOpts;
-use wabt::wat2wasm;
 use std::env;
 use std::fs;
 use std::io::Write;
 use std::path::Path;
+use wabt::wat2wasm;
 
 fn main() {
     // Change working directory to the directory of the script (similar to process.chdir)
