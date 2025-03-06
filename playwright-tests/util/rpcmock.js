@@ -513,7 +513,7 @@ export async function mockWithFTBalance({
             : [
                 {
                   contract: "usdt.tether-token.near",
-                  amount: "4500000",
+                  amount: isSufficient ? "4500000" : "10",
                   ft_meta: {
                     name: "Tether USD",
                     symbol: "USDt",
@@ -526,7 +526,7 @@ export async function mockWithFTBalance({
                 {
                   contract:
                     "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
-                  amount: isSufficient ? "1500000" : "10",
+                  amount: isSufficient ? "5000000" : "10",
                   ft_meta: {
                     name: "USDC",
                     symbol: "USDC",
