@@ -45,7 +45,9 @@
                 (i64.load8_u (i32.add (i32.const 1024) (local.get $offset))) ;; Read from register
                 (i64.load8_u (i32.add (local.get $allowed_addr) (local.get $offset))) ;; Read from memory
               )
-            (call $panic (local.get $allowed_len) (i64.const 8)) ;; Abort on mismatch
+            (then
+              (call $panic (local.get $allowed_len) (i64.const 8)) ;; Abort on mismatch
+            )
           )
 
           (local.set $offset (i32.add (local.get $offset) (i32.const 1)))
@@ -72,8 +74,8 @@
       (call $register_len (i64.const 0))
       (i64.const 2048) 
     )
-    nop ;; padding
-    nop ;; padding
+    nop ;; padding to align base64
+    nop ;; padding to align base64
   )
   (memory 32)
   ;; Reserve 64 bytes for the account ID (pre-allocated empty space)

@@ -5,7 +5,7 @@ use std::env;
 use std::fs;
 use std::io::Write;
 use std::path::Path;
-use wabt::wat2wasm;
+use wat::parse_file as wat2wasm;
 
 fn main() {
     // Change working directory to the directory of the script (similar to process.chdir)
@@ -31,11 +31,20 @@ fn main() {
         .write_all(index_html_base64.as_bytes())
         .expect("Failed to write to output file");
 
-    let min_self_upgrade_contract_wat_path = "./min_self_upgrade_contract.wat";
+    let mut min_self_upgrade_contract_wasm = wat2wasm("./min_self_upgrade_contract.wat").unwrap();
 
-    let min_self_upgrade_contract_wat = fs::read(min_self_upgrade_contract_wat_path)
-        .expect(format!("Failed to read {}", min_self_upgrade_contract_wat_path).as_str());
-    let min_self_upgrade_contract_wasm = wat2wasm(min_self_upgrade_contract_wat).unwrap();
+    // Remove the name section that is added by wat
+    let data_section = b"\x00\x00\x00\x00\x00\x00\x00\x00XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
+
+    if let Some(pos) = min_self_upgrade_contract_wasm
+        .windows(data_section.len())
+        .position(|window| window == data_section)
+    {
+        min_self_upgrade_contract_wasm =
+            min_self_upgrade_contract_wasm[..(pos + data_section.len())].to_vec();
+    } else {
+        panic!("Data section not found in the wasm file");
+    }
 
     // write wasm file to use for inspection if needed
     let mut min_self_upgrade_wasm_file = fs::File::create(
