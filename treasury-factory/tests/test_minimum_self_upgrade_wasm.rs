@@ -33,21 +33,7 @@ async fn test_minimum_self_upgrade_wasm() -> Result<(), Box<dyn std::error::Erro
         .await?
         .result;
 
-    let new_contract_wasm = wabt::wat2wasm(
-        "
-(module
-  (import \"env\" \"value_return\" (func $value_return (param i64 i64)))
-  (func (export \"hello\")
-    i64.const 7
-    i64.const 0
-    call $value_return
-  )
-  (memory 1)
-  (data (i32.const 0) \"\\\"hello\\\"\")
-)
-    ",
-    )
-    .unwrap();
+    let new_contract_wasm = include_bytes!("hello.wasm").to_vec();
 
     let other_account = sandbox.dev_create_account().await?;
     let upgrade_result = other_account
