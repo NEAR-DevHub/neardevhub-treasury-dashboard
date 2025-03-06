@@ -221,3 +221,28 @@ export const SettingsProposalData = {
   votes: {},
   submission_time: "1728033017194722007",
 };
+
+export const SwapProposalData = {
+  id: 1,
+  proposer: "theori.near",
+  description:
+    "* Proposal Action: asset-exchange <br>* Token In: 17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1 <br>* Token Out: usdt.tether-token.near <br>* Amount In: 0.5 <br>* Slippage: 1 <br>* Amount Out: 0.6",
+  kind: {
+    FunctionCall: {
+      receiver_id:
+        "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+      actions: [
+        {
+          method_name: "ft_transfer_call",
+          args: "eyJyZWNlaXZlcl9pZCI6InYyLnJlZi1maW5hbmNlLm5lYXIiLCJhbW91bnQiOiIxMDAwMDAiLCJtc2ciOiJ7XCJmb3JjZVwiOjAsXCJhY3Rpb25zXCI6W3tcInBvb2xfaWRcIjo0NTEzLFwidG9rZW5faW5cIjpcIjE3MjA4NjI4Zjg0ZjVkNmFkMzNmMGRhM2JiYmViMjdmZmNiMzk4ZWFjNTAxYTMxYmQ2YWQyMDExZTM2MTMzYTFcIixcInRva2VuX291dFwiOlwidXNkdC50ZXRoZXItdG9rZW4ubmVhclwiLFwiYW1vdW50X2luXCI6XCIxMDAwMDBcIixcImFtb3VudF9vdXRcIjpcIjBcIixcIm1pbl9hbW91bnRfb3V0XCI6XCI5OTA3M1wifV19In0=",
+          deposit: "1",
+          gas: "180000000000000",
+        },
+      ],
+    },
+  },
+  status: "InProgress",
+  vote_counts: {},
+  votes: {},
+  submission_time: "1740746334157940598",
+};

@@ -1,7 +1,7 @@
 name: Deploy Components to Staging
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: # This allows manual triggering
   push:
     branches: [staging]
 

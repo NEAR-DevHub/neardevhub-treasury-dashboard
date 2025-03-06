@@ -260,7 +260,7 @@ return (
                         />
                       </td>
                       <td className="text-right" style={{ minWidth: 100 }}>
-                        <div className="d-flex gap-2 align-items-center fw-semi-bold justify-content-center">
+                        <div className="d-flex gap-2 align-items-center fw-semi-bold justify-content-end">
                           <a
                             target="_blank"
                             rel="noopener noreferrer"
