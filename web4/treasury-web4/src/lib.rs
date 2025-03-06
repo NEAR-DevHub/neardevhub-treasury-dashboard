@@ -17,6 +17,28 @@ pub struct Contract {}
 // Implement the contract structure
 #[near]
 impl Contract {
+    pub fn self_upgrade(&mut self) {
+        const TREASURY_FACTORY_ACCOUNT_ID: &str = "treasury-factory.near";
+        Promise::new(TREASURY_FACTORY_ACCOUNT_ID.parse().unwrap())
+            .function_call(
+                "get_web4_contract_bytes".to_string(),
+                vec![],
+                NearToken::from_near(0),
+                Gas::from_tgas(200),
+            )
+            .then(Self::ext(env::current_account_id()).self_upgrade_callback());
+    }
+
+    #[private]
+    pub fn self_upgrade_callback(&mut self) -> Promise {
+        match env::promise_result(0) {
+            PromiseResult::Successful(web4_contract_bytes) => {
+                Promise::new(env::current_account_id()).deploy_contract(web4_contract_bytes)
+            }
+            _ => env::panic_str("No web4 contract bytes in promise result"),
+        }
+    }
+
     #[payable]
     pub fn update_widgets(
         &mut self,
