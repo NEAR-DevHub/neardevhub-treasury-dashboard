@@ -726,7 +726,7 @@ const code = `
     
                 async function fetchTokensPrices() {
                     try {
-                        var response = await fetch('https://indexer.ref.finance/list-token-price');
+                        var response = await fetch('https://api.ref.finance/list-token-price');
                         var data = await response.json();
                         tokenExchangePrices = data;
                     } catch (error) {
