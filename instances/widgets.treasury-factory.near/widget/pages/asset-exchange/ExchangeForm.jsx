@@ -141,6 +141,9 @@ const code = `
                 padding-block: 0.5rem;
                 font-weight: 500;
                 font-size: 13px;
+                i {
+                    color: ${colors["--other-warning"]} !important;
+                }
               }
     
               .info-box{
@@ -150,6 +153,9 @@ const code = `
                 padding-block: 0.5rem;
                 font-weight: 500;
                 font-size: 13px;
+                i {
+                    color: ${colors["--grey-02"]} !important;
+                }
               }
               .btn-outline-secondary {
                 border-color: ${colors["--border-color"]} !important;
@@ -171,6 +177,12 @@ const code = `
     </head>
     <body data-bs-theme=${isDarkTheme ? "dark" : "light"}>
         <div class="d-flex flex-column gap-3">
+            <div id="third-party-swap-info" style="display: none;">
+                <div class="d-flex gap-3 align-items-center info-box px-3 py-2 rounded-3">
+                    <i class="bi bi-info-circle h5 mb-0"></i>
+                    <div> Some third-party tools may impose swapping fees when converting your funds.</div>
+                </div>
+            </div>
             <!-- Send Section -->
             <div class="d-flex flex-column gap-1">
                 <label>Send</label>
@@ -241,19 +253,28 @@ const code = `
                 </div>
             </div>
 
+            <!-- NEAR Swap Info -->
+            <div id="near-swap-info" style="display: none;">
+                <div class="d-flex gap-3 align-items-center warning-box px-3 py-2 rounded-3">
+                    <i class="bi bi-exclamation-triangle h5 mb-0"></i>
+                    <div>To exchange NEAR for another token, first swap it for wNEAR. You can then exchange wNEAR for your desired token.</div>
+                </div>
+            </div>
+
+            <!-- Exchange rate Info -->
+            <div id="exchange-rate-info" style="display: none;">
+                <div class="d-flex gap-3 align-items-center warning-box px-3 py-2 rounded-3">
+                     <i class="bi bi-exclamation-triangle h5 mb-0"></i>
+                     <div> The exchange rate applied differs by <span id="exchange-rate-percentage">X%</span> from other platforms. Please review before proceeding.</div>
+                </div>
+            </div>
+
+
             <!-- Warning Message -->
             <div id="warning-message" style="display: none;">
                 <div class="d-flex gap-3 align-items-center warning-box px-3 py-2 rounded-3">
                     <i class="bi bi-exclamation-triangle h5 mb-0"></i>
                     To collect this token, purchase storage space. After submission, 0.1 NEAR will be charged from your account as an additional transaction.
-                </div>
-            </div>
-
-            <!-- NEAR Swap Info -->
-            <div id="near-swap-info" style="display: none;">
-                <div class="d-flex gap-3 align-items-center info-box px-3 py-2 rounded-3">
-                    <i class="bi bi-info-circle h5 mb-0"></i>
-                    <div>To exchange NEAR for another token, first swap it for wNEAR. You can then exchange wNEAR for your desired token.</div>
                 </div>
             </div>
 
@@ -289,6 +310,7 @@ const code = `
             let transactions = []
             let tokens = [];     
             let swapAPI = ""; 
+            let tokenExchangePrices = [];
     
             function checkSubmitDisable() {
                 document.getElementById("submitBtn").disabled = !transactions?.length;
@@ -303,8 +325,15 @@ const code = `
                 var warningElement = document.getElementById("balance-warning"); 
                 var receiveAmountElement = document.getElementById("receive-amount");
                 var nearSwapInfoElement = document.getElementById("near-swap-info");
+                var thirdPartySwap = document.getElementById("third-party-swap-info"); 
                 // Reset receive amount
                 receiveAmountElement.value = "";
+
+                if (isNearOrWrapNear(receiveToken) && isNearOrWrapNear(sendToken)) {
+                    thirdPartySwap.style.display = "none";
+                  } else {
+                    thirdPartySwap.style.display = "block";
+                  }                  
             
                 function isNearOrWrapNear(token) {
                     return token === "near" || token === "wrap.near";
@@ -372,7 +401,7 @@ const code = `
                 var slippageError = document.getElementById("slippage-error");
                 var tokensError = document.getElementById("tokens-error");
             
-                if ( isNaN(amount) || 
+                if (isNaN(amount) || 
                 amount <= 0 || 
                 !fromToken || 
                 !toToken || 
@@ -580,6 +609,40 @@ const code = `
                 warningMessage.style.display = "none"; 
                 swapError.style.display = "none";
             }
+
+            function calculateAndDisplayRateDifference(
+                amountIn,
+                tokenOutAmount,
+                tokenInContract,
+                tokenOutContract,
+              ) {
+                var exchangeRateInfo = document.getElementById("exchange-rate-info");
+                var percentageElement = document.getElementById("exchange-rate-percentage");
+              
+                // Find reference prices for both tokenIn and tokenOut
+                var tokenInPrice = tokenExchangePrices?.[tokenInContract]?.price;
+              
+                var tokenOutPrice = tokenExchangePrices?.[tokenOutContract]?.price;
+              
+                if (!tokenInPrice || !tokenOutPrice) {
+                  console.error("Price data missing for one or both tokens.");
+                  exchangeRateInfo.style.display = "none";
+                  return;
+                }
+              
+                // Calculate the expected tokenOut amount
+                var expectedTokenOutAmount = (amountIn * tokenInPrice) / tokenOutPrice;
+              
+                // Calculate percentage difference
+                var percentageDifference =
+                  Math.abs(
+                    (tokenOutAmount - expectedTokenOutAmount) / expectedTokenOutAmount,
+                  ) * 100;
+              
+                // Update UI
+                percentageElement.textContent = percentageDifference.toFixed(2) + "%";
+                exchangeRateInfo.style.display = percentageDifference >= 1 ? "block" : "none";
+              }                         
     
             function swapTokens() {
                 var amount = document.getElementById("send-amount").value;
@@ -616,6 +679,7 @@ const code = `
                         }                    
                         var receiveAmountInput = document.getElementById("receive-amount");
                         receiveAmountInput.value = data.outEstimate;
+                        calculateAndDisplayRateDifference(amount, data.outEstimate, fromToken.id, toToken.id);
                         transactions = data.transactions
                         if(transactions.length > 1){
                             const warningMessage = document.getElementById("warning-message");
@@ -642,11 +706,14 @@ const code = `
                 const slippageInput = document.getElementById("slippage");
                 const sendInput = document.getElementById("send-amount");
                 const receiveInput = document.getElementById("receive-amount");
-    
+                var percentageElement = document.getElementById("exchange-rate-percentage");
+                var percentageValue = percentageElement.textContent || percentageElement.innerText;
+                const rateDifference =  parseFloat(percentageValue.replace('%', ''));
+
                 window.parent.postMessage(
                     { 
                         handler: "onSubmit", 
-                        args: {transactions, notes: notesInput.value,amountIn: sendInput.value, tokenIn: fromToken.id, tokenOut:toToken.id, slippage:slippageInput.value, amountOut:receiveInput.value }, 
+                        args: {transactions, notes: notesInput.value,amountIn: sendInput.value, tokenIn: fromToken.id, tokenOut:toToken.id, slippage:slippageInput.value, amountOut:receiveInput.value, rateDifference }, 
                     }, 
                         "*"
                     );
@@ -657,11 +724,22 @@ const code = `
                 }
             
     
+                async function fetchTokensPrices() {
+                    try {
+                        var response = await fetch('https://indexer.ref.finance/list-token-price');
+                        var data = await response.json();
+                        tokenExchangePrices = data;
+                    } catch (error) {
+                        console.error("Error fetching tokens prices:", error);                      
+                    } 
+                }
+                
             window.addEventListener("message", function (event) {
                 whitelistTokenAPI = event.data.whitelistTokenAPI;
                 treasuryDaoID = event.data.treasuryDaoID;
                 swapAPI = event.data.swapAPI
                 fetchTokens();
+                fetchTokensPrices();
             });
         </script>
     

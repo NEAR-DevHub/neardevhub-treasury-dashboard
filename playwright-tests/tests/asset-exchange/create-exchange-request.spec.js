@@ -269,6 +269,12 @@ test.describe("User is logged in", function () {
     await selectReceiveToken({ page, token: "wNEAR" });
     const calculateBtn = page.frameLocator("iframe").getByText("Calculate");
     const submitBtn = page.frameLocator("iframe").getByText("Submit");
+    const thirdPartyWarning = page
+      .frameLocator("iframe")
+      .getByText(
+        "Some third-party tools may impose swapping fees when converting your funds."
+      );
+    await expect(thirdPartyWarning).toBeHidden();
     await expect(calculateBtn).toBeEnabled();
     await expect(submitBtn).toBeDisabled();
     const response = {
@@ -331,7 +337,7 @@ test.describe("User is logged in", function () {
     });
   });
 
-  test("create FT token swap request and display in pending request", async ({
+  test("create FT token swap request w/o exchange rate warning", async ({
     page,
     instanceAccount,
     daoAccount,
@@ -343,6 +349,12 @@ test.describe("User is logged in", function () {
     await selectReceiveToken({ page, token: "USDC" });
     const calculateBtn = page.frameLocator("iframe").getByText("Calculate");
     const submitBtn = page.frameLocator("iframe").getByText("Submit");
+    const thirdPartyWarning = page
+      .frameLocator("iframe")
+      .getByText(
+        "Some third-party tools may impose swapping fees when converting your funds."
+      );
+    await expect(thirdPartyWarning).toBeVisible();
     await expect(calculateBtn).toBeEnabled();
     await expect(submitBtn).toBeDisabled();
     const response = {
@@ -388,6 +400,84 @@ test.describe("User is logged in", function () {
               },
             ],
             receiver_id: "usdt.tether-token.near",
+          },
+        },
+      },
+    });
+  });
+
+  test("create FT token swap request w/ exchange rate warning", async ({
+    page,
+    instanceAccount,
+    daoAccount,
+  }) => {
+    test.setTimeout(60_000);
+    await openCreatePage({ page, instanceAccount });
+    await selectSendToken({ page, token: "WETH" });
+    await page.frameLocator("iframe").locator("#send-amount").fill("100");
+    await selectReceiveToken({ page, token: "USDC" });
+    const calculateBtn = page.frameLocator("iframe").getByText("Calculate");
+    const submitBtn = page.frameLocator("iframe").getByText("Submit");
+    const thirdPartyWarning = page
+      .frameLocator("iframe")
+      .getByText(
+        "Some third-party tools may impose swapping fees when converting your funds."
+      );
+    await expect(thirdPartyWarning).toBeVisible();
+    await expect(calculateBtn).toBeEnabled();
+    await expect(submitBtn).toBeDisabled();
+    const exchangeRateWarning = page
+      .frameLocator("iframe")
+      .getByText("The exchange rate applied differs by");
+    const response = {
+      transactions: [
+        {
+          receiverId:
+            "c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2.factory.bridge.near",
+          functionCalls: [
+            {
+              methodName: "ft_transfer_call",
+              args: {
+                receiver_id: "v2.ref-finance.near",
+                amount: "1000000",
+                msg: swapPool,
+              },
+              gas: "180000000000000",
+              amount: "1",
+            },
+          ],
+        },
+      ],
+      outEstimate: "0.99940",
+    };
+    await mockSwapResponse({ page, response, daoAccount });
+    await calculateBtn.click();
+    await expect(exchangeRateWarning).toBeVisible();
+    await expect(submitBtn).toBeEnabled();
+    await submitBtn.click();
+    await expect(page.getByText("High Fee Warning")).toBeVisible();
+    await page.getByRole("button", { name: "Yes" }).click();
+
+    expect(await getTransactionModalObject(page)).toEqual({
+      proposal: {
+        description:
+          "* Proposal Action: asset-exchange <br>* Token In: c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2.factory.bridge.near <br>* Token Out: 17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1 <br>* Amount In: 100 <br>* Slippage: 1 <br>* Amount Out: 0.99940",
+        kind: {
+          FunctionCall: {
+            actions: [
+              {
+                args: toBase64({
+                  receiver_id: "v2.ref-finance.near",
+                  amount: "1000000",
+                  msg: swapPool,
+                }),
+                deposit: "1",
+                gas: "180000000000000",
+                method_name: "ft_transfer_call",
+              },
+            ],
+            receiver_id:
+              "c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2.factory.bridge.near",
           },
         },
       },
