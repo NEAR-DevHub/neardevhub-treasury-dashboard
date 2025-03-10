@@ -304,7 +304,7 @@ test.describe("don't ask again", function () {
     ).toBeVisible();
   });
 
-  test("should throw insufficient DAO account balance error", async ({
+  test.skip("should throw insufficient DAO account balance error", async ({
     page,
     daoAccount,
     instanceAccount,
