@@ -194,7 +194,7 @@ test.describe("User is logged in", function () {
     expect(await submitBtn.isDisabled()).toBe(true);
     await expect(page.getByText("Please enter valid account ID")).toBeVisible();
     // Fill valid account id thomasguntenaar.near
-    await accountInput.fill("thomasguntenaar.near");
+    await accountInput.fill("testing.near");
     await page.waitForTimeout(1000);
 
     // Submit button should be enabled
@@ -389,15 +389,26 @@ test.describe("User is logged in", function () {
 
   test("adding existing member to form should show warning", async ({
     page,
+    instanceAccount
   }) => {
     test.setTimeout(120_000);
+    const hasNewPolicy = instanceAccount.includes("testing");
+    const permission = hasNewPolicy ? "Requestor" : "Create Requests";
     await openAddMemberForm({ page });
     const accountInput = page.getByPlaceholder("treasury.near");
     await accountInput.focus();
     accountInput.fill("megha19.near");
     await accountInput.blur();
+    const submitBtn = page.getByRole("button", { name: "Submit" });
+    const cancelBtn = page.getByRole("button", { name: "Cancel" });
+    await expect(submitBtn).toBeDisabled();
+    await expect(cancelBtn).toBeDisabled();
     await expect(page.getByText("This user is already a member")).toBeVisible();
     await expect(page.getByRole("button", { name: "Delete" })).toBeVisible();
+    await page.locator(".dropdown-toggle", { hasText: "Select" }).click();
+    await page.locator(".dropdown-item", { hasText: permission }).click();
+    await expect(submitBtn).toBeEnabled();
+    await expect(cancelBtn).toBeEnabled();
   });
 
   test("should update existing member permissions", async ({
@@ -420,10 +431,13 @@ test.describe("User is logged in", function () {
       page.locator(".offcanvas-body").getByText(permission, { exact: true })
     ).toBeVisible();
     await expect(page.getByPlaceholder("treasury.near")).toBeDisabled();
+    const submitBtn = page.getByRole("button", { name: "Submit" });
+    const cancelBtn = page.getByRole("button", { name: "Cancel" });
+    await expect(submitBtn).toBeDisabled();
+    await expect(cancelBtn).toBeDisabled();
     await page.getByText(permission, { exact: true }).locator(".bi").click();
 
-    const submitBtn = page.getByRole("button", { name: "Submit" });
-    await expect(submitBtn).toBeAttached({ timeout: 10_000 });
+    await expect(submitBtn).toBeEnabled();
     await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
     await submitBtn.click();
     await expect(
