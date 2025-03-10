@@ -250,6 +250,7 @@ return (
           disabled: selectedMember,
           setParentAccountValid: setIsUsernameValid,
           instance,
+          allowNonExistentImplicit: false,
         }}
       />
       {!selectedMember && memberAlreadyExists && (

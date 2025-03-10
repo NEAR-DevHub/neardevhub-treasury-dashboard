@@ -24,6 +24,7 @@ const proposalCreator = props.proposalCreator;
 const isWithdrawRequest = props.isWithdrawRequest;
 const validatorAccount = props.validatorAccount;
 const treasuryWallet = props.treasuryWallet;
+const isHumanReadableCurrentAmount = props.isHumanReadableCurrentAmount;
 
 const alreadyVoted = Object.keys(votes).includes(accountId);
 const userVote = votes[accountId];
@@ -44,13 +45,26 @@ const [showErrorToast, setShowErrorToast] = useState(false);
 
 useEffect(() => {
   if (!avoidCheckForBalance) {
+    let parsedAmount = currentAmount;
+    const currentContractMetadata = tokensBalance.find(
+      (i) => i.contract === currentContract
+    );
+    if (isHumanReadableCurrentAmount) {
+      parsedAmount = Big(parsedAmount ?? "0")
+        .mul(Big(10).pow(currentContractMetadata?.ft_meta?.decimals ?? 1))
+        .toFixed();
+    }
     setInsufficientBal(
-      Big(
-        tokensBalance.find((i) => i.contract === currentContract)?.amount ?? "0"
-      ).lt(Big(currentAmount ?? "0"))
+      Big(currentContractMetadata?.amount ?? "0").lt(Big(parsedAmount))
     );
   }
-}, [tokensBalance, currentAmount, currentContract, avoidCheckForBalance]);
+}, [
+  tokensBalance,
+  currentAmount,
+  currentContract,
+  avoidCheckForBalance,
+  isHumanReadableCurrentAmount,
+]);
 
 // if it's a withdraw request, check if amount is ready to be withdrawn
 useEffect(() => {

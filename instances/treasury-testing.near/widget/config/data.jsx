@@ -12,10 +12,6 @@ return {
       title: "Stake Delegation",
       href: "?page=stake-delegation",
     },
-    // {
-    //   title: "Asset Exchange",
-    //   href: "?page=asset-exchange",
-    // },
     {
       title: "Lockup",
       href: "?page=lockup",
