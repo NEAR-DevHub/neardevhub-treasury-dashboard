@@ -11,14 +11,17 @@ const { encodeToMarkdown } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
 
-if (!getNearBalances) return <></>;
-
-let balance = getNearBalances(context.accountId);
-balance = balance ? parseFloat(balance.availableParsed) : 0;
 const instance = props.instance;
-const onCloseCanvas = props.onCloseCanvas ?? (() => {});
+const { allowLockupStaking, allowLockupCancellation } = VM.require(
+  `${instance}/widget/config.data`
+);
 
-if (!instance || typeof isBosGateway !== "function") return <></>;
+if (!getNearBalances || !instance || typeof isBosGateway !== "function")
+  return <></>;
+
+let balance = getNearBalances(instance);
+balance = balance ? parseFloat(balance.availableParsed) : 0;
+const onCloseCanvas = props.onCloseCanvas ?? (() => {});
 
 const Container = styled.div`
   font-size: 14px;
@@ -55,8 +58,10 @@ const [startDate, setStartDate] = useState("");
 const [endDate, setEndDate] = useState("");
 const [amount, setAmount] = useState("");
 const [cliffDate, setCliffDate] = useState("");
-const [allowCancellation, setAllowCancellation] = useState(true);
-const [allowStaking, setAllowStaking] = useState(true);
+const [allowCancellation, setAllowCancellation] = useState(
+  allowLockupCancellation
+);
+const [allowStaking, setAllowStaking] = useState(allowLockupStaking);
 
 function formatTimestamp(date) {
   return new Date(date).getTime() * 1000000;
@@ -128,20 +133,20 @@ function onSubmitClick() {
     },
   ];
 
-  if (!isReceiverRegistered) {
-    const depositInYocto = Big(0.125).mul(Big(10).pow(24)).toFixed();
+  // if (!isReceiverRegistered) {
+  //   const depositInYocto = Big(0.125).mul(Big(10).pow(24)).toFixed();
 
-    calls.push({
-      contractName: tokenMapping.NEAR,
-      methodName: "storage_deposit",
-      args: {
-        account_id: receiver,
-        registration_only: true,
-      },
-      gas,
-      deposit: depositInYocto,
-    });
-  }
+  //   calls.push({
+  //     contractName: tokenMapping.NEAR,
+  //     methodName: "storage_deposit",
+  //     args: {
+  //       account_id: receiver,
+  //       registration_only: true,
+  //     },
+  //     gas,
+  //     deposit: depositInYocto,
+  //   });
+  // }
 
   Near.call(calls);
 }
@@ -215,9 +220,14 @@ return (
       <div className="d-flex flex-column gap-1">
         <div>
           <label className="form-label">Amount</label>
-          <span className="text-secondary text-sm">
-            Minimum amount is {MINIMUM_AMOUNT} NEAR
-          </span>
+          <Widget
+            src="test-widgets.treasury-factory.near/widget/components.OverlayTrigger"
+            props={{
+              popup: <span>Minimum amount is {MINIMUM_AMOUNT} NEAR</span>,
+              children: <i className="bi bi-info-circle h6 mb-0"></i>,
+              instance,
+            }}
+          />
         </div>
         <div class="input-group">
           <span class="input-group-text input-icon">
@@ -284,6 +294,7 @@ return (
               style={{ width: "38px", height: "24px" }}
               type="checkbox"
               role="switch"
+              disabled={true}
               checked={allowCancellation}
               onChange={(e) => setAllowCancellation(e.target.checked)}
             />
@@ -323,6 +334,7 @@ return (
               style={{ width: "38px", height: "24px" }}
               type="checkbox"
               role="switch"
+              disabled={true}
               checked={allowStaking}
               onChange={(e) => setAllowStaking(e.target.checked)}
             />

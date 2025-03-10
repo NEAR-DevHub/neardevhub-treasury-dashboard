@@ -154,8 +154,8 @@ const columns = [
   { title: "#", show: true },
   { title: "Created Date", show: true },
   { title: "Status", show: !isPendingRequests },
-  { title: "Funding account", show: true },
   { title: "Receiver account", show: true },
+  { title: "Token", show: true },
   { title: "Amount", show: true },
   { title: "Start date", show: true },
   { title: "End date", show: true },
@@ -271,8 +271,12 @@ const ProposalsComponent = ({ item }) => {
           />
         </td>
       )}
-      <td className={isVisible("Funding account")}>nearfoundation.near</td>
       <td className={isVisible("Receiver account")}>{args.owner_account_id}</td>
+      <td className={isVisible("Token")}>
+        <Widget
+          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenIcon`}
+        />
+      </td>
       <td className={isVisible("Amount") + " text-right"}>
         <Widget
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
@@ -309,10 +313,10 @@ const ProposalsComponent = ({ item }) => {
         )}
       </td>
       <td className={isVisible("Allow cancellation")}>
-        {!!vestingSchedule ? "yes" : "no"}
+        {!!vestingSchedule ? "Yes" : "No"}
       </td>
       <td className={isVisible("Allow staking")}>
-        {args.whitelist_account_id === "system" ? "no" : "yes"}
+        {args.whitelist_account_id === "system" ? "No" : "Yes"}
       </td>
       <td className={isVisible("Required votes") + " text-center"}>
         {requiredVotes ?? "-"}

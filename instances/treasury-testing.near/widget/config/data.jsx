@@ -17,12 +17,12 @@ return {
     //   href: "?page=asset-exchange",
     // },
     {
-      title: "Settings",
-      href: "?page=settings",
-    },
-    {
       title: "Lockup",
       href: "?page=lockup",
+    },
+    {
+      title: "Settings",
+      href: "?page=settings",
     },
   ],
   treasuryDaoID: "${REPL_TREASURY}",
@@ -54,4 +54,6 @@ return {
     </svg>
   ),
   themeColor: "#05a36e",
+  allowLockupStaking: false,
+  allowLockupCancellation: false,
 };

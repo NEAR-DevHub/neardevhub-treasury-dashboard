@@ -58,10 +58,9 @@ const policy = treasuryDaoID
   ? Near.view(treasuryDaoID, "get_policy", {})
   : null;
 
-const functionCallApproversGroup = getApproversAndThreshold(
+const transferApproversGroup = getApproversAndThreshold(
   treasuryDaoID,
-  "call",
-  context.accountId
+  "transfer"
 );
 
 return (
@@ -74,7 +73,6 @@ return (
         loading,
         policy,
         transferApproversGroup,
-        deleteGroup,
         refreshTableData: fetchProposals,
         ...props,
       }}

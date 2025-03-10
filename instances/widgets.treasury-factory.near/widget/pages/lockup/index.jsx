@@ -1,23 +1,10 @@
-const { selectedTab, instance } = props;
+const { instance } = props;
 
 if (!instance) {
   return <></>;
 }
 
 const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
-
-const [showStakeRequest, setShowStakeRequest] = useState(false);
-const [showUnStakeRequest, setShowUnStakeRequest] = useState(false);
-const [showWithdrawRequest, setShowWithdrawRequest] = useState(false);
-const createBtnOption = {
-  STAKE: "CreateStakeRequest",
-  UNSTAKE: "CreateUnstakeRequest",
-  WITHDRAW: "CreateWithdrawRequest",
-};
-const [isCreateBtnOpen, setCreateBtnOpen] = useState(false);
-const [selectedCreatePage, setSelectedCreatePage] = useState(
-  createBtnOption.STAKE
-);
 
 const Container = styled.div`
   .flex-1 {

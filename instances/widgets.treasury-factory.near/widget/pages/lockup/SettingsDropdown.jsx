@@ -18,9 +18,9 @@ const [settingsOptions, setSettingsOptions] = useState(
     ? columnsVisibility
     : [
         { title: "Created Date", show: true },
-        { title: "Funding wallet", show: true },
         { title: "Status", show: !isPendingPage },
         { title: "Receiver account", show: true },
+        { title: "Token", show: true },
         { title: "Amount", show: true },
         { title: "Start date", show: true },
         { title: "End date", show: true },
