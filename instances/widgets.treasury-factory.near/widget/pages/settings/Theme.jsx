@@ -39,11 +39,8 @@ const ThemeOptions = [
   },
 ];
 
-const defaultColor = "#01BF7A";
-const defaultImage =
-  "https://github.com/user-attachments/assets/244e15fc-3fb7-4067-a2c3-013e189e8d20";
-const [image, setImage] = useState(defaultImage);
-const [color, setColor] = useState(defaultColor);
+const [image, setImage] = useState("");
+const [color, setColor] = useState(null);
 const [selectedTheme, setSelectedTheme] = useState(ThemeOptions[0]);
 const [error, setError] = useState(null);
 const [isTxnCreated, setTxnCreated] = useState(false);
@@ -96,6 +93,31 @@ function uploadImageToServer(file) {
       console.log(e);
       setImage(`https://ipfs.near.social/ipfs/${res.body.cid}`);
     });
+}
+
+function getDefaultValues() {
+  const defaultImage = (metadata?.flagLogo ?? "")?.includes("ipfs")
+    ? metadata.flagLogo
+    : "https://github.com/user-attachments/assets/244e15fc-3fb7-4067-a2c3-013e189e8d20";
+  const defaultTheme =
+    ThemeOptions.find((i) => i.value === metadata?.theme) ?? ThemeOptions[0];
+  const defaultColor = metadata?.primaryColor ?? themeColor ?? "#01BF7A";
+
+  return { defaultColor, defaultImage, defaultTheme };
+}
+
+function isInitialValues() {
+  const { defaultColor, defaultImage, defaultTheme } = getDefaultValues();
+  if (
+    image === defaultImage &&
+    color === defaultColor &&
+    selectedTheme &&
+    JSON.stringify(selectedTheme) === JSON.stringify(defaultTheme)
+  ) {
+    return true;
+  } else {
+    return false;
+  }
 }
 
 const daoPolicy = Near.view(treasuryDaoID, "get_policy");
@@ -324,15 +346,10 @@ function onSubmitClick() {
 }
 
 function setDefault() {
-  setImage(
-    (metadata?.flagLogo ?? "")?.includes("ipfs")
-      ? metadata.flagLogo
-      : defaultImage
-  );
-  setColor(metadata?.primaryColor ?? themeColor ?? defaultColor);
-  setSelectedTheme(
-    ThemeOptions.find((i) => i.value === metadata?.theme) ?? ThemeOptions[0]
-  );
+  const { defaultColor, defaultImage, defaultTheme } = getDefaultValues();
+  setImage(defaultImage);
+  setColor(defaultColor);
+  setSelectedTheme(defaultTheme);
 }
 
 useEffect(() => {
@@ -363,7 +380,7 @@ return (
         <div className="d-flex flex-column gap-4 px-3 py-1">
           <div class="d-flex gap-3 align-items-center flex-wrap flex-md-nowrap">
             <img
-              src={image ? image : defaultImage}
+              src={image ? image : getDefaultValues().defaultImage}
               height={100}
               width={100}
               className="object-cover rounded-3"
@@ -440,7 +457,8 @@ return (
                 },
                 label: "Cancel",
                 onClick: setDefault,
-                disabled: !hasCreatePermission || isTxnCreated,
+                disabled:
+                  isInitialValues() || !hasCreatePermission || isTxnCreated,
               }}
             />
             <Widget
@@ -453,13 +471,21 @@ return (
                       classNames: { root: "theme-btn" },
                       label: "Submit Request",
                       loading: isTxnCreated,
-                      disabled: !hasCreatePermission || error || isTxnCreated,
+                      disabled:
+                        isInitialValues() ||
+                        !hasCreatePermission ||
+                        error ||
+                        isTxnCreated,
                     }}
                   />
                 ),
                 checkForDeposit: true,
                 treasuryDaoID,
-                disabled: !hasCreatePermission || error || isTxnCreated,
+                disabled:
+                  isInitialValues() ||
+                  !hasCreatePermission ||
+                  error ||
+                  isTxnCreated,
                 callbackAction: onSubmitClick,
               }}
             />
