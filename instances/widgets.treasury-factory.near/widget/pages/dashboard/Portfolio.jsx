@@ -653,22 +653,40 @@ useEffect(() => {
     const deserialized = deserializeLockupContract(
       new Uint8Array([...lockupState].map((c) => c.charCodeAt(0)))
     );
-    const lockupTimestamp =
-      deserialized.lockup_information.lockup_timestamp.toString();
-    const releaseDuration =
-      deserialized.lockup_information.release_duration.toString();
+    let lockupStartTimestamp = deserialized.lockup_information.lockup_timestamp
+      ? deserialized.lockup_information.lockup_timestamp.toString()
+      : null;
+    let releaseDuration = deserialized.lockup_information.release_duration
+      ? deserialized.lockup_information.release_duration.toString()
+      : null;
     const totalAllocated =
       deserialized.lockup_information.lockup_amount.toString();
     const locked = nearBalances.contractLocked;
+    const transfersTimestamp = deserialized.lockup_information
+      .transfers_information?.transfers_timestamp
+      ? deserialized.lockup_information.transfers_information?.transfers_timestamp.toString()
+      : null;
+
+    if (!lockupStartTimestamp && transfersTimestamp) {
+      lockupStartTimestamp = transfersTimestamp;
+    }
+    let lockupEndTimestamp = Big(lockupStartTimestamp ?? "0")
+      .plus(releaseDuration ?? "0")
+      .toFixed();
+    if (deserialized.vesting_information?.schedule) {
+      lockupStartTimestamp =
+        deserialized.vesting_information?.schedule.start_timestamp.toString();
+      lockupEndTimestamp =
+        deserialized.vesting_information?.schedule.end_timestamp.toString();
+    }
+
     setLockupTotalAllocated(formatNearAmount(totalAllocated));
     setLockupVested(
       formatNearAmount(Big(totalAllocated).minus(locked).toFixed())
     );
     setLockupUnvested(formatNearAmount(locked));
-    setLockupStartDate(convertToDate(lockupTimestamp));
-    setLockupEndDate(
-      convertToDate(Big(lockupTimestamp).plus(releaseDuration).toFixed())
-    );
+    setLockupStartDate(convertToDate(lockupStartTimestamp));
+    setLockupEndDate(convertToDate(lockupEndTimestamp));
   }
 }, [isLockupContract, lockupState, nearBalances]);
 
