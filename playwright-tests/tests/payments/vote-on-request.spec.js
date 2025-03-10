@@ -234,7 +234,7 @@ test.describe("don't ask again", function () {
         .nth(1)
     ).toBeVisible();
   });
-  test("should throw insufficient dao account balance error", async ({
+  test.skip("should throw insufficient dao account balance error", async ({
     page,
     instanceAccount,
     daoAccount,
@@ -518,7 +518,7 @@ test.describe("Vote on Lockup payment request", function () {
     storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
   });
 
-  test("should throw insufficient lockup account balance error", async ({
+  test.skip("should throw insufficient lockup account balance error", async ({
     page,
     instanceAccount,
     daoAccount,

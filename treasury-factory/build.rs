@@ -5,6 +5,7 @@ use std::env;
 use std::fs;
 use std::io::Write;
 use std::path::Path;
+use wat::parse_file as wat2wasm;
 
 fn main() {
     // Change working directory to the directory of the script (similar to process.chdir)
@@ -30,32 +31,62 @@ fn main() {
         .write_all(index_html_base64.as_bytes())
         .expect("Failed to write to output file");
 
-    let web4_wasm_path = "../web4/treasury-web4/target/near/treasury_web4.wasm";
-    if !fs::exists(web4_wasm_path).unwrap() {
-        let build_opts = BuildOpts::builder()
-            .manifest_path("../web4/treasury-web4/Cargo.toml".into())
-            .build();
-        let build_script_opts = BuildScriptOpts::builder().build();
-        let build_opts_extended = BuildOptsExtended::builder()
-            .build_opts(build_opts)
-            .build_script_opts(build_script_opts)
-            .build();
+    let mut min_self_upgrade_contract_wasm = wat2wasm("./min_self_upgrade_contract.wat").unwrap();
 
-        let build_artifact = build(build_opts_extended).expect("Building web4 contract failed");
+    // Remove the name section that is added by wat
+    let data_section = b"\x00\x00\x00\x00\x00\x00\x00\x00XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";
 
-        let web4_wasm = fs::read(build_artifact.path)
-            .expect(format!("Failed to read {}", web4_wasm_path).as_str());
-
-        let web4_wasm_base64 = general_purpose::STANDARD.encode(&web4_wasm);
-
-        let web4_wasm_base64_path =
-            Path::new(env!("CARGO_MANIFEST_DIR")).join("treasury_web4.wasm.base64.txt");
-
-        let mut output_file =
-            fs::File::create(web4_wasm_base64_path).expect("Failed to create output file");
-
-        output_file
-            .write_all(web4_wasm_base64.as_bytes())
-            .expect("Failed to write to output file");
+    if let Some(pos) = min_self_upgrade_contract_wasm
+        .windows(data_section.len())
+        .position(|window| window == data_section)
+    {
+        min_self_upgrade_contract_wasm =
+            min_self_upgrade_contract_wasm[..(pos + data_section.len())].to_vec();
+    } else {
+        panic!("Data section not found in the wasm file");
     }
+
+    // write wasm file to use for inspection if needed
+    let mut min_self_upgrade_wasm_file = fs::File::create(
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("min_self_upgrade_contract.wasm"),
+    )
+    .expect("Failed to create output file");
+    min_self_upgrade_wasm_file
+        .write_all(&min_self_upgrade_contract_wasm)
+        .expect("Unable to write min self upgrade wasm");
+
+    let data_section_offset = min_self_upgrade_contract_wasm.len() - 72;
+
+    let min_self_upgrade_contract_wasm_base64 =
+        general_purpose::STANDARD.encode(&min_self_upgrade_contract_wasm[..data_section_offset]);
+
+    let target_contract_wasm_base64_path =
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("min_self_upgrade_contract.wasm.base64.txt");
+
+    let mut output_file =
+        fs::File::create(target_contract_wasm_base64_path).expect("Failed to create output file");
+
+    output_file
+        .write_all(min_self_upgrade_contract_wasm_base64.as_bytes())
+        .expect("Failed to write to output file");
+
+    let web4_wasm_path = "../web4/treasury-web4/target/near/treasury_web4.wasm";
+    let _web4_wasm = match fs::exists(web4_wasm_path) {
+        Ok(true) => fs::read(web4_wasm_path).unwrap(),
+        Ok(false) => {
+            let build_opts = BuildOpts::builder()
+                .manifest_path("../web4/treasury-web4/Cargo.toml".into())
+                .build();
+            let build_script_opts = BuildScriptOpts::builder().build();
+            let build_opts_extended = BuildOptsExtended::builder()
+                .build_opts(build_opts)
+                .build_script_opts(build_script_opts)
+                .build();
+
+            let build_artifact = build(build_opts_extended).expect("Building web4 contract failed");
+
+            fs::read(build_artifact.path).unwrap()
+        }
+        Err(err) => panic!("Not able to build {}. Error: {}", web4_wasm_path, err),
+    };
 }
