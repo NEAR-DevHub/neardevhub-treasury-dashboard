@@ -74,6 +74,7 @@ return (
         policy,
         transferApproversGroup,
         refreshTableData: fetchProposals,
+        lockupCreated: true,
         ...props,
       }}
     />

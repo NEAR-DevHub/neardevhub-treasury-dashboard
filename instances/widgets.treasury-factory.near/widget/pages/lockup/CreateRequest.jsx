@@ -12,17 +12,26 @@ const { encodeToMarkdown } = VM.require(
 );
 
 const instance = props.instance;
-const { allowLockupStaking, allowLockupCancellation } = VM.require(
+
+const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+const { allowLockupCancellation } = VM.require(
   `${instance}/widget/config.data`
 );
 
-if (!getNearBalances || !instance || typeof isBosGateway !== "function")
+if (
+  !getNearBalances ||
+  !instance ||
+  typeof isBosGateway !== "function" ||
+  !treasuryDaoID
+)
   return <></>;
 
-let balance = getNearBalances(instance);
+let balance = getNearBalances(treasuryDaoID);
+
 balance = balance ? parseFloat(balance.availableParsed) : 0;
 const onCloseCanvas = props.onCloseCanvas ?? (() => {});
 
+console.log("--", balance);
 const Container = styled.div`
   font-size: 14px;
 
@@ -44,24 +53,21 @@ const tokenMapping = {
 };
 
 const MINIMUM_AMOUNT = 4;
-const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 
 const [isTxnCreated, setTxnCreated] = useState(false);
 const [showCancelModal, setShowCancelModal] = useState(false);
 const [showErrorToast, setShowErrorToast] = useState(false);
 const [parsedAmount, setParsedAmount] = useState(0);
 const [isReceiverAccountValid, setIsReceiverAccountValid] = useState(false);
-const [isReceiverRegistered, setReceiverRegister] = useState(false);
 
 const [receiver, setReceiver] = useState(null);
 const [startDate, setStartDate] = useState("");
 const [endDate, setEndDate] = useState("");
 const [amount, setAmount] = useState("");
 const [cliffDate, setCliffDate] = useState("");
-const [allowCancellation, setAllowCancellation] = useState(
-  allowLockupCancellation
-);
-const [allowStaking, setAllowStaking] = useState(allowLockupStaking);
+const [allowCancellation, setAllowCancellation] = useState(false);
+const [allowStaking, setAllowStaking] = useState(false);
+const [amountError, setAmountError] = useState(null);
 
 function formatTimestamp(date) {
   return new Date(date).getTime() * 1000000;
@@ -117,7 +123,7 @@ function onSubmitClick() {
                       : {
                           lockup_duration: "0",
                           owner_account_id: receiver,
-                          whitelist_account_id: "system",
+                          whitelist_account_id: "lockup-no-whitelist.near",
                           ...vestingArgs,
                         }
                   ),
@@ -132,21 +138,6 @@ function onSubmitClick() {
       gas,
     },
   ];
-
-  // if (!isReceiverRegistered) {
-  //   const depositInYocto = Big(0.125).mul(Big(10).pow(24)).toFixed();
-
-  //   calls.push({
-  //     contractName: tokenMapping.NEAR,
-  //     methodName: "storage_deposit",
-  //     args: {
-  //       account_id: receiver,
-  //       registration_only: true,
-  //     },
-  //     gas,
-  //     deposit: depositInYocto,
-  //   });
-  // }
 
   Near.call(calls);
 }
@@ -170,13 +161,6 @@ function isValidAmount() {
 
   return true;
 }
-
-useEffect(() => {
-  if (receiver && isReceiverAccountValid)
-    Near.asyncView(tokenMapping.NEAR, "storage_balance_of", {
-      account_id: receiver,
-    }).then((storage) => setReceiverRegister(!!storage));
-}, [receiver]);
 
 return (
   <Container>
@@ -239,10 +223,24 @@ return (
             class="form-control amount-input"
             placeholder="Enter amount"
             value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            onChange={(e) => {
+              setAmount(e.target.value);
+              if (e.target.value === "") {
+                setAmountError("Amount is required");
+              } else if (e.target.value < MINIMUM_AMOUNT) {
+                setAmountError("Minimum amount is 4 NEAR");
+              } else if (e.target.value > balance) {
+                setAmountError("Insufficient balance");
+              } else {
+                setAmountError(null);
+              }
+            }}
           />
         </div>
-        <div className="d-flex">
+        <div className="d-flex justify-content-between align-items-center">
+          {amountError && (
+            <div className="text-sm text-danger">{amountError}</div>
+          )}
           <span className="text-secondary text-sm">
             Balance: {balance} NEAR
           </span>
@@ -256,6 +254,7 @@ return (
           props={{
             type: "date",
             value: startDate,
+            inputProps: { required: true },
             onChange: (e) => setStartDate(e.target.value),
           }}
         />
@@ -271,6 +270,7 @@ return (
           props={{
             type: "date",
             value: endDate,
+            inputProps: { min: startDate, required: true },
             onChange: (e) => setEndDate(e.target.value),
           }}
         />
@@ -294,7 +294,7 @@ return (
               style={{ width: "38px", height: "24px" }}
               type="checkbox"
               role="switch"
-              disabled={true}
+              disabled={!allowLockupCancellation}
               checked={allowCancellation}
               onChange={(e) => setAllowCancellation(e.target.checked)}
             />
@@ -310,6 +310,7 @@ return (
             props={{
               type: "date",
               value: cliffDate,
+              inputProps: { min: startDate, max: endDate },
               onChange: (e) => setCliffDate(e.target.value),
             }}
           />
@@ -334,7 +335,6 @@ return (
               style={{ width: "38px", height: "24px" }}
               type="checkbox"
               role="switch"
-              disabled={true}
               checked={allowStaking}
               onChange={(e) => setAllowStaking(e.target.checked)}
             />
@@ -366,6 +366,9 @@ return (
               !isValidAmount() ||
               !startDate ||
               !endDate ||
+              new Date(endDate) < new Date(startDate) ||
+              new Date(cliffDate) < new Date(startDate) ||
+              new Date(cliffDate) > new Date(endDate) ||
               isTxnCreated,
             label: "Submit",
             onClick: onSubmitClick,

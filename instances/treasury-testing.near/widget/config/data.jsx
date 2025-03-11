@@ -50,6 +50,5 @@ return {
     </svg>
   ),
   themeColor: "#05a36e",
-  allowLockupStaking: false,
-  allowLockupCancellation: false,
+  allowLockupCancellation: true,
 };

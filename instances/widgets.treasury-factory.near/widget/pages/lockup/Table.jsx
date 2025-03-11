@@ -13,6 +13,7 @@ const highlightProposalId =
   props.highlightProposalId === 0
     ? parseInt(props.highlightProposalId)
     : null;
+const lockupCreated = props.lockupCreated;
 
 const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
@@ -271,7 +272,18 @@ const ProposalsComponent = ({ item }) => {
           />
         </td>
       )}
-      <td className={isVisible("Receiver account")}>{args.owner_account_id}</td>
+      <td className={isVisible("Receiver account")}>
+        {lockupCreated ? (
+          <a
+            href={`https://near.github.io/account-lookup/#${args.owner_account_id}`}
+          >
+            {args.owner_account_id}
+            <i className="bi bi-box-arrow-up-right"></i>
+          </a>
+        ) : (
+          args.owner_account_id
+        )}
+      </td>
       <td className={isVisible("Token")}>
         <Widget
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenIcon`}
@@ -316,7 +328,7 @@ const ProposalsComponent = ({ item }) => {
         {!!vestingSchedule ? "Yes" : "No"}
       </td>
       <td className={isVisible("Allow staking")}>
-        {args.whitelist_account_id === "system" ? "No" : "Yes"}
+        {args.whitelist_account_id === "lockup-no-whitelist.near" ? "No" : "Yes"}
       </td>
       <td className={isVisible("Required votes") + " text-center"}>
         {requiredVotes ?? "-"}
