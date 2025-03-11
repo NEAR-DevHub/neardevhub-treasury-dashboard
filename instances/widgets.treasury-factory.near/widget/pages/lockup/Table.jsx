@@ -275,6 +275,7 @@ const ProposalsComponent = ({ item }) => {
       <td className={isVisible("Receiver account")}>
         {lockupCreated ? (
           <a
+            target="_blank"
             href={`https://near.github.io/account-lookup/#${args.owner_account_id}`}
           >
             {args.owner_account_id}
@@ -328,7 +329,9 @@ const ProposalsComponent = ({ item }) => {
         {!!vestingSchedule ? "Yes" : "No"}
       </td>
       <td className={isVisible("Allow staking")}>
-        {args.whitelist_account_id === "lockup-no-whitelist.near" ? "No" : "Yes"}
+        {args.whitelist_account_id === "lockup-no-whitelist.near"
+          ? "No"
+          : "Yes"}
       </td>
       <td className={isVisible("Required votes") + " text-center"}>
         {requiredVotes ?? "-"}
