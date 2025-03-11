@@ -26,7 +26,10 @@ async function voteOnProposal({
   vote,
   isMultiVote = false,
 }) {
-  const swapProposal = { ...SwapProposalData };
+  const swapProposal = {
+    ...SwapProposalData,
+    submission_time: CurrentTimestampInNanoseconds,
+  };
   let lastProposalId = swapProposal.id;
   let isTransactionCompleted = false;
   const contractId = daoAccount;
