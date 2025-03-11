@@ -26,7 +26,7 @@ const [isTxnCreated, setTxnCreated] = useState(false);
 const [lastProposalId, setLastProposalId] = useState(null);
 const [showDeleteModal, setShowDeleteModal] = useState(false);
 const [showCancelModal, setShowCancelModal] = useState(false);
-const [memberAlreadyExists, setMemberAlreadyExists] = useState(false);
+const [memberAlreadyExistRoles, setMemberAlreadyExistRoles] = useState(null);
 const [showErrorToast, setShowErrorToast] = useState(false);
 
 const daoPolicy =
@@ -79,6 +79,17 @@ useEffect(() => {
     };
   }
 }, [isTxnCreated, lastProposalId]);
+
+function isInitialValues() {
+  if (
+    (selectedMember?.member === username || memberAlreadyExistRoles) &&
+    JSON.stringify((roles ?? [])?.map((i) => i.value)) ===
+      JSON.stringify(selectedMember?.roles ?? memberAlreadyExistRoles ?? "")
+  ) {
+    return true;
+  }
+  return false;
+}
 
 function updateDaoPolicy(rolesMap) {
   const updatedPolicy = { ...daoPolicy };
@@ -207,9 +218,14 @@ useEffect(() => {
     return;
   }
   const timeoutId = setTimeout(() => {
-    setMemberAlreadyExists(
-      daoPolicy?.roles?.some((role) => role?.kind?.Group?.includes(username))
-    );
+    const roleNames = daoPolicy?.roles
+      ?.filter((role) => role?.kind?.Group?.includes(username)) // Filter roles containing the username
+      .map((role) => role.name); // Extract the role names
+    const memberExists = roleNames.length > 0;
+    if (memberExists) {
+      setRoles(roleNames);
+    }
+    setMemberAlreadyExistRoles(memberExists ? roleNames : null);
   }, 500);
 
   return () => clearTimeout(timeoutId);
@@ -253,8 +269,10 @@ return (
           allowNonExistentImplicit: false,
         }}
       />
-      {!selectedMember && memberAlreadyExists && (
-        <div className="text-red text-sm">This user is already a member.</div>
+      {!selectedMember && memberAlreadyExistRoles && (
+        <div className="text-red text-sm mt-1">
+          This user is already a member.
+        </div>
       )}
     </div>
     <div className="d-flex flex-column gap-1">
@@ -271,7 +289,7 @@ return (
 
     <div className="d-flex gap-3 align-items-center mt-2 justify-content-between">
       <div>
-        {(selectedMember || memberAlreadyExists) && !isTreasuryFactory && (
+        {(selectedMember || memberAlreadyExistRoles) && !isTreasuryFactory && (
           <Widget
             src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
             props={{
@@ -313,7 +331,7 @@ return (
             onClick: () => {
               setShowCancelModal(true);
             },
-            disabled: isTxnCreated,
+            disabled: isInitialValues() || isTxnCreated,
           }}
         />
 
@@ -322,7 +340,11 @@ return (
           props={{
             classNames: { root: "theme-btn" },
             disabled:
-              !username || !roles?.length || isTxnCreated || !isUsernameValid,
+              isInitialValues() ||
+              !username ||
+              !roles?.length ||
+              isTxnCreated ||
+              !isUsernameValid,
             label: "Submit",
             onClick: onSubmitClick,
             loading: isTxnCreated,
