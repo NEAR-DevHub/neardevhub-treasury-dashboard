@@ -52,7 +52,7 @@ const tokenMapping = {
   USDC: "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
 };
 
-const MINIMUM_AMOUNT = 4;
+const MINIMUM_AMOUNT = 3.5;
 
 const [isTxnCreated, setTxnCreated] = useState(false);
 const [showCancelModal, setShowCancelModal] = useState(false);
@@ -68,6 +68,7 @@ const [cliffDate, setCliffDate] = useState("");
 const [allowCancellation, setAllowCancellation] = useState(false);
 const [allowStaking, setAllowStaking] = useState(false);
 const [amountError, setAmountError] = useState(null);
+const [lastProposalId, setLastProposalId] = useState(null);
 
 function formatTimestamp(date) {
   return new Date(date).getTime() * 1000000;
@@ -154,13 +155,56 @@ function isValidAmount() {
   if (
     isNaN(amount) ||
     amount === "" ||
-    parseInt(amount) > balance ||
-    parseInt(amount) < MINIMUM_AMOUNT
+    parseFloat(amount) > balance ||
+    parseFloat(amount) < MINIMUM_AMOUNT
   )
     return false;
 
   return true;
 }
+
+function getLastProposalId() {
+  return Near.asyncView(treasuryDaoID, "get_last_proposal_id").then(
+    (result) => result
+  );
+}
+
+useEffect(() => {
+  getLastProposalId().then((i) => setLastProposalId(i));
+}, []);
+
+// close canvas after proposal is submitted
+useEffect(() => {
+  if (isTxnCreated) {
+    let checkTxnTimeout = null;
+    let errorTimeout = null;
+    const checkForNewProposal = () => {
+      getLastProposalId().then((id) => {
+        if (lastProposalId !== id) {
+          cleanInputs();
+          onCloseCanvas();
+          clearTimeout(errorTimeout);
+          refreshData();
+          setTxnCreated(false);
+        } else {
+          checkTxnTimeout = setTimeout(() => checkForNewProposal(), 1000);
+        }
+      });
+    };
+    checkForNewProposal();
+    // if in 20 seconds there is no change, show error condition
+    errorTimeout = setTimeout(() => {
+      setShowErrorToast(true);
+      setTxnCreated(false);
+      clearTimeout(checkTxnTimeout);
+    }, 20000);
+
+    return () => {
+      clearTimeout(checkTxnTimeout);
+      clearTimeout(errorTimeout);
+    };
+  }
+}, [isTxnCreated]);
 
 return (
   <Container>

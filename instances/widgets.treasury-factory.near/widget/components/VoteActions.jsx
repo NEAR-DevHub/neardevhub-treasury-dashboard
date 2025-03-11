@@ -198,7 +198,7 @@ return (
         />
       </div>
     ) : (
-      <div className="d-flex gap-2 align-items-center justify-content-end">
+      <div className="d-flex gap-2 align-items-center justify-content-start">
         {!isReadyToBeWithdrawn ? (
           <div className="text-center fw-semi-bold">
             Voting is not available before unstaking release{" "}

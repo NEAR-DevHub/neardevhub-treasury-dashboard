@@ -17,10 +17,6 @@ return {
       title: "Settings",
       href: "?page=settings",
     },
-    {
-      title: "Lockup",
-      href: "?page=lockup",
-    },
   ],
   treasuryDaoID: "${REPL_TREASURY}",
   showProposalSelection: false,

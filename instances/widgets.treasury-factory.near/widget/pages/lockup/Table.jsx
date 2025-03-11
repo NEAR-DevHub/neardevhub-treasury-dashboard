@@ -154,10 +154,10 @@ const TooltipContent = ({ title, summary }) => {
 const columns = [
   { title: "#", show: true },
   { title: "Created Date", show: true },
-  { title: "Status", show: !isPendingRequests },
+  { title: "Status", show: !isPendingRequests, className: "text-center" },
   { title: "Receiver account", show: true },
-  { title: "Token", show: true },
-  { title: "Amount", show: true },
+  { title: "Token", show: true, className: "text-center" },
+  { title: "Amount", show: true, className: "text-right" },
   { title: "Start date", show: true },
   { title: "End date", show: true },
   { title: "Cliff date", show: true },
@@ -247,7 +247,7 @@ const VoteSuccessToast = () => {
 };
 
 const formatTimestamp = (timestamp) => Math.floor(timestamp / 1e6);
-console.log(hasVotingPermission || hasDeletePermission);
+
 const ProposalsComponent = ({ item }) => {
   const proposalId = parseInt(item.id, 10);
   const args = decodeBase64(item.kind.FunctionCall.actions[0].args);
@@ -265,7 +265,7 @@ const ProposalsComponent = ({ item }) => {
         />
       </td>
       {!isPendingRequests && (
-        <td>
+        <td className={isVisible("Status") + " text-center"}>
           <Widget
             src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.HistoryStatus`}
             props={{ instance, isVoteStatus: false, status: item.status }}
@@ -273,7 +273,7 @@ const ProposalsComponent = ({ item }) => {
         </td>
       )}
       <td className={isVisible("Receiver account")}>
-        {lockupCreated ? (
+        {lockupCreated && item.status === "Approved" ? (
           <a
             target="_blank"
             href={`https://near.github.io/account-lookup/#${args.owner_account_id}`}
@@ -285,7 +285,7 @@ const ProposalsComponent = ({ item }) => {
           args.owner_account_id
         )}
       </td>
-      <td className={isVisible("Token")}>
+      <td className={isVisible("Token") + " text-center"}>
         <Widget
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenIcon`}
         />
@@ -419,7 +419,10 @@ return (
             <thead>
               <tr className="text-secondary">
                 {columns.map((column) => (
-                  <td key={column.title} className={isVisible(column.title)}>
+                  <td
+                    key={column.title}
+                    className={`${column.className} ${isVisible(column.title)}`}
+                  >
                     {column.title}
                   </td>
                 ))}

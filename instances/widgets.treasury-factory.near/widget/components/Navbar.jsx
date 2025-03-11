@@ -36,6 +36,18 @@ useEffect(() => {
     //   updatedNavbarLinks.push(assetExchangeLink);
     // }
 
+    const settingsIndex = updatedNavbarLinks.findIndex(
+      (link) => link.title === "Settings"
+    );
+    const lockupLink = {
+      title: "Lockup",
+      href: "?page=lockup",
+    };
+
+    if (settingsIndex !== -1)
+      updatedNavbarLinks.splice(settingsIndex, 0, lockupLink);
+    else updatedNavbarLinks.push(lockupLink);
+
     setNavbarWithAssetExchange(updatedNavbarLinks);
   }
 }, [navbarLinks]);
