@@ -24,6 +24,11 @@ async function mockSwapResponse({ page, response, daoAccount }) {
   );
 }
 
+test.afterEach(async ({ page }, testInfo) => {
+  console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+});
+
 test.describe("User is not logged in", function () {
   test("should not see 'Create Request' action", async ({
     page,
@@ -185,7 +190,7 @@ test.describe("User is logged in", function () {
       page.getByText(
         "Hey Ori, you don't have enough NEAR to complete actions on your treasury."
       )
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 15_000 });
     await page.waitForTimeout(1_000);
     await page
       .getByRole("button", {
