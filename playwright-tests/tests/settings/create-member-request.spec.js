@@ -389,7 +389,7 @@ test.describe("User is logged in", function () {
 
   test("adding existing member to form should show warning", async ({
     page,
-    instanceAccount
+    instanceAccount,
   }) => {
     test.setTimeout(120_000);
     const hasNewPolicy = instanceAccount.includes("testing");
