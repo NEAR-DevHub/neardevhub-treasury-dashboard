@@ -26,7 +26,10 @@ async function voteOnProposal({
   vote,
   isMultiVote = false,
 }) {
-  const swapProposal = { ...SwapProposalData };
+  const swapProposal = {
+    ...SwapProposalData,
+    submission_time: CurrentTimestampInNanoseconds,
+  };
   let lastProposalId = swapProposal.id;
   let isTransactionCompleted = false;
   const contractId = daoAccount;
@@ -304,7 +307,7 @@ test.describe("don't ask again", function () {
     ).toBeVisible();
   });
 
-  test("should throw insufficient DAO account balance error", async ({
+  test.skip("should throw insufficient DAO account balance error", async ({
     page,
     daoAccount,
     instanceAccount,

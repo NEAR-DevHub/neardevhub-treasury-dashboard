@@ -43,28 +43,29 @@ const [isReadyToBeWithdrawn, setIsReadyToBeWithdrawn] = useState(true);
 const [showConfirmModal, setConfirmModal] = useState(null);
 const [showErrorToast, setShowErrorToast] = useState(false);
 
-useEffect(() => {
-  if (!avoidCheckForBalance) {
-    let parsedAmount = currentAmount;
-    const currentContractMetadata = tokensBalance.find(
-      (i) => i.contract === currentContract
-    );
-    if (isHumanReadableCurrentAmount) {
-      parsedAmount = Big(parsedAmount ?? "0")
-        .mul(Big(10).pow(currentContractMetadata?.ft_meta?.decimals ?? 1))
-        .toFixed();
-    }
-    setInsufficientBal(
-      Big(currentContractMetadata?.amount ?? "0").lt(Big(parsedAmount))
-    );
-  }
-}, [
-  tokensBalance,
-  currentAmount,
-  currentContract,
-  avoidCheckForBalance,
-  isHumanReadableCurrentAmount,
-]);
+// comment the check for balance to unblock user
+// useEffect(() => {
+//   if (!avoidCheckForBalance) {
+//     let parsedAmount = currentAmount;
+//     const currentContractMetadata = tokensBalance.find(
+//       (i) => i.contract === currentContract
+//     );
+//     if (isHumanReadableCurrentAmount) {
+//       parsedAmount = Big(parsedAmount ?? "0")
+//         .mul(Big(10).pow(currentContractMetadata?.ft_meta?.decimals ?? 1))
+//         .toFixed();
+//     }
+//     setInsufficientBal(
+//       Big(currentContractMetadata?.amount ?? "0").lt(Big(parsedAmount))
+//     );
+//   }
+// }, [
+//   tokensBalance,
+//   currentAmount,
+//   currentContract,
+//   avoidCheckForBalance,
+//   isHumanReadableCurrentAmount,
+// ]);
 
 // if it's a withdraw request, check if amount is ready to be withdrawn
 useEffect(() => {
