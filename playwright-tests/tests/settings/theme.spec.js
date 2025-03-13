@@ -95,7 +95,6 @@ test.describe.parallel("User logged in with different roles", function () {
 
         if (hasAllRole) {
           await expect(colorInput).toBeEnabled();
-          await expect(submitButton).toBeEnabled();
         } else {
           await expect(colorInput).toBeDisabled();
           await expect(submitButton).toBeDisabled({ timeout: 20_000 });
@@ -131,6 +130,8 @@ test.describe("User is logged in", function () {
         "Hey Ori, you don't have enough NEAR to complete actions on your treasury."
       )
     ).toBeVisible();
+    const colorInput = page.getByRole("textbox").nth(1);
+    await colorInput.fill("#000");
     await page
       .getByText("Submit Request", {
         exact: true,
@@ -229,6 +230,8 @@ test.describe("User is logged in", function () {
     page,
   }) => {
     test.setTimeout(100_000);
+    const colorInput = page.getByRole("textbox").nth(1);
+    await colorInput.fill("#000");
     const submitBtn = page.getByRole("button", { name: "Submit Request" });
     await submitBtn.click();
     const loader = page.getByText("Awaiting transaction confirmation...");
@@ -241,5 +244,31 @@ test.describe("User is logged in", function () {
       .click();
     await expect(loader).toBeHidden();
     await expect(submitBtn).toBeEnabled();
+  });
+
+  test("should toggle action buttons based on form changes", async ({
+    page,
+  }) => {
+    test.setTimeout(150_000);
+
+    // Reference action buttons
+    const submitRequestButton = page.getByText("Submit Request");
+    const cancelButton = page.getByRole("button", { name: "Cancel" });
+
+    // Initially, both buttons should be disabled
+    await expect(submitRequestButton).toBeDisabled();
+    await expect(cancelButton).toBeDisabled();
+
+    // Changing color input should enable the buttons
+    const colorInput = page.getByRole("textbox").nth(1);
+    await colorInput.fill("#000");
+
+    await expect(submitRequestButton).toBeEnabled();
+    await expect(cancelButton).toBeEnabled();
+
+    // Clicking the cancel button should reset the form and disable both buttons
+    await cancelButton.click();
+    await expect(submitRequestButton).toBeDisabled();
+    await expect(cancelButton).toBeDisabled();
   });
 });

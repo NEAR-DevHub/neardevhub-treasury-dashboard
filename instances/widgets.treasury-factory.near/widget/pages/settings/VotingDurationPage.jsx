@@ -303,6 +303,10 @@ const changeDurationDays = (newDurationDays) => {
   setDurationDays(newDurationDays);
 };
 
+function isInitialValues() {
+  return durationDays === currentDurationDays;
+}
+
 const showImpactedRequests =
   proposalsThatWillExpire.length > 0 || proposalsThatWillBeActive.length > 0;
 
@@ -481,7 +485,7 @@ return (
               },
               label: "Cancel",
               onClick: cancelChangeRequest,
-              disabled: durationDays === currentDurationDays || isTxnCreated,
+              disabled: isInitialValues() || isTxnCreated,
             }}
           />
           <Widget
@@ -497,7 +501,7 @@ return (
                     label: "Submit Request",
                     loading: showLoader || isTxnCreated,
                     disabled:
-                      durationDays === currentDurationDays ||
+                      isInitialValues() ||
                       showLoader ||
                       !hasCreatePermission ||
                       isTxnCreated,
@@ -506,7 +510,7 @@ return (
               ),
               checkForDeposit: true,
               disabled:
-                durationDays === currentDurationDays ||
+                isInitialValues() ||
                 showLoader ||
                 !hasCreatePermission ||
                 isTxnCreated,

@@ -410,6 +410,18 @@ const Table = ({ currentGroup, newGroup }) => {
   );
 };
 
+function isInitialValues() {
+  if (
+    selectedGroup &&
+    JSON.stringify(selectedVoteOption) ===
+      JSON.stringify(selectedGroup.isRatio ? options[1] : options[0]) &&
+    selectedVoteValue === parseInt(selectedGroup.threshold)
+  ) {
+    return true;
+  }
+  return false;
+}
+
 const requiredVotes = selectedGroup
   ? computeRequiredVotes(
       selectedGroup,
@@ -624,7 +636,8 @@ return (
                     onClick: () => {
                       resetForm();
                     },
-                    disabled: isTxnCreated || !hasCreatePermission,
+                    disabled:
+                      isInitialValues() || isTxnCreated || !hasCreatePermission,
                   }}
                 />
                 <Widget
@@ -636,6 +649,7 @@ return (
                         props={{
                           classNames: { root: "theme-btn" },
                           disabled:
+                            isInitialValues() ||
                             !selectedVoteValue ||
                             valueError ||
                             !hasCreatePermission ||
@@ -647,6 +661,7 @@ return (
                     ),
                     checkForDeposit: true,
                     disabled:
+                      isInitialValues() ||
                       !selectedVoteValue ||
                       valueError ||
                       !hasCreatePermission ||
