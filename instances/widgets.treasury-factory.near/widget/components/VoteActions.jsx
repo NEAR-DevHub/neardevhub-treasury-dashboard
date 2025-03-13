@@ -3,6 +3,10 @@ if (!instance) {
   return <></>;
 }
 
+const { Modal, ModalContent, ModalHeader, ModalFooter } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.modal"
+);
+
 const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 const { TransactionLoader } = VM.require(
   `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TransactionLoader`
@@ -11,7 +15,7 @@ const { TransactionLoader } = VM.require(
 const votes = props.votes ?? {};
 const proposalId = props.proposalId;
 const accountId = context.accountId;
-const tokensBalance = props.tokensBalance ?? [];
+const nearBalance = props.nearBalance ?? "0";
 const requiredVotes = props.requiredVotes;
 const checkProposalStatus = props.checkProposalStatus;
 const currentAmount = props.currentAmount ?? "0";
@@ -29,6 +33,9 @@ const isHumanReadableCurrentAmount = props.isHumanReadableCurrentAmount;
 const alreadyVoted = Object.keys(votes).includes(accountId);
 const userVote = votes[accountId];
 
+const isNEAR =
+  currentContract === "" || currentContract.toLowerCase() === "near";
+
 const actions = {
   APPROVE: "VoteApprove",
   REJECT: "VoteReject",
@@ -43,29 +50,63 @@ const [isReadyToBeWithdrawn, setIsReadyToBeWithdrawn] = useState(true);
 const [showConfirmModal, setConfirmModal] = useState(null);
 const [showErrorToast, setShowErrorToast] = useState(false);
 
-// comment the check for balance to unblock user
-// useEffect(() => {
-//   if (!avoidCheckForBalance) {
-//     let parsedAmount = currentAmount;
-//     const currentContractMetadata = tokensBalance.find(
-//       (i) => i.contract === currentContract
-//     );
-//     if (isHumanReadableCurrentAmount) {
-//       parsedAmount = Big(parsedAmount ?? "0")
-//         .mul(Big(10).pow(currentContractMetadata?.ft_meta?.decimals ?? 1))
-//         .toFixed();
-//     }
-//     setInsufficientBal(
-//       Big(currentContractMetadata?.amount ?? "0").lt(Big(parsedAmount))
-//     );
-//   }
-// }, [
-//   tokensBalance,
-//   currentAmount,
-//   currentContract,
-//   avoidCheckForBalance,
-//   isHumanReadableCurrentAmount,
-// ]);
+const userBalance = isNEAR
+  ? nearBalance
+  : useCache(
+      () =>
+        asyncFetch(`${REPL_RPC_URL}`, {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            id: "dontcare",
+            method: "query",
+            params: {
+              request_type: "call_function",
+              account_id: currentContract,
+              finality: "final",
+              method_name: "ft_balance_of",
+              args_base64: btoa(JSON.stringify({ account_id: treasuryDaoID })),
+            },
+          }),
+        }).then((res) => {
+          return res?.body?.result?.result
+            .map((c) => String.fromCharCode(c))
+            .join("")
+            .replace(/\"/g, "");
+        }),
+      currentContract + "-" + treasuryDaoID,
+      { subscribe: false }
+    );
+
+useEffect(() => {
+  if (avoidCheckForBalance || !userBalance) return;
+
+  let amount = Big(currentAmount ?? 0);
+
+  if (isHumanReadableCurrentAmount) {
+    if (isNEAR) {
+      amount = amount.mul(Big(10).pow(24));
+      setInsufficientBal(Big(userBalance ?? "0").lt(amount.toFixed()));
+    } else {
+      Near.asyncView(currentContract, "ft_metadata", {}).then((ftMetadata) => {
+        amount = amount.mul(Big(10).pow(ftMetadata.decimals));
+        setInsufficientBal(Big(userBalance ?? "0").lt(amount.toFixed()));
+      });
+    }
+  } else {
+    setInsufficientBal(Big(userBalance ?? "0").lt(amount.toFixed()));
+  }
+}, [
+  userBalance,
+  currentAmount,
+  currentContract,
+  avoidCheckForBalance,
+  isHumanReadableCurrentAmount,
+]);
 
 // if it's a withdraw request, check if amount is ready to be withdrawn
 useEffect(() => {
@@ -132,30 +173,73 @@ const Container = styled.div`
   }
 `;
 
-useEffect(() => {
-  if (showWarning) {
-    const timer = setTimeout(() => setShowWarning(false), 5000);
-    return () => clearTimeout(timer);
-  }
-}, [showWarning]);
-
 const InsufficientBalanceWarning = () => {
   return showWarning ? (
-    <div class="toast-container position-fixed bottom-0 end-0 p-3">
-      <div className={`toast ${showWarning ? "show" : ""}`}>
-        <div class="toast-header px-2">
-          <strong class="me-auto">Just Now</strong>
+    <Modal>
+      <ModalHeader>
+        <div className="d-flex align-items-center justify-content-between mb-2">
+          <div className="d-flex gap-3">
+            <i class="bi bi-exclamation-triangle warning-icon h4 mb-0"></i>
+            Insufficient Balance
+          </div>
           <i
-            class="bi bi-x-lg h6 mb-0 cursor-pointer"
+            className="bi bi-x-lg h4 mb-0 cursor-pointer"
             onClick={() => setShowWarning(false)}
           ></i>
         </div>
-        <div class="toast-body">
-          The request cannot be approved because the treasury balance is
-          insufficient to cover the payment.
+      </ModalHeader>
+      <ModalContent>
+        Your current balance is not enough to complete this transaction.
+        <div className="d-flex pb-1 mt-2 gap-1 align-items-center">
+          • Transaction amount:
+          <Widget
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
+            props={{
+              instance,
+              ...(isHumanReadableCurrentAmount
+                ? { amountWithDecimals: currentAmount }
+                : { amountWithoutDecimals: currentAmount }),
+              address: currentContract,
+            }}
+          />
         </div>
-      </div>
-    </div>
+        <div className="d-flex gap-1 align-items-center">
+          • Your current balance:
+          <Widget
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
+            props={{
+              instance,
+              amountWithoutDecimals: userBalance,
+              address: currentContract,
+            }}
+          />
+        </div>
+      </ModalContent>
+      <ModalFooter>
+        <Widget
+          src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
+          props={{
+            classNames: {
+              root: "btn btn-outline-secondary shadow-none no-transparent",
+            },
+            label: "Cancel",
+            onClick: () => setShowWarning(false),
+          }}
+        />
+
+        <Widget
+          src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
+          props={{
+            classNames: { root: "theme-btn" },
+            label: "Proceed Anyway",
+            onClick: () => {
+              setShowWarning(false);
+              setConfirmModal(true);
+            },
+          }}
+        />
+      </ModalFooter>
+    </Modal>
   ) : null;
 };
 
@@ -240,10 +324,10 @@ return (
                   treasuryDaoID,
                   disabled: isTxnCreated,
                   callbackAction: () => {
+                    setVote(actions.APPROVE);
                     if (isInsufficientBalance) {
                       setShowWarning(true);
                     } else {
-                      setVote(actions.APPROVE);
                       setConfirmModal(true);
                     }
                   },
