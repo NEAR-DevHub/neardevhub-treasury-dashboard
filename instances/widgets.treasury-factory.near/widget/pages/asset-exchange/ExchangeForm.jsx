@@ -23,6 +23,7 @@ const primaryColor = metadata?.primaryColor
   : themeColor;
 
 const colors = getAllColorsAsObject(isDarkTheme, primaryColor);
+const nearblocksKey = "${REPL_NEARBLOCKS_KEY}";
 
 const code = `
     <!DOCTYPE html>
@@ -310,7 +311,6 @@ const code = `
             let transactions = []
             let tokens = [];     
             let swapAPI = ""; 
-            let tokenExchangePrices = [];
     
             function checkSubmitDisable() {
                 document.getElementById("submitBtn").disabled = !transactions?.length;
@@ -613,16 +613,11 @@ const code = `
             function calculateAndDisplayRateDifference(
                 amountIn,
                 tokenOutAmount,
-                tokenInContract,
-                tokenOutContract,
+                tokenInPrice,
+                tokenOutPrice,
               ) {
                 var exchangeRateInfo = document.getElementById("exchange-rate-info");
                 var percentageElement = document.getElementById("exchange-rate-percentage");
-              
-                // Find reference prices for both tokenIn and tokenOut
-                var tokenInPrice = tokenExchangePrices?.[tokenInContract]?.price;
-              
-                var tokenOutPrice = tokenExchangePrices?.[tokenOutContract]?.price;
               
                 if (!tokenInPrice || !tokenOutPrice) {
                   console.error("Price data missing for one or both tokens.");
@@ -635,9 +630,8 @@ const code = `
               
                 // Calculate percentage difference
                 var percentageDifference =
-                  Math.abs(
-                    (tokenOutAmount - expectedTokenOutAmount) / expectedTokenOutAmount,
-                  ) * 100;
+                    (expectedTokenOutAmount / tokenOutAmount - 1) * 100;
+
               
                 // Update UI
                 percentageElement.textContent = percentageDifference.toFixed(2) + "%";
@@ -673,20 +667,42 @@ const code = `
             
                 fetch(url)
                     .then(response => response.json())
-                    .then(data => {
+                    .then(async (data) => {
                         if (data.error) {
                             throw new Error(data.error);
-                        }                    
-                        var receiveAmountInput = document.getElementById("receive-amount");
-                        receiveAmountInput.value = data.outEstimate;
-                        calculateAndDisplayRateDifference(amount, data.outEstimate, fromToken.id, toToken.id);
-                        transactions = data.transactions
-                        if(transactions.length > 1){
-                            const warningMessage = document.getElementById("warning-message");
-                            warningMessage.style.display = "flex"; 
                         }
-                        checkSubmitDisable()
-                        updateIframeHeight()
+
+                        document.getElementById("receive-amount").value = data.outEstimate;
+
+                        // Fetch token prices in parallel
+                        const headers = {
+                            "Authorization": "Bearer ${nearblocksKey}"
+                        };
+                        
+                        const [tokenInData, tokenOutData] = await Promise.all([
+                            fetch('https://api.nearblocks.io/v1/fts/' + fromToken.id, { headers })
+                                .then(res => res.json())
+                                .catch(() => ({ price: 0 })),
+                        
+                            fetch('https://api.nearblocks.io/v1/fts/' + toToken.id, { headers })
+                                .then(res => res.json())
+                                .catch(() => ({ price: 0 }))
+                        ]);
+                        
+
+                       
+                        const tokenInPrice = parseFloat(tokenInData?.contracts?.[0]?.price) || 0;
+                        const tokenOutPrice = parseFloat(tokenOutData?.contracts?.[0]?.price) || 0;
+                        // Calculate and display rate difference
+                        calculateAndDisplayRateDifference(amount, data.outEstimate, tokenInPrice, tokenOutPrice);
+
+                        transactions = data.transactions;
+                        if (transactions.length > 1) {
+                            document.getElementById("warning-message").style.display = "flex";
+                        }
+
+                        checkSubmitDisable();
+                        updateIframeHeight();
                     })
                     .catch(error => {
                         console.error("Swap API error:", error);
@@ -723,23 +739,11 @@ const code = `
                     window.parent.postMessage({ handler: "onCancel" }, "*");
                 }
             
-    
-                async function fetchTokensPrices() {
-                    try {
-                        var response = await fetch('https://api.ref.finance/list-token-price');
-                        var data = await response.json();
-                        tokenExchangePrices = data;
-                    } catch (error) {
-                        console.error("Error fetching tokens prices:", error);                      
-                    } 
-                }
-                
             window.addEventListener("message", function (event) {
                 whitelistTokenAPI = event.data.whitelistTokenAPI;
                 treasuryDaoID = event.data.treasuryDaoID;
                 swapAPI = event.data.swapAPI
                 fetchTokens();
-                fetchTokensPrices();
             });
         </script>
     
