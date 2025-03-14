@@ -747,6 +747,40 @@ function decodeBase64(encodedArgs) {
   }
 }
 
+function accountToLockup(accountId) {
+  if (!accountId) {
+    return null;
+  }
+  // Compute SHA-256 hash
+  const hash = ethers.utils.sha256(ethers.utils.toUtf8Bytes(accountId));
+
+  // Take the first 40 characters (20 bytes in hex)
+  const truncatedHash = hash.slice(2, 42); // Remove '0x' and take first 40 chars
+  const lockupAccount = `${truncatedHash}.lockup.near`;
+  const resp = fetch(`${REPL_RPC_URL}`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: "dontcare",
+      method: "query",
+      params: {
+        request_type: "view_account",
+        finality: "final",
+        account_id: `${lockupAccount}`,
+      },
+    }),
+  });
+
+  if (resp.body?.result?.amount) {
+    return lockupAccount;
+  }
+  return false;
+}
+
 return {
   getApproversAndThreshold,
   hasPermission,
@@ -768,4 +802,5 @@ return {
   getAllColorsAsCSSVariables,
   getRolesThresholdDescription,
   decodeBase64,
+  accountToLockup,
 };

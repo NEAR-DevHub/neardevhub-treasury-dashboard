@@ -519,10 +519,10 @@ test.describe("Vote on Lockup payment request", function () {
     page,
     instanceAccount,
     daoAccount,
+    lockupContract,
   }) => {
     test.setTimeout(250_000);
-    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
-    if (!instanceConfig.lockupContract) {
+    if (!lockupContract) {
       console.log("no lockup contract found for instance");
       return test.skip();
     }
@@ -550,10 +550,10 @@ test.describe("Vote on Lockup payment request", function () {
     page,
     instanceAccount,
     daoAccount,
+    lockupContract,
   }) => {
     test.setTimeout(250_000);
-    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
-    if (!instanceConfig.lockupContract) {
+    if (!lockupContract) {
       console.log("no lockup contract found for instance");
       return test.skip();
     }

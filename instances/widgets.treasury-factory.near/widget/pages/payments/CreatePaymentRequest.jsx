@@ -10,9 +10,8 @@ const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
 
-const { encodeToMarkdown, LOCKUP_MIN_BALANCE_FOR_STORAGE } = VM.require(
-  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
-);
+const { encodeToMarkdown, LOCKUP_MIN_BALANCE_FOR_STORAGE, accountToLockup } =
+  VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
 
 const onCloseCanvas = props.onCloseCanvas ?? (() => {});
 
@@ -23,25 +22,19 @@ const tokenMapping = {
 };
 
 const instance = props.instance;
-if (!instance) {
+if (!instance || typeof accountToLockup !== "function") {
   return <></>;
 }
 
-const {
-  treasuryDaoID,
-  proposalAPIEndpoint,
-  showProposalSelection,
-  lockupContract,
-} = VM.require(`${instance}/widget/config.data`);
+const { treasuryDaoID, proposalAPIEndpoint, showProposalSelection } =
+  VM.require(`${instance}/widget/config.data`);
+
+const lockupContract = accountToLockup(treasuryDaoID);
 
 const walletOptions = [
   {
     label: treasuryDaoID,
     value: treasuryDaoID,
-  },
-  {
-    label: lockupContract,
-    value: lockupContract,
   },
 ];
 

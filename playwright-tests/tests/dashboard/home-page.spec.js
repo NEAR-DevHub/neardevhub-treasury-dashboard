@@ -167,9 +167,7 @@ test.describe("Lockup portfolio", function () {
 
   test.beforeEach(
     async ({ page, instanceAccount, daoAccount, lockupContract }, testInfo) => {
-      const instanceConfig = await getInstanceConfig({ page, instanceAccount });
-
-      if (!instanceConfig.lockupContract) {
+      if (!lockupContract) {
         console.log("no lockup contract found for instance");
         return test.skip();
       }
@@ -274,8 +272,8 @@ test.describe("Lockup portfolio", function () {
   test("Should show start and end date", async ({ page }) => {
     test.setTimeout(60_000);
     await page.waitForTimeout(5_000);
-    await expect(page.getByText("Started September 26, 2024")).toBeVisible();
-    await expect(page.getByText("End September 27, 2025")).toBeVisible();
+    await expect(page.getByText("Start Date September 26, 2024")).toBeVisible();
+    await expect(page.getByText("End Date September 27, 2025")).toBeVisible();
   });
 
   test("Should show total allocation, vested, unvested amounts", async ({

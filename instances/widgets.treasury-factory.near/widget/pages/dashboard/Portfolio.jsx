@@ -106,6 +106,7 @@ const [displayableTokens, setDisplayableTokens] = useState([]);
 const [hiddenTokens, setHiddenTokens] = useState([]);
 const [lockupStartDate, setLockupStartDate] = useState(null);
 const [lockupEndDate, setLockupEndDate] = useState(null);
+const [lockupCliffDate, setLockupCliffDate] = useState(null);
 const [lockupTotalAllocated, setLockupTotalAllocated] = useState(null);
 const [lockupVested, setLockupVested] = useState(null);
 const [lockupUnvested, setLockupUnvested] = useState(null);
@@ -673,9 +674,12 @@ useEffect(() => {
     let lockupEndTimestamp = Big(lockupStartTimestamp ?? "0")
       .plus(releaseDuration ?? "0")
       .toFixed();
+    let cliffTimestamp = null;
     if (deserialized.vesting_information?.schedule) {
       lockupStartTimestamp =
         deserialized.vesting_information?.schedule.start_timestamp.toString();
+      cliffTimestamp =
+        deserialized.vesting_information?.schedule.cliff_timestamp.toString();
       lockupEndTimestamp =
         deserialized.vesting_information?.schedule.end_timestamp.toString();
     }
@@ -684,6 +688,7 @@ useEffect(() => {
     setLockupVested(
       formatNearAmount(Big(totalAllocated).minus(locked).toFixed())
     );
+    setLockupCliffDate(cliffTimestamp ? convertToDate(cliffTimestamp) : null);
     setLockupUnvested(formatNearAmount(locked));
     setLockupStartDate(convertToDate(lockupStartTimestamp));
     setLockupEndDate(convertToDate(lockupEndTimestamp));
@@ -708,20 +713,30 @@ return (
                 <div className="d-flex flex-column gap-2 px-3 py-2">
                   <div className="border border-1 rounded-3">
                     <LockupRow
-                      label="Started"
+                      label="Start Date"
                       value={lockupStartDate}
                       tooltipInfo="The date when the vesting period for this lockup account began."
                       showExpand={false}
                       noSpaceInEnd={true}
                     />
                     <LockupRow
-                      label="End"
+                      label="End Date"
                       value={lockupEndDate}
                       tooltipInfo="The date when the vesting period for this lockup account will end."
-                      hideBorder={true}
+                      hideBorder={lockupCliffDate ? false : true}
                       showExpand={false}
                       noSpaceInEnd={true}
                     />
+                    {lockupCliffDate && (
+                      <LockupRow
+                        label="Cliff Date"
+                        value={lockupCliffDate}
+                        tooltipInfo="The first date when locked tokens start to unlock. Before this date, you can’t transfer or use the tokens. After the cliff date, tokens may unlock all at once or gradually over time."
+                        hideBorder={true}
+                        showExpand={false}
+                        noSpaceInEnd={true}
+                      />
+                    )}
                   </div>
                   <div className="border border-1 rounded-3">
                     <LockupRow

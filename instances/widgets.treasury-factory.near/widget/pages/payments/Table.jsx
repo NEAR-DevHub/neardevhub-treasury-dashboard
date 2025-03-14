@@ -5,20 +5,24 @@ const {
   getNearBalances,
   decodeProposalDescription,
   formatSubmissionTimeStamp,
+  accountToLockup,
 } = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
 
 const instance = props.instance;
 const policy = props.policy;
-if (!instance) {
+if (!instance || typeof accountToLockup !== "function") {
   return <></>;
 }
 
-const { treasuryDaoID, showKYC, showReferenceProposal, lockupContract } =
-  VM.require(`${instance}/widget/config.data`);
+const { treasuryDaoID, showKYC, showReferenceProposal } = VM.require(
+  `${instance}/widget/config.data`
+);
 
 const { TableSkeleton } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.skeleton"
 );
+
+const lockupContract = accountToLockup(treasuryDaoID);
 
 if (
   !instance ||

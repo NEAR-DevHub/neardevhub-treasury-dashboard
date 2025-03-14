@@ -3,6 +3,7 @@ const {
   LOCKUP_MIN_BALANCE_FOR_STORAGE,
   TooltipText,
   isBosGateway,
+  accountToLockup,
 } = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
 const { NearToken } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Icons"
@@ -20,23 +21,20 @@ const onCloseCanvas = props.onCloseCanvas ?? (() => {});
 if (
   !instance ||
   !LOCKUP_MIN_BALANCE_FOR_STORAGE ||
-  typeof isBosGateway !== "function"
+  typeof isBosGateway !== "function" ||
+  typeof accountToLockup !== "function"
 ) {
   return <></>;
 }
 
-const { treasuryDaoID, lockupContract } = VM.require(
-  `${instance}/widget/config.data`
-);
+const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+
+const lockupContract = accountToLockup(treasuryDaoID);
 
 const walletOptions = [
   {
     label: treasuryDaoID,
     value: treasuryDaoID,
-  },
-  {
-    label: lockupContract,
-    value: lockupContract,
   },
 ];
 const [selectedWallet, setSelectedWallet] = useState(walletOptions[0]);

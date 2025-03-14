@@ -6,7 +6,7 @@ const { readableDate } = VM.require(
   "${REPL_DEVHUB}/widget/core.lib.common"
 ) || { readableDate: () => {} };
 
-const { isBosGateway } = VM.require(
+const { isBosGateway, accountToLockup } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
 
@@ -16,14 +16,20 @@ if (!isBosGateway) {
 
 const instance = props.instance;
 
-const { treasuryDaoID, lockupContract } = VM.require(
-  `${instance}/widget/config.data`
-);
+const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+
+const lockupContract = accountToLockup(treasuryDaoID);
+
 const { TableSkeleton } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.skeleton"
 );
 
-if (!instance || !treasuryDaoID || !TableSkeleton) {
+if (
+  !instance ||
+  !treasuryDaoID ||
+  !TableSkeleton ||
+  typeof accountToLockup !== "function"
+) {
   return <></>;
 }
 
@@ -201,7 +207,8 @@ return (
                     isDeposit && txn.receiver.includes("poolv1.near");
 
                   const isReceived =
-                    txn.receiver === treasuryDaoID || lockupContract;
+                    txn.receiver === treasuryDaoID ||
+                    txn.receiver === lockupContract;
                   if (txn.contract) {
                     const contractMetadata = Near.view(
                       txn.contract,

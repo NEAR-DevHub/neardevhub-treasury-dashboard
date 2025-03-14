@@ -6,6 +6,7 @@ const {
   getNearBalances,
   decodeProposalDescription,
   formatSubmissionTimeStamp,
+  accountToLockup,
 } = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
 const instance = props.instance;
 const policy = props.policy;
@@ -19,14 +20,15 @@ if (
   !TableSkeleton ||
   typeof getNearBalances !== "function" ||
   typeof decodeProposalDescription !== "function" ||
-  typeof formatSubmissionTimeStamp !== "function"
+  typeof formatSubmissionTimeStamp !== "function" ||
+  typeof accountToLockup !== "function"
 ) {
   return <></>;
 }
 
-const { treasuryDaoID, lockupContract } = VM.require(
-  `${instance}/widget/config.data`
-);
+const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+
+const lockupContract = accountToLockup(treasuryDaoID);
 
 const proposals = props.proposals;
 // search for showAfterProposalIdApproved only in pending requests
