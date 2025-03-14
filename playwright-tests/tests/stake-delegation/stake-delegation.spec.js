@@ -962,6 +962,7 @@ test.describe("Withdraw request", function () {
     page,
     daoAccount,
     instanceAccount,
+    lockupContract,
   }) => {
     test.setTimeout(250_000);
     if (lockupContract) {
