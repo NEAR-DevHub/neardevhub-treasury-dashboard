@@ -13,25 +13,23 @@ function changeColumnsVisibility(value) {
   Storage.set("COLUMNS_VISIBILITY", JSON.stringify(value));
 }
 
+const baseColumns = [
+  { title: "Created At", show: true },
+  { title: "Recipient Account", show: true },
+  { title: "Token", show: true },
+  { title: "Amount", show: true },
+  { title: "Start Date", show: true },
+  { title: "End Date", show: true },
+  { title: "Cliff Date", show: true },
+  { title: "Allow Cancellation", show: true },
+  { title: "Allow Staking", show: true },
+  { title: "Required Votes", show: true },
+  { title: "Votes", show: true },
+  { title: "Approvers", show: true },
+];
+
 const [settingsOptions, setSettingsOptions] = useState(
-  columnsVisibility.length
-    ? columnsVisibility
-    : [
-        { title: "Created Date", show: true },
-        { title: "Status", show: !isPendingPage },
-        { title: "Receiver account", show: true },
-        { title: "Token", show: true },
-        { title: "Amount", show: true },
-        { title: "Start date", show: true },
-        { title: "End date", show: true },
-        { title: "Cliff date", show: true },
-        { title: "Allow cancellation", show: true },
-        { title: "Allow staking", show: true },
-        { title: "Required votes", show: true },
-        { title: "Votes", show: isPendingPage },
-        { title: "Approvers", show: true },
-        { title: "Actions", show: isPendingPage },
-      ]
+  columnsVisibility.length ? columnsVisibility : baseColumns
 );
 
 const [isOpen, setIsOpen] = useState(false);

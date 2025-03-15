@@ -272,7 +272,7 @@ return (
               if (e.target.value === "") {
                 setAmountError("Amount is required");
               } else if (e.target.value < MINIMUM_AMOUNT) {
-                setAmountError("Minimum amount is 4 NEAR");
+                setAmountError(`Minimum amount is ${MINIMUM_AMOUNT} NEAR`);
               } else if (e.target.value > balance) {
                 setAmountError("Insufficient balance");
               } else {

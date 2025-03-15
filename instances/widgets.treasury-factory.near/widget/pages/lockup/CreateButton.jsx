@@ -43,64 +43,6 @@ const toggleDropdown = () => {
 };
 
 const CreateBtn = () => {
-  const btnOptions = [
-    {
-      label: "Stake",
-      icon: <StakeIcon />,
-      value: createBtnOption.STAKE,
-      onClick: () => {
-        setShowUnStakeRequest(false);
-        setShowStakeRequest(true);
-        setCreateBtnOpen(false);
-      },
-    },
-  ];
-
-  const DropdowntBtnContainer = styled.div`
-    font-size: 13px;
-    min-width: 150px;
-  
-    .custom-select {
-      position: relative;
-    }
-  
-    .select-header {
-      display: flex;
-      justify-content: space-between;
-      cursor: pointer;
-      border-radius: 5px;
-    }
-  
-    .no-border {
-      border: none !important;
-    }
-  
-    .left {
-      right: 0 !important;
-      left: auto !important;
-    }
-
-    .selected {
-      background-color: var(--grey-04);
-    }
-  
-    .disabled {
-      background-color: #f4f4f4 !important;
-      cursor: not-allowed !important;
-      font-weight: 500;
-      color: #b3b3b3;
-    }
-  
-    .grey {
-      background-color: #818181;
-    }
-  
-    a:hover {
-      text-decoration: none;
-    }
-  }
-  `;
-
   return (
     <div
       className={"btn primary-button d-flex align-items-center"}
@@ -153,7 +95,7 @@ return (
       )}
       <Widget
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.lockup.SettingsDropdown`}
-        props={{ isPendingPage: currentTab.title === "Pending Requests" }}
+        props={{ isPendingPage }}
       />
     </div>
   </div>

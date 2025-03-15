@@ -24,7 +24,7 @@ const { decodeBase64 } = VM.require(
 const { TableSkeleton } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.skeleton"
 );
-const { treasuryDaoID, lockupContract } = VM.require(
+const { treasuryDaoID, lockupContract, allowLockupCancellation } = VM.require(
   `${instance}/widget/config.data`
 );
 
@@ -153,25 +153,29 @@ const TooltipContent = ({ title, summary }) => {
 
 const columns = [
   { title: "#", show: true },
-  { title: "Created Date", show: true },
+  { title: "Created At", show: true },
   { title: "Status", show: !isPendingRequests, className: "text-center" },
-  { title: "Receiver account", show: true },
+  { title: "Recipient Account", show: true },
   { title: "Token", show: true, className: "text-center" },
   { title: "Amount", show: true, className: "text-right" },
-  { title: "Start date", show: true },
-  { title: "End date", show: true },
-  { title: "Cliff date", show: true },
-  { title: "Allow cancellation", show: true },
-  { title: "Allow staking", show: true },
-  { title: "Required votes", show: true },
+  { title: "Start Date", show: true },
+  { title: "End Date", show: true },
+  { title: "Cliff Date", show: allowLockupCancellation },
+  { title: "Allow Cancellation", show: allowLockupCancellation },
+  { title: "Allow Staking", show: true },
+  { title: "Required Votes", show: true },
   { title: "Votes", show: isPendingRequests },
   { title: "Approvers", show: true },
   { title: "Actions", show: isPendingRequests },
 ];
 
 function isVisible(column) {
-  return columns.find((i) => i.title === column)?.show ? "" : "display-none";
+  if (!columnsVisibility.length) return "";
+  return columnsVisibility.find((i) => i.title === column)?.show
+    ? ""
+    : "display-none";
 }
+
 const requiredVotes = transferApproversGroup?.requiredVotes;
 
 const ToastStatusContent = () => {
@@ -258,7 +262,7 @@ const ProposalsComponent = ({ item }) => {
   return (
     <tr>
       <td>{proposalId}</td>
-      <td className={isVisible("Created Date")}>
+      <td className={isVisible("Created At")}>
         <Widget
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
           props={{ timestamp: startTimestamp }}
@@ -272,7 +276,7 @@ const ProposalsComponent = ({ item }) => {
           />
         </td>
       )}
-      <td className={isVisible("Receiver account")}>
+      <td className={isVisible("Recipient Account")}>
         {lockupCreated && item.status === "Approved" ? (
           <a
             target="_blank"
@@ -299,13 +303,13 @@ const ProposalsComponent = ({ item }) => {
           }}
         />
       </td>
-      <td className={isVisible("Start date")}>
+      <td className={isVisible("Start Date")}>
         <Widget
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
           props={{ timestamp: startTimestamp }}
         />
       </td>
-      <td className={isVisible("End date")}>
+      <td className={isVisible("End Date")}>
         <Widget
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
           props={{
@@ -315,25 +319,29 @@ const ProposalsComponent = ({ item }) => {
           }}
         />
       </td>
-      <td className={isVisible("Cliff date")}>
-        {vestingSchedule.cliff_timestamp ? (
-          <Widget
-            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
-            props={{ timestamp: vestingSchedule.cliff_timestamp }}
-          />
-        ) : (
-          "-"
-        )}
-      </td>
-      <td className={isVisible("Allow cancellation")}>
-        {!!vestingSchedule ? "Yes" : "No"}
-      </td>
-      <td className={isVisible("Allow staking")}>
+      {allowLockupCancellation && (
+        <>
+          <td className={isVisible("Cliff Date")}>
+            {vestingSchedule.cliff_timestamp ? (
+              <Widget
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
+                props={{ timestamp: vestingSchedule.cliff_timestamp }}
+              />
+            ) : (
+              "-"
+            )}
+          </td>
+          <td className={isVisible("Allow Cancellation")}>
+            {!!vestingSchedule ? "Yes" : "No"}
+          </td>
+        </>
+      )}
+      <td className={isVisible("Allow Staking")}>
         {args.whitelist_account_id === "lockup-no-whitelist.near"
           ? "No"
           : "Yes"}
       </td>
-      <td className={isVisible("Required votes") + " text-center"}>
+      <td className={isVisible("Required Votes") + " text-center"}>
         {requiredVotes ?? "-"}
       </td>
       {isPendingRequests && (
@@ -418,14 +426,18 @@ return (
           <table className="table">
             <thead>
               <tr className="text-secondary">
-                {columns.map((column) => (
-                  <td
-                    key={column.title}
-                    className={`${column.className} ${isVisible(column.title)}`}
-                  >
-                    {column.title}
-                  </td>
-                ))}
+                {columns
+                  .filter((i) => i.show)
+                  .map((column) => (
+                    <td
+                      key={column.title}
+                      className={`${column.className} ${isVisible(
+                        column.title
+                      )}`}
+                    >
+                      {column.title}
+                    </td>
+                  ))}
               </tr>
             </thead>
 
