@@ -196,13 +196,21 @@ test.describe("Lockup portfolio", function () {
             result: {
               block_hash: "2Dc8Jh8mFU8bKe16hAVcZ3waQhhdfUXwvvnsDP9djN95",
               block_height: 140432800,
-              values: [
-                {
-                  key: "U1RBVEU=",
-                  value:
-                    "GAAAAGluZmluZXguc3B1dG5pay1kYW8ubmVhcgAAAESqcqis2Ly35gEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAADyvmdYcAABAMD2T6eb+BcAfKTy6T+hPRYAFQAAAGxvY2t1cC13aGl0ZWxpc3QubmVhcgEQAAAAcWJpdC5wb29sdjEubmVhcgAAAACIbdT4oNMQ9XoBAAAAAA==",
-                },
-              ],
+              values: testInfo.title.includes("cliff")
+                ? [
+                    {
+                      key: "U1RBVEU=",
+                      value:
+                        "QAAAAGM4MTc5M2QxMzY0MGU0NzY1NTM4ZTczYjA2YWMwZDdkODYwMWVlNjNhYzAzYzkwMzk2MjkyMzQ1NTU4NGYyZDEAAACqiq4bZFT6AgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAfKTy6T+hPRYCAB7YubuEHxgAHti5u4QfGADeBiZCDuAZFQAAAGxvY2t1cC13aGl0ZWxpc3QubmVhcgABDwAAAGZvdW5kYXRpb24ubmVhcg==",
+                    },
+                  ]
+                : [
+                    {
+                      key: "U1RBVEU=",
+                      value:
+                        "GAAAAGluZmluZXguc3B1dG5pay1kYW8ubmVhcgAAAESqcqis2Ly35gEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAADyvmdYcAABAMD2T6eb+BcAfKTy6T+hPRYAFQAAAGxvY2t1cC13aGl0ZWxpc3QubmVhcgEQAAAAcWJpdC5wb29sdjEubmVhcgAAAACIbdT4oNMQ9XoBAAAAAA==",
+                    },
+                  ],
             },
             id: "dontcare",
           };
@@ -274,6 +282,14 @@ test.describe("Lockup portfolio", function () {
     await page.waitForTimeout(5_000);
     await expect(page.getByText("Start Date September 26, 2024")).toBeVisible();
     await expect(page.getByText("End Date September 27, 2025")).toBeVisible();
+  });
+
+  test("Should show start, end and cliff date", async ({ page }) => {
+    test.setTimeout(60_000);
+    await page.waitForTimeout(5_000);
+    await expect(page.getByText("Start Date January 30, 2025")).toBeVisible();
+    await expect(page.getByText("End Date January 31, 2029")).toBeVisible();
+    await expect(page.getByText("Cliff Date January 30, 2025")).toBeVisible();
   });
 
   test("Should show total allocation, vested, unvested amounts", async ({
