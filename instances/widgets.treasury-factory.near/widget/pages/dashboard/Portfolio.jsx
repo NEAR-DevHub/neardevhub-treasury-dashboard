@@ -731,7 +731,7 @@ return (
                       <LockupRow
                         label="Cliff Date"
                         value={lockupCliffDate}
-                        tooltipInfo="The first date when locked tokens start to unlock. Before this date, you can’t transfer or use the tokens. After the cliff date, tokens may unlock all at once or gradually over time."
+                        tooltipInfo="The first date when a portion of the original allocated amount becomes vested according to the vesting schedule. At the cliff date, tokens may unlock all at once or gradually over time. Before the cliff date, you can stake these tokens, but you are unable to use them for any other payments."
                         hideBorder={true}
                         showExpand={false}
                         noSpaceInEnd={true}
