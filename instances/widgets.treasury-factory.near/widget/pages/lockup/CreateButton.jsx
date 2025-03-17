@@ -65,7 +65,7 @@ return (
       props={{
         showCanvas: showStakeRequest,
         onClose: toggleStakePage,
-        title: "Create Lockup",
+        title: "Create Lockup Request",
         children: (
           <Widget
             src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.lockup.CreateRequest`}

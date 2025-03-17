@@ -236,6 +236,7 @@ return (
         <Widget
           src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.AccountInput"
           props={{
+            placeholder: "recipient.near",
             value: receiver,
             onUpdate: setReceiver,
             setParentAccountValid: setIsReceiverAccountValid,
@@ -262,6 +263,7 @@ return (
             <NearToken />
           </span>
           <input
+            data-testid="amount"
             type="number"
             id="amount"
             class="form-control amount-input"
@@ -297,6 +299,7 @@ return (
           src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input"
           props={{
             type: "date",
+            key: "start-date",
             value: startDate,
             inputProps: { required: true },
             onChange: (e) => setStartDate(e.target.value),
@@ -313,6 +316,7 @@ return (
           src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input"
           props={{
             type: "date",
+            key: "end-date",
             value: endDate,
             inputProps: { min: startDate, required: true },
             onChange: (e) => setEndDate(e.target.value),
@@ -334,6 +338,7 @@ return (
           </div>
           <div className="form-check form-switch">
             <input
+              data-testid="allow-cancellation"
               className="form-check-input"
               style={{ width: "38px", height: "24px" }}
               type="checkbox"
@@ -353,6 +358,7 @@ return (
             src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input"
             props={{
               type: "date",
+              key: "cliff-date",
               value: cliffDate,
               inputProps: { min: startDate, max: endDate },
               onChange: (e) => setCliffDate(e.target.value),
@@ -375,6 +381,7 @@ return (
           </div>
           <div className="form-check form-switch">
             <input
+              data-testid="allow-staking"
               className="form-check-input"
               style={{ width: "38px", height: "24px" }}
               type="checkbox"
@@ -394,9 +401,7 @@ return (
               root: "btn btn-outline-secondary shadow-none no-transparent",
             },
             label: "Cancel",
-            onClick: () => {
-              setShowCancelModal(true);
-            },
+            onClick: () => setShowCancelModal(true),
             disabled: isTxnCreated,
           }}
         />
