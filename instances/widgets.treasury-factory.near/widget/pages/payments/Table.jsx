@@ -513,25 +513,12 @@ const ProposalsComponent = () => {
                       hasDeletePermission,
                       hasVotingPermission,
                       proposalCreator: item.proposer,
-                      tokensBalance: isFunctionType
-                        ? [
-                            {
-                              contract: "near",
-                              amount: Big(lockupNearBalances.available).toFixed(
-                                2
-                              ),
-                            },
-                          ]
-                        : [
-                            ...(userFTTokens?.body?.fts ?? []),
-                            {
-                              contract: "near",
-                              amount: nearBalances.available,
-                            },
-                          ],
+                      nearBalance: isFunctionType
+                        ? Big(lockupNearBalances.available).toFixed(2)
+                        : nearBalances.available,
+
                       currentAmount: args.amount,
-                      currentContract:
-                        args.token_id === "" ? "near" : args.token_id,
+                      currentContract: args.token_id,
                       requiredVotes,
                       checkProposalStatus: () => checkProposalStatus(item.id),
                     }}

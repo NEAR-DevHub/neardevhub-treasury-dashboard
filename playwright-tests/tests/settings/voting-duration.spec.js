@@ -517,4 +517,32 @@ test.describe("User is logged in", function () {
     await expect(loader).toBeHidden();
     await expect(submitBtn).toBeEnabled();
   });
+
+  test("should toggle action buttons based on form changes", async ({
+    page,
+    instanceAccount,
+  }) => {
+    test.setTimeout(150_000);
+    await updateDaoPolicyMembers({ instanceAccount, page });
+    await navigateToVotingDurationPage({ page, instanceAccount });
+    // Reference action buttons
+    const submitRequestButton = page.getByText("Submit Request");
+    const cancelButton = page.getByRole("button", { name: "Cancel" });
+
+    // Initially, both buttons should be disabled
+    await expect(submitRequestButton).toBeDisabled();
+    await expect(cancelButton).toBeDisabled();
+
+    // Changing duration input should enable the buttons
+    const durationInput = page.getByPlaceholder("Enter voting duration days");
+    await durationInput.fill("3");
+
+    await expect(submitRequestButton).toBeEnabled();
+    await expect(cancelButton).toBeEnabled();
+
+    // Clicking the cancel button should reset the form and disable both buttons
+    await cancelButton.click();
+    await expect(submitRequestButton).toBeDisabled();
+    await expect(cancelButton).toBeDisabled();
+  });
 });

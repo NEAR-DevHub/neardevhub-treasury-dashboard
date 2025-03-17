@@ -542,4 +542,29 @@ export async function mockWithFTBalance({
       });
     }
   );
+  if (!isSufficient) {
+    await page.route(`https://rpc.mainnet.near.org`, async (route) => {
+      const request = await route.request();
+      const requestPostData = request.postDataJSON();
+
+      if (
+        requestPostData.params &&
+        requestPostData.params.method_name === "ft_balance_of"
+      ) {
+        const json = {
+          jsonrpc: "2.0",
+          result: {
+            block_hash: "Hu4y62y9L8zvoSkeKHan3up7UWAxxuB9P2J9S89eMvp1",
+            block_height: 141681041,
+            logs: [],
+            result: [34, 49],
+          },
+          id: "dontcare",
+        };
+        await route.fulfill({ json });
+      } else {
+        await route.continue();
+      }
+    });
+  }
 }
