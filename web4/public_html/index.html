@@ -327,6 +327,7 @@
         padding: 10px;
         border-radius: 10px;
         z-index: 1000;
+        padding-inline: 0.5rem !important;
       }
 
       .dropdown-menu.show {
@@ -372,7 +373,6 @@
 
       .dropdown-card:hover {
         background-color: rgba(230, 230, 230, 1);
-        transform: translateY(-2px);
       }
 
       .dropdown-card img {
@@ -389,6 +389,7 @@
       .dropdown-card p {
         font-size: 13px;
         color: rgba(153, 153, 153, 1);
+        margin-bottom: 0px !important;
       }
 
       .text-sm {
@@ -471,7 +472,11 @@
           class="d-flex gap-2 align-items-center btn btn-light border-0 rounded-3"
           id="dropdownToggle"
         >
-          <a href="https://neartreasury.com/">
+          <a
+            href="https://neartreasury.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             <img
               id="logo"
               src="https://ipfs.near.social/ipfs/bafkreibm63lijt7qs3dzlmrrdbhqgxkt55k5daswgrq5z4stqp4zk46kc4"
@@ -495,6 +500,8 @@
                 class="dropdown-card border border-1 rounded-3 flex-1 text-decoration-none"
                 style="background-color: rgba(244, 244, 244, 1)"
                 id="web4-link"
+                target="_blank"
+                rel="noopener noreferrer"
               >
                 <img
                   src="https://ipfs.near.social/ipfs/bafkreiepnpb5bjy4bopxwmkxog35swcqliupvmjgzlo3k2pfc345qoquz4"
@@ -513,6 +520,8 @@
               <a
                 class="dropdown-card border border-1 rounded-3 flex-1 text-decoration-none"
                 id="dev-org-link"
+                target="_blank"
+                rel="noopener noreferrer"
               >
                 <img
                   src="https://ipfs.near.social/ipfs/bafkreiffkbotl7he7ikp2yjo2n2eebjrlnstyzc5tdokb2tvy4zd6nkcma"
@@ -528,6 +537,8 @@
                 class="dropdown-card border border-1 rounded-3 flex-1 text-decoration-none"
                 style="background-color: rgba(21, 23, 24, 1)"
                 id="social-link"
+                target="_blank"
+                rel="noopener noreferrer"
               >
                 <img
                   src="https://ipfs.near.social/ipfs/bafkreietyx6i5ntxvk2kkbcmtbkjlqc5pe36agxqzdfinnb6eq6vx3mdxe"
