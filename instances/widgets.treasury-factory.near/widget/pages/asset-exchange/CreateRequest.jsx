@@ -24,6 +24,8 @@ const [isTxnCreated, setTxnCreated] = useState(false);
 const [daoPolicy, setDaoPolicy] = useState(null);
 const [lastProposalId, setLastProposalId] = useState(null);
 const [showCancelModal, setShowCancelModal] = useState(false);
+const [showRateWarningModal, setShowRateWarningModal] = useState(false);
+const [exchangeDetails, setExchangeDetails] = useState(null);
 
 function getLastProposalId() {
   return Near.asyncView(treasuryDaoID, "get_last_proposal_id").then(
@@ -141,6 +143,27 @@ return (
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
       props={{
         instance,
+        heading: (
+          <h5 className="mb-0 d-flex gap-2 align-items-center">
+            <i class="bi bi-exclamation-triangle warning-icon"></i>
+            High Fee Warning
+          </h5>
+        ),
+        content: `The exchange rate applied differs by ${exchangeDetails.rateDifference}% from other platforms. Are you sure you want to continue?.`,
+        confirmLabel: "Yes",
+        isOpen: showRateWarningModal,
+        onCancelClick: () => setShowRateWarningModal(false),
+        onConfirmClick: () => {
+          setShowRateWarningModal(false);
+          onSubmitClick(exchangeDetails);
+        },
+      }}
+    />
+
+    <Widget
+      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
+      props={{
+        instance,
         heading: "Are you sure you want to cancel?",
         content:
           "This action will clear all the information you have entered in the form and cannot be undone.",
@@ -160,7 +183,12 @@ return (
         instance,
         onCancel: () => setShowCancelModal(true),
         onSubmit: (args) => {
-          onSubmitClick(args);
+          setExchangeDetails(args);
+          if (args.rateDifference > 1) {
+            setShowRateWarningModal(true);
+          } else {
+            onSubmitClick(args);
+          }
         },
       }}
     />

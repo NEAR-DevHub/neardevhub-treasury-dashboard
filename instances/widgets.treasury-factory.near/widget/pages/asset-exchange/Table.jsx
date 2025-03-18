@@ -379,16 +379,7 @@ const ProposalsComponent = () => {
                       hasDeletePermission,
                       hasVotingPermission,
                       proposalCreator: item.proposer,
-                      tokensBalance: [
-                        ...(userFTTokens?.body?.fts ?? []),
-                        {
-                          contract: "near",
-                          amount: nearBalances.available,
-                          ft_meta: {
-                            decimals: 24,
-                          },
-                        },
-                      ],
+                      nearBalance: nearBalances.available,
                       currentAmount: amountIn,
                       currentContract: tokenIn,
                       requiredVotes,
