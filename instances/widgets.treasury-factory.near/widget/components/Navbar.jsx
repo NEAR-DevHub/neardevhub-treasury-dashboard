@@ -21,20 +21,19 @@ const [navbarWithAssetExchange, setNavbarWithAssetExchange] = useState([]);
 useEffect(() => {
   if (Array.isArray(navbarLinks) && !navbarWithAssetExchange?.length) {
     const updatedNavbarLinks = [...(navbarLinks ?? [])];
-    // commenting it till we add warnings
-    // const settingsIndex = updatedNavbarLinks.findIndex(
-    //   (link) => link.title === "Settings"
-    // );
-    // const assetExchangeLink = {
-    //   title: "Asset Exchange",
-    //   href: "?page=asset-exchange",
-    // };
+    const settingsIndex = updatedNavbarLinks.findIndex(
+      (link) => link.title === "Settings"
+    );
+    const assetExchangeLink = {
+      title: "Asset Exchange",
+      href: "?page=asset-exchange",
+    };
 
-    // if (settingsIndex !== -1) {
-    //   updatedNavbarLinks.splice(settingsIndex, 0, assetExchangeLink);
-    // } else {
-    //   updatedNavbarLinks.push(assetExchangeLink);
-    // }
+    if (settingsIndex !== -1) {
+      updatedNavbarLinks.splice(settingsIndex, 0, assetExchangeLink);
+    } else {
+      updatedNavbarLinks.push(assetExchangeLink);
+    }
 
     const settingsIndex = updatedNavbarLinks.findIndex(
       (link) => link.title === "Settings"
