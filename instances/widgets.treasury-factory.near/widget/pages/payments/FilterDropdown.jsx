@@ -1,14 +1,14 @@
-const { VerifiedTick, NotVerfiedTick, User, Copy, NearToken } = VM.require(
+const { VerifiedTick, NotVerfiedTick, User, Copy } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Icons"
 ) || {
   VerifiedTick: () => <></>,
   NotVerfiedTick: () => <></>,
   User: () => <></>,
   Copy: () => <></>,
-  NearToken: () => <></>,
+  // NearToken: () => <></>,
 };
 
-const { selectedValue, onChange, disabled, isPendingPage, instance } = props;
+const { instance } = props;
 
 const [fromAmount, setFromAmount] = useState("0");
 const [toAmount, setToAmount] = useState("");
@@ -62,7 +62,7 @@ const TokenLogo = ({ type }) => {
   if (type === "circle") {
     return (
       <div className="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white" style={{ width: "20px", height: "20px", fontSize: "12px", fontWeight: "bold" }}>
-        ©
+        T
       </div>
     );
   }
@@ -76,7 +76,10 @@ const TokenLogo = ({ type }) => {
   }
 
   if (type === "near") {
-    return <NearToken />
+    // return <NearToken />
+    return <div className="rounded-circle bg-info d-flex align-items-center justify-content-center text-white" style={{ width: "20px", height: "20px", fontSize: "12px", fontWeight: "bold" }}>
+            T
+          </div>
   }
 
   return null;
@@ -144,7 +147,7 @@ const allRecipientOptions = [
   {
     label: (
       <span className="text-sm">
-        <b>#3</b> paytriejt (@harry.near)
+        <b>#3</b> harry (@harry.near)
       </span>
     ),
     value: "3",

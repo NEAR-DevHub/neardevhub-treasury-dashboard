@@ -29,7 +29,7 @@ const highlightProposalId =
 
 useEffect(() => {
   setLoading(true);
- setLoading(false); // FIXME: DO NOT PUSH
+  // FIXME: move from rpc calls to indexer
   // Near.asyncView(treasuryDaoID, "get_last_proposal_id").then((i) => {
   //   const lastProposalId = i;
   //   getFilteredProposalsByStatusAndKind({

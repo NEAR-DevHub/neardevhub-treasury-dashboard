@@ -19,6 +19,7 @@ if (!treasuryDaoID || !cacheURL) {
 const [showCreateRequest, setShowCreateRequest] = useState(false);
 const [searchInput, setSearchInput] = useState("");
 const [data, setData] = useState([]);
+// Filters.
 const [author, setAuthor] = useState("");
 const [stage, setStage] = useState("");
 const [sort, setSort] = useState("id_desc");
@@ -30,20 +31,6 @@ const [makeMoreLoader, setMakeMoreLoader] = useState(false);
 const [aggregatedCount, setAggregatedCount] = useState(null);
 const [currentlyDisplaying, setCurrentlyDisplaying] = useState(0);
 
-// State.init({
-//   data: [],
-//   author: "",
-//   stage: "",
-//   sort: "id_desc",
-//   category: "",
-//   input: "",
-//   loading: false,
-//   searchLoader: false,
-//   makeMoreLoader: false,
-//   aggregatedCount: null,
-//   currentlyDisplaying: 0,
-// });
-
 const hasCreatePermission = hasPermission(
   treasuryDaoID,
   context?.accountId,
@@ -53,20 +40,16 @@ const hasCreatePermission = hasPermission(
 
 console.log("cacheURL", cacheURL);
 console.log("treasuryDaoID", treasuryDaoID);
-// https://testing-indexer.fly.dev/
-// testing-astradao.sputnik-dao.near
-// https://testing-indexer.fly.dev/dao/proposals/testing-astradao.sputnik-dao.near
-// http://127.0.0.1:8080/dao/proposals/testing-astradao.sputnik-dao.near
-// TODO once finished replace the cacheURl and treasuryDaoID with the ones from the config.data
+
 const endpointToCall =
   "https://testing-indexer.fly.dev/dao/proposals/testing-astradao.sputnik-dao.near";
 
 
 function searchCacheApi(dao_id, searchTerm) {
   const uriEncodedSearchTerm = encodeURI(searchTerm);
-  // /dao/proposals/search/testing-astradao.sputnik-dao.near/requested
   const searchURL = `${cacheURL}/dao/proposals/search/${dao_id}/${uriEncodedSearchTerm}`;
 
+  console.log("searchURL", searchURL);
   return asyncFetch(searchURL, {
     method: "GET",
     headers: {
@@ -84,36 +67,15 @@ function searchProposals(searchInput) {
   searchCacheApi(treasuryDaoID, searchInput).then((result) => {
     let body = result.body;
     console.log("body search result in SearchProposals", body);
-    // const promises = body.records.map((proposal) => {
-    //   if (isNumber(proposal.linked_rfp)) {
-    //     getRfp(proposal.linked_rfp).then((rfp) => {
-    //       return { ...proposal, rfpData: rfp };
-    //     });
-    //   } else {
-    //     return Promise.resolve(proposal);
-    //   }
-    // });
-    // Promise.all(promises).then((proposalsWithRfpData) => {
-      // setAggregatedCount(body.total_records);
-    //   fetchBlockHeights(proposalsWithRfpData, 0);
-    // });
+    setLoading(false);
   });
 }
 
 function fetchCacheApi(variables) {
-  let fetchUrl = endpointToCall;
-  // let fetchUrl = `${cacheUrl}/dao/proposals?order=${variables.order}&limit=${variables.limit}&offset=${variables.offset}`;
   // FIXME: add the right filters
-  // if (variables.author_id) {
-    //   fetchUrl += `&filters.author_id=${variables.author_id}`;
-    // }
-    // if (variables.stage) {
-      //   fetchUrl += `&filters.stage=${variables.stage}`;
-      // }
-      // if (variables.category) {
-        //     fetchUrl += `&filters.category=${variables.category}`;
-        // }
-        console.log("fetchUrl", fetchUrl);
+  // let fetchUrl = `${cacheUrl}/dao/proposals?order=${variables.order}&limit=${variables.limit}&offset=${variables.offset}`;
+  let fetchUrl = endpointToCall;
+  console.log("fetchUrl", fetchUrl);
   return asyncFetch(fetchUrl, {
     method: "GET",
     headers: {
@@ -141,45 +103,31 @@ function fetchProposals(offset) {
   };
   fetchCacheApi(variables).then((result) => {
     const body = result.body;
-
     console.log("fetchProposals body result after fetch", body);
-    // const promises = body.records.map((proposal) => {
-    //   if (isNumber(proposal.linked_rfp)) {
-    //     getRfp(proposal.linked_rfp).then((rfp) => {
-    //       return { ...proposal, rfpData: rfp };
-    //     });
-    //   } else {
-    //     return Promise.resolve(proposal);
-    //   }
-    // });
-    // Promise.all(promises).then((proposalsWithRfpData) => {
-      // setAggregatedCount(body.total_records);
-    //   fetchBlockHeights(proposalsWithRfpData, offset);
-    // });
+    setLoading(false);
   });
 }
-// MOVE TO TABS? to put the filters etc
-
 useEffect(() => {
   setSearchLoader(true);
   fetchProposals();
 }, [author, sort, category, stage]);
 
 
-// useEffect(() => {
-  // const handler = setTimeout(() => {
-  //   if (searchInput) {
-  //     console.log("index.jsx, searchProposals", searchInput);
-  //     searchProposals(searchInput);
-  //   } else {
-  //     fetchProposals();
-  //   }
-  // }, 1000);
+useEffect(() => {
 
-//   return () => {
-//     clearTimeout(handler);
-//   };
-// }, [searchInput]);
+  const handler = setTimeout(() => {
+    if (searchInput) {
+      console.log("index.jsx, searchProposals", searchInput);
+      searchProposals(searchInput);
+    } else {
+      fetchProposals();
+    }
+  }, 1000);
+
+  return () => {
+    clearTimeout(handler);
+  };
+}, [searchInput]);
 
 
 
@@ -190,17 +138,18 @@ const SidebarMenu = ({ currentTab }) => {
       style={{ paddingBottom: "16px" }}
     >
       <Widget
-        src={
-         `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.SearchInput`
-        }
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
         props={{
-          search: searchInput,
-          className: "w-xs-100",
-          onSearch: (input) => {
-            setSearchInput(input);
+          className: "flex-grow-1 w-100 w-xs-100",
+          value: searchInput,
+          onChange: (e) => {
+            setSearchInput(e.target.value);
           },
-          onEnter: () => {
-            fetchProposals();
+          onKeyDown: (e) => e.key == "Enter" &&  fetchProposals(),
+          skipPaddingGap: true,
+          placeholder: "Search",
+          inputProps: {
+            suffix: <i class="bi bi-search m-auto"></i>,
           },
         }}
       />
