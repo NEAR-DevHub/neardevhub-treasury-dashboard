@@ -5,6 +5,7 @@ const { VerifiedTick, NotVerfiedTick, User, Copy, NearToken } = VM.require(
   NotVerfiedTick: () => <></>,
   User: () => <></>,
   Copy: () => <></>,
+  NearToken: () => <></>,
 };
 
 const { selectedValue, onChange, disabled, isPendingPage, instance } = props;
@@ -249,21 +250,6 @@ return (
                 <i className="bi bi-search position-absolute" style={{ right: "12px", top: "50%", transform: "translateY(-50%)" }}></i>
               </div>
             </div>
-
-            <div className="mb-4">
-              <div className="text-secondary mb-2">KYC/B Verification Status</div>
-              <div className="d-flex gap-2">
-                <div onClick={() => setShowKycStatusVerified(!showKycStatusVerified)} className={`d-flex pointer align-items-center gap-2 px-3 py-1 rounded-pill bg-opacity-10 text-success border border-success border-opacity-25 ${showKycStatusVerified ? "bg-success" : ""}`}>
-                <VerifiedTick width={25} height={25} />
-                  <span>Verified</span>
-                </div>
-                <div onClick={() => setShowKycStatusNotVerified(!showKycStatusNotVerified)} className={`d-flex pointer align-items-center gap-2 px-3 py-1 rounded-pill bg-opacity-10 text-danger border border-danger border-opacity-25 ${showKycStatusNotVerified ? "bg-danger" : ""}`}>
-                  <NotVerfiedTick width={25} height={25} />
-                  <span>Not Verified</span>
-                </div>
-              </div>
-            </div>
-
             <div className="mb-4">
               <div className="d-flex align-items-center text-secondary mb-2">
                 <span>Requested Token ({selectedTokens.length})</span>

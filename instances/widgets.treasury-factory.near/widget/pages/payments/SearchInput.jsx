@@ -15,10 +15,10 @@ useEffect(() => {
   if (search !== props.search) {
     onSearch(search);
   }
-}, [search]);
+}, [search]); // props.search, onSearch
 
 const className = props.className ?? "";
-// "${REPL_DEVHUB}/widget/devhub.components.molecule.Input"
+
 return (
   <Widget
     src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
