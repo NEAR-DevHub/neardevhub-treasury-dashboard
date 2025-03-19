@@ -249,8 +249,6 @@
         align-items: center;
         width: 100%;
         padding: 0 1rem;
-        background-color: #f4f4f4;
-        border-bottom: 1px solid rgba(226, 230, 236, 1);
         font-size: 15px;
         font-weight: 500;
         gap: 0.5rem;
@@ -261,6 +259,16 @@
         display: inline-block;
       }
 
+      [data-bs-theme="light"] .custom-navbar {
+        background-color: #f4f4f4;
+        border-bottom: 1px solid rgba(226, 230, 236, 1);
+      }
+
+      [data-bs-theme="dark"] .custom-navbar {
+        background-color: #131313;
+        border-bottom: 1px solid #3b3b3b;
+      }
+
       .custom-logout button {
         align-items: center;
         display: flex;
@@ -268,16 +276,26 @@
         padding-inline: 8px;
         height: 48px;
         border-radius: 48px;
-        padding: 4px;
-        padding-right: 10px;
+        padding-block: 10px;
         margin: 10px;
         background: none;
         border: none;
-        color: #1b1b18;
       }
 
-      .custom-logout button:hover {
-        background: #e6e6e6;
+      [data-bs-theme="light"] .custom-logout button {
+        color: #1b1b18;
+        background-color: #f4f4f4;
+        &:hover {
+          background-color: #e6e6e6;
+        }
+      }
+
+      [data-bs-theme="dark"] .custom-logout button {
+        color: #cacaca;
+        background-color: #131313;
+        &:hover {
+          background-color: #3e3e3e;
+        }
       }
 
       button.btn-primary {
@@ -295,7 +313,6 @@
       .dropdown-content {
         display: none;
         position: absolute;
-        background-color: #f9f9f9;
         box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
         padding: 12px 16px;
         z-index: 1;
@@ -303,6 +320,18 @@
         width: 89%;
         border-radius: 10px;
         margin-inline: 10px;
+      }
+
+      [data-bs-theme="light"] .dropdown-content {
+        color: #1b1b18;
+        background-color: #f4f4f4;
+        border: 1px solid rgba(226, 230, 236, 1);
+      }
+
+      [data-bs-theme="dark"] .dropdown-content {
+        color: #cacaca;
+        background-color: rgba(34, 34, 34, 1);
+        border: 1px solid rgba(59, 59, 59, 1);
       }
 
       .custom-logout h6 {
@@ -317,33 +346,26 @@
         text-align: left;
       }
 
-      [data-bs-theme="light"] .dropdown-menu {
+      .dropdown-menu {
         display: none;
         position: absolute;
         top: 100%;
         left: 0;
         width: 650px;
-        background-color: #fff;
         box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
         padding: 10px;
         border-radius: 10px;
         z-index: 1000;
         padding-inline: 0.5rem !important;
+      }
+
+      [data-bs-theme="light"] .dropdown-menu {
+        background-color: #fff;
         border-color: rgba(226, 230, 236, 1);
       }
 
       [data-bs-theme="dark"] .dropdown-menu {
-        display: none;
-        position: absolute;
-        top: 100%;
-        left: 0;
-        width: 650px;
         background-color: rgba(34, 34, 34, 1);
-        box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
-        padding: 10px;
-        border-radius: 10px;
-        z-index: 1000;
-        padding-inline: 0.5rem !important;
         border-color: rgba(59, 59, 59, 1);
       }
 
@@ -662,7 +684,7 @@
     document.getElementById("web4-link").href =
       `https://${extractedDomain}.page/`;
     document.getElementById("dev-org-link").href =
-      `https://near.social/${extractedDomain}/widget/app`;
+      `https://dev.near.org/${extractedDomain}/widget/app`;
     document.getElementById("social-link").href =
       `https://near.social/${extractedDomain}/widget/app`;
 
@@ -806,24 +828,7 @@
         );
         const web4Image = document.getElementById("web4-image");
 
-        const navbar = document.querySelector(".custom-navbar");
-        const btn = document.querySelector(".custom-logout button");
         const logo = document.getElementById("logo");
-
-        navbar.style.backgroundColor = isDarkTheme ? "#131313" : "#f4f4f4";
-        navbar.style.borderColor = isDarkTheme
-          ? "#3B3B3B"
-          : "rgba(226, 230, 236, 1)";
-
-        if (btn) {
-          btn.style.color = isDarkTheme ? "#CACACA" : "#1B1B18";
-          btn.addEventListener("mouseover", () => {
-            btn.style.backgroundColor = isDarkTheme ? "#3E3E3E" : "#E6E6E6";
-          });
-          btn.addEventListener("mouseout", () => {
-            btn.style.backgroundColor = isDarkTheme ? "#131313" : "#f4f4f4";
-          });
-        }
 
         logo.src = isDarkTheme
           ? "https://ipfs.near.social/ipfs/bafkreighuyf2wcsc3nyey64536craz2ffis45fnjelh4gqxigugasalcwy"
