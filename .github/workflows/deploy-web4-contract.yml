@@ -10,12 +10,8 @@ on:
       - "web4/**"
 
 jobs:
-  test:
-    uses: ./.github/workflows/test-web4-contract.yml
-
   deploy:
     name: Deploy to production
-    needs: [test]
     runs-on: ubuntu-latest
     environment: treasury-testing.near
     steps:

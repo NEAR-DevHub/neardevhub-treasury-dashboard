@@ -374,7 +374,8 @@ async fn test_update_widgets_and_set_social_metadata_defaults(
     ));
     assert!(body_string.contains("<meta property=\"og:title\" content=\"NEAR Treasury\" />"));
     assert!(body_string.contains("<meta name=\"twitter:title\" content=\"NEAR Treasury\" />"));
-    assert!(body_string.contains(r#"<meta property="og:image" content="https://ipfs.near.social/ipfs/bafkreiefdkigadpkpccreqfnhut2li2nmf3alhz7c3wadveconelisnksu""#));
+    assert!(body_string
+        .contains("<meta property=\"og:image\" content=\"https://ipfs.near.social/ipfs/bafkreiefdkigadpkpccreqfnhut2li2nmf3alhz7c3wadveconelisnksu\" />"));
     assert!(body_string
         .contains("<meta name=\"twitter:image\" content=\"https://ipfs.near.social/ipfs/bafkreiefdkigadpkpccreqfnhut2li2nmf3alhz7c3wadveconelisnksu\" />"));
 
