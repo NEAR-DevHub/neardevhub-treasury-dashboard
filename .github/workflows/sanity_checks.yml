@@ -6,7 +6,7 @@ on:
       - main
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: sanity-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
