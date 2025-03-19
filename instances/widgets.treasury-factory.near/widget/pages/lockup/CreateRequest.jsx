@@ -27,11 +27,9 @@ if (
   return <></>;
 
 let balance = getNearBalances(treasuryDaoID);
-
 balance = balance ? parseFloat(balance.availableParsed) : 0;
 const onCloseCanvas = props.onCloseCanvas ?? (() => {});
 
-console.log("--", balance);
 const Container = styled.div`
   font-size: 14px;
 
@@ -45,12 +43,6 @@ const Container = styled.div`
     padding: 0px !important;
   }
 `;
-
-const tokenMapping = {
-  NEAR: "NEAR",
-  USDT: "usdt.tether-token.near",
-  USDC: "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
-};
 
 const MINIMUM_AMOUNT = 3.5;
 
@@ -80,6 +72,7 @@ function toBase64(json) {
 
 function onSubmitClick() {
   setTxnCreated(true);
+
   const deposit = Big(isNaN(amount) ? 0 : parseInt(amount))
     .mul(Big(10).pow(24))
     .toFixed();
@@ -192,9 +185,8 @@ useEffect(() => {
       });
     };
     checkForNewProposal();
-    // if in 20 seconds there is no change, show error condition
+
     errorTimeout = setTimeout(() => {
-      setShowErrorToast(true);
       setTxnCreated(false);
       clearTimeout(checkTxnTimeout);
     }, 20000);

@@ -188,10 +188,10 @@ const ToastStatusContent = () => {
       content = "The request has been successfully executed.";
       break;
     case "Rejected":
-      content = "The payment request has been rejected.";
+      content = "The request has been rejected.";
       break;
     case "Removed":
-      content = "The payment request has been successfully deleted.";
+      content = "The request has been successfully deleted.";
       break;
     default:
       content = `The request has ${showToastStatus}.`;
@@ -213,7 +213,7 @@ const ToastStatusContent = () => {
                 href={href({
                   widgetSrc: `${instance}/widget/app`,
                   params: {
-                    page: "stake-delegation",
+                    page: "lockup",
                     selectedTab: "History",
                     highlightProposalId:
                       typeof highlightProposalId === "number"
@@ -376,12 +376,7 @@ const ProposalsComponent = ({ item }) => {
               hasDeletePermission,
               hasVotingPermission,
               proposalCreator: item.proposer,
-              tokensBalance: [
-                {
-                  contract: "near",
-                  amount: Big(lockupNearBalances?.available ?? 0).toFixed(2),
-                },
-              ],
+              avoidCheckForBalance: true,
               currentAmount: args.amount,
               currentContract: "near",
               requiredVotes,

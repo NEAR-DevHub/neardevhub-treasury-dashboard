@@ -44,7 +44,7 @@ useEffect(() => {
       const proposals = r.filteredProposals.filter(
         (item) => item.kind.FunctionCall.receiver_id === "lockup.near"
       );
-      console.log(r.filteredProposals);
+
       setOffset(proposals[proposals.length - 1].id);
       if (currentPage === 0 && !totalLength) setTotalLength(proposals.length);
 

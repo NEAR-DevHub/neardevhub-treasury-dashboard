@@ -24,7 +24,6 @@ const baseColumns = [
   { title: "Allow Cancellation", show: true },
   { title: "Allow Staking", show: true },
   { title: "Required Votes", show: true },
-  { title: "Votes", show: true },
   { title: "Approvers", show: true },
 ];
 

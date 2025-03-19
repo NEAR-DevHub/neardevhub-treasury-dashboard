@@ -14,9 +14,7 @@ const { hasPermission } = VM.require(
 
 const { isPendingPage, instance } = props;
 
-if (!instance) {
-  return <></>;
-}
+if (!instance) return <></>;
 
 const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 
@@ -27,29 +25,13 @@ const hasCreatePermission = hasPermission(
   "AddProposal"
 );
 
-const [showStakeRequest, setShowStakeRequest] = useState(false);
-const createBtnOption = { STAKE: "CreateStakeRequest" };
-const [isCreateBtnOpen, setCreateBtnOpen] = useState(false);
-const [selectedCreatePage, setSelectedCreatePage] = useState(
-  createBtnOption.STAKE
-);
-
-function toggleStakePage() {
-  setShowStakeRequest((prev) => !prev);
-}
-
-const toggleDropdown = () => {
-  setCreateBtnOpen((prev) => !prev);
-};
+const [showCanvas, setShowCanvas] = useState(false);
 
 const CreateBtn = () => {
   return (
     <div
       className={"btn primary-button d-flex align-items-center"}
-      onClick={() => {
-        setShowStakeRequest(true);
-        setCreateBtnOpen(false);
-      }}
+      onClick={() => setShowCanvas(true)}
     >
       <div className="d-flex gap-2 align-items-center ">
         <i class="bi bi-plus-lg h5 mb-0"></i>Create Request
@@ -63,15 +45,15 @@ return (
     <Widget
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OffCanvas`}
       props={{
-        showCanvas: showStakeRequest,
-        onClose: toggleStakePage,
+        showCanvas,
+        onClose: () => setShowCanvas(false),
         title: "Create Lockup Request",
         children: (
           <Widget
             src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.lockup.CreateRequest`}
             props={{
               instance,
-              onCloseCanvas: toggleStakePage,
+              onCloseCanvas: () => setShowCanvas(false),
             }}
           />
         ),
