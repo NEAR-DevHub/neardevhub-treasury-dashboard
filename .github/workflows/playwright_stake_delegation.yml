@@ -1,0 +1,37 @@
+name: Playwright Tests - Stake Delegation
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  playwright-tests-stake-delegation:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target_account:
+          - test_command: npx playwright test --project=treasury-dashboard playwright-tests/tests/stake-delegation
+          - test_command: npx playwright test --project=infinex playwright-tests/tests/stake-delegation
+          - test_command: npx playwright test --project=treasury-testing playwright-tests/tests/stake-delegation
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: "npm"
+      - name: Install dependencies
+        run: |
+          npm ci
+          npx playwright install-deps
+          npx playwright install
+      - name: Build project
+        run: npm run build
+      - name: Build sandbox
+        run: npm run build:sandbox
+      - name: Run tests
+        run: ${{ matrix.target_account.test_command }}
