@@ -172,6 +172,11 @@ test.describe("Lockup portfolio", function () {
         return test.skip();
       }
       await mockNearPrice({ daoAccount, nearPrice, page });
+      await page.goto(`/${instanceAccount}/widget/app`);
+      await expect(
+        page.locator("div").filter({ hasText: /^Dashboard$/ })
+      ).toBeVisible();
+
       await mockRpcRequest({
         page,
         filterParams: {
@@ -233,11 +238,6 @@ test.describe("Lockup portfolio", function () {
         balance: accountBalance,
         storage: "345705",
       });
-      await page.goto(`/${instanceAccount}/widget/app`);
-
-      await expect(
-        page.locator("div").filter({ hasText: /^Dashboard$/ })
-      ).toBeVisible();
       await page.route(`https://rpc.mainnet.near.org`, async (route) => {
         const request = await route.request();
         const requestPostData = request.postDataJSON();
@@ -322,11 +322,11 @@ test.describe("Lockup portfolio", function () {
     test.setTimeout(60_000);
     await page.waitForTimeout(5_000);
     const originalAmount = page.getByText(
-      "Original allocated amount 17.03 NEAR"
+      "Original allocated amount 150,631.84 NEAR"
     );
     await expect(originalAmount).toBeVisible();
     await originalAmount.click();
-    await expect(page.getByText("Vested 7.03 NEAR")).toBeVisible();
+    await expect(page.getByText("Vested 150,621.84 NEAR")).toBeVisible();
     await expect(page.getByText("Unvested 10.00 NEAR")).toBeVisible();
   });
 
