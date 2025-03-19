@@ -31,3 +31,20 @@ test("should go directly to app widget for instance", async ({
       .first()
   ).toContainText(daoAccount);
 });
+
+test("should show gateway switch dropdown", async ({
+  page,
+  instanceAccount,
+}) => {
+  await page.goto(`/${instanceAccount}/widget/app?page=payments`);
+  await page.waitForTimeout(2_000);
+  await page.locator("#dropdownToggle").click();
+  const web4Link = page.getByRole("link", { name: "Web4" });
+  const devPortalLink = page.getByRole("link", {
+    name: "NEAR Developer Portal",
+  });
+  const nearSocialLink = page.getByRole("link", { name: "Near Social" });
+  await expect(web4Link).toBeVisible();
+  await expect(devPortalLink).toBeVisible();
+  await expect(nearSocialLink).toBeVisible();
+});
