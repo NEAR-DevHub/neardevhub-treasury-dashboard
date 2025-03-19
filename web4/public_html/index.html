@@ -821,7 +821,7 @@
       if (theme) {
         clearInterval(waitForTheme);
 
-        const isDarkTheme = theme.getAttribute("data-bs-theme") !== "dark";
+        const isDarkTheme = theme.getAttribute("data-bs-theme") === "dark";
         document.body.setAttribute(
           "data-bs-theme",
           isDarkTheme ? "dark" : "light",
