@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
     <title></title>
@@ -522,7 +522,7 @@
               </div>
             </div>
 
-            <div class="card-container d-flex gap-2">
+            <div class="card-container d-flex gap-2 flex-wrap">
               <a
                 class="dropdown-card border border-1 rounded-3 flex-1 text-decoration-none selected"
                 id="web4-link"
@@ -615,17 +615,18 @@
         </div>
       </div>
     </nav>
+  </body>
 
-    <script type="module">
-      import { setupWalletSelector } from "@near-wallet-selector/core";
-      import { setupModal } from "@near-wallet-selector/modal-ui-js";
-      import { setupMyNearWallet } from "@near-wallet-selector/my-near-wallet";
-      import { setupHereWallet } from "@near-wallet-selector/here-wallet";
-      import { setupMeteorWallet } from "@near-wallet-selector/meteor-wallet";
-      import { setupSender } from "@near-wallet-selector/sender";
-      import { Buffer } from "buffer";
+  <script type="module">
+    import { setupWalletSelector } from "@near-wallet-selector/core";
+    import { setupModal } from "@near-wallet-selector/modal-ui-js";
+    import { setupMyNearWallet } from "@near-wallet-selector/my-near-wallet";
+    import { setupHereWallet } from "@near-wallet-selector/here-wallet";
+    import { setupMeteorWallet } from "@near-wallet-selector/meteor-wallet";
+    import { setupSender } from "@near-wallet-selector/sender";
+    import { Buffer } from "buffer";
 
-      window.Buffer = Buffer;
+    window.Buffer = Buffer;
 
     let setupLedger;
     const walletSelectorModules = [
@@ -831,70 +832,74 @@
           ? "https://ipfs.near.social/ipfs/bafkreiarq7ufrypui3ivevbnky46n5u5awgthls22jvr73fsmoyemprrzy"
           : "https://ipfs.near.social/ipfs/bafkreiepnpb5bjy4bopxwmkxog35swcqliupvmjgzlo3k2pfc345qoquz4";
       }
+    }
 
-      checkForLogin();
+    checkForLogin();
 
-      modal.on("onHide", async (event) => {
-        if (event.hideReason === "wallet-navigation") {
-          checkForLogin();
-        }
-      });
-
-      await import(
-        "https://cdn.jsdelivr.net/npm/near-bos-webcomponent@0.0.9/dist/main.1b3f0d7d1017de355a7c.bundle.js"
-      );
-      await import(
-        "https://cdn.jsdelivr.net/npm/near-bos-webcomponent@0.0.9/dist/runtime.25b143da327a5371509f.bundle.js"
-      );
-
-      const viewer = document.createElement("near-social-viewer");
-
-      viewer.selector = selector;
-      viewer.setAttribute(
-        "initialProps",
-        JSON.stringify({ page: "", pikespeakKey: "PIKESPEAK_API_KEY" }),
-      );
-
-      if (location.host.endsWith(".page")) {
-        const instanceAccount = location.host.split(".")[0];
-        viewer.setAttribute("src", `${instanceAccount}.near/widget/app`);
-      } else if (location.port === "8080") {
-        viewer.setAttribute("rpc", "http://127.0.0.1:14500");
+    modal.on("onHide", async (event) => {
+      if (event.hideReason === "wallet-navigation") {
+        checkForLogin();
       }
+    });
 
-      document.body.appendChild(viewer);
+    await import(
+      "https://cdn.jsdelivr.net/npm/near-bos-webcomponent@0.0.9/dist/main.1b3f0d7d1017de355a7c.bundle.js"
+    );
+    await import(
+      "https://cdn.jsdelivr.net/npm/near-bos-webcomponent@0.0.9/dist/runtime.25b143da327a5371509f.bundle.js"
+    );
 
-      const waitForTheme = setInterval(() => {
-        const theme = document?.querySelector("[data-bs-theme]");
+    const viewer = document.createElement("near-social-viewer");
 
-        if (theme) {
-          clearInterval(waitForTheme);
+    viewer.selector = selector;
+    viewer.setAttribute(
+      "initialProps",
+      JSON.stringify({ page: "", pikespeakKey: "PIKESPEAK_API_KEY" }),
+    );
 
-          const isDarkTheme = theme.getAttribute("data-bs-theme") === "dark";
-          const navbar = document.querySelector(".custom-navbar");
-          const btn = document.querySelector(".custom-logout button");
-          const logo = document.getElementById("logo");
+    if (location.host.endsWith(".page")) {
+      const instanceAccount = location.host.split(".")[0];
+      viewer.setAttribute("src", `${instanceAccount}.near/widget/app`);
+    } else if (location.port === "8080") {
+      viewer.setAttribute("rpc", "http://127.0.0.1:14500");
+    }
 
-          navbar.style.backgroundColor = isDarkTheme ? "#131313" : "#f4f4f4";
-          navbar.style.borderColor = isDarkTheme
-            ? "#3B3B3B"
-            : "rgba(226, 230, 236, 1)";
+    document.body.appendChild(viewer);
 
-          if (btn) {
-            btn.style.color = isDarkTheme ? "#CACACA" : "#1B1B18";
-            btn.addEventListener("mouseover", () => {
-              btn.style.backgroundColor = isDarkTheme ? "#3E3E3E" : "#E6E6E6";
-            });
-            btn.addEventListener("mouseout", () => {
-              btn.style.backgroundColor = isDarkTheme ? "#131313" : "#f4f4f4";
-            });
-          }
+    const waitForTheme = setInterval(() => {
+      const theme = document?.querySelector("[data-bs-theme]");
 
-          logo.src = isDarkTheme
-            ? "https://ipfs.near.social/ipfs/bafkreighuyf2wcsc3nyey64536craz2ffis45fnjelh4gqxigugasalcwy"
-            : "https://ipfs.near.social/ipfs/bafkreibm63lijt7qs3dzlmrrdbhqgxkt55k5daswgrq5z4stqp4zk46kc4";
+      if (theme) {
+        clearInterval(waitForTheme);
+
+        const isDarkTheme = theme.getAttribute("data-bs-theme") !== "dark";
+        document.body.setAttribute(
+          "data-bs-theme",
+          isDarkTheme ? "dark" : "light",
+        );
+        const navbar = document.querySelector(".custom-navbar");
+        const btn = document.querySelector(".custom-logout button");
+        const logo = document.getElementById("logo");
+
+        navbar.style.backgroundColor = isDarkTheme ? "#131313" : "#f4f4f4";
+        navbar.style.borderColor = isDarkTheme
+          ? "#3B3B3B"
+          : "rgba(226, 230, 236, 1)";
+
+        if (btn) {
+          btn.style.color = isDarkTheme ? "#CACACA" : "#1B1B18";
+          btn.addEventListener("mouseover", () => {
+            btn.style.backgroundColor = isDarkTheme ? "#3E3E3E" : "#E6E6E6";
+          });
+          btn.addEventListener("mouseout", () => {
+            btn.style.backgroundColor = isDarkTheme ? "#131313" : "#f4f4f4";
+          });
         }
-      }, 500);
-    </script>
-  </body>
+
+        logo.src = isDarkTheme
+          ? "https://ipfs.near.social/ipfs/bafkreighuyf2wcsc3nyey64536craz2ffis45fnjelh4gqxigugasalcwy"
+          : "https://ipfs.near.social/ipfs/bafkreibm63lijt7qs3dzlmrrdbhqgxkt55k5daswgrq5z4stqp4zk46kc4";
+      }
+    }, 500);
+  </script>
 </html>
