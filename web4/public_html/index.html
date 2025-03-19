@@ -522,7 +522,7 @@
               </div>
             </div>
 
-            <div class="card-container d-flex gap-2 flex-wrap">
+            <div class="card-container d-flex gap-2">
               <a
                 class="dropdown-card border border-1 rounded-3 flex-1 text-decoration-none selected"
                 id="web4-link"
@@ -532,6 +532,7 @@
                 <img
                   src="https://ipfs.near.social/ipfs/bafkreiepnpb5bjy4bopxwmkxog35swcqliupvmjgzlo3k2pfc345qoquz4"
                   alt="Web4"
+                  id="web4-image"
                 />
                 <strong>Web4</strong>
                 <p>
@@ -803,6 +804,8 @@
           "data-bs-theme",
           isDarkTheme ? "dark" : "light",
         );
+        const web4Image = document.getElementById("web4-image");
+
         const navbar = document.querySelector(".custom-navbar");
         const btn = document.querySelector(".custom-logout button");
         const logo = document.getElementById("logo");
@@ -825,6 +828,9 @@
         logo.src = isDarkTheme
           ? "https://ipfs.near.social/ipfs/bafkreighuyf2wcsc3nyey64536craz2ffis45fnjelh4gqxigugasalcwy"
           : "https://ipfs.near.social/ipfs/bafkreibm63lijt7qs3dzlmrrdbhqgxkt55k5daswgrq5z4stqp4zk46kc4";
+        web4Image.src = isDarkTheme
+          ? "https://ipfs.near.social/ipfs/bafkreiarq7ufrypui3ivevbnky46n5u5awgthls22jvr73fsmoyemprrzy"
+          : "https://ipfs.near.social/ipfs/bafkreiepnpb5bjy4bopxwmkxog35swcqliupvmjgzlo3k2pfc345qoquz4";
       }
     }, 500);
   </script>
