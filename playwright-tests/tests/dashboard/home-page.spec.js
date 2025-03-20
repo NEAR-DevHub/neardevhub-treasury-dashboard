@@ -161,7 +161,7 @@ test.describe("Dashboard Page", function () {
   });
 });
 
-test.describe.serial("Lockup portfolio", function () {
+test.describe("Lockup portfolio", function () {
   const lockedAmount = "10000000000000000000000000";
   const accountBalance = "12030000000000000000000000";
   test.use({ contextOptions: { ignoreHTTPSErrors: true } });
@@ -213,6 +213,7 @@ test.describe.serial("Lockup portfolio", function () {
             };
             await route.fulfill({ json });
           } else if (requestPostData.params.request_type === "view_state") {
+            console.log(testInfo.title)
             const json = {
               jsonrpc: "2.0",
               result: {
