@@ -1,0 +1,25 @@
+import { expect } from "@playwright/test";
+import { test } from "../../util/test.js";
+import { mockLockupStateAndNavigateToDashboard } from "./util.js";
+
+test.describe("Lockup portfolio with cliff", function () {
+  test("Should show start, end and cliff date", async ({
+    page,
+    lockupContract,
+    instanceAccount,
+    daoAccount,
+  }) => {
+    test.setTimeout(60_000);
+    await mockLockupStateAndNavigateToDashboard({
+      page,
+      lockupContract,
+      instanceAccount,
+      daoAccount,
+      hasCliff: true,
+    });
+    await page.waitForTimeout(5_000);
+    await expect(page.getByText("Start Date January 30, 2025")).toBeVisible();
+    await expect(page.getByText("End Date January 31, 2029")).toBeVisible();
+    await expect(page.getByText("Cliff Date January 30, 2025")).toBeVisible();
+  });
+});
