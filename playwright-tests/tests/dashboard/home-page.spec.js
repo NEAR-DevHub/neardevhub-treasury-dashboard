@@ -161,10 +161,10 @@ test.describe("Dashboard Page", function () {
   });
 });
 
-test.describe("Lockup portfolio", function () {
+test.describe.serial("Lockup portfolio", function () {
   const lockedAmount = "10000000000000000000000000";
   const accountBalance = "12030000000000000000000000";
-
+  test.use({ contextOptions: { ignoreHTTPSErrors: true } });
   test.beforeEach(
     async ({ page, instanceAccount, daoAccount, lockupContract }, testInfo) => {
       if (!lockupContract) {
@@ -188,58 +188,7 @@ test.describe("Lockup portfolio", function () {
           return lockedAmount;
         },
       });
-      await page.route(
-        `https://api.fastnear.com/v1/account/${lockupContract}/staking`,
-        async (route) => {
-          const json = {
-            account_id: lockupContract,
-            pools: [
-              {
-                last_update_block_height: null,
-                pool_id: "here.poolv1.near",
-              },
-            ],
-          };
 
-          await route.fulfill({ json });
-        }
-      );
-      await page.route(
-        `https://archival-rpc.mainnet.fastnear.com/`,
-        async (route) => {
-          const request = await route.request();
-          const requestPostData = request.postDataJSON();
-
-          if (
-            requestPostData.params &&
-            requestPostData.params.request_type === "call_function" &&
-            requestPostData.params.method_name === "get_account_staked_balance"
-          ) {
-            const json = {
-              jsonrpc: "2.0",
-              result: {
-                block_hash: "GXEuJYXvoXoiDhtDJP8EiPXesQbQuwDSWadYzy2JAstV",
-                block_height: 132031112,
-                logs: [],
-                result: [
-                  53, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48,
-                  48, 48, 48, 48, 48, 48, 48, 48, 48, 48,
-                ],
-              },
-              id: "dontcare",
-            };
-            await route.fulfill({ json });
-          } else {
-            await route.continue();
-          }
-        }
-      );
-      await mockNearBalances({
-        page,
-        accountId: lockupContract,
-        balance: accountBalance,
-        storage: "345705",
-      });
       await page.route(`https://rpc.mainnet.near.org`, async (route) => {
         const request = await route.request();
         const requestPostData = await request.postDataJSON();
@@ -294,6 +243,58 @@ test.describe("Lockup portfolio", function () {
         } else {
           await route.continue();
         }
+      });
+      await page.route(
+        `https://api.fastnear.com/v1/account/${lockupContract}/staking`,
+        async (route) => {
+          const json = {
+            account_id: lockupContract,
+            pools: [
+              {
+                last_update_block_height: null,
+                pool_id: "here.poolv1.near",
+              },
+            ],
+          };
+
+          await route.fulfill({ json });
+        }
+      );
+      await page.route(
+        `https://archival-rpc.mainnet.fastnear.com/`,
+        async (route) => {
+          const request = await route.request();
+          const requestPostData = request.postDataJSON();
+
+          if (
+            requestPostData.params &&
+            requestPostData.params.request_type === "call_function" &&
+            requestPostData.params.method_name === "get_account_staked_balance"
+          ) {
+            const json = {
+              jsonrpc: "2.0",
+              result: {
+                block_hash: "GXEuJYXvoXoiDhtDJP8EiPXesQbQuwDSWadYzy2JAstV",
+                block_height: 132031112,
+                logs: [],
+                result: [
+                  53, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48,
+                  48, 48, 48, 48, 48, 48, 48, 48, 48, 48,
+                ],
+              },
+              id: "dontcare",
+            };
+            await route.fulfill({ json });
+          } else {
+            await route.continue();
+          }
+        }
+      );
+      await mockNearBalances({
+        page,
+        accountId: lockupContract,
+        balance: accountBalance,
+        storage: "345705",
       });
     }
   );
