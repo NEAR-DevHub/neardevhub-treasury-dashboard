@@ -159,10 +159,7 @@ const columns = [
 ];
 
 function isVisible(column) {
-  if (!columnsVisibility.length) return "";
-  return columnsVisibility.find((i) => i.title === column)?.show
-    ? ""
-    : "display-none";
+  return columnsVisibility.find((i) => i.title === column)?.show !== false;
 }
 
 const requiredVotes = functionCallApproversGroup?.requiredVotes;
@@ -232,7 +229,7 @@ const ProposalsComponent = ({ item }) => {
       <td className={isVisible("Created At")}>
         <Widget
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
-          props={{ timestamp: startTimestamp }}
+          props={{ timestamp: item.submission_time }}
         />
       </td>
       {!isPendingRequests && (

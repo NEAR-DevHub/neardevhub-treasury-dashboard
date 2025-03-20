@@ -64,7 +64,9 @@ const [lastProposalId, setLastProposalId] = useState(null);
 const [daoPolicy, setDaoPolicy] = useState(null);
 
 function formatTimestamp(date) {
-  return new Date(date).getTime() * 1000000;
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d.getTime() * 1000000;
 }
 
 function toBase64(json) {
