@@ -192,29 +192,7 @@ const ToastStatusContent = () => {
         {showToastStatus === "Approved" && (
           <i class="bi bi-check2 h3 mb-0 success-icon"></i>
         )}
-        <div>
-          {content}
-          <br />
-          {showToastStatus !== "InProgress" &&
-            showToastStatus !== "Removed" && (
-              <a
-                className="text-underline"
-                href={href({
-                  widgetSrc: `${instance}/widget/app`,
-                  params: {
-                    page: "lockup",
-                    selectedTab: "History",
-                    highlightProposalId:
-                      typeof highlightProposalId === "number"
-                        ? highlightProposalId
-                        : voteProposalId,
-                  },
-                })}
-              >
-                View in History
-              </a>
-            )}
-        </div>
+        <div>{content}</div>
       </div>
     </div>
   );
