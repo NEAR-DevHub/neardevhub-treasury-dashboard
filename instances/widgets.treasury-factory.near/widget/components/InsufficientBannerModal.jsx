@@ -76,7 +76,7 @@ const WarningModal = () => (
 
 return (
   <>
-    <div onClick={checkBalance}>
+    <div className="w-100" onClick={checkBalance}>
       <ActionButton />
     </div>
     {showModal && <WarningModal />}

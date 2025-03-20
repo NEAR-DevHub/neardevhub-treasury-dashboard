@@ -12,14 +12,14 @@ const Container = styled.div`
 `;
 
 return (
-  <Container>
+  <Container className="w-100">
     {status === "Approve" ? (
-      <div className="d-flex gap-2 align-items-center approve rounded-2 p-2 bold">
+      <div className="d-flex gap-2 align-items-center approve rounded-2 p-2 bold w-100">
         <i class="bi bi-check2"></i>
         You Approved
       </div>
     ) : (
-      <div className="d-flex gap-2 align-items-center reject rounded-2 p-2 bold">
+      <div className="d-flex gap-2 align-items-center reject rounded-2 p-2 bold w-100">
         <i class="bi bi-x"></i>
         You {status === "Reject" ? "Rejected" : "Deleted"}
       </div>
