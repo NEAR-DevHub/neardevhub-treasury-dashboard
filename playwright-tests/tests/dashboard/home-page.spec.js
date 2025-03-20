@@ -92,7 +92,7 @@ test.describe("Dashboard Page", function () {
     await page.goto(`/${instanceAccount}/widget/app`);
     await expect(
       page.locator("div").filter({ hasText: /^Dashboard$/ })
-    ).toBeVisible({timeout: 15_000});
+    ).toBeVisible({ timeout: 15_000 });
   });
 
   test("should correctly sort tokens by token price and quantity", async ({
