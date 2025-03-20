@@ -8,11 +8,17 @@
     <meta property="og:type" content="website" />
     <meta property="og:title" content="SOCIAL_METADATA_TITLE" />
     <meta property="og:description" content="SOCIAL_METADATA_DESCRIPTION" />
-    <meta property="og:image" content="https://ipfs.near.social/ipfs/SOCIAL_IMAGE_IPFS_CID" />
+    <meta
+      property="og:image"
+      content="https://ipfs.near.social/ipfs/SOCIAL_IMAGE_IPFS_CID"
+    />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="SOCIAL_METADATA_TITLE" />
     <meta name="twitter:description" content="SOCIAL_METADATA_DESCRIPTION" />
-    <meta name="twitter:image" content="https://ipfs.near.social/ipfs/SOCIAL_IMAGE_IPFS_CID" />
+    <meta
+      name="twitter:image"
+      content="https://ipfs.near.social/ipfs/SOCIAL_IMAGE_IPFS_CID"
+    />
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
@@ -779,6 +785,12 @@
 
     checkForLogin();
 
+    modal.on("onHide", async (event) => {
+      if (event.hideReason === "wallet-navigation") {
+        checkForLogin();
+      }
+    });
+
     await import(
       "https://cdn.jsdelivr.net/npm/near-bos-webcomponent@0.0.9/dist/main.1b3f0d7d1017de355a7c.bundle.js"
     );
@@ -814,24 +826,12 @@
           "data-bs-theme",
           isDarkTheme ? "dark" : "light",
         );
-        const navbar = document.querySelector(".custom-navbar");
-        const btn = document.querySelector(".custom-logout button");
         const logo = document.getElementById("logo");
+        const web4Image = document.getElementById("web4-image");
 
-        navbar.style.backgroundColor = isDarkTheme ? "#131313" : "#f4f4f4";
-        navbar.style.borderColor = isDarkTheme
-          ? "#3B3B3B"
-          : "rgba(226, 230, 236, 1)";
-
-        if (btn) {
-          btn.style.color = isDarkTheme ? "#CACACA" : "#1B1B18";
-          btn.addEventListener("mouseover", () => {
-            btn.style.backgroundColor = isDarkTheme ? "#3E3E3E" : "#E6E6E6";
-          });
-          btn.addEventListener("mouseout", () => {
-            btn.style.backgroundColor = isDarkTheme ? "#131313" : "#f4f4f4";
-          });
-        }
+        web4Image.src = isDarkTheme
+          ? "https://ipfs.near.social/ipfs/bafkreiarq7ufrypui3ivevbnky46n5u5awgthls22jvr73fsmoyemprrzy"
+          : "https://ipfs.near.social/ipfs/bafkreiepnpb5bjy4bopxwmkxog35swcqliupvmjgzlo3k2pfc345qoquz4";
 
         logo.src = isDarkTheme
           ? "https://ipfs.near.social/ipfs/bafkreighuyf2wcsc3nyey64536craz2ffis45fnjelh4gqxigugasalcwy"
