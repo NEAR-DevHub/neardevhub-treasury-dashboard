@@ -4,7 +4,7 @@ const { hasPermission } = VM.require(
   hasPermission: () => {},
 };
 
-const { tab, instance } = props;
+const { tab, instance, id } = props;
 
 if (!instance) {
   return <></>;
@@ -63,7 +63,15 @@ const Container = styled.div`
   }
 `;
 
-return (
+return id ? (
+  <Widget
+    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.ProposalDetailsPage`}
+    props={{
+      id: id,
+      instance,
+    }}
+  />
+) : (
   <Container>
     <Widget
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OffCanvas`}
