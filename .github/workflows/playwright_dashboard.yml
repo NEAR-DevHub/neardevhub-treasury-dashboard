@@ -16,7 +16,8 @@ jobs:
       matrix:
         target_account:
           - test_command: npx playwright test --project=treasury-dashboard playwright-tests/tests/dashboard
-          - test_command: npx playwright test --project=infinex playwright-tests/tests/dashboard
+          - test_command: npx playwright test --project=infinex playwright-tests/tests/dashboard/home-page.spec.js
+          - test_command: npx playwright test --project=infinex playwright-tests/tests/dashboard/lockup-cliff.spec.js
           - test_command: npx playwright test --project=treasury-testing playwright-tests/tests/dashboard
     steps:
       - uses: actions/checkout@v3
