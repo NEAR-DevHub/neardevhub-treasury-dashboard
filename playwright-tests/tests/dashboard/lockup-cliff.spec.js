@@ -28,7 +28,7 @@ test.describe("Lockup portfolio with cliff", function () {
     });
     await page.waitForTimeout(5_000);
     await expect(page.getByText("Start Date January 30, 2025")).toBeVisible();
-    await expect(page.getByText("End Date January 31, 2029")).toBeVisible();
+    await expect(page.getByText("End Date January 30, 2029")).toBeVisible();
     await expect(page.getByText("Cliff Date January 30, 2025")).toBeVisible();
   });
 });
