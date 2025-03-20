@@ -181,8 +181,8 @@ test.describe("Lockup portfolio", function () {
       daoAccount,
     });
     await page.waitForTimeout(5_000);
-    await expect(page.getByText("Start Date September 26, 2024")).toBeVisible();
-    await expect(page.getByText("End Date September 27, 2025")).toBeVisible();
+    await expect(page.getByText("Start Date September 25, 2024")).toBeVisible();
+    await expect(page.getByText("End Date September 26, 2025")).toBeVisible();
   });
 
   test("Should show total allocation, vested, unvested amounts", async ({
