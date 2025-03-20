@@ -36,6 +36,11 @@ const deleteGroup = getApproversAndThreshold(
   true
 );
 
+const refreshTableData = Storage.get(
+  "REFRESH_LOCKUP_TABLE_DATA",
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.lockup.CreateRequest`
+);
+
 const fetchProposals = useCallback(() => {
   setLoading(true);
 
@@ -67,6 +72,14 @@ const fetchProposals = useCallback(() => {
 useEffect(() => {
   fetchProposals();
 }, [currentPage, rowsPerPage]);
+
+useEffect(() => {
+  // need to clear all pagination related filters to fetch correct result
+  setIsPrevCalled(false);
+  setOffset(null);
+  setPage(0);
+  fetchProposals();
+}, [refreshTableData]);
 
 return (
   <div className="d-flex flex-column flex-1 justify-content-between">

@@ -166,6 +166,9 @@ useEffect(() => {
   getLastProposalId().then((i) => setLastProposalId(i));
 }, []);
 
+function refreshData() {
+  Storage.set("REFRESH_LOCKUP_TABLE_DATA", Math.random());
+}
 // close canvas after proposal is submitted
 useEffect(() => {
   if (isTxnCreated) {
