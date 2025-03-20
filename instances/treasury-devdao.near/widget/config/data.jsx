@@ -45,4 +45,5 @@ return {
     </svg>
   ),
   themeColor: "#05a36e",
+  allowLockupCancellation: true,
 };

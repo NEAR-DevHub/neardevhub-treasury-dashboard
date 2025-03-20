@@ -108,6 +108,15 @@ const Theme = styled.div`
     }
   }
 
+  .form-check-input {
+    border-color: var(--border-color) !important;
+    box-shadow: none !important;
+
+    &:checked {
+      background-color: var(--theme-color) !important;
+    }
+  }
+
   .text-lg {
     font-size: 15px;
   }
@@ -340,7 +349,7 @@ const Theme = styled.div`
   }
 
   .text-sm {
-    font-size: 13px;
+    font-size: 12px;
   }
 
   .text-secondary a {
