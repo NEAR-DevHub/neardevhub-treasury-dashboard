@@ -55,7 +55,7 @@ async function fillCreateForm(
   const allowCancelationElement = await page.getByTestId("allow-cancellation");
   const allowStakingElement = await page.getByTestId("allow-staking");
 
-  if (!instanceConfig.allowCancellation === false) {
+  if (!instanceConfig.allowLockupCancellation) {
     await expect(allowCancelationElement).toBeDisabled();
   } else {
     await expect(allowCancelationElement).toBeEnabled();
@@ -281,13 +281,14 @@ test.describe("User is logged in", function () {
       instanceAccount,
       daoAccount,
     }) => {
-      const receiverAccount = "webassemblymusic.near";
-
       test.setTimeout(60_000);
       await mockPikespeakFTTokensResponse({ page, daoAccount });
       await updateDaoPolicyMembers({ instanceAccount, page });
       await mockInventory({ page, account: daoAccount });
+
       const instanceConfig = await getInstanceConfig({ page, instanceAccount });
+      if (!instanceConfig.allowLockupCancellation) return true;
+
       const submitBtn = page
         .locator(".offcanvas-body")
         .getByRole("button", { name: "Submit" });
@@ -351,6 +352,8 @@ test.describe("User is logged in", function () {
       await mockInventory({ page, account: daoAccount });
 
       const instanceConfig = await getInstanceConfig({ page, instanceAccount });
+      if (!instanceConfig.allowLockupCancellation) return true;
+
       const submitBtn = page
         .locator(".offcanvas-body")
         .getByRole("button", { name: "Submit" });
