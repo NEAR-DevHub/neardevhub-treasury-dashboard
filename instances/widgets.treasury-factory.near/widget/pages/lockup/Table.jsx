@@ -1,5 +1,5 @@
 const accountId = context.accountId;
-const transferApproversGroup = props.transferApproversGroup;
+const functionCallApproversGroup = props.functionCallApproversGroup;
 const deleteGroup = props.deleteGroup;
 const instance = props.instance;
 const policy = props.policy;
@@ -41,7 +41,7 @@ const columnsVisibility = JSON.parse(
 const [showToastStatus, setToastStatus] = useState(false);
 const [voteProposalId, setVoteProposalId] = useState(null);
 const hasVotingPermission = (
-  transferApproversGroup?.approverAccounts ?? []
+  functionCallApproversGroup?.approverAccounts ?? []
 ).includes(accountId);
 const hasDeletePermission = (deleteGroup?.approverAccounts ?? []).includes(
   accountId
@@ -153,9 +153,9 @@ const columns = [
   { title: "Allow Cancellation", show: allowLockupCancellation },
   { title: "Allow Staking", show: true },
   { title: "Required Votes", show: true },
-  { title: "Votes", show: isPendingRequests },
+  { title: "Votes", show: isPendingRequests, className: "text-center" },
   { title: "Approvers", show: true },
-  { title: "Actions", show: isPendingRequests },
+  { title: "Actions", show: isPendingRequests, className: "text-right" },
 ];
 
 function isVisible(column) {
@@ -165,7 +165,7 @@ function isVisible(column) {
     : "display-none";
 }
 
-const requiredVotes = transferApproversGroup?.requiredVotes;
+const requiredVotes = functionCallApproversGroup?.requiredVotes;
 
 const ToastStatusContent = () => {
   let content = "";
@@ -355,7 +355,7 @@ const ProposalsComponent = ({ item }) => {
         />
       </td>
       {isPendingRequests && (hasVotingPermission || hasDeletePermission) && (
-        <td className={isVisible("Actions") + " text-center"}>
+        <td className={isVisible("Actions") + " text-right"}>
           <Widget
             src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.VoteActions`}
             props={{
