@@ -9,6 +9,10 @@ test.describe("Lockup portfolio with cliff", function () {
     instanceAccount,
     daoAccount,
   }) => {
+    if (!lockupContract) {
+      console.log("no lockup contract found for instance");
+      return test.skip();
+    }
     test.setTimeout(60_000);
     await mockLockupStateAndNavigateToDashboard({
       page,
