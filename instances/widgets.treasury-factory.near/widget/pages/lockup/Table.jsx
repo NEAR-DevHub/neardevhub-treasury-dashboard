@@ -40,7 +40,6 @@ const columnsVisibility = JSON.parse(
 
 const [showToastStatus, setToastStatus] = useState(false);
 const [voteProposalId, setVoteProposalId] = useState(null);
-const [lockupNearBalances, setLockupNearBalances] = useState(null);
 const hasVotingPermission = (
   transferApproversGroup?.approverAccounts ?? []
 ).includes(accountId);
@@ -131,16 +130,6 @@ useEffect(() => {
     });
   }
 }, [props.transactionHashes]);
-
-useEffect(() => {
-  if (lockupContract)
-    Near.asyncView(lockupContract, "get_liquid_owners_balance").then((res) => {
-      setLockupNearBalances((prev) => ({
-        ...prev,
-        available: res,
-      }));
-    });
-}, [lockupContract]);
 
 const TooltipContent = ({ title, summary }) => {
   return (

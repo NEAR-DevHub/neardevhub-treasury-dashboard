@@ -170,13 +170,12 @@ useEffect(() => {
 useEffect(() => {
   if (isTxnCreated) {
     let checkTxnTimeout = null;
-    let errorTimeout = null;
+
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
         if (lastProposalId !== id) {
           cleanInputs();
           onCloseCanvas();
-          clearTimeout(errorTimeout);
           refreshData();
           setTxnCreated(false);
         } else {
@@ -186,14 +185,8 @@ useEffect(() => {
     };
     checkForNewProposal();
 
-    errorTimeout = setTimeout(() => {
-      setTxnCreated(false);
-      clearTimeout(checkTxnTimeout);
-    }, 20000);
-
     return () => {
       clearTimeout(checkTxnTimeout);
-      clearTimeout(errorTimeout);
     };
   }
 }, [isTxnCreated]);

@@ -1,11 +1,3 @@
-const { StakeIcon, UnstakeIcon, WithdrawIcon } = VM.require(
-  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Icons"
-) || {
-  StakeIcon: () => <></>,
-  UnstakeIcon: () => <></>,
-  WithdrawIcon: () => <></>,
-};
-
 const { hasPermission } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 ) || {
