@@ -2,6 +2,11 @@ import { expect } from "@playwright/test";
 import { test } from "../../util/test.js";
 import { mockLockupStateAndNavigateToDashboard } from "./util.js";
 
+test.afterEach(async ({ page }, testInfo) => {
+  console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+});
+
 test.describe("Lockup portfolio with cliff", function () {
   test("Should show start, end and cliff date", async ({
     page,
