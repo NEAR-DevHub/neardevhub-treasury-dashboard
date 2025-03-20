@@ -456,6 +456,34 @@ test.describe("User is logged in", function () {
       outEstimate: "0.99940",
     };
     await mockSwapResponse({ page, response, daoAccount });
+    await page.route(
+      `https://api.nearblocks.io/v1/fts/c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2.factory.bridge.near`,
+      async (route) => {
+        const json = {
+          contracts: [
+            {
+              price: "2022.67000000",
+            },
+          ],
+        };
+
+        await route.fulfill({ json });
+      }
+    );
+    await page.route(
+      `https://api.nearblocks.io/v1/fts/17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1`,
+      async (route) => {
+        const json = {
+          contracts: [
+            {
+              price: "0.99980200",
+            },
+          ],
+        };
+
+        await route.fulfill({ json });
+      }
+    );
     await calculateBtn.click();
     await expect(exchangeRateWarning).toBeVisible();
     await expect(submitBtn).toBeEnabled();
