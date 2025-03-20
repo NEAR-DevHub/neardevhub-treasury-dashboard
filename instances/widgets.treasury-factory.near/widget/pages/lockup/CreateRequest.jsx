@@ -61,6 +61,7 @@ const [allowCancellation, setAllowCancellation] = useState(false);
 const [allowStaking, setAllowStaking] = useState(false);
 const [amountError, setAmountError] = useState(null);
 const [lastProposalId, setLastProposalId] = useState(null);
+const [daoPolicy, setDaoPolicy] = useState(null);
 
 function formatTimestamp(date) {
   return new Date(date).getTime() * 1000000;
@@ -72,7 +73,7 @@ function toBase64(json) {
 
 function onSubmitClick() {
   setTxnCreated(true);
-
+  const proposalBond = daoPolicy?.proposal_bond || 0;
   const deposit = Big(isNaN(amount) ? 0 : parseInt(amount))
     .mul(Big(10).pow(24))
     .toFixed();
@@ -130,6 +131,7 @@ function onSubmitClick() {
         },
       },
       gas,
+      deposit: proposalBond,
     },
   ];
 
@@ -163,6 +165,9 @@ function getLastProposalId() {
 }
 
 useEffect(() => {
+  Near.asyncView(treasuryDaoID, "get_policy").then((policy) => {
+    setDaoPolicy(policy);
+  });
   getLastProposalId().then((i) => setLastProposalId(i));
 }, []);
 

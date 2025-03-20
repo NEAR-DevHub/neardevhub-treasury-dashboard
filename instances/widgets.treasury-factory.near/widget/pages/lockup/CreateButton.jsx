@@ -21,10 +21,7 @@ const [showCanvas, setShowCanvas] = useState(false);
 
 const CreateBtn = () => {
   return (
-    <div
-      className={"btn primary-button d-flex align-items-center"}
-      onClick={() => setShowCanvas(true)}
-    >
+    <div className={"btn primary-button d-flex align-items-center"}>
       <div className="d-flex gap-2 align-items-center ">
         <i class="bi bi-plus-lg h5 mb-0"></i>Create Request
       </div>
@@ -63,7 +60,7 @@ return (
             ActionButton: CreateBtn,
             checkForDeposit: true,
             treasuryDaoID,
-            callbackAction: toggleDropdown,
+            callbackAction: () => setShowCanvas(true),
           }}
         />
       )}
