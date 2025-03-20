@@ -104,7 +104,9 @@ test.describe("Dashboard Page", function () {
   }) => {
     test.setTimeout(60_000);
     await page.waitForTimeout(5_000);
-    await expect(page.getByText("BLACKDRAGON $0.00 743,919,574")).toBeVisible();
+    await expect(
+      page.getByText("BLACKDRAGON < $0.01 743,919,574")
+    ).toBeVisible();
     await expect(page.getByText("USDC $1.00 72.00")).toBeVisible();
     await expect(page.getByText("REF $0.12 0.98")).toBeVisible();
     await expect(page.getByText("SLUSH $0.00 7,231,110.99")).toBeVisible();

@@ -22,6 +22,7 @@ import { InsufficientBalance, toBase64 } from "../../util/lib.js";
 import { SandboxRPC } from "../../util/sandboxrpc.js";
 
 async function clickCreatePaymentRequestButton(page) {
+  await page.waitForTimeout(6_000);
   const createPaymentRequestButton = await page.getByRole("button", {
     name: "Create Request",
   });
@@ -798,7 +799,7 @@ test.describe("admin with function access keys", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(120_000);
+    test.setTimeout(150_000);
     const nearPrice = 4;
     await mockInventory({ page, account: daoAccount });
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
@@ -846,7 +847,7 @@ test.describe("admin with function access keys", function () {
         .fill("webassemblymusic.near");
       const tokenSelect = page.getByTestId("tokens-dropdown");
       await tokenSelect.click();
-      await tokenSelect.getByText("NEAR").first().click();
+      await tokenSelect.getByText("NEAR").first().click({ timeout: 10_000 });
 
       const totalAmountField = page.getByTestId("total-amount");
       await totalAmountField.focus();

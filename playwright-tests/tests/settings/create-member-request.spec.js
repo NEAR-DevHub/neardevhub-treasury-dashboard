@@ -44,6 +44,7 @@ async function navigateToMembersPage({ page, instanceAccount }) {
 }
 
 async function openAddMemberForm({ page }) {
+  await page.waitForTimeout(6_000);
   const createMemberRequestButton = page.getByRole("button", {
     name: "Add Member",
   });

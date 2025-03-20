@@ -6,6 +6,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: web4-treasury-factory-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   code-formatting:
     name: Code Formatting
