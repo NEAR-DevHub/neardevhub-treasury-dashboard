@@ -11,7 +11,8 @@ import { formatTimestamp, isMac, roles, toBase64 } from "../../util/lib.js";
 
 const startDate = "2025-03-04";
 const endDate = "2025-04-05";
-const cliffDate = "2025-05-04";
+const cliffDate = "2025-04-04";
+const receiverAccount = "webassemblymusic.near";
 
 const createRequestButton = (page) =>
   page.getByText("Create Request", {
@@ -54,7 +55,7 @@ async function fillCreateForm(
   const allowCancelationElement = await page.getByTestId("allow-cancellation");
   const allowStakingElement = await page.getByTestId("allow-staking");
 
-  if (!instanceConfig.allowCancellation) {
+  if (!instanceConfig.allowCancellation === false) {
     await expect(allowCancelationElement).toBeDisabled();
   } else {
     await expect(allowCancelationElement).toBeEnabled();
@@ -69,56 +70,8 @@ async function fillCreateForm(
   await allowStakingElement.check();
   await expect(allowStakingElement).toBeChecked();
 
+  await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
   await expect(submitBtn).toBeEnabled();
-}
-
-async function evalTxn(page, sandbox, receiverAccount, daoName, lockupArgs) {
-  page.evaluate(async () => {
-    const selector = await document.querySelector("near-social-viewer")
-      .selectorPromise;
-
-    const wallet = await selector.wallet();
-
-    return new Promise((resolve) => {
-      wallet["signAndSendTransaction"] = async (transaction) => {
-        resolve(transaction);
-        return new Promise((transactionSentPromiseResolve) => {
-          window.transactionSentPromiseResolve = transactionSentPromiseResolve;
-        });
-      };
-    });
-  });
-
-  const transactionResult = await sandbox.addFunctionCallProposal({
-    method_name: "create",
-    functionArgs: lockupArgs,
-    receiver_id: `lockup.near`,
-    description: `Create lockup for ${receiverAccount}`,
-    daoName,
-  });
-
-  await page.getByRole("button", { name: "Confirm" }).click();
-  await page.evaluate(async (transactionResult) => {
-    window.transactionSentPromiseResolve(transactionResult);
-  }, transactionResult);
-  const lastProposalId = await sandbox.getLastProposalId(daoName);
-  await expect(page.locator("div.modal-body code").nth(0)).toBeAttached({
-    attached: false,
-    timeout: 10_000,
-  });
-  await expect(page.locator(".spinner-border")).toBeAttached({
-    attached: false,
-    timeout: 10_000,
-  });
-  await expect(page.locator(".offcanvas-body")).toBeVisible({
-    visible: false,
-  });
-  await expect(
-    page
-      .getByRole("cell", { name: `${lastProposalId - 1}`, exact: true })
-      .first()
-  ).toBeVisible({ timeout: 20_000 });
-  await sandbox.quitSandbox();
 }
 
 async function checkForErrorWithAmountField(page, value, checkCopyPaste) {
@@ -314,125 +267,256 @@ test.describe("User is logged in", function () {
     );
   });
 
-  test("build lockup payment request with staking", async ({
-    page,
-    instanceAccount,
-    daoAccount,
-  }) => {
-    const receiverAccount = "webassemblymusic.near";
-
-    test.setTimeout(60_000);
-    await mockPikespeakFTTokensResponse({ page, daoAccount });
-    await updateDaoPolicyMembers({ instanceAccount, page });
-    await mockInventory({ page, account: daoAccount });
-    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
-    const submitBtn = page
-      .locator(".offcanvas-body")
-      .getByRole("button", { name: "Submit" });
-
-    await fillCreateForm(
-      page,
-      daoAccount,
-      instanceAccount,
-      instanceConfig,
-      submitBtn,
-      {
-        startDate,
-        endDate,
-        cliffDate,
-      }
-    );
-    await submitBtn.click();
-
-    const lockupArgs = toBase64({
-      lockup_duration: "0",
-      owner_account_id: receiverAccount,
-      lockup_timestamp: formatTimestamp(startDate).toString(),
-      release_duration: (
-        formatTimestamp(endDate) - formatTimestamp(startDate)
-      ).toString(),
+  test.describe("With cancellation true", function () {
+    test.use({
+      contextOptions: {
+        permissions: ["clipboard-read", "clipboard-write"],
+      },
+      storageState:
+        "playwright-tests/storage-states/wallet-connected-admin.json",
     });
 
-    expect(await getTransactionModalObject(page)).toEqual({
-      proposal: {
-        description: `Create lockup for ${receiverAccount}`,
-        kind: {
-          FunctionCall: {
-            receiver_id: "lockup.near",
-            actions: [
-              {
-                method_name: "create",
-                args: lockupArgs,
-                deposit: "4000000000000000000000000",
-                gas: "150000000000000",
-              },
-            ],
+    test("build lockup payment request with staking", async ({
+      page,
+      instanceAccount,
+      daoAccount,
+    }) => {
+      const receiverAccount = "webassemblymusic.near";
+
+      test.setTimeout(60_000);
+      await mockPikespeakFTTokensResponse({ page, daoAccount });
+      await updateDaoPolicyMembers({ instanceAccount, page });
+      await mockInventory({ page, account: daoAccount });
+      const instanceConfig = await getInstanceConfig({ page, instanceAccount });
+      const submitBtn = page
+        .locator(".offcanvas-body")
+        .getByRole("button", { name: "Submit" });
+
+      await fillCreateForm(
+        page,
+        daoAccount,
+        instanceAccount,
+        instanceConfig,
+        submitBtn,
+        {
+          startDate,
+          endDate,
+          cliffDate,
+        }
+      );
+      await submitBtn.click();
+
+      const lockupArgs = toBase64({
+        lockup_duration: "0",
+        owner_account_id: receiverAccount,
+        vesting_schedule: {
+          VestingSchedule: {
+            cliff_timestamp: formatTimestamp(cliffDate || startDate).toString(),
+            end_timestamp: formatTimestamp(endDate).toString(),
+            start_timestamp: formatTimestamp(startDate).toString(),
           },
         },
-      },
+      });
+
+      expect(await getTransactionModalObject(page)).toEqual({
+        proposal: {
+          description: `Create lockup for ${receiverAccount}`,
+          kind: {
+            FunctionCall: {
+              receiver_id: "lockup.near",
+              actions: [
+                {
+                  method_name: "create",
+                  args: lockupArgs,
+                  deposit: "4000000000000000000000000",
+                  gas: "150000000000000",
+                },
+              ],
+            },
+          },
+        },
+      });
+    });
+
+    test("build lockup payment request without staking", async ({
+      page,
+      instanceAccount,
+      daoAccount,
+    }) => {
+      const receiverAccount = "webassemblymusic.near";
+
+      test.setTimeout(60_000);
+      await mockPikespeakFTTokensResponse({ page, daoAccount });
+      await updateDaoPolicyMembers({ instanceAccount, page });
+      await mockInventory({ page, account: daoAccount });
+
+      const instanceConfig = await getInstanceConfig({ page, instanceAccount });
+      const submitBtn = page
+        .locator(".offcanvas-body")
+        .getByRole("button", { name: "Submit" });
+
+      await fillCreateForm(
+        page,
+        daoAccount,
+        instanceAccount,
+        instanceConfig,
+        submitBtn,
+        {
+          startDate,
+          endDate,
+          cliffDate,
+        }
+      );
+      const allowStakingElement = await page.getByTestId("allow-staking");
+      await allowStakingElement.uncheck();
+      await submitBtn.click();
+
+      const lockupArgs = toBase64({
+        lockup_duration: "0",
+        owner_account_id: receiverAccount,
+        whitelist_account_id: "lockup-no-whitelist.near",
+        vesting_schedule: {
+          VestingSchedule: {
+            cliff_timestamp: formatTimestamp(cliffDate || startDate).toString(),
+            end_timestamp: formatTimestamp(endDate).toString(),
+            start_timestamp: formatTimestamp(startDate).toString(),
+          },
+        },
+      });
+
+      expect(await getTransactionModalObject(page)).toEqual({
+        proposal: {
+          description: `Create lockup for ${receiverAccount}`,
+          kind: {
+            FunctionCall: {
+              receiver_id: "lockup.near",
+              actions: [
+                {
+                  method_name: "create",
+                  args: lockupArgs,
+                  deposit: "4000000000000000000000000",
+                  gas: "150000000000000",
+                },
+              ],
+            },
+          },
+        },
+      });
     });
   });
 
-  test("build lockup payment request using without staking", async ({
-    page,
-    instanceAccount,
-    daoAccount,
-  }) => {
-    const receiverAccount = "webassemblymusic.near";
-
-    test.setTimeout(60_000);
-    await mockPikespeakFTTokensResponse({ page, daoAccount });
-    await updateDaoPolicyMembers({ instanceAccount, page });
-    await mockInventory({ page, account: daoAccount });
-
-    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
-    const submitBtn = page
-      .locator(".offcanvas-body")
-      .getByRole("button", { name: "Submit" });
-
-    await fillCreateForm(
-      page,
-      daoAccount,
-      instanceAccount,
-      instanceConfig,
-      submitBtn,
-      {
-        startDate,
-        endDate,
-        cliffDate,
-      }
-    );
-    const allowStakingElement = await page.getByTestId("allow-staking");
-    await allowStakingElement.uncheck();
-    await submitBtn.click();
-
-    const lockupArgs = toBase64({
-      lockup_duration: "0",
-      owner_account_id: receiverAccount,
-      whitelist_account_id: "lockup-no-whitelist.near",
-      lockup_timestamp: formatTimestamp(startDate).toString(),
-      release_duration: (
-        formatTimestamp(endDate) - formatTimestamp(startDate)
-      ).toString(),
+  test.describe("With cancellation false", function () {
+    test.use({
+      contextOptions: {
+        permissions: ["clipboard-read", "clipboard-write"],
+      },
+      storageState:
+        "playwright-tests/storage-states/wallet-connected-admin.json",
     });
 
-    expect(await getTransactionModalObject(page)).toEqual({
-      proposal: {
-        description: `Create lockup for ${receiverAccount}`,
-        kind: {
-          FunctionCall: {
-            receiver_id: "lockup.near",
-            actions: [
-              {
-                method_name: "create",
-                args: lockupArgs,
-                deposit: "4000000000000000000000000",
-                gas: "150000000000000",
-              },
-            ],
+    test.beforeEach(async ({ page, daoAccount, instanceAccount }) => {
+      test.setTimeout(60_000);
+      await mockPikespeakFTTokensResponse({ page, daoAccount });
+      await updateDaoPolicyMembers({ instanceAccount, page });
+      await mockInventory({ page, account: daoAccount });
+      const instanceConfig = await getInstanceConfig({ page, instanceAccount });
+      const submitBtn = page
+        .locator(".offcanvas-body")
+        .getByRole("button", { name: "Submit" });
+
+      await fillCreateForm(
+        page,
+        daoAccount,
+        instanceAccount,
+        instanceConfig,
+        submitBtn,
+        {
+          startDate,
+          endDate,
+          cliffDate,
+        }
+      );
+    });
+
+    test("build lockup payment request with staking", async ({ page }) => {
+      const submitBtn = page
+        .locator(".offcanvas-body")
+        .getByRole("button", { name: "Submit" });
+      const allowCancelationElement = await page.getByTestId(
+        "allow-cancellation"
+      );
+      await allowCancelationElement.uncheck();
+      await submitBtn.click();
+
+      const lockupArgs = toBase64({
+        lockup_duration: "0",
+        owner_account_id: receiverAccount,
+        lockup_timestamp: formatTimestamp(startDate).toString(),
+        release_duration: (
+          formatTimestamp(endDate) - formatTimestamp(startDate)
+        ).toString(),
+      });
+
+      expect(await getTransactionModalObject(page)).toEqual({
+        proposal: {
+          description: `Create lockup for ${receiverAccount}`,
+          kind: {
+            FunctionCall: {
+              receiver_id: "lockup.near",
+              actions: [
+                {
+                  method_name: "create",
+                  args: lockupArgs,
+                  deposit: "4000000000000000000000000",
+                  gas: "150000000000000",
+                },
+              ],
+            },
           },
         },
-      },
+      });
+    });
+
+    test("build lockup payment request without staking", async ({ page }) => {
+      const submitBtn = page
+        .locator(".offcanvas-body")
+        .getByRole("button", { name: "Submit" });
+      const allowCancelationElement = await page.getByTestId(
+        "allow-cancellation"
+      );
+      await allowCancelationElement.uncheck();
+      const allowStakingElement = await page.getByTestId("allow-staking");
+      await allowStakingElement.uncheck();
+      await submitBtn.click();
+
+      const lockupArgs = toBase64({
+        lockup_duration: "0",
+        owner_account_id: receiverAccount,
+        whitelist_account_id: "lockup-no-whitelist.near",
+        lockup_timestamp: formatTimestamp(startDate).toString(),
+        release_duration: (
+          formatTimestamp(endDate) - formatTimestamp(startDate)
+        ).toString(),
+      });
+
+      expect(await getTransactionModalObject(page)).toEqual({
+        proposal: {
+          description: `Create lockup for ${receiverAccount}`,
+          kind: {
+            FunctionCall: {
+              receiver_id: "lockup.near",
+              actions: [
+                {
+                  method_name: "create",
+                  args: lockupArgs,
+                  deposit: "4000000000000000000000000",
+                  gas: "150000000000000",
+                },
+              ],
+            },
+          },
+        },
+      });
     });
   });
 });
