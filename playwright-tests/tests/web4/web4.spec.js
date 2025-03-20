@@ -29,7 +29,7 @@ test("should go directly to app widget for instance", async ({
         `div[data-component="${widgetsAccount}/widget/components.Navbar"]`
       )
       .first()
-  ).toContainText(daoAccount);
+  ).toContainText("Dashboard");
 });
 
 test("should show gateway switch dropdown", async ({
