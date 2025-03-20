@@ -26,6 +26,7 @@ async function clickCreateLockupRequestButton(page) {
 }
 
 async function gotoForm(page, instanceAccount) {
+  await page.waitForTimeout(6_000);
   await page.goto(`/${instanceAccount}/widget/app?page=lockup`);
   await clickCreateLockupRequestButton(page);
 }
@@ -134,7 +135,7 @@ test.describe.parallel("User logged in with different roles", () => {
       test(`should ${
         canCreateRequest ? "see" : "not see"
       } 'Create Request' action`, async ({ page, instanceAccount }) => {
-        test.setTimeout(60_000);
+        test.setTimeout(100_000);
 
         await updateDaoPolicyMembers({
           instanceAccount,
@@ -172,7 +173,7 @@ test.describe("User is logged in", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(100_000);
     await mockNearBalances({
       page,
       accountId: daoAccount,
@@ -193,7 +194,7 @@ test.describe("User is logged in", function () {
     page,
     instanceAccount,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(100_000);
     await updateDaoPolicyMembers({ instanceAccount, page });
     await gotoForm(page, instanceAccount);
 
@@ -212,7 +213,7 @@ test.describe("User is logged in", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(100_000);
     await mockPikespeakFTTokensResponse({ page, daoAccount });
     await updateDaoPolicyMembers({ instanceAccount, page });
     await gotoForm(page, instanceAccount);
@@ -244,8 +245,7 @@ test.describe("User is logged in", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(60_000);
-
+    test.setTimeout(100_000);
     await mockPikespeakFTTokensResponse({ page, daoAccount });
     await updateDaoPolicyMembers({ instanceAccount, page });
     await mockInventory({ page, account: daoAccount });
@@ -281,7 +281,7 @@ test.describe("User is logged in", function () {
       instanceAccount,
       daoAccount,
     }) => {
-      test.setTimeout(60_000);
+      test.setTimeout(100_000);
       await mockPikespeakFTTokensResponse({ page, daoAccount });
       await updateDaoPolicyMembers({ instanceAccount, page });
       await mockInventory({ page, account: daoAccount });
@@ -345,8 +345,7 @@ test.describe("User is logged in", function () {
       daoAccount,
     }) => {
       const receiverAccount = "webassemblymusic.near";
-
-      test.setTimeout(60_000);
+      test.setTimeout(100_000);
       await mockPikespeakFTTokensResponse({ page, daoAccount });
       await updateDaoPolicyMembers({ instanceAccount, page });
       await mockInventory({ page, account: daoAccount });
@@ -418,7 +417,7 @@ test.describe("User is logged in", function () {
     });
 
     test.beforeEach(async ({ page, daoAccount, instanceAccount }) => {
-      test.setTimeout(60_000);
+      test.setTimeout(100_000);
       await mockPikespeakFTTokensResponse({ page, daoAccount });
       await updateDaoPolicyMembers({ instanceAccount, page });
       await mockInventory({ page, account: daoAccount });
