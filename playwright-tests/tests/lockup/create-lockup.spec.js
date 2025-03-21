@@ -334,7 +334,9 @@ test.describe("User is logged in", function () {
         owner_account_id: DEFAULT_ACCOUNT,
         vesting_schedule: {
           VestingSchedule: {
-            cliff_timestamp: formatTimestamp(CLIFF_DATE || START_DATE).toString(),
+            cliff_timestamp: formatTimestamp(
+              CLIFF_DATE || START_DATE
+            ).toString(),
             end_timestamp: formatTimestamp(END_DATE).toString(),
             start_timestamp: formatTimestamp(START_DATE).toString(),
           },
@@ -395,7 +397,9 @@ test.describe("User is logged in", function () {
         whitelist_account_id: "lockup-no-whitelist.near",
         vesting_schedule: {
           VestingSchedule: {
-            cliff_timestamp: formatTimestamp(CLIFF_DATE || START_DATE).toString(),
+            cliff_timestamp: formatTimestamp(
+              CLIFF_DATE || START_DATE
+            ).toString(),
             end_timestamp: formatTimestamp(END_DATE).toString(),
             start_timestamp: formatTimestamp(START_DATE).toString(),
           },
