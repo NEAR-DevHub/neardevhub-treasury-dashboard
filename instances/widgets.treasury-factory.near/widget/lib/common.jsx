@@ -781,6 +781,36 @@ function accountToLockup(accountId) {
   return false;
 }
 
+async function asyncAccountToLockup(accountId) {
+  if (!accountId) {
+    return null;
+  }
+  // Compute SHA-256 hash
+  const hash = ethers.utils.sha256(ethers.utils.toUtf8Bytes(accountId));
+
+  // Take the first 40 characters (20 bytes in hex)
+  const truncatedHash = hash.slice(2, 42); // Remove '0x' and take first 40 chars
+  const lockupAccount = `${truncatedHash}.lockup.near`;
+
+  return asyncFetch(`${REPL_RPC_URL}`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: "dontcare",
+      method: "query",
+      params: {
+        request_type: "view_account",
+        finality: "final",
+        account_id: `${lockupAccount}`,
+      },
+    }),
+  });
+}
+
 return {
   getApproversAndThreshold,
   hasPermission,
@@ -803,4 +833,5 @@ return {
   getRolesThresholdDescription,
   decodeBase64,
   accountToLockup,
+  asyncAccountToLockup,
 };
