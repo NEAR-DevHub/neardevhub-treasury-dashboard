@@ -114,7 +114,7 @@ function getRoleWiseData(treasuryDaoID) {
 
       // if there is no role.vote_policy, default is applied
       const threshold = Object.keys(role?.vote_policy ?? {}).length
-        ? role?.vote_policy?.["vote"]?.threshold
+        ? Object.values(role?.vote_policy)?.[0]?.threshold
         : defaultPolicy.threshold;
       const isRatio = Array.isArray(threshold);
 
