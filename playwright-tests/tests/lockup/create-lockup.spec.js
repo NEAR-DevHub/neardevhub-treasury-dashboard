@@ -9,11 +9,12 @@ import { mockNearPrice } from "../../util/nearblocks.js";
 import { focusInputReplaceAndBlur } from "../../util/forms.js";
 import { formatTimestamp, isMac, roles, toBase64 } from "../../util/lib.js";
 
-const startDate = "2025-03-04";
-const endDate = "2025-04-05";
-const cliffDate = "2025-04-04";
-const receiverAccount = "webassemblymusic.near";
-
+const START_DATE = "2025-03-04";
+const END_DATE = "2025-04-05";
+const CLIFF_DATE = "2025-04-04";
+const DEFAULT_ACCOUNT = "webassemblymusic.near";
+const RECEIVER_ACCOUNT_WITH_LOCKUP = "infinex.sputnik-dao.near";
+const NO_WHITELIST_ACCOUNT = "lockup-no-whitelist.near";
 const createRequestButton = (page) =>
   page.getByText("Create Request", {
     exact: true,
@@ -31,18 +32,21 @@ async function gotoForm(page, instanceAccount) {
   await clickCreateLockupRequestButton(page);
 }
 
-async function fillCreateForm(
+async function fillCreateForm({
   page,
   daoAccount,
+  receiverAccount = DEFAULT_ACCOUNT,
   instanceAccount,
   instanceConfig,
   submitBtn,
-  { startDate, endDate, cliffDate }
-) {
+  startDate = START_DATE,
+  endDate = END_DATE,
+  cliffDate = CLIFF_DATE,
+}) {
   await mockInventory({ page, account: daoAccount });
   await gotoForm(page, instanceAccount);
 
-  await page.getByPlaceholder("recipient.near").fill("webassemblymusic.near");
+  await page.getByPlaceholder("recipient.near").fill(receiverAccount);
   const totalAmountField = await page.getByTestId("amount");
   await focusInputReplaceAndBlur({
     inputField: totalAmountField,
@@ -72,7 +76,6 @@ async function fillCreateForm(
   await expect(allowStakingElement).toBeChecked();
 
   await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
-  await expect(submitBtn).toBeEnabled();
 }
 
 async function checkForErrorWithAmountField(page, value, checkCopyPaste) {
@@ -240,7 +243,7 @@ test.describe("User is logged in", function () {
     await checkForErrorWithAmountField(page, "1111111111111111", true);
   });
 
-  test("submit should be disabled when incorrect receiver id is mentioned or empty amount or empty proposal name or empty token", async ({
+  test("submit should be disabled when empty dates", async ({
     page,
     instanceAccount,
     daoAccount,
@@ -253,18 +256,42 @@ test.describe("User is logged in", function () {
     const submitBtn = page
       .locator(".offcanvas-body")
       .getByRole("button", { name: "Submit" });
-    await fillCreateForm(
+    await fillCreateForm({
       page,
       daoAccount,
       instanceAccount,
       instanceConfig,
       submitBtn,
-      {
-        startDate,
-        endDate,
-        cliffDate,
-      }
-    );
+      startDate: "",
+      endDate: "",
+    });
+
+    await expect(submitBtn).toBeDisabled();
+  });
+
+  test("submit should be disabled when receiver already has a lockup", async ({
+    page,
+    instanceAccount,
+    daoAccount,
+  }) => {
+    test.setTimeout(100_000);
+    await mockPikespeakFTTokensResponse({ page, daoAccount });
+    await updateDaoPolicyMembers({ instanceAccount, page });
+    await mockInventory({ page, account: daoAccount });
+    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
+    const submitBtn = page
+      .locator(".offcanvas-body")
+      .getByRole("button", { name: "Submit" });
+    await fillCreateForm({
+      page,
+      daoAccount,
+      receiverAccount: RECEIVER_ACCOUNT_WITH_LOCKUP,
+      instanceAccount,
+      instanceConfig,
+      submitBtn,
+    });
+
+    await expect(submitBtn).toBeDisabled();
   });
 
   test.describe("With cancellation true", function () {
@@ -293,35 +320,30 @@ test.describe("User is logged in", function () {
         .locator(".offcanvas-body")
         .getByRole("button", { name: "Submit" });
 
-      await fillCreateForm(
+      await fillCreateForm({
         page,
         daoAccount,
         instanceAccount,
         instanceConfig,
         submitBtn,
-        {
-          startDate,
-          endDate,
-          cliffDate,
-        }
-      );
+      });
       await submitBtn.click();
 
       const lockupArgs = toBase64({
         lockup_duration: "0",
-        owner_account_id: receiverAccount,
+        owner_account_id: DEFAULT_ACCOUNT,
         vesting_schedule: {
           VestingSchedule: {
-            cliff_timestamp: formatTimestamp(cliffDate || startDate).toString(),
-            end_timestamp: formatTimestamp(endDate).toString(),
-            start_timestamp: formatTimestamp(startDate).toString(),
+            cliff_timestamp: formatTimestamp(CLIFF_DATE || START_DATE).toString(),
+            end_timestamp: formatTimestamp(END_DATE).toString(),
+            start_timestamp: formatTimestamp(START_DATE).toString(),
           },
         },
       });
 
       expect(await getTransactionModalObject(page)).toEqual({
         proposal: {
-          description: `Create lockup for ${receiverAccount}`,
+          description: `Create lockup for ${DEFAULT_ACCOUNT}`,
           kind: {
             FunctionCall: {
               receiver_id: "lockup.near",
@@ -344,7 +366,6 @@ test.describe("User is logged in", function () {
       instanceAccount,
       daoAccount,
     }) => {
-      const receiverAccount = "webassemblymusic.near";
       test.setTimeout(100_000);
       await mockPikespeakFTTokensResponse({ page, daoAccount });
       await updateDaoPolicyMembers({ instanceAccount, page });
@@ -357,38 +378,33 @@ test.describe("User is logged in", function () {
         .locator(".offcanvas-body")
         .getByRole("button", { name: "Submit" });
 
-      await fillCreateForm(
+      await fillCreateForm({
         page,
         daoAccount,
         instanceAccount,
         instanceConfig,
         submitBtn,
-        {
-          startDate,
-          endDate,
-          cliffDate,
-        }
-      );
+      });
       const allowStakingElement = await page.getByTestId("allow-staking");
       await allowStakingElement.uncheck();
       await submitBtn.click();
 
       const lockupArgs = toBase64({
         lockup_duration: "0",
-        owner_account_id: receiverAccount,
+        owner_account_id: DEFAULT_ACCOUNT,
         whitelist_account_id: "lockup-no-whitelist.near",
         vesting_schedule: {
           VestingSchedule: {
-            cliff_timestamp: formatTimestamp(cliffDate || startDate).toString(),
-            end_timestamp: formatTimestamp(endDate).toString(),
-            start_timestamp: formatTimestamp(startDate).toString(),
+            cliff_timestamp: formatTimestamp(CLIFF_DATE || START_DATE).toString(),
+            end_timestamp: formatTimestamp(END_DATE).toString(),
+            start_timestamp: formatTimestamp(START_DATE).toString(),
           },
         },
       });
 
       expect(await getTransactionModalObject(page)).toEqual({
         proposal: {
-          description: `Create lockup for ${receiverAccount}`,
+          description: `Create lockup for ${DEFAULT_ACCOUNT}`,
           kind: {
             FunctionCall: {
               receiver_id: "lockup.near",
@@ -426,18 +442,13 @@ test.describe("User is logged in", function () {
         .locator(".offcanvas-body")
         .getByRole("button", { name: "Submit" });
 
-      await fillCreateForm(
+      await fillCreateForm({
         page,
         daoAccount,
         instanceAccount,
         instanceConfig,
         submitBtn,
-        {
-          startDate,
-          endDate,
-          cliffDate,
-        }
-      );
+      });
     });
 
     test("build lockup payment request with staking", async ({ page }) => {
@@ -452,16 +463,16 @@ test.describe("User is logged in", function () {
 
       const lockupArgs = toBase64({
         lockup_duration: "0",
-        owner_account_id: receiverAccount,
-        lockup_timestamp: formatTimestamp(startDate).toString(),
+        owner_account_id: DEFAULT_ACCOUNT,
+        lockup_timestamp: formatTimestamp(START_DATE).toString(),
         release_duration: (
-          formatTimestamp(endDate) - formatTimestamp(startDate)
+          formatTimestamp(END_DATE) - formatTimestamp(START_DATE)
         ).toString(),
       });
 
       expect(await getTransactionModalObject(page)).toEqual({
         proposal: {
-          description: `Create lockup for ${receiverAccount}`,
+          description: `Create lockup for ${DEFAULT_ACCOUNT}`,
           kind: {
             FunctionCall: {
               receiver_id: "lockup.near",
@@ -493,17 +504,17 @@ test.describe("User is logged in", function () {
 
       const lockupArgs = toBase64({
         lockup_duration: "0",
-        owner_account_id: receiverAccount,
-        whitelist_account_id: "lockup-no-whitelist.near",
-        lockup_timestamp: formatTimestamp(startDate).toString(),
+        owner_account_id: DEFAULT_ACCOUNT,
+        whitelist_account_id: NO_WHITELIST_ACCOUNT,
+        lockup_timestamp: formatTimestamp(START_DATE).toString(),
         release_duration: (
-          formatTimestamp(endDate) - formatTimestamp(startDate)
+          formatTimestamp(END_DATE) - formatTimestamp(START_DATE)
         ).toString(),
       });
 
       expect(await getTransactionModalObject(page)).toEqual({
         proposal: {
-          description: `Create lockup for ${receiverAccount}`,
+          description: `Create lockup for ${DEFAULT_ACCOUNT}`,
           kind: {
             FunctionCall: {
               receiver_id: "lockup.near",
