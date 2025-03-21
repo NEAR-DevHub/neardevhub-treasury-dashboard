@@ -12,6 +12,9 @@ import { formatTimestamp, isMac, roles, toBase64 } from "../../util/lib.js";
 const START_DATE = "2025-03-04";
 const END_DATE = "2025-04-05";
 const CLIFF_DATE = "2025-04-04";
+const START_DATE_AT_0 = "2025-03-04:00:00:00";
+const END_DATE_AT_0 = "2025-04-05:00:00:00";
+const CLIFF_DATE_AT_0 = "2025-04-04:00:00:00";
 const DEFAULT_ACCOUNT = "webassemblymusic.near";
 const RECEIVER_ACCOUNT_WITH_LOCKUP = "infinex.sputnik-dao.near";
 const NO_WHITELIST_ACCOUNT = "lockup-no-whitelist.near";
@@ -335,10 +338,10 @@ test.describe("User is logged in", function () {
         vesting_schedule: {
           VestingSchedule: {
             cliff_timestamp: formatTimestamp(
-              CLIFF_DATE || START_DATE
+              CLIFF_DATE_AT_0 || START_DATE_AT_0
             ).toString(),
-            end_timestamp: formatTimestamp(END_DATE).toString(),
-            start_timestamp: formatTimestamp(START_DATE).toString(),
+            end_timestamp: formatTimestamp(END_DATE_AT_0).toString(),
+            start_timestamp: formatTimestamp(START_DATE_AT_0).toString(),
           },
         },
       });
@@ -398,10 +401,10 @@ test.describe("User is logged in", function () {
         vesting_schedule: {
           VestingSchedule: {
             cliff_timestamp: formatTimestamp(
-              CLIFF_DATE || START_DATE
+              CLIFF_DATE_AT_0 || START_DATE_AT_0
             ).toString(),
-            end_timestamp: formatTimestamp(END_DATE).toString(),
-            start_timestamp: formatTimestamp(START_DATE).toString(),
+            end_timestamp: formatTimestamp(END_DATE_AT_0).toString(),
+            start_timestamp: formatTimestamp(START_DATE_AT_0).toString(),
           },
         },
       });
@@ -468,9 +471,9 @@ test.describe("User is logged in", function () {
       const lockupArgs = toBase64({
         lockup_duration: "0",
         owner_account_id: DEFAULT_ACCOUNT,
-        lockup_timestamp: formatTimestamp(START_DATE).toString(),
+        lockup_timestamp: formatTimestamp(START_DATE_AT_0).toString(),
         release_duration: (
-          formatTimestamp(END_DATE) - formatTimestamp(START_DATE)
+          formatTimestamp(END_DATE_AT_0) - formatTimestamp(START_DATE_AT_0)
         ).toString(),
       });
 
@@ -510,9 +513,9 @@ test.describe("User is logged in", function () {
         lockup_duration: "0",
         owner_account_id: DEFAULT_ACCOUNT,
         whitelist_account_id: NO_WHITELIST_ACCOUNT,
-        lockup_timestamp: formatTimestamp(START_DATE).toString(),
+        lockup_timestamp: formatTimestamp(START_DATE_AT_0).toString(),
         release_duration: (
-          formatTimestamp(END_DATE) - formatTimestamp(START_DATE)
+          formatTimestamp(END_DATE_AT_0) - formatTimestamp(START_DATE_AT_0)
         ).toString(),
       });
 
