@@ -1,5 +1,6 @@
-const { getNearBalances, TooltipText, isBosGateway } =
-  VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
+const { getNearBalances, TooltipText, isBosGateway } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+);
 const { NearToken } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Icons"
 ) || { NearToken: () => <></> };
