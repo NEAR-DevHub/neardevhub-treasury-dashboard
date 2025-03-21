@@ -1,3 +1,9 @@
+const { asyncAccountToLockup } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+);
+
+if (!asyncAccountToLockup) return <></>;
+
 const value = props.value;
 const placeholder = props.placeholder;
 const onUpdate = props.onUpdate;
@@ -5,7 +11,7 @@ const setParentAccountValid = props.setParentAccountValid;
 const disabled = props.disabled;
 const instance = props.instance;
 const allowNonExistentImplicit = props.allowNonExistentImplicit;
-const asyncAccountToLockup = props.asyncAccountToLockup;
+const checkAccountLockup = props.checkAccountLockup;
 
 const [account, setAccount] = useState(value);
 const [showAccountAutocomplete, setAutoComplete] = useState(false);
@@ -68,7 +74,7 @@ const checkAccountAvailability = async () => {
     return;
   }
 
-  if (typeof asyncAccountToLockup === "function") {
+  if (checkAccountLockup) {
     asyncAccountToLockup(account).then((resp) => {
       if (resp.body?.result?.amount) {
         setHasLockup(true);

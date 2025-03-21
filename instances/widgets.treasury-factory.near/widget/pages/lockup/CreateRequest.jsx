@@ -1,4 +1,4 @@
-const { getNearBalances, TooltipText, isBosGateway, asyncAccountToLockup } =
+const { getNearBalances, TooltipText, isBosGateway } =
   VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
 const { NearToken } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Icons"
@@ -233,7 +233,7 @@ return (
             placeholder: "recipient.near",
             value: receiver,
             onUpdate: setReceiver,
-            asyncAccountToLockup,
+            checkAccountLockup: true,
             setParentAccountValid: setIsReceiverAccountValid,
             maxWidth: "100%",
             instance,
