@@ -401,7 +401,7 @@ export async function mockWithFTBalance({
 }) {
   await page.route(
     (daoAccount.includes("testing")
-      ? `https://ref-sdk-test-cold-haze-1300.fly.dev`
+      ? `https://ref-sdk-test-cold-haze-1300-2.fly.dev`
       : `https://ref-sdk-api.fly.dev`) +
       `/api/ft-tokens/?account_id=${daoAccount}`,
     async (route) => {

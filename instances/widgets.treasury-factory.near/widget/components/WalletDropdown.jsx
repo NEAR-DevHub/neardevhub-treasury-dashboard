@@ -1,4 +1,4 @@
-const { getNearBalances } = VM.require(
+const { getNearBalances, accountToLockup } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 ) || { getNearBalances: () => {} };
 
@@ -7,13 +7,12 @@ const instance = props.instance;
 const selectedValue = props.selectedValue;
 const onUpdate = props.onUpdate;
 
-if (!instance) {
+if (!instance || typeof accountToLockup !== "function") {
   return <></>;
 }
 
-const { treasuryDaoID, lockupContract } = VM.require(
-  `${instance}/widget/config.data`
-);
+const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+const lockupContract = accountToLockup(treasuryDaoID);
 
 const nearBalances = getNearBalances(treasuryDaoID);
 
@@ -66,7 +65,7 @@ useEffect(() => {
 
 const Container = styled.div`
   .custom-tag {
-    width: 80px;
+    width: 90px;
     background-color: var(--grey-035);
     color: var(--text-color);
     padding-block: 3px;

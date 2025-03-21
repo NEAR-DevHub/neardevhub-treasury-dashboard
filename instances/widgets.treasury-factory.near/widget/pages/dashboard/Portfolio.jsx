@@ -106,6 +106,7 @@ const [displayableTokens, setDisplayableTokens] = useState([]);
 const [hiddenTokens, setHiddenTokens] = useState([]);
 const [lockupStartDate, setLockupStartDate] = useState(null);
 const [lockupEndDate, setLockupEndDate] = useState(null);
+const [lockupCliffDate, setLockupCliffDate] = useState(null);
 const [lockupTotalAllocated, setLockupTotalAllocated] = useState(null);
 const [lockupVested, setLockupVested] = useState(null);
 const [lockupUnvested, setLockupUnvested] = useState(null);
@@ -653,22 +654,44 @@ useEffect(() => {
     const deserialized = deserializeLockupContract(
       new Uint8Array([...lockupState].map((c) => c.charCodeAt(0)))
     );
-    const lockupTimestamp =
-      deserialized.lockup_information.lockup_timestamp.toString();
-    const releaseDuration =
-      deserialized.lockup_information.release_duration.toString();
+    let lockupStartTimestamp = deserialized.lockup_information.lockup_timestamp
+      ? deserialized.lockup_information.lockup_timestamp.toString()
+      : null;
+    let releaseDuration = deserialized.lockup_information.release_duration
+      ? deserialized.lockup_information.release_duration.toString()
+      : null;
     const totalAllocated =
       deserialized.lockup_information.lockup_amount.toString();
     const locked = nearBalances.contractLocked;
+    const transfersTimestamp = deserialized.lockup_information
+      .transfers_information?.transfers_timestamp
+      ? deserialized.lockup_information.transfers_information?.transfers_timestamp.toString()
+      : null;
+
+    if (!lockupStartTimestamp && transfersTimestamp) {
+      lockupStartTimestamp = transfersTimestamp;
+    }
+    let lockupEndTimestamp = Big(lockupStartTimestamp ?? "0")
+      .plus(releaseDuration ?? "0")
+      .toFixed();
+    let cliffTimestamp = null;
+    if (deserialized.vesting_information?.schedule) {
+      lockupStartTimestamp =
+        deserialized.vesting_information?.schedule.start_timestamp.toString();
+      cliffTimestamp =
+        deserialized.vesting_information?.schedule.cliff_timestamp.toString();
+      lockupEndTimestamp =
+        deserialized.vesting_information?.schedule.end_timestamp.toString();
+    }
+
     setLockupTotalAllocated(formatNearAmount(totalAllocated));
     setLockupVested(
       formatNearAmount(Big(totalAllocated).minus(locked).toFixed())
     );
+    setLockupCliffDate(cliffTimestamp ? convertToDate(cliffTimestamp) : null);
     setLockupUnvested(formatNearAmount(locked));
-    setLockupStartDate(convertToDate(lockupTimestamp));
-    setLockupEndDate(
-      convertToDate(Big(lockupTimestamp).plus(releaseDuration).toFixed())
-    );
+    setLockupStartDate(convertToDate(lockupStartTimestamp));
+    setLockupEndDate(convertToDate(lockupEndTimestamp));
   }
 }, [isLockupContract, lockupState, nearBalances]);
 
@@ -690,20 +713,30 @@ return (
                 <div className="d-flex flex-column gap-2 px-3 py-2">
                   <div className="border border-1 rounded-3">
                     <LockupRow
-                      label="Started"
+                      label="Start Date"
                       value={lockupStartDate}
                       tooltipInfo="The date when the vesting period for this lockup account began."
                       showExpand={false}
                       noSpaceInEnd={true}
                     />
                     <LockupRow
-                      label="End"
+                      label="End Date"
                       value={lockupEndDate}
                       tooltipInfo="The date when the vesting period for this lockup account will end."
-                      hideBorder={true}
+                      hideBorder={lockupCliffDate ? false : true}
                       showExpand={false}
                       noSpaceInEnd={true}
                     />
+                    {lockupCliffDate && (
+                      <LockupRow
+                        label="Cliff Date"
+                        value={lockupCliffDate}
+                        tooltipInfo="The first date when a portion of the original allocated amount becomes vested according to the vesting schedule. At the cliff date, tokens may unlock all at once or gradually over time. Before the cliff date, you can stake these tokens, but you are unable to use them for any other payments."
+                        hideBorder={true}
+                        showExpand={false}
+                        noSpaceInEnd={true}
+                      />
+                    )}
                   </div>
                   <div className="border border-1 rounded-3">
                     <LockupRow
