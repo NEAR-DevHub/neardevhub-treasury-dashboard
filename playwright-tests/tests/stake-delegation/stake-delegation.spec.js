@@ -962,13 +962,10 @@ test.describe("Withdraw request", function () {
     page,
     daoAccount,
     instanceAccount,
+    lockupContract,
   }) => {
     test.setTimeout(250_000);
-    const instanceConfig = await getInstanceConfig({
-      page,
-      instanceAccount,
-    });
-    if (instanceConfig.lockupContract) {
+    if (lockupContract) {
       console.log("lockup contract found for instance");
       return test.skip();
     }
@@ -1119,35 +1116,33 @@ test.describe("Lockup staking", function () {
     storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
   });
 
-  test.beforeEach(async ({ page, instanceAccount, daoAccount }) => {
-    const instanceConfig = await getInstanceConfig({
-      page,
-      instanceAccount,
-    });
-    if (!instanceConfig.lockupContract) {
-      console.log("no lockup contract found for instance");
-      return test.skip();
+  test.beforeEach(
+    async ({ page, instanceAccount, daoAccount, lockupContract }) => {
+      if (!lockupContract) {
+        console.log("no lockup contract found for instance");
+        return test.skip();
+      }
+
+      await mockStakeProposals({ page });
+      await updateDaoPolicyMembers({ instanceAccount, page });
+      await mockNearBalances({
+        page,
+        accountId: daoAccount,
+        balance: sufficientAvailableBalance,
+        storage: 2323,
+      });
+
+      await mockLockupNearBalances({
+        page,
+        balance: sufficientAvailableBalance,
+      });
+
+      await page.goto(`/${instanceAccount}/widget/app?page=stake-delegation`);
+      await expect(
+        await page.locator("div").filter({ hasText: /^Stake Delegation$/ })
+      ).toBeVisible();
     }
-
-    await mockStakeProposals({ page });
-    await updateDaoPolicyMembers({ instanceAccount, page });
-    await mockNearBalances({
-      page,
-      accountId: daoAccount,
-      balance: sufficientAvailableBalance,
-      storage: 2323,
-    });
-
-    await mockLockupNearBalances({
-      page,
-      balance: sufficientAvailableBalance,
-    });
-
-    await page.goto(`/${instanceAccount}/widget/app?page=stake-delegation`);
-    await expect(
-      await page.locator("div").filter({ hasText: /^Stake Delegation$/ })
-    ).toBeVisible();
-  });
+  );
 
   test.describe("Without selected pool", function () {
     const lastProposalId = 10;

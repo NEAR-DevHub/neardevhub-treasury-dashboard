@@ -12,5 +12,5 @@
   "REPL_INDIVIDUAL_PIKESPEAK_KEY": "263f0c69-69e2-4919-ae02-d8ca7a696da2",
   "REPL_GATEWAY_PIKESPEAK_KEY": "36f2b87a-7ee6-40d8-80b9-5e68e587a5b5",
   "REPL_NEARBLOCKS_KEY": "5B3F94A73F54414BAE8C4A8D0AB1B667",
-  "REPL_BACKEND_API": "https://ref-sdk-test-cold-haze-1300.fly.dev/api"
+  "REPL_BACKEND_API": "https://ref-sdk-test-cold-haze-1300-2.fly.dev/api"
 }

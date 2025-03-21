@@ -53,7 +53,7 @@ const server = http.createServer((req, res) => {
               res.setHeader("Content-Type", "application/json");
               res.end(JSON.stringify({ error: "Internal Server Error" }));
             } else {
-              console.warning(
+              console.warn(
                 "Failed fetching from rpc",
                 nextRPC,
                 error.message,
