@@ -471,6 +471,9 @@ return (
                   (hasVotingPermission || hasDeletePermission) && (
                     <td className="text-right">Actions</td>
                   )}
+                {!isPendingRequests && (
+                  <td className="text-right">Transaction</td>
+                )}
               </tr>
             </thead>
             <ProposalsComponent />

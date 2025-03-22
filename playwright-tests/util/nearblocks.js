@@ -13,8 +13,8 @@ export async function mockNearPrice({
 }) {
   await page.route(
     (daoAccount.includes("testing")
-      ? `https://ref-sdk-test-cold-haze-1300.fly.dev`
-      : `https://ref-sdk-api.fly.dev`) + `/api/near-price`,
+      ? `https://ref-sdk-test-cold-haze-1300-2.fly.dev`
+      : `https://ref-sdk-api-2.fly.dev`) + `/api/near-price`,
     async (route) => {
       if (returnError) {
         // Simulate an error response

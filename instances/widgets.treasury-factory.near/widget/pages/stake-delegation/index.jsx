@@ -1,24 +1,3 @@
-const { selectedTab, instance } = props;
-
-if (!instance) {
-  return <></>;
-}
-
-const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
-
-const [showStakeRequest, setShowStakeRequest] = useState(false);
-const [showUnStakeRequest, setShowUnStakeRequest] = useState(false);
-const [showWithdrawRequest, setShowWithdrawRequest] = useState(false);
-const createBtnOption = {
-  STAKE: "CreateStakeRequest",
-  UNSTAKE: "CreateUnstakeRequest",
-  WITHDRAW: "CreateWithdrawRequest",
-};
-const [isCreateBtnOpen, setCreateBtnOpen] = useState(false);
-const [selectedCreatePage, setSelectedCreatePage] = useState(
-  createBtnOption.STAKE
-);
-
 const Container = styled.div`
   .flex-1 {
     flex: 1;
@@ -43,15 +22,8 @@ return (
             props: props,
           },
         ],
-        SidebarMenu: ({ currentTab }) => (
-          <Widget
-            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.CreateButton`}
-            props={{
-              instance,
-              isPendingPage: currentTab.title === "Pending Requests",
-            }}
-          />
-        ),
+        page: 'stake-delegation', // payments, stake-delegation, asset-exchange, settings-history
+        searchAndFilterHistory: false,
       }}
     />
   </Container>

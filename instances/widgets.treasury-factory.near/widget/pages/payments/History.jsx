@@ -13,6 +13,7 @@ const { treasuryDaoID, cacheURL } = VM.require(
 
 const [rowsPerPage, setRowsPerPage] = useState(10);
 const [currentPage, setPage] = useState(0);
+// const proposals = props.proposals;
 const [proposals, setProposals] = useState(null);
 const [totalLength, setTotalLength] = useState(null);
 const [loading, setLoading] = useState(false);
@@ -29,40 +30,41 @@ const highlightProposalId =
 
 useEffect(() => {
   setLoading(true);
-  // FIXME: move from rpc calls to indexer
-  // Near.asyncView(treasuryDaoID, "get_last_proposal_id").then((i) => {
-  //   const lastProposalId = i;
-  //   getFilteredProposalsByStatusAndKind({
-  //     treasuryDaoID,
-  //     resPerPage: rowsPerPage,
-  //     isPrevPageCalled: isPrevPageCalled,
-  //     filterKindArray: ["Transfer", "FunctionCall"],
-  //     filterStatusArray: ["Approved", "Rejected", "Expired", "Failed"],
-  //     offset: typeof offset === "number" ? offset : lastProposalId,
-  //     lastProposalId: lastProposalId,
-  //     currentPage,
-  //   }).then((r) => {
-  //     if (currentPage === 0 && !totalLength) {
-  //       setTotalLength(r.totalLength);
-  //     }
-  //     setOffset(r.filteredProposals[r.filteredProposals.length - 1].id);
-  //     if (typeof highlightProposalId === "number" && firstRender) {
-  //       const proposalExists = r.filteredProposals.find(
-  //         (i) => i.id === highlightProposalId
-  //       );
-  //       if (!proposalExists) {
-  //         setPage(currentPage + 1);
-  //       } else {
-  //         setFirstRender(false);
-  //         setLoading(false);
-  //         setProposals(r.filteredProposals);
-  //       }
-  //     } else {
-  //       setLoading(false);
-  //       setProposals(r.filteredProposals);
-  //     }
-  //   });
-  // });
+  // FIXME: Move from RPC calls to indexer
+  Near.asyncView(treasuryDaoID, "get_last_proposal_id").then((i) => {
+    const lastProposalId = i;
+    getFilteredProposalsByStatusAndKind({
+      treasuryDaoID,
+      resPerPage: rowsPerPage,
+      isPrevPageCalled: isPrevPageCalled,
+      filterKindArray: ["Transfer", "FunctionCall"],
+      filterStatusArray: ["Approved", "Rejected", "Expired", "Failed"],
+      offset: typeof offset === "number" ? offset : lastProposalId,
+      lastProposalId: lastProposalId,
+      currentPage,
+    }).then((r) => {
+      if (currentPage === 0 && !totalLength) {
+        setTotalLength(r.totalLength);
+      }
+      setOffset(r.filteredProposals[r.filteredProposals.length - 1].id);
+      if (typeof highlightProposalId === "number" && firstRender) {
+        const proposalExists = r.filteredProposals.find(
+          (i) => i.id === highlightProposalId
+        );
+        if (!proposalExists) {
+          setPage(currentPage + 1);
+        } else {
+          setFirstRender(false);
+          setLoading(false);
+          setProposals(r.filteredProposals);
+        }
+      } else {
+        setLoading(false);
+        console.log("r.filteredProposals", r.filteredProposals);
+        setProposals(r.filteredProposals);
+      }
+    });
+  });
 }, [currentPage, rowsPerPage]);
 
 const policy = treasuryDaoID

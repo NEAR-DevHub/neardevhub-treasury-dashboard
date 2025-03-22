@@ -1,30 +1,92 @@
-const { VerifiedTick, NotVerfiedTick, User, Copy } = VM.require(
-  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Icons"
-) || {
-  VerifiedTick: () => <></>,
-  NotVerfiedTick: () => <></>,
-  User: () => <></>,
-  Copy: () => <></>,
-  // NearToken: () => <></>,
-};
-
 const { instance } = props;
-
-const [fromAmount, setFromAmount] = useState("0");
+const [fromAmount, setFromAmount] = useState("");
 const [toAmount, setToAmount] = useState("");
 const [recipient, setRecipient] = useState("");
 const [recipientSearch, setRecipientSearch] = useState("");
+const [allRecipients, setAllRecipients] = useState([]);
+const [allRecipientOptions, setAllRecipientOptions] = useState([]);
 const [showKycStatusVerified, setShowKycStatusVerified] = useState(true);
 const [showKycStatusNotVerified, setShowKycStatusNotVerified] = useState(true);
-const [selectedTokens, setSelectedTokens] = useState([
-  { id: "usdc", name: "USDC", logo: "circle" },
-  { id: "usdt", name: "USDt", logo: "tether" },
-  { id: "near", name: "NEAR", logo: "near" },
-]);
+const [selectedTokens, setSelectedTokens] = useState([]);
+const [allTokensOptions, setAllTokensOptions] = useState([]);
 const [approvers, setApprovers] = useState([]);
 const [approversSearch, setApproversSearch] = useState("");
-const [isOpen, setIsOpen] = useState(true);
+const [allApproversOptions, setAllApproversOptions] = useState([]);
+const [isOpen, setIsOpen] = useState(false);
 const [numberOfFiltersApplied, setNumberOfFiltersApplied] = useState(0);
+
+const ENDPOINT= 'https://testing-indexer-2.fly.dev/dao/proposals/testing-astradao.sputnik-dao.near'
+function fetchFilterOptions() {
+  const options = ['token_ids', 'approvers', 'receivers'];
+  const promises = options.map((option) => {
+    const fetchUrl = `${ENDPOINT}/${option}`;
+    return asyncFetch(fetchUrl, {
+      method: "GET",
+      headers: {
+        accept: "application/json",
+      },
+    }).then(response => {
+      return response; // Return successful response
+    }).catch((error) => {
+      console.log(`Error fetching ${option} in fetchFilterOptions: `, error);
+      // Return a default/empty response instead of throwing
+      return { body: [], ok: false, error };
+    });
+  })
+  return Promise.all(promises);
+}
+
+useEffect(() => {
+  fetchFilterOptions().then((r) => {
+    console.log("Returned from fetchFilterOptions", r);
+    if (r[0]?.ok !== false) {
+      let allTokens = (r[0].body || [])
+      console.log("allTokens", allTokens);
+      setAllTokensOptions(allTokens);
+    }
+    if (r[1]?.ok !== false) {
+      let allApprovers = (r[1].body || []).map((approver, index) => {
+        return {
+          label: (
+            <Widget
+              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
+              props={{
+                accountId: approver,
+                showKYC: true,
+                
+                instance,
+              }}
+            />
+          ),
+          value: approver,
+        }
+      })
+      console.log("allApprovers", allApprovers);
+      setAllApproversOptions(allApprovers);
+    }
+    if (r[2]?.ok !== false) {
+      let allRecipients = (r[2].body || []).map((recipient, index) => {
+       
+        return {
+          label: (
+            <Widget
+              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
+              props={{
+                accountId: recipient,
+                showKYC: true,
+                instance,
+              }}
+            />
+          ),
+          value: recipient,
+        }
+      })
+      console.log("allRecipients", allRecipients);
+      setAllRecipientOptions(allRecipients);
+    }
+  })
+}, [])
+
 
 const getNumberOfFiltersApplied = () => {
   let count = 0;
@@ -56,36 +118,6 @@ if (!instance) {
 }
 
 const { showReferenceProposal } = VM.require(`${instance}/widget/config.data`);
-
-
-const TokenLogo = ({ type }) => {
-  if (type === "circle") {
-    return (
-      <div className="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white" style={{ width: "20px", height: "20px", fontSize: "12px", fontWeight: "bold" }}>
-        T
-      </div>
-    );
-  }
-
-  if (type === "tether") {
-    return (
-      <div className="rounded-circle bg-info d-flex align-items-center justify-content-center text-white" style={{ width: "20px", height: "20px", fontSize: "12px", fontWeight: "bold" }}>
-        T
-      </div>
-    );
-  }
-
-  if (type === "near") {
-    // return <NearToken />
-    return <div className="rounded-circle bg-info d-flex align-items-center justify-content-center text-white" style={{ width: "20px", height: "20px", fontSize: "12px", fontWeight: "bold" }}>
-            T
-          </div>
-  }
-
-  return null;
-};
-
-const verificationStatus = 'verified'
 
 const Container = styled.div`
   .dropdown-toggle:after {
@@ -127,52 +159,17 @@ const clearFilters = () => {
   setRecipientSearch("");
 }
 
-const allRecipientOptions = [
-  {
-    label: (
-      <span className="text-sm">
-        <b>#1</b> frol (@frol.near)
-      </span>
-    ),
-    value: "1",
-    },
-  {
-    label: (
-      <span className="text-sm">
-        <b>#2</b> nearblocks (@nearblocks_io.near)
-      </span>
-    ),
-    value: "2",
-  },
-  {
-    label: (
-      <span className="text-sm">
-        <b>#3</b> harry (@harry.near)
-      </span>
-    ),
-    value: "3",
-  },
-]
+// useEffect(() => {
+//   console.log("allRecipientOptions", allRecipientOptions);
+// }, [allRecipientOptions]);
 
-const allApproversOptions = [
-  {
-    label: (
-      <span className="text-sm">
-        <b>#1</b> frol (@frol.near)
-      </span>
-    ),
-    value: "1",
-  },
-  {
-    label: (
-      <span className="text-sm">
-        <b>#2</b> nearblocks (@nearblocks_io.near)
-      </span>
-    ),
-    value: "2",
-  },
-];
+// useEffect(() => {
+//   console.log("allApproversOptions", allApproversOptions);
+// }, [allApproversOptions]);
 
+// useEffect(() => {
+//   console.log("allTokensOptions", allTokensOptions);
+// }, [allTokensOptions]);
 
 return (
   <Container>
@@ -180,7 +177,7 @@ return (
      { numberOfFiltersApplied == 0 ? <div className="dropdown-toggle btn btn-outline-secondary" onClick={() => setIsOpen(!isOpen)}>
         <i className="bi bi-funnel"></i>
       </div> :
-      <div className="btn btn-outline-secondary d-flex align-items-center gap-2">
+      <div className="btn btn-outline-secondary d-flex align-items-center gap-2" onClick={() => setIsOpen(!isOpen)}>
         <div className="position-relative">
             <i className="bi bi-funnel"></i>
             <span className="position-absolute top-0 start-100 translate-middle p-1 bg-primary border border-light rounded-circle">
@@ -204,7 +201,7 @@ return (
                 <div className="mb-1">From</div>
                 <div className="input-group">
                   <input
-                    type="text"
+                    type="number"
                     value={fromAmount}
                     onChange={(e) => setFromAmount(e.target.value)}
                     className="form-control"
@@ -218,7 +215,7 @@ return (
                 <div className="mb-1">To</div>
                 <div className="input-group">
                   <input
-                    type="text"
+                    type="number"
                     value={toAmount}
                     onChange={(e) => setToAmount(e.target.value)}
                     className="form-control"
@@ -263,11 +260,15 @@ return (
 
               <div className="position-relative border rounded p-2" style={{ minHeight: "40px" }}>
                 <div className="d-flex flex-wrap gap-2">
-                  {selectedTokens.map((token) => (
-                    <div key={token.id} className="token-badge">
-                      <TokenLogo type={token.logo} />
-                      <span>{token.name}</span>
-                      <div className="p-0 pointer" onClick={() => removeSelectedToken(token.id)}>
+                  {allTokensOptions.map((token_id) => (
+                    <div key={token_id} className="token-badge">
+                      <Widget
+                          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenIcon`}
+                          props={{
+                            address: token_id,
+                          }}
+                        />
+                      <div className="p-0 pointer" onClick={() => removeSelectedToken(token_id)}>
                         <i className="bi bi-x"></i>
                       </div>
                     </div>
