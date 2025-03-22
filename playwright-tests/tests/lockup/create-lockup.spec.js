@@ -8,6 +8,7 @@ import { mockPikespeakFTTokensResponse } from "../../util/pikespeak.js";
 import { mockNearPrice } from "../../util/nearblocks.js";
 import { focusInputReplaceAndBlur } from "../../util/forms.js";
 import { formatTimestamp, isMac, roles, toBase64 } from "../../util/lib.js";
+import { SandboxRPC } from "../../util/sandboxrpc.js";
 
 // Test constants
 const TEST_DATES = {
@@ -33,6 +34,76 @@ const getSubmitButton = (page) =>
   page.locator(".offcanvas-body").getByRole("button", { name: "Submit" });
 
 // Test helpers
+
+async function checkNewProposalSubmission({
+  page,
+  sandbox,
+  checkforMultiProposals = false,
+  daoAccount,
+  daoName,
+}) {
+  const method = checkforMultiProposals
+    ? "signAndSendTransactions"
+    : "signAndSendTransaction";
+
+  const transactionToSendPromise = page.evaluate(async (method) => {
+    const selector = await document.querySelector("near-social-viewer")
+      .selectorPromise;
+
+    const wallet = await selector.wallet();
+
+    return new Promise((resolve) => {
+      wallet[method] = async (transaction) => {
+        resolve(transaction);
+        return new Promise((transactionSentPromiseResolve) => {
+          window.transactionSentPromiseResolve = transactionSentPromiseResolve;
+        });
+      };
+    });
+  }, method);
+
+  await page.getByRole("button", { name: "Confirm" }).click();
+  const transactionToSend = await transactionToSendPromise;
+  const transaction = checkforMultiProposals
+    ? transactionToSend.transactions[0]
+    : transactionToSend;
+
+  const transactionResult = await sandbox.account.functionCall({
+    contractId: daoAccount,
+    methodName: "add_proposal",
+    args: transaction.actions[0].params.args,
+    attachedDeposit: transaction.actions[0].params.deposit,
+  });
+  await page.evaluate(async (transactionResult) => {
+    window.transactionSentPromiseResolve(transactionResult);
+  }, transactionResult);
+  const lastProposalId = await sandbox.getLastProposalId(daoName);
+  await expect(page.locator("div.modal-body code").nth(0)).toBeAttached({
+    attached: false,
+    timeout: 10_000,
+  });
+  await expect(page.locator(".spinner-border")).toBeAttached({
+    attached: false,
+    timeout: 10_000,
+  });
+  await expect(page.locator(".offcanvas-body")).toBeVisible({
+    visible: false,
+  });
+  await expect(
+    page
+      .getByRole("cell", { name: `${lastProposalId - 1}`, exact: true })
+      .first()
+  ).toBeVisible({ timeout: 20_000 });
+
+  if (checkforMultiProposals) {
+    await expect(
+      page
+        .getByRole("cell", { name: `${lastProposalId - 2}`, exact: true })
+        .first()
+    ).toBeVisible({ timeout: 20_000 });
+  }
+}
+
 async function navigateToLockupPage(page, instanceAccount) {
   await page.waitForTimeout(6_000);
   await page.goto(`/${instanceAccount}/widget/app?page=lockup`);
@@ -548,7 +619,22 @@ test.describe("Lockup Creation", () => {
         });
       });
 
-      test("Creates lockup with staking disabled", async ({ page }) => {
+      test("Creates lockup with staking disabled", async ({
+        page,
+        daoAccount,
+      }) => {
+        test.setTimeout(250_000);
+        const daoName = daoAccount.split(".")[0];
+        const sandbox = new SandboxRPC();
+        await sandbox.init();
+        await sandbox.attachRoutes(page);
+        await sandbox.setupSandboxForSputnikDao(daoName);
+        await sandbox.addStakeRequestProposal({
+          stakedPoolAccount,
+          stakingAmount: "11.00",
+          daoName,
+        });
+
         const submitBtn = getSubmitButton(page);
         await setCancellationOption(page, false);
         await setStakingOption(page, false);
@@ -558,6 +644,14 @@ test.describe("Lockup Creation", () => {
           enableCancellation: false,
           enableStaking: false,
         });
+
+        await checkNewProposalSubmission({
+          page,
+          sandbox,
+          daoAccount,
+          daoName,
+        });
+        await sandbox.quitSandbox();
       });
     });
   });
