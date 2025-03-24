@@ -287,7 +287,12 @@ async function fillLockupForm({
   enableStaking = true,
 }) {
   // Initialize form
-  await mockInventory({ page, account: daoAccount });
+  await mockNearBalances({
+    page,
+    accountId: daoAccount,
+    balance: BigInt(6 * 10 ** 24).toString(),
+    storage: 8,
+  });
   await gotoLockupFormPage(page, instanceAccount);
 
   // Fill form fields
