@@ -363,7 +363,7 @@
         border-color: rgba(59, 59, 59, 1);
       }
 
-      .btn-light i {
+      .web4-btn-light i {
         color: rgba(153, 153, 153, 1) !important;
       }
       .show {
@@ -375,15 +375,15 @@
         cursor: pointer;
       }
 
-      .btn-light {
+      .web4-btn-light {
         background-color: transparent !important;
       }
 
-      [data-bs-theme="light"] .btn-light:hover {
+      [data-bs-theme="light"] .web4-btn-light:hover {
         background-color: rgba(230, 230, 230, 1) !important;
       }
 
-      [data-bs-theme="dark"] .btn-light:hover {
+      [data-bs-theme="dark"] .web4-btn-light:hover {
         background-color: rgba(62, 62, 62, 1) !important;
       }
 
@@ -411,10 +411,6 @@
         cursor: pointer;
       }
 
-      .dropdown-card:hover {
-        background-color: rgba(230, 230, 230, 1);
-      }
-
       .dropdown-card img {
         width: 50px;
         height: 50px;
@@ -432,6 +428,19 @@
         margin-bottom: 0px !important;
       }
 
+      .dropdown-card i {
+        opacity: 0;
+        transition: opacity 0.2s ease-in-out;
+      }
+
+      [data-bs-theme="dark"] i.text-color {
+        color: black !important;
+      }
+
+      .dropdown-card:hover i {
+        opacity: 1;
+      }
+
       .text-sm {
         font-size: 13px;
       }
@@ -440,7 +449,7 @@
         flex: 1;
       }
 
-      .badge {
+      .web4-badge {
         width: fit-content;
         padding: 5px 10px;
         border-radius: 5px;
@@ -449,12 +458,12 @@
         color: white;
       }
 
-      [data-bs-theme="light"] .selected {
-        background-color: rgba(244, 244, 244, 1);
+      [data-bs-theme="light"] .selected-gateway {
+        background-color: rgba(244, 244, 244, 1) !important;
       }
 
-      [data-bs-theme="dark"] .selected {
-        background-color: rgba(50, 50, 50, 1);
+      [data-bs-theme="dark"] .selected-gateway {
+        background-color: rgba(50, 50, 50, 1) !important;
       }
     </style>
     <script>
@@ -517,7 +526,7 @@
     <nav class="custom-navbar">
       <div class="dropdown ms-2">
         <div
-          class="d-flex gap-2 align-items-center btn btn-light border-0 rounded-3"
+          class="d-flex gap-2 align-items-center btn btn-light web4-btn-light border-0 rounded-3"
           id="dropdownToggle"
         >
           <img
@@ -540,7 +549,7 @@
 
             <div class="card-container d-flex gap-2 flex-wrap">
               <a
-                class="dropdown-card border border-1 rounded-3 flex-1 text-decoration-none selected"
+                class="dropdown-card border border-1 rounded-3 flex-1 text-decoration-none selected-gateway"
                 id="web4-link"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -553,9 +562,10 @@
                 <strong>Web4</strong>
                 <p>
                   Gateway built by the NEAR Treasury team, providing a secure
-                  and decentralized experience directly on the NEAR blockchain.
+                  and decentralized experience with optimal performance and
+                  ledger support.
                 </p>
-                <div class="badge mt-2" style="background-color: #3cb179">
+                <div class="web4-badge mt-2" style="background-color: #3cb179">
                   Currently in Use
                 </div>
               </a>
@@ -566,13 +576,17 @@
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <img
-                  src="https://ipfs.near.social/ipfs/bafkreiffkbotl7he7ikp2yjo2n2eebjrlnstyzc5tdokb2tvy4zd6nkcma"
-                  alt="NEAR Developer Portal"
-                />
+                <div class="d-flex justify-content-between">
+                  <img
+                    src="https://ipfs.near.social/ipfs/bafkreiffkbotl7he7ikp2yjo2n2eebjrlnstyzc5tdokb2tvy4zd6nkcma"
+                    alt="NEAR Developer Portal"
+                  />
+                  <i class="bi bi-arrow-up-right h6 mb-0 text-color"></i>
+                </div>
                 <strong style="color: black">NEAR Developer Portal</strong>
                 <p>
-                  Platform designed to support developers for an organization.
+                  Use your existing NEAR Dev gateway for quick access and
+                  single-sign-on convenience.
                 </p>
               </a>
 
@@ -583,12 +597,21 @@
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <img
-                  src="https://ipfs.near.social/ipfs/bafkreietyx6i5ntxvk2kkbcmtbkjlqc5pe36agxqzdfinnb6eq6vx3mdxe"
-                  alt="Near Social"
-                />
+                <div class="d-flex justify-content-between">
+                  <img
+                    src="https://ipfs.near.social/ipfs/bafkreietyx6i5ntxvk2kkbcmtbkjlqc5pe36agxqzdfinnb6eq6vx3mdxe"
+                    alt="Near Social"
+                  />
+                  <i
+                    class="bi bi-arrow-up-right h6 mb-0"
+                    style="color: white"
+                  ></i>
+                </div>
                 <strong style="color: white">Near Social</strong>
-                <p>Social data protocol built on top of NEAR Protocol.</p>
+                <p>
+                  Use your existing NEAR Social ecosystem gateway for quick
+                  access and single sign-on convenience.
+                </p>
               </a>
             </div>
           </div>
