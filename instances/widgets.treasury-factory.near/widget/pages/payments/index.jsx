@@ -22,6 +22,11 @@ const hasCreatePermission = hasPermission(
   "AddProposal"
 );
 
+const proposalDetailsPageId =
+  props.id || props.id === "0" || props.id === 0
+    ? parseInt(props.proposalDetailsPageId)
+    : null;
+
 const SidebarMenu = ({ currentTab }) => {
   return (
     <div
@@ -82,11 +87,11 @@ const Container = styled.div`
   }
 `;
 
-return id ? (
+return proposalDetailsPageId || proposalDetailsPageId === 0 ? (
   <Widget
     src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.ProposalDetailsPage`}
     props={{
-      id: id,
+      id: proposalDetailsPageId,
       instance,
     }}
   />
