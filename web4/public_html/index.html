@@ -346,9 +346,9 @@
         top: 100%;
         left: 0;
         width: 650px;
-        box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+        box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.2);
         padding: 10px;
-        border-radius: 10px;
+        border-radius: 12px;
         z-index: 1000;
         padding-inline: 0.5rem !important;
       }
@@ -400,8 +400,7 @@
         width: 225px;
         height: 270px;
         padding: 15px;
-        border: 1px solid rgba(226, 230, 236, 1);
-        border-radius: 10px;
+        border-radius: 8px;
         text-decoration: none;
         color: inherit;
         background-color: white;
@@ -458,7 +457,7 @@
         color: white;
       }
 
-      [data-bs-theme="light"] .selected-gateway {
+      .selected-gateway {
         background-color: rgba(244, 244, 244, 1) !important;
       }
 
@@ -538,7 +537,10 @@
           <i class="bi bi-chevron-down" id="dropdownIcon"></i>
         </div>
 
-        <div class="web4-selector-dropdown-menu" id="dropdownMenu">
+        <div
+          class="web4-selector-dropdown-menu border border-1"
+          id="dropdownMenu"
+        >
           <div class="d-flex flex-column gap-2">
             <div class="d-flex gap-2 align-items-center">
               <div>Select Gateway</div>
@@ -549,7 +551,7 @@
 
             <div class="card-container d-flex gap-2 flex-wrap">
               <a
-                class="dropdown-card border border-1 rounded-3 flex-1 text-decoration-none selected-gateway"
+                class="dropdown-card rounded-3 flex-1 text-decoration-none selected-gateway"
                 id="web4-link"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -591,7 +593,7 @@
               </a>
 
               <a
-                class="dropdown-card border border-1 rounded-3 flex-1 text-decoration-none"
+                class="dropdown-card rounded-3 flex-1 text-decoration-none"
                 style="background-color: rgba(21, 23, 24, 1)"
                 id="social-link"
                 target="_blank"
