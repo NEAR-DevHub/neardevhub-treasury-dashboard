@@ -386,30 +386,32 @@ return (
         )}
         {/* currently showing delete btn only for proposal creator */}
         {hasDeletePermission && proposalCreator === accountId && (
-          <Widget
-            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
-            props={{
-              ActionButton: () => (
-                <button
-                  className="remove-btn"
-                  data-testid="delete-btn"
-                  disabled={isTxnCreated}
-                >
-                  <img
-                    style={{ height: 24 }}
-                    src="https://ipfs.near.social/ipfs/bafkreieobqzwouuadj7eneei7aadwfel6ubhj7qishnqwrlv5ldgcwuyt4"
-                  />
-                </button>
-              ),
-              checkForDeposit: false,
-              treasuryDaoID,
-              disabled: isTxnCreated,
-              callbackAction: () => {
-                setVote(actions.REMOVE);
-                setConfirmModal(true);
-              },
-            }}
-          />
+          <div style={{ width: "fit-content" }}>
+            <Widget
+              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
+              props={{
+                ActionButton: () => (
+                  <button
+                    className="remove-btn w-100"
+                    data-testid="delete-btn w-100"
+                    disabled={isTxnCreated}
+                  >
+                    <img
+                      style={{ height: 24 }}
+                      src="https://ipfs.near.social/ipfs/bafkreieobqzwouuadj7eneei7aadwfel6ubhj7qishnqwrlv5ldgcwuyt4"
+                    />
+                  </button>
+                ),
+                checkForDeposit: false,
+                treasuryDaoID,
+                disabled: isTxnCreated,
+                callbackAction: () => {
+                  setVote(actions.REMOVE);
+                  setConfirmModal(true);
+                },
+              }}
+            />
+          </div>
         )}
       </div>
     )}

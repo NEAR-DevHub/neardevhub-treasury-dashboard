@@ -16,6 +16,7 @@ const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 
 const [proposalData, setProposalData] = useState(null);
 
+const isCompactVersion = props.isCompactVersion;
 const accountId = context.accountId;
 const transferApproversGroup = getApproversAndThreshold(
   treasuryDaoID,
@@ -84,9 +85,8 @@ useEffect(() => {
         votes: item.votes,
         submission_time: item.submission_time,
         notes,
-        title,
+        title: title ? title : description,
         summary,
-        description,
         proposalId,
         args,
         status: item.status,
@@ -118,30 +118,121 @@ const Container = styled.div`
     background-color: transparent !important;
     font-size: 14px;
   }
+
+  .flex-2 {
+    flex: 2;
+  }
 `;
+
+const VotesDetails = () => {
+  return (
+    <div
+      className={
+        "card card-body d-flex flex-column gap-3 justify-content-around " +
+        (isCompactVersion && " border-0 border-top")
+      }
+    >
+      <Widget
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Votes`}
+        props={{
+          votes: proposalData?.votes,
+          requiredVotes,
+          isProposalDetailsPage: true,
+        }}
+      />
+      {(hasVotingPermission || hasDeletePermission) && (
+        <Widget
+          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.VoteActions`}
+          props={{
+            instance,
+            votes: proposalData?.votes,
+            proposalId: proposalData?.id,
+            hasDeletePermission,
+            hasVotingPermission,
+            proposalCreator: proposalData?.proposer,
+            nearBalance: nearBalances.available,
+            currentAmount: proposalData?.args?.amount,
+            currentContract: proposalData?.args?.token_id,
+            requiredVotes,
+            checkProposalStatus: () => checkProposalStatus(proposalData?.id),
+            isProposalDetailsPage: true,
+          }}
+        />
+      )}
+      <Widget
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Approvers`}
+        props={{
+          votes: proposalData?.votes,
+          approversGroup: transferApproversGroup?.approverAccounts,
+          showApproversList: true,
+        }}
+      />
+    </div>
+  );
+};
+
+const CopyComponent = () => {
+  function onCopy(e) {
+    e.stopPropagation();
+    clipboard.writeText(
+      `https://${instance}.page?page=payments&id=${proposalData.id}`
+    );
+  }
+
+  return isCompactVersion ? (
+    <i class="bi bi-copy h5 mb-0 cursor-pointer" onClick={onCopy}></i>
+  ) : (
+    <button
+      className="btn btn-outline-plain d-flex gap-1 align-items-center"
+      onClick={onCopy}
+    >
+      <i class="bi bi-copy"></i>
+      Copy link
+    </button>
+  );
+};
 
 return (
   <Container className="container-lg d-flex flex-column gap-3">
-    <div className="d-flex justify-content-between gap-2 align-items-center">
-      <a href={`?page=payments`}>
-        <button className="btn btn-outline-plain d-flex gap-1 align-items-center">
-          <i class="bi bi-arrow-left"></i> Back
-        </button>
-      </a>
-      <button
-        className="btn btn-outline-plain d-flex gap-1 align-items-center"
-        onClick={(e) => {
-          e.stopPropagation();
-          clipboard.writeText(
-            `https://${instance}.page?page=payments&id=${proposalData.id}`
-          );
-        }}
-      >
-        <i class="bi bi-copy"></i>Copy link
-      </button>
-    </div>
+    {!isCompactVersion && (
+      <div className="d-flex justify-content-between gap-2 align-items-center">
+        <a href={`?page=payments`}>
+          <button className="btn btn-outline-plain d-flex gap-1 align-items-center">
+            <i class="bi bi-arrow-left"></i> Back
+          </button>
+        </a>
+        <CopyComponent />
+      </div>
+    )}
     {proposalData ? (
-      <div className="d-flex gap-3 flex-wrap">
+      <div
+        className={
+          "d-flex gap-3 flex-wrap " + (isCompactVersion && " flex-column")
+        }
+      >
+        {isCompactVersion && (
+          <div
+            className="d-flex flex-column gap-2 rounded-4 border border-1"
+            style={{ backgroundColor: "var(--grey-05)" }}
+          >
+            <div className="d-flex justify-content-between gap-2 align-items-center px-3 pt-3">
+              <div className="cursor-pointer" onClick={() => props.onClose()}>
+                <i class="bi bi-x-lg h5 mb-0 text-color"></i>
+              </div>
+              <h5>#{id}</h5>
+              <div className="d-flex gap-2">
+                <CopyComponent />
+                <a
+                  className="cursor-pointer"
+                  href={`?page=payments&id=${proposalData.id}`}
+                >
+                  <i class="bi bi-arrows-angle-expand h5 mb-0"></i>
+                </a>
+              </div>
+            </div>
+            <VotesDetails />
+          </div>
+        )}
         <div
           className="flex-3 d-flex flex-column gap-3"
           style={{ minWidth: 300, height: "fit-content" }}
@@ -161,9 +252,11 @@ return (
                 />
               </div>
             </div>
-            <div className="text-sm text-secondary">
-              {proposalData?.summary}
-            </div>
+            {proposalData?.summary && (
+              <div className="text-sm text-secondary">
+                {proposalData?.summary}
+              </div>
+            )}
             {proposalData?.proposalId && (
               <div>
                 <Link
@@ -226,49 +319,10 @@ return (
           </div>
         </div>
         <div
-          className="flex-1 d-flex flex-column gap-3"
+          className={"flex-2 d-flex flex-column gap-3 "}
           style={{ minWidth: 300 }}
         >
-          <div className="card card-body d-flex flex-column gap-4">
-            <Widget
-              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Votes`}
-              props={{
-                votes: proposalData?.votes,
-                requiredVotes,
-                isProposalDetailsPage: true,
-              }}
-            />
-            {(hasVotingPermission || hasDeletePermission) && (
-              <td className="text-right">
-                <Widget
-                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.VoteActions`}
-                  props={{
-                    instance,
-                    votes: proposalData?.votes,
-                    proposalId: proposalData?.id,
-                    hasDeletePermission,
-                    hasVotingPermission,
-                    proposalCreator: proposalData?.proposer,
-                    nearBalance: nearBalances.available,
-                    currentAmount: proposalData?.args?.amount,
-                    currentContract: proposalData?.args?.token_id,
-                    requiredVotes,
-                    checkProposalStatus: () =>
-                      checkProposalStatus(proposalData?.id),
-                    isProposalDetailsPage: true,
-                  }}
-                />
-              </td>
-            )}
-            <Widget
-              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Approvers`}
-              props={{
-                votes: proposalData?.votes,
-                approversGroup: transferApproversGroup?.approverAccounts,
-                showApproversList: true,
-              }}
-            />
-          </div>
+          {!isCompactVersion && <VotesDetails />}
           <div
             className="card card-body d-flex flex-column gap-2"
             style={{ fontSize: 14 }}

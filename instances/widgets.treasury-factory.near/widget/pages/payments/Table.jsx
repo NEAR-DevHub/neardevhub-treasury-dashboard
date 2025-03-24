@@ -57,6 +57,7 @@ const [showToastStatus, setToastStatus] = useState(false);
 const [voteProposalId, setVoteProposalId] = useState(null);
 const [nearStakedTokens, setNearStakedTokens] = useState(null);
 const [lockupNearBalances, setLockupNearBalances] = useState(null);
+const [proposalDetailsId, setProposalDetailsId] = useState(null);
 const refreshTableData = props.refreshTableData;
 
 const accountId = context.accountId;
@@ -87,6 +88,12 @@ const Container = styled.div`
 
   table {
     overflow-x: auto;
+  }
+
+  .proposal-row {
+    &:hover {
+      background-color: var(--grey-04) !important;
+    }
   }
 `;
 
@@ -294,10 +301,17 @@ const ProposalsComponent = () => {
 
         return (
           <tr
+            onClick={() => {
+              props.onSelectRequest(item.id);
+              setProposalDetailsId(item.id);
+            }}
             className={
-              voteProposalId === item.id || highlightProposalId === item.id
+              "cursor-pointer proposal-row " +
+              (voteProposalId === item.id ||
+              highlightProposalId === item.id ||
+              proposalDetailsId === item.id
                 ? "bg-highlight"
-                : ""
+                : "")
             }
           >
             <td className="fw-semi-bold px-3">{item.id}</td>
