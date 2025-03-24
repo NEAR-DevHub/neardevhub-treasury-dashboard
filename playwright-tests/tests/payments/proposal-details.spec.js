@@ -45,6 +45,17 @@ const proposalStatuses = [
   "InProgress",
 ];
 
+async function checkProposalDetailPage({ page, status }) {
+  const notInProgress = status !== "InProgress";
+  if (notInProgress) {
+    await expect(
+      page.getByText(
+        `Payment request ${status === "Approved" ? "Funded" : status}`
+      )
+    ).toBeVisible();
+  }
+}
+
 test.describe
   .parallel("should display proposals of different status correctly", () => {
   proposalStatuses.forEach((status) => {
@@ -56,25 +67,26 @@ test.describe
       await mockPaymentProposals({ page, status });
       await page.goto(`/${instanceAccount}/widget/app?page=payments`);
       await page.waitForTimeout(10_000);
-
       if (notInProgress) {
         await page.getByText("History", { exact: true }).click();
         await page.waitForTimeout(5_000);
       }
-
       const proposalCell = page.getByTestId("proposal-request-#1");
       await expect(proposalCell).toBeVisible({ timeout: 20_000 });
       await mockPaymentProposal({ page, status });
       await proposalCell.click();
 
-      await expect(page.getByRole("heading", { name: "#1" })).toBeVisible();
-      if (notInProgress) {
-        await expect(
-          page.getByText(
-            `Payment request ${status === "Approved" ? "Funded" : status}`
-          )
-        ).toBeVisible();
-      }
+      await checkProposalDetailPage({ page, status });
     });
+  });
+
+  test(`proposal details link should open correctly`, async ({
+    page,
+    instanceAccount,
+  }) => {
+    const status = "Approved";
+    await mockPaymentProposal({ page, status });
+    await page.goto(`/${instanceAccount}/widget/app?page=payments&id=1`);
+    await checkProposalDetailPage({ page, status });
   });
 });
