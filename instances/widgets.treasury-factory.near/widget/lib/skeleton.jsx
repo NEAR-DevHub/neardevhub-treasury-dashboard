@@ -70,4 +70,8 @@ const TableSkeleton = ({ numberOfCols, numberOfRows, numberOfHiddenRows }) => {
   );
 };
 
-return { Skeleton, TableSkeleton };
+const CardSkeleton = () => {
+  return <Skeleton className="rounded-4 w-100 h-100" />;
+};
+
+return { Skeleton, TableSkeleton, CardSkeleton };
