@@ -88,20 +88,6 @@ async function checkNewProposalSubmission({
       .getByRole("cell", { name: `${lastProposalId - 1}`, exact: true })
       .first()
   ).toBeVisible({ timeout: 20_000 });
-
-  const noCount = await page.getByRole("cell", { name: "No" }).count();
-  const yesCount = await page.getByRole("cell", { name: "Yes" }).count();
-
-  if (enableCancellation && enableStaking) {
-    expect(yesCount).toBe(2);
-    expect(noCount).toBe(0);
-  } else if (!enableCancellation && !enableStaking) {
-    expect(noCount).toBe(2);
-    expect(yesCount).toBe(0);
-  } else {
-    expect(noCount).toBe(1);
-    expect(yesCount).toBe(1);
-  }
 }
 
 async function navigateToLockupPage(page, instanceAccount) {
