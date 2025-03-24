@@ -234,6 +234,7 @@ return (
             placeholder: "recipient.near",
             value: receiver,
             onUpdate: setReceiver,
+            checkAccountLockup: true,
             setParentAccountValid: setIsReceiverAccountValid,
             maxWidth: "100%",
             instance,
@@ -406,7 +407,7 @@ return (
           props={{
             classNames: { root: "theme-btn" },
             disabled:
-              !receiver ||
+              !isReceiverAccountValid ||
               !isValidAmount() ||
               !startDate ||
               !endDate ||
