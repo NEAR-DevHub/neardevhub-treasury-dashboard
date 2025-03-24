@@ -1,3 +1,11 @@
+const { Approval, Reject, Warning } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Icons"
+) || {
+  Approval: () => <></>,
+  Reject: () => <></>,
+  Warning: () => <></>,
+};
+
 const { id, instance } = props;
 const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
@@ -60,40 +68,55 @@ function decodeBase64(encodedArgs) {
 }
 
 useEffect(() => {
-  Near.asyncView(treasuryDaoID, "get_proposal", { id: parseInt(id) }).then(
-    (item) => {
-      const notes = decodeProposalDescription("notes", item.description);
-      const title = decodeProposalDescription("title", item.description);
-      const summary = decodeProposalDescription("summary", item.description);
-      const description = !title && !summary && item.description;
-      const id = decodeProposalDescription("proposalId", item.description);
-      const proposalId = id ? parseInt(id, 10) : null;
-      const isFunctionType =
-        Object.values(item?.kind?.FunctionCall ?? {})?.length > 0;
-      const decodedArgs =
-        isFunctionType && decodeBase64(item.kind.FunctionCall?.actions[0].args);
-      const args = isFunctionType
-        ? {
-            token_id: "",
-            receiver_id: decodedArgs?.receiver_id,
-            amount: decodedArgs?.amount,
+  if (proposalPeriod && (!proposalData || proposalData.id !== id)) {
+    Near.asyncView(treasuryDaoID, "get_proposal", { id: parseInt(id) }).then(
+      (item) => {
+        const notes = decodeProposalDescription("notes", item.description);
+        const title = decodeProposalDescription("title", item.description);
+        const summary = decodeProposalDescription("summary", item.description);
+        const description = !title && !summary && item.description;
+        const id = decodeProposalDescription("proposalId", item.description);
+        const proposalId = id ? parseInt(id, 10) : null;
+        const isFunctionType =
+          Object.values(item?.kind?.FunctionCall ?? {})?.length > 0;
+        const decodedArgs =
+          isFunctionType &&
+          decodeBase64(item.kind.FunctionCall?.actions[0].args);
+        const args = isFunctionType
+          ? {
+              token_id: "",
+              receiver_id: decodedArgs?.receiver_id,
+              amount: decodedArgs?.amount,
+            }
+          : item.kind.Transfer;
+        let status = item.status;
+        if (status === "InProgress") {
+          const endTime = Big(proposalData.submissionTime ?? "0")
+            .plus(proposalPeriod ?? "0")
+            .toFixed();
+          const timestampInMilliseconds = Big(endTime) / Big(1_000_000);
+          const currentTimeInMilliseconds = Date.now();
+          if (Big(timestampInMilliseconds).lt(currentTimeInMilliseconds)) {
+            status = "Expired";
           }
-        : item.kind.Transfer;
-      setProposalData({
-        id: item.id,
-        proposer: item.proposer,
-        votes: item.votes,
-        submission_time: item.submission_time,
-        notes,
-        title: title ? title : description,
-        summary,
-        proposalId,
-        args,
-        status: item.status,
-      });
-    }
-  );
-}, [id]);
+        }
+
+        setProposalData({
+          id: item.id,
+          proposer: item.proposer,
+          votes: item.votes,
+          submissionTime: item.submission_time,
+          notes,
+          title: title ? title : description,
+          summary,
+          proposalId,
+          args,
+          status,
+        });
+      }
+    );
+  }
+}, [id, proposalPeriod]);
 
 const Container = styled.div`
   font-size: 14px;
@@ -122,7 +145,84 @@ const Container = styled.div`
   .flex-2 {
     flex: 2;
   }
+
+  .text-large {
+    font-size: 20px;
+  }
+
+  .text-grey-02 {
+    color: var(--grey-02);
+  }
 `;
+
+const ProposalStatus = () => {
+  const Status = ({ bgColor, icon, label, className }) => {
+    return (
+      <div
+        className={
+          "d-flex flex-column align-items-center p-3 rounded-4 " +
+          (className || "")
+        }
+        style={{ backgroundColor: bgColor }}
+      >
+        <div className="d-flex gap-2 align-items-center">
+          {icon}
+          <div className="mb-0 text-large">{label}</div>
+        </div>
+      </div>
+    );
+  };
+  switch (proposalData.status) {
+    case "Approved":
+      return (
+        <Status
+          className="success-icon"
+          bgColor="rgba(60, 177, 121, 0.16)"
+          icon={<Approval width={30} height={30} hideStroke={true} />}
+          label="Payment Request Funded"
+        />
+      );
+    case "Rejected":
+      return (
+        <Status
+          className="error-red"
+          bgColor="rgba(217, 92, 74, 0.16)"
+          icon={<Reject width={30} height={30} hideStroke={true} />}
+          label="Payment Request Rejected"
+        />
+      );
+    case "Removed":
+      return (
+        <Status
+          className="error-icon"
+          bgColor="rgba(217, 92, 74, 0.16)"
+          icon={<Reject width={30} height={30} hideStroke={true} />}
+          label="Payment Request Deleted"
+        />
+      );
+    case "Failed":
+      return (
+        <Status
+          className="warning-icon"
+          bgColor="rgba(177, 113, 8, 0.16)"
+          icon={<Warning width={30} height={30} />}
+          label="Payment Request Failed"
+        />
+      );
+    case "Expired":
+      return (
+        <Status
+          className="text-grey-02"
+          bgColor="var(--grey-04)"
+          icon={<i class="bi bi-clock h5 mb-0"></i>}
+          label="Payment Request Expired"
+        />
+      );
+    default: {
+      return <></>;
+    }
+  }
+};
 
 const VotesDetails = () => {
   return (
@@ -132,33 +232,36 @@ const VotesDetails = () => {
         (isCompactVersion && " border-0 border-top")
       }
     >
+      <ProposalStatus />
       <Widget
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Votes`}
         props={{
           votes: proposalData?.votes,
           requiredVotes,
           isProposalDetailsPage: true,
+          isInProgress: proposalData?.status === "InProgress",
         }}
       />
-      {(hasVotingPermission || hasDeletePermission) && (
-        <Widget
-          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.VoteActions`}
-          props={{
-            instance,
-            votes: proposalData?.votes,
-            proposalId: proposalData?.id,
-            hasDeletePermission,
-            hasVotingPermission,
-            proposalCreator: proposalData?.proposer,
-            nearBalance: nearBalances.available,
-            currentAmount: proposalData?.args?.amount,
-            currentContract: proposalData?.args?.token_id,
-            requiredVotes,
-            checkProposalStatus: () => checkProposalStatus(proposalData?.id),
-            isProposalDetailsPage: true,
-          }}
-        />
-      )}
+      {(hasVotingPermission || hasDeletePermission) &&
+        proposalData.status === "InProgress" && (
+          <Widget
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.VoteActions`}
+            props={{
+              instance,
+              votes: proposalData?.votes,
+              proposalId: proposalData?.id,
+              hasDeletePermission,
+              hasVotingPermission,
+              proposalCreator: proposalData?.proposer,
+              nearBalance: nearBalances.available,
+              currentAmount: proposalData?.args?.amount,
+              currentContract: proposalData?.args?.token_id,
+              requiredVotes,
+              checkProposalStatus: () => checkProposalStatus(proposalData?.id),
+              isProposalDetailsPage: true,
+            }}
+          />
+        )}
       <Widget
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Approvers`}
         props={{
@@ -342,13 +445,13 @@ return (
             <Widget
               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
               props={{
-                timestamp: proposalData?.submission_time,
+                timestamp: proposalData?.submissionTime,
                 isProposalDetailsPage: true,
               }}
             />
             <label className="border-top">Expiring Date</label>
             {formatSubmissionTimeStamp(
-              proposalData?.submission_time,
+              proposalData?.submissionTime,
               proposalPeriod,
               true
             )}
