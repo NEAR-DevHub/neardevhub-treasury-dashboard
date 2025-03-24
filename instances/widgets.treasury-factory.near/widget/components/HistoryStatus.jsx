@@ -1,4 +1,4 @@
-const status = props.status;
+const proposalStatus = props.status;
 const isPaymentsPage = props.isPaymentsPage;
 const Container = styled.div`
   width: 100%;
@@ -7,8 +7,8 @@ const Container = styled.div`
   align-items: center;
 
   .reject {
-    background-color: var(--grey-04);
-    color: var(--text-color);
+    background-color: rgba(217, 92, 74, 0.16);
+    color: var(--other-red);
   }
 
   .approve {
@@ -17,8 +17,8 @@ const Container = styled.div`
   }
 
   .expire {
-    background-color: rgba(255, 122, 0, 0.16);
-    color: var(--other-warning);
+    background-color: var(--grey-04);
+    color: var(--grey-02);
   }
 
   .failed {
@@ -35,13 +35,13 @@ const Container = styled.div`
 
 return (
   <Container>
-    {status === "Approved" ? (
+    {proposalStatus === "Approved" ? (
       <div className="approve bold">
         {isPaymentsPage ? "Funded" : "Executed"}
       </div>
-    ) : status === "Rejected" ? (
+    ) : proposalStatus === "Rejected" ? (
       <div className="reject bold">Rejected</div>
-    ) : status === "Failed" ? (
+    ) : proposalStatus === "Failed" ? (
       <div className="failed bold">Failed</div>
     ) : (
       <div className="expire bold">Expired</div>
