@@ -4,8 +4,6 @@ import { getTransactionModalObject } from "../../util/transaction";
 import { mockNearBalances, updateDaoPolicyMembers } from "../../util/rpcmock";
 import { getInstanceConfig } from "../../util/config.js";
 import { mockInventory } from "../../util/inventory.js";
-import { mockPikespeakFTTokensResponse } from "../../util/pikespeak.js";
-import { mockNearPrice } from "../../util/nearblocks.js";
 import { focusInputReplaceAndBlur } from "../../util/forms.js";
 import { formatTimestamp, isMac, roles, toBase64 } from "../../util/lib.js";
 import { SandboxRPC } from "../../util/sandboxrpc.js";
@@ -38,42 +36,38 @@ const getSubmitButton = (page) =>
 async function checkNewProposalSubmission({
   page,
   sandbox,
-  checkforMultiProposals = false,
   daoAccount,
-  daoName,
+  enableCancellation,
+  enableStaking,
 }) {
-  const method = checkforMultiProposals
-    ? "signAndSendTransactions"
-    : "signAndSendTransaction";
-
-  const transactionToSendPromise = page.evaluate(async (method) => {
+  const daoName = daoAccount.split(".")[0];
+  const args = await buildExpectedLockupArgs({
+    enableCancellation,
+    enableStaking,
+  });
+  const transactionResult = await sandbox.addFunctionCallProposal({
+    method_name: "create",
+    description: `Create lockup for ${daoAccount}`,
+    receiver_id: "lockup.near",
+    functionArgs: args,
+    deposit: "4" + "000000000000000000000000",
+    daoName,
+  });
+  page.evaluate(async () => {
     const selector = await document.querySelector("near-social-viewer")
       .selectorPromise;
-
     const wallet = await selector.wallet();
-
     return new Promise((resolve) => {
-      wallet[method] = async (transaction) => {
+      wallet["signAndSendTransaction"] = async (transaction) => {
         resolve(transaction);
         return new Promise((transactionSentPromiseResolve) => {
           window.transactionSentPromiseResolve = transactionSentPromiseResolve;
         });
       };
     });
-  }, method);
+  });
 
   await page.getByRole("button", { name: "Confirm" }).click();
-  const transactionToSend = await transactionToSendPromise;
-  const transaction = checkforMultiProposals
-    ? transactionToSend.transactions[0]
-    : transactionToSend;
-
-  const transactionResult = await sandbox.account.functionCall({
-    contractId: daoAccount,
-    methodName: "add_proposal",
-    args: transaction.actions[0].params.args,
-    attachedDeposit: transaction.actions[0].params.deposit,
-  });
   await page.evaluate(async (transactionResult) => {
     window.transactionSentPromiseResolve(transactionResult);
   }, transactionResult);
@@ -95,17 +89,22 @@ async function checkNewProposalSubmission({
       .first()
   ).toBeVisible({ timeout: 20_000 });
 
-  if (checkforMultiProposals) {
-    await expect(
-      page
-        .getByRole("cell", { name: `${lastProposalId - 2}`, exact: true })
-        .first()
-    ).toBeVisible({ timeout: 20_000 });
+  const noCount = await page.getByRole("cell", { name: "No" }).count();
+  const yesCount = await page.getByRole("cell", { name: "Yes" }).count();
+
+  if (enableCancellation && enableStaking) {
+    expect(yesCount).toBe(2);
+    expect(noCount).toBe(0);
+  } else if (!enableCancellation && !enableStaking) {
+    expect(noCount).toBe(2);
+    expect(yesCount).toBe(0);
+  } else {
+    expect(noCount).toBe(1);
+    expect(yesCount).toBe(1);
   }
 }
 
 async function navigateToLockupPage(page, instanceAccount) {
-  await page.waitForTimeout(6_000);
   await page.goto(`/${instanceAccount}/widget/app?page=lockup`);
 }
 
@@ -116,10 +115,6 @@ async function clickCreateLockupRequestButton(page) {
 }
 
 async function setupFormEnvironment({ page, daoAccount, instanceAccount }) {
-  await mockPikespeakFTTokensResponse({ page, daoAccount });
-  await updateDaoPolicyMembers({ instanceAccount, page });
-  await mockInventory({ page, account: daoAccount });
-  await mockNearPrice({ daoAccount, nearPrice: 5, page });
   return await getInstanceConfig({ page, instanceAccount });
 }
 
@@ -283,7 +278,6 @@ async function fillLockupForm({
   page,
   daoAccount,
   instanceAccount,
-  instanceConfig,
   receiverAccount = TEST_ACCOUNTS.default,
   amount = "4",
   startDate = TEST_DATES.start,
@@ -303,8 +297,7 @@ async function fillLockupForm({
 
   // Get submit button and ensure it's visible
   const submitBtn = getSubmitButton(page);
-  await expect(submitBtn).toBeAttached({ timeout: 10_000 });
-  await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
+  await expect(submitBtn).toBeVisible({ timeout: 10_000 });
 
   // Configure options
   const cancellationChanged = await setCancellationOption(
@@ -318,8 +311,7 @@ async function fillLockupForm({
   await setStakingOption(page, enableStaking);
 
   // Ensure submit button is still visible
-  await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
-
+  await expect(submitBtn).toBeVisible({ timeout: 10_000 });
   return submitBtn;
 }
 
@@ -427,17 +419,11 @@ test.describe("Lockup Creation", () => {
       daoAccount,
     }) => {
       test.setTimeout(100_000);
-      const instanceConfig = await setupFormEnvironment({
-        page,
-        daoAccount,
-        instanceAccount,
-      });
 
       const submitBtn = await fillLockupForm({
         page,
         daoAccount,
         instanceAccount,
-        instanceConfig,
         startDate: "",
         endDate: "",
       });
@@ -451,17 +437,11 @@ test.describe("Lockup Creation", () => {
       daoAccount,
     }) => {
       test.setTimeout(100_000);
-      const instanceConfig = await setupFormEnvironment({
-        page,
-        daoAccount,
-        instanceAccount,
-      });
 
       const submitBtn = await fillLockupForm({
         page,
         daoAccount,
         instanceAccount,
-        instanceConfig,
         receiverAccount: TEST_ACCOUNTS.withExistingLockup,
       });
 
@@ -512,6 +492,16 @@ test.describe("Lockup Creation", () => {
     });
   });
 
+  async function createLockupRequestUsingSandbox({ page, daoAccount }) {
+    const daoName = daoAccount.split(".")[0];
+    const sandbox = new SandboxRPC();
+    await sandbox.init();
+    await sandbox.attachRoutes(page);
+    await sandbox.setupSandboxForSputnikDao(daoName);
+
+    return sandbox;
+  }
+
   test.describe("Transaction Creation", () => {
     test.use({
       contextOptions: {
@@ -521,17 +511,13 @@ test.describe("Lockup Creation", () => {
         "playwright-tests/storage-states/wallet-connected-admin.json",
     });
 
-    test.beforeEach(async ({ page, daoAccount }) => {
-      await mockNearPrice({ daoAccount, nearPrice: 5, page });
-    });
-
     test.describe("With cancellation enabled", () => {
       test("Creates lockup with staking enabled", async ({
         page,
         instanceAccount,
         daoAccount,
       }) => {
-        test.setTimeout(100_000);
+        test.setTimeout(160_000);
         const instanceConfig = await setupFormEnvironment({
           page,
           daoAccount,
@@ -542,11 +528,16 @@ test.describe("Lockup Creation", () => {
           test.skip("This test requires lockup cancellation to be allowed");
         }
 
+        const sandbox = await createLockupRequestUsingSandbox({
+          daoAccount,
+          page,
+        });
+        await updateDaoPolicyMembers({ instanceAccount, page });
+
         const submitBtn = await fillLockupForm({
           page,
           daoAccount,
           instanceAccount,
-          instanceConfig,
           enableCancellation: true,
           enableStaking: true,
         });
@@ -556,6 +547,15 @@ test.describe("Lockup Creation", () => {
           enableCancellation: true,
           enableStaking: true,
         });
+
+        await checkNewProposalSubmission({
+          page,
+          sandbox,
+          daoAccount,
+          enableStaking: true,
+          enableCancellation: true,
+        });
+        await sandbox.quitSandbox();
       });
 
       test("Creates lockup with staking disabled", async ({
@@ -563,7 +563,7 @@ test.describe("Lockup Creation", () => {
         instanceAccount,
         daoAccount,
       }) => {
-        test.setTimeout(100_000);
+        test.setTimeout(160_000);
         const instanceConfig = await setupFormEnvironment({
           page,
           daoAccount,
@@ -574,11 +574,16 @@ test.describe("Lockup Creation", () => {
           test.skip("This test requires lockup cancellation to be allowed");
         }
 
+        const sandbox = await createLockupRequestUsingSandbox({
+          daoAccount,
+          page,
+        });
+        await updateDaoPolicyMembers({ instanceAccount, page });
+
         const submitBtn = await fillLockupForm({
           page,
           daoAccount,
           instanceAccount,
-          instanceConfig,
           enableCancellation: true,
           enableStaking: false,
         });
@@ -588,27 +593,36 @@ test.describe("Lockup Creation", () => {
           enableCancellation: true,
           enableStaking: false,
         });
+        await checkNewProposalSubmission({
+          page,
+          sandbox,
+          daoAccount,
+          enableStaking: false,
+          enableCancellation: true,
+        });
+
+        await sandbox.quitSandbox();
       });
     });
 
     test.describe("With cancellation disabled", () => {
-      test.beforeEach(async ({ page, daoAccount, instanceAccount }) => {
-        test.setTimeout(100_000);
-        const instanceConfig = await setupFormEnvironment({
-          page,
+      test("Creates lockup with staking enabled", async ({
+        page,
+        daoAccount,
+        instanceAccount,
+      }) => {
+        test.setTimeout(160_000);
+        const sandbox = await createLockupRequestUsingSandbox({
           daoAccount,
-          instanceAccount,
-        });
 
+          page,
+        });
+        await updateDaoPolicyMembers({ instanceAccount, page });
         await fillLockupForm({
           page,
           daoAccount,
           instanceAccount,
-          instanceConfig,
         });
-      });
-
-      test("Creates lockup with staking enabled", async ({ page }) => {
         const submitBtn = getSubmitButton(page);
         await setCancellationOption(page, false);
         await submitBtn.click();
@@ -617,24 +631,33 @@ test.describe("Lockup Creation", () => {
           enableCancellation: false,
           enableStaking: true,
         });
+        await checkNewProposalSubmission({
+          page,
+          sandbox,
+          daoAccount,
+          enableStaking: true,
+          enableCancellation: false,
+        });
+        await sandbox.quitSandbox();
       });
 
       test("Creates lockup with staking disabled", async ({
         page,
+        instanceAccount,
         daoAccount,
       }) => {
-        test.setTimeout(250_000);
-        const daoName = daoAccount.split(".")[0];
-        const sandbox = new SandboxRPC();
-        await sandbox.init();
-        await sandbox.attachRoutes(page);
-        await sandbox.setupSandboxForSputnikDao(daoName);
-        await sandbox.addStakeRequestProposal({
-          stakedPoolAccount,
-          stakingAmount: "11.00",
-          daoName,
-        });
+        test.setTimeout(160_000);
+        const sandbox = await createLockupRequestUsingSandbox({
+          daoAccount,
 
+          page,
+        });
+        await updateDaoPolicyMembers({ instanceAccount, page });
+        await fillLockupForm({
+          page,
+          daoAccount,
+          instanceAccount,
+        });
         const submitBtn = getSubmitButton(page);
         await setCancellationOption(page, false);
         await setStakingOption(page, false);
@@ -649,8 +672,10 @@ test.describe("Lockup Creation", () => {
           page,
           sandbox,
           daoAccount,
-          daoName,
+          enableStaking: false,
+          enableCancellation: false,
         });
+
         await sandbox.quitSandbox();
       });
     });
