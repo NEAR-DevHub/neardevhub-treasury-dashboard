@@ -6,6 +6,10 @@ const { Approval, Reject, Warning } = VM.require(
   Warning: () => <></>,
 };
 
+const { CardSkeleton } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.skeleton"
+) || { CardSkeleton: () => <></> };
+
 const { id, instance } = props;
 const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
@@ -467,12 +471,24 @@ return (
           </div>
         </div>
       </div>
+    ) : isCompactVersion ? (
+      <div
+        className="d-flex flex-column gap-2 w-100"
+        style={{ height: "500px" }}
+      >
+        <CardSkeleton />
+        <CardSkeleton />
+        <CardSkeleton />
+      </div>
     ) : (
-      <div className="card card-body d-flex justify-content-center align-items-center">
-        {" "}
-        <Widget
-          src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"}
-        />
+      <div className="d-flex gap-3 w-100" style={{ height: "600px" }}>
+        <div className="flex-3 h-100">
+          <CardSkeleton />
+        </div>
+        <div className="d-flex flex-column gap-3 flex-2 h-100">
+          <CardSkeleton />
+          <CardSkeleton />
+        </div>
       </div>
     )}
   </Container>
