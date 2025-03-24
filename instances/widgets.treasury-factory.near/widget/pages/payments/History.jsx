@@ -11,7 +11,7 @@ if (!instance || typeof getFilteredProposalsByStatusAndKind !== "function") {
   return <></>;
 }
 
-const { treasuryDaoID, cacheURL } = VM.require(
+const { treasuryDaoID, sputnikIndexerURL } = VM.require(
   `${instance}/widget/config.data`
 );
 

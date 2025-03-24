@@ -26,19 +26,15 @@ if (!instance) {
   return <></>;
 }
 
-const { treasuryDaoID, cacheURL } = VM.require(
+const { treasuryDaoID, sputnikIndexerURL } = VM.require(
   `${instance}/widget/config.data`
 );
-console.log("cacheURL", cacheURL);
-console.log("treasuryDaoID", treasuryDaoID);
 
-if (!treasuryDaoID || !cacheURL) {
+if (!treasuryDaoID || !sputnikIndexerURL) {
   return <></>;
 }
 
-// prop page = // payments, stake-delegation, asset-exchange, settings-history
-// prop searchAndFilterHistory // true, false
-const { selectedTab, tabs, page, searchAndFilterHistory } = props;
+const { selectedTab, tabs, page } = props;
 
 const [currentTabProps, setCurrentTabProps] = useState(null);
 
@@ -108,39 +104,35 @@ const [makeMoreLoader, setMakeMoreLoader] = useState(false);
 const [aggregatedCount, setAggregatedCount] = useState(null);
 const [currentlyDisplaying, setCurrentlyDisplaying] = useState(0);
 
-// TODO: dynamic
-const endpointToCall =
-  "https://testing-indexer-2.fly.dev/dao/proposals/testing-astradao.sputnik-dao.near";
-
 function searchCacheApi(dao_id, searchTerm) {
   const uriEncodedSearchTerm = encodeURI(searchTerm);
-  const searchURL = `${cacheURL}/dao/proposals/search/${dao_id}/${uriEncodedSearchTerm}`;
-
-  console.log("searchURL", searchURL);
-  return asyncFetch(searchURL, {
-    method: "GET",
-    headers: {
-      accept: "application/json",
-    },
-  }).catch((error) => {
+  return asyncFetch(
+    `${sputnikIndexerURL}/dao/proposals/search/${dao_id}/${uriEncodedSearchTerm}`,
+    {
+      method: "GET",
+      headers: {
+        accept: "application/json",
+      },
+    }
+  ).catch((error) => {
     console.log("Error searching cache api", error);
   });
 }
 
 function searchProposals(searchInput) {
+  // TODO: move this to common.jsx
   if (loading) return console.log("loading");
   setLoading(true);
 
   searchCacheApi(treasuryDaoID, searchInput).then((result) => {
-    let body = result.body;
-    console.log("body search result in SearchProposals", body);
+    setData(result?.body?.records || []);
     setLoading(false);
   });
 }
 
 function fetchCacheApi(variables) {
-  const fetchUrl = endpointToCall;
-  return asyncFetch(fetchUrl, {
+  // TODO: use filters
+  return asyncFetch(`${sputnikIndexerURL}/dao/proposals/${treasuryDaoID}`, {
     method: "GET",
     headers: {
       accept: "application/json",
@@ -166,10 +158,7 @@ function fetchProposals(offset) {
     stage: stage ? encodeURIComponent(stage) : "",
   };
   fetchCacheApi(variables).then((result) => {
-    const body = result.body;
-    console.log("fetchProposals body result after fetch", body.records);
-    console.log({ body });
-    setData(body?.records || []);
+    setData(result?.body?.records || []);
     setLoading(false);
   });
 }
@@ -207,7 +196,6 @@ const PaymentsSidebarMenu = ({ currentTab }) => {
           key: `search-input`,
           value: searchInput,
           onChange: (e) => {
-            console.log("onChange -> e", e);
             setSearchInput(e.target.value);
           },
           onKeyDown: (e) => {
@@ -226,7 +214,7 @@ const PaymentsSidebarMenu = ({ currentTab }) => {
         }}
       />
       <Widget
-        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.FilterDropdown`}
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.FilterDropdown`}
         props={{
           instance,
         }}
@@ -270,6 +258,36 @@ const AssetExchangeSidebarMenu = ({ currentTab }) => {
       className="d-flex gap-2 align-items-center"
       style={{ paddingBottom: "16px" }}
     >
+      <Widget
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
+        props={{
+          className: "flex-grow-1 w-100 w-xs-100",
+          key: `search-input`,
+          value: searchInput,
+          onChange: (e) => {
+            setSearchInput(e.target.value);
+          },
+          onKeyDown: (e) => {
+            if (e.key == "Enter") {
+              if (searchInput) {
+                searchProposals(searchInput);
+              } else {
+                fetchProposals();
+              }
+            }
+          },
+          placeholder: "Search",
+          inputProps: {
+            suffix: <i class="bi bi-search m-auto"></i>,
+          },
+        }}
+      />
+      <Widget
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.FilterDropdown`}
+        props={{
+          instance,
+        }}
+      />
       {hasCreatePermissionAssetExchange && (
         <Widget
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
@@ -298,24 +316,95 @@ const AssetExchangeSidebarMenu = ({ currentTab }) => {
 
 const StakeDelegationSidebarMenu = ({ currentTab }) => {
   return (
-    <Widget
-      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.CreateButton`}
-      props={{
-        instance,
-        isPendingPage: currentTab.title === "Pending Requests",
-      }}
-    />
+    <div
+      className="d-flex gap-2 align-items-center flex-direction-column"
+      style={{ paddingBottom: "16px" }}
+    >
+      <Widget
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
+        props={{
+          className: "flex-grow-1 w-100 w-xs-100",
+          key: `search-input`,
+          value: searchInput,
+          onChange: (e) => {
+            setSearchInput(e.target.value);
+          },
+          onKeyDown: (e) => {
+            if (e.key == "Enter") {
+              if (searchInput) {
+                searchProposals(searchInput);
+              } else {
+                fetchProposals();
+              }
+            }
+          },
+          placeholder: "Search",
+          inputProps: {
+            suffix: <i class="bi bi-search m-auto"></i>,
+          },
+        }}
+      />
+      <Widget
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.FilterDropdown`}
+        props={{
+          instance,
+        }}
+      />
+      <Widget
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.CreateButton`}
+        props={{
+          instance,
+          isPendingPage: currentTab.title === "Pending Requests",
+        }}
+      />
+    </div>
   );
 };
 
 const SettingsHistorySidebarMenu = ({ currentTab }) => {
+  // TODO: styling to the root div here
   return (
-    <Widget
-      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.feed.SettingsDropdown`}
-      props={{
-        isPendingPage: currentTab.title === "Pending Requests",
-      }}
-    />
+    <div
+      className="d-flex gap-2 align-items-center flex-direction-row"
+      style={{ paddingBottom: "16px" }}
+    >
+      <Widget
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
+        props={{
+          className: "flex-grow-1 w-100 w-xs-100",
+          key: `search-input`,
+          value: searchInput,
+          onChange: (e) => {
+            setSearchInput(e.target.value);
+          },
+          onKeyDown: (e) => {
+            if (e.key == "Enter") {
+              if (searchInput) {
+                searchProposals(searchInput);
+              } else {
+                fetchProposals();
+              }
+            }
+          },
+          placeholder: "Search",
+          inputProps: {
+            suffix: <i class="bi bi-search m-auto"></i>,
+          },
+        }}
+      />
+      <Widget
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.FilterDropdown`}
+        props={{
+          instance,
+        }}
+      />
+      <Widget
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.feed.SettingsDropdown`}
+        props={{
+          isPendingPage: currentTab.title === "Pending Requests",
+        }}
+      />
+    </div>
   );
 };
 

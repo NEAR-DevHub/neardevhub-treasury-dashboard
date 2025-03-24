@@ -19,7 +19,7 @@ return {
   ],
   treasuryDaoID: "${REPL_TREASURY}",
   proposalAPIEndpoint: "${REPL_PROPOSALS_CACHE_URL}",
-  cacheURL: "${REPL_SPUTNIK_INDEXER_URL}",
+  sputnikIndexerURL: "${REPL_SPUTNIK_INDEXER_URL}",
   showProposalSelection: true,
   showKYC: true,
   showReferenceProposal: true,
