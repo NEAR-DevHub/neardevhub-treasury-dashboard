@@ -301,6 +301,7 @@ const ProposalsComponent = () => {
 
         return (
           <tr
+            data-testid={"proposal-request-#" + item.id}
             onClick={() => {
               props.onSelectRequest(item.id);
               setProposalDetailsId(item.id);
