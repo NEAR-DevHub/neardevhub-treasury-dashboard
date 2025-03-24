@@ -1,3 +1,4 @@
+const isInProgress = props.isInProgress;
 const votes = props.votes;
 const requiredVotes = props.requiredVotes;
 const voteDistribution = { Approve: 0, Reject: 0 };
@@ -51,7 +52,10 @@ const rejectPercentage = getPercentage(voteDistribution.Reject);
 
 return (
   <Container
-    className="d-flex flex-column gap-1"
+    className={
+      "d-flex flex-column gap-1 " +
+      (!isInProgress && " p-3 border border-1 rounded-4")
+    }
     style={{ width: isProposalDetailsPage ? "auto" : "100px" }}
   >
     <div className="d-flex align-items-center px-2 gap-2">
@@ -67,27 +71,29 @@ return (
         {isProposalDetailsPage && "Rejected"} {voteDistribution.Reject}
       </div>
     </div>
-    <div className="bar d-flex align-items-center rounded-pill">
-      <div className="w-100 h-100 flex-item">
-        <div
-          className="h-100"
-          style={{
-            width: `${approvePercentage}%`,
-            backgroundColor: "var(--other-green)",
-          }}
-        ></div>
+    {isInProgress && (
+      <div className="bar d-flex align-items-center rounded-pill">
+        <div className="w-100 h-100 flex-item">
+          <div
+            className="h-100"
+            style={{
+              width: `${approvePercentage}%`,
+              backgroundColor: "var(--other-green)",
+            }}
+          ></div>
+        </div>
+        {isProposalDetailsPage && <div className="vote-separator"></div>}
+        <div className="w-100 h-100 flex-item">
+          <div
+            className="h-100"
+            style={{
+              width: `${rejectPercentage}%`,
+              backgroundColor: "#dc6666",
+              float: "inline-end",
+            }}
+          ></div>
+        </div>
       </div>
-      {isProposalDetailsPage && <div className="vote-separator"></div>}
-      <div className="w-100 h-100 flex-item">
-        <div
-          className="h-100"
-          style={{
-            width: `${rejectPercentage}%`,
-            backgroundColor: "#dc6666",
-            float: "inline-end",
-          }}
-        ></div>
-      </div>
-    </div>
+    )}
   </Container>
 );

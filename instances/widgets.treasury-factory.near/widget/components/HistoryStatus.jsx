@@ -22,8 +22,8 @@ const Container = styled.div`
   }
 
   .failed {
-    background-color: rgba(239, 56, 38, 0.1);
-    color: var(--other-red);
+    background-color: rgba(255, 122, 0, 0.16);
+    color: var(--other-warning);
   }
 
   div {
