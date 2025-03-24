@@ -68,7 +68,7 @@ function decodeBase64(encodedArgs) {
 }
 
 useEffect(() => {
-  if (proposalPeriod && (!proposalData || proposalData.id !== id)) {
+  if (proposalPeriod && !proposalData) {
     Near.asyncView(treasuryDaoID, "get_proposal", { id: parseInt(id) }).then(
       (item) => {
         const notes = decodeProposalDescription("notes", item.description);
@@ -116,7 +116,13 @@ useEffect(() => {
       }
     );
   }
-}, [id, proposalPeriod]);
+}, [id, proposalPeriod, proposalData]);
+
+useEffect(() => {
+  if (proposalData.id !== id) {
+    setProposalData(null);
+  }
+}, [id]);
 
 const Container = styled.div`
   font-size: 14px;
@@ -185,7 +191,7 @@ const ProposalStatus = () => {
     case "Rejected":
       return (
         <Status
-          className="error-red"
+          className="error-icon"
           bgColor="rgba(217, 92, 74, 0.16)"
           icon={<Reject width={30} height={30} hideStroke={true} />}
           label="Payment Request Rejected"
@@ -323,7 +329,7 @@ return (
                 <i class="bi bi-x-lg h5 mb-0 text-color"></i>
               </div>
               <h5>#{id}</h5>
-              <div className="d-flex gap-2">
+              <div className="d-flex gap-3">
                 <CopyComponent />
                 <a
                   className="cursor-pointer"
