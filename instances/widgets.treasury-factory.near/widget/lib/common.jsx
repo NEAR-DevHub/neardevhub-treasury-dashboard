@@ -273,7 +273,223 @@ const decodeProposalDescription = (key, description) => {
   return null; // Return null if key not found
 };
 
-function getFilteredProposalsByStatusAndKind({
+/**
+ * 
+ * PAYMENTS 
+ *    treasuryDaoID,
+      resPerPage: rowsPerPage,
+      isPrevPageCalled: isPrevPageCalled,
+      filterKindArray: ["Transfer", "FunctionCall"],
+      filterStatusArray: ["Approved", "Rejected", "Expired", "Failed"],
+      offset: typeof offset === "number" ? offset : lastProposalId,
+      lastProposalId: lastProposalId,
+      currentPage, 
+ */
+/**
+ * STAKE DELEGATION
+ *   treasuryDaoID,
+      resPerPage: rowsPerPage,
+      isPrevPageCalled: isPrevPageCalled,
+      filterKindArray: ["FunctionCall"],
+      filterStatusArray: ["Approved", "Rejected", "Expired", "Failed"],
+      offset: typeof offset === "number" ? offset : lastProposalId,
+      lastProposalId: lastProposalId,
+      currentPage,
+      isStakeDelegation: true,
+ */
+
+/**
+ * SETTINGS HISTORY
+      treasuryDaoID,
+      resPerPage: rowsPerPage,
+      isPrevPageCalled: isPrevPageCalled,
+      filterKindArray: [
+        "ChangeConfig",
+        "ChangePolicy",
+        "AddMemberToRole",
+        "RemoveMemberFromRole",
+        "ChangePolicyAddOrUpdateRole",
+        "ChangePolicyRemoveRole",
+        "ChangePolicyUpdateDefaultVotePolicy",
+        "ChangePolicyUpdateParameters",
+      ],
+      filterStatusArray: ["Approved", "Rejected", "Expired", "Failed"],
+      offset: typeof offset === "number" ? offset : lastProposalId,
+      lastProposalId: lastProposalId,
+      currentPage,
+ */
+
+function buildQueryString(options) {
+  const {
+    filterStatusArray,
+    filterKindArray,
+    offset,
+    resPerPage,
+    treasuryDaoID,
+  } = options;
+  const endpointToCall = `https://testing-indexer-2.fly.dev/dao/proposals/${treasuryDaoID}`;
+
+  let queryParts = [];
+
+  // Add status filters
+  if (filterStatusArray && filterStatusArray.length > 0) {
+    filterStatusArray.forEach((status) => {
+      queryParts.push(`filters.status[]=${encodeURIComponent(status)}`);
+    });
+    console.log("Added status filters:", filterStatusArray);
+  }
+
+  // Add kind filters
+  if (filterKindArray && filterKindArray.length > 0) {
+    filterKindArray.forEach((kind) => {
+      queryParts.push(`filters.kind[]=${encodeURIComponent(kind)}`);
+    });
+    console.log("Added kind filters:", filterKindArray);
+  }
+
+  // Additional pagination params if needed
+  if (typeof offset === "number") {
+    queryParts.push(`offset=${offset}`);
+    console.log("Added offset:", offset);
+  }
+  if (resPerPage) {
+    queryParts.push(`limit=${resPerPage}`);
+    console.log("Added limit:", resPerPage);
+  }
+
+  const queryString = queryParts.join("&");
+  const endpointWithFilters = `${endpointToCall}${
+    queryString ? `?${queryString}` : ""
+  }`;
+  console.log("Using indexer endpoint:", endpointWithFilters);
+  return endpointWithFilters;
+}
+
+async function getFilteredProposalsFromIndexer(options, policy) {
+  const {
+    treasuryDaoID,
+    resPerPage,
+    isPrevPageCalled,
+    filterKindArray,
+    filterStatusArray,
+    // All under for pagination
+    offset,
+    lastProposalId,
+    currentPage,
+    // All above for pagination
+    isAssetExchange,
+    isStakeDelegation,
+  } = options;
+
+  console.log("getFilteredProposalsFromIndexer called with:", {
+    treasuryDaoID,
+    resPerPage,
+    filterKindArray,
+    filterStatusArray,
+    offset,
+    isAssetExchange,
+    isStakeDelegation,
+  });
+  const endpointWithFilters = buildQueryString(options);
+
+  return asyncFetch(endpointWithFilters)
+    .then((response) => {
+      console.log("Complete response:", response);
+
+      if (response.status !== 200) {
+        console.log("Response status was not 200:", response.status);
+        throw `Non-200 response: ${response.status}`;
+      }
+
+      console.log("Received 200 status, processing data...");
+
+      // Check if response.body exists and has records
+      if (!response.body) {
+        console.log("Response body is missing");
+        throw "Response body is missing";
+      }
+
+      if (!response.body.records) {
+        console.log(
+          "Response body doesn't contain records array:",
+          response.body
+        );
+        throw "Response body has no records";
+      }
+
+      // Process the data from the indexer
+      let proposals = response.body.records;
+      console.log(`Found ${proposals.length} proposals in response`);
+
+      let filteredProposals = proposals.filter((item) => {
+        const kindCondition = filterFunction(
+          item,
+          filterStatusArray,
+          filterKindArray,
+          policy.proposal_period
+        );
+        if (!kindCondition) return false;
+
+        // Check for asset exchange or stake delegation, if applicable
+        if (
+          filterKindArray.includes("Transfer") &&
+          !checkForTransferProposals(item)
+        )
+          return false;
+        if (isAssetExchange && !checkForExchangeProposals(item)) return false;
+        if (isStakeDelegation && !checkForStakeProposals(item)) return false;
+
+        return true;
+      });
+
+      console.log(
+        "Returning successful result from indexer with filtered proposals:",
+        filteredProposals.length
+      );
+      return {
+        filteredProposals: filteredProposals,
+        totalLength: response.body.total_records || filteredProposals.length,
+        usedIndexer: true,
+      };
+    })
+    .catch((error) => {
+      console.log("Using fallback function due to error:", error);
+      console.log("Error type:", typeof error);
+      console.log("Error stack:", error && error.stack);
+      // Fall back to the original function
+      return getFilteredProposalsByStatusAndKind(options);
+    });
+}
+
+const checkForTransferProposals = (item) => {
+  return (
+    decodeProposalDescription("proposal_action", item.description) ===
+      "transfer" || item.kind?.Transfer
+  );
+};
+
+const checkForExchangeProposals = (item) => {
+  const isAssetExchange =
+    decodeProposalDescription("proposal_action", item.description) ===
+    "asset-exchange";
+  return isAssetExchange;
+};
+
+const checkForStakeProposals = (item) => {
+  const proposalAction = decodeProposalDescription(
+    "proposal_action",
+    item.description
+  );
+  const isStakeRequest =
+    decodeProposalDescription("isStakeRequest", item.description) ||
+    proposalAction === "stake" ||
+    proposalAction === "unstake" ||
+    proposalAction === "withdraw";
+
+  return isStakeRequest;
+};
+
+async function getFilteredProposalsByStatusAndKind({
   treasuryDaoID,
   resPerPage,
   isPrevPageCalled,
@@ -315,34 +531,6 @@ function getFilteredProposalsByStatusAndKind({
     }
   }
 
-  const checkForTransferProposals = (item) => {
-    return (
-      decodeProposalDescription("proposal_action", item.description) ===
-        "transfer" || item.kind?.Transfer
-    );
-  };
-
-  const checkForExchangeProposals = (item) => {
-    const isAssetExchange =
-      decodeProposalDescription("proposal_action", item.description) ===
-      "asset-exchange";
-    return isAssetExchange;
-  };
-
-  const checkForStakeProposals = (item) => {
-    const proposalAction = decodeProposalDescription(
-      "proposal_action",
-      item.description
-    );
-    const isStakeRequest =
-      decodeProposalDescription("isStakeRequest", item.description) ||
-      proposalAction === "stake" ||
-      proposalAction === "unstake" ||
-      proposalAction === "withdraw";
-
-    return isStakeRequest;
-  };
-
   return Promise.all([...promiseArray, policy]).then((res) => {
     const policyResult = res[res.length - 1];
     const proposals = res.slice(0, -1).flat();
@@ -378,6 +566,7 @@ function getFilteredProposalsByStatusAndKind({
     return {
       filteredProposals: newArray,
       totalLength: sortedProposals.length,
+      usedIndexer: false,
     };
   });
 }
@@ -738,6 +927,7 @@ return {
   getApproversAndThreshold,
   hasPermission,
   getFilteredProposalsByStatusAndKind,
+  getFilteredProposalsFromIndexer,
   isNearSocial,
   getMembersAndPermissions,
   getDaoRoles,

@@ -28,41 +28,81 @@ const highlightProposalId =
 
 useEffect(() => {
   setLoading(true);
-  Near.asyncView(treasuryDaoID, "get_last_proposal_id").then((i) => {
-    const lastProposalId = i;
-    getFilteredProposalsByStatusAndKind({
-      treasuryDaoID,
-      resPerPage: rowsPerPage,
-      isPrevPageCalled: isPrevPageCalled,
-      filterKindArray: ["FunctionCall"],
-      filterStatusArray: ["Approved", "Rejected", "Expired", "Failed"],
-      offset: typeof offset === "number" ? offset : lastProposalId,
-      lastProposalId: lastProposalId,
-      currentPage,
-      isStakeDelegation: true,
-    }).then((r) => {
-      if (currentPage === 0 && !totalLength) {
-        setTotalLength(r.totalLength);
-      }
-      setOffset(r.filteredProposals[r.filteredProposals.length - 1].id);
-      if (typeof highlightProposalId === "number" && firstRender) {
-        const proposalExists = r.filteredProposals.find(
-          (i) => i.id === highlightProposalId
-        );
-        if (!proposalExists) {
-          setPage(currentPage + 1);
+
+  Near.asyncView(treasuryDaoID, "get_policy", {}).then((policy) => {
+    console.log(
+      "Policy fetched successfully:",
+      policy ? "Policy found" : "No policy found"
+    );
+    getFilteredProposalsFromIndexer(
+      {
+        treasuryDaoID,
+        resPerPage: rowsPerPage,
+        isPrevPageCalled: isPrevPageCalled,
+        filterKindArray: ["FunctionCall"],
+        filterStatusArray: ["Approved", "Rejected", "Expired", "Failed"],
+        offset: typeof offset === "number" ? offset : lastProposalId,
+        lastProposalId: lastProposalId,
+        currentPage,
+        isStakeDelegation: true,
+      },
+      policy
+    )
+      .then((r) => {
+        if (r.usedIndexer) {
+          console.log("USING INDEXER!!!");
+          // TODO: Add logic to handle the case where the indexer is used
+          // I think we still need to do This because the fallback function needs to
+          // have that state
+          thenDoThis(r);
         } else {
-          setFirstRender(false);
-          setLoading(false);
-          setProposals(r.filteredProposals);
+          thenDoThis(r);
         }
-      } else {
-        setLoading(false);
-        setProposals(r.filteredProposals);
-      }
-    });
+      })
+      .catch((e) => {
+        console.log("Error fetching proposal policy:", e);
+      });
   });
+
+  // Near.asyncView(treasuryDaoID, "get_last_proposal_id").then((i) => {
+  //   const lastProposalId = i;
+  //   getFilteredProposalsByStatusAndKind({
+  //     treasuryDaoID,
+  //     resPerPage: rowsPerPage,
+  //     isPrevPageCalled: isPrevPageCalled,
+  //     filterKindArray: ["FunctionCall"],
+  //     filterStatusArray: ["Approved", "Rejected", "Expired", "Failed"],
+  //     offset: typeof offset === "number" ? offset : lastProposalId,
+  //     lastProposalId: lastProposalId,
+  //     currentPage,
+  //     isStakeDelegation: true,
+  //   }).then((r) => {
+  //  thenDoThis(r);
+  // });
+  // });
 }, [currentPage, rowsPerPage]);
+
+function thenDoThis(r) {
+  if (currentPage === 0 && !totalLength) {
+    setTotalLength(r.totalLength);
+  }
+  setOffset(r.filteredProposals[r.filteredProposals.length - 1].id);
+  if (typeof highlightProposalId === "number" && firstRender) {
+    const proposalExists = r.filteredProposals.find(
+      (i) => i.id === highlightProposalId
+    );
+    if (!proposalExists) {
+      setPage(currentPage + 1);
+    } else {
+      setFirstRender(false);
+      setLoading(false);
+      setProposals(r.filteredProposals);
+    }
+  } else {
+    setLoading(false);
+    setProposals(r.filteredProposals);
+  }
+}
 
 const policy = treasuryDaoID
   ? Near.view(treasuryDaoID, "get_policy", {})

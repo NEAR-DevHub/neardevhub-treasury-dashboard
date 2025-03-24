@@ -1,7 +1,11 @@
-const { getApproversAndThreshold, getFilteredProposalsByStatusAndKind } =
-  VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common") || {
-    getApproversAndThreshold: () => {},
-  };
+const {
+  getApproversAndThreshold,
+  getFilteredProposalsByStatusAndKind,
+  getFilteredProposalsFromIndexer,
+} = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common") || {
+  getApproversAndThreshold: () => {},
+  getFilteredProposalsFromIndexer: () => {},
+};
 const instance = props.instance;
 if (!instance || typeof getFilteredProposalsByStatusAndKind !== "function") {
   return <></>;
@@ -31,41 +35,82 @@ const highlightProposalId =
 useEffect(() => {
   setLoading(true);
   // FIXME: Move from RPC calls to indexer
-  Near.asyncView(treasuryDaoID, "get_last_proposal_id").then((i) => {
-    const lastProposalId = i;
-    getFilteredProposalsByStatusAndKind({
-      treasuryDaoID,
-      resPerPage: rowsPerPage,
-      isPrevPageCalled: isPrevPageCalled,
-      filterKindArray: ["Transfer", "FunctionCall"],
-      filterStatusArray: ["Approved", "Rejected", "Expired", "Failed"],
-      offset: typeof offset === "number" ? offset : lastProposalId,
-      lastProposalId: lastProposalId,
-      currentPage,
-    }).then((r) => {
-      if (currentPage === 0 && !totalLength) {
-        setTotalLength(r.totalLength);
-      }
-      setOffset(r.filteredProposals[r.filteredProposals.length - 1].id);
-      if (typeof highlightProposalId === "number" && firstRender) {
-        const proposalExists = r.filteredProposals.find(
-          (i) => i.id === highlightProposalId
-        );
-        if (!proposalExists) {
-          setPage(currentPage + 1);
+  // Fetch policy data - this is needed for the proposal_period value
+  // which is used in filtering expired proposals
+
+  Near.asyncView(treasuryDaoID, "get_policy", {}).then((policy) => {
+    console.log(
+      "Policy fetched successfully:",
+      policy ? "Policy found" : "No policy found"
+    );
+    getFilteredProposalsFromIndexer(
+      {
+        treasuryDaoID,
+        resPerPage: rowsPerPage,
+        isPrevPageCalled: isPrevPageCalled,
+        filterKindArray: ["Transfer", "FunctionCall"],
+        filterStatusArray: ["Approved", "Rejected", "Expired", "Failed"],
+        offset: typeof offset === "number" ? offset : lastProposalId,
+        lastProposalId: lastProposalId,
+        currentPage,
+      },
+      policy
+    )
+      .then((r) => {
+        if (r.usedIndexer) {
+          console.log("USING INDEXER!!!");
+          // TODO: Add logic to handle the case where the indexer is used
+          // I think we still need to do This because the fallback function needs to
+          // have that state
+          thenDoThis(r);
         } else {
-          setFirstRender(false);
-          setLoading(false);
-          setProposals(r.filteredProposals);
+          thenDoThis(r);
         }
-      } else {
-        setLoading(false);
-        console.log("r.filteredProposals", r.filteredProposals);
-        setProposals(r.filteredProposals);
-      }
-    });
+      })
+      .catch((e) => {
+        console.log("Error fetching proposal policy:", e);
+      });
   });
+
+  // Near.asyncView(treasuryDaoID, "get_last_proposal_id").then((i) => {
+  //   const lastProposalId = i;
+  //   getFilteredProposalsByStatusAndKind({
+  //     treasuryDaoID,
+  //     resPerPage: rowsPerPage,
+  //     isPrevPageCalled: isPrevPageCalled,
+  //     filterKindArray: ["Transfer", "FunctionCall"],
+  //     filterStatusArray: ["Approved", "Rejected", "Expired", "Failed"],
+  //     offset: typeof offset === "number" ? offset : lastProposalId,
+  //     lastProposalId: lastProposalId,
+  //     currentPage,
+  //   }).then((r) => {
+  //     thenDoThis(r);
+  //   });
+  // });
 }, [currentPage, rowsPerPage]);
+
+function thenDoThis(r) {
+  if (currentPage === 0 && !totalLength) {
+    setTotalLength(r.totalLength);
+  }
+  setOffset(r.filteredProposals[r.filteredProposals.length - 1].id);
+  if (typeof highlightProposalId === "number" && firstRender) {
+    const proposalExists = r.filteredProposals.find(
+      (i) => i.id === highlightProposalId
+    );
+    if (!proposalExists) {
+      setPage(currentPage + 1);
+    } else {
+      setFirstRender(false);
+      setLoading(false);
+      setProposals(r.filteredProposals);
+    }
+  } else {
+    setLoading(false);
+    console.log("r.filteredProposals", r.filteredProposals);
+    setProposals(r.filteredProposals);
+  }
+}
 
 const policy = treasuryDaoID
   ? Near.view(treasuryDaoID, "get_policy", {})

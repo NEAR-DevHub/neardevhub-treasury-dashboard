@@ -9,5 +9,5 @@
   "REPL_MOB": "mob.near",
   "REPL_SOCIAL_CONTRACT": "social.near",
   "REPL_RPC_URL": "https://rpc.mainnet.near.org",
-  "REPL_SPUTNIK_INDEXER_URL": "https://testing-indexer-2.fly.dev/"
+  "REPL_SPUTNIK_INDEXER_URL": "https://testing-indexer-2.fly.dev"
 }

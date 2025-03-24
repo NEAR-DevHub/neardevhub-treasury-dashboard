@@ -20,14 +20,15 @@ const { hasPermission } = VM.require(
   hasPermission: () => {},
 };
 
-
 const { instance } = props;
 
-if ( !instance) {
+if (!instance) {
   return <></>;
 }
 
-const { treasuryDaoID, cacheURL } = VM.require(`${instance}/widget/config.data`);
+const { treasuryDaoID, cacheURL } = VM.require(
+  `${instance}/widget/config.data`
+);
 console.log("cacheURL", cacheURL);
 console.log("treasuryDaoID", treasuryDaoID);
 
@@ -71,10 +72,8 @@ function findTab(tabTitle) {
 
 const [currentTab, setCurrentTab] = useState(null);
 
-
 useEffect(() => {
-  // TODO DO NOT PUSH
-  const defaultTab = tabs[1].title;
+  const defaultTab = tabs[0].title;
   let tab = findTab(
     selectedTab ? normalize(selectedTab ?? "") : normalize(defaultTab)
   );
@@ -83,7 +82,6 @@ useEffect(() => {
     tab = normalize(defaultTab);
   }
   setCurrentTab(tab);
-  // TODO push the proposal data once it is fetched.
   setCurrentTabProps({ ...tab.props, ...props });
 }, [props]);
 
@@ -97,7 +95,7 @@ const hasCreatePermissionPayments = hasPermission(
 // Proposal data
 const [data, setData] = useState([]);
 // Search
-const [searchInput, setSearchInput] = useState("test");
+const [searchInput, setSearchInput] = useState("");
 // Filters.
 const [author, setAuthor] = useState("");
 const [stage, setStage] = useState("");
@@ -109,7 +107,6 @@ const [searchLoader, setSearchLoader] = useState(false);
 const [makeMoreLoader, setMakeMoreLoader] = useState(false);
 const [aggregatedCount, setAggregatedCount] = useState(null);
 const [currentlyDisplaying, setCurrentlyDisplaying] = useState(0);
-
 
 // TODO: dynamic
 const endpointToCall =
@@ -141,12 +138,8 @@ function searchProposals(searchInput) {
   });
 }
 
-
 function fetchCacheApi(variables) {
-  // FIXME: add the right filters
-  // let fetchUrl = `${cacheURL}/dao/proposals?order=${variables.order}&limit=${variables.limit}&offset=${variables.offset}`;
   const fetchUrl = endpointToCall;
-  // console.log("fetchUrl", fetchUrl);
   return asyncFetch(fetchUrl, {
     method: "GET",
     headers: {
@@ -175,7 +168,7 @@ function fetchProposals(offset) {
   fetchCacheApi(variables).then((result) => {
     const body = result.body;
     console.log("fetchProposals body result after fetch", body.records);
-    console.log({body})
+    console.log({ body });
     setData(body?.records || []);
     setLoading(false);
   });
@@ -183,16 +176,16 @@ function fetchProposals(offset) {
 
 useEffect(() => {
   setSearchLoader(true);
-  fetchProposals();
+  // fetchProposals(); getFilteredProposalsFromIndexer
 }, [author, sort, category, stage]);
 
 useEffect(() => {
   const handler = setTimeout(() => {
     if (searchInput) {
-      console.log("index.jsx, searchProposals", searchInput);
       searchProposals(searchInput);
     } else {
-      fetchProposals();
+      // TODO: this is done in getFilteredProposalsFromIndexer
+      // fetchProposals();
     }
   }, 1000);
 
@@ -200,7 +193,6 @@ useEffect(() => {
     clearTimeout(handler);
   };
 }, [searchInput]);
-
 
 const PaymentsSidebarMenu = ({ currentTab }) => {
   return (
@@ -216,9 +208,10 @@ const PaymentsSidebarMenu = ({ currentTab }) => {
           value: searchInput,
           onChange: (e) => {
             console.log("onChange -> e", e);
-            setSearchInput(e.target.value)},
+            setSearchInput(e.target.value);
+          },
           onKeyDown: (e) => {
-            if(e.key == "Enter") {
+            if (e.key == "Enter") {
               if (searchInput) {
                 searchProposals(searchInput);
               } else {
@@ -303,7 +296,6 @@ const AssetExchangeSidebarMenu = ({ currentTab }) => {
   );
 };
 
-
 const StakeDelegationSidebarMenu = ({ currentTab }) => {
   return (
     <Widget
@@ -313,7 +305,8 @@ const StakeDelegationSidebarMenu = ({ currentTab }) => {
         isPendingPage: currentTab.title === "Pending Requests",
       }}
     />
-)}
+  );
+};
 
 const SettingsHistorySidebarMenu = ({ currentTab }) => {
   return (
@@ -325,7 +318,6 @@ const SettingsHistorySidebarMenu = ({ currentTab }) => {
     />
   );
 };
-
 
 return (
   <Container className="card py-3 d-flex flex-column">
@@ -359,10 +351,16 @@ return (
       <div className="px-2">
         {/* TODO: pass the permission because these look like the */}
         {page === "payments" && <PaymentsSidebarMenu currentTab={currentTab} />}
-        {page === "asset-exchange" && <AssetExchangeSidebarMenu currentTab={currentTab} />}
+        {page === "asset-exchange" && (
+          <AssetExchangeSidebarMenu currentTab={currentTab} />
+        )}
         {/* TODO: these also look like the same component */}
-        {page === "stake-delegation" && <StakeDelegationSidebarMenu currentTab={currentTab} />}
-        {page === "settings-history" && <SettingsHistorySidebarMenu currentTab={currentTab} />}
+        {page === "stake-delegation" && (
+          <StakeDelegationSidebarMenu currentTab={currentTab} />
+        )}
+        {page === "settings-history" && (
+          <SettingsHistorySidebarMenu currentTab={currentTab} />
+        )}
       </div>
     </div>
     {currentTab && (

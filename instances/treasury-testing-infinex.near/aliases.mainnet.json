@@ -2,5 +2,5 @@
   "REPL_BASE_DEPLOYMENT_ACCOUNT": "test-widgets.treasury-factory.near",
   "REPL_INSTANCE": "treasury-testing-infinex.near",
   "REPL_TREASURY": "testing-treasury.sputnik-dao.near",
-  "REPL_SPUTNIK_INDEXER_URL": "https://testing-indexer-2.fly.dev/"
+  "REPL_SPUTNIK_INDEXER_URL": "https://testing-indexer-2.fly.dev"
 }

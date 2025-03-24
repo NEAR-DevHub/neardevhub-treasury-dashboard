@@ -38,10 +38,10 @@ if (
 }
 
 const proposals = props.proposals;
-// FIXME: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.SettingsDropdown`
 const columnsVisibility = JSON.parse(
   Storage.get(
     "COLUMNS_VISIBILITY",
+    `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.SettingsDropdown`
   ) ?? "[]"
 );
 
@@ -290,6 +290,7 @@ const ProposalsComponent = () => {
         const proposalId = id ? parseInt(id, 10) : null;
         const isFunctionType =
           Object.values(item?.kind?.FunctionCall ?? {})?.length > 0;
+        console.log("item?.kind?", item?.kind);
         const decodedArgs =
           isFunctionType &&
           decodeBase64(item.kind.FunctionCall?.actions[0].args);
@@ -303,6 +304,7 @@ const ProposalsComponent = () => {
 
         return (
           <tr
+            key={index}
             className={
               voteProposalId === item.id || highlightProposalId === item.id
                 ? "bg-highlight"
@@ -542,18 +544,23 @@ const ProposalsComponent = () => {
               <td className="text-right">
                 <div className="d-flex gap-2 align-items-center text-underline fw-semi-bold">
                   <a
-                  target="_blank"     
-                  rel="noopener noreferrer"
-                  href={`https://nearblocks.io/txns/${item.hash}`} 
-                  className="d-flex gap-2 align-items-center text-underline cursor-pointer fw-semi-bold">
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    href={`https://nearblocks.io/txns/${item.hash}`}
+                    className="d-flex gap-2 align-items-center text-underline cursor-pointer fw-semi-bold"
+                  >
                     {shortenTransactionHash(item.hash)}
                     <ExternalLink width={15} height={15} />
                   </a>
-                  <div style={{ cursor: "pointer" }}
+                  <div
+                    style={{ cursor: "pointer" }}
                     onClick={(e) => {
                       e.stopPropagation();
-                      clipboard.writeText(`https://nearblocks.io/txns/${item.hash}`);
-                    }}>
+                      clipboard.writeText(
+                        `https://nearblocks.io/txns/${item.hash}`
+                      );
+                    }}
+                  >
                     <Copy width={15} height={15} />
                   </div>
                 </div>
@@ -653,7 +660,9 @@ return (
                   (hasVotingPermission || hasDeletePermission) && (
                     <td className="text-right">Actions</td>
                   )}
-                {!isPendingRequests && <td className="text-right">Transaction</td>}
+                {!isPendingRequests && (
+                  <td className="text-right">Transaction</td>
+                )}
               </tr>
             </thead>
             <ProposalsComponent />
