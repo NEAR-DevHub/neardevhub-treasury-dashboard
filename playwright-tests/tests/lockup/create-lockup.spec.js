@@ -424,7 +424,7 @@ test.describe("Lockup Creation", () => {
       daoAccount,
     }) => {
       test.setTimeout(100_000);
-
+      await updateDaoPolicyMembers({ page, instanceAccount });
       const submitBtn = await fillLockupForm({
         page,
         daoAccount,
@@ -442,6 +442,7 @@ test.describe("Lockup Creation", () => {
       daoAccount,
     }) => {
       test.setTimeout(100_000);
+      await updateDaoPolicyMembers({ page, instanceAccount });
 
       const submitBtn = await fillLockupForm({
         page,
