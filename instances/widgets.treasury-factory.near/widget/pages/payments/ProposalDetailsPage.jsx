@@ -95,7 +95,7 @@ useEffect(() => {
           : item.kind.Transfer;
         let status = item.status;
         if (status === "InProgress") {
-          const endTime = Big(proposalData.submissionTime ?? "0")
+          const endTime = Big(item.submission_time ?? "0")
             .plus(proposalPeriod ?? "0")
             .toFixed();
           const timestampInMilliseconds = Big(endTime) / Big(1_000_000);
@@ -317,7 +317,30 @@ return (
         <CopyComponent />
       </div>
     )}
-    {proposalData ? (
+    {!proposalData ? (
+      <div>
+        {isCompactVersion ? (
+          <div
+            className="d-flex flex-column gap-2 w-100"
+            style={{ height: "500px" }}
+          >
+            <CardSkeleton />
+            <CardSkeleton />
+            <CardSkeleton />
+          </div>
+        ) : (
+          <div className="d-flex gap-3 w-100" style={{ height: "600px" }}>
+            <div className="flex-3 h-100">
+              <CardSkeleton />
+            </div>
+            <div className="d-flex flex-column gap-3 flex-2 h-100">
+              <CardSkeleton />
+              <CardSkeleton />
+            </div>
+          </div>
+        )}
+      </div>
+    ) : (
       <div
         className={
           "d-flex gap-3 flex-wrap " + (isCompactVersion && " flex-column")
@@ -330,7 +353,7 @@ return (
           >
             <div className="d-flex justify-content-between gap-2 align-items-center px-3 pt-3">
               <div className="cursor-pointer" onClick={() => props.onClose()}>
-                <i class="bi bi-x-lg h5 mb-0 text-color"></i>
+                <i class="bi bi-x-lg h5 mb-0"></i>
               </div>
               <h5>#{id}</h5>
               <div className="d-flex gap-3">
@@ -469,25 +492,6 @@ return (
             <label className="border-top">Note</label>
             {proposalData?.notes ?? "-"}
           </div>
-        </div>
-      </div>
-    ) : isCompactVersion ? (
-      <div
-        className="d-flex flex-column gap-2 w-100"
-        style={{ height: "500px" }}
-      >
-        <CardSkeleton />
-        <CardSkeleton />
-        <CardSkeleton />
-      </div>
-    ) : (
-      <div className="d-flex gap-3 w-100" style={{ height: "600px" }}>
-        <div className="flex-3 h-100">
-          <CardSkeleton />
-        </div>
-        <div className="d-flex flex-column gap-3 flex-2 h-100">
-          <CardSkeleton />
-          <CardSkeleton />
         </div>
       </div>
     )}
