@@ -438,4 +438,30 @@ test.describe("User is logged in", function () {
       )
     ).toBeVisible();
   });
+
+  test("should toggle action buttons based on form changes", async ({
+    page,
+  }) => {
+    test.setTimeout(150_000);
+
+    // Reference action buttons
+    const submitRequestButton = page.getByText("Submit Request");
+    const cancelButton = page.getByRole("button", { name: "Cancel" });
+
+    // Initially, both buttons should be disabled
+    await expect(submitRequestButton).toBeDisabled();
+    await expect(cancelButton).toBeDisabled();
+
+    // Entering a value in the threshold input should enable the buttons
+    const thresholdInput = page.getByTestId("threshold-input");
+    await thresholdInput.fill("2");
+
+    await expect(submitRequestButton).toBeEnabled();
+    await expect(cancelButton).toBeEnabled();
+
+    // Clicking the cancel button should reset the form and disable both buttons
+    await cancelButton.click();
+    await expect(submitRequestButton).toBeDisabled();
+    await expect(cancelButton).toBeDisabled();
+  });
 });

@@ -6,6 +6,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: web4-contract-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   code-formatting:
     name: Code Formatting

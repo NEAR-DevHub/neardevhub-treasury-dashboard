@@ -26,7 +26,10 @@ async function voteOnProposal({
   vote,
   isMultiVote = false,
 }) {
-  const swapProposal = { ...SwapProposalData };
+  const swapProposal = {
+    ...SwapProposalData,
+    submission_time: CurrentTimestampInNanoseconds,
+  };
   let lastProposalId = swapProposal.id;
   let isTransactionCompleted = false;
   const contractId = daoAccount;
@@ -93,7 +96,8 @@ async function performVoteAction({
   instanceAccount,
   vote,
   voteStatus,
-  showError,
+  showFundsError,
+  showVoteError,
 }) {
   await voteOnProposal({
     page,
@@ -110,8 +114,12 @@ async function performVoteAction({
       : page.getByRole("button", { name: vote }).first();
   await expect(voteButton).toBeEnabled({ timeout: 30_000 });
   await voteButton.click();
-  if (showError) {
+  if (showFundsError) {
     return;
+  }
+  if (showVoteError) {
+    await expect(page.getByText("Insufficient Balance")).toBeVisible();
+    await page.getByRole("button", { name: "Proceed Anyway" }).click();
   }
   await page.getByRole("button", { name: "Confirm" }).click();
   await expect(
@@ -294,7 +302,8 @@ test.describe("don't ask again", function () {
       instanceAccount,
       vote: "Approve",
       voteStatus: "Approved",
-      showError: true,
+      showVoteError: false,
+      showFundsError: true,
     });
 
     await expect(
@@ -304,7 +313,7 @@ test.describe("don't ask again", function () {
     ).toBeVisible();
   });
 
-  test.skip("should throw insufficient DAO account balance error", async ({
+  test("should throw insufficient DAO account balance error", async ({
     page,
     daoAccount,
     instanceAccount,
@@ -318,14 +327,8 @@ test.describe("don't ask again", function () {
       instanceAccount,
       vote: "Approve",
       voteStatus: "Approved",
-      showError: true,
+      showVoteError: true,
     });
-
-    await expect(
-      page.getByText(
-        "The request cannot be approved because the treasury balance is insufficient to cover the payment."
-      )
-    ).toBeVisible();
   });
 
   test("approve request with single and multiple required votes", async ({

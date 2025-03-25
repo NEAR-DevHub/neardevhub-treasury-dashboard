@@ -1,4 +1,4 @@
-const { getNearBalances } = VM.require(
+const { getNearBalances, accountToLockup } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
 
@@ -12,13 +12,18 @@ const { Modal, ModalContent, ModalHeader, ModalFooter } = VM.require(
 
 const instance = props.instance;
 
-if (!instance || typeof getNearBalances !== "function" || !Skeleton) {
+if (
+  !instance ||
+  typeof getNearBalances !== "function" ||
+  !Skeleton ||
+  typeof accountToLockup !== "function"
+) {
   return <></>;
 }
 
-const { treasuryDaoID, lockupContract } = VM.require(
-  `${instance}/widget/config.data`
-);
+const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+
+const lockupContract = accountToLockup(treasuryDaoID);
 
 if (!treasuryDaoID) return <></>;
 
@@ -94,7 +99,6 @@ useEffect(() => {
     .catch((err) => {
       setShow404Modal(true);
     });
-
   asyncFetch(`${REPL_BACKEND_API}/ft-tokens/?account_id=${treasuryDaoID}`)
     .then((res) => {
       if (typeof res.body.totalCumulativeAmt === "number") {

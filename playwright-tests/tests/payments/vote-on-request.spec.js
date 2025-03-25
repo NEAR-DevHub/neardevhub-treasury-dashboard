@@ -234,15 +234,15 @@ test.describe("don't ask again", function () {
         .nth(1)
     ).toBeVisible();
   });
-  test.skip("should throw insufficient dao account balance error", async ({
+  test("should throw insufficient dao account balance error", async ({
     page,
     instanceAccount,
     daoAccount,
   }) => {
     test.setTimeout(60_000);
-    await mockWithFTBalance({ page, daoAccount, isSufficient: false });
     await mockPikespeakFTTokensResponse({ page, daoAccount });
     await updateDaoPolicyMembers({ instanceAccount, page });
+    await mockWithFTBalance({ page, daoAccount, isSufficient: false });
     await voteOnProposal({
       page,
       daoAccount,
@@ -257,11 +257,8 @@ test.describe("don't ask again", function () {
       .first();
     await expect(approveButton).toBeEnabled({ timeout: 30_000 });
     await approveButton.click();
-    await expect(
-      page.getByText(
-        "The request cannot be approved because the treasury balance is insufficient to cover the payment."
-      )
-    ).toBeVisible();
+    await expect(page.getByText("Insufficient Balance")).toBeVisible();
+    await page.getByRole("button", { name: "Proceed Anyway" }).click();
   });
 
   test("approve payment request with single and multiple required votes", async ({
@@ -518,14 +515,14 @@ test.describe("Vote on Lockup payment request", function () {
     storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
   });
 
-  test.skip("should throw insufficient lockup account balance error", async ({
+  test("should throw insufficient lockup account balance error", async ({
     page,
     instanceAccount,
     daoAccount,
+    lockupContract,
   }) => {
     test.setTimeout(250_000);
-    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
-    if (!instanceConfig.lockupContract) {
+    if (!lockupContract) {
       console.log("no lockup contract found for instance");
       return test.skip();
     }
@@ -544,11 +541,8 @@ test.describe("Vote on Lockup payment request", function () {
       .first();
     await expect(approveButton).toBeEnabled({ timeout: 30_000 });
     await approveButton.click();
-    await expect(
-      page.getByText(
-        "The request cannot be approved because the treasury balance is insufficient to cover the payment."
-      )
-    ).toBeVisible();
+    await expect(page.getByText("Insufficient Balance")).toBeVisible();
+    await page.getByRole("button", { name: "Proceed Anyway" }).click();
     await sandbox.quitSandbox();
   });
 
@@ -556,10 +550,10 @@ test.describe("Vote on Lockup payment request", function () {
     page,
     instanceAccount,
     daoAccount,
+    lockupContract,
   }) => {
     test.setTimeout(250_000);
-    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
-    if (!instanceConfig.lockupContract) {
+    if (!lockupContract) {
       console.log("no lockup contract found for instance");
       return test.skip();
     }

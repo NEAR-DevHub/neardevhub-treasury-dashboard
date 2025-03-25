@@ -1,7 +1,11 @@
 const status = props.status;
 const isPaymentsPage = props.isPaymentsPage;
 const Container = styled.div`
-  text-align: center;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
   .reject {
     background-color: var(--grey-04);
     color: var(--text-color);
@@ -21,20 +25,26 @@ const Container = styled.div`
     background-color: rgba(239, 56, 38, 0.1);
     color: var(--other-red);
   }
+
+  div {
+    padding: 6px 8px;
+    border-radius: 8px;
+    width: fit-content;
+  }
 `;
 
 return (
   <Container>
     {status === "Approved" ? (
-      <div className="approve rounded-2 p-2 bold">
+      <div className="approve bold">
         {isPaymentsPage ? "Funded" : "Executed"}
       </div>
     ) : status === "Rejected" ? (
-      <div className="reject rounded-2 p-2 bold">Rejected</div>
+      <div className="reject bold">Rejected</div>
     ) : status === "Failed" ? (
-      <div className="failed rounded-2 p-2 bold">Failed</div>
+      <div className="failed bold">Failed</div>
     ) : (
-      <div className="expire rounded-2 p-2 bold">Expired</div>
+      <div className="expire bold">Expired</div>
     )}
   </Container>
 );

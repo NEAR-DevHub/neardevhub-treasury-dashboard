@@ -5,20 +5,24 @@ const {
   getNearBalances,
   decodeProposalDescription,
   formatSubmissionTimeStamp,
+  accountToLockup,
 } = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
 
 const instance = props.instance;
 const policy = props.policy;
-if (!instance) {
+if (!instance || typeof accountToLockup !== "function") {
   return <></>;
 }
 
-const { treasuryDaoID, showKYC, showReferenceProposal, lockupContract } =
-  VM.require(`${instance}/widget/config.data`);
+const { treasuryDaoID, showKYC, showReferenceProposal } = VM.require(
+  `${instance}/widget/config.data`
+);
 
 const { TableSkeleton } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.skeleton"
 );
+
+const lockupContract = accountToLockup(treasuryDaoID);
 
 if (
   !instance ||
@@ -513,25 +517,12 @@ const ProposalsComponent = () => {
                       hasDeletePermission,
                       hasVotingPermission,
                       proposalCreator: item.proposer,
-                      tokensBalance: isFunctionType
-                        ? [
-                            {
-                              contract: "near",
-                              amount: Big(lockupNearBalances.available).toFixed(
-                                2
-                              ),
-                            },
-                          ]
-                        : [
-                            ...(userFTTokens?.body?.fts ?? []),
-                            {
-                              contract: "near",
-                              amount: nearBalances.available,
-                            },
-                          ],
+                      nearBalance: isFunctionType
+                        ? Big(lockupNearBalances.available).toFixed(2)
+                        : nearBalances.available,
+
                       currentAmount: args.amount,
-                      currentContract:
-                        args.token_id === "" ? "near" : args.token_id,
+                      currentContract: args.token_id,
                       requiredVotes,
                       checkProposalStatus: () => checkProposalStatus(item.id),
                     }}

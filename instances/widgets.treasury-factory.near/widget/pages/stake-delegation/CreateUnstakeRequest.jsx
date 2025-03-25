@@ -1,5 +1,9 @@
-const { getNearBalances, LOCKUP_MIN_BALANCE_FOR_STORAGE, TooltipText } =
-  VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
+const {
+  getNearBalances,
+  LOCKUP_MIN_BALANCE_FOR_STORAGE,
+  TooltipText,
+  accountToLockup,
+} = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
 const { TransactionLoader } = VM.require(
   `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TransactionLoader`
 ) || { TransactionLoader: () => <></> };
@@ -18,22 +22,22 @@ const { encodeToMarkdown } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
 
-if (!instance || !LOCKUP_MIN_BALANCE_FOR_STORAGE) {
+if (
+  !instance ||
+  !LOCKUP_MIN_BALANCE_FOR_STORAGE ||
+  typeof accountToLockup !== "function"
+) {
   return <></>;
 }
 
-const { treasuryDaoID, lockupContract } = VM.require(
-  `${instance}/widget/config.data`
-);
+const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+
+const lockupContract = accountToLockup(treasuryDaoID);
 
 const walletOptions = [
   {
     label: treasuryDaoID,
     value: treasuryDaoID,
-  },
-  {
-    label: lockupContract,
-    value: lockupContract,
   },
 ];
 const [selectedWallet, setSelectedWallet] = useState(walletOptions[0]);

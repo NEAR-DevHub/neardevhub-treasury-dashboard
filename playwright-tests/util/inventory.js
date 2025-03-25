@@ -26,7 +26,7 @@ export async function mockInventory({ page, account }) {
   );
   await page.route(
     (account.includes("testing")
-      ? `https://ref-sdk-test-cold-haze-1300.fly.dev`
+      ? `https://ref-sdk-test-cold-haze-1300-2.fly.dev`
       : `https://ref-sdk-api.fly.dev`) +
       `/api/ft-tokens/?account_id=${account}`,
 
@@ -237,6 +237,29 @@ export const SwapProposalData = {
           args: "eyJyZWNlaXZlcl9pZCI6InYyLnJlZi1maW5hbmNlLm5lYXIiLCJhbW91bnQiOiIxMDAwMDAiLCJtc2ciOiJ7XCJmb3JjZVwiOjAsXCJhY3Rpb25zXCI6W3tcInBvb2xfaWRcIjo0NTEzLFwidG9rZW5faW5cIjpcIjE3MjA4NjI4Zjg0ZjVkNmFkMzNmMGRhM2JiYmViMjdmZmNiMzk4ZWFjNTAxYTMxYmQ2YWQyMDExZTM2MTMzYTFcIixcInRva2VuX291dFwiOlwidXNkdC50ZXRoZXItdG9rZW4ubmVhclwiLFwiYW1vdW50X2luXCI6XCIxMDAwMDBcIixcImFtb3VudF9vdXRcIjpcIjBcIixcIm1pbl9hbW91bnRfb3V0XCI6XCI5OTA3M1wifV19In0=",
           deposit: "1",
           gas: "180000000000000",
+        },
+      ],
+    },
+  },
+  status: "InProgress",
+  vote_counts: {},
+  votes: {},
+  submission_time: "1740746334157940598",
+};
+
+export const LockupProposalData = {
+  id: 1,
+  proposer: "theori.near",
+  description: "Create lockup for theori.near",
+  kind: {
+    FunctionCall: {
+      receiver_id: "lockup.near",
+      actions: [
+        {
+          method_name: "create",
+          args: "eyJsb2NrdXBfZHVyYXRpb24iOiIwIiwib3duZXJfYWNjb3VudF9pZCI6InRoZW9yaS5uZWFyIiwid2hpdGVsaXN0X2FjY291bnRfaWQiOiJsb2NrdXAtbm8td2hpdGVsaXN0Lm5lYXIiLCJsb2NrdXBfdGltZXN0YW1wIjoiMTc0MjUwODAwMDAwMDAwMDAwMCIsInJlbGVhc2VfZHVyYXRpb24iOiIxNzI4MDAwMDAwMDAwMDAifQ==",
+          deposit: "4000000000000000000000000",
+          gas: "150000000000000",
         },
       ],
     },
