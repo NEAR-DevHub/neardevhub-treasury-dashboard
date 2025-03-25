@@ -352,6 +352,7 @@ return (
                       setConfirmModal(true);
                     }
                   },
+                  className: isProposalDetailsPage ? "w-100" : "",
                 }}
               />
               <Widget
@@ -379,6 +380,7 @@ return (
                     setVote(actions.REJECT);
                     setConfirmModal(true);
                   },
+                  className: isProposalDetailsPage ? "w-100" : "",
                 }}
               />
             </div>
@@ -409,6 +411,7 @@ return (
                   setVote(actions.REMOVE);
                   setConfirmModal(true);
                 },
+                className: isProposalDetailsPage ? "w-100" : "",
               }}
             />
           </div>
