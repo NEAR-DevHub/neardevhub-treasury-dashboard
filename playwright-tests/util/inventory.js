@@ -246,3 +246,26 @@ export const SwapProposalData = {
   votes: {},
   submission_time: "1740746334157940598",
 };
+
+export const LockupProposalData = {
+  id: 1,
+  proposer: "theori.near",
+  description: "Create lockup for theori.near",
+  kind: {
+    FunctionCall: {
+      receiver_id: "lockup.near",
+      actions: [
+        {
+          method_name: "create",
+          args: "eyJsb2NrdXBfZHVyYXRpb24iOiIwIiwib3duZXJfYWNjb3VudF9pZCI6InRoZW9yaS5uZWFyIiwid2hpdGVsaXN0X2FjY291bnRfaWQiOiJsb2NrdXAtbm8td2hpdGVsaXN0Lm5lYXIiLCJsb2NrdXBfdGltZXN0YW1wIjoiMTc0MjUwODAwMDAwMDAwMDAwMCIsInJlbGVhc2VfZHVyYXRpb24iOiIxNzI4MDAwMDAwMDAwMDAifQ==",
+          deposit: "4000000000000000000000000",
+          gas: "150000000000000",
+        },
+      ],
+    },
+  },
+  status: "InProgress",
+  vote_counts: {},
+  votes: {},
+  submission_time: "1740746334157940598",
+};

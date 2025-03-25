@@ -251,7 +251,7 @@ async function openWithdrawForm({
   await expect(page.getByText("Create Request", { exact: true })).toBeVisible({
     timeout: 10_000,
   });
-  await page.locator(".dropdown").first().click();
+  await page.locator(".custom-select > .dropdown").first().click();
   await page.locator(".dropdown-menu > div:nth-child(3)").click();
   await expect(
     page.getByRole("heading", { name: "Create Withdraw Request" })
@@ -264,7 +264,7 @@ async function openWithdrawForm({
 
 async function openUnstakeForm({ page, isLockup, daoAccount, lockupContract }) {
   await expect(page.getByText("Create Request", { exact: true })).toBeVisible();
-  await page.locator(".dropdown").first().click();
+  await page.locator(".custom-select > .dropdown").first().click();
   await page.locator(".dropdown-menu > div:nth-child(2)").click();
   await expect(
     page.getByRole("heading", { name: "Create Unstake Request" })
@@ -277,7 +277,7 @@ async function openUnstakeForm({ page, isLockup, daoAccount, lockupContract }) {
 
 async function openStakeForm({ page, isLockup, daoAccount, lockupContract }) {
   await expect(page.getByText("Create Request", { exact: true })).toBeVisible();
-  await page.locator(".dropdown").first().click();
+  await page.locator(".custom-select > .dropdown").first().click();
   await page.locator(".dropdown-menu > div:nth-child(1)").click();
   await expect(
     page.getByRole("heading", { name: "Create Stake Request" })

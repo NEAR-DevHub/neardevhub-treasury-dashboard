@@ -410,6 +410,7 @@ export class SandboxRPC {
     receiver_id,
     functionArgs,
     daoName,
+    deposit = "0",
   }) {
     const args = {
       proposal: {
@@ -421,7 +422,7 @@ export class SandboxRPC {
               {
                 method_name: method_name,
                 args: functionArgs,
-                deposit: "0",
+                deposit: deposit,
                 gas: "270000000000000",
               },
             ],
