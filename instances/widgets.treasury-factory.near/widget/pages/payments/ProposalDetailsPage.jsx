@@ -293,7 +293,9 @@ const CopyComponent = () => {
   }
 
   return isCompactVersion ? (
-    <i class="bi bi-copy h5 mb-0 cursor-pointer" onClick={onCopy}></i>
+    <div className="cursor-pointer" onClick={onCopy}>
+      <i className="bi bi-copy h5 mb-0"></i>
+    </div>
   ) : (
     <button
       className="btn btn-outline-plain d-flex gap-1 align-items-center"
@@ -305,19 +307,23 @@ const CopyComponent = () => {
   );
 };
 
-return (
-  <Container className="container-lg d-flex flex-column gap-3">
-    {!isCompactVersion && (
-      <div className="d-flex justify-content-between gap-2 align-items-center">
-        <a href={`?page=payments`}>
-          <button className="btn btn-outline-plain d-flex gap-1 align-items-center">
-            <i class="bi bi-arrow-left"></i> Back
-          </button>
-        </a>
-        <CopyComponent />
-      </div>
-    )}
-    {!proposalData ? (
+const Navbar = () => {
+  return !isCompactVersion ? (
+    <div className="d-flex justify-content-between gap-2 align-items-center">
+      <a href={`?page=payments`}>
+        <button className="btn btn-outline-plain d-flex gap-1 align-items-center">
+          <i class="bi bi-arrow-left"></i> Back
+        </button>
+      </a>
+      <CopyComponent />
+    </div>
+  ) : null;
+};
+
+if (!proposalData) {
+  return (
+    <Container key={id} className="container-lg d-flex flex-column gap-3">
+      <Navbar />
       <div>
         {isCompactVersion ? (
           <div
@@ -340,160 +346,165 @@ return (
           </div>
         )}
       </div>
-    ) : (
-      <div
-        className={
-          "d-flex gap-3 flex-wrap " + (isCompactVersion && " flex-column")
-        }
-      >
-        {isCompactVersion && (
-          <div
-            className="d-flex flex-column gap-2 rounded-4 border border-1"
-            style={{ backgroundColor: "var(--grey-05)" }}
-          >
-            <div className="d-flex justify-content-between gap-2 align-items-center px-3 pt-3">
-              <div className="cursor-pointer" onClick={() => props.onClose()}>
-                <i class="bi bi-x-lg h5 mb-0"></i>
-              </div>
-              <h5>#{id}</h5>
-              <div className="d-flex gap-3">
-                <CopyComponent />
-                <a
-                  className="cursor-pointer"
-                  href={`?page=payments&id=${proposalData.id}`}
-                >
-                  <i class="bi bi-arrows-angle-expand h5 mb-0"></i>
-                </a>
-              </div>
-            </div>
-            <VotesDetails />
-          </div>
-        )}
+    </Container>
+  );
+}
+
+return (
+  <Container key={id} className="container-lg d-flex flex-column gap-3">
+    <Navbar />
+    <div
+      className={
+        "d-flex gap-3 flex-wrap " + (isCompactVersion && " flex-column")
+      }
+    >
+      {isCompactVersion && (
         <div
-          className="flex-3 d-flex flex-column gap-3"
-          style={{ minWidth: 300, height: "fit-content" }}
+          className="d-flex flex-column gap-2 rounded-4 border border-1"
+          style={{ backgroundColor: "var(--grey-05)" }}
         >
-          <div className="card card-body d-flex flex-column gap-2">
-            <div className="d-flex gap-2 justify-content-between flex-wrap">
-              <h5 className="mb-0 flex-1">{proposalData?.title}</h5>
-              <div>
-                <Widget
-                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.HistoryStatus`}
-                  props={{
-                    instance,
-                    isVoteStatus: false,
-                    status: proposalData?.status,
-                    isPaymentsPage: true,
-                  }}
-                />
-              </div>
+          <div className="d-flex justify-content-between gap-2 align-items-center px-3 pt-2">
+            <div className="cursor-pointer" onClick={() => props.onClose()}>
+              <i class="bi bi-x-lg h5 mb-0"></i>
             </div>
-            {proposalData?.summary && (
-              <div className="text-sm text-secondary">
-                {proposalData?.summary}
-              </div>
-            )}
-            {proposalData?.proposalId && (
-              <div>
-                <Link
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  to={href({
-                    widgetSrc: `${REPL_DEVHUB}/widget/app`,
-                    params: {
-                      page: "proposal",
-                      id: proposalData?.proposalId,
-                    },
-                  })}
-                >
-                  <button
-                    className="btn p-0 d-flex align-items-center gap-2"
-                    style={{ fontSize: 14 }}
-                  >
-                    Open Proposal <i class="bi bi-box-arrow-up-right"></i>
-                  </button>
-                </Link>
-              </div>
-            )}
-            <div className=" d-flex flex-column gap-2 mt-1">
-              <label className="border-top">Recipient</label>
-              <div className="d-flex justify-content-between gap-2 align-items-center flex-wrap">
-                <Widget
-                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
-                  props={{
-                    accountId: proposalData?.args.receiver_id,
-                    showKYC: true,
-                    displayImage: true,
-                    displayName: true,
-                    instance,
-                  }}
-                />
-                <button
-                  className="btn btn-outline-plain d-flex gap-1 align-items-center"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    clipboard.writeText(proposalData?.args.receiver_id);
-                  }}
-                >
-                  <i class="bi bi-copy"></i>Copy Address
-                </button>
-              </div>
-            </div>
-            <div className="d-flex flex-column gap-2 mt-1">
-              <label className="border-top">Funding Ask</label>
-              <h5 className="mb-0">
-                <Widget
-                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmountAndIcon`}
-                  props={{
-                    instance,
-                    amountWithoutDecimals: proposalData?.args.amount,
-                    address: proposalData?.args.token_id,
-                  }}
-                />
-              </h5>
+            <h5>#{id}</h5>
+            <div className="d-flex gap-3">
+              <CopyComponent />
+              <a
+                className="cursor-pointer"
+                href={`?page=payments&id=${proposalData.id}`}
+              >
+                <i class="bi bi-arrows-angle-expand h5 mb-0"></i>
+              </a>
             </div>
           </div>
+          <VotesDetails />
         </div>
-        <div
-          className={"flex-2 d-flex flex-column gap-3 "}
-          style={{ minWidth: 300 }}
-        >
-          {!isCompactVersion && <VotesDetails />}
-          <div
-            className="card card-body d-flex flex-column gap-2"
-            style={{ fontSize: 14 }}
-          >
-            <label>Created By</label>
-            <Widget
-              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
-              props={{
-                accountId: proposalData?.proposer,
-                showKYC: false,
-                displayImage: true,
-                displayName: true,
-                instance,
-              }}
-            />
-            <label className="border-top">Created Date</label>
-            <Widget
-              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
-              props={{
-                timestamp: proposalData?.submissionTime,
-                isProposalDetailsPage: true,
-              }}
-            />
-            <label className="border-top">Expiring Date</label>
-            {formatSubmissionTimeStamp(
-              proposalData?.submissionTime,
-              proposalPeriod,
-              true
-            )}
-            {/* <label className="border-top">Transaction</label> */}
-            <label className="border-top">Note</label>
-            {proposalData?.notes ?? "-"}
+      )}
+      <div
+        className="flex-3 d-flex flex-column gap-3"
+        style={{ minWidth: 300, height: "fit-content" }}
+      >
+        <div className="card card-body d-flex flex-column gap-2">
+          <div className="d-flex gap-2 justify-content-between flex-wrap">
+            <h5 className="mb-0 flex-1">{proposalData?.title}</h5>
+            <div>
+              <Widget
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.HistoryStatus`}
+                props={{
+                  instance,
+                  isVoteStatus: false,
+                  status: proposalData?.status,
+                  isPaymentsPage: true,
+                }}
+              />
+            </div>
+          </div>
+          {proposalData?.summary && (
+            <div className="text-sm text-secondary">
+              {proposalData?.summary}
+            </div>
+          )}
+          {proposalData?.proposalId && (
+            <div>
+              <Link
+                target="_blank"
+                rel="noopener noreferrer"
+                to={href({
+                  widgetSrc: `${REPL_DEVHUB}/widget/app`,
+                  params: {
+                    page: "proposal",
+                    id: proposalData?.proposalId,
+                  },
+                })}
+              >
+                <button
+                  className="btn p-0 d-flex align-items-center gap-2"
+                  style={{ fontSize: 14 }}
+                >
+                  Open Proposal <i class="bi bi-box-arrow-up-right"></i>
+                </button>
+              </Link>
+            </div>
+          )}
+          <div className=" d-flex flex-column gap-2 mt-1">
+            <label className="border-top">Recipient</label>
+            <div className="d-flex justify-content-between gap-2 align-items-center flex-wrap">
+              <Widget
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
+                props={{
+                  accountId: proposalData?.args.receiver_id,
+                  showKYC: true,
+                  displayImage: true,
+                  displayName: true,
+                  instance,
+                }}
+              />
+              <button
+                className="btn btn-outline-plain d-flex gap-1 align-items-center"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  clipboard.writeText(proposalData?.args.receiver_id);
+                }}
+              >
+                <i class="bi bi-copy"></i>Copy Address
+              </button>
+            </div>
+          </div>
+          <div className="d-flex flex-column gap-2 mt-1">
+            <label className="border-top">Funding Ask</label>
+            <h5 className="mb-0">
+              <Widget
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmountAndIcon`}
+                props={{
+                  instance,
+                  amountWithoutDecimals: proposalData?.args.amount,
+                  address: proposalData?.args.token_id,
+                }}
+              />
+            </h5>
           </div>
         </div>
       </div>
-    )}
+      <div
+        className={"flex-2 d-flex flex-column gap-3 "}
+        style={{ minWidth: 300 }}
+      >
+        {!isCompactVersion && <VotesDetails />}
+        <div
+          className="card card-body d-flex flex-column gap-2"
+          style={{ fontSize: 14 }}
+        >
+          <label>Created By</label>
+          <Widget
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
+            props={{
+              accountId: proposalData?.proposer,
+              showKYC: false,
+              displayImage: true,
+              displayName: true,
+              instance,
+            }}
+          />
+          <label className="border-top">Created Date</label>
+          <Widget
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
+            props={{
+              timestamp: proposalData?.submissionTime,
+              isProposalDetailsPage: true,
+            }}
+          />
+          <label className="border-top">Expiring Date</label>
+          {formatSubmissionTimeStamp(
+            proposalData?.submissionTime,
+            proposalPeriod,
+            true
+          )}
+          {/* <label className="border-top">Transaction</label> */}
+          <label className="border-top">Note</label>
+          {proposalData?.notes ?? "-"}
+        </div>
+      </div>
+    </div>
   </Container>
 );
