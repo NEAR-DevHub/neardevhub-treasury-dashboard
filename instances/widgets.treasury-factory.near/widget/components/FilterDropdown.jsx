@@ -54,6 +54,7 @@ useEffect(() => {
       if (r[0]?.ok !== false) {
         let allTokens = r[0].body || [];
         setAllTokensOptions(allTokens);
+        setSelectedTokens(allTokens);
       }
       // What approvers are available in proposals?
       if (r[1]?.ok !== false) {
@@ -136,6 +137,7 @@ const removeSelectedToken = (tokenId) => {
   setSelectedTokens(selectedTokens.filter((token) => token.id !== tokenId));
 };
 
+// TODO: add token
 const addSelectedToken = (tokenId) => {
   setSelectedTokens([
     ...selectedTokens,
@@ -338,12 +340,12 @@ return (
                 <div className="position-relative">
                   <Widget
                     src={
-                      "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
+                      "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownSelectMultiple"
                     }
                     props={{
                       options: [],
                       value: recipient,
-                      onChange: (e) => setRecipient(e.target.value),
+                      onChange: (option) => setRecipient(option.value),
                       placeholder: "Select",
                       selectedValue: recipient,
                       options: allRecipientOptions,
@@ -356,6 +358,7 @@ return (
                       showManualRequest: false,
                       onClickOfManualRequest: () => {},
                       isLoadingProposals: false,
+                      isMulti: true,
                     }}
                   />
                   <i
@@ -413,7 +416,7 @@ return (
                   style={{ minHeight: "40px" }}
                 >
                   <div className="d-flex flex-wrap gap-2">
-                    {allTokensOptions.map((token_id) => (
+                    {selectedTokens.map((token_id) => (
                       <div key={token_id} className="token-badge">
                         <Widget
                           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenIcon`}
@@ -446,11 +449,11 @@ return (
                 <div className="position-relative">
                   <Widget
                     src={
-                      "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
+                      "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownSelectMultiple"
                     }
                     props={{
                       value: approvers,
-                      onChange: (e) => setApprovers(e.target.value),
+                      onChange: (option) => setApprovers(option.value),
                       placeholder: "Select",
                       selectedValue: approvers,
                       options: allApproversOptions,
@@ -463,6 +466,7 @@ return (
                       showManualRequest: false,
                       onClickOfManualRequest: () => {},
                       isLoadingProposals: false,
+                      isMulti: true,
                     }}
                   />
                   <i
