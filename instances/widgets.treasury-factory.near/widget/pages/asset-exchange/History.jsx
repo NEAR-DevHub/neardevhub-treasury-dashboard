@@ -1,9 +1,18 @@
-const { getApproversAndThreshold, getFilteredProposalsByStatusAndKind } =
-  VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common") || {
-    getApproversAndThreshold: () => {},
-  };
+const {
+  getApproversAndThreshold,
+  getFilteredProposalsByStatusAndKind,
+  getFilteredProposalsFromIndexer,
+} = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common") || {
+  getApproversAndThreshold: () => {},
+  getFilteredProposalsByStatusAndKind: () => {},
+  getFilteredProposalsFromIndexer: () => {},
+};
 const instance = props.instance;
-if (!instance || typeof getFilteredProposalsByStatusAndKind !== "function") {
+if (
+  !instance ||
+  typeof getFilteredProposalsByStatusAndKind !== "function" ||
+  typeof getFilteredProposalsFromIndexer !== "function"
+) {
   return <></>;
 }
 

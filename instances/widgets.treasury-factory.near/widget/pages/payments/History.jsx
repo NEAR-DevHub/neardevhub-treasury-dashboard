@@ -34,10 +34,6 @@ const highlightProposalId =
 
 useEffect(() => {
   setLoading(true);
-  // FIXME: Move from RPC calls to indexer
-  // Fetch policy data - this is needed for the proposal_period value
-  // which is used in filtering expired proposals
-
   Near.asyncView(treasuryDaoID, "get_policy", {}).then((policy) => {
     console.log(
       "Policy fetched successfully:",

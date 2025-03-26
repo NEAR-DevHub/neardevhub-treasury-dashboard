@@ -1,10 +1,21 @@
-const { getApproversAndThreshold, getFilteredProposalsByStatusAndKind } =
-  VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
+const {
+  getApproversAndThreshold,
+  getFilteredProposalsByStatusAndKind,
+  getFilteredProposalsFromIndexer,
+} = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common") || {
+  getApproversAndThreshold: () => {},
+  getFilteredProposalsByStatusAndKind: () => {},
+  getFilteredProposalsFromIndexer: () => {},
+};
 const instance = props.instance;
+console.log(
+  "${REPL_BASE_DEPLOYMENT_ ACCOUNT / ${REPL_BASE_DEPLOYMENT_ACCOUNT}/"
+);
 if (
   !instance ||
   typeof getApproversAndThreshold !== "function" ||
-  typeof getFilteredProposalsByStatusAndKind !== "function"
+  typeof getFilteredProposalsByStatusAndKind !== "function" ||
+  typeof getFilteredProposalsFromIndexer !== "function"
 ) {
   return <></>;
 }
