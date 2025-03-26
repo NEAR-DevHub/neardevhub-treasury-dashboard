@@ -74,6 +74,10 @@ const [settingsOptions, setSettingsOptions] = useState(
           title: "Expiring Date",
           show: true,
         },
+        {
+          title: "Transaction",
+          show: true,
+        },
       ]
 );
 

@@ -273,7 +273,302 @@ const decodeProposalDescription = (key, description) => {
   return null; // Return null if key not found
 };
 
-function getFilteredProposalsByStatusAndKind({
+/**
+ * 
+ * PAYMENTS 
+ *    treasuryDaoID,
+      resPerPage: rowsPerPage,
+      isPrevPageCalled: isPrevPageCalled,
+      filterKindArray: ["Transfer", "FunctionCall"],
+      filterStatusArray: ["Approved", "Rejected", "Expired", "Failed"],
+      offset: typeof offset === "number" ? offset : lastProposalId,
+      lastProposalId: lastProposalId,
+      currentPage, 
+ */
+/**
+ * STAKE DELEGATION
+ *   treasuryDaoID,
+      resPerPage: rowsPerPage,
+      isPrevPageCalled: isPrevPageCalled,
+      filterKindArray: ["FunctionCall"],
+      filterStatusArray: ["Approved", "Rejected", "Expired", "Failed"],
+      offset: typeof offset === "number" ? offset : lastProposalId,
+      lastProposalId: lastProposalId,
+      currentPage,
+      isStakeDelegation: true,
+ */
+
+/**
+ * SETTINGS HISTORY
+      treasuryDaoID,
+      resPerPage: rowsPerPage,
+      isPrevPageCalled: isPrevPageCalled,
+      filterKindArray: [
+        "ChangeConfig",
+        "ChangePolicy",
+        "AddMemberToRole",
+        "RemoveMemberFromRole",
+        "ChangePolicyAddOrUpdateRole",
+        "ChangePolicyRemoveRole",
+        "ChangePolicyUpdateDefaultVotePolicy",
+        "ChangePolicyUpdateParameters",
+      ],
+      filterStatusArray: ["Approved", "Rejected", "Expired", "Failed"],
+      offset: typeof offset === "number" ? offset : lastProposalId,
+      lastProposalId: lastProposalId,
+      currentPage,
+ */
+
+function buildQueryString(options) {
+  const {
+    filterStatusArray,
+    filterKindArray,
+    offset,
+    resPerPage,
+    treasuryDaoID,
+    receiver, // New recipient filter
+    minAmount, // New min amount filter
+    maxAmount, // New max amount filter
+    selectedTokens, // New token filter
+    approvers, // New approvers filter
+  } = options;
+  const endpointToCall = `${REPL_SPUTNIK_INDEXER_URL}/dao/proposals/${treasuryDaoID}`;
+
+  let queryParts = [];
+
+  // Add status filters
+  if (filterStatusArray && filterStatusArray.length > 0) {
+    filterStatusArray.forEach((status) => {
+      queryParts.push(`filters.statuses[]=${encodeURIComponent(status)}`);
+    });
+    console.log("Added status filters:", filterStatusArray);
+  }
+
+  // Add kind filters
+  if (filterKindArray && filterKindArray.length > 0) {
+    filterKindArray.forEach((kind) => {
+      queryParts.push(`filters.kinds[]=${encodeURIComponent(kind)}`);
+    });
+    console.log("Added kind filters:", filterKindArray);
+  }
+
+  // Add token filters
+  if (selectedTokens && selectedTokens.length > 0) {
+    selectedTokens.forEach((token) => {
+      if (token == "near") {
+        queryParts.push(`filters.requested_token_ids[]=`);
+      }
+      queryParts.push(
+        `filters.requested_token_ids[]=${encodeURIComponent(token)}`
+      );
+    });
+  }
+
+  // Add approver filters
+  if (approvers && approvers.length > 0) {
+    approvers.forEach((approver) => {
+      queryParts.push(`filters.approvers[]=${encodeURIComponent(approver)}`);
+    });
+  }
+
+  // Add recipient filter
+  if (receiver && receiver.length > 0) {
+    receiver.forEach((recipient) => {
+      queryParts.push(
+        `filters.recipient_ids[]=${encodeURIComponent(recipient)}`
+      );
+    });
+  }
+
+  // Add amount filters if applicable
+  if (minAmount) {
+    queryParts.push(`filters.from_amount=${encodeURIComponent(minAmount)}`);
+  }
+
+  if (maxAmount) {
+    queryParts.push(`filters.to_amount=${encodeURIComponent(maxAmount)}`);
+  }
+
+  // Additional pagination params if needed
+  if (typeof offset === "number") {
+    queryParts.push(`offset=${offset}`);
+    console.log("Added offset:", offset);
+  }
+  if (resPerPage) {
+    // TODO: pagination
+    queryParts.push(`limit=150`);
+    console.log("Added limit:", resPerPage);
+  }
+
+  const queryString = queryParts.join("&");
+  const endpointWithFilters = `${endpointToCall}${
+    queryString ? `?${queryString}` : ""
+  }`;
+  console.log("Using indexer endpoint:", endpointWithFilters);
+  return endpointWithFilters;
+}
+
+async function getFilteredProposalsFromIndexer(options, policy) {
+  const {
+    treasuryDaoID,
+    resPerPage,
+    isPrevPageCalled,
+    filterKindArray,
+    filterStatusArray,
+    // All under for pagination
+    offset,
+    fallBackOffset,
+    lastProposalId,
+    currentPage,
+    // All above for pagination
+    isAssetExchange,
+    isStakeDelegation,
+    // FilterDropdown
+    fromAmount,
+    toAmount,
+    receivers,
+    selectedTokens,
+    approvers,
+  } = options;
+
+  console.log("getFilteredProposalsFromIndexer called with:", {
+    treasuryDaoID,
+    resPerPage,
+    filterKindArray,
+    filterStatusArray,
+    offset,
+    isAssetExchange,
+    isStakeDelegation,
+  });
+  const endpointWithFilters = buildQueryString(options);
+
+  return asyncFetch(endpointWithFilters)
+    .then((response) => {
+      console.log("Complete response:", response);
+
+      if (response.status !== 200) {
+        console.log("Response status was not 200:", response.status);
+        throw `Non-200 response: ${response.status}`;
+      }
+
+      console.log("Received 200 status, processing data...");
+
+      // Check if response.body exists and has records
+      if (!response.body) {
+        console.log("Response body is missing");
+        throw "Response body is missing";
+      }
+
+      if (!response.body.records) {
+        console.log(
+          "Response body doesn't contain records array:",
+          response.body
+        );
+        throw "Response body has no records";
+      }
+
+      // Process the data from the indexer
+      let proposals = response.body.records;
+      console.log(`Found ${proposals.length} proposals in response`);
+
+      // Swap the proposal_id and id for the proposals to be backwards compatible
+      // consistent with the rpc return value.
+      proposals = proposals.map((proposal) => {
+        // Extract the numeric ID from the composite ID (e.g., "225_testing-astradao.sputnik-dao.near")
+        let temp = proposal.id;
+        proposal.id = proposal.proposal_id;
+        proposal.proposal_id = temp;
+        return proposal;
+      });
+
+      let filteredProposals = proposals.filter((item) => {
+        const kindCondition = filterFunction(
+          item,
+          filterStatusArray,
+          filterKindArray,
+          policy.proposal_period
+        );
+        if (!kindCondition) return false;
+
+        // Check for asset exchange or stake delegation, if applicable
+        if (
+          filterKindArray.includes("Transfer") &&
+          !checkForTransferProposals(item)
+        )
+          return false;
+        if (isAssetExchange && !checkForExchangeProposals(item)) return false;
+        if (isStakeDelegation && !checkForStakeProposals(item)) return false;
+
+        return true;
+      });
+
+      const uniqueFilteredProposals = Array.from(
+        new Map(filteredProposals.map((item) => [item.id, item])).values()
+      );
+      // Sort proposals by ID in descending order (newest first)
+      const sortedProposals = uniqueFilteredProposals.sort(
+        (a, b) => b.id - a.id
+      );
+      // Calculate pagination slice bounds based on current page and direction
+      // If going to previous page, calculate start/end differently
+      const start = isPrevPageCalled ? currentPage * resPerPage : 0;
+      const end = isPrevPageCalled
+        ? currentPage * resPerPage + resPerPage
+        : resPerPage;
+      // Create the final paginated array of proposals to return
+      const newArray = sortedProposals.slice(start, end);
+
+      console.log(
+        "Returning successful result from indexer with filtered proposals:",
+        filteredProposals.length
+      );
+      return {
+        filteredProposals: newArray,
+        totalLength: response.body.total_records || filteredProposals.length,
+        usedIndexer: true,
+      };
+    })
+    .catch((error) => {
+      console.log("Using fallback function due to error:", error);
+      console.log("Error type:", typeof error);
+      console.log("Error stack:", error && error.stack);
+      // Fall back to the original function
+      return getFilteredProposalsByStatusAndKind({
+        ...options,
+        offset: fallBackOffset,
+      });
+    });
+}
+
+const checkForTransferProposals = (item) => {
+  return (
+    decodeProposalDescription("proposal_action", item.description) ===
+      "transfer" || item.kind?.Transfer
+  );
+};
+
+const checkForExchangeProposals = (item) => {
+  const isAssetExchange =
+    decodeProposalDescription("proposal_action", item.description) ===
+    "asset-exchange";
+  return isAssetExchange;
+};
+
+const checkForStakeProposals = (item) => {
+  const proposalAction = decodeProposalDescription(
+    "proposal_action",
+    item.description
+  );
+  const isStakeRequest =
+    decodeProposalDescription("isStakeRequest", item.description) ||
+    proposalAction === "stake" ||
+    proposalAction === "unstake" ||
+    proposalAction === "withdraw";
+
+  return isStakeRequest;
+};
+
+async function getFilteredProposalsByStatusAndKind({
   treasuryDaoID,
   resPerPage,
   isPrevPageCalled,
@@ -315,34 +610,6 @@ function getFilteredProposalsByStatusAndKind({
     }
   }
 
-  const checkForTransferProposals = (item) => {
-    return (
-      decodeProposalDescription("proposal_action", item.description) ===
-        "transfer" || item.kind?.Transfer
-    );
-  };
-
-  const checkForExchangeProposals = (item) => {
-    const isAssetExchange =
-      decodeProposalDescription("proposal_action", item.description) ===
-      "asset-exchange";
-    return isAssetExchange;
-  };
-
-  const checkForStakeProposals = (item) => {
-    const proposalAction = decodeProposalDescription(
-      "proposal_action",
-      item.description
-    );
-    const isStakeRequest =
-      decodeProposalDescription("isStakeRequest", item.description) ||
-      proposalAction === "stake" ||
-      proposalAction === "unstake" ||
-      proposalAction === "withdraw";
-
-    return isStakeRequest;
-  };
-
   return Promise.all([...promiseArray, policy]).then((res) => {
     const policyResult = res[res.length - 1];
     const proposals = res.slice(0, -1).flat();
@@ -369,15 +636,22 @@ function getFilteredProposalsByStatusAndKind({
     const uniqueFilteredProposals = Array.from(
       new Map(filteredProposals.map((item) => [item.id, item])).values()
     );
+    // Sort proposals by ID in descending order (newest first)
     const sortedProposals = uniqueFilteredProposals.sort((a, b) => b.id - a.id);
+    // Calculate pagination slice bounds based on current page and direction
+    // If going to previous page, calculate start/end differently
     const start = isPrevPageCalled ? currentPage * resPerPage : 0;
     const end = isPrevPageCalled
       ? currentPage * resPerPage + resPerPage
       : resPerPage;
+    // Create the final paginated array of proposals to return
     const newArray = sortedProposals.slice(start, end);
+
+    // Return the paginated proposals, total count, and indexer usage flag
     return {
       filteredProposals: newArray,
       totalLength: sortedProposals.length,
+      usedIndexer: false,
     };
   });
 }
@@ -815,6 +1089,7 @@ return {
   getApproversAndThreshold,
   hasPermission,
   getFilteredProposalsByStatusAndKind,
+  getFilteredProposalsFromIndexer,
   isNearSocial,
   getMembersAndPermissions,
   getDaoRoles,

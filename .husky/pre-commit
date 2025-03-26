@@ -1,3 +1,14 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
+
+# Check for "DO NOT PUSH" text in staged files
+if git diff --cached --staged --name-only | xargs grep -l "DO NOT PUSH" > /dev/null; then
+    echo "Error: Attempting to commit files containing 'DO NOT PUSH'"
+    echo "Please remove this text before committing."
+    echo "The following files contain 'DO NOT PUSH':"
+    git diff --cached --staged --name-only | xargs grep -l "DO NOT PUSH"
+    exit 1
+fi
+
+
 npx lint-staged

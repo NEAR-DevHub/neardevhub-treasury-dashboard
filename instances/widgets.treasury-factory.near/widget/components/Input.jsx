@@ -179,7 +179,7 @@ const TextInput = ({
                 inputClassName ||
                 `form-control border ${
                   inputProps.prefix ? "border-start-0" : ""
-                }`
+                } ${inputProps.suffix ? "border-end-0" : ""}`
               }
               type={typeAttribute}
               maxLength={type !== "date" ? inputProps.max : undefined}
@@ -193,6 +193,11 @@ const TextInput = ({
               onKeyDown={onKeyDown}
               {...{ placeholder, ...inputProps }}
             />
+            {inputProps.suffix && (
+              <span className="input-group-text bg-dropdown border-start-0">
+                {inputProps.suffix}
+              </span>
+            )}
           </div>
           {state.error && (
             <div style={{ color: "red" }} className="text-sm">

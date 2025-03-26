@@ -12,7 +12,7 @@ async function mockSwapResponse({ page, response, daoAccount }) {
     new RegExp(
       (daoAccount.includes("testing")
         ? `https://ref-sdk-test-cold-haze-1300-2.fly.dev`
-        : `https://ref-sdk-api.fly.dev`) + `/api/swap\\?.*`
+        : `https://ref-sdk-api-2.fly.dev`) + `/api/swap\\?.*`
     ), // Matches "/swap?..." with query params
     async (route) => {
       await route.fulfill({

@@ -102,7 +102,6 @@ return (
       className="custom-select w-100"
       tabIndex="0"
       onBlur={() => setIsOpen(false)}
-      style={{ paddingBottom: "16px" }}
     >
       <div
         className={"dropdown-toggle btn btn-outline-secondary "}

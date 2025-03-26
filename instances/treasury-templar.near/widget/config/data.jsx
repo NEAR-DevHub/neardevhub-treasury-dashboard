@@ -19,6 +19,7 @@ return {
     },
   ],
   treasuryDaoID: "${REPL_TREASURY}",
+  sputnikIndexerURL: "${REPL_SPUTNIK_INDEXER_URL}",
   showProposalSelection: false,
   showKYC: false,
   showReferenceProposal: false,

@@ -1,15 +1,29 @@
 const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
-
 const {
   getNearBalances,
   decodeProposalDescription,
   formatSubmissionTimeStamp,
   accountToLockup,
 } = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
+
+const { Copy, ExternalLink } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Icons"
+) || {
+  ExternalLink: () => <></>,
+  Copy: () => <></>,
+};
+
 const instance = props.instance;
 const policy = props.policy;
+if (!instance) {
+  return <></>;
+}
+
+const { treasuryDaoID, showKYC, showReferenceProposal } = VM.require(
+  `${instance}/widget/config.data`
+);
 
 const { TableSkeleton } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.skeleton"
@@ -26,10 +40,8 @@ if (
   return <></>;
 }
 
-const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
-
 const lockupContract = accountToLockup(treasuryDaoID);
-
+const isPendingRequests = props.isPendingRequests;
 const proposals = props.proposals;
 // search for showAfterProposalIdApproved only in pending requests
 const visibleProposals = isPendingRequests
@@ -65,7 +77,6 @@ const highlightProposalId =
     : null;
 
 const loading = props.loading;
-const isPendingRequests = props.isPendingRequests;
 const functionCallApproversGroup = props.functionCallApproversGroup;
 const deleteGroup = props.deleteGroup;
 const [showToastStatus, setToastStatus] = useState(false);
@@ -190,6 +201,12 @@ const TooltipContent = ({ title, summary }) => {
     </div>
   );
 };
+
+function shortenTransactionHash(hash) {
+  if (!hash) return "";
+  // A6ys...Yt7f
+  return hash.substring(0, 4) + "..." + hash.substring(hash.length - 4);
+}
 
 function isVisible(column) {
   return columnsVisibility.find((i) => i.title === column)?.show !== false
@@ -492,6 +509,32 @@ const ProposalsComponent = () => {
                   />
                 </td>
               )}
+            {!isPendingRequests && item?.hash && (
+              <td className="text-right">
+                <div className="d-flex gap-2 align-items-center text-underline fw-semi-bold justify-content-end">
+                  <a
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    href={`https://nearblocks.io/txns/${item.hash}`}
+                    className="d-flex gap-2 align-items-center text-underline cursor-pointer fw-semi-bold"
+                  >
+                    {shortenTransactionHash(item.hash)}
+                    <ExternalLink width={15} height={15} />
+                  </a>
+                  <div
+                    style={{ cursor: "pointer" }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      clipboard.writeText(
+                        `https://nearblocks.io/txns/${item.hash}`
+                      );
+                    }}
+                  >
+                    <Copy width={15} height={15} />
+                  </div>
+                </div>
+              </td>
+            )}
           </tr>
         );
       })}
@@ -571,7 +614,10 @@ return (
                     <td className="text-right">Actions</td>
                   )}
                 {/* {!isPendingRequests && <td>Transaction Date</td>}
-          {!isPendingRequests && <td>Transaction</td>} */}
+                {!isPendingRequests && <td>Transaction</td>} */}
+                {!isPendingRequests && (
+                  <td className="text-right">Transaction</td>
+                )}
               </tr>
             </thead>
             <ProposalsComponent />

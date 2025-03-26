@@ -8,6 +8,13 @@ const {
   accountToLockup,
 } = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
 
+const { Copy, ExternalLink } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Icons"
+) || {
+  ExternalLink: () => <></>,
+  Copy: () => <></>,
+};
+
 const instance = props.instance;
 const policy = props.policy;
 if (!instance || typeof accountToLockup !== "function") {
@@ -38,7 +45,7 @@ const proposals = props.proposals;
 const columnsVisibility = JSON.parse(
   Storage.get(
     "COLUMNS_VISIBILITY",
-    `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.SettingsDropdown`
+    `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.SettingsDropdown`
   ) ?? "[]"
 );
 
@@ -155,6 +162,12 @@ const TooltipContent = ({ title, summary }) => {
     </div>
   );
 };
+
+function shortenTransactionHash(hash) {
+  if (!hash) return "";
+  // A6ys...Yt7f
+  return hash.substring(0, 4) + "..." + hash.substring(hash.length - 4);
+}
 
 function isVisible(column) {
   return columnsVisibility.find((i) => i.title === column)?.show !== false
@@ -294,6 +307,7 @@ const ProposalsComponent = () => {
 
         return (
           <tr
+            key={index}
             className={
               voteProposalId === item.id || highlightProposalId === item.id
                 ? "bg-highlight"
@@ -529,6 +543,32 @@ const ProposalsComponent = () => {
                   />
                 </td>
               )}
+            {!isPendingRequests && item?.hash && (
+              <td className="text-right">
+                <div className="d-flex gap-2 align-items-center text-underline fw-semi-bold justify-content-end">
+                  <a
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    href={`https://nearblocks.io/txns/${item.hash}`}
+                    className="d-flex gap-2 align-items-center text-underline cursor-pointer fw-semi-bold"
+                  >
+                    {shortenTransactionHash(item.hash)}
+                    <ExternalLink width={15} height={15} />
+                  </a>
+                  <div
+                    style={{ cursor: "pointer" }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      clipboard.writeText(
+                        `https://nearblocks.io/txns/${item.hash}`
+                      );
+                    }}
+                  >
+                    <Copy width={15} height={15} />
+                  </div>
+                </div>
+              </td>
+            )}
           </tr>
         );
       })}
@@ -623,8 +663,9 @@ return (
                   (hasVotingPermission || hasDeletePermission) && (
                     <td className="text-right">Actions</td>
                   )}
-                {/* {!isPendingRequests && <td>Transaction Date</td>}
-          {!isPendingRequests && <td>Transaction</td>} */}
+                {!isPendingRequests && (
+                  <td className="text-right">Transaction</td>
+                )}
               </tr>
             </thead>
             <ProposalsComponent />
