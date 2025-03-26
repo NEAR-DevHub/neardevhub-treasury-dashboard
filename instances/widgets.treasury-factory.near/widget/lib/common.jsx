@@ -326,15 +326,20 @@ function buildQueryString(options) {
     offset,
     resPerPage,
     treasuryDaoID,
+    receiver, // New recipient filter
+    minAmount, // New min amount filter
+    maxAmount, // New max amount filter
+    tokenIds, // New token filter
+    approvers, // New approvers filter
   } = options;
-  const endpointToCall = `https://testing-indexer-2.fly.dev/dao/proposals/${treasuryDaoID}`;
+  const endpointToCall = `${REPL_SPUTNIK_INDEXER_URL}/dao/proposals/${treasuryDaoID}`;
 
   let queryParts = [];
 
   // Add status filters
   if (filterStatusArray && filterStatusArray.length > 0) {
     filterStatusArray.forEach((status) => {
-      queryParts.push(`filters.status[]=${encodeURIComponent(status)}`);
+      queryParts.push(`filters.statuses[]=${encodeURIComponent(status)}`);
     });
     console.log("Added status filters:", filterStatusArray);
   }
@@ -342,9 +347,43 @@ function buildQueryString(options) {
   // Add kind filters
   if (filterKindArray && filterKindArray.length > 0) {
     filterKindArray.forEach((kind) => {
-      queryParts.push(`filters.kind[]=${encodeURIComponent(kind)}`);
+      queryParts.push(`filters.kinds[]=${encodeURIComponent(kind)}`);
     });
     console.log("Added kind filters:", filterKindArray);
+  }
+
+  // Add token filters
+  if (tokenIds && tokenIds.length > 0) {
+    tokenIds.forEach((token) => {
+      queryParts.push(
+        `filters.requested_token_ids[]=${encodeURIComponent(token)}`
+      );
+    });
+  }
+
+  // Add approver filters
+  if (approvers && approvers.length > 0) {
+    approvers.forEach((approver) => {
+      queryParts.push(`filters.approvers[]=${encodeURIComponent(approver)}`);
+    });
+  }
+
+  // Add recipient filter
+  if (receiver && receiver.length > 0) {
+    receiver.forEach((recipient) => {
+      queryParts.push(
+        `filters.recipient_ids[]=${encodeURIComponent(recipient)}`
+      );
+    });
+  }
+
+  // Add amount filters if applicable
+  if (minAmount) {
+    queryParts.push(`filters.from_amount=${encodeURIComponent(minAmount)}`);
+  }
+
+  if (maxAmount) {
+    queryParts.push(`filters.to_amount=${encodeURIComponent(maxAmount)}`);
   }
 
   // Additional pagination params if needed
@@ -381,6 +420,12 @@ async function getFilteredProposalsFromIndexer(options, policy) {
     // All above for pagination
     isAssetExchange,
     isStakeDelegation,
+    // FilterDropdown
+    fromAmount,
+    toAmount,
+    receivers,
+    tokenIds,
+    approvers,
   } = options;
 
   console.log("getFilteredProposalsFromIndexer called with:", {

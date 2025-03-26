@@ -281,7 +281,7 @@ const AssetExchangeSidebarMenu = ({ currentTab }) => {
 const StakeDelegationSidebarMenu = ({ currentTab }) => {
   return (
     <div
-      className="d-flex gap-2 align-items-center flex-direction-column"
+      className="d-flex gap-2 align-items-center"
       style={{ paddingBottom: "16px" }}
     >
       <Widget
@@ -326,10 +326,9 @@ const StakeDelegationSidebarMenu = ({ currentTab }) => {
 };
 
 const SettingsHistorySidebarMenu = ({ currentTab }) => {
-  // TODO: styling to the root div here
   return (
     <div
-      className="d-flex gap-2 align-items-center flex-direction-row"
+      className="d-flex gap-2 align-items-center"
       style={{ paddingBottom: "16px" }}
     >
       <Widget
@@ -372,6 +371,51 @@ const SettingsHistorySidebarMenu = ({ currentTab }) => {
   );
 };
 
+const SidebarMenuLockup = ({ currentTab }) => (
+  <div
+    className="d-flex gap-2 align-items-center"
+    style={{ paddingBottom: "16px" }}
+  >
+    <Widget
+      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
+      props={{
+        className: "flex-grow-1 w-100 w-xs-100",
+        key: `search-input`,
+        value: searchInput,
+        onChange: (e) => {
+          setSearchInput(e.target.value);
+        },
+        onKeyDown: (e) => {
+          if (e.key == "Enter") {
+            if (searchInput) {
+              searchProposals(searchInput);
+            } else {
+              fetchProposals();
+            }
+          }
+        },
+        placeholder: "Search",
+        inputProps: {
+          suffix: <i class="bi bi-search m-auto"></i>,
+        },
+      }}
+    />
+    <Widget
+      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.FilterDropdown`}
+      props={{
+        instance,
+      }}
+    />
+    <Widget
+      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.lockup.CreateButton`}
+      props={{
+        instance,
+        isPendingPage: currentTab.title === "Pending Requests",
+      }}
+    />
+  </div>
+);
+
 return (
   <Container className="card py-3 d-flex flex-column">
     <div
@@ -407,6 +451,7 @@ return (
         {page === "asset-exchange" && (
           <AssetExchangeSidebarMenu currentTab={currentTab} />
         )}
+        {page === "lockup" && <SidebarMenuLockup currentTab={currentTab} />}
         {/* TODO: these also look like the same component */}
         {page === "stake-delegation" && (
           <StakeDelegationSidebarMenu currentTab={currentTab} />

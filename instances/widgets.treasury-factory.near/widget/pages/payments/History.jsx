@@ -20,11 +20,11 @@ const [currentPage, setPage] = useState(0);
 // const proposals = props.proposals;
 const [proposals, setProposals] = useState(null);
 const [totalLength, setTotalLength] = useState(null);
-const [loading, setLoading] = useState(false);
 const [firstRender, setFirstRender] = useState(true);
 const [offset, setOffset] = useState(null);
 const [fallBackOffset, setFallBackOffset] = useState(null);
 const [isPrevPageCalled, setIsPrevCalled] = useState(false);
+const [loading, setLoading] = useState(false);
 
 const highlightProposalId =
   props.highlightProposalId ||
@@ -33,18 +33,57 @@ const highlightProposalId =
     ? parseInt(props.highlightProposalId)
     : null;
 
-useEffect(() => {
+const activeFilters = JSON.parse(
+  Storage.get(
+    "PAYMENT_FILTERS"
+    // FIXME:`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.FilterDropdown`
+  ) ?? "null"
+);
+
+console.log("activeFilters", activeFilters);
+
+const loadFilteredProposals = (filters) => {
   setLoading(true);
   // New way:
   Near.asyncView(treasuryDaoID, "get_policy", {}).then((policy) => {
-    console.log(
-      "Policy fetched successfully:",
-      policy ? "Policy found" : "No policy found"
-    );
-
     // First get the last proposal ID to use for pagination
     Near.asyncView(treasuryDaoID, "get_last_proposal_id").then(
       (lastProposalId) => {
+        // Create filter parameters from activeFilters
+        const additionalFilters = {};
+        if (filters) {
+          // Apply amount filters
+          if (filters.fromAmount)
+            additionalFilters.fromAmount = filters.fromAmount;
+          if (filters.toAmount) additionalFilters.toAmount = filters.toAmount;
+
+          // Apply recipient filter
+          if (filters.recipient)
+            additionalFilters.receivers = filters.recipient;
+
+          // Apply token filters
+          if (filters.selectedTokens && filters.selectedTokens.length > 0) {
+            console.log("filters.selectedTokens", filters.selectedTokens);
+            additionalFilters.tokenIds = filters.selectedTokens.map(
+              (t) => t.id
+            );
+          }
+
+          // Apply approver filters
+          if (filters.approvers && filters.approvers.length > 0)
+            additionalFilters.approvers = filters.approvers;
+        }
+        // Create additional filter parameters based on active filters
+        // const additionalFilters = {};
+        // if (filters) {
+        //   if (filters.fromAmount) additionalFilters.minAmount = filters.fromAmount;
+        //   if (filters.toAmount) additionalFilters.maxAmount = filters.toAmount;
+        //   if (filters.recipient) additionalFilters.recipient = filters.recipient;
+        //   if (filters.selectedTokens && filters.selectedTokens.length > 0)
+        //     additionalFilters.tokenIds = filters.selectedTokens.map(t => t.id);
+        //   if (filters.approvers && filters.approvers.length > 0)
+        //     additionalFilters.approvers = filters.approvers;
+        // }
         getFilteredProposalsFromIndexer(
           {
             treasuryDaoID,
@@ -58,24 +97,21 @@ useEffect(() => {
               "Expired",
               "Failed",
             ],
-            offset: 0, // TODO pagination
+            offset: 0,
             lastProposalId: lastProposalId,
             currentPage,
             fallBackOffset:
               typeof fallBackOffset === "number"
                 ? fallBackOffset
                 : lastProposalId,
+            ...additionalFilters,
           },
           policy
         )
           .then((r) => {
-            console.log("Filtered proposals result:", r);
             if (r.filteredProposals && r.filteredProposals.length > 0) {
               thenDoThis(r);
             } else {
-              console.log(
-                "No proposals found or filtering returned empty array"
-              );
               setLoading(false);
               setProposals([]);
             }
@@ -87,24 +123,85 @@ useEffect(() => {
       }
     );
   });
+};
 
-  // Old way:
-  // Near.asyncView(treasuryDaoID, "get_last_proposal_id").then((i) => {
-  //   const lastProposalId = i;
-  //   getFilteredProposalsByStatusAndKind({
-  //     treasuryDaoID,
-  //     resPerPage: rowsPerPage,
-  //     isPrevPageCalled: isPrevPageCalled,
-  //     filterKindArray: ["Transfer", "FunctionCall"],
-  //     filterStatusArray: ["Approved", "Rejected", "Expired", "Failed"],
-  //     offset: typeof offset === "number" ? offset : lastProposalId,
-  //     lastProposalId: lastProposalId,
-  //     currentPage,
-  //   }).then((r) => {
-  //     thenDoThis(r);
-  //   });
-  // });
-}, [currentPage, rowsPerPage]);
+// Load proposals with filters when component mounts or filters change
+useEffect(() => {
+  loadFilteredProposals(activeFilters);
+}, [currentPage, rowsPerPage, activeFilters]);
+
+// useEffect(() => {
+//   setLoading(true);
+//   // New way:
+//   Near.asyncView(treasuryDaoID, "get_policy", {}).then((policy) => {
+//     console.log(
+//       "Policy fetched successfully:",
+//       policy ? "Policy found" : "No policy found"
+//     );
+
+//     // First get the last proposal ID to use for pagination
+//     Near.asyncView(treasuryDaoID, "get_last_proposal_id").then(
+//       (lastProposalId) => {
+//         getFilteredProposalsFromIndexer(
+//           {
+//             treasuryDaoID,
+//             resPerPage: rowsPerPage,
+//             isPrevPageCalled: isPrevPageCalled,
+//             filterKindArray: ["Transfer", "FunctionCall"],
+//             filterStatusArray: [
+//               "InProgress",
+//               "Approved",
+//               "Rejected",
+//               "Expired",
+//               "Failed",
+//             ],
+//             offset: 0, // TODO pagination
+//             lastProposalId: lastProposalId,
+//             currentPage,
+//             fallBackOffset:
+//               typeof fallBackOffset === "number"
+//                 ? fallBackOffset
+//                 : lastProposalId,
+//           },
+//           policy
+//         )
+//           .then((r) => {
+//             console.log("Filtered proposals result:", r);
+//             if (r.filteredProposals && r.filteredProposals.length > 0) {
+//               thenDoThis(r);
+//             } else {
+//               console.log(
+//                 "No proposals found or filtering returned empty array"
+//               );
+//               setLoading(false);
+//               setProposals([]);
+//             }
+//           })
+//           .catch((e) => {
+//             console.log("Error fetching or filtering proposals:", e);
+//             setLoading(false);
+//           });
+//       }
+//     );
+//   });
+
+// Old way:
+// Near.asyncView(treasuryDaoID, "get_last_proposal_id").then((i) => {
+//   const lastProposalId = i;
+//   getFilteredProposalsByStatusAndKind({
+//     treasuryDaoID,
+//     resPerPage: rowsPerPage,
+//     isPrevPageCalled: isPrevPageCalled,
+//     filterKindArray: ["Transfer", "FunctionCall"],
+//     filterStatusArray: ["Approved", "Rejected", "Expired", "Failed"],
+//     offset: typeof offset === "number" ? offset : lastProposalId,
+//     lastProposalId: lastProposalId,
+//     currentPage,
+//   }).then((r) => {
+//     thenDoThis(r);
+//   });
+// });
+// }, [currentPage, rowsPerPage]);
 
 function thenDoThis(r) {
   // If we're on the first page (currentPage === 0) and don't have a total count yet,

@@ -226,10 +226,7 @@ return (
       }}
     />
 
-    <div
-      className="d-flex gap-2 align-items-center"
-      style={{ paddingBottom: "16px" }}
-    >
+    <div className="d-flex gap-2 align-items-center">
       {hasCreatePermission && (
         <Widget
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}

@@ -1,11 +1,3 @@
-const { instance } = props;
-
-if (!instance) {
-  return <></>;
-}
-
-const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
-
 const Container = styled.div`
   .flex-1 {
     flex: 1;
@@ -30,15 +22,6 @@ return (
             props: props,
           },
         ],
-        SidebarMenu: ({ currentTab }) => (
-          <Widget
-            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.lockup.CreateButton`}
-            props={{
-              instance,
-              isPendingPage: currentTab.title === "Pending Requests",
-            }}
-          />
-        ),
       }}
     />
   </Container>

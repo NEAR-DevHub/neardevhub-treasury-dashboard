@@ -1,10 +1,19 @@
+const { VerifiedTick, NotVerfiedTick } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Icons"
+) || {
+  VerifiedTick: () => <></>,
+  NotVerfiedTick: () => <></>,
+};
+
 const { instance } = props;
+const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 const [fromAmount, setFromAmount] = useState("");
 const [toAmount, setToAmount] = useState("");
 const [recipient, setRecipient] = useState("");
 const [recipientSearch, setRecipientSearch] = useState("");
 const [allRecipients, setAllRecipients] = useState([]);
 const [allRecipientOptions, setAllRecipientOptions] = useState([]);
+const [recipientsKycStatus, setRecipientsKycStatus] = useState([]);
 const [showKycStatusVerified, setShowKycStatusVerified] = useState(true);
 const [showKycStatusNotVerified, setShowKycStatusNotVerified] = useState(true);
 const [selectedTokens, setSelectedTokens] = useState([]);
@@ -15,12 +24,10 @@ const [allApproversOptions, setAllApproversOptions] = useState([]);
 const [isOpen, setIsOpen] = useState(false);
 const [numberOfFiltersApplied, setNumberOfFiltersApplied] = useState(0);
 
-const ENDPOINT =
-  "https://testing-indexer-2.fly.dev/dao/proposals/testing-astradao.sputnik-dao.near";
 function fetchFilterOptions() {
   const options = ["token_ids", "approvers", "receivers"];
   const promises = options.map((option) => {
-    const fetchUrl = `${ENDPOINT}/${option}`;
+    const fetchUrl = `${REPL_SPUTNIK_INDEXER_URL}/dao/proposals/${treasuryDaoID}/${option}`;
     return asyncFetch(fetchUrl, {
       method: "GET",
       headers: {
@@ -39,51 +46,77 @@ function fetchFilterOptions() {
   return Promise.all(promises);
 }
 
+// Get the filter options from the indexer
 useEffect(() => {
-  fetchFilterOptions().then((r) => {
-    // console.log("Returned from fetchFilterOptions", r);
-    if (r[0]?.ok !== false) {
-      let allTokens = r[0].body || [];
-      setAllTokensOptions(allTokens);
-    }
-    if (r[1]?.ok !== false) {
-      let allApprovers = (r[1].body || []).map((approver, index) => {
-        return {
-          label: (
-            <Widget
-              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
-              props={{
-                accountId: approver,
-                showKYC: true,
-
-                instance,
-              }}
-            />
-          ),
-          value: approver,
-        };
-      });
-      setAllApproversOptions(allApprovers);
-    }
-    if (r[2]?.ok !== false) {
-      let allRecipients = (r[2].body || []).map((recipient, index) => {
-        return {
-          label: (
-            <Widget
-              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
-              props={{
-                accountId: recipient,
-                showKYC: true,
-                instance,
-              }}
-            />
-          ),
-          value: recipient,
-        };
-      });
-      setAllRecipientOptions(allRecipients);
-    }
-  });
+  fetchFilterOptions()
+    .then((r) => {
+      // What tokens are available in proposals?
+      if (r[0]?.ok !== false) {
+        let allTokens = r[0].body || [];
+        setAllTokensOptions(allTokens);
+      }
+      // What approvers are available in proposals?
+      if (r[1]?.ok !== false) {
+        let allApprovers = (r[1].body || []).map((approver, index) => {
+          return {
+            label: (
+              <Widget
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
+                props={{
+                  accountId: approver,
+                  showKYC: true,
+                  instance,
+                }}
+              />
+            ),
+            value: approver,
+          };
+        });
+        setAllApproversOptions(allApprovers);
+      }
+      // What recipients are available in proposals?
+      if (r[2]?.ok !== false) {
+        let allRecipients = (r[2].body || []).map((recipient, index) => {
+          return {
+            label: (
+              <Widget
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
+                props={{
+                  accountId: recipient,
+                  instance,
+                }}
+              />
+            ),
+            value: recipient,
+          };
+        });
+        console.log("allRecipients", allRecipients);
+        setAllRecipientOptions(allRecipients);
+      }
+      return allRecipients;
+    })
+    .then((r) => {
+      return Promise.all(
+        r.map(({ value: recipient }) => {
+          return asyncFetch(
+            `https://neardevhub-kyc-proxy-gvbr.shuttle.app/kyc/${recipient}`
+          ).then((res) => {
+            // res.body.kyc_status // APPROVED, PENDING, NOT_SUBMITTED, REJECTED, EXPIRED
+            return {
+              recipient: recipient,
+              kycStatus: res.body.kyc_status,
+            };
+          });
+        })
+      )
+        .then((rWithKycStatus) => {
+          console.log("rWithKycStatus", rWithKycStatus);
+          setRecipientsKycStatus(rWithKycStatus);
+        })
+        .catch((error) => {
+          console.log("error1", error);
+        });
+    });
 }, []);
 
 const getNumberOfFiltersApplied = () => {
@@ -112,6 +145,62 @@ const addSelectedToken = (tokenId) => {
 
 useEffect(() => {
   getNumberOfFiltersApplied();
+}, [
+  fromAmount,
+  toAmount,
+  recipient,
+  showKycStatusVerified,
+  showKycStatusNotVerified,
+  selectedTokens,
+  approvers,
+]);
+
+// Load saved filters from storage
+const savedFilters = JSON.parse(
+  Storage.get(
+    "PAYMENT_FILTERS"
+    // FIXME:`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.FilterDropdown`
+  ) ?? "null"
+);
+
+// Initialize state with saved values if available
+useEffect(() => {
+  if (savedFilters) {
+    if (savedFilters.fromAmount !== undefined)
+      setFromAmount(savedFilters.fromAmount);
+    if (savedFilters.toAmount !== undefined) setToAmount(savedFilters.toAmount);
+    if (savedFilters.recipient !== undefined)
+      setRecipient(savedFilters.recipient);
+    if (savedFilters.showKycStatusVerified !== undefined)
+      setShowKycStatusVerified(savedFilters.showKycStatusVerified);
+    if (savedFilters.showKycStatusNotVerified !== undefined)
+      setShowKycStatusNotVerified(savedFilters.showKycStatusNotVerified);
+    if (savedFilters.selectedTokens !== undefined)
+      setSelectedTokens(savedFilters.selectedTokens);
+    if (savedFilters.approvers !== undefined)
+      setApprovers(savedFilters.approvers);
+  }
+}, []);
+
+// Save filters whenever they change
+useEffect(() => {
+  const filtersToSave = {
+    fromAmount,
+    toAmount,
+    recipient,
+    showKycStatusVerified,
+    showKycStatusNotVerified,
+    selectedTokens,
+    approvers,
+  };
+
+  setTimeout(() => {
+    Storage.set(
+      "PAYMENT_FILTERS",
+      JSON.stringify(filtersToSave)
+      // FIXME:`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.FilterDropdown`
+    );
+  }, 500); // Adding a delay of 500ms before setting Storage
 }, [
   fromAmount,
   toAmount,
@@ -166,19 +255,14 @@ const clearFilters = () => {
   setApprovers([]);
   setApproversSearch("");
   setRecipientSearch("");
+
+  // Clear stored filters
+  Storage.set(
+    "PAYMENT_FILTERS",
+    null
+    // FIXME: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.FilterDropdown`
+  );
 };
-
-// useEffect(() => {
-//   console.log("allRecipientOptions", allRecipientOptions);
-// }, [allRecipientOptions]);
-
-// useEffect(() => {
-//   console.log("allApproversOptions", allApproversOptions);
-// }, [allApproversOptions]);
-
-// useEffect(() => {
-//   console.log("allTokensOptions", allTokensOptions);
-// }, [allTokensOptions]);
 
 return (
   <Container>
@@ -282,6 +366,35 @@ return (
                       transform: "translateY(-50%)",
                     }}
                   ></i>
+                </div>
+              </div>
+              <div className="mb-4">
+                <div className="text-secondary mb-2">
+                  KYC/B Verification Status
+                </div>
+                <div className="d-flex gap-2">
+                  <div
+                    onClick={() =>
+                      setShowKycStatusVerified(!showKycStatusVerified)
+                    }
+                    className={`d-flex pointer align-items-center gap-2 px-3 py-1 rounded-pill bg-opacity-10 text-success border border-success border-opacity-25 ${
+                      showKycStatusVerified ? "bg-success" : ""
+                    }`}
+                  >
+                    <VerifiedTick width={25} height={25} />
+                    <span>Verified</span>
+                  </div>
+                  <div
+                    onClick={() =>
+                      setShowKycStatusNotVerified(!showKycStatusNotVerified)
+                    }
+                    className={`d-flex pointer align-items-center gap-2 px-3 py-1 rounded-pill bg-opacity-10 text-danger border border-danger border-opacity-25 ${
+                      showKycStatusNotVerified ? "bg-danger" : ""
+                    }`}
+                  >
+                    <NotVerfiedTick width={25} height={25} />
+                    <span>Not Verified</span>
+                  </div>
                 </div>
               </div>
               <div className="mb-4">
