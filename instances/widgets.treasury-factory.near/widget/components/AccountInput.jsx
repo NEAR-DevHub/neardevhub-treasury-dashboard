@@ -1,3 +1,9 @@
+const { asyncAccountToLockup } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+);
+
+if (!asyncAccountToLockup) return <></>;
+
 const value = props.value;
 const placeholder = props.placeholder;
 const onUpdate = props.onUpdate;
@@ -5,11 +11,14 @@ const setParentAccountValid = props.setParentAccountValid;
 const disabled = props.disabled;
 const instance = props.instance;
 const allowNonExistentImplicit = props.allowNonExistentImplicit;
+const checkAccountLockup = props.checkAccountLockup;
 
 const [account, setAccount] = useState(value);
 const [showAccountAutocomplete, setAutoComplete] = useState(false);
 const [isValidAccount, setValidAccount] = useState(false);
 const [selectedFromAutoComplete, setSelectedFromAuto] = useState(false);
+const [hasLockup, setHasLockup] = useState(false);
+
 const maxWidth = props.maxWidth;
 const AutoComplete = styled.div`
   max-width: ${maxWidth ?? "400px"};
@@ -64,6 +73,18 @@ const checkAccountAvailability = async () => {
   ) {
     return;
   }
+
+  if (checkAccountLockup) {
+    asyncAccountToLockup(account).then((resp) => {
+      if (resp.body?.result?.amount) {
+        setHasLockup(true);
+        setValidAccount(false);
+      } else {
+        setHasLockup(false);
+        setValidAccount(true);
+      }
+    });
+  }
   asyncFetch(`${REPL_RPC_URL}`, {
     method: "POST",
     headers: {
@@ -111,9 +132,13 @@ return (
         },
       }}
     />
-    {account && !isValidAccount && (
+    {account && (
       <div style={{ color: "red" }} className="text-sm mt-1">
-        Please enter valid account ID
+        {hasLockup
+          ? "Account already has an active lockup"
+          : !isValidAccount
+          ? "Please enter valid account ID"
+          : null}
       </div>
     )}
     {showAccountAutocomplete && !selectedFromAutoComplete && account && (

@@ -120,7 +120,7 @@ const TextInput = ({
       </span>
     ) : null,
 
-    (inputProps.max ?? null) !== null ? (
+    (inputProps.max ?? null) !== null && type !== "date" ? (
       <span
         className={`d-inline-flex ${
           isValid() ? "text-secondary" : "text-danger"
@@ -179,12 +179,10 @@ const TextInput = ({
                 inputClassName ||
                 `form-control border ${
                   inputProps.prefix ? "border-start-0" : ""
-                } ${
-                  inputProps.suffix ? "border-end-0" : ""
-                }`
+                } ${inputProps.suffix ? "border-end-0" : ""}`
               }
               type={typeAttribute}
-              maxLength={inputProps.max}
+              maxLength={type !== "date" ? inputProps.max : undefined}
               value={getFormattedData()}
               onChange={(e) => State.update({ data: e.target.value })}
               onBlur={(e) => {

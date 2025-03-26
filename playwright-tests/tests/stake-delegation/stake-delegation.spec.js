@@ -251,7 +251,7 @@ async function openWithdrawForm({
   await expect(page.getByText("Create Request", { exact: true })).toBeVisible({
     timeout: 10_000,
   });
-  await page.locator(".dropdown").first().click();
+  await page.locator(".custom-select > .dropdown").first().click();
   await page.locator(".dropdown-menu > div:nth-child(3)").click();
   await expect(
     page.getByRole("heading", { name: "Create Withdraw Request" })
@@ -264,7 +264,7 @@ async function openWithdrawForm({
 
 async function openUnstakeForm({ page, isLockup, daoAccount, lockupContract }) {
   await expect(page.getByText("Create Request", { exact: true })).toBeVisible();
-  await page.locator(".dropdown").first().click();
+  await page.locator(".custom-select > .dropdown").first().click();
   await page.locator(".dropdown-menu > div:nth-child(2)").click();
   await expect(
     page.getByRole("heading", { name: "Create Unstake Request" })
@@ -277,7 +277,7 @@ async function openUnstakeForm({ page, isLockup, daoAccount, lockupContract }) {
 
 async function openStakeForm({ page, isLockup, daoAccount, lockupContract }) {
   await expect(page.getByText("Create Request", { exact: true })).toBeVisible();
-  await page.locator(".dropdown").first().click();
+  await page.locator(".custom-select > .dropdown").first().click();
   await page.locator(".dropdown-menu > div:nth-child(1)").click();
   await expect(
     page.getByRole("heading", { name: "Create Stake Request" })
@@ -962,13 +962,10 @@ test.describe("Withdraw request", function () {
     page,
     daoAccount,
     instanceAccount,
+    lockupContract,
   }) => {
     test.setTimeout(250_000);
-    const instanceConfig = await getInstanceConfig({
-      page,
-      instanceAccount,
-    });
-    if (instanceConfig.lockupContract) {
+    if (lockupContract) {
       console.log("lockup contract found for instance");
       return test.skip();
     }
@@ -1119,35 +1116,33 @@ test.describe("Lockup staking", function () {
     storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
   });
 
-  test.beforeEach(async ({ page, instanceAccount, daoAccount }) => {
-    const instanceConfig = await getInstanceConfig({
-      page,
-      instanceAccount,
-    });
-    if (!instanceConfig.lockupContract) {
-      console.log("no lockup contract found for instance");
-      return test.skip();
+  test.beforeEach(
+    async ({ page, instanceAccount, daoAccount, lockupContract }) => {
+      if (!lockupContract) {
+        console.log("no lockup contract found for instance");
+        return test.skip();
+      }
+
+      await mockStakeProposals({ page });
+      await updateDaoPolicyMembers({ instanceAccount, page });
+      await mockNearBalances({
+        page,
+        accountId: daoAccount,
+        balance: sufficientAvailableBalance,
+        storage: 2323,
+      });
+
+      await mockLockupNearBalances({
+        page,
+        balance: sufficientAvailableBalance,
+      });
+
+      await page.goto(`/${instanceAccount}/widget/app?page=stake-delegation`);
+      await expect(
+        await page.locator("div").filter({ hasText: /^Stake Delegation$/ })
+      ).toBeVisible();
     }
-
-    await mockStakeProposals({ page });
-    await updateDaoPolicyMembers({ instanceAccount, page });
-    await mockNearBalances({
-      page,
-      accountId: daoAccount,
-      balance: sufficientAvailableBalance,
-      storage: 2323,
-    });
-
-    await mockLockupNearBalances({
-      page,
-      balance: sufficientAvailableBalance,
-    });
-
-    await page.goto(`/${instanceAccount}/widget/app?page=stake-delegation`);
-    await expect(
-      await page.locator("div").filter({ hasText: /^Stake Delegation$/ })
-    ).toBeVisible();
-  });
+  );
 
   test.describe("Without selected pool", function () {
     const lastProposalId = 10;

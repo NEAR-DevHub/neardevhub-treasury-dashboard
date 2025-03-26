@@ -114,7 +114,7 @@ function getRoleWiseData(treasuryDaoID) {
 
       // if there is no role.vote_policy, default is applied
       const threshold = Object.keys(role?.vote_policy ?? {}).length
-        ? role?.vote_policy?.["vote"]?.threshold
+        ? Object.values(role?.vote_policy)?.[0]?.threshold
         : defaultPolicy.threshold;
       const isRatio = Array.isArray(threshold);
 
@@ -923,6 +923,83 @@ function getAllColorsAsCSSVariables(isDarkTheme, themeColor) {
     .map(([key, value]) => `${key}: ${value};`)
     .join("\n");
 }
+
+function decodeBase64(encodedArgs) {
+  if (!encodedArgs) return null;
+  try {
+    const jsonString = Buffer.from(encodedArgs, "base64").toString("utf8");
+    const parsedArgs = JSON.parse(jsonString);
+    return parsedArgs;
+  } catch (error) {
+    console.error("Failed to decode or parse encodedArgs:", error);
+    return null;
+  }
+}
+
+function accountToLockup(accountId) {
+  if (!accountId) {
+    return null;
+  }
+  // Compute SHA-256 hash
+  const hash = ethers.utils.sha256(ethers.utils.toUtf8Bytes(accountId));
+
+  // Take the first 40 characters (20 bytes in hex)
+  const truncatedHash = hash.slice(2, 42); // Remove '0x' and take first 40 chars
+  const lockupAccount = `${truncatedHash}.lockup.near`;
+  const resp = fetch(`${REPL_RPC_URL}`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: "dontcare",
+      method: "query",
+      params: {
+        request_type: "view_account",
+        finality: "final",
+        account_id: `${lockupAccount}`,
+      },
+    }),
+  });
+
+  if (resp.body?.result?.amount) {
+    return lockupAccount;
+  }
+  return false;
+}
+
+async function asyncAccountToLockup(accountId) {
+  if (!accountId) {
+    return null;
+  }
+  // Compute SHA-256 hash
+  const hash = ethers.utils.sha256(ethers.utils.toUtf8Bytes(accountId));
+
+  // Take the first 40 characters (20 bytes in hex)
+  const truncatedHash = hash.slice(2, 42); // Remove '0x' and take first 40 chars
+  const lockupAccount = `${truncatedHash}.lockup.near`;
+
+  return asyncFetch(`${REPL_RPC_URL}`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: "dontcare",
+      method: "query",
+      params: {
+        request_type: "view_account",
+        finality: "final",
+        account_id: `${lockupAccount}`,
+      },
+    }),
+  });
+}
+
 return {
   getApproversAndThreshold,
   hasPermission,
@@ -944,4 +1021,7 @@ return {
   getAllColorsAsObject,
   getAllColorsAsCSSVariables,
   getRolesThresholdDescription,
+  decodeBase64,
+  accountToLockup,
+  asyncAccountToLockup,
 };

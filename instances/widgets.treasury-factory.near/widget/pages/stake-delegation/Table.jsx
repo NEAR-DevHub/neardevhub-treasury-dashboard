@@ -5,6 +5,7 @@ const {
   getNearBalances,
   decodeProposalDescription,
   formatSubmissionTimeStamp,
+  accountToLockup,
 } = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
 
 const { Copy, ExternalLink } = VM.require(
@@ -20,8 +21,9 @@ if (!instance) {
   return <></>;
 }
 
-const { treasuryDaoID, showKYC, showReferenceProposal, lockupContract } =
-  VM.require(`${instance}/widget/config.data`);
+const { treasuryDaoID, showKYC, showReferenceProposal } = VM.require(
+  `${instance}/widget/config.data`
+);
 
 const { TableSkeleton } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.skeleton"
@@ -32,11 +34,14 @@ if (
   !TableSkeleton ||
   typeof getNearBalances !== "function" ||
   typeof decodeProposalDescription !== "function" ||
-  typeof formatSubmissionTimeStamp !== "function"
+  typeof formatSubmissionTimeStamp !== "function" ||
+  typeof accountToLockup !== "function"
 ) {
   return <></>;
 }
 
+const lockupContract = accountToLockup(treasuryDaoID);
+const isPendingRequests = props.isPendingRequests;
 const proposals = props.proposals;
 // search for showAfterProposalIdApproved only in pending requests
 const visibleProposals = isPendingRequests
@@ -72,7 +77,6 @@ const highlightProposalId =
     : null;
 
 const loading = props.loading;
-const isPendingRequests = props.isPendingRequests;
 const functionCallApproversGroup = props.functionCallApproversGroup;
 const deleteGroup = props.deleteGroup;
 const [showToastStatus, setToastStatus] = useState(false);

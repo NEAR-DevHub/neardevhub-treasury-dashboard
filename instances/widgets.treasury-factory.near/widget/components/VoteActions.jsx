@@ -272,7 +272,7 @@ return (
       }}
     />
     {alreadyVoted ? (
-      <div className="d-flex gap-2 align-items-center justify-content-end">
+      <div className="d-flex gap-2 align-items-center justify-content-start">
         <Widget
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.ProposalStatus`}
           props={{
@@ -282,7 +282,7 @@ return (
         />
       </div>
     ) : (
-      <div className="d-flex gap-2 align-items-center justify-content-end">
+      <div className="d-flex gap-2 align-items-center justify-content-start">
         {!isReadyToBeWithdrawn ? (
           <div className="text-center fw-semi-bold">
             Voting is not available before unstaking release{" "}

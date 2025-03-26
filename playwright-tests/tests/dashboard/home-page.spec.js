@@ -1,12 +1,8 @@
 import { expect } from "@playwright/test";
 import { test } from "../../util/test.js";
-import {
-  mockNearBalances,
-  mockRpcRequest,
-  mockWithFTBalance,
-} from "../../util/rpcmock.js";
+import { mockNearBalances, mockWithFTBalance } from "../../util/rpcmock.js";
 import { mockNearPrice } from "../../util/nearblocks.js";
-import { getInstanceConfig } from "../../util/config.js";
+import { mockLockupStateAndNavigateToDashboard } from "./util.js";
 
 const availableBalance = "1.00";
 const stakedBalance = "1.00";
@@ -96,7 +92,7 @@ test.describe("Dashboard Page", function () {
     await page.goto(`/${instanceAccount}/widget/app`);
     await expect(
       page.locator("div").filter({ hasText: /^Dashboard$/ })
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 15_000 });
   });
 
   test("should correctly sort tokens by token price and quantity", async ({
@@ -104,7 +100,9 @@ test.describe("Dashboard Page", function () {
   }) => {
     test.setTimeout(60_000);
     await page.waitForTimeout(5_000);
-    await expect(page.getByText("BLACKDRAGON $0.00 743,919,574")).toBeVisible();
+    await expect(
+      page.getByText("BLACKDRAGON < $0.01 743,919,574")
+    ).toBeVisible();
     await expect(page.getByText("USDC $1.00 72.00")).toBeVisible();
     await expect(page.getByText("REF $0.12 0.98")).toBeVisible();
     await expect(page.getByText("SLUSH $0.00 7,231,110.99")).toBeVisible();
@@ -160,138 +158,69 @@ test.describe("Dashboard Page", function () {
 });
 
 test.describe("Lockup portfolio", function () {
-  const lockedAmount = "10000000000000000000000000";
-  const accountBalance = "12030000000000000000000000";
-
-  test.beforeEach(
-    async ({ page, instanceAccount, daoAccount, lockupContract }, testInfo) => {
-      const instanceConfig = await getInstanceConfig({ page, instanceAccount });
-
-      if (!instanceConfig.lockupContract) {
-        console.log("no lockup contract found for instance");
-        return test.skip();
-      }
-      await mockNearPrice({ daoAccount, nearPrice, page });
-      await mockRpcRequest({
-        page,
-        filterParams: {
-          method_name: "get_locked_amount",
-        },
-        modifyOriginalResultFunction: () => {
-          return lockedAmount;
-        },
-      });
-
-      await page.route(`https://rpc.mainnet.near.org`, async (route) => {
-        const request = await route.request();
-        const requestPostData = request.postDataJSON();
-
-        if (
-          requestPostData.params &&
-          requestPostData.params.request_type === "view_state" &&
-          requestPostData.params.account_id === lockupContract
-        ) {
-          const json = {
-            jsonrpc: "2.0",
-            result: {
-              block_hash: "2Dc8Jh8mFU8bKe16hAVcZ3waQhhdfUXwvvnsDP9djN95",
-              block_height: 140432800,
-              values: [
-                {
-                  key: "U1RBVEU=",
-                  value:
-                    "GAAAAGluZmluZXguc3B1dG5pay1kYW8ubmVhcgAAAESqcqis2Ly35gEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAADyvmdYcAABAMD2T6eb+BcAfKTy6T+hPRYAFQAAAGxvY2t1cC13aGl0ZWxpc3QubmVhcgEQAAAAcWJpdC5wb29sdjEubmVhcgAAAACIbdT4oNMQ9XoBAAAAAA==",
-                },
-              ],
-            },
-            id: "dontcare",
-          };
-          await route.fulfill({ json });
-        }
-      });
-
-      await page.route(
-        `https://api.fastnear.com/v1/account/${lockupContract}/staking`,
-        async (route) => {
-          const json = {
-            account_id: lockupContract,
-            pools: [
-              {
-                last_update_block_height: null,
-                pool_id: "here.poolv1.near",
-              },
-            ],
-          };
-
-          await route.fulfill({ json });
-        }
-      );
-      await page.route(
-        `https://archival-rpc.mainnet.fastnear.com/`,
-        async (route) => {
-          const request = await route.request();
-          const requestPostData = request.postDataJSON();
-
-          if (
-            requestPostData.params &&
-            requestPostData.params.request_type === "call_function" &&
-            requestPostData.params.method_name === "get_account_staked_balance"
-          ) {
-            const json = {
-              jsonrpc: "2.0",
-              result: {
-                block_hash: "GXEuJYXvoXoiDhtDJP8EiPXesQbQuwDSWadYzy2JAstV",
-                block_height: 132031112,
-                logs: [],
-                result: [
-                  53, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48,
-                  48, 48, 48, 48, 48, 48, 48, 48, 48, 48,
-                ],
-              },
-              id: "dontcare",
-            };
-            await route.fulfill({ json });
-          } else {
-            await route.continue();
-          }
-        }
-      );
-      await mockNearBalances({
-        page,
-        accountId: lockupContract,
-        balance: accountBalance,
-        storage: "345705",
-      });
-      await page.goto(`/${instanceAccount}/widget/app`);
-      await expect(
-        page.locator("div").filter({ hasText: /^Dashboard$/ })
-      ).toBeVisible();
+  test.beforeEach(async ({ page, lockupContract }) => {
+    if (!lockupContract) {
+      console.log("no lockup contract found for instance");
+      return test.skip();
     }
-  );
+    // Unroute existing handlers to prevent conflicts
+    await page.unroute("**");
+  });
 
-  test("Should show start and end date", async ({ page }) => {
+  test("Should show start and end date", async ({
+    page,
+    lockupContract,
+    instanceAccount,
+    daoAccount,
+  }) => {
     test.setTimeout(60_000);
+    await mockLockupStateAndNavigateToDashboard({
+      page,
+      instanceAccount,
+      lockupContract,
+      daoAccount,
+    });
     await page.waitForTimeout(5_000);
-    await expect(page.getByText("Started September 26, 2024")).toBeVisible();
-    await expect(page.getByText("End September 27, 2025")).toBeVisible();
+    await expect(page.getByText("Start Date September 25, 2024")).toBeVisible();
+    await expect(page.getByText("End Date September 26, 2025")).toBeVisible();
   });
 
   test("Should show total allocation, vested, unvested amounts", async ({
     page,
+    lockupContract,
+    instanceAccount,
+    daoAccount,
   }) => {
     test.setTimeout(60_000);
+    await mockLockupStateAndNavigateToDashboard({
+      page,
+      lockupContract,
+      instanceAccount,
+      daoAccount,
+    });
     await page.waitForTimeout(5_000);
     const originalAmount = page.getByText(
-      "Original allocated amount 17.03 NEAR"
+      "Original allocated amount 150,631.84 NEAR"
     );
     await expect(originalAmount).toBeVisible();
     await originalAmount.click();
-    await expect(page.getByText("Vested 7.03 NEAR")).toBeVisible();
+    await expect(page.getByText("Vested 150,621.84 NEAR")).toBeVisible();
     await expect(page.getByText("Unvested 10.00 NEAR")).toBeVisible();
   });
 
-  test("Should correctly segreggate NEAR balances", async ({ page }) => {
+  test("Should correctly segreggate NEAR balances", async ({
+    page,
+    lockupContract,
+    instanceAccount,
+    daoAccount,
+  }) => {
     test.setTimeout(60_000);
+    await mockLockupStateAndNavigateToDashboard({
+      page,
+      lockupContract,
+      instanceAccount,
+      daoAccount,
+    });
     await page.waitForTimeout(5_000);
     const nearToken = page.getByText("NEAR $5.00 17.03");
     await expect(nearToken).toBeVisible();
