@@ -9,7 +9,7 @@ const { instance } = props;
 const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 const [fromAmount, setFromAmount] = useState("");
 const [toAmount, setToAmount] = useState("");
-const [recipient, setRecipient] = useState("");
+const [recipients, setRecipients] = useState([]);
 const [recipientSearch, setRecipientSearch] = useState("");
 const [allRecipients, setAllRecipients] = useState([]);
 const [allRecipientOptions, setAllRecipientOptions] = useState([]);
@@ -134,15 +134,12 @@ const getNumberOfFiltersApplied = () => {
 };
 
 const removeSelectedToken = (tokenId) => {
-  setSelectedTokens(selectedTokens.filter((token) => token.id !== tokenId));
+  setSelectedTokens(selectedTokens.filter((token) => token !== tokenId));
 };
 
 // TODO: add token
 const addSelectedToken = (tokenId) => {
-  setSelectedTokens([
-    ...selectedTokens,
-    { id: tokenId, name: tokenId, logo: "circle" },
-  ]);
+  setSelectedTokens([...selectedTokens, tokenId]);
 };
 
 useEffect(() => {
@@ -172,15 +169,15 @@ useEffect(() => {
       setFromAmount(savedFilters.fromAmount);
     if (savedFilters.toAmount !== undefined) setToAmount(savedFilters.toAmount);
     if (savedFilters.recipient !== undefined)
-      setRecipient(savedFilters.recipient);
+      setRecipients(savedFilters.recipient);
     if (savedFilters.showKycStatusVerified !== undefined)
       setShowKycStatusVerified(savedFilters.showKycStatusVerified);
     if (savedFilters.showKycStatusNotVerified !== undefined)
       setShowKycStatusNotVerified(savedFilters.showKycStatusNotVerified);
     if (savedFilters.selectedTokens !== undefined)
-      setSelectedTokens(savedFilters.selectedTokens);
-    if (savedFilters.approvers !== undefined)
-      setApprovers(savedFilters.approvers);
+      if (savedFilters.approvers !== undefined)
+        // setSelectedTokens(savedFilters.selectedTokens);
+        setApprovers(savedFilters.approvers);
   }
 }, []);
 
@@ -250,7 +247,7 @@ const Container = styled.div`
 const clearFilters = () => {
   setFromAmount("");
   setToAmount("");
-  setRecipient("");
+  setRecipients([]);
   setSelectedTokens([]);
   setShowKycStatusVerified(true);
   setShowKycStatusNotVerified(true);
@@ -344,10 +341,11 @@ return (
                     }
                     props={{
                       options: [],
-                      value: recipient,
-                      onChange: (option) => setRecipient(option.value),
+                      value: recipients,
+                      onChange: (option) =>
+                        setRecipients([...recipients, option.value]),
                       placeholder: "Select",
-                      selectedValue: recipient,
+                      selectedValue: recipients,
                       options: allRecipientOptions,
                       defaultLabel: "Select",
                       showSearch: true,

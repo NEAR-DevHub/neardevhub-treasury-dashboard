@@ -63,10 +63,7 @@ const loadFilteredProposals = (filters) => {
 
           // Apply token filters
           if (filters.selectedTokens && filters.selectedTokens.length > 0) {
-            console.log("filters.selectedTokens", filters.selectedTokens);
-            additionalFilters.tokenIds = filters.selectedTokens.map(
-              (t) => t.id
-            );
+            additionalFilters.selectedTokens = filters.selectedTokens;
           }
 
           // Apply approver filters
@@ -84,6 +81,8 @@ const loadFilteredProposals = (filters) => {
         //   if (filters.approvers && filters.approvers.length > 0)
         //     additionalFilters.approvers = filters.approvers;
         // }
+        console.log("additionalFilters", additionalFilters);
+
         getFilteredProposalsFromIndexer(
           {
             treasuryDaoID,

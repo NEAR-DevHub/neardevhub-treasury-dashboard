@@ -329,7 +329,7 @@ function buildQueryString(options) {
     receiver, // New recipient filter
     minAmount, // New min amount filter
     maxAmount, // New max amount filter
-    tokenIds, // New token filter
+    selectedTokens, // New token filter
     approvers, // New approvers filter
   } = options;
   const endpointToCall = `${REPL_SPUTNIK_INDEXER_URL}/dao/proposals/${treasuryDaoID}`;
@@ -353,8 +353,11 @@ function buildQueryString(options) {
   }
 
   // Add token filters
-  if (tokenIds && tokenIds.length > 0) {
-    tokenIds.forEach((token) => {
+  if (selectedTokens && selectedTokens.length > 0) {
+    selectedTokens.forEach((token) => {
+      if (token == "near") {
+        queryParts.push(`filters.requested_token_ids[]=`);
+      }
       queryParts.push(
         `filters.requested_token_ids[]=${encodeURIComponent(token)}`
       );
@@ -393,7 +396,7 @@ function buildQueryString(options) {
   }
   if (resPerPage) {
     // TODO: pagination
-    queryParts.push(`limit=75`);
+    queryParts.push(`limit=150`);
     console.log("Added limit:", resPerPage);
   }
 
@@ -424,7 +427,7 @@ async function getFilteredProposalsFromIndexer(options, policy) {
     fromAmount,
     toAmount,
     receivers,
-    tokenIds,
+    selectedTokens,
     approvers,
   } = options;
 
