@@ -130,39 +130,6 @@ function searchProposals(searchInput) {
   });
 }
 
-function fetchCacheApi(variables) {
-  // TODO: use filters
-  return asyncFetch(`${sputnikIndexerURL}/dao/proposals/${treasuryDaoID}`, {
-    method: "GET",
-    headers: {
-      accept: "application/json",
-    },
-  }).catch((error) => {
-    console.log("Error fetching cache api", error);
-  });
-}
-
-function fetchProposals(offset) {
-  if (!offset) {
-    offset = 0;
-  }
-  if (loading) return console.log("loading");
-  setLoading(true);
-  const FETCH_LIMIT = 10;
-  const variables = {
-    order: sort,
-    limit: FETCH_LIMIT,
-    offset,
-    category: category ? encodeURIComponent(category) : "",
-    author_id: author ? encodeURIComponent(author) : "",
-    stage: stage ? encodeURIComponent(stage) : "",
-  };
-  fetchCacheApi(variables).then((result) => {
-    setData(result?.body?.records || []);
-    setLoading(false);
-  });
-}
-
 useEffect(() => {
   setSearchLoader(true);
   // fetchProposals(); getFilteredProposalsFromIndexer
@@ -172,9 +139,6 @@ useEffect(() => {
   const handler = setTimeout(() => {
     if (searchInput) {
       searchProposals(searchInput);
-    } else {
-      // TODO: this is done in getFilteredProposalsFromIndexer
-      // fetchProposals();
     }
   }, 1000);
 

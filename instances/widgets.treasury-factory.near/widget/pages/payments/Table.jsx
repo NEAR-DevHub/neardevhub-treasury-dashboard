@@ -294,7 +294,6 @@ const ProposalsComponent = () => {
         const proposalId = id ? parseInt(id, 10) : null;
         const isFunctionType =
           Object.values(item?.kind?.FunctionCall ?? {})?.length > 0;
-        console.log("item?.kind?", item?.kind);
         const decodedArgs =
           isFunctionType &&
           decodeBase64(item.kind.FunctionCall?.actions[0].args);
@@ -546,7 +545,7 @@ const ProposalsComponent = () => {
               )}
             {!isPendingRequests && item?.hash && (
               <td className="text-right">
-                <div className="d-flex gap-2 align-items-center text-underline fw-semi-bold">
+                <div className="d-flex gap-2 align-items-center text-underline fw-semi-bold justify-content-end">
                   <a
                     target="_blank"
                     rel="noopener noreferrer"

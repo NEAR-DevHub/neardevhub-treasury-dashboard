@@ -1,9 +1,18 @@
-const { getApproversAndThreshold, getFilteredProposalsByStatusAndKind } =
-  VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common") || {
-    getApproversAndThreshold: () => {},
-  };
+const {
+  getApproversAndThreshold,
+  getFilteredProposalsByStatusAndKind,
+  getFilteredProposalsFromIndexer,
+} = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common") || {
+  getApproversAndThreshold: () => {},
+  getFilteredProposalsByStatusAndKind: () => {},
+  getFilteredProposalsFromIndexer: () => {},
+};
 const instance = props.instance;
-if (!instance || typeof getFilteredProposalsByStatusAndKind !== "function") {
+if (
+  !instance ||
+  typeof getFilteredProposalsByStatusAndKind !== "function" ||
+  typeof getFilteredProposalsFromIndexer !== "function"
+) {
   return <></>;
 }
 
@@ -17,6 +26,7 @@ const [totalLength, setTotalLength] = useState(null);
 const [loading, setLoading] = useState(false);
 const [firstRender, setFirstRender] = useState(true);
 const [offset, setOffset] = useState(null);
+const [fallBackOffset, setFallBackOffset] = useState(null);
 const [isPrevPageCalled, setIsPrevCalled] = useState(false);
 
 const highlightProposalId =
@@ -28,30 +38,67 @@ const highlightProposalId =
 
 useEffect(() => {
   setLoading(true);
-  Near.asyncView(treasuryDaoID, "get_last_proposal_id").then((i) => {
-    const lastProposalId = i;
 
-    getFilteredProposalsByStatusAndKind({
-      treasuryDaoID,
-      resPerPage: rowsPerPage,
-      isPrevPageCalled: isPrevPageCalled,
-      filterKindArray: ["FunctionCall"],
-      filterStatusArray: ["Approved", "Rejected", "Expired", "Failed"],
-      offset: typeof offset === "number" ? offset : lastProposalId,
-      lastProposalId: lastProposalId,
-      currentPage,
-    }).then((r) => {
-      const proposals = r.filteredProposals.filter(
-        (item) => item.kind.FunctionCall.receiver_id === "lockup.near"
-      );
+  Near.asyncView(treasuryDaoID, "get_policy", {}).then((policy) => {
+    console.log(
+      "Policy fetched successfully:",
+      policy ? "Policy found" : "No policy found"
+    );
 
-      setOffset(proposals[proposals.length - 1].id);
-      if (currentPage === 0 && !totalLength) setTotalLength(proposals.length);
+    Near.asyncView(treasuryDaoID, "get_last_proposal_id").then((i) => {
+      const lastProposalId = i;
 
-      setLoading(false);
-      setProposals(proposals);
+      getFilteredProposalsFromIndexer({
+        treasuryDaoID,
+        resPerPage: rowsPerPage,
+        isPrevPageCalled: isPrevPageCalled,
+        filterKindArray: ["FunctionCall"],
+        filterStatusArray: ["Approved", "Rejected", "Expired", "Failed"],
+        offset: 0, // TODO pagination
+        lastProposalId: lastProposalId,
+        currentPage,
+        fallBackOffset:
+          typeof fallBackOffset === "number" ? fallBackOffset : lastProposalId,
+      }).then((r) => {
+        const proposals = r.filteredProposals.filter(
+          (item) => item.kind.FunctionCall.receiver_id === "lockup.near"
+        );
+
+        setOffset(proposals[proposals.length - 1].id);
+        setFallBackOffset(proposals[proposals.length - 1].id);
+        if (currentPage === 0 && !totalLength) setTotalLength(proposals.length);
+
+        setLoading(false);
+        setProposals(proposals);
+      });
     });
   });
+
+  // Old way:
+  // Near.asyncView(treasuryDaoID, "get_last_proposal_id").then((i) => {
+  //   const lastProposalId = i;
+
+  //   getFilteredProposalsByStatusAndKind({
+  //     treasuryDaoID,
+  //     resPerPage: rowsPerPage,
+  //     isPrevPageCalled: isPrevPageCalled,
+  //     filterKindArray: ["FunctionCall"],
+  //     filterStatusArray: ["Approved", "Rejected", "Expired", "Failed"],
+  //     offset: typeof offset === "number" ? offset : lastProposalId,
+  //     lastProposalId: lastProposalId,
+  //     currentPage,
+  //   }).then((r) => {
+  //     const proposals = r.filteredProposals.filter(
+  //       (item) => item.kind.FunctionCall.receiver_id === "lockup.near"
+  //     );
+
+  //     setOffset(proposals[proposals.length - 1].id);
+  //     if (currentPage === 0 && !totalLength) setTotalLength(proposals.length);
+
+  //     setLoading(false);
+  //     setProposals(proposals);
+  //   });
+  // });
 }, [currentPage, rowsPerPage]);
 
 const policy = treasuryDaoID
@@ -89,17 +136,20 @@ return (
             onNextClick: () => {
               setIsPrevCalled(false);
               setOffset(proposals[proposals.length - 1].id);
+              setFallBackOffset(proposals[proposals.length - 1].id);
               setPage(currentPage + 1);
             },
             onPrevClick: () => {
               setIsPrevCalled(true);
               setOffset(proposals[0].id);
+              setFallBackOffset(proposals[0].id);
               setPage(currentPage - 1);
             },
             currentPage: currentPage,
             rowsPerPage: rowsPerPage,
             onRowsChange: (v) => {
               setOffset(null);
+              setFallBackOffset(null);
               setPage(0);
               setRowsPerPage(parseInt(v));
             },

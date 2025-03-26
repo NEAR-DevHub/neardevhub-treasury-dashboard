@@ -409,7 +409,7 @@ const ProposalsComponent = () => {
               )}
             {!isPendingRequests && item?.hash && (
               <td className="text-right">
-                <div className="d-flex gap-2 align-items-center text-underline fw-semi-bold">
+                <div className="d-flex gap-2 align-items-center text-underline fw-semi-bold justify-content-end">
                   <a
                     target="_blank"
                     rel="noopener noreferrer"

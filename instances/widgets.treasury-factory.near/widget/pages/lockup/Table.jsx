@@ -24,6 +24,12 @@ const { decodeBase64 } = VM.require(
 const { TableSkeleton } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.skeleton"
 );
+const { Copy, ExternalLink } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Icons"
+) || {
+  ExternalLink: () => <></>,
+  Copy: () => <></>,
+};
 const { treasuryDaoID, lockupContract, allowLockupCancellation } = VM.require(
   `${instance}/widget/config.data`
 );
@@ -46,6 +52,12 @@ const hasVotingPermission = (
 const hasDeletePermission = (deleteGroup?.approverAccounts ?? []).includes(
   accountId
 );
+
+function shortenTransactionHash(hash) {
+  if (!hash) return "";
+  // A6ys...Yt7f
+  return hash.substring(0, 4) + "..." + hash.substring(hash.length - 4);
+}
 
 const Container = styled.div`
   font-size: 14px;
@@ -156,6 +168,11 @@ const columns = [
   { title: "Votes", show: isPendingRequests, className: "text-center" },
   { title: "Approvers", show: true },
   { title: "Actions", show: isPendingRequests, className: "text-right" },
+  {
+    title: "Transaction",
+    show: !isPendingRequests,
+    className: "justify-content-end",
+  },
 ];
 
 function isVisible(column) {
@@ -213,6 +230,12 @@ const VoteSuccessToast = () => {
     </div>
   ) : null;
 };
+
+function shortenTransactionHash(hash) {
+  if (!hash) return "";
+  // A6ys...Yt7f
+  return hash.substring(0, 4) + "..." + hash.substring(hash.length - 4);
+}
 
 const formatTimestamp = (timestamp) => Math.floor(timestamp / 1e6);
 
@@ -347,6 +370,30 @@ const ProposalsComponent = ({ item }) => {
               checkProposalStatus: () => checkProposalStatus(item.id),
             }}
           />
+        </td>
+      )}
+      {!isPendingRequests && item?.hash && (
+        <td className="text-right">
+          <div className="d-flex gap-2 align-items-center text-underline fw-semi-bold justify-content-end">
+            <a
+              target="_blank"
+              rel="noopener noreferrer"
+              href={`https://nearblocks.io/txns/${item.hash}`}
+              className="d-flex gap-2 align-items-center text-underline cursor-pointer fw-semi-bold"
+            >
+              {shortenTransactionHash(item.hash)}
+              <ExternalLink width={15} height={15} />
+            </a>
+            <div
+              style={{ cursor: "pointer" }}
+              onClick={(e) => {
+                e.stopPropagation();
+                clipboard.writeText(`https://nearblocks.io/txns/${item.hash}`);
+              }}
+            >
+              <Copy width={15} height={15} />
+            </div>
+          </div>
         </td>
       )}
     </tr>

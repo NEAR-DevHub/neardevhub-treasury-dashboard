@@ -353,7 +353,8 @@ function buildQueryString(options) {
     console.log("Added offset:", offset);
   }
   if (resPerPage) {
-    queryParts.push(`limit=${resPerPage}`);
+    // TODO: pagination
+    queryParts.push(`limit=75`);
     console.log("Added limit:", resPerPage);
   }
 
@@ -374,6 +375,7 @@ async function getFilteredProposalsFromIndexer(options, policy) {
     filterStatusArray,
     // All under for pagination
     offset,
+    fallBackOffset,
     lastProposalId,
     currentPage,
     // All above for pagination
@@ -421,6 +423,16 @@ async function getFilteredProposalsFromIndexer(options, policy) {
       let proposals = response.body.records;
       console.log(`Found ${proposals.length} proposals in response`);
 
+      // Swap the proposal_id and id for the proposals to be backwards compatible
+      // consistent with the rpc return value.
+      proposals = proposals.map((proposal) => {
+        // Extract the numeric ID from the composite ID (e.g., "225_testing-astradao.sputnik-dao.near")
+        let temp = proposal.id;
+        proposal.id = proposal.proposal_id;
+        proposal.proposal_id = temp;
+        return proposal;
+      });
+
       let filteredProposals = proposals.filter((item) => {
         const kindCondition = filterFunction(
           item,
@@ -442,12 +454,28 @@ async function getFilteredProposalsFromIndexer(options, policy) {
         return true;
       });
 
+      const uniqueFilteredProposals = Array.from(
+        new Map(filteredProposals.map((item) => [item.id, item])).values()
+      );
+      // Sort proposals by ID in descending order (newest first)
+      const sortedProposals = uniqueFilteredProposals.sort(
+        (a, b) => b.id - a.id
+      );
+      // Calculate pagination slice bounds based on current page and direction
+      // If going to previous page, calculate start/end differently
+      const start = isPrevPageCalled ? currentPage * resPerPage : 0;
+      const end = isPrevPageCalled
+        ? currentPage * resPerPage + resPerPage
+        : resPerPage;
+      // Create the final paginated array of proposals to return
+      const newArray = sortedProposals.slice(start, end);
+
       console.log(
         "Returning successful result from indexer with filtered proposals:",
         filteredProposals.length
       );
       return {
-        filteredProposals: filteredProposals,
+        filteredProposals: newArray,
         totalLength: response.body.total_records || filteredProposals.length,
         usedIndexer: true,
       };
@@ -457,7 +485,10 @@ async function getFilteredProposalsFromIndexer(options, policy) {
       console.log("Error type:", typeof error);
       console.log("Error stack:", error && error.stack);
       // Fall back to the original function
-      return getFilteredProposalsByStatusAndKind(options);
+      return getFilteredProposalsByStatusAndKind({
+        ...options,
+        offset: fallBackOffset,
+      });
     });
 }
 
@@ -557,12 +588,18 @@ async function getFilteredProposalsByStatusAndKind({
     const uniqueFilteredProposals = Array.from(
       new Map(filteredProposals.map((item) => [item.id, item])).values()
     );
+    // Sort proposals by ID in descending order (newest first)
     const sortedProposals = uniqueFilteredProposals.sort((a, b) => b.id - a.id);
+    // Calculate pagination slice bounds based on current page and direction
+    // If going to previous page, calculate start/end differently
     const start = isPrevPageCalled ? currentPage * resPerPage : 0;
     const end = isPrevPageCalled
       ? currentPage * resPerPage + resPerPage
       : resPerPage;
+    // Create the final paginated array of proposals to return
     const newArray = sortedProposals.slice(start, end);
+
+    // Return the paginated proposals, total count, and indexer usage flag
     return {
       filteredProposals: newArray,
       totalLength: sortedProposals.length,

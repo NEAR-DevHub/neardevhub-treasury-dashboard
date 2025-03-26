@@ -8,9 +8,7 @@ const {
   getFilteredProposalsFromIndexer: () => {},
 };
 const instance = props.instance;
-console.log(
-  "${REPL_BASE_DEPLOYMENT_ ACCOUNT / ${REPL_BASE_DEPLOYMENT_ACCOUNT}/"
-);
+
 if (
   !instance ||
   typeof getApproversAndThreshold !== "function" ||
