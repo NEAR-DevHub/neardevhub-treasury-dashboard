@@ -42,6 +42,13 @@ async function voteOnProposal({
       } else {
         originalResult.status = "InProgress";
       }
+      if (isMultiVote && !isTransactionCompleted) {
+        originalResult.votes = {
+          "mugen2_ipf1.near": "Approve",
+          "kmao.near": "Approve",
+          "zorsub.near": "Approve",
+        };
+      }
       return originalResult;
     },
   });
@@ -53,6 +60,14 @@ async function voteOnProposal({
     },
     modifyOriginalResultFunction: (originalResult) => {
       originalResult = transferProposalData;
+      // have multiple votes in, to check for order
+      if (isMultiVote && !isTransactionCompleted) {
+        originalResult.votes = {
+          "kmao.near": "Approve",
+          "mugen2_ipf1.near": "Approve",
+          "zorsub.near": "Approve",
+        };
+      }
       if (isTransactionCompleted && vote === "Remove" && !isMultiVote) {
         return {
           isError: true,
