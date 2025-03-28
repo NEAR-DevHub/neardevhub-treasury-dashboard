@@ -157,7 +157,7 @@ return (
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.SuccessPage`}
           props={{
             formFields,
-            clearStorage: Storage.set("TreasuryAccountName", null),
+            clearStorage: () => Storage.set("TreasuryAccountName", null),
           }}
         />
       </PageWrapper>
