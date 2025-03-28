@@ -29,6 +29,7 @@ const isWithdrawRequest = props.isWithdrawRequest;
 const validatorAccount = props.validatorAccount;
 const treasuryWallet = props.treasuryWallet;
 const isHumanReadableCurrentAmount = props.isHumanReadableCurrentAmount;
+const isProposalDetailsPage = props.isProposalDetailsPage;
 
 const alreadyVoted = Object.keys(votes).includes(accountId);
 const userVote = votes[accountId];
@@ -177,6 +178,16 @@ const Container = styled.div`
     border: none;
     color: red;
   }
+
+  .btn-approve {
+    background-color: var(--other-green) !important;
+    color: white;
+  }
+
+  .btn-reject {
+    background-color: var(--other-red) !important;
+    color: white;
+  }
 `;
 
 const InsufficientBalanceWarning = () => {
@@ -249,6 +260,9 @@ const InsufficientBalanceWarning = () => {
   ) : null;
 };
 
+const containerClass = isProposalDetailsPage
+  ? "d-flex gap-2 align-items-center "
+  : "d-flex gap-2 align-items-center justify-content-end";
 return (
   <Container>
     <TransactionLoader
@@ -278,7 +292,7 @@ return (
       }}
     />
     {alreadyVoted ? (
-      <div className="d-flex gap-2 align-items-center justify-content-start">
+      <div className={containerClass}>
         <Widget
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.ProposalStatus`}
           props={{
@@ -288,7 +302,7 @@ return (
         />
       </div>
     ) : (
-      <div className="d-flex gap-2 align-items-center justify-content-start">
+      <div className={containerClass}>
         {!isReadyToBeWithdrawn ? (
           <div className="text-center fw-semi-bold">
             Voting is not available before unstaking release{" "}
@@ -309,7 +323,7 @@ return (
           </div>
         ) : (
           hasVotingPermission && (
-            <div className="d-flex gap-2 align-items-center">
+            <div className="d-flex gap-2 align-items-center w-100">
               <Widget
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
                 props={{
@@ -318,7 +332,8 @@ return (
                       src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
                       props={{
                         classNames: {
-                          root: "btn btn-success",
+                          root: "btn btn-approve w-100",
+                          label: "text-center w-100",
                         },
                         label: "Approve",
                         loading: isTxnCreated && vote === actions.APPROVE,
@@ -337,6 +352,7 @@ return (
                       setConfirmModal(true);
                     }
                   },
+                  className: isProposalDetailsPage ? "w-100" : "",
                 }}
               />
               <Widget
@@ -347,11 +363,13 @@ return (
                       src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
                       props={{
                         classNames: {
-                          root: "btn btn-secondary",
+                          root: "btn btn-reject w-100",
+                          label: "text-center w-100",
                         },
                         label: "Reject",
                         loading: isTxnCreated && vote === actions.REJECT,
                         disabled: isTxnCreated,
+                        texts,
                       }}
                     />
                   ),
@@ -362,6 +380,7 @@ return (
                     setVote(actions.REJECT);
                     setConfirmModal(true);
                   },
+                  className: isProposalDetailsPage ? "w-100" : "",
                 }}
               />
             </div>
@@ -369,30 +388,33 @@ return (
         )}
         {/* currently showing delete btn only for proposal creator */}
         {hasDeletePermission && proposalCreator === accountId && (
-          <Widget
-            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
-            props={{
-              ActionButton: () => (
-                <button
-                  className="remove-btn"
-                  data-testid="delete-btn"
-                  disabled={isTxnCreated}
-                >
-                  <img
-                    style={{ height: 24 }}
-                    src="https://ipfs.near.social/ipfs/bafkreieobqzwouuadj7eneei7aadwfel6ubhj7qishnqwrlv5ldgcwuyt4"
-                  />
-                </button>
-              ),
-              checkForDeposit: false,
-              treasuryDaoID,
-              disabled: isTxnCreated,
-              callbackAction: () => {
-                setVote(actions.REMOVE);
-                setConfirmModal(true);
-              },
-            }}
-          />
+          <div style={{ width: "fit-content" }}>
+            <Widget
+              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
+              props={{
+                ActionButton: () => (
+                  <button
+                    className="remove-btn w-100"
+                    data-testid="delete-btn w-100"
+                    disabled={isTxnCreated}
+                  >
+                    <img
+                      style={{ height: 24 }}
+                      src="https://ipfs.near.social/ipfs/bafkreieobqzwouuadj7eneei7aadwfel6ubhj7qishnqwrlv5ldgcwuyt4"
+                    />
+                  </button>
+                ),
+                checkForDeposit: false,
+                treasuryDaoID,
+                disabled: isTxnCreated,
+                callbackAction: () => {
+                  setVote(actions.REMOVE);
+                  setConfirmModal(true);
+                },
+                className: isProposalDetailsPage ? "w-100" : "",
+              }}
+            />
+          </div>
         )}
       </div>
     )}

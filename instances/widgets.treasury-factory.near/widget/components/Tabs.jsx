@@ -49,16 +49,18 @@ function findTab(tabTitle) {
 const [currentTab, setCurrentTab] = useState(null);
 
 useEffect(() => {
-  const defaultTab = tabs[0].title;
-  let tab = findTab(
-    selectedTab ? normalize(selectedTab ?? "") : normalize(defaultTab)
-  );
-  // in case selectedTab is not provided
-  if (!tab) {
-    tab = normalize(defaultTab);
+  if (!currentTabProps) {
+    const defaultTab = tabs[0].title;
+    let tab = findTab(
+      selectedTab ? normalize(selectedTab ?? "") : normalize(defaultTab)
+    );
+    // in case selectedTab is not provided
+    if (!tab) {
+      tab = normalize(defaultTab);
+    }
+    setCurrentTab(tab);
+    setCurrentTabProps({ ...tab.props, ...props });
   }
-  setCurrentTab(tab);
-  setCurrentTabProps({ ...tab.props, ...props });
 }, [props]);
 
 return (
@@ -69,13 +71,19 @@ return (
     >
       <NavUnderline className="nav gap-2">
         {tabs.map(
-          ({ title }) =>
+          ({ title, props: tabProps }) =>
             title && (
               <li key={title}>
                 <div
                   onClick={() => {
                     setCurrentTab(findTab(normalize(title)));
-                    setCurrentTabProps({ instance: props.instance });
+                    setCurrentTabProps({
+                      ...tabProps,
+                      instance: props.instance,
+                    });
+                    if (typeof tabProps.onSelectRequest === "function") {
+                      tabProps.onSelectRequest(null);
+                    }
                   }}
                   className={[
                     "d-inline-flex gap-2 nav-link",
@@ -96,7 +104,10 @@ return (
     </div>
     {currentTab && (
       <div className="w-100 h-100" key={currentTab.title}>
-        <Widget src={currentTab.href} props={currentTabProps} />
+        <Widget
+          src={currentTab.href}
+          props={{ ...currentTabProps, ...props }}
+        />
       </div>
     )}
   </Container>

@@ -20,6 +20,7 @@ const {
   treasuryDaoID,
   callbackAction,
   disabled,
+  className,
 } = props;
 
 if (typeof getNearBalances !== "function") {
@@ -76,7 +77,7 @@ const WarningModal = () => (
 
 return (
   <>
-    <div onClick={checkBalance}>
+    <div className={className ?? ""} onClick={checkBalance}>
       <ActionButton />
     </div>
     {showModal && <WarningModal />}

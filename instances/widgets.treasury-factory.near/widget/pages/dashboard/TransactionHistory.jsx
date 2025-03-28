@@ -1,6 +1,6 @@
-const { NearToken } = VM.require(
+const { NearToken, Copy } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Icons"
-) || { NearToken: () => <></> };
+) || { NearToken: () => <></>, Copy: () => <></> };
 
 const { readableDate } = VM.require(
   "${REPL_DEVHUB}/widget/core.lib.common"
@@ -279,10 +279,13 @@ return (
                               txn.transaction_id.length - 4
                             )}
                           </a>
-                          <i
-                            class="bi bi-copy h5 mb-0 cursor-pointer"
+                          <div
+                            className="cursor-pointer"
                             onClick={() => clipboard.writeText(txnLink)}
-                          ></i>
+                          >
+                            <Copy width={26} height={26} />
+                          </div>
+
                           <a
                             target="_blank"
                             rel="noopener noreferrer"

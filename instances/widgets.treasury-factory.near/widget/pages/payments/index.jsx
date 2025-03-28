@@ -4,7 +4,7 @@ const { hasPermission } = VM.require(
   hasPermission: () => {},
 };
 
-const { selectedTab, instance } = props;
+const { selectedTab, instance, id } = props;
 
 if (!instance) {
   return <></>;
@@ -13,6 +13,7 @@ if (!instance) {
 const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 
 const [showCreateRequest, setShowCreateRequest] = useState(false);
+const [showProposalDetailsId, setShowProposalId] = useState(null);
 
 const hasCreatePermission = hasPermission(
   treasuryDaoID,
@@ -20,6 +21,9 @@ const hasCreatePermission = hasPermission(
   "transfer",
   "AddProposal"
 );
+
+const proposalDetailsPageId =
+  id || id === "0" || id === 0 ? parseInt(id) : null;
 
 const SidebarMenu = ({ currentTab }) => {
   return (
@@ -61,9 +65,35 @@ const Container = styled.div`
   .flex-1 {
     flex: 1;
   }
+
+  .proposals-container {
+    display: flex;
+    gap: 8px;
+    overflow: hidden;
+  }
+
+  .flex-main-item {
+    flex: 3;
+    min-width: 0;
+    overflow: auto;
+  }
+
+  .flex-secondary-item {
+    flex: 1.5;
+    min-width: 0;
+    overflow: auto;
+  }
 `;
 
-return (
+return typeof proposalDetailsPageId === "number" ? (
+  <Widget
+    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.ProposalDetailsPage`}
+    props={{
+      id: proposalDetailsPageId,
+      instance,
+    }}
+  />
+) : (
   <Container>
     <Widget
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OffCanvas`}
@@ -82,24 +112,48 @@ return (
         ),
       }}
     />
-    <Widget
-      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Tabs`}
-      props={{
-        ...props,
-        tabs: [
-          {
-            title: "Pending Requests",
-            href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.PendingRequests`,
-            props: props,
-          },
-          {
-            title: "History",
-            href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.History`,
-            props: props,
-          },
-        ],
-        SidebarMenu: SidebarMenu,
-      }}
-    />
+    <div className="proposals-container">
+      <div className="flex-main-item">
+        <Widget
+          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Tabs`}
+          props={{
+            ...props,
+            selectedProposalDetailsId: showProposalDetailsId,
+            tabs: [
+              {
+                title: "Pending Requests",
+                href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.PendingRequests`,
+                props: {
+                  ...props,
+                  onSelectRequest: (id) => setShowProposalId(id),
+                },
+              },
+              {
+                title: "History",
+                href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.History`,
+                props: {
+                  ...props,
+                  onSelectRequest: (id) => setShowProposalId(id),
+                },
+              },
+            ],
+            SidebarMenu: SidebarMenu,
+          }}
+        />
+      </div>
+      {showProposalDetailsId && (
+        <div className="flex-secondary-item">
+          <Widget
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.ProposalDetailsPage`}
+            props={{
+              id: showProposalDetailsId,
+              instance,
+              isCompactVersion: true,
+              onClose: () => setShowProposalId(null),
+            }}
+          />
+        </div>
+      )}
+    </div>
   </Container>
 );

@@ -88,6 +88,12 @@ const Container = styled.div`
   table {
     overflow-x: auto;
   }
+
+  .proposal-row {
+    &:hover {
+      background-color: var(--grey-04) !important;
+    }
+  }
 `;
 
 function checkProposalStatus(proposalId) {
@@ -294,10 +300,17 @@ const ProposalsComponent = () => {
 
         return (
           <tr
+            data-testid={"proposal-request-#" + item.id}
+            onClick={() => {
+              props.onSelectRequest(item.id);
+            }}
             className={
-              voteProposalId === item.id || highlightProposalId === item.id
+              "cursor-pointer proposal-row " +
+              (voteProposalId === item.id ||
+              highlightProposalId === item.id ||
+              props.selectedProposalDetailsId === item.id
                 ? "bg-highlight"
-                : ""
+                : "")
             }
           >
             <td className="fw-semi-bold px-3">{item.id}</td>
@@ -472,6 +485,7 @@ const ProposalsComponent = () => {
                   props={{
                     votes: item.votes,
                     requiredVotes,
+                    isInProgress: true,
                   }}
                 />
               </td>
