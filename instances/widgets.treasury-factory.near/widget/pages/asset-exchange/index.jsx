@@ -4,7 +4,7 @@ const { hasPermission } = VM.require(
   hasPermission: () => {},
 };
 
-const { selectedTab, instance } = props;
+const { tab, instance } = props;
 
 if (!instance) {
   return <></>;

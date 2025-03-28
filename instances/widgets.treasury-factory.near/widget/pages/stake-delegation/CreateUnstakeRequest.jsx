@@ -310,7 +310,7 @@ function onSubmitClick(validatorAccount, amount, notes) {
     widgetSrc: `${instance}/widget/app`,
     params: {
       page: "stake-delegation",
-      selectedTab: "History",
+      tab: "History",
       highlightProposalId: lastProposalId,
     },
   });

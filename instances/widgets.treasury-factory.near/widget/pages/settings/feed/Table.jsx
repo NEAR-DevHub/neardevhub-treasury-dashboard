@@ -205,7 +205,7 @@ const ToastStatusContent = () => {
                   widgetSrc: `${instance}/widget/app`,
                   params: {
                     page: "settings",
-                    selectedTab: "History",
+                    tab: "History",
                     highlightProposalId:
                       typeof highlightProposalId === "number"
                         ? highlightProposalId

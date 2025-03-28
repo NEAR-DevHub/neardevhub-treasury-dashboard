@@ -14,7 +14,7 @@ const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
 
-const { selectedTab, tabs, SidebarMenu } = props;
+const { tab, tabs, SidebarMenu } = props;
 
 const [currentTabProps, setCurrentTabProps] = useState(null);
 
@@ -50,10 +50,8 @@ const [currentTab, setCurrentTab] = useState(null);
 
 useEffect(() => {
   const defaultTab = tabs[0].title;
-  let tab = findTab(
-    selectedTab ? normalize(selectedTab ?? "") : normalize(defaultTab)
-  );
-  // in case selectedTab is not provided
+  let tab = findTab(tab ? normalize(tab ?? "") : normalize(defaultTab));
+  // in case tab is not provided
   if (!tab) {
     tab = normalize(defaultTab);
   }

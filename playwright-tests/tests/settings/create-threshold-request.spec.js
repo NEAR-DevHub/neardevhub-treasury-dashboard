@@ -56,7 +56,7 @@ test.afterEach(async ({ page }, testInfo) => {
 
 async function navigateToThresholdPage({ page, instanceAccount }) {
   await page.goto(
-    `/${instanceAccount}/widget/app?page=settings&selectedTab=voting-thresholds`
+    `/${instanceAccount}/widget/app?page=settings&tab=voting-thresholds`
   );
   await expect(page.getByText("Permission Groups")).toBeVisible({
     timeout: 10_000,

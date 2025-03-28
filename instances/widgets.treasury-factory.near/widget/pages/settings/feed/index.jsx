@@ -1,4 +1,4 @@
-const { selectedTab, instance } = props;
+const { tab, instance } = props;
 
 if (!instance) {
   return <></>;

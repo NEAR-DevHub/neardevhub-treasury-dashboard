@@ -49,7 +49,7 @@ async function updateDaoConfig({ page }) {
 
 async function navigateToThemePage({ page, instanceAccount, hasAllRole }) {
   await page.goto(
-    `/${instanceAccount}/widget/app?page=settings&selectedTab=theme-logo`
+    `/${instanceAccount}/widget/app?page=settings&tab=theme-logo`
   );
   await updateDaoPolicyMembers({ instanceAccount, page, hasAllRole });
   await updateDaoConfig({ page });
