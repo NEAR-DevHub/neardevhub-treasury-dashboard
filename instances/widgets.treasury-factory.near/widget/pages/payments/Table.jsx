@@ -57,7 +57,6 @@ const [showToastStatus, setToastStatus] = useState(false);
 const [voteProposalId, setVoteProposalId] = useState(null);
 const [nearStakedTokens, setNearStakedTokens] = useState(null);
 const [lockupNearBalances, setLockupNearBalances] = useState(null);
-const [proposalDetailsId, setProposalDetailsId] = useState(null);
 const refreshTableData = props.refreshTableData;
 
 const accountId = context.accountId;
@@ -304,13 +303,12 @@ const ProposalsComponent = () => {
             data-testid={"proposal-request-#" + item.id}
             onClick={() => {
               props.onSelectRequest(item.id);
-              setProposalDetailsId(item.id);
             }}
             className={
               "cursor-pointer proposal-row " +
               (voteProposalId === item.id ||
               highlightProposalId === item.id ||
-              proposalDetailsId === item.id
+              props.selectedProposalDetailsId === item.id
                 ? "bg-highlight"
                 : "")
             }
