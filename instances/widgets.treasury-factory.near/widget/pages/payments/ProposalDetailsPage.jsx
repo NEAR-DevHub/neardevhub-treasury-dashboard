@@ -1,9 +1,10 @@
-const { Approval, Reject, Warning } = VM.require(
+const { Approval, Reject, Warning, Copy } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Icons"
 ) || {
   Approval: () => <></>,
   Reject: () => <></>,
   Warning: () => <></>,
+  Copy: () => <></>,
 };
 
 const { CardSkeleton } = VM.require(
@@ -294,14 +295,14 @@ const CopyComponent = () => {
 
   return isCompactVersion ? (
     <div className="cursor-pointer" onClick={onCopy}>
-      <i className="bi bi-copy h5 mb-0"></i>
+      <Copy width={26} height={26} />
     </div>
   ) : (
     <button
       className="btn btn-outline-plain d-flex gap-1 align-items-center"
       onClick={onCopy}
     >
-      <i class="bi bi-copy"></i>
+      <Copy />
       Copy link
     </button>
   );
