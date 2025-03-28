@@ -2,7 +2,7 @@ const { TransactionLoader } = VM.require(
   `${REPL_DEVDAO_ACCOUNT}/widget/components.TransactionLoader`
 ) || { TransactionLoader: () => <></> };
 
-const { formFields, setShowCongratsModal } = props;
+const { formFields, showCongratsModal } = props;
 
 const REQUIRED_BALANCE = 9;
 
@@ -74,9 +74,8 @@ useEffect(() => {
         .then((web4) => {
           if (web4) {
             setTxnCreated(false);
-            setShowCongratsModal(true);
+            showCongratsModal(true);
             clearTimeout(checkTxnTimeout);
-            Storage.set("TreasuryAccountName", formFields.accountName);
           } else {
             checkTxnTimeout = setTimeout(checkAccountCreation, 1000);
           }
