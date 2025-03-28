@@ -80,6 +80,7 @@ function Page() {
         />
       );
     }
+
     default: {
       // TODO: 404 page
       return <p>404</p>;
