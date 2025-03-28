@@ -83,6 +83,15 @@ function Page() {
       );
     }
 
+    case "lockup": {
+      return (
+        <Widget
+          src={"${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.lockup.index"}
+          props={propsToSend}
+        />
+      );
+    }
+
     default: {
       // TODO: 404 page
       return <p>404</p>;

@@ -15,6 +15,7 @@ return {
       title: "Stake Delegation",
       href: "?page=stake-delegation",
     },
+    { title: "Lockup", href: "?page=lockup" },
     {
       title: "Settings",
       href: "?page=settings",
