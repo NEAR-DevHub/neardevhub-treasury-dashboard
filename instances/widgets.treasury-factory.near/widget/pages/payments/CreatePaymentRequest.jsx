@@ -466,23 +466,20 @@ return (
 
     <div className="d-flex flex-column gap-3">
       {lockupContract && (
-        <div className="d-flex flex-column gap-1">
-          <label>Treasury Wallet</label>
-          <Widget
-            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.WalletDropdown`}
-            props={{
-              lockupNearBalances,
-              instance,
-              selectedValue: selectedWallet,
-              onUpdate: (v) => {
-                if (v.value !== selectedWallet.value) {
-                  cleanInputs();
-                }
-                setSelectedWallet(v);
-              },
-            }}
-          />
-        </div>
+        <Widget
+          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.WalletDropdown`}
+          props={{
+            lockupNearBalances,
+            instance,
+            selectedValue: selectedWallet,
+            onUpdate: (v) => {
+              if (v.value !== selectedWallet.value) {
+                cleanInputs();
+              }
+              setSelectedWallet(v);
+            },
+          }}
+        />
       )}
       {showProposalSelection && (
         <div className="d-flex flex-column gap-1">
