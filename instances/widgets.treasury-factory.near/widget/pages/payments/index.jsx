@@ -118,6 +118,7 @@ return typeof proposalDetailsPageId === "number" ? (
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Tabs`}
           props={{
             ...props,
+            selectedProposalDetailsId: showProposalDetailsId,
             tabs: [
               {
                 title: "Pending Requests",

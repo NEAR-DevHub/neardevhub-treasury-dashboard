@@ -104,7 +104,10 @@ return (
     </div>
     {currentTab && (
       <div className="w-100 h-100" key={currentTab.title}>
-        <Widget src={currentTab.href} props={currentTabProps} />
+        <Widget
+          src={currentTab.href}
+          props={{ ...currentTabProps, ...props }}
+        />
       </div>
     )}
   </Container>
