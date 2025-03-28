@@ -141,7 +141,13 @@ useEffect(() => {
     const checkForVoteOnProposal = () => {
       getProposalData()
         .then((proposal) => {
-          if (JSON.stringify(proposal.votes) !== JSON.stringify(votes)) {
+          const sortedProposalVotes = JSON.stringify(
+            Object.keys(proposal?.votes ?? {}).sort()
+          );
+          const sortedVotes = JSON.stringify(Object.keys(votes ?? {}).sort());
+          if (
+            JSON.stringify(sortedProposalVotes) !== JSON.stringify(sortedVotes)
+          ) {
             checkProposalStatus();
             clearTimeout(checkTxnTimeout);
             setTxnCreated(false);
