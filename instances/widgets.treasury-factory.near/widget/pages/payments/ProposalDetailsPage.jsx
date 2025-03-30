@@ -189,7 +189,7 @@ const ProposalStatus = () => {
         <Status
           className="success-icon"
           bgColor="rgba(60, 177, 121, 0.16)"
-          icon={<Approval width={30} height={30} hideStroke={true} />}
+          icon={<Approval width={50} height={50} hideStroke={true} />}
           label="Payment Request Funded"
         />
       );
@@ -198,7 +198,7 @@ const ProposalStatus = () => {
         <Status
           className="error-icon"
           bgColor="rgba(217, 92, 74, 0.16)"
-          icon={<Reject width={30} height={30} hideStroke={true} />}
+          icon={<Reject width={50} height={50} hideStroke={true} />}
           label="Payment Request Rejected"
         />
       );
@@ -207,7 +207,7 @@ const ProposalStatus = () => {
         <Status
           className="error-icon"
           bgColor="rgba(217, 92, 74, 0.16)"
-          icon={<Reject width={30} height={30} hideStroke={true} />}
+          icon={<Reject width={50} height={50} hideStroke={true} />}
           label="Payment Request Deleted"
         />
       );
@@ -216,7 +216,7 @@ const ProposalStatus = () => {
         <Status
           className="warning-icon"
           bgColor="rgba(177, 113, 8, 0.16)"
-          icon={<Warning width={30} height={30} />}
+          icon={<Warning width={50} height={50} />}
           label="Payment Request Failed"
         />
       );
@@ -321,6 +321,59 @@ const Navbar = () => {
   ) : null;
 };
 
+const MainSkeleton = () => {
+  return (
+    <div className="card card-body d-flex flex-column gap-3">
+      <div className="w-50" style={{ height: 35 }}>
+        <CardSkeleton />
+      </div>
+      <div className="w-100" style={{ height: 150 }}>
+        <CardSkeleton />
+      </div>
+      <div className="w-100" style={{ height: 50 }}>
+        <CardSkeleton />
+      </div>
+      <div className="w-100" style={{ height: 50 }}>
+        <CardSkeleton />
+      </div>
+    </div>
+  );
+};
+
+const SecondaryTopSkeleton = () => {
+  return (
+    <div className="card card-body d-flex flex-column gap-3 h-100">
+      <div className="w-100" style={{ height: 50 }}>
+        <CardSkeleton />
+      </div>
+      <div className="d-flex gap-2 align-items-center">
+        <div className="w-100" style={{ height: 50 }}>
+          <CardSkeleton />
+        </div>
+        <div className="w-100" style={{ height: 50 }}>
+          <CardSkeleton />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const SecondaryBottomSkeleton = () => {
+  return (
+    <div className="card card-body d-flex flex-column gap-3">
+      <div className="w-100" style={{ height: 50 }}>
+        <CardSkeleton />
+      </div>
+      <div className="w-100" style={{ height: 50 }}>
+        <CardSkeleton />
+      </div>
+      <div className="w-100" style={{ height: 50 }}>
+        <CardSkeleton />
+      </div>
+    </div>
+  );
+};
+
 if (!proposalData) {
   return (
     <Container key={id} className="container-lg d-flex flex-column gap-3">
@@ -331,18 +384,18 @@ if (!proposalData) {
             className="d-flex flex-column gap-2 w-100"
             style={{ height: "500px" }}
           >
-            <CardSkeleton />
-            <CardSkeleton />
-            <CardSkeleton />
+            <SecondaryTopSkeleton />
+            <MainSkeleton />
+            <SecondaryBottomSkeleton />
           </div>
         ) : (
-          <div className="d-flex gap-3 w-100" style={{ height: "600px" }}>
-            <div className="flex-3 h-100">
-              <CardSkeleton />
+          <div className="d-flex gap-3 w-100">
+            <div className="flex-3 ">
+              <MainSkeleton />
             </div>
             <div className="d-flex flex-column gap-3 flex-2 h-100">
-              <CardSkeleton />
-              <CardSkeleton />
+              <SecondaryTopSkeleton />
+              <SecondaryBottomSkeleton />
             </div>
           </div>
         )}
@@ -384,7 +437,7 @@ return (
       )}
       <div
         className="flex-3 d-flex flex-column gap-3"
-        style={{ minWidth: 300, height: "fit-content" }}
+        style={{ minWidth: 500, height: "fit-content" }}
       >
         <div className="card card-body d-flex flex-column gap-2">
           <div className="d-flex gap-2 justify-content-between flex-wrap">
@@ -448,7 +501,8 @@ return (
                   clipboard.writeText(proposalData?.args.receiver_id);
                 }}
               >
-               <Copy/>Copy Address
+                <Copy />
+                Copy Address
               </button>
             </div>
           </div>
@@ -469,7 +523,7 @@ return (
       </div>
       <div
         className={"flex-2 d-flex flex-column gap-3 "}
-        style={{ minWidth: 300 }}
+        style={{ minWidth: 500 }}
       >
         {!isCompactVersion && <VotesDetails />}
         <div

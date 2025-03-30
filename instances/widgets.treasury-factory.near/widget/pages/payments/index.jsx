@@ -79,9 +79,21 @@ const Container = styled.div`
   }
 
   .flex-secondary-item {
-    flex: 1.5;
+    flex: 1.7;
     min-width: 0;
     overflow: auto;
+    position: absolute;
+    right: 0;
+    width: 40%;
+    transform: translateX(100%);
+    opacity: 0;
+    transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+  }
+
+  .flex-secondary-item.show {
+    transform: translateX(0);
+    opacity: 1;
+    position: relative;
   }
 `;
 
@@ -141,8 +153,10 @@ return typeof proposalDetailsPageId === "number" ? (
           }}
         />
       </div>
-      {showProposalDetailsId && (
-        <div className="flex-secondary-item">
+      <div
+        className={`flex-secondary-item ${showProposalDetailsId ? "show" : ""}`}
+      >
+        {showProposalDetailsId && (
           <Widget
             src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.ProposalDetailsPage`}
             props={{
@@ -152,8 +166,8 @@ return typeof proposalDetailsPageId === "number" ? (
               onClose: () => setShowProposalId(null),
             }}
           />
-        </div>
-      )}
+        )}
+      </div>
     </div>
   </Container>
 );

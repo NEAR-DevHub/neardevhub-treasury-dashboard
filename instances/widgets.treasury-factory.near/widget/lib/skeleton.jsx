@@ -71,7 +71,7 @@ const TableSkeleton = ({ numberOfCols, numberOfRows, numberOfHiddenRows }) => {
 };
 
 const CardSkeleton = () => {
-  return <Skeleton className="rounded-4 w-100 h-100" />;
+  return <Skeleton className="rounded-2 w-100 h-100" />;
 };
 
 return { Skeleton, TableSkeleton, CardSkeleton };
