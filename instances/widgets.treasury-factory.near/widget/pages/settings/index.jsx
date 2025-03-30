@@ -1,4 +1,4 @@
-const { instance, selectedTab } = props;
+const { instance, selectedTab, tab } = props;
 
 const [leftNavbarOptions, setLeftBarOptions] = useState([
   {
@@ -32,9 +32,9 @@ const [leftNavbarOptions, setLeftBarOptions] = useState([
     props: { instance },
   },
   {
-    title: "System upgrade",
-    key: "system-upgrade",
-    href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.SystemUpgrade`,
+    title: "System updates",
+    key: "system-updates",
+    href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.systemupdates.SystemUpdates`,
     props: { instance },
   },
 ]);

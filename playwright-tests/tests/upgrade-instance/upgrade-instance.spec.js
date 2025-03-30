@@ -19,9 +19,10 @@ test.describe("Admin is logged in", function () {
     await sandbox.setupWidgetReferenceAccount(widget_reference_account_id);
 
     await page.goto(
-      `/${instanceAccount}/widget/app?page=settings&selectedTab=system-upgrade`
+      `/${instanceAccount}/widget/app?page=settings&selectedTab=system-updates`
     );
-    await expect(page.getByText("Web4 updates")).toBeVisible({
+    await page.getByText("Available Updates").click();
+    await expect(page.getByText("Web4 Contract")).toBeVisible({
       timeout: 10_000,
     });
 
