@@ -14,7 +14,7 @@ const STATIC_IMAGES = {
 const widgetBasePath = `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.create-treasury`;
 const alreadyCreatedATreasury = Storage.get(
   "TreasuryAccountName",
-  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.create-treasury.SummaryStep`
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.treasury.Create`
 );
 
 const [formFields, setFormFields] = useState({});
@@ -38,7 +38,13 @@ const STEPS = [
   />,
   <Widget
     src={`${widgetBasePath}.SummaryStep`}
-    props={{ formFields, setShowCongratsModal }}
+    props={{
+      formFields,
+      showCongratsModal: () => {
+        Storage.set("TreasuryAccountName", formFields.accountName);
+        setShowCongratsModal(true);
+      },
+    }}
   />,
 ];
 
@@ -149,7 +155,10 @@ return (
       <PageWrapper style={{ margin: "auto" }}>
         <Widget
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.SuccessPage`}
-          props={{ formFields }}
+          props={{
+            formFields,
+            clearStorage: () => Storage.set("TreasuryAccountName", null),
+          }}
         />
       </PageWrapper>
     ) : (
