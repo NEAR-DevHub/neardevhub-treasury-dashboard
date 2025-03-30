@@ -1,7 +1,7 @@
-const { formFields } = props;
+const { formFields, clearStorage } = props;
 const storageAccountName = Storage.get(
   "TreasuryAccountName",
-  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.create-treasury.SummaryStep`
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.treasury.Create`
 );
 
 const accountName = formFields.accountName ?? storageAccountName;
@@ -169,7 +169,7 @@ return (
     <a
       href="?page=create-treasury"
       className="btn btn-transparent w-100"
-      onClick={() => Storage.set("TreasuryAccountName", null)}
+      onClick={clearStorage}
     >
       Create another Treasury
     </a>

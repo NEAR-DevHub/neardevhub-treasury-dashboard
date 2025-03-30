@@ -1,4 +1,4 @@
-const { getNearBalances, TooltipText } = VM.require(
+const { getNearBalances, TooltipText, deserializeLockupContract } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
 const { NearToken } = VM.require(
@@ -9,7 +9,11 @@ const { Skeleton } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.skeleton"
 );
 
-if (typeof getNearBalances !== "function" || !Skeleton) {
+if (
+  typeof getNearBalances !== "function" ||
+  !Skeleton ||
+  typeof deserializeLockupContract !== "function"
+) {
   return <></>;
 }
 
@@ -488,151 +492,6 @@ const LockupRow = ({
     </div>
   );
 };
-
-function deserializeLockupContract(byteArray) {
-  let offset = 0;
-
-  function readU8() {
-    return byteArray[offset++];
-  }
-
-  function readU32() {
-    const bytes = [
-      byteArray[offset++],
-      byteArray[offset++],
-      byteArray[offset++],
-      byteArray[offset++],
-    ];
-    let result = new BN(0);
-    for (let i = 0; i < 4; i++) {
-      result = result.add(new BN(bytes[i]).mul(new BN(256).pow(new BN(i))));
-    }
-    return result;
-  }
-
-  function readU64() {
-    const bytes = Array(8)
-      .fill(0)
-      .map(() => byteArray[offset++]);
-    let result = new BN(0);
-    for (let i = 0; i < 8; i++) {
-      result = result.add(new BN(bytes[i]).mul(new BN(256).pow(new BN(i))));
-    }
-    return result;
-  }
-
-  function readU128() {
-    const bytes = Array(16)
-      .fill(0)
-      .map(() => byteArray[offset++]);
-    let result = new BN(0);
-    for (let i = 0; i < 16; i++) {
-      result = result.add(new BN(bytes[i]).mul(new BN(256).pow(new BN(i))));
-    }
-    return result;
-  }
-
-  function readString() {
-    const length = readU32().toNumber();
-    const strBytes = byteArray.slice(offset, offset + length);
-    offset += length;
-    return String.fromCharCode(...strBytes);
-  }
-
-  function readOption(reader) {
-    const hasValue = readU8() === 1;
-    return hasValue ? reader() : null;
-  }
-
-  function readVecU8() {
-    const length = readU32();
-    const bytes = byteArray.slice(offset, offset + length);
-    offset += length;
-    return Array.from(bytes);
-  }
-
-  // Deserialize TransfersInformation enum
-  function readTransfersInformation() {
-    const variant = readU8();
-    if (variant === 0) {
-      return {
-        type: "TransfersEnabled",
-        transfers_timestamp: readU64(),
-      };
-    } else if (variant === 1) {
-      return {
-        type: "TransfersDisabled",
-        transfer_poll_account_id: readString(),
-      };
-    }
-    console.log("var", variant);
-    throw `Invalid TransfersInformation variant ${variant}`;
-  }
-
-  // Deserialize TransactionStatus enum
-  function readTransactionStatus() {
-    const variant = readU8();
-    return variant === 0 ? "Idle" : "Busy";
-  }
-
-  // Deserialize VestingSchedule
-  function readVestingSchedule() {
-    return {
-      start_timestamp: readU64(),
-      cliff_timestamp: readU64(),
-      end_timestamp: readU64(),
-    };
-  }
-
-  // Deserialize VestingInformation enum
-  function readVestingInformation() {
-    const variant = readU8();
-    switch (variant) {
-      case 0:
-        return { type: "None" };
-      case 1:
-        return {
-          type: "VestingHash",
-          hash: readVecU8(),
-        };
-      case 2:
-        return {
-          type: "VestingSchedule",
-          schedule: readVestingSchedule(),
-        };
-      case 3:
-        return {
-          type: "Terminating",
-          unvested_amount: readU128(),
-          status: readU8(), // TerminationStatus as simple u8 for now
-        };
-      default:
-        throw new Error("Invalid VestingInformation variant");
-    }
-  }
-
-  const result = {
-    owner_account_id: readString(),
-    lockup_information: {
-      lockup_amount: readU128(),
-      termination_withdrawn_tokens: readU128(),
-      lockup_duration: readU64(),
-      release_duration: readOption(readU64),
-      lockup_timestamp: readOption(readU64),
-      transfers_information: readTransfersInformation(),
-    },
-    vesting_information: readVestingInformation(),
-    staking_pool_whitelist_account_id: readString(),
-    staking_information: readOption(() => ({
-      staking_pool_account_id: readString(),
-      status: readTransactionStatus(),
-      deposit_amount: readU128(),
-    })),
-    foundation_account_id: readOption(readString),
-  };
-
-  return result;
-}
 
 function convertToDate(nanoseconds) {
   const milliseconds = Number(nanoseconds) / 1_000_000; // Convert to milliseconds
