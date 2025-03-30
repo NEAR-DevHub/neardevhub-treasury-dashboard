@@ -216,7 +216,7 @@ const ProposalStatus = () => {
         <Status
           className="warning-icon"
           bgColor="rgba(177, 113, 8, 0.16)"
-          icon={<Warning width={50} height={50} />}
+          icon={<Warning width={40} height={40} />}
           label="Payment Request Failed"
         />
       );
