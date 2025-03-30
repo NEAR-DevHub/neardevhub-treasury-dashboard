@@ -33,14 +33,14 @@ const StakeIcon = ({ height, width }) => (
     <path
       d="M15.8333 9.1665H4.16667C3.24619 9.1665 2.5 9.9127 2.5 10.8332V16.6665C2.5 17.587 3.24619 18.3332 4.16667 18.3332H15.8333C16.7538 18.3332 17.5 17.587 17.5 16.6665V10.8332C17.5 9.9127 16.7538 9.1665 15.8333 9.1665Z"
       stroke="var(--icon-color)"
-      stroke-width="1.66667"
+      stroke-width="1"
       stroke-linecap="round"
       stroke-linejoin="round"
     />
     <path
       d="M5.83325 9.1665V5.83317C5.83325 4.7281 6.27224 3.66829 7.05364 2.88689C7.83504 2.10549 8.89485 1.6665 9.99992 1.6665C11.105 1.6665 12.1648 2.10549 12.9462 2.88689C13.7276 3.66829 14.1666 4.7281 14.1666 5.83317V9.1665"
       stroke="var(--icon-color)"
-      stroke-width="1.66667"
+      stroke-width="1"
       stroke-linecap="round"
       stroke-linejoin="round"
     />
@@ -58,14 +58,14 @@ const UnstakeIcon = ({ height, width }) => (
     <path
       d="M15.8333 9.1665H4.16667C3.24619 9.1665 2.5 9.9127 2.5 10.8332V16.6665C2.5 17.587 3.24619 18.3332 4.16667 18.3332H15.8333C16.7538 18.3332 17.5 17.587 17.5 16.6665V10.8332C17.5 9.9127 16.7538 9.1665 15.8333 9.1665Z"
       stroke="var(--icon-color)"
-      stroke-width="1.66667"
+      stroke-width="1"
       stroke-linecap="round"
       stroke-linejoin="round"
     />
     <path
       d="M5.83325 9.16679V5.83346C5.83222 4.80017 6.21515 3.80335 6.90773 3.03652C7.60031 2.26968 8.55311 1.78755 9.58117 1.6837C10.6092 1.57986 11.6392 1.86171 12.4711 2.47456C13.3031 3.0874 13.8776 3.9875 14.0833 5.00013"
       stroke="var(--icon-color)"
-      stroke-width="1.66667"
+      stroke-width="1"
       stroke-linecap="round"
       stroke-linejoin="round"
     />
@@ -83,21 +83,21 @@ const WithdrawIcon = ({ height, width }) => (
     <path
       d="M2.5 7.5L2.5 4.16667C2.5 3.72464 2.6756 3.30072 2.98816 2.98816C3.30072 2.6756 3.72464 2.5 4.16667 2.5L15.8333 2.5C16.2754 2.5 16.6993 2.67559 17.0118 2.98816C17.3244 3.30072 17.5 3.72464 17.5 4.16667L17.5 7.5"
       stroke="var(--icon-color)"
-      stroke-width="1.66667"
+      stroke-width="1"
       stroke-linecap="round"
       stroke-linejoin="round"
     />
     <path
       d="M5.83341 13.3335L10.0001 17.5002L14.1667 13.3335"
       stroke="var(--icon-color)"
-      stroke-width="1.66667"
+      stroke-width="1"
       stroke-linecap="round"
       stroke-linejoin="round"
     />
     <path
       d="M10 17.5L10 7.5"
       stroke="var(--icon-color)"
-      stroke-width="1.66667"
+      stroke-width="1"
       stroke-linecap="round"
       stroke-linejoin="round"
     />
@@ -119,7 +119,7 @@ const AccountLocker = ({ height, width }) => (
       height="15"
       rx="2.5"
       stroke="var(--icon-color)"
-      stroke-width="1.66667"
+      stroke-width="1"
       stroke-linecap="round"
       stroke-linejoin="round"
     />
@@ -128,49 +128,49 @@ const AccountLocker = ({ height, width }) => (
       cy="10"
       r="2.5"
       stroke="var(--icon-color)"
-      stroke-width="1.66667"
+      stroke-width="1"
       stroke-linecap="round"
       stroke-linejoin="round"
     />
     <path
       d="M12.9166 7.9165L14.5118 6.32133"
       stroke="var(--icon-color)"
-      stroke-width="1.66667"
+      stroke-width="1"
       stroke-linecap="round"
       stroke-linejoin="round"
     />
     <path
       d="M12.8453 11.6665L14.5115 13.3331"
       stroke="var(--icon-color)"
-      stroke-width="1.66667"
+      stroke-width="1"
       stroke-linecap="round"
       stroke-linejoin="round"
     />
     <path
       d="M7.5 13.3335L8.75 12.0835"
       stroke="var(--icon-color)"
-      stroke-width="1.66667"
+      stroke-width="1"
       stroke-linecap="round"
       stroke-linejoin="round"
     />
     <path
       d="M7.5 6.32178L9.09526 7.91703"
       stroke="var(--icon-color)"
-      stroke-width="1.66667"
+      stroke-width="1"
       stroke-linecap="round"
       stroke-linejoin="round"
     />
     <path
       d="M1.66663 6.6665H2.49996"
       stroke="var(--icon-color)"
-      stroke-width="1.66667"
+      stroke-width="1"
       stroke-linecap="round"
       stroke-linejoin="round"
     />
     <path
       d="M1.66663 13.3335H2.49996"
       stroke="var(--icon-color)"
-      stroke-width="1.66667"
+      stroke-width="1"
       stroke-linecap="round"
       stroke-linejoin="round"
     />
@@ -186,7 +186,7 @@ const Whitelist = ({ height, width }) => (
     xmlns="http://www.w3.org/2000/svg"
   >
     <path
-      d="M11.3333 1L4 8.33333L0.666672 5"
+      d="M11.3333 1L4 8.33333L02 5"
       stroke="var(--icon-color)"
       stroke-width="1.33333"
       stroke-linecap="round"
@@ -207,7 +207,7 @@ const VerifiedTick = ({ height, width }) => (
       d="M16.5879 5.32409L16.5872 5.32426L16.0542 4.03729L16.0541 4.0371C15.7665 3.34304 15.215 2.79162 14.5209 2.50411C13.8271 2.21673 13.0476 2.21654 12.3537 2.50355C12.3534 2.50368 12.353 2.50381 12.3527 2.50395L11.066 3.03463L11.0633 3.03573C11.0226 3.05263 10.9769 3.0527 10.9361 3.03594L9.64994 2.5032C8.95569 2.21563 8.17564 2.21563 7.4814 2.5032C6.78715 2.79076 6.23557 3.34234 5.94801 4.03658L5.41514 5.32304C5.39813 5.36358 5.36578 5.39576 5.32514 5.41257L5.32437 5.41289L4.0378 5.9458C4.03767 5.94585 4.03754 5.94591 4.03741 5.94596C3.69362 6.0883 3.38124 6.29695 3.11809 6.56002C2.85484 6.82318 2.64602 7.13564 2.50358 7.47954C2.36113 7.82343 2.28784 8.19203 2.2879 8.56426C2.28796 8.93615 2.36123 9.30439 2.50353 9.64798C2.50366 9.64829 2.50379 9.6486 2.50392 9.64891L3.03555 10.9361L3.03639 10.9381C3.05329 10.9788 3.05336 11.0246 3.0366 11.0653L2.50386 12.3515L2.50352 12.3523C2.21654 13.0465 2.21693 13.8261 2.5046 14.52L3.6827 14.0315L2.5046 14.52C2.79227 15.2138 3.34369 15.7651 4.03763 16.0525L5.32443 16.5855C5.36524 16.6025 5.39765 16.6349 5.41454 16.6758L5.41485 16.6765L5.94847 17.9648L5.94879 17.9656C6.23655 18.6591 6.78782 19.21 7.4815 19.4973C8.17519 19.7847 8.95456 19.7849 9.64841 19.498L9.64856 19.4979L10.9364 18.9652L10.9378 18.9647C10.9786 18.9477 11.0245 18.9477 11.0654 18.9646L12.3512 19.4972C13.0455 19.7848 13.8255 19.7848 14.5198 19.4972L14.0095 18.2654L14.5198 19.4972C15.214 19.2096 15.7656 18.6581 16.0532 17.9638L16.5862 16.677C16.6031 16.6362 16.6356 16.6038 16.6764 16.5869L16.6772 16.5866L17.9638 16.0537C17.9639 16.0536 17.964 16.0536 17.9641 16.0535C18.3079 15.9112 18.6203 15.7025 18.8835 15.4395C19.1467 15.1763 19.3555 14.8638 19.498 14.5199C19.6404 14.176 19.7137 13.8074 19.7137 13.4352C19.7136 13.0633 19.6403 12.6951 19.4981 12.3516C19.498 12.3515 19.498 12.3514 19.4979 12.3513C19.4978 12.3511 19.4977 12.3508 19.4976 12.3506L18.9659 11.065L18.9647 11.0622C18.9485 11.0231 18.948 10.9778 18.9652 10.9362L19.4982 9.64927C19.7858 8.95503 19.7858 8.17498 19.4982 7.48074C19.2107 6.78649 18.6591 6.23491 17.9649 5.94735L16.6778 5.41422C16.6371 5.39724 16.6048 5.36484 16.5879 5.32409Z"
       fill="#3CB179"
       stroke="var(--bg-page-color)"
-      stroke-width="2.66667"
+      stroke-width="2"
     />
     <path
       fill-rule="evenodd"
@@ -246,14 +246,14 @@ const User = ({ height, width }) => (
     <path
       d="M16.6666 17.5V15.8333C16.6666 14.9493 16.3155 14.1014 15.6903 13.4763C15.0652 12.8512 14.2174 12.5 13.3333 12.5H6.66665C5.78259 12.5 4.93474 12.8512 4.30962 13.4763C3.6845 14.1014 3.33331 14.9493 3.33331 15.8333V17.5"
       stroke="var(--icon-color)"
-      stroke-width="1.66667"
+      stroke-width="1"
       stroke-linecap="round"
       stroke-linejoin="round"
     />
     <path
       d="M10 9.16667C11.841 9.16667 13.3334 7.67428 13.3334 5.83333C13.3334 3.99238 11.841 2.5 10 2.5C8.15907 2.5 6.66669 3.99238 6.66669 5.83333C6.66669 7.67428 8.15907 9.16667 10 9.16667Z"
       stroke="var(--icon-color)"
-      stroke-width="1.66667"
+      stroke-width="1"
       stroke-linecap="round"
       stroke-linejoin="round"
     />
@@ -272,14 +272,14 @@ const Copy = ({ height, width }) => (
       <path
         d="M16.6667 7.5H9.16667C8.24619 7.5 7.5 8.24619 7.5 9.16667V16.6667C7.5 17.5871 8.24619 18.3333 9.16667 18.3333H16.6667C17.5871 18.3333 18.3333 17.5871 18.3333 16.6667V9.16667C18.3333 8.24619 17.5871 7.5 16.6667 7.5Z"
         stroke="var(--icon-color)"
-        stroke-width="1.66667"
+        stroke-width="1"
         stroke-linecap="round"
         stroke-linejoin="round"
       />
       <path
         d="M4.16669 12.4998H3.33335C2.89133 12.4998 2.4674 12.3242 2.15484 12.0117C1.84228 11.6991 1.66669 11.2752 1.66669 10.8332V3.33317C1.66669 2.89114 1.84228 2.46722 2.15484 2.15466C2.4674 1.8421 2.89133 1.6665 3.33335 1.6665H10.8334C11.2754 1.6665 11.6993 1.8421 12.0119 2.15466C12.3244 2.46722 12.5 2.89114 12.5 3.33317V4.1665"
         stroke="var(--icon-color)"
-        stroke-width="1.66667"
+        stroke-width="1"
         stroke-linecap="round"
         stroke-linejoin="round"
       />
@@ -362,21 +362,21 @@ const Warning = ({ height, width }) => (
     <path
       d="M10.4801 3.16675H21.5201L29.3334 10.9801V22.0201L21.5201 29.8334H10.4801L2.66675 22.0201V10.9801L10.4801 3.16675Z"
       stroke="#B17108"
-      stroke-width="2.66667"
+      stroke-width="2"
       stroke-linecap="round"
       stroke-linejoin="round"
     />
     <path
       d="M16 11.1667V16.5001"
       stroke="#B17108"
-      stroke-width="2.66667"
+      stroke-width="2"
       stroke-linecap="round"
       stroke-linejoin="round"
     />
     <path
       d="M16 21.8333H16.0133"
       stroke="#B17108"
-      stroke-width="2.66667"
+      stroke-width="2"
       stroke-linecap="round"
       stroke-linejoin="round"
     />

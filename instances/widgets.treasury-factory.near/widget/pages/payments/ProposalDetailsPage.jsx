@@ -448,7 +448,7 @@ return (
                   clipboard.writeText(proposalData?.args.receiver_id);
                 }}
               >
-                <i class="bi bi-copy"></i>Copy Address
+               <Copy/>Copy Address
               </button>
             </div>
           </div>
