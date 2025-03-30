@@ -740,7 +740,7 @@ test.describe("Have valid staked requests and sufficient token balance", functio
       await sandbox.attachRoutes(page);
       await sandbox.setupSandboxForSputnikDao(daoName);
       const args = "eyJhbW91bnQiOiIzMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAifQ==";
-      const description = `* Proposal Action: withdraw <br>* Show After Proposal Id Approved: 2 <br>* Custom Notes: Following to [#2](/${instanceAccount}/widget/app?page=stake-delegation&selectedTab=History&highlightProposalId=2) unstake request`;
+      const description = `* Proposal Action: withdraw <br>* Show After Proposal Id Approved: 2 <br>* Custom Notes: Following to [#2](/${instanceAccount}/widget/app?page=stake-delegation&tab=History&highlightProposalId=2) unstake request`;
       await sandbox.addUnstakeRequestProposal({
         stakedPoolAccount,
         functionCallArgs: args,
@@ -1410,7 +1410,7 @@ test.describe("Lockup staking", function () {
       const dataReceived = JSON.parse(txnLocator);
       expect(dataReceived).toEqual({
         proposal: {
-          description: `* Proposal Action: withdraw <br>* Show After Proposal Id Approved: ${lastProposalId} <br>* Custom Notes: Following to [#${lastProposalId}](/${instanceAccount}/widget/app?page=stake-delegation&selectedTab=History&highlightProposalId=${lastProposalId}) unstake request`,
+          description: `* Proposal Action: withdraw <br>* Show After Proposal Id Approved: ${lastProposalId} <br>* Custom Notes: Following to [#${lastProposalId}](/${instanceAccount}/widget/app?page=stake-delegation&tab=History&highlightProposalId=${lastProposalId}) unstake request`,
           kind: {
             FunctionCall: {
               receiver_id: lockupContract,
