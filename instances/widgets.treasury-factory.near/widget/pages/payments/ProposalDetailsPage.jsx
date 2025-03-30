@@ -189,7 +189,7 @@ const ProposalStatus = () => {
         <Status
           className="success-icon"
           bgColor="rgba(60, 177, 121, 0.16)"
-          icon={<Approval width={50} height={50} hideStroke={true} />}
+          icon={<Approval width={35} height={35} hideStroke={true} />}
           label="Payment Request Funded"
         />
       );
@@ -198,7 +198,7 @@ const ProposalStatus = () => {
         <Status
           className="error-icon"
           bgColor="rgba(217, 92, 74, 0.16)"
-          icon={<Reject width={50} height={50} hideStroke={true} />}
+          icon={<Reject width={40} height={40} hideStroke={true} />}
           label="Payment Request Rejected"
         />
       );
@@ -207,7 +207,7 @@ const ProposalStatus = () => {
         <Status
           className="error-icon"
           bgColor="rgba(217, 92, 74, 0.16)"
-          icon={<Reject width={50} height={50} hideStroke={true} />}
+          icon={<Reject width={40} height={40} hideStroke={true} />}
           label="Payment Request Deleted"
         />
       );
@@ -225,7 +225,7 @@ const ProposalStatus = () => {
         <Status
           className="text-grey-02"
           bgColor="var(--grey-04)"
-          icon={<i class="bi bi-clock h5 mb-0"></i>}
+          icon={<i class="bi bi-clock h2 mb-0"></i>}
           label="Payment Request Expired"
         />
       );
@@ -417,7 +417,7 @@ return (
           className="d-flex flex-column gap-2 rounded-4 border border-1"
           style={{ backgroundColor: "var(--grey-05)" }}
         >
-          <div className="d-flex justify-content-between gap-2 align-items-center px-3 pt-2">
+          <div className="d-flex justify-content-between gap-2 align-items-center px-3 pt-3">
             <div className="cursor-pointer" onClick={() => props.onClose()}>
               <i class="bi bi-x-lg h5 mb-0"></i>
             </div>

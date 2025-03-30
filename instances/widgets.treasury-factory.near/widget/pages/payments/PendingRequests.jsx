@@ -77,7 +77,7 @@ const deleteGroup = getApproversAndThreshold(
 
 useEffect(() => {
   props.onSelectRequest(null);
-}, [currentPage]);
+}, [currentPage, rowsPerPage]);
 
 return (
   <div className="d-flex flex-column flex-1 justify-content-between">
