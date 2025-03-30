@@ -556,12 +556,11 @@ export async function mockWithFTBalance({
           block_hash: "Hu4y62y9L8zvoSkeKHan3up7UWAxxuB9P2J9S89eMvp1",
           block_height: 141681041,
           logs: [],
-          result: isSufficient
-            ? [
-                49, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48,
-                48, 48, 48, 48, 48, 48,
-              ]
-            : [34, 49],
+          result: Array.from(
+            new TextEncoder().encode(
+              isSufficient ? "100000000000000000000" : "10"
+            )
+          ),
         },
         id: "dontcare",
       };
