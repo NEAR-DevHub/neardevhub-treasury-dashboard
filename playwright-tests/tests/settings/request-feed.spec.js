@@ -157,6 +157,31 @@ test.describe("User is not logged in", function () {
     await expect(page.getByText("Transaction Details")).toBeVisible();
     await expect(page.getByText("Expired")).toBeVisible();
   });
+
+  test("Should navigate to different settings tabs", async ({
+    page,
+    instanceAccount,
+  }) => {
+    test.setTimeout(120_000);
+    await page.goto(`/${instanceAccount}/widget/app?page=settings`);
+    await page.waitForTimeout(5000);
+
+    const tabs = [
+      { name: "Members", url: "members" },
+      { name: "Voting Thresholds", url: "voting-thresholds" },
+      { name: "Voting Duration", url: "voting-duration" },
+      { name: "Theme & Logo", url: "theme-logo" },
+    ];
+
+    for (const tab of tabs) {
+      await page.getByRole("link", { name: tab.name }).click();
+      await expect(page).toHaveURL(
+        `http://localhost:8080/${instanceAccount}/widget/app?page=settings&tab=${tab.url}`
+      );
+      await page.waitForTimeout(5000);
+      await expect(page.getByText(tab.name).first()).toBeVisible();
+    }
+  });
 });
 
 test.describe.parallel("User logged in with different roles", function () {
