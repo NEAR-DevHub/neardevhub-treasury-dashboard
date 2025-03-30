@@ -10,6 +10,9 @@ export const SPUTNIK_DAO_CONTRACT_ID = "sputnik-dao.near";
 // we don't have proposal bond for any instance (in this repo)
 export const PROPOSAL_BOND = "0";
 
+export const DEFAULT_WIDGET_REFERENCE_ACCOUNT_ID =
+  "bootstrap.treasury-factory.near";
+
 export class SandboxRPC {
   async init() {
     await new Promise((resolve) => {
@@ -81,7 +84,7 @@ export class SandboxRPC {
   }
 
   async setupDefaultWidgetReferenceAccount() {
-    const reference_widget_account_id = "bootstrap.treasury-factory.near";
+    const reference_widget_account_id = DEFAULT_WIDGET_REFERENCE_ACCOUNT_ID;
 
     const keyPair = utils.KeyPair.fromString(this.secret_key);
 
