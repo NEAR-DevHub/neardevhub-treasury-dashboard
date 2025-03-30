@@ -1,4 +1,4 @@
-const { instance, selectedTab } = props;
+const { instance, tab } = props;
 
 const [leftNavbarOptions, setLeftBarOptions] = useState([
   {
@@ -39,7 +39,7 @@ const Menu = useMemo(() => {
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.SidebarAndMainLayout`}
       props={{
         leftNavbarOptions,
-        selectedTab,
+        tab,
       }}
     />
   );
