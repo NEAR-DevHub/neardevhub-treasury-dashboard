@@ -12,10 +12,7 @@ test.describe("Admin is logged in", function () {
     storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
   });
 
-  test("should go to system upgrade page", async ({
-    page,
-    instanceAccount,
-  }) => {
+  test("should go to system upgrade page", async ({ page }) => {
     test.setTimeout(200_000);
     const sandbox = new SandboxRPC();
     await sandbox.init();
@@ -23,7 +20,9 @@ test.describe("Admin is logged in", function () {
     const widget_reference_account_id = DEFAULT_WIDGET_REFERENCE_ACCOUNT_ID;
     await sandbox.setupDefaultWidgetReferenceAccount();
 
-    const instance_name = "theupgradable";
+    const instanceName = "theupgradable";
+
+    const instanceAccountId = `${instanceName}.near`;
 
     const createInstanceResult = await sandbox.account.functionCall({
       contractId: "treasury-factory.near",
@@ -32,11 +31,11 @@ test.describe("Admin is logged in", function () {
         sputnik_dao_factory_account_id: "sputnik-dao.near",
         social_db_account_id: "social.near",
         widget_reference_account_id: widget_reference_account_id,
-        name: instance_name,
+        name: instanceName,
         create_dao_args: Buffer.from(
           JSON.stringify(
             createDAOargs({
-              instanceName: instance_name,
+              instanceName: instanceName,
               adminAccountId: sandbox.account.accountId,
             })
           )
@@ -52,8 +51,9 @@ test.describe("Admin is logged in", function () {
       ).length
     ).toBe(0);
 
+    await sandbox.redirectWeb4(instanceAccountId, page);
     await page.goto(
-      `/${instanceAccount}/widget/app?page=settings&selectedTab=system-updates`
+      `https://${instanceName}.near.page/widget/app?page=settings&selectedTab=system-updates`
     );
     await page.getByText("Available Updates").click();
     await expect(page.getByText("Web4 Contract")).toBeVisible({

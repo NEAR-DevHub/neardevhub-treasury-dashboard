@@ -509,6 +509,68 @@ export class SandboxRPC {
     };
     await this.addProposal({ daoName, args });
   }
+
+  /**
+   * Redirect Web4 requests to the specified contract
+   * @param {string} contractId - The contract ID to redirect requests to
+   * @param {import('@playwright/test').Page} page - Playwright page object
+   */
+  async redirectWeb4(contractId, page) {
+    await page.route(
+      `https://${contractId}.page/**`,
+      async (route, request) => {
+        const path = request
+          .url()
+          .substring(`https://${contractId}.page`.length);
+        let viewResult = await this.account.viewFunction({
+          contractId,
+          methodName: "web4_get",
+          args: {
+            request: {
+              path,
+            },
+          },
+        });
+
+        if (viewResult.preloadUrls) {
+          const preloads = {};
+          for (let preloadUrl of viewResult.preloadUrls) {
+            const keys = JSON.parse(
+              decodeURIComponent(preloadUrl.split("?keys.json=")[1])
+            );
+            const preloadBody = await this.account.viewFunction({
+              contractId: "social.near",
+              methodName: "get",
+              args: {
+                keys,
+              },
+            });
+            preloads[preloadUrl] = {
+              contentType: "application/json",
+              body: btoa(JSON.stringify(preloadBody)),
+            };
+          }
+
+          viewResult = await this.account.viewFunction({
+            contractId,
+            methodName: "web4_get",
+            args: {
+              request: {
+                path,
+                preloads,
+              },
+            },
+          });
+        }
+
+        await route.fulfill({
+          contentType: viewResult.contentType,
+          body: atob(viewResult.body),
+        });
+      }
+    );
+  }
+
   /**
    * Time travel forward with the specified number of blocks
    * @param {number} numBlocks
