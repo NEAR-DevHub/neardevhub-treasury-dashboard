@@ -279,12 +279,14 @@ return (
                               txn.transaction_id.length - 4
                             )}
                           </a>
-                          <div
-                            className="cursor-pointer"
-                            onClick={() => clipboard.writeText(txnLink)}
-                          >
-                            <Copy width={26} height={26} />
-                          </div>
+                          <Widget
+                            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Copy`}
+                            props={{
+                              label: "",
+                              clipboardText: txnLink,
+                              showLogo: true,
+                            }}
+                          />
 
                           <a
                             target="_blank"

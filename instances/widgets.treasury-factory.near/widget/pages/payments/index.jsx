@@ -70,12 +70,14 @@ const Container = styled.div`
     display: flex;
     gap: 8px;
     overflow: hidden;
+    flex-wrap: wrap;
   }
 
   .flex-main-item {
     flex: 3;
     min-width: 0;
     overflow: auto;
+    min-width: 300px;
   }
 
   .flex-secondary-item {
@@ -88,6 +90,7 @@ const Container = styled.div`
     transform: translateX(100%);
     opacity: 0;
     transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+    min-width: 300px;
   }
 
   .flex-secondary-item.show {
