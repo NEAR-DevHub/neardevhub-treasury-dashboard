@@ -53,8 +53,9 @@ test.describe("Admin is logged in", function () {
 
     await sandbox.redirectWeb4(instanceAccountId, page);
     await page.goto(
-      `https://${instanceName}.near.page/widget/app?page=settings&selectedTab=system-updates`
+      `https://${instanceName}.near.page/widget/app?page=settings&tab=system-updates`
     );
+
     await page.getByText("Available Updates").click();
     await expect(page.getByText("Web4 Contract")).toBeVisible({
       timeout: 10_000,

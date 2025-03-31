@@ -559,10 +559,16 @@ export class SandboxRPC {
               }
               const content = fs
                 .readFileSync(filePath, "utf-8")
-                .replaceAll("${REPL_BASE_DEPLOYMENT_ACCOUNT}", account);
+                .replaceAll("${REPL_BASE_DEPLOYMENT_ACCOUNT}", account)
+                .replaceAll("${REPL_DEVHUB}", "devhub.near");
+
               fileContents[account][section][contentKey] = content;
             } else {
-              console.warn(`File not found for key: ${key} ${filePath}`);
+              console.warn(
+                `File not found for key: ${key} ${filePath}, going to live RPC`
+              );
+              await route.fallback();
+              return;
             }
           }
 

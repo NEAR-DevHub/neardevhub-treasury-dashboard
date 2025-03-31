@@ -35,7 +35,7 @@ const [leftNavbarOptions, setLeftBarOptions] = useState([
     title: "System updates",
     key: "system-updates",
     href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.systemupdates.SystemUpdates`,
-    props: { instance },
+    props: { instance, ...props },
   },
 ]);
 
