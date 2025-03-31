@@ -1,3 +1,5 @@
+const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url");
+
 const normalize = (text) =>
   text
     ? text
@@ -10,7 +12,7 @@ const normalize = (text) =>
         .trim("-")
     : "";
 
-const { selectedTab, page, leftNavbarOptions } = props;
+const { tab, page, leftNavbarOptions } = props;
 
 const Container = styled.div`
   .link {
@@ -37,9 +39,7 @@ const Container = styled.div`
 
 const defaultTab = leftNavbarOptions?.[0];
 
-const currentTabKey = selectedTab
-  ? normalize(selectedTab)
-  : normalize(defaultTab?.key);
+const currentTabKey = tab ? normalize(tab) : normalize(defaultTab?.key);
 
 const [currentTab, setCurrentTab] = useState(defaultTab);
 
@@ -48,30 +48,36 @@ useEffect(() => {
     leftNavbarOptions.find((i) => normalize(i.key) === currentTabKey) ??
       defaultTab
   );
-}, [selectedTab]);
+}, [tab]);
 
 return (
   <Container className="d-flex gap-4 flex-wrap">
     <div className="flex-1" style={{ height: "max-content" }}>
       <div className="d-flex gap-2 flex-column">
         {leftNavbarOptions.map((item) => {
-          const { title } = item;
+          const { title, key } = item;
           return (
-            <div
-              onClick={() => setCurrentTab(item)}
-              className={[
-                "link d-inline-flex gap-2 p-2 px-3 rounded-3 pointer",
-                currentTab.title === title ? "active" : "",
-              ].join(" ")}
-              key={title}
-              data-testid={title}
-            >
-              <div>{title}</div>
+            <div key={title} data-testid={title}>
+              <a
+                href={`?page=settings&tab=${key}`}
+                className="d-flex w-100"
+                style={{ textDecoration: "none" }}
+              >
+                <div
+                  className={[
+                    "link d-inline-flex gap-2 p-2 px-3 rounded-3 pointer w-100",
+                    currentTab.title === title ? "active" : "",
+                  ].join(" ")}
+                >
+                  <div>{title}</div>
+                </div>
+              </a>
             </div>
           );
         })}
       </div>
     </div>
+
     <div className="flex-5 w-100">
       {currentTab && (
         <div className="w-100 h-100" key={currentTab.key}>

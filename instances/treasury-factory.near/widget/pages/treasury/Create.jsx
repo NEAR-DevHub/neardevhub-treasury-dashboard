@@ -14,7 +14,7 @@ const STATIC_IMAGES = {
 const widgetBasePath = `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.create-treasury`;
 const alreadyCreatedATreasury = Storage.get(
   "TreasuryAccountName",
-  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.create-treasury.SummaryStep`
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.treasury.Create`
 );
 
 const [formFields, setFormFields] = useState({});
@@ -38,7 +38,13 @@ const STEPS = [
   />,
   <Widget
     src={`${widgetBasePath}.SummaryStep`}
-    props={{ formFields, setShowCongratsModal }}
+    props={{
+      formFields,
+      showCongratsModal: () => {
+        Storage.set("TreasuryAccountName", formFields.accountName);
+        setShowCongratsModal(true);
+      },
+    }}
   />,
 ];
 
@@ -143,13 +149,48 @@ const loading = (
   <Widget src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"} />
 );
 
+useEffect(() => {
+  if (props.transactionHashes) {
+    asyncFetch("${REPL_RPC_URL}", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: "dontcare",
+        method: "tx",
+        params: [props.transactionHashes, context.accountId],
+      }),
+    }).then((transaction) => {
+      if (transaction !== null) {
+        const transaction_method_name =
+          transaction?.body?.result?.transaction?.actions[0].FunctionCall
+            .method_name;
+        if (transaction_method_name === "create_instance") {
+          const args =
+            transaction?.body?.result?.transaction?.actions[0].FunctionCall
+              .args;
+          const decodedArgs = JSON.parse(atob(args ?? "") ?? "{}");
+          const treasuryName = decodedArgs?.name;
+          Storage.set("TreasuryAccountName", treasuryName);
+          setShowCongratsModal(true);
+        }
+      }
+    });
+  }
+}, [props.transactionHashes]);
+
 return (
   <div>
     {showCongratsModal ? (
       <PageWrapper style={{ margin: "auto" }}>
         <Widget
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.SuccessPage`}
-          props={{ formFields }}
+          props={{
+            formFields,
+            clearStorage: () => Storage.set("TreasuryAccountName", null),
+          }}
         />
       </PageWrapper>
     ) : (

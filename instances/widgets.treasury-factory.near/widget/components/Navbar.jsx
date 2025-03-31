@@ -39,14 +39,19 @@ useEffect(() => {
     const settingsIndex = updatedNavbarLinks.findIndex(
       (link) => link.title === "Settings"
     );
-    const lockupLink = {
-      title: "Lockup",
-      href: "?page=lockup",
-    };
+    const lockupExists = updatedNavbarLinks.some(
+      (link) => link.title === "Lockup"
+    );
 
-    if (settingsIndex !== -1)
-      updatedNavbarLinks.splice(settingsIndex, 0, lockupLink);
-    else updatedNavbarLinks.push(lockupLink);
+    if (!lockupExists) {
+      const lockupLink = { title: "Lockup", href: "?page=lockup" };
+
+      if (settingsIndex !== -1) {
+        updatedNavbarLinks.splice(settingsIndex, 0, lockupLink); // Insert before "Settings"
+      } else {
+        updatedNavbarLinks.push(lockupLink); // Add at the end if "Settings" is missing
+      }
+    }
 
     setNavbarWithAssetExchange(updatedNavbarLinks);
   }

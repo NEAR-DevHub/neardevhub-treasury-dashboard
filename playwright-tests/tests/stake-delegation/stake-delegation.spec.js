@@ -238,6 +238,7 @@ export async function mockLockupNearBalances({ page, balance }) {
 }
 
 async function selectLockupAccount({ page, daoAccount, lockupContract }) {
+  await page.waitForTimeout(5_000);
   await page.getByRole("button", { name: daoAccount }).click();
   await page.getByText(lockupContract).click();
 }
@@ -337,6 +338,37 @@ async function checkForStakeAmount({ page, errorText, availableBalance }) {
   await expect(amountErrorText).toBeHidden();
 }
 
+async function mockLockupState({ page, lockupContract }) {
+  await page.route(`https://rpc.mainnet.near.org`, async (route) => {
+    const request = await route.request();
+    const requestPostData = await request.postDataJSON();
+
+    if (
+      requestPostData.params &&
+      requestPostData.params.account_id === lockupContract &&
+      requestPostData.params.request_type === "view_state"
+    ) {
+      const json = {
+        jsonrpc: "2.0",
+        result: {
+          block_hash: "2Dc8Jh8mFU8bKe16hAVcZ3waQhhdfUXwvvnsDP9djN95",
+          block_height: 140432800,
+          values: [
+            {
+              key: "U1RBVEU=",
+              value:
+                "DAAAAG1lZ2hhMTkubmVhcgAAACWkAAqLyiIEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAABPkZROAAABAACi6omWKxgAfKTy6T+hPRYAGAAAAGxvY2t1cC1uby13aGl0ZWxpc3QubmVhcgAA",
+            },
+          ],
+        },
+        id: "dontcare",
+      };
+      await route.fulfill({ json });
+    } else {
+      await route.continue();
+    }
+  });
+}
 const NEAR_DIVISOR = 10n ** 24n;
 
 function formatNearAmount(amount) {
@@ -740,7 +772,7 @@ test.describe("Have valid staked requests and sufficient token balance", functio
       await sandbox.attachRoutes(page);
       await sandbox.setupSandboxForSputnikDao(daoName);
       const args = "eyJhbW91bnQiOiIzMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAifQ==";
-      const description = `* Proposal Action: withdraw <br>* Show After Proposal Id Approved: 2 <br>* Custom Notes: Following to [#2](/${instanceAccount}/widget/app?page=stake-delegation&selectedTab=History&highlightProposalId=2) unstake request`;
+      const description = `* Proposal Action: withdraw <br>* Show After Proposal Id Approved: 2 <br>* Custom Notes: Following to [#2](/${instanceAccount}/widget/app?page=stake-delegation&tab=History&highlightProposalId=2) unstake request`;
       await sandbox.addUnstakeRequestProposal({
         stakedPoolAccount,
         functionCallArgs: args,
@@ -1410,7 +1442,7 @@ test.describe("Lockup staking", function () {
       const dataReceived = JSON.parse(txnLocator);
       expect(dataReceived).toEqual({
         proposal: {
-          description: `* Proposal Action: withdraw <br>* Show After Proposal Id Approved: ${lastProposalId} <br>* Custom Notes: Following to [#${lastProposalId}](/${instanceAccount}/widget/app?page=stake-delegation&selectedTab=History&highlightProposalId=${lastProposalId}) unstake request`,
+          description: `* Proposal Action: withdraw <br>* Show After Proposal Id Approved: ${lastProposalId} <br>* Custom Notes: Following to [#${lastProposalId}](/${instanceAccount}/widget/app?page=stake-delegation&tab=History&highlightProposalId=${lastProposalId}) unstake request`,
           kind: {
             FunctionCall: {
               receiver_id: lockupContract,
@@ -1425,6 +1457,37 @@ test.describe("Lockup staking", function () {
             },
           },
         },
+      });
+    });
+  });
+
+  test.describe("Wallet dropdown shouldn't be visible when staking is not allowed", () => {
+    const dropdownOptions = [
+      { name: "Stake", option: 1 },
+      { name: "Unstake", option: 2 },
+      { name: "Withdraw", option: 3 },
+    ];
+
+    dropdownOptions.forEach(({ name, option }) => {
+      test(`shouldn't display wallet dropdown selector when opening ${name} request`, async ({
+        page,
+        lockupContract,
+      }) => {
+        test.setTimeout(120_000);
+        await expect(
+          page.getByText("Create Request", { exact: true })
+        ).toBeVisible();
+        await mockLockupState({ page, lockupContract });
+        await page.locator(".custom-select > .dropdown").first().click();
+        await page.locator(`.dropdown-menu > div:nth-child(${option})`).click();
+        await expect(page.getByText("Ready to stake")).toBeVisible(10_000);
+        await expect(
+          page.getByRole("heading", { name: `Create ${name} Request` })
+        ).toBeVisible(10_000);
+        await page.waitForTimeout(5_000);
+        await expect(
+          page.locator(".offcanvas-body").getByText("Treasury Wallet")
+        ).toBeHidden();
       });
     });
   });
