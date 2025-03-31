@@ -178,16 +178,6 @@ const Container = styled.div`
     border: none;
     color: red;
   }
-
-  .btn-approve {
-    background-color: var(--other-green) !important;
-    color: white;
-  }
-
-  .btn-reject {
-    background-color: var(--other-red) !important;
-    color: white;
-  }
 `;
 
 const InsufficientBalanceWarning = () => {
@@ -332,7 +322,7 @@ return (
                       src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
                       props={{
                         classNames: {
-                          root: "btn btn-approve w-100",
+                          root: "btn btn-success w-100",
                           label: "text-center w-100",
                         },
                         label: "Approve",
@@ -363,7 +353,7 @@ return (
                       src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
                       props={{
                         classNames: {
-                          root: "btn btn-reject w-100",
+                          root: "btn btn-danger w-100",
                           label: "text-center w-100",
                         },
                         label: "Reject",

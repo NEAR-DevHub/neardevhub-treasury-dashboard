@@ -164,6 +164,33 @@ const Container = styled.div`
   .text-grey-02 {
     color: var(--grey-02);
   }
+
+  .sticky-header {
+    position: sticky;
+    top: 0;
+    z-index: 10000;
+    background-color: var(--bg-system-color);
+
+    .content {
+      border: 1px solid var(--border-color);
+      border-bottom: 0px;
+      height: 60px !important;
+      background-color: var(--grey-05);
+    }
+
+    /* Create the bottom inward curve */
+    .content::after {
+      content: "";
+      position: absolute;
+      bottom: 0px;
+      left: 0px;
+      width: 100%;
+      height: 11px;
+      border-radius: 150rem 150rem 0px 0px;
+      border-top: 1px solid var(--border-color);
+      background: var(--bg-page-color) !important;
+    }
+  }
 `;
 
 const ProposalStatus = () => {
@@ -240,7 +267,7 @@ const VotesDetails = () => {
     <div
       className={
         "card card-body d-flex flex-column gap-3 justify-content-around " +
-        (isCompactVersion && " border-0 border-top")
+        (isCompactVersion && " border-0 rounded-top-0")
       }
     >
       <ProposalStatus />
@@ -289,7 +316,7 @@ const CopyComponent = () => {
   function onCopy(e) {
     e.stopPropagation();
     clipboard.writeText(
-      `https://${instance}.page?page=payments&id=${proposalData.id}`
+      `https://near.social/${instance}/widget/app?page=payments&id=${proposalData.id}`
     );
   }
 
@@ -299,7 +326,7 @@ const CopyComponent = () => {
     </div>
   ) : (
     <button
-      className="btn btn-outline-plain d-flex gap-1 align-items-center"
+      className="btn btn-outline-secondary d-flex gap-1 align-items-center"
       onClick={onCopy}
     >
       <Copy />
@@ -312,7 +339,7 @@ const Navbar = () => {
   return !isCompactVersion ? (
     <div className="d-flex justify-content-between gap-2 align-items-center">
       <a href={`?page=payments`}>
-        <button className="btn btn-outline-plain d-flex gap-1 align-items-center">
+        <button className="btn btn-outline-secondary d-flex gap-1 align-items-center">
           <i class="bi bi-arrow-left"></i> Back
         </button>
       </a>
@@ -405,36 +432,45 @@ if (!proposalData) {
 }
 
 return (
-  <Container key={id} className="container-lg d-flex flex-column gap-3">
+  <Container
+    key={id}
+    className="container-lg d-flex flex-column"
+    style={{
+      position: isCompactVersion ? "absolute" : "relative",
+      gap: isCompactVersion ? "0rem" : "1rem",
+    }}
+  >
     <Navbar />
+
+    {isCompactVersion && (
+      <div className="sticky-header">
+        <div className="d-flex justify-content-between gap-2 px-3 pt-3 rounded-top-4 content">
+          <div className="cursor-pointer" onClick={() => props.onClose()}>
+            <i class="bi bi-x-lg h5 mb-0"></i>
+          </div>
+          <h5>#{id}</h5>
+          <div className="d-flex gap-3">
+            <CopyComponent />
+            <a
+              className="cursor-pointer"
+              href={`?page=payments&id=${proposalData.id}`}
+            >
+              <i class="bi bi-arrows-angle-expand h5 mb-0"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    )}
+    {isCompactVersion && (
+      <div className="mb-3">
+        <VotesDetails />
+      </div>
+    )}
     <div
       className={
         "d-flex gap-3 flex-wrap " + (isCompactVersion && " flex-column")
       }
     >
-      {isCompactVersion && (
-        <div
-          className="d-flex flex-column gap-2 rounded-4 border border-1"
-          style={{ backgroundColor: "var(--grey-05)" }}
-        >
-          <div className="d-flex justify-content-between gap-2 align-items-center px-3 pt-3">
-            <div className="cursor-pointer" onClick={() => props.onClose()}>
-              <i class="bi bi-x-lg h5 mb-0"></i>
-            </div>
-            <h5>#{id}</h5>
-            <div className="d-flex gap-3">
-              <CopyComponent />
-              <a
-                className="cursor-pointer"
-                href={`?page=payments&id=${proposalData.id}`}
-              >
-                <i class="bi bi-arrows-angle-expand h5 mb-0"></i>
-              </a>
-            </div>
-          </div>
-          <VotesDetails />
-        </div>
-      )}
       <div
         className="flex-3 d-flex flex-column gap-3"
         style={{ minWidth: 500, height: "fit-content" }}
@@ -495,7 +531,7 @@ return (
                 }}
               />
               <button
-                className="btn btn-outline-plain d-flex gap-1 align-items-center"
+                className="btn btn-outline-secondary d-flex gap-1 align-items-center"
                 onClick={(e) => {
                   e.stopPropagation();
                   clipboard.writeText(proposalData?.args.receiver_id);

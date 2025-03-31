@@ -87,7 +87,7 @@ async function checkProposalDetailPage({
     await copyLink.click();
     await readClipboard({
       page,
-      expectedText: `https://${instanceAccount}.page?page=payments&id=1`,
+      expectedText: `https://near.social/${instanceAccount}/widget/app?page=payments&id=1`,
     });
     const backBtn = await page.getByRole("button", { name: " Back" });
     await backBtn.click();
