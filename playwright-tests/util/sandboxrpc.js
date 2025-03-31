@@ -5,6 +5,8 @@ import { parseNearAmount } from "near-api-js/lib/utils/format.js";
 import { KeyPairEd25519 } from "near-api-js/lib/utils/key_pair.js";
 import { getLocalWidgetSource } from "./bos-workspace.js";
 import { expect } from "@playwright/test";
+import fs from "fs";
+import path, { dirname } from "path";
 
 export const SPUTNIK_DAO_CONTRACT_ID = "sputnik-dao.near";
 // we don't have proposal bond for any instance (in this repo)
@@ -516,6 +518,72 @@ export class SandboxRPC {
    * @param {import('@playwright/test').Page} page - Playwright page object
    */
   async redirectWeb4(contractId, page) {
+    await page.route("https://rpc.mainnet.near.org", async (route, request) => {
+      const postData = request.postDataJSON();
+      if (postData.params.account_id.endsWith(SPUTNIK_DAO_CONTRACT_ID)) {
+        const response = await route.fetch({
+          url: this.rpc_url,
+          json: postData,
+        });
+        await route.fulfill({ response });
+      } else if (postData.params.account_id === "social.near") {
+        const args = JSON.parse(atob(postData.params.args_base64));
+        const keys = args.keys;
+
+        if (keys[0].startsWith(contractId)) {
+          const response = await route.fetch({
+            url: this.rpc_url,
+            json: postData,
+          });
+          await route.fulfill({ response });
+        } else {
+          const instancesFolder = path.resolve(dirname("."), "instances"); // Adjust the path if necessary
+          const fileContents = {};
+
+          for (const key of keys) {
+            // Replace dots with path separators only after "widget"
+            const [prefix, ...rest] = key.split("/widget/");
+            const normalizedKey = path.join(
+              prefix,
+              "widget",
+              rest.join("/").replace(/\./g, "/")
+            );
+            const filePath = path.join(instancesFolder, normalizedKey) + ".jsx";
+            if (fs.existsSync(filePath)) {
+              const [account, section, contentKey] = key.split("/");
+              if (fileContents[account] === undefined) {
+                fileContents[account] = {};
+              }
+              if (fileContents[account][section] === undefined) {
+                fileContents[account][section] = {};
+              }
+              const content = fs
+                .readFileSync(filePath, "utf-8")
+                .replaceAll("${REPL_BASE_DEPLOYMENT_ACCOUNT}", account);
+              fileContents[account][section][contentKey] = content;
+            } else {
+              console.warn(`File not found for key: ${key} ${filePath}`);
+            }
+          }
+
+          const json = {
+            jsonrpc: "2.0",
+            id: "dontcare",
+            result: {},
+          };
+
+          json["result"] = {
+            result: Array.from(
+              new TextEncoder().encode(JSON.stringify(fileContents))
+            ),
+          };
+          await route.fulfill({ json });
+        }
+      } else {
+        await route.fallback();
+      }
+    });
+
     await page.route(
       `https://${contractId}.page/**`,
       async (route, request) => {
