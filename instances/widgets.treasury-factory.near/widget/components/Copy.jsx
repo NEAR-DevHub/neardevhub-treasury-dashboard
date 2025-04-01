@@ -16,26 +16,8 @@ useEffect(() => {
   return () => clearTimeout(timer);
 }, [isCopied]);
 
-const Toast = () => {
-  return (
-    <div className="toast-container position-fixed bottom-0 end-0 p-3">
-      <div className={`toast ${isCopied ? "show" : ""}`}>
-        <div className="toast-header px-2">
-          <strong className="me-auto">Just Now</strong>
-          <i
-            className="bi bi-x-lg h6 mb-0 cursor-pointer"
-            onClick={() => setIsCopied(false)}
-          ></i>
-        </div>
-        <div className="toast-body justify-self-start">Copied!</div>
-      </div>
-    </div>
-  );
-};
-
 return (
   <div>
-    {isCopied && <Toast />}
     <div
       className={className}
       style={{ cursor: "pointer" }}
@@ -45,8 +27,8 @@ return (
         setIsCopied(true);
       }}
     >
-      {showLogo && <Copy />}
-      {label}
+      {showLogo && isCopied ? <i class="bi bi-check-lg h5 mb-0"></i> : <Copy />}
+      {label && isCopied ? "Copied" : label}
     </div>
   </div>
 );
