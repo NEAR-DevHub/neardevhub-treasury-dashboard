@@ -26,13 +26,10 @@ const [settingsOptions, setSettingsOptions] = useState(
           show: true,
         },
         {
-          title: "Receive",
+          title: "Minimum received",
           show: true,
         },
-        {
-          title: "Slippage Limit",
-          show: true,
-        },
+
         {
           title: "Creator",
           show: true,
