@@ -61,6 +61,33 @@ test.describe("Admin is logged in", function () {
       timeout: 10_000,
     });
 
+    await page.locator("#dropdownIcon").click();
+    await expect(await page.getByText("Select Gateway")).toBeVisible();
+
+    await sandbox.deployNewTreasuryFactoryWithUpdatedWeb4Contract();
+
+    const web4selfUpgradeResult = await sandbox.account.functionCall({
+      contractId: instanceAccountId,
+      methodName: "self_upgrade",
+      gas: 300_000_000_000_000,
+    });
+
+    expect(
+      web4selfUpgradeResult.receipts_outcome.filter(
+        (receipt_outcome) => receipt_outcome.outcome.status.Failure
+      ).length
+    ).toBe(0);
+
+    await page.reload();
+
+    await page.getByText("Available Updates").click();
+    await expect(page.getByText("Web4 Contract")).toBeVisible({
+      timeout: 10_000,
+    });
+
+    await page.locator("#dropdownIcon").click();
+    await expect(await page.getByText("Gateway Select")).toBeVisible();
+
     await sandbox.quitSandbox();
   });
 });

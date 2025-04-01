@@ -15,6 +15,7 @@ export const PROPOSAL_BOND = "0";
 export const DEFAULT_WIDGET_REFERENCE_ACCOUNT_ID =
   "bootstrap.treasury-factory.near";
 
+export const TREASURY_FACTORY_ACCOUNT_ID = "treasury-factory.near";
 export class SandboxRPC {
   async init() {
     await new Promise((resolve) => {
@@ -47,6 +48,11 @@ export class SandboxRPC {
       this.account_id,
       utils.KeyPair.fromString(this.secret_key)
     );
+    this.keyStore.setKey(
+      "sandbox",
+      TREASURY_FACTORY_ACCOUNT_ID,
+      utils.KeyPair.fromString(this.secret_key)
+    );
 
     this.near = await connect({
       networkId: "sandbox",
@@ -55,6 +61,36 @@ export class SandboxRPC {
     });
 
     this.account = await this.near.account(this.account_id);
+  }
+
+  async deployNewTreasuryFactoryWithUpdatedWeb4Contract() {
+    const result = await this.near.connection.provider.query({
+      request_type: "view_code",
+      account_id: TREASURY_FACTORY_ACCOUNT_ID,
+      finality: "final",
+    });
+    const currentCode = Buffer.from(result.code_base64, "base64");
+
+    // Convert the binary to a string and search for "Select Gateway"
+    const searchString = "Select Gateway";
+    const replaceString = "Gateway Select";
+
+    const searchBuffer = Buffer.from(searchString, "utf-8");
+    const replaceBuffer = Buffer.from(replaceString, "utf-8");
+
+    const index = currentCode.indexOf(searchBuffer);
+    if (index === -1) {
+      console.error(`String "${searchString}" not found in the WASM binary.`);
+      return;
+    }
+
+    // Replace the string in the binary
+    replaceBuffer.copy(currentCode, index);
+
+    // Deploy new treasury factory with updated web4 contract
+    await (
+      await this.near.account(TREASURY_FACTORY_ACCOUNT_ID)
+    ).deployContract(currentCode);
   }
 
   /**
