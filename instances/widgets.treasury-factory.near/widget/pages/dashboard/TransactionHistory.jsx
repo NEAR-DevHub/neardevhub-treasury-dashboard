@@ -285,6 +285,7 @@ return (
                               label: "",
                               clipboardText: txnLink,
                               showLogo: true,
+                              logoDimensions: { width: 25, height: 25 },
                             }}
                           />
 

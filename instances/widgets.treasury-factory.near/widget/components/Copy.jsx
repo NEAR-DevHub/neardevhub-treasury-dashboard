@@ -4,7 +4,7 @@ const { Copy } = VM.require(
   Copy: () => <></>,
 };
 
-const { label, clipboardText, showLogo, className } = props;
+const { label, clipboardText, showLogo, className, logoDimensions } = props;
 
 const [isCopied, setIsCopied] = useState(false);
 
@@ -27,7 +27,11 @@ return (
         setIsCopied(true);
       }}
     >
-      {showLogo && isCopied ? <i class="bi bi-check-lg h5 mb-0"></i> : <Copy />}
+      {showLogo && isCopied ? (
+        <i class="bi bi-check-lg h5 mb-0"></i>
+      ) : (
+        <Copy width={logoDimensions?.width} height={logoDimensions?.height} />
+      )}
       {label && isCopied ? "Copied" : label}
     </div>
   </div>

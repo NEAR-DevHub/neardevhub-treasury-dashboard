@@ -341,6 +341,7 @@ const CopyComponent = () => {
         label: "",
         clipboardText,
         showLogo: true,
+        logoDimensions: { width: 25, height: 25 },
       }}
     />
   ) : (
