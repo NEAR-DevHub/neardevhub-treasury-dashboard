@@ -524,6 +524,7 @@ const code = `
             let swapAPI = ""; 
             let priceAPI = "";
             let tokenExchangePrices = [];
+            let priceDifference = null;
 
             function checkSubmitDisable() {
                 document.getElementById("submitBtn").disabled = !transactions?.length;
@@ -651,6 +652,7 @@ const code = `
                 collapseContainer.classList.add("collapse-shown");
                 toggleIcon.classList.remove("bi-chevron-down");
                 toggleIcon.classList.add("bi-chevron-up");
+                updateIframeHeight();
                 });
 
                 collapseElement.addEventListener("hidden.bs.collapse", () => {
@@ -658,6 +660,7 @@ const code = `
                 collapseContainer.classList.remove("collapse-shown");
                 toggleIcon.classList.remove("bi-chevron-up");
                 toggleIcon.classList.add("bi-chevron-down");
+                updateIframeHeight();
                 });
 
                 let slippageDebounceTimer;
@@ -885,6 +888,7 @@ const code = `
             }
 
             function cleanErrors() {
+                priceDifference = null;
                 var swapError = document.getElementById("swap-error");
                 const poolFeeItem = document.getElementById("pool-fee-item");
                 const additionalStorageMessage = document.getElementById(
@@ -1036,6 +1040,7 @@ const code = `
                   percentageElement.classList.remove("text-red");
                 }
               
+                priceDifference = percentageDifference.toFixed(4);
                 percentageElement.innerHTML =
                   percentageDifference.toFixed(4) +
                   "%" +
@@ -1158,12 +1163,7 @@ const code = `
                 const slippageInput = document.getElementById("slippage");
                 const sendInput = document.getElementById("send-amount");
                 const receiveInput = document.getElementById("receive-amount");
-                var percentageElement = document.getElementById(
-                "exchange-rate-percentage",
-                );
-                var percentageValue =
-                percentageElement.textContent || percentageElement.innerText;
-                const rateDifference = parseFloat(percentageValue.replace("%", ""));
+               
 
                 window.parent.postMessage(
                 {
@@ -1176,7 +1176,7 @@ const code = `
                     tokenOut: toToken.id,
                     slippage: slippageInput.value,
                     amountOut: receiveInput.value,
-                    rateDifference,
+                    rateDifference:priceDifference,
                     },
                 },
                 "*",

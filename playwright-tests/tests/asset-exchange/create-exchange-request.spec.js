@@ -109,8 +109,9 @@ async function openCreatePage({ page, instanceAccount }) {
     name: "Create Request",
   });
   await expect(createRequestButton).toBeVisible({ timeout: 20_000 });
-  await page.waitForTimeout(1_000);
+  await page.waitForTimeout(5_000);
   await createRequestButton.click();
+  await page.waitForTimeout(2_000);
 }
 
 async function selectSendToken({ page, token }) {
@@ -218,16 +219,14 @@ test.describe("User is logged in", function () {
       .getByText(
         "To exchange NEAR for another token, first swap it for wNEAR. You can then exchange wNEAR for your desired token."
       );
-    const calculateBtn = page.frameLocator("iframe").getByText("Calculate");
+
     const submitBtn = page.frameLocator("iframe").getByText("Submit");
     await expect(warningText).toBeVisible();
-    await expect(calculateBtn).toBeDisabled();
     await expect(submitBtn).toBeDisabled();
     // reverse the tokens
     await selectSendToken({ page, token: "USDC" });
     await selectReceiveToken({ page, token: "NEAR" });
     await expect(warningText).toBeVisible();
-    await expect(calculateBtn).toBeDisabled();
     await expect(submitBtn).toBeDisabled();
   });
 
@@ -240,8 +239,6 @@ test.describe("User is logged in", function () {
     await selectSendToken({ page, token: "wNEAR" });
     await page.frameLocator("iframe").locator("#send-amount").fill("10000");
     await selectReceiveToken({ page, token: "DAI" });
-
-    const calculateBtn = page.frameLocator("iframe").getByText("Calculate");
     const submitBtn = page.frameLocator("iframe").getByText("Submit");
     const balanceWarningText = page
       .frameLocator("iframe")
@@ -249,17 +246,23 @@ test.describe("User is logged in", function () {
         "The treasury balance doesn't have enough tokens to swap. You can create the request, but it won’t be approved until the balance is topped up."
       );
     await expect(balanceWarningText).toBeVisible();
-    await expect(calculateBtn).toBeEnabled();
-    await expect(submitBtn).toBeDisabled();
-    await calculateBtn.click();
-    const storageWarningText = page
-      .frameLocator("iframe")
-      .getByText(
-        "To collect this token, purchase storage space. After submission, 0.1 NEAR will be charged from your account as an additional transaction."
-      );
-    await expect(storageWarningText).toBeVisible();
+    await page.frameLocator("iframe").getByText("Details").click();
+    await expect(
+      page.frameLocator("iframe").getByText("Price Deference")
+    ).toBeVisible();
+    await expect(
+      page.frameLocator("iframe").getByText("Pool fee")
+    ).toBeVisible();
+    await expect(
+      page.frameLocator("iframe").getByText("Additional Storage Purchase")
+    ).toBeVisible();
+    await page.frameLocator("iframe").getByText("DAI ($").click();
+    await expect(
+      page.frameLocator("iframe").getByText("1 wNEAR ($")
+    ).toBeVisible();
     await expect(submitBtn).toBeEnabled();
     await submitBtn.click();
+    await expect(page.getByText("Confirm Transaction").first()).toBeVisible();
   });
 
   test("create NEAR to wNEAR swap request and display in pending request", async ({
@@ -270,18 +273,8 @@ test.describe("User is logged in", function () {
     test.setTimeout(60_000);
     await openCreatePage({ page, instanceAccount });
     await selectSendToken({ page, token: "NEAR" });
-    await page.frameLocator("iframe").locator("#send-amount").fill("1");
     await selectReceiveToken({ page, token: "wNEAR" });
-    const calculateBtn = page.frameLocator("iframe").getByText("Calculate");
     const submitBtn = page.frameLocator("iframe").getByText("Submit");
-    const thirdPartyWarning = page
-      .frameLocator("iframe")
-      .getByText(
-        "Some third-party tools may impose swapping fees when converting your funds."
-      );
-    await expect(thirdPartyWarning).toBeHidden();
-    await expect(calculateBtn).toBeEnabled();
-    await expect(submitBtn).toBeDisabled();
     const response = {
       transactions: [
         {
@@ -308,14 +301,14 @@ test.describe("User is logged in", function () {
       outEstimate: "1",
     };
     await mockSwapResponse({ page, response, daoAccount });
-    await calculateBtn.click();
+    await page.frameLocator("iframe").locator("#send-amount").fill("1");
     await expect(submitBtn).toBeEnabled();
     await submitBtn.click();
 
     expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
         description:
-          "* Proposal Action: asset-exchange <br>* Token In: near <br>* Token Out: wrap.near <br>* Amount In: 1 <br>* Slippage: 1 <br>* Amount Out: 1",
+          "* Proposal Action: asset-exchange <br>* Token In: near <br>* Token Out: wrap.near <br>* Amount In: 1 <br>* Slippage: 0.1 <br>* Amount Out: 1",
         kind: {
           FunctionCall: {
             actions: [
@@ -350,18 +343,8 @@ test.describe("User is logged in", function () {
     test.setTimeout(60_000);
     await openCreatePage({ page, instanceAccount });
     await selectSendToken({ page, token: "USDt" });
-    await page.frameLocator("iframe").locator("#send-amount").fill("1");
     await selectReceiveToken({ page, token: "USDC" });
-    const calculateBtn = page.frameLocator("iframe").getByText("Calculate");
     const submitBtn = page.frameLocator("iframe").getByText("Submit");
-    const thirdPartyWarning = page
-      .frameLocator("iframe")
-      .getByText(
-        "Some third-party tools may impose swapping fees when converting your funds."
-      );
-    await expect(thirdPartyWarning).toBeVisible();
-    await expect(calculateBtn).toBeEnabled();
-    await expect(submitBtn).toBeDisabled();
     const response = {
       transactions: [
         {
@@ -383,13 +366,13 @@ test.describe("User is logged in", function () {
       outEstimate: "0.99940",
     };
     await mockSwapResponse({ page, response, daoAccount });
-    await calculateBtn.click();
+    await page.frameLocator("iframe").locator("#send-amount").fill("1");
     await expect(submitBtn).toBeEnabled();
     await submitBtn.click();
     expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
         description:
-          "* Proposal Action: asset-exchange <br>* Token In: usdt.tether-token.near <br>* Token Out: 17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1 <br>* Amount In: 1 <br>* Slippage: 1 <br>* Amount Out: 0.99940",
+          "* Proposal Action: asset-exchange <br>* Token In: usdt.tether-token.near <br>* Token Out: 17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1 <br>* Amount In: 1 <br>* Slippage: 0.1 <br>* Amount Out: 0.99940",
         kind: {
           FunctionCall: {
             actions: [
@@ -419,21 +402,9 @@ test.describe("User is logged in", function () {
     test.setTimeout(60_000);
     await openCreatePage({ page, instanceAccount });
     await selectSendToken({ page, token: "WETH" });
-    await page.frameLocator("iframe").locator("#send-amount").fill("100");
     await selectReceiveToken({ page, token: "USDC" });
-    const calculateBtn = page.frameLocator("iframe").getByText("Calculate");
     const submitBtn = page.frameLocator("iframe").getByText("Submit");
-    const thirdPartyWarning = page
-      .frameLocator("iframe")
-      .getByText(
-        "Some third-party tools may impose swapping fees when converting your funds."
-      );
-    await expect(thirdPartyWarning).toBeVisible();
-    await expect(calculateBtn).toBeEnabled();
-    await expect(submitBtn).toBeDisabled();
-    const exchangeRateWarning = page
-      .frameLocator("iframe")
-      .getByText("The exchange rate applied differs by");
+
     const response = {
       transactions: [
         {
@@ -457,35 +428,36 @@ test.describe("User is logged in", function () {
     };
     await mockSwapResponse({ page, response, daoAccount });
     await page.route(
-      `https://api.nearblocks.io/v1/fts/c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2.factory.bridge.near`,
+      (daoAccount.includes("testing")
+        ? `https://ref-sdk-test-cold-haze-1300-2.fly.dev`
+        : `https://ref-sdk-api-2.fly.dev`) +
+        `/api/ft-token-price?account_id=c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2.factory.bridge.near`,
       async (route) => {
         const json = {
-          contracts: [
-            {
-              price: "2022.67000000",
-            },
-          ],
+          price: "2022.67000000",
         };
 
         await route.fulfill({ json });
       }
     );
     await page.route(
-      `https://api.nearblocks.io/v1/fts/17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1`,
+      (daoAccount.includes("testing")
+        ? `https://ref-sdk-test-cold-haze-1300-2.fly.dev`
+        : `https://ref-sdk-api-2.fly.dev`) +
+        `/api/ft-token-price?account_id=17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1`,
       async (route) => {
         const json = {
-          contracts: [
-            {
-              price: "0.99980200",
-            },
-          ],
+          price: "0.99980200",
         };
 
         await route.fulfill({ json });
       }
     );
-    await calculateBtn.click();
-    await expect(exchangeRateWarning).toBeVisible();
+    await page.frameLocator("iframe").locator("#send-amount").fill("100");
+    await expect(
+      page.frameLocator("iframe").locator("#exchange-rate-warning")
+    ).toBeVisible();
+    await page.frameLocator("iframe").getByText("Details").click();
     await expect(submitBtn).toBeEnabled();
     await submitBtn.click();
     await expect(page.getByText("High Fee Warning")).toBeVisible();
@@ -494,7 +466,7 @@ test.describe("User is logged in", function () {
     expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
         description:
-          "* Proposal Action: asset-exchange <br>* Token In: c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2.factory.bridge.near <br>* Token Out: 17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1 <br>* Amount In: 100 <br>* Slippage: 1 <br>* Amount Out: 0.99940",
+          "* Proposal Action: asset-exchange <br>* Token In: c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2.factory.bridge.near <br>* Token Out: 17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1 <br>* Amount In: 100 <br>* Slippage: 0.1 <br>* Amount Out: 0.99940",
         kind: {
           FunctionCall: {
             actions: [
