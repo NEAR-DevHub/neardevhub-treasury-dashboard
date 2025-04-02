@@ -51,15 +51,15 @@ const [currentTab, setCurrentTab] = useState(null);
 useEffect(() => {
   if (!currentTabProps) {
     const defaultTab = tabs[0].title;
-    let tab = findTab(
-      selectedTab ? normalize(selectedTab ?? "") : normalize(defaultTab)
+    let selectedTab = findTab(
+      tab ? normalize(tab ?? "") : normalize(defaultTab)
     );
     // in case selectedTab is not provided
-    if (!tab) {
-      tab = normalize(defaultTab);
+    if (!selectedTab) {
+      selectedTab = normalize(defaultTab);
     }
-    setCurrentTab(tab);
-    setCurrentTabProps({ ...tab.props, ...props });
+    setCurrentTab(selectedTab);
+    setCurrentTabProps({ ...selectedTab.props, ...props });
   }
 }, [props]);
 
