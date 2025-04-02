@@ -274,8 +274,12 @@ return (
               } this request? You cannot change this vote later.`,
         confirmLabel: "Confirm",
         isOpen: showConfirmModal,
-        onCancelClick: () => setConfirmModal(false),
-        onConfirmClick: () => {
+        onCancelClick: (e) => {
+          e.stopPropagation();
+          setConfirmModal(false);
+        },
+        onConfirmClick: (e) => {
+          e.stopPropagation();
           actProposal(vote);
           setConfirmModal(false);
         },
@@ -334,7 +338,8 @@ return (
                   checkForDeposit: false,
                   treasuryDaoID,
                   disabled: isTxnCreated,
-                  callbackAction: () => {
+                  callbackAction: (e) => {
+                    e.stopPropagation();
                     setVote(actions.APPROVE);
                     if (isInsufficientBalance) {
                       setShowWarning(true);
@@ -366,7 +371,8 @@ return (
                   disabled: isTxnCreated,
                   checkForDeposit: false,
                   treasuryDaoID,
-                  callbackAction: () => {
+                  callbackAction: (e) => {
+                    e.stopPropagation();
                     setVote(actions.REJECT);
                     setConfirmModal(true);
                   },
@@ -385,7 +391,7 @@ return (
                 ActionButton: () => (
                   <button
                     className="remove-btn w-100"
-                    data-testid="delete-btn w-100"
+                    data-testid="delete-btn"
                     disabled={isTxnCreated}
                   >
                     <img
@@ -397,7 +403,8 @@ return (
                 checkForDeposit: false,
                 treasuryDaoID,
                 disabled: isTxnCreated,
-                callbackAction: () => {
+                callbackAction: (e) => {
+                  e.stopPropagation();
                   setVote(actions.REMOVE);
                   setConfirmModal(true);
                 },

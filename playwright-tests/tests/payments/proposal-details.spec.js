@@ -64,9 +64,7 @@ async function checkProposalDetailPage({
       )
     ).toBeVisible({ timeout: 20_000 });
   }
-  const copyReceiverAddr = await page.getByRole("button", {
-    name: "Copy Address",
-  });
+  const copyReceiverAddr = await page.getByText("Copy Address");
   await expect(copyReceiverAddr).toBeVisible();
   await copyReceiverAddr.click();
   await readClipboard({ page, expectedText: "megha19.near" });
@@ -83,7 +81,7 @@ async function checkProposalDetailPage({
     await expect(heading).toBeHidden();
     await expect(highlightedProposalRow).not.toHaveClass("bg-highlight");
   } else {
-    const copyLink = await page.getByRole("button", { name: "Copy link" });
+    const copyLink = await page.getByText("Copy link");
     await copyLink.click();
     await readClipboard({
       page,
