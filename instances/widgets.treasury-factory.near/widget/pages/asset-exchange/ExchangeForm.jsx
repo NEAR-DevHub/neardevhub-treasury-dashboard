@@ -211,6 +211,10 @@ const code = `
                 padding-block: 0.5rem;
                 padding-inline: 0.5rem;
             }
+            .cursor-pointer {
+                cursor: pointer;
+            }
+            
             </style>
         </head>
         <body data-bs-theme=${isDarkTheme ? "dark" : "light"}>
@@ -340,16 +344,13 @@ const code = `
             <div id="exchange-details" style="display: none">
                 <div
                 class="d-flex flex-column gap-1 border border-1 collapse-container"
-                data-bs-toggle="collapse"
-                data-bs-target="#exchange-details-collapse"
-                aria-expanded="false"
-                aria-controls="exchange-details-collapse"
+               
                 >
                 <div
                     class="d-flex align-items-center gap-2 justify-content-between toggle-header"
                 >
                     <div class="d-flex align-items-center gap-2">
-                    <div id="tokens-exchange-rate">
+                    <div id="tokens-exchange-rate" class="cursor-pointer">
                         <div id="send-exchange-rate" style="display: none"></div>
                         <div id="receive-exchange-rate"></div>
                     </div>
@@ -361,7 +362,11 @@ const code = `
                     >
                     </i>
                     </div>
-                    <div class="d-flex gap-1 align-items-center">
+                    <div class="d-flex gap-1 align-items-center cursor-pointer"  
+                    data-bs-toggle="collapse"
+                    data-bs-target="#exchange-details-collapse"
+                    aria-expanded="false"
+                    aria-controls="exchange-details-collapse">
                     <i
                         class="bi bi-exclamation-triangle h5 mb-0 text-red"
                         id="exchange-rate-warning"
@@ -385,7 +390,7 @@ const code = `
                     >
                     </i>
                     </div>
-                    <div class="text-red" id="exchange-rate-percentage"></div>
+                    <div id="exchange-rate-percentage"></div>
                 </div>
                 <div class="collapse-item rounded-bottom-3" id="pool-fee-item">
                     <div>
@@ -622,7 +627,8 @@ const code = `
                 );
                 const toggleButton = document.getElementById("tokens-exchange-rate");
 
-                toggleButton.addEventListener("click", function () {
+                toggleButton.addEventListener("click", function (event) {
+                event.stopPropagation();
                 if (sendExchangeRate.style.display === "none") {
                     sendExchangeRate.style.display = "block";
                     receiveExchangeRate.style.display = "none";
@@ -906,48 +912,46 @@ const code = `
                 amountIn,
                 tokenOutAmount,
                 tokenInContract,
-                tokenOutContract,
-            ) {
+                tokenOutContract
+              ) {
                 var poolFeeElement = document.getElementById("pool-fee");
-                // Find reference prices for both tokenIn and tokenOut
-
+              
+                // Get token prices
                 var tokenInPrice =
-                tokenExchangePrices?.[
+                  tokenExchangePrices?.[
                     tokenInContract === "near" ? "wrap.near" : tokenInContract
-                ]?.price;
-
+                  ]?.price;
+              
                 var tokenOutPrice =
-                tokenExchangePrices?.[
+                  tokenExchangePrices?.[
                     tokenOutContract === "near" ? "wrap.near" : tokenOutContract
-                ]?.price;
-
+                  ]?.price;
+              
                 if (!tokenInPrice || !tokenOutPrice) {
-                console.error("Price data missing for one or both tokens.");
-                return;
+                  console.error("Price data missing for one or both tokens.");
+                  return;
                 }
-
+              
+                // Calculate expected tokenOut amount
                 var expectedTokenOutAmount = (amountIn * tokenInPrice) / tokenOutPrice;
-
+              
+                // Calculate percentage difference (pool fee impact)
                 var percentageDifference =
-                Math.abs(
-                    (tokenOutAmount - expectedTokenOutAmount) / expectedTokenOutAmount,
-                ) * 100;
-
-                const amountDifference = Number(
-                percentageDifference * amountIn,
-                ).toLocaleString("en-US", {
-                maximumFractionDigits: 4,
+                  (Math.abs(tokenOutAmount - expectedTokenOutAmount) / expectedTokenOutAmount) *
+                  100;
+              
+                // **Convert amount difference back to input token **
+                const amountDifference =
+                  Math.abs(expectedTokenOutAmount - tokenOutAmount) * tokenOutPrice / tokenInPrice;
+              
+                const formattedAmountDifference = amountDifference.toLocaleString("en-US", {
+                  maximumFractionDigits: 4,
                 });
-
+              
                 poolFeeElement.innerHTML =
-                percentageDifference.toFixed(4) +
-                "%" +
-                " / " +
-                amountDifference +
-                " " +
-                fromToken.symbol;
-            }
-
+                  percentageDifference.toFixed(4) + "%" + " / " + formattedAmountDifference + " " + fromToken.symbol;
+              }
+    
             function showExchangeDetailsSection() {
                 var exchangeDetailsSection =
                 document.getElementById("exchange-details");
@@ -996,48 +1000,51 @@ const code = `
                 tokenOutAmount,
                 tokenInPrice,
                 tokenOutPrice,
-            ) {
-                var percentageElement = document.getElementById(
-                "exchange-rate-percentage",
-                );
-
-                var rateWarningElement = document.getElementById(
-                "exchange-rate-warning",
-                );
+              ) {
+                var percentageElement = document.getElementById("exchange-rate-percentage");
+                var rateWarningElement = document.getElementById("exchange-rate-warning");
+              
                 if (!tokenInPrice || !tokenOutPrice) {
-                console.error("Price data missing for one or both tokens.");
-                return;
+                  console.error("Price data missing for one or both tokens.");
+                  return;
                 }
-
-                // Calculate the expected tokenOut amount
+              
+                // Calculate expected tokenOut amount based on price conversion
                 var expectedTokenOutAmount = (amountIn * tokenInPrice) / tokenOutPrice;
-
+              
                 // Calculate percentage difference
                 var percentageDifference =
-                (expectedTokenOutAmount / tokenOutAmount - 1) * 100;
-
-                const amountDifference = Number(
-                percentageDifference * tokenOutAmount,
-                ).toLocaleString("en-US", {
-                maximumFractionDigits: 4,
+                  ((tokenOutAmount - expectedTokenOutAmount) / expectedTokenOutAmount) * 100;
+              
+                // Calculate absolute amount difference
+                const amountDifference = Math.abs(expectedTokenOutAmount - tokenOutAmount).toLocaleString("en-US", {
+                  maximumFractionDigits: 4,
                 });
-
-                if(percentageDifference >= 1){
-                    rateWarningElement.style.display = "block";
+              
+                // Show warning if the rate difference is significant (e.g., more than 1% lower)
+                if (percentageDifference <= -1) {
+                  rateWarningElement.style.display = "block";
                 } else {
-                    rateWarningElement.style.display = "none";
+                  rateWarningElement.style.display = "none";
                 }
-                
-
+                            
+                if (percentageDifference < 0) {
+                  percentageElement.classList.add("text-red");
+                  percentageElement.classList.remove("text-green");
+                } else {
+                  percentageElement.classList.add("text-green");
+                  percentageElement.classList.remove("text-red");
+                }
+              
                 percentageElement.innerHTML =
-                percentageDifference.toFixed(4) +
-                "%" +
-                " / " +
-                amountDifference +
-                " " +
-                toToken.symbol;
-            }
-
+                  percentageDifference.toFixed(4) +
+                  "%" +
+                  " / " +
+                  amountDifference +
+                  " " +
+                  toToken.symbol;
+              }
+              
             function swapTokens() {
                 var amount = document.getElementById("send-amount").value;
                 var slippage = document.getElementById("slippage").value;

@@ -368,10 +368,6 @@ const Theme = styled.div`
     border-right: 1px solid var(--border-color);
   }
 
-  .cursor-pointer {
-    cursor: pointer;
-  }
-
   .success-icon {
     color: var(--other-green) !important;
   }
