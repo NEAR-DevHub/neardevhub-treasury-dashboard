@@ -210,6 +210,7 @@ const code = `
                 border-top: none;
                 padding-block: 0.5rem;
                 padding-inline: 0.5rem;
+                background-color: ${colors["--bg-system-color"]};
             }
             .cursor-pointer {
                 cursor: pointer;
