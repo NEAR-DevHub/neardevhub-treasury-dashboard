@@ -139,7 +139,7 @@ const ToastStatusContent = () => {
           <br />
           {showToastStatus !== "InProgress" &&
             showToastStatus !== "Removed" &&
-            !typeof proposalDetailsPageId !== "number" && (
+            typeof proposalDetailsPageId !== "number" && (
               <a
                 className="text-underline"
                 href={href({
@@ -249,7 +249,7 @@ return (
               showProposalDetailsId ? "show" : ""
             }`}
           >
-            {showProposalDetailsId && (
+            {typeof showProposalDetailsId === "number" && (
               <Widget
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.ProposalDetailsPage`}
                 props={{

@@ -190,6 +190,7 @@ async function approveProposal({
     });
   });
   await page.getByRole("button", { name: "Confirm" }).click();
+  await page.getByRole("button", { name: "Confirm" }).click();
   const transactionResult = await sandbox.account.functionCall({
     contractId: daoAccount,
     methodName: "act_proposal",
@@ -197,31 +198,42 @@ async function approveProposal({
       id: 0,
       action: "VoteApprove",
     },
+    gas: "300000000000000",
     attachedDeposit: "0",
   });
 
-  await page.getByRole("button", { name: "Confirm" }).click();
   await page.evaluate(async (transactionResult) => {
     window.transactionSentPromiseResolve(transactionResult);
   }, transactionResult);
-  await page.waitForTimeout(10_000);
+  await expect(page.locator("div.modal-body code").nth(0)).toBeAttached({
+    attached: false,
+    timeout: 10_000,
+  });
+  await expect(page.locator(".spinner-border")).toBeAttached({
+    attached: false,
+    timeout: 10_000,
+  });
   if (isMultiVote) {
     if (isCompactVersion) {
       await expect(
         page.getByText(
           "Your vote is counted, the payment request is highlighted."
         )
-      ).toBeVisible();
+      ).toBeVisible({ timeout: 30_000 });
     } else {
-      await expect(page.getByText("Your vote is counted.")).toBeVisible();
+      await expect(page.getByText("Your vote is counted.")).toBeVisible({
+        timeout: 30_000,
+      });
       await expect(page.getByText("You approved")).toBeVisible();
     }
   } else {
     await expect(
       page.getByText("The payment request has been successfully executed.")
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 30_000 });
     if (!isCompactVersion) {
-      await expect(page.getByText("Payment Request Funded")).toBeVisible();
+      await expect(page.getByText("Payment Request Funded")).toBeVisible({
+        timeout: 30_000,
+      });
     } else {
       await page.getByText("View in History").click();
       await expect(page.locator("tr").nth(1)).toHaveClass(
@@ -243,7 +255,7 @@ test.describe("Should vote on proposal using sandbox RPC and show updated status
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(200_000);
+    test.setTimeout(250_000);
     const sandbox = await setupSandboxAndCreateProposal({ daoAccount, page });
     await mockWithFTBalance({ page, daoAccount, isSufficient: true });
 
@@ -269,9 +281,10 @@ test.describe("Should vote on proposal using sandbox RPC and show updated status
     await mockWithFTBalance({ page, daoAccount, isSufficient: true });
 
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
-    const proposalCell = page.getByTestId("proposal-request-#1");
+    const proposalCell = page.getByTestId("proposal-request-#0");
     await expect(proposalCell).toBeVisible({ timeout: 20_000 });
     await proposalCell.click();
+    await expect(page.getByRole("heading", { name: "#0" })).toBeVisible();
     const approveButton = page
       .getByRole("button", {
         name: "Approve",
