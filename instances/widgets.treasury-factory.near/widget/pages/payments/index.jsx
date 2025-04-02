@@ -4,6 +4,10 @@ const { hasPermission } = VM.require(
   hasPermission: () => {},
 };
 
+const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
+  href: () => {},
+};
+
 const { tab, instance, id } = props;
 
 if (!instance) {
@@ -14,7 +18,8 @@ const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 
 const [showCreateRequest, setShowCreateRequest] = useState(false);
 const [showProposalDetailsId, setShowProposalId] = useState(null);
-
+const [showToastStatus, setToastStatus] = useState(false);
+const [voteProposalId, setVoteProposalId] = useState(null);
 const hasCreatePermission = hasPermission(
   treasuryDaoID,
   context.accountId,
@@ -100,77 +105,167 @@ const Container = styled.div`
   }
 `;
 
-return typeof proposalDetailsPageId === "number" ? (
-  <Widget
-    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.ProposalDetailsPage`}
-    props={{
-      id: proposalDetailsPageId,
-      instance,
-    }}
-  />
-) : (
-  <Container>
-    <Widget
-      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OffCanvas`}
-      props={{
-        showCanvas: showCreateRequest,
-        onClose: toggleCreatePage,
-        title: "Create Payment Request",
-        children: (
-          <Widget
-            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.CreatePaymentRequest`}
-            props={{
-              instance,
-              onCloseCanvas: toggleCreatePage,
-            }}
-          />
-        ),
-      }}
-    />
-    <div className="proposals-container">
-      <div className="flex-main-item">
-        <Widget
-          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Tabs`}
-          props={{
-            ...props,
-            selectedProposalDetailsId: showProposalDetailsId,
-            tabs: [
-              {
-                title: "Pending Requests",
-                href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.PendingRequests`,
-                props: {
-                  ...props,
-                  onSelectRequest: (id) => setShowProposalId(id),
-                },
-              },
-              {
-                title: "History",
-                href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.History`,
-                props: {
-                  ...props,
-                  onSelectRequest: (id) => setShowProposalId(id),
-                },
-              },
-            ],
-            SidebarMenu: SidebarMenu,
-          }}
-        />
-      </div>
-      <div
-        className={`flex-secondary-item ${showProposalDetailsId ? "show" : ""}`}
-      >
-        {showProposalDetailsId && (
-          <Widget
-            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.ProposalDetailsPage`}
-            props={{
-              id: showProposalDetailsId,
-              instance,
-              isCompactVersion: true,
-              onClose: () => setShowProposalId(null),
-            }}
-          />
+const ToastStatusContent = () => {
+  let content = "";
+  switch (showToastStatus) {
+    case "InProgress":
+      content =
+        "Your vote is counted" +
+        (typeof proposalDetailsPageId === "number"
+          ? "."
+          : ", the payment request is highlighted.");
+      break;
+    case "Approved":
+      content = "The payment request has been successfully executed.";
+      break;
+    case "Rejected":
+      content = "The payment request has been rejected.";
+      break;
+    case "Removed":
+      content = "The payment request has been successfully deleted.";
+      break;
+    default:
+      content = `The payment request is ${showToastStatus}.`;
+      break;
+  }
+  return (
+    <div className="toast-body">
+      <div className="d-flex align-items-center gap-3">
+        {showToastStatus === "Approved" && (
+          <i class="bi bi-check2 h3 mb-0 success-icon"></i>
         )}
+        <div>
+          {content}
+          <br />
+          {showToastStatus !== "InProgress" &&
+            showToastStatus !== "Removed" &&
+            !typeof proposalDetailsPageId !== "number" && (
+              <a
+                className="text-underline"
+                href={href({
+                  widgetSrc: `${instance}/widget/app`,
+                  params: {
+                    page: "payments",
+                    tab: "History",
+                    highlightProposalId: voteProposalId,
+                  },
+                })}
+              >
+                View in History
+              </a>
+            )}
+        </div>
       </div>
     </div>
-  </Container>
+  );
+};
+
+const VoteSuccessToast = () => {
+  return showToastStatus ? (
+    <div className="toast-container position-fixed bottom-0 end-0 p-3">
+      <div className={`toast ${showToastStatus ? "show" : ""}`}>
+        <div className="toast-header px-2">
+          <strong className="me-auto">Just Now</strong>
+          <i
+            className="bi bi-x-lg h6 mb-0 cursor-pointer"
+            onClick={() => setToastStatus(null)}
+          ></i>
+        </div>
+        <ToastStatusContent />
+      </div>
+    </div>
+  ) : null;
+};
+
+return (
+  <div>
+    <VoteSuccessToast />
+    {typeof proposalDetailsPageId === "number" ? (
+      <Widget
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.ProposalDetailsPage`}
+        props={{
+          id: proposalDetailsPageId,
+          instance,
+          setToastStatus,
+          setVoteProposalId,
+        }}
+      />
+    ) : (
+      <Container>
+        <Widget
+          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OffCanvas`}
+          props={{
+            showCanvas: showCreateRequest,
+            onClose: toggleCreatePage,
+            title: "Create Payment Request",
+            children: (
+              <Widget
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.CreatePaymentRequest`}
+                props={{
+                  instance,
+                  onCloseCanvas: toggleCreatePage,
+                }}
+              />
+            ),
+          }}
+        />
+        <div className="proposals-container">
+          <div className="flex-main-item">
+            <Widget
+              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Tabs`}
+              props={{
+                ...props,
+                selectedProposalDetailsId: showProposalDetailsId,
+                highlightProposalId:
+                  props.highlightProposalId || voteProposalId,
+                tabs: [
+                  {
+                    title: "Pending Requests",
+                    href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.PendingRequests`,
+                    props: {
+                      ...props,
+                      onSelectRequest: (id) => setShowProposalId(id),
+                      setToastStatus,
+                      setVoteProposalId,
+                    },
+                  },
+                  {
+                    title: "History",
+                    href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.History`,
+                    props: {
+                      ...props,
+                      onSelectRequest: (id) => setShowProposalId(id),
+                      setToastStatus,
+                      setVoteProposalId,
+                    },
+                  },
+                ],
+                SidebarMenu: SidebarMenu,
+              }}
+            />
+          </div>
+          <div
+            className={`flex-secondary-item ${
+              showProposalDetailsId ? "show" : ""
+            }`}
+          >
+            {showProposalDetailsId && (
+              <Widget
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.ProposalDetailsPage`}
+                props={{
+                  ...props,
+                  id: showProposalDetailsId,
+                  instance,
+                  isCompactVersion: true,
+                  onClose: () => setShowProposalId(null),
+                  setToastStatus,
+                  setVoteProposalId,
+                }}
+              />
+            )}
+          </div>
+        </div>
+      </Container>
+    )}
+  </div>
 );

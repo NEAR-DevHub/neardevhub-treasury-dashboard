@@ -27,6 +27,7 @@ const {
 const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 
 const [proposalData, setProposalData] = useState(null);
+const [isDeleted, setIsDeleted] = useState(false);
 
 const isCompactVersion = props.isCompactVersion;
 const accountId = context.accountId;
@@ -73,8 +74,8 @@ function decodeBase64(encodedArgs) {
 
 useEffect(() => {
   if (proposalPeriod && !proposalData) {
-    Near.asyncView(treasuryDaoID, "get_proposal", { id: parseInt(id) }).then(
-      (item) => {
+    Near.asyncView(treasuryDaoID, "get_proposal", { id: parseInt(id) })
+      .then((item) => {
         const notes = decodeProposalDescription("notes", item.description);
         const title = decodeProposalDescription("title", item.description);
         const summary = decodeProposalDescription("summary", item.description);
@@ -117,8 +118,11 @@ useEffect(() => {
           args,
           status,
         });
-      }
-    );
+      })
+      .catch(() => {
+        // proposal is deleted or doesn't exist
+        setIsDeleted(true);
+      });
   }
 }, [id, proposalPeriod, proposalData]);
 
@@ -127,6 +131,66 @@ useEffect(() => {
     setProposalData(null);
   }
 }, [id]);
+
+function refreshData() {
+  if (!isCompactVersion) {
+    setProposalData(null);
+  } else {
+    Storage.set("REFRESH_PAYMENTS_TABLE_DATA", Math.random());
+  }
+}
+
+function checkProposalStatus(proposalId) {
+  Near.asyncView(treasuryDaoID, "get_proposal", {
+    id: proposalId,
+  })
+    .then((result) => {
+      console.log(result.status);
+      props.setVoteProposalId(proposalId);
+      props.setToastStatus(result.status);
+      refreshData();
+    })
+    .catch(() => {
+      // deleted request (thus proposal won't exist)
+      props.setVoteProposalId(proposalId);
+      props.setToastStatus("Removed");
+      refreshData();
+    });
+}
+
+useEffect(() => {
+  if (props.transactionHashes) {
+    asyncFetch("${REPL_RPC_URL}", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: "dontcare",
+        method: "tx",
+        params: [props.transactionHashes, context.accountId],
+      }),
+    }).then((transaction) => {
+      if (transaction !== null) {
+        const transaction_method_name =
+          transaction?.body?.result?.transaction?.actions[0].FunctionCall
+            .method_name;
+
+        if (transaction_method_name === "act_proposal") {
+          const args =
+            transaction?.body?.result?.transaction?.actions[0].FunctionCall
+              .args;
+          const decodedArgs = JSON.parse(atob(args ?? "") ?? "{}");
+          if (decodedArgs.id) {
+            const proposalId = decodedArgs.id;
+            checkProposalStatus(proposalId);
+          }
+        }
+      }
+    });
+  }
+}, [props.transactionHashes]);
 
 const Container = styled.div`
   font-size: 14px;
@@ -422,6 +486,23 @@ const SecondaryBottomSkeleton = () => {
     </div>
   );
 };
+
+if (isDeleted) {
+  return (
+    <div
+      class="container-lg alert alert-danger d-flex flex-column gap-3"
+      role="alert"
+    >
+      The requested proposal was not found. Please verify the proposal ID or
+      check if it has been removed.
+      <a href={`?page=payments`}>
+        <button className="btn btn-danger d-flex gap-1 align-items-center">
+          Go Back
+        </button>
+      </a>
+    </div>
+  );
+}
 
 if (!proposalData) {
   return (

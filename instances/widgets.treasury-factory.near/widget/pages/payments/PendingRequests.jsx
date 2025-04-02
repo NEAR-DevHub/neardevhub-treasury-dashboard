@@ -22,6 +22,11 @@ const refreshTableData = Storage.get(
   `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.CreatePaymentRequest`
 );
 
+const refreshProposalsTableData = Storage.get(
+  "REFRESH_PAYMENTS_TABLE_DATA",
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.ProposalDetailsPage`
+);
+
 const fetchProposals = useCallback(() => {
   setLoading(true);
   Near.asyncView(treasuryDaoID, "get_last_proposal_id").then((i) => {
@@ -56,7 +61,7 @@ useEffect(() => {
   setOffset(null);
   setPage(0);
   fetchProposals();
-}, [refreshTableData]);
+}, [refreshTableData, refreshProposalsTableData]);
 
 const policy = treasuryDaoID
   ? Near.view(treasuryDaoID, "get_policy", {})

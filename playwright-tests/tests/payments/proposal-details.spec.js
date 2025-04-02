@@ -4,7 +4,8 @@ import {
   CurrentTimestampInNanoseconds,
   TransferProposalData,
 } from "../../util/inventory.js";
-import { mockRpcRequest } from "../../util/rpcmock.js";
+import { mockRpcRequest, mockWithFTBalance } from "../../util/rpcmock.js";
+import { SandboxRPC } from "../../util/sandboxrpc.js";
 
 async function mockPaymentProposals({ page, status }) {
   await mockRpcRequest({
@@ -143,5 +144,147 @@ test.describe
       instanceAccount,
       isCompactVersion: false,
     });
+  });
+});
+
+async function setupSandboxAndCreateProposal({ daoAccount, page }) {
+  const daoName = daoAccount.split(".")[0];
+  const sandbox = new SandboxRPC();
+  const proposalTitle = "Test proposal title";
+  const proposalSummary = "Test proposal summary";
+  const receiverAccount = daoAccount;
+  await sandbox.init();
+  await sandbox.attachRoutes(page);
+  const isMultiVote = daoAccount === "infinex.sputnik-dao.near";
+  await sandbox.setupSandboxForSputnikDao(daoName, "theori.near", isMultiVote);
+  await sandbox.addPaymentRequestProposal({
+    title: proposalTitle,
+    summary: proposalSummary,
+    amount: "5",
+    receiver_id: receiverAccount,
+    daoName,
+  });
+  return sandbox;
+}
+
+async function approveProposal({
+  page,
+  sandbox,
+  daoAccount,
+  isCompactVersion,
+}) {
+  const isMultiVote = daoAccount === "infinex.sputnik-dao.near";
+  page.evaluate(async () => {
+    const selector = await document.querySelector("near-social-viewer")
+      .selectorPromise;
+
+    const wallet = await selector.wallet();
+
+    return new Promise((resolve) => {
+      wallet["signAndSendTransaction"] = async (transaction) => {
+        resolve(transaction);
+        return new Promise((transactionSentPromiseResolve) => {
+          window.transactionSentPromiseResolve = transactionSentPromiseResolve;
+        });
+      };
+    });
+  });
+  await page.getByRole("button", { name: "Confirm" }).click();
+  const transactionResult = await sandbox.account.functionCall({
+    contractId: daoAccount,
+    methodName: "act_proposal",
+    args: {
+      id: 0,
+      action: "VoteApprove",
+    },
+    attachedDeposit: "0",
+  });
+
+  await page.getByRole("button", { name: "Confirm" }).click();
+  await page.evaluate(async (transactionResult) => {
+    window.transactionSentPromiseResolve(transactionResult);
+  }, transactionResult);
+  await page.waitForTimeout(10_000);
+  if (isMultiVote) {
+    if (isCompactVersion) {
+      await expect(
+        page.getByText(
+          "Your vote is counted, the payment request is highlighted."
+        )
+      ).toBeVisible();
+    } else {
+      await expect(page.getByText("Your vote is counted.")).toBeVisible();
+      await expect(page.getByText("You approved")).toBeVisible();
+    }
+  } else {
+    await expect(
+      page.getByText("The payment request has been successfully executed.")
+    ).toBeVisible();
+    if (!isCompactVersion) {
+      await expect(page.getByText("Payment Request Funded")).toBeVisible();
+    } else {
+      await page.getByText("View in History").click();
+      await expect(page.locator("tr").nth(1)).toHaveClass(
+        "cursor-pointer proposal-row bg-highlight",
+        {
+          timeout: 10_000,
+        }
+      );
+    }
+  }
+}
+
+test.describe("Should vote on proposal using sandbox RPC and show updated status and toast", () => {
+  test.use({
+    storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
+  });
+  test(`Proposal details page`, async ({
+    page,
+    instanceAccount,
+    daoAccount,
+  }) => {
+    test.setTimeout(200_000);
+    const sandbox = await setupSandboxAndCreateProposal({ daoAccount, page });
+    await mockWithFTBalance({ page, daoAccount, isSufficient: true });
+
+    await page.goto(`/${instanceAccount}/widget/app?page=payments&id=0`);
+    const approveButton = page
+      .getByRole("button", {
+        name: "Approve",
+      })
+      .first();
+    await expect(approveButton).toBeEnabled({ timeout: 30_000 });
+    await approveButton.click();
+    await approveProposal({ page, sandbox, daoAccount });
+    await sandbox.quitSandbox();
+  });
+
+  test(`Compact proposal page`, async ({
+    page,
+    instanceAccount,
+    daoAccount,
+  }) => {
+    test.setTimeout(200_000);
+    const sandbox = await setupSandboxAndCreateProposal({ daoAccount, page });
+    await mockWithFTBalance({ page, daoAccount, isSufficient: true });
+
+    await page.goto(`/${instanceAccount}/widget/app?page=payments`);
+    const proposalCell = page.getByTestId("proposal-request-#1");
+    await expect(proposalCell).toBeVisible({ timeout: 20_000 });
+    await proposalCell.click();
+    const approveButton = page
+      .getByRole("button", {
+        name: "Approve",
+      })
+      .first();
+    await expect(approveButton).toBeEnabled({ timeout: 30_000 });
+    await approveButton.click();
+    await approveProposal({
+      page,
+      sandbox,
+      daoAccount,
+      isCompactVersion: true,
+    });
+    await sandbox.quitSandbox();
   });
 });

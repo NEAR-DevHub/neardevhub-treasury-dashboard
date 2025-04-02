@@ -53,8 +53,6 @@ const loading = props.loading;
 const isPendingRequests = props.isPendingRequests;
 const transferApproversGroup = props.transferApproversGroup;
 const deleteGroup = props.deleteGroup;
-const [showToastStatus, setToastStatus] = useState(false);
-const [voteProposalId, setVoteProposalId] = useState(null);
 const [nearStakedTokens, setNearStakedTokens] = useState(null);
 const [lockupNearBalances, setLockupNearBalances] = useState(null);
 const refreshTableData = props.refreshTableData;
@@ -101,23 +99,17 @@ function checkProposalStatus(proposalId) {
     id: proposalId,
   })
     .then((result) => {
-      setToastStatus(result.status);
-      setVoteProposalId(proposalId);
+      props.setToastStatus(result.status);
+      props.setVoteProposalId(proposalId);
       refreshTableData();
     })
     .catch(() => {
       // deleted request (thus proposal won't exist)
-      setToastStatus("Removed");
-      setVoteProposalId(proposalId);
+      props.setToastStatus("Removed");
+      props.setVoteProposalId(proposalId);
       refreshTableData();
     });
 }
-
-useEffect(() => {
-  if (typeof highlightProposalId === "number" && isPendingRequests) {
-    checkProposalStatus(highlightProposalId);
-  }
-}, [highlightProposalId]);
 
 useEffect(() => {
   if (props.transactionHashes) {
@@ -178,78 +170,6 @@ const userFTTokens = fetch(
 
 const nearBalances = getNearBalances(treasuryDaoID);
 
-const ToastStatusContent = () => {
-  let content = "";
-  switch (showToastStatus) {
-    case "InProgress":
-      content = "Your vote is counted, the payment request is highlighted.";
-      break;
-    case "Approved":
-      content = "The payment request has been successfully executed.";
-      break;
-    case "Rejected":
-      content = "The payment request has been rejected.";
-      break;
-    case "Removed":
-      content = "The payment request has been successfully deleted.";
-      break;
-    default:
-      content = `The payment request is ${showToastStatus}.`;
-      break;
-  }
-  return (
-    <div className="toast-body">
-      <div className="d-flex align-items-center gap-3">
-        {showToastStatus === "Approved" && (
-          <i class="bi bi-check2 h3 mb-0 success-icon"></i>
-        )}
-        <div>
-          {content}
-          <br />
-          {showToastStatus !== "InProgress" &&
-            showToastStatus !== "Removed" && (
-              <a
-                className="text-underline"
-                href={href({
-                  widgetSrc: `${instance}/widget/app`,
-                  params: {
-                    page: "payments",
-                    tab: "History",
-                    highlightProposalId:
-                      typeof highlightProposalId === "number"
-                        ? highlightProposalId
-                        : voteProposalId,
-                  },
-                })}
-              >
-                View in History
-              </a>
-            )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const VoteSuccessToast = () => {
-  return showToastStatus &&
-    (typeof voteProposalId === "number" ||
-      typeof highlightProposalId === "number") ? (
-    <div className="toast-container position-fixed bottom-0 end-0 p-3">
-      <div className={`toast ${showToastStatus ? "show" : ""}`}>
-        <div className="toast-header px-2">
-          <strong className="me-auto">Just Now</strong>
-          <i
-            className="bi bi-x-lg h6 mb-0 cursor-pointer"
-            onClick={() => setToastStatus(null)}
-          ></i>
-        </div>
-        <ToastStatusContent />
-      </div>
-    </div>
-  ) : null;
-};
-
 const proposalPeriod = policy.proposal_period;
 
 function decodeBase64(encodedArgs) {
@@ -306,8 +226,7 @@ const ProposalsComponent = () => {
             }}
             className={
               "cursor-pointer proposal-row " +
-              (voteProposalId === item.id ||
-              highlightProposalId === item.id ||
+              (highlightProposalId === item.id ||
               props.selectedProposalDetailsId === item.id
                 ? "bg-highlight"
                 : "")
@@ -559,7 +478,6 @@ return (
         setNearStakedTotalTokens: (v) => setNearStakedTokens(Big(v).toFixed(2)),
       }}
     />
-    <VoteSuccessToast />
     {loading === true ||
     proposals === null ||
     transferApproversGroup === null ||
