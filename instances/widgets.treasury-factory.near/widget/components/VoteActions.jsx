@@ -317,7 +317,7 @@ return (
           </div>
         ) : (
           hasVotingPermission && (
-            <div className="d-flex gap-2 align-items-center w-100">
+            <div className="d-flex gap-2 align-items-center w-100 justify-content-end">
               <Widget
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
                 props={{
