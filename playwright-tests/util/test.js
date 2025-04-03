@@ -38,13 +38,13 @@ export async function overlayMessage(page, message) {
     document.head.appendChild(style);
     document.body.appendChild(overlay);
 
-    return () => {
+    window.removeOverlay = () => {
       overlay.remove();
       style.remove();
     };
   }, message);
 
   const removeOverlay = async () =>
-    (await page.evaluateHandle(() => window.removeOverlay)).dispose();
+    await page.evaluate(() => window.removeOverlay());
   return removeOverlay;
 }

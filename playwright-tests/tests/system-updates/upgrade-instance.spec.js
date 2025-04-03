@@ -7,7 +7,9 @@ import {
 import { createDAOargs } from "../../util/sputnikdao.js";
 import nearApi from "near-api-js";
 
-test("should go to system upgrade page", async ({ page }) => {
+test("should update treasury factory with new web4 contract and self upgrade instance", async ({
+  page,
+}) => {
   test.setTimeout(200_000);
   const sandbox = new SandboxRPC();
   await sandbox.init();
