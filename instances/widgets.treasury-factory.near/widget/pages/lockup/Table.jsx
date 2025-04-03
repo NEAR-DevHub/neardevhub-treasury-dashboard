@@ -315,6 +315,7 @@ const ProposalsComponent = ({ item }) => {
             props={{
               votes: item.votes,
               requiredVotes,
+              isInProgress: true,
             }}
           />
         </td>

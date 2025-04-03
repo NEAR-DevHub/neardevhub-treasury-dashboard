@@ -35,7 +35,7 @@ const Theme = styled.div`
   .card {
     border-color: var(--border-color) !important;
     border-width: 1px !important;
-    border-radius: 14px;
+    border-radius: 16px;
     background-color: var(--bg-page-color) !important;
   }
 

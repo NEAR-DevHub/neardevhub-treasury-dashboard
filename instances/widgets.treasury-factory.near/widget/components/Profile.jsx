@@ -129,8 +129,8 @@ const ReceiverAccountComponent = (
     style={{ width: width ? width : displayImage ? "180px" : "100px" }}
   >
     {displayImage && (
-      <div style={{ width: "40px", height: 40, position: "relative" }}>
-        <img src={imageSrc} height={40} width={40} className="rounded-circle" />
+      <div style={{ width: "35", height: 35, position: "relative" }}>
+        <img src={imageSrc} height={35} width={35} className="rounded-circle" />
         <div style={{ marginTop: "-20px", marginLeft: "22px" }}>
           {verificationStatus &&
             (isVerfied ? <VerifiedTick /> : <NotVerfiedTick />)}
@@ -142,8 +142,10 @@ const ReceiverAccountComponent = (
       className="text-truncate"
       style={{ width: width ? width : displayImage ? "150px" : "100px" }}
     >
-      {displayName && <div className="h6 mb-0"> {name}</div>}
-      <div>{displayName ? "@" + accountId : accountId}</div>
+      {displayName && <div className="mb-0"> {name}</div>}
+      <div className="text-secondary text-sm">
+        {displayName ? "@" + accountId : accountId}
+      </div>
     </div>
   </div>
 );

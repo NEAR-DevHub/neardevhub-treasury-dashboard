@@ -10,6 +10,7 @@ const accounts = Object.keys(votes);
 const approversGroup = (props.approversGroup ?? []).sort((a, b) =>
   a.localeCompare(b)
 );
+const showApproversList = props.showApproversList;
 const maxShow = 1;
 const showHover = accounts?.length > maxShow;
 const maxIndex = 100;
@@ -36,7 +37,7 @@ const ApprovalImage = styled.div`
   .status {
     position: absolute;
     bottom: 0;
-    right: 0;
+    right: -5px;
   }
 `;
 
@@ -83,72 +84,69 @@ function getVoteStatus(vote) {
   }
 }
 
-return (
+const approversList = (
+  <div className={showApproversList ? "" : "p-1"}>
+    <div className="d-flex flex-column gap-2">
+      {(showApproversList ? accounts : approversGroup).map((acc) => {
+        const profile = Social.getr(`${acc}/profile`);
+        const name = profile.name;
+        const imageSrc = getImage(acc);
+        const voted = !!votes[acc];
+        const votesStatus = getVoteStatus(votes[acc]);
+        return (
+          <div
+            className="d-flex gap-2 align-items-center"
+            style={{
+              color: voted ? "" : "#B3B3B3",
+              opacity: voted ? " " : "0.6",
+            }}
+          >
+            <div>
+              <ApprovalImage
+                style={{
+                  backgroundImage: `url("${imageSrc}")`,
+                }}
+                className="rounded-circle"
+              >
+                {voted && (
+                  <div className="status">
+                    {votes[acc] === "Approve" ? <Approval /> : <Reject />}
+                  </div>
+                )}
+              </ApprovalImage>
+            </div>
+            <div className="d-flex flex-column">
+              <div className="h6 mb-0 text-break">{name ?? acc}</div>
+              <div className="d-flex">
+                {voted ? (
+                  <span
+                    style={{
+                      color: votesStatus === "Approved" ? "#3CB179" : "#D95C4A",
+                    }}
+                  >
+                    {votesStatus}{" "}
+                  </span>
+                ) : (
+                  "Not Voted"
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  </div>
+);
+
+return showApproversList ? (
+  approversList
+) : (
   <Container className="d-flex justify-content-center">
     {showHover ? (
       <Widget
         src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
         props={{
-          popup: (
-            <div className="p-1">
-              <div className="d-flex flex-column gap-3">
-                {approversGroup.map((acc) => {
-                  const profile = Social.getr(`${acc}/profile`);
-                  const name = profile.name;
-                  const imageSrc = getImage(acc);
-                  const voted = !!votes[acc];
-                  const votesStatus = getVoteStatus(votes[acc]);
-                  return (
-                    <div
-                      className="d-flex gap-2 align-items-center"
-                      style={{
-                        color: voted ? "" : "#B3B3B3",
-                        opacity: voted ? " " : "0.6",
-                      }}
-                    >
-                      <div>
-                        <ApprovalImage
-                          style={{
-                            backgroundImage: `url("${imageSrc}")`,
-                          }}
-                          className="rounded-circle"
-                        >
-                          {voted && (
-                            <div className="status">
-                              {votes[acc] === "Approve" ? (
-                                <Approval />
-                              ) : (
-                                <Reject />
-                              )}
-                            </div>
-                          )}
-                        </ApprovalImage>
-                      </div>
-                      <div className="d-flex flex-column">
-                        <div className="h6 mb-0 text-break">{name ?? acc}</div>
-                        <div className="d-flex">
-                          {voted ? (
-                            <span
-                              style={{
-                                color:
-                                  votesStatus === "Approved"
-                                    ? "#3CB179"
-                                    : "#D95C4A",
-                              }}
-                            >
-                              {votesStatus}{" "}
-                            </span>
-                          ) : (
-                            "Not Voted"
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ),
+          popup: approversList,
           children: ApproversComponent,
           instance: props.instance,
         }}

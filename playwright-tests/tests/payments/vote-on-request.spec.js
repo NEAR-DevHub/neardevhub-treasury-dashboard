@@ -329,9 +329,12 @@ test.describe("don't ask again", function () {
       await page.getByText("View in History").click();
     }
 
-    await expect(page.locator("tr").nth(1)).toHaveClass("bg-highlight", {
-      timeout: 10_000,
-    });
+    await expect(page.locator("tr").nth(1)).toHaveClass(
+      "cursor-pointer proposal-row bg-highlight",
+      {
+        timeout: 10_000,
+      }
+    );
   });
 
   test("reject payment request with single and multiple required votes", async ({
@@ -387,9 +390,12 @@ test.describe("don't ask again", function () {
       await page.getByText("View in History").click();
     }
 
-    await expect(page.locator("tr").nth(1)).toHaveClass("bg-highlight", {
-      timeout: 30_000,
-    });
+    await expect(page.locator("tr").nth(1)).toHaveClass(
+      "cursor-pointer proposal-row bg-highlight",
+      {
+        timeout: 10_000,
+      }
+    );
     await page.waitForTimeout(1_000);
   });
 
@@ -638,9 +644,12 @@ test.describe("Vote on Lockup payment request", function () {
       page.getByText("The payment request has been successfully executed.")
     ).toBeVisible();
     await page.getByText("View in History").click();
-    await expect(page.locator("tr").nth(1)).toHaveClass("bg-highlight", {
-      timeout: 10_000,
-    });
+    await expect(page.locator("tr").nth(1)).toHaveClass(
+      "cursor-pointer proposal-row bg-highlight",
+      {
+        timeout: 10_000,
+      }
+    );
     await sandbox.quitSandbox();
   });
 });
