@@ -592,7 +592,7 @@ function formatSubmissionTimeStamp(
   return (
     <div
       className={
-        "d-flex " +
+        "d-flex flex-wrap " +
         (isProposalDetailsPage ? "align-items-center gap-2" : "flex-column")
       }
     >

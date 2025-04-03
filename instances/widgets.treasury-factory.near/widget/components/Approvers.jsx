@@ -86,7 +86,7 @@ function getVoteStatus(vote) {
 
 const approversList = (
   <div className={showApproversList ? "" : "p-1"}>
-    <div className="d-flex flex-column gap-3">
+    <div className="d-flex flex-column gap-2">
       {(showApproversList ? accounts : approversGroup).map((acc) => {
         const profile = Social.getr(`${acc}/profile`);
         const name = profile.name;

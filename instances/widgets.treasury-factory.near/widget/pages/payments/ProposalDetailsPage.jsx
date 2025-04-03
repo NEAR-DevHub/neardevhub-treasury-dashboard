@@ -205,7 +205,7 @@ const Container = styled.div`
   }
 
   label {
-    font-size: 13px;
+    font-size: 12px;
     color: var(--text-secondary-color);
   }
 
@@ -223,7 +223,8 @@ const Container = styled.div`
   }
 
   .text-large {
-    font-size: 20px;
+    font-size: 18px;
+    font-weight: 600;
   }
 
   .text-grey-02 {
@@ -239,7 +240,7 @@ const Container = styled.div`
     .content {
       border: 1px solid var(--border-color);
       border-bottom: 0px;
-      height: 60px !important;
+      height: 70px !important;
       background-color: var(--grey-05);
     }
 
@@ -255,10 +256,6 @@ const Container = styled.div`
       border-top: 1px solid var(--border-color);
       background: var(--bg-page-color) !important;
     }
-  }
-
-  .rounded-4 {
-    border-radius: 14px !important;
   }
 
   .details-container {
@@ -284,12 +281,12 @@ const ProposalStatus = () => {
     return (
       <div
         className={
-          "d-flex flex-column align-items-center p-3 rounded-4 " +
+          "d-flex flex-column align-items-center px-3 py-4 rounded-4 " +
           (className || "")
         }
         style={{ backgroundColor: bgColor }}
       >
-        <div className="d-flex gap-2 align-items-center">
+        <div className="d-flex gap-3 align-items-center">
           {icon}
           <div className="mb-0 text-large">{label}</div>
         </div>
@@ -302,7 +299,7 @@ const ProposalStatus = () => {
         <Status
           className="success-icon"
           bgColor="rgba(60, 177, 121, 0.16)"
-          icon={<ApprovedStatus width={35} height={35} hideStroke={true} />}
+          icon={<ApprovedStatus width={32} height={32} hideStroke={true} />}
           label="Payment Request Funded"
         />
       );
@@ -311,7 +308,7 @@ const ProposalStatus = () => {
         <Status
           className="error-icon"
           bgColor="rgba(217, 92, 74, 0.16)"
-          icon={<RejectedStatus width={40} height={40} hideStroke={true} />}
+          icon={<RejectedStatus width={32} height={32} hideStroke={true} />}
           label="Payment Request Rejected"
         />
       );
@@ -320,7 +317,7 @@ const ProposalStatus = () => {
         <Status
           className="error-icon"
           bgColor="rgba(217, 92, 74, 0.16)"
-          icon={<RejectedStatus width={40} height={40} hideStroke={true} />}
+          icon={<RejectedStatus width={32} height={32} hideStroke={true} />}
           label="Payment Request Deleted"
         />
       );
@@ -329,7 +326,7 @@ const ProposalStatus = () => {
         <Status
           className="warning-icon"
           bgColor="rgba(177, 113, 8, 0.16)"
-          icon={<Warning width={40} height={40} />}
+          icon={<Warning width={32} height={32} />}
           label="Payment Request Failed"
         />
       );
@@ -386,14 +383,16 @@ const VotesDetails = () => {
             }}
           />
         )}
-      <Widget
-        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Approvers`}
-        props={{
-          votes: proposalData?.votes,
-          approversGroup: transferApproversGroup?.approverAccounts,
-          showApproversList: true,
-        }}
-      />
+      {Object.keys(proposalData?.votes ?? {}).length > 0 && (
+        <Widget
+          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Approvers`}
+          props={{
+            votes: proposalData?.votes,
+            approversGroup: transferApproversGroup?.approverAccounts,
+            showApproversList: true,
+          }}
+        />
+      )}
     </div>
   );
 };
@@ -548,11 +547,11 @@ return (
 
       {isCompactVersion && (
         <div className="sticky-header">
-          <div className="d-flex justify-content-between gap-2 px-3 pt-3 rounded-top-4 content">
+          <div className="d-flex justify-content-between gap-2 px-3 py-3 rounded-top-4 content">
             <div className="cursor-pointer" onClick={() => props.onClose()}>
               <i class="bi bi-x-lg h5 mb-0"></i>
             </div>
-            <h5>#{id}</h5>
+            <h5 className="mb-0">#{id}</h5>
             <div className="d-flex gap-3">
               <CopyComponent />
               <a
@@ -580,7 +579,7 @@ return (
           style={{ minWidth: 200, height: "fit-content" }}
         >
           <div className="card card-body d-flex flex-column gap-2">
-            <h5 className="mb-0 flex-1">{proposalData?.title}</h5>
+            <h6 className="mb-0 flex-1">{proposalData?.title}</h6>
             {proposalData?.summary && (
               <div className=" text-secondary">{proposalData?.summary}</div>
             )}
@@ -598,7 +597,7 @@ return (
                   })}
                 >
                   <button
-                    className="btn p-0 d-flex align-items-center gap-2"
+                    className="btn p-0 d-flex align-items-center gap-2 h-auto"
                     style={{ fontSize: 14 }}
                   >
                     Open Proposal <i class="bi bi-box-arrow-up-right"></i>

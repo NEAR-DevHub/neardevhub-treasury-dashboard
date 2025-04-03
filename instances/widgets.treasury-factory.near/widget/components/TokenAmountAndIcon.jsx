@@ -25,13 +25,13 @@ if (amountWithoutDecimals !== undefined) {
 }
 
 return (
-  <div className="d-flex gap-1 align-items-center">
+  <div className="d-flex gap-1 align-items-center" style={{ fontSize: "18px" }}>
     {isNEAR ? (
       <NearToken width={20} height={20} />
     ) : (
       <img width="20" height="20" src={ftMetadata.icon} />
     )}
-    <span className="amount bolder mb-0">
+    <span className="bolder mb-0">
       {Number(amount).toLocaleString("en-US", {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
