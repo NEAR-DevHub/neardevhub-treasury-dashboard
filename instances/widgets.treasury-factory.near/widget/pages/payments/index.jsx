@@ -184,6 +184,7 @@ return (
       <Widget
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.ProposalDetailsPage`}
         props={{
+          ...props,
           id: proposalDetailsPageId,
           instance,
           setToastStatus,
@@ -246,7 +247,7 @@ return (
           </div>
           <div
             className={`flex-secondary-item ${
-              showProposalDetailsId ? "show" : ""
+              typeof showProposalDetailsId === "number" ? "show" : ""
             }`}
           >
             {typeof showProposalDetailsId === "number" && (

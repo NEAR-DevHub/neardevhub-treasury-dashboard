@@ -15,7 +15,7 @@ async function mockPaymentProposals({ page, status }) {
     },
     modifyOriginalResultFunction: () => {
       let originalResult = [JSON.parse(JSON.stringify(TransferProposalData))];
-      originalResult[0].id = 1;
+      originalResult[0].id = 0;
       originalResult[0].status = status;
       originalResult[0].submission_time = CurrentTimestampInNanoseconds;
       return originalResult;
@@ -31,7 +31,7 @@ async function mockPaymentProposal({ page, status }) {
     },
     modifyOriginalResultFunction: () => {
       let originalResult = JSON.parse(JSON.stringify(TransferProposalData));
-      originalResult.id = 1;
+      originalResult.id = 0;
       originalResult.status = status;
       return originalResult;
     },
@@ -75,7 +75,7 @@ async function checkProposalDetailPage({
     await expect(highlightedProposalRow).toHaveClass(
       "cursor-pointer proposal-row bg-highlight"
     );
-    const heading = page.getByRole("heading", { name: "#1" });
+    const heading = page.getByRole("heading", { name: "#0" });
     await expect(heading).toBeVisible();
     const cancelBtn = await page.locator(".cursor-pointer > .bi").first();
     await cancelBtn.click();
@@ -86,7 +86,7 @@ async function checkProposalDetailPage({
     await copyLink.click();
     await readClipboard({
       page,
-      expectedText: `https://near.social/${instanceAccount}/widget/app?page=payments&id=1`,
+      expectedText: `https://near.social/${instanceAccount}/widget/app?page=payments&id=0`,
     });
     const backBtn = await page.getByRole("button", { name: " Back" });
     await backBtn.click();
@@ -117,7 +117,7 @@ test.describe
         await page.getByText("History", { exact: true }).click();
         await page.waitForTimeout(5_000);
       }
-      const proposalCell = page.getByTestId("proposal-request-#1");
+      const proposalCell = page.getByTestId("proposal-request-#0");
       await expect(proposalCell).toBeVisible({ timeout: 20_000 });
       await mockPaymentProposal({ page, status });
       await proposalCell.click();
@@ -137,7 +137,7 @@ test.describe
   }) => {
     const status = "Approved";
     await mockPaymentProposal({ page, status });
-    await page.goto(`/${instanceAccount}/widget/app?page=payments&id=1`);
+    await page.goto(`/${instanceAccount}/widget/app?page=payments&id=0`);
     await checkProposalDetailPage({
       page,
       status,
@@ -202,6 +202,7 @@ async function approveProposal({
     attachedDeposit: "0",
   });
 
+  await page.waitForTimeout(5_000);
   await page.evaluate(async (transactionResult) => {
     window.transactionSentPromiseResolve(transactionResult);
   }, transactionResult);
@@ -214,34 +215,23 @@ async function approveProposal({
     timeout: 10_000,
   });
   if (isMultiVote) {
-    if (isCompactVersion) {
-      await expect(
-        page.getByText(
-          "Your vote is counted, the payment request is highlighted."
-        )
-      ).toBeVisible({ timeout: 30_000 });
-    } else {
-      await expect(page.getByText("Your vote is counted.")).toBeVisible({
-        timeout: 30_000,
-      });
-      await expect(page.getByText("You approved")).toBeVisible();
-    }
+    await expect(page.getByText("1 Approved", { exact: true })).toBeVisible();
+    await expect(
+      page.getByText(
+        "Your vote is counted" +
+          (!isCompactVersion ? "." : ", the payment request is highlighted.")
+      )
+    ).toBeVisible({ timeout: 30_000 });
   } else {
     await expect(
       page.getByText("The payment request has been successfully executed.")
     ).toBeVisible({ timeout: 30_000 });
-    if (!isCompactVersion) {
-      await expect(page.getByText("Payment Request Funded")).toBeVisible({
-        timeout: 30_000,
-      });
-    } else {
-      await page.getByText("View in History").click();
-      await expect(page.locator("tr").nth(1)).toHaveClass(
-        "cursor-pointer proposal-row bg-highlight",
-        {
-          timeout: 10_000,
-        }
-      );
+
+    await expect(page.getByText("Payment Request Funded")).toBeVisible({
+      timeout: 30_000,
+    });
+    if (isCompactVersion) {
+      await expect(page.getByText("View in History")).toBeVisible();
     }
   }
 }
@@ -289,7 +279,7 @@ test.describe("Should vote on proposal using sandbox RPC and show updated status
       .getByRole("button", {
         name: "Approve",
       })
-      .first();
+      .nth(1);
     await expect(approveButton).toBeEnabled({ timeout: 30_000 });
     await approveButton.click();
     await approveProposal({
