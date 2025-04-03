@@ -234,7 +234,7 @@ const Container = styled.div`
   .sticky-header {
     position: sticky;
     top: 0;
-    z-index: 10000;
+    z-index: 998;
     background-color: var(--bg-system-color);
 
     .content {
