@@ -7,7 +7,7 @@ import { getLocalWidgetSource } from "./bos-workspace.js";
 import { expect } from "@playwright/test";
 import fs from "fs";
 import path, { dirname } from "path";
-import { overlayMessage } from "./test.js";
+import { overlayMessage, removeOverlayMessage } from "./test.js";
 
 export const SPUTNIK_DAO_CONTRACT_ID = "sputnik-dao.near";
 // we don't have proposal bond for any instance (in this repo)
@@ -68,10 +68,7 @@ export class SandboxRPC {
    * @param {import('playwright').Page} page - Playwright page object
    */
   async deployNewTreasuryFactoryWithUpdatedWeb4Contract(page) {
-    const removeOverlayMessage = await overlayMessage(
-      page,
-      "Deploying new treasury factory"
-    );
+    await overlayMessage(page, "Deploying new treasury factory");
     const result = await this.near.connection.provider.query({
       request_type: "view_code",
       account_id: TREASURY_FACTORY_ACCOUNT_ID,
@@ -99,7 +96,7 @@ export class SandboxRPC {
     await (
       await this.near.account(TREASURY_FACTORY_ACCOUNT_ID)
     ).deployContract(currentCode);
-    await removeOverlayMessage();
+    await removeOverlayMessage(page);
   }
 
   /**

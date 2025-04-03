@@ -86,6 +86,8 @@ test("should update treasury factory with new web4 contract and self upgrade ins
     `https://${instanceName}.near.page/widget/app?page=settings&tab=system-updates`
   );
 
+  await expect(await page.getByText("Available Updates")).toBeEnabled();
+
   await page.getByText("Available Updates").click({ timeout: 7_000 });
   await expect(page.getByText("Web4 Contract")).toBeVisible({
     timeout: 10_000,

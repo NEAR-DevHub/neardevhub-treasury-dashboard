@@ -9,9 +9,7 @@ export const test = base.extend({
 
 /**
  * @param {import('playwright').Page} page - Playwright page object
- * @returns {async function}
  */
-
 export async function overlayMessage(page, message) {
   await page.evaluate((message) => {
     const overlay = document.createElement("div");
@@ -43,8 +41,11 @@ export async function overlayMessage(page, message) {
       style.remove();
     };
   }, message);
+}
 
-  const removeOverlay = async () =>
-    await page.evaluate(() => window.removeOverlay());
-  return removeOverlay;
+/**
+ * @param {import('playwright').Page} page - Playwright page object
+ */
+export async function removeOverlayMessage(page) {
+  await page.evaluate(() => window.removeOverlay());
 }
