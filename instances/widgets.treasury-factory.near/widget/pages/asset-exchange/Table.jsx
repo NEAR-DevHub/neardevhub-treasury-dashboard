@@ -255,6 +255,15 @@ const ProposalsComponent = () => {
           "amountOut",
           item.description
         );
+
+        const outEstimate = parseFloat(amountOut) || 0;
+        const slippageValue = parseFloat(slippage) || 0;
+        const minAmountReceive = Number(
+          outEstimate * (1 - slippageValue / 100)
+        ).toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 6,
+        });
         return (
           <tr
             className={
@@ -285,29 +294,40 @@ const ProposalsComponent = () => {
               </td>
             )}
 
-            <td className={"fw-semi-bold " + isVisible("Send")}>
+            <td className={"text-right " + isVisible("Send")}>
               <Widget
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
                 props={{
                   instance,
                   amountWithDecimals: amountIn,
                   address: tokenIn,
+                  showUSDValue: true,
                 }}
               />
             </td>
-            <td className={isVisible("Receive") + " text-center"}>
+            <td className={isVisible("Receive") + " text-right"}>
               <Widget
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
                 props={{
                   instance,
                   amountWithDecimals: amountOut,
                   address: tokenOut,
+                  showUSDValue: true,
                 }}
               />
             </td>
-            <td className={isVisible("Slippage Limit") + " text-center"}>
-              <b>{slippage}%</b>
+            <td className={isVisible("Minimum received") + " text-right"}>
+              <Widget
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
+                props={{
+                  instance,
+                  amountWithDecimals: minAmountReceive,
+                  address: tokenOut,
+                  showUSDValue: true,
+                }}
+              />
             </td>
+
             <td className={"fw-semi-bold text-center " + isVisible("Creator")}>
               <Widget
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
@@ -438,8 +458,8 @@ return (
                 <td className={isVisible("Receive") + " text-right"}>
                   Receive
                 </td>
-                <td className={isVisible("Slippage Limit") + " text-center"}>
-                  Slippage Limit
+                <td className={isVisible("Minimum received") + " text-right"}>
+                  Minimum received
                 </td>
 
                 <td className={isVisible("Creator") + " text-center"}>

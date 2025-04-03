@@ -184,7 +184,7 @@ return (
         onCancel: () => setShowCancelModal(true),
         onSubmit: (args) => {
           setExchangeDetails(args);
-          if (args.rateDifference > 1) {
+          if (args.rateDifference && args.rateDifference < -1) {
             setShowRateWarningModal(true);
           } else {
             onSubmitClick(args);
