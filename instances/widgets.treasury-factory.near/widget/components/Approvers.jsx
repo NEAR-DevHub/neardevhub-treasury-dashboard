@@ -117,7 +117,7 @@ const approversList = (
             </div>
             <div className="d-flex flex-column">
               <div className="h6 mb-0 text-break">{name ?? acc}</div>
-              <div className="d-flex">
+              <div className="d-flex" style={{ fontSize: 12 }}>
                 {voted ? (
                   <span
                     style={{

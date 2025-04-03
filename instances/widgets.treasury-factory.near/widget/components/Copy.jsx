@@ -1,7 +1,8 @@
-const { Copy } = VM.require(
+const { Copy, Check } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Icons"
 ) || {
   Copy: () => <></>,
+  Check: () => <></>,
 };
 
 const { label, clipboardText, showLogo, className, logoDimensions } = props;
@@ -28,7 +29,7 @@ return (
       }}
     >
       {showLogo && isCopied ? (
-        <i class="bi bi-check-lg h5 mb-0"></i>
+        <Check width={logoDimensions?.width} height={logoDimensions?.height} />
       ) : (
         <Copy width={logoDimensions?.width} height={logoDimensions?.height} />
       )}

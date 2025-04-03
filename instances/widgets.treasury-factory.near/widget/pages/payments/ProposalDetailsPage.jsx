@@ -274,6 +274,10 @@ const Container = styled.div`
     bottom: 0px;
     transition: top 0.3s ease-in-out;
   }
+
+  .gap-10px {
+    gap: 10px !important;
+  }
 `;
 
 const ProposalStatus = () => {
@@ -512,7 +516,7 @@ if (!proposalData) {
       <div>
         {isCompactVersion ? (
           <div
-            className="d-flex flex-column gap-2 w-100"
+            className="d-flex flex-column gap-10px w-100"
             style={{ height: "500px" }}
           >
             <SecondaryTopSkeleton />
@@ -524,7 +528,7 @@ if (!proposalData) {
             <div className="flex-3 ">
               <MainSkeleton />
             </div>
-            <div className="d-flex flex-column gap-3 flex-2 h-100">
+            <div className="d-flex flex-column gap-10px flex-2 h-100">
               <SecondaryTopSkeleton />
               <SecondaryBottomSkeleton />
             </div>
@@ -565,13 +569,14 @@ return (
         </div>
       )}
       {isCompactVersion && (
-        <div className="mb-3">
+        <div className="mb-2">
           <VotesDetails />
         </div>
       )}
       <div
         className={
-          "d-flex gap-3 flex-wrap " + (isCompactVersion && " flex-column")
+          "d-flex flex-wrap " +
+          (isCompactVersion ? " gap-10px flex-column" : " gap-3")
         }
       >
         <div
@@ -646,7 +651,7 @@ return (
           </div>
         </div>
         <div
-          className={"flex-2 d-flex flex-column gap-3 "}
+          className={"flex-2 d-flex flex-column gap-10px"}
           style={{ minWidth: 200 }}
         >
           {!isCompactVersion && <VotesDetails />}
