@@ -106,7 +106,7 @@ const code = `
                 background: ${colors["--theme-color-dark"]} !important;
             }
             .text-sm {
-                font-size: 13px;
+                font-size: 12px;
             }
             .disabled img {
                 opacity: 0.8;
@@ -145,6 +145,10 @@ const code = `
                 right: 0;
             }
 
+            i{
+               color: ${colors["--icon-color"]};
+            }
+
             .text-warning {
                 color: ${colors["--other-warning"]} ;
             }
@@ -180,11 +184,12 @@ const code = `
             }
             .ms-auto {
                 font-size: 12px;
+                margin-left: 0.5rem !important;
             }
 
             .toggle-header {
-                padding-block: 0.5rem;
-                padding-inline: 0.5rem;
+                padding-block: 0.6rem;
+                padding-inline: 0.6rem;
             }
 
             #exchange-details-collapse.show {
@@ -208,20 +213,26 @@ const code = `
                 gap: 0.2rem;
                 border: 1px solid var(--border-color);
                 border-top: none;
-                padding-block: 0.5rem;
-                padding-inline: 0.5rem;
+                padding-block: 0.6rem;
+                padding-inline: 0.6rem;
                 background-color: ${colors["--bg-system-color"]};
             }
             .cursor-pointer {
                 cursor: pointer;
             }
+
+            .tooltip-inner {
+                background-color:${colors["--bg-system-color"]}  !important;
+                color: ${colors["--text-color"]} !important;
+                border-color: ${colors["--border-color"]} !important;
+              }
             
             </style>
         </head>
         <body data-bs-theme=${isDarkTheme ? "dark" : "light"}>
             <div class="d-flex flex-column gap-3">
             <!-- Send Section -->
-            <div class="d-flex flex-column gap-1">
+            <div class="d-flex flex-column gap-2">
                 <label>Send</label>
                 <div class="d-flex">
                 <input
@@ -243,7 +254,7 @@ const code = `
                         style="display: none"
                     />
                     <span id="sendTokenSymbol">Select</span>
-                    <span class="ms-auto"><i class="bi bi-chevron-down"></i></span>
+                    <span class="ms-auto"><i class="bi bi-chevron-down h6 mb-0"></i></span>
                     </button>
                     <div
                     id="sendDropdownMenu"
@@ -275,7 +286,7 @@ const code = `
             </div>
 
             <!-- Receive Section -->
-            <div class="d-flex flex-column gap-1">
+            <div class="d-flex flex-column gap-2">
                 <label>Receive</label>
                 <div class="d-flex" style="position: relative">
                 <input
@@ -306,7 +317,7 @@ const code = `
                         style="display: none"
                     />
                     <span id="receiveTokenSymbol">Select</span>
-                    <span class="ms-auto"><i class="bi bi-chevron-down"></i></span>
+                    <span class="ms-auto"><i class="bi bi-chevron-down h6 mb-0"></i></span>
                     </button>
                     <div
                     id="receiveDropdownMenu"
@@ -344,11 +355,11 @@ const code = `
             <!-- Details section -->
             <div id="exchange-details" style="display: none">
                 <div
-                class="d-flex flex-column gap-1 border border-1 collapse-container"
+                class="d-flex flex-column gap-2 border border-1 collapse-container"
                
                 >
                 <div
-                    class="d-flex align-items-center gap-2 justify-content-between toggle-header"
+                    class="d-flex align-items-center gap-3 justify-content-between toggle-header"
                 >
                     <div class="d-flex align-items-center gap-2">
                     <div id="tokens-exchange-rate" class="cursor-pointer">
@@ -363,7 +374,7 @@ const code = `
                     >
                     </i>
                     </div>
-                    <div class="d-flex gap-1 align-items-center cursor-pointer"  
+                    <div class="d-flex gap-2 align-items-center cursor-pointer"  
                     data-bs-toggle="collapse"
                     data-bs-target="#exchange-details-collapse"
                     aria-expanded="false"
@@ -374,7 +385,7 @@ const code = `
                         style="display: none"
                     ></i>
                     Details
-                    <i id="details-toggle-icon" class="bi bi-chevron-down"></i>
+                    <i id="details-toggle-icon" class="bi bi-chevron-down h6 mb-0"></i>
                     </div>
                 </div>
                 </div>
@@ -453,7 +464,7 @@ const code = `
             </div>
 
             <!-- Slippage Section -->
-            <div class="d-flex flex-column gap-1">
+            <div class="d-flex flex-column gap-2">
                 <label>
                 Price Slippage Limit (%)
                 <i
@@ -484,7 +495,7 @@ const code = `
             </div>
 
             <!-- Notes Section -->
-            <div class="d-flex flex-column gap-1">
+            <div class="d-flex flex-column gap-2">
                 <label>Notes (Optional)</label>
                 <div class="d-flex">
                 <textarea
@@ -566,10 +577,12 @@ const code = `
                 if (
                     sendToken &&
                     receiveToken &&
-                    sendToken !== receiveToken &&
-                    sendAmount
+                    sendToken !== receiveToken
                 ) {
-                    swapTokens();
+                    showExchangeDetailsSection();
+                    if(sendAmount){
+                        swapTokens();
+                    }
                 }
                 }
 
@@ -691,33 +704,36 @@ const code = `
                 });
 
                 function toggleDropdown(event, type) {
-                event.stopPropagation(); // Prevents closing when clicking inside
-
-                var selectedTokenBtn = document.getElementById(
-                    "selected" + capitalize(type) + "Token",
-                );
-                var dropdownMenu = document.getElementById(type + "DropdownMenu");
-
-                var isOpen = dropdownMenu.style.display === "block";
-                dropdownMenu.style.display = isOpen ? "none" : "block";
-                }
-
-                function closeDropdown(event) {
-                ["send", "receive"].forEach(function (type) {
+                    event.stopPropagation(); // Prevents closing when clicking inside
+                
+                    var selectedTokenBtn = document.getElementById("selected" + capitalize(type) + "Token");
                     var dropdownMenu = document.getElementById(type + "DropdownMenu");
-                    var selectedTokenBtn = document.getElementById(
-                    "selected" + capitalize(type) + "Token",
-                    );
-
-                    if (
-                    !dropdownMenu.contains(event.target) &&
-                    event.target !== selectedTokenBtn
-                    ) {
-                    dropdownMenu.style.display = "none";
-                    }
-                });
+                    var chevronIcon = selectedTokenBtn.querySelector("i"); // Get the icon inside the button
+                
+                    var isOpen = dropdownMenu.style.display === "block";
+                    dropdownMenu.style.display = isOpen ? "none" : "block";
+                
+                    // Toggle the chevron direction
+                    chevronIcon.classList.toggle("bi-chevron-down", isOpen);
+                    chevronIcon.classList.toggle("bi-chevron-up", !isOpen);
                 }
-
+                
+                function closeDropdown(event) {
+                    ["send", "receive"].forEach(function (type) {
+                        var dropdownMenu = document.getElementById(type + "DropdownMenu");
+                        var selectedTokenBtn = document.getElementById("selected" + capitalize(type) + "Token");
+                        var chevronIcon = selectedTokenBtn.querySelector("i");
+                
+                        if (!dropdownMenu.contains(event.target) && event.target !== selectedTokenBtn) {
+                            dropdownMenu.style.display = "none";
+                
+                            // Ensure icon resets to down when closing
+                            chevronIcon.classList.add("bi-chevron-down");
+                            chevronIcon.classList.remove("bi-chevron-up");
+                        }
+                    });
+                }
+                
                 ["send", "receive"].forEach(function (type) {
                 var selectedTokenBtn = document.getElementById(
                     "selected" + capitalize(type) + "Token",
@@ -787,7 +803,7 @@ const code = `
 
                 var priceText = document.createElement("div");
                 priceText.className = "text-muted text-sm";
-                priceText.innerText = "$" + token.price;
+                priceText.innerText = "$" +  Number(token.price ?? 0).toLocaleString("en-US");
 
                 nameContainer.appendChild(symbolText);
                 nameContainer.appendChild(priceText);
@@ -809,9 +825,19 @@ const code = `
                 item.onclick = function () {
                     updateSelectedToken(type, token);
                     window[type + "SelectedToken"] = token;
-                    document.getElementById(type + "DropdownMenu").style.display =
-                    "none";
+                
+                    var dropdownMenu = document.getElementById(type + "DropdownMenu");
+                    var selectedTokenBtn = document.getElementById("selected" + capitalize(type) + "Token");
+                    var chevronIcon = selectedTokenBtn.querySelector("i"); // Get the chevron icon inside the button
+                
+                    // Close the dropdown
+                    dropdownMenu.style.display = "none";
+                
+                    // Reset the chevron icon to point down
+                    chevronIcon.classList.add("bi-chevron-down");
+                    chevronIcon.classList.remove("bi-chevron-up");
                 };
+                
 
                 dropdown.appendChild(item);
                 });
@@ -860,9 +886,7 @@ const code = `
                 currentPrice.style.display = "block";
                 currentPrice.innerText =
                 "$" +
-                Number(token.price ?? 0).toLocaleString("en-US", {
-                    minimumFractionDigits: 2,
-                });
+                Number(token.price ?? 0).toLocaleString("en-US");
 
                 exchangeDetailsSection.style.display = "none";
                 // Set the selected token variable
@@ -968,8 +992,10 @@ const code = `
                 var receiveExchangeRate = document.getElementById(
                 "receive-exchange-rate",
                 );
-                const tokenOutRate = toToken.price / fromToken.price;
-                const tokenInRate = fromToken.price / toToken.price;
+                const tokenOutRate =
+                fromToken.price > 0 ? toToken.price / fromToken.price : 0;
+                const tokenInRate =
+                toToken.price > 0 ? fromToken.price / toToken.price : 0;
 
                 sendExchangeRate.innerHTML =
                 "1 " +
@@ -1135,8 +1161,6 @@ const code = `
                     fromToken.id,
                     toToken.id,
                     );
-
-                    showExchangeDetailsSection();
 
                     transactions = data.transactions;
                     if (transactions.length > 1) {

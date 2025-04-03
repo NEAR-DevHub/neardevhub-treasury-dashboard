@@ -26,10 +26,13 @@ const [settingsOptions, setSettingsOptions] = useState(
           show: true,
         },
         {
+          title: "Receive",
+          show: true,
+        },
+        {
           title: "Minimum received",
           show: true,
         },
-
         {
           title: "Creator",
           show: true,

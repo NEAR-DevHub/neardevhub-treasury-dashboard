@@ -294,7 +294,7 @@ const ProposalsComponent = () => {
               </td>
             )}
 
-            <td className={"fw-semi-bold " + isVisible("Send")}>
+            <td className={"text-right " + isVisible("Send")}>
               <Widget
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
                 props={{
@@ -305,7 +305,18 @@ const ProposalsComponent = () => {
                 }}
               />
             </td>
-            <td className={isVisible("Minimum received") + " text-center"}>
+            <td className={isVisible("Receive") + " text-right"}>
+              <Widget
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
+                props={{
+                  instance,
+                  amountWithDecimals: amountOut,
+                  address: tokenOut,
+                  showUSDValue: true,
+                }}
+              />
+            </td>
+            <td className={isVisible("Minimum received") + " text-right"}>
               <Widget
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
                 props={{
@@ -443,6 +454,9 @@ return (
                 )}
 
                 <td className={isVisible("Send") + " text-right"}>Send</td>
+                <td className={isVisible("Receive") + " text-right"}>
+                  Receive
+                </td>
                 <td className={isVisible("Minimum received") + " text-right"}>
                   Minimum received
                 </td>
