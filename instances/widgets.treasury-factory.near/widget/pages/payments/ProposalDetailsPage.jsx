@@ -136,7 +136,7 @@ function refreshData() {
   if (props.transactionHashes) {
     return;
   }
-  if (!isCompactVersion) {
+  if (isCompactVersion) {
     Storage.set("REFRESH_PAYMENTS_TABLE_DATA", Math.random());
   }
   setProposalData(null);
