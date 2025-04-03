@@ -1,3 +1,5 @@
+const { instance } = props;
+
 const Container = styled.div`
   font-size: 13px;
   min-height: 60vh;
@@ -40,6 +42,30 @@ return (
             <td>2023-10-01</td>
             <td>1.0</td>
             <td>Web4 Contract</td>
+            <td>contract update</td>
+            <td>No</td>
+            <td>
+              <Widget
+                src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
+                props={{
+                  classNames: {
+                    root: "btn btn-success shadow-none",
+                  },
+                  label: "Review",
+                  onClick: () => {
+                    Near.call([
+                      {
+                        contractName: instance,
+                        methodName: "self_upgrade",
+                        args: {},
+                        gas: 300_000_000_000_000,
+                        deposit: 0,
+                      },
+                    ]);
+                  },
+                }}
+              />
+            </td>
           </tr>
         </tbody>
       </table>

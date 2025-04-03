@@ -7,6 +7,7 @@ import { getLocalWidgetSource } from "./bos-workspace.js";
 import { expect } from "@playwright/test";
 import fs from "fs";
 import path, { dirname } from "path";
+import { overlayMessage } from "./test.js";
 
 export const SPUTNIK_DAO_CONTRACT_ID = "sputnik-dao.near";
 // we don't have proposal bond for any instance (in this repo)
@@ -63,7 +64,14 @@ export class SandboxRPC {
     this.account = await this.near.account(this.account_id);
   }
 
-  async deployNewTreasuryFactoryWithUpdatedWeb4Contract() {
+  /**
+   * @param {import('playwright').Page} page - Playwright page object
+   */
+  async deployNewTreasuryFactoryWithUpdatedWeb4Contract(page) {
+    const removeOverlayMessage = await overlayMessage(
+      page,
+      "Deploying new treasury factory"
+    );
     const result = await this.near.connection.provider.query({
       request_type: "view_code",
       account_id: TREASURY_FACTORY_ACCOUNT_ID,
@@ -91,6 +99,7 @@ export class SandboxRPC {
     await (
       await this.near.account(TREASURY_FACTORY_ACCOUNT_ID)
     ).deployContract(currentCode);
+    await removeOverlayMessage();
   }
 
   /**
@@ -556,17 +565,11 @@ export class SandboxRPC {
   async redirectWeb4(contractId, page) {
     await page.route("https://rpc.mainnet.near.org", async (route, request) => {
       const postData = request.postDataJSON();
-      if (postData.params.account_id.endsWith(SPUTNIK_DAO_CONTRACT_ID)) {
-        const response = await route.fetch({
-          url: this.rpc_url,
-          json: postData,
-        });
-        await route.fulfill({ response });
-      } else if (postData.params.account_id === "social.near") {
+      if (postData.params.account_id === "social.near") {
         const args = JSON.parse(atob(postData.params.args_base64));
         const keys = args.keys;
 
-        if (keys[0].startsWith(contractId)) {
+        if ((keys && keys[0].startsWith(contractId)) || keys === undefined) {
           const response = await route.fetch({
             url: this.rpc_url,
             json: postData,
@@ -622,7 +625,11 @@ export class SandboxRPC {
           await route.fulfill({ json });
         }
       } else {
-        await route.fallback();
+        const response = await route.fetch({
+          url: this.rpc_url,
+          json: postData,
+        });
+        await route.fulfill({ response });
       }
     });
 
