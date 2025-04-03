@@ -272,14 +272,14 @@ const Copy = ({ height, width }) => (
       <path
         d="M16.6667 7.5H9.16667C8.24619 7.5 7.5 8.24619 7.5 9.16667V16.6667C7.5 17.5871 8.24619 18.3333 9.16667 18.3333H16.6667C17.5871 18.3333 18.3333 17.5871 18.3333 16.6667V9.16667C18.3333 8.24619 17.5871 7.5 16.6667 7.5Z"
         stroke="var(--icon-color)"
-        stroke-width="1.66667"
+        stroke-width="1"
         stroke-linecap="round"
         stroke-linejoin="round"
       />
       <path
         d="M4.16669 12.4998H3.33335C2.89133 12.4998 2.4674 12.3242 2.15484 12.0117C1.84228 11.6991 1.66669 11.2752 1.66669 10.8332V3.33317C1.66669 2.89114 1.84228 2.46722 2.15484 2.15466C2.4674 1.8421 2.89133 1.6665 3.33335 1.6665H10.8334C11.2754 1.6665 11.6993 1.8421 12.0119 2.15466C12.3244 2.46722 12.5 2.89114 12.5 3.33317V4.1665"
         stroke="var(--icon-color)"
-        stroke-width="1.66667"
+        stroke-width="1"
         stroke-linecap="round"
         stroke-linejoin="round"
       />
@@ -292,7 +292,7 @@ const Copy = ({ height, width }) => (
   </svg>
 );
 
-const Approval = ({ height, width }) => (
+const Approval = ({ height, width, hideStroke }) => (
   <svg
     width={width ?? 20}
     height={height ?? 20}
@@ -306,11 +306,11 @@ const Approval = ({ height, width }) => (
       r="9"
       fill="#3CB179"
       stroke="var(--bg-page-color)"
-      stroke-width="2"
+      stroke-width={hideStroke ? "0" : "2"}
     />
     <path
       d="M14 7L8.5 12.5L6 10"
-      stroke="var(--bg-page-color)"
+      stroke="white"
       stroke-width="2"
       stroke-linecap="round"
       stroke-linejoin="round"
@@ -318,7 +318,7 @@ const Approval = ({ height, width }) => (
   </svg>
 );
 
-const Reject = ({ height, width }) => (
+const Reject = ({ height, width, hideStroke }) => (
   <svg
     width={width ?? 21}
     height={height ?? 20}
@@ -332,18 +332,113 @@ const Reject = ({ height, width }) => (
       r="9"
       fill="#D95C4A"
       stroke="var(--bg-page-color)"
-      stroke-width="2"
+      stroke-width={hideStroke ? "0" : "2"}
     />
     <path
       d="M13.5 7L7.5 13"
-      stroke="var(--bg-page-color)"
+      stroke="white"
       stroke-width="2"
       stroke-linecap="round"
       stroke-linejoin="round"
     />
     <path
       d="M7.5 7L13.5 13"
-      stroke="var(--bg-page-color)"
+      stroke="white"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  </svg>
+);
+
+const Warning = ({ height, width }) => (
+  <svg
+    width={width ?? 21}
+    height={height ?? 20}
+    viewBox="0 0 32 33"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M10.4801 3.16675H21.5201L29.3334 10.9801V22.0201L21.5201 29.8334H10.4801L2.66675 22.0201V10.9801L10.4801 3.16675Z"
+      stroke="#B17108"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M16 11.1667V16.5001"
+      stroke="#B17108"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M16 21.8333H16.0133"
+      stroke="#B17108"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  </svg>
+);
+
+const ApprovedStatus = ({ height, width }) => (
+  <svg
+    width={width ?? 20}
+    height={height ?? 20}
+    viewBox="0 0 32 33"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <circle cx="16.5" cy="16.5" r="16" fill="#3CB179" />
+    <path
+      d="M24.5 10.5L13.5 21.5L8.5 16.5"
+      stroke="white"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  </svg>
+);
+
+const RejectedStatus = ({ height, width }) => (
+  <svg
+    width={width ?? 21}
+    height={height ?? 20}
+    viewBox="0 0 32 33"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <circle cx="16" cy="16.5" r="16" fill="#D95C4A" />
+    <path
+      d="M22 10.5L10 22.5"
+      stroke="white"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+    <path
+      d="M10 10.5L22 22.5"
+      stroke="white"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  </svg>
+);
+
+const Check = ({ height, width }) => (
+  <svg
+    width={width ?? 20}
+    height={height ?? 20}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M20 6L9 17L4 12"
+      stroke="var(--icon-color)"
       stroke-width="2"
       stroke-linecap="round"
       stroke-linejoin="round"
@@ -364,4 +459,8 @@ return {
   Copy,
   Approval,
   Reject,
+  Warning,
+  ApprovedStatus,
+  RejectedStatus,
+  Check,
 };

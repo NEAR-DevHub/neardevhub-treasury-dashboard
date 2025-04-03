@@ -73,6 +73,10 @@ const transferApproversGroup = getApproversAndThreshold(
   context.accountId
 );
 
+useEffect(() => {
+  props.onSelectRequest(null);
+}, [currentPage, rowsPerPage]);
+
 return (
   <div className="d-flex flex-column flex-1 justify-content-between">
     <Widget
@@ -85,6 +89,7 @@ return (
         highlightProposalId,
         loading: loading,
         policy,
+        ...props,
       }}
     />
     {(proposals ?? [])?.length > 0 && (

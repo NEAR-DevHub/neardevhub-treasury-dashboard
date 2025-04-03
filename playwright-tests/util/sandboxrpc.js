@@ -289,7 +289,7 @@ export class SandboxRPC {
     return findLockupContractLog(createLockupResult);
   }
 
-  async setupSandboxForSputnikDao(daoName, memberAccountId) {
+  async setupSandboxForSputnikDao(daoName, memberAccountId, isMultiVote) {
     const group = [this.account.accountId];
     if (memberAccountId) {
       group.push(memberAccountId);
@@ -297,7 +297,7 @@ export class SandboxRPC {
     const oneRequiredVote = {
       weight_kind: "RoleWeight",
       quorum: "0",
-      threshold: "1",
+      threshold: isMultiVote ? "2" : "1",
     };
     const createDaoConfig = {
       config: {
@@ -445,8 +445,7 @@ export class SandboxRPC {
           Transfer: {
             amount,
             receiver_id,
-            token_id:
-              "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+            token_id: "",
           },
         },
       },

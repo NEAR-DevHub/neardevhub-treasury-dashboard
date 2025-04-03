@@ -30,7 +30,7 @@ const [settingsOptions, setSettingsOptions] = useState(
           show: true,
         },
         {
-          title: "Slippage Limit",
+          title: "Minimum received",
           show: true,
         },
         {

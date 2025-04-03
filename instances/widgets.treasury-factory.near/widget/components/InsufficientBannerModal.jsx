@@ -20,6 +20,7 @@ const {
   treasuryDaoID,
   callbackAction,
   disabled,
+  className,
 } = props;
 
 if (typeof getNearBalances !== "function") {
@@ -39,14 +40,14 @@ const ADDITIONAL_AMOUNT = checkForDeposit
 
 const INSUFFICIENT_BALANCE_LIMIT = ADDITIONAL_AMOUNT + 0.1; // 0.1N
 
-function checkBalance() {
+function checkBalance(e) {
   if (disabled || !context.accountId) {
     return;
   }
   if (parseFloat(nearBalances?.availableParsed) < INSUFFICIENT_BALANCE_LIMIT) {
     setShowModal(true);
   } else {
-    callbackAction();
+    callbackAction(e);
   }
 }
 
@@ -76,7 +77,7 @@ const WarningModal = () => (
 
 return (
   <>
-    <div onClick={checkBalance}>
+    <div className={className ?? ""} onClick={checkBalance}>
       <ActionButton />
     </div>
     {showModal && <WarningModal />}
