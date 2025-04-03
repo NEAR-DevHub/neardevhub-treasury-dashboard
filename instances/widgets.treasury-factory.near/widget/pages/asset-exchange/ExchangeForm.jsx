@@ -210,7 +210,7 @@ const code = `
                 justify-content: space-between;
                 width: 100%;
                 align-items: center;
-                gap: 0.2rem;
+                gap: 0.5rem;
                 border: 1px solid var(--border-color);
                 border-top: none;
                 padding-block: 0.6rem;
@@ -221,10 +221,9 @@ const code = `
                 cursor: pointer;
             }
 
-            .tooltip-inner {
-                background-color:${colors["--bg-system-color"]}  !important;
-                color: ${colors["--text-color"]} !important;
-                border-color: ${colors["--border-color"]} !important;
+            .custom-tooltip {
+                --bs-tooltip-bg:${colors["--bg-system-color"]}  !important;
+                --bs-tooltip-color:${colors["--text-color"]} !important;
               }
             
             </style>
@@ -369,6 +368,7 @@ const code = `
                     <i
                         class="bi bi-info-circle text-secondary"
                         data-bs-toggle="tooltip"
+                        data-bs-custom-class="custom-tooltip"
                         data-bs-placement="top"
                         title="This exchange rate is based on the swap provider Ref Finance."
                     >
@@ -392,11 +392,12 @@ const code = `
 
                 <div class="collapse" id="exchange-details-collapse">
                 <div class="collapse-item">
-                    <div>
+                    <div class="d-flex gap-2 align-items-center">
                     Price Deference
                     <i
                         class="bi bi-info-circle text-secondary"
                         data-bs-toggle="tooltip"
+                        data-bs-custom-class="custom-tooltip"
                         data-bs-placement="top"
                         title="The difference between the market price and the price you get."
                     >
@@ -405,11 +406,12 @@ const code = `
                     <div id="exchange-rate-percentage"></div>
                 </div>
                 <div class="collapse-item rounded-bottom-3" id="pool-fee-item">
-                    <div>
+                    <div class="d-flex gap-2 align-items-center">
                     Pool fee
                     <i
                         class="bi bi-info-circle text-secondary"
                         data-bs-toggle="tooltip"
+                        data-bs-custom-class="custom-tooltip"
                         data-bs-placement="top"
                         title="This fee is collected by Ref Finance and shared with liquidity providers as a reward for providing liquidity to the pool"
                     >
@@ -422,11 +424,12 @@ const code = `
                     id="additional-storage-message"
                     style="display: none"
                 >
-                    <div>
+                    <div class="d-flex gap-2 align-items-center">
                     Additional Storage Purchase
                     <i
                         class="bi bi-info-circle text-secondary"
                         data-bs-toggle="tooltip"
+                        data-bs-custom-class="custom-tooltip"
                         data-bs-placement="top"
                         title="To collect this token, purchase storage space. After submission, 0.1 NEAR will be charged from your account as an additional transaction."
                     >
@@ -469,6 +472,7 @@ const code = `
                 Price Slippage Limit (%)
                 <i
                     class="bi bi-info-circle text-secondary"
+                    data-bs-custom-class="custom-tooltip"
                     data-bs-toggle="tooltip"
                     data-bs-placement="top"
                     title="Exchange rates may fluctuate during the approval process for your asset exchange request. Setting a price slippage limit helps protect against unexpected changes. If the actual exchange rate exceeds your specified limit at the time of voting, the request will fail."
