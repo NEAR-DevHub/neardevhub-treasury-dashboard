@@ -437,6 +437,11 @@ test.describe("Lockup Creation", () => {
         receiverAccount: TEST_ACCOUNTS.withExistingLockup,
       });
 
+      await expect(
+        page.getByText(
+          "This account already has an active lockup. You can only have one active lockup at a time."
+        )
+      ).toBeVisible();
       await expect(submitBtn).toBeDisabled();
     });
 

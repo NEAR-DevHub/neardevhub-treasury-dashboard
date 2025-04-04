@@ -135,7 +135,7 @@ return (
     {account && (
       <div style={{ color: "red" }} className="text-sm mt-1">
         {hasLockup
-          ? "Account already has an active lockup"
+          ? "This account already has an active lockup. You can only have one active lockup at a time."
           : !isValidAccount
           ? "Please enter valid account ID"
           : null}
