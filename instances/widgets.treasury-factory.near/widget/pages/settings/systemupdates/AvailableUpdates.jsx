@@ -1,4 +1,9 @@
 const { instance } = props;
+const { Modal, ModalContent, ModalHeader, ModalFooter } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.modal"
+);
+
+const [showUpdateModal, setShowUpdateModal] = useState(false);
 
 const Container = styled.div`
   font-size: 13px;
@@ -20,6 +25,60 @@ const Container = styled.div`
     overflow-x: auto;
   }
 `;
+
+function applyWeb4ContractUpdate() {
+  setShowUpdateModal(false);
+  Near.call([
+    {
+      contractName: instance,
+      methodName: "self_upgrade",
+      args: {},
+      gas: 300_000_000_000_000,
+      deposit: 0,
+    },
+  ]);
+}
+
+function cancelUpdate() {
+  setShowUpdateModal(false);
+}
+
+function updateModal() {
+  if (!showUpdateModal) {
+    return <></>;
+  }
+  return (
+    <Modal>
+      <ModalHeader>
+        <i class="bi bi-exclamation-triangle text-warning"></i>
+        System update
+      </ModalHeader>
+      <ModalContent>
+        <p>Update the Web4 contract</p>
+      </ModalContent>
+      <ModalFooter>
+        <Widget
+          src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
+          props={{
+            classNames: {
+              root: "btn btn-outline-secondary shadow-none no-transparent",
+            },
+            label: "Cancel",
+            onClick: cancelUpdate,
+          }}
+        />
+        <Widget
+          src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
+          props={{
+            classNames: { root: "theme-btn" },
+            label: "Yes, proceed",
+            onClick: applyWeb4ContractUpdate,
+          }}
+        />
+      </ModalFooter>
+    </Modal>
+  );
+}
 
 return (
   <Container style={{ overflowX: "auto" }}>
@@ -53,15 +112,7 @@ return (
                   },
                   label: "Review",
                   onClick: () => {
-                    Near.call([
-                      {
-                        contractName: instance,
-                        methodName: "self_upgrade",
-                        args: {},
-                        gas: 300_000_000_000_000,
-                        deposit: 0,
-                      },
-                    ]);
+                    setShowUpdateModal(true);
                   },
                 }}
               />
@@ -70,5 +121,6 @@ return (
         </tbody>
       </table>
     </div>
+    {updateModal()}
   </Container>
 );

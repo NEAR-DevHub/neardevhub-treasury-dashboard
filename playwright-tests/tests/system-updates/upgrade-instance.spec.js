@@ -101,6 +101,7 @@ test("should update treasury factory with new web4 contract and self upgrade ins
   await sandbox.deployNewTreasuryFactoryWithUpdatedWeb4Contract(page);
 
   await page.locator("button", { hasText: "Review" }).click();
+  await page.getByRole("button", { name: "Yes, proceed" }).click();
 
   await page.getByRole("button", { name: "Confirm" }).click();
   await expect(
@@ -119,5 +120,6 @@ test("should update treasury factory with new web4 contract and self upgrade ins
   await page.locator("#dropdownIcon").click();
   await expect(await page.getByText("Gateway Select")).toBeVisible();
 
+  await page.waitForTimeout(500);
   await sandbox.quitSandbox();
 });
