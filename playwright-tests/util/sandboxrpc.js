@@ -18,6 +18,10 @@ export const DEFAULT_WIDGET_REFERENCE_ACCOUNT_ID =
 
 export const TREASURY_FACTORY_ACCOUNT_ID = "treasury-factory.near";
 export class SandboxRPC {
+  constructor() {
+    this.modifiedWidgets = {};
+  }
+
   async init() {
     await new Promise((resolve) => {
       this.sandbox = exec(
@@ -584,15 +588,18 @@ export class SandboxRPC {
               "widget",
               rest.join("/").replace(/\./g, "/")
             );
+            const [account, section, contentKey] = key.split("/");
+            if (fileContents[account] === undefined) {
+              fileContents[account] = {};
+            }
+            if (fileContents[account][section] === undefined) {
+              fileContents[account][section] = {};
+            }
             const filePath = path.join(instancesFolder, normalizedKey) + ".jsx";
-            if (fs.existsSync(filePath)) {
-              const [account, section, contentKey] = key.split("/");
-              if (fileContents[account] === undefined) {
-                fileContents[account] = {};
-              }
-              if (fileContents[account][section] === undefined) {
-                fileContents[account][section] = {};
-              }
+            if (this.modifiedWidgets[key]) {
+              fileContents[account][section][contentKey] =
+                this.modifiedWidgets[key];
+            } else if (fs.existsSync(filePath)) {
               const content = fs
                 .readFileSync(filePath, "utf-8")
                 .replaceAll("${REPL_BASE_DEPLOYMENT_ACCOUNT}", account)
@@ -684,6 +691,10 @@ export class SandboxRPC {
         });
       }
     );
+  }
+
+  modifyWidget(key, content) {
+    this.modifiedWidgets[key] = content;
   }
 
   /**

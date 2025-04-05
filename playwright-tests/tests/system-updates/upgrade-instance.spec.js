@@ -99,6 +99,21 @@ test("should update treasury factory with new web4 contract and self upgrade ins
     timeout: 10_000,
   });
   await sandbox.deployNewTreasuryFactoryWithUpdatedWeb4Contract(page);
+  await sandbox.modifyWidget(
+    "widgets.treasury-factory.near/widget/pages.settings.systemupdates.UpdateRegistry",
+    `
+    return [
+      {
+          id: 99999999,
+          createdDate: "2025-04-05",
+          version: "n/a",
+          type: "Web4 Contract",
+          summary: "contract update",
+          votingRequired: false
+      }
+  ];
+  `
+  );
 
   await page.reload();
   await expect(await page.getByText("Available Updates")).toBeEnabled();

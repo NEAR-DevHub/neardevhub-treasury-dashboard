@@ -2,9 +2,32 @@ const { instance } = props;
 const { Modal, ModalContent, ModalHeader, ModalFooter } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.modal"
 );
+const updateRegistry =
+  VM.require(
+    "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.systemupdates.UpdateRegistry"
+  ) ?? [];
+
+console.log("updateRegistry", updateRegistry);
+
+const STORAGE_KEY_FINISHED_UPDATES = "FINISHED_UPDATES";
+const UPDATE_TYPE_WEB4_CONTRACT = "Web4 Contract";
 
 const [showUpdateModal, setShowUpdateModal] = useState(false);
-const [web4isUpToDate, setWeb4isUpToDate] = useState(true);
+const [web4isUpToDate, setWeb4isUpToDate] = useState(false);
+
+const finishedUpdates = JSON.parse(
+  Storage.get(STORAGE_KEY_FINISHED_UPDATES) ?? "{}"
+);
+
+const updatesNotApplied = updateRegistry.filter(
+  (update) => finishedUpdates[update.id] === undefined
+);
+if (web4isUpToDate) {
+  updatesNotApplied
+    .filter((update) => update.type === UPDATE_TYPE_WEB4_CONTRACT)
+    .forEach((update) => (finishedUpdates[update.id] = true));
+  Storage.set(STORAGE_KEY_FINISHED_UPDATES, JSON.stringify(finishedUpdates));
+}
 
 const Container = styled.div`
   font-size: 13px;
@@ -89,7 +112,11 @@ async function checkForWeb4ContractUpdate() {
   });
 }
 
-checkForWeb4ContractUpdate();
+if (
+  updatesNotApplied.find((update) => update.type === UPDATE_TYPE_WEB4_CONTRACT)
+) {
+  checkForWeb4ContractUpdate();
+}
 
 function applyWeb4ContractUpdate() {
   setShowUpdateModal(false);
@@ -161,16 +188,14 @@ return (
           </tr>
         </thead>
         <tbody>
-          {web4isUpToDate ? (
-            <></>
-          ) : (
-            <tr>
-              <td className="px-3">1</td>
-              <td>2023-10-01</td>
-              <td>1.0</td>
-              <td>Web4 Contract</td>
-              <td>contract update</td>
-              <td>No</td>
+          {updatesNotApplied.map((update) => (
+            <tr key={update.id}>
+              <td className="px-3">{update.id}</td>
+              <td>{update.createdDate}</td>
+              <td>{update.version}</td>
+              <td>{update.type}</td>
+              <td>{update.summary}</td>
+              <td>{update.votingRequired ? "Yes" : "No"}</td>
               <td>
                 <Widget
                   src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
@@ -186,7 +211,7 @@ return (
                 />
               </td>
             </tr>
-          )}
+          ))}
         </tbody>
       </table>
     </div>
