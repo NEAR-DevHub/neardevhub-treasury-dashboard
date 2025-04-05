@@ -559,7 +559,8 @@ export class SandboxRPC {
    * @param {import('@playwright/test').Page} page - Playwright page object
    */
   async redirectWeb4(contractId, page) {
-    await page.route("https://rpc.mainnet.near.org", async (route, request) => {
+    const original_rpc_url = "https://rpc.mainnet.near.org";
+    await page.route(original_rpc_url, async (route, request) => {
       const postData = request.postDataJSON();
       if (postData.params.account_id === "social.near") {
         const args = JSON.parse(atob(postData.params.args_base64));
@@ -595,7 +596,8 @@ export class SandboxRPC {
               const content = fs
                 .readFileSync(filePath, "utf-8")
                 .replaceAll("${REPL_BASE_DEPLOYMENT_ACCOUNT}", account)
-                .replaceAll("${REPL_DEVHUB}", "devhub.near");
+                .replaceAll("${REPL_DEVHUB}", "devhub.near")
+                .replaceAll("${REPL_RPC_URL}", original_rpc_url);
 
               fileContents[account][section][contentKey] = content;
             } else {

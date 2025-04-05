@@ -89,16 +89,24 @@ test("should update treasury factory with new web4 contract and self upgrade ins
   await expect(await page.getByText("Available Updates")).toBeEnabled();
 
   await page.getByText("Available Updates").click({ timeout: 7_000 });
-  await expect(page.getByText("Web4 Contract")).toBeVisible({
-    timeout: 10_000,
-  });
 
   await page.locator("#dropdownIcon").click();
   await expect(await page.getByText("Select Gateway")).toBeVisible();
   await page.waitForTimeout(500);
   await page.locator("#dropdownIcon").click();
 
+  await expect(page.getByText("Web4 Contract")).not.toBeVisible({
+    timeout: 10_000,
+  });
   await sandbox.deployNewTreasuryFactoryWithUpdatedWeb4Contract(page);
+
+  await page.reload();
+  await expect(await page.getByText("Available Updates")).toBeEnabled();
+  await page.getByText("Available Updates").click();
+
+  await expect(page.getByText("Web4 Contract")).toBeVisible({
+    timeout: 10_000,
+  });
 
   await page.locator("button", { hasText: "Review" }).click();
   await page.getByRole("button", { name: "Yes, proceed" }).click();
@@ -113,7 +121,7 @@ test("should update treasury factory with new web4 contract and self upgrade ins
   await expect(await page.getByText("Available Updates")).toBeEnabled();
 
   await page.getByText("Available Updates").click();
-  await expect(page.getByText("Web4 Contract")).toBeVisible({
+  await expect(page.getByText("Web4 Contract")).not.toBeVisible({
     timeout: 10_000,
   });
 
