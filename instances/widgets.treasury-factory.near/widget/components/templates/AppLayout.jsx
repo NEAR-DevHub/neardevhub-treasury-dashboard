@@ -16,6 +16,16 @@ const AppHeader = ({ page, instance }) => (
   />
 );
 
+const UpdateNotificationBanner = ({ page, instance }) => (
+  <Widget
+    src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.systemupdates.UpdateNotificationBanner"
+    props={{
+      page,
+      instance,
+    }}
+  />
+);
+
 const Theme = styled.div`
   padding-top: calc(-1 * var(--body-top-padding));
 
@@ -445,6 +455,7 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
           minHeight: gatewayURL.includes("near.org") ? "100vh" : "100%",
         }}
       >
+        <UpdateNotificationBanner></UpdateNotificationBanner>
         <AppHeader page={page} instance={instance} />
         <BalanceBanner accountId={accountId} treasuryDaoID={treasuryDaoID} />
         <div className="px-3 pb-3 w-100 h-100">{children}</div>

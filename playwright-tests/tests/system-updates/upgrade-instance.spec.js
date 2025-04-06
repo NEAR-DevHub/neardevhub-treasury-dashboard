@@ -82,8 +82,12 @@ test("should update treasury factory with new web4 contract and self upgrade ins
       privateKey: keyPair.toString(),
     }
   );
+
+  await page.reload();
+  await expect(await page.getByRole("link", { name: "Review" })).toBeVisible();
+
   await page.goto(
-    `https://${instanceName}.near.page/widget/app?page=settings&tab=system-updates`
+    `https://${instanceName}.near.page/?page=settings&tab=system-updates`
   );
 
   await expect(await page.getByText("Available Updates")).toBeEnabled();
@@ -98,6 +102,16 @@ test("should update treasury factory with new web4 contract and self upgrade ins
   await expect(page.getByText("Web4 Contract")).not.toBeVisible({
     timeout: 10_000,
   });
+
+  // Visiting the updates page above should have automatically marked the web4 contract as up to date, and notification banner should disappear
+  await page.goto(`https://${instanceName}.near.page/`);
+  await page.waitForTimeout(500);
+  await expect(
+    await page.getByRole("link", { name: "Review" })
+  ).not.toBeVisible();
+
+  // Deploy the new treasury factory with an updated web4 contract
+
   await sandbox.deployNewTreasuryFactoryWithUpdatedWeb4Contract(page);
   await sandbox.modifyWidget(
     "widgets.treasury-factory.near/widget/pages.settings.systemupdates.UpdateRegistry",
@@ -115,7 +129,11 @@ test("should update treasury factory with new web4 contract and self upgrade ins
   `
   );
 
-  await page.reload();
+  await page.goto(`https://${instanceName}.near.page/`);
+
+  await expect(await page.getByRole("link", { name: "Review" })).toBeVisible();
+  await page.getByRole("link", { name: "Review" }).click();
+
   await expect(await page.getByText("Available Updates")).toBeEnabled();
   await page.getByText("Available Updates").click();
 
@@ -144,5 +162,12 @@ test("should update treasury factory with new web4 contract and self upgrade ins
   await expect(await page.getByText("Gateway Select")).toBeVisible();
 
   await page.waitForTimeout(500);
+  await page.goto(`https://${instanceName}.near.page/`);
+
+  await page.waitForTimeout(500);
+  await expect(
+    await page.getByRole("link", { name: "Review" })
+  ).not.toBeVisible();
+
   await sandbox.quitSandbox();
 });

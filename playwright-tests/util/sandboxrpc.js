@@ -602,6 +602,10 @@ export class SandboxRPC {
             } else if (fs.existsSync(filePath)) {
               const content = fs
                 .readFileSync(filePath, "utf-8")
+                .replaceAll(
+                  "${REPL_BACKEND_API}",
+                  "https://ref-sdk-api-2.fly.dev/api"
+                )
                 .replaceAll("${REPL_BASE_DEPLOYMENT_ACCOUNT}", account)
                 .replaceAll("${REPL_DEVHUB}", "devhub.near")
                 .replaceAll("${REPL_RPC_URL}", original_rpc_url);

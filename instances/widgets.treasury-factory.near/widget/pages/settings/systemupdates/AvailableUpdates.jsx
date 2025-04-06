@@ -1,32 +1,24 @@
 const { instance } = props;
-const { Modal, ModalContent, ModalHeader, ModalFooter } = VM.require(
-  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.modal"
-);
-const updateRegistry =
-  VM.require(
-    "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.systemupdates.UpdateRegistry"
-  ) ?? [];
-
-console.log("updateRegistry", updateRegistry);
-
-const STORAGE_KEY_FINISHED_UPDATES = "FINISHED_UPDATES";
-const UPDATE_TYPE_WEB4_CONTRACT = "Web4 Contract";
-
 const [showUpdateModal, setShowUpdateModal] = useState(false);
 const [web4isUpToDate, setWeb4isUpToDate] = useState(false);
 
-const finishedUpdates = JSON.parse(
-  Storage.get(STORAGE_KEY_FINISHED_UPDATES) ?? "{}"
+const { Modal, ModalContent, ModalHeader, ModalFooter } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.modal"
 );
+const {
+  updatesNotApplied,
+  finishedUpdates,
+  setFinishedUpdates,
+  UPDATE_TYPE_WEB4_CONTRACT,
+} = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.systemupdates.UpdateNotificationTracker"
+) ?? { updatesNotApplied: [], setFinishedUpdates: () => {} };
 
-const updatesNotApplied = updateRegistry.filter(
-  (update) => finishedUpdates[update.id] === undefined
-);
 if (web4isUpToDate) {
   updatesNotApplied
     .filter((update) => update.type === UPDATE_TYPE_WEB4_CONTRACT)
     .forEach((update) => (finishedUpdates[update.id] = true));
-  Storage.set(STORAGE_KEY_FINISHED_UPDATES, JSON.stringify(finishedUpdates));
+  setFinishedUpdates(finishedUpdates);
 }
 
 const Container = styled.div`
