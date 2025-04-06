@@ -97,13 +97,6 @@ const Container = styled.div`
   min-height: 60vh;
   display: flex;
 
-  td {
-    padding: 0.5rem;
-    color: inherit;
-    vertical-align: middle;
-    background: inherit;
-  }
-
   table {
     overflow-x: auto;
 
