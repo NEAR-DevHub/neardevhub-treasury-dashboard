@@ -72,7 +72,10 @@ export class SandboxRPC {
    * @param {import('playwright').Page} page - Playwright page object
    */
   async deployNewTreasuryFactoryWithUpdatedWeb4Contract(page) {
-    await overlayMessage(page, "Deploying new treasury factory");
+    await overlayMessage(
+      page,
+      "Development team is deploying new treasury factory with updated web4 contract"
+    );
     const result = await this.near.connection.provider.query({
       request_type: "view_code",
       account_id: TREASURY_FACTORY_ACCOUNT_ID,

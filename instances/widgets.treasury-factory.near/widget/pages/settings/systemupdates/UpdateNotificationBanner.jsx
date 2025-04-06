@@ -2,7 +2,26 @@ const { hasUpdates } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.systemupdates.UpdateNotificationTracker"
 ) ?? { hasUpdates: false };
 
-return hasUpdates ? (
+const { hasPermission } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+) || {
+  hasPermission: () => false,
+};
+
+const instance = props.instance;
+if (!instance) {
+  return <></>;
+}
+
+const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+const hasEditPermission = hasPermission(
+  treasuryDaoID,
+  context.accountId,
+  "policy",
+  "AddProposal"
+);
+
+return hasEditPermission && hasUpdates ? (
   <div
     style={{
       backgroundColor: "#e4ece8",

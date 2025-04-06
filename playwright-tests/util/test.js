@@ -1,5 +1,7 @@
 import { test as base } from "@playwright/test";
 
+const cdnCache = {};
+
 export const test = base.extend({
   instanceAccount: ["treasury-devdao.near", { option: true }],
   daoAccount: ["devdao.sputnik-dao.near", { option: true }],
@@ -48,4 +50,21 @@ export async function overlayMessage(page, message) {
  */
 export async function removeOverlayMessage(page) {
   await page.evaluate(() => window.removeOverlay());
+}
+
+/**
+ * Call this to ensure that static cdn data is cached and not re-fetched on page reloads
+ * Without this you may run into that the CDN will not serve files because of too many requests
+ * @param {import('playwright').Page} page - Playwright page object
+ */
+export async function cacheCDN(page) {
+  await page.route("https://ga.jspm.io/**", async (route, request) => {
+    if (cdnCache[request.url()]) {
+      await route.fulfill({ response: cdnCache[request.url()] });
+    } else {
+      const response = await route.fetch();
+      cdnCache[request.url()] = response;
+      await route.fulfill({ response });
+    }
+  });
 }

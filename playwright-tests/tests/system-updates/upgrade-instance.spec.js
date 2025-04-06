@@ -1,5 +1,5 @@
 import { expect } from "@playwright/test";
-import { test } from "../../util/test.js";
+import { cacheCDN, test } from "../../util/test.js";
 import {
   DEFAULT_WIDGET_REFERENCE_ACCOUNT_ID,
   SandboxRPC,
@@ -10,7 +10,10 @@ import nearApi from "near-api-js";
 test("should update treasury factory with new web4 contract and self upgrade instance", async ({
   page,
 }) => {
-  test.setTimeout(200_000);
+  test.setTimeout(120_000);
+
+  await cacheCDN(page);
+
   const sandbox = new SandboxRPC();
   await sandbox.init();
 
@@ -51,6 +54,13 @@ test("should update treasury factory with new web4 contract and self upgrade ins
   await sandbox.redirectWeb4(instanceAccountId, page);
 
   await page.goto(`https://${instanceName}.near.page`);
+
+  // Normal users should not see the update banner
+  await page.waitForTimeout(500);
+  await expect(
+    await page.getByRole("link", { name: "Review" })
+  ).not.toBeVisible();
+
   const keyPair = await sandbox.keyStore.getKey("sandbox", sandbox.account_id);
   await page.evaluate(
     ({ accountId, publicKey, privateKey }) => {
@@ -85,14 +95,13 @@ test("should update treasury factory with new web4 contract and self upgrade ins
 
   await page.reload();
   await expect(await page.getByRole("link", { name: "Review" })).toBeVisible();
+  await page.getByRole("link", { name: "Review" }).click();
 
-  await page.goto(
-    `https://${instanceName}.near.page/?page=settings&tab=system-updates`
-  );
+  await expect(await page.getByText("Available Updates")).toBeEnabled({
+    timeout: 20_000,
+  });
 
-  await expect(await page.getByText("Available Updates")).toBeEnabled();
-
-  await page.getByText("Available Updates").click({ timeout: 7_000 });
+  await page.getByText("Available Updates").click();
 
   await page.locator("#dropdownIcon").click();
   await expect(await page.getByText("Select Gateway")).toBeVisible();
@@ -131,7 +140,9 @@ test("should update treasury factory with new web4 contract and self upgrade ins
 
   await page.goto(`https://${instanceName}.near.page/`);
 
-  await expect(await page.getByRole("link", { name: "Review" })).toBeVisible();
+  await expect(await page.getByRole("link", { name: "Review" })).toBeVisible({
+    timeout: 10_000,
+  });
   await page.getByRole("link", { name: "Review" }).click();
 
   await expect(await page.getByText("Available Updates")).toBeEnabled();
@@ -169,5 +180,6 @@ test("should update treasury factory with new web4 contract and self upgrade ins
     await page.getByRole("link", { name: "Review" })
   ).not.toBeVisible();
 
+  await page.unrouteAll({ behavior: "ignoreErrors" });
   await sandbox.quitSandbox();
 });

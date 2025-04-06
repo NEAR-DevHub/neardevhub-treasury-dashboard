@@ -455,7 +455,10 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
           minHeight: gatewayURL.includes("near.org") ? "100vh" : "100%",
         }}
       >
-        <UpdateNotificationBanner></UpdateNotificationBanner>
+        <UpdateNotificationBanner
+          page={page}
+          instance={instance}
+        ></UpdateNotificationBanner>
         <AppHeader page={page} instance={instance} />
         <BalanceBanner accountId={accountId} treasuryDaoID={treasuryDaoID} />
         <div className="px-3 pb-3 w-100 h-100">{children}</div>
