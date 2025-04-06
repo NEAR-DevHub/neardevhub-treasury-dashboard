@@ -21,27 +21,26 @@ const ModalDiv = styled.div`
       font-size: 16px !important;
     }
   }
-
-  .btn {
-    font-size: 14px;
-  }
 `;
 
 const ModalBackdrop = styled.div`
   position: absolute;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  opacity: 0.4;
+  background-color: rgba(0, 0, 0, 1);
+  opacity: 0.7;
 `;
 
 const ModalDialog = styled.div`
-  padding: 2em;
+  padding: 16px;
   z-index: 999;
   overflow-y: auto;
   max-height: 85%;
   margin-top: 5%;
   width: 35%;
-  border-radius: 20px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 
   @media screen and (max-width: 768px) {
     margin: 2rem;
@@ -54,7 +53,6 @@ const ModalHeaderDiv = styled.div`
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 4px;
 `;
 
 const CloseButton = styled.button`
@@ -75,8 +73,6 @@ const CloseButton = styled.button`
 const ModalContent = styled.div`
   flex: 1;
   font-size: 14px;
-  margin-top: 4px;
-  margin-bottom: 4px;
   overflow-y: auto;
   max-height: 50%;
   text-align: left !important;
@@ -100,7 +96,7 @@ const ModalHeader = ({ children }) => (
 );
 
 const ModalFooter = ({ children }) => (
-  <div className="modalfooter d-flex gap-2 align-items-center justify-content-end mt-2">
+  <div className="modalfooter d-flex gap-3 align-items-center justify-content-end mt-2">
     {children}
   </div>
 );

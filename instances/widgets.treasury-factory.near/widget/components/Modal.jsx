@@ -5,6 +5,7 @@ const cancelLabel = props.cancelLabel;
 const confirmLabel = props.confirmLabel;
 const onCancelClick = props.onCancelClick;
 const onConfirmClick = props.onConfirmClick;
+const wider = props.wider;
 
 const Modal = styled.div`
   display: ${({ hidden }) => (hidden ? "none" : "flex")};
@@ -29,27 +30,26 @@ const Modal = styled.div`
       font-size: 16px !important;
     }
   }
-
-  .btn {
-    font-size: 14px;
-  }
 `;
 
 const ModalBackdrop = styled.div`
   position: absolute;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  opacity: 0.4;
+  background-color: rgba(0, 0, 0, 1);
+  opacity: 0.7;
 `;
 
 const ModalDialog = styled.div`
-  padding: 2em;
+  padding: 24px;
   z-index: 999;
   overflow-y: auto;
   max-height: 85%;
   margin-top: 5%;
-  width: 35%;
-  min-width: 400px;
+  width: ${({ wider }) => (wider ? "800px" : "600px")};
+  max-width: 800px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 
   @media screen and (max-width: 768px) {
     margin: 2rem;
@@ -63,11 +63,9 @@ const ModalHeader = styled.div`
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 4px;
 `;
 
 const ModalFooter = styled.div`
-  padding-top: 4px;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
@@ -95,6 +93,7 @@ const ModalContent = styled.div`
   margin-top: 4px;
   margin-bottom: 4px;
   overflow-y: auto;
+  overflow-x: hidden;
   max-height: 50%;
   text-align: left !important;
   @media screen and (max-width: 768px) {
@@ -114,12 +113,12 @@ return (
   <>
     <Modal hidden={!isOpen}>
       <ModalBackdrop />
-      <ModalDialog className="card">
+      <ModalDialog className="card" wider={wider}>
         <ModalHeader>
           <h5 className="mb-0">{heading}</h5>
         </ModalHeader>
         <ModalContent>{content}</ModalContent>
-        <div className="d-flex gap-2 align-items-center justify-content-end mt-2">
+        <div className="d-flex gap-3 align-items-center justify-content-end mt-2">
           {typeof onCancelClick === "function" && (
             <Widget
               src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}

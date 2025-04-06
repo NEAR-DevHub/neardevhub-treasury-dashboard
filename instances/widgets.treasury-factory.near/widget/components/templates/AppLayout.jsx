@@ -301,14 +301,90 @@ const Theme = styled.div`
     .amount {
       font-size: 14px;
     }
+
+    tbody {
+      tr {
+        height: 60px;
+
+        td {
+          padding: 0.5rem;
+          color: inherit;
+          vertical-align: middle;
+          background: inherit;
+
+          &:first-child {
+            padding-left: 20px;
+          }
+
+          &:last-child {
+            padding-right: 20px;
+          }
+        }
+      }
+    }
   }
 
-  .table td:first-child {
-    padding-left: 20px;
+  .text-clamp {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
-  .table td:last-child {
-    padding-right: 20px;
+  .table-compact {
+    border-collapse: separate;
+    border-spacing: 0;
+    text-align: center;
+    border-radius: 12px;
+
+    thead th {
+      border-bottom: 0;
+    }
+
+    tbody {
+      tr {
+        height: 45px;
+
+        td {
+          padding: 12px;
+          border: 1px solid var(--border-color);
+          border-bottom-width: 0;
+          border-left-width: 0;
+
+          &:first-child {
+            border-left-width: 1px;
+            background-color: var(--grey-045);
+            font-weight: 500;
+            text-align: left;
+          }
+        }
+
+        &:first-child {
+          td {
+            &:first-child {
+              border-top-left-radius: 12px;
+            }
+
+            &:last-child {
+              border-top-right-radius: 12px;
+            }
+          }
+        }
+        &:last-child {
+          td {
+            border-bottom-width: 1px;
+            &:first-child {
+              border-bottom-left-radius: 12px;
+            }
+
+            &:last-child {
+              border-bottom-right-radius: 12px;
+            }
+          }
+        }
+      }
+    }
   }
 
   .bg-white {

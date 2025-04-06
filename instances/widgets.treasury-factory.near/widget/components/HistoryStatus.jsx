@@ -26,6 +26,11 @@ const Container = styled.div`
     color: var(--other-warning);
   }
 
+  .active {
+    background-color: rgba(0, 202, 134, 0.16);
+    color: var(--other-green);
+  }
+
   div {
     padding: 6px 8px;
     border-radius: 8px;
@@ -43,6 +48,8 @@ return (
       <div className="reject bold">Rejected</div>
     ) : proposalStatus === "Failed" ? (
       <div className="failed bold">Failed</div>
+    ) : proposalStatus === "Active" ? (
+      <div className="active bold">Active</div>
     ) : (
       <div className="expire bold">Expired</div>
     )}

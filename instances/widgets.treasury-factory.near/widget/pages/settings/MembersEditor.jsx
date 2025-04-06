@@ -1,9 +1,16 @@
 const { encodeToMarkdown } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
+const { Modal, ModalContent, ModalHeader, ModalFooter } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.modal"
+);
 const { TransactionLoader } = VM.require(
   `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TransactionLoader`
 ) || { TransactionLoader: () => <></> };
+
+const { InfoBlock } = VM.require(
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InfoBlock`
+) || { InfoBlock: () => <></> };
 
 const isTreasuryFactory = props.isTreasuryFactory;
 const instance = props.instance;
@@ -28,6 +35,9 @@ const [showDeleteModal, setShowDeleteModal] = useState(false);
 const [showCancelModal, setShowCancelModal] = useState(false);
 const [memberAlreadyExistRoles, setMemberAlreadyExistRoles] = useState(null);
 const [showErrorToast, setShowErrorToast] = useState(false);
+const [showConfirmModal, setShowConfirmModal] = useState(false);
+const [otherPendingRequests, setOtherPendingRequests] = useState([]);
+const [permissionsImpactions, setPermissionsImpactions] = useState([]);
 
 const daoPolicy =
   treasuryDaoID && !isTreasuryFactory
@@ -194,6 +204,47 @@ function cleanInputs() {
   setRoles([]);
 }
 
+function detectImpactedPermissions() {
+  const { updatedPolicy } = updateDaoPolicy(
+    new Map(roles.map((role) => [role.title, role.value]))
+  );
+
+  const permissionsImpactions = updatedPolicy.roles.map((role) => {
+    const votersSize = role.kind.Group.length;
+    const defaultVotersSize = daoPolicy.roles.find((r) => r.name === role.name)
+      .kind.Group.length;
+
+    const threshold = Object.values(role.vote_policy)[0].threshold;
+
+    if (Array.isArray(threshold)) {
+      const requiredVotersSize =
+        Math.floor((threshold[0] / 100) * votersSize) + 1;
+      const defaultRequiredVotersSize =
+        Math.floor((threshold[0] / 100) * defaultVotersSize) + 1;
+
+      if (requiredVotersSize !== defaultRequiredVotersSize) {
+        return {
+          name: role.name,
+          old: defaultRequiredVotersSize,
+          new: requiredVotersSize,
+        };
+      } else return null;
+    } else {
+      if (votersSize < parseInt(threshold)) {
+        return {
+          name: role.name,
+          old: parseInt(threshold),
+          new: votersSize,
+        };
+      } else return null;
+    }
+  });
+
+  const filteredPermissionsImpactions = permissionsImpactions.filter((i) => i);
+  setPermissionsImpactions(filteredPermissionsImpactions);
+  return filteredPermissionsImpactions;
+}
+
 const Container = styled.div`
   font-size: 14px;
 
@@ -334,7 +385,6 @@ return (
             disabled: isInitialValues() || isTxnCreated,
           }}
         />
-
         <Widget
           src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
           props={{
@@ -346,8 +396,64 @@ return (
               isTxnCreated ||
               !isUsernameValid,
             label: "Submit",
-            onClick: onSubmitClick,
+            onClick: () => {
+              const impactedPermissions = detectImpactedPermissions();
+              if (impactedPermissions.length > 0) {
+                setShowConfirmModal(true);
+              } else {
+                onSubmitClick();
+              }
+            },
             loading: isTxnCreated,
+          }}
+        />
+
+        <Widget
+          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
+          props={{
+            instance,
+            heading: "Confirm Your Change",
+            content: (
+              <div className="d-flex flex-column gap-2">
+                <span>
+                  This action will result in significant changes to the system.
+                </span>
+
+                <InfoBlock
+                  type="warning"
+                  description={
+                    <div>
+                      <div>
+                        Adding this member will change the required votes for
+                        some permissions
+                      </div>
+                      {permissionsImpactions.map((i) => (
+                        <div>
+                          <b>{i.name}</b>: {i.old} vote{i.old > 1 ? "s" : ""} →{" "}
+                          {i.new} vote{i.new > 1 ? "s" : ""}
+                        </div>
+                      ))}
+                      <div>
+                        <a
+                          href={`app?page=settings&tab=voting-thresholds`}
+                          target="_blank"
+                          className="mt-2"
+                        >
+                          Open Settings
+                        </a>
+                      </div>
+                    </div>
+                  }
+                />
+              </div>
+            ),
+            confirmLabel: "Yes, proceed",
+            isOpen: showConfirmModal,
+            onCancelClick: () => setShowConfirmModal(false),
+            onConfirmClick: () => {
+              setShowConfirmModal(false);
+              onSubmitClick();
+            },
           }}
         />
       </div>
