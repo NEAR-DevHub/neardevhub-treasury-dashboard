@@ -20,7 +20,6 @@ return {
   UPDATE_TYPE_WEB4_CONTRACT,
   finishedUpdates,
   setFinishedUpdates: (finishedUpdates) => {
-    console.log("setFinishedUpdates", finishedUpdates);
     Storage.set(STORAGE_KEY_FINISHED_UPDATES, JSON.stringify(finishedUpdates));
   },
 };
