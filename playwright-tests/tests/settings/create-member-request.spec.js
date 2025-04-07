@@ -661,6 +661,6 @@ test.describe("User is logged in", function () {
       await expect(
         page.getByText("Awaiting transaction confirmation...")
       ).toBeVisible();
-    }); 
+    });
   });
 });
