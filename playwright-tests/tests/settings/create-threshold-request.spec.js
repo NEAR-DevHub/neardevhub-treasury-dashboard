@@ -464,4 +464,34 @@ test.describe("User is logged in", function () {
     await expect(submitRequestButton).toBeDisabled();
     await expect(cancelButton).toBeDisabled();
   });
+
+  test("should see alert when required voters changed", async ({ page }) => {
+    test.setTimeout(150_000);
+    const submitBtn = page.getByText("Submit Request");
+    await page.getByTestId("dropdown-btn").click();
+    await page.getByRole("list").getByText("Percentage of members").click();
+    const thresholdInput = page.getByTestId("threshold-input");
+    await thresholdInput.fill("50");
+    await submitBtn.click();
+    await expect(
+      page.getByText(
+        "Changing this setting will require 5 votes to approve requests. You will no longer be able to approve requests with a single vote."
+      )
+    ).toBeVisible();
+  });
+
+  test("should not see alert when required voters is not changed", async ({
+    page,
+  }) => {
+    test.setTimeout(150_000);
+    const submitBtn = page.getByText("Submit Request");
+    await page.getByTestId("dropdown-btn").click();
+    await page.getByRole("list").getByText("Percentage of members").click();
+    const thresholdInput = page.getByTestId("threshold-input");
+    await thresholdInput.fill("1");
+    await submitBtn.click();
+    await expect(
+      page.getByText("Changing this setting will require")
+    ).not.toBeVisible();
+  });
 });

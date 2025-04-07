@@ -208,12 +208,10 @@ function detectImpactedPermissions() {
   const { updatedPolicy } = updateDaoPolicy(
     new Map(roles.map((role) => [role.title, role.value]))
   );
-
   const permissionsImpactions = updatedPolicy.roles.map((role) => {
     const votersSize = role.kind.Group.length;
     const defaultVotersSize = daoPolicy.roles.find((r) => r.name === role.name)
       .kind.Group.length;
-
     const threshold = Object.values(role.vote_policy)[0].threshold;
 
     if (Array.isArray(threshold)) {
