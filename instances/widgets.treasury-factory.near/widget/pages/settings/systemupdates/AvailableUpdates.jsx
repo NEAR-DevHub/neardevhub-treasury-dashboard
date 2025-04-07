@@ -1,5 +1,5 @@
 const { instance } = props;
-const [showUpdateModal, setShowUpdateModal] = useState(false);
+const [showReviewModalForUpdate, setShowReviewModalForUpdate] = useState(null);
 const [web4isUpToDate, setWeb4isUpToDate] = useState(false);
 
 const { Modal, ModalContent, ModalHeader, ModalFooter } = VM.require(
@@ -111,7 +111,7 @@ if (
 }
 
 function applyWeb4ContractUpdate() {
-  setShowUpdateModal(false);
+  setShowReviewModalForUpdate(null);
   Near.call([
     {
       contractName: instance,
@@ -124,21 +124,41 @@ function applyWeb4ContractUpdate() {
 }
 
 function cancelUpdate() {
-  setShowUpdateModal(false);
+  setShowReviewModalForUpdate(null);
 }
 
-function updateModal() {
-  if (!showUpdateModal) {
+function updateModal(update) {
+  if (!update) {
     return <></>;
   }
   return (
     <Modal>
       <ModalHeader>
         <i class="bi bi-exclamation-triangle text-warning"></i>
-        System update
+        System Update: {update.type}
       </ModalHeader>
       <ModalContent>
-        <p>Update the Web4 contract</p>
+        {update.type === UPDATE_TYPE_WEB4_CONTRACT && (
+          <p>
+            Applying Web4 contract updates will always update your web4 contract
+            to the latest version. All pending web4 contract updates will be
+            applied.
+          </p>
+        )}
+        <h6>Summary</h6>
+        <p>{update.summary}</p>
+        {update.details && (
+          <>
+            <h6>Details</h6>
+            <p>{update.details}</p>
+          </>
+        )}
+        <h6>Voting required</h6>
+        <p>{update.votingRequired ? "Yes" : "No"}</p>
+        <h6>Created Date</h6>
+        <p>{update.createdDate}</p>
+        <h6>Version</h6>
+        <p>{update.version}</p>
       </ModalContent>
       <ModalFooter>
         <Widget
@@ -197,7 +217,7 @@ return (
                     },
                     label: "Review",
                     onClick: () => {
-                      setShowUpdateModal(true);
+                      setShowReviewModalForUpdate(update);
                     },
                   }}
                 />
@@ -207,6 +227,6 @@ return (
         </tbody>
       </table>
     </div>
-    {updateModal()}
+    {updateModal(showReviewModalForUpdate)}
   </Container>
 );

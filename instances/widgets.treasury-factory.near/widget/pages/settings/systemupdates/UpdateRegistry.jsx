@@ -5,6 +5,7 @@ return [
     version: "n/a",
     type: "Web4 Contract",
     summary: "Fixed dark theme, added lockup to all instances",
+    details: ``,
     votingRequired: false,
   },
 ];
