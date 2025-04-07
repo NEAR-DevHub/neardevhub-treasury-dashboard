@@ -224,8 +224,15 @@ const code = `
             .custom-tooltip {
                 --bs-tooltip-bg:${colors["--bg-system-color"]}  !important;
                 --bs-tooltip-color:${colors["--text-color"]} !important;
-              }
+                width: 300px !important;
+                font-size: 13px;
+              }              
             
+              .tooltip-inner {
+                max-width: 300px !important;
+                width: 300px !important;
+                white-space: normal; /* allow text wrapping */
+              }
             </style>
         </head>
         <body data-bs-theme=${isDarkTheme ? "dark" : "light"}>
@@ -413,7 +420,7 @@ const code = `
                         data-bs-toggle="tooltip"
                         data-bs-custom-class="custom-tooltip"
                         data-bs-placement="top"
-                        title="This fee is collected by Ref Finance and shared with liquidity providers as a reward for providing liquidity to the pool"
+                        title="This fee is collected by Ref Finance and shared with liquidity providers as a reward for providing liquidity to the pool."
                     >
                     </i>
                     </div>
@@ -633,11 +640,18 @@ const code = `
                 const slippageError = document.getElementById("slippage-error");
 
                 var tooltipTriggerList = [].slice.call(
-                document.querySelectorAll('[data-bs-toggle="tooltip"]'),
-                );
-                tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl);
-                });
+                    document.querySelectorAll('[data-bs-toggle="tooltip"]')
+                  );
+                  
+                  tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl, {
+                      html: true,
+                      delay: { show: 300, hide: 500 },
+                      customClass: 'custom-tooltip',
+                      trigger: 'hover focus'
+                    });  
+                });                  
+                  
 
                 // Select the exchange rate elements and the toggle button
                 const sendExchangeRate = document.getElementById("send-exchange-rate");
