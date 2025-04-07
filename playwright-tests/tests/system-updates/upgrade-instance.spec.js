@@ -101,8 +101,6 @@ test("should update treasury factory with new web4 contract and self upgrade ins
     timeout: 20_000,
   });
 
-  await page.getByText("Available Updates").click();
-
   await page.locator("#dropdownIcon").click();
   await expect(await page.getByText("Select Gateway")).toBeVisible();
   await page.waitForTimeout(500);
@@ -146,7 +144,6 @@ test("should update treasury factory with new web4 contract and self upgrade ins
   await page.getByRole("link", { name: "Review" }).click();
 
   await expect(await page.getByText("Available Updates")).toBeEnabled();
-  await page.getByText("Available Updates").click();
 
   await expect(page.getByText("Web4 Contract")).toBeVisible({
     timeout: 10_000,
@@ -164,7 +161,6 @@ test("should update treasury factory with new web4 contract and self upgrade ins
 
   await expect(await page.getByText("Available Updates")).toBeEnabled();
 
-  await page.getByText("Available Updates").click();
   await expect(page.getByText("Web4 Contract")).not.toBeVisible({
     timeout: 10_000,
   });

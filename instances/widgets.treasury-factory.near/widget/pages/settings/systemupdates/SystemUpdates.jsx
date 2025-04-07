@@ -31,6 +31,7 @@ return (
     src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Tabs`}
     props={{
       ...props,
+      tab: undefined,
       tabs: [
         {
           title: "Available Updates",
