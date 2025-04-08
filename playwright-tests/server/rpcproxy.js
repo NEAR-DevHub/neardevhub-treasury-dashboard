@@ -41,10 +41,16 @@ const server = http.createServer((req, res) => {
               body: body,
             });
 
-            const proxyData = await proxyResponse.text();
-            res.statusCode = proxyResponse.status;
-            res.setHeader("Content-Type", "application/json");
-            res.end(proxyData);
+            if (proxyResponse.ok) {
+              const proxyData = await proxyResponse.text();
+              res.statusCode = proxyResponse.status;
+              res.setHeader("Content-Type", "application/json");
+              res.end(proxyData);
+            } else {
+              throw `${proxyResponse.status} ${
+                proxyResponse.statusText
+              }: ${await proxyResponse.text()}`;
+            }
             break;
           } catch (error) {
             if (n === MAX_RETRIES - 1) {
