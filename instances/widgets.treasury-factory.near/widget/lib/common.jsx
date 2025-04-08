@@ -981,6 +981,39 @@ function deserializeLockupContract(byteArray) {
   return result;
 }
 
+function getCurrentUserTreasuries(accountId) {
+  const pikespeakKey = isBosGateway()
+    ? "${REPL_GATEWAY_PIKESPEAK_KEY}"
+    : props.pikespeakKey ?? "${REPL_INDIVIDUAL_PIKESPEAK_KEY}";
+  return asyncFetch(`https://api.pikespeak.ai/daos/members`, {
+    mode: "cors",
+    headers: {
+      "x-api-key": pikespeakKey,
+    },
+  }).then((res) => {
+    const userDaos = res?.body?.[accountId]?.["daos"] ?? [];
+    return Promise.all(
+      userDaos.map((daoId) => {
+        return Near.asyncView(daoId, "get_config").then((config) => {
+          const frontendExists = Social.get(`/${daoId}/widget/app`);
+          const spuntikName = daoId.split(".")?.[0];
+          conso;
+          return {
+            daoId,
+            instanceAccount: frontendExists
+              ? daoId
+              : `treasury-${spuntikName}.near`,
+            config: {
+              ...config,
+              metadata: JSON.parse(atob(config.metadata ?? "")),
+            },
+          };
+        });
+      })
+    );
+  });
+}
+
 return {
   getApproversAndThreshold,
   hasPermission,
@@ -1005,4 +1038,5 @@ return {
   accountToLockup,
   asyncAccountToLockup,
   deserializeLockupContract,
+  getCurrentUserTreasuries,
 };
