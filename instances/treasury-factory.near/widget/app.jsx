@@ -23,14 +23,31 @@ const { Theme } = VM.require(
 
 const propsToSend = { ...passProps };
 
-return (
-  <Theme>
-    <ThemeContainer>
-      <AppLayout>
+function Page() {
+  const routes = (page ?? "").split(".");
+  switch (routes[0]) {
+    case "my-treasuries": {
+      return (
+        <Widget
+          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.treasury.MyTreasuries"
+          props={propsToSend}
+        />
+      );
+    }
+    default:
+      return (
         <Widget
           src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.treasury.Create"
           props={propsToSend}
         />
+      );
+  }
+}
+return (
+  <Theme>
+    <ThemeContainer>
+      <AppLayout>
+        <Page />
       </AppLayout>
     </ThemeContainer>
   </Theme>
