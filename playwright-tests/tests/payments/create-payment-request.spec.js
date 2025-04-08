@@ -274,7 +274,7 @@ test.describe("User is logged in", function () {
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
     await clickCreatePaymentRequestButton(page);
     const receiveInput = page.getByPlaceholder("treasury.near");
-    await receiveInput.fill("webass");
+    await receiveInput.pressSequentially("webass", { delay: 100 });
     const errorText = page.getByText("Please enter valid account ID");
     await expect(errorText).toBeVisible();
     receiveInput.fill(
