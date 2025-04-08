@@ -11,7 +11,7 @@ const {
   setFinishedUpdates,
   UPDATE_TYPE_WEB4_CONTRACT,
 } = VM.require(
-  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.systemupdates.UpdateNotificationTracker"
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.system-updates.UpdateNotificationTracker"
 ) ?? { updatesNotApplied: [], setFinishedUpdates: () => {} };
 
 if (web4isUpToDate) {

@@ -1,6 +1,6 @@
 const updateRegistry =
   VM.require(
-    "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.systemupdates.UpdateRegistry"
+    "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.system-updates.UpdateRegistry"
   ) ?? [];
 
 const STORAGE_KEY_FINISHED_UPDATES = "FINISHED_UPDATES";

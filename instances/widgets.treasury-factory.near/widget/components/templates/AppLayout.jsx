@@ -18,7 +18,7 @@ const AppHeader = ({ page, instance }) => (
 
 const UpdateNotificationBanner = ({ page, instance }) => (
   <Widget
-    src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.systemupdates.UpdateNotificationBanner"
+    src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.system-updates.UpdateNotificationBanner"
     props={{
       page,
       instance,

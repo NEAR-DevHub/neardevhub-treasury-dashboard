@@ -1,5 +1,5 @@
 const { hasUpdates } = VM.require(
-  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.systemupdates.UpdateNotificationTracker"
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.system-updates.UpdateNotificationTracker"
 ) ?? { hasUpdates: false };
 
 const { hasPermission } = VM.require(

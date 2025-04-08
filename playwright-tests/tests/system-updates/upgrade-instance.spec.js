@@ -121,7 +121,7 @@ test("should update treasury factory with new web4 contract and self upgrade ins
 
   await sandbox.deployNewTreasuryFactoryWithUpdatedWeb4Contract(page);
   await sandbox.modifyWidget(
-    "widgets.treasury-factory.near/widget/pages.settings.systemupdates.UpdateRegistry",
+    "widgets.treasury-factory.near/widget/pages.settings.system-updates.UpdateRegistry",
     `
     return [
       {

@@ -35,12 +35,12 @@ return (
       tabs: [
         {
           title: "Available Updates",
-          href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.systemupdates.AvailableUpdates`,
+          href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.system-updates.AvailableUpdates`,
           props: props,
         },
         {
           title: "History",
-          href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.systemupdates.History`,
+          href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.system-updates.History`,
           props: props,
         },
       ],
