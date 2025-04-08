@@ -231,7 +231,7 @@ const code = `
               .tooltip-inner {
                 max-width: 300px !important;
                 width: 300px !important;
-                white-space: normal; /* allow text wrapping */
+                white-space: normal;
               }
             </style>
         </head>
