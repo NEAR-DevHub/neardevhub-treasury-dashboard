@@ -209,10 +209,16 @@ function detectImpactedPermissions() {
     new Map(roles.map((role) => [role.title, role.value]))
   );
   const permissionsImpactions = updatedPolicy.roles.map((role) => {
+    if (role.name === "all" || !Array.isArray(role.kind.Group)) return null;
+
     const votersSize = role.kind.Group.length;
     const defaultVotersSize = daoPolicy.roles.find((r) => r.name === role.name)
       .kind.Group.length;
-    const threshold = Object.values(role.vote_policy)[0].threshold;
+    const votePolicy = Object.values(role.vote_policy);
+    const threshold =
+      Array.isArray(votePolicy) && votePolicy.length > 0
+        ? votePolicy[0].threshold
+        : daoPolicy.default_vote_policy.threshold;
 
     if (Array.isArray(threshold)) {
       const requiredVotersSize =
