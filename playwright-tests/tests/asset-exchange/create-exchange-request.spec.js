@@ -1,5 +1,5 @@
 import { expect } from "@playwright/test";
-import { test } from "../../util/test.js";
+import { cacheCDN, test } from "../../util/test.js";
 import { getTransactionModalObject } from "../../util/transaction";
 import { mockNearBalances, updateDaoPolicyMembers } from "../../util/rpcmock";
 import { InsufficientBalance, toBase64 } from "../../util/lib.js";
@@ -153,6 +153,7 @@ test.describe("User is logged in", function () {
   });
 
   test.beforeEach(async ({ page, instanceAccount, daoAccount }) => {
+    await cacheCDN(page);
     await updateDaoPolicyMembers({ instanceAccount, page });
   });
 

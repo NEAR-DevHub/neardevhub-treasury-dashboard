@@ -1,4 +1,7 @@
 import { test as base } from "@playwright/test";
+import fs from "fs";
+import path from "path";
+import os from "os";
 
 const cdnCache = {};
 
@@ -58,13 +61,35 @@ export async function removeOverlayMessage(page) {
  * @param {import('playwright').Page} page - Playwright page object
  */
 export async function cacheCDN(page) {
+  const cacheDir = path.join(os.tmpdir(), "cdn-cache");
+  if (!fs.existsSync(cacheDir)) {
+    fs.mkdirSync(cacheDir, { recursive: true });
+  }
+
   await page.route("https://ga.jspm.io/**", async (route, request) => {
-    if (cdnCache[request.url()]) {
-      await route.fulfill({ response: cdnCache[request.url()] });
+    const urlHash = Buffer.from(request.url()).toString("base64");
+    const cacheFilePath = path.join(cacheDir, urlHash);
+
+    if (fs.existsSync(cacheFilePath)) {
+      const cachedContent = fs.readFileSync(cacheFilePath);
+      const contentType = fs.readFileSync(`${cacheFilePath}.type`, "utf-8");
+      await route.fulfill({
+        body: cachedContent,
+        headers: { "Content-Type": contentType },
+      });
     } else {
       const response = await route.fetch();
-      cdnCache[request.url()] = response;
-      await route.fulfill({ response });
+      const body = await response.body();
+      const contentType =
+        response.headers()["content-type"] || "application/octet-stream";
+
+      fs.writeFileSync(cacheFilePath, body);
+      fs.writeFileSync(`${cacheFilePath}.type`, contentType);
+
+      await route.fulfill({
+        body,
+        headers: response.headers(),
+      });
     }
   });
 }
