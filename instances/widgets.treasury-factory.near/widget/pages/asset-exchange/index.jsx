@@ -43,7 +43,7 @@ const SidebarMenu = ({ currentTab }) => {
         />
       )}
       <Widget
-        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.SettingsDropdown`}
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.asset-exchange.SettingsDropdown`}
         props={{
           isPendingPage: currentTab.title === "Pending Requests",
           instance,

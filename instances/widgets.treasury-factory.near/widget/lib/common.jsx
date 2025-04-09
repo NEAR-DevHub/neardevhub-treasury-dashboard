@@ -547,8 +547,14 @@ function getNearBalances(accountId) {
 // https://github.com/near/core-contracts/blob/master/lockup/src/lib.rs#L33
 const LOCKUP_MIN_BALANCE_FOR_STORAGE = Big(3.5).mul(Big(10).pow(24)).toFixed();
 
-function formatSubmissionTimeStamp(submissionTime, proposalPeriod) {
-  const endTime = Big(submissionTime).plus(proposalPeriod).toFixed();
+function formatSubmissionTimeStamp(
+  submissionTime,
+  proposalPeriod,
+  isProposalDetailsPage
+) {
+  const endTime = Big(submissionTime ?? "0")
+    .plus(proposalPeriod ?? "0")
+    .toFixed();
   const milliseconds = Number(endTime) / 1000000;
   const date = new Date(milliseconds);
 
@@ -573,16 +579,35 @@ function formatSubmissionTimeStamp(submissionTime, proposalPeriod) {
   const day = date.getDate().toString().padStart(2, "0");
   const month = date.toLocaleString("default", { month: "short" });
   const year = date.getFullYear();
+  const formattedUTC = date.toLocaleString("en-US", {
+    month: "short",
+    day: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "UTC",
+    timeZoneName: "short",
+  });
   return (
-    <div className="d-flex flex-column">
+    <div
+      className={
+        "d-flex flex-wrap " +
+        (isProposalDetailsPage ? "align-items-center gap-2" : "flex-column")
+      }
+    >
       <div className="fw-bold">
         {isNegative
           ? "Expired"
           : `${totalDays}d ${remainingHours}h ${remainingMinutes}m`}
       </div>
-      <div className="text-secondary text-sm">
-        {hours}:{minutes} {day} {month} {year}
-      </div>
+      {isProposalDetailsPage ? (
+        <div className="text-secondary">{formattedUTC}</div>
+      ) : (
+        <div className="text-secondary text-sm">
+          {hours}:{minutes} {day} {month} {year}
+        </div>
+      )}
     </div>
   );
 }

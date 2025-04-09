@@ -5,9 +5,12 @@ const { NearToken } = VM.require(
 const address = props.address ?? ""; // Empty string for NEAR
 const amountWithDecimals = props.amountWithDecimals ?? 0;
 const amountWithoutDecimals = props.amountWithoutDecimals;
+const showUSDValue = props.showUSDValue;
 
 const isNEAR = address === "" || address.toLowerCase() === "near";
 const isWrapNear = address === "wrap.near";
+
+const [tokenUSDValue, setTokenUSDValue] = useState(null);
 
 let ftMetadata = {
   symbol: "NEAR",
@@ -32,22 +35,38 @@ if (amountWithoutDecimals !== undefined) {
     .toFixed(2);
 }
 
+function toReadableAmount(amount) {
+  return Number(amount).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+useEffect(() => {
+  asyncFetch(`${REPL_BACKEND_API}/ft-token-price?account_id=${address}`).then(
+    (res) => {
+      const price = res.body?.price;
+      if (price) {
+        setTokenUSDValue(Big(amount).mul(price).toFixed(2));
+      }
+    }
+  );
+}, [showUSDValue]);
+
 return (
   <div className="text-center">
     <div className="d-flex gap-1 align-items-center justify-content-end">
-      <span className="amount bolder mb-0">
-        {Number(amount).toLocaleString("en-US", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        })}
-      </span>
+      <span className="amount bolder mb-0">{toReadableAmount(amount)}</span>
       {isNEAR ? (
         <NearToken width={16} height={16} />
       ) : (
         <img width="16" height="16" src={ftMetadata.icon} />
       )}
     </div>
-    {/* TODO later */}
-    {/* <div className="text-secondary">~1000 USD</div> */}
+    {tokenUSDValue && (
+      <div className="text-secondary d-flex justify-content-end">
+        ~{toReadableAmount(tokenUSDValue)} USD
+      </div>
+    )}
   </div>
 );

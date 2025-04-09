@@ -1,4 +1,9 @@
 const { formFields, clearStorage } = props;
+const { Copy } = VM.require(
+  "${REPL_DEVDAO_ACCOUNT}/widget/components.Icons"
+) || {
+  Copy: () => <></>,
+};
 const storageAccountName = Storage.get(
   "TreasuryAccountName",
   `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.treasury.Create`
@@ -45,7 +50,7 @@ const GatewayLink = ({ link, label }) => {
           clipboard.writeText(link);
         }}
       >
-        <i className="bi bi-copy h6 mb-0"></i>
+        <Copy />
       </div>
       <a target="_blank" rel="noopener noreferrer" href={link}>
         <i className="bi bi-box-arrow-up-right h6 mb-0"></i>
