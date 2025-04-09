@@ -12,6 +12,12 @@ const { InfoBlock } = VM.require(
   `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InfoBlock`
 ) || { InfoBlock: () => <></> };
 
+const { getFilteredProposalsByStatusAndKind } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+) || {
+  getFilteredProposalsByStatusAndKind: () => {},
+};
+
 const isTreasuryFactory = props.isTreasuryFactory;
 const instance = props.instance;
 if (!instance && !isTreasuryFactory) {
@@ -36,8 +42,31 @@ const [showCancelModal, setShowCancelModal] = useState(false);
 const [memberAlreadyExistRoles, setMemberAlreadyExistRoles] = useState(null);
 const [showErrorToast, setShowErrorToast] = useState(false);
 const [showConfirmModal, setShowConfirmModal] = useState(false);
-const [otherPendingRequests, setOtherPendingRequests] = useState([]);
-const [permissionsImpactions, setPermissionsImpactions] = useState([]);
+const [proposals, setProposals] = useState([]);
+const [rowsPerPage, setRowsPerPage] = useState(10);
+const [currentPage, setPage] = useState(0);
+const [offset, setOffset] = useState(null);
+const [totalLength, setTotalLength] = useState(null);
+const [isPrevPageCalled, setIsPrevCalled] = useState(false);
+
+const fetchProposals = async () =>
+  getFilteredProposalsByStatusAndKind({
+    treasuryDaoID,
+    resPerPage: rowsPerPage,
+    isPrevPageCalled: isPrevPageCalled,
+    filterKindArray: ["ChangePolicy"],
+    filterStatusArray: ["InProgress"],
+    offset: typeof offset === "number" ? offset : lastProposalId,
+    lastProposalId: lastProposalId,
+    currentPage,
+  }).then((r) => {
+    setOffset(r.filteredProposals[r.filteredProposals.length - 1].id);
+    if (currentPage === 0 && !totalLength) {
+      setTotalLength(r.totalLength);
+    }
+
+    return r.filteredProposals;
+  });
 
 const daoPolicy =
   treasuryDaoID && !isTreasuryFactory
@@ -204,51 +233,6 @@ function cleanInputs() {
   setRoles([]);
 }
 
-function detectImpactedPermissions() {
-  const { updatedPolicy } = updateDaoPolicy(
-    new Map(roles.map((role) => [role.title, role.value]))
-  );
-  const permissionsImpactions = updatedPolicy.roles.map((role) => {
-    if (role.name === "all" || !Array.isArray(role.kind.Group)) return null;
-
-    const votersSize = role.kind.Group.length;
-    const defaultVotersSize = daoPolicy.roles.find((r) => r.name === role.name)
-      .kind.Group.length;
-    const votePolicy = Object.values(role.vote_policy);
-    const threshold =
-      Array.isArray(votePolicy) && votePolicy.length > 0
-        ? votePolicy[0].threshold
-        : daoPolicy.default_vote_policy.threshold;
-
-    if (Array.isArray(threshold)) {
-      const requiredVotersSize =
-        Math.floor((threshold[0] / 100) * votersSize) + 1;
-      const defaultRequiredVotersSize =
-        Math.floor((threshold[0] / 100) * defaultVotersSize) + 1;
-
-      if (requiredVotersSize !== defaultRequiredVotersSize) {
-        return {
-          name: role.name,
-          old: defaultRequiredVotersSize,
-          new: requiredVotersSize,
-        };
-      } else return null;
-    } else {
-      if (votersSize < parseInt(threshold)) {
-        return {
-          name: role.name,
-          old: parseInt(threshold),
-          new: votersSize,
-        };
-      } else return null;
-    }
-  });
-
-  const filteredPermissionsImpactions = permissionsImpactions.filter((i) => i);
-  setPermissionsImpactions(filteredPermissionsImpactions);
-  return filteredPermissionsImpactions;
-}
-
 const Container = styled.div`
   font-size: 14px;
 
@@ -285,6 +269,11 @@ useEffect(() => {
 
   return () => clearTimeout(timeoutId);
 }, [username]);
+
+const submissionTimeMillis = (proposal) =>
+  Number(
+    proposal.submission_time.substr(0, proposal.submission_time.length - 6)
+  );
 
 return (
   <Container className="d-flex flex-column gap-2">
@@ -400,66 +389,83 @@ return (
               isTxnCreated ||
               !isUsernameValid,
             label: "Submit",
-            onClick: () => {
-              const impactedPermissions = detectImpactedPermissions();
-              if (impactedPermissions.length > 0) {
-                setShowConfirmModal(true);
-              } else {
-                onSubmitClick();
-              }
+            onClick: async () => {
+              fetchProposals().then((proposals) => {
+                if (proposals.length > 0) {
+                  setProposals(proposals);
+                  setShowConfirmModal(true);
+                } else {
+                  onSubmitClick();
+                }
+              });
             },
             loading: isTxnCreated,
           }}
         />
 
-        <Widget
-          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
-          props={{
-            instance,
-            heading: "Confirm Your Change",
-            content: (
-              <div className="d-flex flex-column gap-2">
-                <span>
-                  This action will result in significant changes to the system.
-                </span>
-
-                <InfoBlock
-                  type="warning"
-                  description={
-                    <div>
+        {proposals.length > 0 && (
+          <Widget
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
+            props={{
+              instance,
+              heading: "Confirm Your Change",
+              wider: true,
+              content: (
+                <div className="d-flex flex-column">
+                  <InfoBlock
+                    type="warning"
+                    description={
                       <div>
-                        Adding this member will change the required votes for
-                        some permissions
-                      </div>
-                      {permissionsImpactions.map((i) => (
                         <div>
-                          <b>{i.name}</b>: {i.old} vote{i.old > 1 ? "s" : ""} →{" "}
-                          {i.new} vote{i.new > 1 ? "s" : ""}
+                          This action will override your previous pending
+                          proposals. Complete exsisting one before creating a
+                          new to avoid conflicting or incomplete updates.
                         </div>
-                      ))}
-                      <div>
-                        <a
-                          href={`app?page=settings&tab=voting-thresholds`}
-                          target="_blank"
-                          className="mt-2"
-                        >
-                          Open Settings
-                        </a>
                       </div>
-                    </div>
-                  }
-                />
-              </div>
-            ),
-            confirmLabel: "Yes, proceed",
-            isOpen: showConfirmModal,
-            onCancelClick: () => setShowConfirmModal(false),
-            onConfirmClick: () => {
-              setShowConfirmModal(false);
-              onSubmitClick();
-            },
-          }}
-        />
+                    }
+                  />
+
+                  <h6 className="mt-4">Pending proposals</h6>
+                  <div className="overflow-auto">
+                    <table className="table table-compact">
+                      <thead>
+                        <tr>
+                          <th>Id</th>
+                          <th>Description</th>
+                          <th>Submission date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {proposals.map((proposal) => (
+                          <tr class="proposal-in-progress">
+                            <td style={{ width: "64px" }}>{proposal.id}</td>
+                            <td className="w-75">
+                              <div className="text-left text-clamp">
+                                {proposal.description}
+                              </div>
+                            </td>
+                            <td>
+                              {new Date(submissionTimeMillis(proposal))
+                                .toJSON()
+                                .substring(0, "yyyy-mm-dd".length)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ),
+              confirmLabel: "Yes, proceed",
+              isOpen: showConfirmModal,
+              onCancelClick: () => setShowConfirmModal(false),
+              onConfirmClick: () => {
+                setShowConfirmModal(false);
+                onSubmitClick();
+              },
+            }}
+          />
+        )}
       </div>
     </div>
   </Container>

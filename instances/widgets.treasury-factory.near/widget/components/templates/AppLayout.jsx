@@ -325,6 +325,7 @@ const Theme = styled.div`
   }
 
   .text-clamp {
+    text-align: left;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -352,11 +353,16 @@ const Theme = styled.div`
           border-bottom-width: 0;
           border-left-width: 0;
 
+          &:last-child {
+            padding-right: 10px;
+          }
+
           &:first-child {
             border-left-width: 1px;
             background-color: var(--grey-045);
             font-weight: 500;
             text-align: left;
+            padding-lef5: 10px;
           }
         }
 

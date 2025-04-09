@@ -9,6 +9,12 @@ const { InfoBlock } = VM.require(
   `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InfoBlock`
 ) || { InfoBlock: () => <></> };
 
+const { getFilteredProposalsByStatusAndKind } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+) || {
+  getFilteredProposalsByStatusAndKind: () => {},
+};
+
 const {
   encodeToMarkdown,
   hasPermission,
@@ -64,6 +70,12 @@ const [valueError, setValueError] = useState(null);
 const [showConfirmModal, setConfirmModal] = useState(null);
 const [rolesData, setRolesData] = useState(null);
 const [showErrorToast, setShowErrorToast] = useState(false);
+const [proposals, setProposals] = useState([]);
+const [rowsPerPage, setRowsPerPage] = useState(10);
+const [currentPage, setPage] = useState(0);
+const [offset, setOffset] = useState(null);
+const [totalLength, setTotalLength] = useState(null);
+const [isPrevPageCalled, setIsPrevCalled] = useState(false);
 
 const hasCreatePermission = hasPermission(
   treasuryDaoID,
@@ -71,6 +83,25 @@ const hasCreatePermission = hasPermission(
   "policy",
   "AddProposal"
 );
+
+const fetchProposals = async () =>
+  getFilteredProposalsByStatusAndKind({
+    treasuryDaoID,
+    resPerPage: rowsPerPage,
+    isPrevPageCalled: isPrevPageCalled,
+    filterKindArray: ["ChangePolicy"],
+    filterStatusArray: ["InProgress"],
+    offset: typeof offset === "number" ? offset : lastProposalId,
+    lastProposalId: lastProposalId,
+    currentPage,
+  }).then((r) => {
+    setOffset(r.filteredProposals[r.filteredProposals.length - 1].id);
+    if (currentPage === 0 && !totalLength) {
+      setTotalLength(r.totalLength);
+    }
+
+    setProposals(r.filteredProposals);
+  });
 
 useEffect(() => {
   if (Array.isArray(rolesData) && rolesData.length) {
@@ -129,6 +160,12 @@ useEffect(() => {
     };
   }
 }, [isTxnCreated, lastProposalId]);
+
+useEffect(() => {
+  if (lastProposalId) {
+    fetchProposals();
+  }
+}, [lastProposalId]);
 
 function resetForm() {
   setSelectedVoteOption(selectedGroup.isRatio ? options[1] : options[0]);
@@ -422,6 +459,11 @@ function isInitialValues() {
   return false;
 }
 
+const submissionTimeMillis = (proposal) =>
+  Number(
+    proposal.submission_time.substr(0, proposal.submission_time.length - 6)
+  );
+
 const requiredVotes = selectedGroup
   ? computeRequiredVotes(
       selectedGroup,
@@ -470,6 +512,22 @@ return (
                     }
                   />
                 )}
+                {proposals.length > 0 && (
+                  <div className="mt-2">
+                    <InfoBlock
+                      type="warning"
+                      description={
+                        <div>
+                          <div>
+                            This action will override your previous pending
+                            proposals. Complete exsisting one before creating a
+                            new to avoid conflicting or incomplete updates.
+                          </div>
+                        </div>
+                      }
+                    />
+                  </div>
+                )}
                 <Table
                   currentGroup={
                     selectedGroup.isRatio
@@ -499,6 +557,35 @@ return (
                         }
                   }
                 />
+                <h6 className="mt-4">Pending proposals</h6>
+                <div className="overflow-auto">
+                  <table className="table table-compact">
+                    <thead>
+                      <tr>
+                        <th>Id</th>
+                        <th>Description</th>
+                        <th>Submission date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {proposals.map((proposal) => (
+                        <tr class="proposal-in-progress">
+                          <td style={{ width: "64px" }}>{proposal.id}</td>
+                          <td className="w-75">
+                            <div className="text-left text-clamp">
+                              {proposal.description}
+                            </div>
+                          </td>
+                          <td>
+                            {new Date(submissionTimeMillis(proposal))
+                              .toJSON()
+                              .substring(0, "yyyy-mm-dd".length)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </>
             ),
             confirmLabel: "Yes, proceed",

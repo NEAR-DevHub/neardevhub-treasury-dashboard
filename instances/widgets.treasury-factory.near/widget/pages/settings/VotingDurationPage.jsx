@@ -405,51 +405,35 @@ return (
                   <>
                     <h6 className="mt-4">Summary of changes</h6>
                     <div className="overflow-auto">
-                      <table
-                        class="table table-compact"
-                        style={{ width: "100%", tableLayout: "fixed" }}
-                      >
+                      <table className="table table-compact">
                         <thead>
                           <tr>
                             <th>Id</th>
                             <th>Description</th>
-                            <th>Status</th>
+                            <th>Submission date</th>
                             <th>Expiry date</th>
-                            <th></th>
-                            <th>New Status</th>
                             <th>New expiry</th>
                           </tr>
                         </thead>
                         <tbody>
                           {proposalsThatWillExpire.map((proposal) => (
-                            <tr class="proposal-that-will-expire">
-                              <td>{proposal.id}</td>
+                            <tr class="proposal-that-will-expire  ">
+                              <td style={{ width: "64px" }}>{proposal.id}</td>
 
-                              <td>
+                              <td className="w-50">
                                 <div className="text-clamp">
                                   {proposal.description}
                                 </div>
                               </td>
-
                               <td>
-                                <Widget
-                                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.HistoryStatus`}
-                                  props={{ status: proposal.status }}
-                                />
+                                {new Date(proposal.submissionTimeMillis)
+                                  .toJSON()
+                                  .substring(0, "yyyy-mm-dd".length)}
                               </td>
                               <td>
                                 {new Date(proposal.currentExpiryTime)
                                   .toJSON()
                                   .substring(0, "yyyy-mm-dd".length)}
-                              </td>
-                              <td>
-                                <i className="bi bi-arrow-right text-lg"></i>
-                              </td>
-                              <td>
-                                <Widget
-                                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.HistoryStatus`}
-                                  props={{ status: "Active" }}
-                                />
                               </td>
                               <td>
                                 {new Date(proposal.newExpiryTime)
@@ -460,18 +444,8 @@ return (
                           ))}
                           {proposalsThatWillBeActive.map((proposal) => (
                             <tr class="proposal-that-will-be-active">
-                              <td>{proposal.id}</td>
-                              <td>
-                                <Widget
-                                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.HistoryStatus`}
-                                  props={{
-                                    instance,
-                                    isVoteStatus: false,
-                                    status: proposal.status,
-                                  }}
-                                />
-                              </td>
-                              <td>
+                              <td style={{ width: "64px" }}>{proposal.id}</td>
+                              <td className="w-50">
                                 <div className="text-clamp">
                                   {proposal.description}
                                 </div>
