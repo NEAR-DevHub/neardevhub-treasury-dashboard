@@ -977,6 +977,27 @@ function deserializeLockupContract(byteArray) {
   return result;
 }
 
+function waitForSocialGet(key, retries, interval) {
+  retries = retries ?? 3;
+  interval = interval ?? 200;
+
+  return new Promise((resolve) => {
+    let attempts = 0;
+
+    const check = () => {
+      const result = Social.get(key);
+      if (result || attempts >= retries) {
+        resolve(result);
+      } else {
+        attempts += 1;
+        setTimeout(check, interval);
+      }
+    };
+
+    check();
+  });
+}
+
 function getCurrentUserTreasuries(accountId) {
   const pikespeakKey = isBosGateway()
     ? "${REPL_GATEWAY_PIKESPEAK_KEY}"
@@ -990,18 +1011,25 @@ function getCurrentUserTreasuries(accountId) {
     const userDaos = res?.body?.[accountId]?.["daos"] ?? [];
     return Promise.all(
       userDaos.map((daoId) => {
-        const spuntikName = daoId.split(".")?.[0];
-        const selfCreatedfrontendExists = Social.get(
-          `/${spuntikName}.near/widget/app`
-        );
+        const spuntikName = daoId.split(".")[0];
+        const selfFrontendKey = `/${spuntikName}.near/widget/app`;
         const instanceAccount = `treasury-${spuntikName}.near`;
-        const manualCreatedfrontendExists = Social.get(
-          `${instanceAccount}/widget/app`
-        );
-        return Near.asyncView(daoId, "get_config").then((config) => {
+        const manualFrontendKey = `${instanceAccount}/widget/app`;
+
+        return Promise.all([
+          Near.asyncView(daoId, "get_config"),
+          waitForSocialGet(selfFrontendKey),
+          waitForSocialGet(manualFrontendKey),
+        ]).then((res) => {
+          const config = res[0];
+          const selfCreatedfrontendExists = res[1];
+          const manualCreatedfrontendExists = res[2];
+
           return {
             daoId,
-            instanceAccount: frontendExists ? daoId : instanceAccount,
+            instanceAccount: selfCreatedfrontendExists
+              ? daoId
+              : instanceAccount,
             hasTreasury:
               selfCreatedfrontendExists || manualCreatedfrontendExists,
             config: {

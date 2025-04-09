@@ -11,12 +11,14 @@ const [otherDaos, setOtherDaos] = useState([]);
 const [isExpanded, setExpanded] = useState(false);
 
 useEffect(() => {
-  getCurrentUserTreasuries(accountId).then((results) => {
-    const withTreasury = results.filter((dao) => dao.hasTreasury);
-    const withoutTreasury = results.filter((dao) => !dao.hasTreasury);
-    setUserTreasuires(withTreasury);
-    setOtherDaos(withoutTreasury);
-  });
+  if (accountId) {
+    getCurrentUserTreasuries(accountId).then((results) => {
+      const withTreasury = results.filter((dao) => dao.hasTreasury);
+      const withoutTreasury = results.filter((dao) => !dao.hasTreasury);
+      setUserTreasuires(withTreasury);
+      setOtherDaos(withoutTreasury);
+    });
+  }
 }, []);
 
 const Container = styled.div`
@@ -281,69 +283,84 @@ function toggleExpand() {
   setExpanded(!isExpanded);
 }
 
-return (
-  <div className="d-flex flex-column align-items-center w-100 mb-4">
-    <div className="d-flex w-100 align-items-center justify-content-between position-relative">
-      <h3
-        className="mb-0 position-absolute start-50 translate-middle-x"
-        style={{ fontWeight: 600 }}
-      >
-        My Treasuries
-      </h3>
-      <div></div>
-      <div>
-        <a target="_blank" rel="noopener noreferrer" href={`?page=create`}>
-          <button className="btn btn-primary d-flex align-items-center gap-1">
-            <i className="bi bi-plus-lg h6 mb-0"></i>
-            Create Treasury
-          </button>
-        </a>
-      </div>
-    </div>
-
-    <Container className="d-flex flex-column gap-3">
-      {!Array.isArray(userTreasuries) && <Loader />}
-      <div className="d-flex flex-column gap-3">
-        <div className="d-flex flex-column gap-3 mt-3">
-          {Array.isArray(userTreasuries) && userTreasuries.length > 0 && (
-            <TreasuryCardList treasuries={userTreasuries} hasTreasury={true} />
-          )}
-
-          {Array.isArray(otherDaos) && otherDaos.length > 0 && (
-            <>
-              <div className={userTreasuries.length && "border-top my-3"} />
-              <div className="d-flex gap-2 align-items-center justify-content-between">
-                <div className="d-flex gap-2 align-items-center">
-                  <h6 className="mb-0 fw-bold">Other DAOs</h6>
-                  <div className="custom-tag rounded-3 fw-bold text-center">
-                    {otherDaos.length}
-                  </div>
-                </div>
-                <div className="text-secondary cursor-pointer">
-                  {!isExpanded ? (
-                    <div
-                      className="d-flex gap-2 align-items-center"
-                      onClick={toggleExpand}
-                    >
-                      Show <i className="bi bi-chevron-down"></i>
-                    </div>
-                  ) : (
-                    <div
-                      className="d-flex gap-2 align-items-center"
-                      onClick={toggleExpand}
-                    >
-                      Hide <i className="bi bi-chevron-up"></i>
-                    </div>
-                  )}
-                </div>
-              </div>
-              {isExpanded && (
-                <TreasuryCardList treasuries={otherDaos} hasTreasury={false} />
-              )}
-            </>
-          )}
+if (accountId) {
+  return (
+    <div className="d-flex flex-column align-items-center w-100 mb-4">
+      <div className="d-flex w-100 align-items-center justify-content-between position-relative">
+        <h3
+          className="mb-0 position-absolute start-50 translate-middle-x"
+          style={{ fontWeight: 600 }}
+        >
+          My Treasuries
+        </h3>
+        <div></div>
+        <div>
+          <a target="_blank" rel="noopener noreferrer" href={`?page=create`}>
+            <button className="btn btn-primary d-flex align-items-center gap-1">
+              <i className="bi bi-plus-lg h6 mb-0"></i>
+              Create Treasury
+            </button>
+          </a>
         </div>
       </div>
+
+      <Container className="d-flex flex-column gap-3">
+        {!Array.isArray(userTreasuries) && <Loader />}
+        <div className="d-flex flex-column gap-3">
+          <div className="d-flex flex-column gap-3 mt-3">
+            {Array.isArray(userTreasuries) && userTreasuries.length > 0 && (
+              <TreasuryCardList
+                treasuries={userTreasuries}
+                hasTreasury={true}
+              />
+            )}
+
+            {Array.isArray(otherDaos) && otherDaos.length > 0 && (
+              <>
+                <div className={userTreasuries.length && "border-top my-3"} />
+                <div className="d-flex gap-2 align-items-center justify-content-between">
+                  <div className="d-flex gap-2 align-items-center">
+                    <h6 className="mb-0 fw-bold">Other DAOs</h6>
+                    <div className="custom-tag rounded-3 fw-bold text-center">
+                      {otherDaos.length}
+                    </div>
+                  </div>
+                  <div className="text-secondary cursor-pointer">
+                    {!isExpanded ? (
+                      <div
+                        className="d-flex gap-2 align-items-center"
+                        onClick={toggleExpand}
+                      >
+                        Show <i className="bi bi-chevron-down"></i>
+                      </div>
+                    ) : (
+                      <div
+                        className="d-flex gap-2 align-items-center"
+                        onClick={toggleExpand}
+                      >
+                        Hide <i className="bi bi-chevron-up"></i>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {isExpanded && (
+                  <TreasuryCardList
+                    treasuries={otherDaos}
+                    hasTreasury={false}
+                  />
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      </Container>
+    </div>
+  );
+}
+return (
+  <div className="d-flex flex-column align-items-center w-100 mb-4">
+    <Container>
+      <Widget src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Login`} />
     </Container>
   </div>
 );
