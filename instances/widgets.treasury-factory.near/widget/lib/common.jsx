@@ -990,15 +990,20 @@ function getCurrentUserTreasuries(accountId) {
     const userDaos = res?.body?.[accountId]?.["daos"] ?? [];
     return Promise.all(
       userDaos.map((daoId) => {
+        const spuntikName = daoId.split(".")?.[0];
+        const selfCreatedfrontendExists = Social.get(
+          `/${spuntikName}.near/widget/app`
+        );
+        const instanceAccount = `treasury-${spuntikName}.near`;
+        const manualCreatedfrontendExists = Social.get(
+          `${instanceAccount}/widget/app`
+        );
         return Near.asyncView(daoId, "get_config").then((config) => {
-          const frontendExists = Social.get(`/${daoId}/widget/app`);
-          const spuntikName = daoId.split(".")?.[0];
-          conso;
           return {
             daoId,
-            instanceAccount: frontendExists
-              ? daoId
-              : `treasury-${spuntikName}.near`,
+            instanceAccount: frontendExists ? daoId : instanceAccount,
+            hasTreasury:
+              selfCreatedfrontendExists || manualCreatedfrontendExists,
             config: {
               ...config,
               metadata: JSON.parse(atob(config.metadata ?? "")),

@@ -52,12 +52,10 @@ const treasuryLogo = (currentTreasury.metadata?.flagLogo ?? "")?.includes(
   : defaultImage;
 
 const Container = styled.div`
-  font-size: 14px;
+  font-size: 14px !important;
+  --bs-dropdown-font-size: 14px;
   .image-container {
     position: relative;
-  }
-
-  .treasury-dropdown {
   }
 
   .scroll-box {
@@ -80,6 +78,14 @@ const Container = styled.div`
 
   .dropdown-menu {
     width: 400px;
+  }
+
+  .heading {
+    padding: var(--bs-dropdown-item-padding-y) var(--bs-dropdown-item-padding-x);
+  }
+
+  .text-sm {
+    font-size: 12px;
   }
 `;
 
@@ -116,7 +122,17 @@ return (
         </div>
       )}
       {isOpen && (
-        <div className="dropdown-menu dropdown-menu-end dropdown-menu-lg-start px-1 shadow show">
+        <div className="dropdown-menu dropdown-menu-end dropdown-menu-lg-start shadow show">
+          <div className="d-flex justify-content-between w-100 fw-semi-bold heading align-items-center">
+            <div>My Treasuries</div>
+            <a
+              target="_blank"
+              rel="noopener noreferrer"
+              href={`https://near.social/treasury-factory.near/widget/app?page=my-treasuries`}
+            >
+              <div className="primary-text-color text-sm">Manage</div>
+            </a>
+          </div>
           <div className="scroll-box">
             {userTreasuries.map((option) => {
               return (
@@ -132,8 +148,8 @@ return (
                         ? option.config.metadata?.flagLogo
                         : defaultImage
                     }
-                    width={35}
-                    height={35}
+                    width={32}
+                    height={32}
                     className="rounded-3 object-fit-cover"
                   />
                   <div className="d-flex flex-column">
