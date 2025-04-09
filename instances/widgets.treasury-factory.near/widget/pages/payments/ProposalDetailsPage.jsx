@@ -24,7 +24,7 @@ const {
   getApproversAndThreshold,
 } = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
 
-const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+const { treasuryDaoID, showKYC } = VM.require(`${instance}/widget/config.data`);
 
 const [proposalData, setProposalData] = useState(null);
 const [isDeleted, setIsDeleted] = useState(false);
@@ -621,10 +621,11 @@ return (
                   src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
                   props={{
                     accountId: proposalData?.args.receiver_id,
-                    showKYC: true,
+                    showKYC,
                     displayImage: true,
                     displayName: true,
                     instance,
+                    profileClass: "text-secondary text-sm",
                   }}
                 />
                 <Widget
@@ -672,6 +673,7 @@ return (
                 displayImage: true,
                 displayName: true,
                 instance,
+                profileClass: "text-secondary text-sm",
               }}
             />
             <label className="border-top">Created Date</label>

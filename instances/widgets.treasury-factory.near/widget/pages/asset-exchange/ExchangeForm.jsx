@@ -222,13 +222,16 @@ const code = `
             }
 
             .custom-tooltip {
-                --bs-tooltip-bg:${colors["--bg-system-color"]}  !important;
+                --bs-tooltip-bg:${colors["--bg-page-color"]}  !important;
                 --bs-tooltip-color:${colors["--text-color"]} !important;
                 width: 300px !important;
                 font-size: 13px;
+                z-index: 1055;
               }              
             
               .tooltip-inner {
+                border: 1px solid ${colors["--border-color"]};
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
                 max-width: 300px !important;
                 width: 300px !important;
                 white-space: normal;
