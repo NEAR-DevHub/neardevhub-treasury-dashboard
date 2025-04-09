@@ -1,22 +1,12 @@
-const { encodeToMarkdown } = VM.require(
-  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
-);
-const { Modal, ModalContent, ModalHeader, ModalFooter } = VM.require(
-  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.modal"
-);
-const { TransactionLoader } = VM.require(
-  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TransactionLoader`
-) || { TransactionLoader: () => <></> };
-
-const { InfoBlock } = VM.require(
-  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InfoBlock`
-) || { InfoBlock: () => <></> };
-
-const { getFilteredProposalsByStatusAndKind } = VM.require(
+const { encodeToMarkdown, getFilteredProposalsByStatusAndKind } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 ) || {
   getFilteredProposalsByStatusAndKind: () => {},
 };
+
+const { TransactionLoader } = VM.require(
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TransactionLoader`
+) || { TransactionLoader: () => <></> };
 
 const isTreasuryFactory = props.isTreasuryFactory;
 const instance = props.instance;
@@ -411,50 +401,14 @@ return (
               heading: "Confirm Your Change",
               wider: true,
               content: (
-                <div className="d-flex flex-column">
-                  <InfoBlock
-                    type="warning"
-                    description={
-                      <div>
-                        <div>
-                          This action will override your previous pending
-                          proposals. Complete exsisting one before creating a
-                          new to avoid conflicting or incomplete updates.
-                        </div>
-                      </div>
-                    }
-                  />
-
-                  <h6 className="mt-4">Pending proposals</h6>
-                  <div className="overflow-auto">
-                    <table className="table table-compact">
-                      <thead>
-                        <tr>
-                          <th>Id</th>
-                          <th>Description</th>
-                          <th>Submission date</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {proposals.map((proposal) => (
-                          <tr class="proposal-in-progress">
-                            <td style={{ width: "64px" }}>{proposal.id}</td>
-                            <td className="w-75">
-                              <div className="text-left text-clamp">
-                                {proposal.description}
-                              </div>
-                            </td>
-                            <td>
-                              {new Date(submissionTimeMillis(proposal))
-                                .toJSON()
-                                .substring(0, "yyyy-mm-dd".length)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                <Widget
+                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.WarningTable`}
+                  props={{
+                    proposals,
+                    warningText:
+                      "This action will override your previous pending proposals. Complete exsisting one before creating a new to avoid conflicting or incomplete updates.",
+                  }}
+                />
               ),
               confirmLabel: "Yes, proceed",
               isOpen: showConfirmModal,

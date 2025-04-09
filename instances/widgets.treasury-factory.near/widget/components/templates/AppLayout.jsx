@@ -302,25 +302,26 @@ const Theme = styled.div`
       font-size: 14px;
     }
 
-    tbody {
-      tr {
-        height: 60px;
+    tr {
+      height: 60px;
 
-        td {
-          padding: 0.5rem;
-          color: inherit;
-          vertical-align: middle;
-          background: inherit;
-
-          &:first-child {
-            padding-left: 20px;
-          }
-
-          &:last-child {
-            padding-right: 20px;
-          }
-        }
+      th,
+      td {
+        padding: 0.5rem;
+        color: inherit;
+        vertical-align: middle;
+        background: inherit;
       }
+    }
+
+    th:first-child,
+    td:first-child {
+      padding-left: 20px;
+    }
+
+    th:last-child,
+    td:last-child {
+      padding-right: 20px;
     }
   }
 
@@ -331,6 +332,22 @@ const Theme = styled.div`
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .table-simple {
+    margin-bottom: 0;
+    font-size: 14px;
+
+    thead th {
+      font-weight: 500;
+      font-size: 12px;
+    }
+
+    tbody tr:last-child {
+      td {
+        border-bottom-width: 0;
+      }
+    }
   }
 
   .table-compact {

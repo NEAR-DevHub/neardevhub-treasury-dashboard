@@ -499,52 +499,14 @@ return (
             heading: "Confirm Your Change",
             wider: true,
             content: (
-              <>
-                <div className="mt-2">
-                  <InfoBlock
-                    type="warning"
-                    description={
-                      <div>
-                        <div>
-                          This action will override your previous pending
-                          proposals. Complete exsisting one before creating a
-                          new to avoid conflicting or incomplete updates.
-                        </div>
-                      </div>
-                    }
-                  />
-                </div>
-
-                <h6 className="mt-4">Pending proposals</h6>
-                <div className="overflow-auto">
-                  <table className="table table-compact">
-                    <thead>
-                      <tr>
-                        <th>Id</th>
-                        <th>Description</th>
-                        <th>Submission date</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {proposals.map((proposal) => (
-                        <tr class="proposal-in-progress">
-                          <td style={{ width: "64px" }}>{proposal.id}</td>
-                          <td className="w-75">
-                            <div className="text-left text-clamp">
-                              {proposal.description}
-                            </div>
-                          </td>
-                          <td>
-                            {new Date(submissionTimeMillis(proposal))
-                              .toJSON()
-                              .substring(0, "yyyy-mm-dd".length)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </>
+              <Widget
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.WarningTable`}
+                props={{
+                  proposals,
+                  warningText:
+                    "This action will override your previous pending proposals. Complete exsisting one before creating a new to avoid conflicting or incomplete updates.",
+                }}
+              />
             ),
             confirmLabel: "Yes, proceed",
             isOpen: showWarningModal,
