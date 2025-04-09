@@ -76,6 +76,7 @@ const [currentPage, setPage] = useState(0);
 const [offset, setOffset] = useState(null);
 const [totalLength, setTotalLength] = useState(null);
 const [isPrevPageCalled, setIsPrevCalled] = useState(false);
+const [showWarningModal, setShowWarningModal] = useState(false);
 
 const hasCreatePermission = hasPermission(
   treasuryDaoID,
@@ -499,64 +500,21 @@ return (
             wider: true,
             content: (
               <>
-                {requiredVotes > 1 && (
+                <div className="mt-2">
                   <InfoBlock
                     type="warning"
                     description={
-                      <span>
-                        Changing this setting will require {requiredVotes} votes
-                        to approve requests.
-                        {selectedGroup.requiredVotes === 1 &&
-                          ` You will no longer be able to approve requests with a single vote.`}
-                      </span>
+                      <div>
+                        <div>
+                          This action will override your previous pending
+                          proposals. Complete exsisting one before creating a
+                          new to avoid conflicting or incomplete updates.
+                        </div>
+                      </div>
                     }
                   />
-                )}
-                {proposals.length > 0 && (
-                  <div className="mt-2">
-                    <InfoBlock
-                      type="warning"
-                      description={
-                        <div>
-                          <div>
-                            This action will override your previous pending
-                            proposals. Complete exsisting one before creating a
-                            new to avoid conflicting or incomplete updates.
-                          </div>
-                        </div>
-                      }
-                    />
-                  </div>
-                )}
-                <Table
-                  currentGroup={
-                    selectedGroup.isRatio
-                      ? {
-                          ...selectedGroup,
-                          threshold: [selectedGroup.threshold, 100],
-                          option: "percentage",
-                        }
-                      : {
-                          ...selectedGroup,
-                          option: "number",
-                        }
-                  }
-                  newGroup={
-                    selectedVoteOption.value === options[1].value
-                      ? {
-                          members: selectedGroup.members,
-                          threshold: [selectedVoteValue, 100],
-                          requiredVotes,
-                          option: "percentage",
-                        }
-                      : {
-                          members: selectedGroup.members,
-                          option: "number",
-                          threshold: requiredVotes,
-                          requiredVotes,
-                        }
-                  }
-                />
+                </div>
+
                 <h6 className="mt-4">Pending proposals</h6>
                 <div className="overflow-auto">
                   <table className="table table-compact">
@@ -589,6 +547,67 @@ return (
               </>
             ),
             confirmLabel: "Yes, proceed",
+            isOpen: showWarningModal,
+            onCancelClick: () => setShowWarningModal(false),
+            onConfirmClick: () => {
+              setShowWarningModal(false);
+              setConfirmModal(true);
+            },
+          }}
+        />
+        <Widget
+          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
+          props={{
+            instance,
+            heading: "Confirm Your Change",
+            wider: true,
+            content: (
+              <>
+                {requiredVotes > 1 && (
+                  <InfoBlock
+                    type="warning"
+                    description={
+                      <span>
+                        Changing this setting will require {requiredVotes} votes
+                        to approve requests.
+                        {selectedGroup.requiredVotes === 1 &&
+                          ` You will no longer be able to approve requests with a single vote.`}
+                      </span>
+                    }
+                  />
+                )}
+                <Table
+                  currentGroup={
+                    selectedGroup.isRatio
+                      ? {
+                          ...selectedGroup,
+                          threshold: [selectedGroup.threshold, 100],
+                          option: "percentage",
+                        }
+                      : {
+                          ...selectedGroup,
+                          option: "number",
+                        }
+                  }
+                  newGroup={
+                    selectedVoteOption.value === options[1].value
+                      ? {
+                          members: selectedGroup.members,
+                          threshold: [selectedVoteValue, 100],
+                          requiredVotes,
+                          option: "percentage",
+                        }
+                      : {
+                          members: selectedGroup.members,
+                          option: "number",
+                          threshold: requiredVotes,
+                          requiredVotes,
+                        }
+                  }
+                />
+              </>
+            ),
+            confirmLabel: "Confirm",
             isOpen: showConfirmModal,
             onCancelClick: () => setConfirmModal(false),
             onConfirmClick: () => {
@@ -764,7 +783,11 @@ return (
                           `Maximum members allowed is ${selectedGroup.members.length}.`
                         );
                       } else {
-                        setConfirmModal(true);
+                        if (proposals.length > 0) {
+                          setShowWarningModal(true);
+                        } else {
+                          setConfirmModal(true);
+                        }
                       }
                     },
                   }}
