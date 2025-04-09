@@ -64,7 +64,7 @@ return (
       </div>
       {isProposalDetailsPage && (
         <div className="text-secondary text-xs">
-          Required votes: {requiredVotes}
+          Required Votes: {requiredVotes}
         </div>
       )}
       <div className="w-100 h-100 flex-item label red">

@@ -77,10 +77,21 @@ async function checkProposalDetailPage({
     );
     const heading = page.getByRole("heading", { name: "#0" });
     await expect(heading).toBeVisible();
-    const cancelBtn = await page.locator(".cursor-pointer > .bi").first();
-    await cancelBtn.click();
-    await expect(heading).toBeHidden();
-    await expect(highlightedProposalRow).not.toHaveClass("bg-highlight");
+    if (!notInProgress || status === "Approved") {
+      await page.getByRole("link", { name: "" }).click();
+      const backBtn = await page.getByRole("button", { name: " Back" });
+      await backBtn.click();
+      const newUrl = await page.url();
+      await expect(newUrl).toBe(
+        `http://localhost:8080/${instanceAccount}/widget/app?page=payments` +
+          (notInProgress ? "&tab=history" : "")
+      );
+    } else {
+      const cancelBtn = await page.locator(".cursor-pointer > .bi").first();
+      await cancelBtn.click();
+      await expect(heading).toBeHidden();
+      await expect(highlightedProposalRow).not.toHaveClass("bg-highlight");
+    }
   } else {
     const copyLink = await page.getByText("Copy link");
     await copyLink.click();
