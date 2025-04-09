@@ -625,6 +625,7 @@ return (
                     displayImage: true,
                     displayName: true,
                     instance,
+                    profileClass: "text-secondary text-sm",
                   }}
                 />
                 <Widget
@@ -672,6 +673,7 @@ return (
                 displayImage: true,
                 displayName: true,
                 instance,
+                profileClass: "text-secondary text-sm",
               }}
             />
             <label className="border-top">Created Date</label>
