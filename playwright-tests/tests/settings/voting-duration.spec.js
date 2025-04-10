@@ -424,10 +424,11 @@ test.describe("User is logged in", function () {
             })
           ).toBeVisible();
           await expect(
-            await page.locator(".proposal-that-will-expire")
+            await page.getByTestId("proposal-that-will-expire")
           ).toHaveCount(expectedNewExpiredProposals.length);
           const visibleProposalIds = await page
-            .locator(".proposal-that-will-expire td:first-child")
+            .getByTestId("proposal-that-will-expire")
+            .locator("td:first-child")
             .allInnerTexts();
           expect(visibleProposalIds).toEqual(
             expectedNewExpiredProposals.map((proposal) =>
@@ -453,10 +454,11 @@ test.describe("User is logged in", function () {
             })
           ).toBeVisible();
           await expect(
-            await page.locator(".proposal-that-will-be-active")
+            await page.getByTestId("proposals-that-will-be-active")
           ).toHaveCount(expectedNewActiveProposals.length);
           const visibleProposalIds = await page
-            .locator(".proposal-that-will-be-active td:first-child")
+            .getByTestId("proposals-that-will-be-active")
+            .locator("td:first-child")
             .allInnerTexts();
           expect(visibleProposalIds).toEqual(
             expectedNewActiveProposals.map((proposal) => proposal.id.toString())

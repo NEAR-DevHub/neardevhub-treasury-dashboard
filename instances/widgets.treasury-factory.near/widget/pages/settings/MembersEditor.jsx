@@ -404,9 +404,9 @@ return (
                 <Widget
                   src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.WarningTable`}
                   props={{
-                    proposals,
                     warningText:
                       "This action will override your previous pending proposals. Complete exsisting one before creating a new to avoid conflicting or incomplete updates.",
+                    tableProps: [{ proposals }],
                   }}
                 />
               ),

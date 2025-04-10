@@ -99,7 +99,7 @@ const fetchProposals = async () =>
     setOffset(r.filteredProposals[r.filteredProposals.length - 1].id);
     if (currentPage === 0 && !totalLength) {
       setTotalLength(r.totalLength);
-    }
+    }    
 
     setProposals(r.filteredProposals);
   });
@@ -502,7 +502,7 @@ return (
               <Widget
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.WarningTable`}
                 props={{
-                  proposals,
+                  tableProps: [{ proposals }],
                   warningText:
                     "This action will override your previous pending proposals. Complete exsisting one before creating a new to avoid conflicting or incomplete updates.",
                 }}
