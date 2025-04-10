@@ -36,7 +36,7 @@ return hasEditPermission && hasUpdates ? (
     >
       New
     </small>
-    You have pending system updates{" "}
+    New system updates published, check if your instance is up to date.{" "}
     <a
       style={{ textDecoration: "underline" }}
       href="?page=settings&tab=system-updates"
