@@ -353,37 +353,71 @@ test.describe("Lockup staking", function () {
     });
   });
 
-  test.describe("Wallet dropdown shouldn't be visible when staking is not allowed", () => {
+  test.describe("Wallet dropdown shouldn't be visible when staking is not allowed", async () => {
     const dropdownOptions = [
       { name: "Stake", option: 1 },
       { name: "Unstake", option: 2 },
       { name: "Withdraw", option: 3 },
     ];
 
-    dropdownOptions.forEach(({ name, option }) => {
-      test(`shouldn't display wallet dropdown selector when opening ${name} request`, async ({
+    const shouldntDisplayWalletDropdownSelectorWhenOpening = async ({
+      page,
+      lockupContract,
+      option,
+      name,
+    }) => {
+      test.setTimeout(120_000);
+      await expect(
+        page.getByText("Create Request", { exact: true })
+      ).toBeVisible();
+      await mockLockupState({ page, lockupContract });
+      await page.locator(".custom-select > .dropdown").first().click();
+      await page
+        .locator(`.dropdown-menu > div:nth-child(${option})`)
+        .click({ timeout: 20_000 });
+      await expect(page.getByText("Ready to stake")).toBeVisible({
+        timeout: 20_000,
+      });
+      await expect(
+        page.getByRole("heading", { name: `Create ${name} Request` })
+      ).toBeVisible(10_000);
+      await page.waitForTimeout(5_000);
+      await expect(
+        page.locator(".offcanvas-body").getByText("Treasury Wallet")
+      ).toBeHidden();
+    };
+
+    test(`shouldn't display wallet dropdown selector when opening Stake request`, async ({
+      page,
+      lockupContract,
+    }) => {
+      await shouldntDisplayWalletDropdownSelectorWhenOpening({
         page,
         lockupContract,
-      }) => {
-        test.setTimeout(120_000);
-        await expect(
-          page.getByText("Create Request", { exact: true })
-        ).toBeVisible();
-        await mockLockupState({ page, lockupContract });
-        await page.locator(".custom-select > .dropdown").first().click();
-        await page
-          .locator(`.dropdown-menu > div:nth-child(${option})`)
-          .click({ timeout: 20_000 });
-        await expect(page.getByText("Ready to stake")).toBeVisible({
-          timeout: 20_000,
-        });
-        await expect(
-          page.getByRole("heading", { name: `Create ${name} Request` })
-        ).toBeVisible(10_000);
-        await page.waitForTimeout(5_000);
-        await expect(
-          page.locator(".offcanvas-body").getByText("Treasury Wallet")
-        ).toBeHidden();
+        option: dropdownOptions[0].option,
+        name: dropdownOptions[0].name,
+      });
+    });
+    test(`shouldn't display wallet dropdown selector when opening Unstake request`, async ({
+      page,
+      lockupContract,
+    }) => {
+      await shouldntDisplayWalletDropdownSelectorWhenOpening({
+        page,
+        lockupContract,
+        option: dropdownOptions[1].option,
+        name: dropdownOptions[1].name,
+      });
+    });
+    test(`shouldn't display wallet dropdown selector when opening Withdraw request`, async ({
+      page,
+      lockupContract,
+    }) => {
+      await shouldntDisplayWalletDropdownSelectorWhenOpening({
+        page,
+        lockupContract,
+        option: dropdownOptions[2].option,
+        name: dropdownOptions[2].name,
       });
     });
   });
