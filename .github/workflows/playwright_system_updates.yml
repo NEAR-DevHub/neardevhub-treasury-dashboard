@@ -25,9 +25,17 @@ jobs:
           npx playwright install
       - name: Build project
         run: npm run build
-      - name: Cache and Build Sandbox
-        uses: ./.github/actions/cache-sandbox
+      - name: Restore sandbox build cache
+        uses: actions/cache@v3
+        id: sandbox-cache
         with:
-          build-command: npm run build:sandbox
+          path: sandboxrpc/build
+          key: sandboxrpc-${{ hashFiles('sandboxrpc/**') }}
+          restore-keys: |
+            sandboxrpc-
+      
+      - name: Build sandbox
+        if: steps.sandbox-cache.outputs.cache-hit != 'true'
+        run: npm run build:sandbox
       - name: Run tests
         run: npx playwright test --project=treasury-testing playwright-tests/tests/system-updates
