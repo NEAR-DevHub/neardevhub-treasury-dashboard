@@ -30,7 +30,7 @@ jobs:
         if: steps.sandbox-cache.outputs.cache-hit != 'true'
         run: npm run build:sandbox
       - name: Upload sandbox binary
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: sandboxrpc-binary
           path: sandboxrpc/target/debug/sandboxrpc

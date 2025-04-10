@@ -29,7 +29,7 @@ jobs:
       - name: Build project
         run: npm run build
       - name: Download sandbox binary
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: sandboxrpc-binary
           path: sandboxrpc/target/debug      
