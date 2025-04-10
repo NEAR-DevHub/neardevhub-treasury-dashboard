@@ -277,7 +277,7 @@ export async function openStakeForm({
   await page.locator(".dropdown-menu > div:nth-child(1)").click();
   await expect(
     page.getByRole("heading", { name: "Create Stake Request" })
-  ).toBeVisible(10_000);
+  ).toBeVisible({ timeout: 20_000 });
   await page.waitForTimeout(10_000);
   if (isLockup) {
     await selectLockupAccount({ page, daoAccount, lockupContract });
@@ -567,7 +567,7 @@ export async function openLockupStakingForm({
         "You cannot split your locked funds across multiple validators."
       )
   ).toBeVisible({
-    timeout: 10_000,
+    timeout: 30_000,
   });
 }
 

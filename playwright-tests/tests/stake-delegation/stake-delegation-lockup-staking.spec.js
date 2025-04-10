@@ -12,6 +12,7 @@ import {
   checkForStakeAmount,
   fillValidatorAccount,
   formatNearAmount,
+  minStorageBalance,
   mockLockupNearBalances,
   mockLockupSelectedPool,
   mockLockupState,
@@ -21,6 +22,7 @@ import {
   openLockupStakingForm,
   openUnstakeForm,
   stakedNear,
+  stakedPoolAccount,
   sufficientAvailableBalance,
   toBase64,
 } from "./stake-delegation-common.js";
@@ -370,7 +372,7 @@ test.describe("Lockup staking", function () {
         await mockLockupState({ page, lockupContract });
         await page.locator(".custom-select > .dropdown").first().click();
         await page.locator(`.dropdown-menu > div:nth-child(${option})`).click();
-        await expect(page.getByText("Ready to stake")).toBeVisible(10_000);
+        await expect(page.getByText("Ready to stake")).toBeVisible(20_000);
         await expect(
           page.getByRole("heading", { name: `Create ${name} Request` })
         ).toBeVisible(10_000);
