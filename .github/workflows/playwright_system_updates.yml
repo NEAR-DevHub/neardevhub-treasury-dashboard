@@ -34,5 +34,6 @@ jobs:
           name: sandboxrpc-binary
           path: sandboxrpc/target/debug
       - run: chmod +x sandboxrpc/target/debug/sandboxrpc
+
       - name: Run tests
         run: npx playwright test --project=treasury-testing playwright-tests/tests/system-updates
