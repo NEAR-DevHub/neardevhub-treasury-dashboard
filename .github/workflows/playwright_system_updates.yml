@@ -10,7 +10,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  build-sandbox:
+    uses: ./.github/workflows/build_sandbox.yml
   playwright-tests-system-updates:
+    needs: build-sandbox
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -25,17 +28,5 @@ jobs:
           npx playwright install
       - name: Build project
         run: npm run build
-      - name: Restore sandbox build cache
-        uses: actions/cache@v3
-        id: sandbox-cache
-        with:
-          path: sandboxrpc/build
-          key: sandboxrpc-${{ hashFiles('sandboxrpc/**') }}
-          restore-keys: |
-            sandboxrpc-
-      
-      - name: Build sandbox
-        if: steps.sandbox-cache.outputs.cache-hit != 'true'
-        run: npm run build:sandbox
       - name: Run tests
         run: npx playwright test --project=treasury-testing playwright-tests/tests/system-updates
