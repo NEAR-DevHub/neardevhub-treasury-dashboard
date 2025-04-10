@@ -30,9 +30,11 @@ export class SandboxRPC {
       );
 
       this.sandbox.stdout.on("data", (/** @type String */ data) => {
-        console.log(data);
-        if (!this.rpc_url) {
-          const sandboxConfig = JSON.parse(data.split("\n")[0]);
+        const configLine = data
+          .split("\n")
+          .find((line) => line.startsWith("{"));
+        if (configLine && !this.rpc_url) {
+          const sandboxConfig = JSON.parse(configLine);
           this.rpc_url = sandboxConfig.rpc_url;
           this.account_id = sandboxConfig.account_id;
           this.secret_key = sandboxConfig.secret_key;
