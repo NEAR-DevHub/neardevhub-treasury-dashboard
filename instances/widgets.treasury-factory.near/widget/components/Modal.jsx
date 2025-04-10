@@ -118,7 +118,7 @@ return (
           <h5 className="mb-0">{heading}</h5>
         </ModalHeader>
         <ModalContent>{content}</ModalContent>
-        <div className="d-flex gap-3 align-items-center justify-content-end mt-2">
+        <div className="modalfooter d-flex gap-3 align-items-center justify-content-end mt-2">
           {typeof onCancelClick === "function" && (
             <Widget
               src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}

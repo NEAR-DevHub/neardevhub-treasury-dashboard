@@ -188,7 +188,7 @@ test.describe("User is logged in", function () {
       .fill((Number(currentDurationDays) + 3).toString());
 
     await page.waitForTimeout(500);
-    await page.getByText("Cancel").click();
+    await page.getByRole("button", { name: "Cancel" }).click();
 
     await expect(
       await page.getByPlaceholder("Enter voting duration days")
@@ -424,10 +424,10 @@ test.describe("User is logged in", function () {
             })
           ).toBeVisible();
           await expect(
-            await page.getByTestId("proposal-that-will-expire")
+            await page.getByTestId("proposals-that-will-expire")
           ).toHaveCount(expectedNewExpiredProposals.length);
           const visibleProposalIds = await page
-            .getByTestId("proposal-that-will-expire")
+            .getByTestId("proposals-that-will-expire")
             .locator("td:first-child")
             .allInnerTexts();
           expect(visibleProposalIds).toEqual(

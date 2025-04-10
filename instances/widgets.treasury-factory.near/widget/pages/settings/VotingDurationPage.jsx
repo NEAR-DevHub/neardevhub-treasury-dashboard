@@ -346,7 +346,7 @@ return (
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
           props={{
             instance,
-            heading: "Confirm Your Change",
+            heading: "Impact of changing voting duration",
             wider: true,
             content: (
               <>
