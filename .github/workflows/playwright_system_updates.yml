@@ -28,5 +28,10 @@ jobs:
           npx playwright install
       - name: Build project
         run: npm run build
+      - name: Download sandbox binary
+        uses: actions/download-artifact@v3
+        with:
+          name: sandboxrpc-binary
+          path: sandboxrpc/target/debug      
       - name: Run tests
         run: npx playwright test --project=treasury-testing playwright-tests/tests/system-updates

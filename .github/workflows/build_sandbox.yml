@@ -29,5 +29,8 @@ jobs:
       - name: Build sandbox
         if: steps.sandbox-cache.outputs.cache-hit != 'true'
         run: npm run build:sandbox
-      - name: Check sandbox binary exists
-        run: ls -l sandboxrpc/target/debug/
+      - name: Upload sandbox binary
+        uses: actions/upload-artifact@v3
+        with:
+          name: sandboxrpc-binary
+          path: sandboxrpc/target/debug/sandboxrpc
