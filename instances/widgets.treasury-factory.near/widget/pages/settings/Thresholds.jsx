@@ -99,7 +99,7 @@ const fetchProposals = async () =>
     setOffset(r.filteredProposals[r.filteredProposals.length - 1].id);
     if (currentPage === 0 && !totalLength) {
       setTotalLength(r.totalLength);
-    }    
+    }
 
     setProposals(r.filteredProposals);
   });
@@ -427,7 +427,7 @@ const Table = ({ currentGroup, newGroup }) => {
     },
   ];
   return (
-    <table className="table table-compact mt-3">
+    <table className="table table-compact my-0">
       <thead>
         <tr>
           <th className="fw-bold"></th>

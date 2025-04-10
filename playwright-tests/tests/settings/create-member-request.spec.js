@@ -14,6 +14,10 @@ import {
 } from "../../util/rpcmock.js";
 import { mockInventory } from "../../util/inventory.js";
 import { InsufficientBalance, encodeToMarkdown } from "../../util/lib.js";
+import {
+  CurrentTimestampInNanoseconds,
+  SettingsMemberProposalData,
+} from "../../util/inventory.js";
 
 const lastProposalId = 3;
 
@@ -51,6 +55,20 @@ async function openAddMemberForm({ page }) {
   await createMemberRequestButton.click();
   await expect(page.getByRole("heading", { name: "Add Member" })).toBeVisible({
     timeout: 10_000,
+  });
+}
+
+async function mockSettingsProposals({ page }) {
+  await mockRpcRequest({
+    page,
+    filterParams: { method_name: "get_proposals" },
+    modifyOriginalResultFunction: () => {
+      let originalResult = JSON.parse(
+        JSON.stringify(SettingsMemberProposalData)
+      );
+      originalResult.submission_time = CurrentTimestampInNanoseconds;
+      return originalResult;
+    },
   });
 }
 
@@ -576,91 +594,44 @@ test.describe("User is logged in", function () {
     await expect(submitBtn).toBeEnabled();
   });
 
-  test.describe("mulivote dao", function () {
-    test.use({
-      storageState:
-        "playwright-tests/storage-states/wallet-connected-admin.json",
+  test("should show warning when adding member having non complete proposals", async ({
+    page,
+    instanceAccount,
+  }) => {
+    test.setTimeout(120_000);
+    await mockSettingsProposals({ page });
+
+    const account = "testingaccount.near";
+    const hasNewPolicy = instanceAccount.includes("testing");
+
+    const permission = hasNewPolicy ? "Requestor" : "Create Requests";
+    await openAddMemberForm({ page });
+
+    const accountInput = page.getByPlaceholder("treasury.near");
+    await accountInput.focus();
+    accountInput.fill(account);
+    await accountInput.blur();
+
+    await page.locator(".dropdown-toggle", { hasText: "Select" }).click();
+    await page.locator(".dropdown-item", { hasText: permission }).click();
+
+    const submitBtn = await page.locator("button", { hasText: "Submit" });
+    await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
+    await submitBtn.click();
+
+    await expect(
+      page.getByText(
+        "This action will override your previous pending proposals. Complete exsisting one before creating a new to avoid conflicting or incomplete updates."
+      )
+    ).toBeVisible();
+
+    const confirmBtn = await page.locator("button", {
+      hasText: "Yes, proceed",
     });
+    await confirmBtn.click();
 
-    test.beforeEach(async ({ page, daoAccount, instanceAccount }, testInfo) => {
-      await mockInventory({ page, account: daoAccount });
-      await updateDaoPolicyMembers({
-        instanceAccount,
-        page,
-        isMultiVote: true,
-      });
-      await updateLastProposalId(page);
-      if (testInfo.title.includes("insufficient account balance")) {
-        await mockNearBalances({
-          page,
-          accountId: "theori.near",
-          balance: InsufficientBalance,
-          storage: 8,
-        });
-      }
-      await navigateToMembersPage({ page, instanceAccount });
-    });
-
-    test("should show warning about 'significant changes to the system' when adding new member", async ({
-      page,
-    }) => {
-      test.setTimeout(100_000);
-      const account = "root.near";
-      await openAddMemberForm({ page });
-      const accountInput = page.getByPlaceholder("treasury.near");
-      await accountInput.focus();
-      accountInput.fill(account);
-      await accountInput.blur();
-      await page.locator(".dropdown-toggle", { hasText: "Select" }).click();
-      await page.locator(".dropdown-item", { hasText: "Vote" }).click();
-      const submitBtn = await page.locator("button", { hasText: "Submit" });
-      await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
-      await submitBtn.click();
-
-      await expect(
-        page.getByText(
-          "This action will result in significant changes to the system"
-        )
-      ).toBeVisible();
-
-      const confirmBtn = page.getByRole("button", { name: "Yes, proceed" });
-      await confirmBtn.click();
-      await expect(
-        page.getByText("Awaiting transaction confirmation...")
-      ).toBeVisible();
-    });
-
-    test("should show warning about 'significant changes to the system' when changing existing member role", async ({
-      page,
-      instanceAccount,
-    }) => {
-      test.setTimeout(120_000);
-      const account = "theori.near";
-      const hasNewPolicy = instanceAccount.includes("testing");
-      const permission = hasNewPolicy ? "Requestor" : "Create Requests";
-      await page
-        .getByRole("row", { name: `not defined Ori ${account}` })
-        .locator("i")
-        .first()
-        .click();
-
-      const submitBtn = page.getByRole("button", { name: "Submit" });
-      await page.getByText(permission, { exact: true }).locator(".bi").click();
-      await expect(submitBtn).toBeEnabled();
-      await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
-      await submitBtn.click();
-
-      await expect(
-        page.getByText(
-          "This action will result in significant changes to the system"
-        )
-      ).toBeVisible();
-
-      const confirmBtn = page.getByRole("button", { name: "Yes, proceed" });
-      await confirmBtn.click();
-      await expect(
-        page.getByText("Awaiting transaction confirmation...")
-      ).toBeVisible();
-    });
+    await expect(
+      page.getByText("Awaiting transaction confirmation...")
+    ).toBeVisible();
   });
 });
