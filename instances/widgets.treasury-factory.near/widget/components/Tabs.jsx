@@ -63,6 +63,13 @@ useEffect(() => {
   }
 }, [props]);
 
+// needed to pass props to child related to current tab
+useEffect(() => {
+  if (typeof props.setCurrentTab === "function") {
+    props.setCurrentTab(currentTab);
+  }
+}, [currentTab]);
+
 return (
   <Container className="card py-3 d-flex flex-column">
     <div

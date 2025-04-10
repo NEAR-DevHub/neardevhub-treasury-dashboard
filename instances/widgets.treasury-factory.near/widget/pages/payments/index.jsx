@@ -26,6 +26,7 @@ const hasCreatePermission = hasPermission(
   "transfer",
   "AddProposal"
 );
+const [currentTab, setCurrentTab] = useState(null);
 
 const proposalDetailsPageId =
   id || id === "0" || id === 0 ? parseInt(id) : null;
@@ -217,6 +218,7 @@ return (
               props={{
                 ...props,
                 selectedProposalDetailsId: showProposalDetailsId,
+                setCurrentTab,
                 highlightProposalId:
                   props.highlightProposalId || voteProposalId,
                 tabs: [
@@ -261,6 +263,7 @@ return (
                   onClose: () => setShowProposalId(null),
                   setToastStatus,
                   setVoteProposalId,
+                  currentTab,
                 }}
               />
             )}

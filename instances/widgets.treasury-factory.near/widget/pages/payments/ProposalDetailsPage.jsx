@@ -24,7 +24,7 @@ const {
   getApproversAndThreshold,
 } = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
 
-const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+const { treasuryDaoID, showKYC } = VM.require(`${instance}/widget/config.data`);
 
 const [proposalData, setProposalData] = useState(null);
 const [isDeleted, setIsDeleted] = useState(false);
@@ -429,7 +429,9 @@ const CopyComponent = () => {
 const Navbar = () => {
   return !isCompactVersion ? (
     <div className="d-flex justify-content-between gap-2 align-items-center">
-      <a href={`?page=payments`}>
+      <a
+        href={`?page=payments${props?.tab === "history" ? "&tab=history" : ""}`}
+      >
         <button className="btn btn-outline-secondary d-flex gap-1 align-items-center">
           <i class="bi bi-arrow-left"></i> Back
         </button>
@@ -560,7 +562,9 @@ return (
               <CopyComponent />
               <a
                 className="cursor-pointer"
-                href={`?page=payments&id=${proposalData.id}`}
+                href={`?page=payments${
+                  props?.currentTab?.title === "History" ? "&tab=history" : ""
+                }&id=${proposalData.id}`}
               >
                 <i class="bi bi-arrows-angle-expand h5 mb-0"></i>
               </a>
@@ -617,10 +621,11 @@ return (
                   src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
                   props={{
                     accountId: proposalData?.args.receiver_id,
-                    showKYC: true,
+                    showKYC,
                     displayImage: true,
                     displayName: true,
                     instance,
+                    profileClass: "text-secondary text-sm",
                   }}
                 />
                 <Widget
@@ -668,6 +673,7 @@ return (
                 displayImage: true,
                 displayName: true,
                 instance,
+                profileClass: "text-secondary text-sm",
               }}
             />
             <label className="border-top">Created Date</label>
