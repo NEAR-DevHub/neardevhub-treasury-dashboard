@@ -32,6 +32,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: sandboxrpc-binary
-          path: sandboxrpc/target/debug      
+          path: sandboxrpc/target/debug
+      - run: chmod +x sandboxrpc/target/debug/sandboxrpc
       - name: Run tests
         run: npx playwright test --project=treasury-testing playwright-tests/tests/system-updates
