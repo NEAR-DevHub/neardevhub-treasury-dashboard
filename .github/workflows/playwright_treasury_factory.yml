@@ -25,7 +25,9 @@ jobs:
           npx playwright install
       - name: Build project
         run: npm run build
-      - name: Build sandbox
-        run: npm run build:sandbox
+      - name: Cache and Build Sandbox
+        uses: ./.github/actions/cache-sandbox
+        with:
+          build-command: npm run build:sandbox
       - name: Run tests
         run: npx playwright test --project=treasury-testing playwright-tests/tests/treasury-factory
