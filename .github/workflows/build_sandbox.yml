@@ -18,14 +18,12 @@ jobs:
           node-version: ${{ inputs.node-version }}
           cache: npm
       - run: npm ci
-      - name: Ensure sandboxrpc target folder exists
-        run: mkdir -p sandboxrpc/target
       - name: Restore sandbox build cache
         uses: actions/cache@v3
         id: sandbox-cache
         with:
           path: sandboxrpc/target
-          key: sandboxrpc-${{ hashFiles('sandboxrpc/**') }}
+          key: ${{ runner.os }}-sandboxrpc-${{ hashFiles('sandboxrpc/src/**', 'sandboxrpc/Cargo.*') }}
           restore-keys: |
             sandboxrpc-
       - name: Build sandbox
