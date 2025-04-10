@@ -35,5 +35,11 @@ jobs:
           npx playwright install
       - name: Build project
         run: npm run build
+      - name: Download sandbox binary
+        uses: actions/download-artifact@v4
+        with:
+          name: sandboxrpc-binary
+          path: sandboxrpc/target/debug
+      - run: chmod +x sandboxrpc/target/debug/sandboxrpc
       - name: Run tests
         run: ${{ matrix.target_account.test_command }}
