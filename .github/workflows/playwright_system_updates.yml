@@ -1,4 +1,4 @@
-name: Playwright Tests - Lockup
+name: Playwright Tests - System updates
 on:
   pull_request:
   push:
@@ -6,22 +6,15 @@ on:
       - main
 
 concurrency:
-  group: lockup-${{ github.ref }}
+  group: system-updates-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   build-sandbox:
     uses: ./.github/workflows/build_sandbox.yml
-    
-  playwright-tests-lockup:
+  playwright-tests-system-updates:
     needs: build-sandbox
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        target_account:
-          - test_command: npx playwright test --project=treasury-dashboard playwright-tests/tests/lockup
-          - test_command: npx playwright test --project=infinex playwright-tests/tests/lockup
-          - test_command: npx playwright test --project=treasury-testing playwright-tests/tests/lockup
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -41,5 +34,6 @@ jobs:
           name: sandboxrpc-binary
           path: sandboxrpc/target/debug
       - run: chmod +x sandboxrpc/target/debug/sandboxrpc
+
       - name: Run tests
-        run: ${{ matrix.target_account.test_command }}
+        run: npx playwright test --project=treasury-testing playwright-tests/tests/system-updates
