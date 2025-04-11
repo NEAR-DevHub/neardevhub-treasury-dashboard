@@ -1,11 +1,27 @@
-const {
-  finishedUpdates,
+const { appliedUpdates, UPDATE_TYPE_WEB4_CONTRACT } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.system-updates.UpdateNotificationTracker"
+) ?? { appliedUpdates: [] };
 
-  UPDATE_TYPE_WEB4_CONTRACT,
-} =
-  VM.require(
-    "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.system-updates.UpdateNotificationTracker"
-  ) ?? {};
+const Container = styled.div`
+  font-size: 13px;
+  min-height: 60vh;
+  display: flex;
+
+  td {
+    padding: 0.5rem;
+    color: inherit;
+    vertical-align: middle;
+    background: inherit;
+  }
+
+  thead td {
+    text-wrap: nowrap;
+  }
+
+  table {
+    overflow-x: auto;
+  }
+`;
 
 return (
   <Container style={{ overflowX: "auto" }}>
@@ -22,7 +38,7 @@ return (
           </tr>
         </thead>
         <tbody>
-          {finishedUpdates.map((update) => (
+          {appliedUpdates.map((update) => (
             <tr key={update.id}>
               <td className="px-3">{update.id}</td>
               <td>{update.createdDate}</td>
