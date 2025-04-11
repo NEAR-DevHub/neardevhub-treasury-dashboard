@@ -10,7 +10,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  build-sandbox:
+    uses: ./.github/workflows/build_sandbox.yml
   playwright-tests-treasury-factory:
+    needs: build-sandbox
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -25,7 +28,11 @@ jobs:
           npx playwright install
       - name: Build project
         run: npm run build
-      - name: Build sandbox
-        run: npm run build:sandbox
+      - name: Download sandbox binary
+        uses: actions/download-artifact@v4
+        with:
+          name: sandboxrpc-binary
+          path: sandboxrpc/target/debug
+      - run: chmod +x sandboxrpc/target/debug/sandboxrpc
       - name: Run tests
         run: npx playwright test --project=treasury-testing playwright-tests/tests/treasury-factory

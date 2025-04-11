@@ -5,12 +5,23 @@ import { parseNearAmount } from "near-api-js/lib/utils/format.js";
 import { KeyPairEd25519 } from "near-api-js/lib/utils/key_pair.js";
 import { getLocalWidgetSource } from "./bos-workspace.js";
 import { expect } from "@playwright/test";
+import fs from "fs";
+import path, { dirname } from "path";
+import { overlayMessage, removeOverlayMessage } from "./test.js";
 
 export const SPUTNIK_DAO_CONTRACT_ID = "sputnik-dao.near";
 // we don't have proposal bond for any instance (in this repo)
 export const PROPOSAL_BOND = "0";
 
+export const DEFAULT_WIDGET_REFERENCE_ACCOUNT_ID =
+  "bootstrap.treasury-factory.near";
+
+export const TREASURY_FACTORY_ACCOUNT_ID = "treasury-factory.near";
 export class SandboxRPC {
+  constructor() {
+    this.modifiedWidgets = {};
+  }
+
   async init() {
     await new Promise((resolve) => {
       this.sandbox = exec(
@@ -19,9 +30,11 @@ export class SandboxRPC {
       );
 
       this.sandbox.stdout.on("data", (/** @type String */ data) => {
-        console.log(data);
-        if (!this.rpc_url) {
-          const sandboxConfig = JSON.parse(data.split("\n")[0]);
+        const configLine = data
+          .split("\n")
+          .find((line) => line.startsWith("{"));
+        if (configLine && !this.rpc_url) {
+          const sandboxConfig = JSON.parse(configLine);
           this.rpc_url = sandboxConfig.rpc_url;
           this.account_id = sandboxConfig.account_id;
           this.secret_key = sandboxConfig.secret_key;
@@ -42,6 +55,11 @@ export class SandboxRPC {
       this.account_id,
       utils.KeyPair.fromString(this.secret_key)
     );
+    this.keyStore.setKey(
+      "sandbox",
+      TREASURY_FACTORY_ACCOUNT_ID,
+      utils.KeyPair.fromString(this.secret_key)
+    );
 
     this.near = await connect({
       networkId: "sandbox",
@@ -50,6 +68,44 @@ export class SandboxRPC {
     });
 
     this.account = await this.near.account(this.account_id);
+  }
+
+  /**
+   * @param {import('playwright').Page} page - Playwright page object
+   */
+  async deployNewTreasuryFactoryWithUpdatedWeb4Contract(page) {
+    await overlayMessage(
+      page,
+      "Development team is deploying new treasury factory with updated web4 contract"
+    );
+    const result = await this.near.connection.provider.query({
+      request_type: "view_code",
+      account_id: TREASURY_FACTORY_ACCOUNT_ID,
+      finality: "final",
+    });
+    const currentCode = Buffer.from(result.code_base64, "base64");
+
+    // Convert the binary to a string and search for "Select Gateway"
+    const searchString = "Select Gateway";
+    const replaceString = "Gateway Select";
+
+    const searchBuffer = Buffer.from(searchString, "utf-8");
+    const replaceBuffer = Buffer.from(replaceString, "utf-8");
+
+    const index = currentCode.indexOf(searchBuffer);
+    if (index === -1) {
+      console.error(`String "${searchString}" not found in the WASM binary.`);
+      return;
+    }
+
+    // Replace the string in the binary
+    replaceBuffer.copy(currentCode, index);
+
+    // Deploy new treasury factory with updated web4 contract
+    await (
+      await this.near.account(TREASURY_FACTORY_ACCOUNT_ID)
+    ).deployContract(currentCode);
+    await removeOverlayMessage(page);
   }
 
   /**
@@ -81,7 +137,7 @@ export class SandboxRPC {
   }
 
   async setupDefaultWidgetReferenceAccount() {
-    const reference_widget_account_id = "bootstrap.treasury-factory.near";
+    const reference_widget_account_id = DEFAULT_WIDGET_REFERENCE_ACCOUNT_ID;
 
     const keyPair = utils.KeyPair.fromString(this.secret_key);
 
@@ -505,6 +561,151 @@ export class SandboxRPC {
     };
     await this.addProposal({ daoName, args });
   }
+
+  /**
+   * Redirect Web4 requests to the specified contract
+   * @param {string} contractId - The contract ID to redirect requests to
+   * @param {import('@playwright/test').Page} page - Playwright page object
+   */
+  async redirectWeb4(contractId, page) {
+    const original_rpc_url = "https://rpc.mainnet.near.org";
+    await page.route(original_rpc_url, async (route, request) => {
+      const postData = request.postDataJSON();
+      if (postData.params.account_id === "social.near") {
+        const args = JSON.parse(atob(postData.params.args_base64));
+        const keys = args.keys;
+
+        if ((keys && keys[0].startsWith(contractId)) || keys === undefined) {
+          const response = await route.fetch({
+            url: this.rpc_url,
+            json: postData,
+          });
+          await route.fulfill({ response });
+        } else {
+          const instancesFolder = path.resolve(dirname("."), "instances"); // Adjust the path if necessary
+          const fileContents = {};
+
+          for (const key of keys) {
+            // Replace dots with path separators only after "widget"
+            const [prefix, ...rest] = key.split("/widget/");
+            const normalizedKey = path.join(
+              prefix,
+              "widget",
+              rest.join("/").replace(/\./g, "/")
+            );
+            const [account, section, contentKey] = key.split("/");
+            if (fileContents[account] === undefined) {
+              fileContents[account] = {};
+            }
+            if (fileContents[account][section] === undefined) {
+              fileContents[account][section] = {};
+            }
+            const filePath = path.join(instancesFolder, normalizedKey) + ".jsx";
+            if (this.modifiedWidgets[key]) {
+              fileContents[account][section][contentKey] =
+                this.modifiedWidgets[key];
+            } else if (fs.existsSync(filePath)) {
+              const content = fs
+                .readFileSync(filePath, "utf-8")
+                .replaceAll(
+                  "${REPL_BACKEND_API}",
+                  "https://ref-sdk-api-2.fly.dev/api"
+                )
+                .replaceAll("${REPL_BASE_DEPLOYMENT_ACCOUNT}", account)
+                .replaceAll("${REPL_DEVHUB}", "devhub.near")
+                .replaceAll("${REPL_RPC_URL}", original_rpc_url);
+
+              fileContents[account][section][contentKey] = content;
+            } else {
+              console.warn(
+                `File not found for key: ${key} ${filePath}, going to live RPC`
+              );
+              await route.fallback();
+              return;
+            }
+          }
+
+          const json = {
+            jsonrpc: "2.0",
+            id: "dontcare",
+            result: {},
+          };
+
+          json["result"] = {
+            result: Array.from(
+              new TextEncoder().encode(JSON.stringify(fileContents))
+            ),
+          };
+          await route.fulfill({ json });
+        }
+      } else {
+        const response = await route.fetch({
+          url: this.rpc_url,
+          json: postData,
+        });
+        await route.fulfill({ response });
+      }
+    });
+
+    await page.route(
+      `https://${contractId}.page/**`,
+      async (route, request) => {
+        const path = request
+          .url()
+          .substring(`https://${contractId}.page`.length);
+        let viewResult = await this.account.viewFunction({
+          contractId,
+          methodName: "web4_get",
+          args: {
+            request: {
+              path,
+            },
+          },
+        });
+
+        if (viewResult.preloadUrls) {
+          const preloads = {};
+          for (let preloadUrl of viewResult.preloadUrls) {
+            const keys = JSON.parse(
+              decodeURIComponent(preloadUrl.split("?keys.json=")[1])
+            );
+            const preloadBody = await this.account.viewFunction({
+              contractId: "social.near",
+              methodName: "get",
+              args: {
+                keys,
+              },
+            });
+            preloads[preloadUrl] = {
+              contentType: "application/json",
+              body: btoa(JSON.stringify(preloadBody)),
+            };
+          }
+
+          viewResult = await this.account.viewFunction({
+            contractId,
+            methodName: "web4_get",
+            args: {
+              request: {
+                path,
+                preloads,
+              },
+            },
+          });
+        }
+
+        await route.fulfill({
+          contentType: viewResult.contentType,
+          body: atob(viewResult.body),
+        });
+      }
+    );
+  }
+
+  modifyWidget(key, content) {
+    this.modifiedWidgets[key] = content;
+  }
+
   /**
    * Time travel forward with the specified number of blocks
    * @param {number} numBlocks
