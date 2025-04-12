@@ -190,7 +190,9 @@ const code = `
         animation: {
           duration: 300,
           onComplete: () => {
-            sendChartHeight(); 
+            setTimeout(() => {
+              sendChartHeight(); 
+            }, 100);
           },
         },
     };
