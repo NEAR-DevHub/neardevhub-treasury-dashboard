@@ -1,5 +1,5 @@
 import { expect } from "@playwright/test";
-import { test } from "../../util/test.js";
+import { cacheCDN, test } from "../../util/test.js";
 import { mockTransactionSubmitRPCResponses } from "../../util/transaction.js";
 import {
   mockNearBalances,
@@ -275,6 +275,7 @@ test.describe("don't ask again", function () {
   });
 
   test.beforeEach(async ({ page, instanceAccount, daoAccount }) => {
+    await cacheCDN(page);
     await updateDaoPolicyMembers({
       instanceAccount,
       page,
