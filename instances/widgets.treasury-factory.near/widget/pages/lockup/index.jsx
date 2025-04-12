@@ -13,7 +13,7 @@ const Container = styled.div`
 `;
 
 return (
-  <Container>
+  <Container className="h-100 w-100 flex-grow-1 d-flex flex-column">
     <Widget
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Tabs`}
       props={{
