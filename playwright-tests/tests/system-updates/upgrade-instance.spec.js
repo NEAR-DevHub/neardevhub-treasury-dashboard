@@ -129,7 +129,7 @@ test("should update treasury factory with new web4 contract and self upgrade ins
           createdDate: "2025-04-05",
           version: "n/a",
           type: "Web4 Contract",
-          summary: "contract update",
+          summary: "contract update test",
           votingRequired: false
       }
   ];
@@ -175,6 +175,13 @@ test("should update treasury factory with new web4 contract and self upgrade ins
   await expect(
     await page.getByRole("link", { name: "Review" })
   ).not.toBeVisible();
+
+  await page.getByText("Settings").click();
+  await page.getByText("System updates").click();
+  await page.getByText("History").click();
+  await expect(page.getByText("2025-04-05")).toBeVisible();
+  await expect(page.getByText("99999999")).toBeVisible();
+  await expect(page.getByText("contract update test")).toBeVisible();
 
   await page.unrouteAll({ behavior: "ignoreErrors" });
   await sandbox.quitSandbox();
