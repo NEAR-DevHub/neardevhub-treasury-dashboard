@@ -4,3 +4,4 @@ yarn.lock
 test-results
 build
 .env
+devstoragestate.json
