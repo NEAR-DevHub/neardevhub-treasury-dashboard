@@ -43,7 +43,7 @@ The resulting mp4 file can be directly dragged into the Pull Request description
 
 To start the development server, use the following command:
 
-```
+```bash
 npm run dev -- --contractId=webassemblymusic-treasury.near --storageStateFile=devstoragestate.json
 ```
 

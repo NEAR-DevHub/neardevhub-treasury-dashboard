@@ -16,11 +16,15 @@ import path, { dirname } from "path";
 export async function redirectWeb4({
   contractId,
   page,
+  treasury,
   networkId = "mainnet",
   nodeUrl = "https://rpc.mainnet.near.org",
 }) {
   const keyStore = new keyStores.InMemoryKeyStore();
 
+  if (!treasury) {
+    treasury = contractId.split(".")[0] + ".sputnik-dao.near";
+  }
   const near = await connect({
     networkId,
     nodeUrl,
@@ -68,10 +72,7 @@ export async function redirectWeb4({
                 "${REPL_BACKEND_API}",
                 "https://ref-sdk-api-2.fly.dev/api"
               )
-              .replaceAll(
-                "${REPL_TREASURY}",
-                "testing-astradao.sputnik-dao.near"
-              )
+              .replaceAll("${REPL_TREASURY}", treasury)
               .replaceAll("${REPL_INSTANCE}", account)
               .replaceAll(
                 "${REPL_BASE_DEPLOYMENT_ACCOUNT}",
