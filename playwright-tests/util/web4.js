@@ -162,3 +162,66 @@ export async function redirectWeb4({
     });
   });
 }
+
+export async function compareInstanceWeb4WithTreasuryFactory(instance) {
+  const rpcUrl = `https://rpc.mainnet.fastnear.com`;
+  const treasuryFactoryWeb4ContractBytesResult = await fetch(rpcUrl, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: "dontcare",
+      method: "query",
+      params: {
+        request_type: "call_function",
+        finality: "final",
+        account_id: "treasury-factory.near",
+        method_name: "get_web4_contract_bytes",
+        args_base64: "",
+      },
+    }),
+  }).then((r) => r.json());
+
+  const web4_contract_bytes_from_treasury_factory = new Uint8Array(
+    treasuryFactoryWeb4ContractBytesResult.result.result
+  );
+  const instanceWeb4ContractBytesResponse = await fetch(rpcUrl, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: "dontcare",
+      method: "query",
+      params: {
+        request_type: "view_code",
+        finality: "final",
+        account_id: instance,
+      },
+    }),
+  }).then((r) => r.json());
+  const instance_contract_code_base64 =
+    instanceWeb4ContractBytesResponse.result.code_base64;
+  const instance_contract_bytes = Buffer.from(
+    instance_contract_code_base64,
+    "base64"
+  );
+  if (
+    web4_contract_bytes_from_treasury_factory.length ===
+      instance_contract_bytes.length &&
+    web4_contract_bytes_from_treasury_factory.every(
+      (byte, index) => byte === instance_contract_bytes[index]
+    )
+  ) {
+    console.log("The contract bytes are identical.");
+    return true;
+  } else {
+    console.log("The contract bytes are different.");
+    return false;
+  }
+}
