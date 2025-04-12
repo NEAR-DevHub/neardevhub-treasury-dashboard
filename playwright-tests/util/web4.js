@@ -1,14 +1,35 @@
+import { connect, keyStores } from "near-api-js";
 import fs from "fs";
 import path, { dirname } from "path";
 
 /**
- * Redirect Web4 requests to the specified contract
- * @param {string} contractId - The contract ID to redirect requests to
- * @param {import('@playwright/test').Page} page - Playwright page object
+ * Redirect Web4 requests to the specified contract and handle routing logic.
+ *
+ * @param {Object} options - The options object.
+ * @param {string} options.contractId - The contract ID to redirect requests to.
+ * @param {import('@playwright/test').Page} options.page - Playwright page object.
+ * @param {string} [options.networkId="mainnet"] - The NEAR network ID (default is "mainnet").
+ * @param {string} [options.nodeUrl="https://rpc.mainnet.near.org"] - The NEAR RPC node URL (default is the mainnet RPC URL).
+ *
+ * @returns {Promise<void>} A promise that resolves when the routing setup is complete.
  */
-export async function redirectWeb4(contractId, page) {
-  const original_rpc_url = "https://rpc.mainnet.near.org";
-  await page.route(original_rpc_url, async (route, request) => {
+export async function redirectWeb4({
+  contractId,
+  page,
+  networkId = "mainnet",
+  nodeUrl = "https://rpc.mainnet.near.org",
+}) {
+  const keyStore = new keyStores.InMemoryKeyStore();
+
+  const near = await connect({
+    networkId,
+    nodeUrl,
+    keyStore,
+  });
+
+  const contractAccount = await near.account(contractId);
+
+  await page.route(nodeUrl, async (route, request) => {
     const postData = request.postDataJSON();
     if (postData.params.account_id === "social.near") {
       const args = JSON.parse(atob(postData.params.args_base64));
@@ -16,7 +37,7 @@ export async function redirectWeb4(contractId, page) {
 
       if ((keys && keys[0].startsWith(contractId)) || keys === undefined) {
         const response = await route.fetch({
-          url: this.rpc_url,
+          url: nodeUrl,
           json: postData,
         });
         await route.fulfill({ response });
@@ -57,7 +78,7 @@ export async function redirectWeb4(contractId, page) {
                 "widgets.treasury-factory.near"
               )
               .replaceAll("${REPL_DEVHUB}", "devhub.near")
-              .replaceAll("${REPL_RPC_URL}", original_rpc_url);
+              .replaceAll("${REPL_RPC_URL}", nodeUrl);
 
             fileContents[account][section][contentKey] = content;
           } else {
@@ -84,7 +105,7 @@ export async function redirectWeb4(contractId, page) {
       }
     } else {
       const response = await route.fetch({
-        url: original_rpc_url,
+        url: nodeUrl,
         json: postData,
       });
       await route.fulfill({ response });
@@ -93,7 +114,8 @@ export async function redirectWeb4(contractId, page) {
 
   await page.route(`https://${contractId}.page/**`, async (route, request) => {
     const path = request.url().substring(`https://${contractId}.page`.length);
-    let viewResult = await this.account.viewFunction({
+
+    let viewResult = await contractAccount.viewFunction({
       contractId,
       methodName: "web4_get",
       args: {
@@ -109,7 +131,7 @@ export async function redirectWeb4(contractId, page) {
         const keys = JSON.parse(
           decodeURIComponent(preloadUrl.split("?keys.json=")[1])
         );
-        const preloadBody = await this.account.viewFunction({
+        const preloadBody = await contractAccount.viewFunction({
           contractId: "social.near",
           methodName: "get",
           args: {
@@ -122,7 +144,7 @@ export async function redirectWeb4(contractId, page) {
         };
       }
 
-      viewResult = await this.account.viewFunction({
+      viewResult = await contractAccount.viewFunction({
         contractId,
         methodName: "web4_get",
         args: {
