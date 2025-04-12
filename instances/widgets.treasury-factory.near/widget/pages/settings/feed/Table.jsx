@@ -392,7 +392,7 @@ const ProposalsComponent = () => {
 };
 
 return (
-  <Container style={{ overflowX: "auto" }}>
+  <Container className="h-100 w-100" style={{ overflowX: "auto" }}>
     <VoteSuccessToast />
     {loading === true ||
     proposals === null ||

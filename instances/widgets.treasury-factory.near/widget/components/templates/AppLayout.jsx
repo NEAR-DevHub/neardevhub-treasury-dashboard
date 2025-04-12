@@ -450,7 +450,7 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
   return (
     <ParentContainer data-bs-theme={isDarkTheme ? "dark" : "light"}>
       <Theme
-        className="w-100"
+        className="w-100 d-flex flex-column"
         style={{
           minHeight: gatewayURL.includes("near.org") ? "100vh" : "100%",
         }}
@@ -461,7 +461,9 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
         ></UpdateNotificationBanner>
         <AppHeader page={page} instance={instance} />
         <BalanceBanner accountId={accountId} treasuryDaoID={treasuryDaoID} />
-        <div className="px-3 pb-3 w-100 h-100">{children}</div>
+        <div className="px-3 pb-3 w-100 h-100 flex-grow-1 d-flex flex-column">
+          {children}
+        </div>
       </Theme>
     </ParentContainer>
   );
