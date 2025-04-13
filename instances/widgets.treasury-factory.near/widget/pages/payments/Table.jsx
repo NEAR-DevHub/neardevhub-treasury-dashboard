@@ -164,7 +164,7 @@ const requiredVotes = transferApproversGroup?.requiredVotes;
 
 const hideApproversCol = isPendingRequests && requiredVotes === 1;
 
-const userFTTokens = fetch(
+const daoFTTokens = fetch(
   `${REPL_BACKEND_API}/ft-tokens/?account_id=${treasuryDaoID}`
 );
 
