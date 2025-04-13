@@ -43,14 +43,16 @@ function toReadableAmount(amount) {
 }
 
 useEffect(() => {
-  asyncFetch(`${REPL_BACKEND_API}/ft-token-price?account_id=${address}`).then(
-    (res) => {
-      const price = res.body?.price;
-      if (price) {
-        setTokenUSDValue(Big(amount).mul(price).toFixed(2));
+  if (showUSDValue) {
+    asyncFetch(`${REPL_BACKEND_API}/ft-token-price?account_id=${address}`).then(
+      (res) => {
+        const price = res.body?.price;
+        if (price) {
+          setTokenUSDValue(Big(amount).mul(price).toFixed(2));
+        }
       }
-    }
-  );
+    );
+  }
 }, [showUSDValue]);
 
 return (

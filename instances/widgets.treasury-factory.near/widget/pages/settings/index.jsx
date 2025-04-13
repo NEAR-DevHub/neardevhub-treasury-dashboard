@@ -31,6 +31,12 @@ const [leftNavbarOptions, setLeftBarOptions] = useState([
     href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.Theme`,
     props: { instance },
   },
+  {
+    title: "System updates",
+    key: "system-updates",
+    href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.system-updates.SystemUpdates`,
+    props: { instance, ...props },
+  },
 ]);
 
 const Menu = useMemo(() => {

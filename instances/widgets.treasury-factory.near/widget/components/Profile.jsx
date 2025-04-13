@@ -11,6 +11,7 @@ const showKYC = props.showKYC;
 const accountId = props.accountId;
 const displayName = props.displayName ?? true;
 const displayImage = props.displayImage ?? true;
+const profileClass = props.profileClass ?? "";
 const width = props.width ?? null;
 const [isVerfied, setIsVerfied] = useState(false);
 const [verificationStatus, setVerificationStatus] = useState(null);
@@ -143,7 +144,7 @@ const ReceiverAccountComponent = (
       style={{ width: width ? width : displayImage ? "150px" : "100px" }}
     >
       {displayName && <div className="mb-0"> {name}</div>}
-      <div className="text-secondary text-sm">
+      <div className={profileClass}>
         {displayName ? "@" + accountId : accountId}
       </div>
     </div>
