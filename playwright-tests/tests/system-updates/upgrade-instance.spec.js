@@ -51,6 +51,24 @@ test("should update treasury factory with new web4 contract and self upgrade ins
     ).length
   ).toBe(0);
 
+  // The initial update that is already applied, so should automatically be dismissed when visiting the updates page
+  await sandbox.modifyWidget(
+    "widgets.treasury-factory.near/widget/pages.settings.system-updates.UpdateRegistry",
+    `
+    return [
+      {
+        id: 1,
+        createdDate: "2025-03-28",
+        version: "n/a",
+        type: "Web4 Contract",
+        summary: "Fixed dark theme, added lockup to all instances",
+        details: "",
+        votingRequired: false,
+      }
+  ];
+  `
+  );
+
   await sandbox.redirectWeb4(instanceAccountId, page);
 
   await page.goto(`https://${instanceName}.near.page`);
@@ -129,7 +147,7 @@ test("should update treasury factory with new web4 contract and self upgrade ins
           createdDate: "2025-04-05",
           version: "n/a",
           type: "Web4 Contract",
-          summary: "contract update",
+          summary: "contract update test",
           votingRequired: false
       }
   ];
@@ -175,6 +193,15 @@ test("should update treasury factory with new web4 contract and self upgrade ins
   await expect(
     await page.getByRole("link", { name: "Review" })
   ).not.toBeVisible();
+
+  await page.getByText("Settings").click();
+  await page.getByText("System updates").click();
+  await page.getByText("History").click();
+  await expect(page.getByText("2025-04-05")).toBeVisible();
+  await expect(page.getByText("99999999")).toBeVisible();
+  await expect(page.getByText("contract update test")).toBeVisible();
+
+  await page.waitForTimeout(500);
 
   await page.unrouteAll({ behavior: "ignoreErrors" });
   await sandbox.quitSandbox();

@@ -1,5 +1,5 @@
 return [
-  {
+  /*{
     id: 1,
     createdDate: "2025-03-28",
     version: "n/a",
@@ -7,5 +7,5 @@ return [
     summary: "Fixed dark theme, added lockup to all instances",
     details: ``,
     votingRequired: false,
-  },
+  },*/
 ];

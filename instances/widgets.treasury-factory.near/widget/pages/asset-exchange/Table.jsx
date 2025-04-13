@@ -221,7 +221,7 @@ const VoteSuccessToast = () => {
 
 const proposalPeriod = policy.proposal_period;
 
-const userFTTokens = fetch(
+const daoFTTokens = fetch(
   `${REPL_BACKEND_API}/ft-tokens/?account_id=${treasuryDaoID}`
 );
 

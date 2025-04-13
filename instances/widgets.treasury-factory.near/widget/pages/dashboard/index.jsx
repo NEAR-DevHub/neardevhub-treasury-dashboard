@@ -82,7 +82,7 @@ const [lockupUnStakedTokens, setLockupUnStakedTokens] = useState(null);
 const [lockupStakedTotalTokens, setLockupStakedTotalTokens] = useState(null);
 const [lockupNearWithdrawTokens, setLockupNearWithdrawTokens] = useState(null);
 const [nearPrice, setNearPrice] = useState(null);
-const [userFTTokens, setFTTokens] = useState(null);
+const [daoFTTokens, setFTTokens] = useState(null);
 const [show404Modal, setShow404Modal] = useState(false);
 const [disableRefreshBtn, setDisableRefreshBtn] = useState(false);
 const [lockupState, setLockupState] = useState(false);
@@ -234,7 +234,7 @@ const totalBalance = Big(nearBalances?.totalParsed ?? "0")
   .mul(nearPrice ?? 1)
   .plus(Big(nearStakedTotalTokens ?? "0").mul(nearPrice ?? 1))
   .plus(Big(lockupNearBalances?.totalParsed ?? "0").mul(nearPrice ?? 1))
-  .plus(Big(userFTTokens?.totalCumulativeAmt ?? "0"))
+  .plus(Big(daoFTTokens?.totalCumulativeAmt ?? "0"))
   .toFixed(2);
 
 function formatCurrency(amount) {
@@ -349,7 +349,7 @@ return (
           <div className="h6 text-secondary">Total Balance</div>
           {typeof getNearBalances !== "function" ||
           nearPrice === null ||
-          userFTTokens === null ? (
+          daoFTTokens === null ? (
             <Loading />
           ) : (
             <div className="fw-bold h3 mb-0">
@@ -362,7 +362,7 @@ return (
             "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.Portfolio"
           }
           props={{
-            ftTokens: userFTTokens.fts ? userFTTokens.fts : null,
+            ftTokens: daoFTTokens.fts ? daoFTTokens.fts : null,
             nearStakedTokens,
             nearUnStakedTokens,
             nearPrice,
@@ -426,7 +426,7 @@ return (
             totalBalance: formatCurrency(
               Big(nearBalances?.totalParsed ?? "0").mul(nearPrice ?? 1)
             ),
-            ftTokens: userFTTokens.fts ? userFTTokens.fts : null,
+            ftTokens: daoFTTokens.fts ? daoFTTokens.fts : null,
             instance,
             accountId: treasuryDaoID,
           }}
@@ -445,7 +445,7 @@ return (
               totalBalance: formatCurrency(
                 Big(lockupNearBalances?.totalParsed ?? "0").mul(nearPrice ?? 1)
               ),
-              ftTokens: userFTTokens.fts ? userFTTokens.fts : null,
+              ftTokens: [], // lockup doesn't have any FTs
               accountId: lockupContract,
             }}
           />
