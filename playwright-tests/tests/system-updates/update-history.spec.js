@@ -14,7 +14,25 @@ test("should show update history", async ({ page, instanceAccount }) => {
   const isUpToDate = await compareInstanceWeb4WithTreasuryFactory(
     instanceAccount
   );
-  await redirectWeb4({ contractId, page });
+  await redirectWeb4({
+    contractId,
+    page,
+    modifiedWidgets: {
+      "widgets.treasury-factory.near/widget/pages.settings.system-updates.UpdateRegistry": `
+    return [
+      {
+        id: 1,
+        createdDate: "2025-03-28",
+        version: "n/a",
+        type: "Web4 Contract",
+        summary: "Fixed dark theme, added lockup to all instances",
+        details: "",
+        votingRequired: false,
+      }
+  ];
+  `,
+    },
+  });
   await page.goto(`https://${contractId}.page/?page=settings`);
   await page.getByText("System updates").click();
 

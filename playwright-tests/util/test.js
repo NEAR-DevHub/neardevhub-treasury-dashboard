@@ -92,15 +92,4 @@ export async function cacheCDN(page) {
       });
     }
   });
-
-  await page.route("https://ref-sdk-api-2.fly.dev/**", async (route) => {
-    const newUrl = route
-      .request()
-      .url()
-      .replace(
-        "https://ref-sdk-api-2.fly.dev",
-        "https://ref-sdk-test-cold-haze-1300-2.fly.dev"
-      );
-    await route.continue({ url: newUrl });
-  });
 }

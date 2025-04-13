@@ -19,6 +19,7 @@ export async function redirectWeb4({
   treasury,
   networkId = "mainnet",
   nodeUrl = "https://rpc.mainnet.near.org",
+  modifiedWidgets = {},
 }) {
   const keyStore = new keyStores.InMemoryKeyStore();
 
@@ -65,7 +66,9 @@ export async function redirectWeb4({
             fileContents[account][section] = {};
           }
           const filePath = path.join(instancesFolder, normalizedKey) + ".jsx";
-          if (fs.existsSync(filePath)) {
+          if (modifiedWidgets[key]) {
+            fileContents[account][section][contentKey] = modifiedWidgets[key];
+          } else if (fs.existsSync(filePath)) {
             const content = fs
               .readFileSync(filePath, "utf-8")
               .replaceAll(
