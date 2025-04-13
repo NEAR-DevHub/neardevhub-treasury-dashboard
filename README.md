@@ -39,6 +39,64 @@ ffmpeg -i test-results/stake-delegation-stake-delegation-admin-connected-Should-
 
 The resulting mp4 file can be directly dragged into the Pull Request description.
 
+## Running a Development Server using PlayWright hosted web4 gateway
+
+To start the development server, use the following command:
+
+```bash
+npm run dev -- --contractId=webassemblymusic-treasury.near --storageStateFile=devstoragestate.json
+```
+
+### Parameters
+
+- `--contractId` (required): Specifies the contract ID to be used. For example, `webassemblymusic-treasury.near`.
+- `--treasury` (optional): Specify which treasury to use. Defaults to `<contractId>.sputnik-dao.near`.
+- `--storageStateFile` (optional): Path to a Playwright storage state file. If provided, the storage state will be applied to the browser context. This is useful for preloading authentication or other session data.
+
+### Example `devstoragestate.json`
+
+Here is an example of a `devstoragestate.json` file that reflects the data needed for a user to appear logged in:
+
+```json
+{
+    "cookies": [],
+    "origins": [
+        {
+            "origin": "https://webassemblymusic-treasury.near.page",
+            "localStorage": [
+                {
+                    "name": "near-social-vm:v01::accountId:",
+                    "value": "\"petersalomonsen.near\""
+                },
+                {
+                    "name": "near-wallet-selector:contract",
+                    "value": "{\"contractId\":\"social.near\",\"methodNames\":[]}"
+                },
+                {
+                    "name": "near-wallet-selector:ledger:accounts",
+                    "value": "[{\"accountId\":\"petersalomonsen.near\",\"derivationPath\":\"44'/397'/0'/0'/1'\",\"publicKey\":\"A7sZsyaujEaeYpUsw29hCi8vrxiyxXSbaTqbsxoa4AcN\"}]"
+                },
+                {
+                    "name": "near-wallet-selector:recentlySignedInWallets",
+                    "value": "[\"ledger\"]"
+                },
+                {
+                    "name": "near-wallet-selector:rememberRecentWallets",
+                    "value": "\"enabled\""
+                },
+                {
+                    "name": "near-wallet-selector:selectedWalletId",
+                    "value": "\"ledger\""
+                }
+            ]
+        }
+    ],
+    "sessionStorage": []
+}
+```
+
+This file contains `localStorage` entries for user account information and wallet settings, ensuring the user appears logged in when applied. Note that the example here shows how to connect a ledger device, which then ensures that your private credentials are not stored in the browser.
+
 # Web4 gateway
 
 In the [web4](./web4) folder there is a setup for a web4 gateway. The [public_html](./web4/public_html/) contains the gateway static index.html file that is served on the web4 page, and there is also the [treasury-web4](./web4/treasury-web4/) that contains the web4 contract that is written in Rust.

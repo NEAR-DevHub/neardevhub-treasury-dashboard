@@ -14,7 +14,12 @@ const updatesNotApplied = updateRegistry.filter(
   (update) => finishedUpdates[update.id] === undefined
 );
 
+const appliedUpdates = updateRegistry.filter(
+  (update) => finishedUpdates[update.id] !== undefined
+);
+
 return {
+  appliedUpdates,
   updatesNotApplied,
   hasUpdates: updatesNotApplied.length > 0,
   UPDATE_TYPE_WEB4_CONTRACT,
