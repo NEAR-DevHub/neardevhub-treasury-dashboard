@@ -186,7 +186,15 @@ const code = `
             display: false,
           },
         },
-        events: []
+        events: [],
+        animation: {
+          duration: 300,
+          onComplete: () => {
+            setTimeout(() => {
+              sendChartHeight(); 
+            }, 100);
+          },
+        },
     };
 
     // Initialize the chart with an empty dataset and labels
@@ -248,7 +256,7 @@ const code = `
     function sendChartHeight() {
       currIndex = myChart.data.datasets[0].data.length-1;
       const chartHeight = document.getElementById("myChart").offsetHeight;
-      window.parent.postMessage({ handler: "chartHeight", chartHeight }, "*");
+      window.parent.postMessage({ handler: "chartHeight", chartHeight, account_id }, "*");
     }
 
     function sendChartBalance() {
@@ -258,7 +266,8 @@ const code = `
       window.parent.postMessage({
         handler: "balance",
         balance: data[currIndex],
-        date: timestamp[currIndex]
+        date: timestamp[currIndex],
+        account_id
       }, "*");
     }
 
@@ -383,7 +392,7 @@ const formattedDate = (date) => {
 };
 
 return (
-  <div className="card flex-1 w-100 card-body">
+  <div className="card flex-1 w-100 card-body" key={accountId}>
     <div>
       <div className="d-flex justify-content-between flex-row align-items-start">
         <div className="d-flex flex-column gap-2">
@@ -418,7 +427,7 @@ return (
             ([period, { value, interval }], idx) => (
               <Period
                 role="button"
-                key={idx}
+                key={`${accountId}-${idx}`}
                 onClick={() => setSelectedPeriod(period)}
                 className={
                   periodMap[selectedPeriod].value === value &&
@@ -441,10 +450,13 @@ return (
             const { symbol } = ft_meta;
 
             return (
-              <RadioButton className="d-flex align-items-center" key={idx}>
+              <RadioButton
+                className="d-flex align-items-center"
+                key={`${accountId}-${idx}`}
+              >
                 <input
                   style={{ visibility: "hidden", width: 0, padding: 0 }}
-                  id={contract}
+                  id={`${accountId}-${contract}`}
                   type="radio"
                   value={contract}
                   onClick={() => {
@@ -454,7 +466,7 @@ return (
                   selected={contract === selectedToken}
                 />
                 <label
-                  htmlFor={contract}
+                  htmlFor={`${accountId}-${contract}`}
                   role="button"
                   className="d-flex align-items-center gap-1"
                 >
@@ -492,15 +504,19 @@ return (
           className="chart"
           style={{ width: "100%", height: `${height}px` }}
           srcDoc={code}
-          message={{ account_id, history }}
+          message={{ account_id: accountId, history }}
           onMessage={(e) => {
+            if (e.account_id !== accountId) return; // ignore if it's not from this iframe
+
             switch (e.handler) {
-              case "chartHeight": {
+              case "chartHeight":
                 setHeight(e.chartHeight);
-              }
-              case "balance": {
+                break;
+              case "balance":
                 setBalanceDate({ balance: e.balance, date: e.date });
-              }
+                break;
+              default:
+                break;
             }
           }}
         />
