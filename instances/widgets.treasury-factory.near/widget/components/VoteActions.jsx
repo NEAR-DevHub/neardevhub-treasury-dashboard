@@ -416,7 +416,7 @@ return (
             />
           </div>
         ) : hasOneDeleteIcon ? (
-          <div style={{ width: 40 }}> </div>
+          <div style={{ minWidth: 36 }}> </div>
         ) : (
           <></>
         )}

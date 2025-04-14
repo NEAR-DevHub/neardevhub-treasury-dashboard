@@ -36,6 +36,6 @@ return (
         You {status === "Reject" ? "Rejected" : "Deleted"}
       </div>
     )}
-    {hasOneDeleteIcon && <div style={{ width: 40 }}></div>}
+    {hasOneDeleteIcon && <div style={{ minWidth: 36 }}></div>}
   </Container>
 );
