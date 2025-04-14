@@ -163,7 +163,7 @@ useEffect(() => {
 }, [isTxnCreated, lastProposalId]);
 
 useEffect(() => {
-  if (lastProposalId) {
+  if (lastProposalId && !proposals.length) {
     fetchProposals();
   }
 }, [lastProposalId]);
