@@ -8,5 +8,6 @@
   "REPL_NEAR": "near",
   "REPL_MOB": "mob.near",
   "REPL_SOCIAL_CONTRACT": "social.near",
-  "REPL_RPC_URL": "https://rpc.mainnet.near.org"
+  "REPL_RPC_URL": "https://rpc.mainnet.near.org",
+  "REPL_BACKEND_API": "https://ref-sdk-api-2.fly.dev/api"
 }

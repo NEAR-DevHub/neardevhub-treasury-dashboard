@@ -981,6 +981,72 @@ function deserializeLockupContract(byteArray) {
   return result;
 }
 
+function waitForSocialGet(key, retries, interval) {
+  retries = retries ?? 3;
+  interval = interval ?? 200;
+
+  return new Promise((resolve) => {
+    let attempts = 0;
+
+    const check = () => {
+      const result = Social.get(key);
+      if (result || attempts >= retries) {
+        resolve(result);
+      } else {
+        attempts += 1;
+        setTimeout(check, interval);
+      }
+    };
+
+    check();
+  });
+}
+
+function getCurrentUserTreasuries(accountId) {
+  const pikespeakKey = isBosGateway()
+    ? "${REPL_GATEWAY_PIKESPEAK_KEY}"
+    : props.pikespeakKey ?? "${REPL_INDIVIDUAL_PIKESPEAK_KEY}";
+  return asyncFetch(`https://api.pikespeak.ai/daos/members`, {
+    mode: "cors",
+    headers: {
+      "x-api-key": pikespeakKey,
+    },
+  }).then((res) => {
+    const userDaos = res?.body?.[accountId]?.["daos"] ?? [];
+    return Promise.all(
+      userDaos.map((daoId) => {
+        const spuntikName = daoId.split(".")[0];
+        const selfFrontendKey = `/${spuntikName}.near/widget/app`;
+        const instanceAccount = `treasury-${spuntikName}.near`;
+        const manualFrontendKey = `${instanceAccount}/widget/app`;
+
+        return Promise.all([
+          Near.asyncView(daoId, "get_config"),
+          waitForSocialGet(selfFrontendKey),
+          waitForSocialGet(manualFrontendKey),
+        ]).then((res) => {
+          const config = res[0];
+          const selfCreatedfrontendExists = res[1];
+          const manualCreatedfrontendExists = res[2];
+
+          return {
+            daoId,
+            instanceAccount: selfCreatedfrontendExists
+              ? daoId
+              : instanceAccount,
+            hasTreasury:
+              selfCreatedfrontendExists || manualCreatedfrontendExists,
+            config: {
+              ...config,
+              metadata: JSON.parse(atob(config.metadata ?? "")),
+            },
+          };
+        });
+      })
+    );
+  });
+}
+
 return {
   getApproversAndThreshold,
   hasPermission,
@@ -1005,4 +1071,5 @@ return {
   accountToLockup,
   asyncAccountToLockup,
   deserializeLockupContract,
+  getCurrentUserTreasuries,
 };
