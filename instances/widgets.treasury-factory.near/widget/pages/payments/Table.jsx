@@ -184,6 +184,15 @@ function decodeBase64(encodedArgs) {
   }
 }
 
+const hasOneDeleteIcon =
+  isPendingRequests &&
+  hasDeletePermission &&
+  (proposals ?? []).find(
+    (i) =>
+      i.proposer === accountId &&
+      !Object.keys(i.votes ?? {}).includes(accountId)
+  );
+
 useEffect(() => {
   if (lockupContract) {
     Near.asyncView(lockupContract, "get_liquid_owners_balance").then((res) => {
@@ -450,6 +459,7 @@ const ProposalsComponent = () => {
                       hasDeletePermission,
                       hasVotingPermission,
                       proposalCreator: item.proposer,
+                      hasOneDeleteIcon,
                       nearBalance: isFunctionType
                         ? Big(lockupNearBalances.available).toFixed(2)
                         : nearBalances.available,
