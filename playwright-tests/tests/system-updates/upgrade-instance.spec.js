@@ -202,6 +202,7 @@ test("should update treasury factory with new web4 contract and self upgrade ins
   await expect(page.getByText("contract update test")).toBeVisible();
 
   await page.waitForTimeout(500);
+
   await page.unrouteAll({ behavior: "ignoreErrors" });
   await sandbox.quitSandbox();
 });

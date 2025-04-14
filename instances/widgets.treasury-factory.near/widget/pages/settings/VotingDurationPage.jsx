@@ -8,6 +8,10 @@ const { TransactionLoader } = VM.require(
   `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TransactionLoader`
 ) || { TransactionLoader: () => <></> };
 
+const { InfoBlock } = VM.require(
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InfoBlock`
+) || { InfoBlock: () => <></> };
+
 const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
@@ -338,144 +342,98 @@ return (
           ></input>
         </div>
 
-        {showAffectedProposalsModal ? (
-          <Modal>
-            <ModalHeader>
-              <i class="bi bi-exclamation-triangle text-warning"></i>
-              Impact of changing voting duration
-            </ModalHeader>
-            <ModalContent>
-              <p>
-                You are about to update the voting duration. This will impact
-                existing requests.
-              </p>
-              <ul>
-                {otherPendingRequests.length > 0 ? (
-                  <li>
-                    <b>{otherPendingRequests.length} pending requests</b> will
-                    now follow the new voting duration policy.
-                  </li>
-                ) : (
-                  ""
-                )}
-                {proposalsThatWillExpire.length > 0 ? (
-                  <li>
-                    <b>{proposalsThatWillExpire.length} active requests</b>{" "}
-                    under the old voting duration will move to the "Archived"
-                    tab and close for voting. These requests were created
-                    outside the new voting period and are no longer considered
-                    active.
-                  </li>
-                ) : (
-                  ""
-                )}
-                {proposalsThatWillBeActive.length > 0 ? (
-                  <li>
-                    <b>{proposalsThatWillBeActive.length} expired requests</b>{" "}
-                    under the old voting duration will move back to the "Pending
-                    Requests" tab and reopen for voting. These requests were
-                    created within the new voting period and are no longer
-                    considered expired.
-                  </li>
-                ) : (
-                  ""
-                )}
-              </ul>
-              {showImpactedRequests ? (
-                <>
-                  <h4>Summary of changes</h4>
-                  <table className="table table-sm">
-                    <thead>
-                      <tr className="text-grey">
-                        <th>Id</th>
-                        <th>Description</th>
-                        <th>Submission date</th>
-                        <th>Current expiry</th>
-                        <th>New expiry</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {proposalsThatWillExpire.map((proposal) => (
-                        <tr class="proposal-that-will-expire">
-                          <td>{proposal.id}</td>
-                          <td>{proposal.description}</td>
-                          <td>
-                            {new Date(proposal.submissionTimeMillis)
-                              .toJSON()
-                              .substring(0, "yyyy-mm-dd".length)}
-                          </td>
-                          <td>
-                            {new Date(proposal.currentExpiryTime)
-                              .toJSON()
-                              .substring(0, "yyyy-mm-dd".length)}
-                          </td>
-                          <td>
-                            {new Date(proposal.newExpiryTime)
-                              .toJSON()
-                              .substring(0, "yyyy-mm-dd".length)}
-                          </td>
-                        </tr>
-                      ))}
-                      {proposalsThatWillBeActive.map((proposal) => (
-                        <tr class="proposal-that-will-be-active">
-                          <td>{proposal.id}</td>
-                          <td>{proposal.description}</td>
-                          <td>
-                            {new Date(proposal.submissionTimeMillis)
-                              .toJSON()
-                              .substring(0, "yyyy-mm-dd".length)}
-                          </td>
-                          <td>
-                            {new Date(proposal.currentExpiryTime)
-                              .toJSON()
-                              .substring(0, "yyyy-mm-dd".length)}
-                          </td>
-                          <td>
-                            {new Date(proposal.newExpiryTime)
-                              .toJSON()
-                              .substring(0, "yyyy-mm-dd".length)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </>
-              ) : (
-                ""
-              )}
-              {proposalsThatWillBeActive.length > 0 ? (
+        <Widget
+          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
+          props={{
+            instance,
+            heading: "Impact of changing voting duration",
+            wider: true,
+            content: (
+              <>
                 <p>
-                  If you do not want expired proposals to be open for voting
-                  again, you may need to delete them.
+                  You are about to update the voting duration. This will affect
+                  the following existing requests.
                 </p>
-              ) : (
-                ""
-              )}
-            </ModalContent>
-            <ModalFooter>
-              <Widget
-                src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
-                props={{
-                  classNames: {
-                    root: "btn btn-outline-secondary shadow-none no-transparent",
-                  },
-                  label: "Cancel",
-                  onClick: cancelChangeRequest,
-                }}
-              />
-              <Widget
-                src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
-                props={{
-                  classNames: { root: "theme-btn" },
-                  label: "Yes, proceed",
-                  onClick: submitChangeRequest,
-                }}
-              />
-            </ModalFooter>
-          </Modal>
-        ) : (
-          ""
-        )}
+
+                <Widget
+                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.WarningTable`}
+                  props={{
+                    includeExpiryDate: true,
+                    warningText: (
+                      <>
+                        <ul className="px-3 mb-0">
+                          {otherPendingRequests.length > 0 ? (
+                            <li>
+                              <b>
+                                {otherPendingRequests.length} pending requests
+                              </b>{" "}
+                              will now follow the new voting duration policy.
+                            </li>
+                          ) : (
+                            ""
+                          )}
+                          {proposalsThatWillExpire.length > 0 ? (
+                            <li>
+                              <b>
+                                {proposalsThatWillExpire.length} active requests
+                              </b>{" "}
+                              under the old voting duration will move to the
+                              "Archived" tab and close for voting. These
+                              requests were created outside the new voting
+                              period and are no longer considered active.
+                            </li>
+                          ) : (
+                            ""
+                          )}
+                          {proposalsThatWillBeActive.length > 0 ? (
+                            <li>
+                              <b>
+                                {proposalsThatWillBeActive.length} expired
+                                requests
+                              </b>{" "}
+                              under the old voting duration will move back to
+                              the "Pending Requests" tab and reopen for voting.
+                              These requests were created within the new voting
+                              period and are no longer considered expired.
+                            </li>
+                          ) : (
+                            ""
+                          )}
+                        </ul>
+                        {proposalsThatWillBeActive.length > 0 ? (
+                          <span className="mt-2">
+                            If you do not want expired proposals to be open for
+                            voting again, you may need to delete them.
+                          </span>
+                        ) : (
+                          ""
+                        )}
+                      </>
+                    ),
+                    tableProps: showImpactedRequests
+                      ? [
+                          {
+                            proposals: proposalsThatWillExpire,
+                            title: "Proposals that will expire",
+                            testId: "proposals-that-will-expire",
+                          },
+                          {
+                            proposals: proposalsThatWillBeActive,
+                            title: "Proposals that will be active",
+                            testId: "proposals-that-will-be-active",
+                          },
+                        ]
+                      : [],
+                  }}
+                />
+              </>
+            ),
+            confirmLabel: "Yes, proceed",
+            isOpen: showAffectedProposalsModal,
+            onCancelClick: cancelChangeRequest,
+            onConfirmClick: submitChangeRequest,
+          }}
+        />
         <div className="d-flex mt-2 gap-3 justify-content-end">
           <Widget
             src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
