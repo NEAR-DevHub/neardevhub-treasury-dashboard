@@ -30,6 +30,7 @@ const validatorAccount = props.validatorAccount;
 const treasuryWallet = props.treasuryWallet;
 const isHumanReadableCurrentAmount = props.isHumanReadableCurrentAmount;
 const isProposalDetailsPage = props.isProposalDetailsPage;
+const hasOneDeleteIcon = props.hasOneDeleteIcon;
 
 const alreadyVoted = Object.keys(votes).includes(accountId);
 const userVote = votes[accountId];
@@ -292,6 +293,8 @@ return (
           props={{
             isVoteStatus: true,
             status: userVote,
+            hasOneDeleteIcon,
+            hasFullWidth: isProposalDetailsPage,
           }}
         />
       </div>
@@ -383,7 +386,7 @@ return (
           )
         )}
         {/* currently showing delete btn only for proposal creator */}
-        {hasDeletePermission && proposalCreator === accountId && (
+        {hasDeletePermission && proposalCreator === accountId ? (
           <div style={{ width: "fit-content" }}>
             <Widget
               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
@@ -412,6 +415,10 @@ return (
               }}
             />
           </div>
+        ) : hasOneDeleteIcon ? (
+          <div style={{ width: 40 }}> </div>
+        ) : (
+          <></>
         )}
       </div>
     )}
