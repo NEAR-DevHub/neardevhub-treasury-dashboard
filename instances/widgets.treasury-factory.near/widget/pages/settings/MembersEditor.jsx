@@ -33,28 +33,17 @@ const [memberAlreadyExistRoles, setMemberAlreadyExistRoles] = useState(null);
 const [showErrorToast, setShowErrorToast] = useState(false);
 const [showConfirmModal, setShowConfirmModal] = useState(false);
 const [proposals, setProposals] = useState([]);
-const [rowsPerPage, setRowsPerPage] = useState(10);
-const [currentPage, setPage] = useState(0);
-const [offset, setOffset] = useState(null);
-const [totalLength, setTotalLength] = useState(null);
-const [isPrevPageCalled, setIsPrevCalled] = useState(false);
 
 const fetchProposals = async () =>
   getFilteredProposalsByStatusAndKind({
     treasuryDaoID,
-    resPerPage: rowsPerPage,
-    isPrevPageCalled: isPrevPageCalled,
+    resPerPage: 10,
+    isPrevPageCalled: false,
     filterKindArray: ["ChangePolicy"],
     filterStatusArray: ["InProgress"],
-    offset: typeof offset === "number" ? offset : lastProposalId,
-    lastProposalId: lastProposalId,
-    currentPage,
+    offset: lastProposalId,
+    lastProposalId,
   }).then((r) => {
-    setOffset(r.filteredProposals[r.filteredProposals.length - 1].id);
-    if (currentPage === 0 && !totalLength) {
-      setTotalLength(r.totalLength);
-    }
-
     return r.filteredProposals;
   });
 
