@@ -684,7 +684,7 @@ return (
                 isProposalDetailsPage: true,
               }}
             />
-            <label className="border-top">Expiring Date</label>
+            <label className="border-top">Expires At</label>
             {formatSubmissionTimeStamp(
               proposalData?.submissionTime,
               proposalPeriod,
