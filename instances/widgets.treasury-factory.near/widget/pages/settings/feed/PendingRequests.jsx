@@ -17,7 +17,7 @@ const [totalLength, setTotalLength] = useState(null);
 const [loading, setLoading] = useState(false);
 const [isPrevPageCalled, setIsPrevCalled] = useState(false);
 
-const fetchProposals = useCallback(() => {
+const fetchProposals = () => {
   setLoading(true);
   Near.asyncView(treasuryDaoID, "get_last_proposal_id").then((i) => {
     const lastProposalId = i;
@@ -48,11 +48,11 @@ const fetchProposals = useCallback(() => {
       setProposals(r.filteredProposals);
     });
   });
-}, [rowsPerPage, isPrevPageCalled, currentPage]);
+};
 
 useEffect(() => {
   fetchProposals();
-}, [currentPage, rowsPerPage]);
+}, [currentPage, rowsPerPage, isPrevPageCalled]);
 
 const policy = treasuryDaoID
   ? Near.view(treasuryDaoID, "get_policy", {})

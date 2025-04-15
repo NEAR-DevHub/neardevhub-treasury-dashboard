@@ -3,7 +3,7 @@ const { instance, tab } = props;
 const [leftNavbarOptions, setLeftBarOptions] = useState([
   {
     title: "Pending Requests",
-    key: "requests",
+    key: "pending-requests",
     href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.feed.index`,
     props: { instance, ...props },
   },

@@ -188,7 +188,7 @@ test.describe("User is logged in", function () {
       .fill((Number(currentDurationDays) + 3).toString());
 
     await page.waitForTimeout(500);
-    await page.getByText("Cancel").click();
+    await page.getByRole("button", { name: "Cancel" }).click();
 
     await expect(
       await page.getByPlaceholder("Enter voting duration days")
@@ -424,10 +424,11 @@ test.describe("User is logged in", function () {
             })
           ).toBeVisible();
           await expect(
-            await page.locator(".proposal-that-will-expire")
+            await page.getByTestId("proposals-that-will-expire")
           ).toHaveCount(expectedNewExpiredProposals.length);
           const visibleProposalIds = await page
-            .locator(".proposal-that-will-expire td:first-child")
+            .getByTestId("proposals-that-will-expire")
+            .locator("td:first-child")
             .allInnerTexts();
           expect(visibleProposalIds).toEqual(
             expectedNewExpiredProposals.map((proposal) =>
@@ -453,10 +454,11 @@ test.describe("User is logged in", function () {
             })
           ).toBeVisible();
           await expect(
-            await page.locator(".proposal-that-will-be-active")
+            await page.getByTestId("proposals-that-will-be-active")
           ).toHaveCount(expectedNewActiveProposals.length);
           const visibleProposalIds = await page
-            .locator(".proposal-that-will-be-active td:first-child")
+            .getByTestId("proposals-that-will-be-active")
+            .locator("td:first-child")
             .allInnerTexts();
           expect(visibleProposalIds).toEqual(
             expectedNewActiveProposals.map((proposal) => proposal.id.toString())
