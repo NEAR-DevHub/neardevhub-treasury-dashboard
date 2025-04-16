@@ -139,10 +139,6 @@ const Modal = styled.div`
       font-size: 16px !important;
     }
   }
-
-  .btn {
-    font-size: 14px;
-  }
 `;
 
 const ModalBackdrop = styled.div`
@@ -236,7 +232,7 @@ return (
           {username} will immediately lose their permissions to this treasury if
           you continue.
         </ModalContent>
-        <div className="d-flex gap-2 align-items-center justify-content-end mt-2">
+        <div className="d-flex gap-3 align-items-center justify-content-end mt-2">
           <Widget
             src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
             props={{

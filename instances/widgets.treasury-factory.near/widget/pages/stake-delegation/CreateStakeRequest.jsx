@@ -391,6 +391,7 @@ useEffect(() => {
       (i) => i.pool === lockupStakedPoolId
     );
     const isAlreadyStaked =
+      lockupStakedPoolId ||
       (pool.stakedBalance || 0) > 0 ||
       (pool.unstakedBalance || 0) > 0 ||
       (pool.availableToWithdrawBalance || 0) > 0;

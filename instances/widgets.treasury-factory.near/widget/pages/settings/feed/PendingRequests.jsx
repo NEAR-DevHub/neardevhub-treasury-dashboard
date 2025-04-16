@@ -17,7 +17,7 @@ const [totalLength, setTotalLength] = useState(null);
 const [loading, setLoading] = useState(false);
 const [isPrevPageCalled, setIsPrevCalled] = useState(false);
 
-const fetchProposals = useCallback(() => {
+const fetchProposals = () => {
   setLoading(true);
   Near.asyncView(treasuryDaoID, "get_last_proposal_id").then((i) => {
     const lastProposalId = i;
@@ -48,11 +48,11 @@ const fetchProposals = useCallback(() => {
       setProposals(r.filteredProposals);
     });
   });
-}, [rowsPerPage, isPrevPageCalled, currentPage]);
+};
 
 useEffect(() => {
   fetchProposals();
-}, [currentPage, rowsPerPage]);
+}, [currentPage, rowsPerPage, isPrevPageCalled]);
 
 const policy = treasuryDaoID
   ? Near.view(treasuryDaoID, "get_policy", {})
@@ -72,7 +72,7 @@ const deleteGroup = getApproversAndThreshold(
 );
 
 return (
-  <div className="d-flex flex-column flex-1 justify-content-between">
+  <div className="d-flex flex-column flex-1 justify-content-between h-100">
     <Widget
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.feed.Table`}
       props={{

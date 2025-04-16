@@ -77,7 +77,7 @@ useEffect(() => {
       }
     });
   }
-}, [page]);
+}, [page, lockupContract]);
 
 function convertBalanceToReadableFormat(amount) {
   return Big(amount ?? "0").toFixed(2);

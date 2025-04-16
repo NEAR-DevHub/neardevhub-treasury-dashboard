@@ -222,6 +222,33 @@ export const SettingsProposalData = {
   submission_time: "1728033017194722007",
 };
 
+export const SettingsMemberProposalData = {
+  id: 1,
+  proposer: "theori.near",
+  description:
+    '* Title: Update policy - Members Permissions <br>* Summary: rubycop.near requested to add "root.near" to "Approver".',
+  kind: {
+    ChangePolicy: {
+      policy: {
+        roles: [],
+        default_vote_policy: {
+          weight_kind: "RoleWeight",
+          quorum: "1",
+          threshold: "1",
+        },
+        proposal_bond: "0",
+        proposal_period: "1036800000000000",
+        bounty_bond: "100000000000000000000000",
+        bounty_forgiveness_period: "604800000000000",
+      },
+    },
+  },
+  status: "InProgress",
+  vote_counts: {},
+  votes: {},
+  submission_time: "1728033017194722007",
+};
+
 export const SwapProposalData = {
   id: 1,
   proposer: "theori.near",

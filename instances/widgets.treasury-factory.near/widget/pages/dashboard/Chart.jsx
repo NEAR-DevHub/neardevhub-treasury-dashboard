@@ -382,13 +382,18 @@ const LoadingChart = () => {
   );
 };
 const formattedDate = (date) => {
-  const d = date.toLocaleDateString("en-US", { dateStyle: "medium" });
+  const d = date.toLocaleDateString("en-US", {
+    dateStyle: "medium",
+    timeZone: "UTC",
+  });
+
   const t = date.toLocaleTimeString("en-US", {
     hour: "numeric",
     minute: "numeric",
+    timeZone: "UTC",
   });
 
-  return `${d} ${t}`;
+  return `${d} ${t} UTC`;
 };
 
 return (

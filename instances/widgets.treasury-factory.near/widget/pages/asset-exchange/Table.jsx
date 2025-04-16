@@ -61,12 +61,6 @@ const Container = styled.div`
   font-size: 13px;
   min-height: 60vh;
   display: flex;
-  td {
-    padding: 0.5rem;
-    color: inherit;
-    vertical-align: middle;
-    background: inherit;
-  }
 
   table {
     overflow-x: auto;
@@ -232,6 +226,15 @@ const daoFTTokens = fetch(
 );
 
 const nearBalances = getNearBalances(treasuryDaoID);
+
+const hasOneDeleteIcon =
+  isPendingRequests &&
+  hasDeletePermission &&
+  (proposals ?? []).find(
+    (i) =>
+      i.proposer === accountId &&
+      !Object.keys(i.votes ?? {}).includes(accountId)
+  );
 
 const ProposalsComponent = () => {
   return (
@@ -406,6 +409,7 @@ const ProposalsComponent = () => {
                       requiredVotes,
                       isHumanReadableCurrentAmount: true,
                       checkProposalStatus: () => checkProposalStatus(item.id),
+                      hasOneDeleteIcon,
                     }}
                   />
                 </td>
