@@ -209,6 +209,15 @@ const VoteSuccessToast = () => {
 
 const formatTimestamp = (timestamp) => Math.floor(timestamp / 1e6);
 
+const hasOneDeleteIcon =
+  isPendingRequests &&
+  hasDeletePermission &&
+  (proposals ?? []).find(
+    (i) =>
+      i.proposer === accountId &&
+      !Object.keys(i.votes ?? {}).includes(accountId)
+  );
+
 const ProposalsComponent = ({ item }) => {
   const proposalId = parseInt(item.id, 10);
   const args = decodeBase64(item.kind.FunctionCall.actions[0].args);
@@ -339,6 +348,7 @@ const ProposalsComponent = ({ item }) => {
               currentContract: "near",
               requiredVotes,
               checkProposalStatus: () => checkProposalStatus(item.id),
+              hasOneDeleteIcon,
             }}
           />
         </td>
@@ -348,7 +358,7 @@ const ProposalsComponent = ({ item }) => {
 };
 
 return (
-  <Container style={{ overflowX: "auto" }}>
+  <Container className="h-100 w-100" style={{ overflowX: "auto" }}>
     <VoteSuccessToast />
     {loading === true || proposals === null || policy === null ? (
       <TableSkeleton

@@ -227,6 +227,15 @@ const daoFTTokens = fetch(
 
 const nearBalances = getNearBalances(treasuryDaoID);
 
+const hasOneDeleteIcon =
+  isPendingRequests &&
+  hasDeletePermission &&
+  (proposals ?? []).find(
+    (i) =>
+      i.proposer === accountId &&
+      !Object.keys(i.votes ?? {}).includes(accountId)
+  );
+
 const ProposalsComponent = () => {
   return (
     <tbody style={{ overflowX: "auto" }}>
@@ -400,6 +409,7 @@ const ProposalsComponent = () => {
                       requiredVotes,
                       isHumanReadableCurrentAmount: true,
                       checkProposalStatus: () => checkProposalStatus(item.id),
+                      hasOneDeleteIcon,
                     }}
                   />
                 </td>

@@ -280,6 +280,15 @@ function decodeBase64(encodedArgs) {
   }
 }
 
+const hasOneDeleteIcon =
+  isPendingRequests &&
+  hasDeletePermission &&
+  (proposals ?? []).find(
+    (i) =>
+      i.proposer === accountId &&
+      !Object.keys(i.votes ?? {}).includes(accountId)
+  );
+
 const ProposalsComponent = () => {
   return (
     <tbody style={{ overflowX: "auto" }}>
@@ -482,6 +491,7 @@ const ProposalsComponent = () => {
                       isWithdrawRequest,
                       validatorAccount,
                       treasuryWallet,
+                      hasOneDeleteIcon,
                     }}
                   />
                 </td>
@@ -494,7 +504,7 @@ const ProposalsComponent = () => {
 };
 
 return (
-  <Container style={{ overflowX: "auto" }}>
+  <Container className="h-100 w-100" style={{ overflowX: "auto" }}>
     <VoteSuccessToast />
     {loading === true ||
     proposals === null ||

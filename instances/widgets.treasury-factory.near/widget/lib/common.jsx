@@ -589,25 +589,19 @@ function formatSubmissionTimeStamp(
     timeZone: "UTC",
     timeZoneName: "short",
   });
-  return (
-    <div
-      className={
-        "d-flex flex-wrap " +
-        (isProposalDetailsPage ? "align-items-center gap-2" : "flex-column")
-      }
-    >
+  return isProposalDetailsPage ? (
+    <div className={isNegative && "text-secondary"}>{formattedUTC}</div>
+  ) : (
+    <div className="d-flex flex-wrap">
       <div className="fw-bold">
         {isNegative
           ? "Expired"
           : `${totalDays}d ${remainingHours}h ${remainingMinutes}m`}
-      </div>
-      {isProposalDetailsPage ? (
-        <div className="text-secondary">{formattedUTC}</div>
-      ) : (
+
         <div className="text-secondary text-sm">
           {hours}:{minutes} {day} {month} {year}
         </div>
-      )}
+      </div>
     </div>
   );
 }

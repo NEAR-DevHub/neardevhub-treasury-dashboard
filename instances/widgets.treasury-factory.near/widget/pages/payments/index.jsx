@@ -179,7 +179,7 @@ const VoteSuccessToast = () => {
 };
 
 return (
-  <div>
+  <div className="w-100 h-100 flex-grow-1 d-flex flex-column">
     <VoteSuccessToast />
     {typeof proposalDetailsPageId === "number" ? (
       <Widget
@@ -193,7 +193,7 @@ return (
         }}
       />
     ) : (
-      <Container>
+      <Container className="h-100 w-100 flex-grow-1 d-flex flex-column">
         <Widget
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OffCanvas`}
           props={{
@@ -211,7 +211,7 @@ return (
             ),
           }}
         />
-        <div className="proposals-container">
+        <div className="proposals-container flex-grow-1">
           <div className="flex-main-item">
             <Widget
               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Tabs`}

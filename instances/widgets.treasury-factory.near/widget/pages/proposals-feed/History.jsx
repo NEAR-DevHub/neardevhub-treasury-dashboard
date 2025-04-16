@@ -74,7 +74,7 @@ const transferApproversGroup = getApproversAndThreshold(
 );
 
 return (
-  <div className="d-flex flex-column flex-1 justify-content-between">
+  <div className="d-flex flex-column flex-1 justify-content-between h-100">
     <Widget
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.proposals-feed.Table`}
       props={{

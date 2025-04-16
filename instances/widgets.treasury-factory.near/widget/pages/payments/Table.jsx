@@ -177,6 +177,15 @@ function decodeBase64(encodedArgs) {
   }
 }
 
+const hasOneDeleteIcon =
+  isPendingRequests &&
+  hasDeletePermission &&
+  (proposals ?? []).find(
+    (i) =>
+      i.proposer === accountId &&
+      !Object.keys(i.votes ?? {}).includes(accountId)
+  );
+
 useEffect(() => {
   if (lockupContract) {
     Near.asyncView(lockupContract, "get_liquid_owners_balance").then((res) => {
@@ -443,6 +452,7 @@ const ProposalsComponent = () => {
                       hasDeletePermission,
                       hasVotingPermission,
                       proposalCreator: item.proposer,
+                      hasOneDeleteIcon,
                       nearBalance: isFunctionType
                         ? Big(lockupNearBalances.available).toFixed(2)
                         : nearBalances.available,
@@ -463,7 +473,7 @@ const ProposalsComponent = () => {
 };
 
 return (
-  <Container style={{ overflowX: "auto" }}>
+  <Container className="h-100 w-100" style={{ overflowX: "auto" }}>
     <Widget
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
       props={{

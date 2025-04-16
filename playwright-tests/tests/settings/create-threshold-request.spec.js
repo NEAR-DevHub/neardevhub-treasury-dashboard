@@ -210,6 +210,15 @@ test.describe("User is logged in", function () {
         storage: 8,
       });
     }
+
+    if (
+      testInfo.title.includes(
+        "should show warning screen if there is pending request"
+      )
+    ) {
+      await mockSettingsProposals({ page });
+    }
+
     await navigateToThresholdPage({ page, instanceAccount });
   });
 
@@ -499,8 +508,6 @@ test.describe("User is logged in", function () {
     page,
   }) => {
     test.setTimeout(150_000);
-    await mockSettingsProposals({ page });
-
     const submitRequestButton = page.getByText("Submit Request");
     const thresholdInput = page.getByTestId("threshold-input");
     await thresholdInput.fill("20");
