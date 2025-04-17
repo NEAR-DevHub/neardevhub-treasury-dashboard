@@ -6,6 +6,7 @@ import {
 } from "../../util/sandboxrpc.js";
 import { createDAOargs } from "../../util/sputnikdao.js";
 import nearApi from "near-api-js";
+import { readFile } from "fs/promises";
 
 test("should update bootstrap widget and upgrade instance with it", async ({
   page,
@@ -23,6 +24,16 @@ test("should update bootstrap widget and upgrade instance with it", async ({
   const instanceName = "theupgradable";
 
   const instanceAccountId = `${instanceName}.near`;
+
+  // This, and the treasury_factory.wasm file, can be removed when the on-chain treasury-factory is updated with a web4 contract that has the update_app_widget function
+
+  await (
+    await sandbox.near.account("treasury-factory.near")
+  ).deployContract(
+    await readFile(new URL("treasury_factory.wasm", import.meta.url))
+  );
+
+  // --------------------
 
   const createInstanceResult = await sandbox.account.functionCall({
     contractId: "treasury-factory.near",
@@ -119,7 +130,7 @@ test("should update bootstrap widget and upgrade instance with it", async ({
     timeout: 20_000,
   });
 
-  await expect(page.getByText("Web4 Contract")).not.toBeVisible({
+  await expect(page.getByText("Widgets")).not.toBeVisible({
     timeout: 10_000,
   });
 
@@ -130,128 +141,6 @@ test("should update bootstrap widget and upgrade instance with it", async ({
     await page.getByRole("link", { name: "Review" })
   ).not.toBeVisible();
 
-  // Now make a new update to the app widget
-  await sandbox.modifyWidget(
-    "bootstrap.treasury-factory.near/widget/app",
-    `/**
- * This is the main entry point for the Treasury application.
- * Page route gets passed in through params, along with all other page props.
- */
-
-const { page, ...passProps } = props;
-
-// Import our modules
-const { AppLayout } = VM.require(
-  "\${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.templates.AppLayout"
-) || { AppLayout: () => <></> };
-
-const { instance, treasuryDaoID } = VM.require(
-  "\${REPL_BOOTSTRAP_ACCOUNT}/widget/config.data"
-);
-
-if (!instance || !treasuryDaoID) {
-  return <></>;
-}
-
-if (!page) {
-  // If no page is specified, we default to the feed page TEMP
-  page = "dashboard";
-}
-
-const propsToSend = { ...passProps, instance: instance };
-
-// This is our navigation, rendering the page based on the page parameter
-function Page() {
-  const routes = page.split(".");
-  switch (routes[0]) {
-    case "dashboard": {
-      return (
-        <Widget
-          src="\${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.index"
-          props={propsToSend}
-        />
-      );
-    }
-    // ?page=settings
-    case "settings": {
-      return (
-        <Widget
-          src={"\${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.index"}
-          props={propsToSend}
-        />
-      );
-    }
-    case "payments": {
-      return (
-        <Widget
-          src={"\${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.index"}
-          props={propsToSend}
-        />
-      );
-    }
-
-    case "stake-delegation": {
-      return (
-        <Widget
-          src={
-            "\${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.index"
-          }
-          props={propsToSend}
-        />
-      );
-    }
-
-    case "asset-exchange": {
-      return (
-        <Widget
-          src={
-            "\${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.asset-exchange.index"
-          }
-          props={propsToSend}
-        />
-      );
-    }
-
-    case "proposals-feed": {
-      return (
-        <Widget
-          src={
-            "\${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.proposals-feed.index"
-          }
-          props={propsToSend}
-        />
-      );
-    }
-
-    case "lockup": {
-      return (
-        <Widget
-          src={"\${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.lockup.index"}
-          props={propsToSend}
-        />
-      );
-    }
-
-    default: {
-      // TODO: 404 page
-      return <p>404</p>;
-    }
-  }
-}
-
-return (
-  <AppLayout
-    page={page}
-    instance={instance}
-    treasuryDaoID={treasuryDaoID}
-    accountId={context.accountId}
-  >
-    HELLO I AM UDPATED
-    <Page />
-  </AppLayout>
-);
-`);
-
   await sandbox.modifyWidget(
     "widgets.treasury-factory.near/widget/pages.settings.system-updates.UpdateRegistry",
     `
@@ -261,7 +150,7 @@ return (
           createdDate: "2025-04-05",
           version: "n/a",
           type: "Widgets",
-          summary: "Remove everything",
+          summary: "Widgets update test",
           votingRequired: false
       }
   ];
@@ -270,7 +159,6 @@ return (
 
   await page.goto(`https://${instanceName}.near.page/`);
 
-  await expect(await page.getByText("HELLO I AM UDPATED")).toBeVisible();
   await expect(await page.getByRole("link", { name: "Review" })).toBeVisible({
     timeout: 10_000,
   });
@@ -310,7 +198,7 @@ return (
   await page.getByText("History").click();
   await expect(page.getByText("2025-04-02")).toBeVisible();
   await expect(page.getByText("99999998")).toBeVisible();
-  await expect(page.getByText("contract update test")).toBeVisible();
+  await expect(page.getByText("Widgets update test")).toBeVisible();
 
   await page.waitForTimeout(500);
 

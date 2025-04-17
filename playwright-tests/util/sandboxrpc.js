@@ -5,9 +5,9 @@ import { parseNearAmount } from "near-api-js/lib/utils/format.js";
 import { KeyPairEd25519 } from "near-api-js/lib/utils/key_pair.js";
 import { getLocalWidgetSource } from "./bos-workspace.js";
 import { expect } from "@playwright/test";
-import fs from "fs";
 import path, { dirname } from "path";
 import { overlayMessage, removeOverlayMessage } from "./test.js";
+import { getLocalWidgetContent } from "./web4.js";
 
 export const SPUTNIK_DAO_CONTRACT_ID = "sputnik-dao.near";
 // we don't have proposal bond for any instance (in this repo)
@@ -153,12 +153,18 @@ export class SandboxRPC {
     ).toEqual(keyPair.getPublicKey().toString());
 
     const data = {};
-    const localWidgetSources = await getLocalWidgetSource(
-      reference_widget_account_id + "/widget/**"
+    const appWidget = await getLocalWidgetContent(
+      reference_widget_account_id + "/widget/app"
+    );
+    const configWidget = await getLocalWidgetContent(
+      reference_widget_account_id + "/widget/config.data"
     );
 
     data[reference_widget_account_id] = {
-      widget: localWidgetSources[reference_widget_account_id].widget,
+      widget: {
+        app: appWidget,
+        "config.data": configWidget,
+      },
     };
 
     await reference_widget_account.functionCall({
@@ -568,6 +574,7 @@ export class SandboxRPC {
    * @param {import('@playwright/test').Page} page - Playwright page object
    */
   async redirectWeb4(contractId, page) {
+    const treasury = contractId.split(".near")[0] + ".sputnik-dao.near";
     const original_rpc_url = "https://rpc.mainnet.near.org";
     await page.route(original_rpc_url, async (route, request) => {
       const postData = request.postDataJSON();
@@ -582,17 +589,9 @@ export class SandboxRPC {
           });
           await route.fulfill({ response });
         } else {
-          const instancesFolder = path.resolve(dirname("."), "instances"); // Adjust the path if necessary
           const fileContents = {};
 
           for (const key of keys) {
-            // Replace dots with path separators only after "widget"
-            const [prefix, ...rest] = key.split("/widget/");
-            const normalizedKey = path.join(
-              prefix,
-              "widget",
-              rest.join("/").replace(/\./g, "/")
-            );
             const [account, section, contentKey] = key.split("/");
             if (fileContents[account] === undefined) {
               fileContents[account] = {};
@@ -600,31 +599,26 @@ export class SandboxRPC {
             if (fileContents[account][section] === undefined) {
               fileContents[account][section] = {};
             }
-            const filePath = path.join(instancesFolder, normalizedKey) + ".jsx";
+
             if (this.modifiedWidgets[key]) {
               fileContents[account][section][contentKey] =
                 this.modifiedWidgets[key];
-            } else if (fs.existsSync(filePath)) {
-              const content = fs
-                .readFileSync(filePath, "utf-8")
-                .replaceAll(
-                  "${REPL_BACKEND_API}",
-                  "https://ref-sdk-api-2.fly.dev/api"
-                )
-                .replaceAll(
-                  "${REPL_BASE_DEPLOYMENT_ACCOUNT}",
-                  "widgets.treasury-factory.near"
-                )
-                .replaceAll("${REPL_DEVHUB}", "devhub.near")
-                .replaceAll("${REPL_RPC_URL}", original_rpc_url);
-
-              fileContents[account][section][contentKey] = content;
             } else {
-              console.warn(
-                `File not found for key: ${key} ${filePath}, going to live RPC`
-              );
-              await route.fallback();
-              return;
+              const content = getLocalWidgetContent(key, {
+                treasury,
+                account,
+                nodeUrl: this.rpc_url,
+              });
+
+              if (content) {
+                fileContents[account][section][contentKey] = content;
+              } else {
+                console.warn(
+                  `File not found for key: ${key}, going to live RPC`
+                );
+                await route.fallback();
+                return;
+              }
             }
           }
 
