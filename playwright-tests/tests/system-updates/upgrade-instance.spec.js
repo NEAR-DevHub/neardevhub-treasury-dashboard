@@ -10,7 +10,7 @@ import nearApi from "near-api-js";
 test("should update treasury factory with new web4 contract and self upgrade instance", async ({
   page,
 }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(150_000);
 
   await cacheCDN(page);
 

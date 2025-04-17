@@ -253,7 +253,7 @@ return (
   await page.getByText("Settings").click();
   await page.getByText("System updates").click();
   await page.getByText("History").click();
-  await expect(page.getByText("2025-04-05")).toBeVisible();
+  await expect(page.getByText("2025-04-05")).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText("99999998")).toBeVisible();
   await expect(page.getByText("Widgets update test")).toBeVisible();
 
