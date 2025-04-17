@@ -153,9 +153,13 @@ export class SandboxRPC {
     ).toEqual(keyPair.getPublicKey().toString());
 
     const data = {};
-    const appWidget = await getLocalWidgetContent(
-      reference_widget_account_id + "/widget/app"
-    );
+    const appWidgetKey = reference_widget_account_id + "/widget/app";
+
+    const appWidget =
+      this.modifiedWidgets[appWidgetKey] ??
+      (await getLocalWidgetContent(
+        reference_widget_account_id + "/widget/app"
+      ));
     const configWidget = await getLocalWidgetContent(
       reference_widget_account_id + "/widget/config.data"
     );

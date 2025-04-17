@@ -21,7 +21,7 @@ test("should update bootstrap widget and upgrade instance with it", async ({
   const widget_reference_account_id = DEFAULT_WIDGET_REFERENCE_ACCOUNT_ID;
   await sandbox.setupDefaultWidgetReferenceAccount();
 
-  const instanceName = "theupgradable";
+  const instanceName = "widgetupdater";
 
   const instanceAccountId = `${instanceName}.near`;
 
@@ -141,6 +141,63 @@ test("should update bootstrap widget and upgrade instance with it", async ({
     await page.getByRole("link", { name: "Review" })
   ).not.toBeVisible();
 
+  const REPL_BASE_DEPLOYMENT_ACCOUNT = "widgets.treasury-factory.near";
+  await sandbox.modifyWidget(
+    `${DEFAULT_WIDGET_REFERENCE_ACCOUNT_ID}/widget/app`,
+    `
+const { page, ...passProps } = props;
+const { AppLayout } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.templates.AppLayout"
+) || { AppLayout: () => <></> };
+const { instance, treasuryDaoID } = VM.require(
+  "${DEFAULT_WIDGET_REFERENCE_ACCOUNT_ID}/widget/config.data"
+);
+if (!instance || !treasuryDaoID) {
+  return <></>;
+}
+if (!page) {
+  page = "dashboard";
+}
+const propsToSend = { ...passProps, instance: instance };
+function Page() {
+  const routes = page.split(".");
+  switch (routes[0]) {
+    case "dashboard": {
+      return (
+        <Widget
+          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.index"
+          props={propsToSend}
+        />
+      );
+    }
+    case "settings": {
+      return (
+        <Widget
+          src={"${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.index"}
+          props={propsToSend}
+        />
+      );
+    }
+    default: {
+      return <p>404</p>;
+    }
+  }
+}
+return (
+  <AppLayout
+    page={page}
+    instance={instance}
+    treasuryDaoID={treasuryDaoID}
+    accountId={context.accountId}
+  >
+    <p>I AM UPDATED</p>
+    <Page />
+  </AppLayout>
+);
+  `
+  );
+
+  await sandbox.setupDefaultWidgetReferenceAccount();
   await sandbox.modifyWidget(
     "widgets.treasury-factory.near/widget/pages.settings.system-updates.UpdateRegistry",
     `
@@ -166,7 +223,7 @@ test("should update bootstrap widget and upgrade instance with it", async ({
 
   await expect(await page.getByText("Available Updates")).toBeEnabled();
 
-  await expect(page.getByText("Web4 Contract")).toBeVisible({
+  await expect(page.getByText("Widgets update test")).toBeVisible({
     timeout: 10_000,
   });
 
@@ -182,7 +239,7 @@ test("should update bootstrap widget and upgrade instance with it", async ({
 
   await expect(await page.getByText("Available Updates")).toBeEnabled();
 
-  await expect(page.getByText("Widgets")).not.toBeVisible({
+  await expect(page.getByText("Widgets update test")).not.toBeVisible({
     timeout: 10_000,
   });
 
@@ -196,10 +253,11 @@ test("should update bootstrap widget and upgrade instance with it", async ({
   await page.getByText("Settings").click();
   await page.getByText("System updates").click();
   await page.getByText("History").click();
-  await expect(page.getByText("2025-04-02")).toBeVisible();
+  await expect(page.getByText("2025-04-05")).toBeVisible();
   await expect(page.getByText("99999998")).toBeVisible();
   await expect(page.getByText("Widgets update test")).toBeVisible();
 
+  await expect(page.getByText("I AM UPDATED")).toBeVisible();
   await page.waitForTimeout(500);
 
   await page.unrouteAll({ behavior: "ignoreErrors" });
