@@ -25,12 +25,12 @@ test("should update bootstrap widget and upgrade instance with it", async ({
 
   const instanceAccountId = `${instanceName}.near`;
 
-  // This, and the treasury_factory.wasm file, can be removed when the on-chain treasury-factory is updated with a web4 contract that has the update_app_widget function
+  // This should be removed when the on-chain treasury-factory is updated with a web4 contract that has the update_app_widget function
 
   await (
     await sandbox.near.account("treasury-factory.near")
   ).deployContract(
-    await readFile(new URL("treasury_factory.wasm", import.meta.url))
+    await readFile("treasury-factory/target/near/treasury_factory.wasm")
   );
 
   // --------------------
