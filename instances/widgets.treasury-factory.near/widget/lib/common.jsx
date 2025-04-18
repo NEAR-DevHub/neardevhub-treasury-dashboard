@@ -742,6 +742,7 @@ function getAllColorsAsObject(isDarkTheme, primaryColor) {
     "--other-primary": "#2775C9",
     "--other-warning": "#B17108",
     "--other-green": "#3CB179",
+    "--other-green-light": "#3CB1791A",
     "--other-red": "#D95C4A",
     "--bs-body-bg": "var(--bg-page-color)",
     "--bs-border-color": "var(--border-color)",

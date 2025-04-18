@@ -22,27 +22,10 @@ const hasEditPermission = hasPermission(
 );
 
 return hasEditPermission && hasUpdates ? (
-  <div
-    style={{
-      backgroundColor: "#e4ece8",
-      padding: "8px",
-      textAlign: "center",
-      fontWeight: 300,
-    }}
-  >
-    <small
-      className="badge badge-success"
-      style={{ backgroundColor: "#60ae7e", color: "#ffffff" }}
-    >
-      New
-    </small>
+  <div className="system-update-banner">
+    <small className="badge">New</small>
     New system updates published, check if your instance is up to date.{" "}
-    <a
-      style={{ textDecoration: "underline" }}
-      href="?page=settings&tab=system-updates"
-    >
-      Review
-    </a>
+    <a href="?page=settings&tab=system-updates">Review</a>
   </div>
 ) : (
   <></>

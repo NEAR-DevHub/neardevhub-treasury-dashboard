@@ -704,7 +704,7 @@ test.describe("User is logged in", function () {
                   receiver_id: receiverAccount,
                 }),
                 deposit: "0",
-                gas: 270000000000000,
+                gas: "270000000000000",
               },
             ],
           },

@@ -66,30 +66,35 @@ export async function cacheCDN(page) {
     fs.mkdirSync(cacheDir, { recursive: true });
   }
 
-  await page.route("https://ga.jspm.io/**", async (route, request) => {
-    const urlHash = Buffer.from(request.url()).toString("base64");
-    const cacheFilePath = path.join(cacheDir, urlHash);
+  const cacheRoute = async (url) => {
+    await page.route(url, async (route, request) => {
+      const urlHash = Buffer.from(request.url()).toString("base64");
+      const cacheFilePath = path.join(cacheDir, urlHash);
 
-    if (fs.existsSync(cacheFilePath)) {
-      const cachedContent = fs.readFileSync(cacheFilePath);
-      const contentType = fs.readFileSync(`${cacheFilePath}.type`, "utf-8");
-      await route.fulfill({
-        body: cachedContent,
-        headers: { "Content-Type": contentType },
-      });
-    } else {
-      const response = await route.fetch();
-      const body = await response.body();
-      const contentType =
-        response.headers()["content-type"] || "application/octet-stream";
+      if (fs.existsSync(cacheFilePath)) {
+        const cachedContent = fs.readFileSync(cacheFilePath);
+        const contentType = fs.readFileSync(`${cacheFilePath}.type`, "utf-8");
+        await route.fulfill({
+          body: cachedContent,
+          headers: { "Content-Type": contentType },
+        });
+      } else {
+        const response = await route.fetch();
+        const body = await response.body();
+        const contentType =
+          response.headers()["content-type"] || "application/octet-stream";
 
-      fs.writeFileSync(cacheFilePath, body);
-      fs.writeFileSync(`${cacheFilePath}.type`, contentType);
+        fs.writeFileSync(cacheFilePath, body);
+        fs.writeFileSync(`${cacheFilePath}.type`, contentType);
 
-      await route.fulfill({
-        body,
-        headers: response.headers(),
-      });
-    }
-  });
+        await route.fulfill({
+          body,
+          headers: response.headers(),
+        });
+      }
+    });
+  };
+
+  await cacheRoute("https://cdn.jsdelivr.net/**");
+  await cacheRoute("https://ga.jspm.io/**");
 }

@@ -492,6 +492,23 @@ const Theme = styled.div`
   .primary-icon {
     color: var(--theme-color) !important;
   }
+
+  .system-update-banner {
+    background-color: var(--other-green-light);
+    padding: 8px;
+    text-align: center;
+    font-weight: 300;
+
+    .badge {
+      background-color: var(--other-green);
+      color: white;
+      margin-right: 8px;
+    }
+
+    a {
+      text-decoration: underline;
+    }
+  }
 `;
 
 function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {

@@ -368,7 +368,7 @@ function onSubmitClick() {
                         receiver_id: receiver,
                       }),
                       deposit: "0",
-                      gas: gas,
+                      gas: gas.toFixed(),
                     },
                   ],
                 },

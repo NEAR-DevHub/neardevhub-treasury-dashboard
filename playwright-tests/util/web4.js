@@ -68,9 +68,14 @@ export async function redirectWeb4({
           const filePath = path.join(instancesFolder, normalizedKey) + ".jsx";
           if (modifiedWidgets[key]) {
             fileContents[account][section][contentKey] = modifiedWidgets[key];
-          } else if (fs.existsSync(filePath)) {
-            const content = fs
-              .readFileSync(filePath, "utf-8")
+          } else if (
+            await fs.promises
+              .access(filePath)
+              .then(() => true)
+              .catch(() => false)
+          ) {
+            let content = await fs.promises.readFile(filePath, "utf-8");
+            content = content
               .replaceAll(
                 "${REPL_BACKEND_API}",
                 "https://ref-sdk-api-2.fly.dev/api"
