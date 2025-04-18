@@ -589,25 +589,19 @@ function formatSubmissionTimeStamp(
     timeZone: "UTC",
     timeZoneName: "short",
   });
-  return (
-    <div
-      className={
-        "d-flex flex-wrap " +
-        (isProposalDetailsPage ? "align-items-center gap-2" : "flex-column")
-      }
-    >
+  return isProposalDetailsPage ? (
+    <div className={isNegative && "text-secondary"}>{formattedUTC}</div>
+  ) : (
+    <div className="d-flex flex-wrap">
       <div className="fw-bold">
         {isNegative
           ? "Expired"
           : `${totalDays}d ${remainingHours}h ${remainingMinutes}m`}
-      </div>
-      {isProposalDetailsPage ? (
-        <div className="text-secondary">{formattedUTC}</div>
-      ) : (
+
         <div className="text-secondary text-sm">
           {hours}:{minutes} {day} {month} {year}
         </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -742,6 +736,7 @@ function getAllColorsAsObject(isDarkTheme, primaryColor) {
     "--grey-03": isDarkTheme ? "#555555" : "#B3B3B3",
     "--grey-035": isDarkTheme ? "#3E3E3E" : "#E6E6E6",
     "--grey-04": isDarkTheme ? "#323232" : "#F4F4F4",
+    "--grey-045": isDarkTheme ? "#1d1d1d" : "#F4F4F4",
     "--grey-05": isDarkTheme ? "#1B1B18" : "#F7F7F7",
     "--icon-color": isDarkTheme ? "#CACACA" : "#060606",
     "--other-primary": "#2775C9",

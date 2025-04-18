@@ -72,13 +72,6 @@ const Container = styled.div`
   min-height: 60vh;
   display: flex;
 
-  td {
-    padding: 0.5rem;
-    color: inherit;
-    vertical-align: middle;
-    background: inherit;
-  }
-
   thead td {
     text-wrap: nowrap;
   }
@@ -164,7 +157,7 @@ const requiredVotes = transferApproversGroup?.requiredVotes;
 
 const hideApproversCol = isPendingRequests && requiredVotes === 1;
 
-const userFTTokens = fetch(
+const daoFTTokens = fetch(
   `${REPL_BACKEND_API}/ft-tokens/?account_id=${treasuryDaoID}`
 );
 
@@ -183,6 +176,15 @@ function decodeBase64(encodedArgs) {
     return null;
   }
 }
+
+const hasOneDeleteIcon =
+  isPendingRequests &&
+  hasDeletePermission &&
+  (proposals ?? []).find(
+    (i) =>
+      i.proposer === accountId &&
+      !Object.keys(i.votes ?? {}).includes(accountId)
+  );
 
 useEffect(() => {
   if (lockupContract) {
@@ -450,6 +452,7 @@ const ProposalsComponent = () => {
                       hasDeletePermission,
                       hasVotingPermission,
                       proposalCreator: item.proposer,
+                      hasOneDeleteIcon,
                       nearBalance: isFunctionType
                         ? Big(lockupNearBalances.available).toFixed(2)
                         : nearBalances.available,
@@ -470,7 +473,7 @@ const ProposalsComponent = () => {
 };
 
 return (
-  <Container style={{ overflowX: "auto" }}>
+  <Container className="h-100 w-100" style={{ overflowX: "auto" }}>
     <Widget
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
       props={{

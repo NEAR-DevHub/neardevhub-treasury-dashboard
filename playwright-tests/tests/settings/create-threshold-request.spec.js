@@ -10,6 +10,10 @@ import {
   updateDaoPolicyMembers,
 } from "../../util/rpcmock.js";
 import { InsufficientBalance, encodeToMarkdown } from "../../util/lib.js";
+import {
+  CurrentTimestampInNanoseconds,
+  SettingsMemberProposalData,
+} from "../../util/inventory.js";
 
 const lastProposalId = 3;
 
@@ -47,6 +51,20 @@ async function checkVotingDropdownChange({ page }) {
     )
   ).toBeVisible();
   await expect(page.getByTestId("threshold-value-label")).toBeVisible();
+}
+
+async function mockSettingsProposals({ page }) {
+  await mockRpcRequest({
+    page,
+    filterParams: { method_name: "get_proposals" },
+    modifyOriginalResultFunction: () => {
+      let originalResult = JSON.parse(
+        JSON.stringify(SettingsMemberProposalData)
+      );
+      originalResult.submission_time = CurrentTimestampInNanoseconds;
+      return originalResult;
+    },
+  });
 }
 
 test.afterEach(async ({ page }, testInfo) => {
@@ -192,6 +210,15 @@ test.describe("User is logged in", function () {
         storage: 8,
       });
     }
+
+    if (
+      testInfo.title.includes(
+        "should show warning screen if there is pending request"
+      )
+    ) {
+      await mockSettingsProposals({ page });
+    }
+
     await navigateToThresholdPage({ page, instanceAccount });
   });
 
@@ -297,9 +324,15 @@ test.describe("User is logged in", function () {
     ).toBeVisible();
     await expect(submitBtn).toBeDisabled();
     await thresholdInput.fill("20");
-    await expect(page.getByText("Warning!")).toBeVisible();
+    await expect(
+      page.getByText(
+        "If you choose a percentage-based threshold, the number of votes required could change if new members are added or existing members are removed. However, at least one vote will always be required, regardless of the percentage."
+      )
+    ).toBeVisible();
     await submitBtn.click();
-    await expect(page.getByText("Confirm Your Change")).toBeVisible();
+    await expect(
+      page.getByText("Changing this setting will require")
+    ).toBeVisible();
     await page.getByRole("button", { name: "Confirm" }).click();
     await expect(
       page.getByText("Awaiting transaction confirmation...")
@@ -384,9 +417,15 @@ test.describe("User is logged in", function () {
     ).toBeVisible({ timeout: 20_000 });
     await expect(submitBtn).toBeDisabled();
     await thresholdInput.fill("20");
-    await expect(page.getByText("Warning!")).toBeVisible();
+    await expect(
+      page.getByText(
+        "If you choose a percentage-based threshold, the number of votes required could change if new members are added or existing members are removed. However, at least one vote will always be required, regardless of the percentage."
+      )
+    ).toBeVisible();
     await submitBtn.click();
-    await expect(page.getByText("Confirm Your Change")).toBeVisible();
+    await expect(
+      page.getByText("Changing this setting will require")
+    ).toBeVisible();
     await page.getByRole("button", { name: "Confirm" }).click();
     await expect(
       page.getByText("Awaiting transaction confirmation...")
@@ -463,5 +502,30 @@ test.describe("User is logged in", function () {
     await cancelButton.click();
     await expect(submitRequestButton).toBeDisabled();
     await expect(cancelButton).toBeDisabled();
+  });
+
+  test("should show warning screen if there is pending request", async ({
+    page,
+  }) => {
+    test.setTimeout(150_000);
+    const submitRequestButton = page.getByText("Submit Request");
+    const thresholdInput = page.getByTestId("threshold-input");
+    await thresholdInput.fill("20");
+    await submitRequestButton.click();
+    await expect(
+      page.getByText(
+        "This action will override your previous pending proposals. Complete exsisting one before creating a new to avoid conflicting or incomplete updates."
+      )
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Yes, proceed" }).click();
+    await expect(
+      page.getByText(
+        "This is equivalent to 2 votes with the current number of members."
+      )
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Confirm" }).click();
+    await expect(
+      page.getByText("Awaiting transaction confirmation...")
+    ).toBeVisible();
   });
 });

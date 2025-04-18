@@ -61,12 +61,6 @@ const Container = styled.div`
   font-size: 13px;
   min-height: 60vh;
   display: flex;
-  td {
-    padding: 0.5rem;
-    color: inherit;
-    vertical-align: middle;
-    background: inherit;
-  }
 
   table {
     overflow-x: auto;
@@ -227,11 +221,20 @@ const VoteSuccessToast = () => {
 
 const proposalPeriod = policy.proposal_period;
 
-const userFTTokens = fetch(
+const daoFTTokens = fetch(
   `${REPL_BACKEND_API}/ft-tokens/?account_id=${treasuryDaoID}`
 );
 
 const nearBalances = getNearBalances(treasuryDaoID);
+
+const hasOneDeleteIcon =
+  isPendingRequests &&
+  hasDeletePermission &&
+  (proposals ?? []).find(
+    (i) =>
+      i.proposer === accountId &&
+      !Object.keys(i.votes ?? {}).includes(accountId)
+  );
 
 const ProposalsComponent = () => {
   return (
@@ -406,6 +409,7 @@ const ProposalsComponent = () => {
                       requiredVotes,
                       isHumanReadableCurrentAmount: true,
                       checkProposalStatus: () => checkProposalStatus(item.id),
+                      hasOneDeleteIcon,
                     }}
                   />
                 </td>

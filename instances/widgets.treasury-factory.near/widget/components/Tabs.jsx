@@ -63,8 +63,18 @@ useEffect(() => {
   }
 }, [props]);
 
+// needed to pass props to child related to current tab
+useEffect(() => {
+  if (typeof props.setCurrentTab === "function") {
+    props.setCurrentTab(currentTab);
+  }
+}, [currentTab]);
+
 return (
-  <Container className="card py-3 d-flex flex-column">
+  <Container
+    className="card py-3 d-flex flex-column w-100 h-100 flex-grow-1
+  "
+  >
     <div
       className="d-flex justify-content-between gap-2 align-items-center border-bottom flex-wrap"
       style={{ paddingRight: "10px" }}
@@ -103,7 +113,7 @@ return (
       </div>
     </div>
     {currentTab && (
-      <div className="w-100 h-100" key={currentTab.title}>
+      <div className="w-100 h-100 flex-grow-1" key={currentTab.title}>
         <Widget
           src={currentTab.href}
           props={{ ...currentTabProps, ...props }}

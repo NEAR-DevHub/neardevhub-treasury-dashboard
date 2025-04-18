@@ -44,6 +44,7 @@ const storageState = storageStateFile
 
 const context = await browser.newContext({ storageState });
 const page = await context.newPage();
+
 await cacheCDN(page);
 await redirectWeb4({ contractId, page, treasury });
 await page.goto(`https://${contractId}.page/`);

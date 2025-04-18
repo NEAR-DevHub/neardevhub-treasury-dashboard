@@ -1,6 +1,9 @@
-const { encodeToMarkdown } = VM.require(
+const { encodeToMarkdown, getFilteredProposalsByStatusAndKind } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
-);
+) || {
+  getFilteredProposalsByStatusAndKind: () => {},
+};
+
 const { TransactionLoader } = VM.require(
   `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TransactionLoader`
 ) || { TransactionLoader: () => <></> };
@@ -28,6 +31,21 @@ const [showDeleteModal, setShowDeleteModal] = useState(false);
 const [showCancelModal, setShowCancelModal] = useState(false);
 const [memberAlreadyExistRoles, setMemberAlreadyExistRoles] = useState(null);
 const [showErrorToast, setShowErrorToast] = useState(false);
+const [showConfirmModal, setShowConfirmModal] = useState(false);
+const [proposals, setProposals] = useState([]);
+
+const fetchProposals = async () =>
+  getFilteredProposalsByStatusAndKind({
+    treasuryDaoID,
+    resPerPage: 10,
+    isPrevPageCalled: false,
+    filterKindArray: ["ChangePolicy"],
+    filterStatusArray: ["InProgress"],
+    offset: lastProposalId,
+    lastProposalId,
+  }).then((r) => {
+    return r.filteredProposals;
+  });
 
 const daoPolicy =
   treasuryDaoID && !isTreasuryFactory
@@ -231,6 +249,11 @@ useEffect(() => {
   return () => clearTimeout(timeoutId);
 }, [username]);
 
+const submissionTimeMillis = (proposal) =>
+  Number(
+    proposal.submission_time.substr(0, proposal.submission_time.length - 6)
+  );
+
 return (
   <Container className="d-flex flex-column gap-2">
     <TransactionLoader
@@ -334,7 +357,6 @@ return (
             disabled: isInitialValues() || isTxnCreated,
           }}
         />
-
         <Widget
           src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
           props={{
@@ -346,10 +368,47 @@ return (
               isTxnCreated ||
               !isUsernameValid,
             label: "Submit",
-            onClick: onSubmitClick,
+            onClick: async () => {
+              fetchProposals().then((proposals) => {
+                if (proposals.length > 0) {
+                  setProposals(proposals);
+                  setShowConfirmModal(true);
+                } else {
+                  onSubmitClick();
+                }
+              });
+            },
             loading: isTxnCreated,
           }}
         />
+
+        {proposals.length > 0 && (
+          <Widget
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
+            props={{
+              instance,
+              heading: "Confirm Your Change",
+              wider: true,
+              content: (
+                <Widget
+                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.WarningTable`}
+                  props={{
+                    warningText:
+                      "This action will override your previous pending proposals. Complete exsisting one before creating a new to avoid conflicting or incomplete updates.",
+                    tableProps: [{ proposals }],
+                  }}
+                />
+              ),
+              confirmLabel: "Yes, proceed",
+              isOpen: showConfirmModal,
+              onCancelClick: () => setShowConfirmModal(false),
+              onConfirmClick: () => {
+                setShowConfirmModal(false);
+                onSubmitClick();
+              },
+            }}
+          />
+        )}
       </div>
     </div>
   </Container>

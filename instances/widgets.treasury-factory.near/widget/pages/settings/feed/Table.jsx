@@ -67,13 +67,6 @@ const Container = styled.div`
   min-height: 60vh;
   display: flex;
 
-  td {
-    padding: 0.5rem;
-    color: inherit;
-    vertical-align: middle;
-    background: inherit;
-  }
-
   table {
     overflow-x: auto;
   }
@@ -244,6 +237,16 @@ const VoteSuccessToast = () => {
 const proposalPeriod = policy.proposal_period;
 
 const [showDetailsProposalKind, setShowDetailsProposalKind] = useState(null);
+
+const hasOneDeleteIcon =
+  isPendingRequests &&
+  hasDeletePermission &&
+  (proposals ?? []).find(
+    (i) =>
+      i.proposer === accountId &&
+      !Object.keys(i.votes ?? {}).includes(accountId)
+  );
+
 const ProposalsComponent = () => {
   return (
     <tbody style={{ overflowX: "auto" }}>
@@ -380,6 +383,7 @@ const ProposalsComponent = () => {
                       avoidCheckForBalance: true,
                       requiredVotes,
                       checkProposalStatus: () => checkProposalStatus(item.id),
+                      hasOneDeleteIcon,
                     }}
                   />
                 </td>
@@ -392,7 +396,7 @@ const ProposalsComponent = () => {
 };
 
 return (
-  <Container style={{ overflowX: "auto" }}>
+  <Container className="h-100 w-100" style={{ overflowX: "auto" }}>
     <VoteSuccessToast />
     {loading === true ||
     proposals === null ||

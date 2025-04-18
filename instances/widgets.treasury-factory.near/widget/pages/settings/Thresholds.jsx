@@ -5,6 +5,16 @@ const { TransactionLoader } = VM.require(
   `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TransactionLoader`
 ) || { TransactionLoader: () => <></> };
 
+const { InfoBlock } = VM.require(
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InfoBlock`
+) || { InfoBlock: () => <></> };
+
+const { getFilteredProposalsByStatusAndKind } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+) || {
+  getFilteredProposalsByStatusAndKind: () => {},
+};
+
 const {
   encodeToMarkdown,
   hasPermission,
@@ -33,31 +43,6 @@ const hasEditPermission = hasPermission(
   "AddProposal"
 );
 
-const [selectedGroup, setSelectedGroup] = useState(null);
-const [selectedVoteOption, setSelectedVoteOption] = useState(null);
-const [selectedVoteValue, setSelectedVoteValue] = useState("");
-const [isTxnCreated, setTxnCreated] = useState(false);
-const [daoPolicy, setDaoPolicy] = useState(null);
-const [lastProposalId, setLastProposalId] = useState(null);
-const [showToastStatus, setToastStatus] = useState(false);
-const [valueError, setValueError] = useState(null);
-const [showConfirmModal, setConfirmModal] = useState(null);
-const [rolesData, setRolesData] = useState(null);
-const [showErrorToast, setShowErrorToast] = useState(false);
-
-const hasCreatePermission = hasPermission(
-  treasuryDaoID,
-  context.accountId,
-  "policy",
-  "AddProposal"
-);
-
-useEffect(() => {
-  if (Array.isArray(rolesData) && rolesData.length) {
-    setSelectedGroup(rolesData[0]);
-  }
-}, [rolesData]);
-
 const options = [
   {
     label: "Number of votes",
@@ -71,6 +56,49 @@ const options = [
       "A percentage of the total group members must vote for a decision to pass.",
   },
 ];
+const limit = 10;
+const millisec = 24 * 60 * 60 * 1000;
+
+const [selectedGroup, setSelectedGroup] = useState(null);
+const [selectedVoteOption, setSelectedVoteOption] = useState(null);
+const [selectedVoteValue, setSelectedVoteValue] = useState("");
+const [isTxnCreated, setTxnCreated] = useState(false);
+const [daoPolicy, setDaoPolicy] = useState(null);
+const [lastProposalId, setLastProposalId] = useState(null);
+const [showToastStatus, setToastStatus] = useState(false);
+const [valueError, setValueError] = useState(null);
+const [showConfirmModal, setConfirmModal] = useState(null);
+const [rolesData, setRolesData] = useState(null);
+const [showErrorToast, setShowErrorToast] = useState(false);
+const [proposals, setProposals] = useState([]);
+
+const [showWarningModal, setShowWarningModal] = useState(false);
+
+const hasCreatePermission = hasPermission(
+  treasuryDaoID,
+  context.accountId,
+  "policy",
+  "AddProposal"
+);
+
+const fetchProposals = async () =>
+  getFilteredProposalsByStatusAndKind({
+    treasuryDaoID,
+    resPerPage: 10,
+    isPrevPageCalled: false,
+    filterKindArray: ["ChangePolicy"],
+    filterStatusArray: ["InProgress"],
+    offset: lastProposalId,
+    lastProposalId,
+  }).then((r) => {
+    setProposals(r.filteredProposals);
+  });
+
+useEffect(() => {
+  if (Array.isArray(rolesData) && rolesData.length) {
+    setSelectedGroup(rolesData[0]);
+  }
+}, [rolesData]);
 
 function getLastProposalId() {
   return Near.asyncView(treasuryDaoID, "get_last_proposal_id").then(
@@ -124,6 +152,12 @@ useEffect(() => {
   }
 }, [isTxnCreated, lastProposalId]);
 
+useEffect(() => {
+  if (lastProposalId && !proposals.length) {
+    fetchProposals();
+  }
+}, [lastProposalId]);
+
 function resetForm() {
   setSelectedVoteOption(selectedGroup.isRatio ? options[1] : options[0]);
   setSelectedVoteValue(parseInt(selectedGroup.threshold));
@@ -171,12 +205,6 @@ const Container = styled.div`
 
   .text-md {
     font-size: 13px;
-  }
-
-  .warning {
-    background-color: rgba(255, 158, 0, 0.1);
-    color: var(--other-warning);
-    font-weight: 500;
   }
 
   .text-sm {
@@ -389,9 +417,9 @@ const Table = ({ currentGroup, newGroup }) => {
     },
   ];
   return (
-    <table className="table mt-2">
-      <thead className="">
-        <tr className="">
+    <table className="table table-compact my-0">
+      <thead>
+        <tr>
           <th className="fw-bold"></th>
           <th className="fw-bold text-center ">Current Setup</th>
           <th className="fw-bold text-center ">New Setup</th>
@@ -422,6 +450,11 @@ function isInitialValues() {
   return false;
 }
 
+const submissionTimeMillis = (proposal) =>
+  Number(
+    proposal.submission_time.substr(0, proposal.submission_time.length - 6)
+  );
+
 const requiredVotes = selectedGroup
   ? computeRequiredVotes(
       selectedGroup,
@@ -430,6 +463,15 @@ const requiredVotes = selectedGroup
       selectedVoteValue
     )
   : 0;
+
+const disableSubmit =
+  isInitialValues() ||
+  !selectedVoteValue ||
+  valueError ||
+  !hasCreatePermission ||
+  isTxnCreated ||
+  (selectedVoteValue &&
+    parseInt(selectedVoteValue) === selectedGroup.threshold);
 
 return (
   <Container>
@@ -445,17 +487,47 @@ return (
           props={{
             instance,
             heading: "Confirm Your Change",
+            wider: true,
+            content: (
+              <Widget
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.WarningTable`}
+                props={{
+                  tableProps: [{ proposals }],
+                  warningText:
+                    "This action will override your previous pending proposals. Complete exsisting one before creating a new to avoid conflicting or incomplete updates.",
+                }}
+              />
+            ),
+            confirmLabel: "Yes, proceed",
+            isOpen: showWarningModal,
+            onCancelClick: () => setShowWarningModal(false),
+            onConfirmClick: () => {
+              setShowWarningModal(false);
+              setConfirmModal(true);
+            },
+          }}
+        />
+        <Widget
+          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
+          props={{
+            instance,
+            heading: "Confirm Your Change",
+            wider: true,
             content: (
               <>
-                {requiredVotes > 1 &&
-                  parseInt(selectedGroup.threshold) === 1 && (
-                    <div className="d-flex align-items-center gap-3 warning px-3 py-2 rounded-3">
-                      <i className="bi bi-exclamation-triangle warning-icon h5 mb-0"></i>
-                      <div>
-                        You will no longer be able to vote with a single vote.
-                      </div>
-                    </div>
-                  )}
+                {requiredVotes > 1 && (
+                  <InfoBlock
+                    type="warning"
+                    description={
+                      <span>
+                        Changing this setting will require {requiredVotes} votes
+                        to approve requests.
+                        {selectedGroup.requiredVotes === 1 &&
+                          ` You will no longer be able to approve requests with a single vote.`}
+                      </span>
+                    }
+                  />
+                )}
                 <Table
                   currentGroup={
                     selectedGroup.isRatio
@@ -609,23 +681,17 @@ return (
               </div>
               {valueError && <div className="text-red"> {valueError}</div>}
             </div>
-
             {isPercentageSelected &&
-            selectedVoteValue &&
-            selectedGroup.threshold != selectedVoteValue ? (
-              <div className="d-flex gap-3 warning px-3 py-2 rounded-3">
-                <i className="bi bi-exclamation-triangle warning-icon h5"></i>
-                <div>
-                  <span className="fw-bolder">Warning! </span> <br />
-                  If you choose a percentage-based threshold, the number of
+              selectedVoteValue &&
+              selectedGroup.threshold !== parseInt(selectedVoteValue) && (
+                <InfoBlock
+                  type="warning"
+                  description="If you choose a percentage-based threshold, the number of
                   votes required could change if new members are added or
                   existing members are removed. However, at least one vote will
-                  always be required, regardless of the percentage.
-                </div>
-              </div>
-            ) : (
-              <></>
-            )}
+                  always be required, regardless of the percentage."
+                />
+              )}
 
             {hasCreatePermission && (
               <div className="d-flex mt-2 gap-3 justify-content-end">
@@ -651,24 +717,14 @@ return (
                         src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
                         props={{
                           classNames: { root: "theme-btn" },
-                          disabled:
-                            isInitialValues() ||
-                            !selectedVoteValue ||
-                            valueError ||
-                            !hasCreatePermission ||
-                            isTxnCreated,
+                          disabled: disableSubmit,
                           label: "Submit Request",
                           loading: isTxnCreated,
                         }}
                       />
                     ),
                     checkForDeposit: true,
-                    disabled:
-                      isInitialValues() ||
-                      !selectedVoteValue ||
-                      valueError ||
-                      !hasCreatePermission ||
-                      isTxnCreated,
+                    disabled: disableSubmit,
                     treasuryDaoID,
                     callbackAction: () => {
                       if (
@@ -679,7 +735,11 @@ return (
                           `Maximum members allowed is ${selectedGroup.members.length}.`
                         );
                       } else {
-                        setConfirmModal(true);
+                        if (proposals.length > 0) {
+                          setShowWarningModal(true);
+                        } else {
+                          setConfirmModal(true);
+                        }
                       }
                     },
                   }}

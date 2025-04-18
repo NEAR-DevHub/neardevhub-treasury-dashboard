@@ -97,13 +97,6 @@ const Container = styled.div`
   min-height: 60vh;
   display: flex;
 
-  td {
-    padding: 0.5rem;
-    color: inherit;
-    vertical-align: middle;
-    background: inherit;
-  }
-
   table {
     overflow-x: auto;
 
@@ -286,6 +279,15 @@ function decodeBase64(encodedArgs) {
     return null;
   }
 }
+
+const hasOneDeleteIcon =
+  isPendingRequests &&
+  hasDeletePermission &&
+  (proposals ?? []).find(
+    (i) =>
+      i.proposer === accountId &&
+      !Object.keys(i.votes ?? {}).includes(accountId)
+  );
 
 const ProposalsComponent = () => {
   return (
@@ -489,6 +491,7 @@ const ProposalsComponent = () => {
                       isWithdrawRequest,
                       validatorAccount,
                       treasuryWallet,
+                      hasOneDeleteIcon,
                     }}
                   />
                 </td>
@@ -501,7 +504,7 @@ const ProposalsComponent = () => {
 };
 
 return (
-  <Container style={{ overflowX: "auto" }}>
+  <Container className="h-100 w-100" style={{ overflowX: "auto" }}>
     <VoteSuccessToast />
     {loading === true ||
     proposals === null ||

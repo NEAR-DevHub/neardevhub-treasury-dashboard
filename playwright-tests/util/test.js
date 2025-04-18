@@ -1,4 +1,9 @@
 import { test as base } from "@playwright/test";
+import fs from "fs";
+import path from "path";
+import os from "os";
+
+const cdnCache = {};
 
 export const test = base.extend({
   instanceAccount: ["treasury-devdao.near", { option: true }],

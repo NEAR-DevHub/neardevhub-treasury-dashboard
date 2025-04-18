@@ -3,7 +3,7 @@ const { instance, tab } = props;
 const [leftNavbarOptions, setLeftBarOptions] = useState([
   {
     title: "Pending Requests",
-    key: "requests",
+    key: "pending-requests",
     href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.feed.index`,
     props: { instance, ...props },
   },
@@ -30,6 +30,12 @@ const [leftNavbarOptions, setLeftBarOptions] = useState([
     key: "theme-logo",
     href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.Theme`,
     props: { instance },
+  },
+  {
+    title: "System updates",
+    key: "system-updates",
+    href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.system-updates.SystemUpdates`,
+    props: { instance, ...props },
   },
 ]);
 
