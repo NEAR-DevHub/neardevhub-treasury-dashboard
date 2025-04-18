@@ -8,6 +8,8 @@ const TREASURY_FACTORY_ACCOUNT_ID: &near_sdk::AccountIdRef =
     near_sdk::AccountIdRef::new_or_panic("treasury-factory.near");
 const NEAR_SOCIAL_ACCOUNT_ID: &near_sdk::AccountIdRef =
     near_sdk::AccountIdRef::new_or_panic("social.near");
+const WIDGET_REFERENCE_ACCOUNT_ID: &near_sdk::AccountIdRef =
+    near_sdk::AccountIdRef::new_or_panic("bootstrap.treasury-factory.near");
 
 // Define the contract structure
 #[near(contract_state)]
@@ -37,6 +39,31 @@ impl Contract {
             }
             _ => env::panic_str("No web4 contract bytes in promise result"),
         }
+    }
+
+    /**
+     * Update app widget only, callable by anyone
+     */
+    #[payable]
+    pub fn update_app_widget(&mut self) -> Promise {
+        let current_account_id = env::current_account_id();
+
+        let key = format!("{}/widget/app", WIDGET_REFERENCE_ACCOUNT_ID);
+        let promise = Promise::new(NEAR_SOCIAL_ACCOUNT_ID.into())
+            .function_call(
+                "get".to_string(),
+                serde_json::json!({ "keys": [key] })
+                    .to_string()
+                    .into_bytes(),
+                NearToken::from_near(0),
+                Gas::from_tgas(10),
+            )
+            .then(Self::ext(current_account_id).update_widgets_callback(
+                WIDGET_REFERENCE_ACCOUNT_ID.into(),
+                NEAR_SOCIAL_ACCOUNT_ID.into(),
+                env::attached_deposit(),
+            ));
+        promise
     }
 
     #[payable]
@@ -242,6 +269,7 @@ impl Contract {
         }
     }
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;
