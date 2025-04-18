@@ -70,7 +70,7 @@ export async function cacheCDN(page) {
     await page.route(url, async (route, request) => {
       const urlHash = Buffer.from(request.url()).toString("base64");
       const cacheFilePath = path.join(cacheDir, urlHash);
-  
+
       if (fs.existsSync(cacheFilePath)) {
         const cachedContent = fs.readFileSync(cacheFilePath);
         const contentType = fs.readFileSync(`${cacheFilePath}.type`, "utf-8");
@@ -83,17 +83,17 @@ export async function cacheCDN(page) {
         const body = await response.body();
         const contentType =
           response.headers()["content-type"] || "application/octet-stream";
-  
+
         fs.writeFileSync(cacheFilePath, body);
         fs.writeFileSync(`${cacheFilePath}.type`, contentType);
-  
+
         await route.fulfill({
           body,
           headers: response.headers(),
         });
       }
     });
-  }
+  };
 
   await cacheRoute("https://cdn.jsdelivr.net/**");
   await cacheRoute("https://ga.jspm.io/**");
