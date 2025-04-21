@@ -1,28 +1,93 @@
-const { getCurrentUserTreasuries, accountToLockup, getNearBalances } =
-  VM.require("${REPL_DEVDAO_ACCOUNT}/widget/lib.common");
+const { getUserTreasuries, accountToLockup, getNearBalances } = VM.require(
+  "${REPL_DEVDAO_ACCOUNT}/widget/lib.common"
+);
+
+const { Modal, ModalContent, ModalHeader } = VM.require(
+  "${REPL_DEVDAO_ACCOUNT}/widget/lib.modal"
+);
 
 const { NearToken } = VM.require(
   "${REPL_DEVDAO_ACCOUNT}/widget/components.Icons"
 ) || { NearToken: () => <></> };
 const accountId = context.accountId;
+const showCongratsModal = props.showCongratsModal;
+const formFields = props.formFields;
 
 const [userTreasuries, setUserTreasuires] = useState(null);
 const [otherDaos, setOtherDaos] = useState([]);
 const [isExpanded, setExpanded] = useState(false);
 
+const storageAccountName = Storage.get(
+  "TreasuryAccountName",
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.treasury.Create`
+);
+
+const draftTreasuries =
+  JSON.parse(
+    Storage.get("TREASURY_DRAFTS") ?? "[]",
+    `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.treasury.Create`
+  ) ?? [];
+
+function mergeUniqueTreasuries(arr1, arr2) {
+  const uniqueMap = {};
+
+  arr1.concat(arr2).forEach((item) => {
+    uniqueMap[item.daoId] = item;
+  });
+
+  return Object.values(uniqueMap);
+}
 useEffect(() => {
   if (accountId) {
-    getCurrentUserTreasuries(accountId).then((results) => {
+    getUserTreasuries(accountId).then((results) => {
       const withTreasury = results.filter((dao) => dao.hasTreasury);
       const withoutTreasury = results.filter((dao) => !dao.hasTreasury);
-      setUserTreasuires(withTreasury);
+
+      if (storageAccountName) {
+        const storageDaoId = `${storageAccountName}.sputnik-dao.near`;
+        // Check if storageAccountName is already in withTreasury
+        const hasStorageAccount = withTreasury.some(
+          (dao) => dao.daoId === storageDaoId
+        );
+
+        // If not, push a new object into withTreasury
+        if (!hasStorageAccount) {
+          withTreasury.push({
+            daoId: storageDaoId,
+            instanceAccount: `${storageAccountName}.near`,
+            hasTreasury: true,
+            config: {},
+          });
+        }
+      }
+      setUserTreasuires((prev) =>
+        mergeUniqueTreasuries(prev || [], withTreasury)
+      );
       setOtherDaos(withoutTreasury);
     });
   }
-}, []);
+}, [storageAccountName]);
+
+useEffect(() => {
+  if (draftTreasuries?.length > 0) {
+    const parsedDrafts = draftTreasuries.map((i) => ({
+      ...i,
+      daoId: `${i.accountName}.sputnik-dao.near`,
+      hasTreasury: true,
+      instanceAccount: `${i.accountName}.near`,
+      isDraft: true,
+      config: {
+        name: i.accountName,
+      },
+    }));
+
+    setUserTreasuires((prev) =>
+      mergeUniqueTreasuries(prev || [], parsedDrafts)
+    );
+  }
+}, [draftTreasuries]);
 
 const Container = styled.div`
-  max-width: 560px;
   width: 100%;
   font-size: 14px;
 
@@ -58,6 +123,15 @@ const Container = styled.div`
   .cursor-pointer {
     cursor: pointer;
   }
+
+  .warning-link {
+    text-decoration: underline;
+    color: inherit !important;
+  }
+
+  .badge-secondary {
+    background-color: var(--grey-035);
+  }
 `;
 
 const Skeleton = styled.div`
@@ -80,36 +154,44 @@ const defaultImage =
 
 const Loader = () => {
   return (
-    <div className="card mt-3">
-      <div className={`d-flex gap-3 align-items-center card-body`}>
-        <Skeleton style={{ height: 55, width: 55 }} className="rounded-3" />
+    <div className="row mt-3">
+      <div className="card col-md-4 ">
+        <div className={`d-flex gap-3 align-items-center card-body`}>
+          <Skeleton style={{ height: 55, width: 55 }} className="rounded-3" />
 
-        <div className="d-flex flex-column">
-          <div className="h6 mb-0">
-            <Skeleton
-              style={{ height: 22, width: 120 }}
-              className="rounded-3"
-            />
-          </div>
-          <div className="text-secondary text-sm pt-2">
-            <Skeleton style={{ height: 20, width: 60 }} className="rounded-3" />
-          </div>
-        </div>
-      </div>
-      <div className="border-top">
-        <div className="card-body d-flex flex-column gap-3">
-          <Skeleton style={{ height: 22, width: 150 }} className="rounded-3" />
-
-          <div className="border border-1 p-3 rounded-3 d-flex flex-column gap-2">
-            <div className="text-secondary">Total Balance</div>
-            <div className="h6 mb-0 fw-bold">
+          <div className="d-flex flex-column">
+            <div className="h6 mb-0">
               <Skeleton
-                style={{ height: 22, width: 200 }}
+                style={{ height: 22, width: 120 }}
+                className="rounded-3"
+              />
+            </div>
+            <div className="text-secondary text-sm pt-2">
+              <Skeleton
+                style={{ height: 20, width: 60 }}
                 className="rounded-3"
               />
             </div>
           </div>
-          <Skeleton style={{ height: 35, width: 520 }} className="rounded-3" />
+        </div>
+        <div className="border-top">
+          <div className="card-body d-flex flex-column gap-3">
+            <Skeleton
+              style={{ height: 22, width: 150 }}
+              className="rounded-3"
+            />
+
+            <div className="border border-1 p-3 rounded-3 d-flex flex-column gap-2">
+              <div className="text-secondary">Total Balance</div>
+              <div className="h6 mb-0 fw-bold">
+                <Skeleton
+                  style={{ height: 22, width: 200 }}
+                  className="rounded-3"
+                />
+              </div>
+            </div>
+            <Skeleton style={{ height: 35 }} className="rounded-3" />
+          </div>
         </div>
       </div>
     </div>
@@ -125,11 +207,14 @@ const TokenImage = styled.div`
   width: 32px;
 `;
 
-const BalanceComponent = ({ daoId }) => {
+const BalanceComponent = ({ daoId, isDraft }) => {
   const maxShow = 3;
-  const nearBalance = getNearBalances(daoId);
-  const ftTokens = fetch(`${REPL_BACKEND_API}/ft-tokens/?account_id=${daoId}`)
-    ?.body ?? [{ totalCumulativeAmt: "", fts: [] }];
+  const nearBalance = isDraft ? { totalParsed: 0 } : getNearBalances(daoId);
+  const ftTokens = isDraft
+    ? [{ totalCumulativeAmt: "", fts: [] }]
+    : fetch(`${REPL_BACKEND_API}/ft-tokens/?account_id=${daoId}`)?.body ?? [
+        { totalCumulativeAmt: "", fts: [] },
+      ];
   const totalBalance = Number(
     Big(nearBalance?.totalParsed ?? 0)
       .plus(Big(ftTokens?.totalCumulativeAmt ?? "0"))
@@ -152,39 +237,157 @@ const BalanceComponent = ({ daoId }) => {
         <div className="text-secondary">Total Balance</div>
         <div className="h6 mb-0 fw-bold">${totalBalance}</div>
       </div>
-      <div className="d-flex align-items-center">
-        {(ftTokens?.fts ?? []).slice(0, maxShow - 1).map((acc, index) => (
+      {!isDraft && (
+        <div className="d-flex align-items-center">
+          {(ftTokens?.fts ?? []).slice(0, maxShow - 1).map((acc, index) => (
+            <TokenImage
+              key={acc.contract}
+              style={{
+                marginLeft: index > 0 ? "-10px" : 0,
+                zIndex: index,
+                backgroundImage: `url("${acc.ft_meta.icon}")`,
+              }}
+              className="rounded-circle"
+            />
+          ))}
+
           <TokenImage
-            key={acc.contract}
+            key="near"
             style={{
-              marginLeft: index > 0 ? "-10px" : 0,
-              zIndex: index,
-              backgroundImage: `url("${acc.ft_meta.icon}")`,
+              marginLeft: ftTokens?.fts?.length > 0 ? "-10px" : 0,
+              zIndex: maxShow,
+              backgroundImage: `url("${near.ft_meta.icon}")`,
+              height: 37,
+              width: 37,
             }}
             className="rounded-circle"
           />
-        ))}
 
-        <TokenImage
-          key="near"
-          style={{
-            marginLeft: ftTokens?.fts?.length > 0 ? "-10px" : 0,
-            zIndex: maxShow,
-            backgroundImage: `url("${near.ft_meta.icon}")`,
-            height: 37,
-            width: 37,
-          }}
-          className="rounded-circle"
+          {ftTokens?.fts.length > maxShow && (
+            <div
+              style={{ marginLeft: "-15px", zIndex: 999 }}
+              className="grey-circle rounded-circle d-flex justify-content-center align-items-center"
+            >
+              +{ftTokens.fts.length - (maxShow - 1)}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const SuccessModal = () => {
+  return (
+    showCongratsModal && (
+      <Modal>
+        <div className="d-flex justify-content-end w-100">
+          <a href="?page=my-treasuries">
+            <i className="bi bi-x-lg h4 mb-0 cursor-pointer"></i>
+          </a>
+        </div>
+        <ModalContent>
+          <Widget
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.SuccessPage`}
+            props={{
+              formFields,
+            }}
+          />
+        </ModalContent>
+      </Modal>
+    )
+  );
+};
+
+const TreasuryCard = ({ treasury, hasTreasury }) => {
+  const lockupContract = accountToLockup(treasury.daoId);
+  const primaryColor = treasury.config.metadata.primaryColor ?? "#01BF7A";
+  return (
+    <div className="card h-100 w-100 d-flex flex-column" key={treasury.daoId}>
+      <div
+        className="p-3 d-flex gap-3 align-items-center"
+        style={{ height: "80px", overflow: "hidden" }}
+      >
+        <img
+          src={
+            (treasury.config.metadata?.flagLogo ?? "")?.includes("ipfs")
+              ? treasury.config.metadata?.flagLogo
+              : defaultImage
+          }
+          width={48}
+          height={48}
+          className="rounded-3 object-fit-cover"
         />
-
-        {ftTokens?.fts.length > maxShow && (
-          <div
-            style={{ marginLeft: "-15px", zIndex: 999 }}
-            className="grey-circle rounded-circle d-flex justify-content-center align-items-center"
-          >
-            +{ftTokens.fts.length - (maxShow - 1)}
+        <div className="d-flex flex-column">
+          <div className="h6 mb-0">
+            {treasury.config.name}
+            {treasury.isDraft && (
+              <span class="badge badge-secondary">Draft</span>
+            )}
           </div>
-        )}
+          <div className="text-secondary text-sm">
+            @{treasury.instanceAccount}
+          </div>
+        </div>
+      </div>
+
+      <div className="border-top flex-grow-1 p-3 d-flex flex-column gap-3">
+        <div
+          className="d-flex flex-column gap-1"
+          style={{ color: primaryColor }}
+        >
+          <div>
+            <label>Spuntik DAO:</label>
+            <span className="fw-semi-bold">{treasury.daoId}</span>
+          </div>
+          {lockupContract && (
+            <div>
+              <label>Lockup:</label>
+              <span className="fw-semi-bold">{lockupContract}</span>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-auto d-flex flex-column gap-3">
+          <div className="border border-1 p-3 rounded-3 d-flex flex-column gap-2 justfiy-self-end">
+            <BalanceComponent
+              daoId={treasury.daoId}
+              isDraft={treasury.isDraft}
+            />
+          </div>
+          {treasury.isDraft && (
+            <a
+              className="btn btn-primary w-100"
+              href={`?page=create`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() =>
+                Storage.set("CURRENT_DRAFT", JSON.stringify(treasury))
+              }
+            >
+              Complete Setup
+            </a>
+          )}
+          {!hasTreasury && (
+            <div className="d-flex gap-3 warning-box px-3 py-2 rounded-3">
+              <i class="bi bi-exclamation-triangle h5 mb-0"></i>
+              <div>
+                <div className="fw-bold">
+                  This treasury is not currently supported.
+                </div>
+                To enable it for use with NEAR Treasury,
+                <a
+                  className="warning-link"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  href={`https://docs.neartreasury.com/support/`}
+                >
+                  please contact our team.
+                </a>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -193,90 +396,32 @@ const BalanceComponent = ({ daoId }) => {
 const TreasuryCardList = ({ treasuries, hasTreasury }) => {
   if (!Array.isArray(treasuries) || treasuries.length === 0) return null;
 
-  return treasuries.map((treasury) => {
-    const lockupContract = accountToLockup(treasury.daoId);
-    const primaryColor = treasury.config.metadata.primaryColor ?? "#01BF7A";
+  return (
+    <div className="row g-4">
+      {treasuries.map((treasury) => {
+        const cardContent = (
+          <TreasuryCard treasury={treasury} hasTreasury={hasTreasury} />
+        );
 
-    return (
-      <div className="card" key={treasury.daoId}>
-        <div className="card-body d-flex gap-3 align-items-center">
-          <img
-            src={
-              treasury.config.metadata?.flagLogo?.includes("ipfs")
-                ? treasury.config.metadata?.flagLogo
-                : defaultImage
-            }
-            width={48}
-            height={48}
-            className="rounded-3 object-fit-cover"
-          />
-          <div className="d-flex flex-column">
-            <div className="h6 mb-0">{treasury.config.name}</div>
-            <div className="text-secondary text-sm">
-              @{treasury.instanceAccount}
-            </div>
-          </div>
-        </div>
-
-        <div className="border-top">
-          <div className="card-body d-flex flex-column gap-3">
-            <div
-              className="d-flex flex-column gap-1"
-              style={{ color: primaryColor }}
-            >
-              <div>
-                <label>Spuntik DAO:</label>
-                <span className="fw-semi-bold">{treasury.daoId}</span>
-              </div>
-              {lockupContract && (
-                <div>
-                  <label>Lockup:</label>
-                  <span className="fw-semi-bold">{lockupContract}</span>
-                </div>
-              )}
-            </div>
-
-            <div className="border border-1 p-3 rounded-3 d-flex flex-column gap-2">
-              <BalanceComponent daoId={treasury.daoId} />
-            </div>
+        return (
+          <div className="col-md-4" key={treasury.daoId}>
             {hasTreasury ? (
               <a
                 target="_blank"
                 rel="noopener noreferrer"
                 href={`https://${treasury.instanceAccount}.page/`}
+                className="text-decoration-none text-dark d-block h-100 w-100"
               >
-                <button className="text-align-center btn btn-outline-secondary w-100">
-                  Open
-                </button>
+                {cardContent}
               </a>
             ) : (
-              <div className="d-flex flex-column gap-3">
-                <div className="d-flex gap-3 warning-box px-3 py-2 rounded-3">
-                  <i class="bi bi-exclamation-triangle h5 mb-0"></i>
-                  <div>
-                    <div className="fw-bold">
-                      This treasury is not currently supported.
-                    </div>
-                    To enable it for use with NEAR Treasury, please contact our
-                    team.
-                  </div>
-                </div>
-                <a
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  href={`https://docs.neartreasury.com/support/`}
-                >
-                  <button className="text-align-center btn btn-outline-secondary w-100">
-                    Contact us
-                  </button>
-                </a>
-              </div>
+              cardContent
             )}
           </div>
-        </div>
-      </div>
-    );
-  });
+        );
+      })}
+    </div>
+  );
 };
 
 function toggleExpand() {
@@ -285,15 +430,9 @@ function toggleExpand() {
 
 if (accountId) {
   return (
-    <div className="d-flex flex-column align-items-center w-100 mb-4">
+    <div className="d-flex flex-column align-items-center w-100 mb-4 px-3">
       <div className="d-flex w-100 align-items-center justify-content-between position-relative">
-        <h3
-          className="mb-0 position-absolute start-50 translate-middle-x"
-          style={{ fontWeight: 600 }}
-        >
-          My Treasuries
-        </h3>
-        <div></div>
+        <h3 style={{ fontWeight: 600 }}>My Treasuries</h3>
         <div>
           <a target="_blank" rel="noopener noreferrer" href={`?page=create`}>
             <button className="btn btn-primary d-flex align-items-center gap-1">
@@ -303,11 +442,11 @@ if (accountId) {
           </a>
         </div>
       </div>
-
+      <SuccessModal />
       <Container className="d-flex flex-column gap-3">
         {!Array.isArray(userTreasuries) && <Loader />}
         <div className="d-flex flex-column gap-3">
-          <div className="d-flex flex-column gap-3 mt-3">
+          <div className="mt-3">
             {Array.isArray(userTreasuries) && userTreasuries.length > 0 && (
               <TreasuryCardList
                 treasuries={userTreasuries}
@@ -319,7 +458,7 @@ if (accountId) {
               <>
                 <div className={userTreasuries.length && "border-top my-3"} />
                 <div className="d-flex gap-2 align-items-center justify-content-between">
-                  <div className="d-flex gap-2 align-items-center">
+                  <div className="d-flex gap-2 align-items-center mb-3">
                     <h6 className="mb-0 fw-bold">Other DAOs</h6>
                     <div className="custom-tag rounded-3 fw-bold text-center">
                       {otherDaos.length}

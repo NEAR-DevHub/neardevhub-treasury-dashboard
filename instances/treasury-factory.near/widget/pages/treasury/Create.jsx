@@ -1,19 +1,43 @@
 let { step } = props;
 
 const widgetBasePath = `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.create-treasury`;
-const alreadyCreatedATreasury = Storage.get(
-  "TreasuryAccountName",
-  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.treasury.Create`
-);
 
 const [formFields, setFormFields] = useState({});
 const [showCongratsModal, setShowCongratsModal] = useState(false);
 
+const existingDrafts =
+  JSON.parse(
+    Storage.get("TREASURY_DRAFTS") ?? "[]",
+    `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.treasury.Create`
+  ) ?? [];
+
+const currentDraft =
+  JSON.parse(
+    Storage.get("CURRENT_DRAFT") ?? "{}",
+    `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.treasury.MyTreasuries`
+  ) ?? null;
+
+function removeDeployedTreasuryFromDraft(accountName) {
+  const updated = existingDrafts.filter((d) => d.accountName !== accountName);
+  Storage.set("TREASURY_DRAFTS", JSON.stringify(updated));
+}
+
 useEffect(() => {
-  if (alreadyCreatedATreasury && !showCongratsModal) {
-    setShowCongratsModal(true);
+  if (formFields.accountName) {
+    const updatedDrafts = [
+      ...existingDrafts.filter((d) => d.accountName !== formFields.accountName),
+      formFields,
+    ];
+
+    Storage.set("TREASURY_DRAFTS", JSON.stringify(updatedDrafts));
   }
-}, [alreadyCreatedATreasury]);
+}, [step]);
+
+useEffect(() => {
+  if (currentDraft) {
+    setFormFields(currentDraft);
+  }
+}, [currentDraft]);
 
 const STEPS = [
   <Widget src={`${widgetBasePath}.ConfirmWalletStep`} />,
@@ -31,6 +55,7 @@ const STEPS = [
       formFields,
       showCongratsModal: () => {
         Storage.set("TreasuryAccountName", formFields.accountName);
+        removeDeployedTreasuryFromDraft(formFields.accountName);
         setShowCongratsModal(true);
       },
     }}
@@ -115,6 +140,7 @@ useEffect(() => {
           const decodedArgs = JSON.parse(atob(args ?? "") ?? "{}");
           const treasuryName = decodedArgs?.name;
           Storage.set("TreasuryAccountName", treasuryName);
+          removeDeployedTreasuryFromDraft(treasuryName);
           setShowCongratsModal(true);
         }
       }
@@ -125,15 +151,14 @@ useEffect(() => {
 return (
   <div>
     {showCongratsModal ? (
-      <PageWrapper style={{ margin: "auto" }}>
-        <Widget
-          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.SuccessPage`}
-          props={{
-            formFields,
-            clearStorage: () => Storage.set("TreasuryAccountName", null),
-          }}
-        />
-      </PageWrapper>
+      <Widget
+        src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.treasury.MyTreasuries"
+        props={{
+          ...propsToSend,
+          showCongratsModal: showCongratsModal,
+          formFields,
+        }}
+      />
     ) : (
       <Wrapper title={context.accountId ? "Treasury Creation" : "Sign In"}>
         {context.accountId ? (

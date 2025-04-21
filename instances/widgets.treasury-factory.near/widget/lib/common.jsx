@@ -998,21 +998,34 @@ function waitForSocialGet(key, retries, interval) {
   });
 }
 
-function getCurrentUserTreasuries(accountId) {
+function getUserDaos(accountId, doAsyncFetch) {
+  if (!accountId) return [];
+
   const pikespeakKey = isBosGateway()
     ? "${REPL_GATEWAY_PIKESPEAK_KEY}"
     : props.pikespeakKey ?? "${REPL_INDIVIDUAL_PIKESPEAK_KEY}";
-  return asyncFetch(`https://api.pikespeak.ai/daos/members`, {
-    mode: "cors",
-    headers: {
-      "x-api-key": pikespeakKey,
-    },
-  }).then((res) => {
-    const userDaos = res?.body?.[accountId]?.["daos"] ?? [];
+
+  const url = `https://api.pikespeak.ai/daos/members`;
+
+  const headers = {
+    "x-api-key": pikespeakKey,
+  };
+
+  const doFetch = doAsyncFetch
+    ? asyncFetch(url, { headers }).then(
+        (res) => res?.body?.[accountId]?.["daos"] ?? []
+      )
+    : fetch(url, { headers });
+
+  return doFetch;
+}
+
+function getUserTreasuries(accountId) {
+  return getUserDaos(accountId, true).then((userDaos) => {
     return Promise.all(
       userDaos.map((daoId) => {
         const spuntikName = daoId.split(".")[0];
-        const selfFrontendKey = `/${spuntikName}.near/widget/app`;
+        const selfFrontendKey = `${spuntikName}.near/widget/app`;
         const instanceAccount = `treasury-${spuntikName}.near`;
         const manualFrontendKey = `${instanceAccount}/widget/app`;
 
@@ -1024,11 +1037,10 @@ function getCurrentUserTreasuries(accountId) {
           const config = res[0];
           const selfCreatedfrontendExists = res[1];
           const manualCreatedfrontendExists = res[2];
-
           return {
             daoId,
             instanceAccount: selfCreatedfrontendExists
-              ? daoId
+              ? `${spuntikName}.near`
               : instanceAccount,
             hasTreasury:
               selfCreatedfrontendExists || manualCreatedfrontendExists,
@@ -1067,5 +1079,6 @@ return {
   accountToLockup,
   asyncAccountToLockup,
   deserializeLockupContract,
-  getCurrentUserTreasuries,
+  getUserTreasuries,
+  getUserDaos,
 };

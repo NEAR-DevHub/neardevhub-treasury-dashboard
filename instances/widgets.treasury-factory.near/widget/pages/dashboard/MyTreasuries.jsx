@@ -1,4 +1,4 @@
-const { getCurrentUserTreasuries } = VM.require(
+const { getUserTreasuries } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
 
@@ -24,7 +24,7 @@ const [userTreasuries, setUserTreasuries] = useState(null);
 
 useEffect(() => {
   if (accountId) {
-    getCurrentUserTreasuries(accountId).then((res) => setUserTreasuries(res));
+    getUserTreasuries(accountId).then((res) => setUserTreasuries(res));
   }
   if (treasuryDaoID) {
     Near.asyncView(treasuryDaoID, "get_config").then((config) => {
