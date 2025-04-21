@@ -16,6 +16,12 @@ const {
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.system-updates.UpdateNotificationTracker"
 ) ?? { updatesNotApplied: [], setFinishedUpdates: () => {} };
 
+const { checkIfPolicyIsUpToDate } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.system-updates.PolicyUpdate"
+) ?? { checkIfPolicyIsUpToDate: () => {} };
+
+checkIfPolicyIsUpToDate(instance);
+
 if (web4isUpToDate) {
   updatesNotApplied
     .filter((update) => update.type === UPDATE_TYPE_WEB4_CONTRACT)
@@ -52,7 +58,6 @@ const Container = styled.div`
 
 async function checkForWidgetUpdate() {
   const BOOTSTRAP_WIDGET_ACCOUNT = "bootstrap.treasury-factory.near";
-  console.log("checking for widget update");
   asyncFetch(`${REPL_RPC_URL}`, {
     method: "POST",
     headers: {
