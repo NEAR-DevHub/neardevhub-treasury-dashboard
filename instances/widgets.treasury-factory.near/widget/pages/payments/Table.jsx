@@ -79,12 +79,6 @@ const Container = styled.div`
   table {
     overflow-x: auto;
   }
-
-  .proposal-row {
-    &:hover {
-      background-color: var(--grey-04) !important;
-    }
-  }
 `;
 
 function updateVoteSuccess(status, proposalId) {

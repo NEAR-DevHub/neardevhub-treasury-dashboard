@@ -67,45 +67,6 @@ function toggleCreatePage() {
   setShowCreateRequest(!showCreateRequest);
 }
 
-const Container = styled.div`
-  .flex-1 {
-    flex: 1;
-  }
-
-  .proposals-container {
-    display: flex;
-    gap: 8px;
-    overflow: hidden;
-    flex-wrap: wrap;
-  }
-
-  .flex-main-item {
-    flex: 3;
-    min-width: 0;
-    overflow: auto;
-    min-width: 300px;
-  }
-
-  .flex-secondary-item {
-    flex: 1.7;
-    min-width: 0;
-    overflow: auto;
-    position: absolute;
-    right: 0;
-    width: 40%;
-    transform: translateX(100%);
-    opacity: 0;
-    transition: transform 0.2s ease-out, opacity 0.2s ease-out;
-    min-width: 300px;
-  }
-
-  .flex-secondary-item.show {
-    transform: translateX(0);
-    opacity: 1;
-    position: relative;
-  }
-`;
-
 const ToastStatusContent = () => {
   let content = "";
   switch (showToastStatus) {
@@ -193,7 +154,7 @@ return (
         }}
       />
     ) : (
-      <Container className="h-100 w-100 flex-grow-1 d-flex flex-column">
+      <div className="h-100 w-100 flex-grow-1 d-flex flex-column">
         <Widget
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OffCanvas`}
           props={{
@@ -211,8 +172,8 @@ return (
             ),
           }}
         />
-        <div className="proposals-container flex-grow-1">
-          <div className="flex-main-item">
+        <div className="layout-flex-wrap flex-grow-1">
+          <div className="layout-main">
             <Widget
               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Tabs`}
               props={{
@@ -248,7 +209,7 @@ return (
             />
           </div>
           <div
-            className={`flex-secondary-item ${
+            className={`layout-secondary ${
               typeof showProposalDetailsId === "number" ? "show" : ""
             }`}
           >
@@ -269,7 +230,7 @@ return (
             )}
           </div>
         </div>
-      </Container>
+      </div>
     )}
   </div>
 );

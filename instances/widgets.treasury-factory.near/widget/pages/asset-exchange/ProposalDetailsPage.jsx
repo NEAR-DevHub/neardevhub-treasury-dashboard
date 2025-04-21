@@ -22,47 +22,32 @@ const {
   decodeProposalDescription,
   formatSubmissionTimeStamp,
   getApproversAndThreshold,
-  accountToLockup,
 } = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
 
 const { treasuryDaoID, showKYC } = VM.require(`${instance}/widget/config.data`);
 
 const [proposalData, setProposalData] = useState(null);
 const [isDeleted, setIsDeleted] = useState(false);
-const [lockupNearBalances, setLockupNearBalances] = useState(null);
 
 const isCompactVersion = props.isCompactVersion;
 const accountId = context.accountId;
-const transferApproversGroup = getApproversAndThreshold(
+const functionCallApproversGroup = getApproversAndThreshold(
   treasuryDaoID,
-  "transfer",
+  "call",
   accountId
 );
 
 const nearBalances = getNearBalances(treasuryDaoID);
-const lockupContract = accountToLockup(treasuryDaoID);
-
-useEffect(() => {
-  if (lockupContract) {
-    Near.asyncView(lockupContract, "get_liquid_owners_balance").then((res) => {
-      setLockupNearBalances((prev) => ({
-        ...prev,
-        available: res,
-      }));
-    });
-  }
-}, [lockupContract]);
-
 const deleteGroup = getApproversAndThreshold(
   treasuryDaoID,
-  "transfer",
+  "call",
   accountId,
   true
 );
-const requiredVotes = transferApproversGroup?.requiredVotes;
+const requiredVotes = functionCallApproversGroup?.requiredVotes;
 
 const hasVotingPermission = (
-  transferApproversGroup?.approverAccounts ?? []
+  functionCallApproversGroup?.approverAccounts ?? []
 ).includes(accountId);
 
 const hasDeletePermission = (deleteGroup?.approverAccounts ?? []).includes(
@@ -92,23 +77,32 @@ useEffect(() => {
     Near.asyncView(treasuryDaoID, "get_proposal", { id: parseInt(id) })
       .then((item) => {
         const notes = decodeProposalDescription("notes", item.description);
-        const title = decodeProposalDescription("title", item.description);
-        const summary = decodeProposalDescription("summary", item.description);
-        const description = !title && !summary && item.description;
-        const id = decodeProposalDescription("proposalId", item.description);
-        const proposalId = id ? parseInt(id, 10) : null;
-        const isFunctionType =
-          Object.values(item?.kind?.FunctionCall ?? {})?.length > 0;
-        const decodedArgs =
-          isFunctionType &&
-          decodeBase64(item.kind.FunctionCall?.actions[0].args);
-        const args = isFunctionType
-          ? {
-              token_id: "",
-              receiver_id: decodedArgs?.receiver_id,
-              amount: decodedArgs?.amount,
-            }
-          : item.kind.Transfer;
+        const amountIn = decodeProposalDescription(
+          "amountIn",
+          item.description
+        );
+        const tokenIn = decodeProposalDescription("tokenIn", item.description);
+        const tokenOut = decodeProposalDescription(
+          "tokenOut",
+          item.description
+        );
+        const slippage = decodeProposalDescription(
+          "slippage",
+          item.description
+        );
+        const amountOut = decodeProposalDescription(
+          "amountOut",
+          item.description
+        );
+
+        const outEstimate = parseFloat(amountOut) || 0;
+        const slippageValue = parseFloat(slippage) || 0;
+        const minAmountReceive = Number(
+          outEstimate * (1 - slippageValue / 100)
+        ).toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 6,
+        });
         let status = item.status;
         if (status === "InProgress") {
           const endTime = Big(item.submission_time ?? "0")
@@ -127,12 +121,12 @@ useEffect(() => {
           votes: item.votes,
           submissionTime: item.submission_time,
           notes,
-          title: title ? title : description,
-          summary,
-          proposalId,
-          args,
           status,
-          isLockupTransfer: isFunctionType,
+          amountIn,
+          amountOut,
+          minAmountReceive,
+          tokenIn,
+          tokenOut,
         });
       })
       .catch(() => {
@@ -153,7 +147,7 @@ function refreshData() {
     return;
   }
   if (isCompactVersion) {
-    Storage.set("REFRESH_PAYMENTS_TABLE_DATA", Math.random());
+    Storage.set("REFRESH_ASSET_TABLE_DATA", Math.random());
   }
   setProposalData(null);
 }
@@ -163,6 +157,7 @@ function checkProposalStatus(proposalId) {
     id: proposalId,
   })
     .then((result) => {
+      console.log(result.status);
       props.setVoteProposalId(proposalId);
       props.setToastStatus(result.status);
       refreshData();
@@ -319,7 +314,7 @@ const ProposalStatus = () => {
           className="success-icon"
           bgColor="rgba(60, 177, 121, 0.16)"
           icon={<ApprovedStatus width={32} height={32} hideStroke={true} />}
-          label="Payment Request Funded"
+          label="Asset Successfully Exchanged"
         />
       );
     case "Rejected":
@@ -328,7 +323,7 @@ const ProposalStatus = () => {
           className="error-icon"
           bgColor="rgba(217, 92, 74, 0.16)"
           icon={<RejectedStatus width={32} height={32} hideStroke={true} />}
-          label="Payment Request Rejected"
+          label="Asset Exchange Request Rejected"
         />
       );
     case "Removed":
@@ -337,7 +332,7 @@ const ProposalStatus = () => {
           className="error-icon"
           bgColor="rgba(217, 92, 74, 0.16)"
           icon={<RejectedStatus width={32} height={32} hideStroke={true} />}
-          label="Payment Request Deleted"
+          label="Asset Exchange Request Deleted"
         />
       );
     case "Failed":
@@ -346,7 +341,7 @@ const ProposalStatus = () => {
           className="warning-icon"
           bgColor="rgba(177, 113, 8, 0.16)"
           icon={<Warning width={32} height={32} />}
-          label="Payment Request Failed"
+          label="Asset Exchange Request Failed"
         />
       );
     case "Expired":
@@ -355,7 +350,7 @@ const ProposalStatus = () => {
           className="text-grey-02"
           bgColor="var(--grey-04)"
           icon={<i class="bi bi-clock h2 mb-0"></i>}
-          label="Payment Request Expired"
+          label="Asset Exchange Request Expired"
         />
       );
     default: {
@@ -393,11 +388,10 @@ const VotesDetails = () => {
               hasDeletePermission,
               hasVotingPermission,
               proposalCreator: proposalData?.proposer,
-              nearBalance: proposalData?.isLockupTransfer
-                ? lockupNearBalances.available
-                : nearBalances.available,
-              currentAmount: proposalData?.args?.amount,
-              currentContract: proposalData?.args?.token_id,
+              nearBalance: nearBalances.available,
+              currentAmount: amountIn,
+              currentContract: tokenIn,
+              isHumanReadableCurrentAmount: true,
               requiredVotes,
               checkProposalStatus: () => checkProposalStatus(proposalData?.id),
               isProposalDetailsPage: true,
@@ -409,7 +403,7 @@ const VotesDetails = () => {
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Approvers`}
           props={{
             votes: proposalData?.votes,
-            approversGroup: transferApproversGroup?.approverAccounts,
+            approversGroup: functionCallApproversGroup?.approverAccounts,
             showApproversList: true,
           }}
         />
@@ -419,7 +413,7 @@ const VotesDetails = () => {
 };
 
 const CopyComponent = () => {
-  const clipboardText = `https://near.social/${instance}/widget/app?page=payments&id=${proposalData.id}`;
+  const clipboardText = `https://near.social/${instance}/widget/app?page=asset-exchange&id=${proposalData.id}`;
   return isCompactVersion ? (
     <Widget
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Copy`}
@@ -447,7 +441,9 @@ const Navbar = () => {
   return !isCompactVersion ? (
     <div className="d-flex justify-content-between gap-2 align-items-center">
       <a
-        href={`?page=payments${props?.tab === "history" ? "&tab=history" : ""}`}
+        href={`?page=asset-exchange${
+          props?.tab === "history" ? "&tab=history" : ""
+        }`}
       >
         <button className="btn btn-outline-secondary d-flex gap-1 align-items-center">
           <i class="bi bi-arrow-left"></i> Back
@@ -519,7 +515,7 @@ if (isDeleted) {
     >
       The requested proposal was not found. Please verify the proposal ID or
       check if it has been removed.
-      <a href={`?page=payments`}>
+      <a href={`?page=asset-exchange`}>
         <button className="btn btn-danger d-flex gap-1 align-items-center">
           Go Back
         </button>
@@ -579,7 +575,7 @@ return (
               <CopyComponent />
               <a
                 className="cursor-pointer"
-                href={`?page=payments${
+                href={`?page=asset-exchange${
                   props?.currentTab?.title === "History" ? "&tab=history" : ""
                 }&id=${proposalData.id}`}
               >
@@ -602,74 +598,69 @@ return (
       >
         <div
           className="flex-3 d-flex flex-column gap-3"
-          style={{
-            minWidth: 200,
-            height: "fit-content",
-            width: "-webkit-fill-available",
-          }}
+          style={{ minWidth: 200, height: "fit-content" }}
         >
           <div className="card card-body d-flex flex-column gap-2">
-            <h6 className="mb-0 flex-1">{proposalData?.title}</h6>
-            {proposalData?.summary && (
-              <div className=" text-secondary">{proposalData?.summary}</div>
-            )}
-            {proposalData?.proposalId && (
-              <div>
-                <Link
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  to={href({
-                    widgetSrc: `${REPL_DEVHUB}/widget/app`,
-                    params: {
-                      page: "proposal",
-                      id: proposalData?.proposalId,
-                    },
-                  })}
-                >
-                  <button
-                    className="btn p-0 d-flex align-items-center gap-2 h-auto"
-                    style={{ fontSize: 14 }}
-                  >
-                    Open Proposal <i class="bi bi-box-arrow-up-right"></i>
-                  </button>
-                </Link>
-              </div>
-            )}
-            <div className=" d-flex flex-column gap-2 mt-1">
-              <label className="border-top">Recipient</label>
-              <div className="d-flex justify-content-between gap-2 align-items-center flex-wrap">
-                <Widget
-                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
-                  props={{
-                    accountId: proposalData?.args.receiver_id,
-                    showKYC,
-                    displayImage: true,
-                    displayName: true,
-                    instance,
-                    profileClass: "text-secondary text-sm",
-                  }}
-                />
-                <Widget
-                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Copy`}
-                  props={{
-                    label: "Copy Address",
-                    clipboardText: proposalData?.args.receiver_id,
-                    showLogo: true,
-                    className:
-                      "btn btn-outline-secondary d-flex gap-1 align-items-center",
-                  }}
-                />
-              </div>
-            </div>
+            <h6 className="mb-0 flex-1 d-flex align-items-center gap-1">
+              Exchange{" "}
+              <Widget
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
+                props={{
+                  instance,
+                  amountWithDecimals: proposalData?.amountIn,
+                  address: proposalData?.tokenIn,
+                }}
+              />
+              for{" "}
+              <Widget
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
+                props={{
+                  instance,
+                  amountWithDecimals: proposalData?.amountOut,
+                  address: proposalData?.tokenOut,
+                }}
+              />
+            </h6>
             <div className="d-flex flex-column gap-2 mt-1">
-              <label className="border-top">Funding Ask</label>
+              <label className="border-top">Send</label>
               <h5 className="mb-0">
                 <Widget
                   src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmountAndIcon`}
                   props={{
                     instance,
-                    amountWithoutDecimals: proposalData?.args.amount,
-                    address: proposalData?.args.token_id,
+                    amountWithDecimals: proposalData?.amountIn,
+                    address: proposalData?.tokenIn,
+                    showUSDValue: true,
+                  }}
+                />
+              </h5>
+            </div>
+            <div className="d-flex flex-column gap-2 mt-1">
+              <label className="border-top">Receive</label>
+              <h5 className="mb-0">
+                <Widget
+                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmountAndIcon`}
+                  props={{
+                    instance,
+                    amountWithDecimals: proposalData?.amountOut,
+                    address: proposalData?.tokenOut,
+                    showUSDValue: true,
+                  }}
+                />
+              </h5>
+            </div>
+            <div className="d-flex flex-column gap-2 mt-1">
+              <label className="border-top">
+                Min Received (Slippage Protected)
+              </label>
+              <h5 className="mb-0">
+                <Widget
+                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmountAndIcon`}
+                  props={{
+                    instance,
+                    amountWithDecimals: proposalData?.amountOut,
+                    address: proposalData?.tokenOut,
+                    showUSDValue: true,
                   }}
                 />
               </h5>
@@ -678,7 +669,7 @@ return (
         </div>
         <div
           className={"flex-2 d-flex flex-column gap-10px"}
-          style={{ minWidth: 200, width: "-webkit-fill-available" }}
+          style={{ minWidth: 200 }}
         >
           {!isCompactVersion && <VotesDetails />}
           <div
