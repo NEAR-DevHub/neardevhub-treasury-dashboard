@@ -22,12 +22,14 @@ const {
   decodeProposalDescription,
   formatSubmissionTimeStamp,
   getApproversAndThreshold,
+  accountToLockup,
 } = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
 
 const { treasuryDaoID, showKYC } = VM.require(`${instance}/widget/config.data`);
 
 const [proposalData, setProposalData] = useState(null);
 const [isDeleted, setIsDeleted] = useState(false);
+const [lockupNearBalances, setLockupNearBalances] = useState(null);
 
 const isCompactVersion = props.isCompactVersion;
 const accountId = context.accountId;
@@ -38,6 +40,19 @@ const transferApproversGroup = getApproversAndThreshold(
 );
 
 const nearBalances = getNearBalances(treasuryDaoID);
+const lockupContract = accountToLockup(treasuryDaoID);
+
+useEffect(() => {
+  if (lockupContract) {
+    Near.asyncView(lockupContract, "get_liquid_owners_balance").then((res) => {
+      setLockupNearBalances((prev) => ({
+        ...prev,
+        available: res,
+      }));
+    });
+  }
+}, [lockupContract]);
+
 const deleteGroup = getApproversAndThreshold(
   treasuryDaoID,
   "transfer",
@@ -117,6 +132,7 @@ useEffect(() => {
           proposalId,
           args,
           status,
+          isLockupTransfer: isFunctionType,
         });
       })
       .catch(() => {
@@ -378,7 +394,9 @@ const VotesDetails = () => {
               hasDeletePermission,
               hasVotingPermission,
               proposalCreator: proposalData?.proposer,
-              nearBalance: nearBalances.available,
+              nearBalance: proposalData?.isLockupTransfer
+                ? lockupNearBalances.available
+                : nearBalances.available,
               currentAmount: proposalData?.args?.amount,
               currentContract: proposalData?.args?.token_id,
               requiredVotes,
