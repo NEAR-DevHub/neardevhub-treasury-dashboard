@@ -158,7 +158,6 @@ function checkProposalStatus(proposalId) {
     id: proposalId,
   })
     .then((result) => {
-      console.log(result.status);
       props.setVoteProposalId(proposalId);
       props.setToastStatus(result.status);
       refreshData();
