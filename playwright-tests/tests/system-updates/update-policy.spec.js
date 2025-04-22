@@ -81,6 +81,13 @@ test("should update sputnik-dao policy and upgrade instance with it", async ({
            return false;
           }
         },
+        getUpdatedPolicyProposal: (policy) => {
+          policy.roles[0].name = "Requestor";
+          return {
+            updatedPolicy: policy,
+            description: "Change role name to Requestor",
+          };
+        },
         votingRequired: true,
       }
   ];
@@ -167,6 +174,13 @@ test("should update sputnik-dao policy and upgrade instance with it", async ({
           } else {
            return false;
           }
+        },
+        getUpdatedPolicyProposal: (policy) => {
+          policy.roles[0].name = "Proposer";
+          return {
+            updatedPolicy: policy,
+            description: "Change role name to Proposer",
+          };
         },
         votingRequired: true,
       }

@@ -12,11 +12,12 @@ const {
   setFinishedUpdates,
   UPDATE_TYPE_WEB4_CONTRACT,
   UPDATE_TYPE_WIDGET,
+  UPDATE_TYPE_POLICY,
 } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.system-updates.UpdateNotificationTracker"
 ) ?? { updatesNotApplied: [], setFinishedUpdates: () => {} };
 
-const { checkIfPolicyIsUpToDate } = VM.require(
+const { checkIfPolicyIsUpToDate, applyPolicyUpdate } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.system-updates.PolicyUpdate"
 ) ?? { checkIfPolicyIsUpToDate: () => {} };
 
@@ -280,7 +281,17 @@ function updateModal(update) {
                 ? applyWeb4ContractUpdate
                 : update.type === UPDATE_TYPE_WIDGET
                 ? applyWidgetUpdate
-                : () => {},
+                : update.type === UPDATE_TYPE_POLICY
+                ? () => {
+                    setShowReviewModalForUpdate(null);
+                    applyPolicyUpdate(instance, update);
+                  }
+                : () => {
+                    console.log(
+                      "No action defined for this update type",
+                      update.type
+                    );
+                  },
           }}
         />
       </ModalFooter>
