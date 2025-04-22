@@ -24,8 +24,10 @@ const storageAccountName = Storage.get(
 
 const draftTreasuries =
   JSON.parse(
-    Storage.get("TREASURY_DRAFTS") ?? "[]",
-    `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.treasury.Create`
+    Storage.get(
+      "TREASURY_DRAFTS",
+      `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.treasury.Create`
+    ) ?? "[]"
   ) ?? [];
 
 function mergeUniqueTreasuries(arr1, arr2) {
@@ -56,7 +58,9 @@ useEffect(() => {
             daoId: storageDaoId,
             instanceAccount: `${storageAccountName}.near`,
             hasTreasury: true,
-            config: {},
+            config: {
+              name: storageAccountName,
+            },
           });
         }
       }
@@ -127,10 +131,26 @@ const Container = styled.div`
   .warning-link {
     text-decoration: underline;
     color: inherit !important;
+
+    &:hover {
+      color: inherit !important;
+      text-decoration: underline;
+      font-weight: bold;
+    }
   }
 
   .badge-secondary {
     background-color: var(--grey-035);
+  }
+
+  .custom-hover {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    &:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+    }
   }
 `;
 
@@ -303,7 +323,13 @@ const TreasuryCard = ({ treasury, hasTreasury }) => {
   const lockupContract = accountToLockup(treasury.daoId);
   const primaryColor = treasury.config.metadata.primaryColor ?? "#01BF7A";
   return (
-    <div className="card h-100 w-100 d-flex flex-column" key={treasury.daoId}>
+    <div
+      className={
+        "card h-100 w-100 d-flex flex-column " +
+        (hasTreasury && " custom-hover")
+      }
+      key={treasury.daoId}
+    >
       <div
         className="p-3 d-flex gap-3 align-items-center"
         style={{ height: "80px", overflow: "hidden" }}

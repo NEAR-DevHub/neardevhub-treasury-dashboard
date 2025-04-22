@@ -7,14 +7,18 @@ const [showCongratsModal, setShowCongratsModal] = useState(false);
 
 const existingDrafts =
   JSON.parse(
-    Storage.get("TREASURY_DRAFTS") ?? "[]",
-    `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.treasury.Create`
+    Storage.get(
+      "TREASURY_DRAFTS",
+      `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.treasury.Create`
+    ) ?? "[]"
   ) ?? [];
 
 const currentDraft =
   JSON.parse(
-    Storage.get("CURRENT_DRAFT") ?? "{}",
-    `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.treasury.MyTreasuries`
+    Storage.get(
+      "CURRENT_DRAFT",
+      `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.treasury.MyTreasuries`
+    ) ?? "{}"
   ) ?? null;
 
 function removeDeployedTreasuryFromDraft(accountName) {
