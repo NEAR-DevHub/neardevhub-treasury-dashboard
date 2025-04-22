@@ -115,7 +115,7 @@ test.describe("connected with ledger", function () {
     }, transactionResult);
 
     await expect(
-       page.getByRole('heading', { name: 'Congrats! Your Treasury is ready' })
+      page.getByRole("heading", { name: "Congrats! Your Treasury is ready" }),
     ).toBeVisible({ timeout: 20_000 });
     await sandbox.quitSandbox();
   });

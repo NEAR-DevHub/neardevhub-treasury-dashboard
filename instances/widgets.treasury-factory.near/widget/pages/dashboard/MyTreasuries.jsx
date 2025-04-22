@@ -24,7 +24,10 @@ const [userTreasuries, setUserTreasuries] = useState(null);
 
 useEffect(() => {
   if (accountId) {
-    getUserTreasuries(accountId).then((res) => setUserTreasuries(res));
+    getUserTreasuries(accountId).then((results) => {
+      const withTreasury = results.filter((dao) => dao.hasTreasury);
+      setUserTreasuries(withTreasury);
+    });
   }
   if (treasuryDaoID) {
     Near.asyncView(treasuryDaoID, "get_config").then((config) => {
@@ -144,7 +147,7 @@ return (
                 >
                   <img
                     src={
-                      option.config.metadata?.flagLogo?.includes("ipfs")
+                      (option.config.metadata?.flagLogo ?? "")?.includes("ipfs")
                         ? option.config.metadata?.flagLogo
                         : defaultImage
                     }

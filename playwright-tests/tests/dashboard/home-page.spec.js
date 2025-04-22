@@ -1,6 +1,10 @@
 import { expect } from "@playwright/test";
 import { test } from "../../util/test.js";
-import { mockNearBalances, mockWithFTBalance } from "../../util/rpcmock.js";
+import {
+  mockNearBalances,
+  mockUserDaos,
+  mockWithFTBalance,
+} from "../../util/rpcmock.js";
 import { mockNearPrice } from "../../util/nearblocks.js";
 import { mockLockupStateAndNavigateToDashboard } from "./util.js";
 
@@ -65,6 +69,10 @@ test.afterEach(async ({ page }, testInfo) => {
 
 const nearPrice = 5;
 test.describe("Dashboard Page", function () {
+  test.use({
+    storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
+  });
+
   test.beforeEach(async ({ page, instanceAccount, daoAccount }, testInfo) => {
     if (testInfo.title.includes("Should see 404 modal")) {
       await mockNearPrice({ daoAccount, nearPrice, page, returnError: true });
@@ -154,6 +162,30 @@ test.describe("Dashboard Page", function () {
     test.setTimeout(60_000);
     await page.waitForTimeout(5_000);
     await expect(page.getByText("Please wait a moment...")).toBeVisible();
+  });
+
+  test("Shouldn't show treasuries dropdown", async ({ page }) => {
+    test.setTimeout(60_000);
+    await mockUserDaos({ page, accountId: "megha19.near" });
+    await page.waitForTimeout(3_000);
+    const logo = page.locator(".image-container > .rounded-3");
+    await expect(logo).toBeVisible();
+    const treasuriesDropdown = page.locator(".custom-dropdown > .d-flex > .bi");
+    await expect(treasuriesDropdown).toBeHidden();
+  });
+
+  test("Should show user's treasuries dropdown", async ({ page }) => {
+    test.setTimeout(60_000);
+    await mockUserDaos({ page, accountId: "theori.near" });
+    await page.waitForTimeout(3_000);
+    const treasuriesDropdown = page.locator(".custom-dropdown > .d-flex > .bi");
+    await expect(treasuriesDropdown).toBeVisible();
+    await treasuriesDropdown.click();
+    await expect(page.getByText("My Treasuries")).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "@testing.sputnik-dao.near" })
+    ).toBeVisible();
+    await page.waitForTimeout(10_000);
   });
 });
 
