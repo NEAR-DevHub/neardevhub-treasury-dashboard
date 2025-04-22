@@ -25,16 +25,6 @@ test("should update bootstrap widget and upgrade instance with it", async ({
 
   const instanceAccountId = `${instanceName}.near`;
 
-  // This should be removed when the on-chain treasury-factory is updated with a web4 contract that has the update_app_widget function
-
-  await (
-    await sandbox.near.account("treasury-factory.near")
-  ).deployContract(
-    await readFile("treasury-factory/target/near/treasury_factory.wasm")
-  );
-
-  // --------------------
-
   const createInstanceResult = await sandbox.account.functionCall({
     contractId: "treasury-factory.near",
     methodName: "create_instance",
