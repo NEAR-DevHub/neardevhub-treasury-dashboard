@@ -127,6 +127,7 @@ useEffect(() => {
           minAmountReceive,
           tokenIn,
           tokenOut,
+          slippage,
         });
       })
       .catch(() => {
@@ -314,7 +315,7 @@ const ProposalStatus = () => {
           className="success-icon"
           bgColor="rgba(60, 177, 121, 0.16)"
           icon={<ApprovedStatus width={32} height={32} hideStroke={true} />}
-          label="Asset Successfully Exchanged"
+          label="Asset Exchange Request Executed"
         />
       );
     case "Rejected":
@@ -604,7 +605,7 @@ return (
             <h6 className="mb-0 flex-1 d-flex align-items-center gap-1">
               Exchange{" "}
               <Widget
-                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmountAndIcon`}
                 props={{
                   instance,
                   amountWithDecimals: proposalData?.amountIn,
@@ -613,7 +614,7 @@ return (
               />
               for{" "}
               <Widget
-                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmountAndIcon`}
                 props={{
                   instance,
                   amountWithDecimals: proposalData?.amountOut,
@@ -651,14 +652,42 @@ return (
             </div>
             <div className="d-flex flex-column gap-2 mt-1">
               <label className="border-top">
-                Min Received (Slippage Protected)
+                Price Slippage Limit {"   "}
+                <Widget
+                  src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+                  props={{
+                    popup:
+                      "This is the slippage limit defined for this request. If the market rate changes beyond this threshold during execution, the request will automatically fail.",
+                    children: (
+                      <i className="bi bi-info-circle text-secondary"></i>
+                    ),
+                    instance,
+                  }}
+                />
+              </label>
+              <div>{proposalData?.slippage}%</div>
+            </div>
+            <div className="d-flex flex-column gap-2 mt-1">
+              <label className="border-top">
+                Minimum Amount Receive {"   "}
+                <Widget
+                  src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+                  props={{
+                    popup:
+                      "This is the least amount you’ll receive from this exchange, based on the slippage limit set for the request.",
+                    children: (
+                      <i className="bi bi-info-circle text-secondary"></i>
+                    ),
+                    instance,
+                  }}
+                />
               </label>
               <h5 className="mb-0">
                 <Widget
                   src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmountAndIcon`}
                   props={{
                     instance,
-                    amountWithDecimals: proposalData?.amountOut,
+                    amountWithDecimals: proposalData?.minAmountReceive,
                     address: proposalData?.tokenOut,
                     showUSDValue: true,
                   }}
