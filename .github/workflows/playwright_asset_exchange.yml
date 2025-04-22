@@ -14,6 +14,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  build-sandbox:
+    uses: ./.github/workflows/build_sandbox.yml
+
   playwright-tests-asset-exchange:
     runs-on: ubuntu-latest
     strategy:
@@ -55,7 +58,6 @@ jobs:
 
       - name: Build project
         run: npm run build
-
       - name: Download sandbox binary
         uses: actions/download-artifact@v4
         with:
