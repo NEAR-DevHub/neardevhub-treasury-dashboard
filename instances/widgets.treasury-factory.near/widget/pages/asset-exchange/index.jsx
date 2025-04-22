@@ -67,13 +67,15 @@ function toggleCreatePage() {
   setShowCreateRequest(!showCreateRequest);
 }
 
-console.log({ showProposalDetailsId });
-
 const ToastStatusContent = () => {
   let content = "";
   switch (showToastStatus) {
     case "InProgress":
-      content = "Your vote is counted, the request is highlighted.";
+      content =
+        "Your vote is counted" +
+        (typeof proposalDetailsPageId === "number"
+          ? "."
+          : ", the payment request is highlighted.");
       break;
     case "Approved":
       content = "The request has been successfully executed.";
@@ -83,10 +85,6 @@ const ToastStatusContent = () => {
       break;
     case "Removed":
       content = "The request has been successfully deleted.";
-      break;
-    case "Failed":
-      content =
-        "The request could not be completed due to the exceeded price slippage limit.";
       break;
 
     default:
