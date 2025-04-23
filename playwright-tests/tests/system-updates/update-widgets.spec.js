@@ -6,11 +6,12 @@ import {
 } from "../../util/sandboxrpc.js";
 import { createDAOargs } from "../../util/sputnikdao.js";
 import nearApi from "near-api-js";
+import { readFile } from "fs/promises";
 
-test("should update treasury factory with new web4 contract and self upgrade instance", async ({
+test("should update bootstrap widget and upgrade instance with it", async ({
   page,
 }) => {
-  test.setTimeout(150_000);
+  test.setTimeout(120_000);
 
   await cacheCDN(page);
 
@@ -20,7 +21,7 @@ test("should update treasury factory with new web4 contract and self upgrade ins
   const widget_reference_account_id = DEFAULT_WIDGET_REFERENCE_ACCOUNT_ID;
   await sandbox.setupDefaultWidgetReferenceAccount();
 
-  const instanceName = "theupgradable";
+  const instanceName = "widgetupdater";
 
   const instanceAccountId = `${instanceName}.near`;
 
@@ -58,10 +59,10 @@ test("should update treasury factory with new web4 contract and self upgrade ins
     return [
       {
         id: 1,
-        createdDate: "2025-03-28",
+        createdDate: "2025-03-25",
         version: "n/a",
-        type: "Web4 Contract",
-        summary: "Fixed dark theme, added lockup to all instances",
+        type: "Widgets",
+        summary: "Added lockup",
         details: "",
         votingRequired: false,
       }
@@ -119,35 +120,84 @@ test("should update treasury factory with new web4 contract and self upgrade ins
     timeout: 20_000,
   });
 
-  await page.locator("#dropdownIcon").click();
-  await expect(await page.getByText("Select Gateway")).toBeVisible();
-  await page.waitForTimeout(500);
-  await page.locator("#dropdownIcon").click();
-
-  await expect(page.getByText("Web4 Contract")).not.toBeVisible({
+  await expect(page.getByText("Widgets")).not.toBeVisible({
     timeout: 10_000,
   });
 
-  // Visiting the updates page above should have automatically marked the web4 contract as up to date, and notification banner should disappear
+  // Visiting the updates page above should have automatically marked the widgets as up to date, and notification banner should disappear
   await page.goto(`https://${instanceName}.near.page/`);
   await page.waitForTimeout(500);
   await expect(
     await page.getByRole("link", { name: "Review" })
   ).not.toBeVisible();
 
-  // Deploy the new treasury factory with an updated web4 contract
+  const REPL_BASE_DEPLOYMENT_ACCOUNT = "widgets.treasury-factory.near";
+  await sandbox.modifyWidget(
+    `${DEFAULT_WIDGET_REFERENCE_ACCOUNT_ID}/widget/app`,
+    `
+const { page, ...passProps } = props;
+const { AppLayout } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.templates.AppLayout"
+) || { AppLayout: () => <></> };
+const { instance, treasuryDaoID } = VM.require(
+  "${DEFAULT_WIDGET_REFERENCE_ACCOUNT_ID}/widget/config.data"
+);
+if (!instance || !treasuryDaoID) {
+  return <></>;
+}
+if (!page) {
+  page = "dashboard";
+}
+const propsToSend = { ...passProps, instance: instance };
+function Page() {
+  const routes = page.split(".");
+  switch (routes[0]) {
+    case "dashboard": {
+      return (
+        <Widget
+          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.index"
+          props={propsToSend}
+        />
+      );
+    }
+    case "settings": {
+      return (
+        <Widget
+          src={"${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.index"}
+          props={propsToSend}
+        />
+      );
+    }
+    default: {
+      return <p>404</p>;
+    }
+  }
+}
+return (
+  <AppLayout
+    page={page}
+    instance={instance}
+    treasuryDaoID={treasuryDaoID}
+    accountId={context.accountId}
+  >
+    <p>I AM UPDATED</p>
+    <Page />
+  </AppLayout>
+);
+  `
+  );
 
-  await sandbox.deployNewTreasuryFactoryWithUpdatedWeb4Contract(page);
+  await sandbox.setupDefaultWidgetReferenceAccount();
   await sandbox.modifyWidget(
     "widgets.treasury-factory.near/widget/pages.settings.system-updates.UpdateRegistry",
     `
     return [
       {
-          id: 99999999,
+          id: 99999998,
           createdDate: "2025-04-05",
           version: "n/a",
-          type: "Web4 Contract",
-          summary: "contract update test",
+          type: "Widgets",
+          summary: "Widgets update test",
           votingRequired: false
       }
   ];
@@ -163,7 +213,7 @@ test("should update treasury factory with new web4 contract and self upgrade ins
 
   await expect(await page.getByText("Available Updates")).toBeEnabled();
 
-  await expect(page.getByText("Web4 Contract")).toBeVisible({
+  await expect(page.getByText("Widgets update test")).toBeVisible({
     timeout: 10_000,
   });
 
@@ -179,14 +229,10 @@ test("should update treasury factory with new web4 contract and self upgrade ins
 
   await expect(await page.getByText("Available Updates")).toBeEnabled();
 
-  await expect(page.getByText("Web4 Contract")).not.toBeVisible({
+  await expect(page.getByText("Widgets update test")).not.toBeVisible({
     timeout: 10_000,
   });
 
-  await page.locator("#dropdownIcon").click();
-  await expect(await page.getByText("Gateway Select")).toBeVisible();
-
-  await page.waitForTimeout(500);
   await page.goto(`https://${instanceName}.near.page/`);
 
   await page.waitForTimeout(500);
@@ -197,10 +243,11 @@ test("should update treasury factory with new web4 contract and self upgrade ins
   await page.getByText("Settings").click();
   await page.getByText("System updates").click();
   await page.getByText("History").click();
-  await expect(page.getByText("2025-04-05")).toBeVisible();
-  await expect(page.getByText("99999999")).toBeVisible();
-  await expect(page.getByText("contract update test")).toBeVisible();
+  await expect(page.getByText("2025-04-05")).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText("99999998")).toBeVisible();
+  await expect(page.getByText("Widgets update test")).toBeVisible();
 
+  await expect(page.getByText("I AM UPDATED")).toBeVisible();
   await page.waitForTimeout(500);
 
   await page.unrouteAll({ behavior: "ignoreErrors" });

@@ -2,6 +2,43 @@ import { connect, keyStores } from "near-api-js";
 import fs from "fs";
 import path, { dirname } from "path";
 
+const instancesFolder = path.resolve(dirname("."), "instances"); // Adjust the path if necessary
+
+export function getLocalFilePathForKey(key) {
+  const [prefix, ...rest] = key.split("/widget/");
+  const normalizedKey = path.join(
+    prefix,
+    "widget",
+    rest.join("/").replace(/\./g, "/")
+  );
+  const filePath = path.join(instancesFolder, normalizedKey) + ".jsx";
+  if (fs.existsSync(filePath)) {
+    return filePath;
+  } else {
+    return null;
+  }
+}
+
+export function getLocalWidgetContent(key, context = {}) {
+  const { treasury, account, nodeUrl } = context;
+  const filePath = getLocalFilePathForKey(key);
+  if (!filePath) {
+    return null;
+  }
+  const content = fs
+    .readFileSync(filePath, "utf-8")
+    .replaceAll("${REPL_BACKEND_API}", "https://ref-sdk-api-2.fly.dev/api")
+    .replaceAll("${REPL_BOOTSTRAP_ACCOUNT}", "bootstrap.treasury-factory.near")
+    .replaceAll("${REPL_TREASURY}", treasury)
+    .replaceAll("${REPL_INSTANCE}", account)
+    .replaceAll(
+      "${REPL_BASE_DEPLOYMENT_ACCOUNT}",
+      "widgets.treasury-factory.near"
+    )
+    .replaceAll("${REPL_DEVHUB}", "devhub.near")
+    .replaceAll("${REPL_RPC_URL}", nodeUrl);
+  return content;
+}
 /**
  * Redirect Web4 requests to the specified contract and handle routing logic.
  *
@@ -47,17 +84,9 @@ export async function redirectWeb4({
         });
         await route.fulfill({ response });
       } else {
-        const instancesFolder = path.resolve(dirname("."), "instances"); // Adjust the path if necessary
         const fileContents = {};
 
         for (const key of keys) {
-          // Replace dots with path separators only after "widget"
-          const [prefix, ...rest] = key.split("/widget/");
-          const normalizedKey = path.join(
-            prefix,
-            "widget",
-            rest.join("/").replace(/\./g, "/")
-          );
           const [account, section, contentKey] = key.split("/");
           if (fileContents[account] === undefined) {
             fileContents[account] = {};
@@ -65,37 +94,22 @@ export async function redirectWeb4({
           if (fileContents[account][section] === undefined) {
             fileContents[account][section] = {};
           }
-          const filePath = path.join(instancesFolder, normalizedKey) + ".jsx";
+
           if (modifiedWidgets[key]) {
             fileContents[account][section][contentKey] = modifiedWidgets[key];
-          } else if (
-            await fs.promises
-              .access(filePath)
-              .then(() => true)
-              .catch(() => false)
-          ) {
-            let content = await fs.promises.readFile(filePath, "utf-8");
-            content = content
-              .replaceAll(
-                "${REPL_BACKEND_API}",
-                "https://ref-sdk-api-2.fly.dev/api"
-              )
-              .replaceAll("${REPL_TREASURY}", treasury)
-              .replaceAll("${REPL_INSTANCE}", account)
-              .replaceAll(
-                "${REPL_BASE_DEPLOYMENT_ACCOUNT}",
-                "widgets.treasury-factory.near"
-              )
-              .replaceAll("${REPL_DEVHUB}", "devhub.near")
-              .replaceAll("${REPL_RPC_URL}", nodeUrl);
-
-            fileContents[account][section][contentKey] = content;
           } else {
-            console.warn(
-              `File not found for key: ${key} ${filePath}, going to live RPC`
-            );
-            await route.fallback();
-            return;
+            const content = getLocalWidgetContent(key, {
+              treasury,
+              account,
+              nodeUrl,
+            });
+            if (content) {
+              fileContents[account][section][contentKey] = content;
+            } else {
+              console.warn(`File not found for key: ${key}, going to live RPC`);
+              await route.fallback();
+              return;
+            }
           }
         }
 
