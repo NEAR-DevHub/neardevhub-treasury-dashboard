@@ -85,7 +85,10 @@ test("should update sputnik-dao policy and upgrade instance with it", async ({
           policy.roles[0].name = "Requestor";
           return {
             updatedPolicy: policy,
-            description: "Change role name to Requestor",
+            description: {
+              "title": "Change role name",
+              "summary": "Change name of the first role to requestor",
+            },
           };
         },
         votingRequired: true,
@@ -179,7 +182,10 @@ test("should update sputnik-dao policy and upgrade instance with it", async ({
           policy.roles[0].name = "Proposer";
           return {
             updatedPolicy: policy,
-            description: "Change role name to Proposer",
+            description: {
+              "title": "Change role name",
+              "summary": "Change name of the first role to proposer",
+            },
           };
         },
         votingRequired: true,
@@ -211,6 +217,18 @@ test("should update sputnik-dao policy and upgrade instance with it", async ({
     await page.getByRole("button", { name: "Confirm" })
   ).not.toBeVisible();
 
+  await page.goto(
+    `https://${instanceName}.near.page/?page=settings&tab=pending-requests`
+  );
+
+  await expect(await page.getByText("Change role name")).toBeVisible();
+  await page.getByRole("button", { name: "Details" }).click();
+  await expect(
+    await page.getByText("Change name of the first role to proposer")
+  ).toBeVisible();
+  await expect(page.getByRole("code")).toContainText('"name": "Proposer"');
+
+  await page.waitForTimeout(500);
   await page.unrouteAll({ behavior: "ignoreErrors" });
   await sandbox.quitSandbox();
 });
