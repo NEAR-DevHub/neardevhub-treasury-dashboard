@@ -6,9 +6,8 @@ import {
 } from "../../util/sandboxrpc.js";
 import { createDAOargs } from "../../util/sputnikdao.js";
 import nearApi from "near-api-js";
-import { readFile } from "fs/promises";
 
-test("should update bootstrap widget and upgrade instance with it", async ({
+test("should update sputnik-dao policy and upgrade instance with it", async ({
   page,
 }) => {
   test.setTimeout(120_000);
@@ -21,7 +20,7 @@ test("should update bootstrap widget and upgrade instance with it", async ({
   const widget_reference_account_id = DEFAULT_WIDGET_REFERENCE_ACCOUNT_ID;
   await sandbox.setupDefaultWidgetReferenceAccount();
 
-  const instanceName = "widgetupdater";
+  const instanceName = "policyupdater";
 
   const instanceAccountId = `${instanceName}.near`;
 
@@ -61,10 +60,27 @@ test("should update bootstrap widget and upgrade instance with it", async ({
         id: 1,
         createdDate: "2025-03-25",
         version: "n/a",
-        type: "Widgets",
-        summary: "Added lockup",
+        type: "Policy",
+        summary: "Change role name to Requestor",
         details: "",
-        votingRequired: false,
+        checkPolicy: (policy) => {
+          if (policy.roles[0].name === "Requestor") {
+            return true;
+          } else {
+           return false;
+          }
+        },
+        getUpdatedPolicyProposal: (policy) => {
+          policy.roles[0].name = "Requestor";
+          return {
+            updatedPolicy: policy,
+            description: {
+              "title": "Change role name",
+              "summary": "Change name of the first role to requestor",
+            },
+          };
+        },
+        votingRequired: true,
       }
   ];
   `
@@ -89,85 +105,48 @@ test("should update bootstrap widget and upgrade instance with it", async ({
     timeout: 20_000,
   });
 
-  await expect(page.getByText("Widgets")).not.toBeVisible({
-    timeout: 10_000,
-  });
+  await expect(page.getByText("Change role name to Requestor")).not.toBeVisible(
+    {
+      timeout: 10_000,
+    }
+  );
 
-  // Visiting the updates page above should have automatically marked the widgets as up to date, and notification banner should disappear
+  // Visiting the updates page above should have automatically marked the policy as up to date, and notification banner should disappear
   await page.goto(`https://${instanceName}.near.page/`);
   await page.waitForTimeout(500);
   await expect(
     await page.getByRole("link", { name: "Review" })
   ).not.toBeVisible();
 
-  const REPL_BASE_DEPLOYMENT_ACCOUNT = "widgets.treasury-factory.near";
-  await sandbox.modifyWidget(
-    `${DEFAULT_WIDGET_REFERENCE_ACCOUNT_ID}/widget/app`,
-    `
-const { page, ...passProps } = props;
-const { AppLayout } = VM.require(
-  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.templates.AppLayout"
-) || { AppLayout: () => <></> };
-const { instance, treasuryDaoID } = VM.require(
-  "${DEFAULT_WIDGET_REFERENCE_ACCOUNT_ID}/widget/config.data"
-);
-if (!instance || !treasuryDaoID) {
-  return <></>;
-}
-if (!page) {
-  page = "dashboard";
-}
-const propsToSend = { ...passProps, instance: instance };
-function Page() {
-  const routes = page.split(".");
-  switch (routes[0]) {
-    case "dashboard": {
-      return (
-        <Widget
-          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.index"
-          props={propsToSend}
-        />
-      );
-    }
-    case "settings": {
-      return (
-        <Widget
-          src={"${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.index"}
-          props={propsToSend}
-        />
-      );
-    }
-    default: {
-      return <p>404</p>;
-    }
-  }
-}
-return (
-  <AppLayout
-    page={page}
-    instance={instance}
-    treasuryDaoID={treasuryDaoID}
-    accountId={context.accountId}
-  >
-    <p>I AM UPDATED</p>
-    <Page />
-  </AppLayout>
-);
-  `
-  );
-
-  await sandbox.setupDefaultWidgetReferenceAccount();
   await sandbox.modifyWidget(
     "widgets.treasury-factory.near/widget/pages.settings.system-updates.UpdateRegistry",
     `
     return [
       {
-          id: 99999998,
-          createdDate: "2025-04-05",
-          version: "n/a",
-          type: "Widgets",
-          summary: "Widgets update test",
-          votingRequired: false
+        id: 2,
+        createdDate: "2025-04-21",
+        version: "n/a",
+        type: "Policy",
+        summary: "Change Requestor role name to Proposer",
+        details: "",
+        checkPolicy: (policy) => {
+          if (policy.roles[0].name === "Proposer") {
+            return true;
+          } else {
+           return false;
+          }
+        },
+        getUpdatedPolicyProposal: (policy) => {
+          policy.roles[0].name = "Proposer";
+          return {
+            updatedPolicy: policy,
+            description: {
+              "title": "Change role name",
+              "summary": "Change name of the first role to proposer",
+            },
+          };
+        },
+        votingRequired: true,
       }
   ];
   `
@@ -182,7 +161,9 @@ return (
 
   await expect(await page.getByText("Available Updates")).toBeEnabled();
 
-  await expect(page.getByText("Widgets update test")).toBeVisible({
+  await expect(
+    page.getByText("Change Requestor role name to Proposer")
+  ).toBeVisible({
     timeout: 10_000,
   });
 
@@ -194,31 +175,18 @@ return (
     await page.getByRole("button", { name: "Confirm" })
   ).not.toBeVisible();
 
-  await page.reload();
+  await page.goto(
+    `https://${instanceName}.near.page/?page=settings&tab=pending-requests`
+  );
 
-  await expect(await page.getByText("Available Updates")).toBeEnabled();
-
-  await expect(page.getByText("Widgets update test")).not.toBeVisible({
-    timeout: 10_000,
-  });
-
-  await page.goto(`https://${instanceName}.near.page/`);
-
-  await page.waitForTimeout(500);
+  await expect(await page.getByText("Change role name")).toBeVisible();
+  await page.getByRole("button", { name: "Details" }).click();
   await expect(
-    await page.getByRole("link", { name: "Review" })
-  ).not.toBeVisible();
+    await page.getByText("Change name of the first role to proposer")
+  ).toBeVisible();
+  await expect(page.getByRole("code")).toContainText('"name": "Proposer"');
 
-  await page.getByText("Settings").click();
-  await page.getByText("System updates").click();
-  await page.getByText("History").click();
-  await expect(page.getByText("2025-04-05")).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByText("99999998")).toBeVisible();
-  await expect(page.getByText("Widgets update test")).toBeVisible();
-
-  await expect(page.getByText("I AM UPDATED")).toBeVisible();
   await page.waitForTimeout(500);
-
   await page.unrouteAll({ behavior: "ignoreErrors" });
   await sandbox.quitSandbox();
 });

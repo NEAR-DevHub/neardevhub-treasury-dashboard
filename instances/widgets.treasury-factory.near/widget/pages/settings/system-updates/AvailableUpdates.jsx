@@ -12,9 +12,16 @@ const {
   setFinishedUpdates,
   UPDATE_TYPE_WEB4_CONTRACT,
   UPDATE_TYPE_WIDGET,
+  UPDATE_TYPE_POLICY,
 } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.system-updates.UpdateNotificationTracker"
 ) ?? { updatesNotApplied: [], setFinishedUpdates: () => {} };
+
+const { checkIfPolicyIsUpToDate, applyPolicyUpdate } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.system-updates.PolicyUpdate"
+) ?? { checkIfPolicyIsUpToDate: () => {} };
+
+checkIfPolicyIsUpToDate(instance);
 
 if (web4isUpToDate) {
   updatesNotApplied
@@ -52,7 +59,6 @@ const Container = styled.div`
 
 async function checkForWidgetUpdate() {
   const BOOTSTRAP_WIDGET_ACCOUNT = "bootstrap.treasury-factory.near";
-  console.log("checking for widget update");
   asyncFetch(`${REPL_RPC_URL}`, {
     method: "POST",
     headers: {
@@ -275,7 +281,17 @@ function updateModal(update) {
                 ? applyWeb4ContractUpdate
                 : update.type === UPDATE_TYPE_WIDGET
                 ? applyWidgetUpdate
-                : () => {},
+                : update.type === UPDATE_TYPE_POLICY
+                ? () => {
+                    setShowReviewModalForUpdate(null);
+                    applyPolicyUpdate(instance, update);
+                  }
+                : () => {
+                    console.log(
+                      "No action defined for this update type",
+                      update.type
+                    );
+                  },
           }}
         />
       </ModalFooter>

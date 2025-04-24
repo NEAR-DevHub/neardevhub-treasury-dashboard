@@ -70,6 +70,41 @@ export class SandboxRPC {
     this.account = await this.near.account(this.account_id);
   }
 
+  async setPageAuthSettingsWithSandboxAccountKeys(page) {
+    const keyPair = await this.keyStore.getKey("sandbox", this.account_id);
+    await page.evaluate(
+      ({ accountId, publicKey, privateKey }) => {
+        localStorage.setItem("near-social-vm:v01::accountId:", accountId);
+        localStorage.setItem(
+          `near-api-js:keystore:${accountId}:mainnet`,
+          privateKey
+        );
+        localStorage.setItem(
+          "near-wallet-selector:recentlySignedInWallets",
+          JSON.stringify(["my-near-wallet"])
+        );
+        localStorage.setItem(
+          "near-wallet-selector:selectedWalletId",
+          JSON.stringify("my-near-wallet")
+        );
+        localStorage.setItem(
+          "near_app_wallet_auth_key",
+          JSON.stringify({ accountId, allKeys: [publicKey] })
+        );
+        localStorage.setItem(
+          "near-wallet-selector:contract",
+          JSON.stringify({ contractId: "social.near", methodNames: [] })
+        );
+      },
+      {
+        accountId: this.account_id,
+        publicKey: keyPair.getPublicKey().toString(),
+        privateKey: keyPair.toString(),
+      }
+    );
+    await page.reload();
+  }
+
   /**
    * @param {import('playwright').Page} page - Playwright page object
    */

@@ -121,7 +121,8 @@ async fn test_update_widgets() -> Result<(), Box<dyn std::error::Error>> {
     let contract_wasm = near_workspaces::compile_project("./").await?;
 
     let instance_contract = sandbox
-        .import_contract(&"petersalomonsen.near".parse().unwrap(), &mainnet)
+        .import_contract(&"webassemblymusic-treasury.near".parse().unwrap(), &mainnet)
+        .initial_balance(NearToken::from_near(5))
         .transact()
         .await?;
     let instance_account = instance_contract.as_account();
@@ -221,7 +222,8 @@ async fn test_update_widgets_and_set_social_metadata_defaults(
     let contract_wasm = near_workspaces::compile_project("./").await?;
 
     let instance_contract = sandbox
-        .import_contract(&"petersalomonsen.near".parse().unwrap(), &mainnet)
+        .import_contract(&"webassemblymusic-treasury.near".parse().unwrap(), &mainnet)
+        .initial_balance(NearToken::from_near(5))
         .transact()
         .await?;
     let instance_account = instance_contract.as_account();
@@ -392,7 +394,8 @@ async fn test_update_app_widget() -> Result<(), Box<dyn std::error::Error>> {
     let contract_wasm = near_workspaces::compile_project("./").await?;
 
     let instance_contract = sandbox
-        .import_contract(&"petersalomonsen.near".parse().unwrap(), &mainnet)
+        .import_contract(&"webassemblymusic-treasury.near".parse().unwrap(), &mainnet)
+        .initial_balance(NearToken::from_near(5))
         .transact()
         .await?;
     let instance_account = instance_contract.as_account();
