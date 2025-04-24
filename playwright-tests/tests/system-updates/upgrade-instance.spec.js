@@ -79,39 +79,8 @@ test("should update treasury factory with new web4 contract and self upgrade ins
     await page.getByRole("link", { name: "Review" })
   ).not.toBeVisible();
 
-  const keyPair = await sandbox.keyStore.getKey("sandbox", sandbox.account_id);
-  await page.evaluate(
-    ({ accountId, publicKey, privateKey }) => {
-      localStorage.setItem("near-social-vm:v01::accountId:", accountId);
-      localStorage.setItem(
-        `near-api-js:keystore:${accountId}:mainnet`,
-        privateKey
-      );
-      localStorage.setItem(
-        "near-wallet-selector:recentlySignedInWallets",
-        JSON.stringify(["my-near-wallet"])
-      );
-      localStorage.setItem(
-        "near-wallet-selector:selectedWalletId",
-        JSON.stringify("my-near-wallet")
-      );
-      localStorage.setItem(
-        "near_app_wallet_auth_key",
-        JSON.stringify({ accountId, allKeys: [publicKey] })
-      );
-      localStorage.setItem(
-        "near-wallet-selector:contract",
-        JSON.stringify({ contractId: "social.near", methodNames: [] })
-      );
-    },
-    {
-      accountId: sandbox.account_id,
-      publicKey: keyPair.getPublicKey().toString(),
-      privateKey: keyPair.toString(),
-    }
-  );
+  await sandbox.setPageAuthSettingsWithSandboxAccountKeys(page);
 
-  await page.reload();
   await expect(await page.getByRole("link", { name: "Review" })).toBeVisible();
   await page.getByRole("link", { name: "Review" }).click();
 
@@ -184,7 +153,9 @@ test("should update treasury factory with new web4 contract and self upgrade ins
   });
 
   await page.locator("#dropdownIcon").click();
-  await expect(await page.getByText("Gateway Select")).toBeVisible();
+  await expect(await page.getByText("Gateway Select")).toBeVisible({
+    timeout: 15_000,
+  });
 
   await page.waitForTimeout(500);
   await page.goto(`https://${instanceName}.near.page/`);

@@ -96,39 +96,8 @@ test("should update sputnik-dao policy and upgrade instance with it", async ({
     await page.getByRole("link", { name: "Review" })
   ).not.toBeVisible();
 
-  const keyPair = await sandbox.keyStore.getKey("sandbox", sandbox.account_id);
-  await page.evaluate(
-    ({ accountId, publicKey, privateKey }) => {
-      localStorage.setItem("near-social-vm:v01::accountId:", accountId);
-      localStorage.setItem(
-        `near-api-js:keystore:${accountId}:mainnet`,
-        privateKey
-      );
-      localStorage.setItem(
-        "near-wallet-selector:recentlySignedInWallets",
-        JSON.stringify(["my-near-wallet"])
-      );
-      localStorage.setItem(
-        "near-wallet-selector:selectedWalletId",
-        JSON.stringify("my-near-wallet")
-      );
-      localStorage.setItem(
-        "near_app_wallet_auth_key",
-        JSON.stringify({ accountId, allKeys: [publicKey] })
-      );
-      localStorage.setItem(
-        "near-wallet-selector:contract",
-        JSON.stringify({ contractId: "social.near", methodNames: [] })
-      );
-    },
-    {
-      accountId: sandbox.account_id,
-      publicKey: keyPair.getPublicKey().toString(),
-      privateKey: keyPair.toString(),
-    }
-  );
+  await sandbox.setPageAuthSettingsWithSandboxAccountKeys(page);
 
-  await page.reload();
   await expect(await page.getByRole("link", { name: "Review" })).toBeVisible();
   await page.getByRole("link", { name: "Review" }).click();
 
