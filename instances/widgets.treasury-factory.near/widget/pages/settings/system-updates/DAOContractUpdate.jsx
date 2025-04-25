@@ -48,8 +48,21 @@ function base58EncodeFromHex(hex) {
 }
 
 function checkIfDAOContractIsUpToDate(instance) {
+  const {
+    updatesNotApplied,
+    finishedUpdates,
+    setFinishedUpdates,
+    UPDATE_TYPE_DAO_CONTRACT,
+  } = VM.require(
+    "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.system-updates.UpdateNotificationTracker"
+  ) ?? { updatesNotApplied: [], setFinishedUpdates: () => {} };
+
+  const daoContractUpdatesNotApplied = updatesNotApplied.filter(
+    (update) => update.type === UPDATE_TYPE_DAO_CONTRACT
+  );
   const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
-  if (!treasuryDaoID) {
+
+  if (daoContractUpdatesNotApplied.length === 0 || !treasuryDaoID) {
     return;
   }
   asyncFetch(`${REPL_RPC_URL}`, {
@@ -103,10 +116,13 @@ function checkIfDAOContractIsUpToDate(instance) {
       );
       if (dao_code_hash_b58 === dao_contract_code_base58) {
         console.log("The DAO contract hash is identical.");
-        setDaoContractIsUpToDate(true);
+
+        daoContractUpdatesNotApplied.forEach((update) => {
+          finishedUpdates[update.id] = true;
+        });
+        setFinishedUpdates(finishedUpdates);
       } else {
         console.log("The DAO contract hashes are different.");
-        setDaoContractIsUpToDate(false);
       }
     });
   });
