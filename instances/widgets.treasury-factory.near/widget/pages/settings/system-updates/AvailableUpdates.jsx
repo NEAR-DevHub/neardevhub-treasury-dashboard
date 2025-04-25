@@ -23,6 +23,12 @@ const { checkIfPolicyIsUpToDate, applyPolicyUpdate } = VM.require(
 
 checkIfPolicyIsUpToDate(instance);
 
+const { checkIfDAOContractIsUpToDate } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.system-updates.DAOContractUpdate"
+) ?? { checkIfDAOContractIsUpToDate: () => {} };
+
+checkIfDAOContractIsUpToDate(instance);
+
 if (web4isUpToDate) {
   updatesNotApplied
     .filter((update) => update.type === UPDATE_TYPE_WEB4_CONTRACT)

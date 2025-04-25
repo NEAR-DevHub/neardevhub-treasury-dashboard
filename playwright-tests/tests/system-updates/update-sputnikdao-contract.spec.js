@@ -7,9 +7,7 @@ import {
 import { createDAOargs } from "../../util/sputnikdao.js";
 import nearApi from "near-api-js";
 
-test("should update sputnik-dao contract", async ({
-  page,
-}) => {
+test("should update sputnik-dao contract", async ({ page }) => {
   test.setTimeout(120_000);
 
   await cacheCDN(page);
@@ -60,8 +58,8 @@ test("should update sputnik-dao contract", async ({
         id: 1,
         createdDate: "2025-03-25",
         version: "n/a",
-        type: "SputnikDAOContract",
-        summary: "Update to latest sputnikdao contract",
+        type: "DAO contract",
+        summary: "Update to latest sputnik-dao contract",
         details: "",
         votingRequired: true,
       }
@@ -88,11 +86,11 @@ test("should update sputnik-dao contract", async ({
     timeout: 20_000,
   });
 
-  await expect(page.getByText("Update to latest sputnikdao contract")).not.toBeVisible(
-    {
-      timeout: 10_000,
-    }
-  );
+  await expect(
+    page.getByText("Update to latest sputnik-dao contract")
+  ).not.toBeVisible({
+    timeout: 10_000,
+  });
 
   // Visiting the updates page above should have automatically marked the policy as up to date, and notification banner should disappear
   await page.goto(`https://${instanceName}.near.page/`);
@@ -109,8 +107,8 @@ test("should update sputnik-dao contract", async ({
         id: 2,
         createdDate: "2025-04-25",
         version: "n/a",
-        type: "SputnikDAOContract",
-        summary: "Update to latest sputnikdao contract",
+        type: "DAO contract",
+        summary: "Update to latest sputnik-dao contract",
         details: "",
         votingRequired: true,
       }
@@ -128,7 +126,7 @@ test("should update sputnik-dao contract", async ({
   await expect(await page.getByText("Available Updates")).toBeEnabled();
 
   await expect(
-    page.getByText("Update to latest sputnikdao contract")
+    page.getByText("Update to latest sputnik-dao contract")
   ).toBeVisible({
     timeout: 10_000,
   });
