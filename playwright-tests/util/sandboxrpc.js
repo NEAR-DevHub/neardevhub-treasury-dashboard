@@ -17,6 +17,8 @@ export const DEFAULT_WIDGET_REFERENCE_ACCOUNT_ID =
   "bootstrap.treasury-factory.near";
 
 export const TREASURY_FACTORY_ACCOUNT_ID = "treasury-factory.near";
+export const SPUTNIK_DAO_FACTORY_ID = "sputnik-dao.near";
+
 export class SandboxRPC {
   constructor() {
     this.modifiedWidgets = {};
@@ -58,6 +60,11 @@ export class SandboxRPC {
     this.keyStore.setKey(
       "sandbox",
       TREASURY_FACTORY_ACCOUNT_ID,
+      utils.KeyPair.fromString(this.secret_key)
+    );
+    this.keyStore.setKey(
+      "sandbox",
+      SPUTNIK_DAO_FACTORY_ID,
       utils.KeyPair.fromString(this.secret_key)
     );
 

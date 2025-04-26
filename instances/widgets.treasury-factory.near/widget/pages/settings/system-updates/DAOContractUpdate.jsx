@@ -115,14 +115,18 @@ function checkIfDAOContractIsUpToDate(instance) {
         ethers.utils.sha256(dao_contract_bytes)
       );
       if (dao_code_hash_b58 === dao_contract_code_base58) {
-        console.log("The DAO contract hash is identical.");
+        console.log(
+          "The DAO contract hash is identical with the factory default."
+        );
 
         daoContractUpdatesNotApplied.forEach((update) => {
           finishedUpdates[update.id] = true;
         });
         setFinishedUpdates(finishedUpdates);
       } else {
-        console.log("The DAO contract hashes are different.");
+        console.log(
+          "The DAO contract hash is different from the factory default"
+        );
       }
     });
   });

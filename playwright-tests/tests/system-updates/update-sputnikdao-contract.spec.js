@@ -3,9 +3,11 @@ import { cacheCDN, test } from "../../util/test.js";
 import {
   DEFAULT_WIDGET_REFERENCE_ACCOUNT_ID,
   SandboxRPC,
+  SPUTNIK_DAO_FACTORY_ID,
 } from "../../util/sandboxrpc.js";
 import { createDAOargs } from "../../util/sputnikdao.js";
 import nearApi from "near-api-js";
+import crypto from "crypto";
 
 test("should update sputnik-dao contract", async ({ page }) => {
   test.setTimeout(120_000);
@@ -26,7 +28,7 @@ test("should update sputnik-dao contract", async ({ page }) => {
     contractId: "treasury-factory.near",
     methodName: "create_instance",
     args: {
-      sputnik_dao_factory_account_id: "sputnik-dao.near",
+      sputnik_dao_factory_account_id: SPUTNIK_DAO_FACTORY_ID,
       social_db_account_id: "social.near",
       widget_reference_account_id: widget_reference_account_id,
       name: instanceName,
@@ -92,12 +94,75 @@ test("should update sputnik-dao contract", async ({ page }) => {
     timeout: 10_000,
   });
 
-  // Visiting the updates page above should have automatically marked the policy as up to date, and notification banner should disappear
   await page.goto(`https://${instanceName}.near.page/`);
   await page.waitForTimeout(500);
   await expect(
     await page.getByRole("link", { name: "Review" })
   ).not.toBeVisible();
+
+  // Download the contract code of ${instanceName}.sputnik-dao.near
+
+  const daoContractId = `${instanceName}.${SPUTNIK_DAO_FACTORY_ID}`;
+  const result = await sandbox.near.connection.provider.query({
+    request_type: "view_code",
+    account_id: daoContractId,
+    finality: "final",
+  });
+  const currentCode = Buffer.from(result.code_base64, "base64");
+
+  const version = await (
+    await sandbox.near.account(daoContractId)
+  ).viewFunction({ contractId: daoContractId, methodName: "version" });
+
+  // Convert the binary to a string and search for "Select Gateway"
+  const searchString = version;
+  const replaceString = "1" + version.substring(0, version.length - 1);
+  console.log(searchString, replaceString);
+
+  const searchBuffer = Buffer.from(searchString, "utf-8");
+  const replaceBuffer = Buffer.from(replaceString, "utf-8");
+
+  const index = currentCode.indexOf(searchBuffer);
+  if (index === -1) {
+    console.error(`String "${searchString}" not found in the WASM binary.`);
+    return;
+  }
+
+  // Replace the string in the binary
+  replaceBuffer.copy(currentCode, index);
+
+  // Store the new wasm in the factory
+
+  const sputnikDaoFactoryAccount = await sandbox.near.account(
+    SPUTNIK_DAO_FACTORY_ID
+  );
+
+  await sputnikDaoFactoryAccount.functionCall({
+    contractId: SPUTNIK_DAO_FACTORY_ID,
+    methodName: "store",
+    args: currentCode,
+    gas: 300000000000000,
+    attachedDeposit: nearApi.utils.format.parseNearAmount("10"),
+  });
+
+  // compute the hash of the new wasm and set_default_code_hash
+
+  const codeHash = crypto
+    .createHash("sha256")
+    .update(currentCode)
+    .digest("hex");
+
+  const base58CodeHash = nearApi.utils.serialize.base_encode(
+    Buffer.from(codeHash, "hex")
+  );
+
+  await sputnikDaoFactoryAccount.functionCall({
+    contractId: SPUTNIK_DAO_FACTORY_ID,
+    methodName: "set_default_code_hash",
+    args: { code_hash: base58CodeHash },
+    gas: 300000000000000,
+    attachedDeposit: nearApi.utils.format.parseNearAmount("3"),
+  });
 
   await sandbox.modifyWidget(
     "widgets.treasury-factory.near/widget/pages.settings.system-updates.UpdateRegistry",
