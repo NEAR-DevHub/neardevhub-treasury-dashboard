@@ -17,6 +17,25 @@ test("should update sputnik-dao contract", async ({ page }) => {
   const sandbox = new SandboxRPC();
   await sandbox.init();
 
+  await page.route(
+    `https://api.fastnear.com/v1/account/${sandbox.account_id}/full`,
+    async (route) => {
+      await route.fulfill({
+        json: {
+          account_id: sandbox.account_id,
+          nfts: [],
+          pools: [],
+          state: {
+            balance: "6711271810302417189284995",
+            locked: "0",
+            storage_bytes: 425828,
+          },
+          tokens: [],
+        },
+      });
+    }
+  );
+
   const widget_reference_account_id = DEFAULT_WIDGET_REFERENCE_ACCOUNT_ID;
   await sandbox.setupDefaultWidgetReferenceAccount();
 
@@ -100,9 +119,10 @@ test("should update sputnik-dao contract", async ({ page }) => {
     await page.getByRole("link", { name: "Review" })
   ).not.toBeVisible();
 
+  const daoContractId = `${instanceName}.${SPUTNIK_DAO_FACTORY_ID}`;
+
   // Download the contract code of ${instanceName}.sputnik-dao.near
 
-  const daoContractId = `${instanceName}.${SPUTNIK_DAO_FACTORY_ID}`;
   const result = await sandbox.near.connection.provider.query({
     request_type: "view_code",
     account_id: daoContractId,
@@ -215,6 +235,21 @@ test("should update sputnik-dao contract", async ({ page }) => {
   await expect(
     await page.getByText("Update to latest sputnik-dao contract")
   ).toBeVisible();
+
+  await page.getByRole("button", { name: "Cancel" }).click();
+  await page.getByRole("button", { name: "Approve" }).click();
+  await expect(await page.getByText("Confirm your vote")).toBeVisible();
+  await page.getByRole("button", { name: "Confirm" }).click();
+  await expect(await page.getByText("Confirm transaction")).toBeVisible();
+  await page.getByRole("button", { name: "Confirm" }).click();
+
+  await page.goto(
+    `https://${instanceName}.near.page/?page=settings&tab=system-updates`
+  );
+  await page.waitForTimeout(500);
+  await expect(
+    await page.getByRole("link", { name: "Review" })
+  ).not.toBeVisible();
 
   await page.waitForTimeout(500);
   await page.unrouteAll({ behavior: "ignoreErrors" });
