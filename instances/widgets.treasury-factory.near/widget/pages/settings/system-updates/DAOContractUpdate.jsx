@@ -47,25 +47,8 @@ function base58EncodeFromHex(hex) {
   return encoded.reverse().join("");
 }
 
-function checkIfDAOContractIsUpToDate(instance) {
-  const {
-    updatesNotApplied,
-    finishedUpdates,
-    setFinishedUpdates,
-    UPDATE_TYPE_DAO_CONTRACT,
-  } = VM.require(
-    "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.system-updates.UpdateNotificationTracker"
-  ) ?? { updatesNotApplied: [], setFinishedUpdates: () => {} };
-
-  const daoContractUpdatesNotApplied = updatesNotApplied.filter(
-    (update) => update.type === UPDATE_TYPE_DAO_CONTRACT
-  );
-  const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
-
-  if (daoContractUpdatesNotApplied.length === 0 || !treasuryDaoID) {
-    return;
-  }
-  asyncFetch(`${REPL_RPC_URL}`, {
+function getDefaultCodeHash() {
+  return asyncFetch(`${REPL_RPC_URL}`, {
     method: "POST",
     headers: {
       Accept: "application/json",
@@ -87,7 +70,29 @@ function checkIfDAOContractIsUpToDate(instance) {
     const dao_code_hash_b58 = JSON.parse(
       Buffer.from(new Uint8Array(response.body.result.result)).toString()
     );
-    console.log("DAO code hash", dao_code_hash_b58);
+    return dao_code_hash_b58;
+  });
+}
+
+function checkIfDAOContractIsUpToDate(instance) {
+  const {
+    updatesNotApplied,
+    finishedUpdates,
+    setFinishedUpdates,
+    UPDATE_TYPE_DAO_CONTRACT,
+  } = VM.require(
+    "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.system-updates.UpdateNotificationTracker"
+  ) ?? { updatesNotApplied: [], setFinishedUpdates: () => {} };
+
+  const daoContractUpdatesNotApplied = updatesNotApplied.filter(
+    (update) => update.type === UPDATE_TYPE_DAO_CONTRACT
+  );
+  const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+
+  if (daoContractUpdatesNotApplied.length === 0 || !treasuryDaoID) {
+    return;
+  }
+  getDefaultCodeHash().then((dao_code_hash_b58) => {
     asyncFetch(`${REPL_RPC_URL}`, {
       method: "POST",
       headers: {
@@ -132,6 +137,41 @@ function checkIfDAOContractIsUpToDate(instance) {
   });
 }
 
+function applyDAOContractUpdate(instance, update) {
+  const { encodeToMarkdown } = VM.require(
+    "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+  ) || {
+    encodeToMarkdown: () => {},
+  };
+
+  const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+
+  getDefaultCodeHash().then((code_hash) => {
+    Near.call([
+      {
+        contractName: treasuryDaoID,
+        methodName: "add_proposal",
+        args: {
+          proposal: {
+            description: encodeToMarkdown({
+              title: "Upgrade sputnik-dao contract",
+              summary: update.summary,
+            }),
+            kind: {
+              UpgradeSelf: {
+                hash: code_hash,
+              },
+            },
+          },
+        },
+        gas: 200000000000000,
+        deposit,
+      },
+    ]);
+  });
+}
+
 return {
   checkIfDAOContractIsUpToDate,
+  applyDAOContractUpdate,
 };

@@ -208,10 +208,12 @@ test("should update sputnik-dao contract", async ({ page }) => {
     `https://${instanceName}.near.page/?page=settings&tab=pending-requests`
   );
 
-  await expect(await page.getByText("Change role name")).toBeVisible();
+  await expect(
+    await page.getByText("Upgrade sputnik-dao contract")
+  ).toBeVisible();
   await page.getByRole("button", { name: "Details" }).click();
   await expect(
-    await page.getByText("Update to latest sputnikdao contract")
+    await page.getByText("Update to latest sputnik-dao contract")
   ).toBeVisible();
 
   await page.waitForTimeout(500);

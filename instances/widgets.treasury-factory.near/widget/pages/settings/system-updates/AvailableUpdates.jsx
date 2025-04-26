@@ -13,6 +13,7 @@ const {
   UPDATE_TYPE_WEB4_CONTRACT,
   UPDATE_TYPE_WIDGET,
   UPDATE_TYPE_POLICY,
+  UPDATE_TYPE_DAO_CONTRACT,
 } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.system-updates.UpdateNotificationTracker"
 ) ?? { updatesNotApplied: [], setFinishedUpdates: () => {} };
@@ -23,7 +24,7 @@ const { checkIfPolicyIsUpToDate, applyPolicyUpdate } = VM.require(
 
 checkIfPolicyIsUpToDate(instance);
 
-const { checkIfDAOContractIsUpToDate } = VM.require(
+const { checkIfDAOContractIsUpToDate, applyDAOContractUpdate } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.system-updates.DAOContractUpdate"
 ) ?? { checkIfDAOContractIsUpToDate: () => {} };
 
@@ -291,6 +292,11 @@ function updateModal(update) {
                 ? () => {
                     setShowReviewModalForUpdate(null);
                     applyPolicyUpdate(instance, update);
+                  }
+                : update.type === UPDATE_TYPE_DAO_CONTRACT
+                ? () => {
+                    setShowReviewModalForUpdate(null);
+                    applyDAOContractUpdate(instance, update);
                   }
                 : () => {
                     console.log(
