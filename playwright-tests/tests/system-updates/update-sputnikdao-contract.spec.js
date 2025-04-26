@@ -1,5 +1,10 @@
 import { expect } from "@playwright/test";
-import { cacheCDN, test } from "../../util/test.js";
+import {
+  cacheCDN,
+  overlayMessage,
+  removeOverlayMessage,
+  test,
+} from "../../util/test.js";
 import {
   DEFAULT_WIDGET_REFERENCE_ACCOUNT_ID,
   SandboxRPC,
@@ -121,6 +126,10 @@ test("should update sputnik-dao contract", async ({ page }) => {
 
   const daoContractId = `${instanceName}.${SPUTNIK_DAO_FACTORY_ID}`;
 
+  await overlayMessage(
+    page,
+    "Development team is uploading a new sputnik-dao contract"
+  );
   // Download the contract code of ${instanceName}.sputnik-dao.near
 
   const result = await sandbox.near.connection.provider.query({
@@ -201,6 +210,7 @@ test("should update sputnik-dao contract", async ({ page }) => {
   `
   );
 
+  await removeOverlayMessage(page);
   await page.goto(`https://${instanceName}.near.page/`);
 
   await expect(await page.getByRole("link", { name: "Review" })).toBeVisible({
@@ -243,13 +253,27 @@ test("should update sputnik-dao contract", async ({ page }) => {
   await expect(await page.getByText("Confirm transaction")).toBeVisible();
   await page.getByRole("button", { name: "Confirm" }).click();
 
+  await expect(await page.getByText("Awaiting transaction")).not.toBeVisible({
+    timeout: 15_000,
+  });
+
   await page.goto(
     `https://${instanceName}.near.page/?page=settings&tab=system-updates`
   );
   await page.waitForTimeout(500);
+  await expect(await page.getByText("Available Updates")).toBeEnabled();
   await expect(
     await page.getByRole("link", { name: "Review" })
+  ).not.toBeVisible({ timeout: 15_000 });
+
+  await expect(
+    page.getByText("Update to latest sputnik-dao contract")
   ).not.toBeVisible();
+
+  await page.getByText("History").click();
+  await expect(
+    page.getByText("Update to latest sputnik-dao contract")
+  ).toBeVisible();
 
   await page.waitForTimeout(500);
   await page.unrouteAll({ behavior: "ignoreErrors" });

@@ -5,7 +5,6 @@ import { parseNearAmount } from "near-api-js/lib/utils/format.js";
 import { KeyPairEd25519 } from "near-api-js/lib/utils/key_pair.js";
 import { getLocalWidgetSource } from "./bos-workspace.js";
 import { expect } from "@playwright/test";
-import path, { dirname } from "path";
 import { overlayMessage, removeOverlayMessage } from "./test.js";
 import { getLocalWidgetContent } from "./web4.js";
 
