@@ -335,10 +335,19 @@ test("update infinex.sputnik-dao.near", async ({ page }) => {
     timeout: 15_000,
   });
 
+  await expect(
+    await page.getByText("The request has been successfully executed")
+  ).toBeVisible({
+    timeout: 15_000,
+  });
+
+  // Wait for transaction to finalize
+  await page.waitForTimeout(2000);
+
   await page.goto(
     `https://${web4ContractId}.page/?page=settings&tab=system-updates`
   );
-  await page.waitForTimeout(500);
+
   await expect(await page.getByText("Available Updates")).toBeEnabled();
   await expect(
     await page.getByRole("link", { name: "Review" })
