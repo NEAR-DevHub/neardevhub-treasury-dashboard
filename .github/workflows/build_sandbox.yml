@@ -8,10 +8,6 @@ on:
         type: string
         default: '20'
 
-concurrency:
-  group: build-sandbox-${{ github.ref }}
-  cancel-in-progress: false
-
 jobs:
   build-sandbox:
     runs-on: ubuntu-latest
