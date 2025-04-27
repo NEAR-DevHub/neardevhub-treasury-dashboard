@@ -45,8 +45,12 @@ export function getLocalWidgetContent(key, context = {}) {
  * @param {Object} options - The options object.
  * @param {string} options.contractId - The contract ID to redirect requests to.
  * @param {import('@playwright/test').Page} options.page - Playwright page object.
+ * @param {string} [options.treasury] - The treasury account ID. If not provided, it will be derived from the contract ID.
  * @param {string} [options.networkId="mainnet"] - The NEAR network ID (default is "mainnet").
  * @param {string} [options.nodeUrl="https://rpc.mainnet.near.org"] - The NEAR RPC node URL (default is the mainnet RPC URL).
+ * @param {string} [options.sandboxNodeUrl] - Fallback RPC requests will be sent to the sandbox if specified, otherwise to nodeUrl
+ * @param {Object} [options.modifiedWidgets={}] - An object containing modified widget content.
+ *     The keys are widget keys (e.g., "account/section/contentKey"), and the values are the modified widget content as strings.
  *
  * @returns {Promise<void>} A promise that resolves when the routing setup is complete.
  */
@@ -56,6 +60,7 @@ export async function redirectWeb4({
   treasury,
   networkId = "mainnet",
   nodeUrl = "https://rpc.mainnet.near.org",
+  sandboxNodeUrl,
   modifiedWidgets = {},
 }) {
   const keyStore = new keyStores.InMemoryKeyStore();
@@ -128,7 +133,7 @@ export async function redirectWeb4({
       }
     } else {
       const response = await route.fetch({
-        url: nodeUrl,
+        url: sandboxNodeUrl ?? nodeUrl,
         json: postData,
       });
       await route.fulfill({ response });
