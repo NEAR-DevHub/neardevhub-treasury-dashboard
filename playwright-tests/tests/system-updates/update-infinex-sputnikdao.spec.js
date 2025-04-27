@@ -10,6 +10,7 @@ import crypto from "crypto";
 import { cacheCDN } from "../../util/test";
 
 test("update infinex.sputnik-dao.near", async ({ page }) => {
+  test.setTimeout(120_000);
   const daoName = "infinex";
   const daoContractId = `${daoName}.${SPUTNIK_DAO_FACTORY_ID}`;
   const web4ContractId = "treasury-infinex.near";
@@ -351,6 +352,17 @@ test("update infinex.sputnik-dao.near", async ({ page }) => {
   await expect(
     page.getByText("Update to latest sputnik-dao contract")
   ).toBeVisible();
+
+  // Test some functionality
+  await page.getByRole("link", { name: "Voting Duration" }).click();
+  await page.getByPlaceholder("Enter voting duration days").click();
+  await page.getByPlaceholder("Enter voting duration days").fill("10");
+  await page.getByRole("button", { name: "Submit Request" }).click();
+  await page.getByRole("button", { name: "Confirm" }).click();
+  await page.getByRole("link", { name: "View it" }).click();
+  await expect(await page.getByText("Update policy - Voting")).toBeVisible();
+
+  // Tear down
 
   await page.waitForTimeout(500);
   await page.unrouteAll({ behavior: "ignoreErrors" });
