@@ -10,32 +10,194 @@ import crypto from "crypto";
 import { cacheCDN } from "../../util/test";
 
 test("update infinex.sputnik-dao.near", async ({ page }) => {
-  const daoContractId = "infinex.sputnik-dao.near";
+  const daoName = "infinex";
+  const daoContractId = `${daoName}.${SPUTNIK_DAO_FACTORY_ID}`;
   const web4ContractId = "treasury-infinex.near";
   const socialNearContractId = "social.near";
 
   await cacheCDN(page);
+
   const worker = await Worker.init();
 
-  await worker.rootAccount.importContract({
-    mainnetContract: daoContractId,
-    withData: true,
-    blockId: 130_365_841,
+  // Import factory at the time infinex was created
+  const factoryContract = await worker.rootAccount.importContract({
+    mainnetContract: SPUTNIK_DAO_FACTORY_ID,
+    blockId: 129_484_712,
   });
 
-  const factoryContract = await worker.rootAccount.importContract({
-    mainnetContract: "sputnik-dao.near",
-  });
-  const sputnikDaoFactoryContractBytes = await fetch(
-    "https://github.com/near-daos/sputnik-dao-contract/raw/refs/heads/main/sputnikdao-factory2/res/sputnikdao_factory2.wasm"
-  ).then((r) => r.arrayBuffer());
   await factoryContract.call(
     SPUTNIK_DAO_FACTORY_ID,
     "new",
     {},
-    { gas: 300000000000000 }
+    { gas: 300_000_000_000_000 }
   );
+
+  // Create infinex
+
+  const creatorAccount = await worker.rootAccount.importContract({
+    mainnetContract: "megha19.near",
+  });
+
+  const userAccount = await worker.rootAccount.importContract({
+    mainnetContract: "kmao.near",
+  });
+  const userAccount2 = await worker.rootAccount.importContract({
+    mainnetContract: "theori.near",
+  });
+
+  const create_infinex_args = {
+    name: "infinex",
+    args: Buffer.from(
+      JSON.stringify({
+        purpose:
+          "The safest way to get onchain\nYour Infinex Account is the easiest way to access the world of DeFi with robust multi-chain support, and unrivalled, non-custodial security.",
+        bond: "100000000000000000000000",
+        vote_period: "604800000000000",
+        grace_period: "86400000000000",
+        policy: {
+          roles: [
+            {
+              name: "council",
+              kind: {
+                Group: [
+                  creatorAccount.accountId,
+                  userAccount.accountId,
+                  userAccount2.accountId,
+                ],
+              },
+              permissions: ["*:*"],
+              vote_policy: {},
+            },
+            {
+              name: "Create Requests",
+              kind: {
+                Group: [],
+              },
+              permissions: ["transfer:AddProposal", "call:AddProposal"],
+              vote_policy: {},
+            },
+            {
+              name: "Manage Members",
+              kind: {
+                Group: [],
+              },
+              permissions: [
+                "remove_member_from_role:*",
+                "add_member_to_role:*",
+                "config:*",
+                "policy:*",
+              ],
+              vote_policy: {},
+            },
+            {
+              name: "Vote",
+              kind: {
+                Group: [],
+              },
+              permissions: ["*:VoteApprove", "*:VoteReject", "*:VoteRemove"],
+              vote_policy: {
+                config: {
+                  quorum: "0",
+                  threshold: [18, 100],
+                  weight_kind: "RoleWeight",
+                },
+                policy: {
+                  quorum: "0",
+                  threshold: [18, 100],
+                  weight_kind: "RoleWeight",
+                },
+                add_bounty: {
+                  quorum: "0",
+                  threshold: [18, 100],
+                  weight_kind: "RoleWeight",
+                },
+                bounty_done: {
+                  quorum: "0",
+                  threshold: [18, 100],
+                  weight_kind: "RoleWeight",
+                },
+                transfer: {
+                  quorum: "0",
+                  threshold: [18, 100],
+                  weight_kind: "RoleWeight",
+                },
+                vote: {
+                  quorum: "0",
+                  threshold: [18, 100],
+                  weight_kind: "RoleWeight",
+                },
+                remove_member_from_role: {
+                  quorum: "0",
+                  threshold: [18, 100],
+                  weight_kind: "RoleWeight",
+                },
+                add_member_to_role: {
+                  quorum: "0",
+                  threshold: [18, 100],
+                  weight_kind: "RoleWeight",
+                },
+                call: {
+                  quorum: "0",
+                  threshold: [18, 100],
+                  weight_kind: "RoleWeight",
+                },
+                upgrade_self: {
+                  quorum: "0",
+                  threshold: [18, 100],
+                  weight_kind: "RoleWeight",
+                },
+                upgrade_remote: {
+                  quorum: "0",
+                  threshold: [18, 100],
+                  weight_kind: "RoleWeight",
+                },
+                set_vote_token: {
+                  quorum: "0",
+                  threshold: [18, 100],
+                  weight_kind: "RoleWeight",
+                },
+              },
+            },
+          ],
+          default_vote_policy: {
+            weight_kind: "RoleWeight",
+            quorum: "0",
+            threshold: [1, 2],
+          },
+          proposal_bond: "0",
+          proposal_period: "604800000000000",
+          bounty_bond: "100000000000000000000000",
+          bounty_forgiveness_period: "604800000000000",
+        },
+        config: {
+          purpose:
+            "The safest way to get onchain\nYour Infinex Account is the easiest way to access the world of DeFi with robust multi-chain support, and unrivalled, non-custodial security.",
+          name: "infinex",
+          metadata:
+            "eyJzb3VsQm91bmRUb2tlbklzc3VlciI6IiIsImxpbmtzIjpbImh0dHBzOi8vaW5maW5leC54eXovIl0sImZsYWdDb3ZlciI6Imh0dHBzOi8vaXBmcy5uZWFyLnNvY2lhbC9pcGZzL2JhZnliZWlhd3c0am9zcDdzcWh0dGVjdGJnMzZmczJpcGp3Y25kMmpzeXNkcnh4N3NqeTRkdjNnd3BxIiwiZmxhZ0xvZ28iOiJodHRwczovL2lwZnMubmVhci5zb2NpYWwvaXBmcy9iYWZrcmVpaHB6Znk3am9lc3N1dGVsZnZ0MjZxcXJkeng3M3NoaHZvZGVoMnkyN3N2dmlqbGVtZGd5bSIsImRpc3BsYXlOYW1lIjoiSW5maW5leCIsImxlZ2FsIjp7ImxlZ2FsU3RhdHVzIjoiIiwibGVnYWxMaW5rIjoiIn19",
+        },
+      })
+    ).toString("base64"),
+  };
+
+  await creatorAccount.call(
+    SPUTNIK_DAO_FACTORY_ID,
+    "create",
+    create_infinex_args,
+    {
+      gas: 300_000_000_000_000,
+      attachedDeposit: nearApi.utils.format.parseNearAmount("6"),
+    }
+  );
+
+  // Deploy the latest factory
+
+  const sputnikDaoFactoryContractBytes = await fetch(
+    "https://github.com/near-daos/sputnik-dao-contract/raw/refs/heads/main/sputnikdao-factory2/res/sputnikdao_factory2.wasm"
+  ).then((r) => r.arrayBuffer());
   await factoryContract.deploy(sputnikDaoFactoryContractBytes);
+
+  // Upload the latest sputnik dao contract
 
   const sputnikDaoContractBytes = Buffer.from(
     await fetch(
@@ -74,12 +236,6 @@ test("update infinex.sputnik-dao.near", async ({ page }) => {
   );
 
   await worker.rootAccount.importContract({ mainnetContract: web4ContractId });
-  const userAccount = await worker.rootAccount.importContract({
-    mainnetContract: "kmao.near",
-  });
-  const userAccount2 = await worker.rootAccount.importContract({
-    mainnetContract: "theori.near",
-  });
 
   const socialNear = await worker.rootAccount.importContract({
     mainnetContract: socialNearContractId,
