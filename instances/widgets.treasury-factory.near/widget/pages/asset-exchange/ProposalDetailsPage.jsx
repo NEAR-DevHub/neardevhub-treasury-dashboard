@@ -601,28 +601,8 @@ return (
           style={{ minWidth: 200, height: "fit-content" }}
         >
           <div className="card card-body d-flex flex-column gap-2">
-            <h6 className="mb-0 flex-1 d-flex align-items-center gap-1">
-              Exchange{" "}
-              <Widget
-                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmountAndIcon`}
-                props={{
-                  instance,
-                  amountWithDecimals: proposalData?.amountIn,
-                  address: proposalData?.tokenIn,
-                }}
-              />
-              for{" "}
-              <Widget
-                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmountAndIcon`}
-                props={{
-                  instance,
-                  amountWithDecimals: proposalData?.amountOut,
-                  address: proposalData?.tokenOut,
-                }}
-              />
-            </h6>
-            <div className="d-flex flex-column gap-2 mt-1">
-              <label className="border-top">Send</label>
+            <div className="d-flex flex-column gap-2">
+              <label>Send</label>
               <h5 className="mb-0">
                 <Widget
                   src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmountAndIcon`}
@@ -673,7 +653,7 @@ return (
                   src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
                   props={{
                     popup:
-                      "This is the least amount you’ll receive from this exchange, based on the slippage limit set for the request.",
+                      "This is the minimum amount you’ll receive from this exchange, based on the slippage limit set for the request.",
                     children: (
                       <i className="bi bi-info-circle text-secondary"></i>
                     ),
