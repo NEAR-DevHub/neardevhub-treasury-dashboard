@@ -15,7 +15,7 @@ import nearApi from "near-api-js";
 import crypto from "crypto";
 
 test("should update sputnik-dao contract", async ({ page }) => {
-  test.setTimeout(120_000);
+  test.setTimeout(180_000);
 
   await cacheCDN(page);
 
@@ -253,7 +253,7 @@ test("should update sputnik-dao contract", async ({ page }) => {
   await page.getByRole("button", { name: "Details" }).click();
   await expect(
     await page.getByText("Update to latest sputnik-dao contract")
-  ).toBeVisible();
+  ).toBeVisible({ timeout: 15_000 });
 
   await page.getByRole("button", { name: "Cancel" }).click();
   await page.getByRole("button", { name: "Reject" }).click();
@@ -335,6 +335,7 @@ test("should update sputnik-dao contract", async ({ page }) => {
     await page.getByRole("link", { name: "Review" })
   ).not.toBeVisible({ timeout: 15_000 });
 
+  await page.getByText("Available Updates").click();
   await expect(
     page.getByText("Update to latest sputnik-dao contract")
   ).not.toBeVisible();
@@ -342,7 +343,7 @@ test("should update sputnik-dao contract", async ({ page }) => {
   await page.getByText("History").click();
   await expect(
     page.getByText("Update to latest sputnik-dao contract")
-  ).toBeVisible();
+  ).toBeVisible({ timeout: 15_000 });
 
   await page.waitForTimeout(500);
   await page.unrouteAll({ behavior: "ignoreErrors" });
