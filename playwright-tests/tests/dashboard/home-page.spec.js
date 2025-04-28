@@ -164,7 +164,10 @@ test.describe("Dashboard Page", function () {
     await expect(page.getByText("Please wait a moment...")).toBeVisible();
   });
 
-  test("Shouldn't show treasuries dropdown", async ({ page, instanceAccount }) => {
+  test("Shouldn't show treasuries dropdown", async ({
+    page,
+    instanceAccount,
+  }) => {
     test.setTimeout(60_000);
     await mockUserDaos({ page, accountId: "megha19.near" });
     await page.waitForTimeout(3_000);
