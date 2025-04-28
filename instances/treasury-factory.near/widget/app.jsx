@@ -42,7 +42,6 @@ function updateTreasuryDrafts(treasuries) {
 }
 
 function updateCurrentDraft(treasury) {
-  console.log("called", JSON.stringify(treasury));
   Storage.set("CURRENT_DRAFT", JSON.stringify(treasury));
 }
 
