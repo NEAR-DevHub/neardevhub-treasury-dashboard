@@ -164,11 +164,13 @@ test.describe("Dashboard Page", function () {
     await expect(page.getByText("Please wait a moment...")).toBeVisible();
   });
 
-  test("Shouldn't show treasuries dropdown", async ({ page }) => {
+  test("Shouldn't show treasuries dropdown", async ({ page, instanceAccount }) => {
     test.setTimeout(60_000);
     await mockUserDaos({ page, accountId: "megha19.near" });
     await page.waitForTimeout(3_000);
-    const logo = page.locator(".image-container > .rounded-3");
+    const logo = instanceAccount.includes("devdao")
+      ? page.locator("g rect")
+      : page.locator(".image-container > .rounded-3");
     await expect(logo).toBeVisible();
     const treasuriesDropdown = page.locator(".custom-dropdown > .d-flex > .bi");
     await expect(treasuriesDropdown).toBeHidden();
