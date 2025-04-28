@@ -78,7 +78,9 @@ function checkIfDAOContractIsUpToDate(instance) {
   const {
     updatesNotApplied,
     finishedUpdates,
+    proposedUpdates,
     setFinishedUpdates,
+    setProposedUpdates,
     UPDATE_TYPE_DAO_CONTRACT,
   } = VM.require(
     "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.system-updates.UpdateNotificationTracker"
@@ -132,6 +134,30 @@ function checkIfDAOContractIsUpToDate(instance) {
         console.log(
           "The DAO contract hash is different from the factory default"
         );
+
+        Near.asyncView(treasuryDaoID, "get_proposals", {
+          from_index: 0,
+          limit: 20,
+        }).then((proposals) => {
+          const selfUpgradeProposalsInProgress = proposals.filter(
+            (p) => p.kind.UpgradeSelf !== undefined && p.status === "InProgress"
+          );
+          if (selfUpgradeProposalsInProgress.length > 0) {
+            console.log("There is a DAO contract upgrade proposal in progress");
+            daoContractUpdatesNotApplied.forEach((update) => {
+              proposedUpdates[update.id] = true;
+            });
+            setProposedUpdates(proposedUpdates);
+          } else {
+            console.log(
+              "There is no DAO contract upgrade proposal in progress"
+            );
+            daoContractUpdatesNotApplied.forEach((update) => {
+              delete proposedUpdates[update.id];
+            });
+            setProposedUpdates(proposedUpdates);
+          }
+        });
       }
     });
   });

@@ -234,6 +234,14 @@ test("should update sputnik-dao contract", async ({ page }) => {
     await page.getByRole("button", { name: "Confirm" })
   ).not.toBeVisible();
 
+  await page.reload();
+  await expect(
+    await page.getByRole("button", { name: "Review", disabled: true })
+  ).toBeVisible();
+  await expect(
+    page.getByText("New system updates published")
+  ).not.toBeVisible();
+
   await page.goto(
     `https://${instanceName}.near.page/?page=settings&tab=pending-requests`
   );
@@ -241,6 +249,65 @@ test("should update sputnik-dao contract", async ({ page }) => {
   await expect(
     await page.getByText("Upgrade sputnik-dao contract")
   ).toBeVisible();
+
+  await page.getByRole("button", { name: "Details" }).click();
+  await expect(
+    await page.getByText("Update to latest sputnik-dao contract")
+  ).toBeVisible();
+
+  await page.getByRole("button", { name: "Cancel" }).click();
+  await page.getByRole("button", { name: "Reject" }).click();
+  await expect(await page.getByText("Confirm your vote")).toBeVisible();
+  await page.getByRole("button", { name: "Confirm" }).click();
+  await expect(await page.getByText("Confirm transaction")).toBeVisible();
+  await page.getByRole("button", { name: "Confirm" }).click();
+
+  await expect(await page.getByText("Awaiting transaction")).not.toBeVisible({
+    timeout: 15_000,
+  });
+
+  // After the upgrade proposal was rejected, it should be possible to create a new upgrade proposal based on the same update
+
+  await page.goto(
+    `https://${instanceName}.near.page/?page=settings&tab=system-updates`
+  );
+
+  await expect(page.getByText("New system updates published")).toBeVisible();
+  await expect(await page.getByRole("link", { name: "Review" })).toBeVisible({
+    timeout: 10_000,
+  });
+  await expect(await page.getByText("Available Updates")).toBeEnabled();
+
+  await expect(
+    page.getByText("Update to latest sputnik-dao contract")
+  ).toBeVisible({
+    timeout: 10_000,
+  });
+
+  await page.locator("button", { hasText: "Review" }).click();
+  await page.getByRole("button", { name: "Yes, proceed" }).click();
+
+  await page.getByRole("button", { name: "Confirm" }).click();
+  await expect(
+    await page.getByRole("button", { name: "Confirm" })
+  ).not.toBeVisible();
+
+  await page.reload();
+  await expect(
+    await page.getByRole("button", { name: "Review", disabled: true })
+  ).toBeVisible();
+  await expect(
+    page.getByText("New system updates published")
+  ).not.toBeVisible();
+
+  await page.goto(
+    `https://${instanceName}.near.page/?page=settings&tab=pending-requests`
+  );
+
+  await expect(
+    await page.getByText("Upgrade sputnik-dao contract")
+  ).toBeVisible();
+
   await page.getByRole("button", { name: "Details" }).click();
   await expect(
     await page.getByText("Update to latest sputnik-dao contract")
@@ -256,6 +323,8 @@ test("should update sputnik-dao contract", async ({ page }) => {
   await expect(await page.getByText("Awaiting transaction")).not.toBeVisible({
     timeout: 15_000,
   });
+
+  // The update should now have been moved to the history
 
   await page.goto(
     `https://${instanceName}.near.page/?page=settings&tab=system-updates`

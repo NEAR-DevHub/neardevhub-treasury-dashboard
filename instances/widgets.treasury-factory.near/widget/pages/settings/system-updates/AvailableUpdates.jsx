@@ -342,6 +342,7 @@ return (
                     classNames: {
                       root: "btn btn-success shadow-none",
                     },
+                    disabled: update.hasActiveProposal,
                     label: "Review",
                     onClick: () => {
                       setShowReviewModalForUpdate(update);
