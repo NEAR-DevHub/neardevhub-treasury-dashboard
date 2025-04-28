@@ -369,14 +369,18 @@ return (
               !isUsernameValid,
             label: "Submit",
             onClick: async () => {
-              fetchProposals().then((proposals) => {
-                if (proposals.length > 0) {
-                  setProposals(proposals);
-                  setShowConfirmModal(true);
-                } else {
-                  onSubmitClick();
-                }
-              });
+              if (isTreasuryFactory) {
+                onSubmitClick();
+              } else {
+                fetchProposals().then((proposals) => {
+                  if (proposals.length > 0) {
+                    setProposals(proposals);
+                    setShowConfirmModal(true);
+                  } else {
+                    onSubmitClick();
+                  }
+                });
+              }
             },
             loading: isTxnCreated,
           }}

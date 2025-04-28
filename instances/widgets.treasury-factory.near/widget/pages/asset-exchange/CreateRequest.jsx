@@ -71,6 +71,7 @@ useEffect(() => {
 }, [isTxnCreated, lastProposalId]);
 
 function fillTxn(proposalDetails, args, isStorageDeposit) {
+  const proposalBond = daoPolicy?.proposal_bond || 0;
   if (isStorageDeposit) {
     return args.functionCalls.map((call) => ({
       contractName: args.receiverId,
@@ -111,6 +112,7 @@ function fillTxn(proposalDetails, args, isStorageDeposit) {
           },
         },
         gas: gas,
+        deposit: proposalBond,
       },
     ];
   }

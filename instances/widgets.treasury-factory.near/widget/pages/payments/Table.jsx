@@ -81,20 +81,23 @@ const Container = styled.div`
   }
 `;
 
+function updateVoteSuccess(status, proposalId) {
+  props.setToastStatus(status);
+  props.setVoteProposalId(proposalId);
+  props.onSelectRequest(null);
+  refreshTableData();
+}
+
 function checkProposalStatus(proposalId) {
   Near.asyncView(treasuryDaoID, "get_proposal", {
     id: proposalId,
   })
     .then((result) => {
-      props.setToastStatus(result.status);
-      props.setVoteProposalId(proposalId);
-      refreshTableData();
+      updateVoteSuccess(result.status, proposalId);
     })
     .catch(() => {
       // deleted request (thus proposal won't exist)
-      props.setToastStatus("Removed");
-      props.setVoteProposalId(proposalId);
-      refreshTableData();
+      updateVoteSuccess("Removed", proposalId);
     });
 }
 

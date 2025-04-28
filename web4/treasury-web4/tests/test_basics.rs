@@ -121,7 +121,8 @@ async fn test_update_widgets() -> Result<(), Box<dyn std::error::Error>> {
     let contract_wasm = near_workspaces::compile_project("./").await?;
 
     let instance_contract = sandbox
-        .import_contract(&"petersalomonsen.near".parse().unwrap(), &mainnet)
+        .import_contract(&"webassemblymusic-treasury.near".parse().unwrap(), &mainnet)
+        .initial_balance(NearToken::from_near(5))
         .transact()
         .await?;
     let instance_account = instance_contract.as_account();
@@ -221,7 +222,8 @@ async fn test_update_widgets_and_set_social_metadata_defaults(
     let contract_wasm = near_workspaces::compile_project("./").await?;
 
     let instance_contract = sandbox
-        .import_contract(&"petersalomonsen.near".parse().unwrap(), &mainnet)
+        .import_contract(&"webassemblymusic-treasury.near".parse().unwrap(), &mainnet)
+        .initial_balance(NearToken::from_near(5))
         .transact()
         .await?;
     let instance_account = instance_contract.as_account();
@@ -378,6 +380,156 @@ async fn test_update_widgets_and_set_social_metadata_defaults(
         .contains("<meta property=\"og:image\" content=\"https://ipfs.near.social/ipfs/bafkreiefdkigadpkpccreqfnhut2li2nmf3alhz7c3wadveconelisnksu\" />"));
     assert!(body_string
         .contains("<meta name=\"twitter:image\" content=\"https://ipfs.near.social/ipfs/bafkreiefdkigadpkpccreqfnhut2li2nmf3alhz7c3wadveconelisnksu\" />"));
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_update_app_widget() -> Result<(), Box<dyn std::error::Error>> {
+    const SOCIALDB_ACCOUNT: &str = "social.near";
+    const WIDGET_REFERENCE_ACCOUNT_ID: &str = "bootstrap.treasury-factory.near";
+
+    let mainnet = near_workspaces::mainnet().await?;
+    let sandbox = near_workspaces::sandbox().await?;
+    let contract_wasm = near_workspaces::compile_project("./").await?;
+
+    let instance_contract = sandbox
+        .import_contract(&"webassemblymusic-treasury.near".parse().unwrap(), &mainnet)
+        .initial_balance(NearToken::from_near(5))
+        .transact()
+        .await?;
+    let instance_account = instance_contract.as_account();
+    let deploy_instance_contract_result = instance_account.deploy(&contract_wasm).await?;
+    assert!(deploy_instance_contract_result.is_success());
+
+    let reference_widget_contract = sandbox
+        .import_contract(&WIDGET_REFERENCE_ACCOUNT_ID.parse().unwrap(), &mainnet)
+        .initial_balance(NearToken::from_near(20))
+        .transact()
+        .await?;
+
+    let socialdb = sandbox
+        .import_contract(&SOCIALDB_ACCOUNT.parse().unwrap(), &mainnet)
+        .initial_balance(NearToken::from_near(10000))
+        .transact()
+        .await?;
+
+    let init_socialdb_result = socialdb.call("new").max_gas().transact().await?;
+    assert!(init_socialdb_result.is_success());
+
+    let init_socialdb_result = socialdb
+        .call("set_status")
+        .args_json(json!({"status": "Live"}))
+        .max_gas()
+        .transact()
+        .await?;
+    assert!(init_socialdb_result.is_success());
+
+    let reference_widget_data = json!({
+        reference_widget_contract.id().as_str(): {
+            "widget": {
+                "app": "Hello",
+                "config": "Goodbye"
+            }
+        }
+    });
+
+    let social_set_result = reference_widget_contract
+        .as_account()
+        .call(socialdb.id(), "set")
+        .args_json(json!({
+            "data": reference_widget_data
+        }))
+        .deposit(NearToken::from_near(2))
+        .transact()
+        .await?;
+    assert!(social_set_result.is_success());
+
+    instance_account
+        .call(instance_account.id(), "update_widgets")
+        .args_json(json!({
+            "widget_reference_account_id": WIDGET_REFERENCE_ACCOUNT_ID,
+            "social_db_account_id": SOCIALDB_ACCOUNT,
+            "set_social_metadata_defaults": true
+        }))
+        .deposit(NearToken::from_near(2))
+        .max_gas()
+        .transact()
+        .await?
+        .into_result()
+        .unwrap();
+
+    let deployed_widgets = socialdb
+        .call("get")
+        .args_json(json!({
+            "keys": [format!("{}/widget/**", instance_account.id())]
+        }))
+        .view()
+        .await?;
+    let deployed_widgets_json =
+        Value::from_str(String::from_utf8(deployed_widgets.result).unwrap().as_str()).unwrap();
+
+    assert_eq!(
+        deployed_widgets_json[instance_account.id().as_str()]["widget"]["app"][""],
+        reference_widget_data[reference_widget_contract.id().as_str()]["widget"]["app"]
+    );
+    assert_eq!(
+        deployed_widgets_json[instance_account.id().as_str()]["widget"]["config"],
+        reference_widget_data[reference_widget_contract.id().as_str()]["widget"]["config"]
+    );
+
+    let changed_reference_widget_data = json!({
+        reference_widget_contract.id().as_str(): {
+            "widget": {
+                "app": "Hello changed",
+                "config": "Goodbye changed"
+            }
+        }
+    });
+
+    let social_set_result = reference_widget_contract
+        .as_account()
+        .call(socialdb.id(), "set")
+        .args_json(json!({
+            "data": changed_reference_widget_data
+        }))
+        .deposit(NearToken::from_near(2))
+        .transact()
+        .await?;
+    assert!(social_set_result.is_success());
+
+    let update_app_widget_result = instance_account
+        .call(instance_account.id(), "update_app_widget")
+        .max_gas()
+        .transact()
+        .await?
+        .into_result()
+        .unwrap();
+
+    assert!(
+        update_app_widget_result.failures().len() == 0,
+        "Failures: {:?}",
+        update_app_widget_result.failures()
+    );
+
+    let deployed_widgets = socialdb
+        .call("get")
+        .args_json(json!({
+            "keys": [format!("{}/widget/**", instance_account.id())]
+        }))
+        .view()
+        .await?;
+    let deployed_widgets_json =
+        Value::from_str(String::from_utf8(deployed_widgets.result).unwrap().as_str()).unwrap();
+
+    assert_eq!(
+        deployed_widgets_json[instance_account.id().as_str()]["widget"]["app"][""],
+        changed_reference_widget_data[reference_widget_contract.id().as_str()]["widget"]["app"]
+    );
+    assert_eq!(
+        deployed_widgets_json[instance_account.id().as_str()]["widget"]["config"],
+        reference_widget_data[reference_widget_contract.id().as_str()]["widget"]["config"]
+    );
 
     Ok(())
 }

@@ -5,6 +5,8 @@ const updateRegistry =
 
 const STORAGE_KEY_FINISHED_UPDATES = "FINISHED_UPDATES";
 const UPDATE_TYPE_WEB4_CONTRACT = "Web4 Contract";
+const UPDATE_TYPE_WIDGET = "Widgets";
+const UPDATE_TYPE_POLICY = "Policy";
 
 const finishedUpdates = JSON.parse(
   Storage.get(STORAGE_KEY_FINISHED_UPDATES) ?? "{}"
@@ -23,6 +25,8 @@ return {
   updatesNotApplied,
   hasUpdates: updatesNotApplied.length > 0,
   UPDATE_TYPE_WEB4_CONTRACT,
+  UPDATE_TYPE_WIDGET,
+  UPDATE_TYPE_POLICY,
   finishedUpdates,
   setFinishedUpdates: (finishedUpdates) => {
     Storage.set(STORAGE_KEY_FINISHED_UPDATES, JSON.stringify(finishedUpdates));

@@ -1,6 +1,7 @@
 const { instance } = props;
 const [showReviewModalForUpdate, setShowReviewModalForUpdate] = useState(null);
 const [web4isUpToDate, setWeb4isUpToDate] = useState(false);
+const [widgetIsUpToDate, setWidgetIsUpToDate] = useState(false);
 
 const { Modal, ModalContent, ModalHeader, ModalFooter } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.modal"
@@ -10,13 +11,27 @@ const {
   finishedUpdates,
   setFinishedUpdates,
   UPDATE_TYPE_WEB4_CONTRACT,
+  UPDATE_TYPE_WIDGET,
+  UPDATE_TYPE_POLICY,
 } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.system-updates.UpdateNotificationTracker"
 ) ?? { updatesNotApplied: [], setFinishedUpdates: () => {} };
 
+const { checkIfPolicyIsUpToDate, applyPolicyUpdate } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.system-updates.PolicyUpdate"
+) ?? { checkIfPolicyIsUpToDate: () => {} };
+
+checkIfPolicyIsUpToDate(instance);
+
 if (web4isUpToDate) {
   updatesNotApplied
     .filter((update) => update.type === UPDATE_TYPE_WEB4_CONTRACT)
+    .forEach((update) => (finishedUpdates[update.id] = true));
+  setFinishedUpdates(finishedUpdates);
+}
+if (widgetIsUpToDate) {
+  updatesNotApplied
+    .filter((update) => update.type === UPDATE_TYPE_WIDGET)
     .forEach((update) => (finishedUpdates[update.id] = true));
   setFinishedUpdates(finishedUpdates);
 }
@@ -41,6 +56,75 @@ const Container = styled.div`
     overflow-x: auto;
   }
 `;
+
+async function checkForWidgetUpdate() {
+  const BOOTSTRAP_WIDGET_ACCOUNT = "bootstrap.treasury-factory.near";
+  asyncFetch(`${REPL_RPC_URL}`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: "dontcare",
+      method: "query",
+      params: {
+        request_type: "call_function",
+        finality: "final",
+        account_id: "social.near",
+        method_name: "get",
+        args_base64: btoa(
+          JSON.stringify({
+            keys: [`${BOOTSTRAP_WIDGET_ACCOUNT}/widget/app`],
+          })
+        ),
+      },
+    }),
+  }).then((response) => {
+    const bootstrap_widget_content = Buffer.from(
+      new Uint8Array(response.body.result.result)
+    ).toString("utf-8");
+
+    asyncFetch(`${REPL_RPC_URL}`, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: "dontcare",
+        method: "query",
+        params: {
+          request_type: "call_function",
+          finality: "final",
+          account_id: "social.near",
+          method_name: "get",
+          args_base64: btoa(
+            JSON.stringify({
+              keys: [`${instance}/widget/app`],
+            })
+          ),
+        },
+      }),
+    }).then((response) => {
+      const instance_widget_content = Buffer.from(
+        new Uint8Array(response.body.result.result)
+      ).toString("utf-8");
+      if (
+        instance_widget_content ===
+        bootstrap_widget_content.replaceAll(BOOTSTRAP_WIDGET_ACCOUNT, instance)
+      ) {
+        console.log("The widget content is identical.");
+        setWidgetIsUpToDate(true);
+      } else {
+        console.log("The widget content is different.");
+        setWidgetIsUpToDate(false);
+      }
+    });
+  });
+}
 
 async function checkForWeb4ContractUpdate() {
   asyncFetch(`${REPL_RPC_URL}`, {
@@ -110,6 +194,10 @@ if (
   checkForWeb4ContractUpdate();
 }
 
+if (updatesNotApplied.find((update) => update.type === UPDATE_TYPE_WIDGET)) {
+  checkForWidgetUpdate();
+}
+
 function applyWeb4ContractUpdate() {
   setShowReviewModalForUpdate(null);
   Near.call([
@@ -119,6 +207,18 @@ function applyWeb4ContractUpdate() {
       args: {},
       gas: 300_000_000_000_000,
       deposit: 0,
+    },
+  ]);
+}
+
+function applyWidgetUpdate() {
+  setShowReviewModalForUpdate(null);
+  Near.call([
+    {
+      contractName: instance,
+      methodName: "update_app_widget",
+      args: {},
+      gas: 300_000_000_000_000,
     },
   ]);
 }
@@ -176,7 +276,22 @@ function updateModal(update) {
           props={{
             classNames: { root: "theme-btn" },
             label: "Yes, proceed",
-            onClick: applyWeb4ContractUpdate,
+            onClick:
+              update.type === UPDATE_TYPE_WEB4_CONTRACT
+                ? applyWeb4ContractUpdate
+                : update.type === UPDATE_TYPE_WIDGET
+                ? applyWidgetUpdate
+                : update.type === UPDATE_TYPE_POLICY
+                ? () => {
+                    setShowReviewModalForUpdate(null);
+                    applyPolicyUpdate(instance, update);
+                  }
+                : () => {
+                    console.log(
+                      "No action defined for this update type",
+                      update.type
+                    );
+                  },
           }}
         />
       </ModalFooter>
