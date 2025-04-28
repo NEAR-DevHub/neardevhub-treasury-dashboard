@@ -353,6 +353,7 @@ test("update infinex.sputnik-dao.near", async ({ page }) => {
     await page.getByRole("link", { name: "Review" })
   ).not.toBeVisible({ timeout: 15_000 });
 
+  await page.getByText("Available Updates").click();
   await expect(
     page.getByText("Update to latest sputnik-dao contract")
   ).not.toBeVisible();
