@@ -135,6 +135,7 @@ function checkIfDAOContractIsUpToDate(instance) {
           "The DAO contract hash is different from the factory default"
         );
 
+        // TODO: Consider using indexer to get the proposals instead of asyncView
         Near.asyncView(treasuryDaoID, "get_proposals", {
           from_index: 0,
           limit: 20,
