@@ -22,12 +22,14 @@ const {
   decodeProposalDescription,
   formatSubmissionTimeStamp,
   getApproversAndThreshold,
+  accountToLockup,
 } = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
 
 const { treasuryDaoID, showKYC } = VM.require(`${instance}/widget/config.data`);
 
 const [proposalData, setProposalData] = useState(null);
 const [isDeleted, setIsDeleted] = useState(false);
+const [lockupNearBalances, setLockupNearBalances] = useState(null);
 
 const isCompactVersion = props.isCompactVersion;
 const accountId = context.accountId;
@@ -38,6 +40,19 @@ const transferApproversGroup = getApproversAndThreshold(
 );
 
 const nearBalances = getNearBalances(treasuryDaoID);
+const lockupContract = accountToLockup(treasuryDaoID);
+
+useEffect(() => {
+  if (lockupContract) {
+    Near.asyncView(lockupContract, "get_liquid_owners_balance").then((res) => {
+      setLockupNearBalances((prev) => ({
+        ...prev,
+        available: res,
+      }));
+    });
+  }
+}, [lockupContract]);
+
 const deleteGroup = getApproversAndThreshold(
   treasuryDaoID,
   "transfer",
@@ -117,6 +132,7 @@ useEffect(() => {
           proposalId,
           args,
           status,
+          isLockupTransfer: isFunctionType,
         });
       })
       .catch(() => {
@@ -377,7 +393,9 @@ const VotesDetails = () => {
               hasDeletePermission,
               hasVotingPermission,
               proposalCreator: proposalData?.proposer,
-              nearBalance: nearBalances.available,
+              nearBalance: proposalData?.isLockupTransfer
+                ? lockupNearBalances.available
+                : nearBalances.available,
               currentAmount: proposalData?.args?.amount,
               currentContract: proposalData?.args?.token_id,
               requiredVotes,
@@ -584,7 +602,11 @@ return (
       >
         <div
           className="flex-3 d-flex flex-column gap-3"
-          style={{ minWidth: 200, height: "fit-content" }}
+          style={{
+            minWidth: 200,
+            height: "fit-content",
+            width: "-webkit-fill-available",
+          }}
         >
           <div className="card card-body d-flex flex-column gap-2">
             <h6 className="mb-0 flex-1">{proposalData?.title}</h6>
@@ -656,7 +678,7 @@ return (
         </div>
         <div
           className={"flex-2 d-flex flex-column gap-10px"}
-          style={{ minWidth: 200 }}
+          style={{ minWidth: 200, width: "-webkit-fill-available" }}
         >
           {!isCompactVersion && <VotesDetails />}
           <div

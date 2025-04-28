@@ -7,10 +7,10 @@ import {
 import { createDAOargs } from "../../util/sputnikdao.js";
 import nearApi from "near-api-js";
 
-test("should update treasury factory with new web4 contract and self upgrade instance", async ({
+test("should update sputnik-dao policy and upgrade instance with it", async ({
   page,
 }) => {
-  test.setTimeout(150_000);
+  test.setTimeout(120_000);
 
   await cacheCDN(page);
 
@@ -20,7 +20,7 @@ test("should update treasury factory with new web4 contract and self upgrade ins
   const widget_reference_account_id = DEFAULT_WIDGET_REFERENCE_ACCOUNT_ID;
   await sandbox.setupDefaultWidgetReferenceAccount();
 
-  const instanceName = "theupgradable";
+  const instanceName = "policyupdater";
 
   const instanceAccountId = `${instanceName}.near`;
 
@@ -58,12 +58,29 @@ test("should update treasury factory with new web4 contract and self upgrade ins
     return [
       {
         id: 1,
-        createdDate: "2025-03-28",
+        createdDate: "2025-03-25",
         version: "n/a",
-        type: "Web4 Contract",
-        summary: "Fixed dark theme, added lockup to all instances",
+        type: "Policy",
+        summary: "Change role name to Requestor",
         details: "",
-        votingRequired: false,
+        checkPolicy: (policy) => {
+          if (policy.roles[0].name === "Requestor") {
+            return true;
+          } else {
+           return false;
+          }
+        },
+        getUpdatedPolicyProposal: (policy) => {
+          policy.roles[0].name = "Requestor";
+          return {
+            updatedPolicy: policy,
+            description: {
+              "title": "Change role name",
+              "summary": "Change name of the first role to requestor",
+            },
+          };
+        },
+        votingRequired: true,
       }
   ];
   `
@@ -88,36 +105,48 @@ test("should update treasury factory with new web4 contract and self upgrade ins
     timeout: 20_000,
   });
 
-  await page.locator("#dropdownIcon").click();
-  await expect(await page.getByText("Select Gateway")).toBeVisible();
-  await page.waitForTimeout(500);
-  await page.locator("#dropdownIcon").click();
+  await expect(page.getByText("Change role name to Requestor")).not.toBeVisible(
+    {
+      timeout: 10_000,
+    }
+  );
 
-  await expect(page.getByText("Web4 Contract")).not.toBeVisible({
-    timeout: 10_000,
-  });
-
-  // Visiting the updates page above should have automatically marked the web4 contract as up to date, and notification banner should disappear
+  // Visiting the updates page above should have automatically marked the policy as up to date, and notification banner should disappear
   await page.goto(`https://${instanceName}.near.page/`);
   await page.waitForTimeout(500);
   await expect(
     await page.getByRole("link", { name: "Review" })
   ).not.toBeVisible();
 
-  // Deploy the new treasury factory with an updated web4 contract
-
-  await sandbox.deployNewTreasuryFactoryWithUpdatedWeb4Contract(page);
   await sandbox.modifyWidget(
     "widgets.treasury-factory.near/widget/pages.settings.system-updates.UpdateRegistry",
     `
     return [
       {
-          id: 99999999,
-          createdDate: "2025-04-05",
-          version: "n/a",
-          type: "Web4 Contract",
-          summary: "contract update test",
-          votingRequired: false
+        id: 2,
+        createdDate: "2025-04-21",
+        version: "n/a",
+        type: "Policy",
+        summary: "Change Requestor role name to Proposer",
+        details: "",
+        checkPolicy: (policy) => {
+          if (policy.roles[0].name === "Proposer") {
+            return true;
+          } else {
+           return false;
+          }
+        },
+        getUpdatedPolicyProposal: (policy) => {
+          policy.roles[0].name = "Proposer";
+          return {
+            updatedPolicy: policy,
+            description: {
+              "title": "Change role name",
+              "summary": "Change name of the first role to proposer",
+            },
+          };
+        },
+        votingRequired: true,
       }
   ];
   `
@@ -132,7 +161,9 @@ test("should update treasury factory with new web4 contract and self upgrade ins
 
   await expect(await page.getByText("Available Updates")).toBeEnabled();
 
-  await expect(page.getByText("Web4 Contract")).toBeVisible({
+  await expect(
+    page.getByText("Change Requestor role name to Proposer")
+  ).toBeVisible({
     timeout: 10_000,
   });
 
@@ -144,36 +175,18 @@ test("should update treasury factory with new web4 contract and self upgrade ins
     await page.getByRole("button", { name: "Confirm" })
   ).not.toBeVisible();
 
-  await page.reload();
+  await page.goto(
+    `https://${instanceName}.near.page/?page=settings&tab=pending-requests`
+  );
 
-  await expect(await page.getByText("Available Updates")).toBeEnabled();
-
-  await expect(page.getByText("Web4 Contract")).not.toBeVisible({
-    timeout: 10_000,
-  });
-
-  await page.locator("#dropdownIcon").click();
-  await expect(await page.getByText("Gateway Select")).toBeVisible({
-    timeout: 15_000,
-  });
-
-  await page.waitForTimeout(500);
-  await page.goto(`https://${instanceName}.near.page/`);
-
-  await page.waitForTimeout(500);
+  await expect(await page.getByText("Change role name")).toBeVisible();
+  await page.getByRole("button", { name: "Details" }).click();
   await expect(
-    await page.getByRole("link", { name: "Review" })
-  ).not.toBeVisible();
-
-  await page.getByText("Settings").click();
-  await page.getByText("System updates").click();
-  await page.getByText("History").click();
-  await expect(page.getByText("2025-04-05")).toBeVisible();
-  await expect(page.getByText("99999999")).toBeVisible();
-  await expect(page.getByText("contract update test")).toBeVisible();
+    await page.getByText("Change name of the first role to proposer")
+  ).toBeVisible();
+  await expect(page.getByRole("code")).toContainText('"name": "Proposer"');
 
   await page.waitForTimeout(500);
-
   await page.unrouteAll({ behavior: "ignoreErrors" });
   await sandbox.quitSandbox();
 });
