@@ -3,6 +3,7 @@ import { cacheCDN, test } from "../../util/test.js";
 import {
   DEFAULT_WIDGET_REFERENCE_ACCOUNT_ID,
   SandboxRPC,
+  SPUTNIK_DAO_FACTORY_ID,
 } from "../../util/sandboxrpc.js";
 import { createDAOargs } from "../../util/sputnikdao.js";
 import nearApi from "near-api-js";
@@ -28,7 +29,7 @@ test("should update sputnik-dao policy and upgrade instance with it", async ({
     contractId: "treasury-factory.near",
     methodName: "create_instance",
     args: {
-      sputnik_dao_factory_account_id: "sputnik-dao.near",
+      sputnik_dao_factory_account_id: SPUTNIK_DAO_FACTORY_ID,
       social_db_account_id: "social.near",
       widget_reference_account_id: widget_reference_account_id,
       name: instanceName,
