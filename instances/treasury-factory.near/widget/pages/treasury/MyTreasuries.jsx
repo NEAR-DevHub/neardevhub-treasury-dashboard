@@ -227,6 +227,8 @@ const TokenImage = styled.div`
   width: 32px;
 `;
 
+const nearPrice = fetch(`${REPL_BACKEND_API}/near-price`)?.body;
+
 const BalanceComponent = ({ daoId, isDraft }) => {
   const maxShow = 3;
   const nearBalance = isDraft ? { totalParsed: 0 } : getNearBalances(daoId);
@@ -235,10 +237,11 @@ const BalanceComponent = ({ daoId, isDraft }) => {
     : fetch(`${REPL_BACKEND_API}/ft-tokens/?account_id=${daoId}`)?.body ?? [
         { totalCumulativeAmt: "", fts: [] },
       ];
+  const nearBalanceUSD = Big(nearBalance?.totalParsed ?? 0).mul(
+    nearPrice ?? "1"
+  );
   const totalBalance = Number(
-    Big(nearBalance?.totalParsed ?? 0)
-      .plus(Big(ftTokens?.totalCumulativeAmt ?? "0"))
-      .toFixed(2)
+    nearBalanceUSD.plus(Big(ftTokens?.totalCumulativeAmt ?? "0")).toFixed(2)
   ).toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
