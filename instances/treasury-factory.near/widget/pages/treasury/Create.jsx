@@ -1,4 +1,4 @@
-let { step } = props;
+let { step, ...propsToSend } = props;
 
 const widgetBasePath = `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.create-treasury`;
 
@@ -9,7 +9,7 @@ const existingDrafts =
   JSON.parse(
     Storage.get(
       "TREASURY_DRAFTS",
-      `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.treasury.Create`
+      `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app`
     ) ?? "[]"
   ) ?? [];
 
@@ -17,13 +17,13 @@ const currentDraft =
   JSON.parse(
     Storage.get(
       "CURRENT_DRAFT",
-      `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.treasury.MyTreasuries`
+      `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app`
     ) ?? "{}"
   ) ?? null;
 
 function removeDeployedTreasuryFromDraft(accountName) {
   const updated = existingDrafts.filter((d) => d.accountName !== accountName);
-  Storage.set("TREASURY_DRAFTS", JSON.stringify(updated));
+  props.updateTreasuryDrafts(updated);
 }
 
 useEffect(() => {
@@ -32,14 +32,14 @@ useEffect(() => {
       ...existingDrafts.filter((d) => d.accountName !== formFields.accountName),
       formFields,
     ];
-
-    Storage.set("TREASURY_DRAFTS", JSON.stringify(updatedDrafts));
+    props.updateTreasuryDrafts(updatedDrafts);
   }
 }, [step]);
 
 useEffect(() => {
-  if (currentDraft) {
+  if (Object.keys(currentDraft ?? {}).length > 0) {
     setFormFields(currentDraft);
+    props.updateCurrentDraft(null);
   }
 }, [currentDraft]);
 

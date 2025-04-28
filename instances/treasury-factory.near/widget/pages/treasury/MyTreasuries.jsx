@@ -13,7 +13,7 @@ const accountId = context.accountId;
 const showCongratsModal = props.showCongratsModal;
 const formFields = props.formFields;
 
-const [userTreasuries, setUserTreasuires] = useState(null);
+const [userTreasuries, setUserTreasuries] = useState(null);
 const [otherDaos, setOtherDaos] = useState([]);
 const [isExpanded, setExpanded] = useState(false);
 
@@ -26,7 +26,7 @@ const draftTreasuries =
   JSON.parse(
     Storage.get(
       "TREASURY_DRAFTS",
-      `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.treasury.Create`
+      `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app`
     ) ?? "[]"
   ) ?? [];
 
@@ -64,7 +64,7 @@ useEffect(() => {
           });
         }
       }
-      setUserTreasuires((prev) =>
+      setUserTreasuries((prev) =>
         mergeUniqueTreasuries(prev || [], withTreasury)
       );
       setOtherDaos(withoutTreasury);
@@ -85,7 +85,7 @@ useEffect(() => {
       },
     }));
 
-    setUserTreasuires((prev) =>
+    setUserTreasuries((prev) =>
       mergeUniqueTreasuries(prev || [], parsedDrafts)
     );
   }
@@ -322,17 +322,18 @@ const SuccessModal = () => {
 const TreasuryCard = ({ treasury, hasTreasury }) => {
   const lockupContract = accountToLockup(treasury.daoId);
   const primaryColor = treasury.config.metadata.primaryColor ?? "#01BF7A";
+  const isDraft = treasury.isDraft;
   return (
     <div
       className={
         "card h-100 w-100 d-flex flex-column " +
-        (hasTreasury && " custom-hover")
+        (hasTreasury && !isDraft && " custom-hover")
       }
       key={treasury.daoId}
     >
       <div
         className="p-3 d-flex gap-3 align-items-center"
-        style={{ height: "80px", overflow: "hidden" }}
+        style={{ height: "80px" }}
       >
         <img
           src={
@@ -347,14 +348,45 @@ const TreasuryCard = ({ treasury, hasTreasury }) => {
         <div className="d-flex flex-column">
           <div className="h6 mb-0">
             {treasury.config.name}
-            {treasury.isDraft && (
-              <span class="badge badge-secondary">Draft</span>
-            )}
+            {isDraft && <span class="badge badge-secondary">Draft</span>}
           </div>
           <div className="text-secondary text-sm">
             @{treasury.instanceAccount}
           </div>
         </div>
+        {isDraft && (
+          <div className="dropdown ms-auto">
+            <div
+              className="cursor-pointer"
+              id="dropdownMenuButton"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
+            >
+              <i className="bi bi-three-dots"></i>
+            </div>
+            <div
+              className="dropdown-menu dropdown-menu-end dropdown-menu-lg-start px-2 shadow w-100"
+              aria-labelledby="dropdownMenuButton"
+            >
+              <div className="dropdown-item cursor-pointer">
+                <div
+                  onClick={() => {
+                    const updatedTreasuries = userTreasuries.filter(
+                      (i) => i.daoId !== treasury.daoId
+                    );
+                    const updatedDrafts = updatedTreasuries.filter(
+                      (i) => i.isDraft
+                    );
+                    props.updateTreasuryDrafts(updatedDrafts);
+                    setUserTreasuries(updatedTreasuries);
+                  }}
+                >
+                  Delete Draft
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="border-top flex-grow-1 p-3 d-flex flex-column gap-3">
@@ -376,20 +408,15 @@ const TreasuryCard = ({ treasury, hasTreasury }) => {
 
         <div className="mt-auto d-flex flex-column gap-3">
           <div className="border border-1 p-3 rounded-3 d-flex flex-column gap-2 justfiy-self-end">
-            <BalanceComponent
-              daoId={treasury.daoId}
-              isDraft={treasury.isDraft}
-            />
+            <BalanceComponent daoId={treasury.daoId} isDraft={isDraft} />
           </div>
-          {treasury.isDraft && (
+          {isDraft && (
             <a
               className="btn btn-primary w-100"
-              href={`?page=create`}
+              href={`?page=create&step=3`}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={() =>
-                Storage.set("CURRENT_DRAFT", JSON.stringify(treasury))
-              }
+              onClick={() => props.updateCurrentDraft(treasury)}
             >
               Complete Setup
             </a>
@@ -428,10 +455,9 @@ const TreasuryCardList = ({ treasuries, hasTreasury }) => {
         const cardContent = (
           <TreasuryCard treasury={treasury} hasTreasury={hasTreasury} />
         );
-
         return (
           <div className="col-md-4" key={treasury.daoId}>
-            {hasTreasury ? (
+            {hasTreasury && !treasury.isDraft ? (
               <a
                 target="_blank"
                 rel="noopener noreferrer"

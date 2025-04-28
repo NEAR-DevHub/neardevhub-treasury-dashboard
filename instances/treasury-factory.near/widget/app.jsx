@@ -29,6 +29,23 @@ if (typeof getUserDaos !== "function") {
 
 const propsToSend = { ...passProps };
 
+const [isLoading, setIsLoading] = useState(true);
+
+useEffect(() => {
+  setTimeout(() => {
+    setIsLoading(false);
+  }, 500);
+}, []);
+
+function updateTreasuryDrafts(treasuries) {
+  Storage.set("TREASURY_DRAFTS", JSON.stringify(treasuries));
+}
+
+function updateCurrentDraft(treasury) {
+  console.log("called", JSON.stringify(treasury));
+  Storage.set("CURRENT_DRAFT", JSON.stringify(treasury));
+}
+
 function Page() {
   if (!page) {
     const accountId = context.accountId;
@@ -40,12 +57,15 @@ function Page() {
   }
 
   const routes = (page ?? "").split(".");
+  if (isLoading) {
+    return <></>;
+  }
   switch (routes[0]) {
     case "my-treasuries": {
       return (
         <Widget
           src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.treasury.MyTreasuries"
-          props={propsToSend}
+          props={{ ...propsToSend, updateTreasuryDrafts, updateCurrentDraft }}
         />
       );
     }
@@ -53,11 +73,12 @@ function Page() {
       return (
         <Widget
           src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.treasury.Create"
-          props={propsToSend}
+          props={{ ...propsToSend, updateTreasuryDrafts, updateCurrentDraft }}
         />
       );
   }
 }
+
 return (
   <Theme>
     <ThemeContainer>
