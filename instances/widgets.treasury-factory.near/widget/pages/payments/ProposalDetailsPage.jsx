@@ -603,7 +603,11 @@ return (
       >
         <div
           className="flex-3 d-flex flex-column gap-3"
-          style={{ minWidth: 200, height: "fit-content" }}
+          style={{
+            minWidth: 200,
+            height: "fit-content",
+            width: "-webkit-fill-available",
+          }}
         >
           <div className="card card-body d-flex flex-column gap-2">
             <h6 className="mb-0 flex-1">{proposalData?.title}</h6>
@@ -675,7 +679,7 @@ return (
         </div>
         <div
           className={"flex-2 d-flex flex-column gap-10px"}
-          style={{ minWidth: 200 }}
+          style={{ minWidth: 200, width: "-webkit-fill-available" }}
         >
           {!isCompactVersion && <VotesDetails />}
           <div
