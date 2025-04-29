@@ -6,7 +6,7 @@ on:
       - main
 
 concurrency:
-  group: asset-exchange-${{ github.ref }}
+  group: payments-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:

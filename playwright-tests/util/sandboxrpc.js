@@ -5,7 +5,6 @@ import { parseNearAmount } from "near-api-js/lib/utils/format.js";
 import { KeyPairEd25519 } from "near-api-js/lib/utils/key_pair.js";
 import { getLocalWidgetSource } from "./bos-workspace.js";
 import { expect } from "@playwright/test";
-import path, { dirname } from "path";
 import { overlayMessage, removeOverlayMessage } from "./test.js";
 import { getLocalWidgetContent } from "./web4.js";
 
@@ -17,6 +16,42 @@ export const DEFAULT_WIDGET_REFERENCE_ACCOUNT_ID =
   "bootstrap.treasury-factory.near";
 
 export const TREASURY_FACTORY_ACCOUNT_ID = "treasury-factory.near";
+export const SPUTNIK_DAO_FACTORY_ID = "sputnik-dao.near";
+
+export async function setPageAuthSettings(page, accountId, keyPair) {
+  await page.evaluate(
+    ({ accountId, publicKey, privateKey }) => {
+      localStorage.setItem("near-social-vm:v01::accountId:", accountId);
+      localStorage.setItem(
+        `near-api-js:keystore:${accountId}:mainnet`,
+        privateKey
+      );
+      localStorage.setItem(
+        "near-wallet-selector:recentlySignedInWallets",
+        JSON.stringify(["my-near-wallet"])
+      );
+      localStorage.setItem(
+        "near-wallet-selector:selectedWalletId",
+        JSON.stringify("my-near-wallet")
+      );
+      localStorage.setItem(
+        "near_app_wallet_auth_key",
+        JSON.stringify({ accountId, allKeys: [publicKey] })
+      );
+      localStorage.setItem(
+        "near-wallet-selector:contract",
+        JSON.stringify({ contractId: "social.near", methodNames: [] })
+      );
+    },
+    {
+      accountId,
+      publicKey: keyPair.getPublicKey().toString(),
+      privateKey: keyPair.toString(),
+    }
+  );
+  await page.reload();
+}
+
 export class SandboxRPC {
   constructor() {
     this.modifiedWidgets = {};
@@ -60,6 +95,11 @@ export class SandboxRPC {
       TREASURY_FACTORY_ACCOUNT_ID,
       utils.KeyPair.fromString(this.secret_key)
     );
+    this.keyStore.setKey(
+      "sandbox",
+      SPUTNIK_DAO_FACTORY_ID,
+      utils.KeyPair.fromString(this.secret_key)
+    );
 
     this.near = await connect({
       networkId: "sandbox",
@@ -72,37 +112,7 @@ export class SandboxRPC {
 
   async setPageAuthSettingsWithSandboxAccountKeys(page) {
     const keyPair = await this.keyStore.getKey("sandbox", this.account_id);
-    await page.evaluate(
-      ({ accountId, publicKey, privateKey }) => {
-        localStorage.setItem("near-social-vm:v01::accountId:", accountId);
-        localStorage.setItem(
-          `near-api-js:keystore:${accountId}:mainnet`,
-          privateKey
-        );
-        localStorage.setItem(
-          "near-wallet-selector:recentlySignedInWallets",
-          JSON.stringify(["my-near-wallet"])
-        );
-        localStorage.setItem(
-          "near-wallet-selector:selectedWalletId",
-          JSON.stringify("my-near-wallet")
-        );
-        localStorage.setItem(
-          "near_app_wallet_auth_key",
-          JSON.stringify({ accountId, allKeys: [publicKey] })
-        );
-        localStorage.setItem(
-          "near-wallet-selector:contract",
-          JSON.stringify({ contractId: "social.near", methodNames: [] })
-        );
-      },
-      {
-        accountId: this.account_id,
-        publicKey: keyPair.getPublicKey().toString(),
-        privateKey: keyPair.toString(),
-      }
-    );
-    await page.reload();
+    await setPageAuthSettings(page, this.account_id, keyPair);
   }
 
   /**

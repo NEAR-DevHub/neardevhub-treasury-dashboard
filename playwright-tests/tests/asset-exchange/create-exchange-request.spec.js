@@ -208,7 +208,7 @@ test.describe("User is logged in", function () {
     ).toBeVisible();
     await expect(submitBtn).toBeEnabled();
     await submitBtn.click();
-    if (await page.getByText("High Fee Warning")) {
+    if (await page.getByText("High Fee Warning").isVisible()) {
       await page.getByRole("button", { name: "Yes" }).click();
     }
     await expect(page.getByText("Confirm Transaction").first()).toBeVisible({});
