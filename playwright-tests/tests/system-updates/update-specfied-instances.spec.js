@@ -3,9 +3,18 @@ import { test } from "../../util/test.js";
 import { redirectWeb4 } from "../../util/web4.js";
 import { setPageAuthSettings } from "../../util/sandboxrpc.js";
 import { KeyPairEd25519 } from "near-workspaces";
+import fs from "fs";
+import path from "path";
 
-test.afterEach(async ({ page }) => {
+test.afterEach(async ({ page }, testInfo) => {
   await page.unrouteAll({ behavior: "ignoreErrors" });
+  const video = await page.video();
+  if (video) {
+    const titleFile = testInfo.outputPath("test-title.txt");
+    
+    await fs.promises.writeFile(titleFile, testInfo.title);
+    console.log(`Written video title file ${titleFile}`);
+  }
 });
 
 test("should show system-update for targeted instance", async ({ page }) => {
