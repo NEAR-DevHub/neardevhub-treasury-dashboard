@@ -18,12 +18,17 @@ const proposedUpdates = JSON.parse(
   Storage.get(STORAGE_KEY_PROPOSED_UPDATES) ?? "{}"
 );
 
-const updatesNotApplied = updateRegistry
-  .filter((update) => finishedUpdates[update.id] === undefined)
-  .map((update) => ({
-    ...update,
-    hasActiveProposal: proposedUpdates[update.id] !== undefined,
-  }));
+const updatesNotAppliedForInstance = (instance) =>
+  updateRegistry
+    .filter((update) => finishedUpdates[update.id] === undefined)
+    .filter(
+      (update) =>
+        update.instances === undefined || update.instances.includes(instance)
+    )
+    .map((update) => ({
+      ...update,
+      hasActiveProposal: proposedUpdates[update.id] !== undefined,
+    }));
 
 const appliedUpdates = updateRegistry.filter(
   (update) => finishedUpdates[update.id] !== undefined
@@ -31,12 +36,16 @@ const appliedUpdates = updateRegistry.filter(
 
 return {
   appliedUpdates,
-  updatesNotApplied,
+  updatesNotAppliedForInstance,
   proposedUpdates,
-  hasUpdates:
-    updatesNotApplied.length > 0 &&
-    updatesNotApplied.filter((update) => update.hasActiveProposal).length !==
-      updatesNotApplied.length,
+  instanceHasUpdates: (instance) => {
+    const updatesNotApplied = updatesNotAppliedForInstance(instance);
+    return (
+      updatesNotApplied.length > 0 &&
+      updatesNotApplied.filter((update) => update.hasActiveProposal).length !==
+        updatesNotApplied.length
+    );
+  },
   UPDATE_TYPE_WEB4_CONTRACT,
   UPDATE_TYPE_WIDGET,
   UPDATE_TYPE_POLICY,

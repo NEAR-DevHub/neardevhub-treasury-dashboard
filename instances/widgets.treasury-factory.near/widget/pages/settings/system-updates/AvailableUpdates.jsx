@@ -7,7 +7,7 @@ const { Modal, ModalContent, ModalHeader, ModalFooter } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.modal"
 );
 const {
-  updatesNotApplied,
+  updatesNotAppliedForInstance,
   finishedUpdates,
   setFinishedUpdates,
   UPDATE_TYPE_WEB4_CONTRACT,
@@ -16,7 +16,9 @@ const {
   UPDATE_TYPE_DAO_CONTRACT,
 } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.system-updates.UpdateNotificationTracker"
-) ?? { updatesNotApplied: [], setFinishedUpdates: () => {} };
+) ?? { updatesNotAppliedForInstance: () => [], setFinishedUpdates: () => {} };
+
+const updatesNotApplied = updatesNotAppliedForInstance(instance);
 
 const { checkIfPolicyIsUpToDate, applyPolicyUpdate } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.system-updates.PolicyUpdate"
