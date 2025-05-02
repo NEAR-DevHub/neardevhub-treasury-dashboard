@@ -1,9 +1,6 @@
 import { expect } from "@playwright/test";
 import { test } from "../../util/test.js";
-import {
-  compareInstanceWeb4WithTreasuryFactory,
-  redirectWeb4,
-} from "../../util/web4.js";
+import { redirectWeb4 } from "../../util/web4.js";
 import { setPageAuthSettings } from "../../util/sandboxrpc.js";
 import { KeyPairEd25519 } from "near-workspaces";
 
