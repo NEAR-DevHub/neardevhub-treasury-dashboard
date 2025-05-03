@@ -6,10 +6,10 @@ import { KeyPairEd25519 } from "near-api-js/lib/utils/key_pair.js";
 import { getLocalWidgetSource } from "./bos-workspace.js";
 import { expect } from "@playwright/test";
 import { overlayMessage, removeOverlayMessage } from "./test.js";
-import { getLocalWidgetContent } from "./web4.js";
-import { readFile, writeFile, mkdir } from 'fs/promises';
-import { tmpdir } from 'os';
-import path from 'path';
+import { getLocalWidgetContent, redirectWeb4 } from "./web4.js";
+import { readFile, writeFile, mkdir } from "fs/promises";
+import { tmpdir } from "os";
+import path from "path";
 
 export const SPUTNIK_DAO_CONTRACT_ID = "sputnik-dao.near";
 // we don't have proposal bond for any instance (in this repo)
@@ -620,162 +620,16 @@ export class SandboxRPC {
     await this.addProposal({ daoName, args });
   }
 
-  async newRedirectWeb4() {
+  async redirectWeb4(contractId, page) {
     const treasury = contractId.split(".near")[0] + ".sputnik-dao.near";
     return await redirectWeb4({
       contractId,
       page,
       treasury,
-      networkId: 'sandbox',
+      networkId: "sandbox",
       sandboxNodeUrl: this.rpc_url,
+      modifiedWidgets: this.modifiedWidgets,
     });
-  }
-  
-  /**
-   * Redirect Web4 requests to the specified contract
-   * @param {string} contractId - The contract ID to redirect requests to
-   * @param {import('@playwright/test').Page} page - Playwright page object
-   */
-  async redirectWeb4(contractId, page) {
-    const treasury = contractId.split(".near")[0] + ".sputnik-dao.near";
-    const original_rpc_url = "https://rpc.mainnet.near.org";
-    await page.route(original_rpc_url, async (route, request) => {
-      const postData = request.postDataJSON();
-      if (postData.params.account_id === "social.near") {
-        const args = JSON.parse(atob(postData.params.args_base64));
-        const keys = args.keys;
-
-        if ((keys && keys[0].startsWith(contractId)) || keys === undefined) {
-          const response = await route.fetch({
-            url: this.rpc_url,
-            json: postData,
-          });
-          await route.fulfill({ response });
-        } else {
-          let fileContents = {};
-
-          for (const key of keys) {
-            const [account, section, contentKey] = key.split("/");
-            if (fileContents[account] === undefined) {
-              fileContents[account] = {};
-            }
-            if (fileContents[account][section] === undefined) {
-              fileContents[account][section] = {};
-            }
-
-            if (this.modifiedWidgets[key]) {
-              fileContents[account][section][contentKey] =
-                this.modifiedWidgets[key];
-            } else {
-              const content = getLocalWidgetContent(key, {
-                treasury,
-                account,
-                nodeUrl: this.rpc_url,
-              });
-
-              if (content) {
-                fileContents[account][section][contentKey] = content;
-              } else {
-                // Fetch from live RPC, store to temp folder, and use next time
-                const tempDir = path.join(tmpdir(), "live-widget-cache") ;
-                await mkdir(tempDir, { recursive: true });
-                const cacheFile = path.join(tempDir, encodeURIComponent(key) + '.json');
-                let liveContent;
-                try {
-                  // Try to read from cache first
-                  liveContent = await readFile(cacheFile, 'utf-8');
-                } catch {
-                  try {
-                    // Not cached, fetch from live RPC
-                    const liveRpcResponse = await route.fetch();
-                    const liveRpcJson = await liveRpcResponse.json();
-                    const resultArr = liveRpcJson.result?.result || [];
-                    liveContent = Buffer.from(resultArr).toString('utf-8');
-                    await writeFile(cacheFile, liveContent, 'utf-8');
-                  } catch(e) {
-                    console.log("should not happen", e);
-                  }
-                }
-                fileContents = JSON.parse(liveContent);
-              }
-            }
-          }
-
-          const json = {
-            jsonrpc: "2.0",
-            id: "dontcare",
-            result: {},
-          };
-
-          json["result"] = {
-            result: Array.from(
-              new TextEncoder().encode(JSON.stringify(fileContents))
-            ),
-          };
-          await route.fulfill({ json });
-        }
-      } else {
-        const response = await route.fetch({
-          url: this.rpc_url,
-          json: postData,
-        });
-        await route.fulfill({ response });
-      }
-    });
-
-    await page.route(
-      `https://${contractId}.page/**`,
-      async (route, request) => {
-        const path = request
-          .url()
-          .substring(`https://${contractId}.page`.length);
-        let viewResult = await this.account.viewFunction({
-          contractId,
-          methodName: "web4_get",
-          args: {
-            request: {
-              path,
-            },
-          },
-        });
-
-        if (viewResult.preloadUrls) {
-          const preloads = {};
-          for (let preloadUrl of viewResult.preloadUrls) {
-            const keys = JSON.parse(
-              decodeURIComponent(preloadUrl.split("?keys.json=")[1])
-            );
-            const preloadBody = await this.account.viewFunction({
-              contractId: "social.near",
-              methodName: "get",
-              args: {
-                keys,
-              },
-            });
-            preloads[preloadUrl] = {
-              contentType: "application/json",
-              body: btoa(JSON.stringify(preloadBody)),
-            };
-          }
-
-          viewResult = await this.account.viewFunction({
-            contractId,
-            methodName: "web4_get",
-            args: {
-              request: {
-                path,
-                preloads,
-              },
-            },
-          });
-        }
-
-        await route.fulfill({
-          contentType: viewResult.contentType,
-          body: atob(viewResult.body),
-        });
-      }
-    );
   }
 
   modifyWidget(key, content) {
