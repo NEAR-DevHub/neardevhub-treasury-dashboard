@@ -7,6 +7,9 @@ import { getLocalWidgetSource } from "./bos-workspace.js";
 import { expect } from "@playwright/test";
 import { overlayMessage, removeOverlayMessage } from "./test.js";
 import { getLocalWidgetContent } from "./web4.js";
+import { readFile, writeFile, mkdir } from 'fs/promises';
+import { tmpdir } from 'os';
+import path from 'path';
 
 export const SPUTNIK_DAO_CONTRACT_ID = "sputnik-dao.near";
 // we don't have proposal bond for any instance (in this repo)
@@ -617,6 +620,17 @@ export class SandboxRPC {
     await this.addProposal({ daoName, args });
   }
 
+  async newRedirectWeb4() {
+    const treasury = contractId.split(".near")[0] + ".sputnik-dao.near";
+    return await redirectWeb4({
+      contractId,
+      page,
+      treasury,
+      networkId: 'sandbox',
+      sandboxNodeUrl: this.rpc_url,
+    });
+  }
+  
   /**
    * Redirect Web4 requests to the specified contract
    * @param {string} contractId - The contract ID to redirect requests to
@@ -638,7 +652,7 @@ export class SandboxRPC {
           });
           await route.fulfill({ response });
         } else {
-          const fileContents = {};
+          let fileContents = {};
 
           for (const key of keys) {
             const [account, section, contentKey] = key.split("/");
@@ -662,11 +676,27 @@ export class SandboxRPC {
               if (content) {
                 fileContents[account][section][contentKey] = content;
               } else {
-                console.warn(
-                  `File not found for key: ${key}, going to live RPC`
-                );
-                await route.fallback();
-                return;
+                // Fetch from live RPC, store to temp folder, and use next time
+                const tempDir = path.join(tmpdir(), "live-widget-cache") ;
+                await mkdir(tempDir, { recursive: true });
+                const cacheFile = path.join(tempDir, encodeURIComponent(key) + '.json');
+                let liveContent;
+                try {
+                  // Try to read from cache first
+                  liveContent = await readFile(cacheFile, 'utf-8');
+                } catch {
+                  try {
+                    // Not cached, fetch from live RPC
+                    const liveRpcResponse = await route.fetch();
+                    const liveRpcJson = await liveRpcResponse.json();
+                    const resultArr = liveRpcJson.result?.result || [];
+                    liveContent = Buffer.from(resultArr).toString('utf-8');
+                    await writeFile(cacheFile, liveContent, 'utf-8');
+                  } catch(e) {
+                    console.log("should not happen", e);
+                  }
+                }
+                fileContents = JSON.parse(liveContent);
               }
             }
           }

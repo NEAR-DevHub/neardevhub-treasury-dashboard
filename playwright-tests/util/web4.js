@@ -1,6 +1,8 @@
 import { connect, keyStores } from "near-api-js";
 import fs from "fs";
 import path, { dirname } from "path";
+import { readFile, writeFile, mkdir } from "fs/promises";
+import { tmpdir } from "os";
 
 const instancesFolder = path.resolve(dirname("."), "instances"); // Adjust the path if necessary
 
@@ -68,9 +70,11 @@ export async function redirectWeb4({
   if (!treasury) {
     treasury = contractId.split(".")[0] + ".sputnik-dao.near";
   }
+  const redirectNodeUrl = sandboxNodeUrl ?? nodeUrl;
+
   const near = await connect({
     networkId,
-    nodeUrl,
+    nodeUrl: redirectNodeUrl,
     keyStore,
   });
 
@@ -84,12 +88,12 @@ export async function redirectWeb4({
 
       if ((keys && keys[0].startsWith(contractId)) || keys === undefined) {
         const response = await route.fetch({
-          url: nodeUrl,
+          url: redirectNodeUrl,
           json: postData,
         });
         await route.fulfill({ response });
       } else {
-        const fileContents = {};
+        let fileContents = {};
 
         for (const key of keys) {
           const [account, section, contentKey] = key.split("/");
@@ -106,14 +110,36 @@ export async function redirectWeb4({
             const content = getLocalWidgetContent(key, {
               treasury,
               account,
-              nodeUrl,
+              nodeUrl: redirectNodeUrl,
             });
+
             if (content) {
               fileContents[account][section][contentKey] = content;
             } else {
-              console.warn(`File not found for key: ${key}, going to live RPC`);
-              await route.fallback();
-              return;
+              // Fetch from live RPC, store to temp folder, and use next time
+              const tempDir = path.join(tmpdir(), "live-widget-cache");
+              await mkdir(tempDir, { recursive: true });
+              const cacheFile = path.join(
+                tempDir,
+                encodeURIComponent(key) + ".json"
+              );
+              let liveContent;
+              try {
+                // Try to read from cache first
+                liveContent = await readFile(cacheFile, "utf-8");
+              } catch {
+                try {
+                  // Not cached, fetch from live RPC
+                  const liveRpcResponse = await route.fetch();
+                  const liveRpcJson = await liveRpcResponse.json();
+                  const resultArr = liveRpcJson.result?.result || [];
+                  liveContent = Buffer.from(resultArr).toString("utf-8");
+                  await writeFile(cacheFile, liveContent, "utf-8");
+                } catch (e) {
+                  console.log("should not happen", e);
+                }
+              }
+              fileContents = JSON.parse(liveContent);
             }
           }
         }
@@ -133,7 +159,7 @@ export async function redirectWeb4({
       }
     } else {
       const response = await route.fetch({
-        url: sandboxNodeUrl ?? nodeUrl,
+        url: redirectNodeUrl,
         json: postData,
       });
       await route.fulfill({ response });
