@@ -7,9 +7,6 @@ import { getLocalWidgetSource } from "./bos-workspace.js";
 import { expect } from "@playwright/test";
 import { overlayMessage, removeOverlayMessage } from "./test.js";
 import { getLocalWidgetContent, redirectWeb4 } from "./web4.js";
-import { readFile, writeFile, mkdir } from "fs/promises";
-import { tmpdir } from "os";
-import path from "path";
 
 export const SPUTNIK_DAO_CONTRACT_ID = "sputnik-dao.near";
 // we don't have proposal bond for any instance (in this repo)
@@ -627,6 +624,7 @@ export class SandboxRPC {
       page,
       treasury,
       networkId: "sandbox",
+      widgetNodeUrl: this.rpc_url,
       sandboxNodeUrl: this.rpc_url,
       modifiedWidgets: this.modifiedWidgets,
     });

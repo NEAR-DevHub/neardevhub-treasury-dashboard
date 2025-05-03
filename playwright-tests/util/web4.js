@@ -50,6 +50,7 @@ export function getLocalWidgetContent(key, context = {}) {
  * @param {string} [options.treasury] - The treasury account ID. If not provided, it will be derived from the contract ID.
  * @param {string} [options.networkId="mainnet"] - The NEAR network ID (default is "mainnet").
  * @param {string} [options.nodeUrl="https://rpc.mainnet.near.org"] - The NEAR RPC node URL (default is the mainnet RPC URL).
+ * @param {string} [options.widgetNodeUrl="https://rpc.mainnet.fastnear.com"] - NEAR RPC node URL to get widget content from ( defaults to mainnet ). Specify sandbox URL if you want to fetch from sandbox.
  * @param {string} [options.sandboxNodeUrl] - Fallback RPC requests will be sent to the sandbox if specified, otherwise to nodeUrl
  * @param {Object} [options.modifiedWidgets={}] - An object containing modified widget content.
  *     The keys are widget keys (e.g., "account/section/contentKey"), and the values are the modified widget content as strings.
@@ -62,6 +63,7 @@ export async function redirectWeb4({
   treasury,
   networkId = "mainnet",
   nodeUrl = "https://rpc.mainnet.near.org",
+  widgetNodeUrl = "https://rpc.mainnet.fastnear.com",
   sandboxNodeUrl,
   modifiedWidgets = {},
 }) {
@@ -70,7 +72,7 @@ export async function redirectWeb4({
   if (!treasury) {
     treasury = contractId.split(".")[0] + ".sputnik-dao.near";
   }
-  const redirectNodeUrl = sandboxNodeUrl ?? nodeUrl;
+  const redirectNodeUrl = sandboxNodeUrl ?? "https://rpc.mainnet.fastnear.com";
 
   const near = await connect({
     networkId,
@@ -88,7 +90,7 @@ export async function redirectWeb4({
 
       if ((keys && keys[0].startsWith(contractId)) || keys === undefined) {
         const response = await route.fetch({
-          url: redirectNodeUrl,
+          url: widgetNodeUrl,
           json: postData,
         });
         await route.fulfill({ response });
@@ -110,7 +112,7 @@ export async function redirectWeb4({
             const content = getLocalWidgetContent(key, {
               treasury,
               account,
-              nodeUrl: redirectNodeUrl,
+              nodeUrl,
             });
 
             if (content) {
