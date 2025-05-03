@@ -1,4 +1,5 @@
-import { test, expect } from "@playwright/test";
+import { expect } from "@playwright/test";
+import { test } from "../../util/test.js";
 import { Worker } from "near-workspaces";
 import nearApi from "near-api-js";
 import { redirectWeb4 } from "../../util/web4";
