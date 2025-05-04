@@ -14,7 +14,7 @@ The system update functionality allows developers to publish updates that has to
 
 Updates are defined as JavaScript objects in the `UpdateRegistry` widget. Each update record can include the following fields:
 
-- `id` (number): Unique identifier for the update.
+- `id` (number): Unique identifier for the update, in numerical order. For any new update you should use a new id, incremented with one from the previous.
 - `createdDate` (string): Date of the update in `YYYY-MM-DD` format.
 - `version` (string): Version or label for the update (optional).
 - `type` (string): Type/category of the update (e.g., "DAO contract").
