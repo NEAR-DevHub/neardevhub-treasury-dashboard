@@ -141,7 +141,7 @@ When a system update is published, users may see a notification banner or badge 
   - If you visit the updates page and the system detects that your instance is already up to date (for example, the contract or widget has already been upgraded), the update will disappear from the list and the banner will be removed.
 
 - **Why Updates May Disappear:**
-  - If you see an update notification but then visit the updates page and the update disappears, this means the system has checked your instance and determined that the update is no longer needed (e.g., the upgrade was already applied, possibly by another admin or in another browser).
+  - If you see an update notification but then visit the updates page and the update disappears, this means the system has checked your instance and determined that the update is no longer needed (e.g.,  the upgrade may have already been applied—possibly by another admin or from a different browser—or the update request might have already been created and is still pending a vote).
   - This can be confusing, but it is expected behavior due to the decentralized and stateless nature of the update tracking system.
 
 ### Tips for Users
