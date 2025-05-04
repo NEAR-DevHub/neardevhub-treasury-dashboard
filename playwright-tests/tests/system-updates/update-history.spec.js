@@ -5,10 +5,6 @@ import {
   redirectWeb4,
 } from "../../util/web4.js";
 
-test.afterEach(async ({ page }) => {
-  await page.unrouteAll({ behavior: "ignoreErrors" });
-});
-
 test("should show update history", async ({ page, instanceAccount }) => {
   const contractId = instanceAccount;
   const isUpToDate = await compareInstanceWeb4WithTreasuryFactory(

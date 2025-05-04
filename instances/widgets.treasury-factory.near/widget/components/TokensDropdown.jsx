@@ -64,6 +64,7 @@ if (
 
 const [options, setOptions] = useState([]);
 const [nearStakedTokens, setNearStakedTokens] = useState(null);
+const [lockupStakedTokens, setLockupStakedTokens] = useState(null);
 
 // remove near storage, spam tokens
 const tokensWithBalance =
@@ -98,7 +99,7 @@ useEffect(() => {
     );
   }
   setOptions(tokens);
-}, [tokensWithBalance]);
+}, [tokensWithBalance, isLockupContract]);
 
 const [isOpen, setIsOpen] = useState(false);
 const [selectedOptionValue, setSelectedValue] = useState(selectedValue);
@@ -177,6 +178,8 @@ const Container = styled.div`
   }
 `;
 
+const stakedTokens = isLockupContract ? lockupStakedTokens : nearStakedTokens;
+
 const Item = ({ option }) => {
   if (!option) {
     return <div className="text-secondary">Select</div>;
@@ -193,7 +196,8 @@ const Item = ({ option }) => {
         {option.value === "NEAR" && (
           <div className="d-flex flex-column gap-1 w-100 text-wrap text-sm text-secondary">
             <div>Tokens locked for storage: {nearBalances.storageParsed}</div>
-            {nearStakedTokens && <div>Tokens staked: {nearStakedTokens}</div>}
+
+            {stakedTokens && <div>Tokens staked: {stakedTokens}</div>}
           </div>
         )}
         <div className="text-sm text-secondary w-100 text-wrap">
@@ -216,6 +220,15 @@ return (
         setNearStakedTotalTokens: (v) => setNearStakedTokens(Big(v).toFixed(2)),
       }}
     />
+    {isLockupContract && (
+      <Widget
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
+        props={{
+          accountId: daoAccount,
+          setNearStakedTokens: (v) => setLockupStakedTokens(Big(v).toFixed(2)),
+        }}
+      />
+    )}
     <div
       className="custom-select w-100"
       tabIndex="0"

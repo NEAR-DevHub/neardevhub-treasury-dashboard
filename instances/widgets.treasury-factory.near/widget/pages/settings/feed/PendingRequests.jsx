@@ -34,6 +34,7 @@ const fetchProposals = () => {
         "ChangePolicyRemoveRole",
         "ChangePolicyUpdateDefaultVotePolicy",
         "ChangePolicyUpdateParameters",
+        "UpgradeSelf",
       ],
       filterStatusArray: ["InProgress"],
       offset: typeof offset === "number" ? offset : lastProposalId,

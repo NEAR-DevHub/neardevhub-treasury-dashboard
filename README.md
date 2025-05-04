@@ -39,6 +39,33 @@ ffmpeg -i test-results/stake-delegation-stake-delegation-admin-connected-Should-
 
 The resulting mp4 file can be directly dragged into the Pull Request description.
 
+## Playwright Video Merger Script
+
+The `playwright-video-merger.sh` script is used to process and combine Playwright test videos into a single, presentation-ready video file. It is especially useful for creating demo or showcase videos from your automated test runs.
+
+### What the Script Does
+- **Finds all Playwright test videos** (`video.webm`) in the `test-results/` directory.
+- **Overlays the test title** (from `test-title.txt` if available, or the folder name as a fallback) as a subtitle at the bottom of each video.
+- **Converts each video to mp4** format for compatibility and better compression.
+- **Appends a 1-second freeze frame** (last frame of the test video) to the end of each video segment, making transitions clearer.
+- **Concatenates all processed videos** (with freeze frames) into a single output file: `final_output.mp4`.
+
+### How to Use
+1. **Run your Playwright tests** with video recording enabled. The test videos will be saved in the `test-results/` directory.
+2. **Ensure test titles are saved**: The test suite should write the test title to a `test-title.txt` file in each test's video folder (this is handled by the provided `afterEach` hook in your tests).
+3. **Run the script:**
+   ```bash
+   ./playwright-video-merger.sh
+   ```
+4. **Find your merged video:** The final output will be saved as `final_output.mp4` in the root of your workspace.
+
+### Notes
+- The script also creates intermediate processed videos in the `processed_videos/` directory and freeze frames in the `freeze_frames/` directory.
+- If `test-title.txt` is missing, the script will use the folder name as the overlay text.
+- You can adjust the text wrapping and overlay style by editing the script variables.
+
+This workflow is ideal for creating clear, annotated demo videos from your Playwright test runs, making it easy to share test results or showcase features.
+
 ## Running a Development Server using PlayWright hosted web4 gateway
 
 To start the development server, use the following command:

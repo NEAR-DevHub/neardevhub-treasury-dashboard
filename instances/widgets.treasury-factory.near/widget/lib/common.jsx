@@ -259,13 +259,16 @@ const decodeProposalDescription = (key, description) => {
 
   const lines = description.split("<br>");
   for (const line of lines) {
-    const match = line.match(/^\* (.+): (.+)$/);
-    if (match) {
-      const currentKey = match[1];
-      const value = match[2];
+    if (line.startsWith("* ")) {
+      const rest = line.slice(2);
+      const indexOfColon = rest.indexOf(":");
+      if (indexOfColon !== -1) {
+        const currentKey = rest.slice(0, indexOfColon).trim();
+        const value = rest.slice(indexOfColon + 1).trim();
 
-      if (currentKey === markdownKey) {
-        return value.trim();
+        if (currentKey.toLowerCase() === markdownKey.toLowerCase()) {
+          return value;
+        }
       }
     }
   }
@@ -742,6 +745,7 @@ function getAllColorsAsObject(isDarkTheme, primaryColor) {
     "--other-primary": "#2775C9",
     "--other-warning": "#B17108",
     "--other-green": "#3CB179",
+    "--other-green-light": "#3CB1791A",
     "--other-red": "#D95C4A",
     "--bs-body-bg": "var(--bg-page-color)",
     "--bs-border-color": "var(--border-color)",

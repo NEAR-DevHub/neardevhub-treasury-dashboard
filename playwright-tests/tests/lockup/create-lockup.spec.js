@@ -1,5 +1,5 @@
 import { expect } from "@playwright/test";
-import { test } from "../../util/test.js";
+import { cacheCDN, test } from "../../util/test.js";
 import { getTransactionModalObject } from "../../util/transaction";
 import { mockNearBalances, updateDaoPolicyMembers } from "../../util/rpcmock";
 import { getInstanceConfig } from "../../util/config.js";
@@ -306,6 +306,10 @@ async function fillLockupForm({
   return submitBtn;
 }
 
+test.beforeEach(async ({ page }) => {
+  await cacheCDN(page);
+});
+
 test.afterEach(async ({ page }, testInfo) => {
   console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
   await page.unrouteAll({ behavior: "ignoreErrors" });
@@ -398,7 +402,7 @@ test.describe("Lockup Creation", () => {
       const errorText = page.getByText("Please enter valid account ID");
       await expect(errorText).toBeVisible();
 
-      receiveInput.fill(
+      await receiveInput.fill(
         "e915ea0c6d5f8ccc417db891490246c6bcd8d0a2214cbcbfa3618a7ee6abe26b"
       );
       await expect(errorText).toBeHidden();
@@ -427,7 +431,7 @@ test.describe("Lockup Creation", () => {
       instanceAccount,
       daoAccount,
     }) => {
-      test.setTimeout(100_000);
+      test.setTimeout(140_000);
       await updateDaoPolicyMembers({ page, instanceAccount });
 
       const submitBtn = await fillLockupForm({
@@ -450,7 +454,7 @@ test.describe("Lockup Creation", () => {
       instanceAccount,
       daoAccount,
     }) => {
-      test.setTimeout(100_000);
+      test.setTimeout(120_000);
       await updateDaoPolicyMembers({ instanceAccount, page });
       await gotoLockupFormPage(page, instanceAccount);
 

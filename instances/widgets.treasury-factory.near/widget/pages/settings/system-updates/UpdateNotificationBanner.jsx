@@ -1,17 +1,17 @@
-const { hasUpdates } = VM.require(
+const instance = props.instance;
+if (!instance) {
+  return <></>;
+}
+
+const { instanceHasUpdates } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.system-updates.UpdateNotificationTracker"
-) ?? { hasUpdates: false };
+) ?? { instanceHasUpdates: () => false };
 
 const { hasPermission } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 ) || {
   hasPermission: () => false,
 };
-
-const instance = props.instance;
-if (!instance) {
-  return <></>;
-}
 
 const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 const hasEditPermission = hasPermission(
@@ -21,28 +21,13 @@ const hasEditPermission = hasPermission(
   "AddProposal"
 );
 
+const hasUpdates = instanceHasUpdates(instance);
+
 return hasEditPermission && hasUpdates ? (
-  <div
-    style={{
-      backgroundColor: "#e4ece8",
-      padding: "8px",
-      textAlign: "center",
-      fontWeight: 300,
-    }}
-  >
-    <small
-      className="badge badge-success"
-      style={{ backgroundColor: "#60ae7e", color: "#ffffff" }}
-    >
-      New
-    </small>
+  <div className="system-update-banner">
+    <small className="badge">New</small>
     New system updates published, check if your instance is up to date.{" "}
-    <a
-      style={{ textDecoration: "underline" }}
-      href="?page=settings&tab=system-updates"
-    >
-      Review
-    </a>
+    <a href="?page=settings&tab=system-updates">Review</a>
   </div>
 ) : (
   <></>

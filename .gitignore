@@ -5,3 +5,6 @@ test-results
 build
 .env
 devstoragestate.json
+file_list.txt
+*.mp4
+freeze_frames
