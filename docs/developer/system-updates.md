@@ -119,7 +119,7 @@ The following update types are supported. Set the `type` field in your update ob
 ```
 
 **How to use these types:**
-When creating an update in the UpdateRegistry, set the `type` field to one of the above string values. The system will handle each type appropriately, showing the correct UI and triggering the right actions (such as contract upgrade, widget update, or policy proposal).
+When creating an update in the UpdateRegistry, set the `type` field to one of the supported string values listed above. If you need a different type, you'll have to add support for it first. The system will handle each type appropriately, showing the correct UI and triggering the right actions (such as contract upgrade, widget update, or policy proposal).
 
 For more details or to see usage in tests, check the Playwright test cases for system updates, which demonstrate publishing and applying each type.
 
