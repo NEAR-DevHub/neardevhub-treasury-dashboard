@@ -21,8 +21,7 @@ Updates are defined as JavaScript objects in the `UpdateRegistry` widget. Each u
 - `summary` (string): Short summary of the update.
 - `details` (string): Detailed description (optional).
 - `instances` (array of strings): (Optional) List of instance account IDs that should receive this update. If omitted, the update is shown to all instances.
-- `votingRequired` (boolean): Whether a vote is required for this update.
-
+- `votingRequired` (boolean): Whether a DAO vote by admin is required after the update request is created.
 ## Example: Publishing an Update for All Instances
 
 ```js
