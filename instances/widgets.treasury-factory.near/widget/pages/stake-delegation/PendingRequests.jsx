@@ -33,6 +33,11 @@ const refreshWithdrawTableData = Storage.get(
   `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.CreateWithdrawRequest`
 );
 
+const refreshProposalsTableData = Storage.get(
+  "REFRESH_STAKE_TABLE_DATA",
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.ProposalDetailsPage`
+);
+
 const fetchProposals = useCallback(() => {
   setLoading(true);
   Near.asyncView(treasuryDaoID, "get_last_proposal_id").then((i) => {
@@ -68,7 +73,12 @@ useEffect(() => {
   setOffset(null);
   setPage(0);
   fetchProposals();
-}, [refreshStakeTableData, refreshUnstakeTableData, refreshWithdrawTableData]);
+}, [
+  refreshStakeTableData,
+  refreshUnstakeTableData,
+  refreshWithdrawTableData,
+  refreshProposalsTableData,
+]);
 
 const policy = treasuryDaoID
   ? Near.view(treasuryDaoID, "get_policy", {})
@@ -86,6 +96,10 @@ const deleteGroup = getApproversAndThreshold(
   context.accountId,
   true
 );
+
+useEffect(() => {
+  props.onSelectRequest(null);
+}, [currentPage, rowsPerPage]);
 
 return (
   <div className="d-flex flex-column flex-1 justify-content-between h-100">
@@ -122,6 +136,7 @@ return (
             currentPage: currentPage,
             rowsPerPage: rowsPerPage,
             onRowsChange: (v) => {
+              setIsPrevCalled(false);
               setOffset(null);
               setPage(0);
               setRowsPerPage(parseInt(v));

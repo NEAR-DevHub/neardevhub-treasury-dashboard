@@ -179,7 +179,7 @@ return (
           />
         ),
       ProposalContent: (
-        <div className="card card-body d-flex flex-column gap-2" key={id}>
+        <div className="card card-body d-flex flex-column gap-2">
           <h6 className="mb-0 flex-1">{proposalData?.title}</h6>
           {proposalData?.summary && (
             <div className=" text-secondary">{proposalData?.summary}</div>
