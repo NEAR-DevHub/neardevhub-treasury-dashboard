@@ -75,7 +75,7 @@ const ToastStatusContent = () => {
         "Your vote is counted" +
         (typeof proposalDetailsPageId === "number"
           ? "."
-          : ", the payment request is highlighted.");
+          : ", the request is highlighted.");
       break;
     case "Approved":
       content = "The request has been successfully executed.";

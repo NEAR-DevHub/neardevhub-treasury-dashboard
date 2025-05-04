@@ -3,6 +3,7 @@ const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
 };
 
 const {
+  decodeBase64,
   getNearBalances,
   decodeProposalDescription,
   formatSubmissionTimeStamp,
@@ -267,18 +268,6 @@ const VoteSuccessToast = () => {
 };
 
 const proposalPeriod = policy.proposal_period;
-
-function decodeBase64(encodedArgs) {
-  if (!encodedArgs) return null;
-  try {
-    const jsonString = Buffer.from(encodedArgs, "base64").toString("utf8");
-    const parsedArgs = JSON.parse(jsonString);
-    return parsedArgs;
-  } catch (error) {
-    console.error("Failed to decode or parse encodedArgs:", error);
-    return null;
-  }
-}
 
 const hasOneDeleteIcon =
   isPendingRequests &&

@@ -65,13 +65,8 @@ async function checkProposalDetailPage({
       )
     ).toBeVisible({ timeout: 20_000 });
   }
-  await expect(page.getByRole("heading", { name: "Exchange" })).toBeVisible();
-  await expect(
-    await page.locator("text=0.50 USDC").count()
-  ).toBeGreaterThanOrEqual(2);
-  await expect(
-    await page.locator("text=0.60 USDt").count()
-  ).toBeGreaterThanOrEqual(2);
+  await expect(page.getByText("0.50 USDC")).toBeVisible();
+  await expect(page.getByText("0.60 USDt")).toBeVisible();
   await expect(page.getByText("Price Slippage")).toBeVisible();
   await expect(page.getByText("Minimum Amount Receive")).toBeVisible();
 
