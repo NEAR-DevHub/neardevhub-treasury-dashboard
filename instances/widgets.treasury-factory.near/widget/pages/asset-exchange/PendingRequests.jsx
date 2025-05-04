@@ -62,7 +62,7 @@ useEffect(() => {
   setOffset(null);
   setPage(0);
   fetchProposals();
-}, [refreshTableData]);
+}, [refreshTableData, refreshProposalsTableData]);
 
 const policy = treasuryDaoID
   ? Near.view(treasuryDaoID, "get_policy", {})
