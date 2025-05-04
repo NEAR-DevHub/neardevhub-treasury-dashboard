@@ -1,17 +1,17 @@
-const { hasUpdates } = VM.require(
+const instance = props.instance;
+if (!instance) {
+  return <></>;
+}
+
+const { instanceHasUpdates } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.system-updates.UpdateNotificationTracker"
-) ?? { hasUpdates: false };
+) ?? { instanceHasUpdates: () => false };
 
 const { hasPermission } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 ) || {
   hasPermission: () => false,
 };
-
-const instance = props.instance;
-if (!instance) {
-  return <></>;
-}
 
 const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 const hasEditPermission = hasPermission(
@@ -20,6 +20,8 @@ const hasEditPermission = hasPermission(
   "policy",
   "AddProposal"
 );
+
+const hasUpdates = instanceHasUpdates(instance);
 
 return hasEditPermission && hasUpdates ? (
   <div className="system-update-banner">

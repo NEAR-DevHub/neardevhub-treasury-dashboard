@@ -10,14 +10,15 @@ function getPolicy(instance) {
 
 function checkIfPolicyIsUpToDate(instance) {
   const {
-    updatesNotApplied,
+    updatesNotAppliedForInstance,
     finishedUpdates,
     setFinishedUpdates,
     UPDATE_TYPE_POLICY,
   } = VM.require(
     "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.system-updates.UpdateNotificationTracker"
-  ) ?? { updatesNotApplied: [], setFinishedUpdates: () => {} };
+  ) ?? { updatesNotAppliedForInstance: () => [], setFinishedUpdates: () => {} };
 
+  const updatesNotApplied = updatesNotAppliedForInstance(instance);
   const { daoPolicy } = getPolicy(instance);
   updatesNotApplied
     .filter((update) => update.type === UPDATE_TYPE_POLICY)

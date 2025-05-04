@@ -1,5 +1,5 @@
 import { expect } from "@playwright/test";
-import { cacheCDN, test } from "../../util/test.js";
+import { test } from "../../util/test.js";
 import {
   DEFAULT_WIDGET_REFERENCE_ACCOUNT_ID,
   SandboxRPC,
@@ -7,14 +7,11 @@ import {
 } from "../../util/sandboxrpc.js";
 import { createDAOargs } from "../../util/sputnikdao.js";
 import nearApi from "near-api-js";
-import { readFile } from "fs/promises";
 
 test("should update bootstrap widget and upgrade instance with it", async ({
   page,
 }) => {
   test.setTimeout(120_000);
-
-  await cacheCDN(page);
 
   const sandbox = new SandboxRPC();
   await sandbox.init();

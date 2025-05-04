@@ -76,7 +76,7 @@ function getDefaultCodeHash() {
 
 function checkIfDAOContractIsUpToDate(instance) {
   const {
-    updatesNotApplied,
+    updatesNotAppliedForInstance,
     finishedUpdates,
     proposedUpdates,
     setFinishedUpdates,
@@ -84,8 +84,9 @@ function checkIfDAOContractIsUpToDate(instance) {
     UPDATE_TYPE_DAO_CONTRACT,
   } = VM.require(
     "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.system-updates.UpdateNotificationTracker"
-  ) ?? { updatesNotApplied: [], setFinishedUpdates: () => {} };
+  ) ?? { updatesNotAppliedForInstance: () => [], setFinishedUpdates: () => {} };
 
+  const updatesNotApplied = updatesNotAppliedForInstance(instance);
   const daoContractUpdatesNotApplied = updatesNotApplied.filter(
     (update) => update.type === UPDATE_TYPE_DAO_CONTRACT
   );

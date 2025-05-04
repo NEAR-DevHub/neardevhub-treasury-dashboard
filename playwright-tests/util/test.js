@@ -3,13 +3,23 @@ import fs from "fs";
 import path from "path";
 import os from "os";
 
-const cdnCache = {};
-
 export const test = base.extend({
   instanceAccount: ["treasury-devdao.near", { option: true }],
   daoAccount: ["devdao.sputnik-dao.near", { option: true }],
   lockupContract: [null, { option: true }],
   factoryAccount: ["treasury-factory.near", { option: true }],
+});
+
+test.beforeEach(async ({ page }) => {
+  await cacheCDN(page);
+});
+test.afterEach(async ({ page }, testInfo) => {
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+  const video = await page.video();
+  if (video) {
+    const titleFile = testInfo.outputPath("test-title.txt");
+    await fs.promises.writeFile(titleFile, testInfo.title);
+  }
 });
 
 /**
@@ -72,8 +82,11 @@ export async function cacheCDN(page) {
       const cacheFilePath = path.join(cacheDir, urlHash);
 
       if (fs.existsSync(cacheFilePath)) {
-        const cachedContent = fs.readFileSync(cacheFilePath);
-        const contentType = fs.readFileSync(`${cacheFilePath}.type`, "utf-8");
+        const cachedContent = await fs.promises.readFile(cacheFilePath);
+        const contentType = await fs.promises.readFile(
+          `${cacheFilePath}.type`,
+          "utf-8"
+        );
         await route.fulfill({
           body: cachedContent,
           headers: { "Content-Type": contentType },
@@ -84,8 +97,8 @@ export async function cacheCDN(page) {
         const contentType =
           response.headers()["content-type"] || "application/octet-stream";
 
-        fs.writeFileSync(cacheFilePath, body);
-        fs.writeFileSync(`${cacheFilePath}.type`, contentType);
+        await fs.promises.writeFile(cacheFilePath, body);
+        await fs.promises.writeFile(`${cacheFilePath}.type`, contentType);
 
         await route.fulfill({
           body,

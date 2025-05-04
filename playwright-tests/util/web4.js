@@ -1,6 +1,8 @@
 import { connect, keyStores } from "near-api-js";
 import fs from "fs";
 import path, { dirname } from "path";
+import { readFile, writeFile, mkdir } from "fs/promises";
+import { tmpdir } from "os";
 
 const instancesFolder = path.resolve(dirname("."), "instances"); // Adjust the path if necessary
 
@@ -48,6 +50,7 @@ export function getLocalWidgetContent(key, context = {}) {
  * @param {string} [options.treasury] - The treasury account ID. If not provided, it will be derived from the contract ID.
  * @param {string} [options.networkId="mainnet"] - The NEAR network ID (default is "mainnet").
  * @param {string} [options.nodeUrl="https://rpc.mainnet.near.org"] - The NEAR RPC node URL (default is the mainnet RPC URL).
+ * @param {string} [options.widgetNodeUrl="https://rpc.mainnet.fastnear.com"] - NEAR RPC node URL to get widget content from ( defaults to mainnet ). Specify sandbox URL if you want to fetch from sandbox.
  * @param {string} [options.sandboxNodeUrl] - Fallback RPC requests will be sent to the sandbox if specified, otherwise to nodeUrl
  * @param {Object} [options.modifiedWidgets={}] - An object containing modified widget content.
  *     The keys are widget keys (e.g., "account/section/contentKey"), and the values are the modified widget content as strings.
@@ -60,6 +63,7 @@ export async function redirectWeb4({
   treasury,
   networkId = "mainnet",
   nodeUrl = "https://rpc.mainnet.near.org",
+  widgetNodeUrl = "https://rpc.mainnet.fastnear.com",
   sandboxNodeUrl,
   modifiedWidgets = {},
 }) {
@@ -68,9 +72,11 @@ export async function redirectWeb4({
   if (!treasury) {
     treasury = contractId.split(".")[0] + ".sputnik-dao.near";
   }
+  const redirectNodeUrl = sandboxNodeUrl ?? "https://rpc.mainnet.fastnear.com";
+
   const near = await connect({
     networkId,
-    nodeUrl,
+    nodeUrl: redirectNodeUrl,
     keyStore,
   });
 
@@ -84,12 +90,12 @@ export async function redirectWeb4({
 
       if ((keys && keys[0].startsWith(contractId)) || keys === undefined) {
         const response = await route.fetch({
-          url: nodeUrl,
+          url: widgetNodeUrl,
           json: postData,
         });
         await route.fulfill({ response });
       } else {
-        const fileContents = {};
+        let fileContents = {};
 
         for (const key of keys) {
           const [account, section, contentKey] = key.split("/");
@@ -108,12 +114,34 @@ export async function redirectWeb4({
               account,
               nodeUrl,
             });
+
             if (content) {
               fileContents[account][section][contentKey] = content;
             } else {
-              console.warn(`File not found for key: ${key}, going to live RPC`);
-              await route.fallback();
-              return;
+              // Fetch from live RPC, store to temp folder, and use next time
+              const tempDir = path.join(tmpdir(), "live-widget-cache");
+              await mkdir(tempDir, { recursive: true });
+              const cacheFile = path.join(
+                tempDir,
+                encodeURIComponent(key) + ".json"
+              );
+              let liveContent;
+              try {
+                // Try to read from cache first
+                liveContent = await readFile(cacheFile, "utf-8");
+              } catch {
+                try {
+                  // Not cached, fetch from live RPC
+                  const liveRpcResponse = await route.fetch();
+                  const liveRpcJson = await liveRpcResponse.json();
+                  const resultArr = liveRpcJson.result?.result || [];
+                  liveContent = Buffer.from(resultArr).toString("utf-8");
+                  await writeFile(cacheFile, liveContent, "utf-8");
+                } catch (e) {
+                  console.log("should not happen", e);
+                }
+              }
+              fileContents = JSON.parse(liveContent);
             }
           }
         }
@@ -133,7 +161,7 @@ export async function redirectWeb4({
       }
     } else {
       const response = await route.fetch({
-        url: sandboxNodeUrl ?? nodeUrl,
+        url: redirectNodeUrl,
         json: postData,
       });
       await route.fulfill({ response });

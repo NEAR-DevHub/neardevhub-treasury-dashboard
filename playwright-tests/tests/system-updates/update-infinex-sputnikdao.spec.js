@@ -1,4 +1,5 @@
-import { test, expect } from "@playwright/test";
+import { expect } from "@playwright/test";
+import { test } from "../../util/test.js";
 import { Worker } from "near-workspaces";
 import nearApi from "near-api-js";
 import { redirectWeb4 } from "../../util/web4";
@@ -7,7 +8,6 @@ import {
   SPUTNIK_DAO_FACTORY_ID,
 } from "../../util/sandboxrpc";
 import crypto from "crypto";
-import { cacheCDN } from "../../util/test";
 
 test("update infinex.sputnik-dao.near", async ({ page }) => {
   test.setTimeout(120_000);
@@ -15,8 +15,6 @@ test("update infinex.sputnik-dao.near", async ({ page }) => {
   const daoContractId = `${daoName}.${SPUTNIK_DAO_FACTORY_ID}`;
   const web4ContractId = "treasury-infinex.near";
   const socialNearContractId = "social.near";
-
-  await cacheCDN(page);
 
   const worker = await Worker.init();
 

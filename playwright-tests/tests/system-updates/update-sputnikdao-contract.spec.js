@@ -1,10 +1,5 @@
 import { expect } from "@playwright/test";
-import {
-  cacheCDN,
-  overlayMessage,
-  removeOverlayMessage,
-  test,
-} from "../../util/test.js";
+import { overlayMessage, removeOverlayMessage, test } from "../../util/test.js";
 import {
   DEFAULT_WIDGET_REFERENCE_ACCOUNT_ID,
   SandboxRPC,
@@ -16,8 +11,6 @@ import crypto from "crypto";
 
 test("should update sputnik-dao contract", async ({ page }) => {
   test.setTimeout(180_000);
-
-  await cacheCDN(page);
 
   const sandbox = new SandboxRPC();
   await sandbox.init();
