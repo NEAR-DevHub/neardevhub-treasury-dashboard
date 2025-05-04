@@ -119,28 +119,25 @@ const Container = styled.div`
   }
 `;
 
+function updateVoteSuccess(status, proposalId) {
+  props.setToastStatus(status);
+  props.setVoteProposalId(proposalId);
+  props.onSelectRequest(null);
+  refreshTableData();
+}
+
 function checkProposalStatus(proposalId) {
   Near.asyncView(treasuryDaoID, "get_proposal", {
     id: proposalId,
   })
     .then((result) => {
-      setToastStatus(result.status);
-      setVoteProposalId(proposalId);
-      refreshTableData();
+      updateVoteSuccess(result.status, proposalId);
     })
     .catch(() => {
       // deleted request (thus proposal won't exist)
-      setToastStatus("Removed");
-      setVoteProposalId(proposalId);
-      refreshTableData();
+      updateVoteSuccess("Removed", proposalId);
     });
 }
-
-useEffect(() => {
-  if (typeof highlightProposalId === "number" && isPendingRequests) {
-    checkProposalStatus(highlightProposalId);
-  }
-}, [highlightProposalId]);
 
 useEffect(() => {
   if (props.transactionHashes) {
@@ -195,78 +192,6 @@ const requiredVotes = functionCallApproversGroup.requiredVotes;
 
 const hideApproversCol = isPendingRequests && requiredVotes === 1;
 
-const ToastStatusContent = () => {
-  let content = "";
-  switch (showToastStatus) {
-    case "InProgress":
-      content = "Your vote is counted, the request is highlighted.";
-      break;
-    case "Approved":
-      content = "The request has been successfully executed.";
-      break;
-    case "Rejected":
-      content = "The payment request has been rejected.";
-      break;
-    case "Removed":
-      content = "The payment request has been successfully deleted.";
-      break;
-    default:
-      content = `The request has ${showToastStatus}.`;
-      break;
-  }
-  return (
-    <div className="toast-body">
-      <div className="d-flex align-items-center gap-3">
-        {showToastStatus === "Approved" && (
-          <i class="bi bi-check2 h3 mb-0 success-icon"></i>
-        )}
-        <div>
-          {content}
-          <br />
-          {showToastStatus !== "InProgress" &&
-            showToastStatus !== "Removed" && (
-              <a
-                className="text-underline"
-                href={href({
-                  widgetSrc: `${instance}/widget/app`,
-                  params: {
-                    page: "stake-delegation",
-                    tab: "History",
-                    highlightProposalId:
-                      typeof highlightProposalId === "number"
-                        ? highlightProposalId
-                        : voteProposalId,
-                  },
-                })}
-              >
-                View in History
-              </a>
-            )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const VoteSuccessToast = () => {
-  return showToastStatus &&
-    (typeof voteProposalId === "number" ||
-      typeof highlightProposalId === "number") ? (
-    <div className="toast-container position-fixed bottom-0 end-0 p-3">
-      <div className={`toast ${showToastStatus ? "show" : ""}`}>
-        <div className="toast-header px-2">
-          <strong className="me-auto">Just Now</strong>
-          <i
-            className="bi bi-x-lg h6 mb-0 cursor-pointer"
-            onClick={() => setToastStatus(null)}
-          ></i>
-        </div>
-        <ToastStatusContent />
-      </div>
-    </div>
-  ) : null;
-};
-
 const proposalPeriod = policy.proposal_period;
 
 const hasOneDeleteIcon =
@@ -312,13 +237,19 @@ const ProposalsComponent = () => {
         const treasuryWallet = isLockup ? lockupContract : treasuryDaoID;
         return (
           <tr
+            data-testid={"proposal-request-#" + item.id}
+            onClick={() => {
+              props.onSelectRequest(item.id);
+            }}
             className={
-              voteProposalId === item.id || highlightProposalId === item.id
+              "cursor-pointer proposal-row " +
+              (highlightProposalId === item.id ||
+              props.selectedProposalDetailsId === item.id
                 ? "bg-highlight"
-                : ""
+                : "")
             }
           >
-            <td className="fw-semi-bold">{item.id}</td>
+            <td className="fw-semi-bold px-3">{item.id}</td>
             <td className={isVisible("Created Date")}>
               <Widget
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
@@ -360,7 +291,6 @@ const ProposalsComponent = () => {
             {lockupContract && (
               <td className={"text-left"}>
                 <div className="text-secondary fw-semi-bold">
-                  {" "}
                   {isLockup ? "Lockup" : "Sputnik DAO"}
                 </div>
                 <Widget
@@ -494,7 +424,6 @@ const ProposalsComponent = () => {
 
 return (
   <Container className="h-100 w-100" style={{ overflowX: "auto" }}>
-    <VoteSuccessToast />
     {loading === true ||
     proposals === null ||
     functionCallApproversGroup === null ||
@@ -535,7 +464,6 @@ return (
                 <td className={"text-center " + isVisible("Creator")}>
                   Created by
                 </td>
-
                 <td className={isVisible("Notes") + " text-left"}>Notes</td>
                 {isPendingRequests && (
                   <td className={isVisible("Required Votes") + " text-center"}>

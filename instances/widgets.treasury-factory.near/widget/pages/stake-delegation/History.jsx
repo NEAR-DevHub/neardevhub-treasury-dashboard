@@ -73,6 +73,9 @@ const functionCallApproversGroup = getApproversAndThreshold(
   "call",
   context.accountId
 );
+useEffect(() => {
+  props.onSelectRequest(null);
+}, [currentPage, rowsPerPage]);
 
 return (
   <div className="d-flex flex-column flex-1 justify-content-between h-100">
@@ -86,6 +89,7 @@ return (
         highlightProposalId,
         loading: loading,
         policy,
+        ...props,
       }}
     />
     {(proposals ?? [])?.length > 0 && (
@@ -108,6 +112,7 @@ return (
             currentPage: currentPage,
             rowsPerPage: rowsPerPage,
             onRowsChange: (v) => {
+              setIsPrevCalled(false);
               setOffset(null);
               setPage(0);
               setRowsPerPage(parseInt(v));
