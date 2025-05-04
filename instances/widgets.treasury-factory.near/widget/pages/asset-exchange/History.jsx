@@ -74,8 +74,12 @@ const functionCallApproversGroup = getApproversAndThreshold(
   context.accountId
 );
 
+useEffect(() => {
+  props.onSelectRequest(null);
+}, [currentPage, rowsPerPage]);
+
 return (
-  <div className="d-flex flex-column flex-1 justify-content-between">
+  <div className="d-flex flex-column flex-1 justify-content-between h-100">
     <Widget
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.asset-exchange.Table`}
       props={{
@@ -86,6 +90,7 @@ return (
         highlightProposalId,
         loading: loading,
         policy,
+        ...props,
       }}
     />
     {(proposals ?? [])?.length > 0 && (

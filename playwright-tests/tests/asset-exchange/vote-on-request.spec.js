@@ -359,9 +359,12 @@ test.describe("don't ask again", function () {
       ).toBeVisible();
       await page.getByText("View in History").click();
     }
-    await expect(page.locator("tr").nth(1)).toHaveClass("bg-highlight", {
-      timeout: 10_000,
-    });
+    await expect(page.locator("tr").nth(1)).toHaveClass(
+      "cursor-pointer proposal-row bg-highlight",
+      {
+        timeout: 10_000,
+      }
+    );
   });
 
   test("reject request with single and multiple required votes", async ({
@@ -392,9 +395,12 @@ test.describe("don't ask again", function () {
       await page.getByText("View in History").click();
     }
 
-    await expect(page.locator("tr").nth(1)).toHaveClass("bg-highlight", {
-      timeout: 30_000,
-    });
+    await expect(page.locator("tr").nth(1)).toHaveClass(
+      "cursor-pointer proposal-row bg-highlight",
+      {
+        timeout: 30_000,
+      }
+    );
   });
 
   test("delete request with single and multiple required votes", async ({
