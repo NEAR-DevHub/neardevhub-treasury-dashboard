@@ -600,14 +600,6 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
       `}
   `;
 
-  if (page === "lockup") {
-    children = (
-      <Widget
-        src={"${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.lockup.index"}
-        props={{ page, instance }}
-      />
-    );
-  }
   return (
     <ParentContainer data-bs-theme={isDarkTheme ? "dark" : "light"}>
       <Theme
