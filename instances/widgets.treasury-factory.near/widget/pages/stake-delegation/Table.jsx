@@ -208,6 +208,10 @@ const ProposalsComponent = () => {
     <tbody style={{ overflowX: "auto" }}>
       {visibleProposals?.map((item, index) => {
         const notes = decodeProposalDescription("notes", item.description);
+        const withdrawAmount = decodeProposalDescription(
+          "amount",
+          item.description
+        );
         const args = item?.kind?.FunctionCall;
         const action = args?.actions[0];
         const isStakeRequest = action.method_name === "deposit_and_stake";
@@ -232,6 +236,10 @@ const ProposalsComponent = () => {
         const isWithdrawRequest =
           action.method_name === "withdraw_all_from_staking_pool" ||
           action.method_name === "withdraw_all";
+
+        if (isWithdrawRequest) {
+          amount = withdrawAmount || 0;
+        }
 
         const isLockup = receiverAccount === lockupContract;
         const treasuryWallet = isLockup ? lockupContract : treasuryDaoID;
@@ -301,7 +309,6 @@ const ProposalsComponent = () => {
                     instance,
                     displayImage: false,
                     displayName: false,
-                    width: 200,
                   }}
                 />
               </td>
@@ -317,16 +324,18 @@ const ProposalsComponent = () => {
               />
             </td>
             <td className={"fw-semi-bold text-center " + isVisible("Creator")}>
-              <Widget
-                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
-                props={{
-                  accountId: item.proposer,
-                  showKYC: false,
-                  displayImage: false,
-                  displayName: false,
-                  instance,
-                }}
-              />
+              <div className="d-inline-block">
+                <Widget
+                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
+                  props={{
+                    accountId: item.proposer,
+                    showKYC: false,
+                    displayImage: false,
+                    displayName: false,
+                    instance,
+                  }}
+                />
+              </div>
             </td>
             <td
               className={

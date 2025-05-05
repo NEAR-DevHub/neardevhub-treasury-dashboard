@@ -486,7 +486,7 @@ return (
             )}
             {/* <label className="border-top">Transaction</label> */}
             <label className="border-top">Note</label>
-            {proposalData?.notes ?? "-"}
+            <div className="markdown-href">{proposalData?.notes ?? "-"}</div>
           </div>
         </div>
       </div>

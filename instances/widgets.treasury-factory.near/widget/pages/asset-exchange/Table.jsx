@@ -256,16 +256,18 @@ const ProposalsComponent = () => {
             </td>
 
             <td className={"fw-semi-bold text-center " + isVisible("Creator")}>
-              <Widget
-                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
-                props={{
-                  accountId: item.proposer,
-                  showKYC: false,
-                  displayImage: false,
-                  displayName: false,
-                  instance,
-                }}
-              />
+              <div className="d-inline-block">
+                <Widget
+                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
+                  props={{
+                    accountId: item.proposer,
+                    showKYC: false,
+                    displayImage: false,
+                    displayName: false,
+                    instance,
+                  }}
+                />
+              </div>
             </td>
             <td className={"text-sm text-left " + isVisible("Notes")}>
               {notes ?? "-"}
