@@ -11,6 +11,7 @@ const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 const config = treasuryDaoID ? Near.view(treasuryDaoID, "get_config") : null;
 const metadata = JSON.parse(atob(config.metadata ?? ""));
 const rootClose = props.rootClose ?? true;
+const containerClass = props.containerClass;
 const isDarkTheme = metadata.theme === "dark";
 
 const showTimer = 250;
@@ -68,7 +69,7 @@ return (
     rootClose={rootClose}
   >
     <span
-      className="d-inline-flex"
+      className={containerClass || "d-inline-block"}
       onMouseEnter={handleOnMouseEnter}
       onMouseLeave={handleOnMouseLeave}
     >

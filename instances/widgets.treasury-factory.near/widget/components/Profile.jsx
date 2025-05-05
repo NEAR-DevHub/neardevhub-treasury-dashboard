@@ -12,7 +12,7 @@ const accountId = props.accountId;
 const displayName = props.displayName ?? true;
 const displayImage = props.displayImage ?? true;
 const profileClass = props.profileClass ?? "";
-const width = props.width ?? null;
+
 const [isVerfied, setIsVerfied] = useState(false);
 const [verificationStatus, setVerificationStatus] = useState(null);
 
@@ -43,7 +43,7 @@ useEffect(() => {
           break;
         case "NOT_SUBMITTED":
         case "REJECTED":
-          displayableText = "Not Verfied";
+          displayableText = "Not Verified";
           break;
         case "EXPIRED":
           displayableText = "Expired";
@@ -64,87 +64,90 @@ const ProfileLink = styled.a`
   }
 `;
 
-const HoverCard = () => {
-  return (
-    <div style={{ width: 200 }} className="py-1">
-      <div className="d-flex flex-column gap-2">
-        <div className="d-flex gap-2 align-items-center">
-          <img
-            src={imageSrc}
-            height={40}
-            width={40}
-            className="rounded-circle"
-          />
-          <div className="d-flex flex-column gap-1">
-            <div className="h6 mb-0"> {name}</div>
-
-            <div className="text-break">@{accountId}</div>
-          </div>
+const HoverCard = () => (
+  <div style={{ width: 200 }} className="py-1">
+    <div className="d-flex flex-column gap-2">
+      <div className="d-flex gap-2 align-items-center">
+        <img src={imageSrc} height={40} width={40} className="rounded-circle" />
+        <div className="d-flex flex-column gap-1">
+          <div className="h6 mb-0">{name}</div>
+          <div className="text-break">@{accountId}</div>
         </div>
-        {verificationStatus && (
-          <div className="d-flex align-items-center gap-2">
-            {verificationStatus === "Verified" ? (
-              <VerifiedTick width={30} height={30} />
-            ) : (
-              <NotVerfiedTick width={30} height={30} />
-            )}
-            <div>Fractal {verificationStatus}</div>
-          </div>
-        )}
-        <div
-          className="border-top d-flex pt-2 flex-column"
-          style={{ gap: "0.7rem" }}
+      </div>
+      {verificationStatus && (
+        <div className="d-flex align-items-center gap-2">
+          {isVerfied ? (
+            <VerifiedTick width={30} height={30} />
+          ) : (
+            <NotVerfiedTick width={30} height={30} />
+          )}
+          <div>Fractal {verificationStatus}</div>
+        </div>
+      )}
+      <div
+        className="border-top d-flex pt-2 flex-column"
+        style={{ gap: "0.7rem" }}
+      >
+        <ProfileLink
+          onClick={(e) => e.stopPropagation()}
+          target="_blank"
+          rel="noopener noreferrer"
+          href={`https://near.social/mob.near/widget/ProfilePage?accountId=${accountId}`}
+          className="d-flex gap-2 align-items-center"
         >
-          <ProfileLink
-            onClick={(e) => {
-              e.stopPropagation();
-            }}
-            target="_blank"
-            rel="noopener noreferrer"
-            href={`https://near.social/mob.near/widget/ProfilePage?accountId=${accountId}`}
-            className="d-flex gap-2 align-items-center"
-          >
-            <User width={25} height={25} /> Open Profile
-          </ProfileLink>
+          <User width={25} height={25} /> Open Profile
+        </ProfileLink>
 
-          <div
-            className="d-flex gap-2 align-items-center"
-            style={{ cursor: "pointer" }}
-            onClick={(e) => {
-              e.stopPropagation();
-              clipboard.writeText(accountId);
-            }}
-          >
-            <Copy width={25} height={25} />
-            Copy wallet address
-          </div>
+        <div
+          className="d-flex gap-2 align-items-center"
+          style={{ cursor: "pointer" }}
+          onClick={(e) => {
+            e.stopPropagation();
+            clipboard.writeText(accountId);
+          }}
+        >
+          <Copy width={25} height={25} />
+          Copy wallet address
         </div>
       </div>
     </div>
-  );
-};
+  </div>
+);
 
 const ReceiverAccountComponent = (
-  <div
-    className="d-flex gap-1 align-items-center"
-    style={{ width: width ? width : displayImage ? "180px" : "100px" }}
-  >
+  <div className="d-flex gap-2 align-items-center" style={{ minWidth: 0 }}>
     {displayImage && (
-      <div style={{ width: "35", height: 35, position: "relative" }}>
+      <div
+        style={{
+          flex: "0 0 auto",
+          width: 35,
+          height: 35,
+          position: "relative",
+        }}
+      >
         <img src={imageSrc} height={35} width={35} className="rounded-circle" />
-        <div style={{ marginTop: "-20px", marginLeft: "22px" }}>
+        <div style={{ position: "absolute", top: 0, right: 0 }}>
           {verificationStatus &&
             (isVerfied ? <VerifiedTick /> : <NotVerfiedTick />)}
         </div>
       </div>
     )}
 
-    <div
-      className="text-truncate"
-      style={{ width: width ? width : displayImage ? "150px" : "100px" }}
-    >
-      {displayName && <div className="mb-0"> {name}</div>}
-      <div className={profileClass}>
+    <div className="d-flex flex-column" style={{ minWidth: 0, flex: 1 }}>
+      {displayName && (
+        <div className="mb-0 text-truncate" title={name}>
+          {name}
+        </div>
+      )}
+      <div
+        className={`text-truncate ${profileClass}`}
+        title={accountId}
+        style={{
+          overflow: "hidden",
+          whiteSpace: "nowrap",
+          textOverflow: "ellipsis",
+        }}
+      >
         {displayName ? "@" + accountId : accountId}
       </div>
     </div>
@@ -160,6 +163,7 @@ return (
         children: ReceiverAccountComponent,
         instance: props.instance,
         rootClose: false,
+        containerClass: "d-flex",
       }}
     />
   </div>

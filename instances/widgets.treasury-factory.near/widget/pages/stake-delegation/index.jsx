@@ -10,6 +10,7 @@ if (!instance) {
 
 const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 
+const [currentTab, setCurrentTab] = useState(null);
 const [showStakeRequest, setShowStakeRequest] = useState(false);
 const [showUnStakeRequest, setShowUnStakeRequest] = useState(false);
 const [showWithdrawRequest, setShowWithdrawRequest] = useState(false);

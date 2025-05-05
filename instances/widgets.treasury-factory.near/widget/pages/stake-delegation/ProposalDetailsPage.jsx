@@ -52,6 +52,7 @@ const RequestType = {
   STAKE: "Stake",
   UNSTAKE: "Unstake",
   WITHDRAW: "Withdraw",
+  WHITELIST: "Whitelist",
 };
 
 useEffect(() => {
@@ -59,6 +60,10 @@ useEffect(() => {
     Near.asyncView(treasuryDaoID, "get_proposal", { id: parseInt(id) })
       .then((item) => {
         const notes = decodeProposalDescription("notes", item.description);
+        const withdrawAmount = decodeProposalDescription(
+          "amount",
+          item.description
+        );
         const args = item?.kind?.FunctionCall;
         const action = args?.actions[0];
         const isStakeRequest = action.method_name === "deposit_and_stake";
@@ -84,6 +89,10 @@ useEffect(() => {
           action.method_name === "withdraw_all_from_staking_pool" ||
           action.method_name === "withdraw_all";
 
+        if (isWithdrawRequest) {
+          amount = withdrawAmount || 0;
+        }
+
         const isLockup = receiverAccount === lockupContract;
         const treasuryWallet = isLockup ? lockupContract : treasuryDaoID;
 
@@ -106,6 +115,7 @@ useEffect(() => {
           amount,
           submissionTime: item.submission_time,
           validatorAccount,
+          action,
           notes:
             notes || customNotes ? (
               <Markdown
@@ -122,6 +132,8 @@ useEffect(() => {
             ? RequestType.STAKE
             : isWithdrawRequest
             ? RequestType.WITHDRAW
+            : action.method_name === "select_staking_pool"
+            ? RequestType.WHITELIST
             : RequestType.UNSTAKE,
           treasuryWallet,
           status,
@@ -167,65 +179,84 @@ function checkProposalStatus(proposalId) {
     });
 }
 
+const Container = styled.div`
+  .markdown-href p {
+    margin-bottom: 0px !important;
+  }
+
+  .markdown-href a {
+    color: inherit !important;
+  }
+`;
+
 return (
-  <Widget
-    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.ProposalDetails`}
-    props={{
-      ...props,
-      page: "stake-delegation",
-      VoteActions: (hasVotingPermission || hasDeletePermission) &&
-        proposalData.status === "InProgress" && (
-          <Widget
-            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.VoteActions`}
-            props={{
-              instance,
-              votes: proposalData?.votes,
-              proposalId: proposalData?.id,
-              hasDeletePermission,
-              hasVotingPermission,
-              proposalCreator: proposalData?.proposer,
-              currentContract: "",
-              requiredVotes,
-              checkProposalStatus: () => checkProposalStatus(proposalData?.id),
-              isProposalDetailsPage: true,
-              avoidCheckForBalance: true, // we don't allow user to create request with insufficient balance
-            }}
-          />
-        ),
-      ProposalContent: (
-        <div className="card card-body d-flex flex-column gap-2">
-          {proposalData?.requestType !== RequestType.WITHDRAW && (
-            <div className="d-flex flex-column gap-2 mt-1">
-              <label>{proposalData?.requestType}d Amount</label>
-              <h5 className="mb-0">
-                <Widget
-                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmountAndIcon`}
-                  props={{
-                    instance,
-                    amountWithoutDecimals: proposalData.amount,
-                    address: "",
-                  }}
-                />
-              </h5>
-            </div>
-          )}
-          <div className="d-flex flex-column gap-2 mt-1">
-            <label className="border-top">Validator</label>
+  <Container>
+    <Widget
+      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.ProposalDetails`}
+      props={{
+        ...props,
+        page: "stake-delegation",
+        VoteActions: (hasVotingPermission || hasDeletePermission) &&
+          proposalData.status === "InProgress" && (
             <Widget
-              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.Validator`}
+              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.VoteActions`}
               props={{
-                validatorId: proposalData?.validatorAccount,
                 instance,
+                votes: proposalData?.votes,
+                proposalId: proposalData?.id,
+                hasDeletePermission,
+                hasVotingPermission,
+                proposalCreator: proposalData?.proposer,
+                currentContract: "",
+                requiredVotes,
+                checkProposalStatus: () =>
+                  checkProposalStatus(proposalData?.id),
+                isProposalDetailsPage: true,
+                avoidCheckForBalance: true, // we don't allow user to create request with insufficient balance
               }}
             />
-          </div>
-          {lockupContract && (
+          ),
+        ProposalContent: (
+          <div className="card card-body d-flex flex-column gap-2">
             <div className="d-flex flex-column gap-2 mt-1">
-              <label className="border-top">Treasury Wallet</label>
-              <h5 className="mb-0">
-                <div className="text-secondary fw-semi-bold">
-                  {isLockup ? "Lockup" : "Sputnik DAO"}
-                </div>
+              <label>Request Type</label>
+              <div style={{ width: "fit-content" }}>
+                <Widget
+                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.Type`}
+                  props={{
+                    type: proposalData?.action.method_name,
+                  }}
+                />
+              </div>
+            </div>
+            {proposalData.amount && (
+              <div className="d-flex flex-column gap-2 mt-1">
+                <label className="border-top"> Amount</label>
+                <h5 className="mb-0">
+                  <Widget
+                    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmountAndIcon`}
+                    props={{
+                      instance,
+                      amountWithoutDecimals: proposalData.amount,
+                      address: "",
+                    }}
+                  />
+                </h5>
+              </div>
+            )}
+            <div className="d-flex flex-column gap-2 mt-1">
+              <label className="border-top">Validator</label>
+              <Widget
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.Validator`}
+                props={{
+                  validatorId: proposalData?.validatorAccount,
+                  instance,
+                }}
+              />
+            </div>
+            {lockupContract && (
+              <div className="d-flex flex-column gap-2 mt-1">
+                <label className="border-top">Treasury Wallet</label>
                 <Widget
                   src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
                   props={{
@@ -234,28 +265,27 @@ return (
                     instance,
                     displayImage: false,
                     displayName: false,
-                    width: 200,
                   }}
                 />
-              </h5>
-            </div>
-          )}
-        </div>
-      ),
-      proposalData: proposalData,
-      isDeleted: isDeleted,
-      isCompactVersion,
-      approversGroup: functionCallApprovers,
-      instance,
-      deleteGroup,
-      proposalStatusLabel: {
-        approved: proposalData?.requestType + " Request Executed",
-        rejected: proposalData?.requestType + " Request Rejected",
-        deleted: proposalData?.requestType + " Request Deleted",
-        failed: proposalData?.requestType + " Request Failed",
-        expired: proposalData?.requestType + " Request Expired",
-      },
-      checkProposalStatus,
-    }}
-  />
+              </div>
+            )}
+          </div>
+        ),
+        proposalData: proposalData,
+        isDeleted: isDeleted,
+        isCompactVersion,
+        approversGroup: functionCallApprovers,
+        instance,
+        deleteGroup,
+        proposalStatusLabel: {
+          approved: proposalData?.requestType + " Request Executed",
+          rejected: proposalData?.requestType + " Request Rejected",
+          deleted: proposalData?.requestType + " Request Deleted",
+          failed: proposalData?.requestType + " Request Failed",
+          expired: proposalData?.requestType + " Request Expired",
+        },
+        checkProposalStatus,
+      }}
+    />
+  </Container>
 );
