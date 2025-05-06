@@ -1,6 +1,4 @@
 import { expect } from "@playwright/test";
-import { test } from "../../util/test.js";
-import { getInstanceConfig } from "../../util/config.js";
 import { mockTransactionSubmitRPCResponses } from "../../util/transaction";
 
 import { mockRpcRequest, updateDaoPolicyMembers } from "../../util/rpcmock.js";
@@ -386,15 +384,6 @@ export async function voteOnProposal({
 }) {
   let lastProposalId = 2;
   let isTransactionCompleted = false;
-  const instanceConfig = await getInstanceConfig({ page, instanceAccount });
-  if (
-    !instanceConfig.navbarLinks.find(
-      (navbarLink) => navbarLink.href === "?page=stake-delegation"
-    )
-  ) {
-    console.log("no stake delegation page configured for instance");
-    return test.skip();
-  }
   await updateDaoPolicyMembers({ instanceAccount, page });
   const contractId = daoAccount;
   await mockRpcRequest({

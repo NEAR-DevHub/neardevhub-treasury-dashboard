@@ -181,10 +181,7 @@ const ProposalsComponent = () => {
         const slippageValue = parseFloat(slippage) || 0;
         const minAmountReceive = Number(
           outEstimate * (1 - slippageValue / 100)
-        ).toLocaleString("en-US", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 6,
-        });
+        );
         return (
           <tr
             data-testid={"proposal-request-#" + item.id}
