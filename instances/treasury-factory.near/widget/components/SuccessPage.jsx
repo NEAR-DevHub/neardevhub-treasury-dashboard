@@ -1,4 +1,4 @@
-const { formFields, clearStorage } = props;
+const { formFields } = props;
 const { Copy } = VM.require(
   "${REPL_DEVDAO_ACCOUNT}/widget/components.Icons"
 ) || {
@@ -78,74 +78,22 @@ const Container = styled.div`
     text-overflow: ellipsis;
     text-align: left;
   }
-
-  .btn-transparent {
-    background: none;
-    border: 1px solid var(--border-color);
-    &:hover {
-      background: none;
-      border: 1px solid var(--border-color);
-    }
-  }
-
-  .dropdown-toggle::after {
-    display: none !important;
-  }
-
-  .dropdown-menu {
-    background-color: var(--bg-page-color) !important;
-    color: var(--text-color) !important;
-  }
 `;
 
-const [dropdownOpen, setDropdownOpen] = useState(null);
-
-function toggleDropdown() {
-  setDropdownOpen(!dropdownOpen);
-}
-
-const AccountsToggle = () => {
-  return (
-    <div className="dropdown">
-      <button
-        className="btn btn-transparent dropdown-toggle"
-        type="button"
-        onClick={toggleDropdown}
-      >
-        <i className="bi bi-chevron-down h6 mb-0"></i>
-      </button>
-      {dropdownOpen && (
-        <div className="dropdown-menu d-flex flex-column gap-2 p-3">
-          <div className="text-sm">Select gateway</div>
-          <GatewayLink link={`https://${accountName}.near.page`} label="Web4" />
-          <GatewayLink
-            link={`https://near.social/${accountName}.near/widget/app`}
-            label="Near Social"
-          />
-          <GatewayLink
-            link={`https://dev.near.org/${accountName}.near/widget/app`}
-            label="Dev Near"
-          />
-        </div>
-      )}
-    </div>
-  );
-};
-
 return (
-  <Container className="d-flex flex-column gap-4 align-items-center mt-4">
+  <Container className="d-flex flex-column gap-4 align-items-center">
     <img
       src="https://ipfs.near.social/ipfs/bafkreieelunmk6hppzvaobpq26bspqk2pcybek35us7p4cjd2lvnomppbe"
       height={50}
       width={50}
     />
-    <div>
-      <h3 className="text-center">Congrats! Your Treasury is ready</h3>
-      <p>
+    <div className="text-center">
+      <h5 className="text-center">Congratulations! Your Treasury is ready</h5>
+      <p className="text-sm mb-0">
         You can access and manage your treasury using any of these gateways.
       </p>
     </div>
-    <div className="card card-body w-100 d-flex flex-column gap-4 ">
+    <div className="card w-100 d-flex flex-column gap-4 border-0">
       <div className="border border-1 rounded-3 p-0">
         <AccountDisplay
           label={"NEAR"}
@@ -168,15 +116,7 @@ return (
         >
           Open Treasury
         </a>
-        <AccountsToggle />
       </div>
     </div>
-    <a
-      href="?page=create-treasury"
-      className="btn btn-transparent w-100"
-      onClick={clearStorage}
-    >
-      Create another Treasury
-    </a>
   </Container>
 );

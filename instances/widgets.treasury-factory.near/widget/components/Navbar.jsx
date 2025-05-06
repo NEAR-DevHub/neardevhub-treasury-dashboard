@@ -7,9 +7,6 @@ if (!instance) {
 const { treasuryDaoID, navbarLinks, logo, isTesting } = VM.require(
   `${instance}/widget/config.data`
 );
-
-const config = treasuryDaoID ? Near.view(treasuryDaoID, "get_config") : null;
-const metadata = JSON.parse(atob(config.metadata ?? ""));
 const [showMenu, setShowMenu] = useState(false);
 
 const { href: linkHref } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
@@ -164,25 +161,16 @@ function getTitle(text) {
   return text.replace(/-/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-const treasuryLogo = (metadata?.flagLogo ?? "")?.includes("ipfs")
-  ? metadata?.flagLogo
-  : logo;
-
 return (
   <Navbar className="position-relative d-flex justify-content-between gap-2">
     <div className="d-flex flex-column gap-2">
       <div className="d-flex gap-3 align-items-center">
         {/* logo can be svg or src */}
-        {treasuryLogo && typeof treasuryLogo === "string" ? (
-          <img
-            src={treasuryLogo}
-            width={50}
-            height={50}
-            className="rounded-3 object-fit-cover"
-          />
-        ) : (
-          treasuryLogo
-        )}
+        <Widget
+          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.MyTreasuries"
+          props={{ instance }}
+        />
+
         <div className="d-flex flex-column">
           <div className="h4 mb-0 d-flex flex-row gap-2 align-items-center">
             <div className="page-title">{getTitle(page ?? "dashboard")}</div>
