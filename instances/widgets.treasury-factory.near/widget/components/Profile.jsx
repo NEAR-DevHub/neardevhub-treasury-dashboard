@@ -126,7 +126,7 @@ const ReceiverAccountComponent = (
         }}
       >
         <img src={imageSrc} height={35} width={35} className="rounded-circle" />
-        <div style={{ position: "absolute", top: 0, right: 0 }}>
+        <div style={{ position: "absolute", bottom: "-5px", right: "-5px" }}>
           {verificationStatus &&
             (isVerfied ? <VerifiedTick /> : <NotVerfiedTick />)}
         </div>
