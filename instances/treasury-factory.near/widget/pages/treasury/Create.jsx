@@ -95,7 +95,7 @@ const PageWrapper = styled.div`
 
 const Wrapper = ({ title, children }) => (
   <div className="d-flex flex-column align-items-center w-100 mb-4">
-    <div className="position-relative d-flex flex-row align-items-center w-100 pt-2 pb-4">
+    <div className="position-relative d-flex flex-row align-items-center w-100 mt-3 pb-4">
       <div className="position-absolute left-0" style={{ width: "150px" }}>
         <a
           className="btn btn-outline-plain w-100"

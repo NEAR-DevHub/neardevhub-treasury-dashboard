@@ -34,7 +34,7 @@ const [isLoading, setIsLoading] = useState(true);
 useEffect(() => {
   setTimeout(() => {
     setIsLoading(false);
-  }, 500);
+  }, 1000);
 }, []);
 
 function updateTreasuryDrafts(treasuries) {

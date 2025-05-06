@@ -22,6 +22,10 @@ const storageAccountName = Storage.get(
   `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.treasury.Create`
 );
 
+if (!Modal || typeof getUserTreasuries !== "function") {
+  return <></>;
+}
+
 const draftTreasuries =
   JSON.parse(
     Storage.get(
@@ -64,32 +68,31 @@ useEffect(() => {
           });
         }
       }
-      setUserTreasuries((prev) =>
-        mergeUniqueTreasuries(prev || [], withTreasury)
+
+      let parsedDrafts = [];
+      if (draftTreasuries?.length > 0) {
+        parsedDrafts = draftTreasuries.map((i) => ({
+          ...i,
+          daoId: `${i.accountName}.sputnik-dao.near`,
+          hasTreasury: true,
+          instanceAccount: `${i.accountName}.near`,
+          isDraft: true,
+          config: {
+            name: i.accountName,
+          },
+        }));
+      }
+      setUserTreasuries(
+        mergeUniqueTreasuries(parsedDrafts || [], withTreasury || [])
       );
       setOtherDaos(withoutTreasury);
+
+      if (!(withTreasury || [])?.length && (withoutTreasury || []).length) {
+        setExpanded(true);
+      }
     });
   }
 }, [storageAccountName]);
-
-useEffect(() => {
-  if (draftTreasuries?.length > 0) {
-    const parsedDrafts = draftTreasuries.map((i) => ({
-      ...i,
-      daoId: `${i.accountName}.sputnik-dao.near`,
-      hasTreasury: true,
-      instanceAccount: `${i.accountName}.near`,
-      isDraft: true,
-      config: {
-        name: i.accountName,
-      },
-    }));
-
-    setUserTreasuries((prev) =>
-      mergeUniqueTreasuries(prev || [], parsedDrafts)
-    );
-  }
-}, [draftTreasuries]);
 
 const Container = styled.div`
   width: 100%;
@@ -425,7 +428,7 @@ const TreasuryCard = ({ treasury, hasTreasury }) => {
             </a>
           )}
           {!hasTreasury && (
-            <div className="d-flex gap-3 warning-box px-3 py-2 rounded-3">
+            <div className="d-flex gap-3 warning-box px-3 py-2 rounded-3 align-items-center">
               <i class="bi bi-exclamation-triangle h5 mb-0"></i>
               <div>
                 <div className="fw-bold">
@@ -438,8 +441,9 @@ const TreasuryCard = ({ treasury, hasTreasury }) => {
                   rel="noopener noreferrer"
                   href={`https://docs.neartreasury.com/support/`}
                 >
-                  please contact our team.
+                  please contact our team
                 </a>
+                .
               </div>
             </div>
           )}
@@ -485,7 +489,7 @@ function toggleExpand() {
 
 if (accountId) {
   return (
-    <div className="d-flex flex-column align-items-center w-100 mb-4 px-3">
+    <div className="d-flex flex-column align-items-center w-100 mb-4 px-3 mt-3">
       <div className="d-flex w-100 align-items-center justify-content-between position-relative">
         <h3 style={{ fontWeight: 600 }}>My Treasuries</h3>
         <div>
