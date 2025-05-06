@@ -229,9 +229,9 @@ return (
                 />
               </div>
             </div>
-            {proposalData.amount && (
+            {proposalData.amount !== 0 && proposalData.amount && (
               <div className="d-flex flex-column gap-2 mt-1">
-                <label className="border-top"> Amount</label>
+                <label className="border-top">Amount</label>
                 <h5 className="mb-0">
                   <Widget
                     src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmountAndIcon`}

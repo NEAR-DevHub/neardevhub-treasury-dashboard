@@ -98,7 +98,7 @@ test.describe("Don't ask again connected", function () {
       ).toBeVisible();
     } else {
       await expect(
-        page.getByText("The payment request has been rejected.")
+        page.getByText("The request has been rejected.")
       ).toBeVisible();
     }
   });
@@ -142,7 +142,7 @@ test.describe("Don't ask again connected", function () {
       ).toBeVisible();
     } else {
       await expect(
-        page.getByText("The payment request has been successfully deleted.")
+        page.getByText("The request has been successfully deleted.")
       ).toBeVisible();
     }
   });
