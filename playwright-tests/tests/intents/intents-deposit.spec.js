@@ -171,5 +171,11 @@ test("deposit to near-intents for testdao.sputnik-dao.near", async ({
 
   // Available tokens: https://api-mng-console.chaindefuser.com/api/tokens
 
+  expect(
+    await intentsContract.view("mt_batch_balance_of", {
+      account_id: creatorAccount.accountId,
+      token_ids: ["nep141:wrap.near"],
+    })
+  ).toEqual([parseNEAR("1")]);
   await worker.tearDown();
 });
