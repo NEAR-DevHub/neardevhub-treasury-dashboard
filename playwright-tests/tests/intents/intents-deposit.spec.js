@@ -9,9 +9,7 @@ import {
 } from "../../util/sandboxrpc";
 import crypto from "crypto";
 
-
 // DOCS: https://docs.near.org/tutorials/intents/deposit
-
 
 test("deposit to near-intents for testdao.sputnik-dao.near", async ({
   page,
@@ -23,39 +21,36 @@ test("deposit to near-intents for testdao.sputnik-dao.near", async ({
 
   // Import factory at the time testdao was created
   const intentsContract = await worker.rootAccount.importContract({
-    mainnetContract: "intents.near"
+    mainnetContract: "intents.near",
   });
   await intentsContract.call(intentsContract.accountId, "new", {
     config: {
-        "wnear_id": "wrap.near",
-        "fees": {
-          "fee": 100,
-          "fee_collector": "intents.near"
-        },
-        "roles": {
-          "super_admins": [
-            "intents.near"
-          ],
-          "admins": {
-          },
-          "grantees": {
-          }
-        }
-  }});
+      wnear_id: "wrap.near",
+      fees: {
+        fee: 100,
+        fee_collector: "intents.near",
+      },
+      roles: {
+        super_admins: ["intents.near"],
+        admins: {},
+        grantees: {},
+      },
+    },
+  });
 
   const wrapNearContract = await worker.rootAccount.importContract({
-    mainnetContract: "wrap.near"
+    mainnetContract: "wrap.near",
   });
 
   await wrapNearContract.call(wrapNearContract.accountId, "new", {
     owner_id: wrapNearContract.accountId,
     total_supply: 1_000_000n.toString(),
     metadata: {
-        spec: "1.0.0",
-        name: "Example NEAR fungible token",
-        symbol: "wNEAR",
-        decimals: 24,
-    }
+      spec: "1.0.0",
+      name: "Example NEAR fungible token",
+      symbol: "wNEAR",
+      decimals: 24,
+    },
   });
   // Import factory at the time testdao was created
   const factoryContract = await worker.rootAccount.importContract({
@@ -76,12 +71,34 @@ test("deposit to near-intents for testdao.sputnik-dao.near", async ({
     "testcreator"
   );
 
-  await creatorAccount.call('wrap.near', 'near_deposit', {}, {attachedDeposit: parseNEAR("1")});
-  await creatorAccount.call('wrap.near', 'ft_transfer_call', {
-    "receiver_id": "intents.near",
-    "amount": "1",
-    "msg": ""
-  }, {attachedDeposit: "1"});
+  await creatorAccount.call(
+    "wrap.near",
+    "near_deposit",
+    {},
+    { attachedDeposit: parseNEAR("10") }
+  );
+  await intentsContract.call(
+    wrapNearContract.accountId,
+    "storage_deposit",
+    {
+      account_id: intentsContract.accountId,
+      registration_only: true,
+    },
+    {
+      attachedDeposit: 1_0000_0000000000_0000000000n.toString(),
+    }
+  );
+
+  await creatorAccount.call(
+    wrapNearContract.accountId,
+    "ft_transfer_call",
+    {
+      receiver_id: "intents.near",
+      amount: parseNEAR("1"),
+      msg: "",
+    },
+    { attachedDeposit: "1", gas: 50_000_000_000_000n.toString() }
+  );
 
   const create_testdao_args = {
     name: daoName,
@@ -152,9 +169,7 @@ test("deposit to near-intents for testdao.sputnik-dao.near", async ({
     }
   );
 
-
   // Available tokens: https://api-mng-console.chaindefuser.com/api/tokens
-
 
   await worker.tearDown();
 });
