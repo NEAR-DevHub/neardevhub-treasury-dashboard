@@ -1,6 +1,6 @@
 import { expect } from "@playwright/test";
 import { test } from "../../util/test.js";
-import { Worker } from "near-workspaces";
+import { parseNEAR, Worker } from "near-workspaces";
 import nearApi from "near-api-js";
 import { redirectWeb4 } from "../../util/web4";
 import {
@@ -25,7 +25,38 @@ test("deposit to near-intents for testdao.sputnik-dao.near", async ({
   const intentsContract = await worker.rootAccount.importContract({
     mainnetContract: "intents.near"
   });
+  await intentsContract.call(intentsContract.accountId, "new", {
+    config: {
+        "wnear_id": "wrap.near",
+        "fees": {
+          "fee": 100,
+          "fee_collector": "intents.near"
+        },
+        "roles": {
+          "super_admins": [
+            "intents.near"
+          ],
+          "admins": {
+          },
+          "grantees": {
+          }
+        }
+  }});
 
+  const wrapNearContract = await worker.rootAccount.importContract({
+    mainnetContract: "wrap.near"
+  });
+
+  await wrapNearContract.call(wrapNearContract.accountId, "new", {
+    owner_id: wrapNearContract.accountId,
+    total_supply: 1_000_000n.toString(),
+    metadata: {
+        spec: "1.0.0",
+        name: "Example NEAR fungible token",
+        symbol: "wNEAR",
+        decimals: 24,
+    }
+  });
   // Import factory at the time testdao was created
   const factoryContract = await worker.rootAccount.importContract({
     mainnetContract: SPUTNIK_DAO_FACTORY_ID,
@@ -44,6 +75,13 @@ test("deposit to near-intents for testdao.sputnik-dao.near", async ({
   const creatorAccount = await worker.rootAccount.createSubAccount(
     "testcreator"
   );
+
+  await creatorAccount.call('wrap.near', 'near_deposit', {}, {attachedDeposit: parseNEAR("1")});
+  await creatorAccount.call('wrap.near', 'ft_transfer_call', {
+    "receiver_id": "intents.near",
+    "amount": "1",
+    "msg": ""
+  }, {attachedDeposit: "1"});
 
   const create_testdao_args = {
     name: daoName,
@@ -116,6 +154,7 @@ test("deposit to near-intents for testdao.sputnik-dao.near", async ({
 
 
   // Available tokens: https://api-mng-console.chaindefuser.com/api/tokens
+
 
   await worker.tearDown();
 });
