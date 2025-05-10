@@ -274,7 +274,7 @@ async function approveProposal({
       await Promise.all([page.waitForNavigation(), historyBtn.click()]);
       const currentUrl = page.url();
       await expect(currentUrl).toContain(
-        `http://localhost:8080/${instanceAccount}/widget/app?page=lockup&id=0"`
+        `http://localhost:8080/${instanceAccount}/widget/app?page=lockup&id=0`
       );
     }
   }
