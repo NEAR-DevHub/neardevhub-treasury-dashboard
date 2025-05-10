@@ -240,6 +240,7 @@ async function approveProposal({
   sandbox,
   daoAccount,
   isCompactVersion,
+  instanceAccount,
 }) {
   const isMultiVote = daoAccount === "infinex.sputnik-dao.near";
   page.evaluate(async () => {
@@ -299,7 +300,13 @@ async function approveProposal({
       timeout: 30_000,
     });
     if (isCompactVersion) {
-      await expect(page.getByText("View in History")).toBeVisible();
+      const historyBtn = page.getByText("View in History");
+      await expect(historyBtn).toBeVisible();
+      await Promise.all([page.waitForNavigation(), historyBtn.click()]);
+      const currentUrl = page.url();
+      await expect(currentUrl).toContain(
+        `http://localhost:8080/${instanceAccount}/widget/app?page=stake-delegation&id=0`
+      );
     }
   }
 }
@@ -332,7 +339,7 @@ test.describe("Should vote on stake delegation proposal using sandbox RPC and sh
       .first();
     await expect(approveButton).toBeEnabled({ timeout: 30_000 });
     await approveButton.click();
-    await approveProposal({ page, sandbox, daoAccount });
+    await approveProposal({ page, sandbox, daoAccount, instanceAccount });
     await sandbox.quitSandbox();
   });
 
@@ -360,7 +367,7 @@ test.describe("Should vote on stake delegation proposal using sandbox RPC and sh
       .first();
     await expect(approveButton).toBeEnabled({ timeout: 30_000 });
     await approveButton.click();
-    await approveProposal({ page, sandbox, daoAccount });
+    await approveProposal({ page, sandbox, daoAccount, instanceAccount });
     await sandbox.quitSandbox();
   });
 
@@ -388,7 +395,7 @@ test.describe("Should vote on stake delegation proposal using sandbox RPC and sh
       .first();
     await expect(approveButton).toBeEnabled({ timeout: 30_000 });
     await approveButton.click();
-    await approveProposal({ page, sandbox, daoAccount });
+    await approveProposal({ page, sandbox, daoAccount, instanceAccount });
     await sandbox.quitSandbox();
   });
 
@@ -421,6 +428,7 @@ test.describe("Should vote on stake delegation proposal using sandbox RPC and sh
       sandbox,
       daoAccount,
       isCompactVersion: true,
+      instanceAccount,
     });
     await sandbox.quitSandbox();
   });
