@@ -768,7 +768,6 @@ return (
                       accountId: member,
                       showKYC: false,
                       instance,
-                      width: "100%",
                     }}
                   />
                 </div>

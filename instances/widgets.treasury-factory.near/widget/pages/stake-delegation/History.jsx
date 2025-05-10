@@ -19,13 +19,6 @@ const [firstRender, setFirstRender] = useState(true);
 const [offset, setOffset] = useState(null);
 const [isPrevPageCalled, setIsPrevCalled] = useState(false);
 
-const highlightProposalId =
-  props.highlightProposalId ||
-  props.highlightProposalId === "0" ||
-  props.highlightProposalId === 0
-    ? parseInt(props.highlightProposalId)
-    : null;
-
 useEffect(() => {
   setLoading(true);
   Near.asyncView(treasuryDaoID, "get_last_proposal_id").then((i) => {
@@ -45,21 +38,8 @@ useEffect(() => {
         setTotalLength(r.totalLength);
       }
       setOffset(r.filteredProposals[r.filteredProposals.length - 1].id);
-      if (typeof highlightProposalId === "number" && firstRender) {
-        const proposalExists = r.filteredProposals.find(
-          (i) => i.id === highlightProposalId
-        );
-        if (!proposalExists) {
-          setPage(currentPage + 1);
-        } else {
-          setFirstRender(false);
-          setLoading(false);
-          setProposals(r.filteredProposals);
-        }
-      } else {
-        setLoading(false);
-        setProposals(r.filteredProposals);
-      }
+      setLoading(false);
+      setProposals(r.filteredProposals);
     });
   });
 }, [currentPage, rowsPerPage]);
@@ -73,6 +53,9 @@ const functionCallApproversGroup = getApproversAndThreshold(
   "call",
   context.accountId
 );
+useEffect(() => {
+  props.onSelectRequest(null);
+}, [currentPage, rowsPerPage]);
 
 return (
   <div className="d-flex flex-column flex-1 justify-content-between h-100">
@@ -83,9 +66,9 @@ return (
         proposals: proposals,
         isPendingRequests: false,
         functionCallApproversGroup,
-        highlightProposalId,
         loading: loading,
         policy,
+        ...props,
       }}
     />
     {(proposals ?? [])?.length > 0 && (
@@ -108,6 +91,7 @@ return (
             currentPage: currentPage,
             rowsPerPage: rowsPerPage,
             onRowsChange: (v) => {
+              setIsPrevCalled(false);
               setOffset(null);
               setPage(0);
               setRowsPerPage(parseInt(v));

@@ -17,7 +17,6 @@ if (!pikespeakKey) {
         instance: props.instance,
         displayImage: false,
         displayName: false,
-        width: 200,
       }}
     />
   );

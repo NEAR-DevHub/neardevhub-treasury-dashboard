@@ -138,7 +138,7 @@ export const UnStakeProposalData = {
 export const WithdrawProposalData = {
   id: 55,
   proposer: "megha19.near",
-  description: "* Proposal Action: withdraw",
+  description: "* Proposal Action: withdraw <br>* Amount: 3e+23",
   kind: {
     FunctionCall: {
       receiver_id: "nearfans.poolv1.near",

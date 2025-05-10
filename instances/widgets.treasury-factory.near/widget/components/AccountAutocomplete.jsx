@@ -119,7 +119,6 @@ const Account = ({ accountId }) => {
           accountId: accountId,
           showKYC: false,
           instance: props.instance,
-          width: 160,
         }}
       />
     </div>

@@ -16,7 +16,6 @@ import {
 } from "../../util/inventory.js";
 import { InsufficientBalance, toBase64 } from "../../util/lib.js";
 import { SandboxRPC } from "../../util/sandboxrpc.js";
-import { getInstanceConfig } from "../../util/config.js";
 
 async function voteOnProposal({
   page,

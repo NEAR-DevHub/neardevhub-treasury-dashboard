@@ -269,7 +269,11 @@ function onSubmitClick() {
       methodName: "add_proposal",
       args: {
         proposal: {
-          description: encodeToMarkdown(description),
+          description: encodeToMarkdown({
+            ...description,
+            amount:
+              i.stakedBalance[selectedWallet.value].availableToWithdrawBalance,
+          }),
           kind: {
             FunctionCall: {
               receiver_id: isLockupContractSelected
