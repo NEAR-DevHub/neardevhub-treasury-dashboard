@@ -1,5 +1,7 @@
 const { tab, instance, id } = props;
-
+const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
+  href: () => {},
+};
 if (!instance) {
   return <></>;
 }
@@ -55,8 +57,7 @@ const ToastStatusContent = () => {
                   widgetSrc: `${instance}/widget/app`,
                   params: {
                     page: "lockup",
-                    tab: "History",
-                    highlightProposalId: voteProposalId,
+                    id: voteProposalId,
                   },
                 })}
               >
@@ -110,8 +111,7 @@ return (
                 ...props,
                 selectedProposalDetailsId: showProposalDetailsId,
                 setCurrentTab,
-                highlightProposalId:
-                  props.highlightProposalId || voteProposalId,
+                highlightProposalId: voteProposalId,
                 tabs: [
                   {
                     title: "Pending Requests",
