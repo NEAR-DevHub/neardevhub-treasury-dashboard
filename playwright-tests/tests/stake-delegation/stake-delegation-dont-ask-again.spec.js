@@ -11,6 +11,16 @@ test.afterEach(async ({ page }, testInfo) => {
   await page.unrouteAll({ behavior: "ignoreErrors" });
 });
 
+async function checkHistoryProposal({ page, id, instanceAccount }) {
+  const historyBtn = page.getByText("View in History");
+  await expect(historyBtn).toBeVisible();
+  await Promise.all([page.waitForNavigation(), historyBtn.click()]);
+  const currentUrl = page.url();
+  await expect(currentUrl).toContain(
+    `http://localhost:8080/${instanceAccount}/widget/app?page=stake-delegation&id=${id}`
+  );
+}
+
 test.describe("Don't ask again connected", function () {
   test.use({
     storageState:
@@ -52,10 +62,17 @@ test.describe("Don't ask again connected", function () {
       await expect(
         page.getByText("Your vote is counted, the request is highlighted.")
       ).toBeVisible();
+      await expect(page.locator("tr").nth(1)).toHaveClass(
+        "cursor-pointer proposal-row bg-highlight",
+        {
+          timeout: 10_000,
+        }
+      );
     } else {
       await expect(
         page.getByText("The request has been successfully executed.")
       ).toBeVisible({ timeout: 15_000 });
+      await checkHistoryProposal({ page, instanceAccount, id: 0 });
     }
   });
 
@@ -96,10 +113,17 @@ test.describe("Don't ask again connected", function () {
       await expect(
         page.getByText("Your vote is counted, the request is highlighted.")
       ).toBeVisible();
+      await expect(page.locator("tr").nth(1)).toHaveClass(
+        "cursor-pointer proposal-row bg-highlight",
+        {
+          timeout: 10_000,
+        }
+      );
     } else {
       await expect(
         page.getByText("The request has been rejected.")
       ).toBeVisible();
+      await checkHistoryProposal({ page, instanceAccount, id: 0 });
     }
   });
 
@@ -140,6 +164,12 @@ test.describe("Don't ask again connected", function () {
       await expect(
         page.getByText("Your vote is counted, the request is highlighted.")
       ).toBeVisible();
+      await expect(page.locator("tr").nth(1)).toHaveClass(
+        "cursor-pointer proposal-row bg-highlight",
+        {
+          timeout: 10_000,
+        }
+      );
     } else {
       await expect(
         page.getByText("The request has been successfully deleted.")
@@ -193,10 +223,17 @@ test.describe("Don't ask again connected", function () {
       await expect(
         page.getByText("Your vote is counted, the request is highlighted.")
       ).toBeVisible();
+      await expect(page.locator("tr").nth(1)).toHaveClass(
+        "cursor-pointer proposal-row bg-highlight",
+        {
+          timeout: 10_000,
+        }
+      );
     } else {
       await expect(
         page.getByText("The request has been successfully executed.")
       ).toBeVisible();
+      await checkHistoryProposal({ page, instanceAccount, id: 0 });
     }
   });
 });
