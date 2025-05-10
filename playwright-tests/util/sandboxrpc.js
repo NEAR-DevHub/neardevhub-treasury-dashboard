@@ -463,7 +463,7 @@ export class SandboxRPC {
         args: Buffer.from(JSON.stringify(createDaoConfig)).toString("base64"),
       },
       gas: 300000000000000,
-      attachedDeposit: utils.format.parseNearAmount("8"),
+      attachedDeposit: utils.format.parseNearAmount("15"),
     });
   }
 

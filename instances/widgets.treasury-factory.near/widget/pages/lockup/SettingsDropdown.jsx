@@ -16,7 +16,6 @@ function changeColumnsVisibility(value) {
 const baseColumns = [
   { title: "Created At", show: true },
   { title: "Recipient Account", show: true },
-  { title: "Token", show: true },
   { title: "Amount", show: true },
   { title: "Start Date", show: true },
   { title: "End Date", show: true },

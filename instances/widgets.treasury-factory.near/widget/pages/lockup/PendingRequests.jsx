@@ -41,12 +41,15 @@ const refreshTableData = Storage.get(
   `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.lockup.CreateRequest`
 );
 
+const refreshProposalsTableData = Storage.get(
+  "REFRESH_LOCKUP_TABLE_DATA",
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.lockup.ProposalDetailsPage`
+);
+
 const fetchProposals = useCallback(() => {
   setLoading(true);
-
   Near.asyncView(treasuryDaoID, "get_last_proposal_id").then((i) => {
     const lastProposalId = i;
-
     getFilteredProposalsByStatusAndKind({
       treasuryDaoID,
       resPerPage: rowsPerPage,
@@ -79,7 +82,11 @@ useEffect(() => {
   setOffset(null);
   setPage(0);
   fetchProposals();
-}, [refreshTableData]);
+}, [refreshTableData, refreshProposalsTableData]);
+
+useEffect(() => {
+  props.onSelectRequest(null);
+}, [currentPage, rowsPerPage]);
 
 return (
   <div className="d-flex flex-column flex-1 justify-content-between h-100">
@@ -116,6 +123,7 @@ return (
             currentPage: currentPage,
             rowsPerPage: rowsPerPage,
             onRowsChange: (v) => {
+              setIsPrevCalled(false);
               setOffset(null);
               setPage(0);
               setRowsPerPage(parseInt(v));
