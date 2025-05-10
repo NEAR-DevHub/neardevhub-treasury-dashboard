@@ -2,15 +2,11 @@ import { expect } from "@playwright/test";
 import { test } from "../../util/test.js";
 import { Account, parseNEAR, Worker } from "near-workspaces";
 import nearApi from "near-api-js";
-import {
-  SPUTNIK_DAO_FACTORY_ID,
-} from "../../util/sandboxrpc.js";
+import { SPUTNIK_DAO_FACTORY_ID } from "../../util/sandboxrpc.js";
 
 // DOCS: https://docs.near.org/tutorials/intents/deposit
 
-test("deposit to near-intents from NEAR", async ({
-  page,
-}) => {
+test("deposit to near-intents from NEAR", async ({ page }) => {
   test.setTimeout(120_000);
   const daoName = "testdao";
 
@@ -49,7 +45,6 @@ test("deposit to near-intents from NEAR", async ({
       decimals: 24,
     },
   });
-
 
   // Import factory at the time testdao was created
   const factoryContract = await worker.rootAccount.importContract({
@@ -181,13 +176,18 @@ test("deposit to near-intents from NEAR", async ({
 
   // Transfer to treasury account
 
-  await creatorAccount.call(intentsContract, "mt_transfer", {
-    "receiver_id": daoAccount.accountId,
-    "amount": parseNEAR("1"),
-    "token_id": "nep141:wrap.near"
-  }, {
-    attachedDeposit: "1"
-  });
+  await creatorAccount.call(
+    intentsContract,
+    "mt_transfer",
+    {
+      receiver_id: daoAccount.accountId,
+      amount: parseNEAR("1"),
+      token_id: "nep141:wrap.near",
+    },
+    {
+      attachedDeposit: "1",
+    }
+  );
 
   expect(
     await intentsContract.view("mt_batch_balance_of", {
