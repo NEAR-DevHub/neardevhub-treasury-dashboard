@@ -49,6 +49,8 @@ test("deposit to near-intents from NEAR", async ({
       decimals: 24,
     },
   });
+
+
   // Import factory at the time testdao was created
   const factoryContract = await worker.rootAccount.importContract({
     mainnetContract: SPUTNIK_DAO_FACTORY_ID,
