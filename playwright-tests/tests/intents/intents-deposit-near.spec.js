@@ -83,17 +83,6 @@ test("deposit to near-intents from NEAR", async ({ page }) => {
     }
   );
 
-  await creatorAccount.call(
-    wrapNearContract.accountId,
-    "ft_transfer_call",
-    {
-      receiver_id: "intents.near",
-      amount: parseNEAR("1"),
-      msg: "",
-    },
-    { attachedDeposit: "1", gas: 50_000_000_000_000n.toString() }
-  );
-
   const create_testdao_args = {
     name: daoName,
     args: Buffer.from(
@@ -165,28 +154,15 @@ test("deposit to near-intents from NEAR", async ({ page }) => {
 
   const daoAccount = new Account(`${daoName}.${SPUTNIK_DAO_FACTORY_ID}`);
 
-  // Available tokens: https://api-mng-console.chaindefuser.com/api/tokens
-
-  expect(
-    await intentsContract.view("mt_batch_balance_of", {
-      account_id: creatorAccount.accountId,
-      token_ids: ["nep141:wrap.near"],
-    })
-  ).toEqual([parseNEAR("1")]);
-
-  // Transfer to treasury account
-
   await creatorAccount.call(
-    intentsContract,
-    "mt_transfer",
+    wrapNearContract.accountId,
+    "ft_transfer_call",
     {
-      receiver_id: daoAccount.accountId,
+      receiver_id: "intents.near",
       amount: parseNEAR("1"),
-      token_id: "nep141:wrap.near",
+      msg: JSON.stringify({ receiver_id: daoAccount }),
     },
-    {
-      attachedDeposit: "1",
-    }
+    { attachedDeposit: "1", gas: 50_000_000_000_000n.toString() }
   );
 
   expect(
