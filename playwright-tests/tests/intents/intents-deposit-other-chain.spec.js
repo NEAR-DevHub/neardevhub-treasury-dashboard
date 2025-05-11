@@ -49,24 +49,33 @@ test("deposit to near-intents from other chain", async ({ page }) => {
     nodeUrl: "https://rpc.mainnet.fastnear.com",
   });
 
-  const ethTokenContract = await worker.rootAccount.importContract({
-    mainnetContract: nativeToken.near_token_id,
+  const omftContract = await worker.rootAccount.importContract({
+    mainnetContract: "omft.near",
+  });
+  const omftMainnetAccount = await mainnet.account(omftContract.accountId);
+
+  await omftContract.call(omftContract.accountId, "new", {
+    super_admins: ["omft.near"],
+    admins: {},
+    grantees: {
+      DAO: ["omft.near"],
+      TokenDeployer: ["omft.near"],
+      TokenDepositer: ["omft.near"],
+    },
   });
 
-  const ethTokenMainnetAccount = await mainnet.account(
-    ethTokenContract.accountId
+  await omftContract.call(
+    omftContract.accountId,
+    "deploy_token",
+    {
+      token: "eth",
+      metadata: await omftMainnetAccount.viewFunction({
+        contractId: nativeToken.near_token_id,
+        methodName: "ft_metadata",
+      }),
+    },
+    { attachedDeposit: parseNEAR("3"), gas: 300_000_000_000_000n.toString() }
   );
-  await ethTokenContract.call(ethTokenContract.accountId, "new", {
-    owner_id: ethTokenContract.accountId,
-    total_supply: await ethTokenMainnetAccount.viewFunction({
-      contractId: ethTokenContract.accountId,
-      methodName: "ft_total_supply",
-    }),
-    metadata: await ethTokenMainnetAccount.viewFunction({
-      contractId: ethTokenContract.accountId,
-      methodName: "ft_metadata",
-    }),
-  });
 
   // Import factory at the time testdao was created
   const intentsContract = await worker.rootAccount.importContract({
@@ -86,6 +95,18 @@ test("deposit to near-intents from other chain", async ({ page }) => {
       },
     },
   });
+
+  await omftContract.call(
+    nativeToken.near_token_id,
+    "storage_deposit",
+    {
+      account_id: intentsContract.accountId,
+      registration_only: true,
+    },
+    {
+      attachedDeposit: 1_500_0000000000_0000000000n.toString(),
+    }
+  );
 
   // Import factory at the time testdao was created
   const factoryContract = await worker.rootAccount.importContract({
@@ -190,65 +211,33 @@ test("deposit to near-intents from other chain", async ({ page }) => {
         method: "deposit_address",
         params: [
           {
-            account_id: creatorAccount.accountId,
+            account_id: daoAccount,
             chain: "eth:1", // CHAIN_TYPE:CHAIN_ID
           },
         ],
       }),
     }).then((r) => r.json())
   ).result.address;
-  expect(depositAddress).toEqual("0x024A7281887f5a36688c6729942f1fF32424D245");
+  expect(depositAddress).toEqual("0xC710Ddfde07A865CcEAd280f3b1C30a4F865d987");
 
-  await ethTokenContract.call(
-    ethTokenContract.accountId,
+  await omftContract.call(
+    omftContract.accountId,
     "ft_deposit",
     {
-      owner_id: creatorAccount.accountId,
-      amount: 10_000_000_000_000_000_000n.toString(),
-    },
-    { attachedDeposit: 1_500_0000000000_0000000000n.toString() }
-  );
-
-  await ethTokenContract.call(
-    ethTokenContract.accountId,
-    "storage_deposit",
-    {
-      account_id: intentsContract.accountId,
-      registration_only: true,
-    },
-    {
-      attachedDeposit: 1_500_0000000000_0000000000n.toString(),
-    }
-  );
-
-  await creatorAccount.call(
-    ethTokenContract.accountId,
-    "ft_transfer_call",
-    {
-      receiver_id: "intents.near",
+      owner_id: "intents.near",
+      token: "eth",
       amount: 1_000_000_000_000_000_000n.toString(),
-      msg: "",
-    },
-    { attachedDeposit: "1", gas: 50_000_000_000_000n.toString() }
-  );
-
-  expect(
-    await intentsContract.view("mt_batch_balance_of", {
-      account_id: creatorAccount.accountId,
-      token_ids: [tokenId],
-    })
-  ).toEqual([1_000_000_000_000_000_000n.toString()]);
-
-  await creatorAccount.call(
-    intentsContract,
-    "mt_transfer",
-    {
-      receiver_id: daoAccount.accountId,
-      amount: 1_000_000_000_000_000_000n.toString(),
-      token_id: tokenId,
+      msg: JSON.stringify({ receiver_id: daoAccount }),
+      memo: `BRIDGED_FROM:${JSON.stringify({
+        networkType: "eth",
+        chainId: "1",
+        txHash:
+          "0xc6b7ecd5c7517a8f56ac7ec9befed7d26a459fc97c7d5cd7598d4e19b5a806b7",
+      })}`,
     },
     {
-      attachedDeposit: "1",
+      attachedDeposit: parseNEAR("0.00125"),
+      gas: 300_000_000_000_000n.toString(),
     }
   );
 
