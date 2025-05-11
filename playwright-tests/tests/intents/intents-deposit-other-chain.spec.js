@@ -6,6 +6,19 @@ import { SPUTNIK_DAO_FACTORY_ID } from "../../util/sandboxrpc.js";
 
 // DOCS: https://docs.near.org/tutorials/intents/deposit
 
+/**
+ * This test demonstrates and documents the process of depositing tokens to the NEAR intents contract from another chain (Ethereum).
+ *
+ * Findings:
+ * - The test sets up a simulated environment with omft (fungible token) and intents contracts, and a DAO (Sputnik) contract.
+ * - It fetches available tokens and supported bridge tokens from real APIs, ensuring the test uses real-world token metadata.
+ * - The test deploys and initializes the omft token contract, and registers the intents contract for storage on the token contract.
+ * - It creates a DAO and fetches the deposit address for the DAO on Ethereum using the bridge API.
+ * - The test simulates a cross-chain deposit by calling `ft_deposit` on the omft contract, using a memo that references a real Ethereum transaction hash and a message specifying the DAO as the receiver.
+ * - Finally, it verifies that the DAO account received the correct token balance on NEAR, proving that the cross-chain deposit flow works as expected.
+ *
+ * This test serves as both documentation and a technical reference for implementing a user interface for NEAR intents deposits from other chains.
+ */
 test("deposit to near-intents from other chain", async ({ page }) => {
   test.setTimeout(120_000);
   const daoName = "testdao";
@@ -251,6 +264,24 @@ test("deposit to near-intents from other chain", async ({ page }) => {
   await worker.tearDown();
 });
 
+/**
+ * Note on the real deposit transaction test:
+ *
+ * One of the test cases refers to a real deposit transaction that occurred on Ethereum. In this test, the actual Ethereum transaction hash is used in the `memo` field when calling `ft_deposit` on the omft contract:
+ *
+ *   Ethereum txHash: 0x1718836745367397dd6906344a8d1ce4fcf34109ddae6403b8f07761d6df7fff
+ *
+ * This Ethereum transaction triggered a cross-chain deposit, which resulted in an `ft_deposit` transaction on NEAR. The corresponding NEAR transaction can be found here:
+ *   https://nearblocks.io/txns/6F48rXLYCxRDP26i6BwhwrZPYZbJ2thpXqaJVorZ5Df4
+ *
+ * The test simulates the cross-chain deposit by providing the same parameters (including the txHash and receiver) as the real transaction, and then verifies that the correct NEAR account receives the expected token balance.
+ *
+ * To look up both transactions:
+ *   - Use the Ethereum txHash above in a block explorer like https://etherscan.io/ to see the original deposit.
+ *   - Use the NEAR transaction hash above in https://nearblocks.io/ to see the resulting deposit on NEAR.
+ *
+ * This approach allows the test to reproduce and validate the deposit flow as it happened in production, ensuring that the integration between Ethereum and NEAR via the bridge and intents contract works as expected. It also serves as a reference for how to handle real-world cross-chain deposits in a user interface or backend integration.
+ */
 test("deposit to near-intents from ethereum (referring to real deposit transaction)", async ({
   page,
 }) => {

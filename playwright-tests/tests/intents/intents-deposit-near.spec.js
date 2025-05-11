@@ -1,3 +1,16 @@
+/**
+ * This test suite explores and documents the deposit process for NEAR intents using NEAR-native tokens.
+ *
+ * Findings:
+ * - The tests set up a simulated environment with intents and fungible token (FT) contracts, and a DAO (Sputnik) contract.
+ * - They demonstrate how to initialize and configure the contracts, including registering storage and deploying tokens.
+ * - The tests show how to fetch and use deposit addresses for both user accounts and DAOs on NEAR.
+ * - They simulate deposits by calling `ft_transfer_call` with a message specifying the receiver, and verify that the correct account receives the tokens.
+ * - The tests validate balances after deposit, ensuring the integration between the intent contract and DAO/user accounts is correct.
+ *
+ * These tests serve as both documentation and a technical reference for implementing a user interface for NEAR intents deposits using NEAR-native tokens.
+ */
+
 import { expect } from "@playwright/test";
 import { test } from "../../util/test.js";
 import { Account, parseNEAR, Worker } from "near-workspaces";
