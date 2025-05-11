@@ -250,3 +250,155 @@ test("deposit to near-intents from other chain", async ({ page }) => {
 
   await worker.tearDown();
 });
+
+test("deposit to near-intents from ethereum (referring to real deposit transaction)", async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+
+  const availableTokens = (
+    await fetch("https://api-mng-console.chaindefuser.com/api/tokens").then(
+      (r) => r.json()
+    )
+  ).items;
+  const tokenId = availableTokens.find(
+    (token) => token.defuse_asset_id === "nep141:eth.omft.near"
+  ).defuse_asset_id;
+
+  const supportedTokens = await fetch("https://bridge.chaindefuser.com/rpc", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      id: "dontcare",
+      jsonrpc: "2.0",
+      method: "supported_tokens",
+      params: [
+        {
+          chains: [
+            "eth:1", // Ethereum Mainnet
+          ],
+        },
+      ],
+    }),
+  }).then((r) => r.json());
+
+  const nativeToken = supportedTokens.result.tokens[0];
+  expect(nativeToken.near_token_id).toEqual("eth.omft.near");
+
+  expect(tokenId).toEqual("nep141:eth.omft.near");
+
+  const worker = await Worker.init();
+  const mainnet = await connect({
+    networkId: "mainnet",
+    nodeUrl: "https://rpc.mainnet.fastnear.com",
+  });
+
+  const omftContract = await worker.rootAccount.importContract({
+    mainnetContract: "omft.near",
+  });
+  const omftMainnetAccount = await mainnet.account(omftContract.accountId);
+
+  await omftContract.call(omftContract.accountId, "new", {
+    super_admins: ["omft.near"],
+    admins: {},
+    grantees: {
+      DAO: ["omft.near"],
+      TokenDeployer: ["omft.near"],
+      TokenDepositer: ["omft.near"],
+    },
+  });
+
+  await omftContract.call(
+    omftContract.accountId,
+    "deploy_token",
+    {
+      token: "eth",
+      metadata: await omftMainnetAccount.viewFunction({
+        contractId: nativeToken.near_token_id,
+        methodName: "ft_metadata",
+      }),
+    },
+    { attachedDeposit: parseNEAR("3"), gas: 300_000_000_000_000n.toString() }
+  );
+
+  // Import factory at the time testdao was created
+  const intentsContract = await worker.rootAccount.importContract({
+    mainnetContract: "intents.near",
+  });
+  await intentsContract.call(intentsContract.accountId, "new", {
+    config: {
+      wnear_id: "wrap.near",
+      fees: {
+        fee: 100,
+        fee_collector: "intents.near",
+      },
+      roles: {
+        super_admins: ["intents.near"],
+        admins: {},
+        grantees: {},
+      },
+    },
+  });
+
+  await omftContract.call(
+    nativeToken.near_token_id,
+    "storage_deposit",
+    {
+      account_id: intentsContract.accountId,
+      registration_only: true,
+    },
+    {
+      attachedDeposit: 1_500_0000000000_0000000000n.toString(),
+    }
+  );
+
+  const depositAccountId = "petersalomonsen.near";
+
+  const depositAddress = (
+    await fetch("https://bridge.chaindefuser.com/rpc", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: "dontcare",
+        method: "deposit_address",
+        params: [
+          {
+            account_id: depositAccountId,
+            chain: "eth:1", // CHAIN_TYPE:CHAIN_ID
+          },
+        ],
+      }),
+    }).then((r) => r.json())
+  ).result.address;
+  expect(depositAddress).toEqual("0xe18EFB7f81419bF1976aB48542F6E5047D885FB4");
+
+  await omftContract.call(
+    omftContract.accountId,
+    "ft_deposit",
+    {
+      owner_id: "intents.near",
+      token: "eth",
+      amount: "10000000000000000",
+      msg: '{"receiver_id":"' + depositAccountId + '"}',
+      memo: 'BRIDGED_FROM:{"networkType":"eth","chainId":"1","txHash":"0x1718836745367397dd6906344a8d1ce4fcf34109ddae6403b8f07761d6df7fff"}',
+    },
+    {
+      attachedDeposit: parseNEAR("0.00125"),
+      gas: 300_000_000_000_000n.toString(),
+    }
+  );
+
+  expect(
+    await intentsContract.view("mt_batch_balance_of", {
+      account_id: depositAccountId,
+      token_ids: [tokenId],
+    })
+  ).toEqual([10000000000000000n.toString()]);
+
+  await worker.tearDown();
+});
