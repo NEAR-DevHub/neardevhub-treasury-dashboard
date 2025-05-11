@@ -108,8 +108,7 @@ const ToastStatusContent = () => {
                   widgetSrc: `${instance}/widget/app`,
                   params: {
                     page: "payments",
-                    tab: "History",
-                    highlightProposalId: voteProposalId,
+                    id: voteProposalId,
                   },
                 })}
               >
