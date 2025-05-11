@@ -4,8 +4,13 @@ import {
   CurrentTimestampInNanoseconds,
   TransferProposalData,
 } from "../../util/inventory.js";
-import { mockRpcRequest, mockWithFTBalance } from "../../util/rpcmock.js";
+import {
+  mockNearBalances,
+  mockRpcRequest,
+  mockWithFTBalance,
+} from "../../util/rpcmock.js";
 import { SandboxRPC } from "../../util/sandboxrpc.js";
+import { toBase64 } from "../../util/lib.js";
 
 async function mockPaymentProposals({ page, status }) {
   await mockRpcRequest({
@@ -171,8 +176,32 @@ async function setupSandboxAndCreateProposal({ daoAccount, page }) {
   await sandbox.addPaymentRequestProposal({
     title: proposalTitle,
     summary: proposalSummary,
-    amount: "5",
+    amount: "4" + "000000000000000000000000",
     receiver_id: receiverAccount,
+    daoName,
+  });
+  return sandbox;
+}
+
+async function setupSandboxAndCreateLockupTransferProposal({
+  daoAccount,
+  page,
+}) {
+  const daoName = daoAccount.split(".")[0];
+  const sandbox = new SandboxRPC();
+  const receiverAccount = daoAccount;
+  await sandbox.init();
+  await sandbox.attachRoutes(page);
+  await sandbox.setupSandboxForSputnikDao(daoName, "theori.near", true);
+  await sandbox.setupLockupContract(daoName);
+  await sandbox.addFunctionCallProposal({
+    method_name: "transfer",
+    functionArgs: toBase64({
+      amount: "3000000000000000000000000",
+      receiver_id: receiverAccount,
+    }),
+    receiver_id: daoAccount,
+    description,
     daoName,
   });
   return sandbox;
@@ -183,6 +212,7 @@ async function approveProposal({
   sandbox,
   daoAccount,
   isCompactVersion,
+  showInsufficientBalanceModal,
 }) {
   const isMultiVote = daoAccount === "infinex.sputnik-dao.near";
   page.evaluate(async () => {
@@ -200,6 +230,10 @@ async function approveProposal({
       };
     });
   });
+  if (showInsufficientBalanceModal) {
+    await expect(page.getByText("Insufficient Balance")).toBeVisible();
+    await page.getByRole("button", { name: "Proceed Anyway" }).click();
+  }
   await page.getByRole("button", { name: "Confirm" }).click();
   await page.getByRole("button", { name: "Confirm" }).click();
   const transactionResult = await sandbox.account.functionCall({
@@ -242,7 +276,13 @@ async function approveProposal({
       timeout: 30_000,
     });
     if (isCompactVersion) {
-      await expect(page.getByText("View in History")).toBeVisible();
+      const historyBtn = page.getByText("View in History");
+      await expect(historyBtn).toBeVisible();
+      await Promise.all([page.waitForNavigation(), historyBtn.click()]);
+      const currentUrl = page.url();
+      await expect(currentUrl).toContain(
+        `http://localhost:8080/${instanceAccount}/widget/app?page=payments&id=0`
+      );
     }
   }
 }
@@ -269,6 +309,38 @@ test.describe("Should vote on proposal using sandbox RPC and show updated status
     await expect(approveButton).toBeEnabled({ timeout: 30_000 });
     await approveButton.click();
     await approveProposal({ page, sandbox, daoAccount });
+    await sandbox.quitSandbox();
+  });
+
+  test(`Proposal details page: should show insufficient balance error`, async ({
+    page,
+    instanceAccount,
+    daoAccount,
+  }) => {
+    test.setTimeout(250_000);
+    const sandbox = await setupSandboxAndCreateProposal({ daoAccount, page });
+    await mockNearBalances({
+      page,
+      accountId: daoAccount,
+      balance: "10",
+      storage: "1",
+    });
+    await mockWithFTBalance({ page, daoAccount, isSufficient: false });
+
+    await page.goto(`/${instanceAccount}/widget/app?page=payments&id=0`);
+    const approveButton = page
+      .getByRole("button", {
+        name: "Approve",
+      })
+      .first();
+    await expect(approveButton).toBeEnabled({ timeout: 30_000 });
+    await approveButton.click();
+    await approveProposal({
+      page,
+      sandbox,
+      daoAccount,
+      showInsufficientBalanceModal: true,
+    });
     await sandbox.quitSandbox();
   });
 
@@ -300,5 +372,99 @@ test.describe("Should vote on proposal using sandbox RPC and show updated status
       isCompactVersion: true,
     });
     await sandbox.quitSandbox();
+  });
+
+  test.describe("Lockup Transfer", () => {
+    test.beforeEach(({ daoAccount }) => {
+      if (!daoAccount.includes("infinex")) {
+        test.skip();
+      }
+    });
+
+    test(`Proposal details page`, async ({
+      page,
+      instanceAccount,
+      daoAccount,
+    }) => {
+      test.setTimeout(250_000);
+      const sandbox = await setupSandboxAndCreateLockupTransferProposal({
+        daoAccount,
+        page,
+      });
+      await mockWithFTBalance({ page, daoAccount, isSufficient: true });
+
+      await page.goto(`/${instanceAccount}/widget/app?page=payments&id=0`);
+      const approveButton = page
+        .getByRole("button", {
+          name: "Approve",
+        })
+        .first();
+      await expect(approveButton).toBeEnabled({ timeout: 30_000 });
+      await approveButton.click();
+      await approveProposal({ page, sandbox, daoAccount });
+      await sandbox.quitSandbox();
+    });
+
+    test(`Proposal details pag: should show insufficient balance error`, async ({
+      page,
+      instanceAccount,
+      daoAccount,
+    }) => {
+      test.setTimeout(250_000);
+      const sandbox = await setupSandboxAndCreateLockupTransferProposal({
+        daoAccount,
+        page,
+      });
+      await mockWithFTBalance({ page, daoAccount, isSufficient: false });
+
+      await page.goto(`/${instanceAccount}/widget/app?page=payments&id=0`);
+      const approveButton = page
+        .getByRole("button", {
+          name: "Approve",
+        })
+        .first();
+      await expect(approveButton).toBeEnabled({ timeout: 30_000 });
+      await approveButton.click();
+      await approveProposal({
+        page,
+        sandbox,
+        daoAccount,
+        showInsufficientBalanceModal: true,
+      });
+      await sandbox.quitSandbox();
+    });
+
+    test(`Compact proposal page`, async ({
+      page,
+      instanceAccount,
+      daoAccount,
+    }) => {
+      test.setTimeout(200_000);
+      const sandbox = await setupSandboxAndCreateLockupTransferProposals({
+        daoAccount,
+        page,
+      });
+      await mockWithFTBalance({ page, daoAccount, isSufficient: true });
+
+      await page.goto(`/${instanceAccount}/widget/app?page=payments`);
+      const proposalCell = page.getByTestId("proposal-request-#0");
+      await expect(proposalCell).toBeVisible({ timeout: 20_000 });
+      await proposalCell.click();
+      await expect(page.getByRole("heading", { name: "#0" })).toBeVisible();
+      const approveButton = page
+        .getByRole("button", {
+          name: "Approve",
+        })
+        .nth(1);
+      await expect(approveButton).toBeEnabled({ timeout: 30_000 });
+      await approveButton.click();
+      await approveProposal({
+        page,
+        sandbox,
+        daoAccount,
+        isCompactVersion: true,
+      });
+      await sandbox.quitSandbox();
+    });
   });
 });
