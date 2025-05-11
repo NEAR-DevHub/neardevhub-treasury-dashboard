@@ -183,6 +183,8 @@ async function approveProposal({
   sandbox,
   daoAccount,
   isCompactVersion,
+  showInsufficientBalanceModal,
+  instanceAccount,
 }) {
   const isMultiVote = daoAccount === "infinex.sputnik-dao.near";
   page.evaluate(async () => {
@@ -200,6 +202,10 @@ async function approveProposal({
       };
     });
   });
+  if (showInsufficientBalanceModal) {
+    await expect(page.getByText("Insufficient Balance")).toBeVisible();
+    await page.getByRole("button", { name: "Proceed Anyway" }).click();
+  }
   await page.getByRole("button", { name: "Confirm" }).click();
   await page.getByRole("button", { name: "Confirm" }).click();
   const transactionResult = await sandbox.account.functionCall({
@@ -242,7 +248,13 @@ async function approveProposal({
       timeout: 30_000,
     });
     if (isCompactVersion) {
-      await expect(page.getByText("View in History")).toBeVisible();
+      const historyBtn = page.getByText("View in History");
+      await expect(historyBtn).toBeVisible();
+      await Promise.all([page.waitForNavigation(), historyBtn.click()]);
+      const currentUrl = page.url();
+      await expect(currentUrl).toContain(
+        `http://localhost:8080/${instanceAccount}/widget/app?page=asset-exchange&id=0`
+      );
     }
   }
 }
@@ -268,7 +280,34 @@ test.describe("Should vote on exchange proposal using sandbox RPC and show updat
       .first();
     await expect(approveButton).toBeEnabled({ timeout: 30_000 });
     await approveButton.click();
-    await approveProposal({ page, sandbox, daoAccount });
+    await approveProposal({ page, sandbox, daoAccount, instanceAccount });
+    await sandbox.quitSandbox();
+  });
+
+  test(`Proposal details page: should show insufficient balance error`, async ({
+    page,
+    instanceAccount,
+    daoAccount,
+  }) => {
+    test.setTimeout(250_000);
+    const sandbox = await setupSandboxAndCreateProposal({ daoAccount, page });
+    await mockWithFTBalance({ page, daoAccount, isSufficient: false });
+
+    await page.goto(`/${instanceAccount}/widget/app?page=asset-exchange&id=0`);
+    const approveButton = page
+      .getByRole("button", {
+        name: "Approve",
+      })
+      .first();
+    await expect(approveButton).toBeEnabled({ timeout: 30_000 });
+    await approveButton.click();
+    await approveProposal({
+      page,
+      sandbox,
+      daoAccount,
+      showInsufficientBalanceModal: true,
+      instanceAccount,
+    });
     await sandbox.quitSandbox();
   });
 
@@ -298,6 +337,7 @@ test.describe("Should vote on exchange proposal using sandbox RPC and show updat
       sandbox,
       daoAccount,
       isCompactVersion: true,
+      instanceAccount,
     });
     await sandbox.quitSandbox();
   });

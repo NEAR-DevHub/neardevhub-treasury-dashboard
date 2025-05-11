@@ -268,6 +268,16 @@ test.describe("User is logged in", function () {
   });
 });
 
+async function checkHistoryProposal({ page, id, instanceAccount }) {
+  const historyBtn = page.getByText("View in History");
+  await expect(historyBtn).toBeVisible();
+  await Promise.all([page.waitForNavigation(), historyBtn.click()]);
+  const currentUrl = page.url();
+  await expect(currentUrl).toContain(
+    `http://localhost:8080/${instanceAccount}/widget/app?page=asset-exchange&id=${id}`
+  );
+}
+
 test.describe("don't ask again", function () {
   test.use({
     storageState:
@@ -353,18 +363,18 @@ test.describe("don't ask again", function () {
       await expect(
         page.getByText("Your vote is counted, the request is highlighted.")
       ).toBeVisible();
+      await expect(page.locator("tr").nth(1)).toHaveClass(
+        "cursor-pointer proposal-row bg-highlight",
+        {
+          timeout: 10_000,
+        }
+      );
     } else {
       await expect(
         page.getByText("The request has been successfully executed.")
       ).toBeVisible();
-      await page.getByText("View in History").click();
+      await checkHistoryProposal({ page, instanceAccount, id: 1 });
     }
-    await expect(page.locator("tr").nth(1)).toHaveClass(
-      "cursor-pointer proposal-row bg-highlight",
-      {
-        timeout: 10_000,
-      }
-    );
   });
 
   test("reject request with single and multiple required votes", async ({
@@ -372,7 +382,7 @@ test.describe("don't ask again", function () {
     daoAccount,
     instanceAccount,
   }) => {
-    test.setTimeout(80_000);
+    test.setTimeout(60_000);
     const isMultiVote = daoAccount === "infinex.sputnik-dao.near";
     await setupMocks({ page, daoAccount, isSufficient: true });
 
@@ -388,19 +398,18 @@ test.describe("don't ask again", function () {
       await expect(
         page.getByText("Your vote is counted, the request is highlighted.")
       ).toBeVisible();
+      await expect(page.locator("tr").nth(1)).toHaveClass(
+        "cursor-pointer proposal-row bg-highlight",
+        {
+          timeout: 30_000,
+        }
+      );
     } else {
       await expect(
         page.getByText("The request has been rejected.")
       ).toBeVisible();
-      await page.getByText("View in History").click();
+      await checkHistoryProposal({ page, instanceAccount, id: 1 });
     }
-
-    await expect(page.locator("tr").nth(1)).toHaveClass(
-      "cursor-pointer proposal-row bg-highlight",
-      {
-        timeout: 30_000,
-      }
-    );
   });
 
   test("delete request with single and multiple required votes", async ({
@@ -424,6 +433,12 @@ test.describe("don't ask again", function () {
       await expect(
         page.getByText("Your vote is counted, the request is highlighted.")
       ).toBeVisible();
+      await expect(page.locator("tr").nth(1)).toHaveClass(
+        "cursor-pointer proposal-row bg-highlight",
+        {
+          timeout: 10_000,
+        }
+      );
     } else {
       await expect(
         page.getByText("The request has been successfully deleted.")
