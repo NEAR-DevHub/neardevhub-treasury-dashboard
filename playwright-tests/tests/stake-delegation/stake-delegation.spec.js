@@ -1,6 +1,5 @@
 import { expect } from "@playwright/test";
 import { cacheCDN, test } from "../../util/test.js";
-import { getInstanceConfig } from "../../util/config.js";
 import { getTransactionModalObject } from "../../util/transaction";
 import { utils } from "near-api-js";
 import {
@@ -39,16 +38,6 @@ test.afterEach(async ({ page }, testInfo) => {
 
 test.describe("Have valid staked requests and sufficient token balance", function () {
   test.beforeEach(async ({ page, instanceAccount, daoAccount }, testInfo) => {
-    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
-    if (
-      !instanceConfig.navbarLinks.find(
-        (navbarLink) => navbarLink.href === "?page=stake-delegation"
-      )
-    ) {
-      console.log("no stake delegation page configured for instance");
-      return test.skip();
-    }
-
     if (
       testInfo.title.includes("Should successfully parse old JSON description")
     ) {
@@ -255,7 +244,7 @@ test.describe("Have valid staked requests and sufficient token balance", functio
       await sandbox.attachRoutes(page);
       await sandbox.setupSandboxForSputnikDao(daoName);
       const args = "eyJhbW91bnQiOiIzMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAifQ==";
-      const description = `* Proposal Action: withdraw <br>* Show After Proposal Id Approved: 2 <br>* Custom Notes: Following to [#2](/${instanceAccount}/widget/app?page=stake-delegation&tab=History&highlightProposalId=2) unstake request`;
+      const description = `* Proposal Action: withdraw <br>* Show After Proposal Id Approved: 2 <br>* Custom Notes: Following to [#2](/${instanceAccount}/widget/app?page=stake-delegation&id=2) unstake request`;
       await sandbox.addUnstakeRequestProposal({
         stakedPoolAccount,
         functionCallArgs: args,
@@ -375,15 +364,6 @@ test.describe("Insufficient balance ", function () {
   });
 
   test.beforeEach(async ({ page, instanceAccount, daoAccount }) => {
-    const instanceConfig = await getInstanceConfig({ page, instanceAccount });
-    if (
-      !instanceConfig.navbarLinks.find(
-        (navbarLink) => navbarLink.href === "?page=stake-delegation"
-      )
-    ) {
-      console.log("no stake delegation page configured for instance");
-      return test.skip();
-    }
     await mockStakeProposals({ page });
     await updateDaoPolicyMembers({ instanceAccount, page });
 

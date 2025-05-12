@@ -181,10 +181,7 @@ const ProposalsComponent = () => {
         const slippageValue = parseFloat(slippage) || 0;
         const minAmountReceive = Number(
           outEstimate * (1 - slippageValue / 100)
-        ).toLocaleString("en-US", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 6,
-        });
+        );
         return (
           <tr
             data-testid={"proposal-request-#" + item.id}
@@ -256,16 +253,18 @@ const ProposalsComponent = () => {
             </td>
 
             <td className={"fw-semi-bold text-center " + isVisible("Creator")}>
-              <Widget
-                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
-                props={{
-                  accountId: item.proposer,
-                  showKYC: false,
-                  displayImage: false,
-                  displayName: false,
-                  instance,
-                }}
-              />
+              <div className="d-inline-block">
+                <Widget
+                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
+                  props={{
+                    accountId: item.proposer,
+                    showKYC: false,
+                    displayImage: false,
+                    displayName: false,
+                    instance,
+                  }}
+                />
+              </div>
             </td>
             <td className={"text-sm text-left " + isVisible("Notes")}>
               {notes ?? "-"}
