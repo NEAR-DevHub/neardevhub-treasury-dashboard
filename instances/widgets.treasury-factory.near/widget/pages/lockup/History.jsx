@@ -19,13 +19,6 @@ const [firstRender, setFirstRender] = useState(true);
 const [offset, setOffset] = useState(null);
 const [isPrevPageCalled, setIsPrevCalled] = useState(false);
 
-const highlightProposalId =
-  props.highlightProposalId ||
-  props.highlightProposalId === "0" ||
-  props.highlightProposalId === 0
-    ? parseInt(props.highlightProposalId)
-    : null;
-
 useEffect(() => {
   setLoading(true);
   Near.asyncView(treasuryDaoID, "get_last_proposal_id").then((i) => {
@@ -63,6 +56,7 @@ const functionCallApproversGroup = getApproversAndThreshold(
   "call",
   context.accountId
 );
+
 useEffect(() => {
   props.onSelectRequest(null);
 }, [currentPage, rowsPerPage]);
