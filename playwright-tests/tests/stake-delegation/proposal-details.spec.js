@@ -54,6 +54,9 @@ async function mockStakeDelegationProposal({ page, status, type }) {
       let originalResult = JSON.parse(JSON.stringify(proposal));
       originalResult.id = 0;
       originalResult.status = status;
+      if (status === "InProgress") {
+        originalResult.submission_time = CurrentTimestampInNanoseconds;
+      }
       return originalResult;
     },
   });
@@ -79,10 +82,13 @@ async function checkProposalDetailPage({
   instanceAccount,
 }) {
   const notInProgress = status !== "InProgress";
+  const requestStatus = page.getByText(
+    `Request ${status === "Approved" ? "Executed" : status}`
+  );
   if (notInProgress) {
-    await expect(
-      page.getByText(`Request ${status === "Approved" ? "Executed" : status}`)
-    ).toBeVisible({ timeout: 20_000 });
+    await expect(requestStatus).toBeVisible({ timeout: 20_000 });
+  } else {
+    await expect(requestStatus).toBeHidden({ timeout: 20_000 });
   }
   await expect(page.getByText("Request Type")).toBeVisible();
   await expect(
