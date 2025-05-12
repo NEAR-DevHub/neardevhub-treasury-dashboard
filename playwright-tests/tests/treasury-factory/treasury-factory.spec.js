@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { SandboxRPC } from "../../util/sandboxrpc";
+import { SandboxRPC, SPUTNIK_DAO_FACTORY_ID } from "../../util/sandboxrpc";
 import { getLocalWidgetSource } from "../../util/bos-workspace";
 import nearApi from "near-api-js";
 
@@ -143,7 +143,7 @@ test("should be able to create a treasury instance with sandbox, and create/exec
     contractId: "treasury-factory.near",
     methodName: "create_instance",
     args: {
-      sputnik_dao_factory_account_id: "sputnik-dao.near",
+      sputnik_dao_factory_account_id: SPUTNIK_DAO_FACTORY_ID,
       social_db_account_id: "social.near",
       widget_reference_account_id: widget_reference_account_id,
       name: instance_name,

@@ -7,21 +7,30 @@ const { Modal, ModalContent, ModalHeader, ModalFooter } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.modal"
 );
 const {
-  updatesNotApplied,
+  updatesNotAppliedForInstance,
   finishedUpdates,
   setFinishedUpdates,
   UPDATE_TYPE_WEB4_CONTRACT,
   UPDATE_TYPE_WIDGET,
   UPDATE_TYPE_POLICY,
+  UPDATE_TYPE_DAO_CONTRACT,
 } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.system-updates.UpdateNotificationTracker"
-) ?? { updatesNotApplied: [], setFinishedUpdates: () => {} };
+) ?? { updatesNotAppliedForInstance: () => [], setFinishedUpdates: () => {} };
+
+const updatesNotApplied = updatesNotAppliedForInstance(instance);
 
 const { checkIfPolicyIsUpToDate, applyPolicyUpdate } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.system-updates.PolicyUpdate"
 ) ?? { checkIfPolicyIsUpToDate: () => {} };
 
 checkIfPolicyIsUpToDate(instance);
+
+const { checkIfDAOContractIsUpToDate, applyDAOContractUpdate } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.system-updates.DAOContractUpdate"
+) ?? { checkIfDAOContractIsUpToDate: () => {} };
+
+checkIfDAOContractIsUpToDate(instance);
 
 if (web4isUpToDate) {
   updatesNotApplied
@@ -286,6 +295,11 @@ function updateModal(update) {
                     setShowReviewModalForUpdate(null);
                     applyPolicyUpdate(instance, update);
                   }
+                : update.type === UPDATE_TYPE_DAO_CONTRACT
+                ? () => {
+                    setShowReviewModalForUpdate(null);
+                    applyDAOContractUpdate(instance, update);
+                  }
                 : () => {
                     console.log(
                       "No action defined for this update type",
@@ -330,6 +344,7 @@ return (
                     classNames: {
                       root: "btn btn-success shadow-none",
                     },
+                    disabled: update.hasActiveProposal,
                     label: "Review",
                     onClick: () => {
                       setShowReviewModalForUpdate(update);

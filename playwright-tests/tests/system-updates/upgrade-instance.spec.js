@@ -1,8 +1,9 @@
 import { expect } from "@playwright/test";
-import { cacheCDN, test } from "../../util/test.js";
+import { test } from "../../util/test.js";
 import {
   DEFAULT_WIDGET_REFERENCE_ACCOUNT_ID,
   SandboxRPC,
+  SPUTNIK_DAO_FACTORY_ID,
 } from "../../util/sandboxrpc.js";
 import { createDAOargs } from "../../util/sputnikdao.js";
 import nearApi from "near-api-js";
@@ -11,8 +12,6 @@ test("should update treasury factory with new web4 contract and self upgrade ins
   page,
 }) => {
   test.setTimeout(150_000);
-
-  await cacheCDN(page);
 
   const sandbox = new SandboxRPC();
   await sandbox.init();
@@ -28,7 +27,7 @@ test("should update treasury factory with new web4 contract and self upgrade ins
     contractId: "treasury-factory.near",
     methodName: "create_instance",
     args: {
-      sputnik_dao_factory_account_id: "sputnik-dao.near",
+      sputnik_dao_factory_account_id: SPUTNIK_DAO_FACTORY_ID,
       social_db_account_id: "social.near",
       widget_reference_account_id: widget_reference_account_id,
       name: instanceName,

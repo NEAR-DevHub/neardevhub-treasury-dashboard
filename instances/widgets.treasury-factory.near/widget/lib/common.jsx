@@ -259,13 +259,16 @@ const decodeProposalDescription = (key, description) => {
 
   const lines = description.split("<br>");
   for (const line of lines) {
-    const match = line.match(/^\* (.+): (.+)$/);
-    if (match) {
-      const currentKey = match[1];
-      const value = match[2];
+    if (line.startsWith("* ")) {
+      const rest = line.slice(2);
+      const indexOfColon = rest.indexOf(":");
+      if (indexOfColon !== -1) {
+        const currentKey = rest.slice(0, indexOfColon).trim();
+        const value = rest.slice(indexOfColon + 1).trim();
 
-      if (currentKey === markdownKey) {
-        return value.trim();
+        if (currentKey.toLowerCase() === markdownKey.toLowerCase()) {
+          return value;
+        }
       }
     }
   }
