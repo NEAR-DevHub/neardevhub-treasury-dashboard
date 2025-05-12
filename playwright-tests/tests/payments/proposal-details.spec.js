@@ -176,7 +176,7 @@ async function setupSandboxAndCreateProposal({ daoAccount, page }) {
   await sandbox.addPaymentRequestProposal({
     title: proposalTitle,
     summary: proposalSummary,
-    amount: "4" + "000000000000000000000000",
+    amount: "4_0000_00000_00000_00000_00000n".toString(),
     receiver_id: receiverAccount,
     daoName,
   });
