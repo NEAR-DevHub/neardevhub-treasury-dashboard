@@ -196,7 +196,10 @@ return (
 
             <Widget
               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
-              props={{ timestamp: proposalData?.startTimestamp }}
+              props={{
+                timestamp: proposalData?.startTimestamp,
+                isProposalDetailsPage: true,
+              }}
             />
           </div>
           <div className="d-flex flex-column gap-2 mt-1">
@@ -208,6 +211,7 @@ return (
                   proposalData?.vestingSchedule.end_timestamp ??
                   parseInt(proposalData?.startTimestamp) +
                     parseInt(proposalData?.args.release_duration),
+                isProposalDetailsPage: true,
               }}
             />
           </div>
@@ -220,6 +224,7 @@ return (
                     src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
                     props={{
                       timestamp: proposalData?.vestingSchedule.cliff_timestamp,
+                      isProposalDetailsPage: true,
                     }}
                   />
                 ) : (
