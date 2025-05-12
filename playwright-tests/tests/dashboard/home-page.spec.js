@@ -164,7 +164,7 @@ test.describe("Dashboard Page", function () {
     await expect(page.getByText("Please wait a moment...")).toBeVisible();
   });
 
-  test("Shouldn't show treasuries dropdown", async ({
+  test("Shouldn't show treasuries dropdown when user doesn't own any treasury", async ({
     page,
     instanceAccount,
   }) => {
@@ -179,7 +179,9 @@ test.describe("Dashboard Page", function () {
     await expect(treasuriesDropdown).toBeHidden();
   });
 
-  test("Should show user's treasuries dropdown", async ({ page }) => {
+  test("Should show user's treasuries dropdown when user is part of atleast one treasury", async ({
+    page,
+  }) => {
     test.setTimeout(60_000);
     await mockUserDaos({ page, accountId: "theori.near" });
     await page.waitForTimeout(3_000);
