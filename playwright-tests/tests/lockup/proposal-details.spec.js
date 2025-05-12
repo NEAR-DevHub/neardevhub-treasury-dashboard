@@ -33,6 +33,9 @@ async function mockLockupProposal({ page, status }) {
     modifyOriginalResultFunction: () => {
       let originalResult = JSON.parse(JSON.stringify(LockupProposalData));
       originalResult.id = 0;
+      if (status == "InProgress") {
+        originalResult.submission_time = CurrentTimestampInNanoseconds;
+      }
       originalResult.status = status;
       return originalResult;
     },
@@ -59,12 +62,13 @@ async function checkProposalDetailPage({
   instanceAccount,
 }) {
   const notInProgress = status !== "InProgress";
+  const requestStatus = page.getByText(
+    `Lockup Request ${status === "Approved" ? "Executed" : status}`
+  );
   if (notInProgress) {
-    await expect(
-      page.getByText(
-        `Lockup Request ${status === "Approved" ? "Executed" : status}`
-      )
-    ).toBeVisible({ timeout: 20_000 });
+    await expect(requestStatus).toBeVisible({ timeout: 20_000 });
+  } else {
+    await expect(requestStatus).toBeHidden({ timeout: 20_000 });
   }
 
   if (status === "Approved") {
