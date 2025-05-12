@@ -133,20 +133,22 @@ function refreshData() {
   setProposalData(null);
 }
 
+function updateVoteSuccess(status, proposalId) {
+  props.setVoteProposalId(proposalId);
+  props.setToastStatus(status);
+  refreshData();
+}
+
 function checkProposalStatus(proposalId) {
   Near.asyncView(treasuryDaoID, "get_proposal", {
     id: proposalId,
   })
     .then((result) => {
-      props.setVoteProposalId(proposalId);
-      props.setToastStatus(result.status);
-      refreshData();
+      updateVoteSuccess(result.status, proposalId);
     })
     .catch(() => {
       // deleted request (thus proposal won't exist)
-      props.setVoteProposalId(proposalId);
-      props.setToastStatus("Removed");
-      refreshData();
+      updateVoteSuccess("Removed", proposalId);
     });
 }
 
