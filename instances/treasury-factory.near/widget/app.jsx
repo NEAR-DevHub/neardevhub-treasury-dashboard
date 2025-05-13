@@ -5,6 +5,8 @@
 
 const { page, ...passProps } = props;
 
+const { getUserDaos } = VM.require("${REPL_DEVDAO_ACCOUNT}/widget/lib.common");
+
 // Import our modules
 const { AppLayout } = VM.require(
   `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.templates.AppLayout`
@@ -21,16 +23,66 @@ const { Theme } = VM.require(
   Theme: () => <></>,
 };
 
+if (typeof getUserDaos !== "function") {
+  return <></>;
+}
+
 const propsToSend = { ...passProps };
+
+const [isLoading, setIsLoading] = useState(true);
+
+useEffect(() => {
+  setTimeout(() => {
+    setIsLoading(false);
+  }, 1000);
+}, []);
+
+function updateTreasuryDrafts(treasuries) {
+  Storage.set("TREASURY_DRAFTS", JSON.stringify(treasuries));
+}
+
+function updateCurrentDraft(treasury) {
+  Storage.set("CURRENT_DRAFT", JSON.stringify(treasury));
+}
+
+function Page() {
+  if (!page) {
+    const accountId = context.accountId;
+    const userDaos = getUserDaos(accountId)?.body?.[accountId]?.["daos"];
+
+    if (Array.isArray(userDaos) && userDaos.length > 0) {
+      page = "my-treasuries";
+    }
+  }
+
+  const routes = (page ?? "").split(".");
+  if (isLoading) {
+    return <></>;
+  }
+  switch (routes[0]) {
+    case "my-treasuries": {
+      return (
+        <Widget
+          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.treasury.MyTreasuries"
+          props={{ ...propsToSend, updateTreasuryDrafts, updateCurrentDraft }}
+        />
+      );
+    }
+    default:
+      return (
+        <Widget
+          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.treasury.Create"
+          props={{ ...propsToSend, updateTreasuryDrafts, updateCurrentDraft }}
+        />
+      );
+  }
+}
 
 return (
   <Theme>
     <ThemeContainer>
       <AppLayout>
-        <Widget
-          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.treasury.Create"
-          props={propsToSend}
-        />
+        <Page />
       </AppLayout>
     </ThemeContainer>
   </Theme>
