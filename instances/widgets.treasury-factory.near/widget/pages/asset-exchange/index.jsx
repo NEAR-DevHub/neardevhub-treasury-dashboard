@@ -86,7 +86,6 @@ const ToastStatusContent = () => {
     case "Removed":
       content = "The request has been successfully deleted.";
       break;
-
     default:
       content = `The request has ${showToastStatus}.`;
       break;
