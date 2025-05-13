@@ -176,7 +176,7 @@ async function setupSandboxAndCreateProposal({ daoAccount, page }) {
   await sandbox.addPaymentRequestProposal({
     title: proposalTitle,
     summary: proposalSummary,
-    amount: "4_0000_00000_00000_00000_00000n".toString(),
+    amount: 4_0000_00000_00000_00000_00000n.toString(),
     receiver_id: receiverAccount,
     daoName,
   });
@@ -193,6 +193,7 @@ async function setupSandboxAndCreateLockupTransferProposal({
   await sandbox.init();
   await sandbox.attachRoutes(page);
   await sandbox.setupSandboxForSputnikDao(daoName, "theori.near", true);
+  const description = `* Title: title <br>* Summary: summary <br>* Proposal Action: transfer`;
   await sandbox.setupLockupContract(daoName);
   await sandbox.addFunctionCallProposal({
     method_name: "transfer",
@@ -207,11 +208,24 @@ async function setupSandboxAndCreateLockupTransferProposal({
   return sandbox;
 }
 
+async function mockLockupLiquidAmount({ page, isSufficient }) {
+  await mockRpcRequest({
+    page,
+    filterParams: {
+      method_name: "get_liquid_owners_balance",
+    },
+    modifyOriginalResultFunction: () => {
+      return isSufficient ? "3500000000000000000000000" : "0";
+    },
+  });
+}
+
 async function approveProposal({
   page,
   sandbox,
   daoAccount,
   isCompactVersion,
+  instanceAccount,
   showInsufficientBalanceModal,
 }) {
   const isMultiVote = daoAccount === "infinex.sputnik-dao.near";
@@ -370,6 +384,7 @@ test.describe("Should vote on proposal using sandbox RPC and show updated status
       sandbox,
       daoAccount,
       isCompactVersion: true,
+      instanceAccount,
     });
     await sandbox.quitSandbox();
   });
@@ -391,8 +406,7 @@ test.describe("Should vote on proposal using sandbox RPC and show updated status
         daoAccount,
         page,
       });
-      await mockWithFTBalance({ page, daoAccount, isSufficient: true });
-
+      await mockLockupLiquidAmount({ page, isSufficient: true });
       await page.goto(`/${instanceAccount}/widget/app?page=payments&id=0`);
       const approveButton = page
         .getByRole("button", {
@@ -415,7 +429,7 @@ test.describe("Should vote on proposal using sandbox RPC and show updated status
         daoAccount,
         page,
       });
-      await mockWithFTBalance({ page, daoAccount, isSufficient: false });
+      await mockLockupLiquidAmount({ page, isSufficient: false });
 
       await page.goto(`/${instanceAccount}/widget/app?page=payments&id=0`);
       const approveButton = page
@@ -440,11 +454,11 @@ test.describe("Should vote on proposal using sandbox RPC and show updated status
       daoAccount,
     }) => {
       test.setTimeout(200_000);
-      const sandbox = await setupSandboxAndCreateLockupTransferProposals({
+      const sandbox = await setupSandboxAndCreateLockupTransferProposal({
         daoAccount,
         page,
       });
-      await mockWithFTBalance({ page, daoAccount, isSufficient: true });
+      await mockLockupLiquidAmount({ page, isSufficient: true });
 
       await page.goto(`/${instanceAccount}/widget/app?page=payments`);
       const proposalCell = page.getByTestId("proposal-request-#0");

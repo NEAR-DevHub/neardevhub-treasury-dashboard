@@ -211,8 +211,6 @@ async function approveProposal({
     await expect(page.getByText("Insufficient Balance")).toBeVisible();
     await page.getByRole("button", { name: "Proceed Anyway" }).click();
   }
-  await page.getByRole("button", { name: "Confirm" }).click();
-  await page.getByRole("button", { name: "Confirm" }).click();
   const transactionResult = await sandbox.account.functionCall({
     contractId: daoAccount,
     methodName: "act_proposal",
@@ -223,7 +221,9 @@ async function approveProposal({
     gas: "300000000000000",
     attachedDeposit: "0",
   });
-
+  await page.waitForTimeout(5_000);
+  await page.getByRole("button", { name: "Confirm" }).click();
+  await page.getByRole("button", { name: "Confirm" }).click();
   await page.waitForTimeout(5_000);
   await page.evaluate(async (transactionResult) => {
     window.transactionSentPromiseResolve(transactionResult);
