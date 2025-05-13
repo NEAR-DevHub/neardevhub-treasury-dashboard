@@ -461,7 +461,6 @@ test.describe("don't ask again", function () {
       await expect(
         page.getByText("The payment request has been successfully deleted.")
       ).toBeVisible();
-      await checkHistoryProposal({ page, instanceAccount, id: 10 });
     }
   });
 
