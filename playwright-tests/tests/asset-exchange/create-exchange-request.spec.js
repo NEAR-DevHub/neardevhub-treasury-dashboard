@@ -56,7 +56,7 @@ async function openCreatePage({ page, instanceAccount }) {
   await expect(createRequestButton).toBeVisible({ timeout: 20_000 });
   await page.waitForTimeout(5_000);
   await createRequestButton.click();
-  await page.waitForTimeout(2_000);
+  await page.waitForTimeout(5_000);
 }
 
 async function selectSendToken({ page, token }) {

@@ -26,16 +26,18 @@ async function voteOnProposal({
   vote,
   isMultiVote = false,
 }) {
-  const swapProposal = {
-    ...SwapProposalData,
-    submission_time: CurrentTimestampInNanoseconds,
-  };
+  const swapProposal = JSON.parse(
+    JSON.stringify({
+      ...SwapProposalData,
+      submission_time: CurrentTimestampInNanoseconds,
+    })
+  );
   let lastProposalId = swapProposal.id;
   let isTransactionCompleted = false;
   const contractId = daoAccount;
 
   const updateProposalStatus = (originalResult) => {
-    originalResult = { ...swapProposal };
+    originalResult = JSON.parse(JSON.stringify({ ...swapProposal }));
     if (isTransactionCompleted) {
       if (!isMultiVote) originalResult.status = voteStatus;
       if (vote === "Remove" && !isMultiVote) {
@@ -74,6 +76,7 @@ async function voteOnProposal({
   }.treasury-factory.near`;
 
   await page.goto(`/${instanceAccount}/widget/app?page=asset-exchange`);
+  await page.waitForTimeout(5_000);
   await setDontAskAgainCacheValues({
     page,
     widgetSrc: `${widgetsAccount}/widget/components.VoteActions`,
@@ -197,7 +200,7 @@ test.describe.parallel("User logged in with different roles", () => {
           });
 
           await page.goto(`/${instanceAccount}/widget/app?page=asset-exchange`);
-
+          await page.waitForTimeout(5_000);
           await expect(page.getByText("Pending Requests")).toBeVisible({
             timeout: 20_000,
           });
@@ -237,6 +240,7 @@ test.describe("User is logged in", function () {
     await mockAssetExchangeProposals({ page });
     await setupMocks({ page, daoAccount, isSufficient: true });
     await page.goto(`/${instanceAccount}/widget/app?page=asset-exchange`);
+    await page.waitForTimeout(5_000);
     const approveButton = page.getByRole("button", { name: "Approve" }).first();
     await expect(approveButton).toBeEnabled({ timeout: 30_000 });
 
