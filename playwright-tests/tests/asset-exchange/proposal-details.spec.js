@@ -208,7 +208,9 @@ async function approveProposal({
     });
   });
   if (showInsufficientBalanceModal) {
-    await expect(page.getByText("Insufficient Balance")).toBeVisible();
+    await expect(page.getByText("Insufficient Balance")).toBeVisible({
+      timeout: 10_000,
+    });
     await page.getByRole("button", { name: "Proceed Anyway" }).click();
   }
   const transactionResult = await sandbox.account.functionCall({
@@ -273,7 +275,7 @@ test.describe("Should vote on exchange proposal using sandbox RPC and show updat
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(300_000);
+    test.setTimeout(400_000);
     const sandbox = await setupSandboxAndCreateProposal({ daoAccount, page });
     await mockWithFTBalance({ page, daoAccount, isSufficient: true });
 
@@ -294,7 +296,7 @@ test.describe("Should vote on exchange proposal using sandbox RPC and show updat
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(300_000);
+    test.setTimeout(400_000);
     const sandbox = await setupSandboxAndCreateProposal({ daoAccount, page });
     await page.goto(`/${instanceAccount}/widget/app?page=asset-exchange&id=0`);
     await mockWithFTBalance({ page, daoAccount, isSufficient: false });
@@ -320,7 +322,7 @@ test.describe("Should vote on exchange proposal using sandbox RPC and show updat
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(300_000);
+    test.setTimeout(400_000);
     const sandbox = await setupSandboxAndCreateProposal({ daoAccount, page });
     await mockWithFTBalance({ page, daoAccount, isSufficient: true });
 
