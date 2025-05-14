@@ -413,6 +413,20 @@ return (
             }}
           />
         )}
+        <Widget
+          src={
+            "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.Portfolio"
+          }
+          props={{
+            ftTokens: [],
+            heading: (
+              <div className="d-flex flex-column gap-1 px-3 pt-3 pb-2">
+                <div className="h5 mb-0">Near Intents</div>
+              </div>
+            ),
+            instance,
+          }}
+        />
       </div>
       <div className="d-flex flex-column gap-2 flex-wrap dashboard-item flex-1 flex-container">
         <Widget
