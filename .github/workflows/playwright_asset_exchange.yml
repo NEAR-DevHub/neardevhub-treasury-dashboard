@@ -34,6 +34,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # Download and extract node_modules
       - name: Download installed dependencies
         uses: actions/download-artifact@v4
         with:
