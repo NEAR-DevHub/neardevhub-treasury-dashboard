@@ -32,28 +32,33 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Download installed dependencies from the previous job
       - name: Download installed dependencies
         uses: actions/download-artifact@v4
         with:
           name: installed-dependencies
-          path: /
+          path: ./
 
-      # Setup Node.js
+      - name: Extract node_modules
+        run: tar -xzf installed-dependencies.tar.gz
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 20
           cache: "npm"
+
       - name: Build project
         run: npm run build
+
       - name: Download sandbox binary
         uses: actions/download-artifact@v4
         with:
           name: sandboxrpc-binary
           path: sandboxrpc/target/debug
+
       - name: Make sandbox binary executable
         run: chmod +x sandboxrpc/target/debug/sandboxrpc
+
       - name: Run tests
         run: |
           npx playwright test playwright-tests/tests/asset-exchange --project=${{ matrix.project }} --shard=${{ matrix.shard }}

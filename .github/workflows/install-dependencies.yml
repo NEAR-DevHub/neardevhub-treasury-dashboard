@@ -15,27 +15,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Cache Node.js dependencies
-      - name: Cache Node.js dependencies
-        uses: actions/cache@v3
-        with:
-          path: |
-            node_modules
-          key: ${{ runner.os }}-node-modules-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-modules-
-
-      # Cache Playwright dependencies
-      - name: Cache Playwright dependencies
-        uses: actions/cache@v3
-        with:
-          path: |
-            node_modules/playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-playwright-
-
-      # Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
@@ -45,15 +24,15 @@ jobs:
       # Install dependencies
       - name: Install dependencies
         run: |
-          npm ci  # Installs npm dependencies from package-lock.json
-          npx playwright install-deps  # Install Playwright's system dependencies
-          npx playwright install  # Install Playwright browsers
+          npm ci
+          npx playwright install-deps
+          npx playwright install
 
-      # Upload the cache for reuse
-      - name: Upload installed dependencies cache
+      - name: Archive node_modules
+        run: tar -czf installed-dependencies.tar.gz node_modules
+
+      - name: Upload installed dependencies archive
         uses: actions/upload-artifact@v4
         with:
           name: installed-dependencies
-          path: |
-            node_modules
-            node_modules/playwright
+          path: installed-dependencies.tar.gz
