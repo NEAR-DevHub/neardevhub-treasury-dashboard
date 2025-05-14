@@ -47,7 +47,7 @@ jobs:
         run: chmod +x sandboxrpc/target/debug/sandboxrpc
       - name: Run tests
         run: |
-          npx playwright test --project=${{ matrix.project }} --shard=${{ matrix.shard }} --reporter=html
+          npx playwright test playwright-tests/tests/asset-exchange --project=${{ matrix.project }} --shard=${{ matrix.shard }} --reporter=html
       # Upload Test Videos (only if there are failures)
       - name: Upload Test Videos
         if: failure()
