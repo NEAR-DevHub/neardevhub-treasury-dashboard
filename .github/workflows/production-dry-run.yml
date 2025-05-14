@@ -1,31 +1,31 @@
-name: Dry-run production
+# name: Dry-run production
 
-on:
-  pull_request:
-    branches: [main]
+# on:
+#   pull_request:
+#     branches: [main]
 
-jobs:
-  deploy-widgets:
-    name: Diff from PR
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        target_account:
-          - dry_run_command: npm run dry-run:devdao
-          - dry_run_command: npm run dry-run:infinex
-          - dry_run_command: npm run dry-run:templar
-          - dry_run_command: npm run dry-run:treasury-factory
-          - dry_run_command: npm run dry-run:widgets
-          - dry_run_command: npm run dry-run:bootstrap
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+# jobs:
+#   deploy-widgets:
+#     name: Diff from PR
+#     runs-on: ubuntu-latest
+#     strategy:
+#       matrix:
+#         target_account:
+#           - dry_run_command: npm run dry-run:devdao
+#           - dry_run_command: npm run dry-run:infinex
+#           - dry_run_command: npm run dry-run:templar
+#           - dry_run_command: npm run dry-run:treasury-factory
+#           - dry_run_command: npm run dry-run:widgets
+#           - dry_run_command: npm run dry-run:bootstrap
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: |
-          npm ci
-          curl --proto '=https' --tlsv1.2 -LsSf https://github.com/bos-cli-rs/bos-cli-rs/releases/download/v0.3.15/bos-cli-installer.sh | sh
+#       - name: Install dependencies
+#         run: |
+#           npm ci
+#           curl --proto '=https' --tlsv1.2 -LsSf https://github.com/bos-cli-rs/bos-cli-rs/releases/download/v0.3.15/bos-cli-installer.sh | sh
 
-      - name: Dry-run widgets
-        run: |
-          ${{ matrix.target_account.dry_run_command }}
+#       - name: Dry-run widgets
+#         run: |
+#           ${{ matrix.target_account.dry_run_command }}

@@ -9,9 +9,9 @@ on:
         type: string
         default: "20"
 
-concurrency:
-  group: settings-${{ github.ref }}
-  cancel-in-progress: true
+# concurrency:
+#   group: settings-${{ github.ref }}
+#   cancel-in-progress: true
 
 jobs:
   playwright-tests-settings:

@@ -9,9 +9,9 @@ on:
         type: string
         default: "20"
 
-concurrency:
-  group: system-updates-${{ github.ref }}
-  cancel-in-progress: true
+# concurrency:
+#   group: system-updates-${{ github.ref }}
+#   cancel-in-progress: true
 
 jobs:
   playwright-tests-system-updates:
