@@ -1,44 +1,44 @@
-name: Playwright Tests - Stake Delegation
-on:
-  pull_request:
-  push:
-    branches:
-      - main
+# name: Playwright Tests - Stake Delegation
+# on:
+#   pull_request:
+#   push:
+#     branches:
+#       - main
 
-concurrency:
-  group: stake-delegation-${{ github.ref }}
-  cancel-in-progress: true
+# concurrency:
+#   group: stake-delegation-${{ github.ref }}
+#   cancel-in-progress: true
 
-jobs:
-  build-sandbox:
-    uses: ./.github/workflows/build_sandbox.yml
-  playwright-tests-stake-delegation:
-    needs: build-sandbox
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        target_account:
-          - test_command: npx playwright test --project=treasury-dashboard playwright-tests/tests/stake-delegation
-          - test_command: npx playwright test --project=infinex playwright-tests/tests/stake-delegation
-          - test_command: npx playwright test --project=treasury-testing playwright-tests/tests/stake-delegation
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 20
-          cache: "npm"
-      - name: Install dependencies
-        run: |
-          npm ci
-          npx playwright install-deps
-          npx playwright install
-      - name: Build project
-        run: npm run build
-      - name: Download sandbox binary
-        uses: actions/download-artifact@v4
-        with:
-          name: sandboxrpc-binary
-          path: sandboxrpc/target/debug
-      - run: chmod +x sandboxrpc/target/debug/sandboxrpc
-      - name: Run tests
-        run: ${{ matrix.target_account.test_command }}
+# jobs:
+#   build-sandbox:
+#     uses: ./.github/workflows/build_sandbox.yml
+#   playwright-tests-stake-delegation:
+#     needs: build-sandbox
+#     runs-on: ubuntu-latest
+#     strategy:
+#       matrix:
+#         target_account:
+#           - test_command: npx playwright test --project=treasury-dashboard playwright-tests/tests/stake-delegation
+#           - test_command: npx playwright test --project=infinex playwright-tests/tests/stake-delegation
+#           - test_command: npx playwright test --project=treasury-testing playwright-tests/tests/stake-delegation
+#     steps:
+#       - uses: actions/checkout@v3
+#       - uses: actions/setup-node@v3
+#         with:
+#           node-version: 20
+#           cache: "npm"
+#       - name: Install dependencies
+#         run: |
+#           npm ci
+#           npx playwright install-deps
+#           npx playwright install
+#       - name: Build project
+#         run: npm run build
+#       - name: Download sandbox binary
+#         uses: actions/download-artifact@v4
+#         with:
+#           name: sandboxrpc-binary
+#           path: sandboxrpc/target/debug
+#       - run: chmod +x sandboxrpc/target/debug/sandboxrpc
+#       - name: Run tests
+#         run: ${{ matrix.target_account.test_command }}

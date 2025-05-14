@@ -1,39 +1,39 @@
-name: Playwright Tests - System updates
-on:
-  pull_request:
-  push:
-    branches:
-      - main
+# name: Playwright Tests - System updates
+# on:
+#   pull_request:
+#   push:
+#     branches:
+#       - main
 
-concurrency:
-  group: system-updates-${{ github.ref }}
-  cancel-in-progress: true
+# concurrency:
+#   group: system-updates-${{ github.ref }}
+#   cancel-in-progress: true
 
-jobs:
-  build-sandbox:
-    uses: ./.github/workflows/build_sandbox.yml
-  playwright-tests-system-updates:
-    needs: build-sandbox
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 20
-          cache: "npm"
-      - name: Install dependencies
-        run: |
-          npm ci
-          npx playwright install-deps
-          npx playwright install
-      - name: Build project
-        run: npm run build
-      - name: Download sandbox binary
-        uses: actions/download-artifact@v4
-        with:
-          name: sandboxrpc-binary
-          path: sandboxrpc/target/debug
-      - run: chmod +x sandboxrpc/target/debug/sandboxrpc
+# jobs:
+#   build-sandbox:
+#     uses: ./.github/workflows/build_sandbox.yml
+#   playwright-tests-system-updates:
+#     needs: build-sandbox
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v3
+#       - uses: actions/setup-node@v3
+#         with:
+#           node-version: 20
+#           cache: "npm"
+#       - name: Install dependencies
+#         run: |
+#           npm ci
+#           npx playwright install-deps
+#           npx playwright install
+#       - name: Build project
+#         run: npm run build
+#       - name: Download sandbox binary
+#         uses: actions/download-artifact@v4
+#         with:
+#           name: sandboxrpc-binary
+#           path: sandboxrpc/target/debug
+#       - run: chmod +x sandboxrpc/target/debug/sandboxrpc
 
-      - name: Run tests
-        run: npx playwright test --project=treasury-testing playwright-tests/tests/system-updates
+#       - name: Run tests
+#         run: npx playwright test --project=treasury-testing playwright-tests/tests/system-updates

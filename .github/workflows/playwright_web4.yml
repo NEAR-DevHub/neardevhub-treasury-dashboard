@@ -1,35 +1,35 @@
-name: Playwright Tests - Web4
-on:
-  pull_request:
-  push:
-    branches:
-      - main
+# name: Playwright Tests - Web4
+# on:
+#   pull_request:
+#   push:
+#     branches:
+#       - main
 
-concurrency:
-  group: web4-${{ github.ref }}
-  cancel-in-progress: true
+# concurrency:
+#   group: web4-${{ github.ref }}
+#   cancel-in-progress: true
 
-jobs:
-  playwright-tests-web4:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        target_account:
-          - test_command: npx playwright test --project=treasury-dashboard playwright-tests/tests/web4
-          - test_command: npx playwright test --project=infinex playwright-tests/tests/web4
-          - test_command: npx playwright test --project=treasury-testing playwright-tests/tests/web4
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 20
-          cache: "npm"
-      - name: Install dependencies
-        run: |
-          npm ci
-          npx playwright install-deps
-          npx playwright install
-      - name: Build project
-        run: npm run build
-      - name: Run tests
-        run: ${{ matrix.target_account.test_command }}
+# jobs:
+#   playwright-tests-web4:
+#     runs-on: ubuntu-latest
+#     strategy:
+#       matrix:
+#         target_account:
+#           - test_command: npx playwright test --project=treasury-dashboard playwright-tests/tests/web4
+#           - test_command: npx playwright test --project=infinex playwright-tests/tests/web4
+#           - test_command: npx playwright test --project=treasury-testing playwright-tests/tests/web4
+#     steps:
+#       - uses: actions/checkout@v3
+#       - uses: actions/setup-node@v3
+#         with:
+#           node-version: 20
+#           cache: "npm"
+#       - name: Install dependencies
+#         run: |
+#           npm ci
+#           npx playwright install-deps
+#           npx playwright install
+#       - name: Build project
+#         run: npm run build
+#       - name: Run tests
+#         run: ${{ matrix.target_account.test_command }}

@@ -17,13 +17,17 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        target_account:
-          - test_command: npx playwright test --project=treasury-dashboard playwright-tests/tests/asset-exchange
-          - test_command: npx playwright test --project=infinex playwright-tests/tests/asset-exchange
-          - test_command: npx playwright test --project=treasury-testing playwright-tests/tests/asset-exchange
+        shard: [1/4, 2/4, 3/4, 4/4] # Split tests into 4 shards
+        project:
+          - treasury-dashboard
+          - infinex
+          - treasury-testing
+
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
           node-version: 20
           cache: "npm"
@@ -39,6 +43,15 @@ jobs:
         with:
           name: sandboxrpc-binary
           path: sandboxrpc/target/debug
-      - run: chmod +x sandboxrpc/target/debug/sandboxrpc
+      - name: Make sandbox binary executable
+        run: chmod +x sandboxrpc/target/debug/sandboxrpc
       - name: Run tests
-        run: ${{ matrix.target_account.test_command }}
+        run: |
+          npx playwright test --project=${{ matrix.project }} --shard=${{ matrix.shard }} --reporter=html
+      # Upload Test Videos (only if there are failures)
+      - name: Upload Test Videos
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-videos-${{ matrix.project }}-${{ matrix.shard }}
+          path: test-results/videos/
