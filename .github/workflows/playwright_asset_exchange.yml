@@ -26,7 +26,6 @@ jobs:
         project:
           - treasury-dashboard
           - infinex
-          - treasury-testing
 
     steps:
       - name: Checkout repository
