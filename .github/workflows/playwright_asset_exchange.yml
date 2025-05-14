@@ -32,6 +32,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # Download and extract node_modules
       - name: Download installed dependencies
         uses: actions/download-artifact@v4
         with:
@@ -41,6 +42,19 @@ jobs:
       - name: Extract node_modules
         run: tar -xzf installed-dependencies.tar.gz
 
+      # Download and extract Playwright browsers
+      - name: Download Playwright browsers
+        uses: actions/download-artifact@v4
+        with:
+          name: playwright-browsers
+          path: ./
+
+      - name: Extract Playwright browsers
+        run: |
+          mkdir -p ~/.cache/ms-playwright
+          tar -xzf playwright-browsers.tar.gz -C ~/.cache --strip-components=1
+
+      # Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
@@ -61,4 +75,6 @@ jobs:
 
       - name: Run tests
         run: |
-          npx playwright test playwright-tests/tests/asset-exchange --project=${{ matrix.project }} --shard=${{ matrix.shard }}
+          npx playwright test playwright-tests/tests/asset-exchange \
+            --project=${{ matrix.project }} \
+            --shard=${{ matrix.shard }}

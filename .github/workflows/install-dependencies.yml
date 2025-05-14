@@ -28,11 +28,26 @@ jobs:
           npx playwright install-deps
           npx playwright install
 
+      # Archive node_modules
       - name: Archive node_modules
         run: tar -czf installed-dependencies.tar.gz node_modules
 
-      - name: Upload installed dependencies archive
+      # Archive Playwright browsers
+      - name: Archive Playwright browsers
+        run: |
+          mkdir -p ~/.cache/ms-playwright
+          tar -czf playwright-browsers.tar.gz -C ~/.cache ms-playwright
+
+      # Upload node_modules
+      - name: Upload node_modules
         uses: actions/upload-artifact@v4
         with:
           name: installed-dependencies
           path: installed-dependencies.tar.gz
+
+      # Upload Playwright browsers
+      - name: Upload Playwright browsers
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-browsers
+          path: playwright-browsers.tar.gz
