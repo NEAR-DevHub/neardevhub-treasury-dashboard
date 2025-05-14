@@ -59,8 +59,10 @@ jobs:
         with:
           node-version: 20
           cache: "npm"
+
       - name: Build project
         run: npm run build
+
       - name: Download sandbox binary
         uses: actions/download-artifact@v4
         with:
