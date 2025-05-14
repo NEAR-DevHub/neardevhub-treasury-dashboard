@@ -9,9 +9,9 @@ on:
         type: string
         default: "20"
 
-concurrency:
-  group: dashboard-${{ github.ref }}
-  cancel-in-progress: true
+# concurrency:
+#   group: dashboard-${{ github.ref }}
+#   cancel-in-progress: true
 
 jobs:
   playwright-tests-dashboard:

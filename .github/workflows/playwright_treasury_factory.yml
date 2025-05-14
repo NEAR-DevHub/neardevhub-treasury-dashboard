@@ -9,9 +9,9 @@ on:
         type: string
         default: "20"
 
-concurrency:
-  group: treasury-factory-${{ github.ref }}
-  cancel-in-progress: true
+# concurrency:
+#   group: treasury-factory-${{ github.ref }}
+#   cancel-in-progress: true
 
 jobs:
   playwright-tests-treasury-factory:
