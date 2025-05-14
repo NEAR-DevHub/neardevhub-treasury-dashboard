@@ -1,4 +1,5 @@
 name: Playwright Tests - Asset Exchange
+
 on:
   pull_request:
   push:
@@ -13,11 +14,15 @@ jobs:
   build-sandbox:
     uses: ./.github/workflows/build_sandbox.yml
 
+  install-dependencies:
+    uses: ./.github/workflows/install-dependencies.yml
+
   playwright-tests-asset-exchange:
     runs-on: ubuntu-latest
+    needs: [install-dependencies]
     strategy:
       matrix:
-        shard: [1/4, 2/4, 3/4, 4/4] # Split tests into 4 shards
+        shard: [1/3, 2/3, 3/3]
         project:
           - treasury-dashboard
           - infinex
@@ -26,16 +31,20 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+
+      # Download installed dependencies from the previous job
+      - name: Download installed dependencies
+        uses: actions/download-artifact@v4
+        with:
+          name: installed-dependencies
+          path: /
+
+      # Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 20
           cache: "npm"
-      - name: Install dependencies
-        run: |
-          npm ci
-          npx playwright install-deps
-          npx playwright install
       - name: Build project
         run: npm run build
       - name: Download sandbox binary
@@ -47,11 +56,4 @@ jobs:
         run: chmod +x sandboxrpc/target/debug/sandboxrpc
       - name: Run tests
         run: |
-          npx playwright test playwright-tests/tests/asset-exchange --project=${{ matrix.project }} --shard=${{ matrix.shard }} --reporter=html
-      # Upload Test Videos (only if there are failures)
-      - name: Upload Test Videos
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-videos-${{ matrix.project }}-${{ matrix.shard }}
-          path: test-results/videos/
+          npx playwright test playwright-tests/tests/asset-exchange --project=${{ matrix.project }} --shard=${{ matrix.shard }}
