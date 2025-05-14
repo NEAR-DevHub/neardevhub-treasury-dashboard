@@ -119,20 +119,27 @@ useEffect(() => {
 useEffect(() => {
   asyncFetch("https://api-mng-console.chaindefuser.com/api/tokens").then((resp) => {
     const tokens = resp.body?.items || [];
+    console.log("Fetched NEAR Intents Tokens:", tokens); // Added console.log
     setIntentsTokens(tokens);
     if (tokens.length > 0 && treasuryDaoID) {
       // Get token IDs for mt_batch_balance_of
       const tokenIds = tokens.map((t) => t.defuse_asset_id);
+
       Near.asyncView("intents.near", "mt_batch_balance_of", {
         account_id: treasuryDaoID,
         token_ids: tokenIds,
       }).then((balances) => {
-        setIntentsBalances(
-          tokens.map((t, i) => ({
-            ...t,
-            balance: balances[i],
-          }))
-        );
+        console.log("Fetched NEAR Intents Balances from contract:", balances); // Added console.log
+        const mappedBalances = tokens.map((t, i) => ({
+          ...t,
+          balance: balances[i],
+        }));
+        console.log("Processed Intents Balances for UI:", mappedBalances); // Added console.log
+        setIntentsBalances(mappedBalances);
+      }).catch(err => {
+        console.error("Error fetching NEAR Intents Balances from contract (Near.asyncView):", err);
+        // Optionally, set intents balances to an empty array or an error state
+        // setIntentsBalances([]); 
       });
     }
   });
