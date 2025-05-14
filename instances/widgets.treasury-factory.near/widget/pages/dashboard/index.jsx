@@ -87,6 +87,9 @@ const [show404Modal, setShow404Modal] = useState(false);
 const [disableRefreshBtn, setDisableRefreshBtn] = useState(false);
 const [lockupState, setLockupState] = useState(false);
 
+const [intentsTokens, setIntentsTokens] = useState([]);
+const [intentsBalances, setIntentsBalances] = useState([]);
+
 useEffect(() => {
   asyncFetch(`${REPL_BACKEND_API}/near-price`)
     .then((res) => {
@@ -111,6 +114,29 @@ useEffect(() => {
       setShow404Modal(true);
     });
 }, []);
+
+// Fetch available tokens for NEAR Intents (Chaindefuser API)
+useEffect(() => {
+  asyncFetch("https://api-mng-console.chaindefuser.com/api/tokens").then((resp) => {
+    const tokens = resp.body?.items || [];
+    setIntentsTokens(tokens);
+    if (tokens.length > 0 && treasuryDaoID) {
+      // Get token IDs for mt_batch_balance_of
+      const tokenIds = tokens.map((t) => t.defuse_asset_id);
+      Near.asyncView("intents.near", "mt_batch_balance_of", {
+        account_id: treasuryDaoID,
+        token_ids: tokenIds,
+      }).then((balances) => {
+        setIntentsBalances(
+          tokens.map((t, i) => ({
+            ...t,
+            balance: balances[i],
+          }))
+        );
+      });
+    }
+  });
+}, [treasuryDaoID]);
 
 // disable refresh btn for 30 seconds
 useEffect(() => {
@@ -418,7 +444,15 @@ return (
             "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.Portfolio"
           }
           props={{
-            ftTokens: [],
+            ftTokens: intentsBalances.map((t) => ({
+              ft_meta: {
+                symbol: t.symbol,
+                icon: t.icon,
+                decimals: t.decimals,
+                price: t.price,
+              },
+              amount: t.balance,
+            })),
             heading: (
               <div className="d-flex flex-column gap-1 px-3 pt-3 pb-2">
                 <div className="h5 mb-0">Near Intents</div>
