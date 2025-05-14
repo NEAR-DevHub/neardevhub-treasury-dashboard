@@ -51,8 +51,8 @@ jobs:
 
       - name: Extract Playwright browsers
         run: |
-          mkdir -p ~/.cache/ms-playwright
-          tar -xzf playwright-browsers.tar.gz -C ~/.cache --strip-components=1
+          mkdir -p ~/.cache
+          tar -xzf playwright-browsers.tar.gz -C ~/.cache
 
       # Setup Node.js
       - name: Setup Node.js
