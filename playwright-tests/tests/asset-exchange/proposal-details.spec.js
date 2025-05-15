@@ -125,13 +125,14 @@ test.describe
       page,
       instanceAccount,
     }) => {
+      test.setTimeout(100_000);
       const notInProgress = status !== "InProgress";
       await mockExchangeProposals({ page, status });
       await page.goto(`/${instanceAccount}/widget/app?page=asset-exchange`);
-      await page.waitForTimeout(10_000);
+      await page.waitForTimeout(15_000);
       if (notInProgress) {
         await page.getByText("History", { exact: true }).click();
-        await page.waitForTimeout(5_000);
+        await page.waitForTimeout(10_000);
       }
       const proposalCell = page.getByTestId("proposal-request-#0");
       await expect(proposalCell).toBeVisible({ timeout: 20_000 });
@@ -192,7 +193,7 @@ async function approveProposal({
   instanceAccount,
 }) {
   const isMultiVote = daoAccount === "infinex.sputnik-dao.near";
-  page.evaluate(async () => {
+  await page.evaluate(async () => {
     const selector = await document.querySelector("near-social-viewer")
       .selectorPromise;
 

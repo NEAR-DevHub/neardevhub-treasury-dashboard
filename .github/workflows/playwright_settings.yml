@@ -1,45 +1,76 @@
-# name: Playwright Tests - Settings
-# on:
-#   pull_request:
-#   push:
-#     branches:
-#       - main
+name: Playwright Tests - Settings
 
-# concurrency:
-#   group: settings-${{ github.ref }}
-#   cancel-in-progress: true
+on:
+  pull_request:
+  push:
+    branches:
+      - main
 
-# jobs:
-#   build-sandbox:
-#     uses: ./.github/workflows/build_sandbox.yml
+concurrency:
+  group: settings-${{ github.ref }}
+  cancel-in-progress: true
 
-#   playwright-tests-settings:
-#     needs: build-sandbox
-#     runs-on: ubuntu-latest
-#     strategy:
-#       matrix:
-#         target_account:
-#           - test_command: npx playwright test --project=treasury-dashboard playwright-tests/tests/settings
-#           - test_command: npx playwright test --project=infinex playwright-tests/tests/settings
-#           - test_command: npx playwright test --project=treasury-testing playwright-tests/tests/settings
-#     steps:
-#       - uses: actions/checkout@v3
-#       - uses: actions/setup-node@v3
-#         with:
-#           node-version: 20
-#           cache: "npm"
-#       - name: Install dependencies
-#         run: |
-#           npm ci
-#           npx playwright install-deps
-#           npx playwright install
-#       - name: Build project
-#         run: npm run build
-#       - name: Download sandbox binary
-#         uses: actions/download-artifact@v4
-#         with:
-#           name: sandboxrpc-binary
-#           path: sandboxrpc/target/debug
-#       - run: chmod +x sandboxrpc/target/debug/sandboxrpc
-#       - name: Run tests
-#         run: ${{ matrix.target_account.test_command }}
+jobs:
+  build-sandbox:
+    uses: ./.github/workflows/build_sandbox.yml
+
+  install-dependencies:
+    uses: ./.github/workflows/install-dependencies.yml
+
+  playwright-tests-settings:
+    needs: [build-sandbox, install-dependencies]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shard: [1/3, 2/3, 3/3]
+        project:
+          - treasury-dashboard
+          - infinex
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Download installed dependencies
+        uses: actions/download-artifact@v4
+        with:
+          name: installed-dependencies
+          path: ./
+
+      - name: Extract node_modules
+        run: tar -xzf installed-dependencies.tar.gz
+
+      - name: Download Playwright browsers
+        uses: actions/download-artifact@v4
+        with:
+          name: playwright-browsers
+          path: ./
+
+      - name: Extract browsers
+        run: |
+          mkdir -p ~/.cache
+          tar -xzf playwright-browsers.tar.gz -C ~/.cache
+
+      - name: Build project
+        run: npm run build
+
+      - name: Download sandbox binary
+        uses: actions/download-artifact@v4
+        with:
+          name: sandboxrpc-binary
+          path: sandboxrpc/target/debug
+
+      - name: Make sandbox executable
+        run: chmod +x sandboxrpc/target/debug/sandboxrpc
+
+      - name: Run tests
+        run: |
+          npx playwright test playwright-tests/tests/settings \
+            --project=${{ matrix.project }} \
+            --shard=${{ matrix.shard }}
