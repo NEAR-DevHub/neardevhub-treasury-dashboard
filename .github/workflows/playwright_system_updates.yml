@@ -1,39 +1,71 @@
 name: Playwright Tests - System updates
+
 on:
-  pull_request:
-  push:
-    branches:
-      - main
+  workflow_dispatch: {}
+  workflow_run:
+    workflows: ["Prepare Dependencies"]
+    types:
+      - completed
 
 concurrency:
   group: system-updates-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build-sandbox:
-    uses: ./.github/workflows/build_sandbox.yml
   playwright-tests-system-updates:
-    needs: build-sandbox
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shard: [1/3, 2/3, 3/3]
+        project:
+          - treasury-dashboard
+          - infinex
+          - treasury-testing
+
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
           node-version: 20
-          cache: "npm"
-      - name: Install dependencies
+          cache: npm
+
+      - name: Download installed dependencies
+        uses: actions/download-artifact@v4
+        with:
+          name: installed-dependencies
+          path: ./
+
+      - name: Extract node_modules
+        run: tar -xzf installed-dependencies.tar.gz
+
+      - name: Download Playwright browsers
+        uses: actions/download-artifact@v4
+        with:
+          name: playwright-browsers
+          path: ./
+
+      - name: Extract browsers
         run: |
-          npm ci
-          npx playwright install-deps
-          npx playwright install
+          mkdir -p ~/.cache
+          tar -xzf playwright-browsers.tar.gz -C ~/.cache
+
       - name: Build project
         run: npm run build
+
       - name: Download sandbox binary
         uses: actions/download-artifact@v4
         with:
           name: sandboxrpc-binary
           path: sandboxrpc/target/debug
-      - run: chmod +x sandboxrpc/target/debug/sandboxrpc
+
+      - name: Make sandbox executable
+        run: chmod +x sandboxrpc/target/debug/sandboxrpc
 
       - name: Run tests
-        run: npx playwright test --project=treasury-testing playwright-tests/tests/system-updates
+        run: |
+          npx playwright test playwright-tests/tests/system-updates \
+            --project=${{ matrix.project }} \
+            --shard=${{ matrix.shard }}
