@@ -1,45 +1,72 @@
 name: Playwright Tests - Lockup
+
 on:
-  pull_request:
-  push:
-    branches:
-      - main
+  workflow_dispatch: {}
+  workflow_run:
+    workflows: ["Prepare Dependencies"]
+    types:
+      - completed
 
 concurrency:
   group: lockup-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build-sandbox:
-    uses: ./.github/workflows/build_sandbox.yml
-    
   playwright-tests-lockup:
-    needs: build-sandbox
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        target_account:
-          - test_command: npx playwright test --project=treasury-dashboard playwright-tests/tests/lockup
-          - test_command: npx playwright test --project=infinex playwright-tests/tests/lockup
-          - test_command: npx playwright test --project=treasury-testing playwright-tests/tests/lockup
+        shard: [1/3, 2/3, 3/3]
+        project:
+          - treasury-dashboard
+          - infinex
+
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
           node-version: 20
-          cache: "npm"
-      - name: Install dependencies
+          cache: npm
+
+      # Download and extract node_modules
+      - name: Download installed dependencies
+        uses: actions/download-artifact@v4
+        with:
+          name: installed-dependencies
+          path: ./
+
+      - name: Extract node_modules
+        run: tar -xzf installed-dependencies.tar.gz
+
+      # Download and extract Playwright browsers
+      - name: Download Playwright browsers
+        uses: actions/download-artifact@v4
+        with:
+          name: playwright-browsers
+          path: ./
+
+      - name: Extract browsers
         run: |
-          npm ci
-          npx playwright install-deps
-          npx playwright install
+          mkdir -p ~/.cache
+          tar -xzf playwright-browsers.tar.gz -C ~/.cache
+
       - name: Build project
         run: npm run build
+
       - name: Download sandbox binary
         uses: actions/download-artifact@v4
         with:
           name: sandboxrpc-binary
           path: sandboxrpc/target/debug
-      - run: chmod +x sandboxrpc/target/debug/sandboxrpc
+
+      - name: Make sandbox binary executable
+        run: chmod +x sandboxrpc/target/debug/sandboxrpc
+
       - name: Run tests
-        run: ${{ matrix.target_account.test_command }}
+        run: |
+          npx playwright test playwright-tests/tests/lockup \
+            --project=${{ matrix.project }} \
+            --shard=${{ matrix.shard }}
