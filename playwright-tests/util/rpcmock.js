@@ -570,3 +570,27 @@ export async function mockWithFTBalance({
     }
   });
 }
+
+export async function mockUserDaos({ page, accountId }) {
+  await page.route(`https://api.pikespeak.ai/daos/members`, async (route) => {
+    const json = {
+      [accountId]: {
+        daos: [
+          "build.sputnik-dao.near",
+          "testing.sputnik-dao.near",
+          "she-is-near.sputnik-dao.near",
+          "testing-astradao.sputnik-dao.near",
+          "devdao.sputnik-dao.near",
+          "infinex.sputnik-dao.near",
+          "testing-treasury.sputnik-dao.near",
+          "templar.sputnik-dao.near",
+          "mgoel.sputnik-dao.near",
+          "testing-app2.sputnik-dao.near",
+          "test-self-create.sputnik-dao.near",
+        ],
+      },
+    };
+
+    await route.fulfill({ json });
+  });
+}

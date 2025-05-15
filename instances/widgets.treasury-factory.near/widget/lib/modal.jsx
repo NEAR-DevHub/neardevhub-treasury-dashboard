@@ -37,6 +37,7 @@ const ModalDialog = styled.div`
   max-height: 85%;
   margin-top: 5%;
   width: 35%;
+  min-width: 400px;
   border-radius: 16px;
   display: flex;
   flex-direction: column;

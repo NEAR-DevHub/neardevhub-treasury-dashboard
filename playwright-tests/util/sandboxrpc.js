@@ -5,9 +5,8 @@ import { parseNearAmount } from "near-api-js/lib/utils/format.js";
 import { KeyPairEd25519 } from "near-api-js/lib/utils/key_pair.js";
 import { getLocalWidgetSource } from "./bos-workspace.js";
 import { expect } from "@playwright/test";
-import fs from "fs";
-import path, { dirname } from "path";
 import { overlayMessage, removeOverlayMessage } from "./test.js";
+import { getLocalWidgetContent, redirectWeb4 } from "./web4.js";
 
 export const SPUTNIK_DAO_CONTRACT_ID = "sputnik-dao.near";
 // we don't have proposal bond for any instance (in this repo)
@@ -17,6 +16,42 @@ export const DEFAULT_WIDGET_REFERENCE_ACCOUNT_ID =
   "bootstrap.treasury-factory.near";
 
 export const TREASURY_FACTORY_ACCOUNT_ID = "treasury-factory.near";
+export const SPUTNIK_DAO_FACTORY_ID = "sputnik-dao.near";
+
+export async function setPageAuthSettings(page, accountId, keyPair) {
+  await page.evaluate(
+    ({ accountId, publicKey, privateKey }) => {
+      localStorage.setItem("near-social-vm:v01::accountId:", accountId);
+      localStorage.setItem(
+        `near-api-js:keystore:${accountId}:mainnet`,
+        privateKey
+      );
+      localStorage.setItem(
+        "near-wallet-selector:recentlySignedInWallets",
+        JSON.stringify(["my-near-wallet"])
+      );
+      localStorage.setItem(
+        "near-wallet-selector:selectedWalletId",
+        JSON.stringify("my-near-wallet")
+      );
+      localStorage.setItem(
+        "near_app_wallet_auth_key",
+        JSON.stringify({ accountId, allKeys: [publicKey] })
+      );
+      localStorage.setItem(
+        "near-wallet-selector:contract",
+        JSON.stringify({ contractId: "social.near", methodNames: [] })
+      );
+    },
+    {
+      accountId,
+      publicKey: keyPair.getPublicKey().toString(),
+      privateKey: keyPair.toString(),
+    }
+  );
+  await page.reload();
+}
+
 export class SandboxRPC {
   constructor() {
     this.modifiedWidgets = {};
@@ -60,6 +95,11 @@ export class SandboxRPC {
       TREASURY_FACTORY_ACCOUNT_ID,
       utils.KeyPair.fromString(this.secret_key)
     );
+    this.keyStore.setKey(
+      "sandbox",
+      SPUTNIK_DAO_FACTORY_ID,
+      utils.KeyPair.fromString(this.secret_key)
+    );
 
     this.near = await connect({
       networkId: "sandbox",
@@ -68,6 +108,11 @@ export class SandboxRPC {
     });
 
     this.account = await this.near.account(this.account_id);
+  }
+
+  async setPageAuthSettingsWithSandboxAccountKeys(page) {
+    const keyPair = await this.keyStore.getKey("sandbox", this.account_id);
+    await setPageAuthSettings(page, this.account_id, keyPair);
   }
 
   /**
@@ -153,12 +198,22 @@ export class SandboxRPC {
     ).toEqual(keyPair.getPublicKey().toString());
 
     const data = {};
-    const localWidgetSources = await getLocalWidgetSource(
-      reference_widget_account_id + "/widget/**"
+    const appWidgetKey = reference_widget_account_id + "/widget/app";
+
+    const appWidget =
+      this.modifiedWidgets[appWidgetKey] ??
+      (await getLocalWidgetContent(
+        reference_widget_account_id + "/widget/app"
+      ));
+    const configWidget = await getLocalWidgetContent(
+      reference_widget_account_id + "/widget/config.data"
     );
 
     data[reference_widget_account_id] = {
-      widget: localWidgetSources[reference_widget_account_id].widget,
+      widget: {
+        app: appWidget,
+        "config.data": configWidget,
+      },
     };
 
     await reference_widget_account.functionCall({
@@ -562,147 +617,17 @@ export class SandboxRPC {
     await this.addProposal({ daoName, args });
   }
 
-  /**
-   * Redirect Web4 requests to the specified contract
-   * @param {string} contractId - The contract ID to redirect requests to
-   * @param {import('@playwright/test').Page} page - Playwright page object
-   */
   async redirectWeb4(contractId, page) {
-    const original_rpc_url = "https://rpc.mainnet.near.org";
-    await page.route(original_rpc_url, async (route, request) => {
-      const postData = request.postDataJSON();
-      if (postData.params.account_id === "social.near") {
-        const args = JSON.parse(atob(postData.params.args_base64));
-        const keys = args.keys;
-
-        if ((keys && keys[0].startsWith(contractId)) || keys === undefined) {
-          const response = await route.fetch({
-            url: this.rpc_url,
-            json: postData,
-          });
-          await route.fulfill({ response });
-        } else {
-          const instancesFolder = path.resolve(dirname("."), "instances"); // Adjust the path if necessary
-          const fileContents = {};
-
-          for (const key of keys) {
-            // Replace dots with path separators only after "widget"
-            const [prefix, ...rest] = key.split("/widget/");
-            const normalizedKey = path.join(
-              prefix,
-              "widget",
-              rest.join("/").replace(/\./g, "/")
-            );
-            const [account, section, contentKey] = key.split("/");
-            if (fileContents[account] === undefined) {
-              fileContents[account] = {};
-            }
-            if (fileContents[account][section] === undefined) {
-              fileContents[account][section] = {};
-            }
-            const filePath = path.join(instancesFolder, normalizedKey) + ".jsx";
-            if (this.modifiedWidgets[key]) {
-              fileContents[account][section][contentKey] =
-                this.modifiedWidgets[key];
-            } else if (fs.existsSync(filePath)) {
-              const content = fs
-                .readFileSync(filePath, "utf-8")
-                .replaceAll(
-                  "${REPL_BACKEND_API}",
-                  "https://ref-sdk-api-2.fly.dev/api"
-                )
-                .replaceAll(
-                  "${REPL_BASE_DEPLOYMENT_ACCOUNT}",
-                  "widgets.treasury-factory.near"
-                )
-                .replaceAll("${REPL_DEVHUB}", "devhub.near")
-                .replaceAll("${REPL_RPC_URL}", original_rpc_url);
-
-              fileContents[account][section][contentKey] = content;
-            } else {
-              console.warn(
-                `File not found for key: ${key} ${filePath}, going to live RPC`
-              );
-              await route.fallback();
-              return;
-            }
-          }
-
-          const json = {
-            jsonrpc: "2.0",
-            id: "dontcare",
-            result: {},
-          };
-
-          json["result"] = {
-            result: Array.from(
-              new TextEncoder().encode(JSON.stringify(fileContents))
-            ),
-          };
-          await route.fulfill({ json });
-        }
-      } else {
-        const response = await route.fetch({
-          url: this.rpc_url,
-          json: postData,
-        });
-        await route.fulfill({ response });
-      }
+    const treasury = contractId.split(".near")[0] + ".sputnik-dao.near";
+    return await redirectWeb4({
+      contractId,
+      page,
+      treasury,
+      networkId: "sandbox",
+      widgetNodeUrl: this.rpc_url,
+      sandboxNodeUrl: this.rpc_url,
+      modifiedWidgets: this.modifiedWidgets,
     });
-
-    await page.route(
-      `https://${contractId}.page/**`,
-      async (route, request) => {
-        const path = request
-          .url()
-          .substring(`https://${contractId}.page`.length);
-        let viewResult = await this.account.viewFunction({
-          contractId,
-          methodName: "web4_get",
-          args: {
-            request: {
-              path,
-            },
-          },
-        });
-
-        if (viewResult.preloadUrls) {
-          const preloads = {};
-          for (let preloadUrl of viewResult.preloadUrls) {
-            const keys = JSON.parse(
-              decodeURIComponent(preloadUrl.split("?keys.json=")[1])
-            );
-            const preloadBody = await this.account.viewFunction({
-              contractId: "social.near",
-              methodName: "get",
-              args: {
-                keys,
-              },
-            });
-            preloads[preloadUrl] = {
-              contentType: "application/json",
-              body: btoa(JSON.stringify(preloadBody)),
-            };
-          }
-
-          viewResult = await this.account.viewFunction({
-            contractId,
-            methodName: "web4_get",
-            args: {
-              request: {
-                path,
-                preloads,
-              },
-            },
-          });
-        }
-
-        await route.fulfill({
-          contentType: viewResult.contentType,
-          body: atob(viewResult.body),
-        });
-      }
-    );
   }
 
   modifyWidget(key, content) {

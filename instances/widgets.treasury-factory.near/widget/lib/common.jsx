@@ -259,13 +259,16 @@ const decodeProposalDescription = (key, description) => {
 
   const lines = description.split("<br>");
   for (const line of lines) {
-    const match = line.match(/^\* (.+): (.+)$/);
-    if (match) {
-      const currentKey = match[1];
-      const value = match[2];
+    if (line.startsWith("* ")) {
+      const rest = line.slice(2);
+      const indexOfColon = rest.indexOf(":");
+      if (indexOfColon !== -1) {
+        const currentKey = rest.slice(0, indexOfColon).trim();
+        const value = rest.slice(indexOfColon + 1).trim();
 
-      if (currentKey === markdownKey) {
-        return value.trim();
+        if (currentKey.toLowerCase() === markdownKey.toLowerCase()) {
+          return value;
+        }
       }
     }
   }
@@ -742,6 +745,7 @@ function getAllColorsAsObject(isDarkTheme, primaryColor) {
     "--other-primary": "#2775C9",
     "--other-warning": "#B17108",
     "--other-green": "#3CB179",
+    "--other-green-light": "#3CB1791A",
     "--other-red": "#D95C4A",
     "--bs-body-bg": "var(--bg-page-color)",
     "--bs-border-color": "var(--border-color)",
@@ -976,6 +980,84 @@ function deserializeLockupContract(byteArray) {
   return result;
 }
 
+function waitForSocialGet(key, retries, interval) {
+  retries = retries ?? 3;
+  interval = interval ?? 200;
+
+  return new Promise((resolve) => {
+    let attempts = 0;
+
+    const check = () => {
+      const result = Social.get(key);
+      if (result || attempts >= retries) {
+        resolve(result);
+      } else {
+        attempts += 1;
+        setTimeout(check, interval);
+      }
+    };
+
+    check();
+  });
+}
+
+function getUserDaos(accountId, doAsyncFetch) {
+  if (!accountId) return [];
+
+  const pikespeakKey = isBosGateway()
+    ? "${REPL_GATEWAY_PIKESPEAK_KEY}"
+    : props.pikespeakKey ?? "${REPL_INDIVIDUAL_PIKESPEAK_KEY}";
+
+  const url = `https://api.pikespeak.ai/daos/members`;
+
+  const headers = {
+    "x-api-key": pikespeakKey,
+  };
+
+  const doFetch = doAsyncFetch
+    ? asyncFetch(url, { headers }).then(
+        (res) => res?.body?.[accountId]?.["daos"] ?? []
+      )
+    : fetch(url, { headers });
+
+  return doFetch;
+}
+
+function getUserTreasuries(accountId) {
+  return getUserDaos(accountId, true).then((userDaos) => {
+    return Promise.all(
+      userDaos.map((daoId) => {
+        const spuntikName = daoId.split(".")[0];
+        const selfFrontendKey = `${spuntikName}.near/widget/app`;
+        const instanceAccount = `treasury-${spuntikName}.near`;
+        const manualFrontendKey = `${instanceAccount}/widget/app`;
+
+        return Promise.all([
+          Near.asyncView(daoId, "get_config"),
+          waitForSocialGet(selfFrontendKey),
+          waitForSocialGet(manualFrontendKey),
+        ]).then((res) => {
+          const config = res[0];
+          const selfCreatedfrontendExists = res[1];
+          const manualCreatedfrontendExists = res[2];
+          return {
+            daoId,
+            instanceAccount: selfCreatedfrontendExists
+              ? `${spuntikName}.near`
+              : instanceAccount,
+            hasTreasury:
+              selfCreatedfrontendExists || manualCreatedfrontendExists,
+            config: {
+              ...config,
+              metadata: JSON.parse(atob(config.metadata ?? "")),
+            },
+          };
+        });
+      })
+    );
+  });
+}
+
 return {
   getApproversAndThreshold,
   hasPermission,
@@ -1000,4 +1082,6 @@ return {
   accountToLockup,
   asyncAccountToLockup,
   deserializeLockupContract,
+  getUserTreasuries,
+  getUserDaos,
 };
