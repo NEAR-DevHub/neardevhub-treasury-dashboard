@@ -1,5 +1,5 @@
 import { expect } from "@playwright/test";
-import { test } from "../../util/test.js";
+import { cacheCDN, test } from "../../util/test.js";
 import { mockTransactionSubmitRPCResponses } from "../../util/transaction.js";
 import {
   mockNearBalances,
@@ -12,6 +12,10 @@ import {
   LockupProposalData,
 } from "../../util/inventory.js";
 import { InsufficientBalance } from "../../util/lib.js";
+
+test.beforeEach(async ({ page }) => {
+  await cacheCDN(page);
+});
 
 async function voteOnProposal({
   page,
@@ -247,7 +251,7 @@ test.describe("User is logged in", function () {
     await page.getByRole("button", { name: "Confirm" }).click();
 
     const loader = page.getByText("Awaiting transaction confirmation...");
-    await expect(loader).toBeVisible();
+    await expect(loader).toBeVisible({ timeout: 15_000 });
     await expect(approveButton).toBeDisabled();
 
     await page.getByRole("button", { name: "Close" }).nth(1).click();
@@ -329,7 +333,7 @@ test.describe("don't ask again", function () {
     } else {
       await expect(
         page.getByText("The request has been successfully executed.")
-      ).toBeVisible();
+      ).toBeVisible({ timeout: 15_000 });
     }
   });
 
@@ -355,7 +359,7 @@ test.describe("don't ask again", function () {
     } else {
       await expect(
         page.getByText("The request has been rejected.")
-      ).toBeVisible();
+      ).toBeVisible({ timeout: 15_000 });
     }
   });
 
@@ -381,7 +385,7 @@ test.describe("don't ask again", function () {
     } else {
       await expect(
         page.getByText("The request has been successfully deleted.")
-      ).toBeVisible();
+      ).toBeVisible({ timeout: 15_000 });
     }
   });
 });

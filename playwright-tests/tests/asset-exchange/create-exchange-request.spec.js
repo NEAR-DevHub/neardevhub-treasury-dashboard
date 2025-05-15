@@ -208,7 +208,10 @@ test.describe("User is logged in", function () {
     ).toBeVisible();
     await expect(submitBtn).toBeEnabled();
     await submitBtn.click();
-    await expect(page.getByText("Confirm Transaction").first()).toBeVisible();
+    if (await page.getByText("High Fee Warning").isVisible()) {
+      await page.getByRole("button", { name: "Yes" }).click();
+    }
+    await expect(page.getByText("Confirm Transaction").first()).toBeVisible({});
   });
 
   test("create NEAR to wNEAR swap request and display in pending request", async ({

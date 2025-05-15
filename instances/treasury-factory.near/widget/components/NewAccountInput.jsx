@@ -10,11 +10,17 @@ const {
   id,
 } = props;
 
-const [value, setValue] = useState(defaultValue ?? "");
+const [value, setValue] = useState("");
 const [show, setShow] = useState(false);
 
+useEffect(() => {
+  if (value !== defaultValue) {
+    setValue(defaultValue);
+  }
+}, [defaultValue]);
+
 const checkAccountAvailability = async (accountId, postfix) => {
-  if (accountId.length === 0) return;
+  if (!accountId || accountId.length === 0) return;
 
   asyncFetch(`${REPL_RPC_URL}`, {
     method: "POST",
