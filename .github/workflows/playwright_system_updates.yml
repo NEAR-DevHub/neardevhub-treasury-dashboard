@@ -1,23 +1,15 @@
 name: Playwright Tests - System updates
 on:
-  pull_request:
-  push:
-    branches:
-      - main
-
+  workflow_run:
+    workflows: ["Prepare Dependencies"]
+    types:
+      - completed
 concurrency:
   group: system-updates-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build-sandbox:
-    uses: ./.github/workflows/build_sandbox.yml
-
-  install-dependencies:
-    uses: ./.github/workflows/install-dependencies.yml
-
   playwright-tests-system-updates:
-    needs: [build-sandbox, install-dependencies]
     runs-on: ubuntu-latest
     strategy:
       matrix:

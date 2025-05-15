@@ -1,23 +1,15 @@
 name: Playwright Tests - Web4
 on:
-  pull_request:
-  push:
-    branches:
-      - main
-
+  workflow_run:
+    workflows: ["Prepare Dependencies"]
+    types:
+      - completed
 concurrency:
   group: web4-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build-sandbox:
-    uses: ./.github/workflows/build_sandbox.yml
-
-  install-dependencies:
-    uses: ./.github/workflows/install-dependencies.yml
-
   playwright-tests-web4:
-    needs: [build-sandbox, install-dependencies]
     runs-on: ubuntu-latest
     strategy:
       matrix:

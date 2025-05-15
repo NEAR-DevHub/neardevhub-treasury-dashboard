@@ -1,23 +1,16 @@
 name: Playwright Tests - Treasury Factory
 on:
-  pull_request:
-  push:
-    branches:
-      - main
+  workflow_run:
+    workflows: ["Prepare Dependencies"]
+    types:
+      - completed
 
 concurrency:
   group: treasury-factory-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build-sandbox:
-    uses: ./.github/workflows/build_sandbox.yml
-
-  install-dependencies:
-    uses: ./.github/workflows/install-dependencies.yml
-
   playwright-tests-treasury-factory:
-    needs: [build-sandbox, install-dependencies]
     runs-on: ubuntu-latest
     strategy:
       matrix:

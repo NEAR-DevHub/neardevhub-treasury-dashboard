@@ -1,21 +1,17 @@
 name: Playwright Tests - Dashboard
 
 on:
-  pull_request:
-  push:
-    branches:
-      - main
+  workflow_run:
+    workflows: ["Prepare Dependencies"]
+    types:
+      - completed
 
 concurrency:
   group: dashboard-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  install-dependencies:
-    uses: ./.github/workflows/install-dependencies.yml
-
   playwright-tests-dashboard:
-    needs: install-dependencies
     runs-on: ubuntu-latest
     strategy:
       matrix:

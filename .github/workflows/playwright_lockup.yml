@@ -1,24 +1,17 @@
 name: Playwright Tests - Lockup
 
 on:
-  pull_request:
-  push:
-    branches:
-      - main
+  workflow_run:
+    workflows: ["Prepare Dependencies"]
+    types:
+      - completed
 
 concurrency:
   group: lockup-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build-sandbox:
-    uses: ./.github/workflows/build_sandbox.yml
-
-  install-dependencies:
-    uses: ./.github/workflows/install-dependencies.yml
-
   playwright-tests-lockup:
-    needs: [build-sandbox, install-dependencies]
     runs-on: ubuntu-latest
     strategy:
       matrix:
