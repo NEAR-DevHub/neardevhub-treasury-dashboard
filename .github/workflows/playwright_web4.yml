@@ -1,9 +1,16 @@
 name: Playwright Tests - Web4
+
 on:
+  workflow_dispatch: {}
   workflow_run:
     workflows: ["Prepare Dependencies"]
     types:
       - completed
+    branches:
+      - shard-tests
+      - staging
+      - main
+
 concurrency:
   group: web4-${{ github.ref }}
   cancel-in-progress: true

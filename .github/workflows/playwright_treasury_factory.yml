@@ -1,9 +1,15 @@
 name: Playwright Tests - Treasury Factory
+
 on:
+  workflow_dispatch: {}
   workflow_run:
     workflows: ["Prepare Dependencies"]
     types:
       - completed
+    branches:
+      - shard-tests
+      - staging
+      - main
 
 concurrency:
   group: treasury-factory-${{ github.ref }}

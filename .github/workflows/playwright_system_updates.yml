@@ -1,9 +1,16 @@
 name: Playwright Tests - System updates
+
 on:
+  workflow_dispatch: {}
   workflow_run:
     workflows: ["Prepare Dependencies"]
     types:
       - completed
+    branches:
+      - shard-tests
+      - staging
+      - main
+
 concurrency:
   group: system-updates-${{ github.ref }}
   cancel-in-progress: true
