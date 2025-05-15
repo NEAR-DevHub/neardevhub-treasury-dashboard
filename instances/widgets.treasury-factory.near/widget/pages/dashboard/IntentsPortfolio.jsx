@@ -5,6 +5,15 @@ const { NearToken } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Icons"
 ) || { NearToken: () => <></> };
 
+const props = typeof props !== "undefined" ? props : {};
+const treasuryDaoID = props.treasuryDaoID;
+const heading = props.heading;
+const instance = props.instance;
+
+const [tokens, setTokens] = useState(null);
+const [loading, setLoading] = useState(true);
+const [error, setError] = useState(false);
+
 function formatCurrency(amount) {
   const formattedAmount = Number(amount).toLocaleString("en-US", {
     minimumFractionDigits: 2,
@@ -26,6 +35,46 @@ function formatPrice(price) {
   }
   return "$" + Big(price ?? "0").toFixed(2);
 }
+
+useEffect(() => {
+  if (!treasuryDaoID) return;
+  setLoading(true);
+  asyncFetch("https://api-mng-console.chaindefuser.com/api/tokens")
+    .then((resp) => {
+      const tokens = resp.body?.items || [];
+      if (tokens.length === 0) {
+        setTokens([]);
+        setLoading(false);
+        return;
+      }
+      const tokenIds = tokens.map((t) => t.defuse_asset_id);
+      Near.asyncView("intents.near", "mt_batch_balance_of", {
+        account_id: treasuryDaoID,
+        token_ids: tokenIds,
+      })
+        .then((balances) => {
+          const mapped = tokens.map((t, i) => ({
+            ft_meta: {
+              symbol: t.symbol,
+              icon: t.icon,
+              decimals: t.decimals,
+              price: t.price,
+            },
+            amount: balances[i],
+          }));
+          setTokens(mapped);
+          setLoading(false);
+        })
+        .catch(() => {
+          setError(true);
+          setLoading(false);
+        });
+    })
+    .catch(() => {
+      setError(true);
+      setLoading(false);
+    });
+}, [treasuryDaoID]);
 
 const Loading = () => (
   <div className="d-flex align-items-center gap-2 w-100 mx-2 mb-2">
@@ -98,18 +147,33 @@ const TokenCard = ({ token }) => {
   );
 };
 
+if (loading)
+  return (
+    <div className="card card-body">
+      {heading}
+      <Loading />
+    </div>
+  );
+if (error)
+  return (
+    <div className="card card-body">
+      {heading}
+      <div className="text-danger px-3 py-2">
+        Failed to load Intents balances.
+      </div>
+    </div>
+  );
+
+const filtered = (tokens || []).filter(
+  (token) => token.amount && Big(token.amount).gt(0)
+);
 return (
   <div className="card card-body">
-    {props.heading}
-    {props.tokens === null ? (
-      <Loading />
-    ) : props.tokens.filter((token) => token.amount && Big(token.amount).gt(0))
-        .length === 0 ? (
+    {heading}
+    {filtered.length === 0 ? (
       <div className="text-secondary px-3 py-2">No Intents balances found.</div>
     ) : (
-      props.tokens
-        .filter((token) => token.amount && Big(token.amount).gt(0))
-        .map((token, idx) => <TokenCard key={idx} token={token} />)
+      filtered.map((token, idx) => <TokenCard key={idx} token={token} />)
     )}
   </div>
 );
