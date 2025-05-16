@@ -21,8 +21,8 @@ jobs:
         run: curl --proto '=https' --tlsv1.2 -LsSf https://github.com/near/cargo-near/releases/latest/download/cargo-near-installer.sh | sh
       - name: Deploy
         run: |
-          export PIKESPEAK_API_KEY = ${{ secrets.PIKESPEAK_API_KEY }}
-          export POSTHOG_API_KEY = ${{ secrets.POSTHOG_API_KEY }}
+          export PIKESPEAK_API_KEY=${{ secrets.PIKESPEAK_API_KEY }}
+          export POSTHOG_API_KEY=${{ secrets.POSTHOG_API_KEY }}
           cargo near deploy build-reproducible-wasm  "${{ vars.NEAR_SOCIAL_ACCOUNT_ID }}" \
             without-init-call \
             network-config mainnet \
