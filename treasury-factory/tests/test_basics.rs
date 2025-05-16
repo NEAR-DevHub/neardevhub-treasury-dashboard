@@ -106,6 +106,11 @@ async fn test_web4() -> Result<(), Box<dyn std::error::Error>> {
 
     let body_string = String::from_utf8(BASE64_STANDARD.decode(response.body).unwrap()).unwrap();
     assert!(body_string.contains("near-social-viewer"));
+    assert!(
+        body_string.contains("\"posthog-testrun-apikey\""),
+        "body_string: {}",
+        body_string.as_str()
+    );
 
     Ok(())
 }
@@ -395,6 +400,16 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
 
     assert!(body_string.contains("near-social-viewer"));
     assert!(body_string.contains("\"test treasury title\""));
+    assert!(
+        body_string.contains("\"pikespeak-testrun-apikey\""),
+        "body_string: {}",
+        body_string.as_str()
+    );
+    assert!(
+        body_string.contains("\"posthog-testrun-apikey\""),
+        "body_string: {}",
+        body_string.as_str()
+    );
 
     let get_config_result = worker
         .view(
