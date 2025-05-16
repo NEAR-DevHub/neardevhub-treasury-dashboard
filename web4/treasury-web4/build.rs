@@ -4,6 +4,8 @@ use std::io::Write;
 use std::path::Path;
 
 fn main() {
+    println!("cargo:rerun-if-changed=./src/web4/index.html");
+
     // Change working directory to the directory of the script (similar to process.chdir)
     let current_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../public_html");
 
