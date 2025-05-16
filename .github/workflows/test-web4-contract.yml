@@ -1,44 +1,44 @@
-# name: "Test web4 Rust"
-# on:
-#   workflow_call: {}
-#   pull_request:
-#   push:
-#     branches:
-#       - main
+name: "Test web4 Rust"
+on:
+  workflow_call: {}
+  pull_request:
+  push:
+    branches:
+      - main
 
-# concurrency:
-#   group: web4-contract-${{ github.ref }}
-#   cancel-in-progress: true
+concurrency:
+  group: web4-contract-${{ github.ref }}
+  cancel-in-progress: true
 
-# jobs:
-#   code-formatting:
-#     name: Code Formatting
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Checkout repository
-#         uses: actions/checkout@v4
-#       - run: cargo fmt --check
-#         working-directory: ./web4/treasury-web4
+jobs:
+  code-formatting:
+    name: Code Formatting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - run: cargo fmt --check
+        working-directory: ./web4/treasury-web4
 
-#   tests-and-lint:
-#     name: Tests and linting
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Checkout repository
-#         uses: actions/checkout@v4
-#       - name: Install cargo-near CLI
-#         run: curl --proto '=https' --tlsv1.2 -LsSf https://github.com/near/cargo-near/releases/latest/download/cargo-near-installer.sh | sh
-#       - name: Build web4 contract
-#         run: cargo near build reproducible-wasm
-#         working-directory: ./web4/treasury-web4
-#       - name: Build treasury-factory
-#         run: cargo near build reproducible-wasm
-#         working-directory: ./treasury-factory
-#       - name: Run cargo clippy
-#         run: |
-#           rustup component add clippy
-#           cargo clippy --all-features --workspace --tests -- --warn clippy::all --warn clippy::nursery
-#         working-directory: ./web4/treasury-web4
-#       - name: Run cargo test
-#         run: cargo test
-#         working-directory: ./web4/treasury-web4
+  tests-and-lint:
+    name: Tests and linting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install cargo-near CLI
+        run: curl --proto '=https' --tlsv1.2 -LsSf https://github.com/near/cargo-near/releases/latest/download/cargo-near-installer.sh | sh
+      - name: Build web4 contract
+        run: cargo near build reproducible-wasm
+        working-directory: ./web4/treasury-web4
+      - name: Build treasury-factory
+        run: cargo near build reproducible-wasm
+        working-directory: ./treasury-factory
+      - name: Run cargo clippy
+        run: |
+          rustup component add clippy
+          cargo clippy --all-features --workspace --tests -- --warn clippy::all --warn clippy::nursery
+        working-directory: ./web4/treasury-web4
+      - name: Run cargo test
+        run: cargo test
+        working-directory: ./web4/treasury-web4

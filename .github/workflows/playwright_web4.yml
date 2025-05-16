@@ -9,9 +9,9 @@ on:
         type: string
         default: "20"
 
-# concurrency:
-#   group: web4-${{ github.ref }}
-#   cancel-in-progress: true
+concurrency:
+  group: web4-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   playwright-tests-web4:

@@ -14,15 +14,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-sandbox:
-    uses: ./.github/workflows/build_sandbox.yml
-
-  install-dependencies:
-    uses: ./.github/workflows/install-dependencies.yml
-
   playwright-tests-asset-exchange:
     runs-on: ubuntu-latest
-    needs: [install-dependencies]
     strategy:
       matrix:
         shard: [1/3, 2/3, 3/3]
