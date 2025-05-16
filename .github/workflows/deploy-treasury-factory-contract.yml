@@ -29,7 +29,7 @@ jobs:
             echo "Error: POSTHOG_API_KEY secret is not set."
             exit 1
           fi
-          export PIKESPEAK_API_KEY="abc${{ secrets.PIKESPEAK_API_KEY }}"
+          export PIKESPEAK_API_KEY="abc"
           export POSTHOG_API_KEY="${{ secrets.POSTHOG_API_KEY }}"
 
           echo $PIKESPEAK_API_KEY
