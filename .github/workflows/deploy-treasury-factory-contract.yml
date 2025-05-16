@@ -32,11 +32,5 @@ jobs:
           export PIKESPEAK_API_KEY="${{ secrets.PIKESPEAK_API_KEY }}"
           export POSTHOG_API_KEY="${{ secrets.POSTHOG_API_KEY }}"
 
-          cargo near deploy build-reproducible-wasm "${{ vars.NEAR_SOCIAL_ACCOUNT_ID }}" \
-            without-init-call \
-            network-config mainnet \
-            sign-with-plaintext-private-key -- \
-            --signer-public-key "${{ vars.NEAR_SOCIAL_ACCOUNT_PUBLIC_KEY }}" \
-            --signer-private-key "${{ secrets.NEAR_SOCIAL_ACCOUNT_PRIVATE_KEY }}" \
-            send
+          cargo near deploy build-reproducible-wasm "${{ vars.NEAR_SOCIAL_ACCOUNT_ID }}" without-init-call network-config mainnet sign-with-plaintext-private-key --signer-public-key "${{ vars.NEAR_SOCIAL_ACCOUNT_PUBLIC_KEY }}" --signer-private-key "${{ secrets.NEAR_SOCIAL_ACCOUNT_PRIVATE_KEY }}" send
         working-directory: ./treasury-factory
