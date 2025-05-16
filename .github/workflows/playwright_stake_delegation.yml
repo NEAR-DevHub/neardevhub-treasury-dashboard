@@ -2,10 +2,12 @@ name: Playwright Tests - Stake Delegation
 
 on:
   workflow_dispatch: {}
-  workflow_run:
-    workflows: ["Prepare Dependencies"]
-    types:
-      - completed
+  workflow_call:
+    inputs:
+      node-version:
+        required: false
+        type: string
+        default: "20"
 
 concurrency:
   group: stake-delegation-${{ github.ref }}

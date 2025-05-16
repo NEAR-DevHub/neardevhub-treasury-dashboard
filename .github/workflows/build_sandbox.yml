@@ -13,23 +13,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ inputs.node-version }}
           cache: npm
-
       - run: npm ci
-
       - name: Restore sandbox build cache
         uses: actions/cache@v3
         id: sandbox-cache
         with:
           path: sandboxrpc/target
-          key: sandboxrpc-${{ runner.os }}-${{ hashFiles('sandboxrpc/src/**', 'sandboxrpc/Cargo.*') }}
+          key: ${{ runner.os }}-sandboxrpc-${{ hashFiles('sandboxrpc/src/**', 'sandboxrpc/Cargo.*') }}
           restore-keys: |
-            sandboxrpc-${{ runner.os }}-
-
+            sandboxrpc-
       - name: Build sandbox
         if: steps.sandbox-cache.outputs.cache-hit != 'true'
         run: npm run build:sandbox
+      - name: Upload sandbox binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: sandboxrpc-binary
+          path: sandboxrpc/target/debug/sandboxrpc
