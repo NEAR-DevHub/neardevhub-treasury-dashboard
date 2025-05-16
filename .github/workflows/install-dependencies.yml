@@ -1,0 +1,53 @@
+name: Install Dependencies
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        required: false
+        type: string
+        default: "20"
+
+jobs:
+  install-dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: npm
+
+      # Install dependencies
+      - name: Install dependencies
+        run: |
+          npm ci
+          npx playwright install-deps
+          npx playwright install
+
+      # Archive node_modules
+      - name: Archive node_modules
+        run: tar -czf installed-dependencies.tar.gz node_modules
+
+      # Archive Playwright browsers
+      - name: Archive Playwright browsers
+        run: |
+          mkdir -p ~/.cache/ms-playwright
+          tar -czf playwright-browsers.tar.gz -C ~/.cache ms-playwright
+
+      # Upload node_modules
+      - name: Upload node_modules
+        uses: actions/upload-artifact@v4
+        with:
+          name: installed-dependencies
+          path: installed-dependencies.tar.gz
+
+      # Upload Playwright browsers
+      - name: Upload Playwright browsers
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-browsers
+          path: playwright-browsers.tar.gz
