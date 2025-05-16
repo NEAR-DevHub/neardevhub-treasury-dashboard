@@ -2,6 +2,12 @@ name: Playwright Tests - Asset Exchange
 
 on:
   workflow_dispatch: {}
+  workflow_call:
+    inputs:
+      node-version:
+        required: false
+        type: string
+        default: "20"
 
 concurrency:
   group: asset-exchange-${{ github.ref }}
