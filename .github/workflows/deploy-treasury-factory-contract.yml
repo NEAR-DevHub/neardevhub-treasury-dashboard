@@ -17,13 +17,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Set up Rust 1.86
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: 1.86
-      - uses: Swatinem/rust-cache@v2
-        with:
-          working-directory: ./treasury-factory
+      - name: Modify the rust toolchain version
+        run: rustup override set 1.86
+      - name: Output rust version
+        run: rustup --version
       - name: Install cargo-near CLI
         run: curl --proto '=https' --tlsv1.2 -LsSf https://github.com/near/cargo-near/releases/latest/download/cargo-near-installer.sh | sh
       - name: Deploy
