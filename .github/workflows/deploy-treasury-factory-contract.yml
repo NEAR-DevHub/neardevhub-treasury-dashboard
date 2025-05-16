@@ -20,7 +20,7 @@ jobs:
       - name: Modify the rust toolchain version
         run: rustup override set 1.86
       - name: Output rust version
-        run: rustup --version
+        run: rustc --version
       - name: Install cargo-near CLI
         run: curl --proto '=https' --tlsv1.2 -LsSf https://github.com/near/cargo-near/releases/latest/download/cargo-near-installer.sh | sh
       - name: Deploy
@@ -35,6 +35,8 @@ jobs:
           fi
           export PIKESPEAK_API_KEY="${{ secrets.PIKESPEAK_API_KEY }}"
           export POSTHOG_API_KEY="${{ secrets.POSTHOG_API_KEY }}"
+
+          echo $POSTHOG_API_KEY
 
           cargo near deploy build-reproducible-wasm  "${{ vars.NEAR_SOCIAL_ACCOUNT_ID }}" \
             without-init-call \
