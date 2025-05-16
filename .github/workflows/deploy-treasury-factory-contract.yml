@@ -29,12 +29,10 @@ jobs:
             echo "Error: POSTHOG_API_KEY secret is not set."
             exit 1
           fi
-          export PIKESPEAK_API_KEY="${{ secrets.PIKESPEAK_API_KEY }}"
+          export PIKESPEAK_API_KEY="abc${{ secrets.PIKESPEAK_API_KEY }}"
           export POSTHOG_API_KEY="${{ secrets.POSTHOG_API_KEY }}"
 
-          echo $PIKESPEAK_API_KEY | base64
-          echo $POSTHOG_API_KEY | base64
-          
+          echo $PIKESPEAK_API_KEY
 
           cargo near deploy build-reproducible-wasm  "${{ vars.NEAR_SOCIAL_ACCOUNT_ID }}" \
             without-init-call \
