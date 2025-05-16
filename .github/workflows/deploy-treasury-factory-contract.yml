@@ -41,7 +41,5 @@ jobs:
             without-init-call \
             network-config mainnet \
             sign-with-plaintext-private-key \
-            --signer-public-key "ed25519:2Nc7CSqoJKUJ4vWpnB7g5PhdGw3pYUb4LWxdG91nEcAH" \
-            --signer-private-key "ed25519:31EHRkuPSvVEBGtvPYWnMUdBFyfcZP2fPcedsEGA5ntdU3JQpPRTovgk3vcV1gQQSctK25C5g45feXmCyyRokJfA" \
             send
         working-directory: ./treasury-factory
