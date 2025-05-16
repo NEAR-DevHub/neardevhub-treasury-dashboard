@@ -21,6 +21,14 @@ jobs:
         run: curl --proto '=https' --tlsv1.2 -LsSf https://github.com/near/cargo-near/releases/latest/download/cargo-near-installer.sh | sh
       - name: Deploy
         run: |
+          if [ -z "${{ secrets.PIKESPEAK_API_KEY }}" ]; then
+            echo "Error: PIKESPEAK_API_KEY secret is not set."
+            exit 1
+          fi
+          if [ -z "${{ secrets.POSTHOG_API_KEY }}" ]; then
+            echo "Error: POSTHOG_API_KEY secret is not set."
+            exit 1
+          fi
           export PIKESPEAK_API_KEY=${{ secrets.PIKESPEAK_API_KEY }}
           export POSTHOG_API_KEY=${{ secrets.POSTHOG_API_KEY }}
           cargo near deploy build-reproducible-wasm  "${{ vars.NEAR_SOCIAL_ACCOUNT_ID }}" \
