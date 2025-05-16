@@ -18,7 +18,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Install cargo-near CLI
-        run: curl --proto '=https' --tlsv1.2 -LsSf https://github.com/near/cargo-near/releases/download/cargo-near-v0.14.2/cargo-near-installer.sh | sh
+        run: curl --proto '=https' --tlsv1.2 -LsSf https://github.com/near/cargo-near/releases/latest/download/cargo-near-installer.sh | sh
       - name: Deploy
         run: |
           if [ -z "${{ secrets.PIKESPEAK_API_KEY }}" ]; then
@@ -34,8 +34,6 @@ jobs:
           cargo near deploy build-reproducible-wasm  "${{ vars.NEAR_SOCIAL_ACCOUNT_ID }}" \
             without-init-call \
             network-config mainnet \
-            sign-with-plaintext-private-key \
-            --signer-public-key "${{ vars.NEAR_SOCIAL_ACCOUNT_PUBLIC_KEY }}" \
-            --signer-private-key "${{ secrets.NEAR_SOCIAL_ACCOUNT_PRIVATE_KEY }}" \
+            sign-with-plaintext-private-key "${{ secrets.NEAR_SOCIAL_ACCOUNT_PRIVATE_KEY }}" \
             send
         working-directory: ./treasury-factory
