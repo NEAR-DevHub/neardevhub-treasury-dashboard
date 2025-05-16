@@ -39,7 +39,6 @@ jobs:
             without-init-call \
             network-config mainnet \
             sign-with-plaintext-private-key \
-            -- \
             --signer-public-key "${{ vars.NEAR_SOCIAL_ACCOUNT_PUBLIC_KEY }}" \
             --signer-private-key "${{ secrets.NEAR_SOCIAL_ACCOUNT_PRIVATE_KEY }}" \
             send
