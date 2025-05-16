@@ -21,29 +21,33 @@ jobs:
           node-version: ${{ inputs.node-version }}
           cache: npm
 
-      # Restore cache for both node_modules and Playwright browsers
-      - name: Restore node_modules and Playwright browser cache
-        uses: actions/cache@v3
-        with:
-          path: |
-            node_modules
-            ~/.cache/ms-playwright
-          key: deps-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            deps-${{ runner.os }}-
-
-      # Install dependencies and Playwright
-      - name: Install dependencies and Playwright
+      # Install dependencies
+      - name: Install dependencies
         run: |
           npm ci
           npx playwright install-deps
           npx playwright install
 
-      # Save to cache (in case it was a cache miss)
-      - name: Cache node_modules and Playwright browsers
-        uses: actions/cache@v3
+      # Archive node_modules
+      - name: Archive node_modules
+        run: tar -czf installed-dependencies.tar.gz node_modules
+
+      # Archive Playwright browsers
+      - name: Archive Playwright browsers
+        run: |
+          mkdir -p ~/.cache/ms-playwright
+          tar -czf playwright-browsers.tar.gz -C ~/.cache ms-playwright
+
+      # Upload node_modules
+      - name: Upload node_modules
+        uses: actions/upload-artifact@v4
         with:
-          path: |
-            node_modules
-            ~/.cache/ms-playwright
-          key: deps-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          name: installed-dependencies
+          path: installed-dependencies.tar.gz
+
+      # Upload Playwright browsers
+      - name: Upload Playwright browsers
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-browsers
+          path: playwright-browsers.tar.gz

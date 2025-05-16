@@ -2,10 +2,6 @@ name: Playwright Tests - Asset Exchange
 
 on:
   workflow_dispatch: {}
-  workflow_run:
-    workflows: ["Prepare Dependencies"]
-    types:
-      - completed
 
 concurrency:
   group: asset-exchange-${{ github.ref }}
@@ -25,33 +21,40 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Download installed dependencies
+        uses: actions/download-artifact@v4
+        with:
+          name: installed-dependencies
+          path: ./
+
+      - name: Extract node_modules
+        run: tar -xzf installed-dependencies.tar.gz
+
+      - name: Download Playwright browsers
+        uses: actions/download-artifact@v4
+        with:
+          name: playwright-browsers
+          path: ./
+
+      - name: Extract Playwright browsers
+        run: |
+          mkdir -p ~/.cache
+          tar -xzf playwright-browsers.tar.gz -C ~/.cache
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 20
-          cache: npm
-
-      # Restore both node_modules and Playwright browser binaries
-      - name: Restore dependencies and Playwright browsers
-        uses: actions/cache@v3
-        with:
-          path: |
-            node_modules
-            ~/.cache/ms-playwright
-          key: deps-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            deps-${{ runner.os }}-
+          cache: "npm"
 
       - name: Build project
         run: npm run build
 
-      - name: Restore sandbox build cache
-        uses: actions/cache@v3
+      - name: Download sandbox binary
+        uses: actions/download-artifact@v4
         with:
-          path: sandboxrpc/target
-          key: sandboxrpc-${{ runner.os }}-${{ hashFiles('sandboxrpc/src/**', 'sandboxrpc/Cargo.*') }}
-          restore-keys: |
-            sandboxrpc-${{ runner.os }}-
+          name: sandboxrpc-binary
+          path: sandboxrpc/target/debug
 
       - name: Make sandbox binary executable
         run: chmod +x sandboxrpc/target/debug/sandboxrpc

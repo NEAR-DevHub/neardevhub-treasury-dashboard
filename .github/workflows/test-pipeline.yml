@@ -1,0 +1,34 @@
+name: Test Pipeline
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: test-pipeline-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  install:
+    uses: ./.github/workflows/install-dependencies.yml
+    with:
+      node-version: "20"
+
+  build-sandbox:
+    uses: ./.github/workflows/build_sandbox.yml
+    with:
+      node-version: "20"
+
+  playwright_asset_exchange:
+    needs: [install, build-sandbox]
+    uses: ./.github/workflows/playwright_asset_exchange.yml
+    with:
+      node-version: "20"
+
+  playwright_dashboard:
+    needs: [install, build-sandbox]
+    uses: ./.github/workflows/playwright_dashboard.yml
+    with:
+      node-version: "20"
