@@ -63,8 +63,11 @@ useEffect(() => {
         token_ids: tokenIds,
       })
         .then((balances) => {
-          if (balances === null || typeof balances === 'undefined') {
-            console.error("Failed to fetch balances from intents.near", balances);
+          if (balances === null || typeof balances === "undefined") {
+            console.error(
+              "Failed to fetch balances from intents.near",
+              balances
+            );
             setError(true);
             setLoading(false);
             setTokens([]);
@@ -88,46 +91,54 @@ useEffect(() => {
 
           const iconPromises = filteredTokensWithBalances.map((token) => {
             let iconPromise = Promise.resolve(token.icon); // Default to original icon
-            if (token.defuse_asset_id && token.defuse_asset_id.startsWith("nep141:")) {
+            if (
+              token.defuse_asset_id &&
+              token.defuse_asset_id.startsWith("nep141:")
+            ) {
               const parts = token.defuse_asset_id.split(":");
               if (parts.length > 1) {
                 const contractId = parts[1];
                 iconPromise = Near.asyncView(contractId, "ft_metadata")
-                  .then(metadata => metadata?.icon || token.icon)
+                  .then((metadata) => metadata?.icon || token.icon)
                   .catch(() => token.icon); // Fallback to original icon on error
               }
             }
             return iconPromise;
           });
 
-          Promise.all(iconPromises).then(resolvedIcons => {
-            const finalTokens = filteredTokensWithBalances.map((t, i) => ({
-              ft_meta: {
-                symbol: t.symbol,
-                icon: resolvedIcons[i], // Use icon from ft_metadata or original
-                decimals: t.decimals,
-                price: t.price,
-              },
-              amount: t.amount, // Amount is already on 't' from filteredTokensWithBalances
-            }));
-            setTokens(finalTokens);
-            setLoading(false);
-          }).catch((iconError) => {
-            console.error("Error fetching some token icons, using defaults.", iconError);
-            // Fallback to original icons if Promise.all fails for ft_metadata calls
-            const fallbackTokens = filteredTokensWithBalances.map((t) => ({
-              ft_meta: {
-                symbol: t.symbol,
-                icon: t.icon, 
-                decimals: t.decimals,
-                price: t.price,
-              },
-              amount: t.amount,
-            }));
-            setTokens(fallbackTokens);
-            //setError(true); // Optionally set error, or just log
-            setLoading(false);
-          });
+          Promise.all(iconPromises)
+            .then((resolvedIcons) => {
+              const finalTokens = filteredTokensWithBalances.map((t, i) => ({
+                ft_meta: {
+                  symbol: t.symbol,
+                  icon: resolvedIcons[i], // Use icon from ft_metadata or original
+                  decimals: t.decimals,
+                  price: t.price,
+                },
+                amount: t.amount, // Amount is already on 't' from filteredTokensWithBalances
+              }));
+              setTokens(finalTokens);
+              setLoading(false);
+            })
+            .catch((iconError) => {
+              console.error(
+                "Error fetching some token icons, using defaults.",
+                iconError
+              );
+              // Fallback to original icons if Promise.all fails for ft_metadata calls
+              const fallbackTokens = filteredTokensWithBalances.map((t) => ({
+                ft_meta: {
+                  symbol: t.symbol,
+                  icon: t.icon,
+                  decimals: t.decimals,
+                  price: t.price,
+                },
+                amount: t.amount,
+              }));
+              setTokens(fallbackTokens);
+              //setError(true); // Optionally set error, or just log
+              setLoading(false);
+            });
         })
         .catch((balanceError) => {
           console.error("Error fetching balances:", balanceError);
