@@ -39,40 +39,119 @@ function formatPrice(price) {
 useEffect(() => {
   if (!treasuryDaoID) return;
   setLoading(true);
+  setError(false); // Reset error state on new fetch
+
   asyncFetch("https://api-mng-console.chaindefuser.com/api/tokens")
     .then((resp) => {
-      const tokens = resp.body?.items || [];
-      if (tokens.length === 0) {
+      if (!resp.ok) {
+        console.error("Failed to fetch tokens from Chaindefuser", resp);
+        setError(true);
+        setLoading(false);
+        setTokens([]);
+        return;
+      }
+      const initialTokens = resp.body?.items || [];
+      if (initialTokens.length === 0) {
         setTokens([]);
         setLoading(false);
         return;
       }
-      const tokenIds = tokens.map((t) => t.defuse_asset_id);
+
+      const tokenIds = initialTokens.map((t) => t.defuse_asset_id);
       Near.asyncView("intents.near", "mt_batch_balance_of", {
         account_id: treasuryDaoID,
         token_ids: tokenIds,
       })
         .then((balances) => {
-          const mapped = tokens.map((t, i) => ({
-            ft_meta: {
-              symbol: t.symbol,
-              icon: t.icon,
-              decimals: t.decimals,
-              price: t.price,
-            },
+          if (balances === null || typeof balances === "undefined") {
+            console.error(
+              "Failed to fetch balances from intents.near",
+              balances
+            );
+            setError(true);
+            setLoading(false);
+            setTokens([]);
+            return;
+          }
+
+          const tokensWithBalances = initialTokens.map((t, i) => ({
+            ...t, // Spread original token data
             amount: balances[i],
           }));
-          setTokens(mapped);
-          setLoading(false);
+
+          const filteredTokensWithBalances = tokensWithBalances.filter(
+            (token) => token.amount && Big(token.amount).gt(0)
+          );
+
+          if (filteredTokensWithBalances.length === 0) {
+            setTokens([]);
+            setLoading(false);
+            return;
+          }
+
+          const iconPromises = filteredTokensWithBalances.map((token) => {
+            let iconPromise = Promise.resolve(token.icon); // Default to original icon
+            if (
+              token.defuse_asset_id &&
+              token.defuse_asset_id.startsWith("nep141:")
+            ) {
+              const parts = token.defuse_asset_id.split(":");
+              if (parts.length > 1) {
+                const contractId = parts[1];
+                iconPromise = Near.asyncView(contractId, "ft_metadata")
+                  .then((metadata) => metadata?.icon || token.icon)
+                  .catch(() => token.icon); // Fallback to original icon on error
+              }
+            }
+            return iconPromise;
+          });
+
+          Promise.all(iconPromises)
+            .then((resolvedIcons) => {
+              const finalTokens = filteredTokensWithBalances.map((t, i) => ({
+                ft_meta: {
+                  symbol: t.symbol,
+                  icon: resolvedIcons[i], // Use icon from ft_metadata or original
+                  decimals: t.decimals,
+                  price: t.price,
+                },
+                amount: t.amount, // Amount is already on 't' from filteredTokensWithBalances
+              }));
+              setTokens(finalTokens);
+              setLoading(false);
+            })
+            .catch((iconError) => {
+              console.error(
+                "Error fetching some token icons, using defaults.",
+                iconError
+              );
+              // Fallback to original icons if Promise.all fails for ft_metadata calls
+              const fallbackTokens = filteredTokensWithBalances.map((t) => ({
+                ft_meta: {
+                  symbol: t.symbol,
+                  icon: t.icon,
+                  decimals: t.decimals,
+                  price: t.price,
+                },
+                amount: t.amount,
+              }));
+              setTokens(fallbackTokens);
+              //setError(true); // Optionally set error, or just log
+              setLoading(false);
+            });
         })
-        .catch(() => {
+        .catch((balanceError) => {
+          console.error("Error fetching balances:", balanceError);
           setError(true);
           setLoading(false);
+          setTokens([]);
         });
     })
-    .catch(() => {
+    .catch((fetchError) => {
+      console.error("Error fetching initial tokens:", fetchError);
       setError(true);
       setLoading(false);
+      setTokens([]);
     });
 }, [treasuryDaoID]);
 
