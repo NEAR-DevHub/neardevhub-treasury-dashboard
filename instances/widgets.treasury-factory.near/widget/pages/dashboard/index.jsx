@@ -345,7 +345,7 @@ return (
     )}
     <div className="d-flex gap-3 flex-wrap">
       <div className="d-flex flex-column gap-3 flex-container">
-        <div className="card card-body" style={{ maxHeight: "100px" }}>
+        <div className="card card-body" style={{ minHeight: "100px" }}> {/* Adjusted minHeight for button */}
           <div className="h6 text-secondary">Total Balance</div>
           {typeof getNearBalances !== "function" ||
           nearPrice === null ||
@@ -356,6 +356,15 @@ return (
               {formatCurrency(totalBalance)} USD
             </div>
           )}
+          <button
+            className="btn btn-success mt-2"
+            onClick={() => {
+              /* TODO: Implement open deposit modal functionality */
+            }}
+            style={{ width: "100%" }} // Make button full width of its container
+          >
+            Deposit
+          </button>
         </div>
         <Widget
           src={
