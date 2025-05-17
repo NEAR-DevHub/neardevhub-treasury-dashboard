@@ -37,6 +37,11 @@ fn main() {
         index_html = index_html.replace("POSTHOG_API_KEY", &posthog_api_key);
     }
 
+    // Replace placeholders with environment variables
+    if let Ok(pikespeak_api_key) = env::var("PIKESPEAK_API_KEY") {
+        index_html = index_html.replace("PIKESPEAK_API_KEY", &pikespeak_api_key);
+    }
+
     // Convert the modified HTML content to base64 using near-sdk base64 engine
     let index_html_base64 = general_purpose::STANDARD.encode(&index_html);
 

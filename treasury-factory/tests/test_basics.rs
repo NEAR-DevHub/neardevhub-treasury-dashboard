@@ -111,6 +111,11 @@ async fn test_web4() -> Result<(), Box<dyn std::error::Error>> {
         "body_string: {}",
         body_string.as_str()
     );
+    assert!(
+        body_string.contains("\"pikespeak-testrun-apikey\""),
+        "body_string: {}",
+        body_string.as_str()
+    );
 
     Ok(())
 }
