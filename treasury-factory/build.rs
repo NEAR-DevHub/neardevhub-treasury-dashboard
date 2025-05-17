@@ -8,6 +8,23 @@ use std::path::Path;
 use wat::parse_file as wat2wasm;
 
 fn main() {
+    // Instruct Cargo to re-run this build script if specific files or env vars change.
+    println!("cargo:rerun-if-changed=./public_html/index.html");
+    println!("cargo:rerun-if-changed=./min_self_upgrade_contract.wat");
+    println!("cargo:rerun-if-changed=../web4/treasury-web4/src/web4/index.html");
+    println!("cargo:rerun-if-changed=../web4/treasury-web4/target/near/treasury_web4.wasm");
+    println!("cargo:rerun-if-env-changed=POSTHOG_API_KEY");
+    println!("cargo:rerun-if-env-changed=PIKESPEAK_API_KEY");
+
+    // Set fallback API keys for test/dev runs if not already set externally.
+    // These are only visible in the current build process and to the compiled crate if it reads them.
+    if env::var("PIKESPEAK_API_KEY").is_err() {
+        std::env::set_var("PIKESPEAK_API_KEY", "pikespeak-testrun-apikey");
+    }
+    if env::var("POSTHOG_API_KEY").is_err() {
+        std::env::set_var("POSTHOG_API_KEY", "posthog-testrun-apikey");
+    }
+
     // Change working directory to the directory of the script (similar to process.chdir)
     let current_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("./public_html");
 
@@ -18,6 +35,11 @@ fn main() {
     // Replace placeholders with environment variables
     if let Ok(posthog_api_key) = env::var("POSTHOG_API_KEY") {
         index_html = index_html.replace("POSTHOG_API_KEY", &posthog_api_key);
+    }
+
+    // Replace placeholders with environment variables
+    if let Ok(pikespeak_api_key) = env::var("PIKESPEAK_API_KEY") {
+        index_html = index_html.replace("PIKESPEAK_API_KEY", &pikespeak_api_key);
     }
 
     // Convert the modified HTML content to base64 using near-sdk base64 engine
