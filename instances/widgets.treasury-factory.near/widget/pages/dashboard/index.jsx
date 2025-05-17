@@ -6,22 +6,13 @@ const { Skeleton } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.skeleton"
 );
 
-const { Modal, ModalContent, ModalHeader, ModalFooter } = VM.require(
-  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.modal"
-);
-
-const { DepositModal } = VM.require(
-  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DepositModal"
-);
-
 const instance = props.instance;
 
 if (
   !instance ||
   typeof getNearBalances !== "function" ||
   !Skeleton ||
-  typeof accountToLockup !== "function" ||
-  !DepositModal
+  typeof accountToLockup !== "function"
 ) {
   return <></>;
 }
@@ -323,11 +314,16 @@ const Loading = () => {
 return (
   <Wrapper>
     {show404Modal && <TooManyRequestModal />}
-    <DepositModal
-      show={showDepositModal}
-      onClose={() => setShowDepositModal(false)}
-      treasuryDaoID={treasuryDaoID}
-    />
+    {showDepositModal && (
+      <Widget
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DepositModal`}
+        props={{
+          show: showDepositModal,
+          onClose: () => setShowDepositModal(false),
+          treasuryDaoID: treasuryDaoID,
+        }}
+      />
+    )}
     <Widget
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
       props={{
