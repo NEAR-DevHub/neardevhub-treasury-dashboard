@@ -175,7 +175,6 @@ const Members = () => {
                   displayImage: false,
                   displayName: false,
                   instance,
-                  width: 300,
                 }}
               />
             </td>

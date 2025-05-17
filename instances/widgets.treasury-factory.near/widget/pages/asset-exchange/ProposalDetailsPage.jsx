@@ -6,50 +6,37 @@ if (!instance) {
   return <></>;
 }
 const {
-  decodeBase64,
   getNearBalances,
   decodeProposalDescription,
+  decodeBase64,
   getApproversAndThreshold,
-  accountToLockup,
+  formatSubmissionTimeStamp,
 } = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
 
-const { treasuryDaoID, showKYC } = VM.require(`${instance}/widget/config.data`);
+const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 
 const [proposalData, setProposalData] = useState(null);
 const [isDeleted, setIsDeleted] = useState(false);
-const [lockupNearBalances, setLockupNearBalances] = useState(null);
 
 const isCompactVersion = props.isCompactVersion;
 const accountId = context.accountId;
-const transferApproversGroup = getApproversAndThreshold(
+const functionCallApproversGroup = getApproversAndThreshold(
   treasuryDaoID,
-  "transfer",
+  "call",
   accountId
 );
 
 const nearBalances = getNearBalances(treasuryDaoID);
-const lockupContract = accountToLockup(treasuryDaoID);
-
-useEffect(() => {
-  if (lockupContract) {
-    Near.asyncView(lockupContract, "get_liquid_owners_balance").then((res) => {
-      setLockupNearBalances((prev) => ({
-        ...prev,
-        available: res,
-      }));
-    });
-  }
-}, [lockupContract]);
-
 const deleteGroup = getApproversAndThreshold(
   treasuryDaoID,
-  "transfer",
+  "call",
   accountId,
   true
 );
+const requiredVotes = functionCallApproversGroup?.requiredVotes;
 
 const hasVotingPermission = (
-  transferApproversGroup?.approverAccounts ?? []
+  functionCallApproversGroup?.approverAccounts ?? []
 ).includes(accountId);
 
 const hasDeletePermission = (deleteGroup?.approverAccounts ?? []).includes(
@@ -67,23 +54,29 @@ useEffect(() => {
     Near.asyncView(treasuryDaoID, "get_proposal", { id: parseInt(id) })
       .then((item) => {
         const notes = decodeProposalDescription("notes", item.description);
-        const title = decodeProposalDescription("title", item.description);
-        const summary = decodeProposalDescription("summary", item.description);
-        const description = !title && !summary && item.description;
-        const id = decodeProposalDescription("proposalId", item.description);
-        const proposalId = id ? parseInt(id, 10) : null;
-        const isFunctionType =
-          Object.values(item?.kind?.FunctionCall ?? {})?.length > 0;
-        const decodedArgs =
-          isFunctionType &&
-          decodeBase64(item.kind.FunctionCall?.actions[0].args);
-        const args = isFunctionType
-          ? {
-              token_id: "",
-              receiver_id: decodedArgs?.receiver_id,
-              amount: decodedArgs?.amount,
-            }
-          : item.kind.Transfer;
+        const amountIn = decodeProposalDescription(
+          "amountIn",
+          item.description
+        );
+        const tokenIn = decodeProposalDescription("tokenIn", item.description);
+        const tokenOut = decodeProposalDescription(
+          "tokenOut",
+          item.description
+        );
+        const slippage = decodeProposalDescription(
+          "slippage",
+          item.description
+        );
+        const amountOut = decodeProposalDescription(
+          "amountOut",
+          item.description
+        );
+
+        const outEstimate = parseFloat(amountOut) || 0;
+        const slippageValue = parseFloat(slippage) || 0;
+        const minAmountReceive = Number(
+          outEstimate * (1 - slippageValue / 100)
+        );
         let status = item.status;
         if (status === "InProgress") {
           const endTime = Big(item.submission_time ?? "0")
@@ -102,12 +95,13 @@ useEffect(() => {
           votes: item.votes,
           submissionTime: item.submission_time,
           notes,
-          title: title ? title : description,
-          summary,
-          proposalId,
-          args,
           status,
-          isLockupTransfer: isFunctionType,
+          amountIn,
+          amountOut,
+          minAmountReceive,
+          tokenIn,
+          tokenOut,
+          slippage,
         });
       })
       .catch(() => {
@@ -128,7 +122,7 @@ function refreshData() {
     return;
   }
   if (isCompactVersion) {
-    Storage.set("REFRESH_PAYMENTS_TABLE_DATA", Math.random());
+    Storage.set("REFRESH_ASSET_TABLE_DATA", Math.random());
   }
   setProposalData(null);
 }
@@ -157,7 +151,7 @@ return (
     src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.ProposalDetails`}
     props={{
       ...props,
-      page: "payments",
+      page: "asset-exchange",
       VoteActions: (hasVotingPermission || hasDeletePermission) &&
         proposalData.status === "InProgress" && (
           <Widget
@@ -169,11 +163,10 @@ return (
               hasDeletePermission,
               hasVotingPermission,
               proposalCreator: proposalData?.proposer,
-              nearBalance: proposalData?.isLockupTransfer
-                ? lockupNearBalances.available
-                : nearBalances.available,
-              currentAmount: proposalData?.args?.amount,
-              currentContract: proposalData?.args?.token_id,
+              nearBalance: nearBalances.available,
+              currentAmount: proposalData?.amountIn,
+              currentContract: proposalData?.tokenIn,
+              isHumanReadableCurrentAmount: true,
               requiredVotes,
               checkProposalStatus: () => checkProposalStatus(proposalData?.id),
               isProposalDetailsPage: true,
@@ -182,67 +175,74 @@ return (
         ),
       ProposalContent: (
         <div className="card card-body d-flex flex-column gap-2">
-          <h6 className="mb-0 flex-1">{proposalData?.title}</h6>
-          {proposalData?.summary && (
-            <div className=" text-secondary">{proposalData?.summary}</div>
-          )}
-          {proposalData?.proposalId && (
-            <div>
-              <Link
-                target="_blank"
-                rel="noopener noreferrer"
-                to={href({
-                  widgetSrc: `${REPL_DEVHUB}/widget/app`,
-                  params: {
-                    page: "proposal",
-                    id: proposalData?.proposalId,
-                  },
-                })}
-              >
-                <button
-                  className="btn p-0 d-flex align-items-center gap-2 h-auto"
-                  style={{ fontSize: 14 }}
-                >
-                  Open Proposal <i class="bi bi-box-arrow-up-right"></i>
-                </button>
-              </Link>
-            </div>
-          )}
-          <div className=" d-flex flex-column gap-2 mt-1">
-            <label className="border-top">Recipient</label>
-            <div className="d-flex justify-content-between gap-2 align-items-center flex-wrap">
-              <Widget
-                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
-                props={{
-                  accountId: proposalData?.args.receiver_id,
-                  showKYC,
-                  displayImage: true,
-                  displayName: true,
-                  instance,
-                  profileClass: "text-secondary text-sm",
-                }}
-              />
-              <Widget
-                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Copy`}
-                props={{
-                  label: "Copy Address",
-                  clipboardText: proposalData?.args.receiver_id,
-                  showLogo: true,
-                  className:
-                    "btn btn-outline-secondary d-flex gap-1 align-items-center",
-                }}
-              />
-            </div>
-          </div>
-          <div className="d-flex flex-column gap-2 mt-1">
-            <label className="border-top">Funding Ask</label>
+          <div className="d-flex flex-column gap-2">
+            <label>Send</label>
             <h5 className="mb-0">
               <Widget
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmountAndIcon`}
                 props={{
                   instance,
-                  amountWithoutDecimals: proposalData?.args.amount,
-                  address: proposalData?.args.token_id,
+                  amountWithDecimals: proposalData?.amountIn,
+                  address: proposalData?.tokenIn,
+                  showUSDValue: true,
+                }}
+              />
+            </h5>
+          </div>
+          <div className="d-flex flex-column gap-2 mt-1">
+            <label className="border-top">Receive</label>
+            <h5 className="mb-0">
+              <Widget
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmountAndIcon`}
+                props={{
+                  instance,
+                  amountWithDecimals: proposalData?.amountOut,
+                  address: proposalData?.tokenOut,
+                  showUSDValue: true,
+                }}
+              />
+            </h5>
+          </div>
+          <div className="d-flex flex-column gap-2 mt-1">
+            <label className="border-top">
+              Price Slippage Limit {"   "}
+              <Widget
+                src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+                props={{
+                  popup:
+                    "This is the slippage limit defined for this request. If the market rate changes beyond this threshold during execution, the request will automatically fail.",
+                  children: (
+                    <i className="bi bi-info-circle text-secondary"></i>
+                  ),
+                  instance,
+                }}
+              />
+            </label>
+            <div>{proposalData?.slippage}%</div>
+          </div>
+          <div className="d-flex flex-column gap-2 mt-1">
+            <label className="border-top">
+              Minimum Amount Receive {"   "}
+              <Widget
+                src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+                props={{
+                  popup:
+                    "This is the minimum amount you’ll receive from this exchange, based on the slippage limit set for the request.",
+                  children: (
+                    <i className="bi bi-info-circle text-secondary"></i>
+                  ),
+                  instance,
+                }}
+              />
+            </label>
+            <h5 className="mb-0">
+              <Widget
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmountAndIcon`}
+                props={{
+                  instance,
+                  amountWithDecimals: proposalData?.minAmountReceive,
+                  address: proposalData?.tokenOut,
+                  showUSDValue: true,
                 }}
               />
             </h5>
@@ -252,15 +252,15 @@ return (
       proposalData: proposalData,
       isDeleted: isDeleted,
       isCompactVersion,
-      approversGroup: transferApproversGroup,
+      approversGroup: functionCallApproversGroup,
       instance,
       deleteGroup,
       proposalStatusLabel: {
-        approved: "Payment Request Funded",
-        rejected: "Payment Request Rejected",
-        deleted: "Payment Request Deleted",
-        failed: "Payment Request Failed",
-        expired: "Payment Request Expired",
+        approved: "Asset Exchange Request Executed",
+        rejected: "Asset Exchange Request Rejected",
+        deleted: "Asset Exchange Request Deleted",
+        failed: "Asset Exchange Request Failed",
+        expired: "Asset Exchange Request Expired",
       },
       checkProposalStatus,
     }}

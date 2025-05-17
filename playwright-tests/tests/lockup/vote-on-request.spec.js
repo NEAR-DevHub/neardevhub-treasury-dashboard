@@ -265,6 +265,15 @@ test.describe("User is logged in", function () {
   });
 });
 
+async function checkHistoryProposal({ page, id, instanceAccount }) {
+  const historyBtn = page.getByText("View in History");
+  await expect(historyBtn).toBeVisible();
+  await Promise.all([page.waitForNavigation(), historyBtn.click()]);
+  const currentUrl = page.url();
+  await expect(currentUrl).toContain(
+    `http://localhost:8080/${instanceAccount}/widget/app?page=lockup&id=${id}`
+  );
+}
 test.describe("don't ask again", function () {
   test.use({
     storageState:
@@ -330,10 +339,17 @@ test.describe("don't ask again", function () {
       await expect(
         page.getByText("Your vote is counted, the request is highlighted.")
       ).toBeVisible();
+      await expect(page.locator("tr").nth(1)).toHaveClass(
+        "cursor-pointer proposal-row bg-highlight",
+        {
+          timeout: 10_000,
+        }
+      );
     } else {
       await expect(
         page.getByText("The request has been successfully executed.")
       ).toBeVisible({ timeout: 15_000 });
+      await checkHistoryProposal({ page, id: 1, instanceAccount });
     }
   });
 
@@ -356,10 +372,17 @@ test.describe("don't ask again", function () {
       await expect(
         page.getByText("Your vote is counted, the request is highlighted.")
       ).toBeVisible();
+      await expect(page.locator("tr").nth(1)).toHaveClass(
+        "cursor-pointer proposal-row bg-highlight",
+        {
+          timeout: 10_000,
+        }
+      );
     } else {
       await expect(
         page.getByText("The request has been rejected.")
       ).toBeVisible({ timeout: 15_000 });
+      await checkHistoryProposal({ page, id: 1, instanceAccount });
     }
   });
 
@@ -382,6 +405,12 @@ test.describe("don't ask again", function () {
       await expect(
         page.getByText("Your vote is counted, the request is highlighted.")
       ).toBeVisible();
+      await expect(page.locator("tr").nth(1)).toHaveClass(
+        "cursor-pointer proposal-row bg-highlight",
+        {
+          timeout: 10_000,
+        }
+      );
     } else {
       await expect(
         page.getByText("The request has been successfully deleted.")

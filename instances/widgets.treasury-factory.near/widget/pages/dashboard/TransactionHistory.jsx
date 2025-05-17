@@ -249,7 +249,6 @@ return (
                             instance,
                             displayImage: false,
                             displayName: false,
-                            width: 150,
                           }}
                         />
                       </td>
@@ -262,7 +261,6 @@ return (
                             instance,
                             displayImage: false,
                             displayName: false,
-                            width: 150,
                           }}
                         />
                       </td>

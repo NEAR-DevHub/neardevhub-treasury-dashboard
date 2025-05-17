@@ -19,13 +19,6 @@ const [firstRender, setFirstRender] = useState(true);
 const [offset, setOffset] = useState(null);
 const [isPrevPageCalled, setIsPrevCalled] = useState(false);
 
-const highlightProposalId =
-  props.highlightProposalId ||
-  props.highlightProposalId === "0" ||
-  props.highlightProposalId === 0
-    ? parseInt(props.highlightProposalId)
-    : null;
-
 useEffect(() => {
   setLoading(true);
   Near.asyncView(treasuryDaoID, "get_last_proposal_id").then((i) => {
@@ -64,6 +57,10 @@ const functionCallApproversGroup = getApproversAndThreshold(
   context.accountId
 );
 
+useEffect(() => {
+  props.onSelectRequest(null);
+}, [currentPage, rowsPerPage]);
+
 return (
   <div className="d-flex flex-column flex-1 justify-content-between h-100">
     <Widget
@@ -75,7 +72,6 @@ return (
         policy,
         functionCallApproversGroup,
         refreshTableData: fetchProposals,
-        lockupCreated: true,
         ...props,
       }}
     />
@@ -99,6 +95,7 @@ return (
             currentPage: currentPage,
             rowsPerPage: rowsPerPage,
             onRowsChange: (v) => {
+              setIsPrevCalled(false);
               setOffset(null);
               setPage(0);
               setRowsPerPage(parseInt(v));

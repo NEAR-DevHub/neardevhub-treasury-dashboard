@@ -1,7 +1,9 @@
 const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
+
 const {
+  decodeBase64,
   getNearBalances,
   decodeProposalDescription,
   formatSubmissionTimeStamp,
@@ -78,12 +80,6 @@ const Container = styled.div`
 
   table {
     overflow-x: auto;
-  }
-
-  .proposal-row {
-    &:hover {
-      background-color: var(--grey-04) !important;
-    }
   }
 `;
 
@@ -167,18 +163,6 @@ const daoFTTokens = fetch(
 const nearBalances = getNearBalances(treasuryDaoID);
 
 const proposalPeriod = policy.proposal_period;
-
-function decodeBase64(encodedArgs) {
-  if (!encodedArgs) return null;
-  try {
-    const jsonString = Buffer.from(encodedArgs, "base64").toString("utf8");
-    const parsedArgs = JSON.parse(jsonString);
-    return parsedArgs;
-  } catch (error) {
-    console.error("Failed to decode or parse encodedArgs:", error);
-    return null;
-  }
-}
 
 const hasOneDeleteIcon =
   isPendingRequests &&
@@ -272,7 +256,6 @@ const ProposalsComponent = () => {
                     instance,
                     displayImage: false,
                     displayName: false,
-                    width: 200,
                   }}
                 />
               </td>
@@ -368,16 +351,18 @@ const ProposalsComponent = () => {
               />
             </td>
             <td className={"fw-semi-bold text-center " + isVisible("Creator")}>
-              <Widget
-                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
-                props={{
-                  accountId: item.proposer,
-                  showKYC: false,
-                  displayImage: false,
-                  displayName: false,
-                  instance,
-                }}
-              />
+              <div className="d-inline-block">
+                <Widget
+                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
+                  props={{
+                    accountId: item.proposer,
+                    showKYC: false,
+                    displayImage: false,
+                    displayName: false,
+                    instance,
+                  }}
+                />
+              </div>
             </td>
             <td className={"text-sm text-left " + isVisible("Notes")}>
               {notes ? (
