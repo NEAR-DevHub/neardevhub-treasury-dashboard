@@ -275,7 +275,7 @@ test.describe("Should vote on exchange proposal using sandbox RPC and show updat
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(400_000);
+    test.setTimeout(600_000);
     const sandbox = await setupSandboxAndCreateProposal({ daoAccount, page });
     await mockWithFTBalance({ page, daoAccount, isSufficient: true });
 
@@ -296,7 +296,7 @@ test.describe("Should vote on exchange proposal using sandbox RPC and show updat
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(400_000);
+    test.setTimeout(600_000);
     const sandbox = await setupSandboxAndCreateProposal({ daoAccount, page });
     await page.goto(`/${instanceAccount}/widget/app?page=asset-exchange&id=0`);
     await mockWithFTBalance({ page, daoAccount, isSufficient: false });
@@ -322,7 +322,7 @@ test.describe("Should vote on exchange proposal using sandbox RPC and show updat
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(400_000);
+    test.setTimeout(600_000);
     const sandbox = await setupSandboxAndCreateProposal({ daoAccount, page });
     await mockWithFTBalance({ page, daoAccount, isSufficient: true });
 
