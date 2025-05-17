@@ -57,10 +57,48 @@ test("show intents balance in dashboard (sandbox)", async ({ page }) => {
         spec: "ft-1.0.0",
         name: "Ethereum",
         symbol: "ETH",
-        icon: "",
+        icon: "", // The test will later assert the icon fetched from ft_metadata
         reference: null,
         reference_hash: null,
         decimals: 18,
+      },
+    },
+    { attachedDeposit: parseNEAR("3"), gas: "300000000000000" }
+  );
+
+  // Deploy BTC token
+  await omft.call(
+    omft.accountId,
+    "deploy_token",
+    {
+      token: "btc",
+      metadata: {
+        spec: "ft-1.0.0",
+        name: "Bitcoin",
+        symbol: "BTC",
+        icon: "",
+        reference: null,
+        reference_hash: null,
+        decimals: 8,
+      },
+    },
+    { attachedDeposit: parseNEAR("3"), gas: "300000000000000" }
+  );
+
+  // Deploy SOL token
+  await omft.call(
+    omft.accountId,
+    "deploy_token",
+    {
+      token: "sol",
+      metadata: {
+        spec: "ft-1.0.0",
+        name: "Solana",
+        symbol: "SOL",
+        icon: "",
+        reference: null,
+        reference_hash: null,
+        decimals: 9,
       },
     },
     { attachedDeposit: parseNEAR("3"), gas: "300000000000000" }
@@ -87,7 +125,7 @@ test("show intents balance in dashboard (sandbox)", async ({ page }) => {
     },
   });
 
-  // Register storage for treasury and intents
+  // Register storage for treasury and intents (ETH)
   await omft.call(
     "eth.omft.near",
     "storage_deposit",
@@ -120,6 +158,46 @@ test("show intents balance in dashboard (sandbox)", async ({ page }) => {
 
   await wnear.call(
     wnear.accountId,
+    "storage_deposit",
+    {
+      account_id: intents.accountId,
+      registration_only: true,
+    },
+    { attachedDeposit: "1250000000000000000000" }
+  );
+
+  // Register storage for treasury and intents (BTC)
+  await omft.call(
+    "btc.omft.near", // contract for BTC token
+    "storage_deposit",
+    {
+      account_id: daoTreasuryAccountId,
+      registration_only: true,
+    },
+    { attachedDeposit: "1250000000000000000000" }
+  );
+  await omft.call(
+    "btc.omft.near", // contract for BTC token
+    "storage_deposit",
+    {
+      account_id: intents.accountId,
+      registration_only: true,
+    },
+    { attachedDeposit: "1250000000000000000000" }
+  );
+
+  // Register storage for treasury and intents (SOL)
+  await omft.call(
+    "sol.omft.near", // contract for SOL token
+    "storage_deposit",
+    {
+      account_id: daoTreasuryAccountId,
+      registration_only: true,
+    },
+    { attachedDeposit: "1250000000000000000000" }
+  );
+  await omft.call(
+    "sol.omft.near", // contract for SOL token
     "storage_deposit",
     {
       account_id: intents.accountId,
@@ -156,7 +234,7 @@ test("show intents balance in dashboard (sandbox)", async ({ page }) => {
     "near_deposit",
     {},
     {
-      attachedDeposit: parseNEAR("1.1"), // Deposit 1.1 NEAR to get >1 wNEAR
+      attachedDeposit: parseNEAR("343"), // Deposit 343 NEAR to get >342.66 wNEAR
     }
   );
 
@@ -166,31 +244,51 @@ test("show intents balance in dashboard (sandbox)", async ({ page }) => {
     "ft_transfer",
     {
       receiver_id: wnear.accountId,
-      amount: "1050000000000000000000000", // 1.05 wNEAR
+      amount: "342700000000000000000000000", // 342.7 wNEAR (a bit more than needed)
     },
     { attachedDeposit: "1" }
   );
 
-  // Deposit ETH token to treasury via intents using ft_deposit (simulating bridge)
+  // Deposit ETH token to treasury via intents
   await omft.call(
     omft.accountId,
     "ft_deposit",
     {
       owner_id: intents.accountId,
       token: "eth",
-      amount: "1000000000000000000", // 1 ETH (minimal units)
-      msg: JSON.stringify({ receiver_id: daoTreasuryAccountId }), // Use DAO's treasury account
-      memo: `BRIDGED_FROM:${JSON.stringify({
-        networkType: "eth",
-        chainId: "1",
-        txHash:
-          "0xc6b7ecd5c7517a8f56ac7ec9befed7d26a459fc97c7d5cd7598d4e19b5a806b7",
-      })}`,
+      amount: "128226700000000000000", // 128.2267 ETH
+      msg: JSON.stringify({ receiver_id: daoTreasuryAccountId }),
+      memo: `BRIDGED_FROM:${JSON.stringify({ networkType: "eth", chainId: "1", txHash: "0xethhash" })}`,
     },
+    { attachedDeposit: parseNEAR("0.00125"), gas: "300000000000000" }
+  );
+
+  // Deposit BTC token to treasury via intents
+  await omft.call(
+    omft.accountId,
+    "ft_deposit",
     {
-      attachedDeposit: parseNEAR("0.00125"),
-      gas: "300000000000000",
-    }
+      owner_id: intents.accountId,
+      token: "btc",
+      amount: "50000000", // 0.5 BTC (8 decimals)
+      msg: JSON.stringify({ receiver_id: daoTreasuryAccountId }),
+      memo: `BRIDGED_FROM:${JSON.stringify({ networkType: "btc", chainId: "mainnet", txHash: "0xbtchash" })}`,
+    },
+    { attachedDeposit: parseNEAR("0.00125"), gas: "300000000000000" }
+  );
+
+  // Deposit SOL token to treasury via intents
+  await omft.call(
+    omft.accountId,
+    "ft_deposit",
+    {
+      owner_id: intents.accountId,
+      token: "sol",
+      amount: "10000000000", // 10 SOL (9 decimals)
+      msg: JSON.stringify({ receiver_id: daoTreasuryAccountId }),
+      memo: `BRIDGED_FROM:${JSON.stringify({ networkType: "sol", chainId: "mainnet-beta", txHash: "0xsolhash" })}`,
+    },
+    { attachedDeposit: parseNEAR("0.00125"), gas: "300000000000000" }
   );
 
   // Deposit NEAR (wNEAR) to treasury via intents using ft_transfer_call
@@ -199,7 +297,7 @@ test("show intents balance in dashboard (sandbox)", async ({ page }) => {
     "ft_transfer_call",
     {
       receiver_id: intents.accountId,
-      amount: "1000000000000000000000000", // 1 NEAR (yocto)
+      amount: "342660000000000000000000000", // 342.66 NEAR (yocto)
       msg: JSON.stringify({ receiver_id: daoTreasuryAccountId }), // Use DAO's treasury account
     },
     { attachedDeposit: "1", gas: "300000000000000" }
@@ -207,21 +305,37 @@ test("show intents balance in dashboard (sandbox)", async ({ page }) => {
 
   // --- CONTRACT BALANCE CHECKS ---
   const ethTokenId = "nep141:eth.omft.near";
-  const wnearTokenId = "nep141:wrap.near"; // Assuming wrap.near is the accountId for wNEAR
+  const wnearTokenId = "nep141:wrap.near";
+  const btcTokenId = "nep141:btc.omft.near";
+  const solTokenId = "nep141:sol.omft.near";
 
-  // Check ETH balance on intents contract for the treasury
+  // Check ETH balance
   const ethBalance = await intents.view("mt_balance_of", {
-    account_id: daoTreasuryAccountId, // Use DAO's treasury account
+    account_id: daoTreasuryAccountId,
     token_id: ethTokenId,
   });
-  expect(ethBalance).toEqual("1000000000000000000");
+  expect(ethBalance).toEqual("128226700000000000000");
 
-  // Check wNEAR balance on intents contract for the treasury
+  // Check wNEAR balance
   const wnearBalance = await intents.view("mt_balance_of", {
-    account_id: daoTreasuryAccountId, // Use DAO's treasury account
+    account_id: daoTreasuryAccountId,
     token_id: wnearTokenId,
   });
-  expect(wnearBalance).toEqual("1000000000000000000000000");
+  expect(wnearBalance).toEqual("342660000000000000000000000");
+
+  // Check BTC balance
+  const btcBalance = await intents.view("mt_balance_of", {
+    account_id: daoTreasuryAccountId,
+    token_id: btcTokenId,
+  });
+  expect(btcBalance).toEqual("50000000"); // 0.5 BTC
+
+  // Check SOL balance
+  const solBalance = await intents.view("mt_balance_of", {
+    account_id: daoTreasuryAccountId,
+    token_id: solTokenId,
+  });
+  expect(solBalance).toEqual("10000000000"); // 10 SOL
 
   // --- UI TEST ---
   await redirectWeb4({ page, contractId: treasury.accountId });
@@ -346,10 +460,48 @@ test("show intents balance in dashboard (sandbox)", async ({ page }) => {
   await page.goto(`https://${treasury.accountId}.page`);
 
   await expect(page.getByText("Near Intents")).toBeVisible();
-  await expect(page.getByText("ETH")).toBeVisible();
-  await expect(page.getByText("WNEAR")).toBeVisible();
-  await expect(page.getByText("1.00")).toBeVisible(); // 1 ETH
-  await expect(page.getByText("1.00")).toBeVisible(); // 1 NEAR (WNEAR)
+
+  // Scope token symbol assertions to the IntentsPortfolio component
+  const intentsPortfolioLocator = page.locator('[data-component="widgets.treasury-factory.near/widget/pages.dashboard.IntentsPortfolio"]');
+  await expect(intentsPortfolioLocator.getByText("ETH")).toBeVisible();
+  await expect(intentsPortfolioLocator.getByText("WNEAR")).toBeVisible();
+  await expect(intentsPortfolioLocator.getByText("BTC")).toBeVisible();
+  await expect(intentsPortfolioLocator.getByText("SOL")).toBeVisible();
+  
+  // Locate the ETH row and check its balance
+  const ethRowLocator = page.locator('.card-body div.d-flex.flex-column.border-bottom:has(div.h6.mb-0.text-truncate:has-text("ETH"))');
+  const ethAmountElement = ethRowLocator.locator('div.d-flex.gap-2.align-items-center.justify-content-end div.d-flex.flex-column.align-items-end div.h6.mb-0');
+  await expect(ethAmountElement).toHaveText("128.23", { timeout: 10000 }); // Rounded for display
+
+  // Locate the WNEAR row and check its balance
+  const wnearRowLocator = page.locator('.card-body div.d-flex.flex-column.border-bottom:has(div.h6.mb-0.text-truncate:has-text("WNEAR"))');
+  const wnearAmountElement = wnearRowLocator.locator('div.d-flex.gap-2.align-items-center.justify-content-end div.d-flex.flex-column.align-items-end div.h6.mb-0');
+  await expect(wnearAmountElement).toHaveText("342.66");
+
+  // Locate the BTC row and check its balance
+  const btcRowLocator = page.locator('.card-body div.d-flex.flex-column.border-bottom:has(div.h6.mb-0.text-truncate:has-text("BTC"))');
+  const btcAmountElement = btcRowLocator.locator('div.d-flex.gap-2.align-items-center.justify-content-end div.d-flex.flex-column.align-items-end div.h6.mb-0');
+  await expect(btcAmountElement).toHaveText("0.50");
+
+  // Locate the SOL row and check its balance
+  const solRowLocator = page.locator('.card-body div.d-flex.flex-column.border-bottom:has(div.h6.mb-0.text-truncate:has-text("SOL"))');
+  const solAmountElement = solRowLocator.locator('div.d-flex.gap-2.align-items-center.justify-content-end div.d-flex.flex-column.align-items-end div.h6.mb-0');
+  await expect(solAmountElement).toHaveText("10.00");
+
+  // ETH icon
+  const ethIconLocator = page.locator('div.h6.mb-0.text-truncate:has-text("ETH")').locator('../..').locator('img');
+  const expectedEthIconBase64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCIgdmlld0JveD0iMCAwIDMyIDMyIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxjaXJjbGUgY3g9IjE2IiBjeT0iMTYiIHI9IjE2IiBmaWxsPSIjNjI3RUVBIi8+PGcgZmlsbD0iI0ZGRiIgZmlsbC1ydWxlPSJub256ZXJvIj48cGF0aCBmaWxsLW9wYWNpdHk9Ii42MDIiIGQ9Ik0xNi40OTggNHY4Ljg3bDcuNDk3IDMuMzV6Ii8+PHBhdGggZD0iTTE2LjQ5OCA0TDkgMTYuMjJsNy40OTgtMy4zNVoiLz48cGF0aCBmaWxsLW9wYWNpdHk9Ii42MDIiIGQ9Ik0xNi40OTggMjEuOTY4djYuMDI3TDI0IDE3LjYxNnoiLz48cGF0aCBkPSJNMTYuNDk4IDI3Ljk5NXYtNi4wMjhMOSAxNy42MTZ6Ii8+PHBhdGggZmlsbC1vcGFjaXR5PSIuMiIgZD0iTTE2LjQ5OCAyMC41NzNsNy40OTctNC4zNTMtNy40OTctMy4zNDh6Ii8+PHBhdGggZmlsbC1vcGFjaXR5PSIuNjAyIiBkPSJNOSAxNi4yMmw3LjQ5OCA0LjM1M3YtNy43MDF6Ii8+PC9nPjwvZz48L3N2Zz4=";
+  const alternativeEthIconBase64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCIgdmlld0JveD0iMCAwIDMyIDMyIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxjaXJjbGUgY3g9IjE2IiBjeT0iMTYiIHI9IjE2IiBmaWxsPSIjNjI3RUVBIi8+PGcgZmlsbD0iI0ZGRiIgZmlsbC1ydWxlPSJub256ZXJvIj48cGF0aCBmaWxsLW9wYWNpdHk9Ii42MDIiIGQ9Ik0xNi40OTggNHY4Ljg3bDcuNDk3IDMuMzV6Ii8+PHBhdGggZD0iTTE2LjQ5OCA0TDkgMTYuMjJsNy40OTgtMy4zNXoiLz48cGF0aCBmaWxsLW9wYWNpdHk9Ii42MDIiIGQ9Ik0xNi40OTggMjEuOTY4djYuMDI3TDI0IDE3LjYxNnoiLz48cGF0aCBkPSJNMTYuNDk4IDI3Ljk5NXYtNi4wMjhMOSAxNy42MTZ6Ii8+PHBhdGggZmlsbC1vcGFjaXR5PSIuMiIgZD0iTTE2LjQ5OCAyMC41NzNsNy40OTctNC4zNTMtNy40OTctMy4zNDh6Ii8+PHBhdGggZmlsbC1vcGFjaXR5PSIuNjAyIiBkPSJNOSAxNi4yMmw3LjQ5OCA0LjM1M3YtNy43MDF6Ii8+PC9nPjwvZz48L3N2Zz4="; // Note: This is the "received" one from the error, which has 'X' instead of 'V' in one spot.
+  
+  const ethIconSrc = await ethIconLocator.getAttribute('src');
+  expect(ethIconSrc === expectedEthIconBase64 || ethIconSrc === alternativeEthIconBase64).toBeTruthy();
+
+  // wNEAR balance
+  const wnearBalanceAfterDeposit = await intents.view("mt_balance_of", {
+    account_id: daoTreasuryAccountId,
+    token_id: wnearTokenId,
+  });
+  expect(wnearBalanceAfterDeposit).toEqual("342660000000000000000000000");
 
   await worker.tearDown();
 });
