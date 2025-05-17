@@ -10,13 +10,18 @@ const { Modal, ModalContent, ModalHeader, ModalFooter } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.modal"
 );
 
+const { DepositModal } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DepositModal"
+);
+
 const instance = props.instance;
 
 if (
   !instance ||
   typeof getNearBalances !== "function" ||
   !Skeleton ||
-  typeof accountToLockup !== "function"
+  typeof accountToLockup !== "function" ||
+  !DepositModal
 ) {
   return <></>;
 }
@@ -86,6 +91,7 @@ const [daoFTTokens, setFTTokens] = useState(null);
 const [show404Modal, setShow404Modal] = useState(false);
 const [disableRefreshBtn, setDisableRefreshBtn] = useState(false);
 const [lockupState, setLockupState] = useState(false);
+const [showDepositModal, setShowDepositModal] = useState(false);
 
 useEffect(() => {
   asyncFetch(`${REPL_BACKEND_API}/near-price`)
@@ -317,6 +323,11 @@ const Loading = () => {
 return (
   <Wrapper>
     {show404Modal && <TooManyRequestModal />}
+    <DepositModal
+      show={showDepositModal}
+      onClose={() => setShowDepositModal(false)}
+      treasuryDaoID={treasuryDaoID}
+    />
     <Widget
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
       props={{
@@ -359,7 +370,7 @@ return (
           <button
             className="btn btn-success mt-2"
             onClick={() => {
-              /* TODO: Implement open deposit modal functionality */
+              setShowDepositModal(true);
             }}
             style={{ width: "100%" }} // Make button full width of its container
           >
