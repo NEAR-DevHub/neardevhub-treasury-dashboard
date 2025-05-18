@@ -5,7 +5,11 @@ import { redirectWeb4 } from "../../util/web4.js";
 
 // Use the near-workspaces sandbox to deploy omft and intents contracts, make deposits, and test dashboard UI
 
-test("show intents balance in dashboard (sandbox)", async ({ page }) => {
+test("show intents balance in dashboard (sandbox)", async ({
+  page,
+  instanceAccount,
+  daoAccount,
+}) => {
   test.setTimeout(120_000); // Increased timeout to 120 seconds
 
   page.on("console", (msg) => {
@@ -32,9 +36,9 @@ test("show intents balance in dashboard (sandbox)", async ({ page }) => {
 
   // Import treasury contract (dashboard instance)
   const treasury = await worker.rootAccount.importContract({
-    mainnetContract: "treasury-testing.near",
+    mainnetContract: instanceAccount,
   });
-  const daoTreasuryAccountId = "testing-astradao.sputnik-dao.near"; // The actual account holding the funds
+  const daoTreasuryAccountId = daoAccount; // The actual account holding the funds
 
   // Initialize omft contract
   await omft.call(omft.accountId, "new", {

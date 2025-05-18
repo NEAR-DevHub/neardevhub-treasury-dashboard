@@ -19,6 +19,8 @@ jobs:
       matrix:
         shard: [1/3, 2/3, 3/3]
         project:
+          - treasury-dashboard
+          - infinex
           - treasury-testing
 
     steps:
