@@ -29,7 +29,11 @@ test.describe("Intents Deposit UI", () => {
         config: {
           wnear_id: "wrap.near", // Adjust if your config is different
           fees: { fee: 100, fee_collector: intents.accountId },
-          roles: { super_admins: [intents.accountId], admins: {}, grantees: {} },
+          roles: {
+            super_admins: [intents.accountId],
+            admins: {},
+            grantees: {},
+          },
         },
       });
     } catch (e) {
@@ -90,51 +94,83 @@ test.describe("Intents Deposit UI", () => {
 
     // Check for the introductory text with treasuryDaoID
     await expect(
-      modalLocator.locator(`p.mb-0:has-text("Deposit options for: ${treasury.accountId}")`)
+      modalLocator.locator(
+        `p.mb-0:has-text("Deposit options for: ${treasury.accountId}")`
+      )
     ).toBeVisible();
-    
+
     // Check Sputnik Tab button is visible and active by default
-    const sputnikTabButton = modalLocator.getByRole("button", { name: "Sputnik DAO (NEAR Only)" });
+    const sputnikTabButton = modalLocator.getByRole("button", {
+      name: "Sputnik DAO (NEAR Only)",
+    });
     await expect(sputnikTabButton).toBeVisible();
     await expect(sputnikTabButton).toHaveClass(/active/);
 
     // Check Sputnik tab content is visible
-    await expect(modalLocator.locator("p:has-text('Deposit NEAR to this Sputnik DAO address:')")).toBeVisible();
-    const sputnikAddressContainer = modalLocator.locator('p:has-text("Deposit NEAR to this Sputnik DAO address:")').locator('xpath=./following-sibling::div[1]');
-    await expect(sputnikAddressContainer.locator(`strong:has-text("${treasury.accountId}")`)).toBeVisible();
+    await expect(
+      modalLocator.locator(
+        "p:has-text('Deposit NEAR to this Sputnik DAO address:')"
+      )
+    ).toBeVisible();
+    const sputnikAddressContainer = modalLocator
+      .locator('p:has-text("Deposit NEAR to this Sputnik DAO address:")')
+      .locator("xpath=./following-sibling::div[1]");
+    await expect(
+      sputnikAddressContainer.locator(
+        `strong:has-text("${treasury.accountId}")`
+      )
+    ).toBeVisible();
 
     // Check Near Intents Tab button is visible but not active
-    const intentsTabButton = modalLocator.getByRole("button", { name: "Near Intents (Multi-Asset)" });
+    const intentsTabButton = modalLocator.getByRole("button", {
+      name: "Near Intents (Multi-Asset)",
+    });
     await expect(intentsTabButton).toBeVisible();
     await expect(intentsTabButton).not.toHaveClass(/active/);
 
     // Check Near Intents tab content (descriptive paragraph) is NOT visible initially
-    await expect(modalLocator.locator("p:has-text('Deposit NEAR or other supported tokens to this Near Intents enabled address:')")).not.toBeVisible();
+    await expect(
+      modalLocator.locator(
+        "p:has-text('Deposit NEAR or other supported tokens to this Near Intents enabled address:')"
+      )
+    ).not.toBeVisible();
 
-    const closeButtonFooter = modalLocator.getByRole("button", { name: "Close" });
+    const closeButtonFooter = modalLocator.getByRole("button", {
+      name: "Close",
+    });
     await expect(closeButtonFooter).toBeVisible();
 
     const closeButtonHeader = modalLocator.locator(".modal-header .btn-close");
     await expect(closeButtonHeader).toBeVisible();
-    
+
     await closeButtonFooter.click();
     await expect(modalLocator).not.toBeVisible();
   });
 
-  test("should handle tab switching and display correct content in deposit modal", async ({ page }) => {
+  test("should handle tab switching and display correct content in deposit modal", async ({
+    page,
+  }) => {
     await redirectWeb4({ page, contractId: treasury.accountId });
     await page.goto(`https://${treasury.accountId}.page`);
 
-    const totalBalanceCardLocator = page.locator(".card.card-body", { hasText: "Total Balance" });
+    const totalBalanceCardLocator = page.locator(".card.card-body", {
+      hasText: "Total Balance",
+    });
     await expect(totalBalanceCardLocator).toBeVisible({ timeout: 20000 });
-    const depositButton = totalBalanceCardLocator.getByRole("button", { name: "Deposit" });
+    const depositButton = totalBalanceCardLocator.getByRole("button", {
+      name: "Deposit",
+    });
     await depositButton.click();
 
     const modalLocator = page.locator(".modal-dialog");
     await expect(modalLocator).toBeVisible({ timeout: 10000 });
 
-    const sputnikTabButton = modalLocator.getByRole("button", { name: "Sputnik DAO (NEAR Only)" });
-    const intentsTabButton = modalLocator.getByRole("button", { name: "Near Intents (Multi-Asset)" });
+    const sputnikTabButton = modalLocator.getByRole("button", {
+      name: "Sputnik DAO (NEAR Only)",
+    });
+    const intentsTabButton = modalLocator.getByRole("button", {
+      name: "Near Intents (Multi-Asset)",
+    });
     const sputnikWarningLocator = modalLocator.locator("div.alert-warning");
     const intentsWarningLocator = modalLocator.locator("div.alert-info");
 
@@ -142,21 +178,27 @@ test.describe("Intents Deposit UI", () => {
     await expect(sputnikTabButton).toHaveClass(/active/);
     await expect(intentsTabButton).not.toHaveClass(/active/);
     await expect(sputnikWarningLocator).toBeVisible();
-    await expect(sputnikWarningLocator).toContainText("Only deposit NEAR to this address for Sputnik DAO operations.");
+    await expect(sputnikWarningLocator).toContainText(
+      "Only deposit NEAR to this address for Sputnik DAO operations."
+    );
     await expect(intentsWarningLocator).not.toBeVisible();
 
     // Verify Sputnik tab copy button
-    const sputnikCopyButtonContainer = modalLocator.locator('p:has-text("Deposit NEAR to this Sputnik DAO address:")').locator('xpath=./following-sibling::div[1]');
-    const sputnikCopyButton = sputnikCopyButtonContainer.getByRole('button');
+    const sputnikCopyButtonContainer = modalLocator
+      .locator('p:has-text("Deposit NEAR to this Sputnik DAO address:")')
+      .locator("xpath=./following-sibling::div[1]");
+    const sputnikCopyButton = sputnikCopyButtonContainer.getByRole("button");
     await expect(sputnikCopyButton).toBeVisible();
     await expect(sputnikCopyButton).toContainText("Copy");
-    await expect(sputnikCopyButton.locator('i.bi-clipboard')).toBeVisible();
+    await expect(sputnikCopyButton.locator("i.bi-clipboard")).toBeVisible();
 
     await sputnikCopyButton.click();
     await expect(sputnikCopyButton).toContainText("Copied");
-    await expect(sputnikCopyButton.locator('i.bi-check-lg')).toBeVisible();
+    await expect(sputnikCopyButton.locator("i.bi-check-lg")).toBeVisible();
     // Check for revert, allowing time for the 2s timeout in component
-    await expect(sputnikCopyButton.locator('i.bi-clipboard')).toBeVisible({ timeout: 3000 });
+    await expect(sputnikCopyButton.locator("i.bi-clipboard")).toBeVisible({
+      timeout: 3000,
+    });
     await expect(sputnikCopyButton).toContainText("Copy", { timeout: 3000 });
 
     // Switch to Near Intents tab
@@ -165,27 +207,39 @@ test.describe("Intents Deposit UI", () => {
     await expect(sputnikTabButton).not.toHaveClass(/active/);
     await expect(sputnikWarningLocator).not.toBeVisible();
     await expect(intentsWarningLocator).toBeVisible();
-    await expect(intentsWarningLocator).toContainText("You can deposit NEAR, ETH, wBTC, SOL");
-    
-    const intentsNoteLocator = modalLocator.locator("p.small.text-muted:has-text('Note: While the address is the same')");
+    await expect(intentsWarningLocator).toContainText(
+      "You can deposit NEAR, ETH, wBTC, SOL"
+    );
+
+    const intentsNoteLocator = modalLocator.locator(
+      "p.small.text-muted:has-text('Note: While the address is the same')"
+    );
     await expect(intentsNoteLocator).toBeVisible();
 
     // Verify Near Intents tab copy button
-    const intentsCopyButtonContainer = modalLocator.locator('p:has-text("Deposit NEAR or other supported tokens to this Near Intents enabled address:")').locator('xpath=./following-sibling::div[1]');
-    const intentsCopyButton = intentsCopyButtonContainer.getByRole('button');
+    const intentsCopyButtonContainer = modalLocator
+      .locator(
+        'p:has-text("Deposit NEAR or other supported tokens to this Near Intents enabled address:")'
+      )
+      .locator("xpath=./following-sibling::div[1]");
+    const intentsCopyButton = intentsCopyButtonContainer.getByRole("button");
     await expect(intentsCopyButton).toBeVisible();
     await expect(intentsCopyButton).toContainText("Copy");
-    await expect(intentsCopyButton.locator('i.bi-clipboard')).toBeVisible();
+    await expect(intentsCopyButton.locator("i.bi-clipboard")).toBeVisible();
 
     await intentsCopyButton.click();
     await expect(intentsCopyButton).toContainText("Copied");
-    await expect(intentsCopyButton.locator('i.bi-check-lg')).toBeVisible();
+    await expect(intentsCopyButton.locator("i.bi-check-lg")).toBeVisible();
     // Check for revert
-    await expect(intentsCopyButton.locator('i.bi-clipboard')).toBeVisible({ timeout: 3000 });
+    await expect(intentsCopyButton.locator("i.bi-clipboard")).toBeVisible({
+      timeout: 3000,
+    });
     await expect(intentsCopyButton).toContainText("Copy", { timeout: 3000 });
 
     // Close the modal
-    const closeButtonFooter = modalLocator.getByRole("button", { name: "Close" });
+    const closeButtonFooter = modalLocator.getByRole("button", {
+      name: "Close",
+    });
     await closeButtonFooter.click();
     await expect(modalLocator).not.toBeVisible();
   });
@@ -194,23 +248,40 @@ test.describe("Intents Deposit UI", () => {
     await redirectWeb4({ page, contractId: treasury.accountId });
     await page.goto(`https://${treasury.accountId}.page`);
 
-    const totalBalanceCardLocator = page.locator(".card.card-body", { hasText: "Total Balance" });
+    const totalBalanceCardLocator = page.locator(".card.card-body", {
+      hasText: "Total Balance",
+    });
     await expect(totalBalanceCardLocator).toBeVisible({ timeout: 20000 });
-    const depositButton = totalBalanceCardLocator.getByRole("button", { name: "Deposit" });
+    const depositButton = totalBalanceCardLocator.getByRole("button", {
+      name: "Deposit",
+    });
     await depositButton.click();
 
     const modalLocator = page.locator(".modal-dialog");
     await expect(modalLocator).toBeVisible({ timeout: 10000 });
 
-    const sputnikTabButton = modalLocator.getByRole("button", { name: "Sputnik DAO (NEAR Only)" });
-    const intentsTabButton = modalLocator.getByRole("button", { name: "Near Intents (Multi-Asset)" });
+    const sputnikTabButton = modalLocator.getByRole("button", {
+      name: "Sputnik DAO (NEAR Only)",
+    });
+    const intentsTabButton = modalLocator.getByRole("button", {
+      name: "Near Intents (Multi-Asset)",
+    });
 
     // Check QR code in Sputnik tab
     await expect(sputnikTabButton).toHaveClass(/active/);
-    const sputnikQrCodeContainer = modalLocator.locator('p:has-text("Deposit NEAR to this Sputnik DAO address:")').locator('xpath=./following-sibling::div[contains(@class, "text-center")]');
-    const sputnikQrCodeIframe = sputnikQrCodeContainer.locator("iframe[title*='QR Code for]");
+    const sputnikQrCodeContainer = modalLocator
+      .locator('p:has-text("Deposit NEAR to this Sputnik DAO address:")')
+      .locator(
+        'xpath=./following-sibling::div[contains(@class, "text-center")]'
+      );
+    const sputnikQrCodeIframe = sputnikQrCodeContainer.locator(
+      "iframe[title*='QR Code for]"
+    );
     await expect(sputnikQrCodeIframe).toBeVisible();
-    await expect(sputnikQrCodeIframe).toHaveAttribute("srcdoc", /<img id="qrCodeImageElement"/);
+    await expect(sputnikQrCodeIframe).toHaveAttribute(
+      "srcdoc",
+      /<img id="qrCodeImageElement"/
+    );
     // It's hard to verify the content of the iframe's srcDoc image directly with Playwright's default locators
     // We will check that the iframe is there and has the expected structure.
     // Further checks could involve frameLocator if deeper inspection is needed and feasible.
@@ -218,15 +289,28 @@ test.describe("Intents Deposit UI", () => {
     // Switch to Near Intents tab
     await intentsTabButton.click();
     await expect(intentsTabButton).toHaveClass(/active/);
-    
+
     // Check QR code in Intents tab
-    const intentsQrCodeContainer = modalLocator.locator('p:has-text("Deposit NEAR or other supported tokens to this Near Intents enabled address:")').locator('xpath=./following-sibling::div[contains(@class, "text-center")]');
-    const intentsQrCodeIframe = intentsQrCodeContainer.locator("iframe[title*='QR Code for]");
+    const intentsQrCodeContainer = modalLocator
+      .locator(
+        'p:has-text("Deposit NEAR or other supported tokens to this Near Intents enabled address:")'
+      )
+      .locator(
+        'xpath=./following-sibling::div[contains(@class, "text-center")]'
+      );
+    const intentsQrCodeIframe = intentsQrCodeContainer.locator(
+      "iframe[title*='QR Code for]"
+    );
     await expect(intentsQrCodeIframe).toBeVisible();
-    await expect(intentsQrCodeIframe).toHaveAttribute("srcdoc", /<img id="qrCodeImageElement"/);
+    await expect(intentsQrCodeIframe).toHaveAttribute(
+      "srcdoc",
+      /<img id="qrCodeImageElement"/
+    );
 
     // Close the modal
-    const closeButtonFooter = modalLocator.getByRole("button", { name: "Close" });
+    const closeButtonFooter = modalLocator.getByRole("button", {
+      name: "Close",
+    });
     await closeButtonFooter.click();
     await expect(modalLocator).not.toBeVisible();
   });

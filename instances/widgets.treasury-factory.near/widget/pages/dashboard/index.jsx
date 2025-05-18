@@ -352,7 +352,9 @@ return (
     )}
     <div className="d-flex gap-3 flex-wrap">
       <div className="d-flex flex-column gap-3 flex-container">
-        <div className="card card-body" style={{ minHeight: "100px" }}> {/* Adjusted minHeight for button */}
+        <div className="card card-body" style={{ minHeight: "100px" }}>
+          {" "}
+          {/* Adjusted minHeight for button */}
           <div className="h6 text-secondary">Total Balance</div>
           {typeof getNearBalances !== "function" ||
           nearPrice === null ||

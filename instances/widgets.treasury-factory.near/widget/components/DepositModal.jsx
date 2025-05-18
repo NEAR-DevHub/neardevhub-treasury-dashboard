@@ -43,13 +43,12 @@ const sputnikWarning = (
 );
 
 const intentsWarning = (
-  <div
-    className="alert alert-info d-flex align-items-center mt-2"
-    role="alert"
-  >
+  <div className="alert alert-info d-flex align-items-center mt-2" role="alert">
     <i className="bi bi-info-circle-fill me-2"></i>
     <div>
-      You can deposit <strong>NEAR, ETH, wBTC, SOL</strong> and other supported tokens to this address for Near Intents. These funds can be used for cross-chain operations.
+      You can deposit <strong>NEAR, ETH, wBTC, SOL</strong> and other supported
+      tokens to this address for Near Intents. These funds can be used for
+      cross-chain operations.
     </div>
   </div>
 );
@@ -66,8 +65,10 @@ return (
       ></button>
     </ModalHeader>
     <ModalContent>
-      <p className="mb-0">Deposit options for: <strong>{address}</strong></p>
-      
+      <p className="mb-0">
+        Deposit options for: <strong>{address}</strong>
+      </p>
+
       <ul className="nav nav-tabs mt-3">
         <li className="nav-item">
           <button
@@ -86,13 +87,16 @@ return (
           </button>
         </li>
       </ul>
-      
+
       {activeTab === "sputnik" && (
         <>
           <p className="mt-3">Deposit NEAR to this Sputnik DAO address:</p>
           <div className="d-flex align-items-center mb-2">
             <strong className="text-break">{address}</strong>
-            <button className="btn btn-sm btn-outline-secondary ms-2" onClick={() => handleAddressCopy(address)}>
+            <button
+              className="btn btn-sm btn-outline-secondary ms-2"
+              onClick={() => handleAddressCopy(address)}
+            >
               {isAddressCopied ? (
                 <>
                   <i className="bi bi-check-lg me-1"></i>Copied
@@ -106,12 +110,12 @@ return (
           </div>
           {address && (
             <div className="mt-2 mb-3 text-center">
-              <Widget 
-                src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.QRCodeGenerator" 
+              <Widget
+                src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.QRCodeGenerator"
                 props={{
                   text: address,
                   cellSize: 4, // Or your preferred cell size
-                  margin: 4    // Or your preferred margin
+                  margin: 4, // Or your preferred margin
                 }}
               />
             </div>
@@ -123,11 +127,15 @@ return (
       {activeTab === "intents" && (
         <>
           <p className="mt-3">
-            Deposit NEAR or other supported tokens to this Near Intents enabled address:
+            Deposit NEAR or other supported tokens to this Near Intents enabled
+            address:
           </p>
           <div className="d-flex align-items-center mb-2">
             <strong className="text-break">{address}</strong>
-            <button className="btn btn-sm btn-outline-secondary ms-2" onClick={() => handleAddressCopy(address)}>
+            <button
+              className="btn btn-sm btn-outline-secondary ms-2"
+              onClick={() => handleAddressCopy(address)}
+            >
               {isAddressCopied ? (
                 <>
                   <i className="bi bi-check-lg me-1"></i>Copied
@@ -141,19 +149,22 @@ return (
           </div>
           {address && (
             <div className="mt-2 mb-3 text-center">
-              <Widget 
-                src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.QRCodeGenerator" 
+              <Widget
+                src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.QRCodeGenerator"
                 props={{
                   text: address,
                   cellSize: 4, // Or your preferred cell size
-                  margin: 4    // Or your preferred margin
+                  margin: 4, // Or your preferred margin
                 }}
               />
             </div>
           )}
           {intentsWarning}
           <p className="mt-2 small text-muted">
-             Note: While the address is the same as the Sputnik DAO, depositing here signals intent for funds to be available for cross-chain actions via Near Intents. Standard DAO proposals will still be required to move funds from the main treasury.
+            Note: While the address is the same as the Sputnik DAO, depositing
+            here signals intent for funds to be available for cross-chain
+            actions via Near Intents. Standard DAO proposals will still be
+            required to move funds from the main treasury.
           </p>
         </>
       )}
