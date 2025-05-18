@@ -2,6 +2,9 @@ const { Modal, ModalContent, ModalHeader, ModalFooter } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.modal"
 );
 
+// QRCodeGenerator is now a component, so we don't destructure a function from VM.require
+// We will use it directly as <Widget src="..." props={...} />
+
 if (!Modal || !ModalContent || !ModalHeader || !ModalFooter) {
   return <></>; // Or a loading state
 }
@@ -24,6 +27,7 @@ const handleAddressCopy = (textToCopy) => {
 };
 
 const address = props.treasuryDaoID;
+// qrCodeSvg is no longer needed here, the QRCodeGenerator component will handle SVG generation and rendering
 
 const sputnikWarning = (
   <div
@@ -100,6 +104,18 @@ return (
               )}
             </button>
           </div>
+          {address && (
+            <div className="mt-2 mb-3 text-center">
+              <Widget 
+                src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.QRCodeGenerator" 
+                props={{
+                  text: address,
+                  cellSize: 4, // Or your preferred cell size
+                  margin: 4    // Or your preferred margin
+                }}
+              />
+            </div>
+          )}
           {sputnikWarning}
         </>
       )}
@@ -123,6 +139,18 @@ return (
               )}
             </button>
           </div>
+          {address && (
+            <div className="mt-2 mb-3 text-center">
+              <Widget 
+                src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.QRCodeGenerator" 
+                props={{
+                  text: address,
+                  cellSize: 4, // Or your preferred cell size
+                  margin: 4    // Or your preferred margin
+                }}
+              />
+            </div>
+          )}
           {intentsWarning}
           <p className="mt-2 small text-muted">
              Note: While the address is the same as the Sputnik DAO, depositing here signals intent for funds to be available for cross-chain actions via Near Intents. Standard DAO proposals will still be required to move funds from the main treasury.

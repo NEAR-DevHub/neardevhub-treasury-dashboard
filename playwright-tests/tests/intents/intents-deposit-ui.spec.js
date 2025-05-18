@@ -190,5 +190,44 @@ test.describe("Intents Deposit UI", () => {
     await expect(modalLocator).not.toBeVisible();
   });
 
-  // TODO: Add tests for QR code visibility and copy functionality (once QR is re-implemented)
+  test("should display QR code in both tabs", async ({ page }) => {
+    await redirectWeb4({ page, contractId: treasury.accountId });
+    await page.goto(`https://${treasury.accountId}.page`);
+
+    const totalBalanceCardLocator = page.locator(".card.card-body", { hasText: "Total Balance" });
+    await expect(totalBalanceCardLocator).toBeVisible({ timeout: 20000 });
+    const depositButton = totalBalanceCardLocator.getByRole("button", { name: "Deposit" });
+    await depositButton.click();
+
+    const modalLocator = page.locator(".modal-dialog");
+    await expect(modalLocator).toBeVisible({ timeout: 10000 });
+
+    const sputnikTabButton = modalLocator.getByRole("button", { name: "Sputnik DAO (NEAR Only)" });
+    const intentsTabButton = modalLocator.getByRole("button", { name: "Near Intents (Multi-Asset)" });
+
+    // Check QR code in Sputnik tab
+    await expect(sputnikTabButton).toHaveClass(/active/);
+    const sputnikQrCodeContainer = modalLocator.locator('p:has-text("Deposit NEAR to this Sputnik DAO address:")').locator('xpath=./following-sibling::div[contains(@class, "text-center")]');
+    const sputnikQrCodeIframe = sputnikQrCodeContainer.locator("iframe[title*='QR Code for]");
+    await expect(sputnikQrCodeIframe).toBeVisible();
+    await expect(sputnikQrCodeIframe).toHaveAttribute("srcdoc", /<img id="qrCodeImageElement"/);
+    // It's hard to verify the content of the iframe's srcDoc image directly with Playwright's default locators
+    // We will check that the iframe is there and has the expected structure.
+    // Further checks could involve frameLocator if deeper inspection is needed and feasible.
+
+    // Switch to Near Intents tab
+    await intentsTabButton.click();
+    await expect(intentsTabButton).toHaveClass(/active/);
+    
+    // Check QR code in Intents tab
+    const intentsQrCodeContainer = modalLocator.locator('p:has-text("Deposit NEAR or other supported tokens to this Near Intents enabled address:")').locator('xpath=./following-sibling::div[contains(@class, "text-center")]');
+    const intentsQrCodeIframe = intentsQrCodeContainer.locator("iframe[title*='QR Code for]");
+    await expect(intentsQrCodeIframe).toBeVisible();
+    await expect(intentsQrCodeIframe).toHaveAttribute("srcdoc", /<img id="qrCodeImageElement"/);
+
+    // Close the modal
+    const closeButtonFooter = modalLocator.getByRole("button", { name: "Close" });
+    await closeButtonFooter.click();
+    await expect(modalLocator).not.toBeVisible();
+  });
 });
