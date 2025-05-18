@@ -32,7 +32,6 @@ test("qr code generator produces correct QR", async ({
           JSON.stringify({
             // Ensure the 'text' prop is passed correctly for QRCodeGenerator
             text,
-            displaySize: 150, // Match a typical display size used in DepositModal
           })
         );
         // Ensure this src points to your QRCodeGenerator widget

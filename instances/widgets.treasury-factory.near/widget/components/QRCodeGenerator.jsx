@@ -1,9 +1,3 @@
-// QRCodeGenerator.jsx (NEAR BOS Widget Component)
-// Props:
-// - text: String (required) – the text to encode in the QR code
-// - cellSize: Number (optional) – size of each module in pixels, default 4
-// - margin: Number (optional) – white border in modules, default 4
-
 const textToEncode = props.text;
 const cellSize = props.cellSize || 4;
 const margin = props.margin || 4;
@@ -37,7 +31,6 @@ const iframeSrcDoc = `
       const m = ${margin};
       if (textForQR) {
         document.getElementById('qrCodeImageElement').appendChild(QRCode(textForQR));
-        //document.getElementById('qrCodeImageElement').src = "https://api.qrserver.com/v1/create-qr-code/?data="+textForQR+"&amp;size=100x100";
       } else {
         document.body.innerHTML = '<p class="error">Error: Missing input.</p>';
       }
@@ -49,7 +42,7 @@ const iframeSrcDoc = `
 </html>
 `;
 
-const iframeWidth = 256;
+const iframeWidth = 260;
 const iframeHeight = iframeWidth;
 
 return (
