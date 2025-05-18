@@ -9,6 +9,7 @@ const props = typeof props !== "undefined" ? props : {};
 const treasuryDaoID = props.treasuryDaoID;
 const heading = props.heading;
 const instance = props.instance;
+const onTotalBalanceChange = props.onTotalBalanceChange; // New prop
 
 const [tokens, setTokens] = useState(null);
 const [loading, setLoading] = useState(true);
@@ -40,6 +41,9 @@ useEffect(() => {
   if (!treasuryDaoID) return;
   setLoading(true);
   setError(false); // Reset error state on new fetch
+  if (typeof onTotalBalanceChange === "function") {
+    onTotalBalanceChange("0"); // Initialize to "0" or signal loading
+  }
 
   asyncFetch("https://api-mng-console.chaindefuser.com/api/tokens")
     .then((resp) => {
@@ -119,6 +123,21 @@ useEffect(() => {
               }));
               setTokens(finalTokens);
               setLoading(false);
+
+              // Calculate and pass up the total USD balance
+              if (typeof onTotalBalanceChange === "function") {
+                const totalUsd = finalTokens.reduce((acc, token) => {
+                  const readableAmount = convertBalanceToReadableFormat(
+                    token.amount,
+                    token.ft_meta.decimals
+                  );
+                  const usdValue = Big(readableAmount).mul(
+                    token.ft_meta.price || 0
+                  );
+                  return acc.plus(usdValue);
+                }, Big(0));
+                onTotalBalanceChange(totalUsd.toFixed(2));
+              }
             })
             .catch((iconError) => {
               console.error(
@@ -136,8 +155,21 @@ useEffect(() => {
                 amount: t.amount,
               }));
               setTokens(fallbackTokens);
-              //setError(true); // Optionally set error, or just log
-              setLoading(false);
+              setLoading(false); // Ensure loading is set to false
+              // Calculate and pass up the total USD balance even on icon error
+              if (typeof onTotalBalanceChange === "function") {
+                const totalUsd = fallbackTokens.reduce((acc, token) => {
+                  const readableAmount = convertBalanceToReadableFormat(
+                    token.amount,
+                    token.ft_meta.decimals
+                  );
+                  const usdValue = Big(readableAmount).mul(
+                    token.ft_meta.price || 0
+                  );
+                  return acc.plus(usdValue);
+                }, Big(0));
+                onTotalBalanceChange(totalUsd.toFixed(2));
+              }
             });
         })
         .catch((balanceError) => {
@@ -145,6 +177,9 @@ useEffect(() => {
           setError(true);
           setLoading(false);
           setTokens([]);
+          if (typeof onTotalBalanceChange === "function") {
+            onTotalBalanceChange("0"); // Signal error or zero balance
+          }
         });
     })
     .catch((fetchError) => {
@@ -152,8 +187,11 @@ useEffect(() => {
       setError(true);
       setLoading(false);
       setTokens([]);
+      if (typeof onTotalBalanceChange === "function") {
+        onTotalBalanceChange("0"); // Signal error or zero balance
+      }
     });
-}, [treasuryDaoID]);
+}, [treasuryDaoID, onTotalBalanceChange]);
 
 const Loading = () => (
   <div className="d-flex align-items-center gap-2 w-100 mx-2 mb-2">

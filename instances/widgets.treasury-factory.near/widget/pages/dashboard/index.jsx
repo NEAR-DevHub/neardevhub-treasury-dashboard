@@ -83,6 +83,7 @@ const [show404Modal, setShow404Modal] = useState(false);
 const [disableRefreshBtn, setDisableRefreshBtn] = useState(false);
 const [lockupState, setLockupState] = useState(false);
 const [showDepositModal, setShowDepositModal] = useState(false);
+const [intentsTotalUsdBalance, setIntentsTotalUsdBalance] = useState("0"); // New state for intents balance
 
 useEffect(() => {
   asyncFetch(`${REPL_BACKEND_API}/near-price`)
@@ -232,6 +233,7 @@ const totalBalance = Big(nearBalances?.totalParsed ?? "0")
   .plus(Big(nearStakedTotalTokens ?? "0").mul(nearPrice ?? 1))
   .plus(Big(lockupNearBalances?.totalParsed ?? "0").mul(nearPrice ?? 1))
   .plus(Big(daoFTTokens?.totalCumulativeAmt ?? "0"))
+  .plus(Big(intentsTotalUsdBalance ?? "0")) // Add intents balance
   .toFixed(2);
 
 function formatCurrency(amount) {
@@ -436,6 +438,7 @@ return (
             "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.IntentsPortfolio"
           }
           props={{
+            onTotalBalanceChange: setIntentsTotalUsdBalance,
             treasuryDaoID,
             heading: (
               <div className="d-flex flex-column gap-1 px-3 pt-3 pb-2">
