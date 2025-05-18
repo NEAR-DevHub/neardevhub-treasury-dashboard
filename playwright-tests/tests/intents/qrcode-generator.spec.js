@@ -16,9 +16,14 @@ test("qr code generator produces correct QR", async ({
   });
   await page.goto(`https://${instanceAccount}.page/`);
 
+  
+   const depositButton = page.getByRole("button", {
+      name: "Deposit",
+    });
+    await expect(depositButton).toBeVisible();
   await page.evaluate(
     ({ daoAccount }) => {
-      document.querySelector("near-social-viewer")?.remove();
+      document.querySelector("near-social-viewer").remove();
       const viewer = document.createElement("near-social-viewer");
       viewer.setAttribute(
         "initialProps",
@@ -37,10 +42,10 @@ test("qr code generator produces correct QR", async ({
     },
     { daoAccount }
   );
-
-  // Directly get the FrameLocator for the iframe
   const qrCodeIframe = page.locator("iframe[title*='QR Code for']");
-  const qrCodeImageBuffer = await qrCodeIframe.screenshot();
+  await expect(qrCodeIframe).toBeVisible();
+
+  const qrCodeImageBuffer = await qrCodeIframe.screenshot({path: "qrcode.png"});
   const image = await Jimp.read(qrCodeImageBuffer);
 
   const imageData = {
