@@ -16,11 +16,10 @@ test("qr code generator produces correct QR", async ({
   });
   await page.goto(`https://${instanceAccount}.page/`);
 
-  
-   const depositButton = page.getByRole("button", {
-      name: "Deposit",
-    });
-    await expect(depositButton).toBeVisible();
+  const depositButton = page.getByRole("button", {
+    name: "Deposit",
+  });
+  await expect(depositButton).toBeVisible();
   await page.evaluate(
     ({ daoAccount }) => {
       document.querySelector("near-social-viewer").remove();
@@ -45,7 +44,9 @@ test("qr code generator produces correct QR", async ({
   const qrCodeIframe = page.locator("iframe[title*='QR Code for']");
   await expect(qrCodeIframe).toBeVisible();
 
-  const qrCodeImageBuffer = await qrCodeIframe.screenshot({path: "qrcode.png"});
+  const qrCodeImageBuffer = await qrCodeIframe.screenshot({
+    path: "qrcode.png",
+  });
   const image = await Jimp.read(qrCodeImageBuffer);
 
   const imageData = {
