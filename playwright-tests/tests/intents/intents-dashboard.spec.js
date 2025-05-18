@@ -18,7 +18,6 @@ test("show intents balance in dashboard (sandbox)", async ({
 
   // --- SANDBOX SETUP ---
   const worker = await Worker.init();
-  const root = worker.rootAccount;
   const sandboxRpcUrl = worker.provider.connection.url; // Define sandboxRpcUrl here
 
   // Import omft (ETH) and wNEAR contracts
@@ -458,6 +457,86 @@ test("show intents balance in dashboard (sandbox)", async ({
     token_id: wnearTokenId,
   });
   expect(wnearBalanceAfterDeposit).toEqual("342660000000000000000000000");
+
+  // --- TOTAL BALANCE CHECK ---
+
+  // Define token decimals
+  const decimals = {
+    ETH: 18,
+    WNEAR: 24,
+    BTC: 8,
+    SOL: 9,
+    NEAR: 24, // Native NEAR
+  };
+
+  // Fetch actual token prices
+  const tokensToPrice = [
+    ethTokenId,
+    solTokenId,
+    btcTokenId,
+    wnearTokenId,
+    "near",
+  ]; // "near" is defuse_asset_id for native NEAR
+  let tokenPricesMap = {};
+
+  const tokensResponse = await fetch(
+    "https://api-mng-console.chaindefuser.com/api/tokens"
+  );
+  const actualPricesArray = (await tokensResponse.json()).items;
+  if (!Array.isArray(actualPricesArray) || actualPricesArray.length === 0) {
+    throw new Error("Token prices API did not return a valid array of prices.");
+  }
+  tokenPricesMap = actualPricesArray
+    .filter(
+      (token) =>
+        token.defuse_asset_id && tokensToPrice.includes(token.defuse_asset_id)
+    )
+    .reduce((map, token) => {
+      map[token.defuse_asset_id] = token.price;
+      return map;
+    }, {});
+
+  const getPrice = (assetId) => {
+    const price = tokenPricesMap[assetId];
+    return price;
+  };
+
+  // Calculate expected Intents USD total using on-chain balances
+  const ethAmount = Number(BigInt(ethBalance)) / Math.pow(10, decimals.ETH);
+  const wnearAmount =
+    Number(BigInt(wnearBalance)) / Math.pow(10, decimals.WNEAR); // wnearBalance is from mt_balance_of for wnearTokenId
+  const btcAmount = Number(BigInt(btcBalance)) / Math.pow(10, decimals.BTC);
+  const solAmount = Number(BigInt(solBalance)) / Math.pow(10, decimals.SOL);
+
+  const ethPrice = getPrice(ethTokenId);
+  const wnearPriceForIntents = getPrice(wnearTokenId); // Price for WNEAR in intents
+  const btcPrice = getPrice(btcTokenId);
+  const solPrice = getPrice(solTokenId);
+
+  const intentsExpectedUsdTotal =
+    ethAmount * ethPrice +
+    wnearAmount * wnearPriceForIntents +
+    btcAmount * btcPrice +
+    solAmount * solPrice;
+  console.log(
+    `Calculated Intents Expected USD Total: $${intentsExpectedUsdTotal}`
+  );
+
+  // Locate and assert the total balance in the UI
+  const totalBalanceCardLocator = page
+    .locator("div.card-body")
+    .filter({ hasText: "Total Balance" });
+
+  // Ensure that the total balance is more than the intents balance
+  const totalBalanceText = await totalBalanceCardLocator.innerText();
+  const displayedTotalBalanceNumeric = parseFloat(
+    totalBalanceText.replace(/[^0-9\.]/g, "")
+  );
+
+  expect(displayedTotalBalanceNumeric).toBeGreaterThan(intentsExpectedUsdTotal);
+  console.log(
+    `Asserted: Displayed Total Balance ($${displayedTotalBalanceNumeric}) > Intents Balance ($${intentsExpectedUsdTotal})`
+  );
 
   await worker.tearDown();
 });
