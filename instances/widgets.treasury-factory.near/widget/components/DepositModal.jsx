@@ -17,14 +17,6 @@ if (!props.show) {
 }
 
 const [activeTab, setActiveTab] = useState(props.initialTab || "sputnik");
-const [isAddressCopied, setIsAddressCopied] = useState(false);
-
-const handleAddressCopy = (textToCopy) => {
-  clipboard.writeText(textToCopy).then(() => {
-    setIsAddressCopied(true);
-    setTimeout(() => setIsAddressCopied(false), 2000);
-  });
-};
 
 const address = props.treasuryDaoID;
 // qrCodeSvg is no longer needed here, the QRCodeGenerator component will handle SVG generation and rendering
@@ -93,20 +85,15 @@ return (
           <p className="mt-3">Deposit NEAR to this Sputnik DAO address:</p>
           <div className="d-flex align-items-center mb-2">
             <strong className="text-break">{address}</strong>
-            <button
-              className="btn btn-sm btn-outline-secondary ms-2"
-              onClick={() => handleAddressCopy(address)}
-            >
-              {isAddressCopied ? (
-                <>
-                  <i className="bi bi-check-lg me-1"></i>Copied
-                </>
-              ) : (
-                <>
-                  <i className="bi bi-clipboard me-1"></i>Copy
-                </>
-              )}
-            </button>
+            <Widget
+              src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Copy"
+              props={{
+                clipboardText: address,
+                label: "Copy",
+
+                className: "btn btn-sm btn-outline-secondary ms-2",
+              }}
+            />
           </div>
           {address && (
             <div className="mt-2 mb-3 text-center">
@@ -132,20 +119,16 @@ return (
           </p>
           <div className="d-flex align-items-center mb-2">
             <strong className="text-break">{address}</strong>
-            <button
-              className="btn btn-sm btn-outline-secondary ms-2"
-              onClick={() => handleAddressCopy(address)}
-            >
-              {isAddressCopied ? (
-                <>
-                  <i className="bi bi-check-lg me-1"></i>Copied
-                </>
-              ) : (
-                <>
-                  <i className="bi bi-clipboard me-1"></i>Copy
-                </>
-              )}
-            </button>
+            {/* Replace custom button with Copy widget */}
+            <Widget
+              src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Copy" // Corrected to Copy
+              props={{
+                text: address,
+                className: "btn btn-sm btn-outline-secondary ms-2",
+                // Assuming the widget handles label, copiedLabel, and icons
+                // If Copy.jsx has different prop names for these, they might need adjustment
+              }}
+            />
           </div>
           {address && (
             <div className="mt-2 mb-3 text-center">

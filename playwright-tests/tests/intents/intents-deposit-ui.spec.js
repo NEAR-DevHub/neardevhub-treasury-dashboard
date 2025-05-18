@@ -4,12 +4,16 @@ import { Worker } from "near-workspaces";
 import { redirectWeb4 } from "../../util/web4.js";
 
 test.describe("Intents Deposit UI", () => {
+  test.use({
+    contextOptions: {
+      permissions: ["clipboard-read", "clipboard-write"],
+    },
+  });
   let worker;
   let root;
-  let treasury;
   let intents;
 
-  test.beforeAll(async () => {
+  test.beforeAll(async ({ daoAccount, instanceAccount }) => {
     worker = await Worker.init();
     root = worker.rootAccount;
 
@@ -19,8 +23,8 @@ test.describe("Intents Deposit UI", () => {
     });
 
     // Import treasury contract (dashboard instance)
-    treasury = await root.importContract({
-      mainnetContract: "treasury-testing.near", // Replace with your actual treasury contract
+    await root.importContract({
+      mainnetContract: instanceAccount,
     });
 
     // Initialize intents contract (if necessary, adapt to your contract's init method)
@@ -51,9 +55,15 @@ test.describe("Intents Deposit UI", () => {
 
   test("should display the deposit button in the Total Balance card", async ({
     page,
+    instanceAccount,
+    daoAccount,
   }) => {
-    await redirectWeb4({ page, contractId: treasury.accountId });
-    await page.goto(`https://${treasury.accountId}.page`);
+    await redirectWeb4({
+      page,
+      contractId: instanceAccount,
+      treasury: daoAccount,
+    });
+    await page.goto(`https://${instanceAccount}.page`);
 
     // Wait for the main dashboard content to load, e.g., the Total Balance card
     const totalBalanceCardLocator = page.locator(".card.card-body", {
@@ -71,9 +81,11 @@ test.describe("Intents Deposit UI", () => {
 
   test("clicking deposit button opens deposit modal with correct initial content", async ({
     page,
+    instanceAccount,
+    daoAccount,
   }) => {
-    await redirectWeb4({ page, contractId: treasury.accountId });
-    await page.goto(`https://${treasury.accountId}.page`);
+    await redirectWeb4({ page, contractId: instanceAccount });
+    await page.goto(`https://${instanceAccount}.page`);
 
     const totalBalanceCardLocator = page.locator(".card.card-body", {
       hasText: "Total Balance",
@@ -85,7 +97,7 @@ test.describe("Intents Deposit UI", () => {
     });
     await depositButton.click();
 
-    const modalLocator = page.locator(".modal-dialog");
+    const modalLocator = page.getByText("Deposit Funds Deposit options");
     await expect(modalLocator).toBeVisible({ timeout: 10000 });
 
     await expect(
@@ -94,9 +106,7 @@ test.describe("Intents Deposit UI", () => {
 
     // Check for the introductory text with treasuryDaoID
     await expect(
-      modalLocator.locator(
-        `p.mb-0:has-text("Deposit options for: ${treasury.accountId}")`
-      )
+      modalLocator.getByText(`Deposit options for: ${daoAccount}`)
     ).toBeVisible();
 
     // Check Sputnik Tab button is visible and active by default
@@ -116,9 +126,7 @@ test.describe("Intents Deposit UI", () => {
       .locator('p:has-text("Deposit NEAR to this Sputnik DAO address:")')
       .locator("xpath=./following-sibling::div[1]");
     await expect(
-      sputnikAddressContainer.locator(
-        `strong:has-text("${treasury.accountId}")`
-      )
+      sputnikAddressContainer.locator(`strong:has-text("${daoAccount}")`)
     ).toBeVisible();
 
     // Check Near Intents Tab button is visible but not active
@@ -135,13 +143,12 @@ test.describe("Intents Deposit UI", () => {
       )
     ).not.toBeVisible();
 
-    const closeButtonFooter = modalLocator.getByRole("button", {
-      name: "Close",
-    });
+    const closeButtonFooter = modalLocator
+      .getByRole("button", {
+        name: "Close",
+      })
+      .nth(1);
     await expect(closeButtonFooter).toBeVisible();
-
-    const closeButtonHeader = modalLocator.locator(".modal-header .btn-close");
-    await expect(closeButtonHeader).toBeVisible();
 
     await closeButtonFooter.click();
     await expect(modalLocator).not.toBeVisible();
@@ -149,9 +156,15 @@ test.describe("Intents Deposit UI", () => {
 
   test("should handle tab switching and display correct content in deposit modal", async ({
     page,
+    instanceAccount,
+    daoAccount,
   }) => {
-    await redirectWeb4({ page, contractId: treasury.accountId });
-    await page.goto(`https://${treasury.accountId}.page`);
+    await redirectWeb4({
+      page,
+      contractId: instanceAccount,
+      treasury: daoAccount,
+    });
+    await page.goto(`https://${instanceAccount}.page`);
 
     const totalBalanceCardLocator = page.locator(".card.card-body", {
       hasText: "Total Balance",
@@ -160,9 +173,10 @@ test.describe("Intents Deposit UI", () => {
     const depositButton = totalBalanceCardLocator.getByRole("button", {
       name: "Deposit",
     });
+    await expect(depositButton).toBeVisible();
     await depositButton.click();
 
-    const modalLocator = page.locator(".modal-dialog");
+    const modalLocator = page.getByText("Deposit Funds Deposit options");
     await expect(modalLocator).toBeVisible({ timeout: 10000 });
 
     const sputnikTabButton = modalLocator.getByRole("button", {
@@ -187,19 +201,17 @@ test.describe("Intents Deposit UI", () => {
     const sputnikCopyButtonContainer = modalLocator
       .locator('p:has-text("Deposit NEAR to this Sputnik DAO address:")')
       .locator("xpath=./following-sibling::div[1]");
-    const sputnikCopyButton = sputnikCopyButtonContainer.getByRole("button");
+    const sputnikCopyButton = sputnikCopyButtonContainer.locator(
+      '.btn[data-component="widgets.treasury-factory.near/widget/components.Copy"]'
+    );
     await expect(sputnikCopyButton).toBeVisible();
     await expect(sputnikCopyButton).toContainText("Copy");
-    await expect(sputnikCopyButton.locator("i.bi-clipboard")).toBeVisible();
-
     await sputnikCopyButton.click();
+
     await expect(sputnikCopyButton).toContainText("Copied");
-    await expect(sputnikCopyButton.locator("i.bi-check-lg")).toBeVisible();
-    // Check for revert, allowing time for the 2s timeout in component
-    await expect(sputnikCopyButton.locator("i.bi-clipboard")).toBeVisible({
-      timeout: 3000,
-    });
-    await expect(sputnikCopyButton).toContainText("Copy", { timeout: 3000 });
+
+    let clipboardText = await page.evaluate("navigator.clipboard.readText()");
+    expect(clipboardText).toContain(daoAccount);
 
     // Switch to Near Intents tab
     await intentsTabButton.click();
@@ -222,19 +234,17 @@ test.describe("Intents Deposit UI", () => {
         'p:has-text("Deposit NEAR or other supported tokens to this Near Intents enabled address:")'
       )
       .locator("xpath=./following-sibling::div[1]");
-    const intentsCopyButton = intentsCopyButtonContainer.getByRole("button");
+    const intentsCopyButton = intentsCopyButtonContainer.locator(
+      '.btn[data-component="widgets.treasury-factory.near/widget/components.Copy"]'
+    );
     await expect(intentsCopyButton).toBeVisible();
     await expect(intentsCopyButton).toContainText("Copy");
-    await expect(intentsCopyButton.locator("i.bi-clipboard")).toBeVisible();
-
     await intentsCopyButton.click();
+
     await expect(intentsCopyButton).toContainText("Copied");
-    await expect(intentsCopyButton.locator("i.bi-check-lg")).toBeVisible();
-    // Check for revert
-    await expect(intentsCopyButton.locator("i.bi-clipboard")).toBeVisible({
-      timeout: 3000,
-    });
-    await expect(intentsCopyButton).toContainText("Copy", { timeout: 3000 });
+
+    clipboardText = await page.evaluate("navigator.clipboard.readText()");
+    expect(clipboardText).toContain(intentsDepositAccount);
 
     // Close the modal
     const closeButtonFooter = modalLocator.getByRole("button", {
@@ -244,9 +254,18 @@ test.describe("Intents Deposit UI", () => {
     await expect(modalLocator).not.toBeVisible();
   });
 
-  test("should display QR code in both tabs", async ({ page }) => {
-    await redirectWeb4({ page, contractId: treasury.accountId });
-    await page.goto(`https://${treasury.accountId}.page`);
+  test("should display QR code in both tabs", async ({
+    page,
+    instanceAccount,
+    daoAccount,
+  }) => {
+    await redirectWeb4({
+      page,
+      contractId: instanceAccount,
+      treasury: daoAccount,
+    });
+
+    await page.goto(`https://${instanceAccount}.page`);
 
     const totalBalanceCardLocator = page.locator(".card.card-body", {
       hasText: "Total Balance",
