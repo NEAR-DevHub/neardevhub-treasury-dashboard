@@ -266,14 +266,14 @@ const TokenCard = ({ token }) => {
 
 if (loading)
   return (
-    <div className="card card-body">
+    <div className="card flex-1 overflow-hidden border-bottom">
       {heading}
       <Loading />
     </div>
   );
 if (error)
   return (
-    <div className="card card-body">
+    <div className="card flex-1 overflow-hidden border-bottom">
       {heading}
       <div className="text-danger px-3 py-2">
         Failed to load Intents balances.
@@ -285,7 +285,7 @@ const filtered = (tokens || []).filter(
   (token) => token.amount && Big(token.amount).gt(0)
 );
 return (
-  <div className="card card-body">
+  <div className="card flex-1 overflow-hidden border-bottom">
     {heading}
     {filtered.length === 0 ? (
       <div className="text-secondary px-3 py-2">No Intents balances found.</div>
