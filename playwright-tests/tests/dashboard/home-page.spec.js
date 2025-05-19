@@ -101,7 +101,9 @@ test.describe("Dashboard Page", function () {
     await mockUserDaos({
       page,
       accountId: "theori.near",
-      hasDaos: testInfo.title.includes("Shouldn't show treasuries dropdown") ? false : true,
+      hasDaos: testInfo.title.includes("Shouldn't show treasuries dropdown")
+        ? false
+        : true,
       daoAccount,
     });
 
