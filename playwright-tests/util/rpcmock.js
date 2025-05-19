@@ -573,10 +573,10 @@ export async function mockWithFTBalance({
 
 export async function mockUserDaos({ page, hasDaos, accountId, daoAccount }) {
   await page.route(
-    daoAccount.includes("testing")
+    (daoAccount.includes("testing")
       ? `https://ref-sdk-test-cold-haze-1300-2.fly.dev`
-      : `https://ref-sdk-api-2.fly.dev` +
-          `/api/user-daos?account_id=${accountId}`,
+      : `https://ref-sdk-api-2.fly.dev`) +
+      `/api/user-daos?account_id=${accountId}`,
     async (route) => {
       const json = hasDaos
         ? [
