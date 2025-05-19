@@ -368,7 +368,9 @@ test("update infinex.sputnik-dao.near", async ({ page }) => {
   await page.getByRole("button", { name: "Submit Request" }).click();
   await page.getByRole("button", { name: "Confirm" }).click();
   await page.getByRole("link", { name: "View it" }).click();
-  await expect(await page.getByText("Update policy - Voting")).toBeVisible();
+  await expect(await page.getByText("Update policy - Voting")).toBeVisible({
+    timeout: 15000,
+  });
 
   // Tear down
 

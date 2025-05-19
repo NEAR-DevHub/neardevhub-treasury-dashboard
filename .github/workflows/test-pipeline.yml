@@ -63,6 +63,12 @@ jobs:
     with:
       node-version: "20"
 
+  playwright_intents:
+      needs: [install]
+      uses: ./.github/workflows/playwright_intents.yml
+      with:
+        node-version: "20"
+
   playwright_treasury_factory:
     needs: [install, build-sandbox]
     uses: ./.github/workflows/playwright_treasury_factory.yml
