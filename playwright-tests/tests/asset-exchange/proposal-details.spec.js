@@ -276,7 +276,7 @@ test.describe
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(600_000);
+    test.setTimeout(300_000);
     const sandbox = await setupSandboxAndCreateProposal({ daoAccount, page });
     await mockWithFTBalance({ page, daoAccount, isSufficient: true });
 
@@ -297,7 +297,7 @@ test.describe
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(600_000);
+    test.setTimeout(300_000);
     const sandbox = await setupSandboxAndCreateProposal({ daoAccount, page });
     await page.goto(`/${instanceAccount}/widget/app?page=asset-exchange&id=0`);
     await mockWithFTBalance({ page, daoAccount, isSufficient: false });
@@ -323,7 +323,7 @@ test.describe
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(600_000);
+    test.setTimeout(300_000);
     const sandbox = await setupSandboxAndCreateProposal({ daoAccount, page });
     await mockWithFTBalance({ page, daoAccount, isSufficient: true });
 
