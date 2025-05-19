@@ -17,7 +17,7 @@ test.describe("My Treasuries", () => {
     factoryAccount,
   }) => {
     test.setTimeout(120_000);
-    await mockUserDaos({ page, accountId: "megha19.near" });
+    await mockUserDaos({ page, accountId: "theori.near" , hasDaos: false, daoAccount: factoryAccount});
     await page.goto(`/${factoryAccount}/widget/app`);
     await page.waitForTimeout(3_000);
     await expect(
@@ -30,7 +30,7 @@ test.describe("My Treasuries", () => {
     factoryAccount,
   }) => {
     test.setTimeout(120_000);
-    await mockUserDaos({ page, accountId: "theori.near" });
+    await mockUserDaos({ page, accountId: "theori.near" , hasDaos: true, daoAccount: factoryAccount});
     await page.goto(`/${factoryAccount}/widget/app`);
     await expect(
       page.locator("h3", { hasText: "My Treasuries" }),

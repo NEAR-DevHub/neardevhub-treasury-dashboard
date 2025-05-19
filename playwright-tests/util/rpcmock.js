@@ -571,26 +571,29 @@ export async function mockWithFTBalance({
   });
 }
 
-export async function mockUserDaos({ page, accountId }) {
-  await page.route(`https://api.pikespeak.ai/daos/members`, async (route) => {
-    const json = {
-      [accountId]: {
-        daos: [
-          "build.sputnik-dao.near",
-          "testing.sputnik-dao.near",
-          "she-is-near.sputnik-dao.near",
-          "testing-astradao.sputnik-dao.near",
-          "devdao.sputnik-dao.near",
-          "infinex.sputnik-dao.near",
-          "testing-treasury.sputnik-dao.near",
-          "templar.sputnik-dao.near",
-          "mgoel.sputnik-dao.near",
-          "testing-app2.sputnik-dao.near",
-          "test-self-create.sputnik-dao.near",
-        ],
-      },
-    };
-
-    await route.fulfill({ json });
-  });
+export async function mockUserDaos({ page, hasDaos, accountId, daoAccount }) {
+  await page.route(
+    daoAccount.includes("testing")
+      ? `https://ref-sdk-test-cold-haze-1300-2.fly.dev`
+      : `https://ref-sdk-api-2.fly.dev` +
+          `/api/user-daos?account_id=${accountId}`,
+    async (route) => {
+      const json = hasDaos
+        ? [
+            "build.sputnik-dao.near",
+            "testing.sputnik-dao.near",
+            "she-is-near.sputnik-dao.near",
+            "testing-astradao.sputnik-dao.near",
+            "devdao.sputnik-dao.near",
+            "infinex.sputnik-dao.near",
+            "testing-treasury.sputnik-dao.near",
+            "templar.sputnik-dao.near",
+            "mgoel.sputnik-dao.near",
+            "testing-app2.sputnik-dao.near",
+            "test-self-create.sputnik-dao.near",
+          ]
+        : [];
+      await route.fulfill({ json });
+    }
+  );
 }
