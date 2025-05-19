@@ -76,7 +76,7 @@ jobs:
         if: failure() && steps.run-tests.outcome == 'failure' # Condition to run only if the run-tests step failed
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-test-artifacts-${{ matrix.project }}-${{ matrix.shard }}.zip # Name of the artifact
+          name: playwright-test-artifacts-${{ matrix.project }}.zip # Name of the artifact
           path: | # Paths to include in the artifact
             test-results/
             playwright-report/ # Often contains trace files and HTML reports
