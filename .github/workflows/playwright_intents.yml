@@ -1,0 +1,60 @@
+name: Playwright Tests - NEAR intents
+on:
+  workflow_dispatch: {}
+  workflow_call:
+    inputs:
+      node-version:
+        required: false
+        type: string
+        default: "20"
+
+concurrency:
+  group: intents-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  playwright-tests-intents:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        shard: [1/3, 2/3, 3/3]
+        project:
+          - treasury-dashboard
+          - infinex
+          - treasury-testing
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Download installed dependencies
+        uses: actions/download-artifact@v4
+        with:
+          name: installed-dependencies
+          path: ./
+
+      - name: Extract node_modules
+        run: tar -xzf installed-dependencies.tar.gz
+
+      - name: Download Playwright browsers
+        uses: actions/download-artifact@v4
+        with:
+          name: playwright-browsers
+          path: ./
+
+      - name: Extract browsers
+        run: |
+          mkdir -p ~/.cache
+          tar -xzf playwright-browsers.tar.gz -C ~/.cache
+
+      - name: Run tests
+        run: |
+          npx playwright test playwright-tests/tests/intents \
+            --project=${{ matrix.project }} \
+            --shard=${{ matrix.shard }}
