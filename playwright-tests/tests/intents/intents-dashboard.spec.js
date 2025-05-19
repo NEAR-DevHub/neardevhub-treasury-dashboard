@@ -407,7 +407,7 @@ test("show intents balance in dashboard (sandbox)", async ({
 
   // Locate the ETH row and check its balance
   const ethRowLocator = page.locator(
-    '.card-body div.d-flex.flex-column.border-bottom:has(div.h6.mb-0.text-truncate:has-text("ETH"))'
+    '.card div.d-flex.flex-column.border-bottom:has(div.h6.mb-0.text-truncate:has-text("ETH"))'
   );
   const ethAmountElement = ethRowLocator.locator(
     "div.d-flex.gap-2.align-items-center.justify-content-end div.d-flex.flex-column.align-items-end div.h6.mb-0"
@@ -416,7 +416,7 @@ test("show intents balance in dashboard (sandbox)", async ({
 
   // Locate the WNEAR row and check its balance
   const wnearRowLocator = page.locator(
-    '.card-body div.d-flex.flex-column.border-bottom:has(div.h6.mb-0.text-truncate:has-text("WNEAR"))'
+    '.card div.d-flex.flex-column.border-bottom:has(div.h6.mb-0.text-truncate:has-text("WNEAR"))'
   );
   const wnearAmountElement = wnearRowLocator.locator(
     "div.d-flex.gap-2.align-items-center.justify-content-end div.d-flex.flex-column.align-items-end div.h6.mb-0"
@@ -425,7 +425,7 @@ test("show intents balance in dashboard (sandbox)", async ({
 
   // Locate the BTC row and check its balance
   const btcRowLocator = page.locator(
-    '.card-body div.d-flex.flex-column.border-bottom:has(div.h6.mb-0.text-truncate:has-text("BTC"))'
+    '.card div.d-flex.flex-column.border-bottom:has(div.h6.mb-0.text-truncate:has-text("BTC"))'
   );
   const btcAmountElement = btcRowLocator.locator(
     "div.d-flex.gap-2.align-items-center.justify-content-end div.d-flex.flex-column.align-items-end div.h6.mb-0"
@@ -434,7 +434,7 @@ test("show intents balance in dashboard (sandbox)", async ({
 
   // Locate the SOL row and check its balance
   const solRowLocator = page.locator(
-    '.card-body div.d-flex.flex-column.border-bottom:has(div.h6.mb-0.text-truncate:has-text("SOL"))'
+    '.card div.d-flex.flex-column.border-bottom:has(div.h6.mb-0.text-truncate:has-text("SOL"))'
   );
   const solAmountElement = solRowLocator.locator(
     "div.d-flex.gap-2.align-items-center.justify-content-end div.d-flex.flex-column.align-items-end div.h6.mb-0"
