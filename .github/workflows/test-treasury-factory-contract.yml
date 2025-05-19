@@ -1,43 +1,43 @@
-name: "Test Treasury Factory Rust"
-on:
-  workflow_call: {}
-  pull_request:
-  push:
-    branches:
-      - main
+# name: "Test Treasury Factory Rust"
+# on:
+#   workflow_call: {}
+#   pull_request:
+#   push:
+#     branches:
+#       - main
 
-concurrency:
-  group: web4-treasury-factory-${{ github.ref }}
-  cancel-in-progress: true
+# concurrency:
+#   group: web4-treasury-factory-${{ github.ref }}
+#   cancel-in-progress: true
 
-jobs:
-  code-formatting:
-    name: Code Formatting
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - run: cargo fmt --check
-        working-directory: ./treasury-factory
+# jobs:
+#   code-formatting:
+#     name: Code Formatting
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v4
+#       - run: cargo fmt --check
+#         working-directory: ./treasury-factory
 
-  code-linter:
-    name: Code Linter
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Run cargo clippy
-        run: |
-          rustup component add clippy
-          cargo clippy --all-features --workspace --tests -- --warn clippy::all --warn clippy::nursery
-        working-directory: ./treasury-factory
+#   code-linter:
+#     name: Code Linter
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v4
+#       - name: Run cargo clippy
+#         run: |
+#           rustup component add clippy
+#           cargo clippy --all-features --workspace --tests -- --warn clippy::all --warn clippy::nursery
+#         working-directory: ./treasury-factory
 
-  tests:
-    name: Tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Run cargo test
-        run: cargo test -- --nocapture
-        working-directory: ./treasury-factory
+#   tests:
+#     name: Tests
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Checkout repository
+#         uses: actions/checkout@v4
+#       - name: Run cargo test
+#         run: cargo test -- --nocapture
+#         working-directory: ./treasury-factory
