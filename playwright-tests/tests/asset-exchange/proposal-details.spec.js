@@ -266,7 +266,8 @@ async function approveProposal({
   }
 }
 
-test.describe.serial("Should vote on exchange proposal using sandbox RPC and show updated status and toast", () => {
+test.describe
+  .serial("Should vote on exchange proposal using sandbox RPC and show updated status and toast", () => {
   test.use({
     storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
   });
