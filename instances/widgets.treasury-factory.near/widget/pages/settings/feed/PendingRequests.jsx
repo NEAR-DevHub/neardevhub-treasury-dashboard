@@ -67,7 +67,7 @@ const settingsApproverGroup = getApproversAndThreshold(
 
 const deleteGroup = getApproversAndThreshold(
   treasuryDaoID,
-  "transfer",
+  "policy",
   context.accountId,
   true
 );

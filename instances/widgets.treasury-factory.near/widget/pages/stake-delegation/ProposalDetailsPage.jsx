@@ -207,7 +207,6 @@ return (
                 hasDeletePermission,
                 hasVotingPermission,
                 proposalCreator: proposalData?.proposer,
-                currentContract: "",
                 requiredVotes,
                 checkProposalStatus: () =>
                   checkProposalStatus(proposalData?.id),
