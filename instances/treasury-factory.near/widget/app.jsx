@@ -48,7 +48,7 @@ function updateCurrentDraft(treasury) {
 function Page() {
   if (!page) {
     const accountId = context.accountId;
-    const userDaos = getUserDaos(accountId)?.body?.[accountId]?.["daos"];
+    const userDaos = getUserDaos(accountId)?.body;
 
     if (Array.isArray(userDaos) && userDaos.length > 0) {
       page = "my-treasuries";

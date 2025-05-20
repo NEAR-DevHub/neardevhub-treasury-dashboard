@@ -97,6 +97,16 @@ test.describe("Dashboard Page", function () {
       isSufficient: true,
       isDashboard: true,
     });
+
+    await mockUserDaos({
+      page,
+      accountId: "theori.near",
+      hasDaos: testInfo.title.includes("Shouldn't show treasuries dropdown")
+        ? false
+        : true,
+      daoAccount,
+    });
+
     await page.goto(`/${instanceAccount}/widget/app`);
     await expect(
       page.locator("div").filter({ hasText: /^Dashboard$/ })
@@ -169,7 +179,6 @@ test.describe("Dashboard Page", function () {
     instanceAccount,
   }) => {
     test.setTimeout(60_000);
-    await mockUserDaos({ page, accountId: "megha19.near" });
     await page.waitForTimeout(3_000);
     const logo = instanceAccount.includes("devdao")
       ? page.locator("g rect")
@@ -183,7 +192,6 @@ test.describe("Dashboard Page", function () {
     page,
   }) => {
     test.setTimeout(60_000);
-    await mockUserDaos({ page, accountId: "theori.near" });
     await page.waitForTimeout(3_000);
     const treasuriesDropdown = page.locator(".custom-dropdown > .d-flex > .bi");
     await expect(treasuriesDropdown).toBeVisible();
