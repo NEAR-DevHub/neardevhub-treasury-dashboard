@@ -451,6 +451,7 @@ test.describe("User is logged in", function () {
     expect(await page.getByTestId("total-amount").inputValue()).toBe("");
   });
 
+  // TODO
   test("cancel form with linked proposal should clear existing values", async ({
     page,
     instanceAccount,
@@ -543,6 +544,7 @@ test.describe("User is logged in", function () {
     });
   });
 
+  // TODO
   test("create USDC transfer payment request", async ({
     page,
     instanceAccount,
@@ -772,6 +774,7 @@ test.describe("User is logged in", function () {
   });
 });
 
+// todo
 test.describe("admin with function access keys", function () {
   test.use({
     storageState:
