@@ -287,13 +287,7 @@ const ProposalsComponent = () => {
                   <Link
                     target="_blank"
                     rel="noopener noreferrer"
-                    to={href({
-                      widgetSrc: `${REPL_DEVHUB}/widget/app`,
-                      params: {
-                        page: "proposal",
-                        id: proposalId,
-                      },
-                    })}
+                    to={`https://nearn.io/devhub/7/${proposalId}/`}
                   >
                     <div className="d-flex gap-2 align-items-center text-underline fw-semi-bold">
                       #{proposalId} <i class="bi bi-box-arrow-up-right"> </i>

@@ -271,7 +271,24 @@ useEffect(() => {
 }, []);
 
 function parseString(string) {
-  return (string ?? "").replace(/<[^>]*>/g, "");
+  if (!string) return "";
+
+  // Remove HTML tags
+  const withoutTags = string.replace(/<[^>]*>/g, "");
+
+  // Decode common HTML entities
+  const entities = {
+    "&amp;": "&",
+    "&lt;": "<",
+    "&gt;": ">",
+    "&quot;": '"',
+    "&#39;": "'",
+  };
+
+  return withoutTags.replace(
+    /&amp;|&lt;|&gt;|&quot;|&#39;/g,
+    (match) => entities[match]
+  );
 }
 
 function onSelectProposal(id) {
