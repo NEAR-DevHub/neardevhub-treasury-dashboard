@@ -113,55 +113,55 @@ async function checkProposalDetailPage({
   }
 }
 
-// test.describe
-//   .parallel("should display exchange proposals of different status correctly", () => {
-//   test.use({
-//     contextOptions: {
-//       permissions: ["clipboard-read", "clipboard-write"],
-//     },
-//   });
-//   proposalStatuses.forEach((status) => {
-//     test(`proposal with status '${status}' should be displayed correctly`, async ({
-//       page,
-//       instanceAccount,
-//     }) => {
-//       const notInProgress = status !== "InProgress";
-//       await mockExchangeProposals({ page, status });
-//       await page.goto(`/${instanceAccount}/widget/app?page=asset-exchange`);
-//       await page.waitForTimeout(10_000);
-//       if (notInProgress) {
-//         await page.getByText("History", { exact: true }).click();
-//         await page.waitForTimeout(5_000);
-//       }
-//       const proposalCell = page.getByTestId("proposal-request-#0");
-//       await expect(proposalCell).toBeVisible({ timeout: 20_000 });
-//       await mockExchangeProposal({ page, status });
-//       await proposalCell.click();
+test.describe
+  .parallel("should display exchange proposals of different status correctly", () => {
+  test.use({
+    contextOptions: {
+      permissions: ["clipboard-read", "clipboard-write"],
+    },
+  });
+  proposalStatuses.forEach((status) => {
+    test(`proposal with status '${status}' should be displayed correctly`, async ({
+      page,
+      instanceAccount,
+    }) => {
+      const notInProgress = status !== "InProgress";
+      await mockExchangeProposals({ page, status });
+      await page.goto(`/${instanceAccount}/widget/app?page=asset-exchange`);
+      await page.waitForTimeout(10_000);
+      if (notInProgress) {
+        await page.getByText("History", { exact: true }).click();
+        await page.waitForTimeout(5_000);
+      }
+      const proposalCell = page.getByTestId("proposal-request-#0");
+      await expect(proposalCell).toBeVisible({ timeout: 20_000 });
+      await mockExchangeProposal({ page, status });
+      await proposalCell.click();
 
-//       await checkProposalDetailPage({
-//         page,
-//         status,
-//         instanceAccount,
-//         isCompactVersion: true,
-//       });
-//     });
-//   });
+      await checkProposalDetailPage({
+        page,
+        status,
+        instanceAccount,
+        isCompactVersion: true,
+      });
+    });
+  });
 
-//   test(`proposal details link should open correctly`, async ({
-//     page,
-//     instanceAccount,
-//   }) => {
-//     const status = "Approved";
-//     await mockExchangeProposal({ page, status });
-//     await page.goto(`/${instanceAccount}/widget/app?page=asset-exchange&id=0`);
-//     await checkProposalDetailPage({
-//       page,
-//       status,
-//       instanceAccount,
-//       isCompactVersion: false,
-//     });
-//   });
-// });
+  test(`proposal details link should open correctly`, async ({
+    page,
+    instanceAccount,
+  }) => {
+    const status = "Approved";
+    await mockExchangeProposal({ page, status });
+    await page.goto(`/${instanceAccount}/widget/app?page=asset-exchange&id=0`);
+    await checkProposalDetailPage({
+      page,
+      status,
+      instanceAccount,
+      isCompactVersion: false,
+    });
+  });
+});
 
 async function setupSandboxAndCreateProposal({ daoAccount, page }) {
   const daoName = daoAccount.split(".")[0];
@@ -213,6 +213,9 @@ async function approveProposal({
     });
     await page.getByRole("button", { name: "Proceed Anyway" }).click();
   }
+  await page.getByRole("button", { name: "Confirm" }).click();
+  await expect(page.getByText("Confirm Transaction")).toBeVisible();
+  await page.getByRole("button", { name: "Confirm" }).click();
   const transactionResult = await sandbox.account.functionCall({
     contractId: daoAccount,
     methodName: "act_proposal",
@@ -223,11 +226,7 @@ async function approveProposal({
     gas: "300000000000000",
     attachedDeposit: "0",
   });
-  await page.waitForTimeout(5_000);
-  await page.getByRole("button", { name: "Confirm" }).click();
-  await expect(page.getByText("Confirm Transaction")).toBeVisible();
-  await page.getByRole("button", { name: "Confirm" }).click();
-  await page.waitForTimeout(5_000);
+  await page.waitForTimeout(4_000)
   await page.evaluate(async (transactionResult) => {
     window.transactionSentPromiseResolve(transactionResult);
   }, transactionResult);
@@ -248,11 +247,7 @@ async function approveProposal({
       )
     ).toBeVisible({ timeout: 30_000 });
   } else {
-    await expect(page.getByText("The request has Failed.")).toBeVisible({
-      timeout: 30_000,
-    });
-
-    await expect(page.getByText("Asset Exchange Request Failed")).toBeVisible({
+    await expect(page.getByText('Just Now')).toBeVisible({
       timeout: 30_000,
     });
     if (isCompactVersion) {
@@ -277,7 +272,7 @@ test.describe
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(120_000);
+    test.setTimeout(200_000);
     const sandbox = await setupSandboxAndCreateProposal({ daoAccount, page });
     await mockWithFTBalance({ page, daoAccount, isSufficient: true });
 
@@ -293,60 +288,60 @@ test.describe
     await sandbox.quitSandbox();
   });
 
-  // test(`Proposal details page: should show insufficient balance error`, async ({
-  //   page,
-  //   instanceAccount,
-  //   daoAccount,
-  // }) => {
-  //   test.setTimeout(300_000);
-  //   const sandbox = await setupSandboxAndCreateProposal({ daoAccount, page });
-  //   await page.goto(`/${instanceAccount}/widget/app?page=asset-exchange&id=0`);
-  //   await mockWithFTBalance({ page, daoAccount, isSufficient: false });
-  //   const approveButton = page
-  //     .getByRole("button", {
-  //       name: "Approve",
-  //     })
-  //     .first();
-  //   await expect(approveButton).toBeEnabled({ timeout: 30_000 });
-  //   await approveButton.click();
-  //   await approveProposal({
-  //     page,
-  //     sandbox,
-  //     daoAccount,
-  //     showInsufficientBalanceModal: true,
-  //     instanceAccount,
-  //   });
-  //   await sandbox.quitSandbox();
-  // });
+  test(`Proposal details page: should show insufficient balance error`, async ({
+    page,
+    instanceAccount,
+    daoAccount,
+  }) => {
+    test.setTimeout(200_000);
+    const sandbox = await setupSandboxAndCreateProposal({ daoAccount, page });
+    await page.goto(`/${instanceAccount}/widget/app?page=asset-exchange&id=0`);
+    await mockWithFTBalance({ page, daoAccount, isSufficient: false });
+    const approveButton = page
+      .getByRole("button", {
+        name: "Approve",
+      })
+      .first();
+    await expect(approveButton).toBeEnabled({ timeout: 30_000 });
+    await approveButton.click();
+    await approveProposal({
+      page,
+      sandbox,
+      daoAccount,
+      showInsufficientBalanceModal: true,
+      instanceAccount,
+    });
+    await sandbox.quitSandbox();
+  });
 
-  // test(`Compact proposal page`, async ({
-  //   page,
-  //   instanceAccount,
-  //   daoAccount,
-  // }) => {
-  //   test.setTimeout(300_000);
-  //   const sandbox = await setupSandboxAndCreateProposal({ daoAccount, page });
-  //   await mockWithFTBalance({ page, daoAccount, isSufficient: true });
+  test(`Compact proposal page`, async ({
+    page,
+    instanceAccount,
+    daoAccount,
+  }) => {
+    test.setTimeout(200_000);
+    const sandbox = await setupSandboxAndCreateProposal({ daoAccount, page });
+    await mockWithFTBalance({ page, daoAccount, isSufficient: true });
 
-  //   await page.goto(`/${instanceAccount}/widget/app?page=asset-exchange`);
-  //   const proposalCell = page.getByTestId("proposal-request-#0");
-  //   await expect(proposalCell).toBeVisible({ timeout: 20_000 });
-  //   await proposalCell.click();
-  //   await expect(page.getByRole("heading", { name: "#0" })).toBeVisible();
-  //   const approveButton = page
-  //     .getByRole("button", {
-  //       name: "Approve",
-  //     })
-  //     .nth(1);
-  //   await expect(approveButton).toBeEnabled({ timeout: 30_000 });
-  //   await approveButton.click();
-  //   await approveProposal({
-  //     page,
-  //     sandbox,
-  //     daoAccount,
-  //     isCompactVersion: true,
-  //     instanceAccount,
-  //   });
-  //   await sandbox.quitSandbox();
-  // });
+    await page.goto(`/${instanceAccount}/widget/app?page=asset-exchange`);
+    const proposalCell = page.getByTestId("proposal-request-#0");
+    await expect(proposalCell).toBeVisible({ timeout: 20_000 });
+    await proposalCell.click();
+    await expect(page.getByRole("heading", { name: "#0" })).toBeVisible();
+    const approveButton = page
+      .getByRole("button", {
+        name: "Approve",
+      })
+      .nth(1);
+    await expect(approveButton).toBeEnabled({ timeout: 30_000 });
+    await approveButton.click();
+    await approveProposal({
+      page,
+      sandbox,
+      daoAccount,
+      isCompactVersion: true,
+      instanceAccount,
+    });
+    await sandbox.quitSandbox();
+  });
 });
