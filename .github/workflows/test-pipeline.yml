@@ -1,6 +1,7 @@
 name: Test Pipeline
 
 on:
+  workflow_dispatch: {}
   pull_request:
   push:
     branches:
@@ -62,20 +63,21 @@ jobs:
   #   uses: ./.github/workflows/playwright_system_updates.yml
   #   with:
   #     node-version: "20"
-# playwright_intents:
-#   needs: [install]
-#   uses: ./.github/workflows/playwright_intents.yml
-#   with:
-#     node-version: "20"
 
-# playwright_treasury_factory:
-#   needs: [install, build-sandbox]
-#   uses: ./.github/workflows/playwright_treasury_factory.yml
-#   with:
-#     node-version: "20"
+  # playwright_intents:
+  #   needs: [install]
+  #   uses: ./.github/workflows/playwright_intents.yml
+  #   with:
+  #     node-version: "20"
 
-# playwright_web4:
-#   needs: [install, build-sandbox]
-#   uses: ./.github/workflows/playwright_web4.yml
-#   with:
-#     node-version: "20"
+  # playwright_treasury_factory:
+  #   needs: [install, build-sandbox]
+  #   uses: ./.github/workflows/playwright_treasury_factory.yml
+  #   with:
+  #     node-version: "20"
+
+  # playwright_web4:
+  #   needs: [install, build-sandbox]
+  #   uses: ./.github/workflows/playwright_web4.yml
+  #   with:
+  #     node-version: "20"
