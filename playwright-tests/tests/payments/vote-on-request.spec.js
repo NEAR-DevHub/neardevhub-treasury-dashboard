@@ -16,7 +16,6 @@ import {
 } from "../../util/inventory.js";
 import { InsufficientBalance, toBase64 } from "../../util/lib.js";
 import { SandboxRPC } from "../../util/sandboxrpc.js";
-import { getInstanceConfig } from "../../util/config.js";
 
 async function voteOnProposal({
   page,
@@ -210,6 +209,16 @@ test.describe.parallel("User logged in with different roles", () => {
   }
 });
 
+async function checkHistoryProposal({ page, id, instanceAccount }) {
+  const historyBtn = page.getByText("View in History");
+  await expect(historyBtn).toBeVisible();
+  await Promise.all([page.waitForNavigation(), historyBtn.click()]);
+  const currentUrl = page.url();
+  await expect(currentUrl).toContain(
+    `http://localhost:8080/${instanceAccount}/widget/app?page=payments&id=${id}`
+  );
+}
+
 test.describe("don't ask again", function () {
   test.use({
     storageState:
@@ -322,19 +331,18 @@ test.describe("don't ask again", function () {
           "Your vote is counted, the payment request is highlighted."
         )
       ).toBeVisible();
+      await expect(page.locator("tr").nth(1)).toHaveClass(
+        "cursor-pointer proposal-row bg-highlight",
+        {
+          timeout: 10_000,
+        }
+      );
     } else {
       await expect(
         page.getByText("The payment request has been successfully executed.")
       ).toBeVisible();
-      await page.getByText("View in History").click();
+      await checkHistoryProposal({ page, instanceAccount, id: 10 });
     }
-
-    await expect(page.locator("tr").nth(1)).toHaveClass(
-      "cursor-pointer proposal-row bg-highlight",
-      {
-        timeout: 10_000,
-      }
-    );
   });
 
   test("reject payment request with single and multiple required votes", async ({
@@ -383,20 +391,18 @@ test.describe("don't ask again", function () {
           "Your vote is counted, the payment request is highlighted."
         )
       ).toBeVisible();
+      await expect(page.locator("tr").nth(1)).toHaveClass(
+        "cursor-pointer proposal-row bg-highlight",
+        {
+          timeout: 10_000,
+        }
+      );
     } else {
       await expect(
         page.getByText("The payment request has been rejected.")
       ).toBeVisible();
-      await page.getByText("View in History").click();
+      await checkHistoryProposal({ page, instanceAccount, id: 10 });
     }
-
-    await expect(page.locator("tr").nth(1)).toHaveClass(
-      "cursor-pointer proposal-row bg-highlight",
-      {
-        timeout: 10_000,
-      }
-    );
-    await page.waitForTimeout(1_000);
   });
 
   test("delete payment request with single and multiple required votes", async ({
@@ -445,6 +451,12 @@ test.describe("don't ask again", function () {
           "Your vote is counted, the payment request is highlighted."
         )
       ).toBeVisible();
+      await expect(page.locator("tr").nth(1)).toHaveClass(
+        "cursor-pointer proposal-row bg-highlight",
+        {
+          timeout: 10_000,
+        }
+      );
     } else {
       await expect(
         page.getByText("The payment request has been successfully deleted.")
@@ -643,13 +655,7 @@ test.describe("Vote on Lockup payment request", function () {
     await expect(
       page.getByText("The payment request has been successfully executed.")
     ).toBeVisible();
-    await page.getByText("View in History").click();
-    await expect(page.locator("tr").nth(1)).toHaveClass(
-      "cursor-pointer proposal-row bg-highlight",
-      {
-        timeout: 10_000,
-      }
-    );
-    await sandbox.quitSandbox();
+    await checkHistoryProposal({ page, instanceAccount, id: 0 });
+    sandbox.quitSandbox();
   });
 });

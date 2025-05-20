@@ -68,7 +68,21 @@ jobs:
         run: chmod +x sandboxrpc/target/debug/sandboxrpc
 
       - name: Run tests
+        id: payments-tests
         run: |
           npx playwright test playwright-tests/tests/payments \
             --project=${{ matrix.project }} \
             --shard=${{ matrix.shard }}
+
+      - name: Sanitize shard name
+        run: echo "SHARD_SAFE=$(echo "${{ matrix.shard }}" | sed 's|/|-|')" >> $GITHUB_ENV
+
+      - name: Upload Playwright Test Artifacts (on failure)
+        if: failure() && steps.payments-tests.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-test-artifacts-payments-${{ matrix.project }}-shard-${{ env.SHARD_SAFE }}.zip
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 1
