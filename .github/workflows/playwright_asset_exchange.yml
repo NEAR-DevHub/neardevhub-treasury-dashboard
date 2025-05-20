@@ -8,6 +8,12 @@ on:
         required: false
         type: string
         default: "20"
+      shard:
+        required: true
+        type: string
+      project:
+        required: true
+        type: string
 
 concurrency:
   group: asset-exchange-${{ github.ref }}
@@ -16,19 +22,11 @@ concurrency:
 jobs:
   playwright-tests-asset-exchange:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        fail-fast: false
-        shard: [1/3, 2/3, 3/3]
-        project:
-          - treasury-dashboard
-          - infinex
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Download and extract node_modules
       - name: Download installed dependencies
         uses: actions/download-artifact@v4
         with:
@@ -52,7 +50,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 20
+          node-version: ${{ inputs["node-version"] }}
           cache: "npm"
 
       - name: Build project
@@ -71,17 +69,17 @@ jobs:
         id: asset-exchange-tests
         run: |
           npx playwright test playwright-tests/tests/asset-exchange/proposal-details.spec.js \
-            --project=${{ matrix.project }} \
-            --shard=${{ matrix.shard }}
+            --project=${{ inputs.project }} \
+            --shard=${{ inputs.shard }}
 
       - name: Sanitize shard name
-        run: echo "SHARD_SAFE=$(echo "${{ matrix.shard }}" | sed 's|/|-|')" >> $GITHUB_ENV
+        run: echo "SHARD_SAFE=$(echo "${{ inputs.shard }}" | sed 's|/|-|')" >> $GITHUB_ENV
 
       - name: Upload Playwright Test Artifacts (on failure)
         if: failure() && steps.asset-exchange-tests.outcome == 'failure'
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-test-artifacts-asset-exchange-${{ matrix.project }}-shard-${{ env.SHARD_SAFE }}.zip
+          name: playwright-test-artifacts-asset-exchange-${{ inputs.project }}-shard-${{ env.SHARD_SAFE }}.zip
           path: |
             test-results/
             playwright-report/

@@ -24,60 +24,67 @@ jobs:
 
   playwright_asset_exchange:
     needs: [install, build-sandbox]
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1/3, 2/3, 3/3]
+        project: [treasury-dashboard, infinex]
     uses: ./.github/workflows/playwright_asset_exchange.yml
     with:
       node-version: "20"
+      shard: ${{ matrix.shard }}
+      project: ${{ matrix.project }}
 
-  playwright_dashboard:
-    needs: [install, build-sandbox]
-    uses: ./.github/workflows/playwright_dashboard.yml
-    with:
-      node-version: "20"
+  # playwright_dashboard:
+  #   needs: [install, build-sandbox]
+  #   uses: ./.github/workflows/playwright_dashboard.yml
+  #   with:
+  #     node-version: "20"
 
-  playwright_lockup:
-    needs: [install, build-sandbox]
-    uses: ./.github/workflows/playwright_lockup.yml
-    with:
-      node-version: "20"
+  # playwright_lockup:
+  #   needs: [install, build-sandbox]
+  #   uses: ./.github/workflows/playwright_lockup.yml
+  #   with:
+  #     node-version: "20"
 
-  playwright_payments:
-    needs: [install, build-sandbox]
-    uses: ./.github/workflows/playwright_payments.yml
-    with:
-      node-version: "20"
+  # playwright_payments:
+  #   needs: [install, build-sandbox]
+  #   uses: ./.github/workflows/playwright_payments.yml
+  #   with:
+  #     node-version: "20"
 
-  playwright_settings:
-    needs: [install, build-sandbox]
-    uses: ./.github/workflows/playwright_settings.yml
-    with:
-      node-version: "20"
+  # playwright_settings:
+  #   needs: [install, build-sandbox]
+  #   uses: ./.github/workflows/playwright_settings.yml
+  #   with:
+  #     node-version: "20"
 
-  playwright_stake_delegation:
-    needs: [install, build-sandbox]
-    uses: ./.github/workflows/playwright_stake_delegation.yml
-    with:
-      node-version: "20"
+  # playwright_stake_delegation:
+  #   needs: [install, build-sandbox]
+  #   uses: ./.github/workflows/playwright_stake_delegation.yml
+  #   with:
+  #     node-version: "20"
 
-  playwright_system_updates:
-    needs: [install, build-sandbox]
-    uses: ./.github/workflows/playwright_system_updates.yml
-    with:
-      node-version: "20"
+  # playwright_system_updates:
+  #   needs: [install, build-sandbox]
+  #   uses: ./.github/workflows/playwright_system_updates.yml
+  #   with:
+  #     node-version: "20"
 
-  playwright_intents:
-    needs: [install]
-    uses: ./.github/workflows/playwright_intents.yml
-    with:
-      node-version: "20"
+  # playwright_intents:
+  #   needs: [install]
+  #   uses: ./.github/workflows/playwright_intents.yml
+  #   with:
+  #     node-version: "20"
 
-  playwright_treasury_factory:
-    needs: [install, build-sandbox]
-    uses: ./.github/workflows/playwright_treasury_factory.yml
-    with:
-      node-version: "20"
+  # playwright_treasury_factory:
+  #   needs: [install, build-sandbox]
+  #   uses: ./.github/workflows/playwright_treasury_factory.yml
+  #   with:
+  #     node-version: "20"
 
-  playwright_web4:
-    needs: [install, build-sandbox]
-    uses: ./.github/workflows/playwright_web4.yml
-    with:
-      node-version: "20"
+  # playwright_web4:
+  #   needs: [install, build-sandbox]
+  #   uses: ./.github/workflows/playwright_web4.yml
+  #   with:
+  #     node-version: "20"
