@@ -100,7 +100,7 @@ async function clickCreateLockupRequestButton(page) {
   await createRequestButton(page).click();
 }
 
-async function setupFormEnvironment({ page, daoAccount, instanceAccount }) {
+async function setupFormEnvironment({ page, instanceAccount }) {
   return await getInstanceConfig({ page, instanceAccount });
 }
 

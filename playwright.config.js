@@ -20,28 +20,25 @@ export default defineConfig({
      * For example in `await expect(locator).toHaveText();`
      */
     timeout: 7000,
-  },
-  /* Run tests in files in parallel */
-  fullyParallel: true,
-  /* Fail the build on CI if you accidentally left test.only in the source code. */
+  } /* Run tests in files in parallel */,
+  fullyParallel: true /* Fail the build on CI if you accidentally left test.only in the source code. */,
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
-  retries: process.env.CI ? 4 : 0,
+  retries: process.env.CI ? 3 : 0,
   /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
+  workers: process.env.CI ? 6 : undefined, // Run tests in parallel with 6 workers
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: "line",
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     headless: true,
-    video: process.env.CI ? "off" : "on",
+    video: process.env.CI ? "retain-on-failure" : "on",
     /* Maximum time each action such as `click()` can take. Defaults to 0 (no limit). */
     actionTimeout: 0,
     /* Base URL to use in actions like `await page.goto('/')`. */
     baseURL: "http://localhost:8080",
-
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: process.env.CI ? "on-first-retry" : "retain-on-failure",
+    trace: "retain-on-failure",
   },
 
   /* Configure projects for major browsers */

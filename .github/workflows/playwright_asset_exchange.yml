@@ -27,6 +27,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # Download and extract node_modules
       - name: Download installed dependencies
         uses: actions/download-artifact@v4
         with:
@@ -66,7 +67,21 @@ jobs:
         run: chmod +x sandboxrpc/target/debug/sandboxrpc
 
       - name: Run tests
+        id: asset-exchange-tests
         run: |
           npx playwright test playwright-tests/tests/asset-exchange \
             --project=${{ matrix.project }} \
             --shard=${{ matrix.shard }}
+
+      - name: Sanitize shard name
+        run: echo "SHARD_SAFE=$(echo "${{ matrix.shard }}" | sed 's|/|-|')" >> $GITHUB_ENV
+
+      - name: Upload Playwright Test Artifacts (on failure)
+        if: failure() && steps.asset-exchange-tests.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-test-artifacts-asset-exchange-${{ matrix.project }}-shard-${{ env.SHARD_SAFE }}.zip
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 1

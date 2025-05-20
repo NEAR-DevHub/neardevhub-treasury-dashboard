@@ -85,7 +85,7 @@ test.describe("Withdraw request", function () {
     await sandbox.setupSandboxForSputnikDao(daoName);
     await sandbox.addWithdrawRequestProposal({
       stakedPoolAccount,
-      description: `* Proposal Action: withdraw`,
+      description: `* Proposal Action: withdraw <br>* Amount: 3.0265368343533935e+23`,
       daoName,
     });
     await mockUnstakeAndWithdrawBalance({
@@ -102,7 +102,7 @@ test.describe("Withdraw request", function () {
     await submitBtn.dblclick();
     const expectedTransactionModalObject = {
       proposal: {
-        description: `* Proposal Action: withdraw`,
+        description: `* Proposal Action: withdraw <br>* Amount: 3.0265368343533935e+23`,
         kind: {
           FunctionCall: {
             receiver_id: stakedPoolAccount,
@@ -141,7 +141,7 @@ test.describe("Withdraw request", function () {
     await sandbox.init();
     await sandbox.attachRoutes(page);
     await sandbox.setupSandboxForSputnikDao(daoName);
-    const description = `* Proposal Action: withdraw`;
+    const description = `* Proposal Action: withdraw <br>* Amount: 3.0265368343533935e+23`;
     await sandbox.addWithdrawRequestProposal({
       stakedPoolAccount,
       description,
@@ -179,7 +179,7 @@ test.describe("Withdraw request", function () {
     // proposals for both the pools
     await expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
-        description: `* Proposal Action: withdraw`,
+        description: `* Proposal Action: withdraw <br>* Amount: 3.0265368343533935e+23`,
         kind: {
           FunctionCall: {
             receiver_id: stakedPoolAccount,
@@ -203,7 +203,7 @@ test.describe("Withdraw request", function () {
     const dataReceived = JSON.parse(txnLocator);
     expect(dataReceived).toEqual({
       proposal: {
-        description: `* Proposal Action: withdraw`,
+        description: `* Proposal Action: withdraw <br>* Amount: 3.0265368343533935e+23`,
         kind: {
           FunctionCall: {
             receiver_id: multiStakedPoolAccount,
