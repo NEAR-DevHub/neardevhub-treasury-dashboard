@@ -68,23 +68,10 @@ useEffect(() => {
           });
         }
       }
-
-      let parsedDrafts = [];
-      if (draftTreasuries?.length > 0) {
-        parsedDrafts = draftTreasuries.map((i) => ({
-          ...i,
-          daoId: `${i.accountName}.sputnik-dao.near`,
-          hasTreasury: true,
-          instanceAccount: `${i.accountName}.near`,
-          isDraft: true,
-          config: {
-            name: i.accountName,
-          },
-        }));
-      }
-      setUserTreasuries(
-        mergeUniqueTreasuries(parsedDrafts || [], withTreasury || [])
+      setUserTreasuries((prev) =>
+        mergeUniqueTreasuries(prev ?? [], withTreasury ?? [])
       );
+
       setOtherDaos(withoutTreasury);
 
       if (!(withTreasury || [])?.length && (withoutTreasury || []).length) {
@@ -93,6 +80,23 @@ useEffect(() => {
     });
   }
 }, [storageAccountName]);
+
+useEffect(() => {
+  if (!draftTreasuries?.length) return;
+
+  const enrichedDrafts = draftTreasuries.map((i) => ({
+    ...i,
+    daoId: `${i.accountName}.sputnik-dao.near`,
+    hasTreasury: true,
+    instanceAccount: `${i.accountName}.near`,
+    isDraft: true,
+    config: { name: i.accountName },
+  }));
+
+  setUserTreasuries((prev) =>
+    mergeUniqueTreasuries(prev ?? [], enrichedDrafts ?? [])
+  );
+}, [draftTreasuries]);
 
 const Container = styled.div`
   width: 100%;
