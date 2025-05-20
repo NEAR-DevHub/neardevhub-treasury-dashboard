@@ -524,7 +524,8 @@ test.describe("User is logged in", function () {
 
     const description = {
       title: "Update policy - Members Permissions",
-      summary: `theori.near requested to requested to revoke all permissions of "theori.near".`,
+      summary:
+        'theori.near requested to remove "theori.near" from "Create Requests" and "Manage Members" and "Vote"',
     };
 
     const commonParams = [

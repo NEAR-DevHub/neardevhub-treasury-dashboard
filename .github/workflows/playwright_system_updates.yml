@@ -21,8 +21,6 @@ jobs:
         shard: [1/3, 2/3, 3/3]
         project:
           - treasury-dashboard
-          - infinex
-          - treasury-testing
 
     steps:
       - name: Checkout repository

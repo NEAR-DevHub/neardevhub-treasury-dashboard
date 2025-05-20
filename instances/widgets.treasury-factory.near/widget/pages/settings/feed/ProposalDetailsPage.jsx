@@ -188,7 +188,6 @@ function getMemberDetails() {
 }
 
 function pluralize(count, singular) {
-  console.log(count);
   if (count == "1" || count == "0") {
     return `${count} ${singular}`;
   } else {
@@ -311,7 +310,6 @@ const SettingsContent = () => {
   };
 
   const content = renderContent();
-  console.log({ content, proposalData });
   return content ? (
     <div className="d-flex flex-column gap-2">
       <label className="border-top">Summary</label>

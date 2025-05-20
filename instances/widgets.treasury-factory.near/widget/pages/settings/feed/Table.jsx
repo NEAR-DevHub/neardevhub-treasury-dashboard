@@ -23,7 +23,6 @@ if (
 const { treasuryDaoID, showKYC, showReferenceProposal } = VM.require(
   `${instance}/widget/config.data`
 );
-
 const proposals = props.proposals;
 
 const highlightProposalId =

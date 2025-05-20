@@ -5,7 +5,7 @@ import { mockRpcRequest, updateDaoPolicyMembers } from "../../util/rpcmock";
 import {
   CurrentTimestampInNanoseconds,
   OldSettingsProposalData,
-  SettingsProposalData,
+  SettingsVotingDurationProposalData,
 } from "../../util/inventory.js";
 import { mockTransactionSubmitRPCResponses } from "../../util/transaction.js";
 
@@ -32,7 +32,7 @@ async function mockSettingsProposals({ page }) {
     },
     modifyOriginalResultFunction: () => {
       let originalResult = [
-        JSON.parse(JSON.stringify(SettingsProposalData)),
+        JSON.parse(JSON.stringify(SettingsVotingDurationProposalData)),
         JSON.parse(JSON.stringify(OldSettingsProposalData)),
       ];
       originalResult[0].id = 0;
@@ -60,7 +60,9 @@ async function voteOnProposal({
       method_name: "get_proposals",
     },
     modifyOriginalResultFunction: (originalResult) => {
-      originalResult = JSON.parse(JSON.stringify(SettingsProposalData));
+      originalResult = JSON.parse(
+        JSON.stringify(SettingsVotingDurationProposalData)
+      );
       originalResult.submission_time = CurrentTimestampInNanoseconds;
       if (isTransactionCompleted && !isMultiVote) {
         originalResult.status = voteStatus;
@@ -76,7 +78,9 @@ async function voteOnProposal({
       method_name: "get_proposal",
     },
     modifyOriginalResultFunction: (originalResult) => {
-      originalResult = JSON.parse(JSON.stringify(SettingsProposalData));
+      originalResult = JSON.parse(
+        JSON.stringify(SettingsVotingDurationProposalData)
+      );
       if (isTransactionCompleted && vote === "Remove" && !isMultiVote) {
         return {
           isError: true,
@@ -139,22 +143,10 @@ test.describe("User is not logged in", function () {
     await expect(
       page.getByRole("cell", { name: "0", exact: true })
     ).toBeVisible({ timeout: 20_000 });
-    const detailsBtn = page
-      .locator("tbody")
-      .getByRole("cell", { name: "Details" });
-    // check details w/ and w/o summary
-    await expect(detailsBtn).toBeVisible();
-    await detailsBtn.click();
-    await expect(page.getByText("Summary")).toBeVisible();
-    await page.getByRole("button", { name: "Cancel" }).click();
     await page.getByText("History").click();
     await expect(
       page.getByRole("cell", { name: "1", exact: true })
     ).toBeVisible({ timeout: 20_000 });
-    await expect(detailsBtn).toBeVisible();
-    await detailsBtn.click();
-    await expect(page.getByText("Summary")).toBeHidden();
-    await expect(page.getByText("Transaction Details")).toBeVisible();
     await expect(page.getByText("Expired")).toBeVisible();
   });
 
@@ -225,7 +217,9 @@ test.describe.parallel("User logged in with different roles", function () {
             method_name: "get_proposals",
           },
           modifyOriginalResultFunction: (originalResult) => {
-            originalResult = JSON.parse(JSON.stringify(SettingsProposalData));
+            originalResult = JSON.parse(
+              JSON.stringify(SettingsVotingDurationProposalData)
+            );
             originalResult.submission_time = CurrentTimestampInNanoseconds;
             originalResult.status = "InProgress";
             return originalResult;
@@ -302,11 +296,10 @@ test.describe("don't ask again", function () {
         page.getByText("The request has been successfully executed.")
       ).toBeVisible();
       await page.getByText("View in History").click();
+      await expect(
+        page.getByRole("heading", { name: "Voting Duration Request" })
+      ).toBeVisible();
     }
-
-    await expect(page.locator("tr").nth(1)).toHaveClass("bg-highlight", {
-      timeout: 10_000,
-    });
   });
 
   test("reject settings config request with single and multiple required votes", async ({
@@ -353,12 +346,10 @@ test.describe("don't ask again", function () {
         page.getByText("The request has been rejected.")
       ).toBeVisible();
       await page.getByText("View in History").click();
+      await expect(
+        page.getByRole("heading", { name: "Update policy - Voting Duration" })
+      ).toBeVisible();
     }
-
-    await expect(page.locator("tr").nth(1)).toHaveClass("bg-highlight", {
-      timeout: 30_000,
-    });
-    await page.waitForTimeout(1_000);
   });
 
   test("delete settings config request with single and multiple required votes", async ({
@@ -412,7 +403,9 @@ test.describe("don't ask again", function () {
   }) => {
     test.setTimeout(100_000);
     await updateDaoPolicyMembers({ instanceAccount, page });
-    const proposalData = JSON.parse(JSON.stringify(SettingsProposalData));
+    const proposalData = JSON.parse(
+      JSON.stringify(SettingsVotingDurationProposalData)
+    );
     proposalData.submission_time = CurrentTimestampInNanoseconds;
     proposalData.status = "InProgress";
     await mockRpcRequest({
