@@ -74,7 +74,7 @@ jobs:
             --shard=${{ matrix.shard }}
 
       - name: Sanitize shard name
-        run: echo "SHARD_SAFE=${{ matrix.shard }}" | sed 's|/|-|' >> $GITHUB_ENV
+        run: echo "SHARD_SAFE=$(echo "${{ matrix.shard }}" | sed 's|/|-|')" >> $GITHUB_ENV
 
       - name: Upload Playwright Test Artifacts (on failure)
         if: failure() && steps.run-tests.outcome == 'failure'
