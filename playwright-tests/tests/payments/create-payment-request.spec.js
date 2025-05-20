@@ -835,10 +835,10 @@ test.describe("admin with function access keys", function () {
       const tokenSelect = await page.getByTestId("tokens-dropdown");
       await tokenSelect.click();
       await tokenSelect.getByText("NEAR").first().click();
-      await page.getByTestId("total-amount").fill(
-        nearAmountFromLinkedProposal.toString()
-      );
-      await page.waitForTimeout(1_000)
+      await page
+        .getByTestId("total-amount")
+        .fill(nearAmountFromLinkedProposal.toString());
+      await page.waitForTimeout(1_000);
       await expect(
         page.getByText(`$${usdAmountFromLinkedProposal.toLocaleString()}.00`)
       ).toBeVisible();
