@@ -96,7 +96,10 @@ useEffect(() => {
 function searchCacheApi() {
   let searchTerm = searchProposalId;
   let searchInput = encodeURI(searchTerm);
-  let searchUrl = `${proposalAPIEndpoint}/proposals/search/${searchInput}`;
+  let searchUrl = `${proposalAPIEndpoint}?customQuestion=title&customAnswer=${searchInput}`;
+  if (!isNaN(parseFloat(searchTerm)) && isFinite(searchTerm)) {
+    searchUrl = `${proposalAPIEndpoint}?sequentialId=${searchInput}`;
+  }
 
   return asyncFetch(searchUrl, {
     method: "GET",
@@ -109,17 +112,17 @@ function searchCacheApi() {
 }
 
 function setProposalData(result) {
-  const body = result.body;
-  const proposalsData = body.records;
+  const proposalsData = result.body;
   const data = [];
   for (const prop of proposalsData) {
     data.push({
       label: (
         <span className="text-sm">
-          <b>#{prop.proposal_id}</b> {prop.name}{" "}
+          <b>#{prop.sequentialId}</b>{" "}
+          {parseString(prop?.eligibilityAnswers?.[0].answer)}{" "}
         </span>
       ),
-      value: prop.proposal_id,
+      value: prop.sequentialId,
     });
   }
   setProposalsArray(proposalsData);
@@ -133,12 +136,8 @@ function searchProposals() {
   });
 }
 
-function fetchCacheApi(variables) {
-  let fetchUrl = `${proposalAPIEndpoint}/proposals?order=${variables.order}&limit=${variables.limit}`;
-
-  if (variables.stage) {
-    fetchUrl += `&filters.stage=${variables.stage}`;
-  }
+function fetchCacheApi() {
+  let fetchUrl = `${proposalAPIEndpoint}?status=approved`;
 
   return asyncFetch(fetchUrl, {
     method: "GET",
@@ -151,13 +150,7 @@ function fetchCacheApi(variables) {
 }
 
 function fetchProposals() {
-  const FETCH_LIMIT = 10;
-  const variables = {
-    order: "id_desc",
-    limit: FETCH_LIMIT,
-    stage: "PAYMENT",
-  };
-  fetchCacheApi(variables).then((result) => {
+  fetchCacheApi().then((result) => {
     setProposalData(result);
   });
 }
@@ -277,29 +270,35 @@ useEffect(() => {
   return () => clearInterval(interval);
 }, []);
 
+function parseString(string) {
+  return (string ?? "").replace(/<[^>]*>/g, "");
+}
+
 function onSelectProposal(id) {
   if (!id) {
     setSelectedProposal(null);
     return;
   }
 
-  const proposal = proposalsArray.find((item) => item.proposal_id === id.value);
+  const proposal = proposalsArray.find(
+    (item) => item.sequentialId === id.value
+  );
 
   if (proposal !== null) {
     setSelectedProposal({
-      ...proposal,
-      timeline: JSON.parse(proposal.timeline),
+      name: parseString(proposal.eligibilityAnswers?.[0]?.answer ?? ""),
+      summary: parseString(proposal.eligibilityAnswers?.[1]?.answer ?? ""),
+      proposal_id: proposal.sequentialId,
+      status: proposal.status,
     });
-    const token = tokenMapping[proposal.requested_sponsorship_paid_in_currency];
+    const token = tokenMapping[proposal.token];
     if (token === tokenMapping.NEAR) {
-      const nearTokens = Big(proposal.requested_sponsorship_usd_amount)
-        .div(nearPrice)
-        .toFixed();
+      const nearTokens = Big(proposal.ask).div(nearPrice).toFixed();
       setAmount(nearTokens);
     } else {
-      setAmount(proposal.requested_sponsorship_usd_amount);
+      setAmount(proposal.ask);
     }
-    const receiverAccount = proposal.receiver_account;
+    const receiverAccount = proposal.user?.publicKey;
     setReceiver(receiverAccount);
     setTokenId(token);
     setSelectedProposalId(id.value);
@@ -611,7 +610,7 @@ return (
               <Widget
                 src={"${REPL_DEVHUB}/widget/devhub.entity.proposal.StatusTag"}
                 props={{
-                  timelineStatus: selectedProposal.timeline.status,
+                  timelineStatus: selectedProposal.status,
                 }}
               />
             </div>
@@ -620,13 +619,7 @@ return (
           <Link
             target="_blank"
             rel="noopener noreferrer"
-            to={href({
-              widgetSrc: `${REPL_DEVHUB}/widget/app`,
-              params: {
-                page: "proposal",
-                id: selectedProposal.proposal_id,
-              },
-            })}
+            to={`https://nearn.io/devhub/7/${selectedProposal.proposal_id}/`}
           >
             <button className="btn p-0 d-flex align-items-center gap-2 bolder">
               Open Proposal <i class="bi bi-box-arrow-up-right"></i>
