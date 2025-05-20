@@ -297,7 +297,7 @@ test.describe("don't ask again", function () {
       ).toBeVisible();
       await page.getByText("View in History").click();
       await expect(
-        page.getByRole("heading", { name: "Voting Duration Request" })
+        page.getByRole("heading", { name: "Update policy - Voting Duration" })
       ).toBeVisible();
     }
   });

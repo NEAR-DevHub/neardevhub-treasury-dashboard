@@ -66,13 +66,11 @@ useEffect(() => {
         const title = decodeProposalDescription("title", item.description);
         const summary = decodeProposalDescription("summary", item.description);
 
-        const kind = Object.keys(item.kind)?.[0];
         let requestType = RequestType.OTHER;
-
         // members or threshold
         if (
           (title ?? "").includes("Members Permissions") &&
-          !(title ?? "").includes("revoke")
+          !(summary ?? "").includes("revoke")
         ) {
           requestType = RequestType.MEMBERS;
         } else if ((title ?? "").includes("Voting Thresholds")) {
@@ -241,7 +239,7 @@ const SettingsContent = () => {
             </li>
             <li>
               <div className="summary-item">
-                New Duration:{pluralize(newValue, "day")}
+                New Duration: {pluralize(newValue, "day")}
               </div>
             </li>
           </ul>
