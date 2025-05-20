@@ -50,7 +50,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: ${{ inputs["node-version"] }}
+          node-version: ${{ inputs.node-version }}
           cache: "npm"
 
       - name: Build project
