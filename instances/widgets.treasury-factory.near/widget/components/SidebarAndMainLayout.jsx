@@ -34,6 +34,7 @@ const Container = styled.div`
 
   .flex-5 {
     flex: 5;
+    min-width: 200px;
   }
 `;
 
@@ -51,7 +52,7 @@ useEffect(() => {
 }, [tab]);
 
 return (
-  <Container className="d-flex gap-4 flex-wrap">
+  <Container className="d-flex gap-4 flex-wrap flex-wrap flex-md-nowrap">
     <div className="flex-1" style={{ height: "max-content" }}>
       <div className="d-flex gap-2 flex-column">
         {leftNavbarOptions.map((item) => {
@@ -77,8 +78,7 @@ return (
         })}
       </div>
     </div>
-
-    <div className="flex-5 w-100">
+    <div className="flex-5">
       {currentTab && (
         <div className="w-100 h-100" key={currentTab.key}>
           <Widget

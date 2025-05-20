@@ -203,10 +203,12 @@ const SettingsContent = () => {
             <li>
               <div className="summary-item">
                 Member:
-                <Widget
-                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
-                  props={{ accountId: account, instance }}
-                />
+                <div style={{ overflow: "auto" }}>
+                  <Widget
+                    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
+                    props={{ accountId: account, instance }}
+                  />
+                </div>
               </div>
             </li>
             <li>
@@ -352,6 +354,8 @@ const Container = styled.div`
     display: flex;
     align-items: center;
     gap: 0.2rem;
+    flex-wrap: wrap;
+    margin-block: 0.5rem;
   }
 `;
 
