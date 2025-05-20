@@ -472,10 +472,8 @@ test.describe("User is logged in", function () {
     daoAccount,
   }) => {
     test.setTimeout(60_000);
-    const nearPrice = 4;
-    const amountFromLinkedProposal = 3120 / nearPrice;
+    const amountFromLinkedProposal = 2160;
 
-    await mockNearPrice({ daoAccount, nearPrice, page });
     await mockInventory({ page, account: daoAccount });
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
     if (instanceConfig.showProposalSelection === false) {
@@ -501,11 +499,13 @@ test.describe("User is logged in", function () {
     await proposalSelect.click();
     await page
       .getByPlaceholder("Search by id or title")
-      .pressSequentially("173");
-    const proposal = await page.getByText("#173 Near Contract Standards");
+      .pressSequentially("22");
+    const proposal = await page.getByText(
+      "#22 NEAR-API-TS: Tech Specification & Architecture Development - 30.04-11.05"
+    );
     await proposal.click();
     expect(await page.getByPlaceholder("treasury.near").inputValue()).toBe(
-      "robert.near"
+      "eclipseeer.near"
     );
 
     expect(await page.getByTestId("total-amount").inputValue()).toBe(
@@ -582,17 +582,15 @@ test.describe("User is logged in", function () {
 
       await proposalSelect.click();
 
-      await page
-        .getByPlaceholder("Search by id or title")
-        .fill("215 Fellowship");
+      await page.getByPlaceholder("Search by id or title").fill("22");
       const proposal = page.getByText(
-        "#215 Fellowship Contributor report by Matias Benary for 2024-09-09 2024-09-29"
+        "#22 NEAR-API-TS: Tech Specification & Architecture Development - 30.04-11.05"
       );
       await proposal.click();
       expect(await page.getByPlaceholder("treasury.near").inputValue()).toBe(
-        "maguila.near"
+        "eclipseeer.near"
       );
-      expect(await page.getByTestId("total-amount").inputValue()).toBe("3150");
+      expect(await page.getByTestId("total-amount").inputValue()).toBe("2160");
     } else {
       await page.getByTestId("proposal-title").fill("Test proposal title");
       await page.getByTestId("proposal-summary").fill("Test proposal summary");
@@ -619,12 +617,12 @@ test.describe("User is logged in", function () {
       ? {
           proposal: {
             description:
-              "* Title: Fellowship Contributor report by Matias Benary for  2024-09-09  2024-09-29 <br>* Summary: Fellowship Contributor report by Matias Benary for  2024-09-09  2024-09-29 <br>* Proposal Id: 215",
+              "* Title: NEAR-API-TS: Tech Specification & Architecture Development - 30.04-11.05 <br>* Summary: The goal of this proposal is to create a successor to near-api-js that will enhance the DevX for JS/TS developers interacting with the NEAR Protocol and address existing user issues. <br>* Proposal Id: 22",
             kind: {
               Transfer: {
-                amount: "3150000000",
-                receiver_id: "maguila.near",
                 token_id: "usdt.tether-token.near",
+                receiver_id: "eclipseeer.near",
+                amount: "2160000000",
               },
             },
           },
@@ -812,8 +810,8 @@ test.describe("admin with function access keys", function () {
 
     await clickCreatePaymentRequestButton(page);
 
-    const usdAmountFromLinkedProposal = 3120;
-    const nearAmountFromLinkedProposal = 3120 / nearPrice;
+    const usdAmountFromLinkedProposal = 2160 * nearPrice;
+    const nearAmountFromLinkedProposal = 2160;
 
     if (instanceConfig.showProposalSelection === true) {
       const proposalSelect = page.locator(".dropdown-toggle").first();
@@ -826,16 +824,21 @@ test.describe("admin with function access keys", function () {
       await proposalSelect.click();
       await page
         .getByPlaceholder("Search by id or title")
-        .pressSequentially("173");
-      const proposal = page.getByText("#173 Near Contract Standards");
+        .pressSequentially("22");
+      const proposal = page.getByText(
+        "#22 NEAR-API-TS: Tech Specification & Architecture Development - 30.04-11.05"
+      );
       await proposal.click();
       expect(await page.getByPlaceholder("treasury.near").inputValue()).toBe(
-        "robert.near"
+        "eclipseeer.near"
       );
-
-      expect(await page.getByTestId("total-amount").inputValue()).toBe(
+      const tokenSelect = await page.getByTestId("tokens-dropdown");
+      await tokenSelect.click();
+      await tokenSelect.getByText("NEAR").first().click();
+      await page.getByTestId("total-amount").fill(
         nearAmountFromLinkedProposal.toString()
       );
+      await page.waitForTimeout(1_000)
       await expect(
         page.getByText(`$${usdAmountFromLinkedProposal.toLocaleString()}.00`)
       ).toBeVisible();
@@ -865,11 +868,11 @@ test.describe("admin with function access keys", function () {
       ? {
           proposal: {
             description:
-              "* Title: Near Contract Standards payment request by Robert <br>* Summary: Contract Standards Work Group grant <br>* Proposal Id: 173",
+              "* Title: NEAR-API-TS: Tech Specification & Architecture Development - 30.04-11.05 <br>* Summary: The goal of this proposal is to create a successor to near-api-js that will enhance the DevX for JS/TS developers interacting with the NEAR Protocol and address existing user issues. <br>* Proposal Id: 22",
             kind: {
               Transfer: {
                 token_id: "",
-                receiver_id: "robert.near",
+                receiver_id: "eclipseeer.near",
                 amount: (
                   BigInt(nearAmountFromLinkedProposal) *
                   10n ** 24n
