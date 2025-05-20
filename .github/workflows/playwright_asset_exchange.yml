@@ -20,6 +20,7 @@ jobs:
       matrix:
         shard: [1/3, 2/3, 3/3]
         project:
+          - treasury-dashboard
           - infinex
 
     steps:
@@ -66,18 +67,18 @@ jobs:
         run: chmod +x sandboxrpc/target/debug/sandboxrpc
 
       - name: Run tests
-        id: run-tests # Add an id to this step to reference its outcome
+        id: asset-exchange-tests
         run: |
           npx playwright test playwright-tests/tests/asset-exchange/proposal-details.spec.js \
             --project=${{ matrix.project }} \
             --shard=${{ matrix.shard }}
 
       - name: Upload Playwright Test Artifacts (on failure)
-        if: failure() && steps.run-tests.outcome == 'failure' # Condition to run only if the run-tests step failed
+        if: failure() && steps.run-tests.outcome == 'failure'
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-test-artifacts-${{ matrix.project }}.zip # Name of the artifact
-          path: | # Paths to include in the artifact
+          name: playwright-test-artifacts-asset-exchange-${{ matrix.project }}-shard-${{ matrix.shard.replace('/', '-') }}.zip
+          path: |
             test-results/
-            playwright-report/ # Often contains trace files and HTML reports
-          retention-days: 1 # Optional: How long to keep the artifacts
+            playwright-report/
+          retention-days: 1
