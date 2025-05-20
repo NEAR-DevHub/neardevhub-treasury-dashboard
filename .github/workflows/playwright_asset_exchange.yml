@@ -69,7 +69,7 @@ jobs:
       - name: Run tests
         id: asset-exchange-tests
         run: |
-          npx playwright test playwright-tests/tests/asset-exchange/proposal-details.spec.js \
+          npx playwright test playwright-tests/tests/asset-exchange \
             --project=${{ matrix.project }} \
             --shard=${{ matrix.shard }}
 
