@@ -73,11 +73,14 @@ jobs:
             --project=${{ matrix.project }} \
             --shard=${{ matrix.shard }}
 
+      - name: Sanitize shard name
+        run: echo "SHARD_SAFE=${{ matrix.shard }}" | sed 's|/|-|' >> $GITHUB_ENV
+
       - name: Upload Playwright Test Artifacts (on failure)
         if: failure() && steps.run-tests.outcome == 'failure'
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-test-artifacts-asset-exchange-${{ matrix.project }}-shard-${{ matrix.shard.replace('/', '-') }}.zip
+          name: playwright-test-artifacts-asset-exchange-${{ matrix.project }}-shard-${{ env.SHARD_SAFE }}.zip
           path: |
             test-results/
             playwright-report/
