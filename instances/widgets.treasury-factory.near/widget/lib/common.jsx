@@ -1004,20 +1004,10 @@ function waitForSocialGet(key, retries, interval) {
 function getUserDaos(accountId, doAsyncFetch) {
   if (!accountId) return [];
 
-  const pikespeakKey = isBosGateway()
-    ? "${REPL_GATEWAY_PIKESPEAK_KEY}"
-    : props.pikespeakKey ?? "${REPL_INDIVIDUAL_PIKESPEAK_KEY}";
-
-  const url = `https://api.pikespeak.ai/daos/members`;
-
-  const headers = {
-    "x-api-key": pikespeakKey,
-  };
+  const url = `${REPL_BACKEND_API}/user-daos?account_id=${accountId}`;
 
   const doFetch = doAsyncFetch
-    ? asyncFetch(url, { headers }).then(
-        (res) => res?.body?.[accountId]?.["daos"] ?? []
-      )
+    ? asyncFetch(url).then((res) => res?.body ?? [])
     : fetch(url, { headers });
 
   return doFetch;

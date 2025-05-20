@@ -509,6 +509,51 @@ const Theme = styled.div`
       text-decoration: underline;
     }
   }
+
+  .proposal-row {
+    &:hover {
+      background-color: var(--grey-04) !important;
+    }
+  }
+
+  .flex-1 {
+    flex: 1;
+  }
+
+  .layout-flex-wrap {
+    display: flex;
+    gap: 8px;
+    overflow: hidden;
+    flex-wrap: wrap;
+  }
+
+  .layout-main {
+    flex: 3;
+    min-width: 0;
+    overflow: auto;
+    min-width: 300px;
+  }
+
+  /* Secondary panel (proposal-details section) */
+  .layout-secondary {
+    flex: 1.7;
+    min-width: 0;
+    overflow: auto;
+    position: absolute;
+    right: 0;
+    width: 40%;
+    transform: translateX(100%);
+    opacity: 0;
+    transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+    min-width: 300px;
+  }
+
+  /* When secondary panel is visible */
+  .layout-secondary.show {
+    transform: translateX(0);
+    opacity: 1;
+    position: relative;
+  }
 `;
 
 function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
@@ -555,14 +600,6 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
       `}
   `;
 
-  if (page === "lockup") {
-    children = (
-      <Widget
-        src={"${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.lockup.index"}
-        props={{ page, instance }}
-      />
-    );
-  }
   return (
     <ParentContainer data-bs-theme={isDarkTheme ? "dark" : "light"}>
       <Theme
