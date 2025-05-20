@@ -226,7 +226,7 @@ async function approveProposal({
     gas: "300000000000000",
     attachedDeposit: "0",
   });
-  await page.waitForTimeout(4_000)
+  await page.waitForTimeout(4_000);
   await page.evaluate(async (transactionResult) => {
     window.transactionSentPromiseResolve(transactionResult);
   }, transactionResult);
@@ -247,7 +247,7 @@ async function approveProposal({
       )
     ).toBeVisible({ timeout: 30_000 });
   } else {
-    await expect(page.getByText('Just Now')).toBeVisible({
+    await expect(page.getByText("Just Now")).toBeVisible({
       timeout: 30_000,
     });
     if (isCompactVersion) {
