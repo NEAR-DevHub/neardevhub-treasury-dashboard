@@ -54,7 +54,6 @@ async function navigateToThemePage({ page, instanceAccount, hasAllRole }) {
   await updateDaoPolicyMembers({ instanceAccount, page, hasAllRole });
   await updateDaoConfig({ page });
   await page.waitForTimeout(5_000);
-  await page.getByTestId("Theme & Logo", { exact: true }).click();
   await expect(page.getByText("Theme & Logo").nth(1)).toBeVisible();
 }
 

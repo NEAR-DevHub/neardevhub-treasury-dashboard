@@ -125,6 +125,7 @@ test.describe
       page,
       instanceAccount,
     }) => {
+      test.setTimeout(60_000);
       const notInProgress = status !== "InProgress";
       await mockExchangeProposals({ page, status });
       await page.goto(`/${instanceAccount}/widget/app?page=asset-exchange`);

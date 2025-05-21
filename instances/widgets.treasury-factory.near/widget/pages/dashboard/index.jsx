@@ -442,7 +442,7 @@ return (
             treasuryDaoID,
             heading: (
               <div className="d-flex flex-column gap-1 px-3 pt-3 pb-2">
-                <div className="h5 mb-0">Near Intents</div>
+                <div className="h5 mb-0">NEAR Intents</div>
               </div>
             ),
             instance,

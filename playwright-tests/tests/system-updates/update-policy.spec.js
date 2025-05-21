@@ -179,12 +179,11 @@ test("should update sputnik-dao policy and upgrade instance with it", async ({
   );
 
   await expect(await page.getByText("Change role name")).toBeVisible();
-  await page.getByRole("button", { name: "Details" }).click();
-  await expect(
-    await page.getByText("Change name of the first role to proposer")
-  ).toBeVisible();
+  await page.getByTestId("proposal-request-#0").click();
+  await expect(await page.getByText("Transaction Details")).toBeVisible({
+    timeout: 20_000,
+  });
   await expect(page.getByRole("code")).toContainText('"name": "Proposer"');
-
   await page.waitForTimeout(500);
   await page.unrouteAll({ behavior: "ignoreErrors" });
   await sandbox.quitSandbox();

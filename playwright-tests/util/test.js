@@ -81,7 +81,10 @@ export async function cacheCDN(page) {
       const urlHash = Buffer.from(request.url()).toString("base64");
       const cacheFilePath = path.join(cacheDir, urlHash);
 
-      if (fs.existsSync(cacheFilePath)) {
+      if (
+        fs.existsSync(cacheFilePath) &&
+        fs.existsSync(`${cacheFilePath}.type`)
+      ) {
         const cachedContent = await fs.promises.readFile(cacheFilePath);
         const contentType = await fs.promises.readFile(
           `${cacheFilePath}.type`,

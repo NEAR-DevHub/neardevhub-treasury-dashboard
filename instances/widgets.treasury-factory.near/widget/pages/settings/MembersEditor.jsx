@@ -20,6 +20,7 @@ const selectedMember = props.selectedMember;
 const availableRoles = props.availableRoles ?? [];
 const onCloseCanvas = props.onCloseCanvas ?? (() => {});
 const setToastStatus = props.setToastStatus ?? (() => {});
+const updateLastProposalId = props.updateLastProposalId || (() => {});
 
 const [username, setUsername] = useState(null);
 const [isUsernameValid, setIsUsernameValid] = useState(null);
@@ -81,6 +82,7 @@ useEffect(() => {
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
         if (typeof lastProposalId === "number" && lastProposalId !== id) {
+          updateLastProposalId(lastProposalId);
           setToastStatus(true);
           onCloseCanvas();
           clearTimeout(checkTxnTimeout);
@@ -336,6 +338,7 @@ return (
               setShowDeleteModal(false);
             },
             setToastStatus,
+            updateLastProposalId,
             username: username,
             rolesMap: new Map(
               (selectedMember.roles ?? roles ?? []).map((role) => [role, role])

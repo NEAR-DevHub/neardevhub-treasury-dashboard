@@ -284,13 +284,13 @@ if (error)
 const filtered = (tokens || []).filter(
   (token) => token.amount && Big(token.amount).gt(0)
 );
-return (
+return filtered.length > 0 ? (
   <div className="card flex-1 overflow-hidden border-bottom">
     {heading}
-    {filtered.length === 0 ? (
-      <div className="text-secondary px-3 py-2">No Intents balances found.</div>
-    ) : (
-      filtered.map((token, idx) => <TokenCard key={idx} token={token} />)
-    )}
+    {filtered.map((token, idx) => (
+      <TokenCard key={idx} token={token} />
+    ))}
   </div>
+) : (
+  <></>
 );

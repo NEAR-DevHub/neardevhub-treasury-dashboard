@@ -2,13 +2,10 @@ const { NearToken } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Icons"
 ) || { NearToken: () => <></> };
 
-const { getNearBalances, isBosGateway } = VM.require(
+const { getNearBalances } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
 const daoAccount = props.daoAccount;
-if (typeof isBosGateway !== "function") {
-  return <></>;
-}
 
 const {
   selectedValue,
@@ -20,31 +17,11 @@ const {
 
 onChange = onChange || (() => {});
 
-const pikespeakKey = isBosGateway()
-  ? "${REPL_GATEWAY_PIKESPEAK_KEY}"
-  : props.pikespeakKey ?? "${REPL_INDIVIDUAL_PIKESPEAK_KEY}";
-
-if (!pikespeakKey) {
-  return (
-    <div className="alert alert-danger">Pikespeak key is not provided</div>
-  );
-}
-const pikespeakOptions = {
-  method: "GET",
-  headers: {
-    "Content-Type": "application/json",
-    "x-api-key": pikespeakKey,
-  },
-};
-
 const isLockupContract = daoAccount.includes("lockup.near");
 
 const ftTokensResp = isLockupContract
   ? { body: [] }
-  : fetch(
-      `https://api.pikespeak.ai/account/balance/${daoAccount}`,
-      pikespeakOptions
-    );
+  : fetch(`${REPL_BACKEND_API}/ft-tokens?account_id=${daoAccount}`);
 
 const nearBalances = isLockupContract
   ? lockupNearBalances
@@ -52,7 +29,7 @@ const nearBalances = isLockupContract
 
 if (
   !ftTokensResp ||
-  !Array.isArray(ftTokensResp?.body) ||
+  !Array.isArray(ftTokensResp?.body?.fts) ||
   typeof getNearBalances !== "function"
 ) {
   return (
@@ -68,9 +45,11 @@ const [lockupStakedTokens, setLockupStakedTokens] = useState(null);
 
 // remove near storage, spam tokens
 const tokensWithBalance =
-  ftTokensResp?.body.filter(
+  ftTokensResp?.body?.fts?.filter(
     (i) =>
-      parseFloat(i.amount) > 0 && i.contract !== "Near" && i.symbol.length < 30
+      parseFloat(i.amount) > 0 &&
+      i.contract !== "Near" &&
+      i.ft_meta.symbol.length < 30
   ) ?? [];
 
 useEffect(() => {
@@ -90,10 +69,12 @@ useEffect(() => {
     tokens = tokens.concat(
       tokensWithBalance.map((i) => {
         return {
-          icon: i.icon,
-          title: i.symbol,
+          icon: i.ft_meta.icon,
+          title: i.ft_meta.symbol,
           value: i.contract,
-          tokenBalance: Big(i.amount ?? "0").toFixed(2),
+          tokenBalance: Big(i.amount ?? "0")
+            .div(Big(10).pow(i.ft_meta.decimals))
+            .toFixed(2),
         };
       })
     );

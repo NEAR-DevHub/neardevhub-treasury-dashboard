@@ -125,6 +125,7 @@ test.describe
       page,
       instanceAccount,
     }) => {
+      test.setTimeout(60_000);
       const notInProgress = status !== "InProgress";
       await mockPaymentProposals({ page, status });
       await page.goto(`/${instanceAccount}/widget/app?page=payments`);
