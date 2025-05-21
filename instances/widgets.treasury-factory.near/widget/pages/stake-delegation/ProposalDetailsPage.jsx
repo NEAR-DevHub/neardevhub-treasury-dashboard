@@ -55,6 +55,8 @@ const RequestType = {
   WHITELIST: "Whitelist",
 };
 
+const [lockupStakedPoolId, setLockupStakedPoolId] = useState(null);
+
 useEffect(() => {
   if (proposalPeriod && !proposalData) {
     Near.asyncView(treasuryDaoID, "get_proposal", { id: parseInt(id) })
@@ -74,11 +76,19 @@ useEffect(() => {
         const receiverAccount = args.receiver_id;
         let validatorAccount = receiverAccount;
         if (validatorAccount === lockupContract) {
-          validatorAccount =
-            lockupStakedPoolId ??
-            decodeBase64(action.args)?.staking_pool_account_id ??
-            "";
+          const stakingPoolId = decodeBase64(
+            action.args
+          )?.staking_pool_account_id;
+          if (!stakingPoolId) {
+            validatorAccount = "";
+            Near.asyncView(lockupContract, "get_staking_pool_account_id").then(
+              (res) => setLockupStakedPoolId(res)
+            );
+          } else {
+            validatorAccount = stakingPoolId;
+          }
         }
+
         let amount = action.deposit;
         if (!isStakeRequest || receiverAccount.includes("lockup.near")) {
           let value = decodeBase64(action.args);
@@ -248,7 +258,8 @@ return (
               <Widget
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.Validator`}
                 props={{
-                  validatorId: proposalData?.validatorAccount,
+                  validatorId:
+                    proposalData?.validatorAccount || lockupStakedPoolId,
                   instance,
                 }}
               />
