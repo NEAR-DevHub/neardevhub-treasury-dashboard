@@ -22,7 +22,7 @@ const refreshProposalsTableData = Storage.get(
   `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.feed.ProposalDetailsPage`
 );
 
-const fetchProposals = () => {
+const fetchProposals = ({ fromStart }) => {
   setLoading(true);
   Near.asyncView(treasuryDaoID, "get_last_proposal_id").then((i) => {
     const lastProposalId = i;
@@ -42,7 +42,11 @@ const fetchProposals = () => {
         "UpgradeSelf",
       ],
       filterStatusArray: ["InProgress"],
-      offset: typeof offset === "number" ? offset : lastProposalId,
+      offset: fromStart
+        ? lastProposalId
+        : typeof offset === "number"
+        ? offset
+        : lastProposalId,
       lastProposalId: lastProposalId,
       currentPage,
     }).then((r) => {
@@ -65,7 +69,8 @@ useEffect(() => {
   setIsPrevCalled(false);
   setOffset(null);
   setPage(0);
-  fetchProposals();
+  // sometimes fetchProposals is called but offset is still older one
+  fetchProposals({ fromStart: true });
 }, [refreshProposalsTableData]);
 
 const policy = treasuryDaoID
