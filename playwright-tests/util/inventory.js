@@ -201,7 +201,7 @@ export const OldSettingsProposalData = {
   submission_time: "1728033017194722007",
 };
 
-export const SettingsProposalData = {
+export const SettingsVotingDurationProposalData = {
   id: 1,
   proposer: "theori.near",
   description:
@@ -226,7 +226,7 @@ export const SettingsMemberProposalData = {
   id: 1,
   proposer: "theori.near",
   description:
-    '* Title: Update policy - Members Permissions <br>* Summary: rubycop.near requested to add "root.near" to "Approver".',
+    '* Title: Update policy - Members Permissions <br>* Summary: theori.near requested to add "greenoasis9891.near" to "Requestor" and "Admin" and "Approver".',
   kind: {
     ChangePolicy: {
       policy: {
@@ -246,7 +246,7 @@ export const SettingsMemberProposalData = {
   status: "InProgress",
   vote_counts: {},
   votes: {},
-  submission_time: "1728033017194722007",
+  submission_time: "1745860628312520122",
 };
 
 export const SwapProposalData = {
@@ -295,4 +295,51 @@ export const LockupProposalData = {
   vote_counts: {},
   votes: {},
   submission_time: "1740746334157940598",
+};
+
+export const SettingsThemeProposalData = {
+  id: 1,
+  proposer: "theori.near",
+  description: "* Title: Update Config - Theme & logo",
+  kind: {
+    ChangeConfig: {
+      config: {
+        name: "testing-astradao",
+        purpose: "",
+        metadata:
+          "eyJsaW5rcyI6W10sImZsYWdDb3ZlciI6IiIsImZsYWdMb2dvIjoiaHR0cHM6Ly9pcGZzLm5lYXIuc29jaWFsL2lwZnMvYmFma3JlaWNpbWMzYjVhZXF5Z3Rpd25xZnhweGl2bDIzMzYyMjNibnp2bTd3ZGU1NHhwcHVsZHpuaGkiLCJkaXNwbGF5TmFtZSI6InRlc3RpbmctYXN0cmFkYW8iLCJsZWdhbCI6eyJsZWdhbFN0YXR1cyI6IiIsImxlZ2FsTGluayI6IiJ9LCJwcmltYXJ5Q29sb3IiOiIjMjBENjk0IiwidGhlbWUiOiJsaWdodCJ9",
+      },
+    },
+  },
+  status: "InProgress",
+  vote_counts: {},
+  votes: {},
+  submission_time: "1740099108884872466",
+};
+
+export const SettingsVotingThresholdProposalData = {
+  id: 1,
+  proposer: "theori.near",
+  description:
+    "* Title: Update policy - Voting Thresholds <br>* Summary: theori.near requested to change voting threshold from 1 to 1.",
+  kind: {
+    ChangePolicy: {
+      policy: {
+        roles: [],
+        default_vote_policy: {
+          weight_kind: "RoleWeight",
+          quorum: "1",
+          threshold: "1",
+        },
+        proposal_bond: "0",
+        proposal_period: "1036800000000000",
+        bounty_bond: "100000000000000000000000",
+        bounty_forgiveness_period: "604800000000000",
+      },
+    },
+  },
+  status: "InProgress",
+  vote_counts: {},
+  votes: {},
+  submission_time: "1743696636962779000",
 };

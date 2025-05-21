@@ -296,8 +296,6 @@ const ProposalsComponent = ({ item }) => {
               hasVotingPermission,
               proposalCreator: item.proposer,
               avoidCheckForBalance: true,
-              currentAmount: args.amount,
-              currentContract: "near",
               requiredVotes,
               checkProposalStatus: () => checkProposalStatus(item.id),
               hasOneDeleteIcon,

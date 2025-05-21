@@ -243,14 +243,11 @@ test("should update sputnik-dao contract", async ({ page }) => {
     await page.getByText("Upgrade sputnik-dao contract")
   ).toBeVisible();
 
-  await page.getByRole("button", { name: "Details" }).click();
+  await page.getByTestId("proposal-request-#0").click();
+  await page.getByRole("button", { name: "Reject" }).nth(1).click();
   await expect(
-    await page.getByText("Update to latest sputnik-dao contract")
-  ).toBeVisible({ timeout: 15_000 });
-
-  await page.getByRole("button", { name: "Cancel" }).click();
-  await page.getByRole("button", { name: "Reject" }).click();
-  await expect(await page.getByText("Confirm your vote")).toBeVisible();
+    await page.getByRole("heading", { name: "Confirm your vote" })
+  ).toBeVisible();
   await page.getByRole("button", { name: "Confirm" }).click();
   await expect(await page.getByText("Confirm transaction")).toBeVisible();
   await page.getByRole("button", { name: "Confirm" }).click();
@@ -293,20 +290,11 @@ test("should update sputnik-dao contract", async ({ page }) => {
     page.getByText("New system updates published")
   ).not.toBeVisible();
 
-  await page.goto(
-    `https://${instanceName}.near.page/?page=settings&tab=pending-requests`
-  );
+  await page.goto(`https://${instanceName}.near.page/?page=settings&id=1`);
 
   await expect(
     await page.getByText("Upgrade sputnik-dao contract")
   ).toBeVisible();
-
-  await page.getByRole("button", { name: "Details" }).click();
-  await expect(
-    await page.getByText("Update to latest sputnik-dao contract")
-  ).toBeVisible();
-
-  await page.getByRole("button", { name: "Cancel" }).click();
   await page.getByRole("button", { name: "Approve" }).click();
   await expect(await page.getByText("Confirm your vote")).toBeVisible();
   await page.getByRole("button", { name: "Confirm" }).click();
@@ -316,7 +304,6 @@ test("should update sputnik-dao contract", async ({ page }) => {
   await expect(await page.getByText("Awaiting transaction")).not.toBeVisible({
     timeout: 15_000,
   });
-
   // The update should now have been moved to the history
 
   await page.goto(
