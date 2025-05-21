@@ -2,46 +2,54 @@ const { Modal, ModalContent, ModalHeader, ModalFooter } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.modal"
 );
 
-// QRCodeGenerator is now a component, so we don't destructure a function from VM.require
-// We will use it directly as <Widget src="..." props={...} />
-
 if (!Modal || !ModalContent || !ModalHeader || !ModalFooter) {
-  return <></>; // Or a loading state
+  return <></>;
 }
 
-// Props are implicitly available from <Widget src="..." props={...} />
-// Expected props: show (boolean), onClose (function), treasuryDaoID (string)
-
 if (!props.show) {
-  return <></>; // Render nothing if not supposed to be shown
+  return <></>;
+}
+
+const chainIdToNameMap = {
+  "eth:1": "Ethereum",
+  "bsc:56": "BNB Smart Chain",
+  "polygon:137": "Polygon PoS",
+  "arbitrum:42161": "Arbitrum One",
+  "optimism:10": "Optimism",
+  "avax:43114": "Avalanche C-Chain",
+  "btc:mainnet": "Bitcoin",
+  // Add more as needed from defuse_asset_identifier
+};
+
+function getChainName(chainId) {
+  return chainIdToNameMap[chainId] || chainId;
 }
 
 const [activeTab, setActiveTab] = useState(props.initialTab || "sputnik");
-
-// State for Sputnik tab (remains the same)
 const sputnikAddress = props.treasuryDaoID;
+const nearIntentsTargetAccountId = props.treasuryDaoID;
 
-// State for Intents tab
-const [supportedChains, setSupportedChains] = useState([
-  { id: "eth:1", name: "Ethereum" },
-  // { id: "bsc:56", name: "BNB Smart Chain" }, // Example: Can add more later
-  // { id: "polygon:137", name: "Polygon PoS" },
-]);
-const [selectedChain, setSelectedChain] = useState(supportedChains[0]);
-const [availableTokens, setAvailableTokens] = useState([]); // Tokens available on selectedChain
-const [selectedToken, setSelectedToken] = useState(null); // The full token object
+// State for Intents tab - Refactored
+const [allFetchedTokens, setAllFetchedTokens] = useState([]);
+const [assetNamesForDropdown, setAssetNamesForDropdown] = useState([]);
+const [selectedAssetName, setSelectedAssetName] = useState(""); // Stores the name like "ETH", "USDT"
+
+const [networksForSelectedAssetDropdown, setNetworksForSelectedAssetDropdown] = useState([]);
+const [selectedNetworkFullInfo, setSelectedNetworkFullInfo] = useState(null); // Stores { id, name, near_token_id, originalTokenData }
+
 const [intentsDepositAddress, setIntentsDepositAddress] = useState("");
 const [isLoadingTokens, setIsLoadingTokens] = useState(false);
 const [isLoadingAddress, setIsLoadingAddress] = useState(false);
 const [errorApi, setErrorApi] = useState(null);
 
-const nearIntentsTargetAccountId = props.treasuryDaoID; // This is the NEAR account that will ultimately receive the funds
-
-// Fetch available tokens when selectedChain changes for the Intents tab
+// Effect 1: Fetch all supported tokens when tab becomes active
 useEffect(() => {
-  if (activeTab !== "intents" || !selectedChain) {
-    setAvailableTokens([]);
-    setSelectedToken(null);
+  if (activeTab !== "intents") {
+    setAllFetchedTokens([]);
+    setAssetNamesForDropdown([]);
+    setSelectedAssetName("");
+    setNetworksForSelectedAssetDropdown([]);
+    setSelectedNetworkFullInfo(null);
     setIntentsDepositAddress("");
     setErrorApi(null);
     return;
@@ -49,81 +57,117 @@ useEffect(() => {
 
   setIsLoadingTokens(true);
   setErrorApi(null);
-  setAvailableTokens([]); // Clear previous tokens
-  setSelectedToken(null); // Clear selected token
-  setIntentsDepositAddress(""); // Clear previous address
+  // Reset all dependent states
+  setAllFetchedTokens([]);
+  setAssetNamesForDropdown([]);
+  setSelectedAssetName("");
+  setNetworksForSelectedAssetDropdown([]);
+  setSelectedNetworkFullInfo(null);
+  setIntentsDepositAddress("");
 
   asyncFetch("https://bridge.chaindefuser.com/rpc", {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
-      id: "supportedTokensFetch",
+      id: "supportedTokensFetchAll",
       jsonrpc: "2.0",
       method: "supported_tokens",
-      params: [{ chains: [selectedChain.id] }],
+      params: [{}], // Fetch all tokens
     }),
   })
     .then((res) => {
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status} ${res.statusText}. Body: ${res.body}`);
       }
-      // For asyncFetch, the body is already parsed if it's JSON, otherwise it's a string.
-      // We expect JSON, so res.body should be the parsed object.
-      const data = res.body; 
+      const data = res.body;
       if (data.error) {
-        throw new Error(data.error.message || "Error fetching supported tokens.");
+        throw new Error(data.error.message || "Error fetching all supported tokens.");
       }
       if (data.result && data.result.tokens) {
-        // Filter tokens based on the defuse_asset_identifier and selectedChain.id
-        // and map to the structure expected by the UI.
-        const filteredTokens = data.result.tokens.filter(t => 
-          t.defuse_asset_identifier && 
-          t.defuse_asset_identifier.startsWith(selectedChain.id + ":") &&// e.g., "eth:1:"
-          t.asset_name && 
-          t.near_token_id
-        ).map(t => ({
-          near_token_id: t.near_token_id, // Used as the value for select options
-          name: t.asset_name,             // Used for display
-          symbol: t.asset_name,           // Used for display (e.g., ETH, USDT)
-          decimals: t.decimals,
-          // Store original token data if needed later
-          original_token_data: t 
-        }));
-
-        setAvailableTokens(filteredTokens);
-        if (filteredTokens.length > 0) {
-          // setErrorApi(null); // Clear previous error if tokens are found
-          // Optionally, auto-select the first token or let user choose
-          // setSelectedToken(filteredTokens[0]); 
-        } else {
-          setErrorApi(`No bridgeable tokens found for ${selectedChain.name}.`);
+        setAllFetchedTokens(data.result.tokens);
+        const uniqueAssetNames = Array.from(new Set(data.result.tokens.map(t => t.asset_name)))
+          .filter(name => name) // Ensure name is not null or empty
+          .sort();
+        setAssetNamesForDropdown(uniqueAssetNames);
+        if (uniqueAssetNames.length === 0) {
+          setErrorApi("No bridgeable assets found.");
         }
       } else {
-        setAvailableTokens([]);
-        setErrorApi(`No bridgeable tokens found for ${selectedChain.name}.`);
+        setErrorApi("No bridgeable assets found or unexpected API response.");
+        setAllFetchedTokens([]);
+        setAssetNamesForDropdown([]);
       }
     })
     .catch((err) => {
-      console.error("Failed to fetch supported tokens:", err);
-      setErrorApi(err.message || "Failed to fetch supported tokens. Please try again.");
-      setAvailableTokens([]);
+      console.error("Failed to fetch all supported tokens:", err);
+      setErrorApi(err.message || "Failed to fetch assets. Please try again.");
+      setAllFetchedTokens([]);
+      setAssetNamesForDropdown([]);
     })
     .finally(() => {
       setIsLoadingTokens(false);
     });
-}, [activeTab, selectedChain]);
+}, [activeTab]);
 
-// Fetch deposit address when selectedToken, selectedChain, and targetAccountId are set for Intents tab
+// Effect 2: Populate networks when selectedAssetName changes
 useEffect(() => {
-  if (activeTab !== "intents" || !selectedToken || !selectedChain || !nearIntentsTargetAccountId) {
+  if (!selectedAssetName || allFetchedTokens.length === 0) {
+    setNetworksForSelectedAssetDropdown([]);
+    setSelectedNetworkFullInfo(null);
     setIntentsDepositAddress("");
+    // Don't clear errorApi here as it might be from token loading
+    return;
+  }
+
+  const tokensOfSelectedAsset = allFetchedTokens.filter(
+    (token) => token.asset_name === selectedAssetName
+  );
+
+  const networks = tokensOfSelectedAsset
+    .map((token) => {
+      if (!token.defuse_asset_identifier) return null;
+      const parts = token.defuse_asset_identifier.split(':');
+      // Assuming chainId is the first two parts like "eth:1" or "btc:mainnet"
+      // Or just one part if it's like "near" (though bridge context implies external chains)
+      let chainId;
+      if (parts.length >= 2) {
+        chainId = parts.slice(0, 2).join(':');
+      } else {
+        // Fallback or error if format is unexpected, for now, we'll try to use the first part
+        // This case needs to be verified with actual non-EVM chain identifiers from the API
+        chainId = parts[0]; 
+      }
+      
+      return {
+        id: chainId, // This is the ID like "eth:1"
+        name: getChainName(chainId), // User-friendly name
+        near_token_id: token.near_token_id,
+        originalTokenData: token,
+      };
+    })
+    .filter(network => network && network.id && network.near_token_id); // Ensure valid network objects
+
+  setNetworksForSelectedAssetDropdown(networks);
+  setSelectedNetworkFullInfo(null); // Reset selected network
+  setIntentsDepositAddress(""); // Reset address
+
+  if (networks.length === 0 && selectedAssetName) {
+     // setErrorApi might be too aggressive here if it overwrites a token loading error
+     // console.warn(`No networks found for asset: ${selectedAssetName}`);
+  }
+
+}, [selectedAssetName, allFetchedTokens]);
+
+// Effect 3: Fetch deposit address when selectedNetworkFullInfo changes
+useEffect(() => {
+  if (activeTab !== "intents" || !selectedNetworkFullInfo || !nearIntentsTargetAccountId) {
+    setIntentsDepositAddress("");
+    // Do not clear errorApi here, as it might be from previous steps
     return;
   }
 
   setIsLoadingAddress(true);
-  setErrorApi(null); // Clear previous errors
-
-  // The 'chain' parameter for 'deposit_address' is the chain ID like "eth:1".
+  setErrorApi(null); // Clear previous address-specific errors
 
   asyncFetch("https://bridge.chaindefuser.com/rpc", {
     method: "POST",
@@ -132,9 +176,9 @@ useEffect(() => {
       id: "depositAddressFetch",
       jsonrpc: "2.0",
       method: "deposit_address",
-      params: [{ 
-        account_id: nearIntentsTargetAccountId, 
-        chain: selectedChain.id,
+      params: [{
+        account_id: nearIntentsTargetAccountId,
+        chain: selectedNetworkFullInfo.id, // e.g., "eth:1"
       }],
     }),
   })
@@ -142,7 +186,6 @@ useEffect(() => {
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status} ${res.statusText}. Body: ${res.body}`);
       }
-      // For asyncFetch, the body is already parsed if it's JSON.
       const data = res.body;
       if (data.error) {
         throw new Error(data.error.message || "Error fetching deposit address.");
@@ -162,7 +205,7 @@ useEffect(() => {
     .finally(() => {
       setIsLoadingAddress(false);
     });
-}, [activeTab, selectedToken, selectedChain, nearIntentsTargetAccountId]);
+}, [activeTab, selectedNetworkFullInfo, nearIntentsTargetAccountId]);
 
 
 const sputnikWarning = (
@@ -178,9 +221,8 @@ const sputnikWarning = (
   </div>
 );
 
-// Dynamic warning for Intents tab
 const DynamicIntentsWarning = () => {
-  if (!selectedToken || !selectedChain) {
+  if (!selectedAssetName || !selectedNetworkFullInfo) {
     return (
       <div className="alert alert-info d-flex align-items-center mt-2" role="alert">
         <i className="bi bi-info-circle-fill me-2"></i>
@@ -194,12 +236,11 @@ const DynamicIntentsWarning = () => {
     <div className="alert alert-warning d-flex align-items-center mt-2" role="alert">
       <i className="bi bi-exclamation-triangle-fill me-2"></i>
       <div>
-        Only deposit <strong>{selectedToken.symbol}</strong> from the <strong>{selectedChain.name}</strong> network to the address shown. Depositing other assets or using a different network may result in loss of funds.
+        Only deposit <strong>{selectedAssetName}</strong> from the <strong>{selectedNetworkFullInfo.name}</strong> network to the address shown. Depositing other assets or using a different network may result in loss of funds.
       </div>
     </div>
   );
 };
-
 
 return (
   <Modal>
@@ -209,12 +250,12 @@ return (
         type="button"
         className="btn-close"
         aria-label="Close"
-        onClick={props.onClose} // Use props.onClose
+        onClick={props.onClose}
       ></button>
     </ModalHeader>
     <ModalContent>
       <p className="mb-0">
-        Deposit options for: <strong>{address}</strong>
+        Deposit options for: <strong>{props.treasuryDaoID}</strong>
       </p>
 
       <ul className="nav nav-tabs mt-3">
@@ -244,7 +285,7 @@ return (
             <Widget
               src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Copy"
               props={{
-                clipboardText: sputnikAddress, // Changed from text to clipboardText
+                clipboardText: sputnikAddress,
                 label: "Copy", 
                 className: "btn btn-sm btn-outline-secondary ms-2",
               }}
@@ -256,8 +297,8 @@ return (
                 src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.QRCodeGenerator"
                 props={{
                   text: sputnikAddress,
-                  cellSize: 4, // Or your preferred cell size
-                  margin: 4, // Or your preferred margin
+                  cellSize: 4,
+                  margin: 4,
                 }}
               />
             </div>
@@ -269,61 +310,64 @@ return (
       {activeTab === "intents" && (
         <>
           <h6 className="mt-3">Select asset and network</h6>
-          {/* Network Selector */}
-          <div className="mb-3">
-            <label htmlFor="networkSelectIntents" className="form-label">Network</label>
-            <select 
-              id="networkSelectIntents" 
-              className="form-select" 
-              value={selectedChain ? selectedChain.id : ""}
-              onChange={(e) => {
-                const chain = supportedChains.find(c => c.id === e.target.value);
-                setSelectedChain(chain);
-                setSelectedToken(null); // Reset token when network changes
-                setIntentsDepositAddress(""); // Reset address
-                setErrorApi(null);
-              }}
-              disabled={isLoadingTokens || isLoadingAddress}
-            >
-              {supportedChains.map(chain => (
-                <option key={chain.id} value={chain.id}>{chain.name}</option>
-              ))}
-            </select>
-          </div>
-
           {/* Asset Selector */}
           <div className="mb-3">
             <label htmlFor="assetSelectIntents" className="form-label">Asset</label>
             <select 
               id="assetSelectIntents" 
               className="form-select" 
-              value={selectedToken ? selectedToken.near_token_id : ""} // Assuming near_token_id is a unique identifier
+              value={selectedAssetName}
               onChange={(e) => {
-                const token = availableTokens.find(t => t.near_token_id === e.target.value);
-                setSelectedToken(token);
-                setIntentsDepositAddress(""); // Reset address
-                setErrorApi(null);
+                setSelectedAssetName(e.target.value);
+                // Dependent states (networks, address) will be reset by useEffect for selectedAssetName
               }}
-              disabled={isLoadingTokens || isLoadingAddress || availableTokens.length === 0 || !selectedChain}
+              disabled={isLoadingTokens || assetNamesForDropdown.length === 0}
             >
-              <option value="" disabled={selectedToken !== null}>
-                {isLoadingTokens ? "Loading assets..." : (availableTokens.length === 0 && selectedChain ? "No assets found" : "Select an asset")}
+              <option value="" disabled={selectedAssetName !== ""}>
+                {isLoadingTokens ? "Loading assets..." : (assetNamesForDropdown.length === 0 ? "No assets found" : "Select an asset")}
               </option>
-              {availableTokens.map(token => (
-                // Assuming token object has 'name', 'symbol', and a unique 'near_token_id'
-                <option key={token.near_token_id} value={token.near_token_id}>
-                  {token.name} ({token.symbol})
+              {assetNamesForDropdown.map(assetName => (
+                <option key={assetName} value={assetName}>
+                  {assetName}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Network Selector */}
+          <div className="mb-3">
+            <label htmlFor="networkSelectIntents" className="form-label">Network</label>
+            <select 
+              id="networkSelectIntents" 
+              className="form-select" 
+              value={selectedNetworkFullInfo ? selectedNetworkFullInfo.id : ""}
+              onChange={(e) => {
+                const networkId = e.target.value;
+                const networkInfo = networksForSelectedAssetDropdown.find(n => n.id === networkId);
+                setSelectedNetworkFullInfo(networkInfo);
+                // Address will be fetched by useEffect for selectedNetworkFullInfo
+              }}
+              disabled={isLoadingTokens || isLoadingAddress || !selectedAssetName || networksForSelectedAssetDropdown.length === 0}
+            >
+              <option value="" disabled={selectedNetworkFullInfo !== null}>
+                {!selectedAssetName ? "Select an asset first" : 
+                 (networksForSelectedAssetDropdown.length === 0 && selectedAssetName && !isLoadingTokens ? "No networks for this asset" : "Select a network")}
+              </option>
+              {networksForSelectedAssetDropdown.map(network => (
+                // Using network.id + network.near_token_id for a more unique key if IDs aren't globally unique for an asset
+                <option key={network.id + (network.originalTokenData?.defuse_asset_identifier || '')} value={network.id}> 
+                  {network.name} ({network.originalTokenData?.symbol || network.near_token_id.split('.')[0].toUpperCase()})
                 </option>
               ))}
             </select>
           </div>
           
-          {isLoadingAddress && <p>Loading deposit address...</p>}
+          {isLoadingAddress && <p className="mt-2">Loading deposit address...</p>}
           {errorApi && <div className="alert alert-danger mt-2">{errorApi}</div>}
 
           {intentsDepositAddress ? (
             <>
-              <p className="mt-3">Use this deposit address:</p>
+              <p className="mt-3">Use this deposit address for <strong>{selectedAssetName}</strong> on <strong>{selectedNetworkFullInfo?.name}</strong>:</p>
               <div className="alert alert-secondary mb-2">
                 Always double-check your deposit address — it may change without notice.
               </div>
@@ -332,7 +376,7 @@ return (
                 <Widget
                   src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Copy"
                   props={{
-                    clipboardText: intentsDepositAddress, // Changed from text to clipboardText
+                    clipboardText: intentsDepositAddress,
                     className: "btn btn-sm btn-outline-secondary ms-2",
                   }}
                 />
@@ -349,7 +393,8 @@ return (
               </div>
             </>
           ) : (
-            !isLoadingAddress && selectedChain && selectedToken && !errorApi && <p className="mt-3">Could not load deposit address. Please ensure selection is valid.</p>
+            !isLoadingAddress && selectedAssetName && selectedNetworkFullInfo && !errorApi && 
+            <p className="mt-3 fst-italic">Could not load deposit address. Please ensure your selection is valid or try again.</p>
           )}
           <DynamicIntentsWarning />
           <p className="mt-2 small text-muted">
@@ -362,7 +407,7 @@ return (
       <button
         type="button"
         className="btn btn-secondary"
-        onClick={props.onClose} // Use props.onClose
+        onClick={props.onClose}
       >
         Close
       </button>
