@@ -103,7 +103,7 @@ useEffect(() => {
           status,
           kind: item.kind,
           requestType,
-          title,
+          title: title || summary || item.description,
           summary,
         });
       })
@@ -212,7 +212,7 @@ const SettingsContent = () => {
               </div>
             </li>
             <li>
-              <div className="summary-item">
+              <div className="summary-item mt-1">
                 {isAdd ? "Assigned" : "Revoked"} Roles:
                 {roles.map((i) => (
                   <div
@@ -240,7 +240,7 @@ const SettingsContent = () => {
               </div>
             </li>
             <li>
-              <div className="summary-item">
+              <div className="summary-item mt-1">
                 New Duration: {pluralize(newValue, "day")}
               </div>
             </li>
@@ -257,7 +257,7 @@ const SettingsContent = () => {
               </div>
             </li>
             <li>
-              <div className="summary-item">
+              <div className="summary-item mt-1">
                 New Threshold: {pluralize(newValue, "vote")}
               </div>
             </li>
@@ -284,7 +284,7 @@ const SettingsContent = () => {
             )}
             {primaryColor && (
               <li>
-                <div className="summary-item">
+                <div className="summary-item my-1">
                   Primary Color:
                   <span
                     className="appearance-color-box"
@@ -355,7 +355,6 @@ const Container = styled.div`
     align-items: center;
     gap: 0.2rem;
     flex-wrap: wrap;
-    margin-block: 0.5rem;
   }
 `;
 
@@ -388,14 +387,15 @@ return (
         ProposalContent: (
           <div className="card card-body d-flex flex-column gap-2">
             {proposalData?.title && (
-              <h6 className="mb-0 flex-1">{proposalData?.title}</h6>
+              <h6 className="flex-1">{proposalData?.title}</h6>
             )}
             <SettingsContent />
             <label
               className={
-                proposalData?.requestType !== RequestType.OTHER
-                  ? "border-top"
-                  : ""
+                proposalData?.requestType === RequestType.OTHER &&
+                !proposalData?.title
+                  ? ""
+                  : "border-top"
               }
             >
               Transaction Details
