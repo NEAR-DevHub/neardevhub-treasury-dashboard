@@ -6,13 +6,9 @@ const { readableDate } = VM.require(
   "${REPL_DEVHUB}/widget/core.lib.common"
 ) || { readableDate: () => {} };
 
-const { isBosGateway, accountToLockup } = VM.require(
+const { accountToLockup } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
-
-if (!isBosGateway) {
-  return <></>;
-}
 
 const instance = props.instance;
 
@@ -44,15 +40,6 @@ const totalTxnsPerPage = 15;
 const loading = (
   <Widget src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"} />
 );
-
-// use BOS open API for gateway and paid for web4
-const pikespeakKey = isBosGateway()
-  ? "${REPL_GATEWAY_PIKESPEAK_KEY}"
-  : props.pikespeakKey ?? "${REPL_INDIVIDUAL_PIKESPEAK_KEY}";
-
-if (!pikespeakKey) {
-  return <></>;
-}
 
 function setAPIError() {
   setShowMoreLoading(false);

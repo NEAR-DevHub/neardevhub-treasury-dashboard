@@ -2,7 +2,6 @@ const {
   getNearBalances,
   LOCKUP_MIN_BALANCE_FOR_STORAGE,
   TooltipText,
-  isBosGateway,
   accountToLockup,
 } = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
 const { NearToken } = VM.require(
@@ -21,7 +20,6 @@ const onCloseCanvas = props.onCloseCanvas ?? (() => {});
 if (
   !instance ||
   !LOCKUP_MIN_BALANCE_FOR_STORAGE ||
-  typeof isBosGateway !== "function" ||
   typeof accountToLockup !== "function"
 ) {
   return <></>;
@@ -178,31 +176,10 @@ const BalanceDisplay = ({ label, balance, tooltipInfo, noBorder }) => {
   );
 };
 
-const pikespeakKey = isBosGateway()
-  ? "${REPL_GATEWAY_PIKESPEAK_KEY}"
-  : props.pikespeakKey ?? "${REPL_INDIVIDUAL_PIKESPEAK_KEY}";
-
-const pikespeakOptions = {
-  method: "GET",
-  headers: {
-    "Content-Type": "application/json",
-    "x-api-key": pikespeakKey,
-  },
-};
 const allValidators = useCache(
   () =>
-    asyncFetch(
-      "https://api.pikespeak.ai/validators/current",
-      pikespeakOptions
-    ).then((resp) => {
-      return (
-        resp?.body?.map((item) => {
-          return {
-            pool_id: item.account_id,
-            fee: item.fees.numerator,
-          };
-        }) ?? []
-      );
+    asyncFetch(`${REPL_BACKEND_API}/validators`).then((resp) => {
+      return resp?.body ?? [];
     }),
   "-stake-request-validators",
   { subscribe: false }
