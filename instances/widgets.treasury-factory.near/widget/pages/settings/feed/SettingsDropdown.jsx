@@ -28,10 +28,6 @@ const [settingsOptions, setSettingsOptions] = useState(
           show: true,
         },
         {
-          title: "Details",
-          show: true,
-        },
-        {
           title: "Required Votes",
           show: true,
         },

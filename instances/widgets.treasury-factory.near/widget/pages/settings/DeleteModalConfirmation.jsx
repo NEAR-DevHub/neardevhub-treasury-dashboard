@@ -24,6 +24,7 @@ const deposit = daoPolicy?.proposal_bond || 0;
 const rolesMap = props.rolesMap;
 const onConfirm = props.onConfirmClick ?? (() => {});
 const onRefresh = props.onRefresh;
+const updateLastProposalId = props.updateLastProposalId || (() => {});
 
 const [isTxnCreated, setTxnCreated] = useState(false);
 const [lastProposalId, setLastProposalId] = useState(null);
@@ -47,6 +48,7 @@ useEffect(() => {
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
         if (typeof lastProposalId === "number" && lastProposalId !== id) {
+          updateLastProposalId(lastProposalId);
           setToastStatus(true);
           setTxnCreated(false);
           clearTimeout(isTxnCreated);
@@ -65,6 +67,7 @@ useEffect(() => {
 
 function updateDaoPolicy() {
   const updatedPolicy = { ...daoPolicy };
+  const removals = new Set();
   if (Array.isArray(updatedPolicy.roles)) {
     updatedPolicy.roles = updatedPolicy.roles.map((role) => {
       if (rolesMap.has(role.name)) {
@@ -72,6 +75,7 @@ function updateDaoPolicy() {
 
         if (group.includes(username)) {
           group = group.filter((i) => i !== username);
+          removals.add(role.name);
         }
         // Modify the role's group
         return {
@@ -85,15 +89,22 @@ function updateDaoPolicy() {
     });
   }
 
-  return updatedPolicy;
+  return {
+    updatedPolicy,
+    summary: `${context.accountId} requested to remove "${username}" from ${[
+      ...removals,
+    ]
+      .map((role) => `"${role}"`)
+      .join(" and ")}`,
+  };
 }
 
 function onConfirmClick() {
   setTxnCreated(true);
-  const updatedPolicy = updateDaoPolicy();
+  const { updatedPolicy, summary } = updateDaoPolicy();
   const description = {
     title: "Update policy - Members Permissions",
-    summary: `${context.accountId} requested to requested to revoke all permissions of "${username}".`,
+    summary,
   };
   Near.call([
     {
