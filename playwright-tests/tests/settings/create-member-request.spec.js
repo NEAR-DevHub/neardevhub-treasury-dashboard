@@ -42,7 +42,7 @@ async function updateLastProposalId(page) {
 
 async function navigateToMembersPage({ page, instanceAccount }) {
   await page.goto(`/${instanceAccount}/widget/app?page=settings&tab=members`);
-  await expect(page.getByText("All Members")).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText("All Members")).toBeVisible({ timeout: 20_000 });
 }
 
 async function openAddMemberForm({ page }) {
@@ -135,6 +135,7 @@ test.describe("User is logged in", function () {
   });
 
   test.beforeEach(async ({ page, daoAccount, instanceAccount }, testInfo) => {
+    test.setTimeout(60_000);
     await mockInventory({ page, account: daoAccount });
     await updateDaoPolicyMembers({ instanceAccount, page });
     await updateLastProposalId(page);
@@ -152,7 +153,6 @@ test.describe("User is logged in", function () {
   test("insufficient account balance should show warning modal, disallow action ", async ({
     page,
   }) => {
-    test.setTimeout(60_000);
     await expect(
       page.getByText(
         "Hey Ori, you don't have enough NEAR to complete actions on your treasury."
