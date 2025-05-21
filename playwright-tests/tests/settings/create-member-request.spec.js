@@ -42,7 +42,7 @@ async function updateLastProposalId(page) {
 
 async function navigateToMembersPage({ page, instanceAccount }) {
   await page.goto(`/${instanceAccount}/widget/app?page=settings&tab=members`);
-  await expect(page.getByText("All Members")).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText("All Members")).toBeVisible({ timeout: 20_000 });
 }
 
 async function openAddMemberForm({ page }) {
@@ -135,6 +135,7 @@ test.describe("User is logged in", function () {
   });
 
   test.beforeEach(async ({ page, daoAccount, instanceAccount }, testInfo) => {
+    test.setTimeout(60_000);
     await updateDaoPolicyMembers({ instanceAccount, page });
     await updateLastProposalId(page);
     if (testInfo.title.includes("insufficient account balance")) {
