@@ -1,39 +1,7 @@
-const { isBosGateway } = VM.require(
-  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
-);
-
 const validatorId = props.validatorId;
-const pikespeakKey = isBosGateway()
-  ? "${REPL_GATEWAY_PIKESPEAK_KEY}"
-  : props.pikespeakKey ?? "${REPL_INDIVIDUAL_PIKESPEAK_KEY}";
-
-if (!pikespeakKey) {
-  return (
-    <Widget
-      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
-      props={{
-        accountId: validatorId,
-        showKYC: false,
-        instance: props.instance,
-        displayImage: false,
-        displayName: false,
-        width: 200,
-      }}
-    />
-  );
-}
-
-const options = {
-  method: "GET",
-  headers: {
-    "Content-Type": "application/json",
-    "x-api-key": pikespeakKey,
-  },
-};
 
 const data = fetch(
-  `https://api.pikespeak.ai/validators/details/${validatorId}`,
-  options
+  `${REPL_BACKEND_API}/validator-details?account_id=${validatorId}`
 )?.body;
 
 const fee = data?.fees?.numerator ?? 1 / data?.fees?.denominator ?? 100;

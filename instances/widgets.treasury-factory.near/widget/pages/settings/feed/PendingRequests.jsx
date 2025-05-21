@@ -17,7 +17,12 @@ const [totalLength, setTotalLength] = useState(null);
 const [loading, setLoading] = useState(false);
 const [isPrevPageCalled, setIsPrevCalled] = useState(false);
 
-const fetchProposals = () => {
+const refreshProposalsTableData = Storage.get(
+  "REFRESH_SETTINGS_TABLE_DATA",
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.feed.ProposalDetailsPage`
+);
+
+const fetchProposals = ({ fromStart }) => {
   setLoading(true);
   Near.asyncView(treasuryDaoID, "get_last_proposal_id").then((i) => {
     const lastProposalId = i;
@@ -37,7 +42,11 @@ const fetchProposals = () => {
         "UpgradeSelf",
       ],
       filterStatusArray: ["InProgress"],
-      offset: typeof offset === "number" ? offset : lastProposalId,
+      offset: fromStart
+        ? lastProposalId
+        : typeof offset === "number"
+        ? offset
+        : lastProposalId,
       lastProposalId: lastProposalId,
       currentPage,
     }).then((r) => {
@@ -55,6 +64,15 @@ useEffect(() => {
   fetchProposals();
 }, [currentPage, rowsPerPage, isPrevPageCalled]);
 
+useEffect(() => {
+  // need to clear all pagination related filters to fetch correct result
+  setIsPrevCalled(false);
+  setOffset(null);
+  setPage(0);
+  // sometimes fetchProposals is called but offset is still older one
+  fetchProposals({ fromStart: true });
+}, [refreshProposalsTableData]);
+
 const policy = treasuryDaoID
   ? Near.view(treasuryDaoID, "get_policy", {})
   : null;
@@ -67,7 +85,7 @@ const settingsApproverGroup = getApproversAndThreshold(
 
 const deleteGroup = getApproversAndThreshold(
   treasuryDaoID,
-  "transfer",
+  "policy",
   context.accountId,
   true
 );

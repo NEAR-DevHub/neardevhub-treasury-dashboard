@@ -603,7 +603,10 @@
   const viewer = document.createElement("near-social-viewer");
 
   viewer.selector = selector;
-  viewer.setAttribute("initialProps", JSON.stringify({"page":""}));
+  viewer.setAttribute(
+    "initialProps",
+    JSON.stringify({ page: "", pikespeakKey: "PIKESPEAK_API_KEY" }),
+  );
 
   if (location.host.endsWith(".page")) {
     const instanceAccount = location.host.split(".")[0];

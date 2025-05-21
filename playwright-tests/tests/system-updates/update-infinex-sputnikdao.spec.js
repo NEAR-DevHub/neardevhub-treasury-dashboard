@@ -275,7 +275,6 @@ test("update infinex.sputnik-dao.near", async ({ page }) => {
 
   await page.locator("button", { hasText: "Review" }).click();
   await page.getByRole("button", { name: "Yes, proceed" }).click();
-
   await page.getByRole("button", { name: "Confirm" }).click();
   await expect(
     await page.getByRole("button", { name: "Confirm" })
@@ -288,12 +287,6 @@ test("update infinex.sputnik-dao.near", async ({ page }) => {
   await expect(
     await page.getByText("Upgrade sputnik-dao contract")
   ).toBeVisible();
-  await page.getByRole("button", { name: "Details" }).click();
-  await expect(
-    await page.getByText("Update to latest sputnik-dao contract")
-  ).toBeVisible();
-
-  await page.getByRole("button", { name: "Cancel" }).click();
   await page.getByRole("button", { name: "Approve" }).click();
   await expect(await page.getByText("Confirm your vote")).toBeVisible();
   await page.getByRole("button", { name: "Confirm" }).click();
@@ -317,18 +310,15 @@ test("update infinex.sputnik-dao.near", async ({ page }) => {
   await expect(
     await page.getByText("Upgrade sputnik-dao contract")
   ).toBeVisible();
-  await page.getByRole("button", { name: "Details" }).click();
+  await page.getByTestId("proposal-request-#0").click();
+  await expect(await page.getByText("Transaction Details")).toBeVisible();
+  await page.getByRole("button", { name: "Approve" }).nth(1).click();
   await expect(
-    await page.getByText("Update to latest sputnik-dao contract")
+    await page.getByRole("heading", { name: "Confirm your vote" })
   ).toBeVisible();
-
-  await page.getByRole("button", { name: "Cancel" }).click();
-  await page.getByRole("button", { name: "Approve" }).click();
-  await expect(await page.getByText("Confirm your vote")).toBeVisible();
   await page.getByRole("button", { name: "Confirm" }).click();
   await expect(await page.getByText("Confirm transaction")).toBeVisible();
   await page.getByRole("button", { name: "Confirm" }).click();
-
   await expect(await page.getByText("Awaiting transaction")).not.toBeVisible({
     timeout: 15_000,
   });
@@ -368,7 +358,9 @@ test("update infinex.sputnik-dao.near", async ({ page }) => {
   await page.getByRole("button", { name: "Submit Request" }).click();
   await page.getByRole("button", { name: "Confirm" }).click();
   await page.getByRole("link", { name: "View it" }).click();
-  await expect(await page.getByText("Update policy - Voting")).toBeVisible();
+  await expect(await page.getByText("Update policy - Voting")).toBeVisible({
+    timeout: 15000,
+  });
 
   // Tear down
 

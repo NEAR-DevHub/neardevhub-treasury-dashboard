@@ -34,6 +34,7 @@ const [refreshTable, setRefreshTable] = useState(0);
 const [refetch, setRefetch] = useState(false);
 const policyApproverGroup = getPolicyApproverGroup(treasuryDaoID);
 const roles = getDaoRoles(treasuryDaoID);
+const [lastProposalId, setLastProposalId] = useState(null);
 
 const Container = styled.div`
   font-size: 13px;
@@ -120,6 +121,7 @@ const SubmitToast = () => {
                     widgetSrc: `${instance}/widget/app`,
                     params: {
                       page: "settings",
+                      id: lastProposalId,
                     },
                   })}
                 >
@@ -175,7 +177,6 @@ const Members = () => {
                   displayImage: false,
                   displayName: false,
                   instance,
-                  width: 300,
                 }}
               />
             </td>
@@ -267,6 +268,7 @@ return (
           setShowDeleteModal(false);
         },
         setToastStatus,
+        updateLastProposalId: setLastProposalId,
         username: selectedMember.member,
         rolesMap:
           selectedMember &&

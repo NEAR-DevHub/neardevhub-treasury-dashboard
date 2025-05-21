@@ -136,6 +136,7 @@ useEffect(() => {
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
         if (typeof lastProposalId === "number" && lastProposalId !== id) {
+          setLastProposalId(lastProposalId);
           setToastStatus(true);
           setTxnCreated(false);
           clearTimeout(checkTxnTimeout);
@@ -310,6 +311,7 @@ const SubmitToast = () => {
                     widgetSrc: `${instance}/widget/app`,
                     params: {
                       page: "settings",
+                      id: lastProposalId,
                     },
                   })}
                 >
@@ -768,7 +770,6 @@ return (
                       accountId: member,
                       showKYC: false,
                       instance,
-                      width: "100%",
                     }}
                   />
                 </div>

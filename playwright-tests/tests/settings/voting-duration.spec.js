@@ -19,7 +19,6 @@ async function navigateToVotingDurationPage({ page, instanceAccount }) {
     `/${instanceAccount}/widget/app?page=settings&tab=voting-duration`
   );
   await page.waitForTimeout(5_000);
-  await page.getByTestId("Voting Duration").click();
   await expect(
     page.getByText("Set the number of days a vote is active.")
   ).toBeVisible({

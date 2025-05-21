@@ -13,7 +13,6 @@ const highlightProposalId =
   props.highlightProposalId === 0
     ? parseInt(props.highlightProposalId)
     : null;
-const lockupCreated = props.lockupCreated;
 
 const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
@@ -24,7 +23,7 @@ const { decodeBase64 } = VM.require(
 const { TableSkeleton } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.skeleton"
 );
-const { treasuryDaoID, lockupContract, allowLockupCancellation } = VM.require(
+const { treasuryDaoID, allowLockupCancellation } = VM.require(
   `${instance}/widget/config.data`
 );
 
@@ -63,30 +62,25 @@ const Container = styled.div`
   .text-warning {
     color: var(--other-warning) !important;
   }
-
-  .markdown-href p {
-    margin-bottom: 0px !important;
-  }
-
-  .markdown-href a {
-    color: inherit !important;
-  }
 `;
+
+function updateVoteSuccess(status, proposalId) {
+  props.setToastStatus(status);
+  props.setVoteProposalId(proposalId);
+  props.onSelectRequest(null);
+  refreshTableData();
+}
 
 function checkProposalStatus(proposalId) {
   Near.asyncView(treasuryDaoID, "get_proposal", {
     id: proposalId,
   })
     .then((result) => {
-      setToastStatus(result.status);
-      setVoteProposalId(proposalId);
-      refreshTableData();
+      updateVoteSuccess(result.status, proposalId);
     })
     .catch(() => {
       // deleted request (thus proposal won't exist)
-      setToastStatus("Removed");
-      setVoteProposalId(proposalId);
-      refreshTableData();
+      updateVoteSuccess("Removed", proposalId);
     });
 }
 
@@ -138,7 +132,6 @@ const columns = [
   { title: "Created At", show: true },
   { title: "Status", show: !isPendingRequests, className: "text-center" },
   { title: "Recipient Account", show: true },
-  { title: "Token", show: true, className: "text-center" },
   { title: "Amount", show: true, className: "text-right" },
   { title: "Start Date", show: true },
   { title: "End Date", show: true },
@@ -156,56 +149,6 @@ function isVisible(column) {
 }
 
 const requiredVotes = functionCallApproversGroup?.requiredVotes;
-
-const ToastStatusContent = () => {
-  let content = "";
-  switch (showToastStatus) {
-    case "InProgress":
-      content = "Your vote is counted, the request is highlighted.";
-      break;
-    case "Approved":
-      content = "The request has been successfully executed.";
-      break;
-    case "Rejected":
-      content = "The request has been rejected.";
-      break;
-    case "Removed":
-      content = "The request has been successfully deleted.";
-      break;
-    default:
-      content = `The request has ${showToastStatus}.`;
-      break;
-  }
-  return (
-    <div className="toast-body">
-      <div className="d-flex align-items-center gap-3">
-        {showToastStatus === "Approved" && (
-          <i class="bi bi-check2 h3 mb-0 success-icon"></i>
-        )}
-        <div>{content}</div>
-      </div>
-    </div>
-  );
-};
-
-const VoteSuccessToast = () => {
-  return showToastStatus &&
-    (typeof voteProposalId === "number" ||
-      typeof highlightProposalId === "number") ? (
-    <div className="toast-container position-fixed bottom-0 end-0 p-3">
-      <div className={`toast ${showToastStatus ? "show" : ""}`}>
-        <div className="toast-header px-2">
-          <strong className="me-auto">Just Now</strong>
-          <i
-            className="bi bi-x-lg h6 mb-0 cursor-pointer"
-            onClick={() => setToastStatus(null)}
-          ></i>
-        </div>
-        <ToastStatusContent />
-      </div>
-    </div>
-  ) : null;
-};
 
 const formatTimestamp = (timestamp) => Math.floor(timestamp / 1e6);
 
@@ -226,9 +169,21 @@ const ProposalsComponent = ({ item }) => {
     vestingSchedule?.start_timestamp || args.lockup_timestamp;
 
   return (
-    <tr>
-      <td>{proposalId}</td>
-      <td className={isVisible("Created At")}>
+    <tr
+      data-testid={"proposal-request-#" + item.id}
+      onClick={() => {
+        props.onSelectRequest(item.id);
+      }}
+      className={
+        "cursor-pointer proposal-row " +
+        (highlightProposalId === item.id ||
+        props.selectedProposalDetailsId === item.id
+          ? "bg-highlight"
+          : "")
+      }
+    >
+      <td className="fw-semi-bold">{proposalId}</td>
+      <td className={isVisible("Created Date")}>
         <Widget
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
           props={{ timestamp: item.submission_time }}
@@ -243,9 +198,10 @@ const ProposalsComponent = ({ item }) => {
         </td>
       )}
       <td className={isVisible("Recipient Account")}>
-        {lockupCreated && item.status === "Approved" ? (
+        {item.status === "Approved" ? (
           <a
             target="_blank"
+            rel="noopener noreferrer"
             href={`https://near.github.io/account-lookup/#${args.owner_account_id}`}
           >
             {args.owner_account_id}
@@ -255,11 +211,7 @@ const ProposalsComponent = ({ item }) => {
           args.owner_account_id
         )}
       </td>
-      <td className={isVisible("Token") + " text-center"}>
-        <Widget
-          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenIcon`}
-        />
-      </td>
+
       <td className={isVisible("Amount") + " text-right"}>
         <Widget
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
@@ -344,8 +296,6 @@ const ProposalsComponent = ({ item }) => {
               hasVotingPermission,
               proposalCreator: item.proposer,
               avoidCheckForBalance: true,
-              currentAmount: args.amount,
-              currentContract: "near",
               requiredVotes,
               checkProposalStatus: () => checkProposalStatus(item.id),
               hasOneDeleteIcon,
@@ -358,8 +308,7 @@ const ProposalsComponent = ({ item }) => {
 };
 
 return (
-  <Container className="h-100 w-100" style={{ overflowX: "auto" }}>
-    <VoteSuccessToast />
+  <Container style={{ overflowX: "auto" }}>
     {loading === true || proposals === null || policy === null ? (
       <TableSkeleton
         numberOfCols={columns.filter((i) => i.show).length}
