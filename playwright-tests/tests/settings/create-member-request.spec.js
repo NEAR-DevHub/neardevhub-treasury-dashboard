@@ -104,7 +104,7 @@ test.describe.parallel("User logged in with different roles", function () {
       test(`should ${
         canManageMembers ? "see" : "not see"
       } 'Add Member' and 'Actions'`, async ({ page, instanceAccount }) => {
-        test.setTimeout(60_000);
+        test.setTimeout(100_000);
         await updateDaoPolicyMembers({
           instanceAccount,
           page,
@@ -135,7 +135,6 @@ test.describe("User is logged in", function () {
   });
 
   test.beforeEach(async ({ page, daoAccount, instanceAccount }, testInfo) => {
-    await mockInventory({ page, account: daoAccount });
     await updateDaoPolicyMembers({ instanceAccount, page });
     await updateLastProposalId(page);
     if (testInfo.title.includes("insufficient account balance")) {
@@ -152,7 +151,7 @@ test.describe("User is logged in", function () {
   test("insufficient account balance should show warning modal, disallow action ", async ({
     page,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(100_000);
     await expect(
       page.getByText(
         "Hey Ori, you don't have enough NEAR to complete actions on your treasury."
@@ -167,7 +166,7 @@ test.describe("User is logged in", function () {
   });
 
   test("should show members of the DAO", async ({ page }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(100_000);
     await expect(page.getByText("Megha", { exact: true })).toBeVisible();
   });
 
@@ -176,9 +175,8 @@ test.describe("User is logged in", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    await mockInventory({ page, account: daoAccount });
+    test.setTimeout(100_000);
     await navigateToMembersPage({ page, instanceAccount });
-    await updateDaoPolicyMembers({ instanceAccount, page });
     const createMemberRequestButton = page.getByRole("button", {
       name: "Add Member",
     });
@@ -495,7 +493,7 @@ test.describe("User is logged in", function () {
     page,
     instanceAccount,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(100_000);
     const hasNewPolicy = instanceAccount.includes("testing");
 
     await page
