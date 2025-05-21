@@ -5,6 +5,147 @@ import { redirectWeb4 } from "../../util/web4.js";
 
 // Use the near-workspaces sandbox to deploy omft and intents contracts, make deposits, and test dashboard UI
 
+test("should not display NEAR intents card if there are no assets in NEAR intents", async ({
+  page,
+  instanceAccount,
+  daoAccount,
+}) => {
+  // --- UI TEST ---
+  await redirectWeb4({
+    page,
+    contractId: instanceAccount,
+    treasury: daoAccount,
+  });
+
+  // Intercept RPC calls to redirect intents.near queries to the sandbox
+  // Now this block is after worker initialization and sandboxRpcUrl is available
+  await page.route("https://rpc.mainnet.near.org", async (route) => {
+    const request = route.request();
+    if (request.method() === "POST") {
+      let postData;
+      try {
+        postData = request.postDataJSON();
+      } catch (e) {
+        return route.fallback(); // Ensure other handlers can try
+      }
+
+      if (
+        postData &&
+        typeof postData.method === "string" &&
+        postData.params !== undefined
+      ) {
+        if (
+          postData.method === "query" &&
+          typeof postData.params === "object" &&
+          postData.params !== null && // Ensure params is an object
+          postData.params.request_type === "call_function" &&
+          postData.params.account_id === "intents.near" &&
+          postData.params.method_name === "mt_batch_balance_of"
+        ) {
+          const json = {
+            jsonrpc: "2.0",
+            result: {
+              block_hash: "8XpLrWvFubiBY2hDn9T1jHfqMtvdmPZJPzp7nT9ZAwkZ",
+              block_height: 120,
+              logs: [],
+              result: Array.from(
+                Buffer.from(
+                  JSON.stringify(
+                    // This is how the result would look like if there is a balance
+                    // ["342660000000000000000000000","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","128226700000000000000","0","50000000","10000000000","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0","0"])
+                    // Zero balance
+                    [
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                      "0",
+                    ]
+                  )
+                )
+              ),
+            },
+            id: 162,
+          };
+          return await route.fulfill({ json });
+        }
+      }
+    }
+    return await route.fallback(); // Crucial: let other handlers (like from redirectWeb4) process if this one doesn't.
+  });
+  await page.goto(`https://${instanceAccount}.page`);
+
+  await expect(page.getByText("Total Balance")).toBeVisible();
+  await expect(page.getByText("NEAR Intents")).not.toBeVisible();
+});
+
 test("show intents balance in dashboard (sandbox)", async ({
   page,
   instanceAccount,
