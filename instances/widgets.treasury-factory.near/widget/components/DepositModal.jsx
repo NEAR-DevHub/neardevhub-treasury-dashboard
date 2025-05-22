@@ -42,6 +42,10 @@ const [isLoadingTokens, setIsLoadingTokens] = useState(false);
 const [isLoadingAddress, setIsLoadingAddress] = useState(false);
 const [errorApi, setErrorApi] = useState(null);
 
+// New state for stabilized dropdown options
+const [stableAssetOptions, setStableAssetOptions] = useState([]);
+const [stableNetworkOptions, setStableNetworkOptions] = useState([]);
+
 // Effect 1: Fetch all supported tokens when tab becomes active
 useEffect(() => {
   if (activeTab !== "intents") {
@@ -232,6 +236,7 @@ const DynamicIntentsWarning = () => {
       </div>
     );
   }
+
   return (
     <div className="alert alert-warning d-flex align-items-center mt-2" role="alert">
       <i className="bi bi-exclamation-triangle-fill me-2"></i>
@@ -313,53 +318,65 @@ return (
           {/* Asset Selector */}
           <div className="mb-3">
             <label htmlFor="assetSelectIntents" className="form-label">Asset</label>
-            <select 
-              id="assetSelectIntents" 
-              className="form-select" 
-              value={selectedAssetName}
-              onChange={(e) => {
-                setSelectedAssetName(e.target.value);
-                // Dependent states (networks, address) will be reset by useEffect for selectedAssetName
+            <Widget
+              src={"${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"}
+              props={{
+                selectedValue: selectedAssetName,
+                onChange: (option) => {
+                  if (option && option.value !== undefined) {
+                    setSelectedAssetName(option.value);
+                  } else {
+                    // Handle clear or invalid/undefined option from DropDown
+                    setSelectedAssetName("");
+                  }
+                  // Dependent states (networks, address) will be reset by useEffect for selectedAssetName
+                },
+                options: assetNamesForDropdown.map((assetName) => ({
+                  value: assetName,
+                  label: assetName,
+                })),
+                defaultLabel: isLoadingTokens ? "Loading assets..." : (assetNamesForDropdown.length === 0 ? "No assets found" : "Select an asset"),
+                showSearch: true,
+                searchInputPlaceholder: "Search assets",
+                searchByLabel: true,
+                // Assuming your DropDown.jsx doesn't use isLoadingProposals or showManualRequest
+                // If it does, you might need to pass them or adjust DropDown.jsx
               }}
-              disabled={isLoadingTokens || assetNamesForDropdown.length === 0}
-            >
-              <option value="" disabled={selectedAssetName !== ""}>
-                {isLoadingTokens ? "Loading assets..." : (assetNamesForDropdown.length === 0 ? "No assets found" : "Select an asset")}
-              </option>
-              {assetNamesForDropdown.map(assetName => (
-                <option key={assetName} value={assetName}>
-                  {assetName}
-                </option>
-              ))}
-            </select>
+            />
           </div>
 
           {/* Network Selector */}
           <div className="mb-3">
             <label htmlFor="networkSelectIntents" className="form-label">Network</label>
-            <select 
-              id="networkSelectIntents" 
-              className="form-select" 
-              value={selectedNetworkFullInfo ? selectedNetworkFullInfo.id : ""}
-              onChange={(e) => {
-                const networkId = e.target.value;
-                const networkInfo = networksForSelectedAssetDropdown.find(n => n.id === networkId);
-                setSelectedNetworkFullInfo(networkInfo);
-                // Address will be fetched by useEffect for selectedNetworkFullInfo
+            
+            <Widget
+              src={"${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"}
+              props={{
+                selectedValue: selectedNetworkFullInfo ? selectedNetworkFullInfo.id : "",
+                onChange: (option) => {
+                  if (option && option.value !== undefined) {
+                    const networkInfo = networksForSelectedAssetDropdown.find(
+                      (n) => n.id === option.value
+                    );
+                    setSelectedNetworkFullInfo(networkInfo || null);
+                  } else {
+                    // Handle clear or invalid/undefined option from DropDown
+                    setSelectedNetworkFullInfo(null);
+                  }
+                  // Address will be fetched by useEffect for selectedNetworkFullInfo
+                },
+                options: networksForSelectedAssetDropdown.map((network) => ({
+                  value: network.id,
+                  label: network.name,
+                })),
+                defaultLabel: !selectedAssetName ? "Select an asset first" : (networksForSelectedAssetDropdown.length === 0 && selectedAssetName && !isLoadingTokens ? "No networks for this asset" : "Select a network"),
+                showSearch: true,
+                searchInputPlaceholder: "Search networks",
+                searchByLabel: true,
+                disabled: isLoadingTokens || isLoadingAddress || !selectedAssetName || networksForSelectedAssetDropdown.length === 0,
+                // Assuming your DropDown.jsx doesn't use isLoadingProposals or showManualRequest
               }}
-              disabled={isLoadingTokens || isLoadingAddress || !selectedAssetName || networksForSelectedAssetDropdown.length === 0}
-            >
-              <option value="" disabled={selectedNetworkFullInfo !== null}>
-                {!selectedAssetName ? "Select an asset first" : 
-                 (networksForSelectedAssetDropdown.length === 0 && selectedAssetName && !isLoadingTokens ? "No networks for this asset" : "Select a network")}
-              </option>
-              {networksForSelectedAssetDropdown.map(network => (
-                // Using network.id + network.near_token_id for a more unique key if IDs aren't globally unique for an asset
-                <option key={network.id + (network.originalTokenData?.defuse_asset_identifier || '')} value={network.id}> 
-                  {network.name} ({network.originalTokenData?.symbol || network.near_token_id.split('.')[0].toUpperCase()})
-                </option>
-              ))}
-            </select>
+            />
           </div>
           
           {isLoadingAddress && <p className="mt-2">Loading deposit address...</p>}
