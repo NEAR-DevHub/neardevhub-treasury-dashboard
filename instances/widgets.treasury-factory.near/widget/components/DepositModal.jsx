@@ -34,7 +34,8 @@ const [allFetchedTokens, setAllFetchedTokens] = useState([]);
 const [assetNamesForDropdown, setAssetNamesForDropdown] = useState([]);
 const [selectedAssetName, setSelectedAssetName] = useState(""); // Stores the name like "ETH", "USDT"
 
-const [networksForSelectedAssetDropdown, setNetworksForSelectedAssetDropdown] = useState([]);
+const [networksForSelectedAssetDropdown, setNetworksForSelectedAssetDropdown] =
+  useState([]);
 const [selectedNetworkFullInfo, setSelectedNetworkFullInfo] = useState(null); // Stores { id, name, near_token_id, originalTokenData }
 
 const [intentsDepositAddress, setIntentsDepositAddress] = useState("");
@@ -81,16 +82,22 @@ useEffect(() => {
   })
     .then((res) => {
       if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status} ${res.statusText}. Body: ${res.body}`);
+        throw new Error(
+          `HTTP error! status: ${res.status} ${res.statusText}. Body: ${res.body}`
+        );
       }
       const data = res.body;
       if (data.error) {
-        throw new Error(data.error.message || "Error fetching all supported tokens.");
+        throw new Error(
+          data.error.message || "Error fetching all supported tokens."
+        );
       }
       if (data.result && data.result.tokens) {
         setAllFetchedTokens(data.result.tokens);
-        const uniqueAssetNames = Array.from(new Set(data.result.tokens.map(t => t.asset_name)))
-          .filter(name => name) // Ensure name is not null or empty
+        const uniqueAssetNames = Array.from(
+          new Set(data.result.tokens.map((t) => t.asset_name))
+        )
+          .filter((name) => name) // Ensure name is not null or empty
           .sort();
         setAssetNamesForDropdown(uniqueAssetNames);
         if (uniqueAssetNames.length === 0) {
@@ -130,18 +137,18 @@ useEffect(() => {
   const networks = tokensOfSelectedAsset
     .map((token) => {
       if (!token.defuse_asset_identifier) return null;
-      const parts = token.defuse_asset_identifier.split(':');
+      const parts = token.defuse_asset_identifier.split(":");
       // Assuming chainId is the first two parts like "eth:1" or "btc:mainnet"
       // Or just one part if it's like "near" (though bridge context implies external chains)
       let chainId;
       if (parts.length >= 2) {
-        chainId = parts.slice(0, 2).join(':');
+        chainId = parts.slice(0, 2).join(":");
       } else {
         // Fallback or error if format is unexpected, for now, we'll try to use the first part
         // This case needs to be verified with actual non-EVM chain identifiers from the API
-        chainId = parts[0]; 
+        chainId = parts[0];
       }
-      
+
       return {
         id: chainId, // This is the ID like "eth:1"
         name: getChainName(chainId), // User-friendly name
@@ -149,22 +156,25 @@ useEffect(() => {
         originalTokenData: token,
       };
     })
-    .filter(network => network && network.id && network.near_token_id); // Ensure valid network objects
+    .filter((network) => network && network.id && network.near_token_id); // Ensure valid network objects
 
   setNetworksForSelectedAssetDropdown(networks);
   setSelectedNetworkFullInfo(null); // Reset selected network
   setIntentsDepositAddress(""); // Reset address
 
   if (networks.length === 0 && selectedAssetName) {
-     // setErrorApi might be too aggressive here if it overwrites a token loading error
-     // console.warn(`No networks found for asset: ${selectedAssetName}`);
+    // setErrorApi might be too aggressive here if it overwrites a token loading error
+    // console.warn(`No networks found for asset: ${selectedAssetName}`);
   }
-
 }, [selectedAssetName, allFetchedTokens]);
 
 // Effect 3: Fetch deposit address when selectedNetworkFullInfo changes
 useEffect(() => {
-  if (activeTab !== "intents" || !selectedNetworkFullInfo || !nearIntentsTargetAccountId) {
+  if (
+    activeTab !== "intents" ||
+    !selectedNetworkFullInfo ||
+    !nearIntentsTargetAccountId
+  ) {
     setIntentsDepositAddress("");
     // Do not clear errorApi here, as it might be from previous steps
     return;
@@ -180,37 +190,46 @@ useEffect(() => {
       id: "depositAddressFetch",
       jsonrpc: "2.0",
       method: "deposit_address",
-      params: [{
-        account_id: nearIntentsTargetAccountId,
-        chain: selectedNetworkFullInfo.id, // e.g., "eth:1"
-      }],
+      params: [
+        {
+          account_id: nearIntentsTargetAccountId,
+          chain: selectedNetworkFullInfo.id, // e.g., "eth:1"
+        },
+      ],
     }),
   })
     .then((res) => {
       if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status} ${res.statusText}. Body: ${res.body}`);
+        throw new Error(
+          `HTTP error! status: ${res.status} ${res.statusText}. Body: ${res.body}`
+        );
       }
       const data = res.body;
       if (data.error) {
-        throw new Error(data.error.message || "Error fetching deposit address.");
+        throw new Error(
+          data.error.message || "Error fetching deposit address."
+        );
       }
       if (data.result && data.result.address) {
         setIntentsDepositAddress(data.result.address);
       } else {
         setIntentsDepositAddress("");
-        setErrorApi("Could not retrieve deposit address for the selected asset and network.");
+        setErrorApi(
+          "Could not retrieve deposit address for the selected asset and network."
+        );
       }
     })
     .catch((err) => {
       console.error("Failed to fetch deposit address:", err);
-      setErrorApi(err.message || "Failed to fetch deposit address. Please try again.");
+      setErrorApi(
+        err.message || "Failed to fetch deposit address. Please try again."
+      );
       setIntentsDepositAddress("");
     })
     .finally(() => {
       setIsLoadingAddress(false);
     });
 }, [activeTab, selectedNetworkFullInfo, nearIntentsTargetAccountId]);
-
 
 const sputnikWarning = (
   <div
@@ -228,7 +247,10 @@ const sputnikWarning = (
 const DynamicIntentsWarning = () => {
   if (!selectedAssetName || !selectedNetworkFullInfo) {
     return (
-      <div className="alert alert-info d-flex align-items-center mt-2" role="alert">
+      <div
+        className="alert alert-info d-flex align-items-center mt-2"
+        role="alert"
+      >
         <i className="bi bi-info-circle-fill me-2"></i>
         <div>
           Select an asset and network to see deposit instructions and address.
@@ -238,10 +260,16 @@ const DynamicIntentsWarning = () => {
   }
 
   return (
-    <div className="alert alert-warning d-flex align-items-center mt-2" role="alert">
+    <div
+      className="alert alert-warning d-flex align-items-center mt-2"
+      role="alert"
+    >
       <i className="bi bi-exclamation-triangle-fill me-2"></i>
       <div>
-        Only deposit <strong>{selectedAssetName}</strong> from the <strong>{selectedNetworkFullInfo.name}</strong> network to the address shown. Depositing other assets or using a different network may result in loss of funds.
+        Only deposit <strong>{selectedAssetName}</strong> from the{" "}
+        <strong>{selectedNetworkFullInfo.name}</strong> network to the address
+        shown. Depositing other assets or using a different network may result
+        in loss of funds.
       </div>
     </div>
   );
@@ -291,7 +319,7 @@ return (
               src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Copy"
               props={{
                 clipboardText: sputnikAddress,
-                label: "Copy", 
+                label: "Copy",
                 className: "btn btn-sm btn-outline-secondary ms-2",
               }}
             />
@@ -317,9 +345,13 @@ return (
           <h6 className="mt-3">Select asset and network</h6>
           {/* Asset Selector */}
           <div className="mb-3">
-            <label htmlFor="assetSelectIntents" className="form-label">Asset</label>
+            <label htmlFor="assetSelectIntents" className="form-label">
+              Asset
+            </label>
             <Widget
-              src={"${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"}
+              src={
+                "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
+              }
               props={{
                 selectedValue: selectedAssetName,
                 onChange: (option) => {
@@ -335,7 +367,11 @@ return (
                   value: assetName,
                   label: assetName,
                 })),
-                defaultLabel: isLoadingTokens ? "Loading assets..." : (assetNamesForDropdown.length === 0 ? "No assets found" : "Select an asset"),
+                defaultLabel: isLoadingTokens
+                  ? "Loading assets..."
+                  : assetNamesForDropdown.length === 0
+                  ? "No assets found"
+                  : "Select an asset",
                 showSearch: true,
                 searchInputPlaceholder: "Search assets",
                 searchByLabel: true,
@@ -347,12 +383,18 @@ return (
 
           {/* Network Selector */}
           <div className="mb-3">
-            <label htmlFor="networkSelectIntents" className="form-label">Network</label>
-            
+            <label htmlFor="networkSelectIntents" className="form-label">
+              Network
+            </label>
+
             <Widget
-              src={"${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"}
+              src={
+                "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
+              }
               props={{
-                selectedValue: selectedNetworkFullInfo ? selectedNetworkFullInfo.id : "",
+                selectedValue: selectedNetworkFullInfo
+                  ? selectedNetworkFullInfo.id
+                  : "",
                 onChange: (option) => {
                   if (option && option.value !== undefined) {
                     const networkInfo = networksForSelectedAssetDropdown.find(
@@ -369,24 +411,43 @@ return (
                   value: network.id,
                   label: network.name,
                 })),
-                defaultLabel: !selectedAssetName ? "Select an asset first" : (networksForSelectedAssetDropdown.length === 0 && selectedAssetName && !isLoadingTokens ? "No networks for this asset" : "Select a network"),
+                defaultLabel: !selectedAssetName
+                  ? "Select an asset first"
+                  : networksForSelectedAssetDropdown.length === 0 &&
+                    selectedAssetName &&
+                    !isLoadingTokens
+                  ? "No networks for this asset"
+                  : "Select a network",
                 showSearch: true,
                 searchInputPlaceholder: "Search networks",
                 searchByLabel: true,
-                disabled: isLoadingTokens || isLoadingAddress || !selectedAssetName || networksForSelectedAssetDropdown.length === 0,
+                disabled:
+                  isLoadingTokens ||
+                  isLoadingAddress ||
+                  !selectedAssetName ||
+                  networksForSelectedAssetDropdown.length === 0,
                 // Assuming your DropDown.jsx doesn't use isLoadingProposals or showManualRequest
               }}
             />
           </div>
-          
-          {isLoadingAddress && <p className="mt-2">Loading deposit address...</p>}
-          {errorApi && <div className="alert alert-danger mt-2">{errorApi}</div>}
+
+          {isLoadingAddress && (
+            <p className="mt-2">Loading deposit address...</p>
+          )}
+          {errorApi && (
+            <div className="alert alert-danger mt-2">{errorApi}</div>
+          )}
 
           {intentsDepositAddress ? (
             <>
-              <p className="mt-3">Use this deposit address for <strong>{selectedAssetName}</strong> on <strong>{selectedNetworkFullInfo?.name}</strong>:</p>
+              <p className="mt-3">
+                Use this deposit address for{" "}
+                <strong>{selectedAssetName}</strong> on{" "}
+                <strong>{selectedNetworkFullInfo?.name}</strong>:
+              </p>
               <div className="alert alert-secondary mb-2">
-                Always double-check your deposit address — it may change without notice.
+                Always double-check your deposit address — it may change without
+                notice.
               </div>
               <div className="d-flex align-items-center mb-2">
                 <strong className="text-break">{intentsDepositAddress}</strong>
@@ -410,12 +471,22 @@ return (
               </div>
             </>
           ) : (
-            !isLoadingAddress && selectedAssetName && selectedNetworkFullInfo && !errorApi && 
-            <p className="mt-3 fst-italic">Could not load deposit address. Please ensure your selection is valid or try again.</p>
+            !isLoadingAddress &&
+            selectedAssetName &&
+            selectedNetworkFullInfo &&
+            !errorApi && (
+              <p className="mt-3 fst-italic">
+                Could not load deposit address. Please ensure your selection is
+                valid or try again.
+              </p>
+            )
           )}
           <DynamicIntentsWarning />
           <p className="mt-2 small text-muted">
-            Note: Depositing assets to this address makes them available to the <strong>{nearIntentsTargetAccountId}</strong> account via Near Intents for cross-chain actions. Standard DAO proposals will still be required to move funds from the main treasury account itself.
+            Note: Depositing assets to this address makes them available to the{" "}
+            <strong>{nearIntentsTargetAccountId}</strong> account via Near
+            Intents for cross-chain actions. Standard DAO proposals will still
+            be required to move funds from the main treasury account itself.
           </p>
         </>
       )}
@@ -431,4 +502,3 @@ return (
     </ModalFooter>
   </Modal>
 );
-// No "return { DepositModal };" at the end. The file itself is the widget.
