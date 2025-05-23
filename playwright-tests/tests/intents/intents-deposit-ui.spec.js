@@ -213,7 +213,7 @@ test.describe("Intents Deposit UI", () => {
     await expect(sputnikCopyButton).toContainText("Copied");
 
     let clipboardText = await page.evaluate("navigator.clipboard.readText()");
-    expect(clipboardText).toContain(daoAccount);
+    expect(clipboardText).toEqual(daoAccount);
 
     // Switch to Near Intents tab
     await intentsTabButton.click();
@@ -222,38 +222,8 @@ test.describe("Intents Deposit UI", () => {
     await expect(sputnikWarningLocator).not.toBeVisible();
     await expect(intentsWarningLocator).toBeVisible();
     await expect(intentsWarningLocator).toContainText(
-      "You can deposit NEAR, ETH, wBTC, SOL"
+      "Select an asset and network to see deposit instructions and address."
     );
-
-    const intentsNoteLocator = modalLocator.locator(
-      "p.small.text-muted:has-text('Note: While the address is the same')"
-    );
-    await expect(intentsNoteLocator).toBeVisible();
-
-    // Verify Near Intents tab copy button
-    const intentsCopyButtonContainer = modalLocator
-      .locator(
-        'p:has-text("Deposit NEAR or other supported tokens to this Near Intents enabled address:")'
-      )
-      .locator("xpath=./following-sibling::div[1]");
-    const intentsCopyButton = intentsCopyButtonContainer.locator(
-      '.btn[data-component="widgets.treasury-factory.near/widget/components.Copy"]'
-    );
-    await expect(intentsCopyButton).toBeVisible();
-    await expect(intentsCopyButton).toContainText("Copy");
-    await intentsCopyButton.click();
-
-    await expect(intentsCopyButton).toContainText("Copied");
-
-    clipboardText = await page.evaluate("navigator.clipboard.readText()");
-    expect(clipboardText).toContain(intentsDepositAccount);
-
-    // Close the modal
-    const closeButtonFooter = modalLocator.getByRole("button", {
-      name: "Close",
-    });
-    await closeButtonFooter.click();
-    await expect(modalLocator).not.toBeVisible();
   });
 
   test("should display QR code in both tabs", async ({
@@ -276,6 +246,7 @@ test.describe("Intents Deposit UI", () => {
     const depositButton = totalBalanceCardLocator.getByRole("button", {
       name: "Deposit",
     });
+    await expect(depositButton).toBeEnabled();
     await depositButton.click();
 
     const modalLocator = page.locator(".modal-dialog");
@@ -367,6 +338,7 @@ test.describe("Intents Deposit UI", () => {
     const intentsTabButton = modalLocator.getByRole("button", {
       name: "Near Intents (Multi-Asset)",
     });
+    await expect(intentsTabButton).toBeEnabled();
     await intentsTabButton.click();
     await expect(intentsTabButton).toHaveClass(/active/);
 
@@ -511,6 +483,21 @@ test.describe("Intents Deposit UI", () => {
 
         // Verify the UI address matches the API address
         expect(uiDepositAddress).toEqual(apiDepositAddress);
+
+        const intentsCopyButton = page.locator(
+          '.btn[data-component="widgets.treasury-factory.near/widget/components.Copy"]'
+        );
+        await expect(intentsCopyButton).toBeVisible();
+        await expect(intentsCopyButton).toContainText("Copy");
+        await intentsCopyButton.click();
+
+        await expect(intentsCopyButton).toContainText("Copied");
+
+        const clipboardText = await page.evaluate(
+          "navigator.clipboard.readText()"
+        );
+        expect(clipboardText).toEqual(apiDepositAddress);
+
         console.log(
           `Verified: ${assetName} on ${network.name} - Address: ${uiDepositAddress}`
         );

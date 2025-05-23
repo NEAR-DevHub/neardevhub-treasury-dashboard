@@ -454,6 +454,7 @@ return (
                 <Widget
                   src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Copy"
                   props={{
+                    label: "Copy",
                     clipboardText: intentsDepositAddress,
                     className: "btn btn-sm btn-outline-secondary ms-2",
                   }}
