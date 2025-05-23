@@ -276,7 +276,7 @@ const DynamicIntentsWarning = () => {
 };
 
 return (
-  <Modal>
+  <Modal props={{ minWidth: "700px" }}>
     <ModalHeader>
       <h5 className="modal-title">Deposit Funds</h5>
       <button
@@ -449,26 +449,87 @@ return (
                 Always double-check your deposit address — it may change without
                 notice.
               </div>
-              <div className="d-flex align-items-center mb-2">
-                <strong className="text-break">{intentsDepositAddress}</strong>
-                <Widget
-                  src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Copy"
-                  props={{
-                    label: "Copy",
-                    clipboardText: intentsDepositAddress,
-                    className: "btn btn-sm btn-outline-secondary ms-2",
-                  }}
-                />
-              </div>
-              <div className="mt-2 mb-3 text-center">
-                <Widget
-                  src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.QRCodeGenerator"
-                  props={{
-                    text: intentsDepositAddress,
-                    cellSize: 4,
-                    margin: 4,
-                  }}
-                />
+
+              <div
+                className="row g-0 align-items-start mb-2"
+                style={{ marginTop: 8 }}
+              >
+                <div className="col-auto" style={{ paddingRight: 20 }}>
+                  <div
+                    className="bg-dark-subtle rounded p-2"
+                    style={{
+                      display: "inline-block",
+                      border: "1.5px solid #444",
+                    }}
+                  >
+                    <Widget
+                      src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.QRCodeGenerator"
+                      props={{
+                        text: intentsDepositAddress,
+                        cellSize: 4,
+                        margin: 4,
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className="col ps-0">
+                  <label
+                    className="form-label mb-1"
+                    style={{ fontWeight: 500 }}
+                  >
+                    Deposit Address
+                  </label>
+                  <div
+                    className="d-flex align-items-center mb-2"
+                    style={{ maxWidth: 420 }}
+                  >
+                    <div
+                      className="form-control bg-dark-subtle text-light border-secondary pe-1"
+                      style={{
+                        fontFamily: "monospace",
+                        fontSize: "1.1em",
+                        display: "flex",
+                      }}
+                    >
+                      <div
+                        style={{
+                          textOverflow: "ellipsis",
+                          overflow: "hidden",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {intentsDepositAddress}
+                      </div>
+                      <Widget
+                        src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Copy"
+                        props={{
+                          label: "",
+                          clipboardText: intentsDepositAddress,
+                          className:
+                            "btn btn-sm btn-outline-secondary ms-n5 end-0 me-2",
+                          iconOnly: true,
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div
+                    className="alert mt-2 mb-0 px-3 py-2"
+                    style={{
+                      background: "#47391c",
+                      color: "#ffb84d",
+                      fontWeight: 500,
+                      border: "none",
+                    }}
+                  >
+                    Only deposit {selectedAssetName} from the{" "}
+                    {selectedNetworkFullInfo?.name?.toLowerCase()} network
+                    <br />
+                    <span style={{ fontWeight: 400, color: "#ffb84dcc" }}>
+                      Depositing other assets or using a different network will
+                      result in loss of funds
+                    </span>
+                  </div>
+                </div>
               </div>
             </>
           ) : (
