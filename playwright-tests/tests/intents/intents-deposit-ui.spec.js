@@ -357,6 +357,7 @@ test.describe("Intents Deposit UI", () => {
     const depositButton = totalBalanceCardLocator.getByRole("button", {
       name: "Deposit",
     });
+    await expect(depositButton).toBeEnabled();
     await depositButton.click();
 
     const modalLocator = page.getByText("Deposit Funds Deposit options");
