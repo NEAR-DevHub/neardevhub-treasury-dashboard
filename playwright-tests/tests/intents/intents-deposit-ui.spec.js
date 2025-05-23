@@ -226,7 +226,7 @@ test.describe("Intents Deposit UI", () => {
     );
   });
 
-  test("should display QR code in both tabs", async ({
+  test("should display QR code in NEAR tab", async ({
     page,
     instanceAccount,
     daoAccount,
@@ -249,62 +249,33 @@ test.describe("Intents Deposit UI", () => {
     await expect(depositButton).toBeEnabled();
     await depositButton.click();
 
-    const modalLocator = page.locator(".modal-dialog");
+    const modalLocator = page.getByText("Deposit Funds Deposit options");
     await expect(modalLocator).toBeVisible({ timeout: 10000 });
 
     const sputnikTabButton = modalLocator.getByRole("button", {
       name: "Sputnik DAO (NEAR Only)",
     });
-    const intentsTabButton = modalLocator.getByRole("button", {
-      name: "Near Intents (Multi-Asset)",
-    });
 
     // Check QR code in Sputnik tab
     await expect(sputnikTabButton).toHaveClass(/active/);
-    const sputnikQrCodeContainer = modalLocator
-      .locator('p:has-text("Deposit NEAR to this Sputnik DAO address:")')
-      .locator(
-        'xpath=./following-sibling::div[contains(@class, "text-center")]'
-      );
-    const sputnikQrCodeIframe = sputnikQrCodeContainer.locator(
-      "iframe[title*='QR Code for]"
-    );
-    await expect(sputnikQrCodeIframe).toBeVisible();
-    await expect(sputnikQrCodeIframe).toHaveAttribute(
-      "srcdoc",
-      /<img id="qrCodeImageElement"/
-    );
-    // It's hard to verify the content of the iframe's srcDoc image directly with Playwright's default locators
-    // We will check that the iframe is there and has the expected structure.
-    // Further checks could involve frameLocator if deeper inspection is needed and feasible.
 
-    // Switch to Near Intents tab
-    await intentsTabButton.click();
-    await expect(intentsTabButton).toHaveClass(/active/);
+    // Verify the QR code matches the displayed address
+    const qrCodeIframe = modalLocator.locator("iframe[title*='QR Code for']");
+    await expect(qrCodeIframe).toBeVisible();
+    await qrCodeIframe.scrollIntoViewIfNeeded();
+    // Take a screenshot of the QR code and decode it
+    const qrCodeImageBuffer = await qrCodeIframe.screenshot();
+    const image = await Jimp.read(qrCodeImageBuffer);
 
-    // Check QR code in Intents tab
-    const intentsQrCodeContainer = modalLocator
-      .locator(
-        'p:has-text("Deposit NEAR or other supported tokens to this Near Intents enabled address:")'
-      )
-      .locator(
-        'xpath=./following-sibling::div[contains(@class, "text-center")]'
-      );
-    const intentsQrCodeIframe = intentsQrCodeContainer.locator(
-      "iframe[title*='QR Code for]"
-    );
-    await expect(intentsQrCodeIframe).toBeVisible();
-    await expect(intentsQrCodeIframe).toHaveAttribute(
-      "srcdoc",
-      /<img id="qrCodeImageElement"/
-    );
+    const imageData = {
+      data: new Uint8ClampedArray(image.bitmap.data),
+      width: image.bitmap.width,
+      height: image.bitmap.height,
+    };
 
-    // Close the modal
-    const closeButtonFooter = modalLocator.getByRole("button", {
-      name: "Close",
-    });
-    await closeButtonFooter.click();
-    await expect(modalLocator).not.toBeVisible();
+    // Decode the QR code using jsQR
+    const decodedQR = jsQR(imageData.data, imageData.width, imageData.height);
+    expect(decodedQR?.data).toEqual(daoAccount);
   });
 
   test("verify deposit addresses and QR codes for all assets and networks", async ({
