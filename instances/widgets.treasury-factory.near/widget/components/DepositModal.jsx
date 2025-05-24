@@ -471,7 +471,7 @@ return (
             <div className="alert alert-danger mt-2">{errorApi}</div>
           )}
 
-          {intentsDepositAddress ? (
+          {!isLoadingAddress && intentsDepositAddress ? (
             <>
               <h5>Use this deposit address</h5>
               <p className="mt-2 text-muted">
