@@ -178,35 +178,30 @@ test.describe("Intents Deposit UI", () => {
     await expect(modalLocator).toBeVisible({ timeout: 10000 });
 
     const sputnikTabButton = modalLocator.getByRole("button", {
-      name: "Sputnik DAO (NEAR Only)",
+      name: "Sputnik DAO",
     });
     const intentsTabButton = modalLocator.getByRole("button", {
-      name: "Near Intents (Multi-Asset)",
+      name: "NEAR Intents",
     });
-    const sputnikWarningLocator = modalLocator.locator("div.alert-warning");
-    const intentsWarningLocator = modalLocator.locator("div.alert-info");
+    const warningLocator = modalLocator.locator(".alert");
 
     // Initial state: Sputnik tab should be active
     await expect(sputnikTabButton).toHaveClass(/active/);
     await expect(intentsTabButton).not.toHaveClass(/active/);
-    await expect(sputnikWarningLocator).toBeVisible();
-    await expect(sputnikWarningLocator).toContainText(
-      "Only deposit NEAR to this address for Sputnik DAO operations."
+    await expect(warningLocator).toBeVisible();
+    await expect(warningLocator).toContainText(
+      "Only deposit from the NEAR network"
     );
-    await expect(intentsWarningLocator).not.toBeVisible();
 
     // Verify Sputnik tab copy button
-    const sputnikCopyButtonContainer = modalLocator
-      .locator('p:has-text("Deposit NEAR to this Sputnik DAO address:")')
-      .locator("xpath=./following-sibling::div[1]");
-    const sputnikCopyButton = sputnikCopyButtonContainer.locator(
-      '.btn[data-component="widgets.treasury-factory.near/widget/components.Copy"]'
-    );
+    const sputnikCopyButton = modalLocator
+      .locator(
+        '[data-component="widgets.treasury-factory.near/widget/components.Copy"]'
+      )
+      .first();
     await expect(sputnikCopyButton).toBeVisible();
-    await expect(sputnikCopyButton).toContainText("Copy");
-    await sputnikCopyButton.click();
 
-    await expect(sputnikCopyButton).toContainText("Copied");
+    await sputnikCopyButton.click();
 
     let clipboardText = await page.evaluate("navigator.clipboard.readText()");
     expect(clipboardText).toEqual(daoAccount);
@@ -215,9 +210,7 @@ test.describe("Intents Deposit UI", () => {
     await intentsTabButton.click();
     await expect(intentsTabButton).toHaveClass(/active/);
     await expect(sputnikTabButton).not.toHaveClass(/active/);
-    await expect(sputnikWarningLocator).not.toBeVisible();
-    await expect(intentsWarningLocator).toBeVisible();
-    await expect(intentsWarningLocator).toContainText(
+    await expect(warningLocator).toHaveText(
       "Select an asset and network to see deposit instructions and address."
     );
   });
