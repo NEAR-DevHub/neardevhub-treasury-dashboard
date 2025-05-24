@@ -170,7 +170,6 @@ test.describe("Dashboard Page", function () {
 
   test("Should see 404 modal", async ({ page }) => {
     test.setTimeout(60_000);
-    await page.waitForTimeout(5_000);
     await expect(page.getByText("Please wait a moment...")).toBeVisible();
   });
 

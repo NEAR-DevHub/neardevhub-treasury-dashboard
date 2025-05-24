@@ -399,149 +399,152 @@ export async function mockWithFTBalance({
   isSufficient,
   isDashboard,
 }) {
-  await page.route(
-    (daoAccount.includes("testing")
-      ? `https://ref-sdk-test-cold-haze-1300-2.fly.dev`
-      : `https://ref-sdk-api-2.fly.dev`) +
-      `/api/ft-tokens/?account_id=${daoAccount}`,
-    async (route) => {
-      await route.fulfill({
-        json: {
-          totalCumulativeAmt: 10,
-          fts: isDashboard
-            ? [
-                {
-                  contract: "crans.tkn.near",
-                  amount: "30000000000000000000000000000",
-                  ft_meta: {
-                    name: "Crans",
-                    symbol: "CRANS",
-                    decimals: 24,
-                    icon: "",
-                    reference: null,
-                    price: null,
-                  },
-                },
-                {
-                  contract: "slush.tkn.near",
-                  amount: "7231110994833791657750514",
-                  ft_meta: {
-                    name: "Slushie",
-                    symbol: "SLUSH",
-                    decimals: 18,
-                    icon: "",
-                    reference: null,
-                    price: null,
-                  },
-                },
-                {
-                  contract: "chainabstract.tkn.near",
-                  amount: "1000000000000000000000000",
-                  ft_meta: {
-                    name: "Chain Abstraction",
-                    symbol: "CHAINABSTRACT",
-                    decimals: 18,
-                    icon: "",
-                    reference: null,
-                    price: null,
-                  },
-                },
-                {
-                  contract: "rnc.tkn.near",
-                  amount: "710047000000000000000000",
-                  ft_meta: {
-                    name: "Republican National Committee ",
-                    symbol: "RNC",
-                    decimals: 18,
-                    icon: "",
-                    reference: null,
-                    price: null,
-                  },
-                },
-                {
-                  contract: "hoot-657.meme-cooking.near",
-                  amount: "1000000000000000000000",
-                  ft_meta: {
-                    name: "HOOT",
-                    symbol: "HOOT",
-                    decimals: 18,
-                    icon: "",
-                    reference: null,
-                    price: null,
-                  },
-                },
+  const ftTokensBaseUrl = daoAccount.includes("testing")
+    ? `https://ref-sdk-test-cold-haze-1300-2.fly.dev`
+    : `https://ref-sdk-api-2.fly.dev`;
 
-                {
-                  contract:
-                    "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
-                  amount: "72000000",
-                  ft_meta: {
-                    name: "USDC",
-                    symbol: "USDC",
-                    decimals: 6,
-                    icon: "",
-                    reference: null,
-                    price: 0.999997,
-                  },
-                },
-                {
-                  contract: "token.v2.ref-finance.near",
-                  amount: "977826758655654840",
-                  ft_meta: {
-                    name: "Ref Finance Token",
-                    symbol: "REF",
-                    decimals: 18,
-                    icon: "",
-                    reference: null,
-                    price: 0.123989,
-                  },
-                },
-
-                {
-                  contract: "blackdragon.tkn.near",
-                  amount: "743919574977600000000000000000000000",
-                  ft_meta: {
-                    name: "Black Dragon",
-                    symbol: "BLACKDRAGON",
-                    decimals: 24,
-                    icon: "",
-                    reference: null,
-                    price: 3e-8,
-                  },
-                },
-              ]
-            : [
-                {
-                  contract: "usdt.tether-token.near",
-                  amount: isSufficient ? "4500000" : "10",
-                  ft_meta: {
-                    name: "Tether USD",
-                    symbol: "USDt",
-                    decimals: 6,
-                    icon: "",
-                    reference: null,
-                    price: 1,
-                  },
-                },
-                {
-                  contract:
-                    "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
-                  amount: isSufficient ? "5000000" : "10",
-                  ft_meta: {
-                    name: "USDC",
-                    symbol: "USDC",
-                    decimals: 6,
-                    icon: "",
-                    reference: null,
-                    price: 1,
-                  },
-                },
-              ],
-          nfts: [],
-        },
-      });
-    }
+  // Regex to handle optional trailing slash before query parameters
+  const ftTokensUrlPattern = new RegExp(
+    `^${ftTokensBaseUrl}/api/ft-tokens\\/?\\?account_id=${daoAccount}$`
   );
+
+  await page.route(ftTokensUrlPattern, async (route) => {
+    await route.fulfill({
+      json: {
+        totalCumulativeAmt: 10,
+        fts: isDashboard
+          ? [
+              {
+                contract: "crans.tkn.near",
+                amount: "30000000000000000000000000000",
+                ft_meta: {
+                  name: "Crans",
+                  symbol: "CRANS",
+                  decimals: 24,
+                  icon: "",
+                  reference: null,
+                  price: null,
+                },
+              },
+              {
+                contract: "slush.tkn.near",
+                amount: "7231110994833791657750514",
+                ft_meta: {
+                  name: "Slushie",
+                  symbol: "SLUSH",
+                  decimals: 18,
+                  icon: "",
+                  reference: null,
+                  price: null,
+                },
+              },
+              {
+                contract: "chainabstract.tkn.near",
+                amount: "1000000000000000000000000",
+                ft_meta: {
+                  name: "Chain Abstraction",
+                  symbol: "CHAINABSTRACT",
+                  decimals: 18,
+                  icon: "",
+                  reference: null,
+                  price: null,
+                },
+              },
+              {
+                contract: "rnc.tkn.near",
+                amount: "710047000000000000000000",
+                ft_meta: {
+                  name: "Republican National Committee ",
+                  symbol: "RNC",
+                  decimals: 18,
+                  icon: "",
+                  reference: null,
+                  price: null,
+                },
+              },
+              {
+                contract: "hoot-657.meme-cooking.near",
+                amount: "1000000000000000000000",
+                ft_meta: {
+                  name: "HOOT",
+                  symbol: "HOOT",
+                  decimals: 18,
+                  icon: "",
+                  reference: null,
+                  price: null,
+                },
+              },
+
+              {
+                contract:
+                  "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+                amount: "72000000",
+                ft_meta: {
+                  name: "USDC",
+                  symbol: "USDC",
+                  decimals: 6,
+                  icon: "",
+                  reference: null,
+                  price: 0.999997,
+                },
+              },
+              {
+                contract: "token.v2.ref-finance.near",
+                amount: "977826758655654840",
+                ft_meta: {
+                  name: "Ref Finance Token",
+                  symbol: "REF",
+                  decimals: 18,
+                  icon: "",
+                  reference: null,
+                  price: 0.123989,
+                },
+              },
+
+              {
+                contract: "blackdragon.tkn.near",
+                amount: "743919574977600000000000000000000000",
+                ft_meta: {
+                  name: "Black Dragon",
+                  symbol: "BLACKDRAGON",
+                  decimals: 24,
+                  icon: "",
+                  reference: null,
+                  price: 3e-8,
+                },
+              },
+            ]
+          : [
+              {
+                contract: "usdt.tether-token.near",
+                amount: isSufficient ? "4500000" : "10",
+                ft_meta: {
+                  name: "Tether USD",
+                  symbol: "USDt",
+                  decimals: 6,
+                  icon: "",
+                  reference: null,
+                  price: 1,
+                },
+              },
+              {
+                contract:
+                  "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+                amount: isSufficient ? "5000000" : "10",
+                ft_meta: {
+                  name: "USDC",
+                  symbol: "USDC",
+                  decimals: 6,
+                  icon: "",
+                  reference: null,
+                  price: 1,
+                },
+              },
+            ],
+        nfts: [],
+      },
+    });
+  });
   await page.route(`https://rpc.mainnet.near.org`, async (route) => {
     const request = await route.request();
     const requestPostData = request.postDataJSON();
