@@ -89,6 +89,15 @@ test.describe("Intents Deposit UI", () => {
     await redirectWeb4({ page, contractId: instanceAccount });
     await page.goto(`https://${instanceAccount}.page`);
 
+    // Wait for the page to be loaded by expecting NEAR token in the portfolio
+    await expect(
+      page
+        .locator(
+          '[data-component="widgets.treasury-factory.near/widget/pages.dashboard.Portfolio"]'
+        )
+        .first()
+    ).toContainText("NEAR");
+
     const totalBalanceCardLocator = page.locator(".card.card-body", {
       hasText: "Total Balance",
     });
@@ -104,15 +113,6 @@ test.describe("Intents Deposit UI", () => {
     );
     await expect(modalLocator).toBeVisible({ timeout: 10000 });
 
-    await expect(
-      modalLocator.locator("h5.modal-title:has-text('Deposit Funds')")
-    ).toBeVisible();
-
-    // Check for the introductory text with treasuryDaoID
-    await expect(
-      modalLocator.getByText(`Deposit options for: ${daoAccount}`)
-    ).toBeVisible();
-
     // Check Sputnik Tab button is visible and active by default
     const sputnikTabButton = modalLocator.getByRole("button", {
       name: "Sputnik DAO",
@@ -121,37 +121,20 @@ test.describe("Intents Deposit UI", () => {
     await expect(sputnikTabButton).toHaveClass(/active/);
 
     // Check Sputnik tab content is visible
-    await expect(
-      modalLocator.locator(
-        "p:has-text('Deposit NEAR to this Sputnik DAO address:')"
-      )
-    ).toBeVisible();
-    const sputnikAddressContainer = modalLocator
-      .locator('p:has-text("Deposit NEAR to this Sputnik DAO address:")')
-      .locator("xpath=./following-sibling::div[1]");
-    await expect(
-      sputnikAddressContainer.locator(`strong:has-text("${daoAccount}")`)
-    ).toBeVisible();
+    await expect(modalLocator.locator(`div.form-control`)).toHaveText(
+      daoAccount
+    );
 
     // Check Near Intents Tab button is visible but not active
     const intentsTabButton = modalLocator.getByRole("button", {
-      name: "Near Intents (Multi-Asset)",
+      name: "NEAR Intents",
     });
     await expect(intentsTabButton).toBeVisible();
     await expect(intentsTabButton).not.toHaveClass(/active/);
 
-    // Check Near Intents tab content (descriptive paragraph) is NOT visible initially
-    await expect(
-      modalLocator.locator(
-        "p:has-text('Deposit NEAR or other supported tokens to this Near Intents enabled address:')"
-      )
-    ).not.toBeVisible();
-
-    const closeButtonFooter = modalLocator
-      .getByRole("button", {
-        name: "Close",
-      })
-      .nth(1);
+    const closeButtonFooter = modalLocator.getByRole("button", {
+      name: "Close",
+    });
     await expect(closeButtonFooter).toBeVisible();
 
     await closeButtonFooter.click();
@@ -169,6 +152,15 @@ test.describe("Intents Deposit UI", () => {
       treasury: daoAccount,
     });
     await page.goto(`https://${instanceAccount}.page`);
+
+    // Wait for the page to be loaded by expecting NEAR token in the portfolio
+    await expect(
+      page
+        .locator(
+          '[data-component="widgets.treasury-factory.near/widget/pages.dashboard.Portfolio"]'
+        )
+        .first()
+    ).toContainText("NEAR");
 
     const totalBalanceCardLocator = page.locator(".card.card-body", {
       hasText: "Total Balance",
@@ -243,6 +235,15 @@ test.describe("Intents Deposit UI", () => {
 
     await page.goto(`https://${instanceAccount}.page`);
 
+    // Wait for the page to be loaded by expecting NEAR token in the portfolio
+    await expect(
+      page
+        .locator(
+          '[data-component="widgets.treasury-factory.near/widget/pages.dashboard.Portfolio"]'
+        )
+        .first()
+    ).toContainText("NEAR");
+
     const totalBalanceCardLocator = page.locator(".card.card-body", {
       hasText: "Total Balance",
     });
@@ -296,6 +297,15 @@ test.describe("Intents Deposit UI", () => {
       treasury: daoAccount,
     });
     await page.goto(`https://${instanceAccount}.page`);
+
+    // Wait for the page to be loaded by expecting NEAR token in the portfolio
+    await expect(
+      page
+        .locator(
+          '[data-component="widgets.treasury-factory.near/widget/pages.dashboard.Portfolio"]'
+        )
+        .first()
+    ).toContainText("NEAR");
 
     // Open the deposit modal
     const totalBalanceCardLocator = page.locator(".card.card-body", {
