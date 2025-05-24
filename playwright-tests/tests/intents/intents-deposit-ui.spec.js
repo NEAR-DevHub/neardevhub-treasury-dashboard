@@ -215,7 +215,7 @@ test.describe("Intents Deposit UI", () => {
     );
   });
 
-  test("should display QR code in NEAR tab", async ({
+  test("should display QR code in Sputnik DAO tab", async ({
     page,
     instanceAccount,
     daoAccount,
@@ -253,7 +253,7 @@ test.describe("Intents Deposit UI", () => {
     await expect(modalLocator).toBeVisible({ timeout: 10000 });
 
     const sputnikTabButton = modalLocator.getByRole("button", {
-      name: "Sputnik DAO (NEAR Only)",
+      name: "Sputnik DAO",
     });
 
     // Check QR code in Sputnik tab
@@ -276,6 +276,21 @@ test.describe("Intents Deposit UI", () => {
     // Decode the QR code using jsQR
     const decodedQR = jsQR(imageData.data, imageData.width, imageData.height);
     expect(decodedQR?.data).toEqual(daoAccount);
+
+    // Wait for the deposit address to appear
+    const depositAddressElement = modalLocator.locator("div.form-control");
+    await expect(depositAddressElement).not.toBeEmpty({ timeout: 15000 });
+    const uiDepositAddress = await depositAddressElement.innerText();
+    expect(uiDepositAddress).toEqual(daoAccount);
+
+    const depositAddressCopyButton = modalLocator.locator(
+      '.btn[data-component="widgets.treasury-factory.near/widget/components.Copy"]'
+    );
+    await expect(depositAddressCopyButton).toBeVisible();
+    await depositAddressCopyButton.click();
+
+    const clipboardText = await page.evaluate("navigator.clipboard.readText()");
+    expect(clipboardText).toEqual(daoAccount);
   });
 
   test("verify deposit addresses and QR codes for all assets and networks", async ({
