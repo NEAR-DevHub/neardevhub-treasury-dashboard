@@ -233,14 +233,19 @@ useEffect(() => {
 
 const sputnikWarning = (
   <div
-    className="alert alert-warning d-flex align-items-center mt-2"
-    role="alert"
+    className="alert mt-2 mb-0 px-3 py-2"
+    style={{
+      background: "#47391c",
+      color: "#ffb84d",
+      fontWeight: 500,
+      border: "none",
+    }}
   >
-    <i className="bi bi-exclamation-triangle-fill me-2"></i>
-    <div>
-      Only deposit <strong>NEAR</strong> to this address for Sputnik DAO
-      operations. Other tokens sent here may not be recoverable.
-    </div>
+    Only deposit from the NEAR network
+    <br />
+    <span style={{ fontWeight: 400, color: "#ffb84dcc" }}>
+      Depositing using a different network will result in loss of funds.
+    </span>
   </div>
 );
 
@@ -295,31 +300,76 @@ return (
 
       {activeTab === "sputnik" && (
         <>
-          <p className="mt-3">Deposit NEAR to this Sputnik DAO address:</p>
-          <div className="d-flex align-items-center mb-2">
-            <strong className="text-break">{sputnikAddress}</strong>
-            <Widget
-              src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Copy"
-              props={{
-                clipboardText: sputnikAddress,
-                label: "Copy",
-                className: "btn btn-sm btn-outline-secondary ms-2",
-              }}
-            />
-          </div>
-          {sputnikAddress && (
-            <div className="mt-2 mb-3 text-center">
-              <Widget
-                src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.QRCodeGenerator"
-                props={{
-                  text: sputnikAddress,
-                  cellSize: 4,
-                  margin: 4,
-                }}
-              />
+          <h5 className="mt-3">Use this deposit address</h5>
+          <p className="mt-2 text-muted">
+            Always double-check your deposit address — it may change without
+            notice.
+          </p>
+          <div
+            className="row g-0 align-items-start mb-2"
+            style={{ marginTop: 8 }}
+          >
+            <div className="col-auto" style={{ paddingRight: 20 }}>
+              {sputnikAddress && (
+                <div
+                  className="bg-dark-subtle rounded p-2"
+                  style={{
+                    display: "inline-block",
+                    border: "1.5px solid #444",
+                  }}
+                >
+                  <Widget
+                    src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.QRCodeGenerator"
+                    props={{
+                      text: sputnikAddress,
+                      cellSize: 4,
+                      margin: 4,
+                    }}
+                  />
+                </div>
+              )}
             </div>
-          )}
-          {sputnikWarning}
+            <div className="col ps-0">
+              <label className="form-label mb-1" style={{ fontWeight: 500 }}>
+                Deposit Address
+              </label>
+              <div
+                className="d-flex align-items-center mb-2"
+                style={{ maxWidth: 420 }}
+              >
+                <div
+                  className="form-control bg-dark-subtle text-light border-secondary pe-1"
+                  style={{
+                    fontFamily: "monospace",
+                    fontSize: "1.1em",
+                    display: "flex",
+                  }}
+                >
+                  <div
+                    style={{
+                      textOverflow: "ellipsis",
+                      overflow: "hidden",
+                      whiteSpace: "nowrap",
+                      flexGrow: "1",
+                    }}
+                  >
+                    {sputnikAddress}
+                  </div>
+                  <Widget
+                    src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Copy"
+                    props={{
+                      label: "",
+                      clipboardText: sputnikAddress,
+                      className:
+                        "btn btn-sm btn-outline-secondary ms-n5 end-0 me-2",
+                      iconOnly: true,
+                    }}
+                  />
+                </div>
+              </div>
+              {sputnikWarning}
+            </div>
+          </div>
         </>
       )}
 
@@ -475,6 +525,7 @@ return (
                           textOverflow: "ellipsis",
                           overflow: "hidden",
                           whiteSpace: "nowrap",
+                          flexGrow: "1",
                         }}
                       >
                         {intentsDepositAddress}
