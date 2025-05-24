@@ -435,7 +435,7 @@ return (
       )}
       <div
         className={
-          "d-flex flex-wrap " +
+          "d-flex flex-wrap align-items-start " +
           (isCompactVersion ? " gap-10px flex-column" : " gap-3")
         }
       >

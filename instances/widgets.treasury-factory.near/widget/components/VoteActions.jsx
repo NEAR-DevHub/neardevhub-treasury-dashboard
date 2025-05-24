@@ -146,8 +146,6 @@ useEffect(() => {
           const sortedProposalVotes = JSON.stringify(
             Object.keys(proposal?.votes ?? {}).sort()
           );
-          console.log("old", JSON.stringify(votes));
-          console.log("new", JSON.stringify(proposal));
           const sortedVotes = JSON.stringify(Object.keys(votes ?? {}).sort());
           if (
             JSON.stringify(sortedProposalVotes) !== JSON.stringify(sortedVotes)
