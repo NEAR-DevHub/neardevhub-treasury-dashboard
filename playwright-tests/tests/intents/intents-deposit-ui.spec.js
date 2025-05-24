@@ -99,7 +99,9 @@ test.describe("Intents Deposit UI", () => {
     });
     await depositButton.click();
 
-    const modalLocator = page.getByText("Deposit Funds Deposit options");
+    const modalLocator = page.locator(
+      'div.card[data-component="widgets.treasury-factory.near/widget/lib.modal"]'
+    );
     await expect(modalLocator).toBeVisible({ timeout: 10000 });
 
     await expect(
@@ -113,7 +115,7 @@ test.describe("Intents Deposit UI", () => {
 
     // Check Sputnik Tab button is visible and active by default
     const sputnikTabButton = modalLocator.getByRole("button", {
-      name: "Sputnik DAO (NEAR Only)",
+      name: "Sputnik DAO",
     });
     await expect(sputnikTabButton).toBeVisible();
     await expect(sputnikTabButton).toHaveClass(/active/);
@@ -178,7 +180,9 @@ test.describe("Intents Deposit UI", () => {
     await expect(depositButton).toBeVisible();
     await depositButton.click();
 
-    const modalLocator = page.getByText("Deposit Funds Deposit options");
+    const modalLocator = page.locator(
+      'div.card[data-component="widgets.treasury-factory.near/widget/lib.modal"]'
+    );
     await expect(modalLocator).toBeVisible({ timeout: 10000 });
 
     const sputnikTabButton = modalLocator.getByRole("button", {
@@ -249,7 +253,9 @@ test.describe("Intents Deposit UI", () => {
     await expect(depositButton).toBeEnabled();
     await depositButton.click();
 
-    const modalLocator = page.getByText("Deposit Funds Deposit options");
+    const modalLocator = page.locator(
+      'div.card[data-component="widgets.treasury-factory.near/widget/lib.modal"]'
+    );
     await expect(modalLocator).toBeVisible({ timeout: 10000 });
 
     const sputnikTabButton = modalLocator.getByRole("button", {
@@ -302,12 +308,14 @@ test.describe("Intents Deposit UI", () => {
     await expect(depositButton).toBeEnabled();
     await depositButton.click();
 
-    const modalLocator = page.getByText("Deposit Funds Deposit options");
+    const modalLocator = page.locator(
+      'div.card[data-component="widgets.treasury-factory.near/widget/lib.modal"]'
+    );
     await expect(modalLocator).toBeVisible({ timeout: 10000 });
 
     // Switch to the "Near Intents (Multi-Asset)" tab
     const intentsTabButton = modalLocator.getByRole("button", {
-      name: "Near Intents (Multi-Asset)",
+      name: "NEAR Intents",
     });
     await expect(intentsTabButton).toBeEnabled();
     await intentsTabButton.click();
@@ -404,7 +412,7 @@ test.describe("Intents Deposit UI", () => {
           .click();
 
         // Wait for the deposit address to appear
-        const depositAddressElement = modalLocator.locator("strong.text-break");
+        const depositAddressElement = modalLocator.locator("div.form-control");
         await expect(depositAddressElement).not.toBeEmpty({ timeout: 15000 });
         const uiDepositAddress = await depositAddressElement.innerText();
 
@@ -455,19 +463,21 @@ test.describe("Intents Deposit UI", () => {
         // Verify the UI address matches the API address
         expect(uiDepositAddress).toEqual(apiDepositAddress);
 
-        const intentsCopyButton = page.locator(
+        const intentsCopyButton = modalLocator.locator(
           '.btn[data-component="widgets.treasury-factory.near/widget/components.Copy"]'
         );
         await expect(intentsCopyButton).toBeVisible();
-        await expect(intentsCopyButton).toContainText("Copy");
         await intentsCopyButton.click();
-
-        await expect(intentsCopyButton).toContainText("Copied");
 
         const clipboardText = await page.evaluate(
           "navigator.clipboard.readText()"
         );
         expect(clipboardText).toEqual(apiDepositAddress);
+
+        const alertLocator = modalLocator.locator(".alert");
+        await expect(alertLocator).toContainText(
+          `Only deposit ${assetName} from the ${networkName.toLowerCase()} network`
+        );
 
         console.log(
           `Verified: ${assetName} on ${network.name} - Address: ${uiDepositAddress}`
