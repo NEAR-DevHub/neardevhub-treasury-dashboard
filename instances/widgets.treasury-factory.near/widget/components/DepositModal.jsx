@@ -259,45 +259,28 @@ const DynamicIntentsWarning = () => {
     );
   }
 
-  return (
-    <div
-      className="alert alert-warning d-flex align-items-center mt-2"
-      role="alert"
-    >
-      <i className="bi bi-exclamation-triangle-fill me-2"></i>
-      <div>
-        Only deposit <strong>{selectedAssetName}</strong> from the{" "}
-        <strong>{selectedNetworkFullInfo.name}</strong> network to the address
-        shown. Depositing other assets or using a different network may result
-        in loss of funds.
-      </div>
-    </div>
-  );
+  return <></>;
 };
 
 return (
   <Modal props={{ minWidth: "700px" }}>
     <ModalHeader>
-      <h5 className="modal-title">Deposit Funds</h5>
-      <button
-        type="button"
-        className="btn-close"
-        aria-label="Close"
-        onClick={props.onClose}
-      ></button>
+      <div className="d-flex align-items-center justify-content-between mb-2">
+        <div className="d-flex gap-3">Deposit</div>
+        <i
+          className="bi bi-x-lg h4 mb-0 cursor-pointer"
+          onClick={props.onClose}
+        ></i>
+      </div>
     </ModalHeader>
     <ModalContent>
-      <p className="mb-0">
-        Deposit options for: <strong>{props.treasuryDaoID}</strong>
-      </p>
-
       <ul className="nav nav-tabs mt-3">
         <li className="nav-item">
           <button
             className={`nav-link ${activeTab === "sputnik" ? "active" : ""}`}
             onClick={() => setActiveTab("sputnik")}
           >
-            Sputnik DAO (NEAR Only)
+            Sputnik DAO
           </button>
         </li>
         <li className="nav-item">
@@ -305,7 +288,7 @@ return (
             className={`nav-link ${activeTab === "intents" ? "active" : ""}`}
             onClick={() => setActiveTab("intents")}
           >
-            Near Intents (Multi-Asset)
+            NEAR Intents
           </button>
         </li>
       </ul>
@@ -440,15 +423,11 @@ return (
 
           {intentsDepositAddress ? (
             <>
-              <p className="mt-3">
-                Use this deposit address for{" "}
-                <strong>{selectedAssetName}</strong> on{" "}
-                <strong>{selectedNetworkFullInfo?.name}</strong>:
-              </p>
-              <div className="alert alert-secondary mb-2">
+              <h5>Use this deposit address</h5>
+              <p className="mt-2 text-muted">
                 Always double-check your deposit address — it may change without
                 notice.
-              </div>
+              </p>
 
               <div
                 className="row g-0 align-items-start mb-2"
@@ -544,12 +523,6 @@ return (
             )
           )}
           <DynamicIntentsWarning />
-          <p className="mt-2 small text-muted">
-            Note: Depositing assets to this address makes them available to the{" "}
-            <strong>{nearIntentsTargetAccountId}</strong> account via Near
-            Intents for cross-chain actions. Standard DAO proposals will still
-            be required to move funds from the main treasury account itself.
-          </p>
         </>
       )}
     </ModalContent>
