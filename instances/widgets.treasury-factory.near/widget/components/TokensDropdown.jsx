@@ -20,7 +20,7 @@ onChange = onChange || (() => {});
 const isLockupContract = daoAccount.includes("lockup.near");
 
 const ftTokensResp = isLockupContract
-  ? { body: [] }
+  ? { body: { fts: [] } }
   : fetch(`${REPL_BACKEND_API}/ft-tokens?account_id=${daoAccount}`);
 
 const nearBalances = isLockupContract
