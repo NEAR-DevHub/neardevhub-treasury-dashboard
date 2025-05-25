@@ -446,4 +446,17 @@ test.describe("don't ask again", function () {
     await expect(loader).toBeHidden();
     await expect(approveButton).toBeEnabled();
   });
+
+  test("export action should not be visible in pending requests and history tab", async ({
+    page,
+    instanceAccount,
+  }) => {
+    test.setTimeout(60_000);
+    await page.goto(`/${instanceAccount}/widget/app?page=settings&tab=history`);
+    const exportBtn = page.getByRole("button", { name: " Export" });
+    await expect(page.getByRole('list').getByText('Pending Requests')).toBeVisible();
+    await expect(exportBtn).toBeHidden();
+    await page.getByText("History").click();
+    await expect(exportBtn).toBeHidden();
+  });
 });

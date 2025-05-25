@@ -33,16 +33,14 @@ useEffect(() => {
       offset: typeof offset === "number" ? offset : lastProposalId,
       lastProposalId: lastProposalId,
       currentPage,
+      isLockup: true,
     }).then((r) => {
-      const proposals = r.filteredProposals.filter(
-        (item) => item.kind.FunctionCall.receiver_id === "lockup.near"
-      );
-
-      setOffset(proposals[proposals.length - 1].id);
-      if (currentPage === 0 && !totalLength) setTotalLength(proposals.length);
-
+      if (currentPage === 0 && !totalLength) {
+        setTotalLength(r.totalLength);
+      }
+      setOffset(r.filteredProposals[r.filteredProposals.length - 1].id);
       setLoading(false);
-      setProposals(proposals);
+      setProposals(r.filteredProposals);
     });
   });
 }, [currentPage, rowsPerPage]);

@@ -32,6 +32,7 @@ return (
     props={{
       ...props,
       tab: undefined,
+      page: "settings",
       tabs: [
         {
           title: "Available Updates",

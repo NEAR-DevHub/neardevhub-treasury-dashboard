@@ -109,6 +109,7 @@ return (
               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Tabs`}
               props={{
                 ...props,
+                page: "lockup",
                 selectedProposalDetailsId: showProposalDetailsId,
                 setCurrentTab,
                 highlightProposalId: voteProposalId,
