@@ -190,9 +190,10 @@ const code = `
         animation: {
           duration: 300,
           onComplete: () => {
+            // the labels are sometimes not visible because of less height
             setTimeout(() => {
               sendChartHeight(); 
-            }, 100);
+            }, 1000);
           },
         },
     };
