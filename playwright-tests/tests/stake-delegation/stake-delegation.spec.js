@@ -112,7 +112,9 @@ test.describe("Have valid staked requests and sufficient token balance", functio
       instanceAccount,
     }) => {
       test.setTimeout(60_000);
-      await page.goto(`/${instanceAccount}/widget/app?page=stake-delegation&tab=history`);
+      await page.goto(
+        `/${instanceAccount}/widget/app?page=stake-delegation&tab=history`
+      );
       const exportLink = page.locator('a[download="proposals.csv"]');
       await expect(exportLink).toBeVisible();
       const href = await exportLink.getAttribute("href");
