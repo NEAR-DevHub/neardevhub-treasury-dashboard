@@ -70,6 +70,7 @@ test.describe("Intents Deposit UI", () => {
       contractId: instanceAccount,
       treasury: daoAccount,
       modifiedWidgets,
+      callWidgetNodeURLForContractWidgets: false,
     });
   });
 
