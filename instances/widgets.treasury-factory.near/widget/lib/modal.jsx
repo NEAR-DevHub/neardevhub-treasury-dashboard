@@ -102,10 +102,12 @@ const ModalFooter = ({ children }) => (
   </div>
 );
 
-const Modal = ({ children }) => (
+const Modal = ({ children, props }) => (
   <ModalDiv>
     <ModalBackdrop />
-    <ModalDialog className="card">{children}</ModalDialog>
+    <ModalDialog className="card" style={{ minWidth: props.minWidth }}>
+      {children}
+    </ModalDialog>
   </ModalDiv>
 );
 
