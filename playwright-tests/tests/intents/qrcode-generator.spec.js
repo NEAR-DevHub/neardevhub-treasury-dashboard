@@ -30,11 +30,9 @@ test("qr code generator produces correct QR", async ({
         viewer.setAttribute(
           "initialProps",
           JSON.stringify({
-            // Ensure the 'text' prop is passed correctly for QRCodeGenerator
             text,
           })
         );
-        // Ensure this src points to your QRCodeGenerator widget
         viewer.setAttribute(
           "src",
           "widgets.treasury-factory.near/widget/components.QRCodeGenerator"

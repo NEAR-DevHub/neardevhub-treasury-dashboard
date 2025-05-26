@@ -1,9 +1,48 @@
 import { expect } from "@playwright/test";
 import { test } from "../../util/test.js";
-import { Worker } from "near-workspaces";
-import { redirectWeb4 } from "../../util/web4.js";
+import { redirectWeb4, getLocalWidgetContent } from "../../util/web4.js";
 import { Jimp } from "jimp";
 import jsQR from "jsqr";
+
+test.describe("Intents Deposit UI feature flag", () => {
+  // Disable feature flag during tests for all instances, can be removed when generally available
+  test("should not display the deposit button if Intents Feature flag is not true", async ({
+    page,
+    instanceAccount,
+    daoAccount,
+  }) => {
+    const modifiedWidgets = {};
+    const configKey = `${instanceAccount}/widget/config.data`;
+    modifiedWidgets[configKey] = (
+      await getLocalWidgetContent(configKey, {
+        treasury: daoAccount,
+        account: instanceAccount,
+      })
+    ).replace("showNearIntents: true", "showNearIntents: false");
+
+    // --------------------------------------------------------
+    await redirectWeb4({
+      page,
+      contractId: instanceAccount,
+      treasury: daoAccount,
+      modifiedWidgets,
+    });
+
+    await page.goto(`https://${instanceAccount}.page`);
+
+    // Wait for the main dashboard content to load, e.g., the Total Balance card
+    const totalBalanceCardLocator = page.locator(".card.card-body", {
+      hasText: "Total Balance",
+    });
+    await expect(totalBalanceCardLocator).toBeVisible({ timeout: 20000 }); // Increased timeout
+
+    // Check for the Deposit button within the Total Balance card
+    const depositButton = totalBalanceCardLocator.getByRole("button", {
+      name: "Deposit",
+    });
+    await expect(depositButton).not.toBeVisible();
+  });
+});
 
 test.describe("Intents Deposit UI", () => {
   test.use({
@@ -11,60 +50,32 @@ test.describe("Intents Deposit UI", () => {
       permissions: ["clipboard-read", "clipboard-write"],
     },
   });
-  let worker;
-  let root;
-  let intents;
 
-  test.beforeAll(async ({ daoAccount, instanceAccount }) => {
-    worker = await Worker.init();
-    root = worker.rootAccount;
+  test.beforeEach(async ({ page, instanceAccount, daoAccount }) => {
+    // Enable feature flag during tests for all instances, can be removed when generally available
 
-    // Import intents contract
-    intents = await root.importContract({
-      mainnetContract: "intents.near", // Replace with your actual intents contract if different
+    const modifiedWidgets = {};
+    const configKey = `${instanceAccount}/widget/config.data`;
+    modifiedWidgets[configKey] = (
+      await getLocalWidgetContent(configKey, {
+        treasury: daoAccount,
+        account: instanceAccount,
+      })
+    ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
+
+    // --------------------------------------------------------
+    await redirectWeb4({
+      page,
+      contractId: instanceAccount,
+      treasury: daoAccount,
+      modifiedWidgets,
     });
-
-    // Import treasury contract (dashboard instance)
-    await root.importContract({
-      mainnetContract: instanceAccount,
-    });
-
-    // Initialize intents contract (if necessary, adapt to your contract's init method)
-    try {
-      await intents.call(intents.accountId, "new", {
-        config: {
-          wnear_id: "wrap.near", // Adjust if your config is different
-          fees: { fee: 100, fee_collector: intents.accountId },
-          roles: {
-            super_admins: [intents.accountId],
-            admins: {},
-            grantees: {},
-          },
-        },
-      });
-    } catch (e) {
-      if (!e.message.includes("Contract already initialized")) {
-        throw e;
-      }
-    }
-    // Note: Treasury contract initialization is not included here as it might be complex
-    // and depends on the specific setup. Add if needed for your tests.
-  });
-
-  test.afterAll(async () => {
-    await worker.tearDown();
   });
 
   test("should display the deposit button in the Total Balance card", async ({
     page,
     instanceAccount,
-    daoAccount,
   }) => {
-    await redirectWeb4({
-      page,
-      contractId: instanceAccount,
-      treasury: daoAccount,
-    });
     await page.goto(`https://${instanceAccount}.page`);
 
     // Wait for the main dashboard content to load, e.g., the Total Balance card
@@ -86,7 +97,6 @@ test.describe("Intents Deposit UI", () => {
     instanceAccount,
     daoAccount,
   }) => {
-    await redirectWeb4({ page, contractId: instanceAccount });
     await page.goto(`https://${instanceAccount}.page`);
 
     // Wait for the page to be loaded by expecting NEAR token in the portfolio
@@ -146,11 +156,6 @@ test.describe("Intents Deposit UI", () => {
     instanceAccount,
     daoAccount,
   }) => {
-    await redirectWeb4({
-      page,
-      contractId: instanceAccount,
-      treasury: daoAccount,
-    });
     await page.goto(`https://${instanceAccount}.page`);
 
     // Wait for the page to be loaded by expecting NEAR token in the portfolio
@@ -220,12 +225,6 @@ test.describe("Intents Deposit UI", () => {
     instanceAccount,
     daoAccount,
   }) => {
-    await redirectWeb4({
-      page,
-      contractId: instanceAccount,
-      treasury: daoAccount,
-    });
-
     await page.goto(`https://${instanceAccount}.page`);
 
     // Wait for the page to be loaded by expecting NEAR token in the portfolio
@@ -299,11 +298,6 @@ test.describe("Intents Deposit UI", () => {
     daoAccount,
   }) => {
     test.setTimeout(120_000);
-    await redirectWeb4({
-      page,
-      contractId: instanceAccount,
-      treasury: daoAccount,
-    });
     await page.goto(`https://${instanceAccount}.page`);
 
     // Wait for the page to be loaded by expecting NEAR token in the portfolio
@@ -331,7 +325,7 @@ test.describe("Intents Deposit UI", () => {
     );
     await expect(modalLocator).toBeVisible({ timeout: 10000 });
 
-    // Switch to the "Near Intents (Multi-Asset)" tab
+    // Switch to the "NEAR Intents" tab
     const intentsTabButton = modalLocator.getByRole("button", {
       name: "NEAR Intents",
     });

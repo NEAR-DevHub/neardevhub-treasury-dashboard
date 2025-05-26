@@ -21,7 +21,9 @@ if (
   return <></>;
 }
 
-const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+const { treasuryDaoID, showNearIntents } = VM.require(
+  `${instance}/widget/config.data`
+);
 
 const lockupContract = accountToLockup(treasuryDaoID);
 
@@ -371,15 +373,17 @@ return (
               {formatCurrency(totalBalance)} USD
             </div>
           )}
-          <button
-            className="btn btn-success mt-2"
-            onClick={() => {
-              setShowDepositModal(true);
-            }}
-            style={{ width: "100%" }} // Make button full width of its container
-          >
-            Deposit
-          </button>
+          {showNearIntents && (
+            <button
+              className="btn btn-success mt-2"
+              onClick={() => {
+                setShowDepositModal(true);
+              }}
+              style={{ width: "100%" }} // Make button full width of its container
+            >
+              Deposit
+            </button>
+          )}
         </div>
         <Widget
           src={

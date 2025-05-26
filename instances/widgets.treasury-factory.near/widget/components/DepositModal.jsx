@@ -18,7 +18,6 @@ const chainIdToNameMap = {
   "optimism:10": "Optimism",
   "avax:43114": "Avalanche C-Chain",
   "btc:mainnet": "Bitcoin",
-  // Add more as needed from defuse_asset_identifier
 };
 
 function getChainName(chainId) {
@@ -29,7 +28,6 @@ const [activeTab, setActiveTab] = useState(props.initialTab || "sputnik");
 const sputnikAddress = props.treasuryDaoID;
 const nearIntentsTargetAccountId = props.treasuryDaoID;
 
-// State for Intents tab - Refactored
 const [allFetchedTokens, setAllFetchedTokens] = useState([]);
 const [assetNamesForDropdown, setAssetNamesForDropdown] = useState([]);
 const [selectedAssetName, setSelectedAssetName] = useState(""); // Stores the name like "ETH", "USDT"
@@ -42,10 +40,6 @@ const [intentsDepositAddress, setIntentsDepositAddress] = useState("");
 const [isLoadingTokens, setIsLoadingTokens] = useState(false);
 const [isLoadingAddress, setIsLoadingAddress] = useState(false);
 const [errorApi, setErrorApi] = useState(null);
-
-// New state for stabilized dropdown options
-const [stableAssetOptions, setStableAssetOptions] = useState([]);
-const [stableNetworkOptions, setStableNetworkOptions] = useState([]);
 
 // Effect 1: Fetch all supported tokens when tab becomes active
 useEffect(() => {
@@ -126,7 +120,6 @@ useEffect(() => {
     setNetworksForSelectedAssetDropdown([]);
     setSelectedNetworkFullInfo(null);
     setIntentsDepositAddress("");
-    // Don't clear errorApi here as it might be from token loading
     return;
   }
 
@@ -161,11 +154,6 @@ useEffect(() => {
   setNetworksForSelectedAssetDropdown(networks);
   setSelectedNetworkFullInfo(null); // Reset selected network
   setIntentsDepositAddress(""); // Reset address
-
-  if (networks.length === 0 && selectedAssetName) {
-    // setErrorApi might be too aggressive here if it overwrites a token loading error
-    // console.warn(`No networks found for asset: ${selectedAssetName}`);
-  }
 }, [selectedAssetName, allFetchedTokens]);
 
 // Effect 3: Fetch deposit address when selectedNetworkFullInfo changes
@@ -408,8 +396,6 @@ return (
                 showSearch: true,
                 searchInputPlaceholder: "Search assets",
                 searchByLabel: true,
-                // Assuming your DropDown.jsx doesn't use isLoadingProposals or showManualRequest
-                // If it does, you might need to pass them or adjust DropDown.jsx
               }}
             />
           </div>
@@ -459,7 +445,6 @@ return (
                   isLoadingAddress ||
                   !selectedAssetName ||
                   networksForSelectedAssetDropdown.length === 0,
-                // Assuming your DropDown.jsx doesn't use isLoadingProposals or showManualRequest
               }}
             />
           </div>
