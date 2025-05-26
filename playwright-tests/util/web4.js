@@ -67,7 +67,7 @@ export async function redirectWeb4({
   widgetNodeUrl = "https://rpc.mainnet.fastnear.com",
   sandboxNodeUrl,
   modifiedWidgets = {},
-  callWidgetNodeURLForContractWidgets = false,
+  callWidgetNodeURLForContractWidgets = true,
 }) {
   const keyStore = new keyStores.InMemoryKeyStore();
 

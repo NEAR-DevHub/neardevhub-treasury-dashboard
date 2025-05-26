@@ -26,6 +26,7 @@ test.describe("Intents Deposit UI feature flag", () => {
       contractId: instanceAccount,
       treasury: daoAccount,
       modifiedWidgets,
+      callWidgetNodeURLForContractWidgets: false,
     });
 
     await page.goto(`https://${instanceAccount}.page`);
