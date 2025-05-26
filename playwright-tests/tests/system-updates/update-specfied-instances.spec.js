@@ -9,6 +9,7 @@ test("should show system-update for targeted instance", async ({ page }) => {
   await redirectWeb4({
     contractId,
     page,
+    callWidgetNodeURLForContractWidgets: true,
     modifiedWidgets: {
       "widgets.treasury-factory.near/widget/pages.settings.system-updates.UpdateRegistry": `
     return [
@@ -44,6 +45,7 @@ test("should not show system-update for others than targeted instances", async (
   await redirectWeb4({
     contractId,
     page,
+    callWidgetNodeURLForContractWidgets: true,
     modifiedWidgets: {
       "widgets.treasury-factory.near/widget/pages.settings.system-updates.UpdateRegistry": `
       return [
@@ -81,6 +83,7 @@ test("should show system-update if no target instances specified", async ({
   await redirectWeb4({
     contractId,
     page,
+    callWidgetNodeURLForContractWidgets: true,
     modifiedWidgets: {
       "widgets.treasury-factory.near/widget/pages.settings.system-updates.UpdateRegistry": `
       return [
