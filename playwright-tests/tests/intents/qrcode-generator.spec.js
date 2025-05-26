@@ -17,10 +17,7 @@ test("qr code generator produces correct QR", async ({
   });
   await page.goto(`https://${instanceAccount}.page/`);
 
-  const depositButton = page.getByRole("button", {
-    name: "Deposit",
-  });
-  await expect(depositButton).toBeVisible();
+  await expect(page.locator(".card.card-body")).toBeVisible();
 
   const showAndDecodeQRCode = async (text) => {
     await page.evaluate(
