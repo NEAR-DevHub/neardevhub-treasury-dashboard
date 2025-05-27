@@ -12,6 +12,8 @@
     "eslint": "^8.48.0",
     "http-server": "^14.1.1",
     "husky": "^8.0.0",
+    "jimp": "^1.6.0",
+    "jsqr": "^1.4.0",
     "lint-staged": "^14.0.1",
     "near-api-js": "^4.0.4",
     "near-social-vm-types": "^1.0.0",

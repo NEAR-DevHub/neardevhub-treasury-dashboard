@@ -13,6 +13,7 @@ test("should show update history", async ({ page, instanceAccount }) => {
   await redirectWeb4({
     contractId,
     page,
+    callWidgetNodeURLForContractWidgets: true,
     modifiedWidgets: {
       "widgets.treasury-factory.near/widget/pages.settings.system-updates.UpdateRegistry": `
     return [
