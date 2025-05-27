@@ -76,10 +76,10 @@ return (
   "
   >
     <div
-      className="d-flex justify-content-between gap-2 align-items-center border-bottom flex-wrap"
+      className="d-flex justify-content-between gap-2 align-items-center border-bottom flex-wrap flex-sm-nowrap"
       style={{ paddingRight: "10px" }}
     >
-      <NavUnderline className="nav gap-2">
+      <NavUnderline className="nav gap-2 w-100">
         {tabs.map(
           ({ title, props: tabProps }) =>
             title && (
@@ -108,7 +108,17 @@ return (
             )
         )}
       </NavUnderline>
-      <div className="px-2">
+      <div className="px-2 d-flex gap-2 justify-content-start justify-content-sm-end w-100">
+        {/* show export in all history tabs except settings and system updates */}
+        {currentTab.title === "History" && props.page !== "settings" && (
+          <Widget
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.ExportTransactions`}
+            props={{
+              page: props.page,
+              instance: props.instance,
+            }}
+          />
+        )}
         <SidebarMenu currentTab={currentTab} />
       </div>
     </div>

@@ -287,6 +287,7 @@ function getFilteredProposalsByStatusAndKind({
   currentPage,
   isAssetExchange,
   isStakeDelegation,
+  isLockup,
 }) {
   const policy = Near.asyncView(treasuryDaoID, "get_policy", {});
   let newLastProposalId = typeof offset === "number" ? offset : lastProposalId;
@@ -332,6 +333,10 @@ function getFilteredProposalsByStatusAndKind({
     return isAssetExchange;
   };
 
+  const checkForLockupProposals = (item) => {
+    return item?.kind?.FunctionCall?.receiver_id === "lockup.near";
+  };
+
   const checkForStakeProposals = (item) => {
     const proposalAction = decodeProposalDescription(
       "proposal_action",
@@ -366,6 +371,7 @@ function getFilteredProposalsByStatusAndKind({
         return false;
       if (isAssetExchange && !checkForExchangeProposals(item)) return false;
       if (isStakeDelegation && !checkForStakeProposals(item)) return false;
+      if (isLockup && !checkForLockupProposals(item)) return false;
 
       return true;
     });

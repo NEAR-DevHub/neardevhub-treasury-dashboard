@@ -177,6 +177,7 @@ return (
               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Tabs`}
               props={{
                 ...props,
+                page: "asset-exchange",
                 selectedProposalDetailsId: showProposalDetailsId,
                 setCurrentTab,
                 highlightProposalId:
