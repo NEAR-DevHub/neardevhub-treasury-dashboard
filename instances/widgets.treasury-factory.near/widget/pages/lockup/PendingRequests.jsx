@@ -59,15 +59,14 @@ const fetchProposals = useCallback(() => {
       offset: typeof offset === "number" ? offset : lastProposalId,
       lastProposalId,
       currentPage,
+      isLockup: true,
     }).then((r) => {
-      const proposals = r.filteredProposals.filter(
-        (item) => item.kind.FunctionCall.receiver_id === "lockup.near"
-      );
-      setOffset(proposals[proposals.length - 1].id);
-      if (currentPage === 0 && !totalLength) setTotalLength(proposals.length);
-
+      setOffset(r.filteredProposals[r.filteredProposals.length - 1].id);
+      if (currentPage === 0 && !totalLength) {
+        setTotalLength(r.totalLength);
+      }
       setLoading(false);
-      setProposals(proposals);
+      setProposals(r.filteredProposals);
     });
   });
 }, [rowsPerPage, isPrevPageCalled, currentPage]);
