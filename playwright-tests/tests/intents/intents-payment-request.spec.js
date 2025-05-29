@@ -7,9 +7,7 @@ import {
   SPUTNIK_DAO_FACTORY_ID,
 } from "../../util/sandboxrpc.js";
 
-test("create payment request to transfer BTC from near-intents to the requested BTC account", async ({
-  page,
-}) => {
+test("create payment request to transfer BTC", async ({ page }) => {
   test.setTimeout(120_000);
   const daoName = "testdao";
 
