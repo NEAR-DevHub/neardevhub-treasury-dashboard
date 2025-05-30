@@ -2,7 +2,7 @@ const { NearToken } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Icons"
 ) || { NearToken: () => <></> };
 
-const { getNearBalances } = VM.require(
+const { getNearBalances, getIntentsBalances } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
 const daoAccount = props.daoAccount;
@@ -42,6 +42,7 @@ if (
 const [options, setOptions] = useState([]);
 const [nearStakedTokens, setNearStakedTokens] = useState(null);
 const [lockupStakedTokens, setLockupStakedTokens] = useState(null);
+const [intentsTokens, setIntentsTokens] = useState([]);
 
 // remove near storage, spam tokens
 const tokensWithBalance =
@@ -53,7 +54,7 @@ const tokensWithBalance =
   ) ?? [];
 
 useEffect(() => {
-  const tokens = [
+  let tokens = [
     {
       icon: NearToken,
       title: "NEAR",
@@ -62,25 +63,22 @@ useEffect(() => {
     },
   ];
 
-  if (
-    tokensWithBalance.length > 0 &&
-    options.length !== tokensWithBalance.length + 1
-  ) {
-    tokens = tokens.concat(
-      tokensWithBalance.map((i) => {
-        return {
-          icon: i.ft_meta.icon,
-          title: i.ft_meta.symbol,
-          value: i.contract,
-          tokenBalance: Big(i.amount ?? "0")
-            .div(Big(10).pow(i.ft_meta.decimals))
-            .toFixed(2),
-        };
-      })
-    );
-  }
+  tokens = tokens.concat(
+    tokensWithBalance.map((i) => {
+      return {
+        icon: i.ft_meta.icon,
+        title: i.ft_meta.symbol,
+        value: i.contract,
+        tokenBalance: Big(i.amount ?? "0")
+          .div(Big(10).pow(i.ft_meta.decimals))
+          .toFixed(2),
+      };
+    })
+  );
+
+  tokens = tokens.concat(intentsTokens);
   setOptions(tokens);
-}, [tokensWithBalance, isLockupContract]);
+}, [tokensWithBalance, isLockupContract, intentsTokens]);
 
 const [isOpen, setIsOpen] = useState(false);
 const [selectedOptionValue, setSelectedValue] = useState(selectedValue);
@@ -170,7 +168,7 @@ const Item = ({ option }) => {
       {typeof option.icon === "string" ? (
         <img src={option.icon} height={30} width={30} />
       ) : (
-        <NearToken />
+        option.icon // Allow rendering component icons directly
       )}
       <div className="d-flex flex-column gap-1 w-100 text-wrap">
         <div className="h6 mb-0"> {option.title}</div>
@@ -191,6 +189,36 @@ const Item = ({ option }) => {
 
 const selectedOption =
   options.find((item) => item.value === selectedOptionValue) ?? null;
+
+useEffect(() => {
+  if (typeof getIntentsBalances === "function" && daoAccount) {
+    getIntentsBalances(daoAccount).then((balances) => {
+      const formattedIntentsTokens = balances.map((token) => ({
+        // Assuming getIntentsBalances returns an array of objects with icon, symbol, contract, and amount
+        // You might need to adjust the properties based on the actual return value of getIntentsBalances
+        icon: token.ft_meta?.icon ? (
+          <img src={token.ft_meta.icon} height={30} width={30} />
+        ) : (
+          <div
+            style={{
+              width: 30,
+              height: 30,
+              borderRadius: "50%",
+              background: "#ccc",
+            }}
+          /> // Placeholder icon
+        ),
+        title: `${token.ft_meta.symbol} (NEAR Intents)`,
+        value: token.contract_id, // Or a unique identifier for the intent token
+        tokenBalance: Big(token.amount ?? "0")
+          .div(Big(10).pow(token.ft_meta.decimals))
+          .toFixed(2),
+        isIntent: true, // Add a flag to identify intent tokens if needed later
+      }));
+      setIntentsTokens(formattedIntentsTokens);
+    });
+  }
+}, [daoAccount]);
 
 return (
   <Container>
