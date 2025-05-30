@@ -279,4 +279,21 @@ test("should create payment request to BTC address", async ({
   const createRequestButton = await page.getByText("Create Request");
   await createRequestButton.click();
   await expect(page.getByText("Create Payment Request")).toBeVisible();
+
+  await page.getByTestId("tokens-dropdown").locator("div").first().click();
+
+  await expect(
+    await page
+      .getByTestId("tokens-dropdown")
+      .locator("div.d-flex.flex-column.gap-1.w-100.text-wrap")
+      .filter({ hasText: "NEAR" })
+      .first()
+  ).toBeVisible();
+
+  await expect(
+    await page
+      .getByTestId("tokens-dropdown")
+      .locator("div.d-flex.flex-column.gap-1.w-100.text-wrap")
+      .filter({ hasText: "BTC (NEAR Intents)" })
+  ).toBeVisible();
 });
