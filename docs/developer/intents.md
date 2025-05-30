@@ -59,7 +59,7 @@ This method allows for sending funds directly from the DAO (via `intents.near`) 
         *   `token`: The NEP-141 token ID of the asset to withdraw (e.g., `\"btc.omft.near\"`).
         *   `receiver_id`: This argument might specify the token contract ID (e.g., `btc.omft.near`) from which the withdrawal is being made or serve another internal purpose for `intents.near`. The actual recipient on the native chain is determined by the `memo`.
         *   `amount`: The quantity of the token to withdraw, as a string.
-        *   `memo`: This is critical. It must be formatted to specify the native chain and destination address. For example: `\"WITHDRAW_TO:bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh\"`.
+        *   `memo`: This is critical. It must be formatted to specify the native chain and destination address. For example: `"WITHDRAW_TO:bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"`.
 
 2.  **Proposal Voting and Execution:**
     *   DAO members vote on the proposal.
@@ -83,3 +83,17 @@ This direct withdrawal mechanism via `ft_withdraw` offers significant advantages
 *   **Critical Memo Field:** The accuracy of the `memo` field, containing the native destination address and the correct `\"WITHDRAW_TO:\"` prefix, is essential for the successful execution of the withdrawal.
 
 This direct withdrawal capability allows DAOs on NEAR to fully manage payouts to external L1 addresses through their existing on-chain governance mechanisms.
+
+## Manual Verification of `ft_withdraw`
+
+The `ft_withdraw` functionality, which allows for direct withdrawal to a native chain address via a memo, was manually verified to confirm its viability beyond the automated test cases. This provides an independent confirmation of the core mechanism.
+
+The following `near-cli` command was used to withdraw ETH (represented as `eth.omft.near` on NEAR) to an Ethereum address:
+```bash
+near contract call-function as-transaction intents.near ft_withdraw json-args '{"receiver_id": "eth.omft.near", "amount": "10000000000000000", "token": "eth.omft.near", "memo": "WITHDRAW_TO:0xa029Ca6D14b97749889702eE16E7d168a1094aFE"}' prepaid-gas '100.0 Tgas' attached-deposit '1 yoctoNEAR' sign-as petersalomonsen.near network-config mainnet sign-with-keychain send
+```
+*(Replace `petersalomonsen.near` with your own NEAR account ID and `0xa029Ca6D14b97749889702eE16E7d168a1094aFE` with your desired destination address in the memo).*
+
+This resulted in the following transactions:
+*   NEAR Transaction: [https://nearblocks.io/txns/HibaVVqfuNSDUyAeoNwSv7o83Vk6eGgonmygwiGTUdK9](https://nearblocks.io/txns/HibaVVqfuNSDUyAeoNwSv7o83Vk6eGgonmygwiGTUdK9)
+*   Corresponding Ethereum Transaction: [https://etherscan.io/tx/0x87ac2955fec4f0bfb039548397343f549e5736f5207e207f1b70991d57042e35](https://etherscan.io/tx/0x87ac2955fec4f0bfb039548397343f549e5736f5207e207f1b70991d57042e35)

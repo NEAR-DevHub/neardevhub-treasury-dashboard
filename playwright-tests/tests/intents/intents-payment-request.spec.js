@@ -8,10 +8,12 @@ import {
 } from "../../util/sandboxrpc.js";
 
 /**
- * The approach here was verified in the following transactions
+ * The approach of calling `ft_withdraw`was verified manually like this.
+ * near contract call-function as-transaction intents.near ft_withdraw json-args '{"receiver_id": "eth.omft.near", "amount": "10000000000000000", "token": "eth.omft.near", "memo": "WITHDRAW_TO:0xa029Ca6D14b97749889702eE16E7d168a1094aFE"}' prepaid-gas '100.0 Tgas' attached-deposit '1 yoctoNEAR' sign-as petersalomonsen.near network-config mainnet sign-with-keychain send
  *
- * https://etherscan.io/tx/0x87ac2955fec4f0bfb039548397343f549e5736f5207e207f1b70991d57042e35
- * https://nearblocks.io/txns/HibaVVqfuNSDUyAeoNwSv7o83Vk6eGgonmygwiGTUdK9
+ * It resulted in this transaction on NEAR: https://nearblocks.io/txns/HibaVVqfuNSDUyAeoNwSv7o83Vk6eGgonmygwiGTUdK9
+ * And finally this on ETH: https://etherscan.io/tx/0x87ac2955fec4f0bfb039548397343f549e5736f5207e207f1b70991d57042e35
+ *
  */
 test("create payment request to transfer BTC", async ({ page }) => {
   test.setTimeout(120_000);
