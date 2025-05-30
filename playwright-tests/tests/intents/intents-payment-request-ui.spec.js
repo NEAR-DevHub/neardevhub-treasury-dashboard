@@ -238,12 +238,43 @@ test("should create payment request to BTC address", async ({
     gas: 300_000_000_000_000n.toString(),
   });
 
-  await page.goto(`https://${instanceAccount}.page/?page=payments`);
+  await omftContract.call(
+    omftContract.accountId,
+    "ft_deposit",
+    {
+      owner_id: "intents.near",
+      token: "btc",
+      amount: 32_000_000_000n.toString(),
+      msg: JSON.stringify({ receiver_id: daoAccount }),
+      memo: `BRIDGED_FROM:${JSON.stringify({
+        networkType: "btc",
+        chainId: "1",
+        txHash:
+          "0xc6b7ecd5c7517a8f56ac7ec9befed7d26a459fc97c7d5cd7598d4e19b5a806b7",
+      })}`,
+    },
+    {
+      attachedDeposit: parseNEAR("0.00125"),
+      gas: 300_000_000_000_000n.toString(),
+    }
+  );
+
+  await page.goto(`https://${instanceAccount}.page/`);
   await setPageAuthSettings(
     page,
     creatorAccount.accountId,
     await creatorAccount.getKey()
   );
+
+  const btcRowLocator = page.locator(
+    '.card div.d-flex.flex-column.border-bottom:has(div.h6.mb-0.text-truncate:has-text("BTC"))'
+  );
+  const btcAmountElement = btcRowLocator.locator(
+    "div.d-flex.gap-2.align-items-center.justify-content-end div.d-flex.flex-column.align-items-end div.h6.mb-0"
+  );
+  await expect(btcAmountElement).toHaveText("320.00");
+
+  await page.getByText("Payments").click();
 
   const createRequestButton = await page.getByText("Create Request");
   await createRequestButton.click();
