@@ -41,3 +41,59 @@ The best way to understand how to use NEAR intents is to review and run the prov
 - Review the test files listed above to understand the deposit process and integration points.
 - Use the test code as a reference when implementing your own UI or backend logic for NEAR intents.
 - For more details on the intents contract and message formats, see the [NEAR Intents documentation](https://docs.near.org/tutorials/intents/deposit) and the comments within the test files.
+
+## How Intents-Based Payment Requests Work
+
+The `intents.near` contract can be used to facilitate payment requests, allowing DAOs to manage and disburse assets, particularly tokens bridged from other chains. A DAO can authorize withdrawals directly to an address on the token\'s native chain using a single proposal.
+
+The `intents-payment-request.spec.js` test case (`playwright-tests/tests/intents/intents-payment-request.spec.js`) provides a practical example of this direct withdrawal flow.
+
+### Process Flow for Direct Cross-Chain Withdrawals
+
+This method allows for sending funds directly from the DAO (via `intents.near`) to an external address on another blockchain (e.g., Bitcoin, Ethereum).
+
+1.  **DAO Proposal for Direct Withdrawal:**
+    *   A DAO member creates a proposal with a `FunctionCall` action targeting the `intents.near` contract.
+    *   **Method:** `ft_withdraw` (This method is on `intents.near` itself and is used to initiate the withdrawal).
+    *   **Arguments for `ft_withdraw`:**
+        *   `token`: The NEP-141 token ID of the asset to withdraw (e.g., `\"btc.omft.near\"`).
+        *   `receiver_id`: This argument might specify the token contract ID (e.g., `btc.omft.near`) from which the withdrawal is being made or serve another internal purpose for `intents.near`. The actual recipient on the native chain is determined by the `memo`.
+        *   `amount`: The quantity of the token to withdraw, as a string.
+        *   `memo`: This is critical. It must be formatted to specify the native chain and destination address. For example: `"WITHDRAW_TO:bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"`.
+
+2.  **Proposal Voting and Execution:**
+    *   DAO members vote on the proposal.
+    *   If the proposal passes, it is executed. This triggers the `ft_withdraw` function call on `intents.near`.
+
+3.  **Cross-Chain Withdrawal by `intents.near`:**
+    *   The `intents.near` contract verifies that the DAO (the caller of `ft_withdraw` via the proposal) has a sufficient balance of the specified `token`.
+    *   If the balance is sufficient, `intents.near` debits the DAO\'s balance and initiates the cross-chain transfer to the native address provided in the `memo`. The `intents.near` contract and its associated infrastructure handle the complexities of this cross-chain transaction.
+
+4.  **Verification:**
+    *   The DAO\'s token balance on `intents.near` (viewable with `mt_batch_balance_of`) will decrease.
+    *   Final confirmation is the arrival of funds at the specified native chain address.
+
+### Key Advantages of Direct DAO-Initiated Withdrawals
+
+This direct withdrawal mechanism via `ft_withdraw` offers significant advantages for DAOs managing cross-chain assets:
+
+*   **Streamlined Process:** It allows a DAO to disburse assets directly to their native chains with a single on-chain proposal.
+*   **Simplified Recipient Experience:** The recipient receives funds directly at their L1 address without needing to perform any additional steps on NEAR (like signing a separate withdrawal intent).
+*   **DAO Authorization:** The DAO\'s approval of the proposal directly authorizes `intents.near` to execute the cross-chain withdrawal. This is possible because `intents.near` is designed to act on these instructions, and the DAO itself does not need to sign any off-chain messages (which it cannot do).
+*   **Critical Memo Field:** The accuracy of the `memo` field, containing the native destination address and the correct `\"WITHDRAW_TO:\"` prefix, is essential for the successful execution of the withdrawal.
+
+This direct withdrawal capability allows DAOs on NEAR to fully manage payouts to external L1 addresses through their existing on-chain governance mechanisms.
+
+## Manual Verification of `ft_withdraw`
+
+The `ft_withdraw` functionality, which allows for direct withdrawal to a native chain address via a memo, was manually verified to confirm its viability beyond the automated test cases. This provides an independent confirmation of the core mechanism.
+
+The following `near-cli` command was used to withdraw ETH (represented as `eth.omft.near` on NEAR) to an Ethereum address:
+```bash
+near contract call-function as-transaction intents.near ft_withdraw json-args '{"receiver_id": "eth.omft.near", "amount": "10000000000000000", "token": "eth.omft.near", "memo": "WITHDRAW_TO:0xa029Ca6D14b97749889702eE16E7d168a1094aFE"}' prepaid-gas '100.0 Tgas' attached-deposit '1 yoctoNEAR' sign-as petersalomonsen.near network-config mainnet sign-with-keychain send
+```
+*(Replace `petersalomonsen.near` with your own NEAR account ID and `0xa029Ca6D14b97749889702eE16E7d168a1094aFE` with your desired destination address in the memo).*
+
+This resulted in the following transactions:
+*   NEAR Transaction: [https://nearblocks.io/txns/HibaVVqfuNSDUyAeoNwSv7o83Vk6eGgonmygwiGTUdK9](https://nearblocks.io/txns/HibaVVqfuNSDUyAeoNwSv7o83Vk6eGgonmygwiGTUdK9)
+*   Corresponding Ethereum Transaction: [https://etherscan.io/tx/0x87ac2955fec4f0bfb039548397343f549e5736f5207e207f1b70991d57042e35](https://etherscan.io/tx/0x87ac2955fec4f0bfb039548397343f549e5736f5207e207f1b70991d57042e35)
