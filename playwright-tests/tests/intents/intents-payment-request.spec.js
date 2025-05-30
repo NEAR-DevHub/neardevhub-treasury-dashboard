@@ -7,6 +7,12 @@ import {
   SPUTNIK_DAO_FACTORY_ID,
 } from "../../util/sandboxrpc.js";
 
+/**
+ * The approach here was verified in the following transactions
+ *
+ * https://etherscan.io/tx/0x87ac2955fec4f0bfb039548397343f549e5736f5207e207f1b70991d57042e35
+ * https://nearblocks.io/txns/HibaVVqfuNSDUyAeoNwSv7o83Vk6eGgonmygwiGTUdK9
+ */
 test("create payment request to transfer BTC", async ({ page }) => {
   test.setTimeout(120_000);
   const daoName = "testdao";
@@ -250,14 +256,6 @@ test("create payment request to transfer BTC", async ({ page }) => {
     })
   ).toEqual([32_000_000_000_000_000_000n.toString()]);
 
-  // Check initial balance of creatorAccount for the token
-  expect(
-    await intentsContract.view("mt_batch_balance_of", {
-      account_id: creatorAccount.accountId,
-      token_ids: [tokenId],
-    })
-  ).toEqual(["0"]);
-
   const proposalId = await creatorAccount.call(
     daoAccount.accountId,
     "add_proposal",
@@ -291,7 +289,7 @@ test("create payment request to transfer BTC", async ({ page }) => {
     }
   );
 
-  await creatorAccount.call(
+  const result = await creatorAccount.callRaw(
     daoAccount.accountId,
     "act_proposal",
     {
@@ -302,6 +300,25 @@ test("create payment request to transfer BTC", async ({ page }) => {
       gas: 300_000_000_000_000n.toString(), // Ensure enough gas for voting and potential execution
     }
   );
+
+  expect(
+    result.logsContain(
+      `EVENT_JSON:{"standard":"nep245","version":"1.0.0","event":"mt_burn","data":[{"owner_id":"testdao.sputnik-dao.near","token_ids":["nep141:btc.omft.near"],"amounts":["1000000000000000000"],"memo":"withdraw"}]}`
+    )
+  ).toBeTruthy();
+  expect(
+    result.logsContain(
+      `EVENT_JSON:{"standard":"nep141","version":"1.0.0","event":"ft_burn","data":[{"owner_id":"intents.near","amount":"1000000000000000000","memo":"WITHDRAW_TO:bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"}]}`
+    )
+  ).toBeTruthy();
+  expect(result.failed).toBeFalsy();
+
+  expect(
+    await intentsContract.view("mt_batch_balance_of", {
+      account_id: daoAccount.accountId,
+      token_ids: [tokenId],
+    })
+  ).toEqual([31_000_000_000_000_000_000n.toString()]);
 
   await worker.tearDown();
 });
