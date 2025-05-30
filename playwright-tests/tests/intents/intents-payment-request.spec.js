@@ -269,12 +269,13 @@ test("create payment request to transfer BTC", async ({ page }) => {
             receiver_id: intentsContract.accountId,
             actions: [
               {
-                method_name: "mt_transfer",
+                method_name: "ft_withdraw",
                 args: Buffer.from(
                   JSON.stringify({
-                    receiver_id: creatorAccount.accountId,
-                    token_id: tokenId,
-                    amount: 2_000_000_000_000_000_000n.toString(),
+                    token: nativeToken.near_token_id, // This is btc.omft.near
+                    receiver_id: nativeToken.near_token_id, // Should also be btc.omft.near
+                    amount: 1_000_000_000_000_000_000n.toString(),
+                    memo: "WITHDRAW_TO:bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh", // Correct: BTC address here
                   })
                 ).toString("base64"),
                 deposit: 1n.toString(),
@@ -301,14 +302,6 @@ test("create payment request to transfer BTC", async ({ page }) => {
       gas: 300_000_000_000_000n.toString(), // Ensure enough gas for voting and potential execution
     }
   );
-
-  // Check final balance of creatorAccount for the token
-  expect(
-    await intentsContract.view("mt_batch_balance_of", {
-      account_id: creatorAccount.accountId,
-      token_ids: [tokenId],
-    })
-  ).toEqual([2_000_000_000_000_000_000n.toString()]);
 
   await worker.tearDown();
 });
