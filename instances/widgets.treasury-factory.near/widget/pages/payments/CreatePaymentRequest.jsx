@@ -424,22 +424,23 @@ function isAmountValid() {
 
 useEffect(() => {
   if (
+    selectedTokenBlockchain === "near" && // Check only for NEAR blockchain
     tokenId &&
-    tokenId !== tokenMapping.NEAR &&
+    tokenId !== tokenMapping.NEAR && // And it's an FT (not native NEAR)
     receiver &&
-    isReceiverAccountValid
+    isReceiverAccountValid // And receiver is a valid NEAR account
   ) {
     Near.asyncView(tokenId, "storage_balance_of", {
       account_id: receiver,
     }).then((storage) => {
-      if (!storage) {
-        setReceiverRegister(false);
-      } else {
-        setReceiverRegister(true);
-      }
+      setReceiverRegister(!!storage); // Simplified
     });
+  } else {
+    // For non-NEAR networks, or if it's native NEAR, or if receiver is not valid/empty,
+    // assume storage is not an issue or not applicable for this check.
+    setReceiverRegister(true);
   }
-}, [receiver, tokenId]);
+}, [receiver, tokenId, isReceiverAccountValid, selectedTokenBlockchain]); // Added/updated dependencies
 
 return (
   <Container>
@@ -579,18 +580,58 @@ return (
       )}
       <div className="d-flex flex-column gap-1">
         <label>Recipient</label>
-        <Widget
-          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.AccountInput"
-          props={{
-            value: receiver,
-            placeholder: "treasury.near",
-            onUpdate: setReceiver,
-            setParentAccountValid: setIsReceiverAccountValid,
-            maxWidth: "100%",
-            instance,
-            allowNonExistentImplicit: true,
-          }}
-        />
+        {selectedTokenBlockchain === "btc" ? (
+          <Widget
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
+            props={{
+              value: receiver,
+              placeholder: "Enter BTC Address (e.g., bc1... or 1...)",
+              onChange: (e) => {
+                const value = e.target.value;
+                setReceiver(value);
+                const btcRegex = /^(bc1|[13])[a-zA-HJ-NP-Z0-9]{25,39}$/i;
+                setIsReceiverAccountValid(btcRegex.test(value));
+              },
+              key: "btc-recipient",
+              instance,
+            }}
+          />
+        ) : selectedTokenBlockchain === "eth" ? (
+          <Widget
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
+            props={{
+              value: receiver,
+              placeholder: "Enter ETH Address (0x...)",
+              onChange: (e) => {
+                const value = e.target.value;
+                setReceiver(value);
+                const ethRegex = /^0x[a-fA-F0-9]{40}$/;
+                setIsReceiverAccountValid(ethRegex.test(value));
+              },
+              key: "eth-recipient",
+              instance,
+            }}
+          />
+        ) : (
+          <Widget
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.AccountInput`}
+            props={{
+              value: receiver,
+              placeholder:
+                selectedTokenBlockchain === "near"
+                  ? "treasury.near"
+                  : "Enter recipient account/address",
+              onUpdate: (value) => {
+                setReceiver(value);
+                // setIsReceiverAccountValid is set by setParentAccountValid callback
+              },
+              setParentAccountValid: setIsReceiverAccountValid,
+              maxWidth: "100%",
+              instance,
+              allowNonExistentImplicit: selectedTokenBlockchain === "near", // Allow only for NEAR
+            }}
+          />
+        )}
       </div>
       <div className="d-flex flex-column gap-1">
         <label>Requested Token</label>
@@ -599,7 +640,11 @@ return (
           props={{
             daoAccount: selectedWallet.value,
             selectedValue: tokenId,
-            onChange: (v) => setTokenId(v),
+            onChange: (v) => {
+              setTokenId(v);
+              setReceiver(""); // Reset receiver
+              setIsReceiverAccountValid(false); // Reset validation status
+            },
             setSelectedTokenBlockchain,
             setTokensAvailable: setSelectedTokensAvailable,
             lockupNearBalances,
