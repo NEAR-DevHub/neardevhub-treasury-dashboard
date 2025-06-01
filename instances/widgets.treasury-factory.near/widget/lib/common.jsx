@@ -1128,7 +1128,7 @@ function getIntentsBalances(accountId) {
                   price: t.price, // Include price if available
                 },
                 amount: t.amount,
-                blockchain: t.blockchain
+                blockchain: t.blockchain,
               }));
               return finalTokens;
             })
@@ -1149,7 +1149,7 @@ function getIntentsBalances(accountId) {
                   price: t.price,
                 },
                 amount: t.amount,
-                blockchain: t.blockchain
+                blockchain: t.blockchain,
               }));
               return fallbackTokens;
             });

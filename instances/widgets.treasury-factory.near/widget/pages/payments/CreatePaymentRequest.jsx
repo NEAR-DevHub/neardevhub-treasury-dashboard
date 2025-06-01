@@ -328,7 +328,8 @@ useEffect(() => {
 
 function onSubmitClick() {
   setTxnCreated(true);
-  const isNativeNEAR = selectedTokenBlockchain === 'near' && tokenId === tokenMapping.NEAR;
+  const isNativeNEAR =
+    selectedTokenBlockchain === "near" && tokenId === tokenMapping.NEAR;
 
   const gasForAddProposal = Big(270).mul(Big(10).pow(12)).toFixed(); // 270 Tgas
   const gasForIntentAction = Big(30).mul(Big(10).pow(12)).toFixed(); // 30 Tgas for ft_withdraw
@@ -350,7 +351,7 @@ function onSubmitClick() {
   const isLockupTransfer = selectedWallet.value === lockupContract;
   let proposalKind;
 
-  if (selectedTokenBlockchain && selectedTokenBlockchain !== 'near') {
+  if (selectedTokenBlockchain && selectedTokenBlockchain !== "near") {
     // Non-NEAR / Intent-based payment
     const ftWithdrawArgs = {
       token: tokenId, // This is the NEAR FT contract, e.g., "btc.omft.near"
@@ -365,7 +366,9 @@ function onSubmitClick() {
         actions: [
           {
             method_name: "ft_withdraw",
-            args: Buffer.from(JSON.stringify(ftWithdrawArgs)).toString("base64"),
+            args: Buffer.from(JSON.stringify(ftWithdrawArgs)).toString(
+              "base64"
+            ),
             deposit: "1", // 1 yoctoNEAR
             gas: gasForIntentAction,
           },
@@ -376,7 +379,7 @@ function onSubmitClick() {
     // NEAR blockchain payment (native NEAR or NEP-141 on NEAR)
     if (isLockupTransfer) {
       descriptionFields["proposal_action"] = "transfer";
-      
+
       const lockupArgs = {
         amount: parsedAmount,
         receiver_id: receiver,
@@ -401,7 +404,7 @@ function onSubmitClick() {
               // Assuming lockupContract.transfer handles native NEAR.
               // If FTs, it might be ft_transfer_call to token contract,
               // or lockup has a specific method.
-              method_name: "transfer", 
+              method_name: "transfer",
               args: Buffer.from(JSON.stringify(lockupArgs)).toString("base64"),
               deposit: "0",
               gas: gasForLockupAction,
@@ -438,7 +441,11 @@ function onSubmitClick() {
     },
   ];
 
-  if (selectedTokenBlockchain === 'near' && !isNativeNEAR && !isReceiverRegistered) {
+  if (
+    selectedTokenBlockchain === "near" &&
+    !isNativeNEAR &&
+    !isReceiverRegistered
+  ) {
     const depositInYocto = Big(0.125).mul(Big(10).pow(24)).toFixed();
     calls.push({
       contractName: tokenId,

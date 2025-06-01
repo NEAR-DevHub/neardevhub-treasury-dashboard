@@ -297,49 +297,60 @@ test("should create payment request to BTC address", async ({
       .filter({ hasText: "BTC (NEAR Intents)" })
   ).toBeVisible();
 
-  await page.locator('.dropdown-toggle').first().click();
-  await page.getByText('Add manual request').click();
-  await page.getByTestId('proposal-title').click();
-  await page.getByTestId('proposal-title').fill('btc proposal title');
-  await page.getByTestId('proposal-summary').click();
-  await page.getByTestId('proposal-summary').fill('describing the btc payment request proposal');
-  await page.getByTestId('tokens-dropdown').getByText('Select').click();
-  await page.getByText('BTC (NEAR Intents)').click();
-  await page.getByTestId('total-amount').click();
-  await page.getByTestId('total-amount').fill('2');
-  await page.getByTestId('btc-recipient').click();
-  await page.getByTestId('btc-recipient').fill('bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh');
+  await page.locator(".dropdown-toggle").first().click();
+  await page.getByText("Add manual request").click();
+  await page.getByTestId("proposal-title").click();
+  await page.getByTestId("proposal-title").fill("btc proposal title");
+  await page.getByTestId("proposal-summary").click();
+  await page
+    .getByTestId("proposal-summary")
+    .fill("describing the btc payment request proposal");
+  await page.getByTestId("tokens-dropdown").getByText("Select").click();
+  await page.getByText("BTC (NEAR Intents)").click();
+  await page.getByTestId("total-amount").click();
+  await page.getByTestId("total-amount").fill("2");
+  await page.getByTestId("btc-recipient").click();
+  await page
+    .getByTestId("btc-recipient")
+    .fill("bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh");
 
-  await expect(page.getByText("Please enter valid account ID")).not.toBeVisible();
-  await expect(page.getByRole('button', { name: 'Submit' })).toBeEnabled();
-  await page.getByRole('button', { name: 'Submit' }).click();
+  await expect(
+    page.getByText("Please enter valid account ID")
+  ).not.toBeVisible();
+  await expect(page.getByRole("button", { name: "Submit" })).toBeEnabled();
+  await page.getByRole("button", { name: "Submit" }).click();
 
-  await expect(page.getByText('Confirm Transaction')).toBeVisible();
+  await expect(page.getByText("Confirm Transaction")).toBeVisible();
 
-  const transactionContent = JSON.stringify(JSON.parse(await page.locator('pre div').innerText()));
+  const transactionContent = JSON.stringify(
+    JSON.parse(await page.locator("pre div").innerText())
+  );
   expect(transactionContent).toBe(
-    JSON.stringify({proposal: {
-          description: "Title: btc proposal title<br>* Summary: describing the btc payment request proposal",
-          kind: {
-            FunctionCall: {
-              receiver_id: intentsContract.accountId,
-              actions: [
-                {
-                  method_name: "ft_withdraw",
-                  args: Buffer.from(
-                    JSON.stringify({
-                      token: "btc.omft.near",
-                      receiver_id: "btc.omft.near",
-                      amount: 2_000_000_000_000_000_000n.toString(),
-                      memo: "WITHDRAW_TO:bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
-                    })
-                  ).toString("base64"),
-                  deposit: 1n.toString(),
-                  gas: 30_000_000_000_000n.toString(),
-                },
-              ],
-            },
+    JSON.stringify({
+      proposal: {
+        description:
+          "* Title: btc proposal title <br>* Summary: describing the btc payment request proposal",
+        kind: {
+          FunctionCall: {
+            receiver_id: intentsContract.accountId,
+            actions: [
+              {
+                method_name: "ft_withdraw",
+                args: Buffer.from(
+                  JSON.stringify({
+                    token: "btc.omft.near",
+                    receiver_id: "btc.omft.near",
+                    amount: 2_00000000n.toString(),
+                    memo: "WITHDRAW_TO:bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
+                  })
+                ).toString("base64"),
+                deposit: 1n.toString(),
+                gas: 30_000_000_000_000n.toString(),
+              },
+            ],
           },
-        }})
-      );
+        },
+      },
+    })
+  );
 });
