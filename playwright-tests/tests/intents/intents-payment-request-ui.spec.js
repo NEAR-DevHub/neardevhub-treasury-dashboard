@@ -270,7 +270,10 @@ test("should create payment request to BTC address", async ({
   const btcAmountElement = btcRowLocator.locator(
     "div.d-flex.gap-2.align-items-center.justify-content-end div.d-flex.flex-column.align-items-end div.h6.mb-0"
   );
+  await btcAmountElement.scrollIntoViewIfNeeded();
   await expect(btcAmountElement).toHaveText("320.00");
+
+  await page.waitForTimeout(500);
 
   await page.getByText("Payments").click();
 
@@ -385,4 +388,9 @@ test("should create payment request to BTC address", async ({
       token_ids: [tokenId],
     })
   ).toEqual([318_00_000_000n.toString()]);
+
+  await page.getByText("Dashboard").click();
+  await btcAmountElement.scrollIntoViewIfNeeded();
+  await expect(btcAmountElement).toHaveText("318.00");
+  await page.waitForTimeout(500);
 });
