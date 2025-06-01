@@ -41,6 +41,7 @@ const walletOptions = [
 const [selectedWallet, setSelectedWallet] = useState(walletOptions[0]);
 
 const [tokenId, setTokenId] = useState(null);
+const [selectedTokenBlockchain, setSelectedTokenBlockchain] = useState(null);
 const [receiver, setReceiver] = useState(null);
 const [isReceiverAccountValid, setIsReceiverAccountValid] = useState(false);
 const [notes, setNotes] = useState(null);
@@ -599,6 +600,7 @@ return (
             daoAccount: selectedWallet.value,
             selectedValue: tokenId,
             onChange: (v) => setTokenId(v),
+            setSelectedTokenBlockchain,
             setTokensAvailable: setSelectedTokensAvailable,
             lockupNearBalances,
           }}

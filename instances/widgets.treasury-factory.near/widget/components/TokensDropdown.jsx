@@ -12,6 +12,7 @@ const {
   onChange,
   disabled,
   setTokensAvailable,
+  setSelectedTokenBlockchain,
   lockupNearBalances,
 } = props;
 
@@ -94,15 +95,15 @@ function sendTokensAvailable(value) {
 
 useEffect(() => {
   if (selectedValue !== selectedOptionValue) {
-    setSelectedValue(selectedValue);
-    sendTokensAvailable(selectedValue);
-  }
-}, [selectedValue]);
-
-useEffect(() => {
-  if (selectedValue !== selectedOptionValue) {
     onChange(selectedOptionValue);
-    sendTokensAvailable(selectedOptionValue);
+    setSelectedValue(selectedOptionValue);
+    const selectedToken = options.find((i) => i.value === selectedOptionValue);
+    if (selectedToken) {
+      console.log("Selected token:", selectedToken);
+      setSelectedValue(selectedToken.value);
+      setTokensAvailable(selectedToken.tokenBalance);
+      setSelectedTokenBlockchain(selectedToken.blockchain || "near");
+    }
   }
 }, [selectedOptionValue]);
 
@@ -213,6 +214,7 @@ useEffect(() => {
         tokenBalance: Big(token.amount ?? "0")
           .div(Big(10).pow(token.ft_meta.decimals))
           .toFixed(2),
+        blockchain: token.blockchain,
         isIntent: true, // Add a flag to identify intent tokens if needed later
       }));
       setIntentsTokens(formattedIntentsTokens);
