@@ -296,4 +296,23 @@ test("should create payment request to BTC address", async ({
       .locator("div.d-flex.flex-column.gap-1.w-100.text-wrap")
       .filter({ hasText: "BTC (NEAR Intents)" })
   ).toBeVisible();
+
+  await page.locator('.dropdown-toggle').first().click();
+  await page.getByText('Add manual request').click();
+  await page.getByTestId('proposal-title').click();
+  await page.getByTestId('proposal-title').fill('test');
+  await page.getByTestId('proposal-summary').click();
+  await page.getByTestId('proposal-summary').fill('test');
+  await page.getByTestId('tokens-dropdown').getByText('Select').click();
+  await page.getByText('BTC (NEAR Intents)').click();
+  await page.getByTestId('total-amount').click();
+  await page.getByTestId('total-amount').fill('1');
+  await page.getByPlaceholder('treasury.near').click();
+  await page.getByPlaceholder('treasury.near').fill('1JBmcrzAPeAeQA9CRAuYEoKSE6RN8hu59x');
+
+  await expect(page.getByText("Please enter valid account ID")).not.toBeVisible();
+  await expect(page.getByRole('button', { name: 'Submit' })).toBeEnabled();
+  await page.getByRole('button', { name: 'Submit' }).click();
+
+  await expect(page.getByText('Confirm Transaction')).toBeVisible();
 });
