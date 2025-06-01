@@ -103,7 +103,9 @@ test.describe("Have valid staked requests and sufficient token balance", functio
       test.setTimeout(60_000);
       await page.goto(`/${instanceAccount}/widget/app?page=stake-delegation`);
       await expect(page.getByText("Pending Requests")).toBeVisible();
-      await expect(page.getByRole("button", { name: " Export as CSV" })).toBeHidden();
+      await expect(
+        page.getByRole("button", { name: " Export as CSV" })
+      ).toBeHidden();
     });
 
     test("should export transaction history", async ({
