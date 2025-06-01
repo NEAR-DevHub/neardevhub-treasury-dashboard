@@ -453,7 +453,7 @@ test.describe("don't ask again", function () {
   }) => {
     test.setTimeout(60_000);
     await page.goto(`/${instanceAccount}/widget/app?page=settings&tab=history`);
-    const exportBtn = page.getByRole("button", { name: " Export" });
+    const exportBtn = page.getByRole("button", { name: " Export as CSV" });
     await expect(
       page.getByRole("list").getByText("Pending Requests")
     ).toBeVisible();

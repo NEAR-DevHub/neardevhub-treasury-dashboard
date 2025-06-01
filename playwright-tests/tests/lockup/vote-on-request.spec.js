@@ -272,7 +272,7 @@ test.describe("User is logged in", function () {
 
     await page.goto(`/${instanceAccount}/widget/app?page=lockup`);
     await expect(page.getByText("Pending Requests")).toBeVisible();
-    await expect(page.getByRole("button", { name: " Export" })).toBeHidden();
+    await expect(page.getByRole("button", { name: " Export as CSV" })).toBeHidden();
   });
 
   test("should export transaction history", async ({
