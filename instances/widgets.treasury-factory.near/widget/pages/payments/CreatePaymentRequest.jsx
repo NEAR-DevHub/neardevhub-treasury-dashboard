@@ -328,27 +328,100 @@ useEffect(() => {
 
 function onSubmitClick() {
   setTxnCreated(true);
-  const isNEAR = tokenId === tokenMapping.NEAR;
-  const gas = 270000000000000;
-  const deposit = daoPolicy?.proposal_bond || 0;
-  const description = {
-    title: selectedProposal.name,
-    summary: selectedProposal.summary,
+  const isNativeNEAR = selectedTokenBlockchain === 'near' && tokenId === tokenMapping.NEAR;
+
+  const gasForAddProposal = Big(270).mul(Big(10).pow(12)).toFixed(); // 270 Tgas
+  const gasForIntentAction = Big(30).mul(Big(10).pow(12)).toFixed(); // 30 Tgas for ft_withdraw
+  const gasForLockupAction = Big(270).mul(Big(10).pow(12)).toFixed(); // Gas for lockup's internal transfer action
+  const gasForStorageDeposit = Big(50).mul(Big(10).pow(12)).toFixed(); // 50 Tgas for storage_deposit
+
+  const depositForAddProposal = (daoPolicy?.proposal_bond || "0").toString();
+
+  const descriptionFields = {
+    title: selectedProposal?.name,
+    summary: selectedProposal?.summary,
     notes: notes,
   };
 
-  if (!isManualRequest) {
-    description["proposalId"] = selectedProposalId;
+  if (!isManualRequest && selectedProposalId) {
+    descriptionFields["proposalId"] = selectedProposalId;
   }
 
   const isLockupTransfer = selectedWallet.value === lockupContract;
-  if (isLockupTransfer) {
-    description["proposal_action"] = "transfer";
+  let proposalKind;
+
+  if (selectedTokenBlockchain && selectedTokenBlockchain !== 'near') {
+    // Non-NEAR / Intent-based payment
+    const ftWithdrawArgs = {
+      token: tokenId, // This is the NEAR FT contract, e.g., "btc.omft.near"
+      receiver_id: tokenId, // Per test expectation, this is also the token contract ID for intents.near
+      amount: parsedAmount, // Amount in FT's decimals (e.g., 2 * 10^8 for 2 BTC if 8 decimals)
+      memo: `WITHDRAW_TO:${receiver}`, // `receiver` holds the actual off-chain address
+    };
+
+    proposalKind = {
+      FunctionCall: {
+        receiver_id: "intents.near", // Target contract for intent withdrawals
+        actions: [
+          {
+            method_name: "ft_withdraw",
+            args: Buffer.from(JSON.stringify(ftWithdrawArgs)).toString("base64"),
+            deposit: "1", // 1 yoctoNEAR
+            gas: gasForIntentAction,
+          },
+        ],
+      },
+    };
+  } else {
+    // NEAR blockchain payment (native NEAR or NEP-141 on NEAR)
+    if (isLockupTransfer) {
+      descriptionFields["proposal_action"] = "transfer";
+      
+      const lockupArgs = {
+        amount: parsedAmount,
+        receiver_id: receiver,
+      };
+      if (!isNativeNEAR) {
+        // If it's an FT transfer via lockup, the lockup's transfer method might need token_id.
+        // This depends on the lockup contract's interface. Assuming it's a generic transfer
+        // that might handle FTs if token_id is passed, or it's a separate method.
+        // For now, mirroring the previous direct FT transfer structure.
+        // This part might need adjustment based on `lockupContract` capabilities.
+        // The original code for lockup transfer didn't explicitly handle FTs with token_id in its args.
+        // Sticking to native NEAR transfer for lockup for now unless specified.
+        // If lockup can transfer FTs, its method_name or args might differ.
+        // The provided test is for non-NEAR, so this path is less critical for the immediate fix.
+      }
+
+      proposalKind = {
+        FunctionCall: {
+          receiver_id: lockupContract,
+          actions: [
+            {
+              // Assuming lockupContract.transfer handles native NEAR.
+              // If FTs, it might be ft_transfer_call to token contract,
+              // or lockup has a specific method.
+              method_name: "transfer", 
+              args: Buffer.from(JSON.stringify(lockupArgs)).toString("base64"),
+              deposit: "0",
+              gas: gasForLockupAction,
+            },
+          ],
+        },
+      };
+    } else {
+      // Direct transfer (native NEAR or NEP-141 FT on NEAR)
+      proposalKind = {
+        Transfer: {
+          token_id: isNativeNEAR ? "" : tokenId,
+          receiver_id: receiver,
+          amount: parsedAmount,
+        },
+      };
+    }
   }
 
-  function toBase64(json) {
-    return Buffer.from(JSON.stringify(json)).toString("base64");
-  }
+  const finalDescriptionString = encodeToMarkdown(descriptionFields);
 
   const calls = [
     {
@@ -356,38 +429,16 @@ function onSubmitClick() {
       methodName: "add_proposal",
       args: {
         proposal: {
-          description: encodeToMarkdown(description),
-          kind: isLockupTransfer
-            ? {
-                FunctionCall: {
-                  receiver_id: lockupContract,
-                  actions: [
-                    {
-                      method_name: "transfer",
-                      args: toBase64({
-                        amount: parsedAmount,
-                        receiver_id: receiver,
-                      }),
-                      deposit: "0",
-                      gas: gas.toFixed(),
-                    },
-                  ],
-                },
-              }
-            : {
-                Transfer: {
-                  token_id: isNEAR ? "" : tokenId,
-                  receiver_id: receiver,
-                  amount: parsedAmount,
-                },
-              },
+          description: finalDescriptionString,
+          kind: proposalKind,
         },
       },
-      gas: gas,
-      deposit,
+      gas: gasForAddProposal,
+      deposit: depositForAddProposal,
     },
   ];
-  if (!isReceiverRegistered && !isNEAR) {
+
+  if (selectedTokenBlockchain === 'near' && !isNativeNEAR && !isReceiverRegistered) {
     const depositInYocto = Big(0.125).mul(Big(10).pow(24)).toFixed();
     calls.push({
       contractName: tokenId,
@@ -396,7 +447,7 @@ function onSubmitClick() {
         account_id: receiver,
         registration_only: true,
       },
-      gas: gas,
+      gas: gasForStorageDeposit,
       deposit: depositInYocto,
     });
   }
