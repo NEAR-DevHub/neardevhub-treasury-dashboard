@@ -4,6 +4,7 @@ import { redirectWeb4, getLocalWidgetContent } from "../../util/web4.js";
 import { Account, parseNEAR, Worker } from "near-workspaces";
 import { connect } from "near-api-js";
 import { PROPOSAL_BOND, setPageAuthSettings } from "../../util/sandboxrpc.js";
+import { mockNearBalances } from "../../util/rpcmock.js";
 
 test("should create payment request to BTC address", async ({
   page,
@@ -156,24 +157,12 @@ test("should create payment request to BTC address", async ({
     "testcreator"
   );
 
-  await page.route(
-    `https://api.fastnear.com/v1/account/${creatorAccount.accountId}/full`,
-    async (route) => {
-      await route.fulfill({
-        json: {
-          account_id: creatorAccount.accountId,
-          nfts: [],
-          pools: [],
-          state: {
-            balance: "6711271810302417189284995",
-            locked: "0",
-            storage_bytes: 425828,
-          },
-          tokens: [],
-        },
-      });
-    }
-  );
+  await mockNearBalances({
+    page,
+    accountId: creatorAccount.accountId,
+    balance: (await creatorAccount.availableBalance()).toString(),
+    storage: (await creatorAccount.balance()).staked,
+  });
 
   const daoName = daoAccount.split(".")[0];
   const create_testdao_args = {
@@ -238,13 +227,22 @@ test("should create payment request to BTC address", async ({
     gas: 300_000_000_000_000n.toString(),
   });
 
+  await mockNearBalances({
+    page,
+    accountId: daoContract.accountId,
+    balance: (
+      await daoContract.getAccount(daoAccount).availableBalance()
+    ).toString(),
+    storage: (await daoContract.getAccount(daoAccount).balance()).staked,
+  });
+
   await omftContract.call(
     omftContract.accountId,
     "ft_deposit",
     {
       owner_id: "intents.near",
       token: "btc",
-      amount: 32_000_000_000n.toString(),
+      amount: 320_00_000_000n.toString(),
       msg: JSON.stringify({ receiver_id: daoAccount }),
       memo: `BRIDGED_FROM:${JSON.stringify({
         networkType: "btc",
@@ -355,20 +353,36 @@ test("should create payment request to BTC address", async ({
   );
   await page.getByRole("button", { name: "Confirm" }).click();
 
-  await expect(
-    page.getByTestId("proposal-request-#0").getByText("@")
-  ).toHaveText("bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh");
-  await expect(
-    page.getByTestId("proposal-request-#0").getByText("BTC", { exact: true })
-  ).toBeVisible();
-  await expect(page.getByText("2.00")).toBeVisible();
-  await page
-    .getByTestId("proposal-request-#0")
-    .locator("div")
-    .filter({ hasText: "@" })
-    .nth(1)
-    .click();
+  const proposalColumns = page.getByTestId("proposal-request-#0").locator("td");
+  await expect(proposalColumns.nth(5)).toHaveText(
+    "@bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"
+  );
+  await expect(proposalColumns.nth(6)).toHaveText("BTC");
+  await expect(proposalColumns.nth(7)).toHaveText("2.00");
 
-  await page.getByRole("button", { name: "Approve" }).nth(2).click();
-  // await page.getByRole('button', { name: 'Confirm' }).click();
+  await proposalColumns.nth(7).click();
+
+  await page.getByRole("button", { name: "Approve" }).nth(1).click();
+  await page.getByRole("button", { name: "Proceed Anyway" }).click();
+
+  expect(
+    await intentsContract.view("mt_batch_balance_of", {
+      account_id: daoAccount,
+      token_ids: [tokenId],
+    })
+  ).toEqual([320_00_000_000n.toString()]);
+
+  await page.getByRole("button", { name: "Confirm" }).click();
+  await expect(page.getByText("Confirm Transaction")).toBeVisible();
+  await page.getByRole("button", { name: "Confirm" }).click();
+
+  await expect(
+    page.getByText("The payment request has been successfully executed.")
+  ).toBeVisible({ timeout: 15_000 });
+  expect(
+    await intentsContract.view("mt_batch_balance_of", {
+      account_id: daoAccount,
+      token_ids: [tokenId],
+    })
+  ).toEqual([318_00_000_000n.toString()]);
 });
