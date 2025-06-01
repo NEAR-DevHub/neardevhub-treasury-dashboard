@@ -322,7 +322,9 @@ function getFilteredProposalsByStatusAndKind({
   const checkForTransferProposals = (item) => {
     return (
       decodeProposalDescription("proposal_action", item.description) ===
-        "transfer" || item.kind?.Transfer
+        "transfer" ||
+      item.kind?.Transfer ||
+      item.kind?.FunctionCall?.actions[0].method_name === "ft_withdraw"
     );
   };
 
@@ -367,8 +369,9 @@ function getFilteredProposalsByStatusAndKind({
       if (
         filterKindArray.includes("Transfer") &&
         !checkForTransferProposals(item)
-      )
+      ) {
         return false;
+      }
       if (isAssetExchange && !checkForExchangeProposals(item)) return false;
       if (isStakeDelegation && !checkForStakeProposals(item)) return false;
       if (isLockup && !checkForLockupProposals(item)) return false;

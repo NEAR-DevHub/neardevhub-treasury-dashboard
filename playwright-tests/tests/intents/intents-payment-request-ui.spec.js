@@ -353,4 +353,22 @@ test("should create payment request to BTC address", async ({
       },
     })
   );
+  await page.getByRole("button", { name: "Confirm" }).click();
+
+  await expect(
+    page.getByTestId("proposal-request-#0").getByText("@")
+  ).toHaveText("bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh");
+  await expect(
+    page.getByTestId("proposal-request-#0").getByText("BTC", { exact: true })
+  ).toBeVisible();
+  await expect(page.getByText("2.00")).toBeVisible();
+  await page
+    .getByTestId("proposal-request-#0")
+    .locator("div")
+    .filter({ hasText: "@" })
+    .nth(1)
+    .click();
+
+  await page.getByRole("button", { name: "Approve" }).nth(2).click();
+  // await page.getByRole('button', { name: 'Confirm' }).click();
 });

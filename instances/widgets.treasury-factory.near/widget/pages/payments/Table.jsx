@@ -196,10 +196,21 @@ const ProposalsComponent = () => {
         const proposalId = id ? parseInt(id, 10) : null;
         const isFunctionType =
           Object.values(item?.kind?.FunctionCall ?? {})?.length > 0;
+        const isIntentWithdraw =
+          isFunctionType &&
+          item.kind.FunctionCall?.actions[0].method_name === "ft_withdraw";
         const decodedArgs =
           isFunctionType &&
           decodeBase64(item.kind.FunctionCall?.actions[0].args);
-        const args = isFunctionType
+        const args = isIntentWithdraw
+          ? {
+              token_id: decodedArgs?.token,
+              receiver_id:
+                decodedArgs?.memo?.replace(/^WITHDRAW_TO:/, "") ||
+                decodedArgs?.receiver_id,
+              amount: decodedArgs?.amount,
+            }
+          : isFunctionType
           ? {
               token_id: "",
               receiver_id: decodedArgs?.receiver_id,
@@ -246,12 +257,20 @@ const ProposalsComponent = () => {
             {lockupContract && (
               <td className={"text-left"}>
                 <div className="text-secondary fw-semi-bold">
-                  {isFunctionType ? "Lockup" : "Sputnik DAO"}
+                  {isIntentWithdraw
+                    ? "Intents"
+                    : isFunctionType
+                    ? "Lockup"
+                    : "Sputnik DAO"}
                 </div>
                 <Widget
                   src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
                   props={{
-                    accountId: isFunctionType ? lockupContract : treasuryDaoID,
+                    accountId: isIntentWithdraw
+                      ? treasuryDaoID
+                      : isFunctionType
+                      ? lockupContract
+                      : treasuryDaoID,
                     showKYC: false,
                     instance,
                     displayImage: false,
@@ -441,10 +460,13 @@ const ProposalsComponent = () => {
                       hasVotingPermission,
                       proposalCreator: item.proposer,
                       hasOneDeleteIcon,
-                      nearBalance: isFunctionType
-                        ? Big(lockupNearBalances.available).toFixed(2)
-                        : nearBalances.available,
-
+                      ...(isIntentWithdraw
+                        ? {}
+                        : {
+                            nearBalance: isFunctionType
+                              ? Big(lockupNearBalances.available).toFixed(2)
+                              : nearBalances.available,
+                          }),
                       currentAmount: args.amount,
                       currentContract: args.token_id,
                       requiredVotes,
