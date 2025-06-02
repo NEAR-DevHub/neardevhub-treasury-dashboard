@@ -407,6 +407,7 @@ test("should create payment request to BTC address", async ({
       },
     })
   );
+  await expect(page.getByRole("button", { name: "Confirm" })).toBeVisible();
   await page.getByRole("button", { name: "Confirm" }).click();
 
   const proposalColumns = page.getByTestId("proposal-request-#0").locator("td");
@@ -428,6 +429,7 @@ test("should create payment request to BTC address", async ({
     })
   ).toEqual([320_00_000_000n.toString()]);
 
+  await expect(page.getByRole("button", { name: "Confirm" })).toBeVisible();
   await page.getByRole("button", { name: "Confirm" }).click();
   await expect(page.getByText("Confirm Transaction")).toBeVisible();
   await page.getByRole("button", { name: "Confirm" }).click();
@@ -673,6 +675,7 @@ test("should create payment request to USDC address on BASE", async ({
       },
     })
   );
+  await expect(page.getByRole("button", { name: "Confirm" })).toBeVisible();
   await page.getByRole("button", { name: "Confirm" }).click();
 
   const proposalColumns = page.getByTestId("proposal-request-#0").locator("td");
@@ -694,6 +697,7 @@ test("should create payment request to USDC address on BASE", async ({
     })
   ).toEqual(["100000000000"]);
 
+  await expect(page.getByRole("button", { name: "Confirm" })).toBeVisible();
   await page.getByRole("button", { name: "Confirm" }).click();
   await expect(page.getByText("Confirm Transaction")).toBeVisible();
   await page.getByRole("button", { name: "Confirm" }).click();
