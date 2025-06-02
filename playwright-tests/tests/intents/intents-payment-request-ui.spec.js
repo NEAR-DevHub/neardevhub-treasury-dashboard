@@ -1,66 +1,64 @@
 import { test } from "../../util/test.js";
 import { expect } from "@playwright/test";
 import { redirectWeb4, getLocalWidgetContent } from "../../util/web4.js";
-import { Account, parseNEAR, Worker } from "near-workspaces";
+import { parseNEAR, Worker } from "near-workspaces";
 import { connect } from "near-api-js";
 import { PROPOSAL_BOND, setPageAuthSettings } from "../../util/sandboxrpc.js";
 import { mockNearBalances } from "../../util/rpcmock.js";
 
-test("should create payment request to BTC address", async ({
-  page,
-  instanceAccount,
-  daoAccount,
-}) => {
-  test.setTimeout(120000);
-  const availableTokens = (
+let worker;
+let availableTokensList;
+let tokenId;
+let supportedTokensInfo;
+let nativeToken;
+let socialNearAccount;
+let mainnet;
+let omftContract;
+let omftMainnetAccount;
+let intentsContract;
+let creatorAccount;
+
+test.beforeAll(async () => {
+  test.setTimeout(120000); // Set timeout for the whole beforeAll block
+
+  // Fetch token info
+  availableTokensList = (
     await fetch("https://api-mng-console.chaindefuser.com/api/tokens").then(
       (r) => r.json()
     )
   ).items;
-  const tokenId = availableTokens.find(
+  tokenId = availableTokensList.find(
     (token) => token.defuse_asset_id === "nep141:btc.omft.near"
   ).defuse_asset_id;
 
-  const supportedTokens = await fetch("https://bridge.chaindefuser.com/rpc", {
+  supportedTokensInfo = await fetch("https://bridge.chaindefuser.com/rpc", {
     method: "POST",
-    headers: {
-      "content-type": "application/json",
-    },
+    headers: { "content-type": "application/json" },
     body: JSON.stringify({
       id: "dontcare",
       jsonrpc: "2.0",
       method: "supported_tokens",
-      params: [
-        {
-          chains: [
-            "btc:mainnet", // Ethereum Mainnet
-          ],
-        },
-      ],
+      params: [{ chains: ["btc:mainnet"] }],
     }),
   }).then((r) => r.json());
 
-  const nativeToken = supportedTokens.result.tokens[0];
+  nativeToken = supportedTokensInfo.result.tokens[0];
   expect(nativeToken.near_token_id).toEqual("btc.omft.near");
-
   expect(tokenId).toEqual("nep141:btc.omft.near");
 
-  const worker = await Worker.init();
-  await worker.rootAccount.importContract({
-    mainnetContract: instanceAccount,
-  });
+  // Worker setup
+  worker = await Worker.init();
 
-  const socialNearAccount = await worker.rootAccount.importContract({
+  // social.near setup
+  socialNearAccount = await worker.rootAccount.importContract({
     mainnetContract: "social.near",
   });
-
   await socialNearAccount.call(
     socialNearAccount.accountId,
     "new",
     {},
     { gas: "300000000000000" }
   );
-
   await socialNearAccount.call(
     socialNearAccount.accountId,
     "set_status",
@@ -68,15 +66,17 @@ test("should create payment request to BTC address", async ({
     { gas: "300000000000000" }
   );
 
-  const mainnet = await connect({
+  // Mainnet connection for metadata
+  mainnet = await connect({
     networkId: "mainnet",
     nodeUrl: "https://rpc.mainnet.fastnear.com",
   });
 
-  const omftContract = await worker.rootAccount.importContract({
+  // omft.near contract setup
+  omftContract = await worker.rootAccount.importContract({
     mainnetContract: "omft.near",
   });
-  const omftMainnetAccount = await mainnet.account(omftContract.accountId);
+  omftMainnetAccount = await mainnet.account(omftContract.accountId); // omftContract.accountId is "omft.near"
 
   await omftContract.call(omftContract.accountId, "new", {
     super_admins: ["omft.near"],
@@ -94,24 +94,21 @@ test("should create payment request to BTC address", async ({
     {
       token: "btc",
       metadata: await omftMainnetAccount.viewFunction({
-        contractId: nativeToken.near_token_id,
+        contractId: nativeToken.near_token_id, // btc.omft.near on mainnet
         methodName: "ft_metadata",
       }),
     },
     { attachedDeposit: parseNEAR("3"), gas: 300_000_000_000_000n.toString() }
   );
 
-  // Import factory at the time testdao was created
-  const intentsContract = await worker.rootAccount.importContract({
+  // intents.near contract setup
+  intentsContract = await worker.rootAccount.importContract({
     mainnetContract: "intents.near",
   });
   await intentsContract.call(intentsContract.accountId, "new", {
     config: {
       wnear_id: "wrap.near",
-      fees: {
-        fee: 100,
-        fee_collector: "intents.near",
-      },
+      fees: { fee: 100, fee_collector: "intents.near" },
       roles: {
         super_admins: ["intents.near"],
         admins: {},
@@ -120,50 +117,39 @@ test("should create payment request to BTC address", async ({
     },
   });
 
-  await omftContract.call(
-    nativeToken.near_token_id,
+  // Storage deposit for intents.near on the btc.omft.near token contract
+  await omftContract.call( // The omftContract Account object (representing omft.near) makes the call
+    nativeToken.near_token_id, // to the btc.omft.near contract (nativeToken.near_token_id)
     "storage_deposit",
     {
       account_id: intentsContract.accountId,
       registration_only: true,
     },
     {
-      attachedDeposit: 1_500_0000000000_0000000000n.toString(),
+      attachedDeposit: "1500000000000000000000000", // 1.5 NEAR
+      gas: "300000000000000",
     }
   );
 
-  const modifiedWidgets = {};
-  const configKey = `${instanceAccount}/widget/config.data`;
+  // Creator account
+  creatorAccount = await worker.rootAccount.createSubAccount("testcreator");
+});
 
-  // Enable feature flag
-  modifiedWidgets[configKey] = (
-    await getLocalWidgetContent(configKey, {
-      treasury: daoAccount,
-      account: instanceAccount,
-    })
-  ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
+test("should create payment request to BTC address", async ({
+  page,
+  instanceAccount,
+  daoAccount,
+}) => {
+  test.setTimeout(120000);
 
-  await redirectWeb4({
-    page,
-    contractId: instanceAccount,
-    treasury: daoAccount,
-    networkId: "sandbox",
-    sandboxNodeUrl: worker.provider.connection.url,
-    modifiedWidgets,
-    callWidgetNodeURLForContractWidgets: false,
+  // Import contract for the specific instance being tested
+  // instanceAccount is an Account object provided by the test fixture
+  await worker.rootAccount.importContract({
+    mainnetContract: instanceAccount
   });
 
-  const creatorAccount = await worker.rootAccount.createSubAccount(
-    "testcreator"
-  );
-
-  await mockNearBalances({
-    page,
-    accountId: creatorAccount.accountId,
-    balance: (await creatorAccount.availableBalance()).toString(),
-    storage: (await creatorAccount.balance()).staked,
-  });
-
+  // DAO setup (specific to this test's daoAccount)
+  // daoAccount is an Account object provided by the test fixture
   const daoName = daoAccount.split(".")[0];
   const create_testdao_args = {
     config: {
@@ -175,7 +161,7 @@ test("should create payment request to BTC address", async ({
       roles: [
         {
           kind: {
-            Group: [creatorAccount.accountId],
+            Group: [creatorAccount.accountId], // creatorAccount from beforeAll
           },
           name: "Create Requests",
           permissions: [
@@ -224,7 +210,57 @@ test("should create payment request to BTC address", async ({
     initialBalance: parseNEAR("24"),
   });
   await daoContract.callRaw(daoAccount, "new", create_testdao_args, {
-    gas: 300_000_000_000_000n.toString(),
+    gas: "300000000000000",
+  });
+
+  // Fund the DAO with btc.omft.near tokens via ft_deposit on omft.near
+  await omftContract.call( // omftContract is from beforeAll (represents omft.near)
+    omftContract.accountId, // Calling the main omft.near contract itself
+    "ft_deposit",
+    {
+      owner_id: "intents.near", // Tokens are "owned" by intents.near initially for this flow
+      token: "btc", // The token symbol registered in omft.near
+      amount: "32000000000", // 320 BTC (assuming 8 decimals for btc.omft.near)
+      msg: JSON.stringify({ receiver_id: daoAccount }), // Message for intents.near to credit the DAO
+      memo: `BRIDGED_FROM:${JSON.stringify({
+        networkType: "btc",
+        chainId: "1",
+        txHash:
+          "0xc6b7ecd5c7517a8f56ac7ec9befed7d26a459fc97c7d5cd7598d4e19b5a806b7",
+      })}`,
+    },
+    {
+      attachedDeposit: parseNEAR("0.00125"), // Deposit for the call
+      gas: "300000000000000",
+    }
+  );
+
+  const modifiedWidgets = {};
+  const configKey = `${instanceAccount}/widget/config.data`;
+
+  // Enable feature flag
+  modifiedWidgets[configKey] = (
+    await getLocalWidgetContent(configKey, {
+      treasury: daoAccount,
+      account: instanceAccount,
+    })
+  ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
+
+  await redirectWeb4({
+    page,
+    contractId: instanceAccount,
+    treasury: daoAccount,
+    networkId: "sandbox",
+    sandboxNodeUrl: worker.provider.connection.url,
+    modifiedWidgets,
+    callWidgetNodeURLForContractWidgets: false,
+  });
+
+  await mockNearBalances({
+    page,
+    accountId: creatorAccount.accountId,
+    balance: (await creatorAccount.availableBalance()).toString(),
+    storage: (await creatorAccount.balance()).staked,
   });
 
   await mockNearBalances({
@@ -235,28 +271,7 @@ test("should create payment request to BTC address", async ({
     ).toString(),
     storage: (await daoContract.getAccount(daoAccount).balance()).staked,
   });
-
-  await omftContract.call(
-    omftContract.accountId,
-    "ft_deposit",
-    {
-      owner_id: "intents.near",
-      token: "btc",
-      amount: 320_00_000_000n.toString(),
-      msg: JSON.stringify({ receiver_id: daoAccount }),
-      memo: `BRIDGED_FROM:${JSON.stringify({
-        networkType: "btc",
-        chainId: "1",
-        txHash:
-          "0xc6b7ecd5c7517a8f56ac7ec9befed7d26a459fc97c7d5cd7598d4e19b5a806b7",
-      })}`,
-    },
-    {
-      attachedDeposit: parseNEAR("0.00125"),
-      gas: 300_000_000_000_000n.toString(),
-    }
-  );
-
+  
   await page.goto(`https://${instanceAccount}.page/`);
   await setPageAuthSettings(
     page,
@@ -340,8 +355,8 @@ test("should create payment request to BTC address", async ({
                 args: Buffer.from(
                   JSON.stringify({
                     token: "btc.omft.near",
-                    receiver_id: "btc.omft.near",
-                    amount: 2_00000000n.toString(),
+                    receiver_id: "btc.omft.near", // For ft_withdraw, receiver_id is the token contract itself
+                    amount: "200000000", // 2 BTC (8 decimals)
                     memo: "WITHDRAW_TO:bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
                   })
                 ).toString("base64"),
