@@ -275,7 +275,7 @@ test("should create payment request to BTC address", async ({
 
   await page.waitForTimeout(500);
 
-  await page.getByText("Payments").click();
+  await page.getByRole("link", { name: "Payments" }).click();
 
   const createRequestButton = await page.getByText("Create Request");
   await createRequestButton.click();
@@ -389,7 +389,7 @@ test("should create payment request to BTC address", async ({
     })
   ).toEqual([318_00_000_000n.toString()]);
 
-  await page.getByText("Dashboard").click();
+  await page.getByRole("link", { name: "Dashboard" }).click();
   await btcAmountElement.scrollIntoViewIfNeeded();
   await expect(btcAmountElement).toHaveText("318.00");
   await page.waitForTimeout(500);
