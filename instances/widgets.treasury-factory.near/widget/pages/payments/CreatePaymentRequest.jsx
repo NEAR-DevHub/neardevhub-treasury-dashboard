@@ -638,56 +638,31 @@ return (
       )}
       <div className="d-flex flex-column gap-1">
         <label>Recipient</label>
-        {selectedTokenBlockchain === "btc" ? (
-          <Widget
-            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
-            props={{
-              value: receiver,
-              placeholder: "Enter BTC Address (e.g., bc1... or 1...)",
-              onChange: (e) => {
-                const value = e.target.value;
-                setReceiver(value);
-                const btcRegex = /^(bc1|[13])[a-zA-HJ-NP-Z0-9]{25,39}$/i;
-                setIsReceiverAccountValid(btcRegex.test(value));
-              },
-              key: "btc-recipient",
-              instance,
-            }}
-          />
-        ) : selectedTokenBlockchain === "eth" ? (
-          <Widget
-            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
-            props={{
-              value: receiver,
-              placeholder: "Enter ETH Address (0x...)",
-              onChange: (e) => {
-                const value = e.target.value;
-                setReceiver(value);
-                const ethRegex = /^0x[a-fA-F0-9]{40}$/;
-                setIsReceiverAccountValid(ethRegex.test(value));
-              },
-              key: "eth-recipient",
-              instance,
-            }}
-          />
-        ) : (
+        {selectedTokenBlockchain === "near" ||
+        selectedTokenBlockchain == null ? (
           <Widget
             src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.AccountInput`}
             props={{
               value: receiver,
-              placeholder:
-                selectedTokenBlockchain == null ||
-                selectedTokenBlockchain === "near"
-                  ? "treasury.near"
-                  : "Enter recipient account/address",
+              placeholder: "treasury.near",
               onUpdate: (value) => {
                 setReceiver(value);
-                // setIsReceiverAccountValid is set by setParentAccountValid callback
               },
               setParentAccountValid: setIsReceiverAccountValid,
               maxWidth: "100%",
               instance,
-              allowNonExistentImplicit: selectedTokenBlockchain === "near", // Allow only for NEAR
+              allowNonExistentImplicit: true,
+            }}
+          />
+        ) : (
+          <Widget
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OtherChainAccountInput`}
+            props={{
+              blockchain: selectedTokenBlockchain,
+              value: receiver,
+              setValue: setReceiver,
+              setIsValid: setIsReceiverAccountValid,
+              instance: REPL_BASE_DEPLOYMENT_ACCOUNT,
             }}
           />
         )}
