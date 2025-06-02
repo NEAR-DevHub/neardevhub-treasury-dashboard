@@ -676,6 +676,7 @@ return (
             props={{
               value: receiver,
               placeholder:
+                selectedTokenBlockchain == null ||
                 selectedTokenBlockchain === "near"
                   ? "treasury.near"
                   : "Enter recipient account/address",
