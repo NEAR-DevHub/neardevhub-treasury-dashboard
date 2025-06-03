@@ -95,7 +95,7 @@ function validateCsvInput() {
   const tokensSum = [];
   const validData = [];
 
-  const rows = csvData
+  const rows = (csvData || "")
     .trim()
     .split("\n")
     .map((line) => line.split("\t"));
@@ -103,7 +103,7 @@ function validateCsvInput() {
 
   const colIdx = (name) =>
     headers.findIndex((h) =>
-      h.trim().toLowerCase().startsWith(name.toLowerCase())
+      (h || "").trim().toLowerCase().startsWith(name.toLowerCase())
     );
 
   const titleIdx = colIdx("Title");
@@ -130,17 +130,17 @@ function validateCsvInput() {
       const rowErrors = [];
       const data = {};
 
-      const title = row[titleIdx]?.trim();
+      const title = (row[titleIdx] || "")?.trim();
       if (!title) {
         rowErrors.push("Title is missing.");
       } else {
         data["Title"] = title;
       }
 
-      const summary = row[summaryIdx]?.trim() || "";
+      const summary = (row[summaryIdx] || "")?.trim() || "";
       data["Summary"] = summary;
 
-      const recipient = row[recipientIdx]?.trim();
+      const recipient = (row[recipientIdx] || "")?.trim();
       let recipientCheckPromise;
 
       if (!recipient) {
@@ -166,7 +166,7 @@ function validateCsvInput() {
       }
 
       return recipientCheckPromise.then((recipientValid) => {
-        const token = row[requestedTokenIdx]?.trim();
+        const token = (row[requestedTokenIdx] || "")?.trim();
 
         if (!token) {
           rowErrors.push("Requested Token is missing.");
@@ -178,7 +178,7 @@ function validateCsvInput() {
             rowErrors.push("Invalid token address.");
           }
 
-          const amountStr = row[fundingAskIdx]?.trim();
+          const amountStr = (row[fundingAskIdx] || "")?.trim();
           if (!amountStr) {
             rowErrors.push("Funding Ask is missing.");
           } else {
@@ -209,7 +209,7 @@ function validateCsvInput() {
             }
           }
 
-          const notes = row[notesIdx]?.trim() || "";
+          const notes = (row[notesIdx] || "")?.trim() || "";
           data["Notes"] = notes;
 
           return { rowErrors, data };
@@ -365,8 +365,10 @@ return (
           className: "flex-grow-1",
           key: `csv-data`,
           onChange: (e) => {
-            setValidatedData(null);
             setCsvData(e.target.value);
+            setValidatedData(null);
+            setDataWarnings(null);
+            setDataErrors(null);
           },
           value: csvData ?? "",
           multiline: true,
@@ -424,7 +426,7 @@ return (
           src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
           props={{
             classNames: { root: "theme-btn" },
-            disabled: !csvData || isValidating,
+            disabled: !csvData || isValidating || dataErrors?.length,
             loading: isValidating,
             label: "Validate Data",
             onClick: () => {

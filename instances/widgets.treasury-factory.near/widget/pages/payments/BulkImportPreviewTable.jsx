@@ -36,6 +36,14 @@ useEffect(() => {
   Near.asyncView(treasuryDaoID, "get_policy").then(setDaoPolicy);
 }, []);
 
+function getLastProposalId() {
+  return Near.asyncView(treasuryDaoID, "get_last_proposal_id");
+}
+
+function refreshData() {
+  Storage.set("REFRESH_TABLE_DATA", Math.random());
+}
+
 useEffect(() => {
   if (isTxnCreated) {
     let checkTxnTimeout = null;
@@ -43,13 +51,14 @@ useEffect(() => {
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
         if (typeof lastProposalId === "number" && lastProposalId !== id) {
+          closePreviewTable();
           clearTimeout(checkTxnTimeout);
+          refreshData();
         } else {
           checkTxnTimeout = setTimeout(() => checkForNewProposal(), 1000);
         }
       });
     };
-
     checkForNewProposal();
 
     return () => clearTimeout(checkTxnTimeout);
@@ -71,10 +80,6 @@ const handleToggleAll = () => {
   });
   setSelectedMap(newMap);
 };
-
-function getLastProposalId() {
-  return Near.asyncView(treasuryDaoID, "get_last_proposal_id");
-}
 
 function isReceiverRegistered(tokenId, receiver) {
   return Near.asyncView(tokenId, "storage_balance_of", {

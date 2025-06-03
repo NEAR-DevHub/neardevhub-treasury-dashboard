@@ -197,6 +197,7 @@ return (
                     onCloseCanvas: toggleCreatePage,
                     showPreviewTable: (data) => {
                       toggleCreatePage();
+                      setIsBulkImport(false);
                       setBulkPreviewData(data);
                     },
                   }}
