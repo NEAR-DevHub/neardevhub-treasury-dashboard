@@ -243,9 +243,18 @@ test.describe("User is logged in", () => {
     const submitBtn = page.getByRole("button", { name: "Submit 2 Requests" });
     await submitBtn.click();
     await page.waitForTimeout(5_000);
-    const proposal1 = await page
+    const storageDeposit = await page
       .locator("div.modal-body code")
       .nth(0)
+      .innerText();
+    expect(await JSON.parse(storageDeposit)).toEqual({
+      account_id: "megha19.near",
+      registration_only: true,
+    });
+
+    const proposal1 = await page
+      .locator("div.modal-body code")
+      .nth(1)
       .innerText();
     await expect(await JSON.parse(proposal1)).toEqual({
       proposal: {
@@ -259,14 +268,6 @@ test.describe("User is logged in", () => {
           },
         },
       },
-    });
-    const storageDeposit = await page
-      .locator("div.modal-body code")
-      .nth(1)
-      .innerText();
-    expect(await JSON.parse(storageDeposit)).toEqual({
-      account_id: "megha19.near",
-      registration_only: true,
     });
 
     const proposal2 = await page

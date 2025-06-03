@@ -95,6 +95,9 @@ function createPaymentTx() {
 
   if (selected.length === 0) return;
 
+  const storageDepositOps = [];
+  const proposalOps = [];
+
   const proposalPromises = selected.map((proposal) => {
     const Title = proposal.Title;
     const Summary = proposal.Summary;
@@ -132,32 +135,33 @@ function createPaymentTx() {
     };
 
     if (isTokenNEAR) {
-      return Promise.resolve([addProposalCall]);
-    } else {
-      return isReceiverRegistered(tokenId, receiver).then((isRegistered) => {
-        const ops = [];
-        if (!isRegistered) {
-          const depositInYocto = Big(0.125).mul(Big(10).pow(24)).toFixed();
-          ops.push({
-            contractName: tokenId,
-            methodName: "storage_deposit",
-            args: {
-              account_id: receiver,
-              registration_only: true,
-            },
-            gas,
-            deposit: depositInYocto,
-          });
-        }
-        ops.push(addProposalCall);
-        return ops;
-      });
+      // No storage deposit needed
+      proposalOps.push(addProposalCall);
+      return Promise.resolve();
     }
+
+    // Check registration and add storage deposit if needed
+    return isReceiverRegistered(tokenId, receiver).then((isRegistered) => {
+      if (!isRegistered) {
+        const depositInYocto = Big(0.125).mul(Big(10).pow(24)).toFixed();
+        storageDepositOps.push({
+          contractName: tokenId,
+          methodName: "storage_deposit",
+          args: {
+            account_id: receiver,
+            registration_only: true,
+          },
+          gas,
+          deposit: depositInYocto,
+        });
+      }
+      proposalOps.push(addProposalCall);
+    });
   });
 
   Promise.all(proposalPromises)
-    .then((allOps) => {
-      const calls = allOps.flat();
+    .then(() => {
+      const calls = storageDepositOps.concat(proposalOps);
       setIsCreatingRequest(false);
       setTxnCreated(true);
       Near.call(calls);
