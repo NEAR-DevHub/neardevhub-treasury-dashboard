@@ -36,7 +36,7 @@ const ModalDialog = styled.div`
   overflow-y: auto;
   max-height: 85%;
   margin-top: 5%;
-  width: 35%;
+  width: ${(props) => props.width || "35%"};
   min-width: 400px;
   border-radius: 16px;
   display: flex;
@@ -105,7 +105,12 @@ const ModalFooter = ({ children }) => (
 const Modal = ({ children, props }) => (
   <ModalDiv>
     <ModalBackdrop />
-    <ModalDialog className="card" style={{ minWidth: props.minWidth }}>
+
+    <ModalDialog
+      width={width}
+      className="card"
+      style={{ minWidth: props.minWidth }}
+    >
       {children}
     </ModalDialog>
   </ModalDiv>
