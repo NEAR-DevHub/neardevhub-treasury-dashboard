@@ -27,6 +27,8 @@ const hasCreatePermission = hasPermission(
   "AddProposal"
 );
 const [currentTab, setCurrentTab] = useState(null);
+const [isBulkImport, setIsBulkImport] = useState(false);
+const [bulkPreviewData, setBulkPreviewData] = useState(null);
 
 const proposalDetailsPageId =
   id || id === "0" || id === 0 ? parseInt(id) : null;
@@ -154,20 +156,72 @@ return (
       />
     ) : (
       <div className="h-100 w-100 flex-grow-1 d-flex flex-column">
+        {bulkPreviewData && (
+          <Widget
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.BulkImportPreviewTable`}
+            props={{
+              instance,
+              proposals: bulkPreviewData,
+              closePreviewTable: () => setBulkPreviewData(null),
+            }}
+          />
+        )}
         <Widget
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OffCanvas`}
           props={{
             showCanvas: showCreateRequest,
             onClose: toggleCreatePage,
-            title: "Create Payment Request",
-            children: (
-              <Widget
-                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.CreatePaymentRequest`}
-                props={{
-                  instance,
-                  onCloseCanvas: toggleCreatePage,
-                }}
-              />
+            title: isBulkImport
+              ? "Import Payment Requests"
+              : "Create Payment Request",
+            children: isBulkImport ? (
+              <div>
+                <div className="mb-3" style={{ fontSize: "13px" }}>
+                  Create multiple payment requests at once by pasting data
+                  copied from our spreadsheet template. Review and submit your
+                  bulk requests with ease. You can add up to 10 requests at a
+                  time.
+                  <a
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="primary-text-color cursor-pointer"
+                    href=""
+                  >
+                    View Step-by-Steps Instructions
+                  </a>
+                </div>
+                <Widget
+                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.BulkImportForm`}
+                  props={{
+                    instance,
+                    onCloseCanvas: toggleCreatePage,
+                    showPreviewTable: (data) => {
+                      toggleCreatePage();
+                      setBulkPreviewData(data);
+                    },
+                  }}
+                />
+              </div>
+            ) : (
+              <div>
+                <div className="mb-3" style={{ fontSize: "13px" }}>
+                  Fill in the details to send a payment request to a recipient.
+                  Need to send many?
+                  <span
+                    className="primary-text-color cursor-pointer"
+                    onClick={() => setIsBulkImport(true)}
+                  >
+                    Import Multiple Payment Requests
+                  </span>
+                </div>
+                <Widget
+                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.CreatePaymentRequest`}
+                  props={{
+                    instance,
+                    onCloseCanvas: toggleCreatePage,
+                  }}
+                />
+              </div>
             ),
           }}
         />
