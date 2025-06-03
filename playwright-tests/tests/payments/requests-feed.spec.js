@@ -68,7 +68,9 @@ test.describe("payment requests feed", function () {
 
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
     await expect(page.getByText("Pending Requests")).toBeVisible();
-    await expect(page.getByRole("button", { name: " Export as CSV" })).toBeHidden();
+    await expect(
+      page.getByRole("button", { name: " Export as CSV" })
+    ).toBeHidden();
   });
 
   test("should export transaction history", async ({
