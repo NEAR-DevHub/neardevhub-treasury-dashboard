@@ -335,7 +335,9 @@ test("should create payment request to BTC address", async ({
   const createRequestButton = await page.getByText("Create Request");
   await createRequestButton.click();
   await expect(page.getByText("Create Payment Request")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Submit" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Submit" })).toBeVisible({
+    timeout: 14_000,
+  });
 
   await page.getByTestId("tokens-dropdown").locator("div").first().click();
 
@@ -440,6 +442,8 @@ test("should create payment request to BTC address", async ({
   await expect(
     page.getByText("The payment request has been successfully executed.")
   ).toBeVisible({ timeout: 15_000 });
+
+  await page.waitForTimeout(1000);
   expect(
     await intentsContract.view("mt_batch_balance_of", {
       account_id: daoAccount,
@@ -612,6 +616,9 @@ test("should create payment request to USDC address on BASE", async ({
   const createRequestButton = await page.getByText("Create Request");
   await createRequestButton.click();
   await expect(page.getByText("Create Payment Request")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Submit" })).toBeVisible({
+    timeout: 14_000,
+  });
 
   await page.getByTestId("tokens-dropdown").locator("div").first().click();
 
@@ -705,6 +712,7 @@ test("should create payment request to USDC address on BASE", async ({
   await expect(page.getByText("Confirm Transaction")).toBeVisible();
   await page.getByRole("button", { name: "Confirm" }).click();
 
+  await page.waitForTimeout(1000);
   await expect(
     page.getByText("The payment request has been successfully executed.")
   ).toBeVisible({ timeout: 15_000 });
@@ -922,7 +930,9 @@ test("should create payment request for NEAR token on NEAR intents", async ({
   await createRequestButton.click();
 
   await expect(page.getByText("Create Payment Request")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Submit" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Submit" })).toBeVisible({
+    timeout: 14_000,
+  });
 
   await page.locator(".dropdown-toggle").first().click();
   await page.getByText("Add manual request").click();
@@ -996,14 +1006,12 @@ test("should create payment request for NEAR token on NEAR intents", async ({
   await page.getByRole("button", { name: "Approve" }).nth(1).click();
   await page.getByRole("button", { name: "Proceed Anyway" }).click();
 
-  /*
   // Check intents balance before execution
   const intentsBalanceBefore = await intentsContract.view("mt_balance_of", {
     account_id: daoAccount,
     token_id: "nep141:wrap.near",
   });
-  console.log("intents balance before", intentsBalanceBefore);
-  expect(BigInt(intentsBalanceBefore)).toBe(parseNEAR("91.3"));*/
+  expect(intentsBalanceBefore).toBe(parseNEAR("91.3"));
 
   await expect(page.getByRole("button", { name: "Confirm" })).toBeVisible();
   await page.getByRole("button", { name: "Confirm" }).click();
