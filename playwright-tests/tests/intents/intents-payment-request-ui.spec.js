@@ -169,7 +169,9 @@ test.beforeAll(async () => {
   );
 
   // Creator account
-  creatorAccount = await worker.rootAccount.createSubAccount("testcreator");
+  creatorAccount = await worker.rootAccount.createSubAccount("testcreator", {
+    initialBalance: parseNEAR("2000")
+  });
 });
 
 test("should create payment request to BTC address", async ({
@@ -333,6 +335,7 @@ test("should create payment request to BTC address", async ({
   const createRequestButton = await page.getByText("Create Request");
   await createRequestButton.click();
   await expect(page.getByText("Create Payment Request")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Submit" })).toBeVisible();
 
   await page.getByTestId("tokens-dropdown").locator("div").first().click();
 
@@ -715,5 +718,299 @@ test("should create payment request to USDC address on BASE", async ({
   await page.getByRole("link", { name: "Dashboard" }).click();
   await usdcAmountElement.scrollIntoViewIfNeeded();
   await expect(usdcAmountElement).toHaveText("97500.00");
+  await page.waitForTimeout(500);
+});
+
+test("should create payment request for NEAR token on NEAR intents", async ({
+  page,
+  instanceAccount,
+  daoAccount,
+}) => {
+  test.setTimeout(120000);
+
+  // Import contract for the specific instance being tested
+  await worker.rootAccount.importContract({
+    mainnetContract: instanceAccount,
+  });
+
+  // Set up wNEAR contract for NEAR intents
+  const wrapNearContract = await worker.rootAccount.importContract({
+    mainnetContract: "wrap.near",
+  });
+
+  await wrapNearContract.call(wrapNearContract.accountId, "new", {
+    owner_id: wrapNearContract.accountId,
+    total_supply: parseNEAR("1000000000"),
+    metadata: {
+      spec: "ft-1.0.0",
+      name: "Wrapped NEAR fungible token",
+      symbol: "wNEAR",
+      decimals: 24,
+    },
+  });
+
+  // DAO setup (specific to this test's daoAccount)
+  const daoName = daoAccount.split(".")[0];
+  const create_testdao_args = {
+    config: {
+      name: daoName,
+      purpose: "treasury",
+      metadata: "",
+    },
+    policy: {
+      roles: [
+        {
+          kind: {
+            Group: [creatorAccount.accountId],
+          },
+          name: "Create Requests",
+          permissions: [
+            "call:AddProposal",
+            "transfer:AddProposal",
+            "config:Finalize",
+          ],
+          vote_policy: {},
+        },
+        {
+          kind: {
+            Group: [creatorAccount.accountId],
+          },
+          name: "Manage Members",
+          permissions: [
+            "config:*",
+            "policy:*",
+            "add_member_to_role:*",
+            "remove_member_from_role:*",
+          ],
+          vote_policy: {},
+        },
+        {
+          kind: {
+            Group: [creatorAccount.accountId],
+          },
+          name: "Vote",
+          permissions: ["*:VoteReject", "*:VoteApprove", "*:VoteRemove"],
+          vote_policy: {},
+        },
+      ],
+      default_vote_policy: {
+        weight_kind: "RoleWeight",
+        quorum: "0",
+        threshold: [1, 2],
+      },
+      proposal_bond: PROPOSAL_BOND,
+      proposal_period: "604800000000000",
+      bounty_bond: "100000000000000000000000",
+      bounty_forgiveness_period: "604800000000000",
+    },
+  };
+
+  const daoContract = await worker.rootAccount.importContract({
+    mainnetContract: daoAccount,
+    initialBalance: parseNEAR("24"),
+  });
+  await daoContract.callRaw(daoAccount, "new", create_testdao_args, {
+    gas: "300000000000000",
+  });
+
+  // Register storage for intents contract on wNEAR
+  await intentsContract.call(
+    wrapNearContract.accountId,
+    "storage_deposit",
+    {
+      account_id: intentsContract.accountId,
+      registration_only: true,
+    },
+    {
+      attachedDeposit: parseNEAR("0.01"),
+    }
+  );
+
+  // Deposit NEAR into wNEAR contract to get wNEAR tokens for DAO
+  await creatorAccount.call(
+    wrapNearContract.accountId,
+    "near_deposit",
+    {},
+    { attachedDeposit: parseNEAR("100") }
+  );
+
+  // Transfer wNEAR to intents contract for the DAO using ft_transfer_call
+  await creatorAccount.call(
+    wrapNearContract.accountId,
+    "ft_transfer_call",
+    {
+      receiver_id: intentsContract.accountId,
+      amount: parseNEAR("91.3"), // 100 NEAR worth of wNEAR
+      msg: JSON.stringify({ receiver_id: daoAccount }),
+    },
+    { attachedDeposit: "1", gas: "50000000000000" }
+  );
+
+  // Verify that the DAO has NEAR balance in intents contract
+  const nearIntentsBalance = await intentsContract.view("mt_balance_of", {
+    account_id: daoAccount,
+    token_id: "nep141:wrap.near",
+  });
+  expect(nearIntentsBalance).toBe(parseNEAR("91.3"));
+
+  // Get initial balance of creatorAccount (who will be the recipient)
+  const recipientInitialBalance = await creatorAccount.availableBalance();
+
+  const modifiedWidgets = {};
+  const configKey = `${instanceAccount}/widget/config.data`;
+  modifiedWidgets[configKey] = (
+    await getLocalWidgetContent(configKey, {
+      treasury: daoAccount,
+      account: instanceAccount,
+    })
+  ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
+
+  await redirectWeb4({
+    page,
+    contractId: instanceAccount,
+    treasury: daoAccount,
+    networkId: "sandbox",
+    sandboxNodeUrl: worker.provider.connection.url,
+    modifiedWidgets,
+    callWidgetNodeURLForContractWidgets: false,
+  });
+
+  await mockNearBalances({
+    page,
+    accountId: creatorAccount.accountId,
+    balance: (await creatorAccount.availableBalance()).toString(),
+    storage: (await creatorAccount.balance()).staked,
+  });
+
+  await mockNearBalances({
+    page,
+    accountId: daoContract.accountId,
+    balance: (
+      await daoContract.getAccount(daoAccount).availableBalance()
+    ).toString(),
+    storage: (await daoContract.getAccount(daoAccount).balance()).staked,
+  });
+
+  await page.goto(`https://${instanceAccount}.page/`);
+  await setPageAuthSettings(
+    page,
+    creatorAccount.accountId,
+    await creatorAccount.getKey()
+  );
+
+  // Check that NEAR (NEAR Intents) balance shows up in the dashboard
+  const nearBalanceRowLocator = page.locator(
+    '.card div.d-flex.flex-column.border-bottom:has(div.h6.mb-0.text-truncate:has-text("wNEAR"))'
+  );
+
+  const nearBalanceLocator = nearBalanceRowLocator.locator(
+    "div.d-flex.gap-2.align-items-center.justify-content-end div.d-flex.flex-column.align-items-end div.h6.mb-0"
+  );
+  await expect(nearBalanceRowLocator).toBeAttached();
+  
+  await nearBalanceLocator.scrollIntoViewIfNeeded();
+  await expect(nearBalanceLocator).toHaveText("91.30");
+
+  await page.waitForTimeout(500);
+
+  await page.getByRole("link", { name: "Payments" }).click();
+
+  const createRequestButton = await page.getByText("Create Request");
+  await expect(createRequestButton).toBeEnabled();
+  await createRequestButton.click();
+  
+  await expect(page.getByText("Create Payment Request")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Submit" })).toBeVisible();
+
+  await page.locator(".dropdown-toggle").first().click();
+  await page.getByText("Add manual request").click();
+  await page.getByTestId("proposal-title").click();
+  await page.getByTestId("proposal-title").fill("NEAR intents withdrawal proposal");
+  await page.getByTestId("proposal-summary").click();
+  await page
+    .getByTestId("proposal-summary")
+    .fill("Withdrawal of wNEAR tokens from intents contract");
+  await page.getByTestId("tokens-dropdown").getByText("Select").click();
+  await page.getByText("wNEAR (NEAR Intents)", { exact: true }).click();
+  await page.getByTestId("total-amount").click();
+  await page.getByTestId("total-amount").fill("50");
+  await page.getByPlaceholder("treasury.near").click();
+  await page
+    .getByPlaceholder("treasury.near")
+    .fill(creatorAccount.accountId);
+
+  await expect(
+    page.getByText("Please enter valid account ID")
+  ).not.toBeVisible();
+  await expect(page.getByRole("button", { name: "Submit" })).toBeEnabled();
+  await page.getByRole("button", { name: "Submit" }).click();
+
+  await expect(page.getByText("Confirm Transaction")).toBeVisible();
+
+  // The transaction should be creating an intents-based payment request
+  const transactionContent = JSON.stringify(
+    JSON.parse(await page.locator("pre div").innerText())
+  );
+  expect(transactionContent).toBe(JSON.stringify(
+    {"proposal":{"description":"* Title: NEAR intents withdrawal proposal <br>* Summary: Withdrawal of wNEAR tokens from intents contract","kind":{"FunctionCall":{"receiver_id":"intents.near","actions":[{"method_name":"ft_withdraw",
+      "args": Buffer.from(
+                  JSON.stringify({
+                    token: "wrap.near",
+                    receiver_id: creatorAccount.accountId,
+                    amount: parseNEAR("50")
+                  })
+                ).toString("base64")
+      ,"deposit":"1","gas":"30000000000000"}]}}}}
+  ));
+
+  await expect(page.getByRole("button", { name: "Confirm" })).toBeVisible();
+  await page.getByRole("button", { name: "Confirm" }).click();
+
+  const proposalColumns = page.getByTestId("proposal-request-#0").locator("td");
+  await expect(proposalColumns.nth(5)).toHaveText(`@${creatorAccount.accountId}`);
+  await expect(proposalColumns.nth(6)).toHaveText("wNEAR");
+  await expect(proposalColumns.nth(7)).toHaveText("50.00");
+
+  await proposalColumns.nth(7).click();
+
+  await page.getByRole("button", { name: "Approve" }).nth(1).click();
+  await page.getByRole("button", { name: "Proceed Anyway" }).click();
+
+  /*
+  // Check intents balance before execution
+  const intentsBalanceBefore = await intentsContract.view("mt_balance_of", {
+    account_id: daoAccount,
+    token_id: "nep141:wrap.near",
+  });
+  console.log("intents balance before", intentsBalanceBefore);
+  expect(BigInt(intentsBalanceBefore)).toBe(parseNEAR("91.3"));*/
+
+  await expect(page.getByRole("button", { name: "Confirm" })).toBeVisible();
+  await page.getByRole("button", { name: "Confirm" }).click();
+  await expect(page.getByText("Confirm Transaction")).toBeVisible();
+  await page.getByRole("button", { name: "Confirm" }).click();
+
+  await expect(
+    page.getByText("The payment request has been successfully executed.")
+  ).toBeVisible({ timeout: 15_000 });
+  
+  // Check that intents balance is reduced by 50 NEAR
+  /*const intentsBalanceAfter = await intentsContract.view("mt_balance_of", {
+    account_id: daoAccount,
+    token_id: "nep141:wrap.near",
+  });
+  expect(BigInt(intentsBalanceAfter)).toBe(parseNEAR("41.3"));*/
+
+  // Check that recipient (creatorAccount) received the NEAR tokens
+  const recipientFinalBalance = await creatorAccount.availableBalance();
+  const balanceIncrease = BigInt(recipientFinalBalance.toString()) - BigInt(recipientInitialBalance.toString());
+  // Should have received approximately 50 NEAR (minus any transaction fees)
+  expect(balanceIncrease).toBeGreaterThan(parseNEAR("49"));
+  expect(balanceIncrease).toBeLessThan(parseNEAR("51"));
+
+  await page.getByRole("link", { name: "Dashboard" }).click();
+  await nearBalanceLocator.scrollIntoViewIfNeeded();
+  // Balance should be reduced to approximately 50 NEAR
+  await expect(nearBalanceLocator).toHaveText("41.30");
   await page.waitForTimeout(500);
 });

@@ -13,6 +13,7 @@ const {
   disabled,
   setTokensAvailable,
   setSelectedTokenBlockchain,
+  setSelectedTokenIsIntent,
   lockupNearBalances,
 } = props;
 
@@ -95,14 +96,16 @@ function sendTokensAvailable(value) {
 
 useEffect(() => {
   if (selectedValue !== selectedOptionValue) {
-    onChange(selectedOptionValue);
+    
     setSelectedValue(selectedOptionValue);
     const selectedToken = options.find((i) => i.value === selectedOptionValue);
+    onChange(selectedToken?.isIntent ? selectedToken.tokenId : selectedOptionValue);
+
     if (selectedToken) {
-      console.log("Selected token:", selectedToken);
       setSelectedValue(selectedToken.value);
       setTokensAvailable(selectedToken.tokenBalance);
       setSelectedTokenBlockchain(selectedToken.blockchain || "near");
+      setSelectedTokenIsIntent(selectedToken.isIntent || false);
     }
   }
 }, [selectedOptionValue]);
@@ -195,8 +198,6 @@ useEffect(() => {
   if (typeof getIntentsBalances === "function" && daoAccount) {
     getIntentsBalances(daoAccount).then((balances) => {
       const formattedIntentsTokens = balances.map((token) => ({
-        // Assuming getIntentsBalances returns an array of objects with icon, symbol, contract, and amount
-        // You might need to adjust the properties based on the actual return value of getIntentsBalances
         icon: token.ft_meta?.icon ? (
           <img src={token.ft_meta.icon} height={30} width={30} />
         ) : (
@@ -210,12 +211,13 @@ useEffect(() => {
           /> // Placeholder icon
         ),
         title: `${token.ft_meta.symbol} (NEAR Intents)`,
-        value: token.contract_id, // Or a unique identifier for the intent token
+        tokenId: token.contract_id,
+        value: `intents_${token.contract_id}`,
         tokenBalance: Big(token.amount ?? "0")
           .div(Big(10).pow(token.ft_meta.decimals))
           .toFixed(2),
         blockchain: token.blockchain,
-        isIntent: true, // Add a flag to identify intent tokens if needed later
+        isIntent: true,
       }));
       setIntentsTokens(formattedIntentsTokens);
     });

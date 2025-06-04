@@ -42,6 +42,7 @@ const [selectedWallet, setSelectedWallet] = useState(walletOptions[0]);
 
 const [tokenId, setTokenId] = useState(null);
 const [selectedTokenBlockchain, setSelectedTokenBlockchain] = useState(null);
+const [selectedTokenIsIntent, setSelectedTokenIsIntent] = useState(false);
 const [receiver, setReceiver] = useState(null);
 const [isReceiverAccountValid, setIsReceiverAccountValid] = useState(false);
 const [notes, setNotes] = useState(null);
@@ -351,31 +352,56 @@ function onSubmitClick() {
   const isLockupTransfer = selectedWallet.value === lockupContract;
   let proposalKind;
 
-  if (selectedTokenBlockchain && selectedTokenBlockchain !== "near") {
-    // Non-NEAR / Intent-based payment
-    const ftWithdrawArgs = {
-      token: tokenId, // This is the NEAR FT contract, e.g., "btc.omft.near"
-      receiver_id: tokenId, // Per test expectation, this is also the token contract ID for intents.near
-      amount: parsedAmount, // Amount in FT's decimals (e.g., 2 * 10^8 for 2 BTC if 8 decimals)
-      memo: `WITHDRAW_TO:${receiver}`, // `receiver` holds the actual off-chain address
-    };
+  if (selectedTokenIsIntent) {
+    if (selectedTokenBlockchain && selectedTokenBlockchain !== "near") {
+      // Non-NEAR / Intent-based payment
+      const ftWithdrawArgs = {
+        token: tokenId, // This is the NEAR FT contract, e.g., "btc.omft.near"
+        receiver_id: tokenId, // Per test expectation, this is also the token contract ID for intents.near
+        amount: parsedAmount, // Amount in FT's decimals (e.g., 2 * 10^8 for 2 BTC if 8 decimals)
+        memo: `WITHDRAW_TO:${receiver}`, // `receiver` holds the actual off-chain address
+      };
 
-    proposalKind = {
-      FunctionCall: {
-        receiver_id: "intents.near", // Target contract for intent withdrawals
-        actions: [
-          {
-            method_name: "ft_withdraw",
-            args: Buffer.from(JSON.stringify(ftWithdrawArgs)).toString(
-              "base64"
-            ),
-            deposit: "1", // 1 yoctoNEAR
-            gas: gasForIntentAction,
-          },
-        ],
-      },
-    };
-  } else {
+      proposalKind = {
+        FunctionCall: {
+          receiver_id: "intents.near", // Target contract for intent withdrawals
+          actions: [
+            {
+              method_name: "ft_withdraw",
+              args: Buffer.from(JSON.stringify(ftWithdrawArgs)).toString(
+                "base64"
+              ),
+              deposit: "1", // 1 yoctoNEAR
+              gas: gasForIntentAction,
+            },
+          ],
+        },
+      };
+    } else {
+      // NEAR / Intent-based payment
+      const ftWithdrawArgs = {
+        token: tokenId, // This is the NEAR FT contract, e.g., "wrap.near"
+        receiver_id: receiver,
+        amount: parsedAmount
+      };
+
+      proposalKind = {
+        FunctionCall: {
+          receiver_id: "intents.near", // Target contract for intent withdrawals
+          actions: [
+            {
+              method_name: "ft_withdraw",
+              args: Buffer.from(JSON.stringify(ftWithdrawArgs)).toString(
+                "base64"
+              ),
+              deposit: "1", // 1 yoctoNEAR
+              gas: gasForIntentAction,
+            },
+          ],
+        },
+      };
+    }
+  }  else {
     // NEAR blockchain payment (native NEAR or NEP-141 on NEAR)
     if (isLockupTransfer) {
       descriptionFields["proposal_action"] = "transfer";
@@ -681,6 +707,7 @@ return (
             },
             setSelectedTokenBlockchain,
             setTokensAvailable: setSelectedTokensAvailable,
+            setSelectedTokenIsIntent,
             lockupNearBalances,
           }}
         />
