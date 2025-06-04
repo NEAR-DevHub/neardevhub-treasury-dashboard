@@ -170,7 +170,7 @@ test.beforeAll(async () => {
 
   // Creator account
   creatorAccount = await worker.rootAccount.createSubAccount("testcreator", {
-    initialBalance: parseNEAR("2000")
+    initialBalance: parseNEAR("2000"),
   });
 });
 
@@ -853,8 +853,10 @@ test("should create payment request for NEAR token on NEAR intents", async ({
   });
   expect(nearIntentsBalance).toBe(parseNEAR("91.3"));
 
-  // Get initial balance of creatorAccount (who will be the recipient)
-  const recipientInitialBalance = await creatorAccount.availableBalance();
+  // Get initial wNEAR balance of creatorAccount (who will be the recipient)
+  const recipientInitialBalance = await wrapNearContract.view("ft_balance_of", {
+    account_id: creatorAccount.accountId,
+  });
 
   const modifiedWidgets = {};
   const configKey = `${instanceAccount}/widget/config.data`;
@@ -907,7 +909,7 @@ test("should create payment request for NEAR token on NEAR intents", async ({
     "div.d-flex.gap-2.align-items-center.justify-content-end div.d-flex.flex-column.align-items-end div.h6.mb-0"
   );
   await expect(nearBalanceRowLocator).toBeAttached();
-  
+
   await nearBalanceLocator.scrollIntoViewIfNeeded();
   await expect(nearBalanceLocator).toHaveText("91.30");
 
@@ -918,14 +920,16 @@ test("should create payment request for NEAR token on NEAR intents", async ({
   const createRequestButton = await page.getByText("Create Request");
   await expect(createRequestButton).toBeEnabled();
   await createRequestButton.click();
-  
+
   await expect(page.getByText("Create Payment Request")).toBeVisible();
   await expect(page.getByRole("button", { name: "Submit" })).toBeVisible();
 
   await page.locator(".dropdown-toggle").first().click();
   await page.getByText("Add manual request").click();
   await page.getByTestId("proposal-title").click();
-  await page.getByTestId("proposal-title").fill("NEAR intents withdrawal proposal");
+  await page
+    .getByTestId("proposal-title")
+    .fill("NEAR intents withdrawal proposal");
   await page.getByTestId("proposal-summary").click();
   await page
     .getByTestId("proposal-summary")
@@ -935,9 +939,7 @@ test("should create payment request for NEAR token on NEAR intents", async ({
   await page.getByTestId("total-amount").click();
   await page.getByTestId("total-amount").fill("50");
   await page.getByPlaceholder("treasury.near").click();
-  await page
-    .getByPlaceholder("treasury.near")
-    .fill(creatorAccount.accountId);
+  await page.getByPlaceholder("treasury.near").fill(creatorAccount.accountId);
 
   await expect(
     page.getByText("Please enter valid account ID")
@@ -951,23 +953,41 @@ test("should create payment request for NEAR token on NEAR intents", async ({
   const transactionContent = JSON.stringify(
     JSON.parse(await page.locator("pre div").innerText())
   );
-  expect(transactionContent).toBe(JSON.stringify(
-    {"proposal":{"description":"* Title: NEAR intents withdrawal proposal <br>* Summary: Withdrawal of wNEAR tokens from intents contract","kind":{"FunctionCall":{"receiver_id":"intents.near","actions":[{"method_name":"ft_withdraw",
-      "args": Buffer.from(
+  expect(transactionContent).toBe(
+    JSON.stringify({
+      proposal: {
+        description:
+          "* Title: NEAR intents withdrawal proposal <br>* Summary: Withdrawal of wNEAR tokens from intents contract",
+        kind: {
+          FunctionCall: {
+            receiver_id: "intents.near",
+            actions: [
+              {
+                method_name: "ft_withdraw",
+                args: Buffer.from(
                   JSON.stringify({
                     token: "wrap.near",
                     receiver_id: creatorAccount.accountId,
-                    amount: parseNEAR("50")
+                    amount: parseNEAR("50"),
                   })
-                ).toString("base64")
-      ,"deposit":"1","gas":"30000000000000"}]}}}}
-  ));
+                ).toString("base64"),
+                deposit: "1",
+                gas: "30000000000000",
+              },
+            ],
+          },
+        },
+      },
+    })
+  );
 
   await expect(page.getByRole("button", { name: "Confirm" })).toBeVisible();
   await page.getByRole("button", { name: "Confirm" }).click();
 
   const proposalColumns = page.getByTestId("proposal-request-#0").locator("td");
-  await expect(proposalColumns.nth(5)).toHaveText(`@${creatorAccount.accountId}`);
+  await expect(proposalColumns.nth(5)).toHaveText(
+    `@${creatorAccount.accountId}`
+  );
   await expect(proposalColumns.nth(6)).toHaveText("wNEAR");
   await expect(proposalColumns.nth(7)).toHaveText("50.00");
 
@@ -993,20 +1013,22 @@ test("should create payment request for NEAR token on NEAR intents", async ({
   await expect(
     page.getByText("The payment request has been successfully executed.")
   ).toBeVisible({ timeout: 15_000 });
-  
-  // Check that intents balance is reduced by 50 NEAR
-  /*const intentsBalanceAfter = await intentsContract.view("mt_balance_of", {
-    account_id: daoAccount,
-    token_id: "nep141:wrap.near",
-  });
-  expect(BigInt(intentsBalanceAfter)).toBe(parseNEAR("41.3"));*/
 
-  // Check that recipient (creatorAccount) received the NEAR tokens
-  const recipientFinalBalance = await creatorAccount.availableBalance();
-  const balanceIncrease = BigInt(recipientFinalBalance.toString()) - BigInt(recipientInitialBalance.toString());
-  // Should have received approximately 50 NEAR (minus any transaction fees)
-  expect(balanceIncrease).toBeGreaterThan(parseNEAR("49"));
-  expect(balanceIncrease).toBeLessThan(parseNEAR("51"));
+  await page.waitForTimeout(1000);
+
+  // Check that recipient (creatorAccount) received the wNEAR tokens
+  const recipientFinalBalance = await wrapNearContract.view("ft_balance_of", {
+    account_id: creatorAccount.accountId,
+  });
+  console.log(
+    "initial and final wNEAR balance",
+    recipientInitialBalance,
+    recipientFinalBalance
+  );
+  const balanceIncrease =
+    BigInt(recipientFinalBalance) - BigInt(recipientInitialBalance);
+  // Should have received exactly 50 wNEAR tokens
+  expect(balanceIncrease.toString()).toBe(parseNEAR("50"));
 
   await page.getByRole("link", { name: "Dashboard" }).click();
   await nearBalanceLocator.scrollIntoViewIfNeeded();

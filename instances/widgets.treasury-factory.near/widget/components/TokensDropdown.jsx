@@ -96,10 +96,11 @@ function sendTokensAvailable(value) {
 
 useEffect(() => {
   if (selectedValue !== selectedOptionValue) {
-    
     setSelectedValue(selectedOptionValue);
     const selectedToken = options.find((i) => i.value === selectedOptionValue);
-    onChange(selectedToken?.isIntent ? selectedToken.tokenId : selectedOptionValue);
+    onChange(
+      selectedToken?.isIntent ? selectedToken.tokenId : selectedOptionValue
+    );
 
     if (selectedToken) {
       setSelectedValue(selectedToken.value);

@@ -382,7 +382,7 @@ function onSubmitClick() {
       const ftWithdrawArgs = {
         token: tokenId, // This is the NEAR FT contract, e.g., "wrap.near"
         receiver_id: receiver,
-        amount: parsedAmount
+        amount: parsedAmount,
       };
 
       proposalKind = {
@@ -401,7 +401,7 @@ function onSubmitClick() {
         },
       };
     }
-  }  else {
+  } else {
     // NEAR blockchain payment (native NEAR or NEP-141 on NEAR)
     if (isLockupTransfer) {
       descriptionFields["proposal_action"] = "transfer";

@@ -207,7 +207,8 @@ const ProposalsComponent = () => {
           ? {
               token_id: decodedArgs?.token,
               receiver_id:
-                (decodedArgs?.memo && decodedArgs.memo.replace(/^WITHDRAW_TO:/, "")) ||
+                (decodedArgs?.memo &&
+                  decodedArgs.memo.replace(/^WITHDRAW_TO:/, "")) ||
                 decodedArgs?.receiver_id,
               amount: decodedArgs?.amount,
             }
