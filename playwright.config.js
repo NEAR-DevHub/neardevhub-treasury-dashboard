@@ -5,8 +5,7 @@ import { defineConfig, devices } from "@playwright/test";
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
  */
-import dotenv from "dotenv";
-dotenv.config();
+process.env.NEAR_CLI_MAINNET_RPC_SERVER_URL="https://archival-rpc.mainnet.fastnear.com";
 
 /**
  * @see https://playwright.dev/docs/test-configuration
