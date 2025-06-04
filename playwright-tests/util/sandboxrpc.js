@@ -627,6 +627,7 @@ export class SandboxRPC {
       widgetNodeUrl: this.rpc_url,
       sandboxNodeUrl: this.rpc_url,
       modifiedWidgets: this.modifiedWidgets,
+      callWidgetNodeURLForContractWidgets: true,
     });
   }
 

@@ -60,4 +60,28 @@ test.describe("payment requests feed", function () {
     ).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText("Expired")).toBeVisible({ timeout: 20_000 });
   });
+  test("export action should not be visible in pending requests tab", async ({
+    page,
+    instanceAccount,
+  }) => {
+    test.setTimeout(60_000);
+
+    await page.goto(`/${instanceAccount}/widget/app?page=payments`);
+    await expect(page.getByText("Pending Requests")).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: " Export as CSV" })
+    ).toBeHidden();
+  });
+
+  test("should export transaction history", async ({
+    page,
+    daoAccount,
+    instanceAccount,
+  }) => {
+    await page.goto(`/${instanceAccount}/widget/app?page=payments&tab=history`);
+    const exportLink = page.locator('a[download="proposals.csv"]');
+    await expect(exportLink).toBeVisible();
+    const href = await exportLink.getAttribute("href");
+    expect(href).toContain(`/proposals/${daoAccount}?proposal_type=Transfer`);
+  });
 });

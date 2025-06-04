@@ -53,6 +53,7 @@ export function getLocalWidgetContent(key, context = {}) {
  * @param {string} [options.widgetNodeUrl="https://rpc.mainnet.fastnear.com"] - NEAR RPC node URL to get widget content from ( defaults to mainnet ). Specify sandbox URL if you want to fetch from sandbox.
  * @param {string} [options.sandboxNodeUrl] - Fallback RPC requests will be sent to the sandbox if specified, otherwise to nodeUrl
  * @param {Object} [options.modifiedWidgets={}] - An object containing modified widget content.
+ * @param {boolean} [options.callWidgetNodeURLForContractWidgets=false] - call the provided `widgetNodeUrl` when requesting social db contents under the provided `contractId`
  *     The keys are widget keys (e.g., "account/section/contentKey"), and the values are the modified widget content as strings.
  *
  * @returns {Promise<void>} A promise that resolves when the routing setup is complete.
@@ -66,6 +67,7 @@ export async function redirectWeb4({
   widgetNodeUrl = "https://rpc.mainnet.fastnear.com",
   sandboxNodeUrl,
   modifiedWidgets = {},
+  callWidgetNodeURLForContractWidgets = true,
 }) {
   const keyStore = new keyStores.InMemoryKeyStore();
 
@@ -88,7 +90,12 @@ export async function redirectWeb4({
       const args = JSON.parse(atob(postData.params.args_base64));
       const keys = args.keys;
 
-      if ((keys && keys[0].startsWith(contractId)) || keys === undefined) {
+      if (
+        (callWidgetNodeURLForContractWidgets &&
+          keys &&
+          keys[0].startsWith(contractId)) ||
+        keys === undefined
+      ) {
         const response = await route.fetch({
           url: widgetNodeUrl,
           json: postData,

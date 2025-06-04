@@ -95,6 +95,35 @@ test.describe("Have valid staked requests and sufficient token balance", functio
         page.getByRole("cell", { name: "this is notes", exact: true })
       ).toBeVisible({ timeout: 40_000 });
     });
+
+    test("export action should not be visible in pending requests tab", async ({
+      page,
+      instanceAccount,
+    }) => {
+      test.setTimeout(60_000);
+      await page.goto(`/${instanceAccount}/widget/app?page=stake-delegation`);
+      await expect(page.getByText("Pending Requests")).toBeVisible();
+      await expect(
+        page.getByRole("button", { name: " Export as CSV" })
+      ).toBeHidden();
+    });
+
+    test("should export transaction history", async ({
+      page,
+      daoAccount,
+      instanceAccount,
+    }) => {
+      test.setTimeout(60_000);
+      await page.goto(
+        `/${instanceAccount}/widget/app?page=stake-delegation&tab=history`
+      );
+      const exportLink = page.locator('a[download="proposals.csv"]');
+      await expect(exportLink).toBeVisible();
+      const href = await exportLink.getAttribute("href");
+      expect(href).toContain(
+        `/proposals/${daoAccount}?proposal_type=FunctionCall&keyword=stake,withdraw`
+      );
+    });
   });
 
   test.describe.parallel("User logged in with different roles", function () {

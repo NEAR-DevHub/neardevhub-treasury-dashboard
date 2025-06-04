@@ -21,7 +21,9 @@ if (
   return <></>;
 }
 
-const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+const { treasuryDaoID, showNearIntents } = VM.require(
+  `${instance}/widget/config.data`
+);
 
 const lockupContract = accountToLockup(treasuryDaoID);
 
@@ -86,6 +88,7 @@ const [daoFTTokens, setFTTokens] = useState(null);
 const [show404Modal, setShow404Modal] = useState(false);
 const [disableRefreshBtn, setDisableRefreshBtn] = useState(false);
 const [lockupState, setLockupState] = useState(false);
+const [showDepositModal, setShowDepositModal] = useState(false);
 const [intentsTotalUsdBalance, setIntentsTotalUsdBalance] = useState("0"); // New state for intents balance
 
 useEffect(() => {
@@ -319,6 +322,16 @@ const Loading = () => {
 return (
   <Wrapper>
     {show404Modal && <TooManyRequestModal />}
+    {showDepositModal && (
+      <Widget
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DepositModal`}
+        props={{
+          show: showDepositModal,
+          onClose: () => setShowDepositModal(false),
+          treasuryDaoID: treasuryDaoID,
+        }}
+      />
+    )}
     <Widget
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
       props={{
@@ -347,7 +360,9 @@ return (
     )}
     <div className="d-flex gap-3 flex-wrap">
       <div className="d-flex flex-column gap-3 flex-container">
-        <div className="card card-body" style={{ maxHeight: "100px" }}>
+        <div className="card card-body" style={{ minHeight: "100px" }}>
+          {" "}
+          {/* Adjusted minHeight for button */}
           <div className="h6 text-secondary">Total Balance</div>
           {typeof getNearBalances !== "function" ||
           nearPrice === null ||
@@ -357,6 +372,17 @@ return (
             <div className="fw-bold h3 mb-0">
               {formatCurrency(totalBalance)} USD
             </div>
+          )}
+          {showNearIntents && (
+            <button
+              className="btn btn-success mt-2"
+              onClick={() => {
+                setShowDepositModal(true);
+              }}
+              style={{ width: "100%" }} // Make button full width of its container
+            >
+              Deposit
+            </button>
           )}
         </div>
         <Widget
