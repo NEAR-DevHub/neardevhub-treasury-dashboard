@@ -702,10 +702,17 @@ return (
             selectedValue: tokenId,
             onChange: (v) => {
               setTokenId(v);
-              setReceiver(""); // Reset receiver
-              setIsReceiverAccountValid(false); // Reset validation status
             },
-            setSelectedTokenBlockchain,
+            setSelectedTokenBlockchain: (blockchain) => {
+              if (
+                selectedTokenBlockchain &&
+                blockchain !== selectedTokenBlockchain
+              ) {
+                setReceiver(""); // Reset receiver
+                setIsReceiverAccountValid(false); // Reset validation status
+                setSelectedTokenBlockchain(blockchain);
+              }
+            },
             setTokensAvailable: setSelectedTokensAvailable,
             setSelectedTokenIsIntent,
             lockupNearBalances,
