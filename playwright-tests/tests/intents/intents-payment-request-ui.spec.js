@@ -174,7 +174,11 @@ test.beforeAll(async () => {
   });
 });
 
-test("should create payment request to BTC address", async ({
+test.afterAll(async () => {
+  await worker.tearDown();
+});
+
+test("payment request to BTC address", async ({
   page,
   instanceAccount,
   daoAccount,
@@ -415,7 +419,13 @@ test("should create payment request to BTC address", async ({
   await expect(page.getByRole("button", { name: "Confirm" })).toBeVisible();
   await page.getByRole("button", { name: "Confirm" }).click();
 
-  const proposalColumns = page.getByTestId("proposal-request-#0").locator("td");
+  await expect(page.getByRole("button", { name: "Confirm" })).not.toBeVisible();
+  const proposalColumns = page
+    .locator(
+      'tr[data-component="widgets.treasury-factory.near/widget/pages.payments.Table"]'
+    )
+    .nth(1)
+    .locator("td");
   await expect(proposalColumns.nth(5)).toHaveText(
     "@bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"
   );
@@ -457,7 +467,7 @@ test("should create payment request to BTC address", async ({
   await page.waitForTimeout(500);
 });
 
-test("should create payment request to USDC address on BASE", async ({
+test("payment request to USDC address on BASE", async ({
   page,
   instanceAccount,
   daoAccount,
@@ -603,6 +613,7 @@ test("should create payment request to USDC address on BASE", async ({
   const usdcRowLocator = page.locator(
     '.card div.d-flex.flex-column.border-bottom:has(div.h6.mb-0.text-truncate:has-text("USDC"))'
   );
+  await expect(usdcRowLocator).toBeAttached();
   const usdcAmountElement = usdcRowLocator.locator(
     "div.d-flex.gap-2.align-items-center.justify-content-end div.d-flex.flex-column.align-items-end div.h6.mb-0"
   );
@@ -688,7 +699,13 @@ test("should create payment request to USDC address on BASE", async ({
   await expect(page.getByRole("button", { name: "Confirm" })).toBeVisible();
   await page.getByRole("button", { name: "Confirm" }).click();
 
-  const proposalColumns = page.getByTestId("proposal-request-#0").locator("td");
+  await expect(page.getByRole("button", { name: "Confirm" })).not.toBeVisible();
+  const proposalColumns = page
+    .locator(
+      'tr[data-component="widgets.treasury-factory.near/widget/pages.payments.Table"]'
+    )
+    .nth(1)
+    .locator("td");
   await expect(proposalColumns.nth(5)).toHaveText(
     "@0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
   );
@@ -729,7 +746,7 @@ test("should create payment request to USDC address on BASE", async ({
   await page.waitForTimeout(500);
 });
 
-test("should create payment request for NEAR token on NEAR intents", async ({
+test("payment request for wNEAR token on NEAR intents", async ({
   page,
   instanceAccount,
   daoAccount,
@@ -994,7 +1011,13 @@ test("should create payment request for NEAR token on NEAR intents", async ({
   await expect(page.getByRole("button", { name: "Confirm" })).toBeVisible();
   await page.getByRole("button", { name: "Confirm" }).click();
 
-  const proposalColumns = page.getByTestId("proposal-request-#0").locator("td");
+  await expect(page.getByRole("button", { name: "Confirm" })).not.toBeVisible();
+  const proposalColumns = page
+    .locator(
+      'tr[data-component="widgets.treasury-factory.near/widget/pages.payments.Table"]'
+    )
+    .nth(1)
+    .locator("td");
   await expect(proposalColumns.nth(5)).toHaveText(
     `@${creatorAccount.accountId}`
   );
