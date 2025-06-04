@@ -330,7 +330,8 @@ useEffect(() => {
 function onSubmitClick() {
   setTxnCreated(true);
   const isNativeNEAR =
-    selectedTokenBlockchain === "near" && tokenId === tokenMapping.NEAR;
+    !selectedTokenBlockchain ||
+    (selectedTokenBlockchain === "near" && tokenId === tokenMapping.NEAR);
 
   const gasForAddProposal = Big(270).mul(Big(10).pow(12)).toFixed(); // 270 Tgas
   const gasForIntentAction = Big(30).mul(Big(10).pow(12)).toFixed(); // 30 Tgas for ft_withdraw
