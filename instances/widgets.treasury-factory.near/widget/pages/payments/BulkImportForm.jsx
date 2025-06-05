@@ -120,6 +120,22 @@ function validateCsvInput() {
     });
   }
 
+  if (
+    titleIdx === -1 ||
+    recipientIdx === -1 ||
+    requestedTokenIdx === -1 ||
+    fundingAskIdx === -1
+  ) {
+    errors.push({
+      row: 0,
+      message:
+        "Missing one or more required columns: Title, Recipient, Requested Token, Funding Ask",
+    });
+    setDataErrors(errors);
+    setIsValidating(false);
+    return;
+  }
+
   const rowPromises = [];
 
   for (let i = 1; i < rows.length; i++) {

@@ -208,7 +208,7 @@ return (
         Import Payment Requests
         <i
           className="bi bi-x-lg h4 mb-0 cursor-pointer"
-          onClick={() => setShowCancelModal(false)}
+          onClick={() => setShowCancelModal(true)}
         ></i>
       </div>
     </ModalHeader>

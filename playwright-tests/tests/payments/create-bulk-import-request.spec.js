@@ -1,11 +1,15 @@
 import { expect } from "@playwright/test";
 import { test } from "../../util/test.js";
 import { updateDaoPolicyMembers } from "../../util/rpcmock.js";
+import { Worker } from "near-workspaces";
+import {
+  SPUTNIK_DAO_FACTORY_ID,
+  setPageAuthSettings,
+} from "../../util/sandboxrpc.js";
+import nearApi from "near-api-js";
+import { redirectWeb4 } from "../../util/web4.js";
 
-async function pasteAndValidateCorrectData(page) {
-  const csvText = `Title\tSummary\tRecipient\tRequested Token\tFunding Ask\tNotes
-  Test title 1\tSummary 1\tmegha19.near\tnear\t100\tNote1
-  Test title 2\tSummary 2\tmegha19.near\tdai\t50\tNote2`;
+async function pasteAndValidateCorrectData(page, csvText) {
   const textarea = await page.getByTestId("csv-data");
   const validateBtn = page.getByRole("button", { name: "Validate Data" });
   await textarea.fill(csvText);
@@ -147,7 +151,10 @@ test.describe("User is logged in", () => {
   test("Valid data shows preview table, checkbox selection and cancel modal behavior", async ({
     page,
   }) => {
-    await pasteAndValidateCorrectData(page);
+    const csvText = `Title\tSummary\tRecipient\tRequested Token\tFunding Ask\tNotes
+    Test title 1\tSummary 1\tmegha19.near\tnear\t100\tNote1
+    Test title 2\tSummary 2\tmegha19.near\tdai\t50\tNote2`;
+    await pasteAndValidateCorrectData(page, csvText);
     const table = page.locator('[data-testid="preview-table"]');
     const rowCheckboxes = table.locator('tbody input[type="checkbox"]');
     const topCheckbox = table.locator('thead input[type="checkbox"]');
@@ -237,56 +244,155 @@ test.describe("User is logged in", () => {
     // Expect preview table to be gone
     await expect(page.locator("table")).not.toBeVisible();
   });
+});
 
-  test("Submit button opens confirmation modal", async ({ page }) => {
-    await pasteAndValidateCorrectData(page);
-    const submitBtn = page.getByRole("button", { name: "Submit 2 Requests" });
-    await submitBtn.click();
-    await page.waitForTimeout(5_000);
-    const storageDeposit = await page
-      .locator("div.modal-body code")
-      .nth(0)
-      .innerText();
-    expect(await JSON.parse(storageDeposit)).toEqual({
-      account_id: "megha19.near",
-      registration_only: true,
-    });
+test("should create bulk requests using sandbox", async ({
+  page,
+  instanceAccount,
+  daoAccount,
+}) => {
+  test.setTimeout(200_000);
+  const daoName = daoAccount.split("." + SPUTNIK_DAO_FACTORY_ID)?.[0];
+  const web4ContractId = instanceAccount;
+  const socialNearContractId = "social.near";
+  const DAIContractId =
+    "6b175474e89094c44da98b954eedeac495271d0f.factory.bridge.near";
 
-    const proposal1 = await page
-      .locator("div.modal-body code")
-      .nth(1)
-      .innerText();
-    await expect(await JSON.parse(proposal1)).toEqual({
-      proposal: {
-        description:
-          "* Title: Test title 1 <br>* Summary: Summary 1 <br>* Notes: Note1",
-        kind: {
-          Transfer: {
-            token_id: "",
-            receiver_id: "megha19.near",
-            amount: "100000000000000000000000000",
-          },
-        },
-      },
-    });
+  const worker = await Worker.init();
 
-    const proposal2 = await page
-      .locator("div.modal-body code")
-      .nth(2)
-      .innerText();
-    expect(await JSON.parse(proposal2)).toEqual({
-      proposal: {
-        description:
-          "* Title: Test title 2 <br>* Summary: Summary 2 <br>* Notes: Note2",
-        kind: {
-          Transfer: {
-            token_id:
-              "6b175474e89094c44da98b954eedeac495271d0f.factory.bridge.near",
-            receiver_id: "megha19.near",
-            amount: "50000000000000000000",
-          },
-        },
-      },
-    });
+  const factoryContract = await worker.rootAccount.importContract({
+    mainnetContract: SPUTNIK_DAO_FACTORY_ID,
   });
+
+  await factoryContract.call(
+    SPUTNIK_DAO_FACTORY_ID,
+    "new",
+    {},
+    { gas: 300_000_000_000_000 }
+  );
+
+  const creatorAccount = await worker.rootAccount.importContract({
+    mainnetContract: "theori.near",
+  });
+
+  const userAccount = await worker.rootAccount.importContract({
+    mainnetContract: "megha19.near",
+  });
+
+  const create_args = {
+    name: daoName,
+    args: Buffer.from(
+      JSON.stringify({
+        purpose: "purpose",
+        bond: "100000000000000000000000",
+        vote_period: "604800000000000",
+        grace_period: "86400000000000",
+        policy: {
+          roles: [
+            {
+              name: "Create Requests",
+              kind: {
+                Group: [creatorAccount.accountId, userAccount.accountId],
+              },
+              permissions: ["transfer:AddProposal", "call:AddProposal"],
+              vote_policy: {},
+            },
+            {
+              name: "Manage Members",
+              kind: {
+                Group: [creatorAccount.accountId, userAccount.accountId],
+              },
+              permissions: [
+                "remove_member_from_role:*",
+                "add_member_to_role:*",
+                "config:*",
+                "policy:*",
+              ],
+              vote_policy: {},
+            },
+            {
+              name: "Vote",
+              kind: {
+                Group: [creatorAccount.accountId, userAccount.accountId],
+              },
+              permissions: ["*:VoteApprove", "*:VoteReject", "*:VoteRemove"],
+              vote_policy: {},
+            },
+          ],
+          default_vote_policy: {
+            weight_kind: "RoleWeight",
+            quorum: "0",
+            threshold: [1, 2],
+          },
+          proposal_bond: "0",
+          proposal_period: "604800000000000",
+          bounty_bond: "100000000000000000000000",
+          bounty_forgiveness_period: "604800000000000",
+        },
+        config: {
+          purpose: "purpose",
+          name: "infinex",
+          metadata: "",
+        },
+      })
+    ).toString("base64"),
+  };
+
+  await creatorAccount.call(SPUTNIK_DAO_FACTORY_ID, "create", create_args, {
+    gas: 300_000_000_000_000,
+    attachedDeposit: nearApi.utils.format.parseNearAmount("6"),
+  });
+
+  await worker.rootAccount.importContract({ mainnetContract: web4ContractId });
+
+  const dai = await worker.rootAccount.importContract({
+    mainnetContract: DAIContractId,
+  });
+
+  const socialNear = await worker.rootAccount.importContract({
+    mainnetContract: socialNearContractId,
+  });
+  await socialNear.call(socialNearContractId, "new", {});
+  await socialNear.call(socialNearContractId, "set_status", { status: "Live" });
+
+  await redirectWeb4({
+    page,
+    contractId: web4ContractId,
+    treasury: daoAccount,
+    sandboxNodeUrl: worker.provider.connection.url,
+  });
+
+  await page.goto(`https://${web4ContractId}.page/?page=payments`);
+  await setPageAuthSettings(
+    page,
+    userAccount.accountId,
+    await userAccount.getKey()
+  );
+
+  await page.getByRole("button", { name: "Create Request" }).click();
+  await page.getByText("Import Multiple Payment Requests").click();
+  const csvText = `Title\tSummary\tRecipient\tRequested Token\tFunding Ask\tNotes
+  Test title 1\tSummary 1\tmegha19.near\tnear\t100\tNote1
+  Test title 2\tSummary 2\tmegha19.near\tnear\t50\tNote2
+  Test title 3\tSummary 3\ttheori.near\tnear\t100\tNote3
+  Test title 4\tSummary 4\ttheori.near\tnear\t100\tNote4`;
+
+  await pasteAndValidateCorrectData(page, csvText);
+  const table = page.locator('[data-testid="preview-table"]');
+  const topCheckbox = table.locator('thead input[type="checkbox"]');
+  await topCheckbox.click();
+  const rowCheckboxes = table.locator('tbody input[type="checkbox"]');
+  await rowCheckboxes.nth(0).click();
+  const submitBtn = page.getByRole("button", { name: "Submit 1 Requests" });
+  await submitBtn.click();
+  await expect(page.locator("div.modal-body code")).toHaveCount(1);
+  await page.getByRole("button", { name: "Confirm" }).click();
+  await expect(
+    await page.getByRole("button", { name: "Confirm" })
+  ).not.toBeVisible();
+  await expect(table).toBeHidden();
+  await expect(
+    page.getByRole("cell", { name: "0", exact: true })
+  ).toBeVisible();
+  await expect(page.getByText("Test title")).toBeVisible();
 });

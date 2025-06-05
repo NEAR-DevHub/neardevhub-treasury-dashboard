@@ -66,6 +66,7 @@ const SidebarMenu = ({ currentTab }) => {
 };
 
 function toggleCreatePage() {
+  setIsBulkImport(false);
   setShowCreateRequest(!showCreateRequest);
 }
 
