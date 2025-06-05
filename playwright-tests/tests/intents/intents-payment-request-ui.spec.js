@@ -178,6 +178,26 @@ test.afterAll(async () => {
   await worker.tearDown();
 });
 
+// Helper function to find column index by header name
+async function getColumnIndex(page, headerName) {
+  const headerRow = page
+    .locator(
+      'tr[data-component="widgets.treasury-factory.near/widget/pages.payments.Table"]'
+    )
+    .nth(0)
+    .locator("td");
+  await expect(headerRow).not.toHaveCount(0);
+
+  const headerCount = await headerRow.count();
+  for (let i = 0; i < headerCount; i++) {
+    const headerText = await headerRow.nth(i).textContent();
+    if (headerText && headerText.trim() === headerName) {
+      return i;
+    }
+  }
+  throw new Error(`Column header "${headerName}" not found`);
+}
+
 test("payment request to BTC address", async ({
   page,
   instanceAccount,
@@ -428,13 +448,19 @@ test("payment request to BTC address", async ({
     )
     .nth(1)
     .locator("td");
-  await expect(proposalColumns.nth(5)).toHaveText(
+
+  // Get column indexes dynamically
+  const recipientColumnIndex = await getColumnIndex(page, "Recipient");
+  const tokenColumnIndex = await getColumnIndex(page, "Requested Token");
+  const fundingColumnIndex = await getColumnIndex(page, "Funding Ask");
+
+  await expect(proposalColumns.nth(recipientColumnIndex)).toHaveText(
     "@bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"
   );
-  await expect(proposalColumns.nth(6)).toHaveText("BTC");
-  await expect(proposalColumns.nth(7)).toHaveText("2.00");
+  await expect(proposalColumns.nth(tokenColumnIndex)).toHaveText("BTC");
+  await expect(proposalColumns.nth(fundingColumnIndex)).toHaveText("2.00");
 
-  await proposalColumns.nth(7).click();
+  await proposalColumns.nth(fundingColumnIndex).click();
 
   await page.getByRole("button", { name: "Approve" }).nth(1).click();
   await page.getByRole("button", { name: "Proceed Anyway" }).click();
@@ -710,13 +736,19 @@ test("payment request to USDC address on BASE", async ({
     )
     .nth(1)
     .locator("td");
-  await expect(proposalColumns.nth(5)).toHaveText(
+
+  // Get column indexes dynamically
+  const recipientColumnIndex = await getColumnIndex(page, "Recipient");
+  const tokenColumnIndex = await getColumnIndex(page, "Requested Token");
+  const fundingColumnIndex = await getColumnIndex(page, "Funding Ask");
+
+  await expect(proposalColumns.nth(recipientColumnIndex)).toHaveText(
     "@0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
   );
-  await expect(proposalColumns.nth(6)).toHaveText("USDC");
-  await expect(proposalColumns.nth(7)).toHaveText("2,500.00");
+  await expect(proposalColumns.nth(tokenColumnIndex)).toHaveText("USDC");
+  await expect(proposalColumns.nth(fundingColumnIndex)).toHaveText("2,500.00");
 
-  await proposalColumns.nth(7).click();
+  await proposalColumns.nth(fundingColumnIndex).click();
 
   await page.getByRole("button", { name: "Approve" }).nth(1).click();
   await page.getByRole("button", { name: "Proceed Anyway" }).click();
@@ -1020,25 +1052,6 @@ test("payment request for wNEAR token on NEAR intents", async ({
   await expect(page.getByRole("button", { name: "Confirm" })).not.toBeVisible();
 
   // Helper function to find column index by header name
-  async function getColumnIndex(headerName) {
-    const headerRow = page
-      .locator(
-        'tr[data-component="widgets.treasury-factory.near/widget/pages.payments.Table"]'
-      )
-      .nth(0)
-      .locator("td");
-    await expect(headerRow).not.toHaveCount(0);
-
-    const headerCount = await headerRow.count();
-    for (let i = 0; i < headerCount; i++) {
-      const headerText = await headerRow.nth(i).textContent();
-      if (headerText && headerText.trim() === headerName) {
-        return i;
-      }
-    }
-    throw new Error(`Column header "${headerName}" not found`);
-  }
-
   const proposalColumns = page
     .locator(
       'tr[data-component="widgets.treasury-factory.near/widget/pages.payments.Table"]'
@@ -1047,9 +1060,9 @@ test("payment request for wNEAR token on NEAR intents", async ({
     .locator("td");
 
   // Get column indexes dynamically
-  const creatorColumnIndex = await getColumnIndex("Created by");
-  const tokenColumnIndex = await getColumnIndex("Requested Token");
-  const fundingColumnIndex = await getColumnIndex("Funding Ask");
+  const creatorColumnIndex = await getColumnIndex(page, "Created by");
+  const tokenColumnIndex = await getColumnIndex(page, "Requested Token");
+  const fundingColumnIndex = await getColumnIndex(page, "Funding Ask");
 
   await expect(proposalColumns.nth(creatorColumnIndex)).toHaveText(
     `${creatorAccount.accountId}`
