@@ -360,8 +360,10 @@ test("payment request to BTC address", async ({
       .filter({ hasText: "BTC (NEAR Intents)" })
   ).toBeVisible();
 
-  await page.locator(".dropdown-toggle").first().click();
-  await page.getByText("Add manual request").click();
+  if (!(await page.getByTestId("proposal-title").isVisible())) {
+    await page.locator(".dropdown-toggle").first().click();
+    await page.getByText("Add manual request").click();
+  }
   await page.getByTestId("proposal-title").click();
   await page.getByTestId("proposal-title").fill("btc proposal title");
   await page.getByTestId("proposal-summary").click();
@@ -640,8 +642,10 @@ test("payment request to USDC address on BASE", async ({
       .filter({ hasText: "USDC (NEAR Intents)" })
   ).toBeVisible();
 
-  await page.locator(".dropdown-toggle").first().click();
-  await page.getByText("Add manual request").click();
+  if (!(await page.getByTestId("proposal-title").isVisible())) {
+    await page.locator(".dropdown-toggle").first().click();
+    await page.getByText("Add manual request").click();
+  }
   await page.getByTestId("proposal-title").click();
   await page.getByTestId("proposal-title").fill("usdc proposal title");
   await page.getByTestId("proposal-summary").click();
@@ -951,8 +955,10 @@ test("payment request for wNEAR token on NEAR intents", async ({
     timeout: 14_000,
   });
 
-  await page.locator(".dropdown-toggle").first().click();
-  await page.getByText("Add manual request").click();
+  if (!(await page.getByTestId("proposal-title").isVisible())) {
+    await page.locator(".dropdown-toggle").first().click();
+    await page.getByText("Add manual request").click();
+  }
   await page.getByTestId("proposal-title").click();
   await page
     .getByTestId("proposal-title")
@@ -1012,19 +1018,46 @@ test("payment request for wNEAR token on NEAR intents", async ({
   await page.getByRole("button", { name: "Confirm" }).click();
 
   await expect(page.getByRole("button", { name: "Confirm" })).not.toBeVisible();
+
+  // Helper function to find column index by header name
+  async function getColumnIndex(headerName) {
+    const headerRow = page
+      .locator(
+        'tr[data-component="widgets.treasury-factory.near/widget/pages.payments.Table"]'
+      )
+      .nth(0)
+      .locator("td");
+    await expect(headerRow).not.toHaveCount(0);
+
+    const headerCount = await headerRow.count();
+    for (let i = 0; i < headerCount; i++) {
+      const headerText = await headerRow.nth(i).textContent();
+      if (headerText && headerText.trim() === headerName) {
+        return i;
+      }
+    }
+    throw new Error(`Column header "${headerName}" not found`);
+  }
+
   const proposalColumns = page
     .locator(
       'tr[data-component="widgets.treasury-factory.near/widget/pages.payments.Table"]'
     )
     .nth(1)
     .locator("td");
-  await expect(proposalColumns.nth(5)).toHaveText(
-    `@${creatorAccount.accountId}`
-  );
-  await expect(proposalColumns.nth(6)).toHaveText("wNEAR");
-  await expect(proposalColumns.nth(7)).toHaveText("50.00");
 
-  await proposalColumns.nth(7).click();
+  // Get column indexes dynamically
+  const creatorColumnIndex = await getColumnIndex("Created by");
+  const tokenColumnIndex = await getColumnIndex("Requested Token");
+  const fundingColumnIndex = await getColumnIndex("Funding Ask");
+
+  await expect(proposalColumns.nth(creatorColumnIndex)).toHaveText(
+    `${creatorAccount.accountId}`
+  );
+  await expect(proposalColumns.nth(tokenColumnIndex)).toHaveText("wNEAR");
+  await expect(proposalColumns.nth(fundingColumnIndex)).toHaveText("50.00");
+
+  await proposalColumns.nth(fundingColumnIndex).click();
 
   await page.getByRole("button", { name: "Approve" }).nth(1).click();
   await page.getByRole("button", { name: "Proceed Anyway" }).click();
