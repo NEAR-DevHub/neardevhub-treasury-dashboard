@@ -330,7 +330,7 @@ useEffect(() => {
 function onSubmitClick() {
   setTxnCreated(true);
   const isNEAR = tokenId === tokenMapping.NEAR;
-  const gas = 270000000000000;
+  const gas = "270000000000000"; // 270 Tgas for transfer
   const gasForIntentAction = Big(30).mul(Big(10).pow(12)).toFixed(); // 30 Tgas for ft_withdraw
   const deposit = daoPolicy?.proposal_bond || 0;
   const description = {
@@ -395,14 +395,13 @@ function onSubmitClick() {
         },
       };
     }
-  } else {
-    if (isLockupTransfer) {
-      description["proposal_action"] = "transfer";
-    }
+  }
+  if (isLockupTransfer) {
+    description["proposal_action"] = "transfer";
+  }
 
-    function toBase64(json) {
-      return Buffer.from(JSON.stringify(json)).toString("base64");
-    }
+  function toBase64(json) {
+    return Buffer.from(JSON.stringify(json)).toString("base64");
   }
 
   const calls = [
@@ -426,7 +425,7 @@ function onSubmitClick() {
                         receiver_id: receiver,
                       }),
                       deposit: "0",
-                      gas: gas,
+                      gas,
                     },
                   ],
                 },
@@ -440,7 +439,7 @@ function onSubmitClick() {
               },
         },
       },
-      gas: gas,
+      gas,
       deposit,
     },
   ];
@@ -453,7 +452,7 @@ function onSubmitClick() {
         account_id: receiver,
         registration_only: true,
       },
-      gas: gas,
+      gas,
       deposit: depositInYocto,
     });
   }
