@@ -44,14 +44,14 @@ return (
       data-bs-backdrop="true"
     >
       <div
-        className="p-3 d-flex gap-2 align-items-center pb-0"
+        className="p-3 d-flex gap-2 align-items-end pb-0"
         style={{ marginTop: isNearSocial ? "4rem" : "" }}
       >
         <button
           onClick={onClose}
           type="button"
           class="btn-close"
-          style={{ opacity: 1 }}
+          style={{ opacity: 1, height: 20 }}
         ></button>
         <h5 class="offcanvas-title" id="offcanvasLabel">
           {title}
