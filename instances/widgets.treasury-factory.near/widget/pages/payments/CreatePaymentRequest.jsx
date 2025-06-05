@@ -329,25 +329,18 @@ useEffect(() => {
 
 function onSubmitClick() {
   setTxnCreated(true);
-  const isNativeNEAR =
-    !selectedTokenBlockchain ||
-    (selectedTokenBlockchain === "near" && tokenId === tokenMapping.NEAR);
-
-  const gasForAddProposal = Big(270).mul(Big(10).pow(12)).toFixed(); // 270 Tgas
+  const isNEAR = tokenId === tokenMapping.NEAR;
+  const gas = 270000000000000;
   const gasForIntentAction = Big(30).mul(Big(10).pow(12)).toFixed(); // 30 Tgas for ft_withdraw
-  const gasForLockupAction = Big(270).mul(Big(10).pow(12)).toFixed(); // Gas for lockup's internal transfer action
-  const gasForStorageDeposit = Big(50).mul(Big(10).pow(12)).toFixed(); // 50 Tgas for storage_deposit
-
-  const depositForAddProposal = (daoPolicy?.proposal_bond || "0").toString();
-
-  const descriptionFields = {
-    title: selectedProposal?.name,
-    summary: selectedProposal?.summary,
+  const deposit = daoPolicy?.proposal_bond || 0;
+  const description = {
+    title: selectedProposal.name,
+    summary: selectedProposal.summary,
     notes: notes,
   };
 
-  if (!isManualRequest && selectedProposalId) {
-    descriptionFields["proposalId"] = selectedProposalId;
+  if (!isManualRequest) {
+    description["proposalId"] = selectedProposalId;
   }
 
   const isLockupTransfer = selectedWallet.value === lockupContract;
@@ -403,55 +396,14 @@ function onSubmitClick() {
       };
     }
   } else {
-    // NEAR blockchain payment (native NEAR or NEP-141 on NEAR)
     if (isLockupTransfer) {
-      descriptionFields["proposal_action"] = "transfer";
+      description["proposal_action"] = "transfer";
+    }
 
-      const lockupArgs = {
-        amount: parsedAmount,
-        receiver_id: receiver,
-      };
-      if (!isNativeNEAR) {
-        // If it's an FT transfer via lockup, the lockup's transfer method might need token_id.
-        // This depends on the lockup contract's interface. Assuming it's a generic transfer
-        // that might handle FTs if token_id is passed, or it's a separate method.
-        // For now, mirroring the previous direct FT transfer structure.
-        // This part might need adjustment based on `lockupContract` capabilities.
-        // The original code for lockup transfer didn't explicitly handle FTs with token_id in its args.
-        // Sticking to native NEAR transfer for lockup for now unless specified.
-        // If lockup can transfer FTs, its method_name or args might differ.
-        // The provided test is for non-NEAR, so this path is less critical for the immediate fix.
-      }
-
-      proposalKind = {
-        FunctionCall: {
-          receiver_id: lockupContract,
-          actions: [
-            {
-              // Assuming lockupContract.transfer handles native NEAR.
-              // If FTs, it might be ft_transfer_call to token contract,
-              // or lockup has a specific method.
-              method_name: "transfer",
-              args: Buffer.from(JSON.stringify(lockupArgs)).toString("base64"),
-              deposit: "0",
-              gas: gasForLockupAction,
-            },
-          ],
-        },
-      };
-    } else {
-      // Direct transfer (native NEAR or NEP-141 FT on NEAR)
-      proposalKind = {
-        Transfer: {
-          token_id: isNativeNEAR ? "" : tokenId,
-          receiver_id: receiver,
-          amount: parsedAmount,
-        },
-      };
+    function toBase64(json) {
+      return Buffer.from(JSON.stringify(json)).toString("base64");
     }
   }
-
-  const finalDescriptionString = encodeToMarkdown(descriptionFields);
 
   const calls = [
     {
@@ -459,20 +411,40 @@ function onSubmitClick() {
       methodName: "add_proposal",
       args: {
         proposal: {
-          description: finalDescriptionString,
-          kind: proposalKind,
+          description: encodeToMarkdown(description),
+          kind: selectedTokenIsIntent
+            ? proposalKind
+            : isLockupTransfer
+            ? {
+                FunctionCall: {
+                  receiver_id: lockupContract,
+                  actions: [
+                    {
+                      method_name: "transfer",
+                      args: toBase64({
+                        amount: parsedAmount,
+                        receiver_id: receiver,
+                      }),
+                      deposit: "0",
+                      gas: gas,
+                    },
+                  ],
+                },
+              }
+            : {
+                Transfer: {
+                  token_id: isNEAR ? "" : tokenId,
+                  receiver_id: receiver,
+                  amount: parsedAmount,
+                },
+              },
         },
       },
-      gas: gasForAddProposal,
-      deposit: depositForAddProposal,
+      gas: gas,
+      deposit,
     },
   ];
-
-  if (
-    selectedTokenBlockchain === "near" &&
-    !isNativeNEAR &&
-    !isReceiverRegistered
-  ) {
+  if (!selectedTokenIsIntent && !isReceiverRegistered && !isNEAR) {
     const depositInYocto = Big(0.125).mul(Big(10).pow(24)).toFixed();
     calls.push({
       contractName: tokenId,
@@ -481,7 +453,7 @@ function onSubmitClick() {
         account_id: receiver,
         registration_only: true,
       },
-      gas: gasForStorageDeposit,
+      gas: gas,
       deposit: depositInYocto,
     });
   }
@@ -509,23 +481,23 @@ function isAmountValid() {
 
 useEffect(() => {
   if (
-    selectedTokenBlockchain === "near" && // Check only for NEAR blockchain
+    !selectedTokenIsIntent &&
     tokenId &&
-    tokenId !== tokenMapping.NEAR && // And it's an FT (not native NEAR)
+    tokenId !== tokenMapping.NEAR &&
     receiver &&
-    isReceiverAccountValid // And receiver is a valid NEAR account
+    isReceiverAccountValid
   ) {
     Near.asyncView(tokenId, "storage_balance_of", {
       account_id: receiver,
     }).then((storage) => {
-      setReceiverRegister(!!storage); // Simplified
+      if (!storage) {
+        setReceiverRegister(false);
+      } else {
+        setReceiverRegister(true);
+      }
     });
-  } else {
-    // For non-NEAR networks, or if it's native NEAR, or if receiver is not valid/empty,
-    // assume storage is not an issue or not applicable for this check.
-    setReceiverRegister(true);
   }
-}, [receiver, tokenId, isReceiverAccountValid, selectedTokenBlockchain]); // Added/updated dependencies
+}, [receiver, tokenId, selectedTokenIsIntent]);
 
 return (
   <Container>
@@ -668,13 +640,11 @@ return (
         {selectedTokenBlockchain === "near" ||
         selectedTokenBlockchain == null ? (
           <Widget
-            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.AccountInput`}
+            src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.AccountInput"
             props={{
               value: receiver,
               placeholder: "treasury.near",
-              onUpdate: (value) => {
-                setReceiver(value);
-              },
+              onUpdate: setReceiver,
               setParentAccountValid: setIsReceiverAccountValid,
               maxWidth: "100%",
               instance,
@@ -701,14 +671,9 @@ return (
           props={{
             daoAccount: selectedWallet.value,
             selectedValue: tokenId,
-            onChange: (v) => {
-              setTokenId(v);
-            },
+            onChange: (v) => setTokenId(v),
             setSelectedTokenBlockchain: (blockchain) => {
-              if (
-                selectedTokenBlockchain &&
-                blockchain !== selectedTokenBlockchain
-              ) {
+              if (blockchain !== selectedTokenBlockchain) {
                 setReceiver(""); // Reset receiver
                 setIsReceiverAccountValid(false); // Reset validation status
                 setSelectedTokenBlockchain(blockchain);

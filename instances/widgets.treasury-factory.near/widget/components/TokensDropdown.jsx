@@ -95,19 +95,24 @@ function sendTokensAvailable(value) {
 }
 
 useEffect(() => {
+  if (selectedValue !== (selectedOptionValue ?? "").replace(/^intents\_/, "")) {
+    setSelectedValue(selectedValue);
+    sendTokensAvailable(selectedValue);
+  }
+}, [selectedValue]);
+
+useEffect(() => {
   if (selectedValue !== selectedOptionValue) {
-    setSelectedValue(selectedOptionValue);
     const selectedToken = options.find((i) => i.value === selectedOptionValue);
+
     onChange(
       selectedToken?.isIntent ? selectedToken.tokenId : selectedOptionValue
     );
 
-    if (selectedToken) {
-      setSelectedValue(selectedToken.value);
-      setTokensAvailable(selectedToken.tokenBalance);
-      setSelectedTokenBlockchain(selectedToken.blockchain || "near");
-      setSelectedTokenIsIntent(selectedToken.isIntent || false);
-    }
+    setSelectedValue(selectedToken ? selectedToken.value : null);
+    setSelectedTokenBlockchain(selectedToken ? selectedToken.blockchain : null);
+    setSelectedTokenIsIntent(selectedToken ? selectedToken.isIntent : false);
+    sendTokensAvailable(selectedValue);
   }
 }, [selectedOptionValue]);
 
