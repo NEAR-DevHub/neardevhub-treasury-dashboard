@@ -62,6 +62,7 @@ useEffect(() => {
       title: "NEAR",
       value: "NEAR",
       tokenBalance: nearBalances.availableParsed,
+      blockchain: null,
     },
   ];
 
@@ -71,6 +72,7 @@ useEffect(() => {
         icon: i.ft_meta.icon,
         title: i.ft_meta.symbol,
         value: i.contract,
+        blockchain: null,
         tokenBalance: Big(i.amount ?? "0")
           .div(Big(10).pow(i.ft_meta.decimals))
           .toFixed(2),
