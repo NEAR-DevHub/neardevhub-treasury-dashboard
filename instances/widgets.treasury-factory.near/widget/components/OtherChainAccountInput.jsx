@@ -14,16 +14,16 @@ if (blockchain === "btc") {
   regex = /^(bc1|[13])[a-zA-HJ-NP-Z0-9]{25,39}$/i;
 } else if (blockchain === "zec") {
   placeholder = "Enter ZEC Address (t1..., t3..., zc...)";
-  regex = /^(t1|t3)[a-zA-HJ-NP-Z0-9]{33}|^zc[a-z0-9]{76}$/i;
+  regex = /^(t1|t3)[a-zA-HJ-NP-Z0-9]{33}$|^zc[a-z0-9]{76}$/i;
 } else if (blockchain === "sol") {
   placeholder = "Enter Solana Address";
   regex = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 } else if (blockchain === "doge") {
   placeholder = "Enter Dogecoin Address (D... or A...)";
-  regex = /^[DA9][a-km-zA-HJ-NP-Z1-9]{25,34}$/;
+  regex = /^[DA][a-km-zA-HJ-NP-Z1-9]{33}$/;
 } else if (blockchain === "xrp") {
   placeholder = "Enter XRP Address (r...)";
-  regex = /^r[1-9A-HJ-NP-Za-km-z]{24,34}$/;
+  regex = /^r[1-9A-HJ-NP-Za-km-z]{33}$/;
 } else if (blockchain === "tron") {
   placeholder = "Enter Tron Address (T...)";
   regex = /^T[1-9A-HJ-NP-Za-km-z]{33}$/;
