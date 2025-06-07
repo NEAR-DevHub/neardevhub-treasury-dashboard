@@ -22,7 +22,7 @@ import { InsufficientBalance, toBase64 } from "../../util/lib.js";
 import { SandboxRPC } from "../../util/sandboxrpc.js";
 
 async function clickCreatePaymentRequestButton(page) {
-  await page.waitForTimeout(6_000);
+  await page.waitForTimeout(1_000);
   const createPaymentRequestButton = await page.getByRole("button", {
     name: "Create Request",
   });
@@ -607,7 +607,7 @@ test.describe("User is logged in", function () {
       await totalAmountField.pressSequentially("3150");
       await totalAmountField.blur();
     }
-    await page.waitForTimeout(5_000);
+    await page.waitForTimeout(1_000);
     const submitBtn = page.getByRole("button", { name: "Submit" });
     await expect(submitBtn).toBeAttached({ timeout: 10_000 });
     await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });

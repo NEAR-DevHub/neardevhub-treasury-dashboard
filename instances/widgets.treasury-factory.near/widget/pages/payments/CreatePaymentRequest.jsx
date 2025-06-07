@@ -41,6 +41,8 @@ const walletOptions = [
 const [selectedWallet, setSelectedWallet] = useState(walletOptions[0]);
 
 const [tokenId, setTokenId] = useState(null);
+const [selectedTokenBlockchain, setSelectedTokenBlockchain] = useState(null);
+const [selectedTokenIsIntent, setSelectedTokenIsIntent] = useState(false);
 const [receiver, setReceiver] = useState(null);
 const [isReceiverAccountValid, setIsReceiverAccountValid] = useState(false);
 const [notes, setNotes] = useState(null);
@@ -328,7 +330,8 @@ useEffect(() => {
 function onSubmitClick() {
   setTxnCreated(true);
   const isNEAR = tokenId === tokenMapping.NEAR;
-  const gas = 270000000000000;
+  const gas = "270000000000000"; // 270 Tgas for transfer
+  const gasForIntentAction = Big(30).mul(Big(10).pow(12)).toFixed(); // 30 Tgas for ft_withdraw
   const deposit = daoPolicy?.proposal_bond || 0;
   const description = {
     title: selectedProposal.name,
@@ -341,6 +344,58 @@ function onSubmitClick() {
   }
 
   const isLockupTransfer = selectedWallet.value === lockupContract;
+  let proposalKind;
+
+  if (selectedTokenIsIntent) {
+    if (selectedTokenBlockchain && selectedTokenBlockchain !== "near") {
+      // Non-NEAR / Intent-based payment
+      const ftWithdrawArgs = {
+        token: tokenId, // This is the NEAR FT contract, e.g., "btc.omft.near"
+        receiver_id: tokenId, // Per test expectation, this is also the token contract ID for intents.near
+        amount: parsedAmount, // Amount in FT's decimals (e.g., 2 * 10^8 for 2 BTC if 8 decimals)
+        memo: `WITHDRAW_TO:${receiver}`, // `receiver` holds the actual off-chain address
+      };
+
+      proposalKind = {
+        FunctionCall: {
+          receiver_id: "intents.near", // Target contract for intent withdrawals
+          actions: [
+            {
+              method_name: "ft_withdraw",
+              args: Buffer.from(JSON.stringify(ftWithdrawArgs)).toString(
+                "base64"
+              ),
+              deposit: "1", // 1 yoctoNEAR
+              gas: gasForIntentAction,
+            },
+          ],
+        },
+      };
+    } else {
+      // NEAR / Intent-based payment
+      const ftWithdrawArgs = {
+        token: tokenId, // This is the NEAR FT contract, e.g., "wrap.near"
+        receiver_id: receiver,
+        amount: parsedAmount,
+      };
+
+      proposalKind = {
+        FunctionCall: {
+          receiver_id: "intents.near", // Target contract for intent withdrawals
+          actions: [
+            {
+              method_name: "ft_withdraw",
+              args: Buffer.from(JSON.stringify(ftWithdrawArgs)).toString(
+                "base64"
+              ),
+              deposit: "1", // 1 yoctoNEAR
+              gas: gasForIntentAction,
+            },
+          ],
+        },
+      };
+    }
+  }
   if (isLockupTransfer) {
     description["proposal_action"] = "transfer";
   }
@@ -356,7 +411,9 @@ function onSubmitClick() {
       args: {
         proposal: {
           description: encodeToMarkdown(description),
-          kind: isLockupTransfer
+          kind: selectedTokenIsIntent
+            ? proposalKind
+            : isLockupTransfer
             ? {
                 FunctionCall: {
                   receiver_id: lockupContract,
@@ -368,7 +425,7 @@ function onSubmitClick() {
                         receiver_id: receiver,
                       }),
                       deposit: "0",
-                      gas: gas.toFixed(),
+                      gas,
                     },
                   ],
                 },
@@ -382,11 +439,11 @@ function onSubmitClick() {
               },
         },
       },
-      gas: gas,
+      gas,
       deposit,
     },
   ];
-  if (!isReceiverRegistered && !isNEAR) {
+  if (!selectedTokenIsIntent && !isReceiverRegistered && !isNEAR) {
     const depositInYocto = Big(0.125).mul(Big(10).pow(24)).toFixed();
     calls.push({
       contractName: tokenId,
@@ -395,7 +452,7 @@ function onSubmitClick() {
         account_id: receiver,
         registration_only: true,
       },
-      gas: gas,
+      gas,
       deposit: depositInYocto,
     });
   }
@@ -423,6 +480,7 @@ function isAmountValid() {
 
 useEffect(() => {
   if (
+    !selectedTokenIsIntent &&
     tokenId &&
     tokenId !== tokenMapping.NEAR &&
     receiver &&
@@ -438,7 +496,7 @@ useEffect(() => {
       }
     });
   }
-}, [receiver, tokenId]);
+}, [receiver, tokenId, selectedTokenIsIntent]);
 
 return (
   <Container>
@@ -578,18 +636,32 @@ return (
       )}
       <div className="d-flex flex-column gap-1">
         <label>Recipient</label>
-        <Widget
-          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.AccountInput"
-          props={{
-            value: receiver,
-            placeholder: "treasury.near",
-            onUpdate: setReceiver,
-            setParentAccountValid: setIsReceiverAccountValid,
-            maxWidth: "100%",
-            instance,
-            allowNonExistentImplicit: true,
-          }}
-        />
+        {selectedTokenBlockchain === "near" ||
+        selectedTokenBlockchain == null ? (
+          <Widget
+            src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.AccountInput"
+            props={{
+              value: receiver,
+              placeholder: "treasury.near",
+              onUpdate: setReceiver,
+              setParentAccountValid: setIsReceiverAccountValid,
+              maxWidth: "100%",
+              instance,
+              allowNonExistentImplicit: true,
+            }}
+          />
+        ) : (
+          <Widget
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OtherChainAccountInput`}
+            props={{
+              blockchain: selectedTokenBlockchain,
+              value: receiver,
+              setValue: setReceiver,
+              setIsValid: setIsReceiverAccountValid,
+              instance: REPL_BASE_DEPLOYMENT_ACCOUNT,
+            }}
+          />
+        )}
       </div>
       <div className="d-flex flex-column gap-1">
         <label>Requested Token</label>
@@ -599,7 +671,15 @@ return (
             daoAccount: selectedWallet.value,
             selectedValue: tokenId,
             onChange: (v) => setTokenId(v),
+            setSelectedTokenBlockchain: (blockchain) => {
+              if (blockchain !== selectedTokenBlockchain) {
+                setReceiver(""); // Reset receiver
+                setIsReceiverAccountValid(false); // Reset validation status
+                setSelectedTokenBlockchain(blockchain);
+              }
+            },
             setTokensAvailable: setSelectedTokensAvailable,
+            setSelectedTokenIsIntent,
             lockupNearBalances,
           }}
         />

@@ -9,3 +9,4 @@ file_list.txt
 *.mp4
 freeze_frames
 qrcode.png
+playwright-report
