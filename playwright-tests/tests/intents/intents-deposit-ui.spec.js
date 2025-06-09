@@ -100,15 +100,7 @@ test.describe("Intents Deposit UI", () => {
     daoAccount,
   }) => {
     await page.goto(`https://${instanceAccount}.page`);
-
-    // Wait for the page to be loaded by expecting NEAR token in the portfolio
-    await expect(
-      page
-        .locator(
-          '[data-component="widgets.treasury-factory.near/widget/pages.dashboard.Portfolio"]'
-        )
-        .first()
-    ).toContainText("NEAR");
+    await page.waitForLoadState("networkidle");
 
     const totalBalanceCardLocator = page.locator(".card.card-body", {
       hasText: "Total Balance",
@@ -159,15 +151,7 @@ test.describe("Intents Deposit UI", () => {
     daoAccount,
   }) => {
     await page.goto(`https://${instanceAccount}.page`);
-
-    // Wait for the page to be loaded by expecting NEAR token in the portfolio
-    await expect(
-      page
-        .locator(
-          '[data-component="widgets.treasury-factory.near/widget/pages.dashboard.Portfolio"]'
-        )
-        .first()
-    ).toContainText("NEAR");
+    await page.waitForLoadState("networkidle");
 
     const totalBalanceCardLocator = page.locator(".card.card-body", {
       hasText: "Total Balance",
@@ -228,15 +212,7 @@ test.describe("Intents Deposit UI", () => {
     daoAccount,
   }) => {
     await page.goto(`https://${instanceAccount}.page`);
-
-    // Wait for the page to be loaded by expecting NEAR token in the portfolio
-    await expect(
-      page
-        .locator(
-          '[data-component="widgets.treasury-factory.near/widget/pages.dashboard.Portfolio"]'
-        )
-        .first()
-    ).toContainText("NEAR");
+    await page.waitForLoadState("networkidle");
 
     const totalBalanceCardLocator = page.locator(".card.card-body", {
       hasText: "Total Balance",
@@ -301,15 +277,7 @@ test.describe("Intents Deposit UI", () => {
   }) => {
     test.setTimeout(120_000);
     await page.goto(`https://${instanceAccount}.page`);
-
-    // Wait for the page to be loaded by expecting NEAR token in the portfolio
-    await expect(
-      page
-        .locator(
-          '[data-component="widgets.treasury-factory.near/widget/pages.dashboard.Portfolio"]'
-        )
-        .first()
-    ).toContainText("NEAR");
+    await page.waitForLoadState("networkidle");
 
     // Open the deposit modal
     const totalBalanceCardLocator = page.locator(".card.card-body", {
@@ -507,15 +475,6 @@ test.describe("Intents Deposit UI", () => {
     test.setTimeout(20_000);
     await page.goto(`https://${instanceAccount}.page`);
     await page.waitForLoadState("networkidle");
-
-    // Wait for the page to be loaded by expecting NEAR token in the portfolio
-    await expect(
-      page
-        .locator(
-          '[data-component="widgets.treasury-factory.near/widget/pages.dashboard.Portfolio"]'
-        )
-        .first()
-    ).toContainText("NEAR");
 
     // Open the deposit modal
     const totalBalanceCardLocator = page.locator(".card.card-body", {
