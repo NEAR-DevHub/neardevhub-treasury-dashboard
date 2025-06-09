@@ -251,14 +251,6 @@ async function approveProposal({
           (!isCompactVersion ? "." : ", the request is highlighted.")
       )
     ).toBeVisible({ timeout: 30_000 });
-  } else if (isCompactVersion) {
-    const historyBtn = page.getByText("View in History");
-    await expect(historyBtn).toBeVisible();
-    await Promise.all([page.waitForNavigation(), historyBtn.click()]);
-    const currentUrl = page.url();
-    await expect(currentUrl).toContain(
-      `http://localhost:8080/${instanceAccount}/widget/app?page=asset-exchange&id=0`
-    );
   }
   await page.waitForTimeout(500);
   await page.evaluate(async (transactionResult) => {
@@ -273,6 +265,15 @@ async function approveProposal({
     attached: false,
     timeout: 10_000,
   });
+  if (!isMultiVote && isCompactVersion) {
+    const historyBtn = page.getByText("View in History");
+    await expect(historyBtn).toBeVisible();
+    await Promise.all([page.waitForNavigation(), historyBtn.click()]);
+    const currentUrl = page.url();
+    await expect(currentUrl).toContain(
+      `http://localhost:8080/${instanceAccount}/widget/app?page=asset-exchange&id=0`
+    );
+  }
 }
 
 test.describe
