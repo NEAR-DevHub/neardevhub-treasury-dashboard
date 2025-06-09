@@ -235,15 +235,16 @@ async function approveProposal({
     gas: "300000000000000",
     attachedDeposit: "0",
   });
-  await page.waitForTimeout(1_000);
-  await page.evaluate(async (transactionResult) => {
-    window.transactionSentPromiseResolve(transactionResult);
-  }, transactionResult);
   if (!isMultiVote) {
     await expect(page.getByText("Just Now")).toBeVisible({
       timeout: 10_000,
     });
   }
+  await page.waitForTimeout(500);
+  await page.evaluate(async (transactionResult) => {
+    window.transactionSentPromiseResolve(transactionResult);
+  }, transactionResult);
+
   await expect(page.locator("div.modal-body code").nth(0)).toBeAttached({
     attached: false,
     timeout: 10_000,
