@@ -239,6 +239,11 @@ async function approveProposal({
   await page.evaluate(async (transactionResult) => {
     window.transactionSentPromiseResolve(transactionResult);
   }, transactionResult);
+  if (!isMultiVote) {
+    await expect(page.getByText("Just Now")).toBeVisible({
+      timeout: 10_000,
+    });
+  }
   await expect(page.locator("div.modal-body code").nth(0)).toBeAttached({
     attached: false,
     timeout: 10_000,
@@ -255,19 +260,14 @@ async function approveProposal({
           (!isCompactVersion ? "." : ", the request is highlighted.")
       )
     ).toBeVisible({ timeout: 30_000 });
-  } else {
-    await expect(page.getByText("Just Now")).toBeVisible({
-      timeout: 30_000,
-    });
-    if (isCompactVersion) {
-      const historyBtn = page.getByText("View in History");
-      await expect(historyBtn).toBeVisible();
-      await Promise.all([page.waitForNavigation(), historyBtn.click()]);
-      const currentUrl = page.url();
-      await expect(currentUrl).toContain(
-        `http://localhost:8080/${instanceAccount}/widget/app?page=asset-exchange&id=0`
-      );
-    }
+  } else if (isCompactVersion) {
+    const historyBtn = page.getByText("View in History");
+    await expect(historyBtn).toBeVisible();
+    await Promise.all([page.waitForNavigation(), historyBtn.click()]);
+    const currentUrl = page.url();
+    await expect(currentUrl).toContain(
+      `http://localhost:8080/${instanceAccount}/widget/app?page=asset-exchange&id=0`
+    );
   }
 }
 
