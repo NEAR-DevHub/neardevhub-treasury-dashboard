@@ -53,8 +53,9 @@ export function getLocalWidgetContent(key, context = {}) {
  * @param {string} [options.widgetNodeUrl="https://rpc.mainnet.fastnear.com"] - NEAR RPC node URL to get widget content from ( defaults to mainnet ). Specify sandbox URL if you want to fetch from sandbox.
  * @param {string} [options.sandboxNodeUrl] - Fallback RPC requests will be sent to the sandbox if specified, otherwise to nodeUrl
  * @param {Object} [options.modifiedWidgets={}] - An object containing modified widget content.
- * @param {boolean} [options.callWidgetNodeURLForContractWidgets=false] - call the provided `widgetNodeUrl` when requesting social db contents under the provided `contractId`
  *     The keys are widget keys (e.g., "account/section/contentKey"), and the values are the modified widget content as strings.
+ * @param {boolean} [options.callWidgetNodeURLForContractWidgets=true] - call the provided `widgetNodeUrl` when requesting social db contents under the provided `contractId`
+ *     Set to false if you want to provide the modifiedWidgets object also for the contract widgets, otherwise the default is to request these widgets from `widgetNode`
  *
  * @returns {Promise<void>} A promise that resolves when the routing setup is complete.
  */
