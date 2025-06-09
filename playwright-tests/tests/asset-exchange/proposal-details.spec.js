@@ -224,6 +224,14 @@ async function approveProposal({
     name: "Confirm",
   });
   await expect(confirmTransactionButton).toBeEnabled();
+  if (!isMultiVote) {
+    // The "awaiting transaction confirmation toast should be visible"
+    await expect(
+      page.getByText("Awaiting transaction confirmation")
+    ).toBeVisible({
+      timeout: 10_000,
+    });
+  }
   await confirmTransactionButton.click();
   const transactionResult = await sandbox.account.functionCall({
     contractId: daoAccount,
@@ -235,11 +243,6 @@ async function approveProposal({
     gas: "300000000000000",
     attachedDeposit: "0",
   });
-  if (!isMultiVote) {
-    await expect(page.getByText("Just Now")).toBeVisible({
-      timeout: 10_000,
-    });
-  }
 
   if (isMultiVote) {
     await expect(page.getByText("1 Approved", { exact: true })).toBeVisible({
