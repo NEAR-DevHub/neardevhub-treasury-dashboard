@@ -240,21 +240,11 @@ async function approveProposal({
       timeout: 10_000,
     });
   }
-  await page.waitForTimeout(500);
-  await page.evaluate(async (transactionResult) => {
-    window.transactionSentPromiseResolve(transactionResult);
-  }, transactionResult);
 
-  await expect(page.locator("div.modal-body code").nth(0)).toBeAttached({
-    attached: false,
-    timeout: 10_000,
-  });
-  await expect(page.locator(".spinner-border")).toBeAttached({
-    attached: false,
-    timeout: 10_000,
-  });
   if (isMultiVote) {
-    await expect(page.getByText("1 Approved", { exact: true })).toBeVisible();
+    await expect(page.getByText("1 Approved", { exact: true })).toBeVisible({
+      timeout: 15_000,
+    });
     await expect(
       page.getByText(
         "Your vote is counted" +
@@ -270,6 +260,19 @@ async function approveProposal({
       `http://localhost:8080/${instanceAccount}/widget/app?page=asset-exchange&id=0`
     );
   }
+  await page.waitForTimeout(500);
+  await page.evaluate(async (transactionResult) => {
+    window.transactionSentPromiseResolve(transactionResult);
+  }, transactionResult);
+
+  await expect(page.locator("div.modal-body code").nth(0)).toBeAttached({
+    attached: false,
+    timeout: 10_000,
+  });
+  await expect(page.locator(".spinner-border")).toBeAttached({
+    attached: false,
+    timeout: 10_000,
+  });
 }
 
 test.describe
@@ -287,6 +290,7 @@ test.describe
     await mockWithFTBalance({ page, daoAccount, isSufficient: true });
 
     await page.goto(`/${instanceAccount}/widget/app?page=asset-exchange&id=0`);
+    await page.waitForLoadState("networkidle");
     const approveButton = page
       .getByRole("button", {
         name: "Approve",
