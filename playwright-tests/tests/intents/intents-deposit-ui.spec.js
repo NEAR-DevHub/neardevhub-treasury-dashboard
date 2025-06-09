@@ -499,4 +499,63 @@ test.describe("Intents Deposit UI", () => {
       }
     }
   });
+
+  test("search for an asset, click on it, and it should be selected", async ({
+    page,
+    instanceAccount,
+  }) => {
+    test.setTimeout(20_000);
+    await page.goto(`https://${instanceAccount}.page`);
+    await page.waitForLoadState("networkidle");
+
+    // Wait for the page to be loaded by expecting NEAR token in the portfolio
+    await expect(
+      page
+        .locator(
+          '[data-component="widgets.treasury-factory.near/widget/pages.dashboard.Portfolio"]'
+        )
+        .first()
+    ).toContainText("NEAR");
+
+    // Open the deposit modal
+    const totalBalanceCardLocator = page.locator(".card.card-body", {
+      hasText: "Total Balance",
+    });
+    await expect(totalBalanceCardLocator).toBeVisible({ timeout: 20000 });
+    const depositButton = totalBalanceCardLocator.getByRole("button", {
+      name: "Deposit",
+    });
+    await expect(depositButton).toBeEnabled();
+    await depositButton.click();
+
+    const modalLocator = page.locator(
+      'div.card[data-component="widgets.treasury-factory.near/widget/lib.modal"]'
+    );
+    await expect(modalLocator).toBeVisible({ timeout: 10000 });
+
+    // Switch to the "NEAR Intents" tab
+    const intentsTabButton = modalLocator.getByRole("button", {
+      name: "NEAR Intents",
+    });
+    await expect(intentsTabButton).toBeEnabled();
+    await intentsTabButton.click();
+    await expect(intentsTabButton).toHaveClass(/active/);
+
+    await page.getByText("Select an asset", { exact: true }).click();
+    const assetSearchField = await page.getByPlaceholder("Search assets");
+    await assetSearchField.click();
+    await assetSearchField.pressSequentially("usdc", { delay: 100 });
+    const assetDropDownItem = page
+      .locator(
+        'div.dropdown-item.cursor-pointer.w-100.text-wrap[data-component="widgets.treasury-factory.near/widget/components.DropDownWithSearchAndManualRequest"]'
+      )
+      .first();
+    await assetSearchField.blur(); // In a real click, the blur event is also sent before the click event
+    await assetDropDownItem.click({});
+
+    await expect(page.locator(".dropdown-toggle").first()).toContainText(
+      "USDC"
+    );
+    await page.waitForTimeout(500);
+  });
 });

@@ -110,9 +110,13 @@ return (
       className="custom-select"
       tabIndex="0"
       onBlur={() => {
-        setTimeout(() => {
-          setIsOpen(searchFocused || false);
-        }, 0);
+        setTimeout(
+          () => {
+            setIsOpen(searchFocused || false);
+          },
+          // The delay of 100ms is to allow the onClick event of the dropdown items to register before closing the dropdown
+          100
+        );
       }}
     >
       <div className="dropdown-toggle bg-dropdown border rounded-2 btn drop-btn">
