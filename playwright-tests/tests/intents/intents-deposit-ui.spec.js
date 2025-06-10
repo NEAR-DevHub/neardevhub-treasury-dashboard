@@ -517,4 +517,145 @@ test.describe("Intents Deposit UI", () => {
     );
     await page.waitForTimeout(500);
   });
+
+  test("should display human-readable blockchain names in network selection", async ({
+    page,
+    instanceAccount,
+    // daoAccount, // daoAccount is not used in this test
+  }) => {
+    test.setTimeout(180_000); // Increased timeout for multiple assets and API calls
+
+    await page.goto(`https://${instanceAccount}.page`);
+    await page.waitForLoadState("networkidle");
+
+    // Open the deposit modal
+    const totalBalanceCardLocator = page.locator(".card.card-body", {
+      hasText: "Total Balance",
+    });
+    await expect(totalBalanceCardLocator).toBeVisible({ timeout: 20000 });
+    const depositButton = totalBalanceCardLocator.getByRole("button", {
+      name: "Deposit",
+    });
+    await expect(depositButton).toBeEnabled();
+    await depositButton.click();
+
+    const modalLocator = page.locator(
+      'div.card[data-component="widgets.treasury-factory.near/widget/lib.modal"]'
+    );
+    await expect(modalLocator).toBeVisible({ timeout: 10000 });
+
+    // Switch to the "NEAR Intents" tab
+    const intentsTabButton = modalLocator.getByRole("button", {
+      name: "NEAR Intents",
+    });
+    await expect(intentsTabButton).toBeEnabled();
+    await intentsTabButton.click();
+    await expect(intentsTabButton).toHaveClass(/active/);
+
+    // Define all potential test cases for USDC
+    // The chainId here is what defuse_asset_identifier.startsWith(chainId) would match
+    const usdcNetworkExpectations = [
+      { assetSymbol: "USDC", chainId: "eth:1", expectedNetworkName: "Ethereum" },
+      { assetSymbol: "USDC", chainId: "arbitrum:42161", expectedNetworkName: "Arbitrum One" },
+      { assetSymbol: "USDC", chainId: "optimism:10", expectedNetworkName: "Optimism" },
+      { assetSymbol: "USDC", chainId: "polygon:137", expectedNetworkName: "Polygon PoS" },
+      { assetSymbol: "USDC", chainId: "bsc:56", expectedNetworkName: "BNB Smart Chain" },
+      { assetSymbol: "USDC", chainId: "avax:43114", expectedNetworkName: "Avalanche C-Chain" },
+      { assetSymbol: "USDC", chainId: "eth:8453", expectedNetworkName: "Base" }, // Key L2 test
+      // Add eth: variants if the backend might provide these for L2s and they need mapping
+      // e.g. if arbitrum could be eth:42161 from backend for USDC
+      { assetSymbol: "USDC", chainId: "eth:42161", expectedNetworkName: "Arbitrum One" }, 
+      { assetSymbol: "USDC", chainId: "eth:10", expectedNetworkName: "Optimism" },
+      // { assetSymbol: "USDC", chainId: "solana:mainnet", expectedNetworkName: "Solana" }, // Example if Solana USDC is supported
+    ];
+
+    // Fetch all supported tokens from the API to validate test cases
+    const supportedTokensResponse = await fetch(
+      "https://bridge.chaindefuser.com/rpc",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          id: "supportedTokensNetworkNameTestUSDC",
+          jsonrpc: "2.0",
+          method: "supported_tokens",
+          params: [{}],
+        }),
+      }
+    );
+    const supportedTokensData = await supportedTokensResponse.json();
+    expect(
+      supportedTokensData.result && supportedTokensData.result.tokens
+    ).toBeTruthy();
+    const allFetchedTokens = supportedTokensData.result.tokens;
+
+    // Filter to get valid network configurations for USDC that are actually supported
+    const validUsdcNetworksToTest = usdcNetworkExpectations.filter(tc => {
+      return allFetchedTokens.some(token =>
+        token.asset_name === tc.assetSymbol && // Should always be "USDC"
+        token.defuse_asset_identifier &&
+        // Check if the defuse_asset_identifier starts with the chainId (e.g., "eth:8453" for "eth:8453:0xContract")
+        token.defuse_asset_identifier.startsWith(tc.chainId)
+      );
+    });
+
+    if (validUsdcNetworksToTest.length === 0) {
+      console.warn("WARN: No valid USDC network test cases found based on currently supported tokens. Test skipped.");
+      return; 
+    }
+    console.log(`INFO: Running USDC network name verification for ${validUsdcNetworksToTest.length} configurations.`);
+
+    // 1. Select the asset "USDC"
+    const assetDropdown = modalLocator.locator("div.custom-select").nth(0);
+    await assetDropdown.click();
+    const usdcAssetItemLocator = assetDropdown.locator("div.dropdown-item", {
+        hasText: new RegExp(`^\\s*USDC(\\s|$)`) 
+    });
+    await expect(usdcAssetItemLocator.first()).toBeVisible({ timeout: 10000 });
+    await usdcAssetItemLocator.first().click();
+    await expect(assetDropdown.locator(".dropdown-toggle")).toContainText("USDC", { timeout: 5000 });
+
+    // 2. Click the network dropdown to open it
+    const networkDropdownLocator = modalLocator.locator("div.custom-select").nth(1);
+    await networkDropdownLocator.click();
+    await page.waitForTimeout(500); // Allow dropdown to render
+
+    // 3. Get all visible network item texts from the UI
+    const networkItems = networkDropdownLocator.locator('div.dropdown-item.cursor-pointer.w-100.text-wrap');
+    const uiNetworkNames = [];
+    const count = await networkItems.count();
+    for (let i = 0; i < count; i++) {
+        uiNetworkNames.push(await networkItems.nth(i).innerText());
+    }
+    console.log("INFO: UI Network Names for USDC:", uiNetworkNames);
+
+    // 4. Perform assertions for each expected USDC network configuration
+    for (const { chainId, expectedNetworkName } of validUsdcNetworksToTest) {
+      console.log(`INFO: Verifying: ChainID ${chainId} should display as "${expectedNetworkName}"`);
+      
+      // Assert that the expected human-readable name is present in the UI dropdown
+      expect(uiNetworkNames, 
+        `Dropdown should contain "${expectedNetworkName}" for USDC (from chainId "${chainId}"). UI items: ${uiNetworkNames.join(', ')}`
+      ).toContain(expectedNetworkName);
+
+      // Assert that the raw chainId is NOT present if it's different from the expectedNetworkName
+      if (chainId !== expectedNetworkName) {
+        expect(uiNetworkNames, 
+          `Dropdown should NOT contain raw chainId "${chainId}" for USDC when "${expectedNetworkName}" is expected. UI items: ${uiNetworkNames.join(', ')}`
+        ).not.toContain(chainId);
+      }
+    }
+    
+    // As a final check, ensure that we have tested at least one L2 that might have an eth: prefix if not mapped.
+    const baseCase = validUsdcNetworksToTest.find(tc => tc.chainId === "eth:8453");
+    if (baseCase) {
+        console.log("INFO: Specifically verified expectations for Base (eth:8453).");
+    }
+    const arbitrumCase = validUsdcNetworksToTest.find(tc => tc.chainId === "arbitrum:42161" || tc.chainId === "eth:42161");
+    if (arbitrumCase) {
+        console.log("INFO: Specifically verified expectations for Arbitrum.");
+    }
+
+  });
+
 });
