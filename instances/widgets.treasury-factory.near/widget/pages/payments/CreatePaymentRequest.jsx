@@ -307,6 +307,7 @@ function onSelectProposal(id) {
       summary: parseString(proposal.eligibilityAnswers?.[1]?.answer ?? ""),
       proposal_id: proposal.sequentialId,
       status: proposal.status,
+      url: `https://nearn.io/devhub/${proposal.listing.sequentialId}/${proposal.sequentialId}`,
     });
     const token = tokenMapping[proposal.token];
     if (token === tokenMapping.NEAR) {
@@ -357,6 +358,7 @@ function onSubmitClick() {
 
   if (!isManualRequest) {
     description["proposalId"] = selectedProposalId;
+    description["url"] = selectedProposal.url;
   }
 
   const isLockupTransfer = selectedWallet.value === lockupContract;
@@ -636,7 +638,7 @@ return (
           <Link
             target="_blank"
             rel="noopener noreferrer"
-            to={`https://nearn.io/devhub/7/${selectedProposal.proposal_id}/`}
+            to={selectedProposal.url}
           >
             <button className="btn p-0 d-flex align-items-center gap-2 bolder">
               Open Proposal <i class="bi bi-box-arrow-up-right"></i>

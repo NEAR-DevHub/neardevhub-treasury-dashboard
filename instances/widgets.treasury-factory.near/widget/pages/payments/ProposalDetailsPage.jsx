@@ -72,6 +72,8 @@ useEffect(() => {
         const description = !title && !summary && item.description;
         const id = decodeProposalDescription("proposalId", item.description);
         const proposalId = id ? parseInt(id, 10) : null;
+        const proposalUrl = decodeProposalDescription("url", item.description);
+
         const isFunctionType =
           Object.values(item?.kind?.FunctionCall ?? {})?.length > 0;
         const decodedArgs =
@@ -151,6 +153,8 @@ useEffect(() => {
           isLockupTransfer: isFunctionType,
           isIntentsPayment,
           intentsTokenInfo,
+          isIntentWithdraw,
+          proposalUrl,
         });
       })
       .catch((e) => {

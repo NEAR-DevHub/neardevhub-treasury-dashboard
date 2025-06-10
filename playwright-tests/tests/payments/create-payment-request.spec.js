@@ -617,7 +617,7 @@ test.describe("User is logged in", function () {
       ? {
           proposal: {
             description:
-              "* Title: NEAR-API-TS: Tech Specification & Architecture Development - 30.04-11.05 <br>* Summary: The goal of this proposal is to create a successor to near-api-js that will enhance the DevX for JS/TS developers interacting with the NEAR Protocol and address existing user issues. <br>* Proposal Id: 22",
+              "* Title: NEAR-API-TS: Tech Specification & Architecture Development - 30.04-11.05 <br>* Summary: The goal of this proposal is to create a successor to near-api-js that will enhance the DevX for JS/TS developers interacting with the NEAR Protocol and address existing user issues. <br>* Proposal Id: 22 <br>* Url: https://nearn.io/devhub/8/22",
             kind: {
               Transfer: {
                 token_id: "usdt.tether-token.near",
@@ -868,7 +868,7 @@ test.describe("admin with function access keys", function () {
       ? {
           proposal: {
             description:
-              "* Title: NEAR-API-TS: Tech Specification & Architecture Development - 30.04-11.05 <br>* Summary: The goal of this proposal is to create a successor to near-api-js that will enhance the DevX for JS/TS developers interacting with the NEAR Protocol and address existing user issues. <br>* Proposal Id: 22",
+              "* Title: NEAR-API-TS: Tech Specification & Architecture Development - 30.04-11.05 <br>* Summary: The goal of this proposal is to create a successor to near-api-js that will enhance the DevX for JS/TS developers interacting with the NEAR Protocol and address existing user issues. <br>* Proposal Id: 22 <br>* Url: https://nearn.io/devhub/8/22",
             kind: {
               Transfer: {
                 token_id: "",
