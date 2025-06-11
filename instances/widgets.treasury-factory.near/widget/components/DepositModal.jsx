@@ -142,7 +142,9 @@ useEffect(() => {
 
       return {
         id: chainId, // This is the ID like "eth:1"
-        name: `${defuse_asset_id_to_chain_map[intents_token_id]} ( ${chainId} )`,
+        name: `${defuse_asset_id_to_chain_map[
+          intents_token_id
+        ].toUpperCase()} ( ${chainId} )`,
         near_token_id: token.near_token_id,
         originalTokenData: token,
       };
