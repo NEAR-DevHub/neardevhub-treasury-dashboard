@@ -8,7 +8,7 @@
   "REPL_NEAR": "near",
   "REPL_MOB": "mob.near",
   "REPL_SOCIAL_CONTRACT": "social.near",
-  "REPL_RPC_URL": "https://rpc.mainnet.near.org",
+  "REPL_RPC_URL": "https://free.rpc.fastnear.com",
   "REPL_BACKEND_API": "https://ref-sdk-api-2.fly.dev/api",
   "REPL_INDIVIDUAL_PIKESPEAK_KEY": "263f0c69-69e2-4919-ae02-d8ca7a696da2",
   "REPL_GATEWAY_PIKESPEAK_KEY": "36f2b87a-7ee6-40d8-80b9-5e68e587a5b5"

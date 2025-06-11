@@ -336,7 +336,7 @@ export async function checkForStakeAmount({
 }
 
 export async function mockLockupState({ page, lockupContract }) {
-  await page.route(`https://rpc.mainnet.near.org`, async (route) => {
+  await page.route(`https://free.rpc.fastnear.com`, async (route) => {
     const request = await route.request();
     const requestPostData = await request.postDataJSON();
 
