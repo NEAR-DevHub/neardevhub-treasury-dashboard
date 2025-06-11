@@ -27,10 +27,12 @@ const [isLoadingTokens, setIsLoadingTokens] = useState(false);
 const [isLoadingAddress, setIsLoadingAddress] = useState(false);
 const [errorApi, setErrorApi] = useState(null);
 
-const allTokens = fetch("https://api-mng-console.chaindefuser.com/api/tokens").body?.items || [];
+const allTokens =
+  fetch("https://api-mng-console.chaindefuser.com/api/tokens").body?.items ||
+  [];
 
 const defuse_asset_id_to_chain_map = {};
-for(const token of allTokens) {
+for (const token of allTokens) {
   defuse_asset_id_to_chain_map[token.defuse_asset_id] = token.blockchain;
 }
 
@@ -81,7 +83,9 @@ useEffect(() => {
         );
       }
       if (data.result && data.result.tokens) {
-        setAllFetchedTokens(data.result.tokens.filter(token => token.standard ==='nep141'));
+        setAllFetchedTokens(
+          data.result.tokens.filter((token) => token.standard === "nep141")
+        );
         const uniqueAssetNames = Array.from(
           new Set(data.result.tokens.map((t) => t.asset_name))
         )
@@ -130,7 +134,6 @@ useEffect(() => {
       if (parts.length >= 2) {
         chainId = parts.slice(0, 2).join(":");
       } else {
-        
         chainId = parts[0];
       }
 
