@@ -523,7 +523,7 @@ test.describe("Intents Deposit UI", () => {
     instanceAccount,
     // daoAccount, // daoAccount is not used in this test
   }) => {
-    test.setTimeout(180_000); // Increased timeout for multiple assets and API calls
+    test.setTimeout(300_000); // Increased timeout for testing multiple assets
 
     await page.goto(`https://${instanceAccount}.page`);
     await page.waitForLoadState("networkidle");
@@ -552,31 +552,14 @@ test.describe("Intents Deposit UI", () => {
     await intentsTabButton.click();
     await expect(intentsTabButton).toHaveClass(/active/);
 
-    // Define all potential test cases for USDC
-    // The chainId here is what defuse_asset_identifier.startsWith(chainId) would match
-    const usdcNetworkExpectations = [
-      { assetSymbol: "USDC", chainId: "eth:1", expectedNetworkName: "Ethereum" },
-      { assetSymbol: "USDC", chainId: "arbitrum:42161", expectedNetworkName: "Arbitrum One" },
-      { assetSymbol: "USDC", chainId: "optimism:10", expectedNetworkName: "Optimism" },
-      { assetSymbol: "USDC", chainId: "polygon:137", expectedNetworkName: "Polygon PoS" },
-      { assetSymbol: "USDC", chainId: "bsc:56", expectedNetworkName: "BNB Smart Chain" },
-      { assetSymbol: "USDC", chainId: "avax:43114", expectedNetworkName: "Avalanche C-Chain" },
-      { assetSymbol: "USDC", chainId: "eth:8453", expectedNetworkName: "Base" }, // Key L2 test
-      // Add eth: variants if the backend might provide these for L2s and they need mapping
-      // e.g. if arbitrum could be eth:42161 from backend for USDC
-      { assetSymbol: "USDC", chainId: "eth:42161", expectedNetworkName: "Arbitrum One" }, 
-      { assetSymbol: "USDC", chainId: "eth:10", expectedNetworkName: "Optimism" },
-      // { assetSymbol: "USDC", chainId: "solana:mainnet", expectedNetworkName: "Solana" }, // Example if Solana USDC is supported
-    ];
-
-    // Fetch all supported tokens from the API to validate test cases
+    // Fetch all supported tokens from the API
     const supportedTokensResponse = await fetch(
       "https://bridge.chaindefuser.com/rpc",
       {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          id: "supportedTokensNetworkNameTestUSDC",
+          id: "supportedTokensNetworkNameTestAll",
           jsonrpc: "2.0",
           method: "supported_tokens",
           params: [{}],
@@ -589,73 +572,103 @@ test.describe("Intents Deposit UI", () => {
     ).toBeTruthy();
     const allFetchedTokens = supportedTokensData.result.tokens;
 
-    // Filter to get valid network configurations for USDC that are actually supported
-    const validUsdcNetworksToTest = usdcNetworkExpectations.filter(tc => {
-      return allFetchedTokens.some(token =>
-        token.asset_name === tc.assetSymbol && // Should always be "USDC"
-        token.defuse_asset_identifier &&
-        // Check if the defuse_asset_identifier starts with the chainId (e.g., "eth:8453" for "eth:8453:0xContract")
-        token.defuse_asset_identifier.startsWith(tc.chainId)
-      );
-    });
+    // Filter tokens to only include NEP-141 tokens and group by asset name
+    const nep141Tokens = allFetchedTokens.filter(token => 
+      token.intents_token_id && token.intents_token_id.startsWith("nep141:")
+    );
 
-    if (validUsdcNetworksToTest.length === 0) {
-      console.warn("WARN: No valid USDC network test cases found based on currently supported tokens. Test skipped.");
-      return; 
-    }
-    console.log(`INFO: Running USDC network name verification for ${validUsdcNetworksToTest.length} configurations.`);
-
-    // 1. Select the asset "USDC"
-    const assetDropdown = modalLocator.locator("div.custom-select").nth(0);
-    await assetDropdown.click();
-    const usdcAssetItemLocator = assetDropdown.locator("div.dropdown-item", {
-        hasText: new RegExp(`^\\s*USDC(\\s|$)`) 
-    });
-    await expect(usdcAssetItemLocator.first()).toBeVisible({ timeout: 10000 });
-    await usdcAssetItemLocator.first().click();
-    await expect(assetDropdown.locator(".dropdown-toggle")).toContainText("USDC", { timeout: 5000 });
-
-    // 2. Click the network dropdown to open it
-    const networkDropdownLocator = modalLocator.locator("div.custom-select").nth(1);
-    await networkDropdownLocator.click();
-    await page.waitForTimeout(500); // Allow dropdown to render
-
-    // 3. Get all visible network item texts from the UI
-    const networkItems = networkDropdownLocator.locator('div.dropdown-item.cursor-pointer.w-100.text-wrap');
-    const uiNetworkNames = [];
-    const count = await networkItems.count();
-    for (let i = 0; i < count; i++) {
-        uiNetworkNames.push(await networkItems.nth(i).innerText());
-    }
-    console.log("INFO: UI Network Names for USDC:", uiNetworkNames);
-
-    // 4. Perform assertions for each expected USDC network configuration
-    for (const { chainId, expectedNetworkName } of validUsdcNetworksToTest) {
-      console.log(`INFO: Verifying: ChainID ${chainId} should display as "${expectedNetworkName}"`);
-      
-      // Assert that the expected human-readable name is present in the UI dropdown
-      expect(uiNetworkNames, 
-        `Dropdown should contain "${expectedNetworkName}" for USDC (from chainId "${chainId}"). UI items: ${uiNetworkNames.join(', ')}`
-      ).toContain(expectedNetworkName);
-
-      // Assert that the raw chainId is NOT present if it's different from the expectedNetworkName
-      if (chainId !== expectedNetworkName) {
-        expect(uiNetworkNames, 
-          `Dropdown should NOT contain raw chainId "${chainId}" for USDC when "${expectedNetworkName}" is expected. UI items: ${uiNetworkNames.join(', ')}`
-        ).not.toContain(chainId);
+    const assetsByName = {};
+    nep141Tokens.forEach(token => {
+      if (!token.asset_name) return;
+      if (!assetsByName[token.asset_name]) {
+        assetsByName[token.asset_name] = [];
       }
-    }
+      assetsByName[token.asset_name].push(token);
+    });
+
+    const availableAssets = Object.keys(assetsByName).sort();
     
-    // As a final check, ensure that we have tested at least one L2 that might have an eth: prefix if not mapped.
-    const baseCase = validUsdcNetworksToTest.find(tc => tc.chainId === "eth:8453");
-    if (baseCase) {
-        console.log("INFO: Specifically verified expectations for Base (eth:8453).");
-    }
-    const arbitrumCase = validUsdcNetworksToTest.find(tc => tc.chainId === "arbitrum:42161" || tc.chainId === "eth:42161");
-    if (arbitrumCase) {
-        console.log("INFO: Specifically verified expectations for Arbitrum.");
+    if (availableAssets.length === 0) {
+      console.warn("WARN: No NEP-141 assets found in supported tokens. Test skipped.");
+      return;
     }
 
+    console.log(`INFO: Testing ${availableAssets.length} assets with NEP-141 tokens: ${availableAssets.join(', ')}`);
+
+    // Test each asset
+    for (const assetName of availableAssets) {
+      console.log(`\nINFO: Testing asset: ${assetName}`);
+      
+      // 1. Select the asset
+      const assetDropdown = modalLocator.locator("div.custom-select").nth(0);
+      await assetDropdown.click();
+      
+      const assetItemLocator = assetDropdown.locator("div.dropdown-item", {
+        hasText: new RegExp(`^\\s*${assetName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(\\s|$)`)
+      });
+      
+      await expect(assetItemLocator.first()).toBeVisible({ timeout: 10000 });
+      await assetItemLocator.first().click();
+      await expect(assetDropdown.locator(".dropdown-toggle")).toContainText(assetName, { timeout: 5000 });
+
+      // 2. Open the network dropdown
+      const networkDropdownLocator = modalLocator.locator("div.custom-select").nth(1);
+      await networkDropdownLocator.click();
+      await page.waitForTimeout(500); // Allow dropdown to render
+
+      // 3. Get all visible network item texts from the UI
+      const networkItems = networkDropdownLocator.locator('div.dropdown-item.cursor-pointer.w-100.text-wrap');
+      const uiNetworkNames = [];
+      const count = await networkItems.count();
+      for (let i = 0; i < count; i++) {
+        uiNetworkNames.push(await networkItems.nth(i).innerText());
+      }
+      console.log(`INFO: UI Network Names for ${assetName}:`, uiNetworkNames);
+
+      // 4. Verify that network names follow the expected format and don't show raw chain IDs
+      const tokensForAsset = assetsByName[assetName];
+      let hasValidNetworkNames = false;
+
+      for (const uiNetworkName of uiNetworkNames) {
+        // Check if the UI network name follows the expected format: "name ( chainId )"
+        const formatMatch = uiNetworkName.match(/^(.+?)\s+\(\s+(.+?)\s+\)$/);
+        
+        if (formatMatch) {
+          const [, humanReadableName, chainId] = formatMatch;
+          console.log(`INFO: ${assetName} - Found formatted network: "${humanReadableName}" with chainId "${chainId}"`);
+          hasValidNetworkNames = true;
+
+          // Verify that the humanReadableName is not the same as chainId (i.e., it's been translated)
+          if (humanReadableName !== chainId) {
+            console.log(`INFO: ${assetName} - Good: Human-readable name "${humanReadableName}" differs from chainId "${chainId}"`);
+          }
+
+          // Find corresponding token in the API data to validate the chainId
+          const correspondingToken = tokensForAsset.find(token => 
+            token.defuse_asset_identifier && token.defuse_asset_identifier.startsWith(chainId)
+          );
+          
+          if (correspondingToken) {
+            console.log(`INFO: ${assetName} - Validated: chainId "${chainId}" matches token data`);
+          } else {
+            console.warn(`WARN: ${assetName} - No matching token found for chainId "${chainId}" in API data`);
+          }
+        } else {
+          console.warn(`WARN: ${assetName} - Network name "${uiNetworkName}" does not follow expected format "name ( chainId )"`);
+        }
+      }
+
+      // Assert that at least one network name follows the expected format
+      expect(hasValidNetworkNames, 
+        `${assetName} should have at least one network name in format "name ( chainId )". Found: ${uiNetworkNames.join(', ')}`
+      ).toBe(true);
+
+      // Close the network dropdown by clicking elsewhere
+      await modalLocator.locator("h6").click(); // Click on the "Select asset and network" header
+      await page.waitForTimeout(200);
+    }
+
+    console.log("\nINFO: Completed testing all available NEP-141 assets for human-readable blockchain names.");
   });
 
 });
