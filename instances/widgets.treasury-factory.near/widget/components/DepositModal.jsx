@@ -10,20 +10,6 @@ if (!props.show) {
   return <></>;
 }
 
-const chainIdToNameMap = {
-  "eth:1": "Ethereum",
-  "bsc:56": "BNB Smart Chain",
-  "polygon:137": "Polygon PoS",
-  "arbitrum:42161": "Arbitrum One",
-  "optimism:10": "Optimism",
-  "avax:43114": "Avalanche C-Chain",
-  "btc:mainnet": "Bitcoin",
-};
-
-function getChainName(chainId) {
-  return chainIdToNameMap[chainId] || chainId;
-}
-
 const [activeTab, setActiveTab] = useState(props.initialTab || "sputnik");
 const sputnikAddress = props.treasuryDaoID;
 const nearIntentsTargetAccountId = props.treasuryDaoID;
@@ -41,7 +27,17 @@ const [isLoadingTokens, setIsLoadingTokens] = useState(false);
 const [isLoadingAddress, setIsLoadingAddress] = useState(false);
 const [errorApi, setErrorApi] = useState(null);
 
-// Effect 1: Fetch all supported tokens when tab becomes active
+const allTokens =
+  fetch("https://api-mng-console.chaindefuser.com/api/tokens").body?.items ||
+  [];
+
+const defuse_asset_id_to_chain_map = {};
+for (const token of allTokens) {
+  defuse_asset_id_to_chain_map[token.defuse_asset_id] = token.blockchain;
+}
+
+console.log("defuse_asset_id_to_chain_map", defuse_asset_id_to_chain_map);
+
 useEffect(() => {
   if (activeTab !== "intents") {
     setAllFetchedTokens([]);
@@ -87,7 +83,9 @@ useEffect(() => {
         );
       }
       if (data.result && data.result.tokens) {
-        setAllFetchedTokens(data.result.tokens);
+        setAllFetchedTokens(
+          data.result.tokens.filter((token) => token.standard === "nep141")
+        );
         const uniqueAssetNames = Array.from(
           new Set(data.result.tokens.map((t) => t.asset_name))
         )
@@ -131,20 +129,22 @@ useEffect(() => {
     .map((token) => {
       if (!token.defuse_asset_identifier) return null;
       const parts = token.defuse_asset_identifier.split(":");
-      // Assuming chainId is the first two parts like "eth:1" or "btc:mainnet"
-      // Or just one part if it's like "near" (though bridge context implies external chains)
+      // The first part of the defuse_asset_identitier is the blockchain id
       let chainId;
       if (parts.length >= 2) {
         chainId = parts.slice(0, 2).join(":");
       } else {
-        // Fallback or error if format is unexpected, for now, we'll try to use the first part
-        // This case needs to be verified with actual non-EVM chain identifiers from the API
         chainId = parts[0];
       }
 
+      // The API for all tokens has the property  `defuse_asset_id` which is the same as `intents_token_id`
+      const intents_token_id = token.intents_token_id;
+
       return {
         id: chainId, // This is the ID like "eth:1"
-        name: getChainName(chainId), // User-friendly name
+        name: `${defuse_asset_id_to_chain_map[
+          intents_token_id
+        ].toUpperCase()} ( ${chainId} )`,
         near_token_id: token.near_token_id,
         originalTokenData: token,
       };
