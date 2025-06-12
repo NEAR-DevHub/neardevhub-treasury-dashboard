@@ -102,6 +102,13 @@ const Container = styled.div`
     overflow: hidden;
     white-space: normal;
   }
+
+  .dropdown-icon {
+    width: 1.25em;
+    height: 1.25em;
+    margin-right: 0.5em;
+    vertical-align: middle;
+  }
 `;
 let searchFocused = false;
 return (
@@ -165,6 +172,13 @@ return (
                   }`}
                   onClick={() => handleOptionClick(option)}
                 >
+                  {option.icon && (
+                    <img
+                      className="dropdown-icon"
+                      src={option.icon}
+                      alt={`${option.label} icon`}
+                    />
+                  )}
                   {option.label}
                 </div>
               ))}

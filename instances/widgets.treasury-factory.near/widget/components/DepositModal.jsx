@@ -145,6 +145,7 @@ useEffect(() => {
         name: `${defuse_asset_id_to_chain_map[
           intents_token_id
         ].toUpperCase()} ( ${chainId} )`,
+        icon: defuse_asset_id_to_chain_map[intents_token_id].toLowerCase(),
         near_token_id: token.near_token_id,
         originalTokenData: token,
       };
@@ -387,6 +388,7 @@ return (
                 options: assetNamesForDropdown.map((assetName) => ({
                   value: assetName,
                   label: assetName,
+                  icon: `https://cdn.jsdelivr.net/npm/cryptocurrency-icons@0.18.1/svg/color/${assetName.toLowerCase()}.svg`,
                 })),
                 defaultLabel: isLoadingTokens
                   ? "Loading assets..."
@@ -429,6 +431,7 @@ return (
                 options: networksForSelectedAssetDropdown.map((network) => ({
                   value: network.id,
                   label: network.name,
+                  icon: `https://cdn.jsdelivr.net/npm/cryptocurrency-icons@0.18.1/svg/color/${network.icon}.svg`,
                 })),
                 defaultLabel: !selectedAssetName
                   ? "Select an asset first"
