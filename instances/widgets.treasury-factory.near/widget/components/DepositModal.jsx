@@ -145,7 +145,7 @@ useEffect(() => {
         name: `${defuse_asset_id_to_chain_map[
           intents_token_id
         ].toUpperCase()} ( ${chainId} )`,
-        icon: defuse_asset_id_to_chain_map[intents_token_id].toLowerCase(),
+        icon: defuse_asset_id_to_chain_map[intents_token_id].toUpperCase(),
         near_token_id: token.near_token_id,
         originalTokenData: token,
       };
@@ -388,7 +388,7 @@ return (
                 options: assetNamesForDropdown.map((assetName) => ({
                   value: assetName,
                   label: assetName,
-                  icon: `https://cdn.jsdelivr.net/npm/cryptocurrency-icons@0.18.1/svg/color/${assetName.toLowerCase()}.svg`,
+                  icon: `https://crypto-icons.ledger.com/${assetName.toUpperCase()}.png`,
                 })),
                 defaultLabel: isLoadingTokens
                   ? "Loading assets..."
@@ -431,7 +431,7 @@ return (
                 options: networksForSelectedAssetDropdown.map((network) => ({
                   value: network.id,
                   label: network.name,
-                  icon: `https://cdn.jsdelivr.net/npm/cryptocurrency-icons@0.18.1/svg/color/${network.icon}.svg`,
+                  icon: `https://crypto-icons.ledger.com/${network.icon}.png`,
                 })),
                 defaultLabel: !selectedAssetName
                   ? "Select an asset first"
