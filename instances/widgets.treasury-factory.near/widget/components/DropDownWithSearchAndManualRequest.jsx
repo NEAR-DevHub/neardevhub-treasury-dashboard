@@ -25,10 +25,12 @@ const [selectedOption, setSelectedOption] = useState({
 
 useEffect(() => {
   if (selectedOption.value !== selectedValue) {
+    const option = options?.find((item) => item.value === selectedValue);
     setSelectedOption({
       label:
-        options?.find((item) => item.value === selectedValue)?.label ??
+        option?.label ??
         defaultLabel,
+      icon: option?.icon,
       value: defaultLabel,
     });
   }
@@ -133,6 +135,11 @@ return (
           }`}
           onClick={toggleDropdown}
         >
+          <img
+                      className="dropdown-icon"
+                      src={selectedOption.icon}
+                      alt={`${selectedOption.label} icon`}
+                    />
           {selectedOption.label ?? defaultLabel}
         </div>
       </div>
