@@ -10,55 +10,143 @@ if (!props.show) {
   return <></>;
 }
 
-const [activeTab, setActiveTab] = useState(props.initialTab || "sputnik");
+// Function to generate iframe HTML for batch icon fetching
+const generateBatchIconHTML = (symbols) => {
+  const symbolsArray = JSON.stringify(symbols);
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <script type="module">
+    import * as web3Icons from 'https://cdn.jsdelivr.net/npm/@web3icons/core@4/+esm';
+    
+    const symbols = ${symbolsArray};
+    console.log('Iframe loading for symbols:', symbols);
+    
+    const results = {};
+    
+    try {
+      for (const symbol of symbols) {
+        const normalizedSymbol = symbol.toUpperCase();
+        const possibleNames = [
+          \`TokenBranded\${normalizedSymbol}\`,
+          \`TokenMono\${normalizedSymbol}\`,
+          \`TokenBackground\${normalizedSymbol}\`
+        ];
+        
+        let iconData = null;
+        for (const exportName of possibleNames) {
+          if (web3Icons[exportName]) {
+            console.log('Found icon for', symbol, 'as', exportName);
+            const svgContent = web3Icons[exportName].default || web3Icons[exportName];
+            iconData = \`data:image/svg+xml;base64,\${btoa(svgContent)}\`;
+            break;
+          }
+        }
+        
+        results[symbol] = iconData;
+      }
+      
+      console.log('Sending batch response with', Object.keys(results).length, 'icons');
+      // Send all results back to parent
+      window.parent.postMessage({
+        handler: 'batchIconResponse',
+        results
+      }, '*');
+    } catch (error) {
+      console.error('Error in iframe:', error);
+      window.parent.postMessage({
+        handler: 'batchIconResponse',
+        results: {},
+        error: error.message
+      }, '*');
+    }
+  </script>
+</head>
+<body style="margin:0;padding:0;width:1px;height:1px;"></body>
+</html>`;
+};
+
+// Initialize state for the entire component
+State.init({
+  iconCache: {},
+  activeTab: props.initialTab || "sputnik",
+  allFetchedTokens: [],
+  assetNamesForDropdown: [],
+  selectedAssetName: "",
+  networksForSelectedAssetDropdown: [],
+  selectedNetworkFullInfo: null,
+  intentsDepositAddress: "",
+  isLoadingTokens: false,
+  isLoadingAddress: false,
+  errorApi: null,
+  iconsFetched: false, // Track if icons have been fetched
+  symbolsToFetch: [], // Symbols that need icons
+});
+
+const activeTab = state.activeTab;
 const sputnikAddress = props.treasuryDaoID;
 const nearIntentsTargetAccountId = props.treasuryDaoID;
 
-const [allFetchedTokens, setAllFetchedTokens] = useState([]);
-const [assetNamesForDropdown, setAssetNamesForDropdown] = useState([]);
-const [selectedAssetName, setSelectedAssetName] = useState(""); // Stores the name like "ETH", "USDT"
+// Enhanced icon mapping function
+const getIconForToken = (symbol) => {
+  // Check cache first
+  if (state.iconCache[symbol]) {
+    return state.iconCache[symbol];
+  }
 
-const [networksForSelectedAssetDropdown, setNetworksForSelectedAssetDropdown] =
-  useState([]);
-const [selectedNetworkFullInfo, setSelectedNetworkFullInfo] = useState(null); // Stores { id, name, near_token_id, originalTokenData }
+  // Request icon from iframe if service is ready
+  if (state.iconServiceReady) {
+    console.log(`Requesting icon for ${symbol} from iframe service`);
+    // Note: In BOS, we'll send messages via the iframe's message prop
+  }
 
-const [intentsDepositAddress, setIntentsDepositAddress] = useState("");
-const [isLoadingTokens, setIsLoadingTokens] = useState(false);
-const [isLoadingAddress, setIsLoadingAddress] = useState(false);
-const [errorApi, setErrorApi] = useState(null);
+  // Fallback to original iconMap
+  return iconMap[symbol.toUpperCase()] || null;
+};
 
 const allTokens =
   fetch("https://api-mng-console.chaindefuser.com/api/tokens").body?.items ||
   [];
 
 const defuse_asset_id_to_chain_map = {};
+const iconMap = {};
 for (const token of allTokens) {
+  const ftMetadata = Near.view(
+    token.defuse_asset_id.substring("nep141:".length),
+    "ft_metadata",
+    {}
+  );
+  if (ftMetadata?.icon) {
+    // iconMap[token.symbol.toUpperCase()] = ftMetadata.icon;
+  }
   defuse_asset_id_to_chain_map[token.defuse_asset_id] = token.blockchain;
 }
 
-console.log("defuse_asset_id_to_chain_map", defuse_asset_id_to_chain_map);
-
-useEffect(() => {
+// Function to fetch tokens when switching to intents tab
+const fetchIntentsTokens = () => {
   if (activeTab !== "intents") {
-    setAllFetchedTokens([]);
-    setAssetNamesForDropdown([]);
-    setSelectedAssetName("");
-    setNetworksForSelectedAssetDropdown([]);
-    setSelectedNetworkFullInfo(null);
-    setIntentsDepositAddress("");
-    setErrorApi(null);
+    State.update({
+      allFetchedTokens: [],
+      assetNamesForDropdown: [],
+      selectedAssetName: "",
+      networksForSelectedAssetDropdown: [],
+      selectedNetworkFullInfo: null,
+      intentsDepositAddress: "",
+      errorApi: null,
+    });
     return;
   }
 
-  setIsLoadingTokens(true);
-  setErrorApi(null);
-  // Reset all dependent states
-  setAllFetchedTokens([]);
-  setAssetNamesForDropdown([]);
-  setSelectedAssetName("");
-  setNetworksForSelectedAssetDropdown([]);
-  setSelectedNetworkFullInfo(null);
-  setIntentsDepositAddress("");
+  State.update({
+    isLoadingTokens: true,
+    errorApi: null,
+    allFetchedTokens: [],
+    assetNamesForDropdown: [],
+    selectedAssetName: "",
+    networksForSelectedAssetDropdown: [],
+    selectedNetworkFullInfo: null,
+    intentsDepositAddress: "",
+  });
 
   asyncFetch("https://bridge.chaindefuser.com/rpc", {
     method: "POST",
@@ -83,46 +171,64 @@ useEffect(() => {
         );
       }
       if (data.result && data.result.tokens) {
-        setAllFetchedTokens(
-          data.result.tokens.filter((token) => token.standard === "nep141")
+        const filteredTokens = data.result.tokens.filter(
+          (token) => token.standard === "nep141"
         );
         const uniqueAssetNames = Array.from(
           new Set(data.result.tokens.map((t) => t.asset_name))
         )
           .filter((name) => name) // Ensure name is not null or empty
           .sort();
-        setAssetNamesForDropdown(uniqueAssetNames);
-        if (uniqueAssetNames.length === 0) {
-          setErrorApi("No bridgeable assets found.");
+
+        State.update({
+          allFetchedTokens: filteredTokens,
+          assetNamesForDropdown: uniqueAssetNames,
+          errorApi:
+            uniqueAssetNames.length === 0
+              ? "No bridgeable assets found."
+              : null,
+        });
+
+        // Collect all symbols for batch icon fetching
+        if (!state.iconsFetched && uniqueAssetNames.length > 0) {
+          State.update({
+            symbolsToFetch: uniqueAssetNames,
+          });
         }
       } else {
-        setErrorApi("No bridgeable assets found or unexpected API response.");
-        setAllFetchedTokens([]);
-        setAssetNamesForDropdown([]);
+        State.update({
+          errorApi: "No bridgeable assets found or unexpected API response.",
+          allFetchedTokens: [],
+          assetNamesForDropdown: [],
+        });
       }
     })
     .catch((err) => {
       console.error("Failed to fetch all supported tokens:", err);
-      setErrorApi(err.message || "Failed to fetch assets. Please try again.");
-      setAllFetchedTokens([]);
-      setAssetNamesForDropdown([]);
+      State.update({
+        errorApi: err.message || "Failed to fetch assets. Please try again.",
+        allFetchedTokens: [],
+        assetNamesForDropdown: [],
+      });
     })
     .finally(() => {
-      setIsLoadingTokens(false);
+      State.update({ isLoadingTokens: false });
     });
-}, [activeTab]);
+};
 
-// Effect 2: Populate networks when selectedAssetName changes
-useEffect(() => {
-  if (!selectedAssetName || allFetchedTokens.length === 0) {
-    setNetworksForSelectedAssetDropdown([]);
-    setSelectedNetworkFullInfo(null);
-    setIntentsDepositAddress("");
+// Function to update networks when asset changes
+const updateNetworksForAsset = (assetName) => {
+  if (!assetName || state.allFetchedTokens.length === 0) {
+    State.update({
+      networksForSelectedAssetDropdown: [],
+      selectedNetworkFullInfo: null,
+      intentsDepositAddress: "",
+    });
     return;
   }
 
-  const tokensOfSelectedAsset = allFetchedTokens.filter(
-    (token) => token.asset_name === selectedAssetName
+  const tokensOfSelectedAsset = state.allFetchedTokens.filter(
+    (token) => token.asset_name === assetName
   );
 
   const networks = tokensOfSelectedAsset
@@ -145,32 +251,34 @@ useEffect(() => {
         name: `${defuse_asset_id_to_chain_map[
           intents_token_id
         ].toUpperCase()} ( ${chainId} )`,
-        icon: defuse_asset_id_to_chain_map[intents_token_id].toUpperCase(),
+        icon:
+          iconMap[
+            defuse_asset_id_to_chain_map[intents_token_id].toUpperCase()
+          ] || null, // Use iconMap to get the icon URL
         near_token_id: token.near_token_id,
         originalTokenData: token,
       };
     })
     .filter((network) => network && network.id && network.near_token_id); // Ensure valid network objects
 
-  setNetworksForSelectedAssetDropdown(networks);
-  setSelectedNetworkFullInfo(null); // Reset selected network
-  setIntentsDepositAddress(""); // Reset address
-}, [selectedAssetName, allFetchedTokens]);
+  State.update({
+    networksForSelectedAssetDropdown: networks,
+    selectedNetworkFullInfo: null,
+    intentsDepositAddress: "",
+  });
+};
 
-// Effect 3: Fetch deposit address when selectedNetworkFullInfo changes
-useEffect(() => {
-  if (
-    activeTab !== "intents" ||
-    !selectedNetworkFullInfo ||
-    !nearIntentsTargetAccountId
-  ) {
-    setIntentsDepositAddress("");
-    // Do not clear errorApi here, as it might be from previous steps
+// Function to fetch deposit address when network changes
+const fetchDepositAddress = (networkInfo) => {
+  if (activeTab !== "intents" || !networkInfo || !nearIntentsTargetAccountId) {
+    State.update({ intentsDepositAddress: "" });
     return;
   }
 
-  setIsLoadingAddress(true);
-  setErrorApi(null); // Clear previous address-specific errors
+  State.update({
+    isLoadingAddress: true,
+    errorApi: null,
+  });
 
   asyncFetch("https://bridge.chaindefuser.com/rpc", {
     method: "POST",
@@ -182,7 +290,7 @@ useEffect(() => {
       params: [
         {
           account_id: nearIntentsTargetAccountId,
-          chain: selectedNetworkFullInfo.id, // e.g., "eth:1"
+          chain: networkInfo.id, // e.g., "eth:1"
         },
       ],
     }),
@@ -200,25 +308,36 @@ useEffect(() => {
         );
       }
       if (data.result && data.result.address) {
-        setIntentsDepositAddress(data.result.address);
+        State.update({ intentsDepositAddress: data.result.address });
       } else {
-        setIntentsDepositAddress("");
-        setErrorApi(
-          "Could not retrieve deposit address for the selected asset and network."
-        );
+        State.update({
+          intentsDepositAddress: "",
+          errorApi:
+            "Could not retrieve deposit address for the selected asset and network.",
+        });
       }
     })
     .catch((err) => {
       console.error("Failed to fetch deposit address:", err);
-      setErrorApi(
-        err.message || "Failed to fetch deposit address. Please try again."
-      );
-      setIntentsDepositAddress("");
+      State.update({
+        errorApi:
+          err.message || "Failed to fetch deposit address. Please try again.",
+        intentsDepositAddress: "",
+      });
     })
     .finally(() => {
-      setIsLoadingAddress(false);
+      State.update({ isLoadingAddress: false });
     });
-}, [activeTab, selectedNetworkFullInfo, nearIntentsTargetAccountId]);
+};
+
+// Initialize data fetching if intents tab is active
+if (
+  activeTab === "intents" &&
+  state.allFetchedTokens.length === 0 &&
+  !state.isLoadingTokens
+) {
+  fetchIntentsTokens();
+}
 
 const sputnikWarning = (
   <div
@@ -239,7 +358,7 @@ const sputnikWarning = (
 );
 
 const DynamicIntentsWarning = () => {
-  if (!selectedAssetName || !selectedNetworkFullInfo) {
+  if (!state.selectedAssetName || !state.selectedNetworkFullInfo) {
     return (
       <div
         className="alert alert-info d-flex align-items-center mt-2"
@@ -256,8 +375,56 @@ const DynamicIntentsWarning = () => {
   return <></>;
 };
 
+// Enhanced icon mapping function with cache lookup
+const getIconForTokenWithRequest = (symbol) => {
+  // Check cache first
+  if (state.iconCache[symbol]) {
+    const cachedValue = state.iconCache[symbol];
+    // Return null if it was previously not found, otherwise return the cached icon
+    return cachedValue === "NOT_FOUND" ? null : cachedValue;
+  }
+  
+  // Return fallback while waiting for batch response or if not cached
+  return iconMap[symbol.toUpperCase()] || null;
+};
+
 return (
   <Modal props={{ minWidth: "700px" }}>
+    {/* Hidden iframe for batch icon service - only render if we have symbols to fetch */}
+    {state.symbolsToFetch.length > 0 && !state.iconsFetched && (
+      <iframe
+        srcDoc={generateBatchIconHTML(state.symbolsToFetch)}
+        style={{ display: "none" }}
+        onMessage={(e) => {
+          if (e.handler === "batchIconResponse") {
+            const { results, error } = e;
+            console.log(
+              "Received batch icon response with",
+              Object.keys(results).length,
+              "icons"
+            );
+
+            // Build cache from results, marking missing icons as "NOT_FOUND"
+            const newCache = { ...state.iconCache };
+            for (const symbol of state.symbolsToFetch) {
+              newCache[symbol] = results[symbol] || "NOT_FOUND";
+            }
+
+            // Update cache and mark icons as fetched
+            State.update({
+              iconCache: newCache,
+              iconsFetched: true,
+              symbolsToFetch: [], // Clear the fetch list
+            });
+
+            if (error) {
+              console.error("Error in batch icon fetch:", error);
+            }
+          }
+        }}
+      />
+    )}
+
     <ModalHeader>
       <div className="d-flex align-items-center justify-content-between mb-2">
         <div className="d-flex gap-3">Deposit</div>
@@ -272,7 +439,9 @@ return (
         <li className="nav-item">
           <button
             className={`nav-link ${activeTab === "sputnik" ? "active" : ""}`}
-            onClick={() => setActiveTab("sputnik")}
+            onClick={() => {
+              State.update({ activeTab: "sputnik" });
+            }}
           >
             Sputnik DAO
           </button>
@@ -280,7 +449,18 @@ return (
         <li className="nav-item">
           <button
             className={`nav-link ${activeTab === "intents" ? "active" : ""}`}
-            onClick={() => setActiveTab("intents")}
+            onClick={() => {
+              const newTab = "intents";
+              State.update({ activeTab: newTab });
+              // Trigger token fetching if switching to intents
+              if (
+                newTab === "intents" &&
+                state.allFetchedTokens.length === 0 &&
+                !state.isLoadingTokens
+              ) {
+                fetchIntentsTokens();
+              }
+            }}
           >
             NEAR Intents
           </button>
@@ -375,24 +555,21 @@ return (
                 "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
               }
               props={{
-                selectedValue: selectedAssetName,
+                selectedValue: state.selectedAssetName,
                 onChange: (option) => {
-                  if (option && option.value !== undefined) {
-                    setSelectedAssetName(option.value);
-                  } else {
-                    // Handle clear or invalid/undefined option from DropDown
-                    setSelectedAssetName("");
-                  }
-                  // Dependent states (networks, address) will be reset by useEffect for selectedAssetName
+                  const newAssetName =
+                    option && option.value !== undefined ? option.value : "";
+                  State.update({ selectedAssetName: newAssetName });
+                  updateNetworksForAsset(newAssetName);
                 },
-                options: assetNamesForDropdown.map((assetName) => ({
+                options: state.assetNamesForDropdown.map((assetName) => ({
                   value: assetName,
                   label: assetName,
-                  icon: `https://crypto-icons.ledger.com/${assetName.toUpperCase()}.png`,
+                  icon: getIconForTokenWithRequest(assetName), // Use enhanced icon function
                 })),
-                defaultLabel: isLoadingTokens
+                defaultLabel: state.isLoadingTokens
                   ? "Loading assets..."
-                  : assetNamesForDropdown.length === 0
+                  : state.assetNamesForDropdown.length === 0
                   ? "No assets found"
                   : "Select an asset",
                 showSearch: true,
@@ -413,53 +590,53 @@ return (
                 "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
               }
               props={{
-                selectedValue: selectedNetworkFullInfo
-                  ? selectedNetworkFullInfo.id
+                selectedValue: state.selectedNetworkFullInfo
+                  ? state.selectedNetworkFullInfo.id
                   : "",
                 onChange: (option) => {
-                  if (option && option.value !== undefined) {
-                    const networkInfo = networksForSelectedAssetDropdown.find(
-                      (n) => n.id === option.value
-                    );
-                    setSelectedNetworkFullInfo(networkInfo || null);
-                  } else {
-                    // Handle clear or invalid/undefined option from DropDown
-                    setSelectedNetworkFullInfo(null);
-                  }
-                  // Address will be fetched by useEffect for selectedNetworkFullInfo
+                  const networkInfo =
+                    option && option.value !== undefined
+                      ? state.networksForSelectedAssetDropdown.find(
+                          (n) => n.id === option.value
+                        )
+                      : null;
+                  State.update({ selectedNetworkFullInfo: networkInfo });
+                  fetchDepositAddress(networkInfo);
                 },
-                options: networksForSelectedAssetDropdown.map((network) => ({
-                  value: network.id,
-                  label: network.name,
-                  icon: `https://crypto-icons.ledger.com/${network.icon}.png`,
-                })),
-                defaultLabel: !selectedAssetName
+                options: state.networksForSelectedAssetDropdown.map(
+                  (network) => ({
+                    value: network.id,
+                    label: network.name,
+                    icon: network.icon,
+                  })
+                ),
+                defaultLabel: !state.selectedAssetName
                   ? "Select an asset first"
-                  : networksForSelectedAssetDropdown.length === 0 &&
-                    selectedAssetName &&
-                    !isLoadingTokens
+                  : state.networksForSelectedAssetDropdown.length === 0 &&
+                    state.selectedAssetName &&
+                    !state.isLoadingTokens
                   ? "No networks for this asset"
                   : "Select a network",
                 showSearch: true,
                 searchInputPlaceholder: "Search networks",
                 searchByLabel: true,
                 disabled:
-                  isLoadingTokens ||
-                  isLoadingAddress ||
-                  !selectedAssetName ||
-                  networksForSelectedAssetDropdown.length === 0,
+                  state.isLoadingTokens ||
+                  state.isLoadingAddress ||
+                  !state.selectedAssetName ||
+                  state.networksForSelectedAssetDropdown.length === 0,
               }}
             />
           </div>
 
-          {isLoadingAddress && (
+          {state.isLoadingAddress && (
             <p className="mt-2">Loading deposit address...</p>
           )}
-          {errorApi && (
-            <div className="alert alert-danger mt-2">{errorApi}</div>
+          {state.errorApi && (
+            <div className="alert alert-danger mt-2">{state.errorApi}</div>
           )}
 
-          {!isLoadingAddress && intentsDepositAddress ? (
+          {!state.isLoadingAddress && state.intentsDepositAddress ? (
             <>
               <h5>Use this deposit address</h5>
               <p className="mt-2 text-muted">
@@ -482,7 +659,7 @@ return (
                     <Widget
                       src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.QRCodeGenerator"
                       props={{
-                        text: intentsDepositAddress,
+                        text: state.intentsDepositAddress,
                         cellSize: 4,
                         margin: 4,
                       }}
@@ -516,13 +693,13 @@ return (
                           flexGrow: "1",
                         }}
                       >
-                        {intentsDepositAddress}
+                        {state.intentsDepositAddress}
                       </div>
                       <Widget
                         src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Copy"
                         props={{
                           label: "",
-                          clipboardText: intentsDepositAddress,
+                          clipboardText: state.intentsDepositAddress,
                           className:
                             "btn btn-sm btn-outline-secondary ms-n5 end-0 me-2",
                           iconOnly: true,
@@ -539,8 +716,8 @@ return (
                       border: "none",
                     }}
                   >
-                    Only deposit {selectedAssetName} from the{" "}
-                    {selectedNetworkFullInfo?.name?.toLowerCase()} network
+                    Only deposit {state.selectedAssetName} from the{" "}
+                    {state.selectedNetworkFullInfo?.name?.toLowerCase()} network
                     <br />
                     <span style={{ fontWeight: 400, color: "#ffb84dcc" }}>
                       Depositing other assets or using a different network will
@@ -551,10 +728,10 @@ return (
               </div>
             </>
           ) : (
-            !isLoadingAddress &&
-            selectedAssetName &&
-            selectedNetworkFullInfo &&
-            !errorApi && (
+            !state.isLoadingAddress &&
+            state.selectedAssetName &&
+            state.selectedNetworkFullInfo &&
+            !state.errorApi && (
               <p className="mt-3 fst-italic">
                 Could not load deposit address. Please ensure your selection is
                 valid or try again.
