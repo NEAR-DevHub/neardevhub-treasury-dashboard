@@ -117,7 +117,7 @@ for (const token of allTokens) {
     {}
   );
   if (ftMetadata?.icon) {
-    // iconMap[token.symbol.toUpperCase()] = ftMetadata.icon;
+    iconMap[token.symbol.toUpperCase()] = ftMetadata.icon;
   }
   defuse_asset_id_to_chain_map[token.defuse_asset_id] = token.blockchain;
 }
@@ -252,9 +252,9 @@ const updateNetworksForAsset = (assetName) => {
           intents_token_id
         ].toUpperCase()} ( ${chainId} )`,
         icon:
-          iconMap[
+          getIconForTokenWithRequest(
             defuse_asset_id_to_chain_map[intents_token_id].toUpperCase()
-          ] || null, // Use iconMap to get the icon URL
+          ),
         near_token_id: token.near_token_id,
         originalTokenData: token,
       };
