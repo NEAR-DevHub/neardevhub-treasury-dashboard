@@ -25,10 +25,10 @@ const [selectedOption, setSelectedOption] = useState({
 
 useEffect(() => {
   if (selectedOption.value !== selectedValue) {
+    const option = options?.find((item) => item.value === selectedValue);
     setSelectedOption({
-      label:
-        options?.find((item) => item.value === selectedValue)?.label ??
-        defaultLabel,
+      label: option?.label ?? defaultLabel,
+      icon: option?.icon,
       value: defaultLabel,
     });
   }
@@ -102,6 +102,13 @@ const Container = styled.div`
     overflow: hidden;
     white-space: normal;
   }
+
+  .dropdown-icon {
+    width: 1.25em;
+    height: 1.25em;
+    margin-right: 0.5em;
+    vertical-align: middle;
+  }
 `;
 let searchFocused = false;
 return (
@@ -126,6 +133,11 @@ return (
           }`}
           onClick={toggleDropdown}
         >
+          <img
+            className="dropdown-icon"
+            src={selectedOption.icon}
+            alt={`${selectedOption.label} icon`}
+          />
           {selectedOption.label ?? defaultLabel}
         </div>
       </div>
@@ -165,6 +177,13 @@ return (
                   }`}
                   onClick={() => handleOptionClick(option)}
                 >
+                  {option.icon && (
+                    <img
+                      className="dropdown-icon"
+                      src={option.icon}
+                      alt={`${option.label} icon`}
+                    />
+                  )}
                   {option.label}
                 </div>
               ))}
