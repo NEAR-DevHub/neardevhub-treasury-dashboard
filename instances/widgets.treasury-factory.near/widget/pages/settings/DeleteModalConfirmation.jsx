@@ -1,270 +1,194 @@
+const { Modal, ModalContent, ModalHeader, ModalFooter } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.modal"
+);
+
 const { encodeToMarkdown } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
-const { TransactionLoader } = VM.require(
-  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TransactionLoader`
-) || { TransactionLoader: () => <></> };
 
 const instance = props.instance;
-if (!instance) {
-  return <></>;
-}
+if (!instance) return <></>;
 
 const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 
 const isOpen = props.isOpen;
 const onCancelClick = props.onCancelClick;
-const username = props.username;
-const setToastStatus = props.setToastStatus || (() => {});
-const daoPolicy = treasuryDaoID
-  ? Near.view(treasuryDaoID, "get_policy", {})
-  : null;
-
-const deposit = daoPolicy?.proposal_bond || 0;
-const rolesMap = props.rolesMap;
+const selectedMembers = props.selectedMembers || [];
 const onConfirm = props.onConfirmClick ?? (() => {});
-const onRefresh = props.onRefresh;
-const updateLastProposalId = props.updateLastProposalId || (() => {});
 
-const [isTxnCreated, setTxnCreated] = useState(false);
-const [lastProposalId, setLastProposalId] = useState(null);
-const [showErrorToast, setShowErrorToast] = useState(false);
+const [daoPolicy, setDaoPolicy] = useState(null);
+const [allAdminsRemoved, setAllAdminsRemoved] = useState(false);
 
-function getLastProposalId() {
-  return Near.asyncView(treasuryDaoID, "get_last_proposal_id").then(
-    (result) => result
-  );
-}
+function updateDaoPolicy(policy) {
+  const updatedPolicy = { ...policy };
+  const removals = new Map();
+  const emptyRoles = [];
 
-useEffect(() => {
-  getLastProposalId().then((i) => setLastProposalId(i));
-}, []);
-
-// show toast after proposal is submitted
-useEffect(() => {
-  if (isTxnCreated && typeof onRefresh === "function") {
-    let checkTxnTimeout = null;
-
-    const checkForNewProposal = () => {
-      getLastProposalId().then((id) => {
-        if (typeof lastProposalId === "number" && lastProposalId !== id) {
-          updateLastProposalId(lastProposalId);
-          setToastStatus(true);
-          setTxnCreated(false);
-          clearTimeout(isTxnCreated);
-        } else {
-          checkTxnTimeout = setTimeout(() => checkForNewProposal(), 1000);
-        }
-      });
-    };
-    checkForNewProposal();
-
-    return () => {
-      clearTimeout(checkTxnTimeout);
-    };
-  }
-}, [isTxnCreated, onRefresh]);
-
-function updateDaoPolicy() {
-  const updatedPolicy = { ...daoPolicy };
-  const removals = new Set();
   if (Array.isArray(updatedPolicy.roles)) {
     updatedPolicy.roles = updatedPolicy.roles.map((role) => {
-      if (rolesMap.has(role.name)) {
-        let group = role.kind.Group;
+      const group = role.kind.Group;
+      if (!group || !Array.isArray(group)) return role;
 
-        if (group.includes(username)) {
-          group = group.filter((i) => i !== username);
-          removals.add(role.name);
-        }
-        // Modify the role's group
-        return {
-          ...role,
-          kind: {
-            Group: group,
-          },
-        };
+      const newGroup = group.filter(
+        (member) => !selectedMembers.some(({ member: m }) => m === member)
+      );
+
+      if (newGroup.length === 0) {
+        emptyRoles.push(role.name);
       }
-      return role;
+
+      selectedMembers.forEach(({ member, roles }) => {
+        if (group.includes(member)) {
+          if (!removals.has(member)) removals.set(member, new Set());
+          removals.get(member).add(role.name);
+        }
+      });
+
+      return {
+        ...role,
+        kind: { Group: newGroup },
+      };
     });
   }
 
+  const summaryLines = selectedMembers.map(({ member, roles }) => {
+    return `- remove "${member}" from [${roles
+      .map((r) => `"${r}"`)
+      .join(", ")}]`;
+  });
+
   return {
     updatedPolicy,
-    summary: `${context.accountId} requested to remove "${username}" from ${[
-      ...removals,
-    ]
-      .map((role) => `"${role}"`)
-      .join(" and ")}`,
+    summary: `${
+      context.accountId
+    } requested the following removals:\n${summaryLines.join("\n")}`,
+    emptyRoles,
   };
 }
 
+useEffect(() => {
+  if (treasuryDaoID) {
+    Near.asyncView(treasuryDaoID, "get_policy", {}).then((i) => {
+      setDaoPolicy(i);
+      const { emptyRoles } = updateDaoPolicy(i);
+      if (emptyRoles.length > 0) {
+        setAllAdminsRemoved(emptyRoles);
+        return;
+      }
+    });
+  }
+}, [treasuryDaoID]);
+
 function onConfirmClick() {
-  setTxnCreated(true);
-  const { updatedPolicy, summary } = updateDaoPolicy();
+  const deposit = daoPolicy?.proposal_bond || 0;
+  const { updatedPolicy, summary } = updateDaoPolicy(daoPolicy);
   const description = {
     title: "Update policy - Members Permissions",
     summary,
   };
-  Near.call([
+
+  onConfirm([
     {
       contractName: treasuryDaoID,
       methodName: "add_proposal",
       args: {
         proposal: {
           description: encodeToMarkdown(description),
-          kind: {
-            ChangePolicy: {
-              policy: updatedPolicy,
-            },
-          },
+          kind: { ChangePolicy: { policy: updatedPolicy } },
         },
       },
       gas: 200000000000000,
-      deposit,
+      deposit: deposit,
     },
   ]);
-  onConfirm();
 }
 
-const Modal = styled.div`
-  display: ${({ hidden }) => (hidden ? "none" : "flex")};
-  position: fixed;
-  inset: 0;
-  justify-content: center;
-  align-items: center;
-  opacity: 1;
-  z-index: 999;
-
-  .black-btn {
-    background-color: #000 !important;
-    border: none;
-    color: white;
-    &:active {
-      color: white;
-    }
-  }
-
-  @media screen and (max-width: 768px) {
-    h5 {
-      font-size: 16px !important;
-    }
-  }
-`;
-
-const ModalBackdrop = styled.div`
-  position: absolute;
-  inset: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  opacity: 0.4;
-`;
-
-const ModalDialog = styled.div`
-  padding: 2em;
-  z-index: 999;
-  overflow-y: auto;
-  max-height: 85%;
-  margin-top: 5%;
-  width: 35%;
-  min-width: 400px;
-
-  @media screen and (max-width: 768px) {
-    margin: 2rem;
-    width: 100%;
-  }
-`;
-
-const ModalHeader = styled.div`
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 4px;
-`;
-
-const ModalFooter = styled.div`
-  padding-top: 4px;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: items-center;
-`;
-
-const CloseButton = styled.button`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: white;
-  padding: 0.5em;
-  border-radius: 6px;
-  border: 0;
-  color: #344054;
-
-  &:hover {
-    background-color: #d3d3d3;
-  }
-`;
-
-const ModalContent = styled.div`
-  flex: 1;
-  font-size: 14px;
-  margin-top: 4px;
-  margin-bottom: 4px;
-  overflow-y: auto;
-  max-height: 50%;
-
-  @media screen and (max-width: 768px) {
-    font-size: 12px !important;
-  }
-`;
-
-const NoButton = styled.button`
-  background: transparent;
-  border: none;
-  padding: 0;
-  margin: 0;
-  box-shadow: none;
-`;
-
+if (!daoPolicy) {
+  return <></>;
+}
 return (
-  <>
-    {onRefresh && (
-      <TransactionLoader
-        showInProgress={isTxnCreated}
-        cancelTxn={() => setTxnCreated(false)}
-      />
-    )}
-    <Modal hidden={!isOpen}>
-      <ModalBackdrop />
-      <ModalDialog className="card">
+  <div>
+    {allAdminsRemoved ? (
+      <Modal hidden={!isOpen}>
+        <ModalHeader>
+          <h5 className="d-flex gap-2 align-items-center mb-0">
+            <i class="bi bi-exclamation-octagon h5 mb-0 text-red"></i> Invalid
+            Role Change
+          </h5>
+        </ModalHeader>
+
+        <ModalContent>
+          The following roles would be left with <strong>no members</strong> if
+          you proceed:
+          <ul className="my-1">
+            {allAdminsRemoved.map((role) => (
+              <li key={role}>{role}</li>
+            ))}
+          </ul>
+          Please adjust the selection to retain at least one member per role.
+        </ModalContent>
+        <ModalFooter>
+          <div className="d-flex justify-content-end">
+            <Widget
+              src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
+              props={{
+                classNames: { root: "theme-btn" },
+                label: "Close",
+                onClick: onCancelClick,
+              }}
+            />
+          </div>
+        </ModalFooter>
+      </Modal>
+    ) : (
+      <Modal hidden={!isOpen}>
         <ModalHeader>
           <h5 className="mb-0">Are you sure?</h5>
         </ModalHeader>
+
         <ModalContent>
-          {username} will immediately lose their permissions to this treasury if
-          you continue.
+          {selectedMembers.length === 1 ? (
+            <div>
+              {selectedMembers[0].member} will immediately lose their
+              permissions to this treasury if you continue.
+            </div>
+          ) : (
+            <>
+              <div>
+                The following users immediately lose their permissions to this
+                treasury if you continue:
+              </div>
+              <ul className="my-1">
+                {selectedMembers.map(({ member }) => (
+                  <li key={member}>{member}</li>
+                ))}
+              </ul>
+            </>
+          )}
         </ModalContent>
-        <div className="d-flex gap-3 align-items-center justify-content-end mt-2">
-          <Widget
-            src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
-            props={{
-              classNames: {
-                root: "btn btn-outline-secondary shadow-none no-transparent",
-              },
-              label: "Cancel",
-              onClick: onCancelClick,
-            }}
-          />
-          <Widget
-            src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
-            props={{
-              classNames: { root: "theme-btn" },
-              label: "Remove",
-              onClick: onConfirmClick,
-            }}
-          />
-        </div>
-      </ModalDialog>
-    </Modal>
-  </>
+        <ModalFooter>
+          <div className="d-flex gap-3 align-items-center justify-content-end">
+            <Widget
+              src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
+              props={{
+                classNames: {
+                  root: "btn btn-outline-secondary shadow-none no-transparent",
+                },
+                label: "Cancel",
+                onClick: onCancelClick,
+              }}
+            />
+            <Widget
+              src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
+              props={{
+                classNames: { root: "btn btn-danger" },
+                label: "Remove",
+                onClick: onConfirmClick,
+              }}
+            />
+          </div>
+        </ModalFooter>
+      </Modal>
+    )}
+  </div>
 );

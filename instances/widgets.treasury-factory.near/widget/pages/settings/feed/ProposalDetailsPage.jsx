@@ -62,6 +62,7 @@ useEffect(() => {
   if (proposalPeriod && !proposalData) {
     Near.asyncView(treasuryDaoID, "get_proposal", { id: parseInt(id) })
       .then((item) => {
+        console.log(item);
         const notes = decodeProposalDescription("notes", item.description);
         const title = decodeProposalDescription("title", item.description);
         const summary = decodeProposalDescription("summary", item.description);

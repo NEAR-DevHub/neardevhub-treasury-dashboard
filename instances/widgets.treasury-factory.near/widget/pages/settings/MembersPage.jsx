@@ -1,7 +1,9 @@
 const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
-
+const { TransactionLoader } = VM.require(
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TransactionLoader`
+) || { TransactionLoader: () => <></> };
 const {
   getMembersAndPermissions,
   getDaoRoles,
@@ -35,6 +37,56 @@ const [refetch, setRefetch] = useState(false);
 const policyApproverGroup = getPolicyApproverGroup(treasuryDaoID);
 const roles = getDaoRoles(treasuryDaoID);
 const [lastProposalId, setLastProposalId] = useState(null);
+const [rowsPerPage, setRowsPerPage] = useState(10);
+const [currentPage, setPage] = useState(0);
+const [data, setData] = useState([]);
+const [allMembers, setAllMembers] = useState([]);
+const [selectedRows, setSelectedRows] = useState([]);
+const [selectedMembers, setSelectedMembers] = useState([]);
+const [showEditor, setShowEditor] = useState(false);
+const [showDeleteModal, setShowDeleteModal] = useState(false);
+const [showToastStatus, setToastStatus] = useState(false);
+const [loading, setLoading] = useState(false);
+
+const [isTxnCreated, setTxnCreated] = useState(false);
+
+useEffect(() => {
+  setLoading(true);
+  if (typeof getMembersAndPermissions === "function") {
+    setAllMembers([]);
+    getMembersAndPermissions(treasuryDaoID).then((res) => {
+      setAllMembers(res);
+      setLoading(false);
+    });
+  }
+}, [refreshTable, refetch]);
+
+useEffect(() => {
+  if (allMembers.length > 0) {
+    setData(
+      allMembers.slice(
+        currentPage * rowsPerPage,
+        currentPage * rowsPerPage + rowsPerPage
+      )
+    );
+  }
+}, [currentPage, rowsPerPage, allMembers]);
+
+function toggleEditor() {
+  setShowEditor(!showEditor);
+  setSelectedMembers([]);
+}
+
+const hasCreatePermission = hasPermission(
+  treasuryDaoID,
+  context.accountId,
+  "policy",
+  "AddProposal"
+);
+
+function getImage(acc) {
+  return `https://i.near.social/magic/large/https://near.social/magic/img/account/${acc}`;
+}
 
 const Container = styled.div`
   font-size: 13px;
@@ -64,39 +116,16 @@ const Container = styled.div`
     font-size: 20px;
     font-weight: 600;
   }
+
+  .form-check-input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+  }
 `;
 
-const [rowsPerPage, setRowsPerPage] = useState(10);
-const [currentPage, setPage] = useState(0);
-const [data, setData] = useState([]);
-const [allMembers, setAllMembers] = useState([]);
-const [showEditor, setShowEditor] = useState(false);
-const [selectedMember, setSelectedMember] = useState(null);
-const [loading, setLoading] = useState(false);
-const [showDeleteModal, setShowDeleteModal] = useState(false);
-const [showToastStatus, setToastStatus] = useState(false);
-
-useEffect(() => {
-  setLoading(true);
-  if (typeof getMembersAndPermissions === "function") {
-    setAllMembers([]);
-    getMembersAndPermissions(treasuryDaoID).then((res) => {
-      setAllMembers(res);
-    });
-  }
-}, [refreshTable, refetch]);
-
-useEffect(() => {
-  if (allMembers.length > 0) {
-    setLoading(false);
-    setData(
-      allMembers.slice(
-        currentPage * rowsPerPage,
-        currentPage * rowsPerPage + rowsPerPage
-      )
-    );
-  }
-}, [currentPage, rowsPerPage, allMembers]);
+const Tag = styled.div`
+  border: 1px solid var(--border-color);
+`;
 
 const SubmitToast = () => {
   return (
@@ -112,9 +141,9 @@ const SubmitToast = () => {
           </div>
           <div className="toast-body">
             <div className="d-flex align-items-center gap-3">
-              <i class="bi bi-check2 h3 mb-0 success-icon"></i>
+              <i className="bi bi-check2 h3 mb-0 success-icon"></i>
               <div>
-                <div>New members policy request is submitted.</div>
+                <div>Your request has been submitted.</div>
                 <a
                   className="text-underline"
                   href={href({
@@ -136,14 +165,6 @@ const SubmitToast = () => {
   );
 };
 
-function getImage(acc) {
-  return `https://i.near.social/magic/large/https://near.social/magic/img/account/${acc}`;
-}
-
-const Tag = styled.div`
-  border: 1px solid var(--border-color);
-`;
-
 const Members = () => {
   return (
     <tbody style={{ overflowX: "auto" }}>
@@ -153,6 +174,24 @@ const Members = () => {
         const imageSrc = getImage(account);
         return (
           <tr key={index} className="fw-semi-bold">
+            <td>
+              <input
+                type="checkbox"
+                className="form-check-input"
+                role="switch"
+                disabled={isTxnCreated || showEditor || showDeleteModal}
+                checked={selectedRows.includes(account)}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setSelectedRows([...selectedRows, account]);
+                  } else {
+                    setSelectedRows(
+                      selectedRows.filter((id) => id !== account)
+                    );
+                  }
+                }}
+              />
+            </td>
             <td>
               <div className="d-flex gap-2 align-items-center">
                 <img
@@ -185,57 +224,20 @@ const Members = () => {
                 {(group.roles ?? []).map((i) => {
                   const description = getRolesDescription(i);
                   const tag = <Tag className="rounded-pill px-2 py-1">{i}</Tag>;
-                  if (!description) {
-                    return tag;
-                  } else {
-                    return (
-                      <Widget
-                        src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
-                        props={{
-                          popup: description,
-                          children: tag,
-                          instance,
-                        }}
-                      />
-                    );
-                  }
+                  if (!description) return tag;
+                  return (
+                    <Widget
+                      src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+                      props={{
+                        popup: description,
+                        children: tag,
+                        instance,
+                      }}
+                    />
+                  );
                 })}
               </div>
             </td>
-            {hasCreatePermission && (
-              <td className="text-right">
-                <div className="d-flex align-items-center gap-2 justify-content-end">
-                  <Widget
-                    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
-                    props={{
-                      ActionButton: () => (
-                        <i class="bi bi-pencil-square h4 mb-0 cursor-pointer"></i>
-                      ),
-                      checkForDeposit: true,
-                      treasuryDaoID,
-                      callbackAction: () => {
-                        setSelectedMember(group);
-                        setShowEditor(true);
-                      },
-                    }}
-                  />
-                  <Widget
-                    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
-                    props={{
-                      ActionButton: () => (
-                        <i class="bi bi-trash3 h4 mb-0 text-red cursor-pointer"></i>
-                      ),
-                      checkForDeposit: true,
-                      treasuryDaoID,
-                      callbackAction: () => {
-                        setSelectedMember(group);
-                        setShowDeleteModal(true);
-                      },
-                    }}
-                  />
-                </div>
-              </td>
-            )}
           </tr>
         );
       })}
@@ -243,59 +245,81 @@ const Members = () => {
   );
 };
 
-function toggleEditor() {
-  setShowEditor(!showEditor);
-  setSelectedMember(null);
+function getLastProposalId() {
+  return Near.asyncView(treasuryDaoID, "get_last_proposal_id").then(
+    (result) => result
+  );
 }
 
-const hasCreatePermission = hasPermission(
-  treasuryDaoID,
-  context.accountId,
-  "policy",
-  "AddProposal"
-);
+useEffect(() => {
+  getLastProposalId().then((r) => setLastProposalId(r));
+}, []);
+
+useEffect(() => {
+  if (isTxnCreated && typeof onRefresh === "function") {
+    let checkTxnTimeout = null;
+
+    const checkForNewProposal = () => {
+      getLastProposalId().then((id) => {
+        if (typeof lastProposalId === "number" && lastProposalId !== id) {
+          setLastProposalId(lastProposalId);
+          setToastStatus(true);
+          setTxnCreated(false);
+          clearTimeout(checkTxnTimeout);
+        } else {
+          checkTxnTimeout = setTimeout(() => checkForNewProposal(), 1000);
+        }
+      });
+    };
+
+    checkForNewProposal();
+    return () => clearTimeout(checkTxnTimeout);
+  }
+}, [isTxnCreated]);
 
 return (
   <Container className="d-flex flex-column">
     <SubmitToast />
-    <Widget
-      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.DeleteModalConfirmation`}
-      props={{
-        instance,
-        isOpen: showDeleteModal && selectedMember,
-        onCancelClick: () => setShowDeleteModal(false),
-        onConfirmClick: () => {
-          setShowDeleteModal(false);
-        },
-        setToastStatus,
-        updateLastProposalId: setLastProposalId,
-        username: selectedMember.member,
-        rolesMap:
-          selectedMember &&
-          new Map(selectedMember.roles.map((role) => [role, role])),
-        onRefresh: () => setRefetch(!refetch),
-      }}
+    <TransactionLoader
+      showInProgress={isTxnCreated}
+      cancelTxn={() => setTxnCreated(false)}
     />
+    {showDeleteModal && selectedMembers?.length && (
+      <Widget
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.DeleteModalConfirmation`}
+        props={{
+          instance,
+          isOpen: showDeleteModal && selectedMembers,
+          onCancelClick: () => setShowDeleteModal(false),
+          onConfirmClick: (proposal) => {
+            Near.call(proposal);
+            setTxnCreated(true);
+            setShowDeleteModal(false);
+          },
+          selectedMembers: selectedMembers,
+        }}
+      />
+    )}
     <Widget
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OffCanvas`}
       props={{
         showCanvas: showEditor,
         onClose: toggleEditor,
-        title: selectedMember ? "Edit Member" : "Add Member",
+        title: selectedMembers.length > 0 ? "Edit Members" : "Add Members",
         children: (
           <Widget
             src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.MembersEditor`}
             props={{
               instance,
-              refreshMembersTableData: () => {
-                setRefreshTable(refreshTable + 1);
-              },
+              refreshMembersTableData: () => setRefreshTable(refreshTable + 1),
               onCloseCanvas: toggleEditor,
               availableRoles: (roles ?? [])
                 .filter((i) => i !== "all")
                 .map((i) => ({ title: i, value: i })),
-              selectedMember: selectedMember,
               setToastStatus,
+              isEdit: selectedMembers.length,
+              selectedMembers: selectedMembers,
+              allMembers: allMembers,
             }}
           />
         ),
@@ -305,23 +329,54 @@ return (
     <div className="card rounded-4 py-3 d-flex flex-column flex-1 w-100">
       <div className="d-flex justify-content-between gap-2 align-items-center border-bottom px-3 pb-3">
         <div className="card-title mb-0">All Members</div>
-        {hasCreatePermission && (
-          <Widget
-            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
-            props={{
-              ActionButton: () => (
-                <button className="btn primary-button d-flex align-items-center gap-2">
-                  <i class="bi bi-plus-lg h5 mb-0"></i>Add Member
-                </button>
-              ),
-              checkForDeposit: true,
-              treasuryDaoID,
-              callbackAction: () => {
-                setShowEditor(true);
-              },
-            }}
-          />
-        )}
+        {hasCreatePermission &&
+          (selectedRows.length === 0 ? (
+            <Widget
+              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
+              props={{
+                ActionButton: () => (
+                  <button className="btn primary-button d-flex align-items-center gap-2">
+                    <i className="bi bi-plus-lg h5 mb-0"></i>Add Members
+                  </button>
+                ),
+                checkForDeposit: true,
+                treasuryDaoID,
+                callbackAction: () => setShowEditor(true),
+                disabled: showEditor || showDeleteModal || isTxnCreated,
+              }}
+            />
+          ) : (
+            <div className="d-flex gap-3">
+              <button
+                className="btn btn-outline-secondary d-flex gap-1 align-items-center"
+                disabled={showEditor || showDeleteModal || isTxnCreated}
+                onClick={() => {
+                  const members = allMembers.filter((m) =>
+                    selectedRows.includes(m.member)
+                  );
+                  setSelectedMembers(members);
+                  setShowEditor(true);
+                }}
+              >
+                <i className="bi bi-pencil" />
+                Edit
+              </button>
+              <button
+                className="btn btn-outline-danger d-flex gap-1 align-items-center"
+                disabled={showEditor || showDeleteModal || isTxnCreated}
+                onClick={() => {
+                  const members = allMembers.filter((m) =>
+                    selectedRows.includes(m.member)
+                  );
+                  setSelectedMembers(members);
+                  setShowDeleteModal(true);
+                }}
+              >
+                <i className="bi bi-trash3" />
+                Delete
+              </button>
+            </div>
+          ))}
       </div>
       {loading ? (
         <TableSkeleton
@@ -337,6 +392,24 @@ return (
           <table className="table">
             <thead>
               <tr className="text-secondary">
+                <td>
+                  <input
+                    type="checkbox"
+                    className="form-check-input"
+                    role="switch"
+                    disabled={isTxnCreated || showEditor || showDeleteModal}
+                    checked={
+                      selectedRows.length === data.length && data.length > 0
+                    }
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedRows(data.map((item) => item.member));
+                      } else {
+                        setSelectedRows([]);
+                      }
+                    }}
+                  />
+                </td>
                 <td>Name</td>
                 <td>User name</td>
                 <td>
@@ -346,7 +419,7 @@ return (
                     props={{
                       popup: (
                         <span>
-                          Refer to
+                          Refer to{" "}
                           <a
                             target="_blank"
                             rel="noopener noreferrer"
@@ -354,8 +427,8 @@ return (
                             href={"https://docs.neartreasury.com/permissions"}
                           >
                             Permission Group(s)
-                          </a>
-                          to learn more about each group can and cannot do.
+                          </a>{" "}
+                          to learn more about each group.
                         </span>
                       ),
                       children: (
@@ -365,7 +438,6 @@ return (
                     }}
                   />
                 </td>
-                {hasCreatePermission && <td className="text-right">Actions</td>}
               </tr>
             </thead>
             <Members />

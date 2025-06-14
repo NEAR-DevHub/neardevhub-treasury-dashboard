@@ -120,17 +120,11 @@ function onClose() {
 }
 
 function onSubmit(newData) {
-  let newMembers = [
-    ...members,
-    {
-      accountId: newData.accountId,
-      permissions: newData.permissions,
-    },
-  ];
-  newMembers = newMembers.filter(
-    (el, i) =>
-      newMembers.map((m) => m.accountId).lastIndexOf(el.accountId) === i
+  const merged = [...members, ...newData];
+  const newMembers = Array.from(
+    new Map(merged.map((item) => [item.accountId, item])).values()
   );
+
   setMembers(newMembers);
   setFields({});
   onClose();
@@ -153,12 +147,17 @@ return (
                 availableRoles: Object.values(PERMISSIONS).map((i) => {
                   return { title: i, value: i };
                 }),
-                selectedMember: fields.accountId
-                  ? {
-                      member: fields.accountId,
-                      roles: fields.permissions,
-                    }
-                  : null,
+                selectedMembers: fields.accountId
+                  ? [
+                      {
+                        member: fields.accountId,
+                        roles: fields.permissions,
+                      },
+                    ]
+                  : [],
+                allMembers: members?.map((i) => {
+                  return { member: i.accountId, roles: i.permissions };
+                }),
                 setToastStatus: () => {},
                 isTreasuryFactory: true,
                 onSubmit: onSubmit,
