@@ -469,7 +469,6 @@ test.describe("Intents Deposit UI", () => {
   }) => {
     test.setTimeout(20_000);
     await page.goto(`https://${instanceAccount}.page`);
-    await page.waitForLoadState("networkidle");
 
     // Open the deposit modal
     const totalBalanceCardLocator = page.locator(".card.card-body", {

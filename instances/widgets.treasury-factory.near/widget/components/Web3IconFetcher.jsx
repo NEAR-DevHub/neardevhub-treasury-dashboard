@@ -180,8 +180,17 @@ const handleIconResponse = (e) => {
         }
         console.log(`Added to cache: ${key}`, result);
       } else {
-        newCache[key] = "NOT_FOUND";
-        console.log(`No result found for ${key}, marking as NOT_FOUND`);
+        const ftMetadata = Near.view(
+          token.defuse_asset_id.substring("nep141:".length),
+          "ft_metadata",
+          {}
+        );
+        if (ftMetadata?.icon) {
+          newCache[token.symbol.toUpperCase()] = ftMetadata.icon;
+        } else {
+          newCache[key] = "NOT_FOUND";
+          console.log(`No result found for ${key}, marking as NOT_FOUND`);
+        }
       }
     }
 

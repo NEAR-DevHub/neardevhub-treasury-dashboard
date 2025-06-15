@@ -23,6 +23,7 @@ State.init({
   isLoadingAddress: false,
   errorApi: null,
   web3IconsCache: {},
+  tokenIconMap: {}, // Map for token icons
   allTokensForIcons: [], // All tokens (assets + networks) for one-time icon fetching
   allIconsFetched: false, // Track if all icons have been fetched
 });
@@ -36,44 +37,25 @@ const allTokens =
   [];
 
 const defuse_asset_id_to_chain_map = {};
-const iconMap = {};
+
 for (const token of allTokens) {
-  const ftMetadata = Near.view(
-    token.defuse_asset_id.substring("nep141:".length),
-    "ft_metadata",
-    {}
-  );
-  if (ftMetadata?.icon) {
-    iconMap[token.symbol.toUpperCase()] = ftMetadata.icon;
-  }
   defuse_asset_id_to_chain_map[token.defuse_asset_id] = token.blockchain;
 }
 
 // Callback when all icons are loaded from Web3Icons widget
 const handleAllIconsLoaded = (iconCache) => {
-  State.update({
-    web3IconsCache: Object.assign({}, state.web3IconsCache, iconCache),
-    allIconsFetched: true,
-  });
-};
-
-// Function to get enhanced icons with iconMap having precedence
-const getTokenIcon = (symbol) => {
-  // First check iconMap (from smart contracts) - this has precedence
-  const contractIcon = iconMap[symbol.toUpperCase()];
-  if (contractIcon) {
-    return contractIcon;
-  }
-
-  // Then check Web3Icons cache as fallback
-  if (state.web3IconsCache && state.web3IconsCache[symbol]) {
-    const cached = state.web3IconsCache[symbol];
-    if (cached !== "NOT_FOUND") {
-      return cached.tokenIcon || null;
+  const tokenIconMap = {};
+  Object.keys(iconCache).forEach((symbol) => {
+    const cached = iconCache[symbol];
+    if (cached !== "NOT_FOUND" && cached.tokenIcon) {
+      tokenIconMap[cached.symbol] = cached.tokenIcon;
     }
-  }
-
-  return null;
+    State.update({
+      tokenIconMap,
+      web3IconsCache: Object.assign({}, state.web3IconsCache, iconCache),
+      allIconsFetched: true,
+    });
+  });
 };
 
 const getNetworkIcon = (symbol, networkId) => {
@@ -378,11 +360,6 @@ const DynamicIntentsWarning = () => {
   return <></>;
 };
 
-// Enhanced icon mapping function with iconMap precedence
-const getIconForTokenWithRequest = (symbol) => {
-  return getTokenIcon(symbol);
-};
-
 return (
   <Modal props={{ minWidth: "700px" }}>
     {/* Single Web3IconFetcher for all icons - optimized to fetch all asset and network icons at once */}
@@ -537,7 +514,7 @@ return (
                 options: state.assetNamesForDropdown.map((assetName) => ({
                   value: assetName,
                   label: assetName,
-                  icon: getIconForTokenWithRequest(assetName), // Use enhanced icon function
+                  icon: state.tokenIconMap[assetName],
                 })),
                 defaultLabel: state.isLoadingTokens
                   ? "Loading assets..."
