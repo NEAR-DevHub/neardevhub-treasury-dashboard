@@ -23,7 +23,7 @@ State.init({
   isLoadingAddress: false,
   errorApi: null,
   web3IconsCache: {},
-  tokensNeedingIcons: [], // For asset icons 
+  tokensNeedingIcons: [], // For asset icons
   networkTokensNeedingIcons: [], // For network icons
 });
 
@@ -51,15 +51,27 @@ for (const token of allTokens) {
 
 // Callback when asset icons are loaded from Web3Icons widget
 const handleAssetIconsLoaded = (iconCache) => {
-  State.update({ web3IconsCache: Object.assign({}, state.web3IconsCache, iconCache) });
-  console.log("Asset icons loaded:", Object.keys(iconCache).length, "cached icons");
+  State.update({
+    web3IconsCache: Object.assign({}, state.web3IconsCache, iconCache),
+  });
+  console.log(
+    "Asset icons loaded:",
+    Object.keys(iconCache).length,
+    "cached icons"
+  );
 };
 
 // Callback when network icons are loaded from Web3Icons widget
 const handleNetworkIconsLoaded = (iconCache) => {
-  State.update({ web3IconsCache: Object.assign({}, state.web3IconsCache, iconCache) });
-  console.log("Network icons loaded:", Object.keys(iconCache).length, "cached icons");
-  
+  State.update({
+    web3IconsCache: Object.assign({}, state.web3IconsCache, iconCache),
+  });
+  console.log(
+    "Network icons loaded:",
+    Object.keys(iconCache).length,
+    "cached icons"
+  );
+
   // Re-build network options with updated icons if we have a selected asset
   if (state.selectedAssetName && !state.selectedNetworkFullInfo) {
     updateNetworksForAsset(state.selectedAssetName);
@@ -79,7 +91,7 @@ const getTokenIcon = (symbol) => {
 
 const getNetworkIcon = (symbol, networkId) => {
   if (!networkId) return null;
-  
+
   const key = `${symbol}:${networkId}`;
   if (state.web3IconsCache && state.web3IconsCache[key]) {
     const cached = state.web3IconsCache[key];
@@ -196,7 +208,7 @@ const updateNetworksForAsset = (assetName) => {
 
   // Build network tokens for enhanced icon fetching
   const networkTokensForIcons = [];
-  
+
   const networks = tokensOfSelectedAsset
     .map((token) => {
       if (!token.defuse_asset_identifier) return null;
@@ -211,11 +223,12 @@ const updateNetworksForAsset = (assetName) => {
 
       // The API for all tokens has the property  `defuse_asset_id` which is the same as `intents_token_id`
       const intents_token_id = token.intents_token_id;
-      const blockchainName = defuse_asset_id_to_chain_map[intents_token_id].toUpperCase();
+      const blockchainName =
+        defuse_asset_id_to_chain_map[intents_token_id].toUpperCase();
 
       // Add to network tokens for icon fetching (using the asset symbol with network ID)
       networkTokensForIcons.push({
-        symbol: assetName,  // Use the asset name as symbol
+        symbol: assetName, // Use the asset name as symbol
         networkId: chainId, // Use the chain ID for network matching
       });
 
@@ -361,7 +374,7 @@ return (
         fetchNetworkIcons: false,
       }}
     />
-    
+
     {/* Web3IconFetcher for network icons */}
     {state.networkTokensNeedingIcons.length > 0 && (
       <Widget

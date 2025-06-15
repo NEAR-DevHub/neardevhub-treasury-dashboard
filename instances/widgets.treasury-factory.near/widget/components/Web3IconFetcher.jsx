@@ -1,9 +1,9 @@
 /**
  * Web3IconFetcher Widget
- * 
+ *
  * Enhanced version that fetches both asset and network icons using @web3icons/common
  * for accurate metadata mapping and better icon coverage.
- * 
+ *
  * Props:
  * - tokens: array of token objects with {symbol, networkId} or just strings for symbols
  * - onIconsLoaded: callback function that receives the icon cache object
@@ -162,15 +162,15 @@ const handleIconResponse = (e) => {
   console.log("e.data:", e.data);
   console.log("e.handler:", e.handler);
   console.log("typeof e.data:", typeof e.data);
-  
+
   // Try both e.data.handler and e.handler (BOS might structure this differently)
   const handler = (e.data && e.data.handler) || e.handler;
   const results = (e.data && e.data.results) || e.results || {};
   const error = (e.data && e.data.error) || e.error;
-  
+
   console.log("Extracted handler:", handler);
   console.log("Extracted results:", results);
-  
+
   if (handler === "web3IconFetcherResponse") {
     console.log(
       "Enhanced Web3IconFetcher received response with",
@@ -183,15 +183,18 @@ const handleIconResponse = (e) => {
     // Build cache from results
     const newCache = Object.assign({}, state.iconCache);
     for (const token of state.tokensToFetch) {
-      const key = typeof token === 'object' ? `${token.symbol}:${token.networkId || 'default'}` : token;
+      const key =
+        typeof token === "object"
+          ? `${token.symbol}:${token.networkId || "default"}`
+          : token;
       const result = results[key];
-      
+
       console.log(`Processing token ${key}, found result:`, result);
-      
+
       if (result) {
         // Store both token and network icons
         newCache[key] = result;
-        
+
         // Also store simple symbol mapping for backward compatibility
         if (result.tokenIcon) {
           newCache[result.symbol] = result.tokenIcon;
@@ -220,22 +223,34 @@ const handleIconResponse = (e) => {
       console.error("Error in Enhanced Web3IconFetcher:", error);
     }
   } else {
-    console.log("handleIconResponse called but handler not web3IconFetcherResponse. Handler:", handler);
+    console.log(
+      "handleIconResponse called but handler not web3IconFetcherResponse. Handler:",
+      handler
+    );
   }
 };
 
 // Determine which tokens need fetching
 const getTokenKey = (token) => {
-  return typeof token === 'object' ? `${token.symbol}:${token.networkId || 'default'}` : token;
+  return typeof token === "object"
+    ? `${token.symbol}:${token.networkId || "default"}`
+    : token;
 };
 
-const uncachedTokens = tokens.filter(token => {
+const uncachedTokens = tokens.filter((token) => {
   const key = getTokenKey(token);
-  return !state.iconCache[key] && !state.tokensToFetch.find(t => getTokenKey(t) === key);
+  return (
+    !state.iconCache[key] &&
+    !state.tokensToFetch.find((t) => getTokenKey(t) === key)
+  );
 });
 
 // Start fetching if we have new tokens and haven't started yet
-if (uncachedTokens.length > 0 && !state.isLoading && !state.hasStartedFetching) {
+if (
+  uncachedTokens.length > 0 &&
+  !state.isLoading &&
+  !state.hasStartedFetching
+) {
   State.update({
     tokensToFetch: uncachedTokens,
     isLoading: true,
@@ -248,28 +263,32 @@ const getIconForToken = (tokenOrSymbol, networkId) => {
     networkId = null;
   }
   let key;
-  if (typeof tokenOrSymbol === 'object') {
-    key = `${tokenOrSymbol.symbol}:${tokenOrSymbol.networkId || 'default'}`;
+  if (typeof tokenOrSymbol === "object") {
+    key = `${tokenOrSymbol.symbol}:${tokenOrSymbol.networkId || "default"}`;
   } else if (networkId) {
     key = `${tokenOrSymbol}:${networkId}`;
   } else {
     key = tokenOrSymbol;
   }
-  
+
   const cached = state.iconCache[key];
   if (cached && cached !== "NOT_FOUND") {
     // Return token icon if it's the enhanced format, otherwise the cached value
     return cached.tokenIcon || cached;
   }
-  
+
   // Fallback to simple symbol lookup
-  const simpleCached = state.iconCache[typeof tokenOrSymbol === 'object' ? tokenOrSymbol.symbol : tokenOrSymbol];
+  const simpleCached =
+    state.iconCache[
+      typeof tokenOrSymbol === "object" ? tokenOrSymbol.symbol : tokenOrSymbol
+    ];
   if (simpleCached && simpleCached !== "NOT_FOUND") {
     return simpleCached.tokenIcon || simpleCached;
   }
 
   // Return fallback
-  const symbol = typeof tokenOrSymbol === 'object' ? tokenOrSymbol.symbol : tokenOrSymbol;
+  const symbol =
+    typeof tokenOrSymbol === "object" ? tokenOrSymbol.symbol : tokenOrSymbol;
   return fallbackIconMap[symbol.toUpperCase()] || null;
 };
 
@@ -278,29 +297,29 @@ const getNetworkIcon = (tokenOrSymbol, networkId) => {
     networkId = null;
   }
   let key;
-  if (typeof tokenOrSymbol === 'object') {
-    key = `${tokenOrSymbol.symbol}:${tokenOrSymbol.networkId || 'default'}`;
+  if (typeof tokenOrSymbol === "object") {
+    key = `${tokenOrSymbol.symbol}:${tokenOrSymbol.networkId || "default"}`;
   } else if (networkId) {
     key = `${tokenOrSymbol}:${networkId}`;
   } else {
     return null; // No network icon without networkId
   }
-  
+
   const cached = state.iconCache[key];
   if (cached && cached !== "NOT_FOUND" && cached.networkIcon) {
     return cached.networkIcon;
   }
-  
+
   return null;
 };
 
 // Expose enhanced API to parent via callback (backward compatible)
 if (props.onApiReady && typeof props.onApiReady === "function") {
-  props.onApiReady({ 
+  props.onApiReady({
     getIconForSymbol: getIconForToken, // Backward compatibility
-    getIconForToken, 
+    getIconForToken,
     getNetworkIcon,
-    cache: state.iconCache 
+    cache: state.iconCache,
   });
 }
 
@@ -311,7 +330,10 @@ return (
       <iframe
         srcDoc={generateEnhancedIconHTML()}
         style={{ display: "none" }}
-        message={{ tokens: state.tokensToFetch, fetchNetworkIcons: fetchNetworkIcons }}
+        message={{
+          tokens: state.tokensToFetch,
+          fetchNetworkIcons: fetchNetworkIcons,
+        }}
         onMessage={handleIconResponse}
       />
     )}
