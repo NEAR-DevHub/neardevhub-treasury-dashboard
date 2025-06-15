@@ -49,13 +49,19 @@ for (const token of allTokens) {
   defuse_asset_id_to_chain_map[token.defuse_asset_id] = token.blockchain;
 }
 
-// Callback when icons are loaded from Web3Icons widget
-const handleIconsLoaded = (iconCache) => {
-  State.update({ web3IconsCache: iconCache });
-  console.log("Web3Icons loaded:", Object.keys(iconCache).length, "cached icons");
+// Callback when asset icons are loaded from Web3Icons widget
+const handleAssetIconsLoaded = (iconCache) => {
+  State.update({ web3IconsCache: Object.assign({}, state.web3IconsCache, iconCache) });
+  console.log("Asset icons loaded:", Object.keys(iconCache).length, "cached icons");
+};
+
+// Callback when network icons are loaded from Web3Icons widget
+const handleNetworkIconsLoaded = (iconCache) => {
+  State.update({ web3IconsCache: Object.assign({}, state.web3IconsCache, iconCache) });
+  console.log("Network icons loaded:", Object.keys(iconCache).length, "cached icons");
   
   // Re-build network options with updated icons if we have a selected asset
-  if (state.selectedAssetName) {
+  if (state.selectedAssetName && !state.selectedNetworkFullInfo) {
     updateNetworksForAsset(state.selectedAssetName);
   }
 };
@@ -350,7 +356,7 @@ return (
       src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Web3IconFetcher"
       props={{
         tokens: state.tokensNeedingIcons,
-        onIconsLoaded: handleIconsLoaded,
+        onIconsLoaded: handleAssetIconsLoaded,
         fallbackIconMap: iconMap,
         fetchNetworkIcons: false,
       }}
@@ -362,7 +368,7 @@ return (
         src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Web3IconFetcher"
         props={{
           tokens: state.networkTokensNeedingIcons,
-          onIconsLoaded: handleIconsLoaded,
+          onIconsLoaded: handleNetworkIconsLoaded,
           fallbackIconMap: {},
           fetchNetworkIcons: true, // Enable network icon fetching
         }}
