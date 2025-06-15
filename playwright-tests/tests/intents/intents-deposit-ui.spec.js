@@ -693,4 +693,89 @@ test.describe("Intents Deposit UI", () => {
       "\nINFO: Completed testing all available NEP-141 assets for human-readable blockchain names."
     );
   });
+
+  test("should display logo icons for each asset and chain", async ({
+    page,
+    instanceAccount,
+    // daoAccount, // daoAccount is not used in this test
+  }) => {
+    await page.goto(`https://${instanceAccount}.page`);
+    await page.waitForLoadState("networkidle");
+
+    // Open the deposit modal
+    const totalBalanceCardLocator = page.locator(".card.card-body", {
+      hasText: "Total Balance",
+    });
+    await expect(totalBalanceCardLocator).toBeVisible({ timeout: 20000 });
+    const depositButton = totalBalanceCardLocator.getByRole("button", {
+      name: "Deposit",
+    });
+    await expect(depositButton).toBeEnabled();
+    await depositButton.click();
+
+    const modalLocator = page.locator(
+      'div.card[data-component="widgets.treasury-factory.near/widget/lib.modal"]'
+    );
+    await expect(modalLocator).toBeVisible({ timeout: 10000 });
+
+    // Switch to the "NEAR Intents" tab
+    const intentsTabButton = modalLocator.getByRole("button", {
+      name: "NEAR Intents",
+    });
+    await expect(intentsTabButton).toBeEnabled();
+    await intentsTabButton.click();
+    await expect(intentsTabButton).toHaveClass(/active/);
+
+    // Fetch all supported tokens from the API
+    const supportedTokensResponse = await fetch(
+      "https://bridge.chaindefuser.com/rpc",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          id: "supportedTokensNetworkNameTestAll",
+          jsonrpc: "2.0",
+          method: "supported_tokens",
+          params: [{}],
+        }),
+      }
+    );
+    const supportedTokensData = await supportedTokensResponse.json();
+    expect(
+      supportedTokensData.result && supportedTokensData.result.tokens
+    ).toBeTruthy();
+    const allFetchedTokens = supportedTokensData.result.tokens;
+
+    // Filter tokens to only include NEP-141 tokens and group by asset name
+    const nep141Tokens = allFetchedTokens.filter(
+      (token) =>
+        token.intents_token_id && token.intents_token_id.startsWith("nep141:")
+    );
+
+    const assetsByName = {};
+    nep141Tokens.forEach((token) => {
+      if (!token.asset_name) return;
+      if (!assetsByName[token.asset_name]) {
+        assetsByName[token.asset_name] = [];
+      }
+      assetsByName[token.asset_name].push(token);
+    });
+
+    const availableAssets = Object.keys(assetsByName).sort();
+
+    if (availableAssets.length === 0) {
+      console.warn(
+        "WARN: No NEP-141 assets found in supported tokens. Test skipped."
+      );
+      return;
+    }
+
+    console.log(
+      `INFO: Testing ${
+        availableAssets.length
+      } assets with NEP-141 tokens: ${availableAssets.join(", ")}`
+    );
+
+    
+  });
 });

@@ -23,7 +23,8 @@ State.init({
   isLoadingAddress: false,
   errorApi: null,
   web3IconsCache: {},
-  symbolsNeedingIcons: [],
+  tokensNeedingIcons: [], // For asset icons 
+  networkTokensNeedingIcons: [], // For network icons
 });
 
 const activeTab = state.activeTab;
@@ -43,7 +44,7 @@ for (const token of allTokens) {
     {}
   );
   if (ftMetadata?.icon) {
-    iconMap[token.symbol.toUpperCase()] = ftMetadata.icon;
+    //iconMap[token.symbol.toUpperCase()] = ftMetadata.icon;
   }
   defuse_asset_id_to_chain_map[token.defuse_asset_id] = token.blockchain;
 }
@@ -52,19 +53,35 @@ for (const token of allTokens) {
 const handleIconsLoaded = (iconCache) => {
   State.update({ web3IconsCache: iconCache });
   console.log("Web3Icons loaded:", Object.keys(iconCache).length, "cached icons");
+  
+  // Re-build network options with updated icons if we have a selected asset
+  if (state.selectedAssetName) {
+    updateNetworksForAsset(state.selectedAssetName);
+  }
 };
 
-// Function to get icon for a symbol with fallback
-const getIconForSymbol = (symbol) => {
-  // Check web3icons cache first
+// Function to get enhanced icons from cache
+const getTokenIcon = (symbol) => {
   if (state.web3IconsCache && state.web3IconsCache[symbol]) {
-    const cachedValue = state.web3IconsCache[symbol];
-    // Return null if it was previously not found, otherwise return the cached icon
-    return cachedValue === "NOT_FOUND" ? null : cachedValue;
+    const cached = state.web3IconsCache[symbol];
+    if (cached !== "NOT_FOUND") {
+      return cached.tokenIcon || cached;
+    }
   }
-
-  // Return fallback while waiting for batch response or if not cached
   return iconMap[symbol.toUpperCase()] || null;
+};
+
+const getNetworkIcon = (symbol, networkId) => {
+  if (!networkId) return null;
+  
+  const key = `${symbol}:${networkId}`;
+  if (state.web3IconsCache && state.web3IconsCache[key]) {
+    const cached = state.web3IconsCache[key];
+    if (cached !== "NOT_FOUND" && cached.networkIcon) {
+      return cached.networkIcon;
+    }
+  }
+  return null;
 };
 
 // Function to fetch tokens when switching to intents tab
@@ -132,7 +149,7 @@ const fetchIntentsTokens = () => {
             uniqueAssetNames.length === 0
               ? "No bridgeable assets found."
               : null,
-          symbolsNeedingIcons: uniqueAssetNames, // Set symbols for Web3IconFetcher
+          tokensNeedingIcons: uniqueAssetNames, // Still use simple symbols for asset dropdown
         });
       } else {
         State.update({
@@ -162,6 +179,7 @@ const updateNetworksForAsset = (assetName) => {
       networksForSelectedAssetDropdown: [],
       selectedNetworkFullInfo: null,
       intentsDepositAddress: "",
+      networkTokensNeedingIcons: [], // Clear network icons too
     });
     return;
   }
@@ -170,6 +188,9 @@ const updateNetworksForAsset = (assetName) => {
     (token) => token.asset_name === assetName
   );
 
+  // Build network tokens for enhanced icon fetching
+  const networkTokensForIcons = [];
+  
   const networks = tokensOfSelectedAsset
     .map((token) => {
       if (!token.defuse_asset_identifier) return null;
@@ -184,15 +205,18 @@ const updateNetworksForAsset = (assetName) => {
 
       // The API for all tokens has the property  `defuse_asset_id` which is the same as `intents_token_id`
       const intents_token_id = token.intents_token_id;
+      const blockchainName = defuse_asset_id_to_chain_map[intents_token_id].toUpperCase();
+
+      // Add to network tokens for icon fetching (using the asset symbol with network ID)
+      networkTokensForIcons.push({
+        symbol: assetName,  // Use the asset name as symbol
+        networkId: chainId, // Use the chain ID for network matching
+      });
 
       return {
         id: chainId, // This is the ID like "eth:1"
-        name: `${defuse_asset_id_to_chain_map[
-          intents_token_id
-        ].toUpperCase()} ( ${chainId} )`,
-        icon: getIconForSymbol(
-          defuse_asset_id_to_chain_map[intents_token_id].toUpperCase()
-        ),
+        name: `${blockchainName} ( ${chainId} )`,
+        icon: getNetworkIcon(assetName, chainId), // Use enhanced network icon lookup
         near_token_id: token.near_token_id,
         originalTokenData: token,
       };
@@ -203,6 +227,7 @@ const updateNetworksForAsset = (assetName) => {
     networksForSelectedAssetDropdown: networks,
     selectedNetworkFullInfo: null,
     intentsDepositAddress: "",
+    networkTokensNeedingIcons: networkTokensForIcons, // Trigger network icon fetching
   });
 };
 
@@ -315,20 +340,34 @@ const DynamicIntentsWarning = () => {
 
 // Enhanced icon mapping function with cache lookup
 const getIconForTokenWithRequest = (symbol) => {
-  return getIconForSymbol(symbol);
+  return getTokenIcon(symbol);
 };
 
 return (
   <Modal props={{ minWidth: "700px" }}>
-    {/* Web3IconFetcher Widget for batch icon loading */}
+    {/* Web3IconFetcher for asset icons */}
     <Widget
       src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Web3IconFetcher"
       props={{
-        symbols: state.symbolsNeedingIcons,
+        tokens: state.tokensNeedingIcons,
         onIconsLoaded: handleIconsLoaded,
         fallbackIconMap: iconMap,
+        fetchNetworkIcons: false,
       }}
     />
+    
+    {/* Web3IconFetcher for network icons */}
+    {state.networkTokensNeedingIcons.length > 0 && (
+      <Widget
+        src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Web3IconFetcher"
+        props={{
+          tokens: state.networkTokensNeedingIcons,
+          onIconsLoaded: handleIconsLoaded,
+          fallbackIconMap: {},
+          fetchNetworkIcons: true, // Enable network icon fetching
+        }}
+      />
+    )}
 
     <ModalHeader>
       <div className="d-flex align-items-center justify-content-between mb-2">
