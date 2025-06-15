@@ -2,7 +2,12 @@ const { Modal, ModalContent, ModalHeader, ModalFooter } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.modal"
 );
 
-if (!Modal || !ModalContent || !ModalHeader || !ModalFooter) {
+// Import web3icons service
+const { createWeb3IconsService } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.web3icons"
+);
+
+if (!Modal || !ModalContent || !ModalHeader || !ModalFooter || !createWeb3IconsService) {
   return <></>;
 }
 
@@ -10,65 +15,8 @@ if (!props.show) {
   return <></>;
 }
 
-// Function to generate iframe HTML for batch icon fetching
-const generateBatchIconHTML = (symbols) => {
-  const symbolsArray = JSON.stringify(symbols);
-  return `<!DOCTYPE html>
-<html>
-<head>
-  <script type="module">
-    import * as web3Icons from 'https://cdn.jsdelivr.net/npm/@web3icons/core@4/+esm';
-    
-    const symbols = ${symbolsArray};
-    console.log('Iframe loading for symbols:', symbols);
-    
-    const results = {};
-    
-    try {
-      for (const symbol of symbols) {
-        const normalizedSymbol = symbol.toUpperCase();
-        const possibleNames = [
-          \`TokenBranded\${normalizedSymbol}\`,
-          \`TokenMono\${normalizedSymbol}\`,
-          \`TokenBackground\${normalizedSymbol}\`
-        ];
-        
-        let iconData = null;
-        for (const exportName of possibleNames) {
-          if (web3Icons[exportName]) {
-            console.log('Found icon for', symbol, 'as', exportName);
-            const svgContent = web3Icons[exportName].default || web3Icons[exportName];
-            iconData = \`data:image/svg+xml;base64,\${btoa(svgContent)}\`;
-            break;
-          }
-        }
-        
-        results[symbol] = iconData;
-      }
-      
-      console.log('Sending batch response with', Object.keys(results).length, 'icons');
-      // Send all results back to parent
-      window.parent.postMessage({
-        handler: 'batchIconResponse',
-        results
-      }, '*');
-    } catch (error) {
-      console.error('Error in iframe:', error);
-      window.parent.postMessage({
-        handler: 'batchIconResponse',
-        results: {},
-        error: error.message
-      }, '*');
-    }
-  </script>
-</head>
-<body style="margin:0;padding:0;width:1px;height:1px;"></body>
-</html>`;
-};
-
 // Initialize state for the entire component
 State.init({
-  iconCache: {},
   activeTab: props.initialTab || "sputnik",
   allFetchedTokens: [],
   assetNamesForDropdown: [],
@@ -79,30 +27,11 @@ State.init({
   isLoadingTokens: false,
   isLoadingAddress: false,
   errorApi: null,
-  iconsFetched: false, // Track if icons have been fetched
-  symbolsToFetch: [], // Symbols that need icons
 });
 
 const activeTab = state.activeTab;
 const sputnikAddress = props.treasuryDaoID;
 const nearIntentsTargetAccountId = props.treasuryDaoID;
-
-// Enhanced icon mapping function
-const getIconForToken = (symbol) => {
-  // Check cache first
-  if (state.iconCache[symbol]) {
-    return state.iconCache[symbol];
-  }
-
-  // Request icon from iframe if service is ready
-  if (state.iconServiceReady) {
-    console.log(`Requesting icon for ${symbol} from iframe service`);
-    // Note: In BOS, we'll send messages via the iframe's message prop
-  }
-
-  // Fallback to original iconMap
-  return iconMap[symbol.toUpperCase()] || null;
-};
 
 const allTokens =
   fetch("https://api-mng-console.chaindefuser.com/api/tokens").body?.items ||
@@ -121,6 +50,16 @@ for (const token of allTokens) {
   }
   defuse_asset_id_to_chain_map[token.defuse_asset_id] = token.blockchain;
 }
+
+// Initialize web3icons service
+const web3IconsService = createWeb3IconsService({
+  fallbackIconMap: iconMap,
+  onIconsLoaded: (cache) => {
+    console.log("Web3Icons loaded:", Object.keys(cache).length, "cached icons");
+  },
+  state: state,
+  updateState: State.update,
+});
 
 // Function to fetch tokens when switching to intents tab
 const fetchIntentsTokens = () => {
@@ -189,11 +128,9 @@ const fetchIntentsTokens = () => {
               : null,
         });
 
-        // Collect all symbols for batch icon fetching
-        if (!state.iconsFetched && uniqueAssetNames.length > 0) {
-          State.update({
-            symbolsToFetch: uniqueAssetNames,
-          });
+        // Trigger batch icon fetching for all asset names
+        if (uniqueAssetNames.length > 0) {
+          web3IconsService.fetchIconsForSymbols(uniqueAssetNames);
         }
       } else {
         State.update({
@@ -251,10 +188,9 @@ const updateNetworksForAsset = (assetName) => {
         name: `${defuse_asset_id_to_chain_map[
           intents_token_id
         ].toUpperCase()} ( ${chainId} )`,
-        icon:
-          getIconForTokenWithRequest(
-            defuse_asset_id_to_chain_map[intents_token_id].toUpperCase()
-          ),
+        icon: web3IconsService.getIconForToken(
+          defuse_asset_id_to_chain_map[intents_token_id].toUpperCase()
+        ),
         near_token_id: token.near_token_id,
         originalTokenData: token,
       };
@@ -377,53 +313,13 @@ const DynamicIntentsWarning = () => {
 
 // Enhanced icon mapping function with cache lookup
 const getIconForTokenWithRequest = (symbol) => {
-  // Check cache first
-  if (state.iconCache[symbol]) {
-    const cachedValue = state.iconCache[symbol];
-    // Return null if it was previously not found, otherwise return the cached icon
-    return cachedValue === "NOT_FOUND" ? null : cachedValue;
-  }
-  
-  // Return fallback while waiting for batch response or if not cached
-  return iconMap[symbol.toUpperCase()] || null;
+  return web3IconsService.getIconForToken(symbol);
 };
 
 return (
   <Modal props={{ minWidth: "700px" }}>
-    {/* Hidden iframe for batch icon service - only render if we have symbols to fetch */}
-    {state.symbolsToFetch.length > 0 && !state.iconsFetched && (
-      <iframe
-        srcDoc={generateBatchIconHTML(state.symbolsToFetch)}
-        style={{ display: "none" }}
-        onMessage={(e) => {
-          if (e.handler === "batchIconResponse") {
-            const { results, error } = e;
-            console.log(
-              "Received batch icon response with",
-              Object.keys(results).length,
-              "icons"
-            );
-
-            // Build cache from results, marking missing icons as "NOT_FOUND"
-            const newCache = { ...state.iconCache };
-            for (const symbol of state.symbolsToFetch) {
-              newCache[symbol] = results[symbol] || "NOT_FOUND";
-            }
-
-            // Update cache and mark icons as fetched
-            State.update({
-              iconCache: newCache,
-              iconsFetched: true,
-              symbolsToFetch: [], // Clear the fetch list
-            });
-
-            if (error) {
-              console.error("Error in batch icon fetch:", error);
-            }
-          }
-        }}
-      />
-    )}
+    {/* Render web3icons iframe service */}
+    {web3IconsService.renderIconServiceIframe()}
 
     <ModalHeader>
       <div className="d-flex align-items-center justify-content-between mb-2">
