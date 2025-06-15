@@ -44,7 +44,7 @@ for (const token of allTokens) {
     {}
   );
   if (ftMetadata?.icon) {
-    //iconMap[token.symbol.toUpperCase()] = ftMetadata.icon;
+    iconMap[token.symbol.toUpperCase()] = ftMetadata.icon;
   }
   defuse_asset_id_to_chain_map[token.defuse_asset_id] = token.blockchain;
 }
@@ -67,15 +67,23 @@ const handleAllIconsLoaded = (iconCache) => {
   }
 };
 
-// Function to get enhanced icons from cache
+// Function to get enhanced icons with iconMap having precedence
 const getTokenIcon = (symbol) => {
+  // First check iconMap (from smart contracts) - this has precedence
+  const contractIcon = iconMap[symbol.toUpperCase()];
+  if (contractIcon) {
+    return contractIcon;
+  }
+  
+  // Then check Web3Icons cache as fallback
   if (state.web3IconsCache && state.web3IconsCache[symbol]) {
     const cached = state.web3IconsCache[symbol];
     if (cached !== "NOT_FOUND") {
       return cached.tokenIcon || cached;
     }
   }
-  return iconMap[symbol.toUpperCase()] || null;
+  
+  return null;
 };
 
 const getNetworkIcon = (symbol, networkId) => {
@@ -376,7 +384,7 @@ const DynamicIntentsWarning = () => {
   return <></>;
 };
 
-// Enhanced icon mapping function with cache lookup
+// Enhanced icon mapping function with iconMap precedence
 const getIconForTokenWithRequest = (symbol) => {
   return getTokenIcon(symbol);
 };
@@ -390,7 +398,6 @@ return (
         props={{
           tokens: state.allTokensForIcons,
           onIconsLoaded: handleAllIconsLoaded,
-          fallbackIconMap: iconMap,
           fetchNetworkIcons: true, // Enable both asset and network icon fetching
         }}
       />

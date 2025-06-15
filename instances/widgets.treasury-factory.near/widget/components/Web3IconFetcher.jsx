@@ -7,7 +7,6 @@
  * Props:
  * - tokens: array of token objects with {symbol, networkId} or just strings for symbols
  * - onIconsLoaded: callback function that receives the icon cache object
- * - fallbackIconMap: optional fallback icons to use while loading
  * - fetchNetworkIcons: boolean to enable network icon fetching (default: false)
  */
 
@@ -21,7 +20,6 @@ State.init({
 
 const tokens = props.tokens || props.symbols || []; // Support both new and legacy prop names
 const onIconsLoaded = props.onIconsLoaded || (() => {});
-const fallbackIconMap = props.fallbackIconMap || {};
 const fetchNetworkIcons = props.fetchNetworkIcons || false;
 
 // Function to generate iframe HTML for enhanced icon fetching
@@ -267,10 +265,8 @@ const getIconForToken = (tokenOrSymbol, networkId) => {
     return simpleCached.tokenIcon || simpleCached;
   }
 
-  // Return fallback
-  const symbol =
-    typeof tokenOrSymbol === "object" ? tokenOrSymbol.symbol : tokenOrSymbol;
-  return fallbackIconMap[symbol.toUpperCase()] || null;
+  // Return fallback as null since external fallback handling is preferred
+  return null;
 };
 
 const getNetworkIcon = (tokenOrSymbol, networkId) => {
