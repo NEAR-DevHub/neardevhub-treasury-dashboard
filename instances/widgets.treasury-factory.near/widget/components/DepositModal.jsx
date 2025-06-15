@@ -2,12 +2,7 @@ const { Modal, ModalContent, ModalHeader, ModalFooter } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.modal"
 );
 
-// Import web3icons service
-const { createWeb3IconsService } = VM.require(
-  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.web3icons"
-);
-
-if (!Modal || !ModalContent || !ModalHeader || !ModalFooter || !createWeb3IconsService) {
+if (!Modal || !ModalContent || !ModalHeader || !ModalFooter) {
   return <></>;
 }
 
@@ -27,6 +22,8 @@ State.init({
   isLoadingTokens: false,
   isLoadingAddress: false,
   errorApi: null,
+  web3IconsCache: {},
+  symbolsNeedingIcons: [],
 });
 
 const activeTab = state.activeTab;
@@ -51,15 +48,24 @@ for (const token of allTokens) {
   defuse_asset_id_to_chain_map[token.defuse_asset_id] = token.blockchain;
 }
 
-// Initialize web3icons service
-const web3IconsService = createWeb3IconsService({
-  fallbackIconMap: iconMap,
-  onIconsLoaded: (cache) => {
-    console.log("Web3Icons loaded:", Object.keys(cache).length, "cached icons");
-  },
-  state: state,
-  updateState: State.update,
-});
+// Callback when icons are loaded from Web3Icons widget
+const handleIconsLoaded = (iconCache) => {
+  State.update({ web3IconsCache: iconCache });
+  console.log("Web3Icons loaded:", Object.keys(iconCache).length, "cached icons");
+};
+
+// Function to get icon for a symbol with fallback
+const getIconForSymbol = (symbol) => {
+  // Check web3icons cache first
+  if (state.web3IconsCache && state.web3IconsCache[symbol]) {
+    const cachedValue = state.web3IconsCache[symbol];
+    // Return null if it was previously not found, otherwise return the cached icon
+    return cachedValue === "NOT_FOUND" ? null : cachedValue;
+  }
+
+  // Return fallback while waiting for batch response or if not cached
+  return iconMap[symbol.toUpperCase()] || null;
+};
 
 // Function to fetch tokens when switching to intents tab
 const fetchIntentsTokens = () => {
@@ -126,12 +132,8 @@ const fetchIntentsTokens = () => {
             uniqueAssetNames.length === 0
               ? "No bridgeable assets found."
               : null,
+          symbolsNeedingIcons: uniqueAssetNames, // Set symbols for Web3IconFetcher
         });
-
-        // Trigger batch icon fetching for all asset names
-        if (uniqueAssetNames.length > 0) {
-          web3IconsService.fetchIconsForSymbols(uniqueAssetNames);
-        }
       } else {
         State.update({
           errorApi: "No bridgeable assets found or unexpected API response.",
@@ -188,7 +190,7 @@ const updateNetworksForAsset = (assetName) => {
         name: `${defuse_asset_id_to_chain_map[
           intents_token_id
         ].toUpperCase()} ( ${chainId} )`,
-        icon: web3IconsService.getIconForToken(
+        icon: getIconForSymbol(
           defuse_asset_id_to_chain_map[intents_token_id].toUpperCase()
         ),
         near_token_id: token.near_token_id,
@@ -313,13 +315,20 @@ const DynamicIntentsWarning = () => {
 
 // Enhanced icon mapping function with cache lookup
 const getIconForTokenWithRequest = (symbol) => {
-  return web3IconsService.getIconForToken(symbol);
+  return getIconForSymbol(symbol);
 };
 
 return (
   <Modal props={{ minWidth: "700px" }}>
-    {/* Render web3icons iframe service */}
-    {web3IconsService.renderIconServiceIframe()}
+    {/* Web3IconFetcher Widget for batch icon loading */}
+    <Widget
+      src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Web3IconFetcher"
+      props={{
+        symbols: state.symbolsNeedingIcons,
+        onIconsLoaded: handleIconsLoaded,
+        fallbackIconMap: iconMap,
+      }}
+    />
 
     <ModalHeader>
       <div className="d-flex align-items-center justify-content-between mb-2">
