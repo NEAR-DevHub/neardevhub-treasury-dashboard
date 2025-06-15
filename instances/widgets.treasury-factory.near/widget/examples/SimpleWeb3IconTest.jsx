@@ -1,5 +1,5 @@
 /**
- * Simple single Web3IconFetcher test to debug the cache issue
+ * Example of using a single Web3IconFetcher instance to fetch icons for a list of assets.
  */
 
 State.init({
