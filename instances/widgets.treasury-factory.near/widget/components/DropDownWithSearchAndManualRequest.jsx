@@ -133,10 +133,9 @@ return (
           }`}
           onClick={toggleDropdown}
         >
-          {selectedOption.icon && (<img
-            className="dropdown-icon"
-            src={selectedOption.icon}
-          />)}
+          {selectedOption.icon && (
+            <img className="dropdown-icon" src={selectedOption.icon} />
+          )}
           {selectedOption.label ?? defaultLabel}
         </div>
       </div>
@@ -177,10 +176,7 @@ return (
                   onClick={() => handleOptionClick(option)}
                 >
                   {option.icon && (
-                    <img
-                      className="dropdown-icon"
-                      src={option.icon}
-                    />
+                    <img className="dropdown-icon" src={option.icon} />
                   )}
                   {option.label}
                 </div>

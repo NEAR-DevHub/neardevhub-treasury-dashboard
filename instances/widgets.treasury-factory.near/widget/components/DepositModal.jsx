@@ -74,7 +74,7 @@ const getTokenIcon = (symbol) => {
   if (contractIcon) {
     return contractIcon;
   }
-  
+
   // Then check Web3Icons cache as fallback
   if (state.web3IconsCache && state.web3IconsCache[symbol]) {
     const cached = state.web3IconsCache[symbol];
@@ -82,7 +82,7 @@ const getTokenIcon = (symbol) => {
       return cached.tokenIcon || null;
     }
   }
-  
+
   return null;
 };
 
