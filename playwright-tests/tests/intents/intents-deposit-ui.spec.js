@@ -277,13 +277,13 @@ test.describe("Intents Deposit UI", () => {
   }) => {
     test.setTimeout(120_000);
     await page.goto(`https://${instanceAccount}.page`);
-    await page.waitForLoadState("networkidle");
 
     // Open the deposit modal
     const totalBalanceCardLocator = page.locator(".card.card-body", {
       hasText: "Total Balance",
     });
     await expect(totalBalanceCardLocator).toBeVisible({ timeout: 20000 });
+
     const depositButton = totalBalanceCardLocator.getByRole("button", {
       name: "Deposit",
     });
@@ -293,7 +293,7 @@ test.describe("Intents Deposit UI", () => {
     const modalLocator = page.locator(
       'div.card[data-component="widgets.treasury-factory.near/widget/lib.modal"]'
     );
-    await expect(modalLocator).toBeVisible({ timeout: 10000 });
+    await expect(modalLocator).toBeVisible();
 
     // Switch to the "NEAR Intents" tab
     const intentsTabButton = modalLocator.getByRole("button", {
@@ -342,12 +342,13 @@ test.describe("Intents Deposit UI", () => {
         await expect(assetDropdownSelector).toHaveText("Select an asset");
       }
       await assetDropdownSelector.click();
+
       // Use a strict locator for the asset dropdown item to avoid partial matches (e.g., BTC vs wBTC)
-      await assetDropdownSelector
-        .locator("div.dropdown-item", {
-          hasText: new RegExp(`\\s+${assetName}\\s+`),
-        })
-        .click();
+      const assetLocator = assetDropdownSelector.locator("div.dropdown-item", {
+        hasText: new RegExp(`\\s+${assetName}\\s+`),
+      });
+
+      await assetLocator.click();
 
       const tokensOfSelectedAsset = allFetchedTokens.filter(
         (token) => token.asset_name === assetName
@@ -394,6 +395,10 @@ test.describe("Intents Deposit UI", () => {
         );
         await expect(qrCodeIframe).toBeVisible();
         await qrCodeIframe.scrollIntoViewIfNeeded();
+        await expect(
+          qrCodeIframe.contentFrame().locator("path").first()
+        ).toBeVisible();
+
         // Take a screenshot of the QR code and decode it
         const qrCodeImageBuffer = await qrCodeIframe.screenshot();
         const image = await Jimp.read(qrCodeImageBuffer);

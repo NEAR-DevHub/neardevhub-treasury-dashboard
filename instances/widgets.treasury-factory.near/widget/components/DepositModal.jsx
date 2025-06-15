@@ -55,16 +55,6 @@ const handleAllIconsLoaded = (iconCache) => {
     web3IconsCache: Object.assign({}, state.web3IconsCache, iconCache),
     allIconsFetched: true,
   });
-  console.log(
-    "All icons loaded:",
-    Object.keys(iconCache).length,
-    "cached icons"
-  );
-
-  // Re-build network options with updated icons if we have a selected asset
-  if (state.selectedAssetName) {
-    updateNetworksForAsset(state.selectedAssetName);
-  }
 };
 
 // Function to get enhanced icons with iconMap having precedence
@@ -113,6 +103,10 @@ const fetchIntentsTokens = () => {
       allTokensForIcons: [],
       allIconsFetched: false,
     });
+    return;
+  }
+
+  if (state.isLoadingTokens || state.allFetchedTokens.length > 0) {
     return;
   }
 
