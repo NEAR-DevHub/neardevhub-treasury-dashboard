@@ -52,26 +52,7 @@ const generateEnhancedIconHTML = () => {
       const results = {};
       
       try {
-        // Get supported tokens from bridge API for better matching
-        let supportedTokens = null;
-        try {
-        const response = await fetch("https://bridge.chaindefuser.com/rpc", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({
-            jsonrpc: "2.0",
-            id: "web3icons-fetch",
-            method: "supported_tokens",
-            params: [{}],
-          }),
-        });
-        const data = await response.json();
-        supportedTokens = data.result ? data.result.tokens : null;
-      } catch (e) {
-        console.warn('Could not fetch supported tokens for enhanced matching:', e);
-      }
-      
-      for (const tokenInput of tokens) {
+        for (const tokenInput of tokens) {
         // Handle both string symbols and token objects
         const isTokenObject = typeof tokenInput === 'object';
         const symbol = isTokenObject ? tokenInput.symbol : tokenInput;
