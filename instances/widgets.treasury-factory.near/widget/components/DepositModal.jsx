@@ -23,9 +23,8 @@ State.init({
   isLoadingAddress: false,
   errorApi: null,
   web3IconsCache: {},
-  tokensNeedingIcons: [], // For asset icons
-  allNetworkTokensForIcons: [], // All network tokens for one-time icon fetching
-  networkIconsFetched: false, // Track if network icons have been fetched
+  allTokensForIcons: [], // All tokens (assets + networks) for one-time icon fetching
+  allIconsFetched: false, // Track if all icons have been fetched
 });
 
 const activeTab = state.activeTab;
@@ -50,26 +49,14 @@ for (const token of allTokens) {
   defuse_asset_id_to_chain_map[token.defuse_asset_id] = token.blockchain;
 }
 
-// Callback when asset icons are loaded from Web3Icons widget
-const handleAssetIconsLoaded = (iconCache) => {
+// Callback when all icons are loaded from Web3Icons widget
+const handleAllIconsLoaded = (iconCache) => {
   State.update({
     web3IconsCache: Object.assign({}, state.web3IconsCache, iconCache),
+    allIconsFetched: true,
   });
   console.log(
-    "Asset icons loaded:",
-    Object.keys(iconCache).length,
-    "cached icons"
-  );
-};
-
-// Callback when network icons are loaded from Web3Icons widget
-const handleNetworkIconsLoaded = (iconCache) => {
-  State.update({
-    web3IconsCache: Object.assign({}, state.web3IconsCache, iconCache),
-    networkIconsFetched: true,
-  });
-  console.log(
-    "Network icons loaded:",
+    "All icons loaded:",
     Object.keys(iconCache).length,
     "cached icons"
   );
@@ -115,10 +102,8 @@ const fetchIntentsTokens = () => {
       selectedNetworkFullInfo: null,
       intentsDepositAddress: "",
       errorApi: null,
-      allNetworkTokensForIcons: [],
-      networkIconsFetched: false,
-      allNetworkTokensForIcons: [],
-      networkIconsFetched: false,
+      allTokensForIcons: [],
+      allIconsFetched: false,
     });
     return;
   }
@@ -166,10 +151,22 @@ const fetchIntentsTokens = () => {
           .filter((name) => name) // Ensure name is not null or empty
           .sort();
 
-        // Collect all unique network tokens for icon fetching
-        const allNetworkTokensForIcons = [];
+        // Collect all tokens for one-time icon fetching optimization
+        // This includes both simple asset names and network-specific tokens
+        // to avoid individual Web3IconFetcher calls when dropdowns are populated
+        const allTokensForIcons = [];
+        const seenAssetNames = new Set();
         const seenNetworkKeys = new Set();
 
+        // First, collect unique asset names for simple asset icon fetching
+        uniqueAssetNames.forEach((assetName) => {
+          if (!seenAssetNames.has(assetName)) {
+            seenAssetNames.add(assetName);
+            allTokensForIcons.push(assetName); // Simple string for asset icons
+          }
+        });
+
+        // Then, collect network-specific tokens for network icon fetching
         data.result.tokens.forEach((token) => {
           if (!token.defuse_asset_identifier || !token.asset_name) return;
 
@@ -184,7 +181,7 @@ const fetchIntentsTokens = () => {
           const networkKey = `${token.asset_name}:${chainId}`;
           if (!seenNetworkKeys.has(networkKey)) {
             seenNetworkKeys.add(networkKey);
-            allNetworkTokensForIcons.push({
+            allTokensForIcons.push({
               symbol: token.asset_name,
               networkId: chainId,
             });
@@ -198,15 +195,14 @@ const fetchIntentsTokens = () => {
             uniqueAssetNames.length === 0
               ? "No bridgeable assets found."
               : null,
-          tokensNeedingIcons: uniqueAssetNames, // Still use simple symbols for asset dropdown
-          allNetworkTokensForIcons: allNetworkTokensForIcons, // All network tokens for one-time fetching
+          allTokensForIcons: allTokensForIcons, // All tokens for one-time fetching
         });
       } else {
         State.update({
           errorApi: "No bridgeable assets found or unexpected API response.",
           allFetchedTokens: [],
           assetNamesForDropdown: [],
-          allNetworkTokensForIcons: [],
+          allTokensForIcons: [],
         });
       }
     })
@@ -216,7 +212,7 @@ const fetchIntentsTokens = () => {
         errorApi: err.message || "Failed to fetch assets. Please try again.",
         allFetchedTokens: [],
         assetNamesForDropdown: [],
-        allNetworkTokensForIcons: [],
+        allTokensForIcons: [],
       });
     })
     .finally(() => {
@@ -387,30 +383,18 @@ const getIconForTokenWithRequest = (symbol) => {
 
 return (
   <Modal props={{ minWidth: "700px" }}>
-    {/* Web3IconFetcher for asset icons */}
-    <Widget
-      src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Web3IconFetcher"
-      props={{
-        tokens: state.tokensNeedingIcons,
-        onIconsLoaded: handleAssetIconsLoaded,
-        fallbackIconMap: iconMap,
-        fetchNetworkIcons: false,
-      }}
-    />
-
-    {/* Web3IconFetcher for network icons */}
-    {state.allNetworkTokensForIcons.length > 0 &&
-      !state.networkIconsFetched && (
-        <Widget
-          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Web3IconFetcher"
-          props={{
-            tokens: state.allNetworkTokensForIcons,
-            onIconsLoaded: handleNetworkIconsLoaded,
-            fallbackIconMap: {},
-            fetchNetworkIcons: true, // Enable network icon fetching
-          }}
-        />
-      )}
+    {/* Single Web3IconFetcher for all icons - optimized to fetch all asset and network icons at once */}
+    {state.allTokensForIcons.length > 0 && !state.allIconsFetched && (
+      <Widget
+        src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Web3IconFetcher"
+        props={{
+          tokens: state.allTokensForIcons,
+          onIconsLoaded: handleAllIconsLoaded,
+          fallbackIconMap: iconMap,
+          fetchNetworkIcons: true, // Enable both asset and network icon fetching
+        }}
+      />
+    )}
 
     <ModalHeader>
       <div className="d-flex align-items-center justify-content-between mb-2">
