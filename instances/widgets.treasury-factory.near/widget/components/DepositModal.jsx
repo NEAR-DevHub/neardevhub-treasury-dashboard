@@ -24,7 +24,8 @@ State.init({
   errorApi: null,
   web3IconsCache: {},
   tokensNeedingIcons: [], // For asset icons
-  networkTokensNeedingIcons: [], // For network icons
+  allNetworkTokensForIcons: [], // All network tokens for one-time icon fetching
+  networkIconsFetched: false, // Track if network icons have been fetched
 });
 
 const activeTab = state.activeTab;
@@ -65,6 +66,7 @@ const handleAssetIconsLoaded = (iconCache) => {
 const handleNetworkIconsLoaded = (iconCache) => {
   State.update({
     web3IconsCache: Object.assign({}, state.web3IconsCache, iconCache),
+    networkIconsFetched: true,
   });
   console.log(
     "Network icons loaded:",
@@ -73,7 +75,7 @@ const handleNetworkIconsLoaded = (iconCache) => {
   );
 
   // Re-build network options with updated icons if we have a selected asset
-  if (state.selectedAssetName && !state.selectedNetworkFullInfo) {
+  if (state.selectedAssetName) {
     updateNetworksForAsset(state.selectedAssetName);
   }
 };
@@ -113,6 +115,10 @@ const fetchIntentsTokens = () => {
       selectedNetworkFullInfo: null,
       intentsDepositAddress: "",
       errorApi: null,
+      allNetworkTokensForIcons: [],
+      networkIconsFetched: false,
+      allNetworkTokensForIcons: [],
+      networkIconsFetched: false,
     });
     return;
   }
@@ -160,6 +166,31 @@ const fetchIntentsTokens = () => {
           .filter((name) => name) // Ensure name is not null or empty
           .sort();
 
+        // Collect all unique network tokens for icon fetching
+        const allNetworkTokensForIcons = [];
+        const seenNetworkKeys = new Set();
+
+        data.result.tokens.forEach((token) => {
+          if (!token.defuse_asset_identifier || !token.asset_name) return;
+
+          const parts = token.defuse_asset_identifier.split(":");
+          let chainId;
+          if (parts.length >= 2) {
+            chainId = parts.slice(0, 2).join(":");
+          } else {
+            chainId = parts[0];
+          }
+
+          const networkKey = `${token.asset_name}:${chainId}`;
+          if (!seenNetworkKeys.has(networkKey)) {
+            seenNetworkKeys.add(networkKey);
+            allNetworkTokensForIcons.push({
+              symbol: token.asset_name,
+              networkId: chainId,
+            });
+          }
+        });
+
         State.update({
           allFetchedTokens: filteredTokens,
           assetNamesForDropdown: uniqueAssetNames,
@@ -168,12 +199,14 @@ const fetchIntentsTokens = () => {
               ? "No bridgeable assets found."
               : null,
           tokensNeedingIcons: uniqueAssetNames, // Still use simple symbols for asset dropdown
+          allNetworkTokensForIcons: allNetworkTokensForIcons, // All network tokens for one-time fetching
         });
       } else {
         State.update({
           errorApi: "No bridgeable assets found or unexpected API response.",
           allFetchedTokens: [],
           assetNamesForDropdown: [],
+          allNetworkTokensForIcons: [],
         });
       }
     })
@@ -183,6 +216,7 @@ const fetchIntentsTokens = () => {
         errorApi: err.message || "Failed to fetch assets. Please try again.",
         allFetchedTokens: [],
         assetNamesForDropdown: [],
+        allNetworkTokensForIcons: [],
       });
     })
     .finally(() => {
@@ -197,7 +231,6 @@ const updateNetworksForAsset = (assetName) => {
       networksForSelectedAssetDropdown: [],
       selectedNetworkFullInfo: null,
       intentsDepositAddress: "",
-      networkTokensNeedingIcons: [], // Clear network icons too
     });
     return;
   }
@@ -205,9 +238,6 @@ const updateNetworksForAsset = (assetName) => {
   const tokensOfSelectedAsset = state.allFetchedTokens.filter(
     (token) => token.asset_name === assetName
   );
-
-  // Build network tokens for enhanced icon fetching
-  const networkTokensForIcons = [];
 
   const networks = tokensOfSelectedAsset
     .map((token) => {
@@ -226,12 +256,6 @@ const updateNetworksForAsset = (assetName) => {
       const blockchainName =
         defuse_asset_id_to_chain_map[intents_token_id].toUpperCase();
 
-      // Add to network tokens for icon fetching (using the asset symbol with network ID)
-      networkTokensForIcons.push({
-        symbol: assetName, // Use the asset name as symbol
-        networkId: chainId, // Use the chain ID for network matching
-      });
-
       return {
         id: chainId, // This is the ID like "eth:1"
         name: `${blockchainName} ( ${chainId} )`,
@@ -246,7 +270,6 @@ const updateNetworksForAsset = (assetName) => {
     networksForSelectedAssetDropdown: networks,
     selectedNetworkFullInfo: null,
     intentsDepositAddress: "",
-    networkTokensNeedingIcons: networkTokensForIcons, // Trigger network icon fetching
   });
 };
 
@@ -376,17 +399,18 @@ return (
     />
 
     {/* Web3IconFetcher for network icons */}
-    {state.networkTokensNeedingIcons.length > 0 && (
-      <Widget
-        src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Web3IconFetcher"
-        props={{
-          tokens: state.networkTokensNeedingIcons,
-          onIconsLoaded: handleNetworkIconsLoaded,
-          fallbackIconMap: {},
-          fetchNetworkIcons: true, // Enable network icon fetching
-        }}
-      />
-    )}
+    {state.allNetworkTokensForIcons.length > 0 &&
+      !state.networkIconsFetched && (
+        <Widget
+          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Web3IconFetcher"
+          props={{
+            tokens: state.allNetworkTokensForIcons,
+            onIconsLoaded: handleNetworkIconsLoaded,
+            fallbackIconMap: {},
+            fetchNetworkIcons: true, // Enable network icon fetching
+          }}
+        />
+      )}
 
     <ModalHeader>
       <div className="d-flex align-items-center justify-content-between mb-2">
