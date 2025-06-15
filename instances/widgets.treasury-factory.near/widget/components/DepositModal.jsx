@@ -79,7 +79,7 @@ const getTokenIcon = (symbol) => {
   if (state.web3IconsCache && state.web3IconsCache[symbol]) {
     const cached = state.web3IconsCache[symbol];
     if (cached !== "NOT_FOUND") {
-      return cached.tokenIcon || cached;
+      return cached.tokenIcon || null;
     }
   }
   

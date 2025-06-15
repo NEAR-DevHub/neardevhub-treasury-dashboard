@@ -133,11 +133,10 @@ return (
           }`}
           onClick={toggleDropdown}
         >
-          <img
+          {selectedOption.icon && (<img
             className="dropdown-icon"
             src={selectedOption.icon}
-            alt={`${selectedOption.label} icon`}
-          />
+          />)}
           {selectedOption.label ?? defaultLabel}
         </div>
       </div>
@@ -181,7 +180,6 @@ return (
                     <img
                       className="dropdown-icon"
                       src={option.icon}
-                      alt={`${option.label} icon`}
                     />
                   )}
                   {option.label}
