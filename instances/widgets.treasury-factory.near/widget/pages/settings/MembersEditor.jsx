@@ -191,6 +191,7 @@ function updateDaoPolicy(membersList) {
 }
 
 function onSubmitClick(list) {
+  list = list || updatedList;
   if (isTreasuryFactory) {
     props.onSubmit(
       list.map((member) => ({

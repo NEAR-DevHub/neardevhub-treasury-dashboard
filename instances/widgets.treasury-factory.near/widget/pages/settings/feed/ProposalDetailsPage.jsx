@@ -233,18 +233,6 @@ function pluralize(count, singular) {
   }
 }
 
-const RolePill = ({ role }) => (
-  <div
-    className="d-flex gap-2 align-items-center rounded-pill px-2 py-1 mb-0"
-    style={{
-      width: "max-content",
-      border: "1px solid var(--border-color)",
-    }}
-  >
-    {role}
-  </div>
-);
-
 const RoleChangeCard = ({ member, type, oldRoles, newRoles, instance }) => {
   return (
     <div className="profile-header">

@@ -31,7 +31,6 @@ if (
 
 const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 
-const [refetch, setRefetch] = useState(false);
 const policyApproverGroup = getPolicyApproverGroup(treasuryDaoID);
 const roles = getDaoRoles(treasuryDaoID);
 const [lastProposalId, setLastProposalId] = useState(null);
@@ -57,7 +56,7 @@ useEffect(() => {
       setLoading(false);
     });
   }
-}, [refetch]);
+}, []);
 
 useEffect(() => {
   if (allMembers.length > 0) {
