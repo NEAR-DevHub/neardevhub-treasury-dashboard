@@ -794,6 +794,10 @@ test.describe("Intents Deposit UI", () => {
     await assetDropdown.click();
     await expect(assetDropdown.locator(".dropdown-icon").first()).toBeVisible();
 
+    for (const icon of await assetDropdown.locator(".dropdown-icon").all()) {
+      await icon.scrollIntoViewIfNeeded();
+      await page.waitForTimeout(20);
+    }
     const assetName = "USDC";
     const assetSearchLocator = page.getByPlaceholder("Search assets");
 
@@ -852,6 +856,7 @@ test.describe("Intents Deposit UI", () => {
             atob(str.substring("data:image/svg+xml;base64,".length))
           )
       ).toBe(networkIconMap[networkName]);
+      await networkIcon.scrollIntoViewIfNeeded();
     }
   });
 });
