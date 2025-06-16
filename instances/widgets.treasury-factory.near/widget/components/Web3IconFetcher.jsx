@@ -1,7 +1,7 @@
 /**
  * Web3IconFetcher Widget
  *
- * Enhanced version that fetches both asset and network icons using @web3icons/common
+ * Fetches both asset and network icons using @web3icons/common
  * for accurate metadata mapping and better icon coverage.
  *
  * Props:
@@ -35,9 +35,7 @@ const generateEnhancedIconHTML = () => {
     window.addEventListener("message", function(event) {
       tokens = event.data.tokens || [];
       fetchNetworkIcons = event.data.fetchNetworkIcons || false;
-      
-      console.log('Enhanced Web3IconFetcher loading for tokens:', tokens);
-      
+       
       // Start the icon fetching process
       processIconFetching();
     });
@@ -113,15 +111,13 @@ const generateEnhancedIconHTML = () => {
         };
       }
       
-      console.log('Enhanced Web3IconFetcher sending response with', Object.keys(results).length, 'entries');
-      
       window.parent.postMessage({
         handler: 'web3IconFetcherResponse',
         results
       }, '*');
       
     } catch (error) {
-      console.error('Error in Enhanced Web3IconFetcher:', error);
+      console.error('Error in Web3IconFetcher:', error);
       window.parent.postMessage({
         handler: 'web3IconFetcherResponse',
         results: {},
@@ -137,28 +133,11 @@ const generateEnhancedIconHTML = () => {
 
 // Function to handle iframe messages
 const handleIconResponse = (e) => {
-  console.log("handleIconResponse called with e:", e);
-  console.log("e.data:", e.data);
-  console.log("e.handler:", e.handler);
-  console.log("typeof e.data:", typeof e.data);
-
-  // Try both e.data.handler and e.handler (BOS might structure this differently)
   const handler = (e.data && e.data.handler) || e.handler;
   const results = (e.data && e.data.results) || e.results || {};
   const error = (e.data && e.data.error) || e.error;
 
-  console.log("Extracted handler:", handler);
-  console.log("Extracted results:", results);
-
   if (handler === "web3IconFetcherResponse") {
-    console.log(
-      "Enhanced Web3IconFetcher received response with",
-      Object.keys(results).length,
-      "entries"
-    );
-    console.log("Results data:", results);
-    console.log("Current state.tokensToFetch:", state.tokensToFetch);
-
     // Build cache from results
     const newCache = Object.assign({}, state.iconCache);
     for (const token of state.tokensToFetch) {
@@ -168,33 +147,16 @@ const handleIconResponse = (e) => {
           : token;
       const result = results[key];
 
-      console.log(`Processing token ${key}, found result:`, result);
-
       if (result) {
         // Store both token and network icons
         newCache[key] = result;
 
         // Also store simple symbol mapping for backward compatibility
-        if (result.tokenIcon) {
-          newCache[result.symbol] = result.tokenIcon;
-        }
-        console.log(`Added to cache: ${key}`, result);
-      } else {
-        const ftMetadata = Near.view(
-          token.defuse_asset_id.substring("nep141:".length),
-          "ft_metadata",
-          {}
-        );
-        if (ftMetadata?.icon) {
-          newCache[token.symbol.toUpperCase()] = ftMetadata.icon;
-        } else {
-          newCache[key] = "NOT_FOUND";
-          console.log(`No result found for ${key}, marking as NOT_FOUND`);
+        if (!result.tokenIcon) {
+          result.tokenContract = token.ftContractId;
         }
       }
     }
-
-    console.log("Final newCache:", newCache);
 
     // Update state and call callback
     State.update({
@@ -203,7 +165,6 @@ const handleIconResponse = (e) => {
       hasStartedFetching: true,
     });
 
-    console.log("About to call onIconsLoaded with:", newCache);
     // Call the callback with the new cache
     onIconsLoaded(newCache);
 
