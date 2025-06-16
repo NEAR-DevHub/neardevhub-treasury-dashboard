@@ -100,12 +100,12 @@ test.describe("Intents Deposit UI", () => {
     daoAccount,
   }) => {
     await page.goto(`https://${instanceAccount}.page`);
-    await page.waitForLoadState("networkidle");
 
     const totalBalanceCardLocator = page.locator(".card.card-body", {
       hasText: "Total Balance",
     });
     await expect(totalBalanceCardLocator).toBeVisible({ timeout: 20000 });
+    await expect(page.locator('span[role="status"]')).toHaveCount(0);
 
     const depositButton = totalBalanceCardLocator.getByRole("button", {
       name: "Deposit",
@@ -151,12 +151,13 @@ test.describe("Intents Deposit UI", () => {
     daoAccount,
   }) => {
     await page.goto(`https://${instanceAccount}.page`);
-    await page.waitForLoadState("networkidle");
 
     const totalBalanceCardLocator = page.locator(".card.card-body", {
       hasText: "Total Balance",
     });
     await expect(totalBalanceCardLocator).toBeVisible({ timeout: 20000 });
+    await expect(page.locator('span[role="status"]')).toHaveCount(0);
+
     const depositButton = totalBalanceCardLocator.getByRole("button", {
       name: "Deposit",
     });
@@ -212,12 +213,13 @@ test.describe("Intents Deposit UI", () => {
     daoAccount,
   }) => {
     await page.goto(`https://${instanceAccount}.page`);
-    await page.waitForLoadState("networkidle");
 
     const totalBalanceCardLocator = page.locator(".card.card-body", {
       hasText: "Total Balance",
     });
     await expect(totalBalanceCardLocator).toBeVisible({ timeout: 20000 });
+    await expect(page.locator('span[role="status"]')).toHaveCount(0);
+
     const depositButton = totalBalanceCardLocator.getByRole("button", {
       name: "Deposit",
     });
@@ -283,8 +285,8 @@ test.describe("Intents Deposit UI", () => {
       hasText: "Total Balance",
     });
     await expect(totalBalanceCardLocator).toBeVisible({ timeout: 20000 });
-
     await expect(page.locator('span[role="status"]')).toHaveCount(0);
+
     const depositButton = totalBalanceCardLocator.getByRole("button", {
       name: "Deposit",
     });
@@ -522,13 +524,14 @@ test.describe("Intents Deposit UI", () => {
     test.setTimeout(300_000); // Increased timeout for testing multiple assets
 
     await page.goto(`https://${instanceAccount}.page`);
-    await page.waitForLoadState("networkidle");
 
     // Open the deposit modal
     const totalBalanceCardLocator = page.locator(".card.card-body", {
       hasText: "Total Balance",
     });
     await expect(totalBalanceCardLocator).toBeVisible({ timeout: 20000 });
+    await expect(page.locator('span[role="status"]')).toHaveCount(0);
+
     const depositButton = totalBalanceCardLocator.getByRole("button", {
       name: "Deposit",
     });
@@ -706,17 +709,16 @@ test.describe("Intents Deposit UI", () => {
     // daoAccount, // daoAccount is not used in this test
   }) => {
     await page.goto(`https://${instanceAccount}.page`);
-    await page.waitForLoadState("networkidle");
 
     // Open the deposit modal
     const totalBalanceCardLocator = page.locator(".card.card-body", {
       hasText: "Total Balance",
     });
+
     await expect(totalBalanceCardLocator).toBeVisible({ timeout: 20000 });
     const depositButton = totalBalanceCardLocator.getByRole("button", {
       name: "Deposit",
     });
-    await expect(depositButton).toBeEnabled();
     await depositButton.click();
 
     const modalLocator = page.locator(
@@ -776,192 +778,46 @@ test.describe("Intents Deposit UI", () => {
       return;
     }
 
-    console.log(
-      `INFO: Testing ${
-        availableAssets.length
-      } assets with NEP-141 tokens: ${availableAssets.join(", ")}`
+    const assetDropdown = modalLocator.locator("div.custom-select").nth(0);
+    await expect(assetDropdown).toHaveText("Select an asset");
+    await assetDropdown.click();
+    await expect(assetDropdown.locator(".dropdown-icon").first()).toBeVisible();
+
+    const assetName = "USDC";
+    const assetSearchLocator = page.getByPlaceholder("Search assets");
+
+    await expect(assetSearchLocator).toBeAttached();
+    await assetSearchLocator.click();
+    await expect(assetSearchLocator).toBeFocused();
+    await assetSearchLocator.pressSequentially(assetName, { delay: 100 });
+
+    const assetItemLocator = assetDropdown.locator("div.dropdown-item", {
+      hasText: new RegExp(
+        `^\\s*${assetName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(\\s|$)`
+      ),
+    });
+
+    await expect(assetItemLocator.locator(".dropdown-icon")).toBeVisible();
+    await expect(assetItemLocator.first()).toBeVisible({ timeout: 10000 });
+    await assetItemLocator.first().click();
+    await expect(assetDropdown.locator(".dropdown-toggle")).toContainText(
+      assetName,
+      { timeout: 5000 }
     );
 
-    await page.getByText("Select an asset", { exact: true }).click();
+    const networkDropdownLocator = modalLocator
+      .locator("div.custom-select")
+      .nth(1);
+    await networkDropdownLocator.click();
 
-    // Wait for the dropdown to open and the search field to appear
-    await expect(page.getByPlaceholder("Search assets")).toBeVisible({
-      timeout: 15000,
-    });
-    await page.getByPlaceholder("Search assets").click();
-    await page.getByPlaceholder("Search assets").fill("usdc");
+    // 3. Get all visible network item texts from the UI
+    const networkItems = networkDropdownLocator.locator(
+      "div.dropdown-item.cursor-pointer.w-100.text-wrap"
+    );
 
-    // Wait for USDC to appear in the dropdown
-    await expect(page.getByText("USDC").first()).toBeVisible({
-      timeout: 10000,
-    });
-
-    // Try to click with force to overcome any overlay issues
-    await page.getByText("USDC").first().click({ force: true });
-
-    // Wait for the UI to update after selecting USDC
-    await page.waitForTimeout(3000); // Give time for network options to load
-
-    console.log("After selecting USDC, looking for network dropdown...");
-
-    // Look for the network selection dropdown - it should appear after selecting an asset
-    const networkDropdownSelectors = [
-      'text="Select a network"',
-      '[placeholder*="network"]',
-      '[placeholder*="Search networks"]',
-      '.custom-select:has-text("Select")',
-      '.dropdown:has-text("Select")',
-    ];
-
-    let networkDropdown = null;
-    let dropdownSelector = "";
-
-    for (const selector of networkDropdownSelectors) {
-      const dropdown = page.locator(selector).first();
-      if ((await dropdown.count()) > 0 && (await dropdown.isVisible())) {
-        networkDropdown = dropdown;
-        dropdownSelector = selector;
-        console.log(`✅ Found network dropdown using selector: ${selector}`);
-        break;
-      }
-    }
-
-    if (!networkDropdown) {
-      console.log(
-        "❌ Could not find network dropdown. Looking for any dropdown elements..."
-      );
-      const allDropdowns = await page
-        .locator('.custom-select, .dropdown, [class*="select"]')
-        .all();
-      console.log(`Found ${allDropdowns.length} dropdown elements`);
-
-      // Try the second dropdown if multiple exist (first might be asset dropdown)
-      if (allDropdowns.length >= 2) {
-        networkDropdown = allDropdowns[1];
-        dropdownSelector = "second dropdown element";
-        console.log("Using second dropdown element as network dropdown");
-      } else if (allDropdowns.length === 1) {
-        networkDropdown = allDropdowns[0];
-        dropdownSelector = "first dropdown element";
-        console.log("Using first dropdown element as network dropdown");
-      }
-    }
-
-    if (networkDropdown) {
-      console.log(
-        `Attempting to open network dropdown (${dropdownSelector})...`
-      );
-
-      // Click to open the network dropdown
-      await networkDropdown.click();
-      await page.waitForTimeout(2000); // Wait for dropdown to open and populate
-
-      console.log(
-        "Network dropdown opened, checking for network options with icons..."
-      );
-
-      // Look for network options in the opened dropdown
-      const networkOptions = await page
-        .locator('.dropdown-item, .option, [class*="item"]')
-        .all();
-      console.log(`Found ${networkOptions.length} dropdown options`);
-
-      let networksWithIcons = 0;
-      const foundNetworks = [];
-
-      for (let i = 0; i < networkOptions.length; i++) {
-        const option = networkOptions[i];
-        const isVisible = await option.isVisible();
-
-        if (isVisible) {
-          const optionText = await option.textContent();
-          console.log(`  Option ${i + 1}: "${optionText?.trim()}"`);
-
-          // Check if this option has an image (icon)
-          const icons = await option.locator("img").all();
-
-          for (const icon of icons) {
-            const iconSrc = await icon.getAttribute("src");
-            if (iconSrc) {
-              if (iconSrc.startsWith("data:image")) {
-                networksWithIcons++;
-                foundNetworks.push({
-                  text: optionText?.trim(),
-                  iconType: "Web3Icon (data URL)",
-                  iconSrc: iconSrc.substring(0, 50) + "...",
-                });
-                console.log(
-                  `    ✅ Found Web3Icon for option: ${optionText?.trim()}`
-                );
-              } else {
-                foundNetworks.push({
-                  text: optionText?.trim(),
-                  iconType: "Regular image",
-                  iconSrc: iconSrc,
-                });
-                console.log(
-                  `    📷 Found regular image for option: ${optionText?.trim()}`
-                );
-              }
-            }
-          }
-        }
-      }
-
-      console.log(`\n📊 Network Icon Summary:`);
-      console.log(
-        `  - Total visible network options: ${networkOptions.length}`
-      );
-      console.log(
-        `  - Options with Web3Icons (data URLs): ${networksWithIcons}`
-      );
-      console.log(`  - Total options with any icons: ${foundNetworks.length}`);
-
-      if (foundNetworks.length > 0) {
-        console.log(`\n🎨 Found icons for networks:`);
-        foundNetworks.forEach((network, index) => {
-          console.log(
-            `  ${index + 1}. "${network.text}" - ${network.iconType}`
-          );
-        });
-      }
-
-      // Verify that we found network icons
-      if (networksWithIcons > 0) {
-        console.log(
-          `\n✅ SUCCESS: Network icon verification passed! Found ${networksWithIcons} networks with Web3Icons`
-        );
-
-        // Take a screenshot of the opened dropdown for verification
-        await page.screenshot({
-          path: "freeze_frames/network-dropdown-with-icons-test.jpg",
-          fullPage: false,
-        });
-        console.log(
-          "📸 Screenshot saved: freeze_frames/network-dropdown-with-icons-test.jpg"
-        );
-      } else if (foundNetworks.length > 0) {
-        console.log(
-          `\n⚠️  Found ${foundNetworks.length} networks with icons, but none are Web3Icons (data URLs)`
-        );
-        console.log(
-          "   This might indicate that Web3IconFetcher is not working or icons are loaded differently"
-        );
-      } else {
-        console.log(`\n❌ No network icons found in the dropdown options`);
-      }
-
-      // Close the dropdown by clicking elsewhere
-      await page.click("body");
-    } else {
-      console.log("❌ Could not find network dropdown to open");
-      console.log(
-        "   This might mean the UI structure is different or the asset selection didn't trigger network options"
-      );
-    }
-
-    console.log(
-      "\n💡 Test completed successfully - USDC asset selection worked without infinite loops!"
+    await expect(networkItems).not.toHaveCount(0);
+    await expect(networkItems.locator(".dropdown-icon")).toHaveCount(
+      await networkItems.count()
     );
   });
 });
