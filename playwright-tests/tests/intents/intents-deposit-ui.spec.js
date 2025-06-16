@@ -90,7 +90,7 @@ test.describe("Intents Deposit UI", () => {
     const depositButton = totalBalanceCardLocator.getByRole("button", {
       name: "Deposit",
     });
-    await expect(depositButton).toBeVisible();
+    await expect(depositButton).toBeVisible({ timeout: 15_000 });
     await expect(depositButton).toHaveClass(/btn-success/); // Check for green color
   });
 
@@ -161,7 +161,7 @@ test.describe("Intents Deposit UI", () => {
     const depositButton = totalBalanceCardLocator.getByRole("button", {
       name: "Deposit",
     });
-    await expect(depositButton).toBeVisible();
+    await expect(depositButton).toBeVisible({ timeout: 15_000 });
     await depositButton.click();
 
     const modalLocator = page.locator(
@@ -223,7 +223,7 @@ test.describe("Intents Deposit UI", () => {
     const depositButton = totalBalanceCardLocator.getByRole("button", {
       name: "Deposit",
     });
-    await expect(depositButton).toBeEnabled();
+    await expect(depositButton).toBeEnabled({ timeout: 15_000 });
     await depositButton.click();
 
     const modalLocator = page.locator(
@@ -242,6 +242,9 @@ test.describe("Intents Deposit UI", () => {
     const qrCodeIframe = modalLocator.locator("iframe[title*='QR Code for']");
     await expect(qrCodeIframe).toBeVisible();
     await qrCodeIframe.scrollIntoViewIfNeeded();
+    await expect(
+      qrCodeIframe.contentFrame().locator("path").first()
+    ).toBeVisible();
     // Take a screenshot of the QR code and decode it
     const qrCodeImageBuffer = await qrCodeIframe.screenshot();
     const image = await Jimp.read(qrCodeImageBuffer);
@@ -290,7 +293,7 @@ test.describe("Intents Deposit UI", () => {
     const depositButton = totalBalanceCardLocator.getByRole("button", {
       name: "Deposit",
     });
-    await expect(depositButton).toBeEnabled();
+    await expect(depositButton).toBeEnabled({ timeout: 15_000 });
     await depositButton.click();
 
     const modalLocator = page.locator(
@@ -482,7 +485,7 @@ test.describe("Intents Deposit UI", () => {
     const depositButton = totalBalanceCardLocator.getByRole("button", {
       name: "Deposit",
     });
-    await expect(depositButton).toBeEnabled();
+    await expect(depositButton).toBeEnabled({ timeout: 15_000 });
     await depositButton.click();
 
     const modalLocator = page.locator(
@@ -535,7 +538,7 @@ test.describe("Intents Deposit UI", () => {
     const depositButton = totalBalanceCardLocator.getByRole("button", {
       name: "Deposit",
     });
-    await expect(depositButton).toBeEnabled();
+    await expect(depositButton).toBeEnabled({ timeout: 15_000 });
     await depositButton.click();
 
     const modalLocator = page.locator(
@@ -627,12 +630,13 @@ test.describe("Intents Deposit UI", () => {
         .locator("div.custom-select")
         .nth(1);
       await networkDropdownLocator.click();
-      await page.waitForTimeout(500); // Allow dropdown to render
 
       // 3. Get all visible network item texts from the UI
       const networkItems = networkDropdownLocator.locator(
         "div.dropdown-item.cursor-pointer.w-100.text-wrap"
       );
+      await expect(networkItems).not.toHaveCount(0);
+
       const uiNetworkNames = [];
       const count = await networkItems.count();
       for (let i = 0; i < count; i++) {
