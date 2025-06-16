@@ -226,16 +226,6 @@ const getIconForToken = (tokenOrSymbol, networkId) => {
     return cached.tokenIcon || cached;
   }
 
-  // Fallback to simple symbol lookup
-  const simpleCached =
-    state.iconCache[
-      typeof tokenOrSymbol === "object" ? tokenOrSymbol.symbol : tokenOrSymbol
-    ];
-  if (simpleCached && simpleCached !== "NOT_FOUND") {
-    return simpleCached.tokenIcon || simpleCached;
-  }
-
-  // Return fallback as null since external fallback handling is preferred
   return null;
 };
 

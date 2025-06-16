@@ -168,7 +168,7 @@ const fetchIntentsTokens = () => {
             allTokensForIcons.push({
               symbol: token.asset_name,
               networkId: chainId,
-              ftContractId: token.near_token_id
+              ftContractId: token.near_token_id,
             });
           }
         });
