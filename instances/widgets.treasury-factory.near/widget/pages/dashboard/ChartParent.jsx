@@ -6,6 +6,7 @@ const {
   instance,
   totalBalance,
   nearBalance,
+  doneLoadingCallback,
 } = props;
 
 const [allPeriodData, setAllPeriodData] = useState({});
@@ -21,10 +22,12 @@ const fetchAllPeriodData = async () => {
     ).then((res) => {
       setAllPeriodData(res.body);
       setIsLoading(false);
+      doneLoadingCallback && doneLoadingCallback();
     });
   } catch (error) {
     console.error("Error fetching data:", error);
     setIsLoading(false);
+    doneLoadingCallback && doneLoadingCallback();
   }
 };
 

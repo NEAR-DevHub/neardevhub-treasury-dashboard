@@ -92,6 +92,7 @@ const [disableRefreshBtn, setDisableRefreshBtn] = useState(false);
 const [lockupState, setLockupState] = useState(false);
 const [showDepositModal, setShowDepositModal] = useState(false);
 const [intentsTotalUsdBalance, setIntentsTotalUsdBalance] = useState("0"); // New state for intents balance
+const [chartLoaded, setChartLoaded] = useState(false);
 
 useEffect(() => {
   asyncFetch(`${REPL_BACKEND_API}/near-price`)
@@ -375,7 +376,7 @@ return (
               <div className="fw-bold h3 mb-0">
                 {formatCurrency(totalBalance)} USD
               </div>
-              {showNearIntents && (
+              {chartLoaded && showNearIntents && (
                 <button
                   className="btn btn-success mt-2"
                   onClick={() => {
@@ -476,6 +477,7 @@ return (
             ftTokens: daoFTTokens.fts ? daoFTTokens.fts : null,
             instance,
             accountId: treasuryDaoID,
+            doneLoadingCallback: () => setChartLoaded(true),
           }}
         />
 

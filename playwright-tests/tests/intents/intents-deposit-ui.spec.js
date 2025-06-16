@@ -708,6 +708,7 @@ test.describe("Intents Deposit UI", () => {
     instanceAccount,
     // daoAccount, // daoAccount is not used in this test
   }) => {
+    test.setTimeout(60_000);
     await page.goto(`https://${instanceAccount}.page`);
 
     // Open the deposit modal

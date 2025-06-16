@@ -520,6 +520,8 @@ return (
                   ? "Loading assets..."
                   : state.assetNamesForDropdown.length === 0
                   ? "No assets found"
+                  : !state.allIconsFetched
+                  ? "Loading asset icons..."
                   : "Select an asset",
                 showSearch: true,
                 searchInputPlaceholder: "Search assets",
