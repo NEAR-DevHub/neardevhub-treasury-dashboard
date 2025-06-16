@@ -3,6 +3,7 @@ import { test } from "../../util/test.js";
 import { redirectWeb4, getLocalWidgetContent } from "../../util/web4.js";
 import { Jimp } from "jimp";
 import jsQR from "jsqr";
+import { getWeb3IconMaps } from "../../util/web3icon.js";
 
 test.describe("Intents Deposit UI feature flag", () => {
   // Disable feature flag during tests for all instances, can be removed when generally available
@@ -345,7 +346,9 @@ test.describe("Intents Deposit UI", () => {
         .locator("div.custom-select")
         .nth(0);
       if (assetName === uniqueAssetNames[0]) {
-        await expect(assetDropdownSelector).toHaveText("Select an asset");
+        await expect(assetDropdownSelector).toHaveText("Select an asset", {
+          timeout: 15_000,
+        });
       }
       await assetDropdownSelector.click({ timeout: 2_000 });
 
@@ -713,6 +716,9 @@ test.describe("Intents Deposit UI", () => {
     // daoAccount, // daoAccount is not used in this test
   }) => {
     test.setTimeout(60_000);
+    const { networkIconMap, networkNames, tokenIconMap } =
+      await getWeb3IconMaps();
+
     await page.goto(`https://${instanceAccount}.page`);
 
     // Open the deposit modal
@@ -802,7 +808,14 @@ test.describe("Intents Deposit UI", () => {
       ),
     });
 
-    await expect(assetItemLocator.locator(".dropdown-icon")).toBeVisible();
+    const assetIcon = assetItemLocator.locator(".dropdown-icon");
+    await expect(assetIcon).toBeVisible();
+    await expect(
+      await assetIcon
+        .getAttribute("src")
+        .then((str) => atob(str.substring("data:image/svg+xml;base64,".length)))
+    ).toBe(tokenIconMap[(await assetItemLocator.innerText()).trim()]);
+
     await expect(assetItemLocator.first()).toBeVisible({ timeout: 10000 });
     await assetItemLocator.first().click();
     await expect(assetDropdown.locator(".dropdown-toggle")).toContainText(
@@ -824,5 +837,21 @@ test.describe("Intents Deposit UI", () => {
     await expect(networkItems.locator(".dropdown-icon")).toHaveCount(
       await networkItems.count()
     );
+    for (const networkItem of await networkItems.all()) {
+      const networkIcon = networkItem.locator(".dropdown-icon");
+      await expect(networkItem.innerText()).toBeDefined();
+      const networkName = (await networkItem.innerText())
+        .trim()
+        .split(" ")[0]
+        .toLowerCase();
+
+      await expect(
+        await networkIcon
+          .getAttribute("src")
+          .then((str) =>
+            atob(str.substring("data:image/svg+xml;base64,".length))
+          )
+      ).toBe(networkIconMap[networkName]);
+    }
   });
 });
