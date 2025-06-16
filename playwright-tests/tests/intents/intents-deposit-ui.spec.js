@@ -284,6 +284,7 @@ test.describe("Intents Deposit UI", () => {
     });
     await expect(totalBalanceCardLocator).toBeVisible({ timeout: 20000 });
 
+    await expect(page.locator('span[role="status"]')).toHaveCount(0);
     const depositButton = totalBalanceCardLocator.getByRole("button", {
       name: "Deposit",
     });
@@ -341,14 +342,15 @@ test.describe("Intents Deposit UI", () => {
       if (assetName === uniqueAssetNames[0]) {
         await expect(assetDropdownSelector).toHaveText("Select an asset");
       }
-      await assetDropdownSelector.click();
+      await assetDropdownSelector.click({ timeout: 2_000 });
 
       // Use a strict locator for the asset dropdown item to avoid partial matches (e.g., BTC vs wBTC)
       const assetLocator = assetDropdownSelector.locator("div.dropdown-item", {
         hasText: new RegExp(`\\s+${assetName}\\s+`),
       });
 
-      await assetLocator.click();
+      await expect(assetLocator).toBeVisible();
+      await assetLocator.click({ timeout: 2_000 });
 
       const tokensOfSelectedAsset = allFetchedTokens.filter(
         (token) => token.asset_name === assetName
@@ -384,10 +386,33 @@ test.describe("Intents Deposit UI", () => {
         const visibleNetworkName = await networkOptionElement.innerText();
         await networkOptionElement.click();
 
+        // Fetch the deposit address directly from the API
+        const apiResponse = await fetch("https://bridge.chaindefuser.com/rpc", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            id: "depositAddressFetchTest",
+            method: "deposit_address",
+            params: [
+              {
+                account_id: daoAccount,
+                chain: network.id,
+              },
+            ],
+          }),
+        });
+        const apiData = await apiResponse.json();
+        expect(apiData.result && apiData.result.address).toBeTruthy();
+        const apiDepositAddress = apiData.result.address;
+
         // Wait for the deposit address to appear
         const depositAddressElement = modalLocator.locator("div.form-control");
         await expect(depositAddressElement).not.toBeEmpty({ timeout: 15000 });
         const uiDepositAddress = await depositAddressElement.innerText();
+
+        // Verify the UI address matches the API address
+        expect(uiDepositAddress).toEqual(apiDepositAddress);
 
         // Verify the QR code matches the displayed address
         const qrCodeIframe = modalLocator.locator(
@@ -416,29 +441,6 @@ test.describe("Intents Deposit UI", () => {
           imageData.height
         );
         expect(decodedQR?.data).toEqual(uiDepositAddress);
-
-        // Fetch the deposit address directly from the API
-        const apiResponse = await fetch("https://bridge.chaindefuser.com/rpc", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({
-            jsonrpc: "2.0",
-            id: "depositAddressFetchTest",
-            method: "deposit_address",
-            params: [
-              {
-                account_id: daoAccount,
-                chain: network.id,
-              },
-            ],
-          }),
-        });
-        const apiData = await apiResponse.json();
-        expect(apiData.result && apiData.result.address).toBeTruthy();
-        const apiDepositAddress = apiData.result.address;
-
-        // Verify the UI address matches the API address
-        expect(uiDepositAddress).toEqual(apiDepositAddress);
 
         const intentsCopyButton = modalLocator.locator(
           '.btn[data-component="widgets.treasury-factory.near/widget/components.Copy"]'
