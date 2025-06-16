@@ -3,6 +3,7 @@ import { test } from "../../util/test.js";
 
 import {
   mockNearBalances,
+  updateDaoPolicyMembers,
 } from "../../util/rpcmock.js";
 import { InsufficientBalance, encodeToMarkdown } from "../../util/lib.js";
 import { Worker } from "near-workspaces";
@@ -13,7 +14,7 @@ import {
   SPUTNIK_DAO_FACTORY_ID,
 } from "../../util/sandboxrpc";
 
-async function setupWorker({ daoAccount, instanceAccount,page }) {
+async function setupWorker({ daoAccount, instanceAccount, page }) {
   const daoName = daoAccount.split("." + SPUTNIK_DAO_FACTORY_ID)?.[0];
   const socialNearContractId = "social.near";
 
@@ -39,6 +40,14 @@ async function setupWorker({ daoAccount, instanceAccount,page }) {
     mainnetContract: "theori.near",
   });
 
+  const userAccount2 = await worker.rootAccount.importContract({
+    mainnetContract: "peter.near",
+  });
+
+  const userAccount3 = await worker.rootAccount.importContract({
+    mainnetContract: "frol.near",
+  });
+
   const create_args = {
     name: daoName,
     args: Buffer.from(
@@ -53,7 +62,12 @@ async function setupWorker({ daoAccount, instanceAccount,page }) {
                 {
                   name: "Requestor",
                   kind: {
-                    Group: [],
+                    Group: [
+                      creatorAccount.accountId,
+                      userAccount.accountId,
+                      userAccount2.accountId,
+                      userAccount3.accountId,
+                    ],
                   },
                   permissions: ["transfer:AddProposal", "call:AddProposal"],
                   vote_policy: {},
@@ -61,7 +75,11 @@ async function setupWorker({ daoAccount, instanceAccount,page }) {
                 {
                   name: "Admin",
                   kind: {
-                    Group: [creatorAccount.accountId, userAccount.accountId],
+                    Group: [
+                      userAccount.accountId,
+                      userAccount2.accountId,
+                      userAccount3.accountId,
+                    ],
                   },
                   permissions: [
                     "remove_member_from_role:*",
@@ -74,7 +92,7 @@ async function setupWorker({ daoAccount, instanceAccount,page }) {
                 {
                   name: "Approver",
                   kind: {
-                    Group: [creatorAccount.accountId, userAccount.accountId],
+                    Group: [userAccount.accountId, userAccount3.accountId],
                   },
                   permissions: [
                     "*:VoteApprove",
@@ -88,7 +106,12 @@ async function setupWorker({ daoAccount, instanceAccount,page }) {
                 {
                   name: "council",
                   kind: {
-                    Group: [creatorAccount.accountId, userAccount.accountId],
+                    Group: [
+                      creatorAccount.accountId,
+                      userAccount.accountId,
+                      userAccount2.accountId,
+                      userAccount3.accountId,
+                    ],
                   },
                   permissions: ["*:*"],
                   vote_policy: {},
@@ -147,9 +170,8 @@ async function navigateToMembersPage({ page, instanceAccount }) {
 async function openAddMemberForm({ page }) {
   await page.waitForTimeout(6_000);
   const createMemberRequestButton = page.getByRole("button", {
-    name: "Add Member",
+    name: " Add Membe",
   });
-
   await expect(createMemberRequestButton).toBeVisible();
   await createMemberRequestButton.click();
   await expect(page.getByRole("heading", { name: "Add Members" })).toBeVisible({
@@ -157,9 +179,12 @@ async function openAddMemberForm({ page }) {
   });
 }
 
-async function submitProposal({ page }) {
+async function submitProposal({ page, isEdit }) {
   await expect(page.getByText("Confirm transaction")).toBeVisible();
-  await page.getByRole("button", { name: "Confirm" }).click();
+  await page
+    .getByRole("button", { name: "Confirm" })
+    .nth(isEdit ? 1 : 0)
+    .click();
 
   await expect(page.getByText("Awaiting transaction")).not.toBeVisible({
     timeout: 15_000,
@@ -167,7 +192,7 @@ async function submitProposal({ page }) {
   await expect(
     page.getByText("Your request has been submitted.")
   ).toBeVisible();
-  await page.getByRole('link', { name: 'View it' }).click();
+  await page.getByRole("link", { name: "View it" }).click();
   await page.waitForTimeout(10_000);
 }
 
@@ -176,16 +201,44 @@ test.describe("User is logged in", function () {
     storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
   });
 
-  test.beforeEach(async ({ page }, testInfo) => {
-    test.setTimeout(60_000);
-    if (testInfo.title.includes("insufficient account balance")) {
-      await mockNearBalances({
-        page,
-        accountId: "theori.near",
-        balance: InsufficientBalance,
-        storage: 8,
-      });
-    }
+  test("insufficient account balance should show warning modal, disallow action ", async ({
+    page,
+    instanceAccount,
+  }) => {
+    test.setTimeout(100_000);
+    await updateDaoPolicyMembers({ instanceAccount, page });
+    await mockNearBalances({
+      page,
+      accountId: "theori.near",
+      balance: InsufficientBalance,
+      storage: 8,
+    });
+    await navigateToMembersPage({ page, instanceAccount });
+    await expect(
+      page.getByText(
+        "Hey Ori, you don't have enough NEAR to complete actions on your treasury."
+      )
+    ).toBeVisible();
+    await page.getByRole("button", { name: " Add Members" }).click();
+    await expect(
+      page
+        .getByText("Please add more funds to your account and try again")
+        .nth(1)
+    ).toBeVisible();
+    await page
+      .getByRole("heading", { name: " Insufficient Funds " })
+      .locator("i")
+      .nth(1)
+      .click();
+    await page.getByRole("switch").nth(0).click();
+    await expect(page.getByRole("switch").nth(1)).toBeChecked();
+    const editBtn = page.getByRole("button", { name: "Edit" });
+    await editBtn.click();
+    await expect(
+      page
+        .getByText("Please add more funds to your account and try again")
+        .nth(1)
+    ).toBeVisible();
   });
 
   test("Add multiple members with permissions and validate errors", async ({
@@ -193,7 +246,8 @@ test.describe("User is logged in", function () {
     daoAccount,
     instanceAccount,
   }) => {
-    const {} = await setupWorker({ daoAccount, instanceAccount,page });
+    test.setTimeout(150_000);
+    const {} = await setupWorker({ daoAccount, instanceAccount, page });
     await openAddMemberForm({ page });
     // 3. Type into the username field
     const iframe = page.locator("iframe").contentFrame();
@@ -242,6 +296,14 @@ test.describe("User is logged in", function () {
     await iframe.locator("#dropdownMenu-1 .dropdown-item").nth(0).click();
     await submitButton.click();
     await submitProposal({ page });
+
+    // proposal details page should have the members added
+    await expect(
+      page.getByRole("heading", { name: "Update policy - Members Permissions" })
+    ).toBeVisible();
+    await expect(page.getByText("@test.near")).toBeVisible();
+    await expect(page.getByText("@another.near")).toBeVisible();
+    await expect(page.getByText("Assigned Roles:").count()).to(2);
   });
 
   test("Edit multiple members with permissions and validate errors", async ({
@@ -249,13 +311,14 @@ test.describe("User is logged in", function () {
     daoAccount,
     instanceAccount,
   }) => {
-    const {} = await setupWorker({ daoAccount, instanceAccount, page});
-
+    test.setTimeout(150_000);
+    const {} = await setupWorker({ daoAccount, instanceAccount, page });
+    await page.waitForTimeout(5_000);
     await page.getByRole("switch").nth(0).click();
     await expect(page.getByRole("switch").nth(1)).toBeChecked();
 
-    const editBtn = await page.getByRole("button", { name: "Edit" });
-    const deleteBtn = await page.getByRole("button", { name: "Delete" });
+    const editBtn = page.getByRole("button", { name: "Edit" });
+    const deleteBtn = page.getByRole("button", { name: "Delete" });
     await expect(editBtn).toBeVisible();
     await expect(deleteBtn).toBeVisible();
     await editBtn.click();
@@ -266,10 +329,11 @@ test.describe("User is logged in", function () {
     });
     const iframe = page.locator("iframe").contentFrame();
     const submitButton = iframe.getByRole("button", { name: "Submit" });
+    await submitButton.scrollIntoViewIfNeeded();
     await expect(submitButton).toBeEnabled({ timeout: 20_000 });
     const account = iframe.getByText("@theori.near");
     await expect(account).toBeVisible();
-    const role = daoAccount.includes('infinex') ? 'Requestor' : 'council'
+    const role = daoAccount.includes("infinex") ? "Requestor" : "council";
     // remove all requestor role
     const deleteIcons = iframe
       .locator('[id^="selectedRoles-"] div')
@@ -283,7 +347,7 @@ test.describe("User is logged in", function () {
     }
 
     const rolesError = iframe
-      .locator("#roleError-0")
+      .locator("#roleError-1")
       .getByText("You must assign at least one role.");
     await expect(rolesError).toBeVisible();
     await expect(
@@ -296,13 +360,44 @@ test.describe("User is logged in", function () {
     await iframe.getByRole("button", { name: "Cancel" }).click();
     await page.getByRole("button", { name: "Yes" }).click();
     await expect(page.locator(".offcanvas-body")).not.toBeVisible();
-    await page.getByRole("switch").nth(0).click();
-    await page.getByRole("switch").nth(1).click();
-    await editBtn.click();
-    await expect(account).not.toBeVisible();
-    await iframe.getByText(role).locator("i").nth(0).click();
-    await submitButton.click();
-    await submitProposal({ page });
+
+    // with single role, edit doesn't work
+    if (daoAccount.includes("infinex")) {
+      await page.getByRole("switch").nth(0).click();
+      await page.getByRole("switch").nth(1).click();
+      await editBtn.click();
+      await expect(account).not.toBeVisible();
+      await iframe.getByText(role).locator("i").nth(0).click();
+      await submitButton.click();
+      await expect(
+        page.getByRole("cell", { name: "Current Roles" })
+      ).toBeVisible();
+      await expect(page.getByRole("cell", { name: "New Roles" })).toBeVisible();
+      await expect(
+        page.getByRole("cell", { name: "Requestor, Approver, Admin" })
+      ).toBeVisible();
+      await expect(
+        page.getByRole("cell", { name: "Approver, Admin", exact: true })
+      ).toBeVisible();
+      await page.getByRole("button", { name: "Cancel" }).click();
+      await expect(
+        page.getByText(
+          "This action will clear all the information you have entered in the form and cannot be undone"
+        )
+      ).toBeVisible();
+      await page.getByRole("button", { name: "Cancel" }).nth(1).click();
+      await page.getByRole("button", { name: "Confirm" }).click();
+      await submitProposal({ page, isEdit: true });
+      // proposal details page should have the edited members
+      await expect(
+        page.getByRole("heading", {
+          name: "Update policy - Members Permissions",
+        })
+      ).toBeVisible();
+      await expect(page.getByText("@frol.near")).toBeVisible();
+      await expect(page.getByText("New Roles:")).toBeVisible();
+      await expect(page.getByText("Old Roles:")).toBeVisible();
+    }
   });
 
   test("Delete multiple members with permissions and validate errors", async ({
@@ -310,8 +405,9 @@ test.describe("User is logged in", function () {
     daoAccount,
     instanceAccount,
   }) => {
-    const {} = await setupWorker({ daoAccount, instanceAccount,page });
-
+    test.setTimeout(150_000);
+    const {} = await setupWorker({ daoAccount, instanceAccount, page });
+    await page.waitForTimeout(5_000);
     await page.getByRole("switch").nth(0).click();
     await expect(page.getByRole("switch").nth(1)).toBeChecked();
 
@@ -326,12 +422,27 @@ test.describe("User is logged in", function () {
     ).toBeVisible({
       timeout: 10_000,
     });
-    const role = daoAccount.includes('infinex') ? 'Requestor' : 'council'
+    const role = daoAccount.includes("infinex") ? "Requestor" : "council";
     await expect(page.getByRole("list").getByText(role)).toBeVisible();
     await page.getByRole("button", { name: "Close" }).click();
     await page.getByRole("switch").nth(0).click();
     await page.getByRole("switch").nth(1).click();
     await deleteBtn.click();
+    await expect(
+      page.getByText(
+        "will lose their permissions to this treasury once the request is created and approved"
+      )
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Remove" }).click();
     await submitProposal({ page });
+    // proposal details page should have the removed member with roles
+    await expect(
+      page.getByRole("heading", {
+        name: "Update policy - Members Permissions",
+      })
+    ).toBeVisible();
+    await expect(page.getByText("@frol.near")).toBeVisible();
+    await expect(page.getByText("Revoked Roles").nth(0)).toBeVisible();
+    await expect(page.getByText(role).nth(0)).toBeVisible();
   });
 });

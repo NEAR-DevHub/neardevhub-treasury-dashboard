@@ -149,14 +149,14 @@ return (
         <ModalContent>
           {selectedMembers.length === 1 ? (
             <div>
-              {selectedMembers[0].member} will immediately lose their
-              permissions to this treasury if you continue.
+              {selectedMembers[0].member} will lose their permissions to this
+              treasury once the request is created and approved.
             </div>
           ) : (
             <>
               <div>
-                The following users immediately lose their permissions to this
-                treasury if you continue:
+                The following users will lose their permissions to this treasury
+                once the request is created and approved:
               </div>
               <ul className="my-1">
                 {selectedMembers.map(({ member }) => (

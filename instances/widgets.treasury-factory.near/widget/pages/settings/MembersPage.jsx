@@ -31,8 +31,6 @@ if (
 
 const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 
-const [refreshTable, setRefreshTable] = useState(0);
-
 const [refetch, setRefetch] = useState(false);
 const policyApproverGroup = getPolicyApproverGroup(treasuryDaoID);
 const roles = getDaoRoles(treasuryDaoID);
@@ -59,7 +57,7 @@ useEffect(() => {
       setLoading(false);
     });
   }
-}, [refreshTable, refetch]);
+}, [refetch]);
 
 useEffect(() => {
   if (allMembers.length > 0) {
@@ -71,11 +69,6 @@ useEffect(() => {
     );
   }
 }, [currentPage, rowsPerPage, allMembers]);
-
-function toggleEditor() {
-  setShowEditor(!showEditor);
-  setSelectedMembers([]);
-}
 
 const hasCreatePermission = hasPermission(
   treasuryDaoID,
@@ -256,7 +249,7 @@ useEffect(() => {
 }, []);
 
 useEffect(() => {
-  if (isTxnCreated && typeof onRefresh === "function") {
+  if (isTxnCreated) {
     let checkTxnTimeout = null;
 
     const checkForNewProposal = () => {
@@ -301,28 +294,18 @@ return (
       />
     )}
     <Widget
-      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OffCanvas`}
+      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.MembersEditor`}
       props={{
-        showCanvas: showEditor,
-        onClose: toggleEditor,
-        title: selectedMembers.length > 0 ? "Edit Members" : "Add Members",
-        children: (
-          <Widget
-            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.MembersEditor`}
-            props={{
-              instance,
-              refreshMembersTableData: () => setRefreshTable(refreshTable + 1),
-              onCloseCanvas: toggleEditor,
-              availableRoles: (roles ?? [])
-                .filter((i) => i !== "all")
-                .map((i) => ({ title: i, value: i })),
-              setToastStatus,
-              isEdit: selectedMembers.length,
-              selectedMembers: selectedMembers,
-              allMembers: allMembers,
-            }}
-          />
-        ),
+        instance,
+        availableRoles: (roles ?? [])
+          .filter((i) => i !== "all")
+          .map((i) => ({ title: i, value: i })),
+        setToastStatus,
+        isEdit: selectedMembers.length,
+        selectedMembers: selectedMembers,
+        allMembers: allMembers,
+        showEditor: showEditor,
+        setShowEditor: setShowEditor,
       }}
     />
 
@@ -341,40 +324,57 @@ return (
                 ),
                 checkForDeposit: true,
                 treasuryDaoID,
-                callbackAction: () => setShowEditor(true),
+                callbackAction: () => {
+                  setSelectedMembers([]);
+                  setShowEditor(true);
+                },
                 disabled: showEditor || showDeleteModal || isTxnCreated,
               }}
             />
           ) : (
             <div className="d-flex gap-3">
-              <button
-                className="btn btn-outline-secondary d-flex gap-1 align-items-center"
-                disabled={showEditor || showDeleteModal || isTxnCreated}
-                onClick={() => {
-                  const members = allMembers.filter((m) =>
-                    selectedRows.includes(m.member)
-                  );
-                  setSelectedMembers(members);
-                  setShowEditor(true);
+              <Widget
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
+                props={{
+                  ActionButton: () => (
+                    <button className="btn btn-outline-secondary d-flex gap-1 align-items-center">
+                      <i className="bi bi-pencil" />
+                      Edit
+                    </button>
+                  ),
+                  checkForDeposit: true,
+                  treasuryDaoID,
+                  callbackAction: () => {
+                    const members = allMembers.filter((m) =>
+                      selectedRows.includes(m.member)
+                    );
+                    setSelectedMembers(members);
+                    setShowEditor(true);
+                  },
+                  disabled: showEditor || showDeleteModal || isTxnCreated,
                 }}
-              >
-                <i className="bi bi-pencil" />
-                Edit
-              </button>
-              <button
-                className="btn btn-outline-danger d-flex gap-1 align-items-center"
-                disabled={showEditor || showDeleteModal || isTxnCreated}
-                onClick={() => {
-                  const members = allMembers.filter((m) =>
-                    selectedRows.includes(m.member)
-                  );
-                  setSelectedMembers(members);
-                  setShowDeleteModal(true);
+              />
+              <Widget
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
+                props={{
+                  ActionButton: () => (
+                    <button className="btn btn-outline-danger d-flex gap-1 align-items-center">
+                      <i className="bi bi-trash3" />
+                      Delete
+                    </button>
+                  ),
+                  checkForDeposit: true,
+                  treasuryDaoID,
+                  callbackAction: () => {
+                    const members = allMembers.filter((m) =>
+                      selectedRows.includes(m.member)
+                    );
+                    setSelectedMembers(members);
+                    setShowDeleteModal(true);
+                  },
+                  disabled: showEditor || showDeleteModal || isTxnCreated,
                 }}
-              >
-                <i className="bi bi-trash3" />
-                Delete
-              </button>
+              />
             </div>
           ))}
       </div>
@@ -407,6 +407,7 @@ return (
                       } else {
                         setSelectedRows([]);
                       }
+                      setSelectedMembers([]);
                     }}
                   />
                 </td>

@@ -8,6 +8,7 @@ const showCanvas = props.showCanvas;
 const onClose = props.onClose;
 const title = props.title;
 const children = props.children;
+const disableScroll = props.disableScroll;
 
 const Container = styled.div`
   opacity: 1 !important;
@@ -30,7 +31,12 @@ const Container = styled.div`
   }
 
   .offcanvas {
-    overflow: auto;
+    overflow: ${disableScroll ? "hideen" : "auto"};
+  }
+
+  .offcanvas-body {
+    overflow-y: auto;
+    flex: 1;
   }
 `;
 
