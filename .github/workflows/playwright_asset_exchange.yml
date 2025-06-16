@@ -70,6 +70,7 @@ jobs:
         id: asset-exchange-tests
         run: |
           npx playwright test playwright-tests/tests/asset-exchange \
+            --workers=1
             --project=${{ matrix.project }} \
             --shard=${{ matrix.shard }}
 

@@ -71,6 +71,7 @@ jobs:
         id: payments-tests
         run: |
           npx playwright test playwright-tests/tests/payments \
+            --workers=1
             --project=${{ matrix.project }} \
             --shard=${{ matrix.shard }}
 
