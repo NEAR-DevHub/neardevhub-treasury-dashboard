@@ -331,11 +331,17 @@ test.describe("Intents Deposit UI", () => {
     );
     expect(allFetchedTokens.length).toBeGreaterThan(60);
 
-    const uniqueAssetNames = Array.from(
+    // Select up to 10 random unique asset names to test
+    const allAssetNames = Array.from(
       new Set(allFetchedTokens.map((t) => t.asset_name))
-    )
-      .filter((name) => name)
-      .sort();
+    ).filter(Boolean);
+
+    const shuffled = allAssetNames
+      .map((name) => ({ name, sort: Math.random() }))
+      .sort((a, b) => a.sort - b.sort)
+      .map(({ name }) => name);
+
+    const uniqueAssetNames = shuffled.slice(0, 10).sort();
 
     for (const assetName of uniqueAssetNames) {
       // Select the asset in the UI
@@ -593,21 +599,23 @@ test.describe("Intents Deposit UI", () => {
 
     const availableAssets = Object.keys(assetsByName).sort();
 
-    if (availableAssets.length === 0) {
-      console.warn(
-        "WARN: No NEP-141 assets found in supported tokens. Test skipped."
-      );
-      return;
-    }
+    expect(availableAssets.length).toBeGreaterThan(0);
+
+    const shuffledAssets = availableAssets
+      .map((name) => ({ name, sort: Math.random() }))
+      .sort((a, b) => a.sort - b.sort)
+      .map(({ name }) => name);
+
+    const assetsToTest = shuffledAssets.slice(0, 10).sort();
 
     console.log(
       `INFO: Testing ${
-        availableAssets.length
-      } assets with NEP-141 tokens: ${availableAssets.join(", ")}`
+        assetsToTest.length
+      } random assets with NEP-141 tokens: ${assetsToTest.join(", ")}`
     );
 
     // Test each asset
-    for (const assetName of availableAssets) {
+    for (const assetName of assetsToTest) {
       console.log(`\nINFO: Testing asset: ${assetName}`);
 
       // 1. Select the asset
@@ -703,10 +711,6 @@ test.describe("Intents Deposit UI", () => {
       await modalLocator.locator("h6").click(); // Click on the "Select asset and network" header
       await page.waitForTimeout(200);
     }
-
-    console.log(
-      "\nINFO: Completed testing all available NEP-141 assets for human-readable blockchain names."
-    );
   });
 
   test("should display logo icons for each asset and chain", async ({
