@@ -17,6 +17,7 @@ State.init({
   assetNamesForDropdown: [],
   selectedAssetName: "",
   networksForSelectedAssetDropdown: [],
+  defuse_asset_id_to_chain_map: {},
   selectedNetworkFullInfo: null,
   intentsDepositAddress: "",
   isLoadingTokens: false,
@@ -31,16 +32,6 @@ State.init({
 const activeTab = state.activeTab;
 const sputnikAddress = props.treasuryDaoID;
 const nearIntentsTargetAccountId = props.treasuryDaoID;
-
-const allTokens =
-  fetch("https://api-mng-console.chaindefuser.com/api/tokens").body?.items ||
-  [];
-
-const defuse_asset_id_to_chain_map = {};
-
-for (const token of allTokens) {
-  defuse_asset_id_to_chain_map[token.defuse_asset_id] = token.blockchain;
-}
 
 // Callback when all icons are loaded from Web3Icons widget
 const handleAllIconsLoaded = (iconCache) => {
@@ -88,6 +79,11 @@ const fetchIntentsTokens = () => {
     return;
   }
 
+  console.log(
+    "Fetching all intents tokens...",
+    state.isLoadingTokens,
+    state.allFetchedTokens.length
+  );
   if (state.isLoadingTokens || state.allFetchedTokens.length > 0) {
     return;
   }
@@ -182,6 +178,21 @@ const fetchIntentsTokens = () => {
               : null,
           allTokensForIcons: allTokensForIcons, // All tokens for one-time fetching
         });
+        asyncFetch("https://api-mng-console.chaindefuser.com/api/tokens").then(
+          (result) => {
+            const allTokens = result.body?.items;
+            const defuse_asset_id_to_chain_map = {};
+
+            for (const token of allTokens) {
+              defuse_asset_id_to_chain_map[token.defuse_asset_id] =
+                token.blockchain;
+            }
+
+            State.update({
+              defuse_asset_id_to_chain_map: defuse_asset_id_to_chain_map,
+            });
+          }
+        );
       } else {
         State.update({
           errorApi: "No bridgeable assets found or unexpected API response.",
@@ -235,7 +246,7 @@ const updateNetworksForAsset = (assetName) => {
       // The API for all tokens has the property  `defuse_asset_id` which is the same as `intents_token_id`
       const intents_token_id = token.intents_token_id;
       const blockchainName =
-        defuse_asset_id_to_chain_map[intents_token_id].toUpperCase();
+        state.defuse_asset_id_to_chain_map[intents_token_id]?.toUpperCase();
 
       return {
         id: chainId, // This is the ID like "eth:1"
@@ -374,18 +385,6 @@ if (state.allIconsFetched) {
 
 return (
   <Modal props={{ minWidth: "700px" }}>
-    {/* Single Web3IconFetcher for all icons - optimized to fetch all asset and network icons at once */}
-    {state.allTokensForIcons.length > 0 && !state.allIconsFetched && (
-      <Widget
-        src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Web3IconFetcher"
-        props={{
-          tokens: state.allTokensForIcons,
-          onIconsLoaded: handleAllIconsLoaded,
-          fetchNetworkIcons: true, // Enable both asset and network icon fetching
-        }}
-      />
-    )}
-
     <ModalHeader>
       <div className="d-flex align-items-center justify-content-between mb-2">
         <div className="d-flex gap-3">Deposit</div>
@@ -505,6 +504,17 @@ return (
 
       {activeTab === "intents" && (
         <>
+          {/* Single Web3IconFetcher for all icons - optimized to fetch all asset and network icons at once */}
+          {state.allTokensForIcons.length > 0 && !state.allIconsFetched && (
+            <Widget
+              src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Web3IconFetcher"
+              props={{
+                tokens: state.allTokensForIcons,
+                onIconsLoaded: handleAllIconsLoaded,
+                fetchNetworkIcons: true, // Enable both asset and network icon fetching
+              }}
+            />
+          )}
           <h6 className="mt-3">Select asset and network</h6>
           {/* Asset Selector */}
           <div className="mb-3">
