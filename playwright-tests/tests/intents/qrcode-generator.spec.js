@@ -17,7 +17,7 @@ test("qr code generator produces correct QR", async ({
   });
   await page.goto(`https://${instanceAccount}.page/`);
 
-  await expect(page.locator(".card.card-body")).toBeVisible();
+  await expect(page.locator(".card.card-body").first()).toBeVisible();
 
   const showAndDecodeQRCode = async (text) => {
     await page.evaluate(

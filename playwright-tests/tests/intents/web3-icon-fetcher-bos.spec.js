@@ -80,19 +80,8 @@ test("Web3IconFetcher BOS compatibility test loads and displays icons", async ({
   const cacheKeys = Object.keys(iconCache);
   console.log("Icon cache keys found:", cacheKeys);
 
-  if (cacheKeys.length === 0) {
-    console.warn(
-      "No icon cache entries found - this may indicate a loading issue"
-    );
-    // Take a screenshot for debugging but don't fail the test yet
-    await page.screenshot({
-      path: "web3-icon-fetcher-bos-test-empty-cache.png",
-      fullPage: true,
-    });
-  } else {
-    console.log("Sample icon cache entry:", iconCache[cacheKeys[0]]);
-    expect(cacheKeys.length).toBeGreaterThan(0);
-  }
+  console.log("Sample icon cache entry:", iconCache[cacheKeys[0]]);
+  expect(cacheKeys.length).toBeGreaterThan(0);
 
   // Check for Icon Display Test section
   await expect(
