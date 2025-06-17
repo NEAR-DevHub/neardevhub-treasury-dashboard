@@ -3,7 +3,6 @@ import fs from "fs";
 import path, { dirname } from "path";
 import { readFile, writeFile, mkdir } from "fs/promises";
 import { tmpdir } from "os";
-import { MOCK_RPC_URL } from "./rpcmock.js";
 
 const instancesFolder = path.resolve(dirname("."), "instances"); // Adjust the path if necessary
 
@@ -76,7 +75,7 @@ export async function redirectWeb4({
   if (!treasury) {
     treasury = contractId.split(".")[0] + ".sputnik-dao.near";
   }
-  const redirectNodeUrl = sandboxNodeUrl ?? MOCK_RPC_URL;
+  const redirectNodeUrl = sandboxNodeUrl ?? "https://rpc.mainnet.fastnear.com";
 
   const near = await connect({
     networkId,

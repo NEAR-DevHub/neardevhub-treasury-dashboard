@@ -239,11 +239,11 @@ test.describe("Intents Deposit UI", () => {
     // Verify the QR code matches the displayed address
     const qrCodeIframe = modalLocator.locator("iframe[title*='QR Code for']");
     await expect(qrCodeIframe).toBeVisible();
-    await qrCodeIframe.scrollIntoViewIfNeeded();
-
     await expect(
       qrCodeIframe.contentFrame().locator("path").first()
     ).toBeVisible();
+
+    await qrCodeIframe.scrollIntoViewIfNeeded();
 
     // Take a screenshot of the QR code and decode it
     const qrCodeImageBuffer = await qrCodeIframe.screenshot();
