@@ -170,7 +170,7 @@ async function navigateToMembersPage({ page, instanceAccount }) {
 async function openAddMemberForm({ page }) {
   await page.waitForTimeout(6_000);
   const createMemberRequestButton = page.getByRole("button", {
-    name: " Add Membe",
+    name: " Add Members",
   });
   await expect(createMemberRequestButton).toBeVisible();
   await createMemberRequestButton.click();
@@ -189,9 +189,9 @@ async function submitProposal({ page, isEdit }) {
   await expect(page.getByText("Awaiting transaction")).not.toBeVisible({
     timeout: 15_000,
   });
-  await expect(
-    page.getByText("Your request has been submitted.")
-  ).toBeVisible();
+  await expect(page.getByText("Your request has been submitted.")).toBeVisible({
+    timeout: 10_000,
+  });
   await page.getByRole("link", { name: "View it" }).click();
   await page.waitForTimeout(10_000);
 }
@@ -266,7 +266,7 @@ test.describe("User is logged in", function () {
     await expect(addButton).toBeDisabled();
     await expect(submitButton).toBeDisabled();
 
-    await usernameInput.fill("test.near");
+    await usernameInput.fill("member1.near");
 
     // 5. Open permission dropdown and select "requestor"
     await iframe.getByText("Select Permission").click();
@@ -280,20 +280,31 @@ test.describe("User is logged in", function () {
 
     // 8. Fill the second member's username
     const usernameInputs = iframe.getByPlaceholder("treasury.near");
-    await usernameInputs.nth(1).fill("test.near");
+    await usernameInputs.nth(1).fill("member1.near");
     const alreadyAdded = iframe.getByText(
       "This account is already added above"
     );
     await expect(alreadyAdded).toBeVisible();
     await expect(addButton).toBeDisabled();
     await expect(submitButton).toBeDisabled();
-    await usernameInputs.nth(1).fill("another.near");
+    await usernameInputs.nth(1).fill("member2.near");
     const rolesError = iframe
       .locator("#roleError-1")
       .getByText("You must assign at least one role.");
     await expect(rolesError).toBeVisible();
     await iframe.getByText("Select Permission").nth(1).click();
     await iframe.locator("#dropdownMenu-1 .dropdown-item").nth(0).click();
+    await addButton.click();
+    await expect(iframe.getByText("Member #3")).toBeVisible();
+    await iframe.locator("#accountInput-2").scrollIntoViewIfNeeded();
+    await iframe.locator("#accountInput-2").fill("member3.near");
+    await iframe.getByText("Select Permission").nth(2).click();
+    await iframe.locator("#dropdownMenu-2 .dropdown-item").nth(0).click();
+    await addButton.click();
+    await iframe.locator("#member-1 i").first().click();
+    await expect(iframe.getByText("Member #4")).not.toBeVisible();
+    await iframe.locator("#member-3 i").first().click();
+    await expect(iframe.getByText("Member #3")).not.toBeVisible();
     await submitButton.click();
     await submitProposal({ page });
 
@@ -301,8 +312,8 @@ test.describe("User is logged in", function () {
     await expect(
       page.getByRole("heading", { name: "Update policy - Members Permissions" })
     ).toBeVisible();
-    await expect(page.getByText("@test.near")).toBeVisible();
-    await expect(page.getByText("@another.near")).toBeVisible();
+    await expect(page.getByText("@member1.near")).toBeVisible();
+    await expect(page.getByText("@member3.near")).toBeVisible();
     await expect(page.getByText("Assigned Roles:").count()).to(2);
   });
 

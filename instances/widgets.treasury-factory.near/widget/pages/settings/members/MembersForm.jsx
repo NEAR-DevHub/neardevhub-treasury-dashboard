@@ -1,8 +1,8 @@
-const { encodeToMarkdown, getFilteredProposalsByStatusAndKind } = VM.require(
-  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
-) || {
-  getFilteredProposalsByStatusAndKind: () => {},
-};
+const {
+  encodeToMarkdown,
+  getFilteredProposalsByStatusAndKind,
+  updateDaoPolicy,
+} = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
 
 const { Modal, ModalContent, ModalHeader, ModalFooter } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.modal"
@@ -52,7 +52,13 @@ useEffect(() => {
   setUpdatedList([]);
 }, [selectedMembers]);
 
-if (!profilesData || !accounts.length || !availableRoles.length) return <></>;
+if (
+  !profilesData ||
+  !accounts.length ||
+  !availableRoles.length ||
+  typeof getFilteredProposalsByStatusAndKind !== "function"
+)
+  return <></>;
 
 const fetchProposals = async (proposalId) =>
   getFilteredProposalsByStatusAndKind({
@@ -99,9 +105,11 @@ useEffect(() => {
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
         if (typeof lastProposalId === "number" && lastProposalId !== id) {
-          updateLastProposalId(lastProposalId);
+          updateLastProposalId(id);
           setToastStatus(true);
           setShowEditor(false);
+          setShowProposalsOverrideConfirmModal(false);
+          setShowEditConfirmationModal(false);
           clearTimeout(checkTxnTimeout);
           setTxnCreated(false);
         } else {
@@ -117,79 +125,6 @@ useEffect(() => {
   }
 }, [isTxnCreated, lastProposalId]);
 
-function updateDaoPolicy(membersList) {
-  const updatedPolicy = { ...daoPolicy };
-  const additions = [];
-  const edits = [];
-
-  const originalRolesMap = new Map();
-
-  if (Array.isArray(updatedPolicy.roles)) {
-    updatedPolicy.roles.forEach((role) => {
-      if (role.name !== "all" && role.kind.Group) {
-        role.kind.Group.forEach((user) => {
-          if (!originalRolesMap.has(user)) {
-            originalRolesMap.set(user, []);
-          }
-          originalRolesMap.get(user).push(role.name);
-        });
-      }
-    });
-
-    updatedPolicy.roles = updatedPolicy.roles.map((role) => {
-      if (role.name === "all" && role.kind === "Everyone") return role;
-
-      let group = [...(role.kind.Group || [])];
-
-      membersList.forEach(({ member, roles }) => {
-        const shouldHaveRole = roles.includes(role.name);
-        const isAlreadyInRole = group.includes(member);
-
-        if (shouldHaveRole && !isAlreadyInRole) {
-          group.push(member);
-        } else if (!shouldHaveRole && isAlreadyInRole) {
-          group = group.filter((u) => u !== member);
-        }
-      });
-
-      return {
-        ...role,
-        kind: { Group: group },
-      };
-    });
-  }
-
-  membersList.forEach(({ member, roles }) => {
-    const oldRoles = originalRolesMap.get(member) || [];
-    const newRoles = roles;
-
-    const added = newRoles.filter((r) => !oldRoles.includes(r));
-    const removed = oldRoles.filter((r) => !newRoles.includes(r));
-
-    if (oldRoles.length === 0 && newRoles.length > 0) {
-      additions.push(
-        `- add "${member}" to [${newRoles.map((r) => `"${r}"`).join(", ")}]`
-      );
-    } else if (added.length > 0 || removed.length > 0) {
-      edits.push(
-        `- edit "${member}" from [${oldRoles
-          .map((r) => `"${r}"`)
-          .join(", ")}] to [${newRoles.map((r) => `"${r}"`).join(", ")}]`
-      );
-    }
-  });
-
-  const summaryLines = [...additions, ...edits];
-  const summary = summaryLines.length
-    ? `${context.accountId} requested to:\n${summaryLines.join("\n")}`
-    : `${context.accountId} made no permission changes.`;
-
-  return {
-    updatedPolicy,
-    summary,
-  };
-}
-
 function onSubmitClick(list) {
   list = list || updatedList;
   if (isTreasuryFactory) {
@@ -201,7 +136,7 @@ function onSubmitClick(list) {
     );
   } else {
     setTxnCreated(true);
-    const changes = updateDaoPolicy(list);
+    const changes = updateDaoPolicy(list, daoPolicy);
     const updatedPolicy = changes.updatedPolicy;
     const summary = changes.summary;
 
@@ -230,62 +165,6 @@ function onSubmitClick(list) {
     ]);
   }
 }
-
-const AllModals = () => {
-  return (
-    <div>
-      <TransactionLoader
-        showInProgress={isTxnCreated}
-        cancelTxn={() => setTxnCreated(false)}
-      />
-      {proposals.length > 0 && (
-        <Widget
-          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
-          props={{
-            instance,
-            heading: "Confirm Your Change",
-            wider: true,
-            content: (
-              <Widget
-                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.WarningTable`}
-                props={{
-                  warningText:
-                    "This action will override your previous pending proposals. Complete exsisting one before creating a new to avoid conflicting or incomplete updates.",
-                  tableProps: [{ proposals }],
-                }}
-              />
-            ),
-            confirmLabel: "Yes, proceed",
-            isOpen: showProposalsOverrideConfirmModal,
-            onCancelClick: () => setShowProposalsOverrideConfirmModal(false),
-            onConfirmClick: () => {
-              setShowProposalsOverrideConfirmModal(false);
-              onSubmitClick(updatedList);
-            },
-          }}
-        />
-      )}
-
-      <Widget
-        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
-        props={{
-          instance,
-          heading: "Are you sure you want to cancel?",
-          content:
-            "This action will clear all the information you have entered in the form and cannot be undone.",
-          confirmLabel: "Yes",
-          isOpen: showCancelModal,
-          onCancelClick: () => setShowCancelModal(false),
-          onConfirmClick: () => {
-            setShowEditConfirmationModal(false);
-            setShowCancelModal(false);
-            setShowEditor(false);
-          },
-        }}
-      />
-    </div>
-  );
-};
 
 const EditMembersChangesModal = () => {
   return showEditConfirmationModal ? (
@@ -365,7 +244,55 @@ const EditMembersChangesModal = () => {
           </div>
         </ModalFooter>
       </Modal>
-      <AllModals />
+      <TransactionLoader
+        showInProgress={isTxnCreated}
+        cancelTxn={() => setTxnCreated(false)}
+      />
+      {proposals.length > 0 && (
+        <Widget
+          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
+          props={{
+            instance,
+            heading: "Confirm Your Change",
+            wider: true,
+            content: (
+              <Widget
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.WarningTable`}
+                props={{
+                  warningText:
+                    "This action will override your previous pending proposals. Complete exsisting one before creating a new to avoid conflicting or incomplete updates.",
+                  tableProps: [{ proposals }],
+                }}
+              />
+            ),
+            confirmLabel: "Yes, proceed",
+            isOpen: showProposalsOverrideConfirmModal,
+            onCancelClick: () => setShowProposalsOverrideConfirmModal(false),
+            onConfirmClick: () => {
+              setShowProposalsOverrideConfirmModal(false);
+              onSubmitClick(updatedList);
+            },
+          }}
+        />
+      )}
+
+      <Widget
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
+        props={{
+          instance,
+          heading: "Are you sure you want to cancel?",
+          content:
+            "This action will clear all the information you have entered in the form and cannot be undone.",
+          confirmLabel: "Yes",
+          isOpen: showCancelModal,
+          onCancelClick: () => setShowCancelModal(false),
+          onConfirmClick: () => {
+            setShowEditConfirmationModal(false);
+            setShowCancelModal(false);
+            setShowEditor(false);
+          },
+        }}
+      />
     </div>
   ) : (
     <></>
@@ -374,7 +301,7 @@ const EditMembersChangesModal = () => {
 
 return (
   <div>
-    <EditMembersChangesModal />
+    {!isTreasuryFactory && <EditMembersChangesModal />}
     <Widget
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OffCanvas`}
       props={{
@@ -389,9 +316,8 @@ return (
                 ? "Make changes to the member's permissions to submit the request. Each member must have at least one permission."
                 : "To add a members, enter the username and select at least one permission."}
             </div>
-            <AllModals />
             <Widget
-              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.MembersInput`}
+              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.members.MembersEditor`}
               props={{
                 isEdit,
                 accounts,
@@ -412,6 +338,11 @@ return (
                 isTreasuryFactory,
                 proposals,
                 updatedList,
+                daoPolicy,
+                onFactorySubmit: props.onSubmit,
+                updateLastProposalId,
+                lastProposalId,
+                setToastStatus,
               }}
             />
           </div>

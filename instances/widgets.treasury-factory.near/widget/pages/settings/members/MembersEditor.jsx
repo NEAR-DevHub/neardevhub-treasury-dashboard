@@ -2,10 +2,15 @@ const {
   encodeToMarkdown,
   getFilteredProposalsByStatusAndKind,
   getAllColorsAsObject,
+  updateDaoPolicy,
 } = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common") || {
   getFilteredProposalsByStatusAndKind: () => {},
   getAllColorsAsObject: () => {},
 };
+
+const { TransactionLoader } = VM.require(
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TransactionLoader`
+) || { TransactionLoader: () => <></> };
 
 const {
   isEdit,
@@ -17,26 +22,105 @@ const {
   isSubmitLoading,
   isTreasuryFactory,
   proposals,
+  daoPolicy,
+  treasuryDaoID,
+  lastProposalId,
 } = props;
-const setShowCancelModal = props.setShowCancelModal || (() => {});
+
 const setUpdatedList = props.setUpdatedList || (() => {});
 const setShowEditConfirmationModal =
   props.setShowEditConfirmationModal || (() => {});
-const onSubmitClick = props.onSubmitClick || (() => {});
-const setShowEditor = props.setShowEditor || (() => {});
-const setShowProposalsOverrideConfirmModal =
-  props.setShowProposalsOverrideConfirmModal || (() => {});
 
-const config = props.treasuryDaoID
-  ? Near.view(props.treasuryDaoID, "get_config")
-  : null;
+const setShowEditor = props.setShowEditor || (() => {});
+
+function onSubmitClick(list) {
+  if (isTreasuryFactory) {
+    props.onFactorySubmit(
+      list.map((member) => ({
+        accountId: member.member,
+        permissions: member.roles,
+      }))
+    );
+  } else {
+    setTxnCreated(true);
+    const changes = updateDaoPolicy(list, daoPolicy);
+    const updatedPolicy = changes.updatedPolicy;
+    const summary = changes.summary;
+
+    const description = {
+      title: "Update policy - Members Permissions",
+      summary,
+    };
+
+    Near.call([
+      {
+        contractName: treasuryDaoID,
+        methodName: "add_proposal",
+        args: {
+          proposal: {
+            description: encodeToMarkdown(description),
+            kind: {
+              ChangePolicy: {
+                policy: updatedPolicy,
+              },
+            },
+          },
+        },
+        gas: 200000000000000,
+        deposit: daoPolicy?.proposal_bond || 0,
+      },
+    ]);
+  }
+}
+
+const config = treasuryDaoID ? Near.view(treasuryDaoID, "get_config") : null;
+
 const metadata = JSON.parse(atob(config.metadata ?? ""));
 const isDarkTheme = metadata.theme === "dark";
 
 const primaryColor = metadata?.primaryColor
   ? metadata?.primaryColor
   : themeColor;
-const colors = getAllColorsAsObject(isDarkTheme, primaryColor);
+const colors = getAllColorsAsObject(isDarkTheme, primaryColor) || {};
+const [showCancelModal, setShowCancelModal] = useState(false);
+const [isTxnCreated, setTxnCreated] = useState(false);
+const [showErrorToast, setShowErrorToast] = useState(false);
+const [
+  showProposalsOverrideConfirmModal,
+  setShowProposalsOverrideConfirmModal,
+] = useState(false);
+
+function getLastProposalId() {
+  return Near.asyncView(treasuryDaoID, "get_last_proposal_id").then(
+    (result) => result
+  );
+}
+
+// close canvas after proposal is submitted
+useEffect(() => {
+  if (isTxnCreated) {
+    let checkTxnTimeout = null;
+
+    const checkForNewProposal = () => {
+      getLastProposalId().then((id) => {
+        if (typeof lastProposalId === "number" && lastProposalId !== id) {
+          props.updateLastProposalId(id);
+          props.setToastStatus(true);
+          setShowEditor(false);
+          clearTimeout(checkTxnTimeout);
+          setTxnCreated(false);
+        } else {
+          checkTxnTimeout = setTimeout(() => checkForNewProposal(), 1000);
+        }
+      });
+    };
+    checkForNewProposal();
+
+    return () => {
+      clearTimeout(checkTxnTimeout);
+    };
+  }
+}, [isTxnCreated, lastProposalId, treasuryDaoID]);
 
 const code = `<!DOCTYPE html>
 <html lang="en">
@@ -272,16 +356,23 @@ const code = `<!DOCTYPE html>
     }
 
     function getAllEnteredAccounts(skipIndex) {
-      const inputs = document.querySelectorAll("[id^='accountInput-']");
+      const inputs = document.querySelectorAll("input[id^='accountInput-']");
       const accounts = [];
+    
       inputs.forEach((input, idx) => {
-        if (idx !== skipIndex) {
-          const val = input.value.trim().toLowerCase();
-          if (val) accounts.push(val);
-        }
+        if (idx === skipIndex) return;
+    
+        // Use offsetParent to check if visible (works even if hidden via class/CSS)
+        if (input.offsetParent === null) return;
+    
+        const val = input.value.trim().toLowerCase();
+        if (val) accounts.push(val);
       });
+    
       return accounts;
-    }    
+    }
+    
+    
 
     function validateMember(index) {
       const input = document.getElementById("accountInput-" + index);
@@ -499,6 +590,7 @@ const code = `<!DOCTYPE html>
             }
           }
         });
+        validateAllMembers()
       }
       
       
@@ -722,18 +814,14 @@ const code = `<!DOCTYPE html>
     }
     
     window.addEventListener("message", function (event) {
+      console.log(availableRoles)
       if (!availableRoles.length){
         isEdit = event.data.isEdit;
         accounts = event.data.accounts;
         availableRoles= event.data.availableRoles;
         allMembers = event.data.allMembers;
 
-        console.log(event.data.existingData)
-        if ((event.data.existingData || []).length > 0) {
-            event.data.existingData.forEach((i, idx) => {
-              addMember({ username: i.member, roles: i.roles });
-            });
-        } else if (isEdit) {
+       if (isEdit) {
           if (Array.isArray(event.data.selectedMembers)) {
             selectedMembers = event.data.selectedMembers;
             event.data.selectedMembers.forEach((i, idx) => {
@@ -761,53 +849,104 @@ State.init({
 });
 
 return (
-  <iframe
-    srcDoc={code}
-    style={{
-      height: `${state.height}px`,
-      width: "100%",
-      border: "none",
-      overflow: "hidden",
-    }}
-    message={{
-      isEdit,
-      accounts,
-      availableRoles,
-      allMembers,
-      selectedMembers,
-      disableCancel,
-      isSubmitLoading,
-      existingData: props.updatedList,
-    }}
-    onMessage={(e) => {
-      switch (e.handler) {
-        case "onCancel": {
-          setShowCancelModal(true);
-          break;
-        }
-        case "onSubmit": {
-          setUpdatedList(e.args);
-          if (isTreasuryFactory) {
-            onSubmitClick(e.args);
-          } else {
-            if (isEdit) {
-              setShowEditConfirmationModal(true);
-              setShowEditor(false);
+  <div>
+    <TransactionLoader
+      showInProgress={isTxnCreated}
+      cancelTxn={() => setTxnCreated(false)}
+    />
+    {proposals.length > 0 && (
+      <Widget
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
+        props={{
+          instance,
+          heading: "Confirm Your Change",
+          wider: true,
+          content: (
+            <Widget
+              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.WarningTable`}
+              props={{
+                warningText:
+                  "This action will override your previous pending proposals. Complete exsisting one before creating a new to avoid conflicting or incomplete updates.",
+                tableProps: [{ proposals }],
+              }}
+            />
+          ),
+          confirmLabel: "Yes, proceed",
+          isOpen: showProposalsOverrideConfirmModal,
+          onCancelClick: () => setShowProposalsOverrideConfirmModal(false),
+          onConfirmClick: () => {
+            setShowProposalsOverrideConfirmModal(false);
+            onSubmitClick(updatedList);
+          },
+        }}
+      />
+    )}
+
+    <Widget
+      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
+      props={{
+        instance,
+        heading: "Are you sure you want to cancel?",
+        content:
+          "This action will clear all the information you have entered in the form and cannot be undone.",
+        confirmLabel: "Yes",
+        isOpen: showCancelModal,
+        onCancelClick: () => setShowCancelModal(false),
+        onConfirmClick: () => {
+          setShowCancelModal(false);
+          setShowEditor(false);
+        },
+      }}
+    />
+
+    <iframe
+      srcDoc={code}
+      style={{
+        height: `${state.height}px`,
+        width: "100%",
+        border: "none",
+        overflow: "hidden",
+      }}
+      message={{
+        isEdit,
+        accounts,
+        availableRoles,
+        allMembers,
+        selectedMembers,
+        disableCancel,
+        isSubmitLoading,
+      }}
+      onMessage={(e) => {
+        switch (e.handler) {
+          case "onCancel": {
+            setShowCancelModal(true);
+            break;
+          }
+          case "onSubmit": {
+            if (isTreasuryFactory) {
+              onSubmitClick(e.args);
             } else {
-              if ((proposals ?? []).length > 0) {
-                setShowProposalsOverrideConfirmModal(true);
+              if (isEdit) {
+                setUpdatedList(e.args);
+                setShowEditConfirmationModal(true);
+                setShowEditor(false);
               } else {
-                onSubmitClick(e.args);
+                if ((proposals ?? []).length > 0) {
+                  setShowProposalsOverrideConfirmModal(true);
+                } else {
+                  setTxnCreated(true);
+                  onSubmitClick(e.args);
+                }
               }
             }
+            break;
           }
-          break;
+          case "updateIframeHeight": {
+            State.update({ height: e.height });
+            break;
+          }
         }
-        case "updateIframeHeight": {
-          State.update({ height: e.height });
-          break;
-        }
-      }
-    }}
-  />
+      }}
+    />
+  </div>
 );

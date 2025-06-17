@@ -293,7 +293,7 @@ return (
       />
     )}
     <Widget
-      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.MembersEditor`}
+      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.members.MembersForm`}
       props={{
         instance,
         availableRoles: (roles ?? [])
