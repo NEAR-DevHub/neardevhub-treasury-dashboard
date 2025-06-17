@@ -11,7 +11,6 @@ const RPCS = [
   "https://near.lava.build",
   "https://near.blockpi.network/v1/rpc/public",
   "https://near.drpc.org",
-  "https://endpoints.omniatech.io/v1/near/mainnet/public",
 ];
 
 let rpcIndex = 0;
