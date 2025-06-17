@@ -394,8 +394,8 @@ function getFilteredProposalsByStatusAndKind({
   });
 }
 
-const data = fetch(`https://httpbin.org/headers`);
-const gatewayOrigin = data?.body?.headers?.Origin ?? "";
+const data = fetch(`https://httpbingo.org/headers`);
+const gatewayOrigin = data?.body?.headers?.Origin[0] ?? "";
 
 const isNearSocial =
   gatewayOrigin.includes("near.social") ||

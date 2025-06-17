@@ -570,8 +570,8 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
     : null;
   const metadata = JSON.parse(atob(config.metadata ?? ""));
 
-  const data = fetch(`https://httpbin.org/headers`);
-  const gatewayURL = data?.body?.headers?.Origin ?? "";
+  const data = fetch(`https://httpbingo.org/headers`);
+  const gatewayURL = data?.body?.headers?.Origin[0] ?? "";
   const isDarkTheme = metadata.theme === "dark";
 
   if (!config) {

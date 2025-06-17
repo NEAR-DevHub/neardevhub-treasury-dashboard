@@ -349,6 +349,7 @@ test("payment request to BTC address", async ({
   const btcAmountElement = btcRowLocator.locator(
     "div.d-flex.gap-2.align-items-center.justify-content-end div.d-flex.flex-column.align-items-end div.h6.mb-0"
   );
+  await expect(btcAmountElement).toBeAttached();
   await btcAmountElement.scrollIntoViewIfNeeded();
   await expect(btcAmountElement).toHaveText("320.00");
 
@@ -645,6 +646,7 @@ test("payment request to USDC address on BASE", async ({
   const usdcAmountElement = usdcRowLocator.locator(
     "div.d-flex.gap-2.align-items-center.justify-content-end div.d-flex.flex-column.align-items-end div.h6.mb-0"
   );
+  await expect(usdcAmountElement).toBeAttached();
   await usdcAmountElement.scrollIntoViewIfNeeded();
   await expect(usdcAmountElement).toHaveText("100000.00");
 
