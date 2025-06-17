@@ -502,7 +502,9 @@ test.describe("Intents Deposit UI", () => {
     await intentsTabButton.click();
     await expect(intentsTabButton).toHaveClass(/active/);
 
-    await page.getByText("Select an asset", { exact: true }).click();
+    const assetDropdown = modalLocator.locator("div.custom-select").nth(0);
+    await expect(assetDropdown).toHaveText("Select an asset");
+    await assetDropdown.click();
     const assetSearchField = await page.getByPlaceholder("Search assets");
     await assetSearchField.click();
     await assetSearchField.pressSequentially("usdc", { delay: 100 });
