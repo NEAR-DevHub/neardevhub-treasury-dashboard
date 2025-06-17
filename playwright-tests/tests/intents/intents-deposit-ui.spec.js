@@ -621,6 +621,11 @@ test.describe("Intents Deposit UI", () => {
 
       // 1. Select the asset
       const assetDropdown = modalLocator.locator("div.custom-select").nth(0);
+      if (assetName === assetsToTest[0]) {
+        await expect(assetDropdown).toHaveText("Select an asset", {
+          exact: true,
+        });
+      }
       await assetDropdown.click();
 
       const assetItemLocator = assetDropdown.locator("div.dropdown-item", {
