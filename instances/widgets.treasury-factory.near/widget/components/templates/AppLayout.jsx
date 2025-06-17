@@ -570,11 +570,11 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
     : null;
   const metadata = JSON.parse(atob(config.metadata ?? ""));
 
-  const data = fetch(`https://httpbin.org/headers`);
+  const data = fetch(`https://ref-sdk-test-cold-haze-1300-2.fly.dev/headers`);
   const gatewayURL = data?.body?.headers?.Origin ?? "";
   const isDarkTheme = metadata.theme === "dark";
 
-  if (!config) {
+  if (!config || !data) {
     return <></>;
   }
 

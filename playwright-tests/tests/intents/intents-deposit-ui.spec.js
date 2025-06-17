@@ -482,7 +482,7 @@ test.describe("Intents Deposit UI", () => {
     page,
     instanceAccount,
   }) => {
-    test.setTimeout(40_000);
+    test.setTimeout(60_000);
     await page.goto(`https://${instanceAccount}.page`);
 
     // Open the deposit modal
@@ -534,7 +534,7 @@ test.describe("Intents Deposit UI", () => {
     instanceAccount,
     // daoAccount, // daoAccount is not used in this test
   }) => {
-    test.setTimeout(300_000); // Increased timeout for testing multiple assets
+    test.setTimeout(60_000); // Increased timeout for testing multiple assets
 
     await page.goto(`https://${instanceAccount}.page`);
 
