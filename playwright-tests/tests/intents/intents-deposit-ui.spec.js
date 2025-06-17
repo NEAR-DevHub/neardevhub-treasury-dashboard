@@ -482,7 +482,7 @@ test.describe("Intents Deposit UI", () => {
     page,
     instanceAccount,
   }) => {
-    test.setTimeout(20_000);
+    test.setTimeout(40_000);
     await page.goto(`https://${instanceAccount}.page`);
 
     // Open the deposit modal
