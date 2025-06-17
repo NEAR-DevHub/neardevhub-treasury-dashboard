@@ -1,5 +1,5 @@
-const data = fetch(`https://httpbingo.org/headers`);
-const gatewayURL = data?.body?.headers?.Origin[0] ?? "";
+const data = fetch(`https://ref-sdk-test-cold-haze-1300-2.fly.dev/headers`);
+const gatewayURL = data?.body?.headers?.Origin ?? "";
 
 // we need fixed positioning for near social and not for org
 const ParentContainer = gatewayURL.includes("near.org")
