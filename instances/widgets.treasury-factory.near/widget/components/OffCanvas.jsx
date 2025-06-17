@@ -31,7 +31,7 @@ const Container = styled.div`
   }
 
   .offcanvas {
-    overflow: ${disableScroll ? "hideen" : "auto"};
+    overflow: ${disableScroll ? "hidden" : "auto"};
   }
 
   .offcanvas-body {
