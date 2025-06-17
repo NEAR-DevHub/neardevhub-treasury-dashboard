@@ -56,6 +56,5 @@ jobs:
       - name: Run tests
         run: |
           npx playwright test playwright-tests/tests/intents \
-            --workers=1 \
             --project=${{ matrix.project }} \
             --shard=${{ matrix.shard }}
