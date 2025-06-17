@@ -92,28 +92,16 @@ test("Web3IconFetcher BOS compatibility test loads and displays icons", async ({
   const iconImages = page.locator("img[width='24'][height='24']");
   const iconCount = await iconImages.count();
 
-  if (iconCount > 0) {
-    console.log(`Found ${iconCount} token icons displayed`);
+  console.log(`Found ${iconCount} token icons displayed`);
 
-    // Verify at least one icon has a valid data URL source
-    const firstIconSrc = await iconImages.first().getAttribute("src");
-    expect(firstIconSrc).toMatch(/^data:image\/(svg\+xml|png|jpeg);base64,/);
+  // Verify at least one icon has a valid data URL source
+  const firstIconSrc = await iconImages.first().getAttribute("src");
+  expect(firstIconSrc).toMatch(/^data:image\/(svg\+xml|png|jpeg);base64,/);
 
-    // Check for network icons too (smaller 20x20 images)
-    const networkIcons = page.locator("img[width='20'][height='20']");
-    const networkIconCount = await networkIcons.count();
-    console.log(`Found ${networkIconCount} network icons displayed`);
-  } else {
-    console.log(
-      "No token icons found - this might indicate an issue with icon loading"
-    );
-  }
-
-  // Take a screenshot for debugging
-  await page.screenshot({
-    path: "web3-icon-fetcher-bos-test.png",
-    fullPage: true,
-  });
+  // Check for network icons too (smaller 20x20 images)
+  const networkIcons = page.locator("img[width='20'][height='20']");
+  const networkIconCount = await networkIcons.count();
+  console.log(`Found ${networkIconCount} network icons displayed`);
 
   // Additional checks for BOS compatibility
   // Verify no JavaScript errors in console (important for BOS)

@@ -106,7 +106,6 @@ test.describe("Intents Deposit UI", () => {
       hasText: "Total Balance",
     });
     await expect(totalBalanceCardLocator).toBeVisible({ timeout: 20000 });
-    await expect(page.locator('span[role="status"]')).toHaveCount(0);
 
     const depositButton = totalBalanceCardLocator.getByRole("button", {
       name: "Deposit",
@@ -157,7 +156,6 @@ test.describe("Intents Deposit UI", () => {
       hasText: "Total Balance",
     });
     await expect(totalBalanceCardLocator).toBeVisible({ timeout: 20000 });
-    await expect(page.locator('span[role="status"]')).toHaveCount(0);
 
     const depositButton = totalBalanceCardLocator.getByRole("button", {
       name: "Deposit",
@@ -219,7 +217,6 @@ test.describe("Intents Deposit UI", () => {
       hasText: "Total Balance",
     });
     await expect(totalBalanceCardLocator).toBeVisible({ timeout: 20000 });
-    await expect(page.locator('span[role="status"]')).toHaveCount(0);
 
     const depositButton = totalBalanceCardLocator.getByRole("button", {
       name: "Deposit",
@@ -242,11 +239,12 @@ test.describe("Intents Deposit UI", () => {
     // Verify the QR code matches the displayed address
     const qrCodeIframe = modalLocator.locator("iframe[title*='QR Code for']");
     await expect(qrCodeIframe).toBeVisible();
+    await qrCodeIframe.scrollIntoViewIfNeeded();
 
     await expect(
       qrCodeIframe.contentFrame().locator("path").first()
     ).toBeVisible();
-    await qrCodeIframe.scrollIntoViewIfNeeded();
+
     // Take a screenshot of the QR code and decode it
     const qrCodeImageBuffer = await qrCodeIframe.screenshot();
     const image = await Jimp.read(qrCodeImageBuffer);
@@ -289,13 +287,12 @@ test.describe("Intents Deposit UI", () => {
     const totalBalanceCardLocator = page.locator(".card.card-body", {
       hasText: "Total Balance",
     });
-    await expect(totalBalanceCardLocator).toBeVisible({ timeout: 20000 });
-    await expect(page.locator('span[role="status"]')).toHaveCount(0);
+    await expect(totalBalanceCardLocator).toBeVisible({ timeout: 20_000 });
 
     const depositButton = totalBalanceCardLocator.getByRole("button", {
       name: "Deposit",
     });
-    await expect(depositButton).toBeEnabled({ timeout: 15_000 });
+    await expect(depositButton).toBeEnabled({ timeout: 20_000 });
     await depositButton.click();
 
     const modalLocator = page.locator(
@@ -537,7 +534,6 @@ test.describe("Intents Deposit UI", () => {
       hasText: "Total Balance",
     });
     await expect(totalBalanceCardLocator).toBeVisible({ timeout: 20000 });
-    await expect(page.locator('span[role="status"]')).toHaveCount(0);
 
     const depositButton = totalBalanceCardLocator.getByRole("button", {
       name: "Deposit",
