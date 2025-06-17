@@ -351,6 +351,7 @@ test.describe("Intents Deposit UI", () => {
         .nth(0);
       if (assetName === uniqueAssetNames[0]) {
         await expect(assetDropdownSelector).toHaveText("Select an asset", {
+          exact: true,
           timeout: 15_000,
         });
       }
@@ -509,7 +510,7 @@ test.describe("Intents Deposit UI", () => {
     await expect(intentsTabButton).toHaveClass(/active/);
 
     const assetDropdown = modalLocator.locator("div.custom-select").nth(0);
-    await expect(assetDropdown).toHaveText("Select an asset");
+    await expect(assetDropdown).toHaveText("Select an asset", { exact: true });
     await assetDropdown.click();
     const assetSearchField = await page.getByPlaceholder("Search assets");
     await assetSearchField.click();
@@ -793,7 +794,7 @@ test.describe("Intents Deposit UI", () => {
     }
 
     const assetDropdown = modalLocator.locator("div.custom-select").nth(0);
-    await expect(assetDropdown).toHaveText("Select an asset");
+    await expect(assetDropdown).toHaveText("Select an asset", { exact: true });
     await assetDropdown.click();
     await expect(assetDropdown.locator(".dropdown-icon").first()).toBeVisible();
 
