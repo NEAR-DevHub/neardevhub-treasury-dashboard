@@ -9,18 +9,23 @@ import {
 import nearApi from "near-api-js";
 import { redirectWeb4 } from "../../util/web4.js";
 
-async function pasteAndValidateCorrectData(page, csvText) {
+async function pasteAndValidateCorrectData(page, csvText, proposalsNo) {
   const textarea = await page.getByTestId("csv-data");
   const validateBtn = page.getByRole("button", { name: "Validate Data" });
   await textarea.fill(csvText);
   await expect(validateBtn).toBeEnabled();
   await validateBtn.click();
   // Show Preview button appears
-  const previewBtn = page.getByRole("button", { name: "Show Preview" });
+  const previewBtn = page.getByRole("button", {
+    name: "Show " + proposalsNo + " Preview",
+  });
   await expect(previewBtn).toBeVisible();
   await previewBtn.click();
   const table = page.locator('[data-testid="preview-table"]');
   await expect(table).toBeVisible();
+  await expect(table.locator('input[type="checkbox"]')).toHaveCount(
+    proposalsNo + 1
+  );
 }
 
 test.describe("User is logged in", () => {
@@ -34,6 +39,7 @@ test.describe("User is logged in", () => {
   test.beforeEach(async ({ page, instanceAccount }) => {
     await updateDaoPolicyMembers({ instanceAccount, page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
+    await page.waitForTimeout(5_000);
     await page.getByRole("button", { name: "Create Request" }).click();
     await page.getByText("Import Multiple Payment Requests").click();
   });
@@ -51,7 +57,9 @@ test.describe("User is logged in", () => {
 
     await newPage.waitForLoadState();
 
-    expect(newPage.url()).toContain("docs");
+    expect(newPage.url()).toContain(
+      "https://docs.neartreasury.com/bulk-import"
+    );
   });
 
   test("should open payment request template link in a new tab", async ({
@@ -62,15 +70,16 @@ test.describe("User is logged in", () => {
       context.waitForEvent("page"),
       page.getByRole("link", { name: "Get the Template" }).click(),
     ]);
-
     await newPage.waitForLoadState();
-
-    expect(newPage.url()).toContain("template");
+    expect(newPage.url()).toContain(
+      "https://docs.google.com/spreadsheets/d/1VGpYu7Nzuuf1mgdeYiMgB2I6rX3VYtvbKP3RY2HuIj4/"
+    );
   });
 
   test("Validate Data shows expected errors after pasting CSV", async ({
     page,
   }) => {
+    test.setTimeout(120_000);
     // Check that Validate Data button is initially disabled
     const validateBtn = page.getByRole("button", { name: "Validate Data" });
     await expect(validateBtn).toBeDisabled();
@@ -108,6 +117,7 @@ test.describe("User is logged in", () => {
       await expect(page.getByText(errorText)).toBeVisible();
     }
   });
+
   test("Valid data shows expected warnings for row count and treasury insufficent balance", async ({
     page,
   }) => {
@@ -154,7 +164,7 @@ test.describe("User is logged in", () => {
     const csvText = `Title\tSummary\tRecipient\tRequested Token\tFunding Ask\tNotes
     Test title 1\tSummary 1\tmegha19.near\tnear\t100\tNote1
     Test title 2\tSummary 2\tmegha19.near\tdai\t50\tNote2`;
-    await pasteAndValidateCorrectData(page, csvText);
+    await pasteAndValidateCorrectData(page, csvText, 2);
     const table = page.locator('[data-testid="preview-table"]');
     const rowCheckboxes = table.locator('tbody input[type="checkbox"]');
     const topCheckbox = table.locator('thead input[type="checkbox"]');
@@ -242,7 +252,55 @@ test.describe("User is logged in", () => {
     await modalYesBtn.click();
 
     // Expect preview table to be gone
-    await expect(page.locator("table")).not.toBeVisible();
+    await expect(
+      page.locator('[data-testid="preview-table"]')
+    ).not.toBeVisible();
+  });
+
+  test("Validate CSV Structure: Tab-separated values", async ({ page }) => {
+    test.setTimeout(120_000);
+    const csvText = `Title\tSummary\tRecipient\tRequested Token\tFunding Ask\tNotes\nTest title 1\tSummary 1\tmegha19.near\tnear\t100\tNote1\nTest title 2\tSummary 2\tmegha19.near\tdai\t50\tNote2`;
+    await pasteAndValidateCorrectData(page, csvText, 2);
+  });
+
+  test("Validate CSV Structure: Comma-separated values", async ({ page }) => {
+    test.setTimeout(120_000);
+    const csvText = `Title,Summary,Recipient,Requested Token,Funding Ask,Notes\nTest title 1,Summary 1,megha19.near,near,100,Note1\nTest title 2,Summary 2,megha19.near,dai,50,Note2`;
+    await pasteAndValidateCorrectData(page, csvText, 2);
+  });
+
+  test("Validate CSV Structure: Semicolon-separated values", async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    const csvText = `Title;Summary;Recipient;Requested Token;Funding Ask;Notes\nTest title 1;Summary 1;megha19.near;near;100;Note1\nTest title 2;Summary 2;megha19.near;dai;50;Note2`;
+    await pasteAndValidateCorrectData(page, csvText, 2);
+  });
+
+  test("Validate CSV Structure: Quoted comma-separated values", async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    const csvText = `"Title","Summary","Recipient","Requested Token","Funding Ask","Notes"\n"Test title 1","Summary 1","megha19.near","near","100","Note1"\n"Test title 2","Summary 2","megha19.near","dai","50","Note2"`;
+    await pasteAndValidateCorrectData(page, csvText, 2);
+  });
+
+  test("Validate CSV Structure: Quoted fields with tabs inside", async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    const csvText = `"Title","Summary","Recipient","Requested Token","Funding Ask","Notes"\n"Test title\t1","Summary\t1","megha19.near","near","100","Note\t1"\n"Test title\t2","Summary\t2","megha19.near","dai","50","Note\t2"`;
+    await pasteAndValidateCorrectData(page, csvText, 2);
+  });
+
+  test("Validate CSV Structure: Raw TSV from spreadsheet copy-paste", async ({
+    page,
+  }) => {
+    test.setTimeout(120_000);
+    const csvText = `Title\tSummary\tRecipient\tRequested Token\tFunding Ask\tNotes
+  Test title 1\tSummary 1\tmegha19.near\tnear\t100\tNote1
+  Test title 2\tSummary 2\tmegha19.near\tdai\t50\tNote2`;
+    await pasteAndValidateCorrectData(page, csvText, 2);
   });
 });
 
@@ -377,7 +435,7 @@ test("should create bulk requests using sandbox", async ({
   Test title 3\tSummary 3\ttheori.near\tnear\t100\tNote3
   Test title 4\tSummary 4\ttheori.near\tnear\t100\tNote4`;
 
-  await pasteAndValidateCorrectData(page, csvText);
+  await pasteAndValidateCorrectData(page, csvText, 4);
   const table = page.locator('[data-testid="preview-table"]');
   const topCheckbox = table.locator('thead input[type="checkbox"]');
   await topCheckbox.click();

@@ -179,9 +179,12 @@ const Item = ({ option }) => {
     <div className="d-flex gap-3 align-items-center w-100">
       {typeof option.icon === "string" ? (
         <img src={option.icon} height={30} width={30} />
+      ) : typeof option.icon === "function" ? (
+        <option.icon />
       ) : (
-        option.icon // Allow rendering component icons directly
+        option.icon
       )}
+
       <div className="d-flex flex-column gap-1 w-100 text-wrap">
         <div className="h6 mb-0"> {option.title}</div>
         {option.value === "NEAR" && (

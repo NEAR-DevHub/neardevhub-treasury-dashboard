@@ -89,16 +89,61 @@ function getAllTreasuryBalances() {
   });
 }
 
+function parseCsv(raw) {
+  const delimiters = [",", "\t", ";"];
+  const lines = raw.trim().split(/\r?\n/);
+  let bestDelimiter = ",";
+  let maxColumns = 0;
+
+  // Detect the best delimiter based on max column count in the header
+  for (const delimiter of delimiters) {
+    const cols = splitCsvLine(lines[0], delimiter).length;
+    if (cols > maxColumns) {
+      maxColumns = cols;
+      bestDelimiter = delimiter;
+    }
+  }
+
+  return lines.map((line) => splitCsvLine(line, bestDelimiter));
+}
+
+// Basic CSV line parser (supports quoted fields and delimiter detection)
+function splitCsvLine(line, delimiter) {
+  const result = [];
+  let field = "";
+  let insideQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    const nextChar = line[i + 1];
+
+    if (char === '"') {
+      if (insideQuotes && nextChar === '"') {
+        field += '"'; // Escaped quote
+        i++;
+      } else {
+        insideQuotes = !insideQuotes;
+      }
+    } else if (char === delimiter && !insideQuotes) {
+      result.push(field);
+      field = "";
+    } else {
+      field += char;
+    }
+  }
+
+  result.push(field);
+  return result.map((f) => f.trim());
+}
+
 function validateCsvInput() {
   const errors = [];
   const warnings = [];
   const tokensSum = [];
   const validData = [];
 
-  const rows = (csvData || "")
-    .trim()
-    .split("\n")
-    .map((line) => line.split("\t"));
+  const rows = parseCsv(csvData || "");
+
   const headers = rows[0];
 
   const colIdx = (name) =>
@@ -362,12 +407,15 @@ return (
     <div className="d-flex flex-column gap-2">
       <h6 className="mb-0 fw-bold">Step 1</h6>
       <div>Get the template and fill out the required payment details</div>
-      <button
+      <a
+        target="_blank"
+        rel="noopener noreferrer"
+        href="https://docs.google.com/spreadsheets/d/1VGpYu7Nzuuf1mgdeYiMgB2I6rX3VYtvbKP3RY2HuIj4/"
         className="btn btn-outline-secondary d-flex align-items-center gap-2"
         style={{ width: "fit-content" }}
       >
         <i class="bi bi-download h6 mb-0"></i> Get the Template
-      </button>
+      </a>
     </div>
     <div className="d-flex flex-column gap-2">
       <h6 className="mb-0 fw-bold">Step 2</h6>
@@ -431,7 +479,7 @@ return (
           src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
           props={{
             classNames: { root: "theme-btn" },
-            label: "Show Preview",
+            label: `Show ${validatedData.length} Preview`,
             onClick: () => {
               showPreviewTable(validatedData);
             },

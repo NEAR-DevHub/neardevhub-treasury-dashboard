@@ -186,9 +186,9 @@ return (
                     target="_blank"
                     rel="noopener noreferrer"
                     className="primary-text-color cursor-pointer"
-                    href=""
+                    href="https://docs.neartreasury.com/bulk-import"
                   >
-                    View Step-by-Steps Instructions
+                    View Step-by-Step Instructions
                   </a>
                 </div>
                 <Widget
