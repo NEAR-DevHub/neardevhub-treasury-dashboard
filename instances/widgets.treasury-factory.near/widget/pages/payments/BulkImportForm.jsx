@@ -319,7 +319,7 @@ function validateCsvInput() {
     })
     .then(() => {
       if (!errors.length) {
-        setValidatedData(validData);
+        setValidatedData(validData.slice(0, 10));
       }
       setDataErrors(errors);
       setDataWarnings(warnings);
