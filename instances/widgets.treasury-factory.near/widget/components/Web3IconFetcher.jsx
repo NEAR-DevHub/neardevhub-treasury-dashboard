@@ -150,8 +150,11 @@ const handleIconResponse = (e) => {
       if (result) {
         // Store both token and network icons
         newCache[key] = result;
+        if (result.networkIcon) {
+          newCache[token.networkId] = result;
+        }
 
-        // Also store simple symbol mapping for backward compatibility
+        // if token icon is not available, provide passed token contract ID
         if (!result.tokenIcon) {
           result.tokenContract = token.ftContractId;
         }
@@ -203,60 +206,6 @@ if (
   State.update({
     tokensToFetch: uncachedTokens,
     isLoading: true,
-  });
-}
-
-// Enhanced API for getting icons
-const getIconForToken = (tokenOrSymbol, networkId) => {
-  if (networkId === undefined) {
-    networkId = null;
-  }
-  let key;
-  if (typeof tokenOrSymbol === "object") {
-    key = `${tokenOrSymbol.symbol}:${tokenOrSymbol.networkId || "default"}`;
-  } else if (networkId) {
-    key = `${tokenOrSymbol}:${networkId}`;
-  } else {
-    key = tokenOrSymbol;
-  }
-
-  const cached = state.iconCache[key];
-  if (cached && cached !== "NOT_FOUND") {
-    // Return token icon if it's the enhanced format, otherwise the cached value
-    return cached.tokenIcon || cached;
-  }
-
-  return null;
-};
-
-const getNetworkIcon = (tokenOrSymbol, networkId) => {
-  if (networkId === undefined) {
-    networkId = null;
-  }
-  let key;
-  if (typeof tokenOrSymbol === "object") {
-    key = `${tokenOrSymbol.symbol}:${tokenOrSymbol.networkId || "default"}`;
-  } else if (networkId) {
-    key = `${tokenOrSymbol}:${networkId}`;
-  } else {
-    return null; // No network icon without networkId
-  }
-
-  const cached = state.iconCache[key];
-  if (cached && cached !== "NOT_FOUND" && cached.networkIcon) {
-    return cached.networkIcon;
-  }
-
-  return null;
-};
-
-// Expose enhanced API to parent via callback (backward compatible)
-if (props.onApiReady && typeof props.onApiReady === "function") {
-  props.onApiReady({
-    getIconForSymbol: getIconForToken, // Backward compatibility
-    getIconForToken,
-    getNetworkIcon,
-    cache: state.iconCache,
   });
 }
 

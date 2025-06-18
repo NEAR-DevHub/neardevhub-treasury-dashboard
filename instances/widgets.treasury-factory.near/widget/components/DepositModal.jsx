@@ -49,10 +49,10 @@ const handleAllIconsLoaded = (iconCache) => {
   });
 };
 
-const getNetworkIcon = (symbol, networkId) => {
+const getNetworkIcon = (networkId) => {
   if (!networkId) return null;
 
-  const key = `${symbol}:${networkId}`;
+  const key = networkId;
   if (state.web3IconsCache && state.web3IconsCache[key]) {
     const cached = state.web3IconsCache[key];
     if (cached !== "NOT_FOUND" && cached.networkIcon) {
@@ -79,11 +79,6 @@ const fetchIntentsTokens = () => {
     return;
   }
 
-  console.log(
-    "Fetching all intents tokens...",
-    state.isLoadingTokens,
-    state.allFetchedTokens.length
-  );
   if (state.isLoadingTokens || state.allFetchedTokens.length > 0) {
     return;
   }
@@ -251,7 +246,7 @@ const updateNetworksForAsset = (assetName) => {
       return {
         id: chainId, // This is the ID like "eth:1"
         name: `${blockchainName} ( ${chainId} )`,
-        icon: getNetworkIcon(assetName, chainId), // Use enhanced network icon lookup
+        icon: getNetworkIcon(chainId), // Use enhanced network icon lookup
         near_token_id: token.near_token_id,
         originalTokenData: token,
       };
@@ -273,6 +268,7 @@ const fetchDepositAddress = (networkInfo) => {
   }
 
   State.update({
+    intentsDepositAddress: "",
     isLoadingAddress: true,
     errorApi: null,
   });
@@ -328,13 +324,15 @@ const fetchDepositAddress = (networkInfo) => {
 };
 
 // Initialize data fetching if intents tab is active
-if (
-  activeTab === "intents" &&
-  state.allFetchedTokens.length === 0 &&
-  !state.isLoadingTokens
-) {
-  fetchIntentsTokens();
-}
+useEffect(() => {
+  if (
+    activeTab === "intents" &&
+    state.allFetchedTokens.length === 0 &&
+    !state.isLoadingTokens
+  ) {
+    fetchIntentsTokens();
+  }
+}, [activeTab]);
 
 const sputnikWarning = (
   <div
