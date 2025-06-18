@@ -22,8 +22,13 @@ const refreshTableData = Storage.get(
   `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.CreatePaymentRequest`
 );
 
+const refreshPaymentsTableData = Storage.get(
+  "REFRESH_TABLE_DATA",
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.BulkImportPreviewTable`
+);
+
 const refreshProposalsTableData = Storage.get(
-  "REFRESH_PAYMENTS_TABLE_DATA",
+  "REFRESH_TABLE_DATA",
   `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.ProposalDetailsPage`
 );
 
@@ -61,7 +66,7 @@ useEffect(() => {
   setOffset(null);
   setPage(0);
   fetchProposals();
-}, [refreshTableData, refreshProposalsTableData]);
+}, [refreshTableData, refreshProposalsTableData, refreshPaymentsTableData]);
 
 const policy = treasuryDaoID
   ? Near.view(treasuryDaoID, "get_policy", {})
