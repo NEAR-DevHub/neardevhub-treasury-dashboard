@@ -394,8 +394,8 @@ function getFilteredProposalsByStatusAndKind({
   });
 }
 
-const data = fetch(`https://httpbin.org/headers`);
-const gatewayOrigin = data?.body?.headers?.Origin ?? "";
+const data = fetch(`https://ref-sdk-test-cold-haze-1300-2.fly.dev/headers`);
+const gatewayOrigin = data?.body?.headers?.origin ?? "";
 
 const isNearSocial =
   gatewayOrigin.includes("near.social") ||

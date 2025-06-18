@@ -668,8 +668,11 @@ test("show intents balance in dashboard (sandbox)", async ({
     .locator("div.card-body")
     .filter({ hasText: "Total Balance" });
 
+  await expect(totalBalanceCardLocator).not.toContainText("NaN");
+
   // Ensure that the total balance is more than the intents balance
   const totalBalanceText = await totalBalanceCardLocator.innerText();
+
   const displayedTotalBalanceNumeric = parseFloat(
     totalBalanceText.replace(/[^0-9\.]/g, "")
   );

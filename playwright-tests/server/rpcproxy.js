@@ -9,6 +9,8 @@ const RPCS = [
   "https://free.rpc.fastnear.com",
   "https://1rpc.io/near",
   "https://near.lava.build",
+  "https://near.blockpi.network/v1/rpc/public",
+  "https://near.drpc.org",
 ];
 
 let rpcIndex = 0;
