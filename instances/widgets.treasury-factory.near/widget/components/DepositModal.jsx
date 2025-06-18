@@ -399,14 +399,6 @@ return (
             onClick={() => {
               const newTab = "intents";
               State.update({ activeTab: newTab });
-              // Trigger token fetching if switching to intents
-              if (
-                newTab === "intents" &&
-                state.allFetchedTokens.length === 0 &&
-                !state.isLoadingTokens
-              ) {
-                fetchIntentsTokens();
-              }
             }}
           >
             NEAR Intents

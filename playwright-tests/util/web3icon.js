@@ -28,7 +28,11 @@ export async function getWeb3IconMaps() {
   for (const token of supportedTokens.result.tokens) {
     const blockchain = allTokens.find(
       (t) => t.defuse_asset_id === token.intents_token_id
-    ).blockchain;
+    )?.blockchain;
+    if (!blockchain) {
+      console.log("skipping", token.intents_token_id);
+      continue;
+    }
     const defuse_asset_id_parts = token.defuse_asset_identifier.split(":");
     const layer1 = defuse_asset_id_parts[0];
     const layer2 = defuse_asset_id_parts[1];
