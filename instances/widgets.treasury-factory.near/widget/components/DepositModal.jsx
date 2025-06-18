@@ -370,17 +370,6 @@ const DynamicIntentsWarning = () => {
   return <></>;
 };
 
-if (state.allIconsFetched) {
-  for (const token of state.allTokensForIcons) {
-    if (!state.tokenIconMap[token.symbol]) {
-      const ftMetadata = Near.view(token.ftContractId, "ft_metadata", {});
-      if (ftMetadata && ftMetadata.icon) {
-        state.tokenIconMap[token.symbol] = ftMetadata.icon;
-      }
-    }
-  }
-}
-
 return (
   <Modal props={{ minWidth: "700px" }}>
     <ModalHeader>
