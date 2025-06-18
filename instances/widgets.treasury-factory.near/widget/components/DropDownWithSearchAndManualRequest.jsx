@@ -121,8 +121,8 @@ return (
           () => {
             setIsOpen(searchFocused || false);
           },
-          // The delay of 100ms is to allow the onClick event of the dropdown items to register before closing the dropdown
-          100
+          // The delay of 200ms is to allow the onClick event of the dropdown items to register before closing the dropdown
+          200
         );
       }}
     >
