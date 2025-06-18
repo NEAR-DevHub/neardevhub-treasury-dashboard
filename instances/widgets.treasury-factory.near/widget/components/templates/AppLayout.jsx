@@ -571,7 +571,7 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
   const metadata = JSON.parse(atob(config.metadata ?? ""));
 
   const data = fetch(`https://ref-sdk-test-cold-haze-1300-2.fly.dev/headers`);
-  const gatewayURL = data?.body?.headers?.Origin ?? "";
+  const gatewayURL = data?.body?.headers?.origin ?? "";
   const isDarkTheme = metadata.theme === "dark";
 
   if (!config || !data) {
