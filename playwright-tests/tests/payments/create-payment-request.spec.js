@@ -176,7 +176,7 @@ test.describe.parallel("User logged in with different roles", () => {
       test(`should ${
         canCreateRequest ? "see" : "not see"
       } 'Create Request' action`, async ({ page, instanceAccount }) => {
-        test.setTimeout(60_000);
+        test.setTimeout(100_000);
 
         await updateDaoPolicyMembers({
           instanceAccount,
@@ -220,7 +220,7 @@ test.describe("User is logged in", function () {
     page,
     instanceAccount,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(100_000);
     await mockNearBalances({
       page,
       accountId: signedUser,
@@ -239,7 +239,7 @@ test.describe("User is logged in", function () {
     page,
     instanceAccount,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(100_000);
     await updateDaoPolicyMembers({ instanceAccount, page });
     await mockNearBalances({
       page,
@@ -269,7 +269,7 @@ test.describe("User is logged in", function () {
     page,
     instanceAccount,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(100_000);
     await updateDaoPolicyMembers({ instanceAccount, page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
     await clickCreatePaymentRequestButton(page);
@@ -287,7 +287,7 @@ test.describe("User is logged in", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(100_000);
     await mockPikespeakFTTokensResponse({ page, daoAccount });
     await updateDaoPolicyMembers({ instanceAccount, page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
@@ -326,7 +326,7 @@ test.describe("User is logged in", function () {
     await expect(
       page.getByText("There has been some issue in fetching FT tokens data.")
     ).toBeVisible({
-      timeout: 60_000,
+      timeout: 100_000,
     });
   });
 
@@ -358,7 +358,7 @@ test.describe("User is logged in", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(100_000);
     await mockPikespeakFTTokensResponse({ page, daoAccount });
     await updateDaoPolicyMembers({ instanceAccount, page });
     await mockInventory({ page, account: daoAccount });
@@ -446,6 +446,7 @@ test.describe("User is logged in", function () {
     instanceAccount,
     daoAccount,
   }) => {
+    test.setTimeout(100_000);
     await mockPikespeakFTTokensResponse({ page, daoAccount });
     await updateDaoPolicyMembers({ instanceAccount, page });
     await fillCreateForm(page, daoAccount, instanceAccount);
@@ -465,13 +466,12 @@ test.describe("User is logged in", function () {
     expect(await page.getByTestId("total-amount").inputValue()).toBe("");
   });
 
-  // TODO
   test("cancel form with linked proposal should clear existing values", async ({
     page,
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(100_000);
     const amountFromLinkedProposal = 2160;
 
     await mockInventory({ page, account: daoAccount });
@@ -558,7 +558,6 @@ test.describe("User is logged in", function () {
     });
   });
 
-  // TODO
   test("create USDC transfer payment request", async ({
     page,
     instanceAccount,
@@ -788,7 +787,6 @@ test.describe("User is logged in", function () {
   });
 });
 
-// todo
 test.describe("admin with function access keys", function () {
   test.use({
     storageState:

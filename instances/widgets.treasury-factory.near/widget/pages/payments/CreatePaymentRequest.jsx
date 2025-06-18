@@ -564,7 +564,10 @@ return (
             src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
             props={{
               selectedValue: selectedProposalId,
-              onChange: onSelectProposal,
+              onChange: (e) => {
+                setIsManualRequest(false);
+                onSelectProposal(e);
+              },
               options: proposalsOptions,
               showSearch: true,
               searchInputPlaceholder: "Search by id or title",
