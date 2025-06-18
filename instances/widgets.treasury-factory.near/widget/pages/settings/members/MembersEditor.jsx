@@ -24,7 +24,6 @@ const {
   proposals,
   daoPolicy,
   treasuryDaoID,
-  lastProposalId,
 } = props;
 
 const setUpdatedList = props.setUpdatedList || (() => {});
@@ -89,12 +88,21 @@ const [
   showProposalsOverrideConfirmModal,
   setShowProposalsOverrideConfirmModal,
 ] = useState(false);
+const [lastProposalId, setLastProposalId] = useState(null);
 
 function getLastProposalId() {
   return Near.asyncView(treasuryDaoID, "get_last_proposal_id").then(
     (result) => result
   );
 }
+
+useEffect(() => {
+  if (!isTreasuryFactory) {
+    getLastProposalId().then((i) => {
+      setLastProposalId(i);
+    });
+  }
+}, [isTreasuryFactory]);
 
 // close canvas after proposal is submitted
 useEffect(() => {
@@ -106,9 +114,9 @@ useEffect(() => {
         if (typeof lastProposalId === "number" && lastProposalId !== id) {
           props.updateLastProposalId(id);
           props.setToastStatus(true);
-          setShowEditor(false);
           clearTimeout(checkTxnTimeout);
           setTxnCreated(false);
+          setShowEditor(false);
         } else {
           checkTxnTimeout = setTimeout(() => checkForNewProposal(), 1000);
         }
@@ -814,7 +822,6 @@ const code = `<!DOCTYPE html>
     }
     
     window.addEventListener("message", function (event) {
-      console.log(availableRoles)
       if (!availableRoles.length){
         isEdit = event.data.isEdit;
         accounts = event.data.accounts;

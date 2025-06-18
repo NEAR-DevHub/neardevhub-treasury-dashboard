@@ -181,6 +181,7 @@ async function openAddMemberForm({ page }) {
 
 async function submitProposal({ page, isEdit }) {
   await expect(page.getByText("Confirm transaction")).toBeVisible();
+  await page.waitForTimeout(2_000);
   await page
     .getByRole("button", { name: "Confirm" })
     .nth(isEdit ? 1 : 0)
@@ -314,7 +315,7 @@ test.describe("User is logged in", function () {
     ).toBeVisible();
     await expect(page.getByText("@member1.near")).toBeVisible();
     await expect(page.getByText("@member3.near")).toBeVisible();
-    await expect(page.getByText("Assigned Roles:").count()).to(2);
+    await expect(page.getByText("Assigned Roles")).toHaveCount(2);
   });
 
   test("Edit multiple members with permissions and validate errors", async ({
