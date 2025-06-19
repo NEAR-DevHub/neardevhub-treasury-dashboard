@@ -314,6 +314,10 @@ const code = `<!DOCTYPE html>
   color: ${colors["--other-red"]} ;
 }
 
+.input-group-text{
+  background: ${colors["--bg-page-color"]} !important;
+}
+
 .error-box {
   background:rgba(217, 92, 74, 0.1);
   color: ${colors["--other-red"]} ;

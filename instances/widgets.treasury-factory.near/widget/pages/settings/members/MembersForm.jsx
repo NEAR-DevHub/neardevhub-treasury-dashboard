@@ -311,7 +311,7 @@ return (
         title: selectedMembers.length > 0 ? "Edit Members" : "Add Members",
         children: (
           <div>
-            <div className="mb-2" style={{ marginTop: "-10px" }}>
+            <div className="mb-3">
               {isEdit
                 ? "Make changes to the member's permissions to submit the request. Each member must have at least one permission."
                 : "To add a members, enter the username and select at least one permission."}
