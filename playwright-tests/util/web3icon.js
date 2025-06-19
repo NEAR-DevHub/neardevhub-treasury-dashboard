@@ -54,6 +54,7 @@ export async function getWeb3IconMaps() {
         );
 
       const tokenSvg = svgs.tokens.background[web3IconToken.fileName].default;
+
       const networkSvg = web3IconNetwork
         ? svgs.networks.background[web3IconNetwork.fileName].default
         : null;
@@ -63,10 +64,13 @@ export async function getWeb3IconMaps() {
 
       if (tokenSvg) {
         tokenIconMap[token.asset_name] = tokenSvg;
+      }
+      if (networkSvg) {
         networkIconMap[blockchain] = networkSvg;
+      }
+      if (networkName) {
         networkNames[blockchain] = networkName;
       }
-    } else {
     }
   }
 
