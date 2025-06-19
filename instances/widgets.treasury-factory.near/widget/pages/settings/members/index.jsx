@@ -278,7 +278,7 @@ return (
     />
     {showDeleteModal && selectedMembers?.length && (
       <Widget
-        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.DeleteModalConfirmation`}
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.members.DeleteModalConfirmation`}
         props={{
           instance,
           isOpen: showDeleteModal && selectedMembers,
@@ -317,7 +317,10 @@ return (
               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
               props={{
                 ActionButton: () => (
-                  <button className="btn primary-button d-flex align-items-center gap-2">
+                  <button
+                    className="btn primary-button d-flex align-items-center gap-2"
+                    disabled={showEditor || showDeleteModal || isTxnCreated}
+                  >
                     <i className="bi bi-plus-lg h5 mb-0"></i>Add Members
                   </button>
                 ),
@@ -336,7 +339,10 @@ return (
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
                 props={{
                   ActionButton: () => (
-                    <button className="btn btn-outline-secondary d-flex gap-1 align-items-center">
+                    <button
+                      className="btn btn-outline-secondary d-flex gap-1 align-items-center"
+                      disabled={showEditor || showDeleteModal || isTxnCreated}
+                    >
                       <i className="bi bi-pencil" />
                       Edit
                     </button>
@@ -357,7 +363,10 @@ return (
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
                 props={{
                   ActionButton: () => (
-                    <button className="btn btn-outline-danger d-flex gap-1 align-items-center">
+                    <button
+                      className="btn btn-outline-danger d-flex gap-1 align-items-center"
+                      disabled={showEditor || showDeleteModal || isTxnCreated}
+                    >
                       <i className="bi bi-trash3" />
                       Delete
                     </button>

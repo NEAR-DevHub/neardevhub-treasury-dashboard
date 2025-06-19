@@ -84,6 +84,7 @@ const colors = getAllColorsAsObject(isDarkTheme, primaryColor) || {};
 const [showCancelModal, setShowCancelModal] = useState(false);
 const [isTxnCreated, setTxnCreated] = useState(false);
 const [showErrorToast, setShowErrorToast] = useState(false);
+const [updatedData, setUpdatedData] = useState(null);
 const [
   showProposalsOverrideConfirmModal,
   setShowProposalsOverrideConfirmModal,
@@ -883,7 +884,7 @@ return (
           onCancelClick: () => setShowProposalsOverrideConfirmModal(false),
           onConfirmClick: () => {
             setShowProposalsOverrideConfirmModal(false);
-            onSubmitClick(updatedList);
+            onSubmitClick(updatedData);
           },
         }}
       />
@@ -939,6 +940,7 @@ return (
                 setShowEditor(false);
               } else {
                 if ((proposals ?? []).length > 0) {
+                  setUpdatedData(e.args);
                   setShowProposalsOverrideConfirmModal(true);
                 } else {
                   setTxnCreated(true);
