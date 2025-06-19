@@ -50,9 +50,8 @@ export function getLocalWidgetContent(key, context = {}) {
  * @param {import('@playwright/test').Page} options.page - Playwright page object.
  * @param {string} [options.treasury] - The treasury account ID. If not provided, it will be derived from the contract ID.
  * @param {string} [options.networkId="mainnet"] - The NEAR network ID (default is "mainnet").
- * @param {string} [options.nodeUrl="https://rpc.mainnet.near.org"] - The NEAR RPC node URL (default is the mainnet RPC URL).
  * @param {string} [options.widgetNodeUrl="https://rpc.mainnet.fastnear.com"] - NEAR RPC node URL to get widget content from ( defaults to mainnet ). Specify sandbox URL if you want to fetch from sandbox.
- * @param {string} [options.sandboxNodeUrl] - Fallback RPC requests will be sent to the sandbox if specified, otherwise to nodeUrl
+ * @param {string} [options.sandboxNodeUrl] - Fallback RPC requests will be sent to the sandbox if specified, otherwise to the hardcoded mainnet URLs
  * @param {Object} [options.modifiedWidgets={}] - An object containing modified widget content.
  *     The keys are widget keys (e.g., "account/section/contentKey"), and the values are the modified widget content as strings.
  * @param {boolean} [options.callWidgetNodeURLForContractWidgets=true] - call the provided `widgetNodeUrl` when requesting social db contents under the provided `contractId`
@@ -65,7 +64,6 @@ export async function redirectWeb4({
   page,
   treasury,
   networkId = "mainnet",
-  nodeUrl = "https://rpc.mainnet.near.org",
   widgetNodeUrl = "https://rpc.mainnet.fastnear.com",
   sandboxNodeUrl,
   modifiedWidgets = {},
@@ -86,7 +84,8 @@ export async function redirectWeb4({
 
   const contractAccount = await near.account(contractId);
 
-  await page.route(nodeUrl, async (route, request) => {
+  // Define the route handler function to reuse for multiple URLs
+  const handleRpcRoute = async (route, request) => {
     const postData = request.postDataJSON();
     if (postData.params.account_id === "social.near") {
       const args = JSON.parse(atob(postData.params.args_base64));
@@ -121,7 +120,7 @@ export async function redirectWeb4({
             const content = getLocalWidgetContent(key, {
               treasury,
               account,
-              nodeUrl,
+              nodeUrl: "https://rpc.mainnet.fastnear.com", // Hardcoded for widget content replacement
             });
 
             if (content) {
@@ -175,7 +174,11 @@ export async function redirectWeb4({
       });
       await route.fulfill({ response });
     }
-  });
+  };
+
+  // Apply the route handler to both mainnet RPC URLs
+  await page.route("https://rpc.mainnet.near.org", handleRpcRoute);
+  await page.route("https://rpc.mainnet.fastnear.com", handleRpcRoute);
 
   await page.route(`https://${contractId}.page/**`, async (route, request) => {
     const path = request.url().substring(`https://${contractId}.page`.length);
