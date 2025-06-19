@@ -558,7 +558,7 @@ const code = `<!DOCTYPE html>
         item.innerHTML =
         "<div class='d-flex gap-2 p-2 align-items-center'>" +
           "<img src='https://i.near.social/magic/large/https://near.social/magic/img/account/" + acc + "' class='account-avatar' />" +
-          "<div class='text-sm text-secondary'>@" + acc + "</div>" +
+          "<div class='text-sm text-secondary text-truncate'>@" + acc + "</div>" +
         "</div>";      
         suggestions.appendChild(item);
       });
