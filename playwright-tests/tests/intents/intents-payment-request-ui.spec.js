@@ -22,7 +22,7 @@ let intentsContract;
 let creatorAccount;
 
 test.beforeAll(async () => {
-  test.setTimeout(180000); // Set timeout for the whole beforeAll block
+  test.setTimeout(120000); // Set timeout for the whole beforeAll block
 
   // Fetch token info
   availableTokensList = (
@@ -203,7 +203,7 @@ test("payment request to BTC address", async ({
   instanceAccount,
   daoAccount,
 }) => {
-  test.setTimeout(120000);
+  test.setTimeout(60_000);
 
   // Import contract for the specific instance being tested
   // instanceAccount is an Account object provided by the test fixture
@@ -501,7 +501,7 @@ test("payment request to USDC address on BASE", async ({
   instanceAccount,
   daoAccount,
 }) => {
-  test.setTimeout(180000);
+  test.setTimeout(60_000);
 
   // Import contract for the specific instance being tested
   await worker.rootAccount.importContract({
@@ -752,7 +752,7 @@ test("payment request to USDC address on BASE", async ({
 
   await proposalColumns.nth(fundingColumnIndex).click();
 
-  await page.getByRole("button", { name: "Approve" }).nth(1).click();
+  await page.getByRole("button", { name: "Approve" }).first().click();
   await page.getByRole("button", { name: "Proceed Anyway" }).click();
 
   expect(
@@ -1074,7 +1074,7 @@ test("payment request for wNEAR token on NEAR intents", async ({
 
   await proposalColumns.nth(fundingColumnIndex).click();
 
-  await page.getByRole("button", { name: "Approve" }).nth(1).click();
+  await page.getByRole("button", { name: "Approve" }).first().click();
   await page.getByRole("button", { name: "Proceed Anyway" }).click();
 
   // Check intents balance before execution
