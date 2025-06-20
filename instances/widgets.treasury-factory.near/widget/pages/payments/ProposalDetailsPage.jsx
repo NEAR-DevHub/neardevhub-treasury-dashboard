@@ -89,9 +89,20 @@ useEffect(() => {
 
         if (isIntentsPayment) {
           // For intents payments, extract the real token and recipient info
-          const realRecipient = decodedArgs?.memo?.includes("WITHDRAW_TO:")
-            ? decodedArgs.memo.split("WITHDRAW_TO:")[1]
-            : decodedArgs?.receiver_id;
+          let realRecipient;
+
+          // Check if this is a cross-chain withdrawal (memo contains WITHDRAW_TO:)
+          if (
+            decodedArgs?.memo &&
+            typeof decodedArgs.memo === "string" &&
+            decodedArgs.memo.includes("WITHDRAW_TO:")
+          ) {
+            // Cross-chain intents payment - extract address from memo
+            realRecipient = decodedArgs.memo.split("WITHDRAW_TO:")[1];
+          } else {
+            // NEAR intents payment - use receiver_id
+            realRecipient = decodedArgs?.receiver_id;
+          }
 
           intentsTokenInfo = {
             tokenContract: decodedArgs?.token,
@@ -101,7 +112,7 @@ useEffect(() => {
 
           args = {
             token_id: decodedArgs?.token, // Use the actual token contract
-            receiver_id: realRecipient, // Use the real recipient from memo
+            receiver_id: realRecipient, // Use the real recipient
             amount: decodedArgs?.amount,
           };
         } else {
@@ -142,8 +153,9 @@ useEffect(() => {
           intentsTokenInfo,
         });
       })
-      .catch(() => {
+      .catch((e) => {
         // proposal is deleted or doesn't exist
+        console.error("Error fetching proposal data:", e);
         setIsDeleted(true);
       });
   }

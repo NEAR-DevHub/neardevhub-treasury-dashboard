@@ -2,7 +2,7 @@ import { test } from "../../util/test.js";
 import { expect } from "@playwright/test";
 import { redirectWeb4, getLocalWidgetContent } from "../../util/web4.js";
 
-test("", async ({ page }) => {
+test("NEAR Intents payment request for ETH", async ({ page }) => {
   const instanceAccount = "webassemblymusic-treasury.near";
   const daoAccount = "webassemblymusic-treasury.sputnik-dao.near";
   const modifiedWidgets = {};
@@ -25,4 +25,29 @@ test("", async ({ page }) => {
       'div[data-component="widgets.treasury-factory.near/widget/components.TokenAmountAndIcon"]'
     )
   ).toContainText("0.005 ETH");
+});
+
+test("NEAR Intents payment request for NEAR", async ({ page }) => {
+  const instanceAccount = "webassemblymusic-treasury.near";
+  const daoAccount = "webassemblymusic-treasury.sputnik-dao.near";
+  const modifiedWidgets = {};
+  await redirectWeb4({
+    page,
+    contractId: instanceAccount,
+    treasury: daoAccount,
+    networkId: "mainnet",
+    modifiedWidgets,
+    callWidgetNodeURLForContractWidgets: false,
+  });
+  await page.goto(
+    "https://webassemblymusic-treasury.near.page/?page=payments&tab=history&id=4"
+  );
+  await expect(page.getByText("Recipient Peter Salomonsen @")).toContainText(
+    "petersalomonsen.near"
+  );
+  await expect(
+    page.locator(
+      'div[data-component="widgets.treasury-factory.near/widget/components.TokenAmountAndIcon"]'
+    )
+  ).toContainText("0.20 wNEAR");
 });
