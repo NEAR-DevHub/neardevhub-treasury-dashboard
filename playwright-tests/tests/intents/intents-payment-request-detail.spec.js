@@ -24,5 +24,5 @@ test("", async ({ page }) => {
     page.locator(
       'div[data-component="widgets.treasury-factory.near/widget/components.TokenAmountAndIcon"]'
     )
-  ).toContainText("0.01 ETH");
+  ).toContainText("0.005 ETH");
 });
