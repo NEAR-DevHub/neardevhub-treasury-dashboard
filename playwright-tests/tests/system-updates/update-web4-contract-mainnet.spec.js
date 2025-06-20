@@ -6,6 +6,7 @@ import {
 } from "../../util/web4.js";
 import { setPageAuthSettings } from "../../util/sandboxrpc.js";
 import nearApi from "near-api-js";
+import { callContractReadOnly } from "../../util/near.js";
 
 test("web4 contract update", async ({ page, instanceAccount, daoAccount }) => {
   const isInstanceWeb4UptoDate = await compareInstanceWeb4WithTreasuryFactory(
@@ -17,6 +18,19 @@ test("web4 contract update", async ({ page, instanceAccount, daoAccount }) => {
     );
     return;
   }
+  const policy = JSON.parse(
+    (
+      await callContractReadOnly({
+        contractId: daoAccount,
+        methodName: "get_policy",
+      })
+    ).toString()
+  );
+  console.log("roles", policy.roles);
+  const daoAdminAccount = policy.roles.find((role) =>
+    role.permissions.includes("config:*")
+  ).kind.Group[0];
+  console.log(daoAdminAccount);
   await redirectWeb4({
     page,
     contractId: instanceAccount,
@@ -26,7 +40,7 @@ test("web4 contract update", async ({ page, instanceAccount, daoAccount }) => {
 
   await setPageAuthSettings(
     page,
-    "theori.near",
+    daoAdminAccount,
     nearApi.utils.KeyPairEd25519.fromRandom()
   );
   await expect(page.getByRole("link", { name: "Review" })).toBeVisible();
