@@ -77,13 +77,43 @@ useEffect(() => {
         const decodedArgs =
           isFunctionType &&
           decodeBase64(item.kind.FunctionCall?.actions[0].args);
-        const args = isFunctionType
-          ? {
-              token_id: "",
-              receiver_id: decodedArgs?.receiver_id,
-              amount: decodedArgs?.amount,
-            }
-          : item.kind.Transfer;
+
+        // Check if this is a NEAR Intents payment request
+        const isIntentsPayment =
+          isFunctionType &&
+          item.kind.FunctionCall?.receiver_id === "intents.near" &&
+          item.kind.FunctionCall?.actions[0]?.method_name === "ft_withdraw";
+
+        let args;
+        let intentsTokenInfo = null;
+
+        if (isIntentsPayment) {
+          // For intents payments, extract the real token and recipient info
+          const realRecipient = decodedArgs?.memo?.includes("WITHDRAW_TO:")
+            ? decodedArgs.memo.split("WITHDRAW_TO:")[1]
+            : decodedArgs?.receiver_id;
+
+          intentsTokenInfo = {
+            tokenContract: decodedArgs?.token,
+            realRecipient: realRecipient,
+            amount: decodedArgs?.amount,
+          };
+
+          args = {
+            token_id: decodedArgs?.token, // Use the actual token contract
+            receiver_id: realRecipient, // Use the real recipient from memo
+            amount: decodedArgs?.amount,
+          };
+        } else {
+          // Regular transfer or function call
+          args = isFunctionType
+            ? {
+                token_id: "",
+                receiver_id: decodedArgs?.receiver_id,
+                amount: decodedArgs?.amount,
+              }
+            : item.kind.Transfer;
+        }
         let status = item.status;
         if (status === "InProgress") {
           const endTime = Big(item.submission_time ?? "0")
@@ -108,6 +138,8 @@ useEffect(() => {
           args,
           status,
           isLockupTransfer: isFunctionType,
+          isIntentsPayment,
+          intentsTokenInfo,
         });
       })
       .catch(() => {
@@ -243,6 +275,10 @@ return (
                   instance,
                   amountWithoutDecimals: proposalData?.args.amount,
                   address: proposalData?.args.token_id,
+                  // For intents payments, we need to use the actual token contract
+                  ...(proposalData?.isIntentsPayment && {
+                    address: proposalData?.intentsTokenInfo?.tokenContract,
+                  }),
                 }}
               />
             </h5>
