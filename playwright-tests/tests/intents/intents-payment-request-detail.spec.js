@@ -17,10 +17,12 @@ test("", async ({ page }) => {
   await page.goto(
     "https://webassemblymusic-treasury.near.page/?page=payments&tab=history&id=2"
   );
+  await expect(page.getByText("Recipient @")).toContainText(
+    "0xa029Ca6D14b97749889702eE16E7d168a1094aFE"
+  );
   await expect(
-    page.locator("div", {
-      hasText: "0xa029Ca6D14b97749889702eE16E7d168a1094aFE",
-    })
-  ).toBeVisible();
-  await expect(await page.getByText("Funding Ask 0.01 ETH")).toBeVisible();
+    page.locator(
+      'div[data-component="widgets.treasury-factory.near/widget/components.TokenAmountAndIcon"]'
+    )
+  ).toContainText("0.01 ETH");
 });
