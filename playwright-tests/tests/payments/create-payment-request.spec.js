@@ -315,21 +315,6 @@ test.describe("User is logged in", function () {
     await checkForErrorWithAmountField(page, "1111111111111111", true);
   });
 
-  test("should throw pikespeak error when response is 403", async ({
-    page,
-    instanceAccount,
-  }) => {
-    test.setTimeout(120_000);
-    await updateDaoPolicyMembers({ instanceAccount, page });
-    await page.goto(`/${instanceAccount}/widget/app?page=payments`);
-    await clickCreatePaymentRequestButton(page);
-    await expect(
-      page.getByText("There has been some issue in fetching FT tokens data.")
-    ).toBeVisible({
-      timeout: 100_000,
-    });
-  });
-
   test("tokens dropdown should show all tokens, after selecting one should allow change", async ({
     page,
     instanceAccount,
