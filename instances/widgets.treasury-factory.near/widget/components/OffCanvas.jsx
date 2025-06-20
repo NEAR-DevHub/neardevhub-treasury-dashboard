@@ -8,6 +8,7 @@ const showCanvas = props.showCanvas;
 const onClose = props.onClose;
 const title = props.title;
 const children = props.children;
+const disableScroll = props.disableScroll;
 
 const Container = styled.div`
   opacity: 1 !important;
@@ -29,8 +30,9 @@ const Container = styled.div`
     }
   }
 
-  .offcanvas {
-    overflow: auto;
+  .offcanvas-body {
+    overflow-y: auto;
+    flex: 1;
   }
 `;
 
@@ -39,13 +41,14 @@ return (
     <div className={`fade ${showCanvas ? "modal-backdrop show" : ""}`} />
     <div
       className={`offcanvas offcanvas-end ${showCanvas ? "show" : ""}`}
+      style={{ overflow: disableScroll ? "hidden" : "auto" }}
       tabIndex="-1"
       data-bs-scroll="false"
       data-bs-backdrop="true"
     >
       <div
         className="p-3 d-flex gap-2 align-items-end pb-0"
-        style={{ marginTop: isNearSocial ? "4rem" : "" }}
+        style={{ marginTop: isNearSocial ? "4.5rem" : "" }}
       >
         <button
           onClick={onClose}

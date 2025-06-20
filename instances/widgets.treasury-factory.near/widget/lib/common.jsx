@@ -1168,6 +1168,79 @@ function getIntentsBalances(accountId) {
     });
 }
 
+function updateDaoPolicy(membersList, daoPolicy) {
+  const updatedPolicy = { ...daoPolicy };
+  const additions = [];
+  const edits = [];
+
+  const originalRolesMap = new Map();
+
+  if (Array.isArray(updatedPolicy.roles)) {
+    updatedPolicy.roles.forEach((role) => {
+      if (role.name !== "all" && role.kind.Group) {
+        role.kind.Group.forEach((user) => {
+          if (!originalRolesMap.has(user)) {
+            originalRolesMap.set(user, []);
+          }
+          originalRolesMap.get(user).push(role.name);
+        });
+      }
+    });
+
+    updatedPolicy.roles = updatedPolicy.roles.map((role) => {
+      if (role.name === "all" && role.kind === "Everyone") return role;
+
+      let group = [...(role.kind.Group || [])];
+
+      membersList.forEach(({ member, roles }) => {
+        const shouldHaveRole = roles.includes(role.name);
+        const isAlreadyInRole = group.includes(member);
+
+        if (shouldHaveRole && !isAlreadyInRole) {
+          group.push(member);
+        } else if (!shouldHaveRole && isAlreadyInRole) {
+          group = group.filter((u) => u !== member);
+        }
+      });
+
+      return {
+        ...role,
+        kind: { Group: group },
+      };
+    });
+  }
+
+  membersList.forEach(({ member, roles }) => {
+    const oldRoles = originalRolesMap.get(member) || [];
+    const newRoles = roles;
+
+    const added = newRoles.filter((r) => !oldRoles.includes(r));
+    const removed = oldRoles.filter((r) => !newRoles.includes(r));
+
+    if (oldRoles.length === 0 && newRoles.length > 0) {
+      additions.push(
+        `- add "${member}" to [${newRoles.map((r) => `"${r}"`).join(", ")}]`
+      );
+    } else if (added.length > 0 || removed.length > 0) {
+      edits.push(
+        `- edit "${member}" from [${oldRoles
+          .map((r) => `"${r}"`)
+          .join(", ")}] to [${newRoles.map((r) => `"${r}"`).join(", ")}]`
+      );
+    }
+  });
+
+  const summaryLines = [...additions, ...edits];
+  const summary = summaryLines.length
+    ? `${context.accountId} requested to:\n${summaryLines.join("\n")}`
+    : `${context.accountId} made no permission changes.`;
+
+  return {
+    updatedPolicy,
+    summary,
+  };
+}
+
 return {
   getApproversAndThreshold,
   hasPermission,
@@ -1194,5 +1267,6 @@ return {
   deserializeLockupContract,
   getUserTreasuries,
   getUserDaos,
-  getIntentsBalances, // Add the new function here
+  getIntentsBalances,
+  updateDaoPolicy,
 };

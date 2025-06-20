@@ -116,6 +116,10 @@ const ThemeContainer = styled.div`
   .primary-text-color {
     color: var(--theme-color);
   }
+
+  .text-red {
+    color: var(--other-red) !important;
+  }
 `;
 
 return { ThemeContainer };

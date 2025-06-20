@@ -25,6 +25,12 @@ const AutoComplete = styled.div`
   margin-top: 1rem;
 `;
 
+const Container = styled.div`
+  .error .form-control {
+    border-color: var(--other-red);
+  }
+`;
+
 useEffect(() => {
   if (value !== account) {
     setAccount(value);
@@ -113,7 +119,7 @@ const checkAccountAvailability = async () => {
 };
 
 return (
-  <div>
+  <Container>
     <Widget
       src="${REPL_DEVHUB}/widget/devhub.components.molecule.Input"
       props={{
@@ -133,7 +139,7 @@ return (
       }}
     />
     {account && (
-      <div style={{ color: "red" }} className="text-sm mt-1">
+      <div className="text-sm mt-2 text-red">
         {hasLockup
           ? "This account already has an active lockup. You can only have one active lockup at a time."
           : !isValidAccount
@@ -158,5 +164,5 @@ return (
         />
       </AutoComplete>
     )}
-  </div>
+  </Container>
 );
