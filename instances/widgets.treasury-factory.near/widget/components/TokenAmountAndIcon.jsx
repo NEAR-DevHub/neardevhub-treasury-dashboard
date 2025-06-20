@@ -33,7 +33,7 @@ let amount = amountWithDecimals;
 if (amountWithoutDecimals !== undefined) {
   amount = Big(amountWithoutDecimals)
     .div(Big(10).pow(ftMetadata.decimals ?? 1))
-    .toFixed(2);
+    .toString(); // Keep full precision, don't round here
 }
 
 useEffect(() => {
