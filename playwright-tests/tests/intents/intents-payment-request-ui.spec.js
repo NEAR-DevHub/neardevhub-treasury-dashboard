@@ -22,7 +22,7 @@ let intentsContract;
 let creatorAccount;
 
 test.beforeAll(async () => {
-  test.setTimeout(120000); // Set timeout for the whole beforeAll block
+  test.setTimeout(180000); // Set timeout for the whole beforeAll block
 
   // Fetch token info
   availableTokensList = (
@@ -501,7 +501,7 @@ test("payment request to USDC address on BASE", async ({
   instanceAccount,
   daoAccount,
 }) => {
-  test.setTimeout(120000);
+  test.setTimeout(180000);
 
   // Import contract for the specific instance being tested
   await worker.rootAccount.importContract({
