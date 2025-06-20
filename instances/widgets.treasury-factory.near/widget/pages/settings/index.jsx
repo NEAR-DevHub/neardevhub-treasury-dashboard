@@ -10,7 +10,7 @@ const [leftNavbarOptions, setLeftBarOptions] = useState([
   {
     title: "Members",
     key: "members",
-    href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.MembersPage`,
+    href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.members.index`,
     props: { instance },
   },
   {
