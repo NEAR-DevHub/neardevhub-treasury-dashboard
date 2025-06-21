@@ -1343,6 +1343,8 @@ test("insufficient balance alert for BTC payment request exceeding available bal
     page.getByRole("button", { name: "Proceed Anyway" })
   ).toBeVisible();
 
+  await page.waitForTimeout(1_000);
+
   // Cancel the transaction to verify the modal closes and we're back to the proposal
   await page.getByRole("button", { name: "Cancel" }).click();
   await expect(page.getByText("Insufficient Balance")).not.toBeVisible();
@@ -1603,6 +1605,8 @@ test("insufficient balance alert for wNEAR payment request exceeding available b
   await expect(
     page.getByRole("button", { name: "Proceed Anyway" })
   ).toBeVisible();
+
+  await page.waitForTimeout(1_000);
 
   // Cancel the transaction to verify the modal closes and we're back to the proposal
   await page.getByRole("button", { name: "Cancel" }).click();
