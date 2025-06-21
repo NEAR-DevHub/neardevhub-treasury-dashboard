@@ -464,7 +464,6 @@ test("payment request to BTC address", async ({
   await proposalColumns.nth(fundingColumnIndex).click();
 
   await page.getByRole("button", { name: "Approve" }).nth(1).click();
-  await page.getByRole("button", { name: "Proceed Anyway" }).click();
 
   expect(
     await intentsContract.view("mt_batch_balance_of", {
@@ -753,7 +752,6 @@ test("payment request to USDC address on BASE", async ({
   await proposalColumns.nth(fundingColumnIndex).click();
 
   await page.getByRole("button", { name: "Approve" }).nth(1).click();
-  await page.getByRole("button", { name: "Proceed Anyway" }).click();
 
   expect(
     await intentsContract.view("mt_batch_balance_of", {
@@ -1075,7 +1073,6 @@ test("payment request for wNEAR token on NEAR intents", async ({
   await proposalColumns.nth(fundingColumnIndex).click();
 
   await page.getByRole("button", { name: "Approve" }).nth(1).click();
-  await page.getByRole("button", { name: "Proceed Anyway" }).click();
 
   // Check intents balance before execution
   const intentsBalanceBefore = await intentsContract.view("mt_balance_of", {

@@ -462,6 +462,7 @@ const ProposalsComponent = () => {
                       hasVotingPermission,
                       proposalCreator: item.proposer,
                       hasOneDeleteIcon,
+                      isIntentsRequest: isIntentWithdraw,
                       ...(isIntentWithdraw
                         ? {}
                         : {
