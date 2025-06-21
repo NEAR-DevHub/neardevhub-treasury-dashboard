@@ -26,11 +26,11 @@ test("web4 contract update", async ({ page, instanceAccount, daoAccount }) => {
       })
     ).toString()
   );
-  console.log("roles", policy.roles);
+
   const daoAdminAccount = policy.roles.find((role) =>
     role.permissions.includes("config:*")
   ).kind.Group[0];
-  console.log(daoAdminAccount);
+
   await redirectWeb4({
     page,
     contractId: instanceAccount,
