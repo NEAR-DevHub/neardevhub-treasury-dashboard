@@ -249,9 +249,8 @@ function updateModal(update) {
       <ModalContent>
         {update.type === UPDATE_TYPE_WEB4_CONTRACT && (
           <p>
-            Applying Web4 contract updates will always update your web4 contract
-            to the latest version. All pending web4 contract updates will be
-            applied.
+            Applies all pending Web4 updates, bringing your contract to the
+            latest version
           </p>
         )}
         <h6>Summary</h6>
