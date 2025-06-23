@@ -10,3 +10,4 @@ file_list.txt
 freeze_frames
 qrcode.png
 playwright-report
+.DS_Store

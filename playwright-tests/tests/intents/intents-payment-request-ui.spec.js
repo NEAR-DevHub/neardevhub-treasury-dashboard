@@ -1607,8 +1607,14 @@ test("insufficient balance alert for wNEAR payment request exceeding available b
   ).toBeVisible();
 
   // Verify the transaction amount and current balance are displayed
-  await expect(page.getByText("Transaction amount:")).toBeVisible();
-  await expect(page.getByText("Your current balance:")).toBeVisible();
+
+  const transactionAmountLocator = page.getByText("Transaction amount:");
+  await expect(transactionAmountLocator).toBeVisible();
+  await expect(transactionAmountLocator).toContainText("100.00");
+
+  const currentBalanceLocator = page.getByText("Your current balance:");
+  await expect(currentBalanceLocator).toBeVisible();
+  await expect(currentBalanceLocator).toContainText("25.00");
 
   // Verify both Cancel and Proceed Anyway buttons are available
   await expect(page.getByRole("button", { name: "Cancel" })).toBeVisible();
