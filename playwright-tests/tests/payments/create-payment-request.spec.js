@@ -147,6 +147,71 @@ async function selectLockupAccount({ page, daoAccount, lockupContract }) {
   await page.locator(".offcanvas-body").getByText(lockupContract).click();
 }
 
+export async function mockNearnProposal({ page }) {
+  await page.route(
+    "https://nearn.io/api/submissions/devhub/?sequentialId=22",
+    async (route) => {
+      const json = [
+        {
+          id: "288b5aa0-163a-4089-80f5-50a1878ea320",
+          sequentialId: 22,
+          link: "",
+          tweet: "",
+          status: "Approved",
+          eligibilityAnswers: [
+            {
+              answer:
+                "<p><strong>NEAR-API-TS: Tech Specification &amp; Architecture Development - 30.04-11.05</strong></p>",
+              question: "Title",
+            },
+            {
+              answer:
+                '<p class="text-node"><span style="color: rgb(33, 37, 41)">The goal of this proposal is to create a successor to near-api-js that will enhance the DevX for JS/TS developers interacting with the NEAR Protocol and address existing user issues.</span></p>',
+              question: "Summary",
+            },
+          ],
+          userId: "81f4b35f-d14e-46bf-864a-20679cd1ff51",
+          listingId: "c738c93f-0e98-4dde-bf87-29f01af84239",
+          isWinner: true,
+          winnerPosition: 1,
+          isActive: true,
+          isArchived: false,
+          createdAt: "2025-05-17T05:08:58.146Z",
+          updatedAt: "2025-06-19T22:00:31.992Z",
+          like: [],
+          likeCount: 0,
+          isPaid: true,
+          paymentDetails: {
+            link: "https://nearblocks.io/txns/HfbRyfBALJTGaH2yeuqma5SdS619J69yaFDerJv87YKH",
+            txId: "HfbRyfBALJTGaH2yeuqma5SdS619J69yaFDerJv87YKH",
+          },
+          otherInfo: "",
+          ask: 2160,
+          token: "USDT",
+          otherTokenDetails: null,
+          label: "Reviewed",
+          rewardInUSD: 2160,
+          ogImage: null,
+          paymentDate: "2025-05-23T08:01:04.392Z",
+          user: {
+            id: "81f4b35f-d14e-46bf-864a-20679cd1ff51",
+            name: "Volodymyr Bilyk",
+            publicKey: "eclipseeer.near",
+            photo: null,
+            username: "eclipseeer",
+            private: false,
+          },
+          listing: {
+            eligibility: [],
+            sequentialId: 8,
+          },
+        },
+      ];
+      await route.fulfill({ json });
+    }
+  );
+}
+
 test.describe.parallel("User logged in with different roles", () => {
   const roles = [
     {
@@ -472,6 +537,7 @@ test.describe("User is logged in", function () {
     await updateDaoPolicyMembers({ instanceAccount, page });
 
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
+    await mockNearnProposal({ page });
     await clickCreatePaymentRequestButton(page);
 
     const proposalSelect = page.locator(".dropdown-toggle").first();
@@ -554,7 +620,7 @@ test.describe("User is logged in", function () {
     await mockPikespeakFTTokensResponse({ page, daoAccount });
     await updateDaoPolicyMembers({ instanceAccount, page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
-
+    await mockNearnProposal({ page });
     await clickCreatePaymentRequestButton(page);
 
     if (instanceConfig.showProposalSelection === true) {
@@ -790,7 +856,7 @@ test.describe("admin with function access keys", function () {
     await mockPikespeakFTTokensResponse({ page, daoAccount });
     await updateDaoPolicyMembers({ instanceAccount, page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
-
+    await mockNearnProposal({ page });
     await clickCreatePaymentRequestButton(page);
 
     const usdAmountFromLinkedProposal = 2160 * nearPrice;
