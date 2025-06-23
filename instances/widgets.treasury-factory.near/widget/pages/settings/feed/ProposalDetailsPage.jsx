@@ -163,26 +163,66 @@ function getOldAndNewValues() {
   return { oldValue, newValue };
 }
 
-function getMemberDetails() {
-  const str = proposalData.summary;
+function parseMembersSummary() {
+  const summary = proposalData?.summary || "";
+  const lines = (summary.split("\n") ?? []).filter((line) => line.trim());
+  const members = [];
 
-  const regex = /requested to (add|remove) "([^"]+)" (?:to|from) (.+)$/;
+  for (const line of lines) {
+    let match;
 
-  const match = str.match(regex);
+    // Match: - add "alice" to ["Admin", "Editor"]
+    if ((match = line.match(/- add "([^"]+)" to \[(.*?)\]/))) {
+      members.push({
+        member: match[1],
+        oldRoles: [],
+        newRoles: match[2].match(/"([^"]+)"/g).map((r) => r.replace(/"/g, "")),
+        type: "add",
+      });
+    }
 
-  let account = "";
-  let roles = [];
-  let isAdd = false;
+    // Match: - remove "bob" from ["Viewer"]
+    else if ((match = line.match(/- remove "([^"]+)" from \[(.*?)\]/))) {
+      members.push({
+        member: match[1],
+        oldRoles: match[2].match(/"([^"]+)"/g).map((r) => r.replace(/"/g, "")),
+        newRoles: [],
+        type: "remove",
+      });
+    }
 
-  if (match) {
-    isAdd = match[1] === "add";
-    account = match[2];
+    // Match: - edit "charlie" from ["Editor"] to ["Admin", "Finance"]
+    else if (
+      (match = line.match(/- edit "([^"]+)" from \[(.*?)\] to \[(.*?)\]/))
+    ) {
+      members.push({
+        member: match[1],
+        oldRoles: match[2].match(/"([^"]+)"/g).map((r) => r.replace(/"/g, "")),
+        newRoles: match[3].match(/"([^"]+)"/g).map((r) => r.replace(/"/g, "")),
+        type: "edit",
+      });
+    }
 
-    // Extract all role names enclosed in double quotes
-    roles = [...match[3].matchAll(/"([^"]+)"/g)].map((m) => m[1]);
+    // Fallback to old style
+    else {
+      const fallback = line.match(
+        /requested to (add|remove) "([^"]+)" (?:to|from) (.+)$/
+      );
+      if (fallback) {
+        const isAdd = fallback[1] === "add";
+        const member = fallback[2];
+        const roles = [...fallback[3].matchAll(/"([^"]+)"/g)].map((m) => m[1]);
+        members.push({
+          member,
+          oldRoles: isAdd ? [] : roles,
+          newRoles: isAdd ? roles : [],
+          type: isAdd ? "add" : "remove",
+        });
+      }
+    }
   }
 
-  return { account, roles, isAdd };
+  return members;
 }
 
 function pluralize(count, singular) {
@@ -193,41 +233,54 @@ function pluralize(count, singular) {
   }
 }
 
+const RoleChangeCard = ({ member, type, oldRoles, newRoles, instance }) => {
+  return (
+    <div className="profile-header">
+      <div
+        className="content px-3 rounded-top-3"
+        style={{ paddingTop: "11px" }}
+      >
+        <Widget
+          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
+          props={{ accountId: member, instance }}
+        />
+      </div>
+      <div className="card p-3 border-top-0 pt-1 rounded-top-0">
+        {type === "edit" ? (
+          <>
+            <label>Old Roles:</label>
+            <div className="d-flex flex-wrap gap-2 mt-1">
+              {(oldRoles || []).join(", ")}
+            </div>
+            <label className="border-top mt-2">New Roles:</label>
+            <div className="d-flex flex-wrap gap-2 mt-1">
+              {(newRoles || []).join(", ")}
+            </div>
+          </>
+        ) : (
+          <>
+            <label>{type === "add" ? "Assigned" : "Revoked"} Roles</label>
+            <div className="d-flex flex-wrap gap-2 mt-1">
+              {(type === "add" ? newRoles : oldRoles).join(", ")}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const SettingsContent = () => {
   const renderContent = () => {
     switch (proposalData.requestType) {
       case RequestType.MEMBERS: {
-        const { account, isAdd, roles } = getMemberDetails();
+        const parsed = parseMembersSummary(proposalData.summary);
         return (
-          <ul className="summary-list mb-0 ps-3">
-            <li>
-              <div className="summary-item">
-                Member:
-                <div style={{ overflow: "auto" }}>
-                  <Widget
-                    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
-                    props={{ accountId: account, instance }}
-                  />
-                </div>
-              </div>
-            </li>
-            <li>
-              <div className="summary-item mt-1">
-                {isAdd ? "Assigned" : "Revoked"} Roles:
-                {roles.map((i) => (
-                  <div
-                    style={{
-                      width: "max-content",
-                      border: "1px solid var(--border-color)",
-                    }}
-                    className="d-flex gap-2 align-items-center rounded-pill px-2 py-1 mb-0"
-                  >
-                    {i}
-                  </div>
-                ))}
-              </div>
-            </li>
-          </ul>
+          <div className="d-flex flex-column gap-3">
+            {parsed.map((change, index) => (
+              <RoleChangeCard key={index} {...change} instance={instance} />
+            ))}
+          </div>
         );
       }
       case RequestType.VOTING_DURATION: {
@@ -319,6 +372,29 @@ const SettingsContent = () => {
 };
 
 const Container = styled.div`
+  .profile-header {
+    .content {
+      border: 1px solid var(--border-color);
+      border-bottom: 0px;
+      height: 70px !important;
+      background-color: var(--grey-05);
+      position: relative;
+    }
+
+    /* Create the bottom inward curve */
+    .content::after {
+      content: "";
+      position: absolute;
+      bottom: 0px;
+      left: 0px;
+      width: 100%;
+      height: 11px;
+      border-radius: 150rem 150rem 0px 0px;
+      border-top: 1px solid var(--border-color);
+      background: var(--bg-page-color) !important;
+    }
+  }
+
   .markdown-scroll {
     max-height: 400px;
     width: 100%;
@@ -392,8 +468,9 @@ return (
             <SettingsContent />
             <label
               className={
-                proposalData?.requestType === RequestType.OTHER &&
-                !proposalData?.title
+                proposalData?.requestType === RequestType.MEMBERS ||
+                (proposalData?.requestType === RequestType.OTHER &&
+                  !proposalData?.title)
                   ? ""
                   : "border-top"
               }

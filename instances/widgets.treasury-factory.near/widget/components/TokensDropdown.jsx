@@ -99,7 +99,9 @@ function sendTokensAvailable(value) {
 useEffect(() => {
   if (selectedValue !== (selectedOptionValue ?? "").replace(/^intents\_/, "")) {
     setSelectedValue(selectedValue);
-    sendTokensAvailable(selectedValue);
+    sendTokensAvailable(
+      selectedToken ? selectedToken.value : selectedOptionValue
+    );
   }
 }, [selectedValue]);
 
@@ -114,7 +116,9 @@ useEffect(() => {
     setSelectedValue(selectedToken ? selectedToken.value : null);
     setSelectedTokenBlockchain(selectedToken ? selectedToken.blockchain : null);
     setSelectedTokenIsIntent(selectedToken ? selectedToken.isIntent : false);
-    sendTokensAvailable(selectedValue);
+    sendTokensAvailable(
+      selectedToken ? selectedToken.value : selectedOptionValue
+    );
   }
 }, [selectedOptionValue]);
 

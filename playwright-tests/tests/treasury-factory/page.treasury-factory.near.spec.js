@@ -2,6 +2,7 @@ import { expect } from "@playwright/test";
 import { test } from "../../util/test.js";
 import { SandboxRPC } from "../../util/sandboxrpc.js";
 import nearApi from "near-api-js";
+import { mockNearBalances } from "../../util/rpcmock.js";
 
 test.afterEach(async ({ page }, testInfo) => {
   console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
@@ -22,6 +23,7 @@ test.describe("connected with ledger", function () {
     factoryAccount,
   }) => {
     test.setTimeout(120_000);
+    await mockNearBalances({page, accountId:'theori.near', balance:BigInt(10 * 10 ** 24).toString(),})
     // initial step
     await page.goto(`/${factoryAccount}/widget/app?page=create`);
     await expect(
@@ -52,20 +54,16 @@ test.describe("connected with ledger", function () {
     await expect(page.getByText("Ori theori.near Requestor")).toBeVisible();
 
     await page.getByRole('button', { name: ' Add Member' }).click()
-    const accountInput = page.getByPlaceholder("treasury.near");
+    await page.waitForTimeout(3_000)
+    const iframe = page. locator('iframe').contentFrame()
+    const accountInput = iframe.getByPlaceholder("treasury.near");
     await accountInput.fill("testingaccount.near");
-    const memberSubmitBtn = page
-    .locator(".offcanvas-body")
-    .getByRole("button", { name: "Submit" });
-    expect(await memberSubmitBtn.isDisabled()).toBe(true);
-    const permissionsSelect = page.locator(".dropdown-toggle").first();
-    await expect(permissionsSelect).toBeVisible();
-    await permissionsSelect.click();
-    await page.locator(".dropdown-item").first().click();
-    expect(await memberSubmitBtn.isEnabled()).toBe(true);
-    await memberSubmitBtn.click()
+    const submitButton = iframe.getByRole("button", { name: "Submit" });
+    await expect(submitButton).toBeDisabled();
+    await iframe.getByText("Select Permission").click();
+    await iframe.locator(".dropdown-item").first().click();
+    await submitButton.click()
     await expect(page.getByText('testingaccount.near Requestor')).toBeVisible()
-   await page.waitForTimeout(5_000)
     await page.getByRole("link", { name: "Continue" }).click();
 
     // confirm transaction step

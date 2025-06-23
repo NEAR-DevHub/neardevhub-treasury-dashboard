@@ -31,6 +31,7 @@ const treasuryWallet = props.treasuryWallet;
 const isHumanReadableCurrentAmount = props.isHumanReadableCurrentAmount;
 const isProposalDetailsPage = props.isProposalDetailsPage;
 const hasOneDeleteIcon = props.hasOneDeleteIcon;
+const isIntentsRequest = props.isIntentsRequest;
 
 const alreadyVoted = Object.keys(votes).includes(accountId);
 const userVote = votes[accountId];
@@ -54,6 +55,18 @@ const [showErrorToast, setShowErrorToast] = useState(false);
 
 const userBalance = isNEAR
   ? nearBalance
+  : isIntentsRequest
+  ? useCache(
+      () =>
+        Near.asyncView("intents.near", "mt_balance_of", {
+          account_id: treasuryDaoID,
+          token_id: `nep141:${currentContract}`,
+        }).then((balance) => {
+          return balance?.toString() || "0";
+        }),
+      "intents-" + currentContract + "-" + treasuryDaoID,
+      { subscribe: false }
+    )
   : useCache(
       () =>
         asyncFetch(`${REPL_RPC_URL}`, {

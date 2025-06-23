@@ -104,7 +104,6 @@ async function checkProposalDetailPage({
 
   switch (type) {
     case RequestType.MEMBERS: {
-      await expect(page.getByText("Member:")).toBeVisible();
       await expect(page.getByText("Assigned Roles")).toBeVisible();
       break;
     }
