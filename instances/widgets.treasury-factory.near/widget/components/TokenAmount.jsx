@@ -31,8 +31,9 @@ if (!isNEAR && !isWrapNear) {
 let amount = amountWithDecimals;
 let originalAmount = null;
 if (amountWithoutDecimals !== undefined) {
-  originalAmount = Big(amountWithoutDecimals)
-    .div(Big(10).pow(ftMetadata.decimals ?? 1));
+  originalAmount = Big(amountWithoutDecimals).div(
+    Big(10).pow(ftMetadata.decimals ?? 1)
+  );
   amount = originalAmount.toFixed(2);
 }
 
@@ -41,15 +42,14 @@ function toReadableAmount(amount) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
-  
+
   // Check if rounding occurred by comparing with original amount
   let needsTilde = false;
   if (originalAmount !== null && amountWithoutDecimals !== undefined) {
-    
     // If original amount is not equal to the formatted amount, we need a tilde
     needsTilde = originalAmount.toString() !== Big(amount).toString();
   }
-  
+
   return needsTilde ? `~ ${formattedAmount}` : formattedAmount;
 }
 
