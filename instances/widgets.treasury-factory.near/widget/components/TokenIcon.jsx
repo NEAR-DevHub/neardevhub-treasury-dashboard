@@ -5,12 +5,21 @@ const { NearToken } = VM.require(
 const address = props.address ?? ""; // Empty string for NEAR
 
 const isNEAR = address === "" || address.toLowerCase() === "near";
+const isWrapNear = address === "wrap.near";
 
 let ftMetadata = {
   symbol: "NEAR",
   decimals: 24,
 };
-if (!isNEAR) {
+// ft_metadata for wrap.near doesn't provide icon, so hardcoding the icon here
+if (isWrapNear) {
+  ftMetadata = {
+    symbol: "wNEAR",
+    decimals: 24,
+    icon: "${REPL_WRAP_NEAR_ICON}",
+  };
+}
+if (!isNEAR && !isWrapNear) {
   ftMetadata = Near.view(address, "ft_metadata", {});
   if (ftMetadata === null) return null;
 }
