@@ -30,7 +30,7 @@ test("should show system-update for targeted instance", async ({ page }) => {
   await page.goto(`https://${contractId}.page/?page=settings`);
   await setPageAuthSettings(page, "theori.near", KeyPairEd25519.fromRandom());
 
-  await expect(page.getByText("New system updates published")).toBeVisible();
+  await expect(page.getByText("New system update published")).toBeVisible();
 
   await page.getByRole("link", { name: "Review" }).click();
   await expect(
@@ -103,7 +103,7 @@ test("should show system-update if no target instances specified", async ({
   await page.goto(`https://${contractId}.page/?page=settings`);
   await setPageAuthSettings(page, "theori.near", KeyPairEd25519.fromRandom());
 
-  await expect(page.getByText("New system updates published")).toBeVisible();
+  await expect(page.getByText("New system update published")).toBeVisible();
 
   await page.getByRole("link", { name: "Review" }).click();
   await expect(

@@ -262,7 +262,7 @@ test("should update sputnik-dao contract", async ({ page }) => {
     `https://${instanceName}.near.page/?page=settings&tab=system-updates`
   );
 
-  await expect(page.getByText("New system updates published")).toBeVisible();
+  await expect(page.getByText("New system update published")).toBeVisible();
   await expect(await page.getByRole("link", { name: "Review" })).toBeVisible({
     timeout: 10_000,
   });

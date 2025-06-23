@@ -26,8 +26,8 @@ const hasUpdates = instanceHasUpdates(instance);
 return hasEditPermission && hasUpdates ? (
   <div className="system-update-banner">
     <small className="badge">New</small>
-    New system updates published, check if your instance is up to date.{" "}
-    <a href="?page=settings&tab=system-updates">Review</a>
+    New system update published. Check if your treasury instance is running the
+    latest version. <a href="?page=settings&tab=system-updates">Review</a>
   </div>
 ) : (
   <></>
