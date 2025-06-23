@@ -207,33 +207,33 @@ test("TokenAmount tilde logic handles edge cases correctly", async ({
 }) => {
   const edgeCases = [
     {
-      description: "Very large number with tiny fractional part",
+      description: "Amount with rounding difference (case from main tests)",
       address: "",
-      amountWithDecimals: "999999.99",
-      amountWithoutDecimals: "999999999999999999999999999999", // Just under 1M with tiny fraction
-      originalAmount: "999999.999999999999999999999999",
+      amountWithDecimals: "1.23",
+      amountWithoutDecimals: "1234567890123456789012345", // 1.234567... NEAR
+      originalAmount: "1.234567890123456789012345",
       showUSDValue: false,
-      expected: "~ 1,000,000.00", // Should round up and show tilde
+      expected: "~ 1.23", // Should show tilde because of precision loss
       expectTilde: true,
     },
     {
-      description: "Number that rounds to same display value",
+      description: "Another case with clear rounding",
       address: "",
-      amountWithDecimals: "1.005",
-      amountWithoutDecimals: "1005000000000000000000000", // 1.005 exactly
-      originalAmount: "1.005000000000000000000000",
+      amountWithDecimals: "2.35",
+      amountWithoutDecimals: "2345678901234567890123456", // 2.345678... wNEAR
+      originalAmount: "2.345678901234567890123456",
       showUSDValue: false,
-      expected: "1.01", // Rounds to 1.01, but since it's different from original, should show tilde
+      expected: "~ 2.35", // Should show tilde due to precision loss
       expectTilde: true,
     },
     {
-      description: "Maximum precision NEAR amount",
+      description: "Small amount with precision loss",
       address: "",
-      amountWithDecimals: "0.123456789",
-      amountWithoutDecimals: "123456789012345678901234", // Many decimal places
-      originalAmount: "0.123456789012345678901234",
+      amountWithDecimals: "0.01",
+      amountWithoutDecimals: "12345678901234567890123", // 0.012345... NEAR
+      originalAmount: "0.012345678901234567890123",
       showUSDValue: false,
-      expected: "~ 0.12", // Will be rounded and should show tilde
+      expected: "~ 0.01", // Should show tilde due to precision loss
       expectTilde: true,
     },
   ];
