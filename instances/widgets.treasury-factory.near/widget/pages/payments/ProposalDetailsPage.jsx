@@ -74,6 +74,9 @@ useEffect(() => {
         const proposalId = id ? parseInt(id, 10) : null;
         const isFunctionType =
           Object.values(item?.kind?.FunctionCall ?? {})?.length > 0;
+        const isIntentWithdraw =
+          isFunctionType &&
+          item.kind.FunctionCall?.actions[0].method_name === "ft_withdraw";
         const decodedArgs =
           isFunctionType &&
           decodeBase64(item.kind.FunctionCall?.actions[0].args);
@@ -213,6 +216,7 @@ return (
               hasDeletePermission,
               hasVotingPermission,
               proposalCreator: proposalData?.proposer,
+              isIntentsRequest: proposalData?.isIntentWithdraw,
               nearBalance: proposalData?.isLockupTransfer
                 ? lockupNearBalances.available
                 : nearBalances.available,

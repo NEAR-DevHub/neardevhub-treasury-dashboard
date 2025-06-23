@@ -27,7 +27,7 @@ function toggleEditor() {
 }
 
 const selectedMembers = props.selectedMembers ?? [];
-const isEdit = selectedMembers.length > 0;
+const isEdit = props.isEdit;
 const availableRoles = props.availableRoles || [];
 const allMembers = props.allMembers || [];
 const profilesData = Social.get("*/profile/name", "final") || {};
@@ -308,14 +308,9 @@ return (
         showCanvas: showEditor,
         onClose: toggleEditor,
         disableScroll: true,
-        title: selectedMembers.length > 0 ? "Edit Members" : "Add Members",
+        title: isEdit ? "Edit Members" : "Add Members",
         children: (
           <div>
-            <div className="mb-3">
-              {isEdit
-                ? "Make changes to the member's permissions to submit the request. Each member must have at least one permission."
-                : "To add a members, enter the username and select at least one permission."}
-            </div>
             <Widget
               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.members.MembersEditor`}
               props={{

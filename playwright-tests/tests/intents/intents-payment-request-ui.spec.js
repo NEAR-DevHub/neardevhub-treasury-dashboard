@@ -464,7 +464,6 @@ test("payment request to BTC address", async ({
   await proposalColumns.nth(fundingColumnIndex).click();
 
   await page.getByRole("button", { name: "Approve" }).nth(1).click();
-  await page.getByRole("button", { name: "Proceed Anyway" }).click();
 
   expect(
     await intentsContract.view("mt_batch_balance_of", {
@@ -752,8 +751,7 @@ test("payment request to USDC address on BASE", async ({
 
   await proposalColumns.nth(fundingColumnIndex).click();
 
-  await page.getByRole("button", { name: "Approve" }).first().click();
-  await page.getByRole("button", { name: "Proceed Anyway" }).click();
+  await page.getByRole("button", { name: "Approve" }).nth(1).click();
 
   expect(
     await intentsContract.view("mt_batch_balance_of", {
@@ -1074,8 +1072,7 @@ test("payment request for wNEAR token on NEAR intents", async ({
 
   await proposalColumns.nth(fundingColumnIndex).click();
 
-  await page.getByRole("button", { name: "Approve" }).first().click();
-  await page.getByRole("button", { name: "Proceed Anyway" }).click();
+  await page.getByRole("button", { name: "Approve" }).nth(1).click();
 
   // Check intents balance before execution
   const intentsBalanceBefore = await intentsContract.view("mt_balance_of", {
@@ -1114,4 +1111,517 @@ test("payment request for wNEAR token on NEAR intents", async ({
   // Balance should be reduced to approximately 50 NEAR
   await expect(nearBalanceLocator).toHaveText("41.30");
   await page.waitForTimeout(500);
+});
+
+test("insufficient balance alert for BTC payment request exceeding available balance", async ({
+  page,
+  instanceAccount,
+  daoAccount,
+}) => {
+  test.setTimeout(120000);
+
+  // Import contract for the specific instance being tested
+  await worker.rootAccount.importContract({
+    mainnetContract: instanceAccount,
+  });
+
+  // DAO setup (specific to this test's daoAccount)
+  const daoName = daoAccount.split(".")[0];
+  const create_testdao_args = {
+    config: {
+      name: daoName,
+      purpose: "treasury",
+      metadata: "",
+    },
+    policy: {
+      roles: [
+        {
+          kind: {
+            Group: [creatorAccount.accountId],
+          },
+          name: "Create Requests",
+          permissions: [
+            "call:AddProposal",
+            "transfer:AddProposal",
+            "config:Finalize",
+          ],
+          vote_policy: {},
+        },
+        {
+          kind: {
+            Group: [creatorAccount.accountId],
+          },
+          name: "Manage Members",
+          permissions: [
+            "config:*",
+            "policy:*",
+            "add_member_to_role:*",
+            "remove_member_from_role:*",
+          ],
+          vote_policy: {},
+        },
+        {
+          kind: {
+            Group: [creatorAccount.accountId],
+          },
+          name: "Vote",
+          permissions: ["*:VoteReject", "*:VoteApprove", "*:VoteRemove"],
+          vote_policy: {},
+        },
+      ],
+      default_vote_policy: {
+        weight_kind: "RoleWeight",
+        quorum: "0",
+        threshold: [1, 2],
+      },
+      proposal_bond: PROPOSAL_BOND,
+      proposal_period: "604800000000000",
+      bounty_bond: "100000000000000000000000",
+      bounty_forgiveness_period: "604800000000000",
+    },
+  };
+
+  const daoContract = await worker.rootAccount.importContract({
+    mainnetContract: daoAccount,
+    initialBalance: parseNEAR("24"),
+  });
+  await daoContract.callRaw(daoAccount, "new", create_testdao_args, {
+    gas: "300000000000000",
+  });
+
+  // Fund the DAO with a smaller amount of BTC (only 100 BTC instead of 320)
+  await omftContract.call(
+    omftContract.accountId,
+    "ft_deposit",
+    {
+      owner_id: "intents.near",
+      token: "btc",
+      amount: "10000000000", // 100 BTC (8 decimals)
+      msg: JSON.stringify({ receiver_id: daoAccount }),
+      memo: `BRIDGED_FROM:${JSON.stringify({
+        networkType: "btc",
+        chainId: "1",
+        txHash:
+          "0xc6b7ecd5c7517a8f56ac7ec9befed7d26a459fc97c7d5cd7598d4e19b5a806b7",
+      })}`,
+    },
+    {
+      attachedDeposit: parseNEAR("0.00125"),
+      gas: "300000000000000",
+    }
+  );
+
+  const modifiedWidgets = {};
+  const configKey = `${instanceAccount}/widget/config.data`;
+
+  // Enable feature flag
+  modifiedWidgets[configKey] = (
+    await getLocalWidgetContent(configKey, {
+      treasury: daoAccount,
+      account: instanceAccount,
+    })
+  ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
+
+  await redirectWeb4({
+    page,
+    contractId: instanceAccount,
+    treasury: daoAccount,
+    networkId: "sandbox",
+    sandboxNodeUrl: worker.provider.connection.url,
+    modifiedWidgets,
+    callWidgetNodeURLForContractWidgets: false,
+  });
+
+  await mockNearBalances({
+    page,
+    accountId: creatorAccount.accountId,
+    balance: (await creatorAccount.availableBalance()).toString(),
+    storage: (await creatorAccount.balance()).staked,
+  });
+
+  await mockNearBalances({
+    page,
+    accountId: daoContract.accountId,
+    balance: (
+      await daoContract.getAccount(daoAccount).availableBalance()
+    ).toString(),
+    storage: (await daoContract.getAccount(daoAccount).balance()).staked,
+  });
+
+  await page.goto(`https://${instanceAccount}.page/`);
+  await setPageAuthSettings(
+    page,
+    creatorAccount.accountId,
+    await creatorAccount.getKey()
+  );
+
+  // Verify the DAO has 100 BTC available
+  const btcRowLocator = page.locator(
+    '.card div.d-flex.flex-column.border-bottom:has(div.h6.mb-0.text-truncate:has-text("BTC"))'
+  );
+  const btcAmountElement = btcRowLocator.locator(
+    "div.d-flex.gap-2.align-items-center.justify-content-end div.d-flex.flex-column.align-items-end div.h6.mb-0"
+  );
+  await expect(btcAmountElement).toBeAttached();
+  await btcAmountElement.scrollIntoViewIfNeeded();
+  await expect(btcAmountElement).toHaveText("100.00");
+
+  await page.waitForTimeout(500);
+
+  await page.getByRole("link", { name: "Payments" }).click();
+
+  const createRequestButton = await page.getByText("Create Request");
+  await createRequestButton.click();
+  await expect(page.getByText("Create Payment Request")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Submit" })).toBeVisible({
+    timeout: 14_000,
+  });
+
+  if (!(await page.getByTestId("proposal-title").isVisible())) {
+    await page.locator(".dropdown-toggle").first().click();
+    await page.getByText("Add manual request").click();
+  }
+  await page.getByTestId("proposal-title").click();
+  await page.getByTestId("proposal-title").fill("excessive btc proposal");
+  await page.getByTestId("proposal-summary").click();
+  await page
+    .getByTestId("proposal-summary")
+    .fill("requesting more BTC than available");
+  await page.getByTestId("tokens-dropdown").getByText("Select").click();
+  await page.getByText("BTC (NEAR Intents)").click();
+  // Request 500 BTC when only 100 BTC is available
+  await page.getByTestId("total-amount").click();
+  await page.getByTestId("total-amount").fill("500");
+  await page.getByTestId("btc-recipient").click();
+  await page
+    .getByTestId("btc-recipient")
+    .fill("bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh");
+
+  // Verify that the insufficient balance warning appears in the create request form
+  await expect(
+    page.getByText("The treasury balance is insufficient to cover the payment.")
+  ).toBeVisible();
+
+  await expect(page.getByRole("button", { name: "Submit" })).toBeEnabled();
+  await page.getByRole("button", { name: "Submit" }).click();
+
+  await expect(page.getByText("Confirm Transaction")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Confirm" })).toBeVisible();
+  await page.getByRole("button", { name: "Confirm" }).click();
+
+  await expect(page.getByRole("button", { name: "Confirm" })).not.toBeVisible();
+
+  // Wait for the proposal to be created and navigate to the proposal
+  const proposalColumns = page
+    .locator(
+      'tr[data-component="widgets.treasury-factory.near/widget/pages.payments.Table"]'
+    )
+    .nth(1)
+    .locator("td");
+
+  const fundingColumnIndex = await getColumnIndex(page, "Funding Ask");
+  await expect(proposalColumns.nth(fundingColumnIndex)).toHaveText("500.00");
+
+  // Click on the proposal to view details
+  await proposalColumns.nth(fundingColumnIndex).click();
+
+  // Try to approve the request - this should trigger the insufficient balance warning
+  await page.getByRole("button", { name: "Approve" }).nth(1).click();
+
+  // Verify the insufficient balance warning modal appears
+  await expect(page.getByText("Insufficient Balance")).toBeVisible({
+    timeout: 10_000,
+  });
+  await expect(
+    page.getByText(
+      "Your current balance is not enough to complete this transaction."
+    )
+  ).toBeVisible();
+
+  // Verify the transaction amount and current balance are displayed
+  await expect(page.getByText("Transaction amount:")).toBeVisible();
+  await expect(page.getByText("Your current balance:")).toBeVisible();
+
+  // Verify both Cancel and Proceed Anyway buttons are available
+  await expect(page.getByRole("button", { name: "Cancel" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Proceed Anyway" })
+  ).toBeVisible();
+
+  await page.waitForTimeout(1_000);
+
+  // Cancel the transaction to verify the modal closes and we're back to the proposal
+  await page.getByRole("button", { name: "Cancel" }).click();
+  await expect(page.getByText("Insufficient Balance")).not.toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Approve" }).nth(1)
+  ).toBeVisible();
+});
+
+test("insufficient balance alert for wNEAR payment request exceeding available balance", async ({
+  page,
+  instanceAccount,
+  daoAccount,
+}) => {
+  test.setTimeout(120000);
+
+  // Import contract for the specific instance being tested
+  await worker.rootAccount.importContract({
+    mainnetContract: instanceAccount,
+  });
+
+  // Set up wNEAR contract for NEAR intents
+  const wrapNearContract = await worker.rootAccount.importContract({
+    mainnetContract: "wrap.near",
+  });
+
+  await wrapNearContract.call(wrapNearContract.accountId, "new", {
+    owner_id: wrapNearContract.accountId,
+    total_supply: parseNEAR("1000000000"),
+    metadata: {
+      spec: "ft-1.0.0",
+      name: "Wrapped NEAR fungible token",
+      symbol: "wNEAR",
+      decimals: 24,
+    },
+  });
+
+  // DAO setup (specific to this test's daoAccount)
+  const daoName = daoAccount.split(".")[0];
+  const create_testdao_args = {
+    config: {
+      name: daoName,
+      purpose: "treasury",
+      metadata: "",
+    },
+    policy: {
+      roles: [
+        {
+          kind: {
+            Group: [creatorAccount.accountId],
+          },
+          name: "Create Requests",
+          permissions: [
+            "call:AddProposal",
+            "transfer:AddProposal",
+            "config:Finalize",
+          ],
+          vote_policy: {},
+        },
+        {
+          kind: {
+            Group: [creatorAccount.accountId],
+          },
+          name: "Manage Members",
+          permissions: [
+            "config:*",
+            "policy:*",
+            "add_member_to_role:*",
+            "remove_member_from_role:*",
+          ],
+          vote_policy: {},
+        },
+        {
+          kind: {
+            Group: [creatorAccount.accountId],
+          },
+          name: "Vote",
+          permissions: ["*:VoteReject", "*:VoteApprove", "*:VoteRemove"],
+          vote_policy: {},
+        },
+      ],
+      default_vote_policy: {
+        weight_kind: "RoleWeight",
+        quorum: "0",
+        threshold: [1, 2],
+      },
+      proposal_bond: PROPOSAL_BOND,
+      proposal_period: "604800000000000",
+      bounty_bond: "100000000000000000000000",
+      bounty_forgiveness_period: "604800000000000",
+    },
+  };
+
+  const daoContract = await worker.rootAccount.importContract({
+    mainnetContract: daoAccount,
+    initialBalance: parseNEAR("24"),
+  });
+  await daoContract.callRaw(daoAccount, "new", create_testdao_args, {
+    gas: "300000000000000",
+  });
+
+  // Register storage for intents contract on wNEAR
+  await intentsContract.call(
+    wrapNearContract.accountId,
+    "storage_deposit",
+    {
+      account_id: intentsContract.accountId,
+      registration_only: true,
+    },
+    {
+      attachedDeposit: parseNEAR("0.01"),
+    }
+  );
+
+  // Deposit NEAR into wNEAR contract and transfer a smaller amount to intents (only 25 wNEAR)
+  await creatorAccount.call(
+    wrapNearContract.accountId,
+    "near_deposit",
+    {},
+    { attachedDeposit: parseNEAR("30") }
+  );
+
+  // Transfer only 25 wNEAR to intents contract for the DAO
+  await creatorAccount.call(
+    wrapNearContract.accountId,
+    "ft_transfer_call",
+    {
+      receiver_id: intentsContract.accountId,
+      amount: parseNEAR("25"), // Only 25 wNEAR available
+      msg: JSON.stringify({ receiver_id: daoAccount }),
+    },
+    { attachedDeposit: "1", gas: "50000000000000" }
+  );
+
+  const modifiedWidgets = {};
+  const configKey = `${instanceAccount}/widget/config.data`;
+  modifiedWidgets[configKey] = (
+    await getLocalWidgetContent(configKey, {
+      treasury: daoAccount,
+      account: instanceAccount,
+    })
+  ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
+
+  await redirectWeb4({
+    page,
+    contractId: instanceAccount,
+    treasury: daoAccount,
+    networkId: "sandbox",
+    sandboxNodeUrl: worker.provider.connection.url,
+    modifiedWidgets,
+    callWidgetNodeURLForContractWidgets: false,
+  });
+
+  await mockNearBalances({
+    page,
+    accountId: creatorAccount.accountId,
+    balance: (await creatorAccount.availableBalance()).toString(),
+    storage: (await creatorAccount.balance()).staked,
+  });
+
+  await mockNearBalances({
+    page,
+    accountId: daoContract.accountId,
+    balance: (
+      await daoContract.getAccount(daoAccount).availableBalance()
+    ).toString(),
+    storage: (await daoContract.getAccount(daoAccount).balance()).staked,
+  });
+
+  await page.goto(`https://${instanceAccount}.page/`);
+  await setPageAuthSettings(
+    page,
+    creatorAccount.accountId,
+    await creatorAccount.getKey()
+  );
+
+  // Verify the DAO has 25 wNEAR available in intents
+  const nearBalanceRowLocator = page.locator(
+    '.card div.d-flex.flex-column.border-bottom:has(div.h6.mb-0.text-truncate:has-text("wNEAR"))'
+  );
+  const nearBalanceLocator = nearBalanceRowLocator.locator(
+    "div.d-flex.gap-2.align-items-center.justify-content-end div.d-flex.flex-column.align-items-end div.h6.mb-0"
+  );
+  await expect(nearBalanceRowLocator).toBeAttached();
+  await nearBalanceLocator.scrollIntoViewIfNeeded();
+  await expect(nearBalanceLocator).toHaveText("25.00");
+
+  await page.waitForTimeout(500);
+
+  await page.getByRole("link", { name: "Payments" }).click();
+
+  const createRequestButton = await page.getByText("Create Request");
+  await createRequestButton.click();
+  await expect(page.getByText("Create Payment Request")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Submit" })).toBeVisible({
+    timeout: 14_000,
+  });
+
+  if (!(await page.getByTestId("proposal-title").isVisible())) {
+    await page.locator(".dropdown-toggle").first().click();
+    await page.getByText("Add manual request").click();
+  }
+  await page.getByTestId("proposal-title").click();
+  await page.getByTestId("proposal-title").fill("excessive wNEAR proposal");
+  await page.getByTestId("proposal-summary").click();
+  await page
+    .getByTestId("proposal-summary")
+    .fill("requesting more wNEAR than available");
+  await page.getByTestId("tokens-dropdown").getByText("Select").click();
+  await page.getByText("wNEAR (NEAR Intents)", { exact: true }).click();
+  // Request 100 wNEAR when only 25 wNEAR is available
+  await page.getByTestId("total-amount").click();
+  await page.getByTestId("total-amount").fill("100");
+  await page.getByPlaceholder("treasury.near").click();
+  await page.getByPlaceholder("treasury.near").fill(creatorAccount.accountId);
+
+  // Verify that the insufficient balance warning appears in the create request form
+  await expect(
+    page.getByText("The treasury balance is insufficient to cover the payment.")
+  ).toBeVisible();
+
+  await expect(page.getByRole("button", { name: "Submit" })).toBeEnabled();
+  await page.getByRole("button", { name: "Submit" }).click();
+
+  await expect(page.getByText("Confirm Transaction")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Confirm" })).toBeVisible();
+  await page.getByRole("button", { name: "Confirm" }).click();
+
+  await expect(page.getByRole("button", { name: "Confirm" })).not.toBeVisible();
+
+  // Wait for the proposal to be created and navigate to the proposal
+  const proposalColumns = page
+    .locator(
+      'tr[data-component="widgets.treasury-factory.near/widget/pages.payments.Table"]'
+    )
+    .nth(1)
+    .locator("td");
+
+  const fundingColumnIndex = await getColumnIndex(page, "Funding Ask");
+  await expect(proposalColumns.nth(fundingColumnIndex)).toHaveText("100.00");
+
+  // Click on the proposal to view details
+  await proposalColumns.nth(fundingColumnIndex).click();
+
+  // Try to approve the request - this should trigger the insufficient balance warning
+  await page.getByRole("button", { name: "Approve" }).nth(1).click();
+
+  // Verify the insufficient balance warning modal appears
+  await expect(page.getByText("Insufficient Balance")).toBeVisible({
+    timeout: 10_000,
+  });
+  await expect(
+    page.getByText(
+      "Your current balance is not enough to complete this transaction."
+    )
+  ).toBeVisible();
+
+  // Verify the transaction amount and current balance are displayed
+  await expect(page.getByText("Transaction amount:")).toBeVisible();
+  await expect(page.getByText("Your current balance:")).toBeVisible();
+
+  // Verify both Cancel and Proceed Anyway buttons are available
+  await expect(page.getByRole("button", { name: "Cancel" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Proceed Anyway" })
+  ).toBeVisible();
+
+  await page.waitForTimeout(1_000);
+
+  // Cancel the transaction to verify the modal closes and we're back to the proposal
+  await page.getByRole("button", { name: "Cancel" }).click();
+  await expect(page.getByText("Insufficient Balance")).not.toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Approve" }).nth(1)
+  ).toBeVisible();
 });
