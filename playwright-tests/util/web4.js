@@ -6,6 +6,16 @@ import { tmpdir } from "os";
 import { MOCK_RPC_URL } from "./rpcmock.js";
 
 const instancesFolder = path.resolve(dirname("."), "instances"); // Adjust the path if necessary
+const replacements = JSON.parse(
+  fs
+    .readFileSync(
+      new URL(
+        "../../instances/widgets.treasury-factory.near/aliases.mainnet.json",
+        import.meta.url
+      )
+    )
+    .toString()
+);
 
 export function getLocalFilePathForKey(key) {
   const [prefix, ...rest] = key.split("/widget/");
@@ -28,6 +38,7 @@ export function getLocalWidgetContent(key, context = {}) {
   if (!filePath) {
     return null;
   }
+
   const content = fs
     .readFileSync(filePath, "utf-8")
     .replaceAll("${REPL_BACKEND_API}", "https://ref-sdk-api-2.fly.dev/api")
@@ -39,6 +50,7 @@ export function getLocalWidgetContent(key, context = {}) {
       "widgets.treasury-factory.near"
     )
     .replaceAll("${REPL_DEVHUB}", "devhub.near")
+    .replaceAll("${REPL_WRAP_NEAR_ICON}", replacements["REPL_WRAP_NEAR_ICON"])
     .replaceAll("${REPL_RPC_URL}", nodeUrl);
   return content;
 }

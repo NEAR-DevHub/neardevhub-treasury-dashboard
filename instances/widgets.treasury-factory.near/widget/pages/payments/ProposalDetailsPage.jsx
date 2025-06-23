@@ -74,28 +74,57 @@ useEffect(() => {
         const proposalId = id ? parseInt(id, 10) : null;
         const isFunctionType =
           Object.values(item?.kind?.FunctionCall ?? {})?.length > 0;
-        const isIntentWithdraw =
-          isFunctionType &&
-          item.kind.FunctionCall?.actions[0].method_name === "ft_withdraw";
         const decodedArgs =
           isFunctionType &&
           decodeBase64(item.kind.FunctionCall?.actions[0].args);
-        const args = isIntentWithdraw
-          ? {
-              token_id: decodedArgs?.token,
-              receiver_id:
-                (decodedArgs?.memo &&
-                  decodedArgs.memo.split("WITHDRAW_TO:")[1]) ||
-                decodedArgs?.receiver_id,
-              amount: decodedArgs?.amount,
-            }
-          : isFunctionType
-          ? {
-              token_id: "",
-              receiver_id: decodedArgs?.receiver_id,
-              amount: decodedArgs?.amount,
-            }
-          : item.kind.Transfer;
+
+        // Check if this is a NEAR Intents payment request
+        const isIntentsPayment =
+          isFunctionType &&
+          item.kind.FunctionCall?.receiver_id === "intents.near" &&
+          item.kind.FunctionCall?.actions[0]?.method_name === "ft_withdraw";
+
+        let args;
+        let intentsTokenInfo = null;
+
+        if (isIntentsPayment) {
+          // For intents payments, extract the real token and recipient info
+          let realRecipient;
+
+          // Check if this is a cross-chain withdrawal (memo contains WITHDRAW_TO:)
+          if (
+            decodedArgs?.memo &&
+            typeof decodedArgs.memo === "string" &&
+            decodedArgs.memo.includes("WITHDRAW_TO:")
+          ) {
+            // Cross-chain intents payment - extract address from memo
+            realRecipient = decodedArgs.memo.split("WITHDRAW_TO:")[1];
+          } else {
+            // NEAR intents payment - use receiver_id
+            realRecipient = decodedArgs?.receiver_id;
+          }
+
+          intentsTokenInfo = {
+            tokenContract: decodedArgs?.token,
+            realRecipient: realRecipient,
+            amount: decodedArgs?.amount,
+          };
+
+          args = {
+            token_id: decodedArgs?.token, // Use the actual token contract
+            receiver_id: realRecipient, // Use the real recipient
+            amount: decodedArgs?.amount,
+          };
+        } else {
+          // Regular transfer or function call
+          args = isFunctionType
+            ? {
+                token_id: "",
+                receiver_id: decodedArgs?.receiver_id,
+                amount: decodedArgs?.amount,
+              }
+            : item.kind.Transfer;
+        }
         let status = item.status;
         if (status === "InProgress") {
           const endTime = Big(item.submission_time ?? "0")
@@ -120,11 +149,13 @@ useEffect(() => {
           args,
           status,
           isLockupTransfer: isFunctionType,
-          isIntentWithdraw,
+          isIntentsPayment,
+          intentsTokenInfo,
         });
       })
-      .catch(() => {
+      .catch((e) => {
         // proposal is deleted or doesn't exist
+        console.error("Error fetching proposal data:", e);
         setIsDeleted(true);
       });
   }
@@ -182,7 +213,7 @@ return (
               hasDeletePermission,
               hasVotingPermission,
               proposalCreator: proposalData?.proposer,
-              isIntentsRequest: proposalData?.isIntentWithdraw,
+              isIntentsRequest: proposalData?.isIntentsPayment,
               nearBalance: proposalData?.isLockupTransfer
                 ? lockupNearBalances.available
                 : nearBalances.available,
@@ -256,7 +287,12 @@ return (
                 props={{
                   instance,
                   amountWithoutDecimals: proposalData?.args.amount,
+                  showAllDecimals: true,
                   address: proposalData?.args.token_id,
+                  // For intents payments, we need to use the actual token contract
+                  ...(proposalData?.isIntentsPayment && {
+                    address: proposalData?.intentsTokenInfo?.tokenContract,
+                  }),
                 }}
               />
             </h5>

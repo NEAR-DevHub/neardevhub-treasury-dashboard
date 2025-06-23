@@ -31,9 +31,10 @@ if (!isNEAR && !isWrapNear) {
 
 let amount = amountWithDecimals;
 if (amountWithoutDecimals !== undefined) {
-  amount = Big(amountWithoutDecimals)
-    .div(Big(10).pow(ftMetadata.decimals ?? 1))
-    .toFixed(2);
+  amount = Big(amountWithoutDecimals).div(
+    Big(10).pow(ftMetadata.decimals ?? 1)
+  );
+  amount = props.showAllDecimals ? amount.toString() : amount.toFixed(2);
 }
 
 useEffect(() => {
@@ -50,10 +51,14 @@ useEffect(() => {
 }, [showUSDValue]);
 
 function toReadableAmount(amount) {
-  return Number(amount).toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 6,
-  });
+  if (props.showAllDecimals) {
+    return Number(amount).toLocaleString("en-US", {});
+  } else {
+    return Number(amount).toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  }
 }
 
 return (
