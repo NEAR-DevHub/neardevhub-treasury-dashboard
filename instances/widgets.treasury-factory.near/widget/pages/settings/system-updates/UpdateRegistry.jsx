@@ -4,8 +4,8 @@ return [
     createdDate: "2025-06-19",
     version: "n/a",
     type: "Web4 Contract",
-    summary: "FastNEAR RPC",
-    details: `Switches to FastNEAR RPC, replacing the deprecated rpc.mainnet.near.org endpoint.`,
+    summary: "Switch to FastNEAR RPC",
+    details: `Introduces FastNEAR RPC, replacing the deprecated rpc.mainnet.near.org endpoint for improved speed and reliability.`,
     votingRequired: false,
   },
 ];

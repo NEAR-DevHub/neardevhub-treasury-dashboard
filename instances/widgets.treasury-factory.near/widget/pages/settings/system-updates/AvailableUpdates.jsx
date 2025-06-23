@@ -250,7 +250,7 @@ function updateModal(update) {
         {update.type === UPDATE_TYPE_WEB4_CONTRACT && (
           <p>
             Applies all pending Web4 updates, bringing your contract to the
-            latest version
+            latest version.
           </p>
         )}
         <h6>Summary</h6>
