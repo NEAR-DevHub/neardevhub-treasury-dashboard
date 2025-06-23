@@ -18,6 +18,9 @@ const {
 };
 
 const instance = props.instance;
+const accountFromQuery = props.member;
+const permissionsFromQuery = (props.permissions || "").split(",") || [];
+
 const { TableSkeleton } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.skeleton"
 );
@@ -44,6 +47,7 @@ const [showEditor, setShowEditor] = useState(false);
 const [showDeleteModal, setShowDeleteModal] = useState(false);
 const [showToastStatus, setToastStatus] = useState(false);
 const [loading, setLoading] = useState(false);
+const [isEdit, setIsEdit] = useState(false);
 
 const [isTxnCreated, setTxnCreated] = useState(false);
 
@@ -75,6 +79,19 @@ const hasCreatePermission = hasPermission(
   "policy",
   "AddProposal"
 );
+
+useEffect(() => {
+  if (accountFromQuery && permissionsFromQuery?.length && hasCreatePermission) {
+    setShowEditor(true);
+    setSelectedMembers([
+      {
+        member: accountFromQuery,
+        roles: permissionsFromQuery,
+      },
+    ]);
+    setIsEdit(false);
+  }
+}, [accountFromQuery, permissionsFromQuery]);
 
 function getImage(acc) {
   return `https://i.near.social/magic/large/https://near.social/magic/img/account/${acc}`;
@@ -166,24 +183,26 @@ const Members = () => {
         const imageSrc = getImage(account);
         return (
           <tr key={index} className="fw-semi-bold">
-            <td>
-              <input
-                type="checkbox"
-                className="form-check-input"
-                role="switch"
-                disabled={isTxnCreated || showEditor || showDeleteModal}
-                checked={selectedRows.includes(account)}
-                onChange={(e) => {
-                  if (e.target.checked) {
-                    setSelectedRows([...selectedRows, account]);
-                  } else {
-                    setSelectedRows(
-                      selectedRows.filter((id) => id !== account)
-                    );
-                  }
-                }}
-              />
-            </td>
+            {hasCreatePermission && (
+              <td>
+                <input
+                  type="checkbox"
+                  className="form-check-input"
+                  role="switch"
+                  disabled={isTxnCreated || showEditor || showDeleteModal}
+                  checked={selectedRows.includes(account)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedRows([...selectedRows, account]);
+                    } else {
+                      setSelectedRows(
+                        selectedRows.filter((id) => id !== account)
+                      );
+                    }
+                  }}
+                />
+              </td>
+            )}
             <td>
               <div className="d-flex gap-2 align-items-center">
                 <img
@@ -300,7 +319,7 @@ return (
           .filter((i) => i !== "all")
           .map((i) => ({ title: i, value: i })),
         setToastStatus,
-        isEdit: selectedMembers.length,
+        isEdit: isEdit,
         selectedMembers: selectedMembers,
         allMembers: allMembers,
         showEditor: showEditor,
@@ -328,6 +347,7 @@ return (
                 treasuryDaoID,
                 callbackAction: () => {
                   setSelectedMembers([]);
+                  setIsEdit(false);
                   setShowEditor(true);
                 },
                 disabled: showEditor || showDeleteModal || isTxnCreated,
@@ -354,6 +374,7 @@ return (
                       selectedRows.includes(m.member)
                     );
                     setSelectedMembers(members);
+                    setIsEdit(true);
                     setShowEditor(true);
                   },
                   disabled: showEditor || showDeleteModal || isTxnCreated,
@@ -400,25 +421,27 @@ return (
           <table className="table">
             <thead>
               <tr className="text-secondary">
-                <td>
-                  <input
-                    type="checkbox"
-                    className="form-check-input"
-                    role="switch"
-                    disabled={isTxnCreated || showEditor || showDeleteModal}
-                    checked={
-                      selectedRows.length === data.length && data.length > 0
-                    }
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedRows(data.map((item) => item.member));
-                      } else {
-                        setSelectedRows([]);
+                {hasCreatePermission && (
+                  <td>
+                    <input
+                      type="checkbox"
+                      className="form-check-input"
+                      role="switch"
+                      disabled={isTxnCreated || showEditor || showDeleteModal}
+                      checked={
+                        selectedRows.length === data.length && data.length > 0
                       }
-                      setSelectedMembers([]);
-                    }}
-                  />
-                </td>
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedRows(data.map((item) => item.member));
+                        } else {
+                          setSelectedRows([]);
+                        }
+                        setSelectedMembers([]);
+                      }}
+                    />
+                  </td>
+                )}
                 <td>Name</td>
                 <td>User name</td>
                 <td>

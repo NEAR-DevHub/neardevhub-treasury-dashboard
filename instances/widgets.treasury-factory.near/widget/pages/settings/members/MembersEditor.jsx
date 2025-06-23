@@ -133,726 +133,758 @@ useEffect(() => {
 
 const code = `<!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <link
-  href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css"
-  rel="stylesheet"
-  />
-  <script src="https://cdn.jsdelivr.net/npm/big-js@3.1.3/big.min.js"></script>
-  <link
-  rel="stylesheet"
-  href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
-  />
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<style>
-  :root {
-    --bs-body-bg: ${colors["--bg-page-color"]} !important;
-    --bs-border-color: ${colors["--border-color"]} !important;
-    --border-color: ${colors["--border-color"]} !important;
-    --bs-form-control-disabled-bg: ${colors["--grey-04"]} !important;
-  }
-  body {
-    background-color: ${colors["--bg-page-color"]} !important;
-    color: ${colors["--text-color"]} !important;
-    overflow:visible;
-    padding-bottom:80px;
-  }
-   
-    .error-text {
-      color: ${colors["--other-red"]} !important;
-      font-size: 0.9rem;
-    }
-    .select-tag {
-      display: inline-flex;
-      align-items: center;
-      border: 1px solid ${colors["--border-color"]} !important;
-      border-radius: 20px;
-      padding: 4px 10px;
-      margin: 5px 5px 0 0;
-      font-size: 14px;
-      background-color: ${colors["--grey-04"]} !important;
-    }
-    
-
-    .role-tag {
-      display: inline-flex;
-      align-items: center;
-      border: 1px solid ${colors["--border-color"]} !important;
-      border-radius: 20px;
-      padding: 4px 10px;
-      margin: 5px 5px 0 0;
-      font-size: 14px;
-    }
-    .role-tag i {
-      margin-left: 8px;
-      cursor: pointer;
-    }
-    .account-suggestions {
-      display: flex;
-      overflow-x: auto;
-      gap: 12px;
-      white-space: nowrap;
-      position: relative;
-      max-width: 400px;
-    }
-    .account-item {
-      max-width: 175px;
-      flex-grow: 0;
-      flex-shrink: 0;
-      border: 1px solid ${colors["--border-color"]} !important;
-      border-radius: 6px;
-      padding: 6px;
-      transition: all 200ms;
-    }
-    .account-item:hover {
-      background-color: ${colors["--grey-04"]};
-    }
-    .account-avatar {
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      object-fit: cover;
-    }
-    .cursor-pointer { cursor: pointer; }
-    .text-sm {
-      font-size: 12px;
-  }
-  i{
-    color: ${colors["--icon-color"]};
- }
- .btn-outline-secondary {
-  border-color: ${colors["--border-color"]} !important;
-  color: ${colors["--text-color"]} !important;
-  border-width: 1px !important;
-}
-.btn-outline-secondary i {
-  color: ${colors["--text-color"]} !important;
-}
-.btn-outline-secondary:hover {
-  color: ${colors["--text-color"]} !important;
-  border-color: ${colors["--border-color"]} !important;
-  background: ${colors["--grey-035"]} !important;
-}
-
-.card{
-  border-color: ${colors["--border-color"]} !important;
-  border-width: 1px !important;
-  border-radius: 16px;
-  background-color:${colors["--bg-page-color"]} !important;
-}
-    .text-secondary {
-      color: ${colors["--text-secondary-color"]};
-    }
-    .dropdown-menu {
-      display: none;
-      width: 100%;
-      background-color: ${colors["--bg-page-color"]} !important;
-      color: ${colors["--text-color"]} !important;
-  }
-  .dropdown-item {
-      cursor: pointer;
-  }
-  .dropdown-item.active,
-  .dropdown-item:active {
-  background-color: ${colors["--grey-04"]} !important;
-  color: inherit !important;
-  }
-  .dropdown-item:hover,
-  .dropdown-item:focus {
-      background-color: ${colors["--grey-04"]} !important;
-      color: inherit !important;
-  }
-  .btn {
-    padding: 0.5rem 1.2rem !important;
-}
-.theme-btn {
-  background: ${colors["--theme-color"]} !important;
-  color: white !important;
-  border: none;
-}
-.theme-btn.btn:hover {
-  color: white !important;
-  background: ${colors["--theme-color-dark"]} !important;
-}
-  .member-container {
-    background: ${colors["--bg-page-color"]} !important;
-  }
-  .custom-header {
-    border: 1px solid ${colors["--border-color"]};
-    border-bottom: 0;
-    height: 70px;
-    background-color: ${colors["--grey-05"]}; 
-    z-index: 1;
-    position: relative;
-  }
-
-  /* Inward bottom curve */
-  .custom-header::after {
-    content: "";
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 11px;
-    border-radius: 150rem 150rem 0 0;
-    border-top: 1px solid ${colors["--border-color"]};
-    background: ${colors["--bg-page-color"]} !important;
-  }
-
-  label {
-    font-weight: 500;
-    margin-bottom: 3px;
-    font-size: 14px;
-}
-
-.text-red {
-  color: ${colors["--other-red"]} ;
-}
-
-.text-red i {
-  color: ${colors["--other-red"]} ;
-}
-
-.input-group-text{
-  background: ${colors["--bg-page-color"]} !important;
-}
-
-.error-box {
-  background:rgba(217, 92, 74, 0.1);
-  color: ${colors["--other-red"]} ;
-  padding: 12px;
-  font-weight: 500;
-  font-size: 13px;
-  margin-top:12px;
-  i {
-          color: ${colors["--other-red"]} !important;
+   <head>
+      <meta charset="UTF-8" />
+      <link
+         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css"
+         rel="stylesheet"
+         />
+      <script src="https://cdn.jsdelivr.net/npm/big-js@3.1.3/big.min.js"></script>
+      <link
+         rel="stylesheet"
+         href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+         />
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+      <style>
+         :root {
+         --bs-body-bg: ${colors["--bg-page-color"]} !important;
+         --bs-border-color: ${colors["--border-color"]} !important;
+         --border-color: ${colors["--border-color"]} !important;
+         --bs-form-control-disabled-bg: ${colors["--grey-04"]} !important;
+         }
+         body {
+         background-color: ${colors["--bg-page-color"]} !important;
+         color: ${colors["--text-color"]} !important;
+         overflow:visible;
+         padding-bottom:80px;
+         }
+         .error-text {
+         color: ${colors["--other-red"]} !important;
+         font-size: 0.9rem;
+         }
+         .select-tag {
+         display: inline-flex;
+         align-items: center;
+         border: 1px solid ${colors["--border-color"]} !important;
+         border-radius: 20px;
+         padding: 4px 10px;
+         margin: 5px 5px 0 0;
+         font-size: 14px;
+         background-color: ${colors["--grey-04"]} !important;
+         }
+         .role-tag {
+         display: inline-flex;
+         align-items: center;
+         border: 1px solid ${colors["--border-color"]} !important;
+         border-radius: 20px;
+         padding: 4px 10px;
+         margin: 5px 5px 0 0;
+         font-size: 14px;
+         }
+         .role-tag i {
+         margin-left: 8px;
+         cursor: pointer;
+         }
+         .account-suggestions {
+         display: flex;
+         overflow-x: auto;
+         gap: 12px;
+         white-space: nowrap;
+         position: relative;
+         max-width: 400px;
+         }
+         .account-item {
+         max-width: 175px;
+         flex-grow: 0;
+         flex-shrink: 0;
+         border: 1px solid ${colors["--border-color"]} !important;
+         border-radius: 6px;
+         padding: 6px;
+         transition: all 200ms;
+         }
+         .account-item:hover {
+         background-color: ${colors["--grey-04"]};
+         }
+         .account-avatar {
+         width: 30px;
+         height: 30px;
+         border-radius: 50%;
+         object-fit: cover;
+         }
+         .cursor-pointer { cursor: pointer; }
+         .text-sm {
+         font-size: 12px;
+         }
+         i{
+         color: ${colors["--icon-color"]};
+         }
+         .btn-outline-secondary {
+         border-color: ${colors["--border-color"]} !important;
+         color: ${colors["--text-color"]} !important;
+         border-width: 1px !important;
+         }
+         .btn-outline-secondary i {
+         color: ${colors["--text-color"]} !important;
+         }
+         .btn-outline-secondary:hover {
+         color: ${colors["--text-color"]} !important;
+         border-color: ${colors["--border-color"]} !important;
+         background: ${colors["--grey-035"]} !important;
+         }
+         .card{
+         border-color: ${colors["--border-color"]} !important;
+         border-width: 1px !important;
+         border-radius: 16px;
+         background-color:${colors["--bg-page-color"]} !important;
+         }
+         .text-secondary {
+         color: ${colors["--text-secondary-color"]};
+         }
+         .dropdown-menu {
+         display: none;
+         width: 100%;
+         background-color: ${colors["--bg-page-color"]} !important;
+         color: ${colors["--text-color"]} !important;
+         }
+         .dropdown-item {
+         cursor: pointer;
+         }
+         .dropdown-item.active,
+         .dropdown-item:active {
+         background-color: ${colors["--grey-04"]} !important;
+         color: inherit !important;
+         }
+         .dropdown-item:hover,
+         .dropdown-item:focus {
+         background-color: ${colors["--grey-04"]} !important;
+         color: inherit !important;
+         }
+         .btn {
+         padding: 0.5rem 1.2rem !important;
+         }
+         .theme-btn {
+         background: ${colors["--theme-color"]} !important;
+         color: white !important;
+         border: none;
+         }
+         .theme-btn.btn:hover {
+         color: white !important;
+         background: ${colors["--theme-color-dark"]} !important;
+         }
+         .member-container {
+         background: ${colors["--bg-page-color"]} !important;
+         }
+         .custom-header {
+         border: 1px solid ${colors["--border-color"]};
+         border-bottom: 0;
+         height: 70px;
+         background-color: ${colors["--grey-05"]}; 
+         z-index: 1;
+         position: relative;
+         }
+         /* Inward bottom curve */
+         .custom-header::after {
+         content: "";
+         position: absolute;
+         bottom: 0;
+         left: 0;
+         width: 100%;
+         height: 11px;
+         border-radius: 150rem 150rem 0 0;
+         border-top: 1px solid ${colors["--border-color"]};
+         background: ${colors["--bg-page-color"]} !important;
+         }
+         label {
+         font-weight: 500;
+         margin-bottom: 3px;
+         font-size: 14px;
+         }
+         .text-red {
+         color: ${colors["--other-red"]} ;
+         }
+         .text-red i {
+         color: ${colors["--other-red"]} ;
+         }
+         .input-group-text{
+         background: ${colors["--bg-page-color"]} !important;
+         }
+         .error-box {
+         background:rgba(217, 92, 74, 0.1);
+         color: ${colors["--other-red"]} ;
+         padding: 12px;
+         font-weight: 500;
+         font-size: 13px;
+         margin-top:12px;
+         i {
+         color: ${colors["--other-red"]} !important;
+         }
+         }
+         .warning-box{
+         background: rgba(255, 158, 0, 0.1);
+         color: ${colors["--other-warning"]} ;
+         padding: 12px;
+         font-weight: 500;
+         font-size: 13px;
+         margin-top:12px;
+         i {
+         color: ${colors["--other-warning"]} !important;
+         }
+         }
+         .select-tag.disabled {
+         pointer-events: none;
+         opacity: 0.5;
+         cursor: not-allowed;
+         }
+      </style>
+   </head>
+   <body data-bs-theme=${isDarkTheme ? "dark" : "light"}>
+   <div class="d-flex flex-column gap-3">
+      <div id="membersContainer" class="d-flex flex-column gap-3"></div>
+      <button id="addMemberBtn" class="btn btn-outline-secondary" onclick="addMember()"> + Add Another Member</button>
+      <div id="rolesError" class="d-none"></div>
+      <div class="d-flex justify-content-end gap-2 align-items-center">
+         <button  id="cancelBtn" class="btn btn-outline-secondary" onclick="onCancel()">Cancel</button>
+         <button id="submitBtn" class="btn theme-btn" onclick="submitForm()">Submit</button>
+      </div>
+   </div>
+   <script>
+      let isEdit = false;
+      let availableRoles = [];
+      let accounts = []
+      let allMembers = [];
+      let selectedMembers = [];
+      const roleDescriptions = {
+        Requestor: "Allows to create transaction requests (payments, stake delegation, and asset exchange).",
+        Approver: "Allows to vote on transaction requests (payments, stake delegation, and asset exchange).",
+        Admin: "Allows to both create and vote on treasury settings (members and permissions, voting policies and duration, and appearance)."
+      };
+      
+      let memberCount = 0;
+      const membersContainer = document.getElementById("membersContainer");
+      
+      function isValidNearAccount(account) {
+        return (
+          account.length === 64 ||
+          account.includes(".near") ||
+          account.includes(".tg") ||
+          account.includes(".aurora")
+        );
       }
-}
-
-}
-  </style>
-</head>
-<body data-bs-theme=${isDarkTheme ? "dark" : "light"}>
-  <div class="d-flex flex-column gap-3">
-    <div id="membersContainer" class="d-flex flex-column gap-3"></div>
-    <button id="addMemberBtn" class="btn btn-outline-secondary" onclick="addMember()"> + Add Another Member</button>
-    <div id="rolesError" class="d-none"></div>
-    <div class="d-flex justify-content-end gap-2 align-items-center">
-      <button  id="cancelBtn" class="btn btn-outline-secondary" onclick="onCancel()">Cancel</button>
-      <button id="submitBtn" class="btn theme-btn" onclick="submitForm()">Submit</button>
-    </div>
-  </div>
-
-  <script>
-    let isEdit = false;
-    let availableRoles = [];
-    let accounts = []
-    let allMembers = [];
-    let selectedMembers = [];
-    const roleDescriptions = {
-      Requestor: "Allows to create transaction requests (payments, stake delegation, and asset exchange).",
-      Approver: "Allows to vote on transaction requests (payments, stake delegation, and asset exchange).",
-      Admin: "Allows to both create and vote on treasury settings (members and permissions, voting policies and duration, and appearance)."
-    };
-
-    let memberCount = 0;
-    const membersContainer = document.getElementById("membersContainer");
-
-    function isValidNearAccount(account) {
-      return (
-        account.length === 64 ||
-        account.includes(".near") ||
-        account.includes(".tg") ||
-        account.includes(".aurora")
-      );
-    }
-
-    function getAllEnteredAccounts(skipIndex) {
-      const inputs = document.querySelectorAll("input[id^='accountInput-']");
-      const accounts = [];
-    
-      inputs.forEach((input, idx) => {
-        if (idx === skipIndex) return;
-    
-        // Use offsetParent to check if visible (works even if hidden via class/CSS)
-        if (input.offsetParent === null) return;
-    
-        const val = input.value.trim().toLowerCase();
-        if (val) accounts.push(val);
-      });
-    
-      return accounts;
-    }
-    
-    
-
-    function validateMember(index) {
-      const input = document.getElementById("accountInput-" + index);
-      const error = document.getElementById("accountError-" + index);
-      const roleError = document.getElementById("roleError-" + index);
-      const selectedRoles = window["selectedRoles_" + index];
-      let isValid = true;
-    
-      const account = input ? input.value.trim() : "";
-      const accountLower = account.toLowerCase();
-    
-      const allAccounts = getAllEnteredAccounts(index); // exclude current index
-    
-      if (!isEdit) {
-        // 1. Empty + no roles
-        if (!account && (!selectedRoles || selectedRoles.length === 0)) {
-          isValid = false;
-        }
-    
-        // 2. Invalid NEAR account
-        if (account.length > 0 && !isValidNearAccount(account) && error) {
-          error.textContent = "Please enter a valid account ID.";
-          error.classList.remove("d-none");
-          isValid = false;
-        }
-        // 3. Duplicate in current list
-        else if (account && allAccounts.includes(accountLower) && error) {
-          const firstIndex = getAllEnteredAccounts().indexOf(accountLower);
-          if (firstIndex < index) {
-            error.textContent = "This account is already added above.";
+      
+      function getAllEnteredAccounts(skipIndex) {
+        const inputs = document.querySelectorAll("input[id^='accountInput-']");
+        const accounts = [];
+      
+        inputs.forEach((input, idx) => {
+          if (idx === skipIndex) return;
+      
+          // Use offsetParent to check if visible (works even if hidden via class/CSS)
+          if (input.offsetParent === null) return;
+      
+          const val = input.value.trim().toLowerCase();
+          if (val) accounts.push(val);
+        });
+      
+        return accounts;
+      }
+      
+      
+      
+      function validateMember(index) {
+        const input = document.getElementById("accountInput-" + index);
+        const error = document.getElementById("accountError-" + index);
+        const roleError = document.getElementById("roleError-" + index);
+        const selectedRoles = window["selectedRoles_" + index];
+        let isValid = true;
+      
+        const account = input ? input.value.trim() : "";
+        const accountLower = account.toLowerCase();
+      
+        const allAccounts = getAllEnteredAccounts(index); // exclude current index
+      
+        if (!isEdit) {
+          // 1. Empty + no roles
+          if (!account && (!selectedRoles || selectedRoles.length === 0)) {
+            isValid = false;
+          }
+      
+          // 2. Invalid NEAR account
+          if (account.length > 0 && !isValidNearAccount(account) && error) {
+            error.textContent = "Please enter a valid account ID.";
+            error.classList.remove("d-none");
+            isValid = false;
+          }
+          
+          // 3. Duplicate in current list
+          else if (account && allAccounts.includes(accountLower) && error) {
+            const firstIndex = getAllEnteredAccounts().indexOf(accountLower);
+            if (firstIndex < index) {
+              error.textContent = "This account is already added above.";
+              error.classList.remove("d-none");
+              isValid = false;
+            } else {
+              error.classList.add("d-none");
+            }
+          }        
+          // 4. Already exists in external list
+          else if (allMembers.map(a => (a?.member ?? '').toLowerCase()).includes(accountLower) && error) {
+            error.textContent = "This account is already a member.";
             error.classList.remove("d-none");
             isValid = false;
           } else {
-            error.classList.add("d-none");
+            error?.classList.add("d-none");
           }
-        }        
-        // 4. Already exists in external list
-        else if (allMembers.map(a => (a?.member ?? '').toLowerCase()).includes(accountLower) && error) {
-          error.textContent = "This account is already a member.";
-          error.classList.remove("d-none");
+        }
+      
+          const isNearnAccount = account === "nearn-io.near";
+          console.log({isNearnAccount})
+          const nearnWarning = document.getElementById("nearnWarning-" + index);
+          const selectTag = document.getElementById("selectTag-" + index);
+          const accountInput = document.getElementById("accountInput-" + index);
+      
+          if (nearnWarning) {
+            nearnWarning.classList.toggle("d-flex", isNearnAccount);
+            nearnWarning.classList.toggle("d-none", !isNearnAccount);
+          }
+      
+          if (selectTag) {
+            selectTag.classList.toggle("disabled", isNearnAccount);
+          }
+      
+          if (accountInput) {
+            accountInput.disabled = isNearnAccount;
+          }
+      
+        if ((isEdit || account) && (!selectedRoles || selectedRoles.length === 0)) {
+          roleError?.classList.remove("d-none");
+          roleError?.classList.add("d-flex");
           isValid = false;
         } else {
-          error?.classList.add("d-none");
+          roleError?.classList.remove("d-flex");
+          roleError?.classList.add("d-none");
         }
-      }
-    
-      if ((isEdit || account) && (!selectedRoles || selectedRoles.length === 0)) {
-        roleError?.classList.remove("d-none");
-        roleError?.classList.add("d-flex");
-        isValid = false;
-      } else {
-        roleError?.classList.remove("d-flex");
-        roleError?.classList.add("d-none");
-      }
-    
-      return isValid;
-    }    
-    
-    function updateIframeHeight() {
-      const height =
-      Math.max(
-        document.body.scrollHeight,
-        document.documentElement.scrollHeight
-      )
-      // Send the new height to the parent window
-      window.parent.postMessage(
-      { handler: "updateIframeHeight", height: height },
-      "*",
-      );
-  }
-
-  function validateAllMembers() {
-    const memberBlocks = document.querySelectorAll(".member-container");
-    let isAllValid = true;
-    const roleAssignments = {};
-    availableRoles.forEach(function(role) {
-      roleAssignments[role.value] = false;
-    });
-  
-    memberBlocks.forEach(function(el, index) {
-      if (el.style.display === 'none') return; // Skip removed members
-  
-      const valid = validateMember(index);
-      if (!valid) isAllValid = false;
-  
-      const roles = window["selectedRoles_" + index];
-      if (roles && roles.length > 0) {
-        roles.forEach(function(r) {
-          if (roleAssignments.hasOwnProperty(r.value)) {
-            roleAssignments[r.value] = true;
-          }
-        });
-      }
-    });
-  
-    const adminRoleError = document.getElementById("rolesError");
-    adminRoleError.innerHTML = "";
-    adminRoleError.classList.add("d-none");
-  
-    if (isEdit) {
-      adminRoleError.innerHTML = "";
-  
-      const selectedIndexMap = new Map(selectedMembers.map((m, i) => [m.member, i]));
-  
-      const updatedMembers = allMembers.map(member => {
-        const i = selectedIndexMap.get(member.member);
-        if (typeof i !== 'undefined') {
-          const block = document.getElementById("member-" + i);
-          if (block && block.style.display !== 'none') {
-            const latestRolesObjects = window["selectedRoles_" + i];
-            if (Array.isArray(latestRolesObjects)) {
-              const latestRoles = latestRolesObjects.map(roleObj => roleObj.value);
-              return { ...member, roles: latestRoles };
-            }
-          }
-        }
-        return member;
-      });
-  
-      // Validate that every role in availableRoles is assigned to at least one member
-      availableRoles.forEach(role => {
-        const roleAssigned = updatedMembers.some(m => m.roles.includes(role.value));
-        if (!roleAssigned) {
-          isAllValid = false;
-  
-          const msgBox = document.createElement("div");
-          msgBox.className = "error-box rounded-3 d-flex align-items-start gap-2 mb-2";
-  
-          const icon = document.createElement("i");
-          icon.className = "bi bi-exclamation-octagon h5 mb-0";
-  
-          const msgText = document.createElement("div");
-          msgText.textContent = "You must assign at least one member with the " + role.title + " role.";
-  
-          msgBox.appendChild(icon);
-          msgBox.appendChild(msgText);
-          adminRoleError.appendChild(msgBox);
-          adminRoleError.classList.remove("d-none");
-        }
-      });
-    }
-  
-    if (!isEdit) {
-      document.getElementById("addMemberBtn").disabled = !isAllValid;
-    }
-    document.getElementById("submitBtn").disabled = !isAllValid;
-    updateIframeHeight();
-    return isAllValid;
-  }
-  
-    async function handleAccountInput(index) {
-      const input = document.getElementById("accountInput-" + index);
-      const query = input.value.trim().toLowerCase();  
-
-      const filtered = !query.length ? [] : accounts.filter(function(acc) {
-        return acc.toLowerCase().includes(query) || acc.toLowerCase().includes(query);
-      }).slice(0, 5); // Limit to top 5;
-      renderAutocompleteResults(index, filtered);
-      validateAllMembers();
-    }
-
-    function renderAutocompleteResults(index, filtered) {
-      const suggestions = document.getElementById("accountSuggestions-" + index);
-      suggestions.innerHTML = "";
-      if (filtered.length === 0) {
-        suggestions.classList.add("d-none");
-        return;
-      }
-      filtered.forEach(function(acc) {
-        const item = document.createElement("div");
-        item.className = "account-item";
-        item.onclick = function() {
-          selectAccount(index, acc);
-        };
-        item.innerHTML =
-        "<div class='d-flex gap-2 p-2 align-items-center'>" +
-          "<img src='https://i.near.social/magic/large/https://near.social/magic/img/account/" + acc + "' class='account-avatar' />" +
-          "<div class='text-sm text-secondary text-truncate'>@" + acc + "</div>" +
-        "</div>";      
-        suggestions.appendChild(item);
-      });
-      suggestions.classList.remove("d-none");
-    }
-
-    function selectAccount(index, accountId) {
-      const input = document.getElementById("accountInput-" + index);
-      input.value = accountId;
-      document.getElementById("accountSuggestions-" + index).classList.add("d-none");
-      validateAllMembers();
-    }
-
-    function removeMember(index) {
-        const member = document.getElementById('member-' + index);
-        if (!member) return;
       
-        member.style.display = 'none';
-        member.classList.add('removed');
+        return isValid;
+      }    
       
-        // Re-number only the visible ones
-        const allMembers = document.querySelectorAll('.member-container');
-        let visibleIndex = 1;
-      
-        allMembers.forEach(function(el, realIndex) {
-          if (el.style.display !== 'none') {
-            const label = el.querySelector('#memberLabel-' + realIndex);
-            if (label) {
-              label.textContent = 'Member #' + visibleIndex;
-              visibleIndex++;
-            }
-      
-            // Also update remove button
-            const btn = el.querySelector('.remove-member-btn');
-            if (btn) {
-              btn.setAttribute('onclick', 'removeMember(' + realIndex + ')');
-            }
-          }
-        });
-        validateAllMembers()
+      function updateIframeHeight() {
+        const height =
+        Math.max(
+          document.body.scrollHeight,
+          document.documentElement.scrollHeight
+        )
+        // Send the new height to the parent window
+        window.parent.postMessage(
+        { handler: "updateIframeHeight", height: height },
+        "*",
+        );
       }
       
-      
-    function setCustomHeaderHeights() {
-      const headers = document.querySelectorAll(".member-container .custom-header");
-      headers.forEach(function (header) {
-        header.style.height = isEdit ? "70px" : "60px";
-      });
-    }
-
-    function addMember(existingMember) {
-      const index = memberCount++;
-      const visibleCount = document.querySelectorAll(".member-container:not([style*='display: none'])").length;
-      const memberDiv = document.createElement("div");
-      memberDiv.className = "member-container";
-      memberDiv.id = "member-" + index;
-      const showDelete = !isEdit && index > 0;
-      memberDiv.innerHTML =
-      '<div class="custom-header px-3 rounded-3">' +
-        (isEdit
-          ? "<div class='d-flex gap-2 align-items-center' style='padding-top:14px;'>" +
-              "<img src='https://i.near.social/magic/large/https://near.social/magic/img/account/" + existingMember.username + "' class='account-avatar' />" +
-              "<div class='text-sm text-secondary text-truncate' style='max-width: 400px;'>@" + existingMember.username + "</div>" +
-            "</div>"
-          : '<div class="d-flex justify-content-between" style="padding-top:12px;">' +
-          '<span id="memberLabel-' + index + '">Member #' + (visibleCount + 1) + '</span>' +
-              (index !== 0
-                ? '<div class="cursor-pointer text-red remove-member-btn" onclick="removeMember(' + index + ')">' +
-                    '<i class="bi bi-trash3 h6 mb-0"></i>' +
-                  '</div>'
-                : '') +
-            '</div>') +
-      '</div>' +
-      '<div class="card p-3 border-top-0 rounded-top-0" style="margin-top: ' +
-        (isEdit ? '-15px' : '-5px') +
-      ';">' +
-        '<div class="d-flex flex-column">' +
-          (!isEdit
-            ? '<div class="d-flex flex-column gap-1">' +
-                '<label>Username</label>' +
-                '<div class="input-group">' +
-                  '<span class="input-group-text border-end-0">@</span>' +
-                  '<input type="text" class="form-control border border-start-0" placeholder="treasury.near" ' +
-                  'id="accountInput-' + index + '" maxlength="64" ' +
-                  (existingMember ? 'value="' + existingMember.username + '"' : 'oninput="handleAccountInput(' + index + ')"') +
-                  '/>' +
-                '</div>' +
-                '<div id="accountError-' + index + '" class="error-text text-sm d-none">Please enter a valid account ID.</div>' +
-                '<div id="accountSuggestions-' + index + '" class="account-suggestions d-none"></div>' +
-              '</div>'
-            : '') +
-          '<div class="position-relative mt-2">' +
-            '<label>Permissions</label>' +
-            '<div class="d-flex flex-wrap gap-1 align-items-center">' +
-              '<div id="selectedRoles-' + index + '"></div>' +
-              '<div class="select-tag select-permission d-flex gap-1 align-items-center" onclick="toggleDropdown(' + index + ')" style="cursor:pointer;">' +
-                '<i class="bi bi-plus-lg h5 mb-0"></i> Select Permission</div>' +
-            '</div>' +
-            '<div id="dropdownMenu-' + index + '" class="dropdown-menu rounded-2 dropdown-menu-end dropdown-menu-lg-start px-2 w-100"></div>' +
-            '<div id="roleError-' + index + '" class="error-box rounded-3 d-none gap-2 align-items-center">' +
-              '<i class="bi bi-exclamation-octagon h5 mb-0"></i>' +
-              '<span>You must assign at least one role.</span>' +
-            '</div>' +
-          '</div>' +
-        '</div>' +
-      '</div>';
-    
-      membersContainer.appendChild(memberDiv);
-      window["selectedRoles_" + index] = [];
-
-      if (existingMember) {
-        existingMember.roles.forEach(function(r) {
-          addRole(index, availableRoles.find(function(role) { return role.value === r; }));
-        });
-      }
-      setCustomHeaderHeights(); 
-      validateAllMembers();
-    }
-
-    document.addEventListener("click", function (event) {
-      const allDropdowns = document.querySelectorAll("[id^='dropdownMenu-']");
-    
-      allDropdowns.forEach((menu) => {
-        const toggleButton = event.target.closest(".select-permission");
-        const clickedInsideMenu = menu.contains(event.target);
-    
-        // Only close if click is outside both dropdown and its toggle button
-        if (!clickedInsideMenu && !toggleButton && menu.classList.contains("show")) {
-          menu.classList.remove("show");
-          menu.removeAttribute("data-open");
-        }
-      });
-    });
-
-    function toggleDropdown(index) {
-      const menu = document.getElementById("dropdownMenu-" + index);
-      const isNowVisible = menu.classList.toggle("show");
-      if (isNowVisible) renderDropdown(index);
-      setTimeout(updateIframeHeight, 0);
-    }
-
-    function renderDropdown(index) {
-      const menu = document.getElementById("dropdownMenu-" + index);
-      const selectedRoles = window["selectedRoles_" + index];
-      menu.innerHTML = "";
+      function validateAllMembers() {
+      const memberBlocks = document.querySelectorAll(".member-container");
+      let isAllValid = true;
+      const roleAssignments = {};
       availableRoles.forEach(function(role) {
-        const item = document.createElement("div");
-        item.className = "dropdown-item cursor-pointer w-100 my-1";
-        item.innerHTML = "<div>" + role.title + "</div>" + (roleDescriptions[role.value]
-          ? "<div class='text-secondary text-sm text-wrap'>" + roleDescriptions[role.value] + "</div>"
-          : "");
-
-        item.onclick = function() {
-          addRole(index, role);
-        };
-        menu.appendChild(item);
+        roleAssignments[role.value] = false;
       });
-    }
-
-    function addRole(index, role) {
-      const selectedRoles = window["selectedRoles_" + index];
-    
-      // Check if the role already exists
-      const alreadyExists = selectedRoles.some(function (r) {
-        return r.value === role.value;
+      
+      memberBlocks.forEach(function(el, index) {
+        if (el.style.display === 'none') return; // Skip removed members
+      
+        const valid = validateMember(index);
+        if (!valid) isAllValid = false;
+      
+        const roles = window["selectedRoles_" + index];
+        if (roles && roles.length > 0) {
+          roles.forEach(function(r) {
+            if (roleAssignments.hasOwnProperty(r.value)) {
+              roleAssignments[r.value] = true;
+            }
+          });
+        }
       });
-    
-      if (alreadyExists) {
-        return;
-      }
-    
-      selectedRoles.push(role);
-      document.getElementById("dropdownMenu-" + index).classList.remove("show");
-      renderSelectedRoles(index);
-      validateAllMembers();
-    }
-    
-
-    function removeRole(index, value) {
-      let selectedRoles = window["selectedRoles_" + index];
-      selectedRoles = selectedRoles.filter(function(r) {
-        return r.value !== value;
-      });
-      window["selectedRoles_" + index] = selectedRoles;
-      renderSelectedRoles(index);
-      validateAllMembers();
-    }
-
-    function renderSelectedRoles(index) {
-      const container = document.getElementById("selectedRoles-" + index);
-      const selectedRoles = window["selectedRoles_" + index];
-      container.innerHTML = "";
-      selectedRoles.forEach(function (role) {
-        const div = document.createElement("div");
-        div.className = "role-tag";
-        div.textContent = role.title + " ";
-    
-        const icon = document.createElement("i");
-        icon.className = "bi bi-x-lg";
-        icon.style.cursor = "pointer";
-        icon.onclick = () => removeRole(index, role.value);
-    
-        div.appendChild(icon);
-        container.appendChild(div);
-      });
-    }
-    
-
-    function submitForm() {
-      const members = [];
-    
+      
+      const adminRoleError = document.getElementById("rolesError");
+      adminRoleError.innerHTML = "";
+      adminRoleError.classList.add("d-none");
+      
       if (isEdit) {
-        // In edit mode, use selectedMembers and update roles from window["selectedRoles_" + i]
-        selectedMembers.forEach((member, i) => {
-          const latestRolesObjects = window["selectedRoles_" + i];
-          const latestRoles = Array.isArray(latestRolesObjects)
-            ? latestRolesObjects.map(roleObj => roleObj.value)
-            : [];
-    
-          if (member.member && latestRoles.length > 0) {
-            members.push({
-              ...member,
-              roles: latestRoles
-            });
+        adminRoleError.innerHTML = "";
+      
+        const selectedIndexMap = new Map(selectedMembers.map((m, i) => [m.member, i]));
+      
+        const updatedMembers = allMembers.map(member => {
+          const i = selectedIndexMap.get(member.member);
+          if (typeof i !== 'undefined') {
+            const block = document.getElementById("member-" + i);
+            if (block && block.style.display !== 'none') {
+              const latestRolesObjects = window["selectedRoles_" + i];
+              if (Array.isArray(latestRolesObjects)) {
+                const latestRoles = latestRolesObjects.map(roleObj => roleObj.value);
+                return { ...member, roles: latestRoles };
+              }
+            }
+          }
+          return member;
+        });
+      
+        // Validate that every role in availableRoles is assigned to at least one member
+        availableRoles.forEach(role => {
+          const roleAssigned = updatedMembers.some(m => m.roles.includes(role.value));
+          if (!roleAssigned) {
+            isAllValid = false;
+      
+            const msgBox = document.createElement("div");
+            msgBox.className = "error-box rounded-3 d-flex align-items-start gap-2 mb-2";
+      
+            const icon = document.createElement("i");
+            icon.className = "bi bi-exclamation-octagon h5 mb-0";
+      
+            const msgText = document.createElement("div");
+            msgText.textContent = "You must assign at least one member with the " + role.title + " role.";
+      
+            msgBox.appendChild(icon);
+            msgBox.appendChild(msgText);
+            adminRoleError.appendChild(msgBox);
+            adminRoleError.classList.remove("d-none");
           }
         });
-      } else {
-            // In create mode, use the DOM inputs
-            const memberBlocks = document.querySelectorAll(".member-container");
-          
-            memberBlocks.forEach((block, i) => {
-              if (block.style.display === "none") return; // Skip hidden/removed members
-          
-              const input = document.getElementById("accountInput-" + i);
-              const username = input ? input.value.trim() : "";
-          
-              const rolesObjects = window["selectedRoles_" + i];
-              const roles = Array.isArray(rolesObjects)
-                ? rolesObjects.map(role => role.value)
-                : [];
-          
-              if (username && roles.length > 0) {
-                members.push({
-                  member: username,
-                  roles: roles,
-                });
-              }
-            });
+      }
+      
+      if (!isEdit) {
+        document.getElementById("addMemberBtn").disabled = !isAllValid;
+      }
+      document.getElementById("submitBtn").disabled = !isAllValid;
+      updateIframeHeight();
+      return isAllValid;
+      }
+      
+      async function handleAccountInput(index) {
+        const input = document.getElementById("accountInput-" + index);
+        const query = input.value.trim().toLowerCase();  
+      
+        const filtered = !query.length ? [] : accounts.filter(function(acc) {
+          return acc.toLowerCase().includes(query) || acc.toLowerCase().includes(query);
+        }).slice(0, 5); // Limit to top 5;
+        renderAutocompleteResults(index, filtered);
+        validateAllMembers();
+      }
+      
+      function renderAutocompleteResults(index, filtered) {
+        const suggestions = document.getElementById("accountSuggestions-" + index);
+        suggestions.innerHTML = "";
+        if (filtered.length === 0) {
+          suggestions.classList.add("d-none");
+          return;
         }
-      window.parent.postMessage(
-        {
-          handler: "onSubmit",
-          args: members,
-        },
-        "*"
-      );
-    }
-    
-    function onCancel() {
-      window.parent.postMessage({ handler: "onCancel" }, "*");
-    }
-    
-    window.addEventListener("message", function (event) {
-      if (!availableRoles.length){
-        isEdit = event.data.isEdit;
-        accounts = event.data.accounts;
-        availableRoles= event.data.availableRoles;
-        allMembers = event.data.allMembers;
-
-       if (isEdit) {
-          if (Array.isArray(event.data.selectedMembers)) {
+        filtered.forEach(function(acc) {
+          const item = document.createElement("div");
+          item.className = "account-item";
+          item.onclick = function() {
+            selectAccount(index, acc);
+          };
+          item.innerHTML =
+          "<div class='d-flex gap-2 p-2 align-items-center'>" +
+            "<img src='https://i.near.social/magic/large/https://near.social/magic/img/account/" + acc + "' class='account-avatar' />" +
+            "<div class='text-sm text-secondary text-truncate'>@" + acc + "</div>" +
+          "</div>";      
+          suggestions.appendChild(item);
+        });
+        suggestions.classList.remove("d-none");
+      }
+      
+      function selectAccount(index, accountId) {
+        const input = document.getElementById("accountInput-" + index);
+        input.value = accountId;
+        document.getElementById("accountSuggestions-" + index).classList.add("d-none");
+        validateAllMembers();
+      }
+      
+      function removeMember(index) {
+          const member = document.getElementById('member-' + index);
+          if (!member) return;
+        
+          member.style.display = 'none';
+          member.classList.add('removed');
+        
+          // Re-number only the visible ones
+          const allMembers = document.querySelectorAll('.member-container');
+          let visibleIndex = 1;
+        
+          allMembers.forEach(function(el, realIndex) {
+            if (el.style.display !== 'none') {
+              const label = el.querySelector('#memberLabel-' + realIndex);
+              if (label) {
+                label.textContent = 'Member #' + visibleIndex;
+                visibleIndex++;
+              }
+        
+              // Also update remove button
+              const btn = el.querySelector('.remove-member-btn');
+              if (btn) {
+                btn.setAttribute('onclick', 'removeMember(' + realIndex + ')');
+              }
+            }
+          });
+          validateAllMembers()
+        }
+        
+        
+      function setCustomHeaderHeights() {
+        const headers = document.querySelectorAll(".member-container .custom-header");
+        headers.forEach(function (header) {
+          header.style.height = isEdit ? "70px" : "60px";
+        });
+      }
+      
+      function addMember(existingMember) {
+        const index = memberCount++;
+        const visibleCount = document.querySelectorAll(".member-container:not([style*='display: none'])").length;
+        const memberDiv = document.createElement("div");
+        memberDiv.className = "member-container";
+        memberDiv.id = "member-" + index;
+        const showDelete = !isEdit && index > 0;
+        memberDiv.innerHTML =
+        '<div class="custom-header px-3 rounded-3">' +
+          (isEdit
+            ? "<div class='d-flex gap-2 align-items-center' style='padding-top:14px;'>" +
+                "<img src='https://i.near.social/magic/large/https://near.social/magic/img/account/" + existingMember.username + "' class='account-avatar' />" +
+                "<div class='text-sm text-secondary text-truncate' style='max-width: 400px;'>@" + existingMember.username + "</div>" +
+              "</div>"
+            : '<div class="d-flex justify-content-between" style="padding-top:12px;">' +
+            '<span id="memberLabel-' + index + '">Member #' + (visibleCount + 1) + '</span>' +
+                (index !== 0
+                  ? '<div class="cursor-pointer text-red remove-member-btn" onclick="removeMember(' + index + ')">' +
+                      '<i class="bi bi-trash3 h6 mb-0"></i>' +
+                    '</div>'
+                  : '') +
+              '</div>') +
+        '</div>' +
+        '<div class="card p-3 border-top-0 rounded-top-0" style="margin-top: ' +
+          (isEdit ? '-15px' : '-5px') +
+        ';">' +
+          '<div class="d-flex flex-column">' +
+            (!isEdit
+              ? '<div class="d-flex flex-column gap-1">' +
+                  '<label>Username</label>' +
+                  '<div class="input-group">' +
+                    '<span class="input-group-text border-end-0">@</span>' +
+                    '<input type="text" class="form-control border border-start-0" placeholder="treasury.near" ' +
+                    'id="accountInput-' + index + '" maxlength="64" ' +
+                    (existingMember ? 'value="' + existingMember.username + '"' : 'oninput="handleAccountInput(' + index + ')"') +
+                    '/>' +
+                  '</div>' +
+                  '<div id="accountError-' + index + '" class="error-text text-sm d-none">Please enter a valid account ID.</div>' +
+                  '<div id="accountSuggestions-' + index + '" class="account-suggestions d-none"></div>' +
+                '</div>'
+              : '') +
+              '<div class="position-relative mt-2">' +
+              '<label>Permissions</label>' +
+              '<div class="d-flex flex-wrap gap-1 align-items-center">' +
+                '<div id="selectedRoles-' + index + '"></div>' +
+                '<div id="selectTag-' + index + '" class="select-tag select-permission d-flex gap-1 align-items-center" onclick="toggleDropdown(' + index + ')" style="cursor:pointer;">' +
+                  '<i class="bi bi-plus-lg h5 mb-0"></i> Select Permission</div>' +
+              '</div>' +
+              '<div id="dropdownMenu-' + index + '" class="dropdown-menu rounded-2 dropdown-menu-end dropdown-menu-lg-start px-2 w-100"></div>' +
+               '<div id="roleError-' + index + '" class="error-box rounded-3 d-none gap-2 align-items-center">' +
+                '<i class="bi bi-exclamation-octagon h5 mb-0"></i>' +
+                '<span>You must assign at least one role.</span>' +
+              '</div>' +
+              '<div id="nearnWarning-' + index + '" class="warning-box rounded-3 d-none gap-2 align-items-center">' +
+                '<i class="bi bi-exclamation-triangle h5 mb-0"></i>' +
+                '<span>Only the Requestor role can be assigned to this member, enabling them to create requests in NEARN.</span>' +
+              '</div>' +
+            
+            '</div>'          
+          '</div>' +
+        '</div>';
+      
+        membersContainer.appendChild(memberDiv);
+        window["selectedRoles_" + index] = [];
+      
+        if (existingMember) {
+          existingMember.roles.forEach(function(r) {
+            addRole(index, availableRoles.find(function(role) { return (role.value).toLowerCase() === (r || '').toLowerCase(); }));
+          });
+        }
+        setCustomHeaderHeights(); 
+        validateAllMembers();
+      }
+      
+      document.addEventListener("click", function (event) {
+        const allDropdowns = document.querySelectorAll("[id^='dropdownMenu-']");
+      
+        allDropdowns.forEach((menu) => {
+          const toggleButton = event.target.closest(".select-permission");
+          const clickedInsideMenu = menu.contains(event.target);
+      
+          // Only close if click is outside both dropdown and its toggle button
+          if (!clickedInsideMenu && !toggleButton && menu.classList.contains("show")) {
+            menu.classList.remove("show");
+            menu.removeAttribute("data-open");
+          }
+        });
+      });
+      
+      function toggleDropdown(index) {
+        const menu = document.getElementById("dropdownMenu-" + index);
+        const isNowVisible = menu.classList.toggle("show");
+        if (isNowVisible) renderDropdown(index);
+        setTimeout(updateIframeHeight, 0);
+      }
+      
+      function renderDropdown(index) {
+        const menu = document.getElementById("dropdownMenu-" + index);
+        const selectedRoles = window["selectedRoles_" + index];
+        menu.innerHTML = "";
+        availableRoles.forEach(function(role) {
+          const item = document.createElement("div");
+          item.className = "dropdown-item cursor-pointer w-100 my-1";
+          item.innerHTML = "<div>" + role.title + "</div>" + (roleDescriptions[role.value]
+            ? "<div class='text-secondary text-sm text-wrap'>" + roleDescriptions[role.value] + "</div>"
+            : "");
+      
+          item.onclick = function() {
+            addRole(index, role);
+          };
+          menu.appendChild(item);
+        });
+      }
+      
+      function addRole(index, role) {
+        const selectedRoles = window["selectedRoles_" + index];
+      
+        // Check if the role already exists
+        const alreadyExists = selectedRoles.some(function (r) {
+          return r.value === role.value;
+        });
+      
+        if (alreadyExists) {
+          return;
+        }
+      
+        selectedRoles.push(role);
+        document.getElementById("dropdownMenu-" + index).classList.remove("show");
+        renderSelectedRoles(index);
+        validateAllMembers();
+      }
+      
+      
+      function removeRole(index, value) {
+        let selectedRoles = window["selectedRoles_" + index];
+        selectedRoles = selectedRoles.filter(function(r) {
+          return r.value !== value;
+        });
+        window["selectedRoles_" + index] = selectedRoles;
+        renderSelectedRoles(index);
+        validateAllMembers();
+      }
+      
+      function renderSelectedRoles(index) {
+        const container = document.getElementById("selectedRoles-" + index);
+        const selectedRoles = window["selectedRoles_" + index];
+        container.innerHTML = "";
+        selectedRoles.forEach(function (role) {
+          const div = document.createElement("div");
+          div.className = "role-tag";
+          div.textContent = role.title + " ";
+      
+          const icon = document.createElement("i");
+          icon.className = "bi bi-x-lg";
+          icon.style.cursor = "pointer";
+          icon.onclick = () => removeRole(index, role.value);
+      
+          div.appendChild(icon);
+          container.appendChild(div);
+        });
+      }
+      
+      
+      function submitForm() {
+        const members = [];
+      
+        if (isEdit) {
+          // In edit mode, use selectedMembers and update roles from window["selectedRoles_" + i]
+          selectedMembers.forEach((member, i) => {
+            const latestRolesObjects = window["selectedRoles_" + i];
+            const latestRoles = Array.isArray(latestRolesObjects)
+              ? latestRolesObjects.map(roleObj => roleObj.value)
+              : [];
+      
+            if (member.member && latestRoles.length > 0) {
+              members.push({
+                ...member,
+                roles: latestRoles
+              });
+            }
+          });
+        } else {
+              // In create mode, use the DOM inputs
+              const memberBlocks = document.querySelectorAll(".member-container");
+            
+              memberBlocks.forEach((block, i) => {
+                if (block.style.display === "none") return; // Skip hidden/removed members
+            
+                const input = document.getElementById("accountInput-" + i);
+                const username = input ? input.value.trim() : "";
+            
+                const rolesObjects = window["selectedRoles_" + i];
+                const roles = Array.isArray(rolesObjects)
+                  ? rolesObjects.map(role => role.value)
+                  : [];
+            
+                if (username && roles.length > 0) {
+                  members.push({
+                    member: username,
+                    roles: roles,
+                  });
+                }
+              });
+          }
+        window.parent.postMessage(
+          {
+            handler: "onSubmit",
+            args: members,
+          },
+          "*"
+        );
+      }
+      
+      function onCancel() {
+        window.parent.postMessage({ handler: "onCancel" }, "*");
+      }
+      
+      window.addEventListener("message", function (event) {
+        if (!availableRoles.length) {
+          isEdit = event.data.isEdit;
+          accounts = event.data.accounts;
+          availableRoles = event.data.availableRoles;
+          allMembers = event.data.allMembers;
+        
+          if (Array.isArray(event.data.selectedMembers) && event.data.selectedMembers.length > 0) {
             selectedMembers = event.data.selectedMembers;
-            event.data.selectedMembers.forEach((i, idx) => {
+        
+            event.data.selectedMembers.forEach((i) => {
               addMember({ username: i.member, roles: i.roles });
             });
-          }      
-          document.getElementById("addMemberBtn").style.display = "none";
+        
+            if (isEdit) {
+              document.getElementById("addMemberBtn").style.display = "none";
+            }
+        
+          } else {
+            addMember();
+            document.getElementById("addMemberBtn").disabled = true;
+            document.getElementById("submitBtn").disabled = true;
+          }
         } else {
-          addMember();
-          document.getElementById("addMemberBtn").disabled = true;
-          document.getElementById("submitBtn").disabled = true;
+          // Handle update to buttons only when availableRoles is already set
+          document.getElementById("submitBtn").disabled = !!event.data.isSubmitLoading;
+          document.getElementById("cancelBtn").disabled = !!event.data.disableCancel;
         }
-      } else {
-        document.getElementById("submitBtn").disabled = event.data.isSubmitLoading;
-        document.getElementById("cancelBtn").disabled = event.data.disableCancel;
-      }    
-  });
-    </script>
-</body>
+      });
+   </script>
+   </body>
 </html>
 `;
 
