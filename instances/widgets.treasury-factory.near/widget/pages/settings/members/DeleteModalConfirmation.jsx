@@ -148,10 +148,17 @@ return (
 
         <ModalContent>
           {selectedMembers.length === 1 ? (
-            <div>
-              {selectedMembers[0].member} will lose their permissions to this
-              treasury once the request is created and approved.
-            </div>
+            selectedMembers[0].member === "nearn-io.near" ? (
+              <div className="mb-2">
+                Removing nearn-io.near will disable the ability to create
+                payment requests in NEARN.
+              </div>
+            ) : (
+              <div>
+                {selectedMembers[0].member} will lose their permissions to this
+                treasury once the request is created and approved.
+              </div>
+            )
           ) : (
             <>
               <div>
@@ -163,6 +170,16 @@ return (
                   <li key={member}>{member}</li>
                 ))}
               </ul>
+
+              {selectedMembers.some(
+                ({ member }) => member === "nearn-io.near"
+              ) && (
+                <div className="mt-2">
+                  Additionally, the selected members include nearn-io.near.
+                  Removing this member will disable the ability to create
+                  payment requests in NEARN.
+                </div>
+              )}
             </>
           )}
         </ModalContent>

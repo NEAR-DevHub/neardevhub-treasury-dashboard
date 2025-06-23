@@ -14,7 +14,7 @@ import {
   SPUTNIK_DAO_FACTORY_ID,
 } from "../../util/sandboxrpc";
 
-async function setupWorker({ daoAccount, instanceAccount, page }) {
+async function setupWorker({ daoAccount, instanceAccount, page, isNearnCall }) {
   const daoName = daoAccount.split("." + SPUTNIK_DAO_FACTORY_ID)?.[0];
   const socialNearContractId = "social.near";
 
@@ -48,6 +48,7 @@ async function setupWorker({ daoAccount, instanceAccount, page }) {
     mainnetContract: "frol.near",
   });
 
+  const isInfinex = daoAccount.includes("infinex");
   const create_args = {
     name: daoName,
     args: Buffer.from(
@@ -57,7 +58,7 @@ async function setupWorker({ daoAccount, instanceAccount, page }) {
         vote_period: "604800000000000",
         grace_period: "86400000000000",
         policy: {
-          roles: daoAccount.includes("infinex")
+          roles: isInfinex
             ? [
                 {
                   name: "Requestor",
@@ -153,7 +154,14 @@ async function setupWorker({ daoAccount, instanceAccount, page }) {
     treasury: daoAccount,
     sandboxNodeUrl: worker.provider.connection.url,
   });
-  await page.goto(`https://${instanceAccount}.page/?page=settings&tab=members`);
+  await page.goto(
+    `https://${instanceAccount}.page/?page=settings&tab=members` +
+      (isNearnCall
+        ? `&member=nearn-io.near&permissions=${
+            isInfinex ? "requestor" : "council"
+          }`
+        : "")
+  );
   await setPageAuthSettings(
     page,
     userAccount.accountId,
@@ -456,5 +464,50 @@ test.describe("User is logged in", function () {
     await expect(page.getByText("@frol.near")).toBeVisible();
     await expect(page.getByText("Revoked Roles").nth(0)).toBeVisible();
     await expect(page.getByText(role).nth(0)).toBeVisible();
+  });
+
+  test("Read from query params, display nearn account", async ({
+    page,
+    daoAccount,
+    instanceAccount,
+  }) => {
+    test.setTimeout(150_000);
+    const {} = await setupWorker({
+      daoAccount,
+      instanceAccount,
+      page,
+      isNearnCall: true,
+    });
+    const role = daoAccount.includes("infinex") ? "Requestor" : "council";
+    await expect(
+      page.getByRole("heading", { name: "Add Members" })
+    ).toBeVisible({ timeout: 20_000 });
+    const iframe = page.locator("iframe").contentFrame();
+    await expect(iframe.getByText("Username")).toBeVisible();
+    await expect(iframe.getByText(role, { exact: true })).toBeVisible();
+    await expect(
+      iframe.getByText(
+        "Only the Requestor role can be assigned to this member, enabling them to create requests in NEARN"
+      )
+    ).toBeVisible();
+    const submitButton = iframe.getByRole("button", { name: "Submit" });
+    await expect(submitButton).toBeEnabled();
+
+    const selectPermission = iframe.getByText("Select Permission", {
+      exact: true,
+    });
+    await expect(selectPermission).toHaveClass(/disabled/);
+
+    const input = iframe.getByPlaceholder("treasury.near");
+    await expect(input).toHaveValue("nearn-io.near");
+    await submitButton.click();
+    await submitProposal({ page });
+
+    await expect(
+      page.getByRole("heading", { name: "Update policy - Members Permissions" })
+    ).toBeVisible();
+    await expect(page.getByText("@nearn-io.near")).toBeVisible();
+    await expect(page.getByText("Assigned Roles")).toBeVisible();
+    await expect(page.getByText(role, { exact: true })).toBeVisible();
   });
 });
