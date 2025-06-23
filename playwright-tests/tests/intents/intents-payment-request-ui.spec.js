@@ -1297,6 +1297,11 @@ test("insufficient balance alert for BTC payment request exceeding available bal
     .getByTestId("btc-recipient")
     .fill("bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh");
 
+  // Verify that the insufficient balance warning appears in the create request form
+  await expect(
+    page.getByText("The treasury balance is insufficient to cover the payment.")
+  ).toBeVisible();
+
   await expect(page.getByRole("button", { name: "Submit" })).toBeEnabled();
   await page.getByRole("button", { name: "Submit" }).click();
 
@@ -1559,6 +1564,11 @@ test("insufficient balance alert for wNEAR payment request exceeding available b
   await page.getByTestId("total-amount").fill("100");
   await page.getByPlaceholder("treasury.near").click();
   await page.getByPlaceholder("treasury.near").fill(creatorAccount.accountId);
+
+  // Verify that the insufficient balance warning appears in the create request form
+  await expect(
+    page.getByText("The treasury balance is insufficient to cover the payment.")
+  ).toBeVisible();
 
   await expect(page.getByRole("button", { name: "Submit" })).toBeEnabled();
   await page.getByRole("button", { name: "Submit" }).click();
