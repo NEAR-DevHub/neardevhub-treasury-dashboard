@@ -32,13 +32,13 @@ let amount = amountWithDecimals;
 if (amountWithoutDecimals !== undefined) {
   amount = Big(amountWithoutDecimals)
     .div(Big(10).pow(ftMetadata.decimals ?? 1))
-    .toString(); // Keep full precision, don't round here
+    .toFixed(2);
 }
 
 function toReadableAmount(amount) {
   return Number(amount).toLocaleString("en-US", {
     minimumFractionDigits: 2,
-    maximumFractionDigits: 6,
+    maximumFractionDigits: 2,
   });
 }
 

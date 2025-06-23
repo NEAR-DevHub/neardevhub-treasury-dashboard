@@ -31,9 +31,10 @@ if (!isNEAR && !isWrapNear) {
 
 let amount = amountWithDecimals;
 if (amountWithoutDecimals !== undefined) {
-  amount = Big(amountWithoutDecimals)
-    .div(Big(10).pow(ftMetadata.decimals ?? 1))
-    .toString(); // Keep full precision, don't round here
+  amount = Big(amountWithoutDecimals).div(
+    Big(10).pow(ftMetadata.decimals ?? 1)
+  );
+  amount = props.showAllDecimals ? amount.toString() : amount.toFixed(2);
 }
 
 useEffect(() => {

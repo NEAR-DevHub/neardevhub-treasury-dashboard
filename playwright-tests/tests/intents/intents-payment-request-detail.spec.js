@@ -49,5 +49,5 @@ test("NEAR Intents payment request for NEAR", async ({ page }) => {
     page.locator(
       'div[data-component="widgets.treasury-factory.near/widget/components.TokenAmountAndIcon"]'
     )
-  ).toContainText("0.20 wNEAR");
+  ).toContainText("0.2 wNEAR");
 });
