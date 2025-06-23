@@ -346,3 +346,58 @@ export const SettingsVotingThresholdProposalData = {
   votes: {},
   submission_time: "1743696636962779000",
 };
+
+export const NearnFTProposal = {
+  id: 1,
+  proposer: "nearn-io.near",
+  description:
+    '* Title: NEARN payment to megha for the listing <br>* Summary: This payment is for the successful completion of the sponsorship "Baaadasdasdasd Super duper bad" on NEARN. The submission has been reviewed and approved by the sponsor. <br>* Notes:https://nearn-app-staging.onrender.com/devhub-staging/47/33<br>* Proposal Id: 47<br>* Url: https://nearn-app-staging.onrender.com/devhub-staging/47/33.',
+  kind: {
+    FunctionCall: {
+      receiver_id:
+        "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+      actions: [
+        {
+          method_name: "ft_transfer",
+          args: "eyJyZWNlaXZlcl9pZCI6Inl1cnR1ci5uZWFyIiwiYW1vdW50IjoiMTAwMDAwMCJ9",
+          deposit: "1",
+          gas: "100000000000000",
+        },
+      ],
+    },
+  },
+  status: "InProgress",
+  vote_counts: {},
+  votes: {},
+  submission_time: "1750169658508700377",
+};
+
+export const NearnFTProposalWithStorage = {
+  id: 2,
+  proposer: "nearn-io.near",
+  description:
+    "* Title: NEARN payment to Artur-Yurii Korchynskyi for the listing <br>* Summary: This payment is for the successful completion of the sponsorship on NEARN. The submission has been reviewed and approved by the sponsor. <br>* Notes:http://localhost:3000/devhub-staging/48/28<br>* Proposal Id: 48<br>* Url: http://localhost:3000/devhub-staging/48/28.",
+  kind: {
+    FunctionCall: {
+      receiver_id: "usdt.tether-token.near",
+      actions: [
+        {
+          method_name: "storage_deposit",
+          args: "eyJhY2NvdW50X2lkIjoibmV3LWFkZHJlc3Mtc3VwZXItc2VjcmV0Lm5lYXIiLCJyZWdpc3RyYXRpb25fb25seSI6dHJ1ZX0=",
+          deposit: "125000000000000000000000",
+          gas: "100000000000000",
+        },
+        {
+          method_name: "ft_transfer",
+          args: "eyJyZWNlaXZlcl9pZCI6Im5ldy1hZGRyZXNzLXN1cGVyLXNlY3JldC5uZWFyIiwiYW1vdW50IjoiMTAwMDAwMCJ9",
+          deposit: "1",
+          gas: "100000000000000",
+        },
+      ],
+    },
+  },
+  status: "InProgress",
+  vote_counts: {},
+  votes: {},
+  submission_time: "1750242182642052192",
+};

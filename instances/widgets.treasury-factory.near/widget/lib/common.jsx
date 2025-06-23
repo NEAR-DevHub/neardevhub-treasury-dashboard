@@ -324,7 +324,9 @@ function getFilteredProposalsByStatusAndKind({
       decodeProposalDescription("proposal_action", item.description) ===
         "transfer" ||
       item.kind?.Transfer ||
-      item.kind?.FunctionCall?.actions[0].method_name === "ft_withdraw"
+      item.kind?.FunctionCall?.actions[0].method_name === "ft_withdraw" ||
+      item.kind?.FunctionCall?.actions[0].method_name === "ft_transfer" ||
+      item.kind?.FunctionCall?.actions[1].method_name === "ft_transfer"
     );
   };
 

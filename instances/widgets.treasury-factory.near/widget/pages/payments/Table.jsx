@@ -199,9 +199,30 @@ const ProposalsComponent = () => {
         const isIntentWithdraw =
           isFunctionType &&
           item.kind.FunctionCall?.actions[0].method_name === "ft_withdraw";
-        const decodedArgs =
-          isFunctionType &&
-          decodeBase64(item.kind.FunctionCall?.actions[0].args);
+        let decodedArgs = null;
+        if (isFunctionType) {
+          const actions = item.kind.FunctionCall?.actions || [];
+          const receiverId = item.kind.FunctionCall?.receiver_id;
+
+          // Requests from NEARN
+          if (
+            actions.length >= 2 &&
+            actions[0]?.method_name === "storage_deposit" &&
+            actions[1]?.method_name === "ft_transfer"
+          ) {
+            decodedArgs = {
+              ...decodeBase64(actions[1].args),
+              token_id: receiverId,
+            };
+          } else if (actions[0]?.method_name === "ft_transfer") {
+            decodedArgs = {
+              ...decodeBase64(actions[0].args),
+              token_id: receiverId,
+            };
+          } else {
+            decodedArgs = decodeBase64(actions[0]?.args);
+          }
+        }
 
         const args = isIntentWithdraw
           ? {
@@ -214,7 +235,7 @@ const ProposalsComponent = () => {
             }
           : isFunctionType
           ? {
-              token_id: "",
+              token_id: decodedArgs?.token_id || "",
               receiver_id: decodedArgs?.receiver_id,
               amount: decodedArgs?.amount,
             }
