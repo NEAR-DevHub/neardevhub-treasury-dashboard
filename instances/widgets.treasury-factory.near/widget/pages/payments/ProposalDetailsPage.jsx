@@ -287,6 +287,7 @@ return (
                 props={{
                   instance,
                   amountWithoutDecimals: proposalData?.args.amount,
+                  showAllDecimals: true,
                   address: proposalData?.args.token_id,
                   // For intents payments, we need to use the actual token contract
                   ...(proposalData?.isIntentsPayment && {
