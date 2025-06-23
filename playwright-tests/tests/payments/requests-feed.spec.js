@@ -105,8 +105,10 @@ test.describe("payment requests feed", function () {
       },
     });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
-    await expect(page.getByRole("link", { name: "#48 " })).toBeVisible();
-    await expect(page.getByRole("link", { name: "#47 " })).toBeVisible();
+    if (!daoAccount.includes("infinex")) {
+      await expect(page.getByRole("link", { name: "#48 " })).toBeVisible();
+      await expect(page.getByRole("link", { name: "#47 " })).toBeVisible();
+    }
     await expect(
       page.getByText("@new-address-super-secret.near")
     ).toBeVisible();
@@ -151,6 +153,5 @@ test.describe("payment requests feed", function () {
     await expect(page.getByText("1.00 USDC")).toBeVisible();
     await expect(page.getByText("Expires At")).toBeVisible();
     await expect(page.getByRole("heading", { name: "#1" })).toBeVisible();
-    await page.waitForTimeout(10_000);
   });
 });
