@@ -4,6 +4,8 @@ import { test } from "../../util/test.js";
 import { mockRpcRequest } from "../../util/rpcmock";
 import {
   CurrentTimestampInNanoseconds,
+  NearnFTProposal,
+  NearnFTProposalWithStorage,
   TransferProposalData,
 } from "../../util/inventory.js";
 
@@ -83,5 +85,73 @@ test.describe("payment requests feed", function () {
     await expect(exportLink).toBeVisible();
     const href = await exportLink.getAttribute("href");
     expect(href).toContain(`/proposals/${daoAccount}?proposal_type=Transfer`);
+  });
+
+  test("should display the NEARN proposal correctly", async ({
+    page,
+    daoAccount,
+    instanceAccount,
+  }) => {
+    await mockRpcRequest({
+      page,
+      filterParams: {
+        method_name: "get_proposals",
+      },
+      modifyOriginalResultFunction: () => {
+        return [
+          JSON.parse(JSON.stringify(NearnFTProposal)),
+          JSON.parse(JSON.stringify(NearnFTProposalWithStorage)),
+        ];
+      },
+    });
+    await page.goto(`/${instanceAccount}/widget/app?page=payments`);
+    if (!daoAccount.includes("infinex")) {
+      await expect(page.getByRole("link", { name: "#48 " })).toBeVisible();
+      await expect(page.getByRole("link", { name: "#47 " })).toBeVisible();
+    }
+    await expect(
+      page.getByText("@new-address-super-secret.near")
+    ).toBeVisible();
+    await expect(page.getByText("@yurtur.near")).toBeVisible();
+    await expect(page.getByText("USDt")).toBeVisible();
+    await expect(page.getByText("USDC")).toBeVisible();
+    await expect(page.getByText("nearn-io.near")).toHaveCount(2);
+    await mockRpcRequest({
+      page,
+      filterParams: {
+        method_name: "get_proposal",
+      },
+      modifyOriginalResultFunction: () => {
+        return JSON.parse(JSON.stringify(NearnFTProposalWithStorage));
+      },
+    });
+    await page.getByTestId("proposal-request-#2").click();
+    await expect(
+      page.getByRole("heading", {
+        name: "NEARN payment to Artur-Yurii Korchynskyi for the listing",
+      })
+    ).toBeVisible();
+    await expect(page.getByText("1 USDt")).toBeVisible();
+    await expect(page.getByText("Expires At")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "#2" })).toBeVisible();
+    await page.locator(".cursor-pointer > .bi").first().click();
+    await mockRpcRequest({
+      page,
+      filterParams: {
+        method_name: "get_proposal",
+      },
+      modifyOriginalResultFunction: () => {
+        return JSON.parse(JSON.stringify(NearnFTProposal));
+      },
+    });
+    await page.getByTestId("proposal-request-#1").click();
+    await expect(
+      page.getByRole("heading", {
+        name: "NEARN payment to megha for the listing",
+      })
+    ).toBeVisible();
+    await expect(page.getByText("1 USDC")).toBeVisible();
+    await expect(page.getByText("Expires At")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "#1" })).toBeVisible();
   });
 });

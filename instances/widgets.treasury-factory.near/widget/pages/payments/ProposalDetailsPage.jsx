@@ -74,9 +74,7 @@ useEffect(() => {
         const proposalId = id ? parseInt(id, 10) : null;
         const isFunctionType =
           Object.values(item?.kind?.FunctionCall ?? {})?.length > 0;
-        const decodedArgs =
-          isFunctionType &&
-          decodeBase64(item.kind.FunctionCall?.actions[0].args);
+        let decodedArgs = {};
 
         // Check if this is a NEAR Intents payment request
         const isIntentsPayment =
@@ -88,6 +86,7 @@ useEffect(() => {
         let intentsTokenInfo = null;
 
         if (isIntentsPayment) {
+          decodedArgs = decodeBase64(item.kind.FunctionCall?.actions[0].args);
           // For intents payments, extract the real token and recipient info
           let realRecipient;
 
@@ -115,16 +114,32 @@ useEffect(() => {
             receiver_id: realRecipient, // Use the real recipient
             amount: decodedArgs?.amount,
           };
+        } else if (isFunctionType) {
+          const actions = item.kind.FunctionCall?.actions || [];
+          const receiverId = item.kind.FunctionCall?.receiver_id;
+
+          // Requests from NEARN
+          if (
+            actions.length >= 2 &&
+            actions[0]?.method_name === "storage_deposit" &&
+            actions[1]?.method_name === "ft_transfer"
+          ) {
+            args = {
+              ...decodeBase64(actions[1].args),
+              token_id: receiverId,
+            };
+          } else if (actions[0]?.method_name === "ft_transfer") {
+            args = {
+              ...decodeBase64(actions[0].args),
+              token_id: receiverId,
+            };
+          } else {
+            args = decodeBase64(actions[0]?.args);
+          }
         } else {
-          // Regular transfer or function call
-          args = isFunctionType
-            ? {
-                token_id: "",
-                receiver_id: decodedArgs?.receiver_id,
-                amount: decodedArgs?.amount,
-              }
-            : item.kind.Transfer;
+          args = item.kind.Transfer;
         }
+
         let status = item.status;
         if (status === "InProgress") {
           const endTime = Big(item.submission_time ?? "0")
@@ -148,7 +163,9 @@ useEffect(() => {
           proposalId,
           args,
           status,
-          isLockupTransfer: isFunctionType,
+          isLockupTransfer:
+            isFunctionType &&
+            item.kind.FunctionCall?.actions[0]?.method_name === "transfer",
           isIntentsPayment,
           intentsTokenInfo,
         });
