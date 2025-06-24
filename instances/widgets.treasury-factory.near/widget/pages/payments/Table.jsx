@@ -193,6 +193,8 @@ const ProposalsComponent = () => {
         const summary = decodeProposalDescription("summary", item.description);
         const description = !title && !summary && item.description;
         const id = decodeProposalDescription("proposalId", item.description);
+        const proposalUrl = decodeProposalDescription("url", item.description);
+
         const proposalId = id ? parseInt(id, 10) : null;
         const isFunctionType =
           Object.values(item?.kind?.FunctionCall ?? {})?.length > 0;
@@ -308,13 +310,7 @@ const ProposalsComponent = () => {
                   <Link
                     target="_blank"
                     rel="noopener noreferrer"
-                    to={href({
-                      widgetSrc: `${REPL_DEVHUB}/widget/app`,
-                      params: {
-                        page: "proposal",
-                        id: proposalId,
-                      },
-                    })}
+                    to={proposalUrl}
                   >
                     <div className="d-flex gap-2 align-items-center text-underline fw-semi-bold">
                       #{proposalId} <i class="bi bi-box-arrow-up-right"> </i>

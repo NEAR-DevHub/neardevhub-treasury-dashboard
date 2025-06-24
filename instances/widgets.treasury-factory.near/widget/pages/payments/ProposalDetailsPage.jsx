@@ -72,6 +72,8 @@ useEffect(() => {
         const description = !title && !summary && item.description;
         const id = decodeProposalDescription("proposalId", item.description);
         const proposalId = id ? parseInt(id, 10) : null;
+        const proposalUrl = decodeProposalDescription("url", item.description);
+
         const isFunctionType =
           Object.values(item?.kind?.FunctionCall ?? {})?.length > 0;
         let decodedArgs = {};
@@ -168,6 +170,7 @@ useEffect(() => {
             item.kind.FunctionCall?.actions[0]?.method_name === "transfer",
           isIntentsPayment,
           intentsTokenInfo,
+          proposalUrl,
         });
       })
       .catch((e) => {
@@ -253,13 +256,7 @@ return (
               <Link
                 target="_blank"
                 rel="noopener noreferrer"
-                to={href({
-                  widgetSrc: `${REPL_DEVHUB}/widget/app`,
-                  params: {
-                    page: "proposal",
-                    id: proposalData?.proposalId,
-                  },
-                })}
+                to={proposalData?.proposalUrl}
               >
                 <button
                   className="btn p-0 d-flex align-items-center gap-2 h-auto"
