@@ -164,7 +164,8 @@ useEffect(() => {
           args,
           status,
           isLockupTransfer:
-            isFunctionType && actions[0]?.method_name === "transfer",
+            isFunctionType &&
+            item.kind.FunctionCall?.actions[0]?.method_name === "transfer",
           isIntentsPayment,
           intentsTokenInfo,
         });

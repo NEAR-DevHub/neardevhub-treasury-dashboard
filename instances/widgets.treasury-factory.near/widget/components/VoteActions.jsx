@@ -205,7 +205,10 @@ const InsufficientBalanceWarning = () => {
           </div>
           <i
             className="bi bi-x-lg h4 mb-0 cursor-pointer"
-            onClick={() => setShowWarning(false)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowWarning(false);
+            }}
           ></i>
         </div>
       </ModalHeader>
@@ -244,7 +247,10 @@ const InsufficientBalanceWarning = () => {
               root: "btn btn-outline-secondary shadow-none no-transparent",
             },
             label: "Cancel",
-            onClick: () => setShowWarning(false),
+            onClick: (e) => {
+              e.stopPropagation();
+              setShowWarning(false);
+            },
           }}
         />
 
@@ -253,7 +259,8 @@ const InsufficientBalanceWarning = () => {
           props={{
             classNames: { root: "theme-btn" },
             label: "Proceed Anyway",
-            onClick: () => {
+            onClick: (e) => {
+              e.stopPropagation();
               setShowWarning(false);
               setConfirmModal(true);
             },
