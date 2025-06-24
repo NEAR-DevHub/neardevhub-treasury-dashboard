@@ -130,6 +130,22 @@ const Container = styled.div`
     width: 18px;
     height: 18px;
   }
+
+  input[type="checkbox"].indeterminate {
+    background-color: var(--theme-color);
+    position: relative;
+  }
+
+  input[type="checkbox"].indeterminate::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 25%;
+    width: 50%;
+    height: 2px;
+    background-color: white;
+    transform: translateY(-50%);
+  }
 `;
 
 const Tag = styled.div`
@@ -263,10 +279,6 @@ function getLastProposalId() {
 }
 
 useEffect(() => {
-  getLastProposalId().then((r) => setLastProposalId(r));
-}, []);
-
-useEffect(() => {
   if (isTxnCreated) {
     let checkTxnTimeout = null;
 
@@ -287,6 +299,41 @@ useEffect(() => {
     return () => clearTimeout(checkTxnTimeout);
   }
 }, [isTxnCreated]);
+
+useEffect(() => {
+  if (props.transactionHashes) {
+    asyncFetch("${REPL_RPC_URL}", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: "dontcare",
+        method: "tx",
+        params: [props.transactionHashes, context.accountId],
+      }),
+    }).then((transaction) => {
+      if (transaction !== null) {
+        const transaction_method_name =
+          transaction?.body?.result?.transaction?.actions[0].FunctionCall
+            .method_name;
+
+        if (transaction_method_name === "add_proposal") {
+          const proposalId = atob(
+            transaction?.body?.result.status.SuccessValue ?? ""
+          );
+          setLastProposalId(proposalId);
+          setToastStatus(true);
+        }
+      }
+    });
+  } else {
+    getLastProposalId().then((i) => {
+      setLastProposalId(i);
+    });
+  }
+}, [props.transactionHashes]);
 
 return (
   <Container className="d-flex flex-column">
@@ -425,14 +472,19 @@ return (
                   <td>
                     <input
                       type="checkbox"
-                      className="form-check-input"
+                      className={`form-check-input ${
+                        selectedRows.length > 0 &&
+                        selectedRows.length < data.length
+                          ? "indeterminate"
+                          : ""
+                      }`}
                       role="switch"
                       disabled={isTxnCreated || showEditor || showDeleteModal}
                       checked={
                         selectedRows.length === data.length && data.length > 0
                       }
                       onChange={(e) => {
-                        if (e.target.checked) {
+                        if (selectedRows.length === 0 && e.target.checked) {
                           setSelectedRows(data.map((item) => item.member));
                         } else {
                           setSelectedRows([]);
@@ -442,7 +494,13 @@ return (
                     />
                   </td>
                 )}
-                <td>Name</td>
+                <td>
+                  {selectedRows.length > 0 ? (
+                    <>{selectedRows.length} Members Selected </>
+                  ) : (
+                    "Name"
+                  )}
+                </td>
                 <td>User name</td>
                 <td>
                   Permission Group(s){" "}

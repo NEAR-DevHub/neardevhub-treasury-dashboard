@@ -123,11 +123,45 @@ useEffect(() => {
 }, []);
 
 useEffect(() => {
-  getLastProposalId().then((i) => setLastProposalId(i));
   Near.asyncView(treasuryDaoID, "get_policy").then((policy) => {
     setDaoPolicy(policy);
   });
 }, []);
+
+useEffect(() => {
+  if (props.transactionHashes) {
+    asyncFetch("${REPL_RPC_URL}", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: "dontcare",
+        method: "tx",
+        params: [props.transactionHashes, context.accountId],
+      }),
+    }).then((transaction) => {
+      if (transaction !== null) {
+        const transaction_method_name =
+          transaction?.body?.result?.transaction?.actions[0].FunctionCall
+            .method_name;
+
+        if (transaction_method_name === "add_proposal") {
+          const proposalId = atob(
+            transaction?.body?.result.status.SuccessValue ?? ""
+          );
+          setLastProposalId(proposalId);
+          setToastStatus(true);
+        }
+      }
+    });
+  } else {
+    getLastProposalId().then((i) => {
+      setLastProposalId(i);
+    });
+  }
+}, [props.transactionHashes]);
 
 useEffect(() => {
   if (isTxnCreated) {
