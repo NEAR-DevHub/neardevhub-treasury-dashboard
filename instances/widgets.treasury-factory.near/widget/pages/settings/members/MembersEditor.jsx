@@ -437,7 +437,6 @@ const code = `<!DOCTYPE html>
         }
       
           const isNearnAccount = account === "nearn-io.near";
-          console.log({isNearnAccount})
           const nearnWarning = document.getElementById("nearnWarning-" + index);
           const selectTag = document.getElementById("selectTag-" + index);
           const accountInput = document.getElementById("accountInput-" + index);

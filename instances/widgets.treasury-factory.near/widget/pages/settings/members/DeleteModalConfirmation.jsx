@@ -162,8 +162,8 @@ return (
           ) : (
             <>
               <div>
-                The following users will lose their permissions to this treasury
-                once the request is created and approved:
+                The following members will lose their permissions to this
+                treasury once the request is created and approved:
               </div>
               <ul className="my-1">
                 {selectedMembers.map(({ member }) => (
