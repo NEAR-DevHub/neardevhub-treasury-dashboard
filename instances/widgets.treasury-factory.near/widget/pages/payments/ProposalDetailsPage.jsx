@@ -153,7 +153,6 @@ useEffect(() => {
           isLockupTransfer: isFunctionType,
           isIntentsPayment,
           intentsTokenInfo,
-          isIntentWithdraw,
           proposalUrl,
         });
       })
