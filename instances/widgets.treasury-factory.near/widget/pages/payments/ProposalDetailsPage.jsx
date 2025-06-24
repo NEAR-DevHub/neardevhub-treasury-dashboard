@@ -136,6 +136,8 @@ useEffect(() => {
           } else {
             args = decodeBase64(actions[0]?.args);
           }
+        } else {
+          args = item.kind.Transfer;
         }
 
         let status = item.status;
