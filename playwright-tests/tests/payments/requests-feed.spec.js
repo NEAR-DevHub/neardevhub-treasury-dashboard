@@ -131,7 +131,7 @@ test.describe("payment requests feed", function () {
         name: "NEARN payment to Artur-Yurii Korchynskyi for the listing",
       })
     ).toBeVisible();
-    await expect(page.getByText("1.00 USDt")).toBeVisible();
+    await expect(page.getByText("1 USDt")).toBeVisible();
     await expect(page.getByText("Expires At")).toBeVisible();
     await expect(page.getByRole("heading", { name: "#2" })).toBeVisible();
     await page.locator(".cursor-pointer > .bi").first().click();
@@ -150,7 +150,7 @@ test.describe("payment requests feed", function () {
         name: "NEARN payment to megha for the listing",
       })
     ).toBeVisible();
-    await expect(page.getByText("1.00 USDC")).toBeVisible();
+    await expect(page.getByText("1 USDC")).toBeVisible();
     await expect(page.getByText("Expires At")).toBeVisible();
     await expect(page.getByRole("heading", { name: "#1" })).toBeVisible();
   });
