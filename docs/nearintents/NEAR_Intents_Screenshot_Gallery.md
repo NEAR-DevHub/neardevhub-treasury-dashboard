@@ -171,6 +171,36 @@ This document provides a comprehensive visual guide to the NEAR Intents function
 ![Payment Request Form](screenshots/payment-request-form.png)
 *Payment request interface with token selection dropdown opened, showing available NEAR Intents assets including BTC (NEAR Intents), USDC, and wNEAR that can be used for cross-chain payments*
 
+### Payment Request Examples
+
+#### Bitcoin Payment Request
+![BTC Payment Request](screenshots/btc-payment-request-example.png)
+*Example of a completed payment request form for Bitcoin, showing the recipient address field, amount input, and selected BTC token*
+
+#### wNEAR Payment Request
+![wNEAR Payment Request](screenshots/wnear-payment-request-example.png)
+*Example of a completed payment request form for wrapped NEAR tokens, demonstrating the interface for NEAR-based payments*
+
+### Error Handling
+
+#### Insufficient Balance Alert
+![Insufficient Balance Alert](screenshots/insufficient-balance-alert.png)
+*Error alert displayed when a user attempts to create a payment request that exceeds their available token balance*
+
+## Interface Elements
+
+### Network Selection
+![Network Selection Dropdown](screenshots/network-selection-dropdown.png)
+*Network selection dropdown showing human-readable blockchain names (ETH, BTC, SOL, etc.) instead of technical chain IDs*
+
+### Token Amount Display
+![Token Amount Display](screenshots/token-amount-display.png)
+*Dashboard view showing token amounts with proper formatting and precision for different asset types*
+
+### USD Value Display
+![USD Values Display](screenshots/usd-values-display.png)
+*Dashboard view showing USD equivalent values for holdings when price data is available*
+
 ## Usage Notes
 
 - All screenshots were captured using automated Playwright tests to ensure accuracy

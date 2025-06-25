@@ -426,6 +426,13 @@ test("payment request to BTC address", async ({
     .getByTestId("btc-recipient")
     .fill("bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh");
 
+  // Capture screenshot of BTC payment request form filled out
+  await page.getByText("Create Payment Request").scrollIntoViewIfNeeded();
+  await page.screenshot({ 
+    path: "docs/nearintents/screenshots/btc-payment-request-example.png", 
+    fullPage: true 
+  });
+
   await expect(
     page.getByText("Please enter valid account ID")
   ).not.toBeVisible();
@@ -1032,6 +1039,13 @@ test("payment request for wNEAR token on NEAR intents", async ({
   await page.getByPlaceholder("treasury.near").click();
   await page.getByPlaceholder("treasury.near").fill(creatorAccount.accountId);
 
+  // Capture screenshot of wNEAR payment request form filled out
+  await page.getByText("Create Payment Request").scrollIntoViewIfNeeded();
+  await page.screenshot({ 
+    path: "docs/nearintents/screenshots/wnear-payment-request-example.png", 
+    fullPage: true 
+  });
+
   await expect(
     page.getByText("Please enter valid account ID")
   ).not.toBeVisible();
@@ -1327,6 +1341,13 @@ test("insufficient balance alert for BTC payment request exceeding available bal
   await expect(
     page.getByText("The treasury balance is insufficient to cover the payment.")
   ).toBeVisible();
+
+  // Capture screenshot of insufficient balance alert in form
+  await page.getByText("Create Payment Request").scrollIntoViewIfNeeded();
+  await page.screenshot({ 
+    path: "docs/nearintents/screenshots/insufficient-balance-alert.png", 
+    fullPage: true 
+  });
 
   await expect(page.getByRole("button", { name: "Submit" })).toBeEnabled();
   await page.getByRole("button", { name: "Submit" }).click();

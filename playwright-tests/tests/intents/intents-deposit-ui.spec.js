@@ -410,6 +410,12 @@ test.describe("Intents Deposit UI", () => {
         // Select the network in the UI
         if (networkName === firstNetworkName) {
           await page.getByText("Select a network", { exact: true }).click();
+          
+          // Capture screenshot of network selection dropdown
+          await page.screenshot({ 
+            path: "docs/nearintents/screenshots/network-selection-dropdown.png", 
+            fullPage: true 
+          });
         } else {
           const dropdowns = await page.locator("div.custom-select");
           await dropdowns.nth(1).click();

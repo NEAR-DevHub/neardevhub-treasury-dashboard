@@ -590,6 +590,13 @@ test("show intents balance in dashboard (sandbox)", async ({
   );
   await expect(solAmountElement).toHaveText("10.00");
 
+  // Capture screenshot of token amount display showing proper formatting
+  await solRowLocator.scrollIntoViewIfNeeded();
+  await page.screenshot({ 
+    path: "docs/nearintents/screenshots/token-amount-display.png", 
+    fullPage: true 
+  });
+
   // ETH icon
   const ethIconLocator = page
     .locator('div.h6.mb-0.text-truncate:has-text("ETH")')
@@ -687,6 +694,13 @@ test("show intents balance in dashboard (sandbox)", async ({
 
   // Scroll dashboard into view and take screenshot showing NEAR Intents balance
   await totalBalanceCardLocator.scrollIntoViewIfNeeded();
+  
+  // Also capture a focused screenshot on USD values
+  await page.screenshot({ 
+    path: "docs/nearintents/screenshots/usd-values-display.png", 
+    fullPage: true 
+  });
+  
   await page.screenshot({ 
     path: 'docs/nearintents/screenshots/dashboard-with-intents-balance.png',
     fullPage: true

@@ -32,9 +32,16 @@ The NEAR Intents dashboard integrates seamlessly into the Treasury Dashboard, pr
    - Updates automatically when intents balances change
 
 2. **NEAR Intents Section**:
-   - Shows individual asset balances
+   - Shows individual asset balances with proper token precision
    - Displays assets from all supported networks
    - Includes icons for each blockchain and asset
+   - Shows USD equivalent values when available
+
+![Token Amount Display](screenshots/token-amount-display.png)
+*Dashboard showing token amounts with proper decimal places and formatting*
+
+![USD Values Display](screenshots/usd-values-display.png)
+*Dashboard showing USD equivalent values for holdings when price data is available*
 
 ### Dashboard Views
 
@@ -71,6 +78,9 @@ NEAR Intents supports deposits from multiple blockchain networks into your DAO t
    - Browse available assets or use the search function
    - Select the blockchain network (displayed with human-readable names)
    - Each network shows its native name (e.g., "ETH" for Ethereum, "BTC" for Bitcoin)
+
+![Network Selection Dropdown](screenshots/network-selection-dropdown.png)
+*Network selection dropdown showing human-readable blockchain names for each supported network*
 
 ![Deposit Modal - Sputnik Tab](screenshots/deposit-modal-sputnik-tab.png)
 
@@ -191,10 +201,19 @@ NEAR Intents enables DAOs to create payment requests that utilize cross-chain as
 ### Payment Request Examples
 
 **Bitcoin Payment Request**:
-![BTC Payment Request](../freeze_frames/intents-intents-payment-re-7dd1d-ment-request-to-BTC-address-treasury-testing.jpg)
+![BTC Payment Request](screenshots/btc-payment-request-example.png)
+*Example of a payment request form configured for Bitcoin payments*
 
 **wNEAR Payment Request**:
-![wNEAR Payment Request](../freeze_frames/intents-intents-payment-re-9851c-wNEAR-token-on-NEAR-intents-treasury-testing.jpg)
+![wNEAR Payment Request](screenshots/wnear-payment-request-example.png)
+*Example of a payment request form configured for wrapped NEAR token payments*
+
+### Insufficient Balance Handling
+
+When users attempt to make payments that exceed their available balance, the system displays a clear error message:
+
+![Insufficient Balance Alert](screenshots/insufficient-balance-alert.png)
+*Alert shown when payment amount exceeds available balance, ensuring users cannot create invalid payment requests*
 
 ### Balance Validation
 
