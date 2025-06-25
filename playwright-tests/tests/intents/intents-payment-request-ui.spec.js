@@ -364,6 +364,32 @@ test("payment request to BTC address", async ({
     timeout: 14_000,
   });
 
+  // Open the tokens dropdown to show NEAR Intents tokens
+  await page.getByTestId("tokens-dropdown").locator("div").first().click();
+
+  // Wait for NEAR Intents tokens to be visible
+  await expect(
+    await page
+      .getByTestId("tokens-dropdown")
+      .locator("div.d-flex.flex-column.gap-1.w-100.text-wrap")
+      .filter({ hasText: "NEAR" })
+      .first()
+  ).toBeVisible();
+
+  await expect(
+    await page
+      .getByTestId("tokens-dropdown")
+      .locator("div.d-flex.flex-column.gap-1.w-100.text-wrap")
+      .filter({ hasText: "BTC (NEAR Intents)" })
+  ).toBeVisible();
+
+  // Capture screenshot of the payment request form with tokens dropdown open
+  await page.getByText("Create Payment Request").scrollIntoViewIfNeeded();
+  await page.screenshot({ 
+    path: "docs/nearintents/screenshots/payment-request-form.png", 
+    fullPage: true 
+  });
+
   await page.getByTestId("tokens-dropdown").locator("div").first().click();
 
   await expect(

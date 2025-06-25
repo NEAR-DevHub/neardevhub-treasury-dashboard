@@ -7,6 +7,18 @@ This is the repository of the BOS components for the NEAR DevHub trustees dashbo
 
 Please refer to [NEAR DevHub](https://github.com/NEAR-DevHub/neardevhub-bos/blob/main/CONTRIBUTING.md) for general contribution guidelines. Details specific for this repository will be added later.
 
+## Documentation
+
+This project includes comprehensive documentation for the NEAR Intents functionality:
+
+- **[NEAR Intents Documentation](docs/nearintents/)** - Complete documentation package including:
+  - **[User Guide](docs/nearintents/NEAR_Intents_User_Guide.md)** - Step-by-step instructions with visual examples
+  - **[Technical Documentation](docs/nearintents/NEAR_Intents_Technical_Documentation.md)** - Implementation details and API references
+  - **[Screenshot Gallery](docs/nearintents/NEAR_Intents_Screenshot_Gallery.md)** - Visual guide showcasing all features
+  - **[Quick Reference](docs/nearintents/NEAR_Intents_Quick_Reference.md)** - Quick reference for common tasks
+
+The NEAR Intents documentation includes high-quality screenshots automatically generated from Playwright tests, ensuring accuracy and up-to-date visual guides.
+
 ## Running tests
 
 This project has many [playwright-tests](./playwright-tests/), which covers most of the functionality.
@@ -18,6 +30,22 @@ To build the sandbox type the following:
 `npm run build:sandbox`
 
 Then you can run the tests using `npm run test` or `npm run test:watch:codespaces`. You can also add flags such as `--ui` for UI mode, or inspect the test configuration in [playwright.config.js](./playwright.config.js).
+
+### Generating Documentation Screenshots
+
+The NEAR Intents tests include automatic screenshot generation for documentation purposes. The following tests will generate screenshots in the `docs/nearintents/screenshots/` directory:
+
+- `playwright-tests/tests/intents/intents-dashboard.spec.js` - Dashboard views
+- `playwright-tests/tests/intents/intents-deposit-ui.spec.js` - Deposit flow and asset examples  
+- `playwright-tests/tests/intents/intents-payment-request-ui.spec.js` - Payment request interface
+
+Run these specific tests to update documentation screenshots:
+
+```bash
+npx playwright test playwright-tests/tests/intents/intents-dashboard.spec.js
+npx playwright test playwright-tests/tests/intents/intents-deposit-ui.spec.js  
+npx playwright test playwright-tests/tests/intents/intents-payment-request-ui.spec.js
+```
 
 ## Creating test videos
 

@@ -93,6 +93,13 @@ test.describe("Intents Deposit UI", () => {
     });
     await expect(depositButton).toBeVisible({ timeout: 15_000 });
     await expect(depositButton).toHaveClass(/btn-success/); // Check for green color
+    
+    // Scroll to deposit button and take screenshot
+    await depositButton.scrollIntoViewIfNeeded();
+    await page.screenshot({ 
+      path: 'docs/nearintents/screenshots/deposit-button-visible.png',
+      fullPage: true
+    });
   });
 
   test("clicking deposit button opens deposit modal with correct initial content", async ({
@@ -140,6 +147,13 @@ test.describe("Intents Deposit UI", () => {
       name: "Close",
     });
     await expect(closeButtonFooter).toBeVisible();
+
+    // Take screenshot of deposit modal with Sputnik DAO tab active
+    await modalLocator.scrollIntoViewIfNeeded();
+    await page.screenshot({ 
+      path: 'docs/nearintents/screenshots/deposit-modal-sputnik-tab.png',
+      fullPage: true
+    });
 
     await closeButtonFooter.click();
     await expect(modalLocator).not.toBeVisible();
@@ -204,6 +218,13 @@ test.describe("Intents Deposit UI", () => {
     await expect(warningLocator).toHaveText(
       "Select an asset and network to see deposit instructions and address."
     );
+    
+    // Take screenshot of NEAR Intents tab with asset selection prompt
+    await modalLocator.scrollIntoViewIfNeeded();
+    await page.screenshot({ 
+      path: 'docs/nearintents/screenshots/deposit-modal-intents-tab.png',
+      fullPage: true
+    });
   });
 
   test("should display QR code in Sputnik DAO tab", async ({
@@ -426,6 +447,13 @@ test.describe("Intents Deposit UI", () => {
 
         // Verify the UI address matches the API address
         expect(uiDepositAddress).toEqual(apiDepositAddress);
+
+        // Take screenshot showing selected asset, network, deposit address and QR code
+        await modalLocator.scrollIntoViewIfNeeded();
+        await page.screenshot({ 
+          path: `docs/nearintents/screenshots/deposit-${assetName}-${network.id.replace(':', '-')}.png`,
+          fullPage: true
+        });
 
         // Verify the QR code matches the displayed address
         const qrCodeIframe = modalLocator.locator(

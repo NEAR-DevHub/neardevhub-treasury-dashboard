@@ -143,6 +143,14 @@ test("should not display NEAR intents card if there are no assets in NEAR intent
   await page.goto(`https://${instanceAccount}.page`);
 
   await expect(page.getByText("Total Balance")).toBeVisible();
+  
+  // Scroll to dashboard content and take screenshot showing no NEAR Intents card
+  await page.locator(".card.card-body", { hasText: "Total Balance" }).scrollIntoViewIfNeeded();
+  await page.screenshot({ 
+    path: 'docs/nearintents/screenshots/dashboard-no-intents.png',
+    fullPage: true
+  });
+  
   await expect(page.getByText("NEAR Intents")).not.toBeVisible();
 });
 
@@ -676,6 +684,13 @@ test("show intents balance in dashboard (sandbox)", async ({
   const displayedTotalBalanceNumeric = parseFloat(
     totalBalanceText.replace(/[^0-9\.]/g, "")
   );
+
+  // Scroll dashboard into view and take screenshot showing NEAR Intents balance
+  await totalBalanceCardLocator.scrollIntoViewIfNeeded();
+  await page.screenshot({ 
+    path: 'docs/nearintents/screenshots/dashboard-with-intents-balance.png',
+    fullPage: true
+  });
 
   expect(displayedTotalBalanceNumeric).toBeGreaterThan(intentsExpectedUsdTotal);
   console.log(
