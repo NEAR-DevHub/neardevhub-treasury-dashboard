@@ -403,7 +403,7 @@ const ProposalsComponent = () => {
             )}
             {isPendingRequests &&
               (hasVotingPermission || hasDeletePermission) && (
-                <td className="text-right">
+                <td className="text-right" onClick={(e) => e.stopPropagation()}>
                   <Widget
                     src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.VoteActions`}
                     props={{

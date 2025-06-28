@@ -607,10 +607,10 @@ const code = `<!DOCTYPE html>
           member.classList.add('removed');
         
           // Re-number only the visible ones
-          const allMembers = document.querySelectorAll('.member-container');
-          let visibleIndex = 1;
+          const members = document.querySelectorAll('.member-container');
+          let visibleIndex = allMembers.length + 1;
         
-          allMembers.forEach(function(el, realIndex) {
+          members.forEach(function(el, realIndex) {
             if (el.style.display !== 'none') {
               const label = el.querySelector('#memberLabel-' + realIndex);
               if (label) {
@@ -638,7 +638,7 @@ const code = `<!DOCTYPE html>
       
       function addMember(existingMember) {
         const index = memberCount++;
-        const visibleCount = document.querySelectorAll(".member-container:not([style*='display: none'])").length;
+        const visibleCount = allMembers.length + document.querySelectorAll(".member-container:not([style*='display: none'])").length;
         const memberDiv = document.createElement("div");
         memberDiv.className = "member-container";
         memberDiv.id = "member-" + index;
@@ -858,7 +858,7 @@ const code = `<!DOCTYPE html>
           isEdit = event.data.isEdit;
           accounts = event.data.accounts;
           availableRoles = event.data.availableRoles;
-          allMembers = event.data.allMembers;
+          allMembers = event.data.allMembers || [];
         
           if (Array.isArray(event.data.selectedMembers) && event.data.selectedMembers.length > 0) {
             selectedMembers = event.data.selectedMembers;
