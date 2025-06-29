@@ -4,17 +4,22 @@ const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
 const { TransactionLoader } = VM.require(
   `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TransactionLoader`
 ) || { TransactionLoader: () => <></> };
+const { Modal, ModalContent, ModalHeader, ModalFooter } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.modal"
+);
 const {
   getMembersAndPermissions,
   getDaoRoles,
   getPolicyApproverGroup,
   hasPermission,
   getRolesDescription,
+  getFilteredProposalsByStatusAndKind,
 } = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common") || {
   getDaoRoles: () => {},
   getPolicyApproverGroup: () => {},
   hasPermission: () => {},
   getRolesDescription: () => {},
+  getFilteredProposalsByStatusAndKind: () => {},
 };
 
 const instance = props.instance;
@@ -48,8 +53,20 @@ const [showDeleteModal, setShowDeleteModal] = useState(false);
 const [showToastStatus, setToastStatus] = useState(false);
 const [loading, setLoading] = useState(false);
 const [isEdit, setIsEdit] = useState(false);
+const [
+  showProposalsOverrideConfirmModal,
+  setShowProposalsOverrideConfirmModal,
+] = useState(false);
+const [pendingAction, setPendingAction] = useState(null);
+const [proposals, setProposals] = useState([]);
 
 const [isTxnCreated, setTxnCreated] = useState(false);
+
+function getLastProposalId() {
+  return Near.asyncView(treasuryDaoID, "get_last_proposal_id").then(
+    (result) => result
+  );
+}
 
 useEffect(() => {
   setLoading(true);
@@ -57,7 +74,26 @@ useEffect(() => {
     setAllMembers([]);
     getMembersAndPermissions(treasuryDaoID).then((res) => {
       setAllMembers(res);
-      setLoading(false);
+      if (treasuryDaoID && !isTreasuryFactory && hasCreatePermission) {
+        getLastProposalId()
+          .then((i) => {
+            fetchProposals(i)
+              .then((prpls) => {
+                setProposals(prpls);
+                setLoading(false);
+              })
+              .catch((error) => {
+                console.error("Error fetching proposals:", error);
+                setLoading(false);
+              });
+          })
+          .catch((error) => {
+            console.error("Error getting last proposal ID:", error);
+            setLoading(false);
+          });
+      } else {
+        setLoading(false);
+      }
     });
   }
 }, []);
@@ -146,6 +182,35 @@ const Container = styled.div`
     background-color: white;
     transform: translateY(-50%);
   }
+
+  .member-row {
+    transition: background-color 0.2s ease;
+    cursor: pointer;
+  }
+
+  .member-row:hover {
+    background-color: var(--grey-04) !important;
+  }
+
+  .action-buttons {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .member-row:hover .action-buttons {
+    opacity: 1;
+  }
+
+  .action-btn {
+    border: none;
+    background: transparent;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+
+  .action-btn:hover {
+    background-color: var(--grey-035);
+  }
 `;
 
 const Tag = styled.div`
@@ -198,7 +263,7 @@ const Members = () => {
         const profile = Social.getr(`${account}/profile`);
         const imageSrc = getImage(account);
         return (
-          <tr key={index} className="fw-semi-bold">
+          <tr key={index} className="fw-semi-bold member-row">
             {hasCreatePermission && (
               <td>
                 <input
@@ -247,22 +312,55 @@ const Members = () => {
               />
             </td>
             <td>
-              <div className="d-flex gap-3 align-items-center">
-                {(group.roles ?? []).map((i) => {
-                  const description = getRolesDescription(i);
-                  const tag = <Tag className="rounded-pill px-2 py-1">{i}</Tag>;
-                  if (!description) return tag;
-                  return (
-                    <Widget
-                      src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
-                      props={{
-                        popup: description,
-                        children: tag,
-                        instance,
+              <div className="d-flex gap-3 align-items-center justify-content-between">
+                <div className="d-flex gap-3 align-items-center">
+                  {(group.roles ?? []).map((i) => {
+                    const description = getRolesDescription(i);
+                    const tag = (
+                      <Tag className="rounded-pill px-2 py-1">{i}</Tag>
+                    );
+                    if (!description) return tag;
+                    return (
+                      <Widget
+                        src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+                        props={{
+                          popup: description,
+                          children: tag,
+                          instance,
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+                {hasCreatePermission && (
+                  <div className="action-buttons d-flex">
+                    <button
+                      className="action-btn edit"
+                      disabled={isTxnCreated || showEditor || showDeleteModal}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        checkAndExecuteAction({ type: "editSingle", account });
                       }}
-                    />
-                  );
-                })}
+                      title="Edit member"
+                    >
+                      <i className="bi bi-pencil h5 mb-0"></i>
+                    </button>
+                    <button
+                      className="action-btn delete"
+                      disabled={isTxnCreated || showEditor || showDeleteModal}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        checkAndExecuteAction({
+                          type: "deleteSingle",
+                          account,
+                        });
+                      }}
+                      title="Delete member"
+                    >
+                      <i className="bi bi-trash3 h5 mb-0 text-red"></i>
+                    </button>
+                  </div>
+                )}
               </div>
             </td>
           </tr>
@@ -271,12 +369,6 @@ const Members = () => {
     </tbody>
   );
 };
-
-function getLastProposalId() {
-  return Near.asyncView(treasuryDaoID, "get_last_proposal_id").then(
-    (result) => result
-  );
-}
 
 useEffect(() => {
   if (isTxnCreated) {
@@ -335,6 +427,62 @@ useEffect(() => {
   }
 }, [props.transactionHashes]);
 
+const fetchProposals = (proposalId) =>
+  getFilteredProposalsByStatusAndKind({
+    treasuryDaoID,
+    resPerPage: 10,
+    isPrevPageCalled: false,
+    filterKindArray: ["ChangePolicy"],
+    filterStatusArray: ["InProgress"],
+    offset: proposalId,
+    lastProposalId: proposalId,
+  }).then((r) => {
+    return r.filteredProposals;
+  });
+
+const checkAndExecuteAction = (action) => {
+  if (proposals.length > 0) {
+    setPendingAction(action);
+    setShowProposalsOverrideConfirmModal(true);
+  } else {
+    executeAction(action);
+  }
+};
+
+const executeAction = (action) => {
+  switch (action.type) {
+    case "add":
+      setSelectedMembers([]);
+      setIsEdit(false);
+      setShowEditor(true);
+      break;
+    case "edit":
+      const members = allMembers.filter((m) => selectedRows.includes(m.member));
+      setSelectedMembers(members);
+      setIsEdit(true);
+      setShowEditor(true);
+      break;
+    case "delete":
+      const deleteMembers = allMembers.filter((m) =>
+        selectedRows.includes(m.member)
+      );
+      setSelectedMembers(deleteMembers);
+      setShowDeleteModal(true);
+      break;
+    case "editSingle":
+      const member = allMembers.find((m) => m.member === action.account);
+      setSelectedMembers([member]);
+      setIsEdit(true);
+      setShowEditor(true);
+      break;
+    case "deleteSingle":
+      const deleteMember = allMembers.find((m) => m.member === action.account);
+      setSelectedMembers([deleteMember]);
+      setShowDeleteModal(true);
+      break;
+  }
+};
+
 return (
   <Container className="d-flex flex-column">
     <SubmitToast />
@@ -342,6 +490,32 @@ return (
       showInProgress={isTxnCreated}
       cancelTxn={() => setTxnCreated(false)}
     />
+    {showProposalsOverrideConfirmModal && (
+      <Modal props={{ minWidth: "700px" }}>
+        <ModalHeader>
+          <h5 className="d-flex gap-2 align-items-center justify-content-between mb-0">
+            <div className="d-flex gap-2 align-items-center">
+              <i className="bi bi-exclamation-triangle text-warning h5 mb-0"></i>
+              Resolve Before Proceeding
+            </div>
+            <i
+              className="bi bi-x-lg h4 mb-0 cursor-pointer"
+              onClick={() => setShowProposalsOverrideConfirmModal(false)}
+            ></i>
+          </h5>
+        </ModalHeader>
+        <ModalContent>
+          <Widget
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.WarningTable`}
+            props={{
+              descriptionText:
+                "To avoid conflicts, you need to complete or resolve the existing pending requests before proceeding. These requests are currently active and must be approved or rejected first.",
+              tableProps: [{ proposals }],
+            }}
+          />
+        </ModalContent>
+      </Modal>
+    )}
     {showDeleteModal && selectedMembers?.length && (
       <Widget
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.members.DeleteModalConfirmation`}
@@ -378,6 +552,7 @@ return (
       <div className="d-flex justify-content-between gap-2 align-items-center border-bottom px-3 pb-3">
         <div className="card-title mb-0">All Members</div>
         {hasCreatePermission &&
+          !loading &&
           (selectedRows.length === 0 ? (
             <Widget
               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
@@ -393,9 +568,7 @@ return (
                 checkForDeposit: true,
                 treasuryDaoID,
                 callbackAction: () => {
-                  setSelectedMembers([]);
-                  setIsEdit(false);
-                  setShowEditor(true);
+                  checkAndExecuteAction({ type: "add" });
                 },
                 disabled: showEditor || showDeleteModal || isTxnCreated,
               }}
@@ -417,12 +590,7 @@ return (
                   checkForDeposit: true,
                   treasuryDaoID,
                   callbackAction: () => {
-                    const members = allMembers.filter((m) =>
-                      selectedRows.includes(m.member)
-                    );
-                    setSelectedMembers(members);
-                    setIsEdit(true);
-                    setShowEditor(true);
+                    checkAndExecuteAction({ type: "edit" });
                   },
                   disabled: showEditor || showDeleteModal || isTxnCreated,
                 }}
@@ -442,11 +610,7 @@ return (
                   checkForDeposit: true,
                   treasuryDaoID,
                   callbackAction: () => {
-                    const members = allMembers.filter((m) =>
-                      selectedRows.includes(m.member)
-                    );
-                    setSelectedMembers(members);
-                    setShowDeleteModal(true);
+                    checkAndExecuteAction({ type: "delete" });
                   },
                   disabled: showEditor || showDeleteModal || isTxnCreated,
                 }}

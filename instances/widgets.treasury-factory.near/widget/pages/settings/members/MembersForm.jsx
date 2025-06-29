@@ -30,8 +30,6 @@ const selectedMembers = props.selectedMembers ?? [];
 const isEdit = props.isEdit;
 const availableRoles = props.availableRoles || [];
 const allMembers = props.allMembers || [];
-const profilesData = Social.get("*/profile/name", "final") || {};
-const accounts = Object.keys(profilesData);
 const setToastStatus = props.setToastStatus ?? (() => {});
 const updateLastProposalId = props.updateLastProposalId || (() => {});
 
@@ -39,11 +37,6 @@ const [showCancelModal, setShowCancelModal] = useState(false);
 const [isTxnCreated, setTxnCreated] = useState(false);
 const [lastProposalId, setLastProposalId] = useState(null);
 const [showErrorToast, setShowErrorToast] = useState(false);
-const [
-  showProposalsOverrideConfirmModal,
-  setShowProposalsOverrideConfirmModal,
-] = useState(false);
-const [proposals, setProposals] = useState([]);
 const [updatedList, setUpdatedList] = useState([]);
 const [showEditConfirmationModal, setShowEditConfirmationModal] =
   useState(false);
@@ -53,25 +46,10 @@ useEffect(() => {
 }, [selectedMembers]);
 
 if (
-  !profilesData ||
-  !accounts.length ||
   !availableRoles.length ||
   typeof getFilteredProposalsByStatusAndKind !== "function"
 )
   return <></>;
-
-const fetchProposals = async (proposalId) =>
-  getFilteredProposalsByStatusAndKind({
-    treasuryDaoID,
-    resPerPage: 10,
-    isPrevPageCalled: false,
-    filterKindArray: ["ChangePolicy"],
-    filterStatusArray: ["InProgress"],
-    offset: proposalId,
-    lastProposalId: proposalId,
-  }).then((r) => {
-    return r.filteredProposals;
-  });
 
 const daoPolicy =
   treasuryDaoID && !isTreasuryFactory
@@ -88,11 +66,8 @@ function getLastProposalId() {
 
 useEffect(() => {
   if (!isTreasuryFactory) {
-    getLastProposalId().then((i) => {
-      setLastProposalId(i);
-      fetchProposals(i).then((prpls) => {
-        setProposals(prpls);
-      });
+    getLastProposalId().then((id) => {
+      setLastProposalId(id);
     });
   }
 }, [isTreasuryFactory]);
@@ -108,7 +83,6 @@ useEffect(() => {
           updateLastProposalId(id);
           setToastStatus(true);
           setShowEditor(false);
-          setShowProposalsOverrideConfirmModal(false);
           setShowEditConfirmationModal(false);
           clearTimeout(checkTxnTimeout);
           setTxnCreated(false);
@@ -140,8 +114,15 @@ function onSubmitClick(list) {
     const updatedPolicy = changes.updatedPolicy;
     const summary = changes.summary;
 
+    let title;
+    if (isEdit) {
+      title = "Update Policy - Edit Members Permissions";
+    } else {
+      title = "Update Policy - Add New Members";
+    }
+
     const description = {
-      title: "Update policy - Members Permissions",
+      title,
       summary,
     };
 
@@ -248,33 +229,6 @@ const EditMembersChangesModal = () => {
         showInProgress={isTxnCreated}
         cancelTxn={() => setTxnCreated(false)}
       />
-      {proposals.length > 0 && (
-        <Widget
-          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
-          props={{
-            instance,
-            heading: "Confirm Your Change",
-            wider: true,
-            content: (
-              <Widget
-                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.WarningTable`}
-                props={{
-                  warningText:
-                    "This action will override your previous pending proposals. Complete exsisting one before creating a new to avoid conflicting or incomplete updates.",
-                  tableProps: [{ proposals }],
-                }}
-              />
-            ),
-            confirmLabel: "Yes, proceed",
-            isOpen: showProposalsOverrideConfirmModal,
-            onCancelClick: () => setShowProposalsOverrideConfirmModal(false),
-            onConfirmClick: () => {
-              setShowProposalsOverrideConfirmModal(false);
-              onSubmitClick(updatedList);
-            },
-          }}
-        />
-      )}
 
       <Widget
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
@@ -315,23 +269,17 @@ return (
               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.members.MembersEditor`}
               props={{
                 isEdit,
-                accounts,
                 availableRoles,
                 allMembers,
                 selectedMembers,
-                disableCancel:
-                  isTxnCreated || showProposalsOverrideConfirmModal,
-                isSubmitLoading:
-                  isTxnCreated || showProposalsOverrideConfirmModal,
+                disableCancel: isTxnCreated,
+                isSubmitLoading: isTxnCreated,
                 setShowCancelModal,
                 setUpdatedList,
                 setShowEditConfirmationModal,
                 setShowEditor,
-                setShowProposalsOverrideConfirmModal,
-                onSubmitClick,
                 treasuryDaoID,
                 isTreasuryFactory,
-                proposals,
                 updatedList,
                 daoPolicy,
                 onFactorySubmit: props.onSubmit,

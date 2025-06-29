@@ -83,7 +83,7 @@ function onConfirmClick() {
   const deposit = daoPolicy?.proposal_bond || 0;
   const { updatedPolicy, summary } = updateDaoPolicy(daoPolicy);
   const description = {
-    title: "Update policy - Members Permissions",
+    title: "Update Policy - Remove Members",
     summary,
   };
 

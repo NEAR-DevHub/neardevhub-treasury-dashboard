@@ -14,14 +14,12 @@ const { TransactionLoader } = VM.require(
 
 const {
   isEdit,
-  accounts,
   availableRoles,
   allMembers,
   selectedMembers,
   disableCancel,
   isSubmitLoading,
   isTreasuryFactory,
-  proposals,
   daoPolicy,
   treasuryDaoID,
 } = props;
@@ -46,8 +44,15 @@ function onSubmitClick(list) {
     const updatedPolicy = changes.updatedPolicy;
     const summary = changes.summary;
 
+    let title;
+    if (isEdit) {
+      title = "Update Policy - Edit Members Permissions";
+    } else {
+      title = "Update Policy - Add New Members";
+    }
+
     const description = {
-      title: "Update policy - Members Permissions",
+      title,
       summary,
     };
 
@@ -85,10 +90,6 @@ const [showCancelModal, setShowCancelModal] = useState(false);
 const [isTxnCreated, setTxnCreated] = useState(false);
 const [showErrorToast, setShowErrorToast] = useState(false);
 const [updatedData, setUpdatedData] = useState(null);
-const [
-  showProposalsOverrideConfirmModal,
-  setShowProposalsOverrideConfirmModal,
-] = useState(false);
 const [lastProposalId, setLastProposalId] = useState(null);
 
 function getLastProposalId() {
@@ -335,6 +336,10 @@ const code = `<!DOCTYPE html>
          opacity: 0.5;
          cursor: not-allowed;
          }
+         .account-info {
+          min-width: 0;
+          flex: 1;
+         }
       </style>
    </head>
    <body data-bs-theme=${isDarkTheme ? "dark" : "light"}>
@@ -350,9 +355,9 @@ const code = `<!DOCTYPE html>
    <script>
       let isEdit = false;
       let availableRoles = [];
-      let accounts = []
       let allMembers = [];
       let selectedMembers = [];
+      let cachedProfilesData = null;
       const roleDescriptions = {
         Requestor: "Allows to create transaction requests (payments, stake delegation, and asset exchange).",
         Approver: "Allows to vote on transaction requests (payments, stake delegation, and asset exchange).",
@@ -396,6 +401,7 @@ const code = `<!DOCTYPE html>
         const roleError = document.getElementById("roleError-" + index);
         const selectedRoles = window["selectedRoles_" + index];
         let isValid = true;
+        let errorMessage = "";
       
         const account = input ? input.value.trim() : "";
         const accountLower = account.toLowerCase();
@@ -406,31 +412,52 @@ const code = `<!DOCTYPE html>
           // 1. Empty + no roles
           if (!account && (!selectedRoles || selectedRoles.length === 0)) {
             isValid = false;
+            errorMessage = "Username and Permissions are missing.";
           }
       
           // 2. Invalid NEAR account
-          if (account.length > 0 && !isValidNearAccount(account) && error) {
+          else if (account.length > 0 && !isValidNearAccount(account) && error) {
             error.textContent = "Please enter a valid account ID.";
             error.classList.remove("d-none");
             isValid = false;
+            errorMessage = "Please enter a valid account ID.";
           }
           
           // 3. Duplicate in current list
           else if (account && allAccounts.includes(accountLower) && error) {
-            const firstIndex = getAllEnteredAccounts().indexOf(accountLower);
-            if (firstIndex < index) {
+            // Find the first visible member with this account (excluding current member)
+            const allVisibleInputs = document.querySelectorAll("input[id^='accountInput-']");
+            let firstDuplicateIndex = -1;
+            
+            for (let i = 0; i < allVisibleInputs.length; i++) {
+              if (i === index) continue; // Skip current member
+              
+              const input = allVisibleInputs[i];
+              if (input.offsetParent === null) continue; // Skip hidden members
+              
+              const inputVal = input.value.trim().toLowerCase();
+              if (inputVal === accountLower) {
+                firstDuplicateIndex = i;
+                break;
+              }
+            }
+            
+            // Only show error if this member has a higher index than the first duplicate
+            if (firstDuplicateIndex >= 0 && index > firstDuplicateIndex) {
               error.textContent = "This account is already added above.";
               error.classList.remove("d-none");
               isValid = false;
+              errorMessage = "This account is already added above.";
             } else {
               error.classList.add("d-none");
             }
           }        
           // 4. Already exists in external list
-          else if (allMembers.map(a => (a?.member ?? '').toLowerCase()).includes(accountLower) && error) {
+          else if (!isEdit && allMembers.map(a => (a?.member ?? '').toLowerCase()).includes(accountLower) && error) {
             error.textContent = "This account is already a member.";
             error.classList.remove("d-none");
             isValid = false;
+            errorMessage = "This account is already a member.";
           } else {
             error?.classList.add("d-none");
           }
@@ -458,12 +485,15 @@ const code = `<!DOCTYPE html>
           roleError?.classList.remove("d-none");
           roleError?.classList.add("d-flex");
           isValid = false;
+          if (!errorMessage) {
+            errorMessage = "The Permissions are missing.";
+          }
         } else {
           roleError?.classList.remove("d-flex");
           roleError?.classList.add("d-none");
         }
       
-        return isValid;
+        return { isValid, errorMessage };
       }    
       
       function updateIframeHeight() {
@@ -483,6 +513,7 @@ const code = `<!DOCTYPE html>
       const memberBlocks = document.querySelectorAll(".member-container");
       let isAllValid = true;
       const roleAssignments = {};
+      const errorMessages = [];
       availableRoles.forEach(function(role) {
         roleAssignments[role.value] = false;
       });
@@ -490,8 +521,13 @@ const code = `<!DOCTYPE html>
       memberBlocks.forEach(function(el, index) {
         if (el.style.display === 'none') return; // Skip removed members
       
-        const valid = validateMember(index);
-        if (!valid) isAllValid = false;
+        const validation = validateMember(index);
+        if (!validation.isValid) {
+          isAllValid = false;
+          const memberLabel = el.querySelector("#memberLabel-" + index);
+          const memberNumber = memberLabel ? memberLabel.textContent : "Member #" + (index + 1);
+          errorMessages.push(memberNumber + " - " + validation.errorMessage);
+        }
       
         const roles = window["selectedRoles_" + index];
         if (roles && roles.length > 0) {
@@ -550,23 +586,105 @@ const code = `<!DOCTYPE html>
         });
       }
       
-      if (!isEdit) {
-        document.getElementById("addMemberBtn").disabled = !isAllValid;
+      // Show error messages in bottom error box
+      if (!isAllValid && errorMessages.length > 0) {
+        const errorBox = document.createElement("div");
+        errorBox.className = "error-box rounded-3 d-flex align-items-start gap-2 mb-2";
+        
+        const icon = document.createElement("i");
+        icon.className = "bi bi-exclamation-octagon h5 mb-0";
+        
+        const errorContent = document.createElement("div");
+        errorContent.innerHTML = "<div class='mb-2'><strong>Please complete all member details before proceeding</strong></div>" +
+          errorMessages.map(function(msg) { return "<div>" + msg + "</div>"; }).join("");
+        
+        errorBox.appendChild(icon);
+        errorBox.appendChild(errorContent);
+        adminRoleError.appendChild(errorBox);
+        adminRoleError.classList.remove("d-none");
       }
-      document.getElementById("submitBtn").disabled = !isAllValid;
+      
       updateIframeHeight();
       return isAllValid;
+      }
+      
+      async function fetchProfileData() {
+        if (cachedProfilesData) return; // Already fetched
+        
+        try {
+          const response = await fetch('https://api.near.social/get', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              "keys": ["*/profile/name"]
+            })
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            cachedProfilesData = data;
+            console.log('Profile data loaded:', Object.keys(data).length, 'profiles');
+          } else {
+            console.error('Failed to fetch profiles:', response.status);
+          }
+        } catch (error) {
+          console.error('Error fetching profiles:', error);
+        }
       }
       
       async function handleAccountInput(index) {
         const input = document.getElementById("accountInput-" + index);
         const query = input.value.trim().toLowerCase();  
       
-        const filtered = !query.length ? [] : accounts.filter(function(acc) {
-          return acc.toLowerCase().includes(query) || acc.toLowerCase().includes(query);
-        }).slice(0, 5); // Limit to top 5;
-        renderAutocompleteResults(index, filtered);
-        validateAllMembers();
+        // Clear errors when user starts typing
+        const error = document.getElementById("accountError-" + index);
+        if (error) {
+          error.classList.add("d-none");
+        }
+        
+        // Clear bottom error box
+        const adminRoleError = document.getElementById("rolesError");
+        if (adminRoleError) {
+          adminRoleError.innerHTML = "";
+          adminRoleError.classList.add("d-none");
+        }
+      
+        if (query.length === 0) {
+          renderAutocompleteResults(index, []);
+          return;
+        }
+        
+        if (cachedProfilesData) {
+          filterAndRenderResults(index, query, cachedProfilesData);
+        } else {
+          await fetchProfileData();
+          if (cachedProfilesData) {
+            filterAndRenderResults(index, query, cachedProfilesData);
+          }
+        }
+        
+        setTimeout(updateIframeHeight, 0);
+      }
+      
+      function filterAndRenderResults(index, query, data) {
+        const filtered = [];
+        
+        Object.keys(data).forEach(accountId => {
+          if (accountId.toLowerCase().includes(query)) {
+            const profile = data[accountId]?.profile;
+            if (profile) {
+              filtered.push({
+                accountId: accountId,
+                name: profile.name || accountId
+              });
+            }
+          }
+        });
+        
+        // Limit to top 7 results
+        renderAutocompleteResults(index, filtered.slice(0, 7));
       }
       
       function renderAutocompleteResults(index, filtered) {
@@ -574,29 +692,49 @@ const code = `<!DOCTYPE html>
         suggestions.innerHTML = "";
         if (filtered.length === 0) {
           suggestions.classList.add("d-none");
+          suggestions.classList.remove("mt-2");
           return;
         }
         filtered.forEach(function(acc) {
           const item = document.createElement("div");
           item.className = "account-item";
           item.onclick = function() {
-            selectAccount(index, acc);
+            selectAccount(index, acc.accountId);
           };
           item.innerHTML =
           "<div class='d-flex gap-2 p-2 align-items-center'>" +
-            "<img src='https://i.near.social/magic/large/https://near.social/magic/img/account/" + acc + "' class='account-avatar' />" +
-            "<div class='text-sm text-secondary text-truncate'>@" + acc + "</div>" +
+            "<img src='https://i.near.social/magic/large/https://near.social/magic/img/account/" + acc.accountId + "' class='account-avatar' />" +
+            "<div class='d-flex flex-column text-sm text-secondary account-info'>" +
+              "<div class='text-truncate'>" + acc.name + "</div>" +
+              "<div class='text-truncate'>@" + acc.accountId + "</div>" +
+            "</div>" +
           "</div>";      
           suggestions.appendChild(item);
         });
         suggestions.classList.remove("d-none");
+        suggestions.classList.add("mt-2");
+        setTimeout(updateIframeHeight, 0);
       }
       
       function selectAccount(index, accountId) {
         const input = document.getElementById("accountInput-" + index);
         input.value = accountId;
         document.getElementById("accountSuggestions-" + index).classList.add("d-none");
-        validateAllMembers();
+        
+        // Clear errors when user selects an account
+        const error = document.getElementById("accountError-" + index);
+        if (error) {
+          error.classList.add("d-none");
+        }
+        
+        // Clear bottom error box
+        const adminRoleError = document.getElementById("rolesError");
+        if (adminRoleError) {
+          adminRoleError.innerHTML = "";
+          adminRoleError.classList.add("d-none");
+        }
+        
+        setTimeout(updateIframeHeight, 0);
       }
       
       function removeMember(index) {
@@ -606,26 +744,32 @@ const code = `<!DOCTYPE html>
           member.style.display = 'none';
           member.classList.add('removed');
         
-          // Re-number only the visible ones
-          const members = document.querySelectorAll('.member-container');
-          let visibleIndex = allMembers.length + 1;
+           // Clear bottom error box when member is removed
+          const adminRoleError = document.getElementById("rolesError");
+          if (adminRoleError) {
+            adminRoleError.innerHTML = "";
+            adminRoleError.classList.add("d-none");
+          }
+            
+          const visibleMembers = document.querySelectorAll('.member-container:not([style*="display: none"])');
+          let visiblePosition = 1;
         
-          members.forEach(function(el, realIndex) {
-            if (el.style.display !== 'none') {
-              const label = el.querySelector('#memberLabel-' + realIndex);
-              if (label) {
-                label.textContent = 'Member #' + visibleIndex;
-                visibleIndex++;
-              }
-        
-              // Also update remove button
-              const btn = el.querySelector('.remove-member-btn');
-              if (btn) {
-                btn.setAttribute('onclick', 'removeMember(' + realIndex + ')');
-              }
+          visibleMembers.forEach(function(el) {
+            // Extract the actual member index from the element ID (array position)
+            const memberId = el.id;
+            const memberIndex = memberId.replace('member-', '');
+            const label = el.querySelector('#memberLabel-' + memberIndex);
+            if (label) {
+              label.textContent = 'Member #' + (allMembers.length + visiblePosition);
+              visiblePosition++;
+            }
+      
+            const btn = el.querySelector('.remove-member-btn');
+            if (btn) {
+              btn.setAttribute('onclick', 'removeMember(' + memberIndex + ')');
             }
           });
-          validateAllMembers()
+          setTimeout(updateIframeHeight, 0);
         }
         
         
@@ -638,7 +782,9 @@ const code = `<!DOCTYPE html>
       
       function addMember(existingMember) {
         const index = memberCount++;
-        const visibleCount = allMembers.length + document.querySelectorAll(".member-container:not([style*='display: none'])").length;
+        // Calculate visible numbering: allMembers.length + visible position
+        const visibleMembers = document.querySelectorAll(".member-container:not([style*='display: none'])");
+        const visiblePosition = visibleMembers.length + 1;
         const memberDiv = document.createElement("div");
         memberDiv.className = "member-container";
         memberDiv.id = "member-" + index;
@@ -651,7 +797,7 @@ const code = `<!DOCTYPE html>
                 "<div class='text-sm text-secondary text-truncate' style='max-width: 400px;'>@" + existingMember.username + "</div>" +
               "</div>"
             : '<div class="d-flex justify-content-between" style="padding-top:12px;">' +
-            '<span id="memberLabel-' + index + '">Member #' + (visibleCount + 1) + '</span>' +
+            '<span id="memberLabel-' + index + '">Member #' + (allMembers.length + visiblePosition) + '</span>' +
                 (index !== 0
                   ? '<div class="cursor-pointer text-red remove-member-btn" onclick="removeMember(' + index + ')">' +
                       '<i class="bi bi-trash3 h6 mb-0"></i>' +
@@ -660,7 +806,7 @@ const code = `<!DOCTYPE html>
               '</div>') +
         '</div>' +
         '<div class="card p-3 border-top-0 rounded-top-0" style="margin-top: ' +
-          (isEdit ? '-15px' : '-5px') +
+          (isEdit ? '-25px' : '-15px') +
         ';">' +
           '<div class="d-flex flex-column">' +
             (!isEdit
@@ -682,7 +828,7 @@ const code = `<!DOCTYPE html>
               '<div class="d-flex flex-wrap gap-1 align-items-center">' +
                 '<div id="selectedRoles-' + index + '"></div>' +
                 '<div id="selectTag-' + index + '" class="select-tag select-permission d-flex gap-1 align-items-center" onclick="toggleDropdown(' + index + ')" style="cursor:pointer;">' +
-                  '<i class="bi bi-plus-lg h5 mb-0"></i> Select Permission</div>' +
+                  '<i class="bi bi-plus-lg h5 mb-0"></i> Add Permission</div>' +
               '</div>' +
               '<div id="dropdownMenu-' + index + '" class="dropdown-menu rounded-2 dropdown-menu-end dropdown-menu-lg-start px-2 w-100"></div>' +
                '<div id="roleError-' + index + '" class="error-box rounded-3 d-none gap-2 align-items-center">' +
@@ -705,9 +851,11 @@ const code = `<!DOCTYPE html>
           existingMember.roles.forEach(function(r) {
             addRole(index, availableRoles.find(function(role) { return (role.value).toLowerCase() === (r || '').toLowerCase(); }));
           });
+          updateAddPermissionButtonVisibility(index);
+          validateMember(index);
         }
         setCustomHeaderHeights(); 
-        validateAllMembers();
+        setTimeout(updateIframeHeight, 0);
       }
       
       document.addEventListener("click", function (event) {
@@ -736,7 +884,15 @@ const code = `<!DOCTYPE html>
         const menu = document.getElementById("dropdownMenu-" + index);
         const selectedRoles = window["selectedRoles_" + index];
         menu.innerHTML = "";
-        availableRoles.forEach(function(role) {
+        
+        // Filter out already selected roles
+        const availableRolesToShow = availableRoles.filter(function(role) {
+          return !selectedRoles.some(function(selectedRole) {
+            return selectedRole.value === role.value;
+          });
+        });
+        
+        availableRolesToShow.forEach(function(role) {
           const item = document.createElement("div");
           item.className = "dropdown-item cursor-pointer w-100 my-1";
           item.innerHTML = "<div>" + role.title + "</div>" + (roleDescriptions[role.value]
@@ -762,10 +918,24 @@ const code = `<!DOCTYPE html>
           return;
         }
       
+        // Clear role error when user adds a role
+        const roleError = document.getElementById("roleError-" + index);
+        if (roleError) {
+          roleError.classList.remove("d-flex");
+          roleError.classList.add("d-none");
+        }
+        
+        // Clear bottom error box
+        const adminRoleError = document.getElementById("rolesError");
+        if (adminRoleError) {
+          adminRoleError.innerHTML = "";
+          adminRoleError.classList.add("d-none");
+        }
+      
         selectedRoles.push(role);
         document.getElementById("dropdownMenu-" + index).classList.remove("show");
         renderSelectedRoles(index);
-        validateAllMembers();
+        setTimeout(updateIframeHeight, 0);
       }
       
       
@@ -776,7 +946,21 @@ const code = `<!DOCTYPE html>
         });
         window["selectedRoles_" + index] = selectedRoles;
         renderSelectedRoles(index);
-        validateAllMembers();
+        setTimeout(updateIframeHeight, 0);
+      }
+      
+      function updateAddPermissionButtonVisibility(index) {
+        const selectedRoles = window["selectedRoles_" + index];
+        const selectTag = document.getElementById("selectTag-" + index);
+        if (selectTag) {
+          if (selectedRoles.length >= availableRoles.length) {
+            selectTag.classList.add("d-none");
+            selectTag.classList.remove("d-flex");
+          } else {
+            selectTag.classList.remove("d-none");
+            selectTag.classList.add("d-flex");
+          }
+        }
       }
       
       function renderSelectedRoles(index) {
@@ -796,10 +980,20 @@ const code = `<!DOCTYPE html>
           div.appendChild(icon);
           container.appendChild(div);
         });
+        updateAddPermissionButtonVisibility(index);
+        setTimeout(updateIframeHeight, 0);
       }
       
       
       function submitForm() {
+        // Validate all members before submitting
+        const isValid = validateAllMembers();
+        
+        if (!isValid) {
+          // Don't submit if validation fails
+          return;
+        }
+        
         const members = [];
       
         if (isEdit) {
@@ -856,7 +1050,6 @@ const code = `<!DOCTYPE html>
       window.addEventListener("message", function (event) {
         if (!availableRoles.length) {
           isEdit = event.data.isEdit;
-          accounts = event.data.accounts;
           availableRoles = event.data.availableRoles;
           allMembers = event.data.allMembers || [];
         
@@ -873,9 +1066,8 @@ const code = `<!DOCTYPE html>
         
           } else {
             addMember();
-            document.getElementById("addMemberBtn").disabled = true;
-            document.getElementById("submitBtn").disabled = true;
           }
+          fetchProfileData();
         } else {
           // Handle update to buttons only when availableRoles is already set
           document.getElementById("submitBtn").disabled = !!event.data.isSubmitLoading;
@@ -897,33 +1089,6 @@ return (
       showInProgress={isTxnCreated}
       cancelTxn={() => setTxnCreated(false)}
     />
-    {proposals.length > 0 && (
-      <Widget
-        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
-        props={{
-          instance,
-          heading: "Confirm Your Change",
-          wider: true,
-          content: (
-            <Widget
-              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.WarningTable`}
-              props={{
-                warningText:
-                  "This action will override your previous pending proposals. Complete exsisting one before creating a new to avoid conflicting or incomplete updates.",
-                tableProps: [{ proposals }],
-              }}
-            />
-          ),
-          confirmLabel: "Yes, proceed",
-          isOpen: showProposalsOverrideConfirmModal,
-          onCancelClick: () => setShowProposalsOverrideConfirmModal(false),
-          onConfirmClick: () => {
-            setShowProposalsOverrideConfirmModal(false);
-            onSubmitClick(updatedData);
-          },
-        }}
-      />
-    )}
 
     <Widget
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
@@ -952,7 +1117,6 @@ return (
       }}
       message={{
         isEdit,
-        accounts,
         availableRoles,
         allMembers,
         selectedMembers,
@@ -974,13 +1138,8 @@ return (
                 setShowEditConfirmationModal(true);
                 setShowEditor(false);
               } else {
-                if ((proposals ?? []).length > 0) {
-                  setUpdatedData(e.args);
-                  setShowProposalsOverrideConfirmModal(true);
-                } else {
-                  setTxnCreated(true);
-                  onSubmitClick(e.args);
-                }
+                setTxnCreated(true);
+                onSubmitClick(e.args);
               }
             }
             break;
