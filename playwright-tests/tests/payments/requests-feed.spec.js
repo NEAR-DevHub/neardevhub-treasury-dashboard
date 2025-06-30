@@ -99,12 +99,23 @@ test.describe("payment requests feed", function () {
       },
       modifyOriginalResultFunction: () => {
         return [
-          JSON.parse(JSON.stringify(NearnFTProposal)),
-          JSON.parse(JSON.stringify(NearnFTProposalWithStorage)),
+          JSON.parse(
+            JSON.stringify({
+              ...NearnFTProposal,
+              submission_time: CurrentTimestampInNanoseconds,
+            })
+          ),
+          JSON.parse(
+            JSON.stringify({
+              ...NearnFTProposalWithStorage,
+              submission_time: CurrentTimestampInNanoseconds,
+            })
+          ),
         ];
       },
     });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
+    await page.waitForTimeout(10_000);
     if (!daoAccount.includes("infinex")) {
       await expect(page.getByRole("link", { name: "#48 " })).toBeVisible();
       await expect(page.getByRole("link", { name: "#47 " })).toBeVisible();

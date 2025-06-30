@@ -638,15 +638,15 @@ return (
             </div>
           </h6>
           <div>{selectedProposal.summary}</div>
-          <Link
+          <a
             target="_blank"
             rel="noopener noreferrer"
-            to={selectedProposal.url}
+            href={selectedProposal.url}
           >
             <button className="btn p-0 d-flex align-items-center gap-2 bolder">
               Open Proposal <i class="bi bi-box-arrow-up-right"></i>
             </button>
-          </Link>
+          </a>
         </div>
       )}
       <div className="d-flex flex-column gap-1">

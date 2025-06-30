@@ -193,7 +193,8 @@ const ProposalsComponent = () => {
         const summary = decodeProposalDescription("summary", item.description);
         const description = !title && !summary && item.description;
         const id = decodeProposalDescription("proposalId", item.description);
-        const proposalUrl = decodeProposalDescription("url", item.description);
+        let proposalUrl = decodeProposalDescription("url", item.description);
+        proposalUrl = (proposalUrl || "").replace(/\.+$/, "");
 
         const proposalId = id ? parseInt(id, 10) : null;
         const isFunctionType =
@@ -307,15 +308,15 @@ const ProposalsComponent = () => {
             {showReferenceProposal && (
               <td className={isVisible("Reference")}>
                 {typeof proposalId === "number" ? (
-                  <Link
+                  <a
                     target="_blank"
                     rel="noopener noreferrer"
-                    to={proposalUrl}
+                    href={proposalUrl}
                   >
                     <div className="d-flex gap-2 align-items-center text-underline fw-semi-bold">
                       #{proposalId} <i class="bi bi-box-arrow-up-right"> </i>
                     </div>
-                  </Link>
+                  </a>
                 ) : (
                   "-"
                 )}
@@ -483,9 +484,12 @@ const ProposalsComponent = () => {
                       ...(isIntentWithdraw
                         ? {}
                         : {
-                            nearBalance: isFunctionType
-                              ? Big(lockupNearBalances.available).toFixed(2)
-                              : nearBalances.available,
+                            nearBalance:
+                              isFunctionType &&
+                              item.kind.FunctionCall?.actions[0]
+                                ?.method_name === "transfer"
+                                ? Big(lockupNearBalances.available).toFixed(2)
+                                : nearBalances.available,
                           }),
                       currentAmount: args.amount,
                       currentContract: args.token_id,
