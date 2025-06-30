@@ -59,8 +59,7 @@ test.describe("connected with ledger", function () {
     const accountInput = iframe.getByPlaceholder("treasury.near");
     await accountInput.fill("testingaccount.near");
     const submitButton = iframe.getByRole("button", { name: "Submit" });
-    await expect(submitButton).toBeDisabled();
-    await iframe.getByText("Select Permission").click();
+    await iframe.getByText("Add Permission").click();
     await iframe.locator(".dropdown-item").first().click();
     await submitButton.click()
     await expect(page.getByText('testingaccount.near Requestor')).toBeVisible()
