@@ -258,71 +258,179 @@ test.describe("User is logged in", function () {
     test.setTimeout(150_000);
     const {} = await setupWorker({ daoAccount, instanceAccount, page });
     await openAddMemberForm({ page });
-    // 3. Type into the username field
+
     const iframe = page.locator("iframe").contentFrame();
+
+    await expect(iframe.getByText("Member #5")).toBeVisible();
+    await expect(iframe.locator("#member-0")).toBeVisible();
 
     const usernameInput = iframe.getByPlaceholder("treasury.near");
     await usernameInput.fill("megha19.near");
 
-    // 4. "+ Add Another Member" button should be disabled
     const addButton = iframe.getByRole("button", {
       name: "+ Add Another Member",
     });
-
     const submitButton = iframe.getByRole("button", { name: "Submit" });
-    const alreadyExists = iframe.getByText("This account is already a member");
-    await expect(alreadyExists).toBeVisible();
-    await expect(addButton).toBeDisabled();
-    await expect(submitButton).toBeDisabled();
 
-    await usernameInput.fill("member1.near");
+    const accountError = iframe.locator("#accountError-0");
+    await expect(accountError).toHaveClass(/d-none/);
 
-    // 5. Open permission dropdown and select "requestor"
-    await iframe.getByText("Select Permission").click();
-    await iframe.locator(".dropdown-item").first().click();
-
-    // 6. "+ Add Another Member" should be enabled
     await expect(addButton).toBeEnabled();
+    await expect(submitButton).toBeEnabled();
 
-    // 7. Click "+ Add Another Member"
+    if (daoAccount.includes("infinex")) {
+      await iframe.getByText("Add Permission").click();
+
+      await expect(
+        iframe.locator("#dropdownMenu-0 .dropdown-item")
+      ).toHaveCount(3);
+      await expect(
+        iframe.locator("#dropdownMenu-0").getByText("Requestor")
+      ).toBeVisible();
+      await expect(
+        iframe.locator("#dropdownMenu-0").getByText("Approver")
+      ).toBeVisible();
+      await expect(
+        iframe.locator("#dropdownMenu-0").getByText("Admin")
+      ).toBeVisible();
+
+      await iframe.locator("#dropdownMenu-0 .dropdown-item").first().click();
+
+      await expect(
+        iframe.locator("#selectedRoles-0").getByText("Requestor")
+      ).toBeVisible();
+
+      await iframe.getByText("Add Permission").click();
+      await expect(
+        iframe.locator("#dropdownMenu-0 .dropdown-item")
+      ).toHaveCount(2);
+      await expect(
+        iframe.locator("#dropdownMenu-0").getByText("Requestor")
+      ).not.toBeVisible();
+
+      await iframe.locator("#dropdownMenu-0 .dropdown-item").first().click();
+
+      await expect(
+        iframe.locator("#selectedRoles-0").getByText("Requestor")
+      ).toBeVisible();
+      await expect(
+        iframe.locator("#selectedRoles-0").getByText("Approver")
+      ).toBeVisible();
+
+      await iframe.getByText("Add Permission").click();
+      await expect(
+        iframe.locator("#dropdownMenu-0 .dropdown-item")
+      ).toHaveCount(1);
+      await expect(
+        iframe.locator("#dropdownMenu-0").getByText("Requestor")
+      ).not.toBeVisible();
+      await expect(
+        iframe.locator("#dropdownMenu-0").getByText("Approver")
+      ).not.toBeVisible();
+
+      await iframe.locator("#dropdownMenu-0 .dropdown-item").first().click();
+
+      await expect(
+        iframe.locator("#selectedRoles-0").getByText("Requestor")
+      ).toBeVisible();
+      await expect(
+        iframe.locator("#selectedRoles-0").getByText("Approver")
+      ).toBeVisible();
+      await expect(
+        iframe.locator("#selectedRoles-0").getByText("Admin")
+      ).toBeVisible();
+
+      await expect(iframe.getByText("Add Permission")).toHaveClass(/d-none/);
+
+      await iframe
+        .locator("#selectedRoles-0")
+        .getByText("Requestor")
+        .locator("i")
+        .click();
+      await expect(iframe.getByText("Add Permission")).not.toHaveClass(
+        /d-none/
+      );
+    } else {
+      await iframe.getByText("Add Permission").click();
+      await iframe.locator(".dropdown-item").first().click();
+      await expect(
+        iframe.locator("#selectedRoles-0").getByText("council")
+      ).toBeVisible();
+      await expect(iframe.getByText("Add Permission")).toHaveClass(/d-none/);
+    }
+
     await addButton.click();
+    await expect(iframe.getByText("Member #6")).toBeVisible();
 
-    // 8. Fill the second member's username
     const usernameInputs = iframe.getByPlaceholder("treasury.near");
     await usernameInputs.nth(1).fill("member1.near");
-    const alreadyAdded = iframe.getByText(
-      "This account is already added above"
-    );
-    await expect(alreadyAdded).toBeVisible();
-    await expect(addButton).toBeDisabled();
-    await expect(submitButton).toBeDisabled();
-    await usernameInputs.nth(1).fill("member2.near");
-    const rolesError = iframe
-      .locator("#roleError-1")
-      .getByText("You must assign at least one role.");
-    await expect(rolesError).toBeVisible();
-    await iframe.getByText("Select Permission").nth(1).click();
+
+    await iframe.getByText("Add Permission").nth(1).click();
     await iframe.locator("#dropdownMenu-1 .dropdown-item").nth(0).click();
+
     await addButton.click();
-    await expect(iframe.getByText("Member #3")).toBeVisible();
+    await expect(iframe.getByText("Member #7")).toBeVisible();
+    await expect(iframe.locator("#member-2")).toBeVisible();
     await iframe.locator("#accountInput-2").scrollIntoViewIfNeeded();
     await iframe.locator("#accountInput-2").fill("member3.near");
-    await iframe.getByText("Select Permission").nth(2).click();
+    await iframe.getByText("Add Permission").nth(2).click();
     await iframe.locator("#dropdownMenu-2 .dropdown-item").nth(0).click();
-    await addButton.click();
+
+    // Remove member and verify renumbering
     await iframe.locator("#member-1 i").first().click();
-    await expect(iframe.getByText("Member #4")).not.toBeVisible();
-    await iframe.locator("#member-3 i").first().click();
-    await expect(iframe.getByText("Member #3")).not.toBeVisible();
+    await expect(iframe.locator("#member-1")).toHaveCSS("display", "none");
+    await expect(iframe.locator("#memberLabel-2")).toHaveText("Member #6");
+    await expect(iframe.locator("#member-2")).toBeVisible();
+
+    await expect(iframe.locator("#memberLabel-0")).toHaveText("Member #5");
+    await expect(iframe.locator("#memberLabel-2")).toHaveText("Member #6");
+    await expect(iframe.locator("#member-0")).toBeVisible();
+    await expect(iframe.locator("#member-2")).toBeVisible();
+
+    // Add another member after removal
+    await addButton.click();
+    await expect(iframe.locator("#memberLabel-3")).toHaveText("Member #7");
+    await expect(iframe.locator("#member-3")).toBeVisible();
+    await iframe.locator("#accountInput-3").fill("member3.near");
+    await iframe.locator("#selectTag-3").click();
+    await iframe.locator("#dropdownMenu-3 .dropdown-item").nth(0).click();
+
+    await addButton.click();
+    // Submit and verify errors appear only on submit
     await submitButton.click();
+
+    await expect(
+      iframe.getByText("This account is already a member.")
+    ).toHaveCount(2);
+    await expect(
+      iframe.getByText("This account is already added above.")
+    ).toHaveCount(2);
+    await expect(
+      iframe.getByText("Username and Permissions are missing.")
+    ).toBeVisible();
+    const bottomError = iframe.locator("#rolesError");
+    await expect(bottomError).toBeVisible();
+    await expect(
+      bottomError.getByText(
+        "Please complete all member details before proceeding"
+      )
+    ).toBeVisible();
+
+    // Fix the errors
+    await iframe.locator("#accountInput-0").fill("testmember1.near");
+    await iframe.locator("#accountInput-2").fill("testmember2.near");
+    await iframe.locator("#member-3 i").first().click();
+    await iframe.locator("#member-4 i").first().click();
+
+    await submitButton.click();
+
     await submitProposal({ page });
 
-    // proposal details page should have the members added
     await expect(
-      page.getByRole("heading", { name: "Update policy - Members Permissions" })
+      page.getByRole("heading", { name: "Update Policy - Add New Members" })
     ).toBeVisible();
-    await expect(page.getByText("@member1.near")).toBeVisible();
-    await expect(page.getByText("@member3.near")).toBeVisible();
+    await expect(page.getByText("@testmember1.near")).toBeVisible();
+    await expect(page.getByText("@testmember2.near")).toBeVisible();
     await expect(page.getByText("Assigned Roles")).toHaveCount(2);
   });
 
@@ -334,8 +442,40 @@ test.describe("User is logged in", function () {
     test.setTimeout(150_000);
     const {} = await setupWorker({ daoAccount, instanceAccount, page });
     await page.waitForTimeout(5_000);
-    await page.getByRole("switch").nth(0).click();
-    await expect(page.getByRole("switch").nth(1)).toBeChecked();
+    const topCheckbox = page.getByRole("switch").first();
+    await expect(topCheckbox).not.toBeChecked();
+
+    // select all by clicking top checkbox
+    await topCheckbox.click();
+    await expect(topCheckbox).toBeChecked();
+
+    // Verify all individual checkboxes are checked
+    const memberCheckboxes = page.locator('.member-row [role="switch"]');
+    const checkboxCount = await memberCheckboxes.count();
+    for (let i = 0; i < checkboxCount; i++) {
+      await expect(memberCheckboxes.nth(i)).toBeChecked();
+    }
+
+    // Deselect all by clicking top checkbox again
+    await topCheckbox.click();
+    await expect(topCheckbox).not.toBeChecked();
+
+    for (let i = 0; i < checkboxCount; i++) {
+      await expect(memberCheckboxes.nth(i)).not.toBeChecked();
+    }
+
+    await topCheckbox.click();
+
+    // Partial selection - deselect first 2 members
+    await memberCheckboxes.nth(0).click();
+    await memberCheckboxes.nth(1).click();
+
+    // Top checkbox should be indeterminate (not checked, not unchecked)
+    await expect(topCheckbox).not.toBeChecked();
+
+    // Select all remaining members to make top checkbox checked
+    await topCheckbox.click();
+    await topCheckbox.click();
 
     const editBtn = page.getByRole("button", { name: "Edit" });
     const deleteBtn = page.getByRole("button", { name: "Delete" });
@@ -354,7 +494,8 @@ test.describe("User is logged in", function () {
     const account = iframe.getByText("@theori.near");
     await expect(account).toBeVisible();
     const role = daoAccount.includes("infinex") ? "Requestor" : "council";
-    // remove all requestor role
+
+    // Remove all roles and verify submit button remains enabled
     const deleteIcons = iframe
       .locator('[id^="selectedRoles-"] div')
       .filter({ hasText: role })
@@ -366,27 +507,40 @@ test.describe("User is logged in", function () {
       await deleteIcons.nth(0).click();
     }
 
-    const rolesError = iframe
-      .locator("#roleError-1")
-      .getByText("You must assign at least one role.");
-    await expect(rolesError).toBeVisible();
+    // Verify errors do NOT appear until submit
+    const rolesError = iframe.locator("#roleError-1");
+    await expect(rolesError).toHaveClass(/d-none/);
+
+    const bottomError = iframe.locator("#rolesError");
+    await expect(bottomError).toHaveClass(/d-none/);
+
+    //  Submit and verify errors appear
+    await submitButton.click();
+
+    await expect(
+      rolesError.getByText("You must assign at least one role.")
+    ).toBeVisible();
+    await expect(bottomError).toBeVisible();
     await expect(
       iframe.getByText(
         `You must assign at least one member with the ${role} role.`
       )
     ).toBeVisible();
-    await expect(submitButton).toBeDisabled({ timeout: 20_000 });
 
-    await iframe.getByRole("button", { name: "Cancel" }).click();
-    await page.getByRole("button", { name: "Yes" }).click();
-    await expect(page.locator(".offcanvas-body")).not.toBeVisible();
-
-    // with single role, edit doesn't work
     if (daoAccount.includes("infinex")) {
-      await page.getByRole("switch").nth(0).click();
-      await page.getByRole("switch").nth(1).click();
-      await editBtn.click();
-      await expect(account).not.toBeVisible();
+      // Add role back using "Add Permission" and verify errors disappear
+      await iframe.locator("#selectTag-1").click();
+      await iframe.locator("#dropdownMenu-1 .dropdown-item").first().click();
+      await submitButton.click();
+      await page.getByRole("button", { name: "Cancel" }).click();
+      await page.getByRole("button", { name: "Yes" }).click();
+      await expect(page.locator(".offcanvas-body")).not.toBeVisible();
+
+      // Test edit using hover for individual member
+      const memberRow = page.locator(".member-row").first();
+      await memberRow.hover();
+      const editIcon = memberRow.locator(".action-btn.edit i.bi-pencil");
+      await editIcon.click();
       await iframe.getByText(role).locator("i").nth(0).click();
       await submitButton.click();
       await expect(
@@ -411,7 +565,7 @@ test.describe("User is logged in", function () {
       // proposal details page should have the edited members
       await expect(
         page.getByRole("heading", {
-          name: "Update policy - Members Permissions",
+          name: "Update Policy - Edit Members Permissions",
         })
       ).toBeVisible();
       await expect(page.getByText("@frol.near")).toBeVisible();
@@ -458,7 +612,7 @@ test.describe("User is logged in", function () {
     // proposal details page should have the removed member with roles
     await expect(
       page.getByRole("heading", {
-        name: "Update policy - Members Permissions",
+        name: "Update policy - Remove Members",
       })
     ).toBeVisible();
     await expect(page.getByText("@frol.near")).toBeVisible();
@@ -493,10 +647,10 @@ test.describe("User is logged in", function () {
     const submitButton = iframe.getByRole("button", { name: "Submit" });
     await expect(submitButton).toBeEnabled();
 
-    const selectPermission = iframe.getByText("Select Permission", {
+    const addPermission = iframe.getByText("Add Permission", {
       exact: true,
     });
-    await expect(selectPermission).toHaveClass(/disabled/);
+    await expect(addPermission).toHaveClass(/disabled/);
 
     const input = iframe.getByPlaceholder("treasury.near");
     await expect(input).toHaveValue("nearn-io.near");
@@ -504,7 +658,7 @@ test.describe("User is logged in", function () {
     await submitProposal({ page });
 
     await expect(
-      page.getByRole("heading", { name: "Update policy - Members Permissions" })
+      page.getByRole("heading", { name: "Update Policy - Add New Members" })
     ).toBeVisible();
     await expect(page.getByText("@nearn-io.near")).toBeVisible();
     await expect(page.getByText("Assigned Roles")).toBeVisible();

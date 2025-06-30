@@ -154,6 +154,7 @@ return (
                   },
                 ]
               : [],
+            isEdit: fields.accountId ? true : false,
             allMembers: members?.map((i) => {
               return { member: i.accountId, roles: i.permissions };
             }),

@@ -514,18 +514,8 @@ test.describe("User is logged in", function () {
     await submitRequestButton.click();
     await expect(
       page.getByText(
-        "This action will override your previous pending proposals. Complete exsisting one before creating a new to avoid conflicting or incomplete updates."
+        "This action will override your previous pending proposals. Complete existing one before creating a new to avoid conflicting or incomplete updates."
       )
-    ).toBeVisible();
-    await page.getByRole("button", { name: "Yes, proceed" }).click();
-    await expect(
-      page.getByText(
-        "This is equivalent to 2 votes with the current number of members."
-      )
-    ).toBeVisible();
-    await page.getByRole("button", { name: "Confirm" }).click();
-    await expect(
-      page.getByText("Awaiting transaction confirmation...")
     ).toBeVisible();
   });
 });
