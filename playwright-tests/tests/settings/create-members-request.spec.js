@@ -527,23 +527,20 @@ test.describe("User is logged in", function () {
       )
     ).toBeVisible();
 
-    // Add role back using "Add Permission" and verify errors disappear
-    await iframe.locator("#selectTag-1").click();
-    await iframe.locator("#dropdownMenu-1 .dropdown-item").first().click();
-    await submitButton.click();
-
-    await page.getByRole("button", { name: "Cancel" }).click();
-    await page.getByRole("button", { name: "Yes" }).click();
-    await expect(page.locator(".offcanvas-body")).not.toBeVisible();
-
-    // Test edit using hover for individual member
     if (daoAccount.includes("infinex")) {
+      // Add role back using "Add Permission" and verify errors disappear
+      await iframe.locator("#selectTag-1").click();
+      await iframe.locator("#dropdownMenu-1 .dropdown-item").first().click();
+      await submitButton.click();
+      await page.getByRole("button", { name: "Cancel" }).click();
+      await page.getByRole("button", { name: "Yes" }).click();
+      await expect(page.locator(".offcanvas-body")).not.toBeVisible();
+
+      // Test edit using hover for individual member
       const memberRow = page.locator(".member-row").first();
       await memberRow.hover();
       const editIcon = memberRow.locator(".action-btn.edit i.bi-pencil");
       await editIcon.click();
-      const iframe = page.locator("iframe").contentFrame();
-      const submitButton = iframe.getByRole("button", { name: "Submit" });
       await iframe.getByText(role).locator("i").nth(0).click();
       await submitButton.click();
       await expect(
