@@ -69,7 +69,10 @@ useEffect(() => {
         let requestType = RequestType.OTHER;
         // members or threshold
         if (
-          (title ?? "").includes("Members Permissions") &&
+          ((title ?? "").includes("Add New Members") ||
+            (title ?? "").includes("Edit Members Permissions") ||
+            (title ?? "").includes("Remove Members") ||
+            (title ?? "").includes("Members Permissions")) &&
           !(summary ?? "").includes("revoke")
         ) {
           requestType = RequestType.MEMBERS;

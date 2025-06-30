@@ -285,7 +285,10 @@ const ProposalsComponent = ({ item }) => {
         />
       </td>
       {isPendingRequests && (hasVotingPermission || hasDeletePermission) && (
-        <td className={isVisible("Actions") + " text-right"}>
+        <td
+          className={isVisible("Actions") + " text-right"}
+          onClick={(e) => e.stopPropagation()}
+        >
           <Widget
             src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.VoteActions`}
             props={{
