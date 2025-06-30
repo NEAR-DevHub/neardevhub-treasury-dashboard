@@ -72,7 +72,8 @@ useEffect(() => {
         const description = !title && !summary && item.description;
         const id = decodeProposalDescription("proposalId", item.description);
         const proposalId = id ? parseInt(id, 10) : null;
-        const proposalUrl = decodeProposalDescription("url", item.description);
+        let proposalUrl = decodeProposalDescription("url", item.description);
+        proposalUrl = (proposalUrl || "").replace(/\.+$/, "");
 
         const isFunctionType =
           Object.values(item?.kind?.FunctionCall ?? {})?.length > 0;
@@ -253,10 +254,10 @@ return (
           )}
           {proposalData?.proposalId && (
             <div>
-              <Link
+              <a
                 target="_blank"
                 rel="noopener noreferrer"
-                to={proposalData?.proposalUrl}
+                href={proposalData?.proposalUrl}
               >
                 <button
                   className="btn p-0 d-flex align-items-center gap-2 h-auto"
@@ -264,7 +265,7 @@ return (
                 >
                   Open Proposal <i class="bi bi-box-arrow-up-right"></i>
                 </button>
-              </Link>
+              </a>
             </div>
           )}
           <div className=" d-flex flex-column gap-2 mt-1">
