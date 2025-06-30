@@ -29,29 +29,47 @@ if (!isNEAR && !isWrapNear) {
   if (ftMetadata === null) return null;
 }
 let amount = amountWithDecimals;
-let originalAmount = null;
+let originalAmount = amountWithDecimals;
 if (amountWithoutDecimals !== undefined) {
   originalAmount = Big(amountWithoutDecimals).div(
     Big(10).pow(ftMetadata.decimals ?? 1)
   );
-  amount = originalAmount.toFixed(2);
+  amount = originalAmount.toFixed();
 }
 
-function toReadableAmount(amount) {
-  const formattedAmount = Number(amount).toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-
-  // Check if rounding occurred by comparing with original amount
-  let needsTilde = false;
-  if (originalAmount !== null && amountWithoutDecimals !== undefined) {
-    // If original amount is not equal to the formatted amount, we need a tilde
-    needsTilde = originalAmount.toString() !== Big(amount).toString();
-  }
-
-  return needsTilde ? `~ ${formattedAmount}` : formattedAmount;
+function toReadableAmount(amount, showAllDecimals) {
+  return Number(amount).toLocaleString(
+    "en-US",
+    showAllDecimals
+      ? { maximumFractionDigits: 10 }
+      : {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }
+  );
 }
+
+const TokenAmount = ({ showAllDecimals, showTilde }) => {
+  return (
+    <div className="text-center">
+      <div className="d-flex gap-1 align-items-center justify-content-end">
+        <span className="amount bolder mb-0">
+          {(showTilde ? "~" : "") + toReadableAmount(amount, showAllDecimals)}
+        </span>
+        {isNEAR ? (
+          <NearToken width={16} height={16} />
+        ) : (
+          <img width="16" height="16" src={ftMetadata.icon} />
+        )}
+      </div>
+      {tokenUSDValue && (
+        <div className="text-secondary d-flex justify-content-end">
+          ~{toReadableAmount(tokenUSDValue, showAllDecimals)} USD
+        </div>
+      )}
+    </div>
+  );
+};
 
 useEffect(() => {
   if (showUSDValue) {
@@ -66,20 +84,22 @@ useEffect(() => {
   }
 }, [showUSDValue]);
 
-return (
-  <div className="text-center">
-    <div className="d-flex gap-1 align-items-center justify-content-end">
-      <span className="amount bolder mb-0">{toReadableAmount(amount)}</span>
-      {isNEAR ? (
-        <NearToken width={16} height={16} />
-      ) : (
-        <img width="16" height="16" src={ftMetadata.icon} />
-      )}
-    </div>
-    {tokenUSDValue && (
-      <div className="text-secondary d-flex justify-content-end">
-        ~{toReadableAmount(tokenUSDValue)} USD
-      </div>
-    )}
-  </div>
+// Check if there are more than 2 decimals in the original amount
+let needsTilde = false;
+if (originalAmount !== null && amountWithoutDecimals !== undefined) {
+  const decimals = originalAmount.toString().split(".")[1];
+  needsTilde = decimals && decimals.length > 2;
+}
+
+return needsTilde ? (
+  <Widget
+    src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+    props={{
+      popup: <TokenAmount showAllDecimals={true} />,
+      children: <TokenAmount showAllDecimals={false} showTilde={true} />,
+      instance: props.instance,
+    }}
+  />
+) : (
+  <TokenAmount showAllDecimals={false} />
 );
