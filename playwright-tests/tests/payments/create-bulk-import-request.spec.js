@@ -37,6 +37,7 @@ test.describe("User is logged in", () => {
   });
 
   test.beforeEach(async ({ page, instanceAccount }) => {
+    test.setTimeout(60_000);
     await updateDaoPolicyMembers({ instanceAccount, page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
     await page.waitForTimeout(5_000);

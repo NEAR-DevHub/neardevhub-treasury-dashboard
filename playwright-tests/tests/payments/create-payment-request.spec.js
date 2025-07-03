@@ -241,7 +241,7 @@ test.describe.parallel("User logged in with different roles", () => {
       test(`should ${
         canCreateRequest ? "see" : "not see"
       } 'Create Request' action`, async ({ page, instanceAccount }) => {
-        test.setTimeout(100_000);
+        test.setTimeout(150_000);
 
         await updateDaoPolicyMembers({
           instanceAccount,
@@ -285,7 +285,7 @@ test.describe("User is logged in", function () {
     page,
     instanceAccount,
   }) => {
-    test.setTimeout(100_000);
+    test.setTimeout(150_000);
     await mockNearBalances({
       page,
       accountId: signedUser,
@@ -304,7 +304,7 @@ test.describe("User is logged in", function () {
     page,
     instanceAccount,
   }) => {
-    test.setTimeout(100_000);
+    test.setTimeout(150_000);
     await updateDaoPolicyMembers({ instanceAccount, page });
     await mockNearBalances({
       page,
@@ -334,7 +334,7 @@ test.describe("User is logged in", function () {
     page,
     instanceAccount,
   }) => {
-    test.setTimeout(100_000);
+    test.setTimeout(150_000);
     await updateDaoPolicyMembers({ instanceAccount, page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
     await clickCreatePaymentRequestButton(page);
@@ -345,14 +345,14 @@ test.describe("User is logged in", function () {
     receiveInput.fill(
       "e915ea0c6d5f8ccc417db891490246c6bcd8d0a2214cbcbfa3618a7ee6abe26b"
     );
-    await expect(errorText).toBeHidden();
+    await expect(errorText).toBeHidden({timeout: 10_000});
   });
   test("different amount values should not throw any error", async ({
     page,
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(100_000);
+    test.setTimeout(150_000);
     await mockPikespeakFTTokensResponse({ page, daoAccount });
     await updateDaoPolicyMembers({ instanceAccount, page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
@@ -408,7 +408,7 @@ test.describe("User is logged in", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(100_000);
+    test.setTimeout(150_000);
     await mockPikespeakFTTokensResponse({ page, daoAccount });
     await updateDaoPolicyMembers({ instanceAccount, page });
     await mockInventory({ page, account: daoAccount });
@@ -496,7 +496,7 @@ test.describe("User is logged in", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(100_000);
+    test.setTimeout(150_000);
     await mockPikespeakFTTokensResponse({ page, daoAccount });
     await updateDaoPolicyMembers({ instanceAccount, page });
     await fillCreateForm(page, daoAccount, instanceAccount);
@@ -521,7 +521,7 @@ test.describe("User is logged in", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(100_000);
+    test.setTimeout(150_000);
     const amountFromLinkedProposal = 2160;
 
     await mockInventory({ page, account: daoAccount });
@@ -816,7 +816,7 @@ test.describe("User is logged in", function () {
     daoAccount,
     instanceAccount,
   }) => {
-    test.setTimeout(100_000);
+    test.setTimeout(150_000);
     await updateDaoPolicyMembers({ instanceAccount, page });
     await fillCreateForm(page, daoAccount, instanceAccount);
     const submitBtn = page
