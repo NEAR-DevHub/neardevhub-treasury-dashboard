@@ -345,7 +345,7 @@ test.describe("User is logged in", function () {
     receiveInput.fill(
       "e915ea0c6d5f8ccc417db891490246c6bcd8d0a2214cbcbfa3618a7ee6abe26b"
     );
-    await expect(errorText).toBeHidden({timeout: 10_000});
+    await expect(errorText).toBeHidden({ timeout: 10_000 });
   });
   test("different amount values should not throw any error", async ({
     page,
