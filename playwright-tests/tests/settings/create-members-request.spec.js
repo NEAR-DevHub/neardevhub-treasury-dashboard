@@ -647,10 +647,21 @@ test.describe("User is logged in", function () {
     const submitButton = iframe.getByRole("button", { name: "Submit" });
     await expect(submitButton).toBeEnabled();
 
-    const addPermission = iframe.getByText("Add Permission", {
-      exact: true,
-    });
-    await expect(addPermission).toHaveClass(/disabled/);
+    if (daoAccount.includes("infinex")) {
+      await iframe.locator("#selectedRoles-0 i").click();
+      iframe
+        .getByText("Add Permission", {
+          exact: true,
+        })
+        .click();
+      await expect(
+        iframe.locator("#dropdownMenu-0 .dropdown-item").nth(1)
+      ).toHaveClass(/disabled/);
+      await expect(
+        iframe.locator("#dropdownMenu-0 .dropdown-item").nth(2)
+      ).toHaveClass(/disabled/);
+      await iframe.locator("#dropdownMenu-0 .dropdown-item").nth(0).click();
+    }
 
     const input = iframe.getByPlaceholder("treasury.near");
     await expect(input).toHaveValue("nearn-io.near");
