@@ -117,7 +117,12 @@ const hasCreatePermission = hasPermission(
 );
 
 useEffect(() => {
-  if (accountFromQuery && permissionsFromQuery?.length && hasCreatePermission) {
+  if (
+    allMembers?.length &&
+    accountFromQuery &&
+    permissionsFromQuery?.length &&
+    hasCreatePermission
+  ) {
     setShowEditor(true);
     setSelectedMembers([
       {
@@ -127,7 +132,7 @@ useEffect(() => {
     ]);
     setIsEdit(false);
   }
-}, [accountFromQuery, permissionsFromQuery]);
+}, [accountFromQuery, permissionsFromQuery, allMembers]);
 
 function getImage(acc) {
   return `https://i.near.social/magic/large/https://near.social/magic/img/account/${acc}`;
