@@ -26,6 +26,9 @@ export async function getWeb3IconMaps() {
   }).then((r) => r.json());
 
   for (const token of supportedTokens.result.tokens) {
+    if (token.standard !== "nep141") {
+      continue;
+    }
     const blockchain = allTokens.find(
       (t) => t.defuse_asset_id === token.intents_token_id
     )?.blockchain;
