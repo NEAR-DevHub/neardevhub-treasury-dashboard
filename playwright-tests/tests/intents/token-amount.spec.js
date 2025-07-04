@@ -25,7 +25,8 @@ const createTokenAmountTestWidget = (instanceAccount, testCases) => {
                       address: testCase.address || '',
                       amountWithDecimals: testCase.amountWithDecimals || 0,
                       amountWithoutDecimals: testCase.amountWithoutDecimals || undefined,
-                      showUSDValue: testCase.showUSDValue || false
+                      showUSDValue: testCase.showUSDValue || false,
+                      instance:'treasury-testing.near'
                     }}
                   />
                 </div>
@@ -67,7 +68,7 @@ const testCases = [
     amountWithoutDecimals: "1234567890123456789012345", // 1.234567... NEAR
     originalAmount: "1.234567890123456789012345",
     showUSDValue: false,
-    expected: "~ 1.23",
+    expected: "~1.23",
     expectTilde: true,
   },
   {
@@ -87,7 +88,7 @@ const testCases = [
     amountWithoutDecimals: "2345678901234567890123456", // 2.345678... wNEAR
     originalAmount: "2.345678901234567890123456",
     showUSDValue: false,
-    expected: "~ 2.35",
+    expected: "~2.35",
     expectTilde: true,
   },
   {
@@ -107,7 +108,7 @@ const testCases = [
     amountWithoutDecimals: "12345678901234567890123", // 0.012345... NEAR
     originalAmount: "0.012345678901234567890123",
     showUSDValue: false,
-    expected: "~ 0.01",
+    expected: "~0.01",
     expectTilde: true,
   },
   {
@@ -190,7 +191,7 @@ test("TokenAmount component displays amounts correctly with proper tilde logic",
 
     // Verify tilde logic specifically
     if (testCase.expectTilde) {
-      expect(actualAmount).toContain("~ ");
+      expect(actualAmount).toContain("~");
       console.log(`✓ Case ${i}: Correctly shows tilde for rounded amount`);
     } else {
       expect(actualAmount).not.toContain("~ ");
@@ -213,7 +214,7 @@ test("TokenAmount tilde logic handles edge cases correctly", async ({
       amountWithoutDecimals: "1234567890123456789012345", // 1.234567... NEAR
       originalAmount: "1.234567890123456789012345",
       showUSDValue: false,
-      expected: "~ 1.23", // Should show tilde because of precision loss
+      expected: "~1.23", // Should show tilde because of precision loss
       expectTilde: true,
     },
     {
@@ -223,7 +224,7 @@ test("TokenAmount tilde logic handles edge cases correctly", async ({
       amountWithoutDecimals: "2345678901234567890123456", // 2.345678... wNEAR
       originalAmount: "2.345678901234567890123456",
       showUSDValue: false,
-      expected: "~ 2.35", // Should show tilde due to precision loss
+      expected: "~2.35", // Should show tilde due to precision loss
       expectTilde: true,
     },
     {
@@ -233,7 +234,7 @@ test("TokenAmount tilde logic handles edge cases correctly", async ({
       amountWithoutDecimals: "12345678901234567890123", // 0.012345... NEAR
       originalAmount: "0.012345678901234567890123",
       showUSDValue: false,
-      expected: "~ 0.01", // Should show tilde due to precision loss
+      expected: "~0.01", // Should show tilde due to precision loss
       expectTilde: true,
     },
   ];
@@ -281,10 +282,10 @@ test("TokenAmount tilde logic handles edge cases correctly", async ({
     // For edge cases, we're mainly testing that the tilde logic works
     // The exact formatted output might vary, but tilde presence should be correct
     if (testCase.expectTilde) {
-      expect(actualAmount).toContain("~ ");
+      expect(actualAmount).toContain("~");
       console.log(`✓ Edge case ${i}: Correctly shows tilde for precision loss`);
     } else {
-      expect(actualAmount).not.toContain("~ ");
+      expect(actualAmount).not.toContain("~");
       console.log(
         `✓ Edge case ${i}: Correctly shows no tilde for exact amount`
       );
