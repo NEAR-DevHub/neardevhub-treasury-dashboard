@@ -112,7 +112,7 @@ function searchCacheApi() {
 }
 
 function setProposalData(result) {
-  const proposalsData = result.body;
+  const proposalsData = result;
   const data = [];
   for (const prop of proposalsData) {
     data.push({
@@ -132,7 +132,7 @@ function setProposalData(result) {
 
 function searchProposals() {
   searchCacheApi().then((result) => {
-    setProposalData(result);
+    setProposalData(result.body);
   });
 }
 
@@ -151,7 +151,8 @@ function fetchCacheApi() {
 
 function fetchProposals() {
   fetchCacheApi().then((result) => {
-    setProposalData(result);
+    const proposals = (result.body || []).slice(0, 10);
+    setProposalData(proposals);
   });
 }
 
@@ -209,6 +210,8 @@ useEffect(() => {
 }, [isTxnCreated, lastProposalId]);
 
 useEffect(() => {
+  if (!proposalAPIEndpoint) return;
+
   const handler = setTimeout(() => {
     setLoadingProposals(true);
     if (searchProposalId) {
@@ -218,10 +221,8 @@ useEffect(() => {
     }
   }, 500);
 
-  return () => {
-    clearTimeout(handler);
-  };
-}, [searchProposalId]);
+  return () => clearTimeout(handler);
+}, [searchProposalId, proposalAPIEndpoint]);
 
 const Container = styled.div`
   font-size: 14px;

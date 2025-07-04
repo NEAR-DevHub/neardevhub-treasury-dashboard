@@ -319,7 +319,6 @@ test("payment request to BTC address", async ({
     modifiedWidgets,
     callWidgetNodeURLForContractWidgets: false,
   });
-  await mockInventory({ page, account: daoContract.accountId });
 
   await mockNearBalances({
     page,
@@ -360,7 +359,6 @@ test("payment request to BTC address", async ({
 
   const createRequestButton = await page.getByText("Create Request");
   await createRequestButton.click();
-  await page.waitForTimeout(5_000);
   await expect(page.getByText("Create Payment Request")).toBeVisible();
   await expect(page.getByRole("button", { name: "Submit" })).toBeVisible({
     timeout: 14_000,
@@ -615,7 +613,6 @@ test("payment request to USDC address on BASE", async ({
     modifiedWidgets,
     callWidgetNodeURLForContractWidgets: false,
   });
-  await mockInventory({ page, account: daoContract.accountId });
 
   await mockNearBalances({
     page,
@@ -657,7 +654,6 @@ test("payment request to USDC address on BASE", async ({
 
   const createRequestButton = await page.getByText("Create Request");
   await createRequestButton.click();
-  await page.waitForTimeout(5_000);
   await expect(page.getByText("Create Payment Request")).toBeVisible();
   await expect(page.getByRole("button", { name: "Submit" })).toBeVisible({
     timeout: 14_000,
@@ -939,7 +935,6 @@ test("payment request for wNEAR token on NEAR intents", async ({
     modifiedWidgets,
     callWidgetNodeURLForContractWidgets: false,
   });
-  await mockInventory({ page, account: daoContract.accountId });
 
   await mockNearBalances({
     page,
@@ -984,7 +979,6 @@ test("payment request for wNEAR token on NEAR intents", async ({
   const createRequestButton = await page.getByText("Create Request");
   await expect(createRequestButton).toBeEnabled();
   await createRequestButton.click();
-  await page.waitForTimeout(5_000);
   await expect(page.getByText("Create Payment Request")).toBeVisible();
   await expect(page.getByRole("button", { name: "Submit" })).toBeVisible({
     timeout: 14_000,
@@ -1233,7 +1227,6 @@ test("insufficient balance alert for BTC payment request exceeding available bal
     modifiedWidgets,
     callWidgetNodeURLForContractWidgets: false,
   });
-  await mockInventory({ page, account: daoContract.accountId });
 
   await mockNearBalances({
     page,
@@ -1275,7 +1268,6 @@ test("insufficient balance alert for BTC payment request exceeding available bal
 
   const createRequestButton = await page.getByText("Create Request");
   await createRequestButton.click();
-  await page.waitForTimeout(5_000);
   await expect(page.getByText("Create Payment Request")).toBeVisible();
   await expect(page.getByRole("button", { name: "Submit" })).toBeVisible({
     timeout: 14_000,
@@ -1504,7 +1496,6 @@ test("insufficient balance alert for wNEAR payment request exceeding available b
     modifiedWidgets,
     callWidgetNodeURLForContractWidgets: false,
   });
-  await mockInventory({ page, account: daoContract.accountId });
 
   await mockNearBalances({
     page,
@@ -1546,7 +1537,6 @@ test("insufficient balance alert for wNEAR payment request exceeding available b
 
   const createRequestButton = await page.getByText("Create Request");
   await createRequestButton.click();
-  await page.waitForTimeout(5_000);
   await expect(page.getByText("Create Payment Request")).toBeVisible();
   await expect(page.getByRole("button", { name: "Submit" })).toBeVisible({
     timeout: 14_000,
