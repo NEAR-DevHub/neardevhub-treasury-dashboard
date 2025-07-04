@@ -358,6 +358,7 @@ const code = `<!DOCTYPE html>
       let allMembers = [];
       let selectedMembers = [];
       let cachedProfilesData = null;
+      const NEARN_ACCOUNT_ID = "nearn-io.near";
       const roleDescriptions = {
         Requestor: "Allows to create transaction requests (payments, stake delegation, and asset exchange).",
         Approver: "Allows to vote on transaction requests (payments, stake delegation, and asset exchange).",
@@ -462,24 +463,6 @@ const code = `<!DOCTYPE html>
             error?.classList.add("d-none");
           }
         }
-      
-          const isNearnAccount = account === "nearn-io.near";
-          const nearnWarning = document.getElementById("nearnWarning-" + index);
-          const selectTag = document.getElementById("selectTag-" + index);
-          const accountInput = document.getElementById("accountInput-" + index);
-      
-          if (nearnWarning) {
-            nearnWarning.classList.toggle("d-flex", isNearnAccount);
-            nearnWarning.classList.toggle("d-none", !isNearnAccount);
-          }
-      
-          if (selectTag) {
-            selectTag.classList.toggle("disabled", isNearnAccount);
-          }
-      
-          if (accountInput) {
-            accountInput.disabled = isNearnAccount;
-          }
       
         if ((isEdit || account) && (!selectedRoles || selectedRoles.length === 0)) {
           roleError?.classList.remove("d-none");
@@ -634,6 +617,29 @@ const code = `<!DOCTYPE html>
         }
       }
       
+      function updateNearnWarning(index) {
+        let account = '';
+        const input = document.getElementById("accountInput-" + index);
+        if (input) {
+          account = input.value.trim().toLowerCase();
+        } else if (typeof selectedMembers !== 'undefined' && selectedMembers[index]) {
+          account = (selectedMembers[index].member || '').toLowerCase();
+        }
+        const isNearnAccount = account === NEARN_ACCOUNT_ID;
+        const nearnWarning = document.getElementById("nearnWarning-" + index);
+        if (nearnWarning) {
+          if (isNearnAccount) {
+            nearnWarning.classList.add("d-flex");
+            nearnWarning.classList.remove("d-none");
+          } else {
+            nearnWarning.classList.remove("d-flex");
+            nearnWarning.classList.add("d-none");
+          }
+        }
+        updateAddPermissionButtonVisibility(index);
+        renderDropdown(index);
+      }
+      
       async function handleAccountInput(index) {
         const input = document.getElementById("accountInput-" + index);
         const query = input.value.trim().toLowerCase();  
@@ -653,6 +659,7 @@ const code = `<!DOCTYPE html>
       
         if (query.length === 0) {
           renderAutocompleteResults(index, []);
+          updateNearnWarning(index);
           return;
         }
         
@@ -666,6 +673,7 @@ const code = `<!DOCTYPE html>
         }
         
         setTimeout(updateIframeHeight, 0);
+        updateNearnWarning(index);
       }
       
       function filterAndRenderResults(index, query, data) {
@@ -735,6 +743,7 @@ const code = `<!DOCTYPE html>
         }
         
         setTimeout(updateIframeHeight, 0);
+        updateNearnWarning(index);
       }
       
       function removeMember(index) {
@@ -816,8 +825,8 @@ const code = `<!DOCTYPE html>
                     '<span class="input-group-text border-end-0">@</span>' +
                     '<input type="text" class="form-control border border-start-0" placeholder="treasury.near" ' +
                     'id="accountInput-' + index + '" maxlength="64" ' +
-                    (existingMember ? 'value="' + existingMember.username + '"' : 'oninput="handleAccountInput(' + index + ')"') +
-                    '/>' +
+                    (existingMember ? 'value="' + existingMember.username + '" ' : '') +
+                    'oninput="handleAccountInput(' + index + ')" />' +
                   '</div>' +
                   '<div id="accountError-' + index + '" class="error-text text-sm d-none">Please enter a valid account ID.</div>' +
                   '<div id="accountSuggestions-' + index + '" class="account-suggestions d-none"></div>' +
@@ -853,6 +862,7 @@ const code = `<!DOCTYPE html>
           });
           updateAddPermissionButtonVisibility(index);
           validateMember(index);
+          updateNearnWarning(index);
         }
         setCustomHeaderHeights(); 
         setTimeout(updateIframeHeight, 0);
@@ -885,6 +895,16 @@ const code = `<!DOCTYPE html>
         const selectedRoles = window["selectedRoles_" + index];
         menu.innerHTML = "";
         
+        // Get the account for this member
+        let account = '';
+        const input = document.getElementById("accountInput-" + index);
+        if (input) {
+          account = input.value.trim().toLowerCase();
+        } else if (typeof selectedMembers !== 'undefined' && selectedMembers[index]) {
+          account = (selectedMembers[index].member || '').toLowerCase();
+        }
+        const isNearnAccount = account === NEARN_ACCOUNT_ID;
+
         // Filter out already selected roles
         const availableRolesToShow = availableRoles.filter(function(role) {
           return !selectedRoles.some(function(selectedRole) {
@@ -894,14 +914,23 @@ const code = `<!DOCTYPE html>
         
         availableRolesToShow.forEach(function(role) {
           const item = document.createElement("div");
-          item.className = "dropdown-item cursor-pointer w-100 my-1";
+          let isDisabled = false;
+          if (isNearnAccount && role.value !== "Requestor") {
+            isDisabled = true;
+            item.className = "dropdown-item w-100 my-1 disabled";
+            item.style.pointerEvents = "none";
+            item.style.opacity = 0.5;
+          } else {
+            item.className = "dropdown-item cursor-pointer w-100 my-1";
+          }
           item.innerHTML = "<div>" + role.title + "</div>" + (roleDescriptions[role.value]
             ? "<div class='text-secondary text-sm text-wrap'>" + roleDescriptions[role.value] + "</div>"
             : "");
-      
-          item.onclick = function() {
-            addRole(index, role);
-          };
+          if (!isDisabled) {
+            item.onclick = function() {
+              addRole(index, role);
+            };
+          }
           menu.appendChild(item);
         });
       }
@@ -952,13 +981,34 @@ const code = `<!DOCTYPE html>
       function updateAddPermissionButtonVisibility(index) {
         const selectedRoles = window["selectedRoles_" + index];
         const selectTag = document.getElementById("selectTag-" + index);
+        // Get the account for this member
+        let account = '';
+        const input = document.getElementById("accountInput-" + index);
+        if (input) {
+          account = input.value.trim().toLowerCase();
+        } else if (typeof selectedMembers !== 'undefined' && selectedMembers[index]) {
+          account = (selectedMembers[index].member || '').toLowerCase();
+        }
+        const isNearnAccount = account === NEARN_ACCOUNT_ID;
         if (selectTag) {
-          if (selectedRoles.length >= availableRoles.length) {
-            selectTag.classList.add("d-none");
-            selectTag.classList.remove("d-flex");
+          if (isNearnAccount) {
+            // Only show if Requestor is not already selected
+            if (selectedRoles.some(r => r.value === "Requestor")) {
+              selectTag.classList.add("d-none");
+            } else {
+              selectTag.classList.remove("d-none");
+              selectTag.classList.remove("disabled");
+              selectTag.classList.add("d-flex");
+            }
           } else {
-            selectTag.classList.remove("d-none");
-            selectTag.classList.add("d-flex");
+            // For other accounts, show only if not all roles are selected
+            if (selectedRoles.length >= availableRoles.length) {
+              selectTag.classList.add("d-none");
+            } else {
+              selectTag.classList.remove("d-none");
+              selectTag.classList.remove("disabled");
+              selectTag.classList.add("d-flex");
+            }
           }
         }
       }

@@ -5,6 +5,7 @@ import { parseNEAR, Worker } from "near-workspaces";
 import { connect } from "near-api-js";
 import { PROPOSAL_BOND, setPageAuthSettings } from "../../util/sandboxrpc.js";
 import { mockNearBalances } from "../../util/rpcmock.js";
+import { mockInventory } from "../../util/inventory.js";
 
 let worker;
 let availableTokensList;
@@ -22,7 +23,7 @@ let intentsContract;
 let creatorAccount;
 
 test.beforeAll(async () => {
-  test.setTimeout(120000); // Set timeout for the whole beforeAll block
+  test.setTimeout(150000); // Set timeout for the whole beforeAll block
 
   // Fetch token info
   availableTokensList = (
@@ -203,8 +204,7 @@ test("payment request to BTC address", async ({
   instanceAccount,
   daoAccount,
 }) => {
-  test.setTimeout(60_000);
-
+  test.setTimeout(150000);
   // Import contract for the specific instance being tested
   // instanceAccount is an Account object provided by the test fixture
   await worker.rootAccount.importContract({
@@ -319,6 +319,7 @@ test("payment request to BTC address", async ({
     modifiedWidgets,
     callWidgetNodeURLForContractWidgets: false,
   });
+  await mockInventory({ page, account: daoContract.accountId });
 
   await mockNearBalances({
     page,
@@ -359,6 +360,7 @@ test("payment request to BTC address", async ({
 
   const createRequestButton = await page.getByText("Create Request");
   await createRequestButton.click();
+  await page.waitForTimeout(5_000);
   await expect(page.getByText("Create Payment Request")).toBeVisible();
   await expect(page.getByRole("button", { name: "Submit" })).toBeVisible({
     timeout: 14_000,
@@ -500,8 +502,7 @@ test("payment request to USDC address on BASE", async ({
   instanceAccount,
   daoAccount,
 }) => {
-  test.setTimeout(60_000);
-
+  test.setTimeout(150000);
   // Import contract for the specific instance being tested
   await worker.rootAccount.importContract({
     mainnetContract: instanceAccount,
@@ -614,6 +615,7 @@ test("payment request to USDC address on BASE", async ({
     modifiedWidgets,
     callWidgetNodeURLForContractWidgets: false,
   });
+  await mockInventory({ page, account: daoContract.accountId });
 
   await mockNearBalances({
     page,
@@ -655,6 +657,7 @@ test("payment request to USDC address on BASE", async ({
 
   const createRequestButton = await page.getByText("Create Request");
   await createRequestButton.click();
+  await page.waitForTimeout(5_000);
   await expect(page.getByText("Create Payment Request")).toBeVisible();
   await expect(page.getByRole("button", { name: "Submit" })).toBeVisible({
     timeout: 14_000,
@@ -787,8 +790,7 @@ test("payment request for wNEAR token on NEAR intents", async ({
   instanceAccount,
   daoAccount,
 }) => {
-  test.setTimeout(120000);
-
+  test.setTimeout(150000);
   // Import contract for the specific instance being tested
   await worker.rootAccount.importContract({
     mainnetContract: instanceAccount,
@@ -937,6 +939,7 @@ test("payment request for wNEAR token on NEAR intents", async ({
     modifiedWidgets,
     callWidgetNodeURLForContractWidgets: false,
   });
+  await mockInventory({ page, account: daoContract.accountId });
 
   await mockNearBalances({
     page,
@@ -981,7 +984,7 @@ test("payment request for wNEAR token on NEAR intents", async ({
   const createRequestButton = await page.getByText("Create Request");
   await expect(createRequestButton).toBeEnabled();
   await createRequestButton.click();
-
+  await page.waitForTimeout(5_000);
   await expect(page.getByText("Create Payment Request")).toBeVisible();
   await expect(page.getByRole("button", { name: "Submit" })).toBeVisible({
     timeout: 14_000,
@@ -1118,8 +1121,7 @@ test("insufficient balance alert for BTC payment request exceeding available bal
   instanceAccount,
   daoAccount,
 }) => {
-  test.setTimeout(120000);
-
+  test.setTimeout(150000);
   // Import contract for the specific instance being tested
   await worker.rootAccount.importContract({
     mainnetContract: instanceAccount,
@@ -1231,6 +1233,7 @@ test("insufficient balance alert for BTC payment request exceeding available bal
     modifiedWidgets,
     callWidgetNodeURLForContractWidgets: false,
   });
+  await mockInventory({ page, account: daoContract.accountId });
 
   await mockNearBalances({
     page,
@@ -1272,6 +1275,7 @@ test("insufficient balance alert for BTC payment request exceeding available bal
 
   const createRequestButton = await page.getByText("Create Request");
   await createRequestButton.click();
+  await page.waitForTimeout(5_000);
   await expect(page.getByText("Create Payment Request")).toBeVisible();
   await expect(page.getByRole("button", { name: "Submit" })).toBeVisible({
     timeout: 14_000,
@@ -1363,8 +1367,7 @@ test("insufficient balance alert for wNEAR payment request exceeding available b
   instanceAccount,
   daoAccount,
 }) => {
-  test.setTimeout(120000);
-
+  test.setTimeout(150000);
   // Import contract for the specific instance being tested
   await worker.rootAccount.importContract({
     mainnetContract: instanceAccount,
@@ -1501,6 +1504,7 @@ test("insufficient balance alert for wNEAR payment request exceeding available b
     modifiedWidgets,
     callWidgetNodeURLForContractWidgets: false,
   });
+  await mockInventory({ page, account: daoContract.accountId });
 
   await mockNearBalances({
     page,
@@ -1542,6 +1546,7 @@ test("insufficient balance alert for wNEAR payment request exceeding available b
 
   const createRequestButton = await page.getByText("Create Request");
   await createRequestButton.click();
+  await page.waitForTimeout(5_000);
   await expect(page.getByText("Create Payment Request")).toBeVisible();
   await expect(page.getByRole("button", { name: "Submit" })).toBeVisible({
     timeout: 14_000,

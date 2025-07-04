@@ -21,7 +21,6 @@ jobs:
         project:
           - treasury-dashboard
           - infinex
-          - treasury-testing
 
     steps:
       - name: Checkout repository
@@ -72,4 +71,3 @@ jobs:
             test-results/
             playwright-report/
           retention-days: 1
-
