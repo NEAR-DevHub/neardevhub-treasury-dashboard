@@ -8,7 +8,15 @@ test.use({
     height: 800,
   },
 });
-test("USDC on ETH payment showcase", async ({ page }) => {
+test("USDC on ETH payment showcase @treasury-testing", async ({
+  page,
+}, testInfo) => {
+  // Skip this test if not running on the treasury-testing project
+  test.skip(
+    testInfo.project.name !== "treasury-testing",
+    "This test only runs on the treasury-testing project"
+  );
+
   const instanceAccount = "webassemblymusic-treasury.near";
   const daoAccount = "webassemblymusic-treasury.sputnik-dao.near";
   const modifiedWidgets = {};

@@ -8,6 +8,15 @@ test.use({
     height: 800,
   },
 });
+
+test.beforeEach(async ({ page }, testInfo) => {
+  // Skip all tests in this file if not running on the treasury-testing project
+  test.skip(
+    testInfo.project.name !== "treasury-testing",
+    "These tests only run on the treasury-testing project"
+  );
+});
+
 test("NEAR Intents payment request for ETH", async ({ page }) => {
   const instanceAccount = "webassemblymusic-treasury.near";
   const daoAccount = "webassemblymusic-treasury.sputnik-dao.near";
