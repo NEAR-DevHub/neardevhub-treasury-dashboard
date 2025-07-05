@@ -45,6 +45,7 @@ export function getLocalWidgetContent(key, context = {}) {
     .replaceAll("${REPL_BOOTSTRAP_ACCOUNT}", "bootstrap.treasury-factory.near")
     .replaceAll("${REPL_TREASURY}", treasury)
     .replaceAll("${REPL_INSTANCE}", account)
+    .replaceAll("${REPL_NEARBLOCKS_KEY}", replacements["REPL_NEARBLOCKS_KEY"])
     .replaceAll(
       "${REPL_BASE_DEPLOYMENT_ACCOUNT}",
       "widgets.treasury-factory.near"

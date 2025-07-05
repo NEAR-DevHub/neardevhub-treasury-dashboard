@@ -357,7 +357,12 @@ useEffect(() => {
 
       // Query NearBlocks API for on_proposal_callback transactions
       asyncFetch(
-        `https://api.nearblocks.io/v1/account/${treasuryDaoID}/receipts?method=on_proposal_callback&after_date=${afterDate}&before_date=${beforeDate}`
+        `https://api.nearblocks.io/v1/account/${treasuryDaoID}/receipts?method=on_proposal_callback&after_date=${afterDate}&before_date=${beforeDate}`,
+        {
+          headers: {
+            Authorization: "Bearer ${REPL_NEARBLOCKS_KEY}",
+          },
+        }
       )
         .then((response) => {
           if (!response.ok || !response.body?.txns) {
