@@ -217,14 +217,24 @@ useEffect(() => {
   }
 }, [proposalData?.isIntentsPayment, proposalData?.intentsTokenInfo?.tokenContract]);
 
+// Clear target chain transaction info for non-intents proposals or NEAR blockchain
+useEffect(() => {
+  if (!proposalData?.isIntentsPayment || networkInfo.blockchain === "near") {
+    setTransactionInfo(prev => ({
+      ...prev,
+      targetTxHash: null,
+    }));
+  }
+}, [proposalData?.isIntentsPayment, networkInfo.blockchain]);
+
 // Set target network explorer links for approved intents payments
 useEffect(() => {
-  if (proposalData?.isIntentsPayment && proposalData?.status === "Approved" && networkInfo.blockchain) {
-    // For target network explorers
+  if (proposalData?.isIntentsPayment && proposalData?.status === "Approved" && 
+      networkInfo.blockchain && networkInfo.blockchain !== "near") {
+    // For target network explorers - initially set to recipient address
     let targetExplorerLink = null;
     if (networkInfo.blockchain === "eth") {
-      // For Ethereum, we'd need the actual transaction hash
-      // For now, link to the recipient address on Etherscan
+      // For Ethereum, link to the recipient address on Etherscan as fallback
       if (proposalData.intentsTokenInfo?.realRecipient) {
         targetExplorerLink = `https://etherscan.io/address/${proposalData.intentsTokenInfo.realRecipient}`;
       }
@@ -236,6 +246,70 @@ useEffect(() => {
     }));
   }
 }, [proposalData?.isIntentsPayment, proposalData?.status, networkInfo.blockchain, proposalData?.intentsTokenInfo]);
+
+// Fetch target chain transaction hash for approved intents payments
+useEffect(() => {
+  if (proposalData?.isIntentsPayment && proposalData?.status === "Approved" && 
+      networkInfo.blockchain && networkInfo.blockchain !== "near" &&
+      transactionInfo.nearTxHash && transactionInfo.nearTxHash.includes('/txns/')) {
+    
+    // Extract the transaction hash from the URL
+    const nearTxHash = transactionInfo.nearTxHash.split('/txns/')[1];
+    
+    console.log(`Fetching withdrawal status for NEAR tx: ${nearTxHash}`);
+    
+    // Call POA Bridge API to get withdrawal status
+    asyncFetch("https://bridge.chaindefuser.com/rpc", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "withdrawal_status",
+        params: [{
+          withdrawal_hash: nearTxHash,
+        }]
+      })
+    }).then((response) => {
+      if (!response || !response.body) {
+        console.log("No withdrawal status response");
+        return;
+      }
+      
+      const result = response.body.result;
+      if (result && result.status === "COMPLETED" && result.data?.transfer_tx_hash) {
+        console.log(`Found target chain tx: ${result.data.transfer_tx_hash}`);
+        
+        // Create target chain explorer link
+        let targetExplorerLink = null;
+        if (result.data.chain && result.data.transfer_tx_hash) {
+          const chainInfo = result.data.chain.toLowerCase();
+          if (chainInfo.includes("eth")) {
+            targetExplorerLink = `https://etherscan.io/tx/${result.data.transfer_tx_hash}`;
+          } else if (chainInfo.includes("polygon")) {
+            targetExplorerLink = `https://polygonscan.com/tx/${result.data.transfer_tx_hash}`;
+          } else if (chainInfo.includes("bsc")) {
+            targetExplorerLink = `https://bscscan.com/tx/${result.data.transfer_tx_hash}`;
+          }
+          // Add more chains as needed
+        }
+        
+        if (targetExplorerLink) {
+          setTransactionInfo(prev => ({
+            ...prev,
+            targetTxHash: targetExplorerLink,
+          }));
+        }
+      } else {
+        console.log(`Withdrawal status: ${result?.status || 'unknown'}`);
+      }
+    }).catch((error) => {
+      console.error("Error fetching withdrawal status:", error);
+    });
+  }
+}, [proposalData?.isIntentsPayment, proposalData?.status, transactionInfo.nearTxHash, networkInfo.blockchain]);
 
 // Fetch execution transaction hash for approved proposals
 useEffect(() => {
@@ -503,7 +577,7 @@ return (
                       className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2"
                       style={{ width: "fit-content" }}
                     >
-                      View on {networkInfo.blockchain} Explorer <i className="bi bi-box-arrow-up-right"></i>
+                      {transactionInfo.targetTxHash.includes('/tx/') ? 'View Transfer' : 'View Address'} on {networkInfo.blockchain?.toUpperCase()} Explorer <i className="bi bi-box-arrow-up-right"></i>
                     </a>
                   )}
                 </div>
