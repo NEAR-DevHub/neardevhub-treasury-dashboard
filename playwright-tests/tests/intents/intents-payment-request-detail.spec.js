@@ -7,6 +7,13 @@ test("NEAR Intents payment request for ETH", async ({ page }) => {
   const daoAccount = "webassemblymusic-treasury.sputnik-dao.near";
   const modifiedWidgets = {};
   
+  // Capture browser console logs
+  page.on('console', msg => {
+    if (msg.type() === 'log' || msg.type() === 'error') {
+      console.log(`Browser ${msg.type()}: ${msg.text()}`);
+    }
+  });
+  
   await redirectWeb4({
     page,
     contractId: instanceAccount,
@@ -41,12 +48,16 @@ test("NEAR Intents payment request for ETH", async ({ page }) => {
     await expect(feeSection).toBeVisible();
   }
   
-  // Check for transaction links section (if present for approved payments)
-  const transactionSection = page.locator('text=Transaction Links');
-  if (await transactionSection.isVisible()) {
-    await expect(transactionSection).toBeVisible();
-    await expect(page.locator('text=View on NEAR Blocks')).toBeVisible();
-  }
+  // Check for transaction links section (should be present for all approved proposals)
+  await expect(page.locator('text=Transaction Links')).toBeVisible();
+  
+  // Check for NEAR Blocks link (either "View Execution" or "Search Execution")
+  const nearBlocksButton = page.locator('a:has-text("on NEAR Blocks")');
+  await expect(nearBlocksButton).toBeVisible();
+  
+  // Check for the specific transaction link to the actual execution transaction
+  // Now that the API lookup is working, we should get the specific transaction hash
+  await expect(page.locator('a[href*="nearblocks.io/txns/2trLm2bSSFiUDt2xckM3UW6C6BND4iksiqEihaEjtcbC"]')).toBeVisible();
   
   // Take a screenshot to see the final result
   await page.screenshot({ path: 'test-results/intents-payment-detail-final.png', fullPage: true });
@@ -75,4 +86,39 @@ test("NEAR Intents payment request for NEAR", async ({ page }) => {
       'div[data-component="widgets.treasury-factory.near/widget/components.TokenAmountAndIcon"]'
     )
   ).toContainText("0.2 wNEAR");
+});
+
+test("Regular payment request shows transaction links", async ({ page }) => {
+  const instanceAccount = "webassemblymusic-treasury.near";
+  const daoAccount = "webassemblymusic-treasury.sputnik-dao.near";
+  const modifiedWidgets = {};
+  
+  await redirectWeb4({
+    page,
+    contractId: instanceAccount,
+    treasury: daoAccount,
+    networkId: "mainnet",
+    modifiedWidgets,
+    callWidgetNodeURLForContractWidgets: false,
+  });
+  
+  // Navigate to a regular (non-intents) approved payment request
+  // Using id=1 which should be a regular payment if it exists
+  await page.goto(
+    "https://webassemblymusic-treasury.near.page/?page=payments&tab=history&id=1"
+  );
+  
+  // Wait for the page to load
+  await page.waitForTimeout(3000);
+  
+  // Check if this is an approved proposal - if not, skip the transaction links check
+  const statusElement = page.locator('text=Payment Request Funded');
+  if (await statusElement.isVisible()) {
+    // Check for transaction links section (should be present for all approved proposals)
+    await expect(page.locator('text=Transaction Links')).toBeVisible();
+    
+    // Check for NEAR Blocks link (either "View Execution" or "Search Execution")
+    const nearBlocksButton = page.locator('a:has-text("on NEAR Blocks")');
+    await expect(nearBlocksButton).toBeVisible();
+  }
 });

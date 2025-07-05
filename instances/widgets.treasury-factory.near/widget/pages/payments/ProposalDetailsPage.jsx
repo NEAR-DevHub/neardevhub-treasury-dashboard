@@ -217,13 +217,9 @@ useEffect(() => {
   }
 }, [proposalData?.isIntentsPayment, proposalData?.intentsTokenInfo?.tokenContract]);
 
-// Fetch transaction information for approved intents payments
+// Set target network explorer links for approved intents payments
 useEffect(() => {
-  if (proposalData?.isIntentsPayment && proposalData?.status === "Approved") {
-    // For approved proposals, we can construct links to view the transactions
-    // The proposal execution should have created an execute_intents transaction on intents.near
-    const nearTxLink = `https://nearblocks.io/address/intents.near?tab=txns&p=1&f=execute_intents`;
-    
+  if (proposalData?.isIntentsPayment && proposalData?.status === "Approved" && networkInfo.blockchain) {
     // For target network explorers
     let targetExplorerLink = null;
     if (networkInfo.blockchain === "eth") {
@@ -236,11 +232,86 @@ useEffect(() => {
     
     setTransactionInfo(prev => ({
       ...prev,
-      nearTxHash: nearTxLink,
       targetTxHash: targetExplorerLink,
     }));
   }
 }, [proposalData?.isIntentsPayment, proposalData?.status, networkInfo.blockchain, proposalData?.intentsTokenInfo]);
+
+// Fetch execution transaction hash for approved proposals
+useEffect(() => {
+  if (proposalData?.status === "Approved" && 
+      proposalData?.submissionTime && proposalPeriod) {
+    
+    const findExecutionTransaction = () => {
+      // Calculate the proposal timeframe using the actual proposal timestamps
+      const submissionTimestamp = parseInt(proposalData.submissionTime);
+      const expirationTimestamp = submissionTimestamp + parseInt(proposalPeriod);
+      
+      // Convert nanoseconds to milliseconds and create UTC dates
+      const submissionDate = new Date(submissionTimestamp / 1000000);
+      const expirationDate = new Date(expirationTimestamp / 1000000);
+      
+      // Format dates for the API (YYYY-MM-DD) in UTC
+      // Note: after_date is exclusive, so we use the day before submission
+      const afterDate = new Date(submissionDate.getTime() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      const beforeDate = new Date(expirationDate.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]; // Add 7 days buffer
+      
+      console.log(`Searching for proposal ${proposalData.id} execution between ${afterDate} and ${beforeDate}`);
+      
+      // Query NearBlocks API for on_proposal_callback transactions
+      asyncFetch(
+        `https://api.nearblocks.io/v1/account/${treasuryDaoID}/receipts?method=on_proposal_callback&after_date=${afterDate}&before_date=${beforeDate}`
+      ).then((response) => {
+        if (!response.ok || !response.body?.txns) {
+          console.log("No execution transactions found or API error");
+          // Fallback to a generic search link
+          setTransactionInfo(prev => ({
+            ...prev,
+            nearTxHash: `https://nearblocks.io/address/${treasuryDaoID}?tab=txns&method=on_proposal_callback`,
+          }));
+          return;
+        }
+        
+        console.log(`Found ${response.body.txns.length} on_proposal_callback transactions`);
+        
+        // Find the transaction that matches our proposal ID
+        const matchingTxn = response.body.txns.find(txn => {
+          try {
+            const args = JSON.parse(txn.actions[0]?.args || "{}");
+            return args.proposal_id === proposalData.id;
+          } catch (e) {
+            return false;
+          }
+        });
+        
+        if (matchingTxn) {
+          console.log(`Found execution transaction: ${matchingTxn.transaction_hash}`);
+          setTransactionInfo(prev => ({
+            ...prev,
+            nearTxHash: `https://nearblocks.io/txns/${matchingTxn.transaction_hash}`,
+          }));
+        } else {
+          console.log(`No execution transaction found for proposal ${proposalData.id}`);
+          // Fallback to a generic search link
+          setTransactionInfo(prev => ({
+            ...prev,
+            nearTxHash: `https://nearblocks.io/address/${treasuryDaoID}?tab=txns&method=on_proposal_callback`,
+          }));
+        }
+      }).catch((error) => {
+        console.error("Error fetching execution transaction:", error);
+        // Fallback to a generic search link
+        setTransactionInfo(prev => ({
+          ...prev,
+          nearTxHash: `https://nearblocks.io/address/${treasuryDaoID}?tab=txns&method=on_proposal_callback`,
+        }));
+      });
+    };
+    
+    findExecutionTransaction();
+  }
+}, [proposalData?.status, proposalData?.submissionTime, 
+    proposalData?.id, proposalPeriod, treasuryDaoID]);
 
 useEffect(() => {
   if (proposalData.id !== id) {
@@ -411,7 +482,7 @@ return (
                 </div>
               </div>
             )}
-            {proposalData?.isIntentsPayment && transactionInfo.nearTxHash && (
+            {proposalData?.status === "Approved" && transactionInfo.nearTxHash && (
               <div className="d-flex flex-column gap-2 mt-3">
                 <label className="border-top">Transaction Links</label>
                 <div className="d-flex flex-column gap-2">
@@ -422,7 +493,7 @@ return (
                     className="btn btn-outline-primary btn-sm d-flex align-items-center gap-2"
                     style={{ width: "fit-content" }}
                   >
-                    View on NEAR Blocks <i className="bi bi-box-arrow-up-right"></i>
+                    {transactionInfo.nearTxHash.includes('/txns/') ? 'View Execution' : 'Search Execution'} on NEAR Blocks <i className="bi bi-box-arrow-up-right"></i>
                   </a>
                   {transactionInfo.targetTxHash && (
                     <a
