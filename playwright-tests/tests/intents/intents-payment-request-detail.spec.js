@@ -1,7 +1,13 @@
 import { test } from "../../util/test.js";
 import { expect } from "@playwright/test";
-import { redirectWeb4, getLocalWidgetContent } from "../../util/web4.js";
+import { redirectWeb4 } from "../../util/web4.js";
 
+test.use({
+  viewport: {
+    width: 1280,
+    height: 800,
+  },
+});
 test("NEAR Intents payment request for ETH", async ({ page }) => {
   const instanceAccount = "webassemblymusic-treasury.near";
   const daoAccount = "webassemblymusic-treasury.sputnik-dao.near";
@@ -45,10 +51,8 @@ test("NEAR Intents payment request for ETH", async ({ page }) => {
   ).toBeVisible();
 
   // Check for fee information (if present)
-  const feeSection = page.locator("text=Network Fee");
-  if (await feeSection.isVisible()) {
-    await expect(feeSection).toBeVisible();
-  }
+  const feeSection = page.getByText("Estimated Fee", { exact: true });
+  await expect(feeSection).toBeVisible({ timeout: 15_000 });
 
   // Check for transaction links section - this should always be present for approved proposals
   await expect(
@@ -65,9 +69,6 @@ test("NEAR Intents payment request for ETH", async ({ page }) => {
       'a[href*="nearblocks.io/txns/2trLm2bSSFiUDt2xckM3UW6C6BND4iksiqEihaEjtcbC"]'
     )
   ).toBeVisible();
-
-  // Wait a bit more for the target chain transaction to be fetched
-  await page.waitForTimeout(2000);
 
   // Check for target chain transaction link (Ethereum in this case)
   await expect(
@@ -86,6 +87,8 @@ test("NEAR Intents payment request for ETH", async ({ page }) => {
     path: "test-results/intents-payment-detail-final.png",
     fullPage: true,
   });
+
+  await page.waitForTimeout(500);
 });
 
 test("NEAR Intents payment request for NEAR", async ({ page }) => {
@@ -150,6 +153,8 @@ test("NEAR Intents payment request for NEAR", async ({ page }) => {
   console.log(
     "SUCCESS: Target chain transaction link correctly hidden for NEAR payment"
   );
+
+  await page.waitForTimeout(500);
 });
 
 test("Regular payment request shows transaction links", async ({ page }) => {
@@ -209,4 +214,6 @@ test("Regular payment request shows transaction links", async ({ page }) => {
   console.log(
     "SUCCESS: Target chain transaction link correctly hidden for regular payment"
   );
+
+  await page.waitForTimeout(500);
 });
