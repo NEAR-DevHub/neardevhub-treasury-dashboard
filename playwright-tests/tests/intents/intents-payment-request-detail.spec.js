@@ -6,14 +6,14 @@ test("NEAR Intents payment request for ETH", async ({ page }) => {
   const instanceAccount = "webassemblymusic-treasury.near";
   const daoAccount = "webassemblymusic-treasury.sputnik-dao.near";
   const modifiedWidgets = {};
-  
+
   // Capture browser console logs
-  page.on('console', msg => {
-    if (msg.type() === 'log' || msg.type() === 'error') {
+  page.on("console", (msg) => {
+    if (msg.type() === "log" || msg.type() === "error") {
       console.log(`Browser ${msg.type()}: ${msg.text()}`);
     }
   });
-  
+
   await redirectWeb4({
     page,
     contractId: instanceAccount,
@@ -33,56 +33,73 @@ test("NEAR Intents payment request for ETH", async ({ page }) => {
       'div[data-component="widgets.treasury-factory.near/widget/components.TokenAmountAndIcon"]'
     )
   ).toContainText("0.005 ETH");
-  
+
   // Wait for network info to load
   await page.waitForTimeout(3000);
-  
+
   // Check that network information is displayed for intents payments
-  await expect(page.locator('text=Network')).toBeVisible();
+  await expect(page.locator("text=Network")).toBeVisible();
   // Look for the network name specifically under the Network label
-  await expect(page.locator('span.text-capitalize').filter({ hasText: 'eth' })).toBeVisible();
-  
+  await expect(
+    page.locator("span.text-capitalize").filter({ hasText: "eth" })
+  ).toBeVisible();
+
   // Check for fee information (if present)
-  const feeSection = page.locator('text=Network Fee');
+  const feeSection = page.locator("text=Network Fee");
   if (await feeSection.isVisible()) {
     await expect(feeSection).toBeVisible();
   }
-  
+
   // Check for transaction links section - this should always be present for approved proposals
-  await expect(page.locator('label:has-text("Transaction Links")')).toBeVisible();
-  
+  await expect(
+    page.locator('label:has-text("Transaction Links")')
+  ).toBeVisible();
+
   // Check for NEAR Blocks link
   const nearBlocksButton = page.locator('a:has-text("on nearblocks.io")');
   await expect(nearBlocksButton).toBeVisible();
-  
+
   // Check for the specific transaction link to the actual execution transaction
-  await expect(page.locator('a[href*="nearblocks.io/txns/2trLm2bSSFiUDt2xckM3UW6C6BND4iksiqEihaEjtcbC"]')).toBeVisible();
-  
+  await expect(
+    page.locator(
+      'a[href*="nearblocks.io/txns/2trLm2bSSFiUDt2xckM3UW6C6BND4iksiqEihaEjtcbC"]'
+    )
+  ).toBeVisible();
+
   // Wait a bit more for the target chain transaction to be fetched
   await page.waitForTimeout(2000);
-  
+
   // Check for target chain transaction link (Ethereum in this case)
-  await expect(page.locator('a[href*="etherscan.io/tx/0x8f52efccdccc3bddc82abc15e259b3d1671959a9694f09d20276892a5863e8d6"]')).toBeVisible();
-  
+  await expect(
+    page.locator(
+      'a[href*="etherscan.io/tx/0x8f52efccdccc3bddc82abc15e259b3d1671959a9694f09d20276892a5863e8d6"]'
+    )
+  ).toBeVisible();
+
   // Verify that no fallback transaction links are shown
-  await expect(page.locator('a:has-text("Search execution")')).not.toBeVisible();
-  
+  await expect(
+    page.locator('a:has-text("Search execution")')
+  ).not.toBeVisible();
+
   // Take a screenshot to see the final result
-  await page.screenshot({ path: 'test-results/intents-payment-detail-final.png', fullPage: true });
+  await page.screenshot({
+    path: "test-results/intents-payment-detail-final.png",
+    fullPage: true,
+  });
 });
 
 test("NEAR Intents payment request for NEAR", async ({ page }) => {
   const instanceAccount = "webassemblymusic-treasury.near";
   const daoAccount = "webassemblymusic-treasury.sputnik-dao.near";
   const modifiedWidgets = {};
-  
+
   // Capture browser console logs
-  page.on('console', msg => {
-    if (msg.type() === 'log' || msg.type() === 'error') {
+  page.on("console", (msg) => {
+    if (msg.type() === "log" || msg.type() === "error") {
       console.log(`Browser ${msg.type()}: ${msg.text()}`);
     }
   });
-  
+
   await redirectWeb4({
     page,
     contractId: instanceAccount,
@@ -102,43 +119,51 @@ test("NEAR Intents payment request for NEAR", async ({ page }) => {
       'div[data-component="widgets.treasury-factory.near/widget/components.TokenAmountAndIcon"]'
     )
   ).toContainText("0.2 wNEAR");
-  
+
   // Wait for network info to load
   await page.waitForTimeout(3000);
-  
+
   // Check that network information is displayed for intents payments
-  await expect(page.locator('text=Network')).toBeVisible();
-  
+  await expect(page.locator("text=Network")).toBeVisible();
+
   // Check for transaction links section - this should always be present for approved proposals
-  await expect(page.locator('text=Payment Request Funded')).toBeVisible();
-  await expect(page.locator('label:has-text("Transaction Links")')).toBeVisible();
-  
+  await expect(page.locator("text=Payment Request Funded")).toBeVisible();
+  await expect(
+    page.locator('label:has-text("Transaction Links")')
+  ).toBeVisible();
+
   // Check for NEAR Blocks link
   const nearBlocksButton = page.locator('a:has-text("on nearblocks.io")');
   await expect(nearBlocksButton).toBeVisible();
-  
+
   // For NEAR-to-NEAR intents payments, target chain transaction link should NOT be shown
-  const targetTxLink = page.locator('a:has-text("on etherscan.io"), a:has-text("on polygonscan.com"), a:has-text("on bscscan.com")');
+  const targetTxLink = page.locator(
+    'a:has-text("on etherscan.io"), a:has-text("on polygonscan.com"), a:has-text("on bscscan.com")'
+  );
   await expect(targetTxLink).not.toBeVisible();
-  
+
   // Verify that no fallback transaction links are shown
-  await expect(page.locator('a:has-text("Search execution")')).not.toBeVisible();
-  
-  console.log('SUCCESS: Target chain transaction link correctly hidden for NEAR payment');
+  await expect(
+    page.locator('a:has-text("Search execution")')
+  ).not.toBeVisible();
+
+  console.log(
+    "SUCCESS: Target chain transaction link correctly hidden for NEAR payment"
+  );
 });
 
 test("Regular payment request shows transaction links", async ({ page }) => {
   const instanceAccount = "webassemblymusic-treasury.near";
   const daoAccount = "webassemblymusic-treasury.sputnik-dao.near";
   const modifiedWidgets = {};
-  
+
   // Capture browser console logs
-  page.on('console', msg => {
-    if (msg.type() === 'log' || msg.type() === 'error') {
+  page.on("console", (msg) => {
+    if (msg.type() === "log" || msg.type() === "error") {
       console.log(`Browser ${msg.type()}: ${msg.text()}`);
     }
   });
-  
+
   await redirectWeb4({
     page,
     contractId: instanceAccount,
@@ -147,33 +172,41 @@ test("Regular payment request shows transaction links", async ({ page }) => {
     modifiedWidgets,
     callWidgetNodeURLForContractWidgets: false,
   });
-  
+
   // Navigate to a regular (non-intents) approved payment request
   // Using id=8 which is confirmed to be a regular (non-intents) payment
   await page.goto(
     "https://webassemblymusic-treasury.near.page/?page=payments&tab=history&id=8"
   );
-  
+
   // Wait for the page to load
   await page.waitForTimeout(3000);
-  
+
   // Check that this is an approved proposal and verify transaction links
-  await expect(page.locator('text=Payment Request Funded')).toBeVisible();
-  
+  await expect(page.locator("text=Payment Request Funded")).toBeVisible();
+
   // Check for transaction links section - this should always be present for approved proposals
-  await expect(page.locator('text=Payment Request Funded')).toBeVisible();
-  await expect(page.locator('label:has-text("Transaction Links")')).toBeVisible();
-  
+  await expect(page.locator("text=Payment Request Funded")).toBeVisible();
+  await expect(
+    page.locator('label:has-text("Transaction Links")')
+  ).toBeVisible();
+
   // Check for NEAR Blocks link
   const nearBlocksButton = page.locator('a:has-text("on nearblocks.io")');
   await expect(nearBlocksButton).toBeVisible();
-  
+
   // For regular (non-intents) payments, target chain transaction link should NOT be shown
-  const targetTxLink = page.locator('a:has-text("on etherscan.io"), a:has-text("on polygonscan.com"), a:has-text("on bscscan.com")');
+  const targetTxLink = page.locator(
+    'a:has-text("on etherscan.io"), a:has-text("on polygonscan.com"), a:has-text("on bscscan.com")'
+  );
   await expect(targetTxLink).not.toBeVisible();
-  
+
   // Verify that no fallback transaction links are shown
-  await expect(page.locator('a:has-text("Search execution")')).not.toBeVisible();
-  
-  console.log('SUCCESS: Target chain transaction link correctly hidden for regular payment');
+  await expect(
+    page.locator('a:has-text("Search execution")')
+  ).not.toBeVisible();
+
+  console.log(
+    "SUCCESS: Target chain transaction link correctly hidden for regular payment"
+  );
 });
