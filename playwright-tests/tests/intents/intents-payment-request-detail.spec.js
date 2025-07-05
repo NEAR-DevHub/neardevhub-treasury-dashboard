@@ -48,10 +48,10 @@ test("NEAR Intents payment request for ETH", async ({ page }) => {
     await expect(feeSection).toBeVisible();
   }
   
-  // Check for transaction links section (should be present for all approved proposals)
+  // Check for transaction links section - this should always be present for approved proposals
   await expect(page.locator('text=Transaction Links')).toBeVisible();
   
-  // Check for NEAR Blocks link (either "View execution" or "Search execution")
+  // Check for NEAR Blocks link
   const nearBlocksButton = page.locator('a:has-text("on nearblocks.io")');
   await expect(nearBlocksButton).toBeVisible();
   
@@ -63,6 +63,9 @@ test("NEAR Intents payment request for ETH", async ({ page }) => {
   
   // Check for target chain transaction link (Ethereum in this case)
   await expect(page.locator('a[href*="etherscan.io/tx/0x8f52efccdccc3bddc82abc15e259b3d1671959a9694f09d20276892a5863e8d6"]')).toBeVisible();
+  
+  // Verify that no fallback transaction links are shown
+  await expect(page.locator('a:has-text("Search execution")')).not.toBeVisible();
   
   // Take a screenshot to see the final result
   await page.screenshot({ path: 'test-results/intents-payment-detail-final.png', fullPage: true });
@@ -106,7 +109,7 @@ test("NEAR Intents payment request for NEAR", async ({ page }) => {
   // Check that network information is displayed for intents payments
   await expect(page.locator('text=Network')).toBeVisible();
   
-  // Check for transaction links section (should be present for approved proposals)
+  // Check for transaction links section - this should always be present for approved proposals
   await expect(page.locator('text=Payment Request Funded')).toBeVisible();
   await expect(page.locator('text=Transaction Links')).toBeVisible();
   
@@ -117,6 +120,10 @@ test("NEAR Intents payment request for NEAR", async ({ page }) => {
   // For NEAR-to-NEAR intents payments, target chain transaction link should NOT be shown
   const targetTxLink = page.locator('a:has-text("on etherscan.io"), a:has-text("on polygonscan.com"), a:has-text("on bscscan.com")');
   await expect(targetTxLink).not.toBeVisible();
+  
+  // Verify that no fallback transaction links are shown
+  await expect(page.locator('a:has-text("Search execution")')).not.toBeVisible();
+  
   console.log('SUCCESS: Target chain transaction link correctly hidden for NEAR payment');
 });
 
@@ -153,15 +160,20 @@ test("Regular payment request shows transaction links", async ({ page }) => {
   // Check that this is an approved proposal and verify transaction links
   await expect(page.locator('text=Payment Request Funded')).toBeVisible();
   
-  // Check for transaction links section (should be present for all approved proposals)
+  // Check for transaction links section - this should always be present for approved proposals
+  await expect(page.locator('text=Payment Request Funded')).toBeVisible();
   await expect(page.locator('text=Transaction Links')).toBeVisible();
   
-  // Check for NEAR Blocks link (either "View execution" or "Search execution")
+  // Check for NEAR Blocks link
   const nearBlocksButton = page.locator('a:has-text("on nearblocks.io")');
   await expect(nearBlocksButton).toBeVisible();
   
   // For regular (non-intents) payments, target chain transaction link should NOT be shown
   const targetTxLink = page.locator('a:has-text("on etherscan.io"), a:has-text("on polygonscan.com"), a:has-text("on bscscan.com")');
   await expect(targetTxLink).not.toBeVisible();
+  
+  // Verify that no fallback transaction links are shown
+  await expect(page.locator('a:has-text("Search execution")')).not.toBeVisible();
+  
   console.log('SUCCESS: Target chain transaction link correctly hidden for regular payment');
 });

@@ -227,25 +227,7 @@ useEffect(() => {
   }
 }, [proposalData?.isIntentsPayment, networkInfo.blockchain]);
 
-// Set target network explorer links for approved intents payments
-useEffect(() => {
-  if (proposalData?.isIntentsPayment && proposalData?.status === "Approved" && 
-      networkInfo.blockchain && networkInfo.blockchain !== "near") {
-    // For target network explorers - initially set to recipient address
-    let targetExplorerLink = null;
-    if (networkInfo.blockchain === "eth") {
-      // For Ethereum, link to the recipient address on Etherscan as fallback
-      if (proposalData.intentsTokenInfo?.realRecipient) {
-        targetExplorerLink = `https://etherscan.io/address/${proposalData.intentsTokenInfo.realRecipient}`;
-      }
-    }
-    
-    setTransactionInfo(prev => ({
-      ...prev,
-      targetTxHash: targetExplorerLink,
-    }));
-  }
-}, [proposalData?.isIntentsPayment, proposalData?.status, networkInfo.blockchain, proposalData?.intentsTokenInfo]);
+// Note: No fallback target network explorer links - only show actual transaction links
 
 // Fetch target chain transaction hash for approved intents payments
 useEffect(() => {
@@ -338,11 +320,6 @@ useEffect(() => {
       ).then((response) => {
         if (!response.ok || !response.body?.txns) {
           console.log("No execution transactions found or API error");
-          // Fallback to a generic search link
-          setTransactionInfo(prev => ({
-            ...prev,
-            nearTxHash: `https://nearblocks.io/address/${treasuryDaoID}?tab=txns&method=on_proposal_callback`,
-          }));
           return;
         }
         
@@ -366,19 +343,9 @@ useEffect(() => {
           }));
         } else {
           console.log(`No execution transaction found for proposal ${proposalData.id}`);
-          // Fallback to a generic search link
-          setTransactionInfo(prev => ({
-            ...prev,
-            nearTxHash: `https://nearblocks.io/address/${treasuryDaoID}?tab=txns&method=on_proposal_callback`,
-          }));
         }
       }).catch((error) => {
         console.error("Error fetching execution transaction:", error);
-        // Fallback to a generic search link
-        setTransactionInfo(prev => ({
-          ...prev,
-          nearTxHash: `https://nearblocks.io/address/${treasuryDaoID}?tab=txns&method=on_proposal_callback`,
-        }));
       });
     };
     
@@ -580,7 +547,7 @@ return (
                     className="btn btn-outline-primary btn-sm d-flex align-items-center gap-2"
                     style={{ width: "fit-content" }}
                   >
-                    {transactionInfo.nearTxHash.includes('/txns/') ? 'View execution' : 'Search execution'} on nearblocks.io <i className="bi bi-box-arrow-up-right"></i>
+                    View execution on nearblocks.io <i className="bi bi-box-arrow-up-right"></i>
                   </a>
                   {transactionInfo.targetTxHash && (
                     <a
