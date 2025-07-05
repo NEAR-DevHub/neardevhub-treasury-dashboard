@@ -2,6 +2,10 @@ import { test } from "../../util/test.js";
 import { expect } from "@playwright/test";
 import { redirectWeb4, getLocalWidgetContent } from "../../util/web4.js";
 
+test.use({viewport: {
+    width: 1280,
+    height: 800
+}})
 test("USDC on ETH payment showcase", async ({ page }) => {
   const instanceAccount = "webassemblymusic-treasury.near";
   const daoAccount = "webassemblymusic-treasury.sputnik-dao.near";
@@ -38,12 +42,17 @@ test("USDC on ETH payment showcase", async ({ page }) => {
   await page.waitForTimeout(3000);
   
   // Check that network information is displayed (should show ETH)
-  await expect(page.locator('text=Network')).toBeVisible();
+  await expect(page.locator('label:has-text("Network"):not(:has-text("Fee"))')).toBeVisible();
   await expect(page.locator('span.text-capitalize').filter({ hasText: 'eth' })).toBeVisible();
+  
+  // Check that estimated fee is displayed
+  await expect(page.locator('label:has-text("Estimated Fee")')).toBeVisible();
+  await expect(page.locator('text=0.3 USDC')).toBeVisible();
+  await expect(page.locator('text=This is an estimated fee. Check the transaction links below for the actual fee charged.')).toBeVisible();
   
   // Check that this is an approved proposal with transaction links
   await expect(page.locator('text=Payment Request Funded')).toBeVisible();
-  await expect(page.locator('text=Transaction Links')).toBeVisible();
+  await expect(page.locator('label:has-text("Transaction Links")')).toBeVisible();
   
   // Find and click on the NEAR transaction link
   const nearTxLink = page.locator('a:has-text("on nearblocks.io")');

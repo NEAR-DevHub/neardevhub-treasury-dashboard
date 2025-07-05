@@ -49,7 +49,7 @@ test("NEAR Intents payment request for ETH", async ({ page }) => {
   }
   
   // Check for transaction links section - this should always be present for approved proposals
-  await expect(page.locator('text=Transaction Links')).toBeVisible();
+  await expect(page.locator('label:has-text("Transaction Links")')).toBeVisible();
   
   // Check for NEAR Blocks link
   const nearBlocksButton = page.locator('a:has-text("on nearblocks.io")');
@@ -111,7 +111,7 @@ test("NEAR Intents payment request for NEAR", async ({ page }) => {
   
   // Check for transaction links section - this should always be present for approved proposals
   await expect(page.locator('text=Payment Request Funded')).toBeVisible();
-  await expect(page.locator('text=Transaction Links')).toBeVisible();
+  await expect(page.locator('label:has-text("Transaction Links")')).toBeVisible();
   
   // Check for NEAR Blocks link
   const nearBlocksButton = page.locator('a:has-text("on nearblocks.io")');
@@ -162,7 +162,7 @@ test("Regular payment request shows transaction links", async ({ page }) => {
   
   // Check for transaction links section - this should always be present for approved proposals
   await expect(page.locator('text=Payment Request Funded')).toBeVisible();
-  await expect(page.locator('text=Transaction Links')).toBeVisible();
+  await expect(page.locator('label:has-text("Transaction Links")')).toBeVisible();
   
   // Check for NEAR Blocks link
   const nearBlocksButton = page.locator('a:has-text("on nearblocks.io")');

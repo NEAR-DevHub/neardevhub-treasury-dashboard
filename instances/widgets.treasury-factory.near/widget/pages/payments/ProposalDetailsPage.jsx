@@ -20,6 +20,7 @@ const [isDeleted, setIsDeleted] = useState(false);
 const [lockupNearBalances, setLockupNearBalances] = useState(null);
 const [networkInfo, setNetworkInfo] = useState({ blockchain: null, blockchainIcon: null });
 const [transactionInfo, setTransactionInfo] = useState({ nearTxHash: null, targetTxHash: null });
+const [estimatedFee, setEstimatedFee] = useState(null);
 
 const isCompactVersion = props.isCompactVersion;
 const accountId = context.accountId;
@@ -402,6 +403,81 @@ function getExplorerButtonText(url) {
   }
 }
 
+// Fetch estimated withdrawal fee for intents payments
+useEffect(() => {
+  if (proposalData?.isIntentsPayment && 
+      proposalData?.intentsTokenInfo?.tokenContract &&
+      proposalData?.intentsTokenInfo?.realRecipient &&
+      networkInfo.blockchain) {
+    
+    // Determine the chain format
+    let chainFormat = null;
+    if (networkInfo.blockchain === "eth") {
+      chainFormat = "eth:1";
+    } else if (networkInfo.blockchain === "polygon") {
+      chainFormat = "polygon:137";
+    } else if (networkInfo.blockchain === "bsc") {
+      chainFormat = "bsc:56";
+    } else if (networkInfo.blockchain === "near") {
+      chainFormat = "near:mainnet";
+    }
+    
+    if (!chainFormat) {
+      console.log(`Unsupported blockchain for fee estimation: ${networkInfo.blockchain}`);
+      return;
+    }
+    
+    console.log(`Fetching estimated withdrawal fee for ${proposalData.intentsTokenInfo.tokenContract} to ${chainFormat}`);
+    
+    // Call withdrawal_estimate API
+    asyncFetch("https://bridge.chaindefuser.com/rpc", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "withdrawal_estimate",
+        params: [{
+          chain: chainFormat,
+          token: proposalData.intentsTokenInfo.tokenContract,
+          address: proposalData.intentsTokenInfo.realRecipient,
+        }]
+      })
+    }).then((response) => {
+      if (!response || !response.body) {
+        console.log("No fee estimation response");
+        return;
+      }
+      
+      const result = response.body.result;
+      if (result && result.withdrawalFee && result.withdrawalFeeDecimals) {
+        const feeAmount = parseFloat(result.withdrawalFee) / Math.pow(10, result.withdrawalFeeDecimals);
+        const tokenSymbol = result.token?.asset_name || networkInfo.blockchain?.toUpperCase() || "tokens";
+        
+        console.log(`Estimated withdrawal fee: ${feeAmount} ${tokenSymbol}`);
+        
+        setEstimatedFee({
+          amount: feeAmount,
+          symbol: tokenSymbol,
+          isZero: feeAmount === 0,
+        });
+      } else {
+        console.log("No fee information in response");
+        setEstimatedFee(null);
+      }
+    }).catch((error) => {
+      console.error("Error fetching estimated withdrawal fee:", error);
+      setEstimatedFee(null);
+    });
+  } else {
+    // Clear fee info for non-intents payments
+    setEstimatedFee(null);
+  }
+}, [proposalData?.isIntentsPayment, proposalData?.intentsTokenInfo?.tokenContract, 
+    proposalData?.intentsTokenInfo?.realRecipient, networkInfo.blockchain]);
+
 return (
   <>
     {networkInfo.blockchain && proposalData?.isIntentsPayment && (
@@ -523,16 +599,16 @@ return (
                 </div>
               </div>
             )}
-            {proposalData?.isIntentsPayment && proposalData?.intentsTokenInfo?.fee && (
+            {proposalData?.isIntentsPayment && estimatedFee && !estimatedFee.isZero && (
               <div className="d-flex flex-column gap-2 mt-3">
-                <label className="border-top">Network Fee</label>
-                <div className="d-flex gap-2 align-items-center">
+                <label className="border-top">Estimated Fee</label>
+                <div className="d-flex flex-column gap-2">
                   <span style={{ fontSize: "16px" }}>
-                    {typeof proposalData.intentsTokenInfo.fee === 'string' ? 
-                      proposalData.intentsTokenInfo.fee : 
-                      JSON.stringify(proposalData.intentsTokenInfo.fee)
-                    }
+                    {estimatedFee.amount} {estimatedFee.symbol}
                   </span>
+                  <small className="text-muted" style={{ fontSize: "12px" }}>
+                    This is an estimated fee. Check the transaction links below for the actual fee charged.
+                  </small>
                 </div>
               </div>
             )}

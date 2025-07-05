@@ -35,7 +35,7 @@ export default defineConfig({
     headless: true,
     video: {
       mode: process.env.CI ? "on-first-retry" : "on",
-      size: { width: 1024, height: 768 }
+      size: { width: 1280, height: 800 }
     },
     /* Maximum time each action such as `click()` can take. Defaults to 0 (no limit). */
     actionTimeout: 0,
