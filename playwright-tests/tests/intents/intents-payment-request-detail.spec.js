@@ -51,8 +51,8 @@ test("NEAR Intents payment request for ETH", async ({ page }) => {
   // Check for transaction links section (should be present for all approved proposals)
   await expect(page.locator('text=Transaction Links')).toBeVisible();
   
-  // Check for NEAR Blocks link (either "View Execution" or "Search Execution")
-  const nearBlocksButton = page.locator('a:has-text("on NEAR Blocks")');
+  // Check for NEAR Blocks link (either "View execution" or "Search execution")
+  const nearBlocksButton = page.locator('a:has-text("on nearblocks.io")');
   await expect(nearBlocksButton).toBeVisible();
   
   // Check for the specific transaction link to the actual execution transaction
@@ -111,11 +111,11 @@ test("NEAR Intents payment request for NEAR", async ({ page }) => {
   await expect(page.locator('text=Transaction Links')).toBeVisible();
   
   // Check for NEAR Blocks link
-  const nearBlocksButton = page.locator('a:has-text("on NEAR Blocks")');
+  const nearBlocksButton = page.locator('a:has-text("on nearblocks.io")');
   await expect(nearBlocksButton).toBeVisible();
   
   // For NEAR-to-NEAR intents payments, target chain transaction link should NOT be shown
-  const targetTxLink = page.locator('a:has-text("Explorer"):not(:has-text("NEAR Blocks"))');
+  const targetTxLink = page.locator('a:has-text("on etherscan.io"), a:has-text("on polygonscan.com"), a:has-text("on bscscan.com")');
   await expect(targetTxLink).not.toBeVisible();
   console.log('SUCCESS: Target chain transaction link correctly hidden for NEAR payment');
 });
@@ -156,12 +156,12 @@ test("Regular payment request shows transaction links", async ({ page }) => {
   // Check for transaction links section (should be present for all approved proposals)
   await expect(page.locator('text=Transaction Links')).toBeVisible();
   
-  // Check for NEAR Blocks link (either "View Execution" or "Search Execution")
-  const nearBlocksButton = page.locator('a:has-text("on NEAR Blocks")');
+  // Check for NEAR Blocks link (either "View execution" or "Search execution")
+  const nearBlocksButton = page.locator('a:has-text("on nearblocks.io")');
   await expect(nearBlocksButton).toBeVisible();
   
   // For regular (non-intents) payments, target chain transaction link should NOT be shown
-  const targetTxLink = page.locator('a:has-text("Explorer"):not(:has-text("NEAR Blocks"))');
+  const targetTxLink = page.locator('a:has-text("on etherscan.io"), a:has-text("on polygonscan.com"), a:has-text("on bscscan.com")');
   await expect(targetTxLink).not.toBeVisible();
   console.log('SUCCESS: Target chain transaction link correctly hidden for regular payment');
 });

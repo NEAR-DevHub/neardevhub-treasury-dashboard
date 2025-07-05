@@ -422,6 +422,19 @@ function checkProposalStatus(proposalId) {
     });
 }
 
+function getExplorerButtonText(url) {
+  try {
+    const urlObj = new URL(url);
+    const hostname = urlObj.hostname;
+    const actionText = url.includes('/tx/') ? 'View transfer' : 'View address';
+    return `${actionText} on ${hostname}`;
+  } catch (e) {
+    // Fallback if URL parsing fails
+    const actionText = url.includes('/tx/') ? 'View transfer' : 'View address';
+    return `${actionText} on target explorer`;
+  }
+}
+
 return (
   <>
     {networkInfo.blockchain && proposalData?.isIntentsPayment && (
@@ -567,7 +580,7 @@ return (
                     className="btn btn-outline-primary btn-sm d-flex align-items-center gap-2"
                     style={{ width: "fit-content" }}
                   >
-                    {transactionInfo.nearTxHash.includes('/txns/') ? 'View Execution' : 'Search Execution'} on NEAR Blocks <i className="bi bi-box-arrow-up-right"></i>
+                    {transactionInfo.nearTxHash.includes('/txns/') ? 'View execution' : 'Search execution'} on nearblocks.io <i className="bi bi-box-arrow-up-right"></i>
                   </a>
                   {transactionInfo.targetTxHash && (
                     <a
@@ -577,7 +590,7 @@ return (
                       className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2"
                       style={{ width: "fit-content" }}
                     >
-                      {transactionInfo.targetTxHash.includes('/tx/') ? 'View Transfer' : 'View Address'} on {networkInfo.blockchain?.toUpperCase()} Explorer <i className="bi bi-box-arrow-up-right"></i>
+                      {getExplorerButtonText(transactionInfo.targetTxHash)} <i className="bi bi-box-arrow-up-right"></i>
                     </a>
                   )}
                 </div>
