@@ -18,6 +18,8 @@ const { treasuryDaoID, showKYC } = VM.require(`${instance}/widget/config.data`);
 const [proposalData, setProposalData] = useState(null);
 const [isDeleted, setIsDeleted] = useState(false);
 const [lockupNearBalances, setLockupNearBalances] = useState(null);
+const [networkInfo, setNetworkInfo] = useState({ blockchain: null, blockchainIcon: null });
+const [transactionInfo, setTransactionInfo] = useState({ nearTxHash: null, targetTxHash: null });
 
 const isCompactVersion = props.isCompactVersion;
 const accountId = context.accountId;
@@ -110,6 +112,9 @@ useEffect(() => {
             tokenContract: decodedArgs?.token,
             realRecipient: realRecipient,
             amount: decodedArgs?.amount,
+            fee: decodedArgs?.fee,
+            memo: decodedArgs?.memo,
+            originalArgs: decodedArgs,
           };
 
           args = {
@@ -182,6 +187,61 @@ useEffect(() => {
   }
 }, [id, proposalPeriod, proposalData]);
 
+// Fetch network information for intents payments
+useEffect(() => {
+  if (proposalData?.isIntentsPayment && proposalData?.intentsTokenInfo?.tokenContract) {
+    const address = proposalData.intentsTokenInfo.tokenContract;
+    
+    // Use asyncFetch for better BOS compatibility
+    asyncFetch("https://api-mng-console.chaindefuser.com/api/tokens")
+      .then((response) => {
+        if (!response || !response.body) {
+          return;
+        }
+        
+        const intentsTokensData = response.body?.items || [];
+        const intentsToken = intentsTokensData.find(
+          (token) => token.defuse_asset_id === `nep141:${address}`
+        );
+        
+        if (intentsToken && intentsToken.blockchain) {
+          setNetworkInfo(prev => ({
+            ...prev,
+            blockchain: intentsToken.blockchain,
+          }));
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to fetch network info:", error);
+      });
+  }
+}, [proposalData?.isIntentsPayment, proposalData?.intentsTokenInfo?.tokenContract]);
+
+// Fetch transaction information for approved intents payments
+useEffect(() => {
+  if (proposalData?.isIntentsPayment && proposalData?.status === "Approved") {
+    // For approved proposals, we can construct links to view the transactions
+    // The proposal execution should have created an execute_intents transaction on intents.near
+    const nearTxLink = `https://nearblocks.io/address/intents.near?tab=txns&p=1&f=execute_intents`;
+    
+    // For target network explorers
+    let targetExplorerLink = null;
+    if (networkInfo.blockchain === "eth") {
+      // For Ethereum, we'd need the actual transaction hash
+      // For now, link to the recipient address on Etherscan
+      if (proposalData.intentsTokenInfo?.realRecipient) {
+        targetExplorerLink = `https://etherscan.io/address/${proposalData.intentsTokenInfo.realRecipient}`;
+      }
+    }
+    
+    setTransactionInfo(prev => ({
+      ...prev,
+      nearTxHash: nearTxLink,
+      targetTxHash: targetExplorerLink,
+    }));
+  }
+}, [proposalData?.isIntentsPayment, proposalData?.status, networkInfo.blockchain, proposalData?.intentsTokenInfo]);
+
 useEffect(() => {
   if (proposalData.id !== id) {
     setProposalData(null);
@@ -218,9 +278,25 @@ function checkProposalStatus(proposalId) {
 }
 
 return (
-  <Widget
-    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.ProposalDetails`}
-    props={{
+  <>
+    {networkInfo.blockchain && proposalData?.isIntentsPayment && (
+      <Widget
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Web3IconFetcher`}
+        props={{
+          tokens: [networkInfo.blockchain],
+          onIconsLoaded: (iconCache) => {
+            setNetworkInfo(prev => ({
+              ...prev,
+              blockchainIcon: iconCache[networkInfo.blockchain].tokenIcon,
+            }));
+          },
+          fetchNetworkIcons: true,
+        }}
+      />
+    )}
+    <Widget
+      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.ProposalDetails`}
+      props={{
       ...props,
       page: "payments",
       VoteActions: (hasVotingPermission || hasDeletePermission) &&
@@ -311,6 +387,57 @@ return (
                 }}
               />
             </h5>
+            {proposalData?.isIntentsPayment && networkInfo.blockchain && (
+              <div className="d-flex flex-column gap-2 mt-3">
+                <label className="border-top">Network</label>
+                <div className="d-flex gap-2 align-items-center">
+                  {networkInfo.blockchainIcon && (
+                    <img src={networkInfo.blockchainIcon} width="20" height="20" alt={networkInfo.blockchain} />
+                  )}
+                  <span style={{ fontSize: "18px", fontWeight: "bold" }} className="text-capitalize">{networkInfo.blockchain}</span>
+                </div>
+              </div>
+            )}
+            {proposalData?.isIntentsPayment && proposalData?.intentsTokenInfo?.fee && (
+              <div className="d-flex flex-column gap-2 mt-3">
+                <label className="border-top">Network Fee</label>
+                <div className="d-flex gap-2 align-items-center">
+                  <span style={{ fontSize: "16px" }}>
+                    {typeof proposalData.intentsTokenInfo.fee === 'string' ? 
+                      proposalData.intentsTokenInfo.fee : 
+                      JSON.stringify(proposalData.intentsTokenInfo.fee)
+                    }
+                  </span>
+                </div>
+              </div>
+            )}
+            {proposalData?.isIntentsPayment && transactionInfo.nearTxHash && (
+              <div className="d-flex flex-column gap-2 mt-3">
+                <label className="border-top">Transaction Links</label>
+                <div className="d-flex flex-column gap-2">
+                  <a
+                    href={transactionInfo.nearTxHash}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-outline-primary btn-sm d-flex align-items-center gap-2"
+                    style={{ width: "fit-content" }}
+                  >
+                    View on NEAR Blocks <i className="bi bi-box-arrow-up-right"></i>
+                  </a>
+                  {transactionInfo.targetTxHash && (
+                    <a
+                      href={transactionInfo.targetTxHash}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2"
+                      style={{ width: "fit-content" }}
+                    >
+                      View on {networkInfo.blockchain} Explorer <i className="bi bi-box-arrow-up-right"></i>
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       ),
@@ -330,4 +457,5 @@ return (
       checkProposalStatus,
     }}
   />
+  </>
 );
