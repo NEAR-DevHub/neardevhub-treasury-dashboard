@@ -650,7 +650,7 @@ return (
                           href={transactionInfo.nearTxHash}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="btn btn-outline-primary btn-sm d-flex align-items-center gap-2"
+                          className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2"
                           style={{ width: "fit-content" }}
                         >
                           View execution on nearblocks.io{" "}

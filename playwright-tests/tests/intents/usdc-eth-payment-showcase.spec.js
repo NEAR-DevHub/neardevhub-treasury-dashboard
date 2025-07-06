@@ -8,9 +8,7 @@ test.use({
     height: 800,
   },
 });
-test("USDC on ETH payment showcase @treasury-testing", async ({
-  page,
-}, testInfo) => {
+test("USDC on ETH payment request detail", async ({ page }, testInfo) => {
   // Skip this test if not running on the treasury-testing project
   test.skip(
     testInfo.project.name !== "treasury-testing",
@@ -84,11 +82,16 @@ test("USDC on ETH payment showcase @treasury-testing", async ({
 
   // Find and click on the NEAR transaction link
   const nearTxLink = page.locator('a:has-text("on nearblocks.io")');
-  await expect(nearTxLink).toBeVisible();
 
+  await expect(nearTxLink).toBeVisible();
+  await nearTxLink.hover();
+  await page.waitForTimeout(500);
   // Get the href URL and navigate to it in the same tab
   const nearTxUrl = await nearTxLink.getAttribute("href");
   console.log("Navigating to NEAR transaction:", nearTxUrl);
+  expect(nearTxUrl).toBe(
+    "https://nearblocks.io/txns/BQcD4XxrXwBVryBkuyXevsuk9eFQhZ23gXusQPaxTJ32"
+  );
   await page.goto(nearTxUrl);
 
   // Wait for the NEAR blocks page to load
@@ -97,18 +100,24 @@ test("USDC on ETH payment showcase @treasury-testing", async ({
 
   // Navigate back to the treasury page
   await page.goBack();
-  await page.waitForLoadState("networkidle");
+  await expect(page.locator("text=12 USDC")).toBeVisible();
 
   // Wait a moment before checking for target chain link
-  await page.waitForTimeout(2000);
+  await page.waitForTimeout(200);
 
   // Find and navigate to the Ethereum transaction link (if available)
   const ethTxLink = page.locator('a:has-text("on etherscan.io")');
+  await ethTxLink.hover();
+  await page.waitForTimeout(500);
   console.log("Found Ethereum transaction link");
 
   // Get the href URL and navigate to it in the same tab
   const ethTxUrl = await ethTxLink.getAttribute("href");
   console.log("Navigating to Ethereum transaction:", ethTxUrl);
+  expect(ethTxUrl).toBe(
+    "https://etherscan.io/tx/0xe1169baab6d9c0b459c2129c2660486a742a4986175fc86e2417054c0f8b5ad0"
+  );
+
   await page.goto(ethTxUrl);
 
   // Wait for the Etherscan page to load
@@ -117,10 +126,7 @@ test("USDC on ETH payment showcase @treasury-testing", async ({
 
   // Navigate back to the treasury page
   await page.goBack();
-  await page.waitForLoadState("networkidle");
-
-  // Final pause to show the complete page
-  await page.waitForTimeout(2000);
+  await expect(page.locator("text=12 USDC")).toBeVisible();
 
   console.log(
     "SHOWCASE COMPLETE: USDC on ETH payment with transaction links demonstrated"
