@@ -202,23 +202,60 @@ useEffect(() => {
   ) {
     const address = proposalData.intentsTokenInfo.tokenContract;
 
-    // Use asyncFetch for better BOS compatibility
-    asyncFetch("https://api-mng-console.chaindefuser.com/api/tokens")
+    asyncFetch("https://bridge.chaindefuser.com/rpc", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        id: "supportedTokensFetchAll",
+        jsonrpc: "2.0",
+        method: "supported_tokens",
+        params: [{}], // Fetch all tokens
+      }),
+    })
       .then((response) => {
         if (!response || !response.body) {
           return;
         }
 
-        const intentsTokensData = response.body?.items || [];
+        const intentsTokensData = response.body?.result.tokens || [];
+
         const intentsToken = intentsTokensData.find(
-          (token) => token.defuse_asset_id === `nep141:${address}`
+          (token) => token.near_token_id === address
         );
 
-        if (intentsToken && intentsToken.blockchain) {
+        if (intentsToken) {
+          const defuse_asset_identifier_parts =
+            intentsToken.defuse_asset_identifier.split(":");
+          const blockchain = `${defuse_asset_identifier_parts[0]}:${defuse_asset_identifier_parts[1]}`;
           setNetworkInfo((prev) => ({
             ...prev,
-            blockchain: intentsToken.blockchain,
+            blockchain,
+            symbol: intentsToken.asset_name,
           }));
+
+          // Extract withdrawal fee information
+          if (intentsToken.withdrawal_fee && intentsToken.decimals) {
+            const feeAmount =
+              parseFloat(intentsToken.withdrawal_fee) /
+              Math.pow(10, intentsToken.decimals);
+            const tokenSymbol =
+              intentsToken.asset_name ||
+              intentsToken.blockchain?.toUpperCase() ||
+              "tokens";
+
+            console.log(`Withdrawal fee: ${feeAmount} ${tokenSymbol}`);
+
+            setEstimatedFee({
+              amount: feeAmount,
+              symbol: tokenSymbol,
+              isZero: feeAmount === 0,
+            });
+          } else {
+            setEstimatedFee(null);
+          }
+        } else {
+          // Clear fee info if token not found
+          setEstimatedFee(null);
         }
       })
       .catch((error) => {
@@ -230,13 +267,18 @@ useEffect(() => {
   proposalData?.intentsTokenInfo?.tokenContract,
 ]);
 
-// Clear target chain transaction info for non-intents proposals or NEAR blockchain
+// Clear target chain transaction info and fee info for non-intents proposals or NEAR blockchain
 useEffect(() => {
   if (!proposalData?.isIntentsPayment || networkInfo.blockchain === "near") {
     setTransactionInfo((prev) => ({
       ...prev,
       targetTxHash: null,
     }));
+
+    // Clear fee info for non-intents payments or NEAR payments (no withdrawal fee)
+    if (!proposalData?.isIntentsPayment || networkInfo.blockchain === "near") {
+      setEstimatedFee(null);
+    }
   }
 }, [proposalData?.isIntentsPayment, networkInfo.blockchain]);
 
@@ -461,298 +503,217 @@ function getExplorerButtonText(url) {
   }
 }
 
-// Fetch estimated withdrawal fee for intents payments
-useEffect(() => {
-  if (
-    proposalData?.isIntentsPayment &&
-    proposalData?.intentsTokenInfo?.tokenContract &&
-    proposalData?.intentsTokenInfo?.realRecipient &&
-    networkInfo.blockchain
-  ) {
-    // Determine the chain format
-    let chainFormat = null;
-    if (networkInfo.blockchain === "eth") {
-      chainFormat = "eth:1";
-    } else if (networkInfo.blockchain === "polygon") {
-      chainFormat = "polygon:137";
-    } else if (networkInfo.blockchain === "bsc") {
-      chainFormat = "bsc:56";
-    } else if (networkInfo.blockchain === "near") {
-      chainFormat = "near:mainnet";
-    }
-
-    if (!chainFormat) {
-      console.log(
-        `Unsupported blockchain for fee estimation: ${networkInfo.blockchain}`
-      );
-      return;
-    }
-
-    console.log(
-      `Fetching estimated withdrawal fee for ${proposalData.intentsTokenInfo.tokenContract} to ${chainFormat}`
-    );
-
-    // Call withdrawal_estimate API
-    asyncFetch("https://bridge.chaindefuser.com/rpc", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id: 1,
-        method: "withdrawal_estimate",
-        params: [
-          {
-            chain: chainFormat,
-            token: proposalData.intentsTokenInfo.tokenContract,
-            address: proposalData.intentsTokenInfo.realRecipient,
-          },
-        ],
-      }),
-    })
-      .then((response) => {
-        if (!response || !response.body) {
-          console.log("No fee estimation response");
-          return;
-        }
-
-        const result = response.body.result;
-        if (result && result.withdrawalFee && result.withdrawalFeeDecimals) {
-          const feeAmount =
-            parseFloat(result.withdrawalFee) /
-            Math.pow(10, result.withdrawalFeeDecimals);
-          const tokenSymbol =
-            result.token?.asset_name ||
-            networkInfo.blockchain?.toUpperCase() ||
-            "tokens";
-
-          console.log(`Estimated withdrawal fee: ${feeAmount} ${tokenSymbol}`);
-
-          setEstimatedFee({
-            amount: feeAmount,
-            symbol: tokenSymbol,
-            isZero: feeAmount === 0,
-          });
-        } else {
-          console.log("No fee information in response");
-          setEstimatedFee(null);
-        }
-      })
-      .catch((error) => {
-        console.error("Error fetching estimated withdrawal fee:", error);
-        setEstimatedFee(null);
-      });
-  } else {
-    // Clear fee info for non-intents payments
-    setEstimatedFee(null);
-  }
-}, [
-  proposalData?.isIntentsPayment,
-  proposalData?.intentsTokenInfo?.tokenContract,
-  proposalData?.intentsTokenInfo?.realRecipient,
-  networkInfo.blockchain,
-]);
-
 return (
   <>
-    {networkInfo.blockchain && proposalData?.isIntentsPayment && (
+    {((proposalData && !proposalData.isIntentsPayment) ||
+      (proposalData && networkInfo.iconLoadFinished)) && (
+      <Widget
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.ProposalDetails`}
+        props={{
+          ...props,
+          page: "payments",
+          VoteActions: (hasVotingPermission || hasDeletePermission) &&
+            proposalData.status === "InProgress" && (
+              <Widget
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.VoteActions`}
+                props={{
+                  instance,
+                  votes: proposalData?.votes,
+                  proposalId: proposalData?.id,
+                  hasDeletePermission,
+                  hasVotingPermission,
+                  proposalCreator: proposalData?.proposer,
+                  isIntentsRequest: proposalData?.isIntentsPayment,
+                  nearBalance: proposalData?.isLockupTransfer
+                    ? lockupNearBalances.available
+                    : nearBalances.available,
+                  currentAmount: proposalData?.args?.amount,
+                  currentContract: proposalData?.args?.token_id,
+                  requiredVotes,
+                  checkProposalStatus: () =>
+                    checkProposalStatus(proposalData?.id),
+                  isProposalDetailsPage: true,
+                }}
+              />
+            ),
+          ProposalContent: (
+            <div className="card card-body d-flex flex-column gap-2">
+              <h6 className="mb-0 flex-1">{proposalData?.title}</h6>
+              {proposalData?.summary && (
+                <div className=" text-secondary">{proposalData?.summary}</div>
+              )}
+              {proposalData?.proposalId && (
+                <div>
+                  <a
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    href={proposalData?.proposalUrl}
+                  >
+                    <button
+                      className="btn p-0 d-flex align-items-center gap-2 h-auto"
+                      style={{ fontSize: 14 }}
+                    >
+                      Open Proposal <i class="bi bi-box-arrow-up-right"></i>
+                    </button>
+                  </a>
+                </div>
+              )}
+              <div className=" d-flex flex-column gap-2 mt-1">
+                <label className="border-top">Recipient</label>
+                <div className="d-flex justify-content-between gap-2 align-items-center flex-wrap">
+                  <Widget
+                    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
+                    props={{
+                      accountId: proposalData?.args.receiver_id,
+                      showKYC,
+                      displayImage: true,
+                      displayName: true,
+                      instance,
+                      profileClass: "text-secondary text-sm",
+                    }}
+                  />
+                  <Widget
+                    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Copy`}
+                    props={{
+                      label: "Copy Address",
+                      clipboardText: proposalData?.args.receiver_id,
+                      showLogo: true,
+                      className:
+                        "btn btn-outline-secondary d-flex gap-1 align-items-center",
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="d-flex flex-column gap-2 mt-1">
+                <label className="border-top">Funding Ask</label>
+                <h5 className="mb-0">
+                  <Widget
+                    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmountAndIcon`}
+                    props={{
+                      instance,
+                      amountWithoutDecimals: proposalData?.args.amount,
+                      showAllDecimals: true,
+                      address: proposalData?.args.token_id,
+                      // For intents payments, we need to use the actual token contract
+                      ...(proposalData?.isIntentsPayment && {
+                        address: proposalData?.intentsTokenInfo?.tokenContract,
+                      }),
+                    }}
+                  />
+                </h5>
+                {proposalData?.isIntentsPayment && networkInfo.blockchain && (
+                  <div className="d-flex flex-column gap-2 mt-3">
+                    <label className="border-top">Network</label>
+                    <div className="d-flex gap-2 align-items-center">
+                      {networkInfo.blockchainIcon && (
+                        <img
+                          src={networkInfo.blockchainIcon}
+                          width="20"
+                          height="20"
+                          alt={networkInfo.blockchain}
+                        />
+                      )}
+                      <span
+                        style={{ fontSize: "18px", fontWeight: "bold" }}
+                        className="text-capitalize"
+                      >
+                        {networkInfo.name ?? networkInfo.blockchain}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                {proposalData?.isIntentsPayment &&
+                  estimatedFee &&
+                  !estimatedFee.isZero && (
+                    <div className="d-flex flex-column gap-2 mt-3">
+                      <label className="border-top">Estimated Fee</label>
+                      <div className="d-flex flex-column gap-2">
+                        <span style={{ fontSize: "16px" }}>
+                          {estimatedFee.amount} {estimatedFee.symbol}
+                        </span>
+                        <small
+                          className="text-muted"
+                          style={{ fontSize: "12px" }}
+                        >
+                          This is an estimated fee. Check the transaction links
+                          below for the actual fee charged.
+                        </small>
+                      </div>
+                    </div>
+                  )}
+                {proposalData?.status === "Approved" &&
+                  transactionInfo.nearTxHash && (
+                    <div className="d-flex flex-column gap-2 mt-3">
+                      <label className="border-top">Transaction Links</label>
+                      <div className="d-flex flex-column gap-2">
+                        <a
+                          href={transactionInfo.nearTxHash}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn btn-outline-primary btn-sm d-flex align-items-center gap-2"
+                          style={{ width: "fit-content" }}
+                        >
+                          View execution on nearblocks.io{" "}
+                          <i className="bi bi-box-arrow-up-right"></i>
+                        </a>
+                        {transactionInfo.targetTxHash && (
+                          <a
+                            href={transactionInfo.targetTxHash}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2"
+                            style={{ width: "fit-content" }}
+                          >
+                            {getExplorerButtonText(
+                              transactionInfo.targetTxHash
+                            )}{" "}
+                            <i className="bi bi-box-arrow-up-right"></i>
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
+              </div>
+            </div>
+          ),
+          proposalData: proposalData,
+          isDeleted: isDeleted,
+          isCompactVersion,
+          approversGroup: transferApproversGroup,
+          instance,
+          deleteGroup,
+          proposalStatusLabel: {
+            approved: "Payment Request Funded",
+            rejected: "Payment Request Rejected",
+            deleted: "Payment Request Deleted",
+            failed: "Payment Request Failed",
+            expired: "Payment Request Expired",
+          },
+          checkProposalStatus,
+        }}
+      />
+    )}
+    {networkInfo.blockchain && !networkInfo.iconLoadFinished && (
       <Widget
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Web3IconFetcher`}
         props={{
-          tokens: [networkInfo.blockchain],
+          tokens: [
+            {
+              symbol: networkInfo.symbol,
+              networkId: networkInfo.blockchain,
+            },
+          ],
           onIconsLoaded: (iconCache) => {
             setNetworkInfo((prev) => ({
               ...prev,
-              blockchainIcon: iconCache[networkInfo.blockchain].tokenIcon,
+              blockchainIcon: iconCache[networkInfo.blockchain].networkIcon,
+              name: iconCache[networkInfo.blockchain].networkName,
+              iconLoadFinished: true,
             }));
           },
           fetchNetworkIcons: true,
         }}
       />
     )}
-    <Widget
-      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.ProposalDetails`}
-      props={{
-        ...props,
-        page: "payments",
-        VoteActions: (hasVotingPermission || hasDeletePermission) &&
-          proposalData.status === "InProgress" && (
-            <Widget
-              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.VoteActions`}
-              props={{
-                instance,
-                votes: proposalData?.votes,
-                proposalId: proposalData?.id,
-                hasDeletePermission,
-                hasVotingPermission,
-                proposalCreator: proposalData?.proposer,
-                isIntentsRequest: proposalData?.isIntentsPayment,
-                nearBalance: proposalData?.isLockupTransfer
-                  ? lockupNearBalances.available
-                  : nearBalances.available,
-                currentAmount: proposalData?.args?.amount,
-                currentContract: proposalData?.args?.token_id,
-                requiredVotes,
-                checkProposalStatus: () =>
-                  checkProposalStatus(proposalData?.id),
-                isProposalDetailsPage: true,
-              }}
-            />
-          ),
-        ProposalContent: (
-          <div className="card card-body d-flex flex-column gap-2">
-            <h6 className="mb-0 flex-1">{proposalData?.title}</h6>
-            {proposalData?.summary && (
-              <div className=" text-secondary">{proposalData?.summary}</div>
-            )}
-            {proposalData?.proposalId && (
-              <div>
-                <a
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  href={proposalData?.proposalUrl}
-                >
-                  <button
-                    className="btn p-0 d-flex align-items-center gap-2 h-auto"
-                    style={{ fontSize: 14 }}
-                  >
-                    Open Proposal <i class="bi bi-box-arrow-up-right"></i>
-                  </button>
-                </a>
-              </div>
-            )}
-            <div className=" d-flex flex-column gap-2 mt-1">
-              <label className="border-top">Recipient</label>
-              <div className="d-flex justify-content-between gap-2 align-items-center flex-wrap">
-                <Widget
-                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
-                  props={{
-                    accountId: proposalData?.args.receiver_id,
-                    showKYC,
-                    displayImage: true,
-                    displayName: true,
-                    instance,
-                    profileClass: "text-secondary text-sm",
-                  }}
-                />
-                <Widget
-                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Copy`}
-                  props={{
-                    label: "Copy Address",
-                    clipboardText: proposalData?.args.receiver_id,
-                    showLogo: true,
-                    className:
-                      "btn btn-outline-secondary d-flex gap-1 align-items-center",
-                  }}
-                />
-              </div>
-            </div>
-            <div className="d-flex flex-column gap-2 mt-1">
-              <label className="border-top">Funding Ask</label>
-              <h5 className="mb-0">
-                <Widget
-                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmountAndIcon`}
-                  props={{
-                    instance,
-                    amountWithoutDecimals: proposalData?.args.amount,
-                    showAllDecimals: true,
-                    address: proposalData?.args.token_id,
-                    // For intents payments, we need to use the actual token contract
-                    ...(proposalData?.isIntentsPayment && {
-                      address: proposalData?.intentsTokenInfo?.tokenContract,
-                    }),
-                  }}
-                />
-              </h5>
-              {proposalData?.isIntentsPayment && networkInfo.blockchain && (
-                <div className="d-flex flex-column gap-2 mt-3">
-                  <label className="border-top">Network</label>
-                  <div className="d-flex gap-2 align-items-center">
-                    {networkInfo.blockchainIcon && (
-                      <img
-                        src={networkInfo.blockchainIcon}
-                        width="20"
-                        height="20"
-                        alt={networkInfo.blockchain}
-                      />
-                    )}
-                    <span
-                      style={{ fontSize: "18px", fontWeight: "bold" }}
-                      className="text-capitalize"
-                    >
-                      {networkInfo.blockchain}
-                    </span>
-                  </div>
-                </div>
-              )}
-              {proposalData?.isIntentsPayment &&
-                estimatedFee &&
-                !estimatedFee.isZero && (
-                  <div className="d-flex flex-column gap-2 mt-3">
-                    <label className="border-top">Estimated Fee</label>
-                    <div className="d-flex flex-column gap-2">
-                      <span style={{ fontSize: "16px" }}>
-                        {estimatedFee.amount} {estimatedFee.symbol}
-                      </span>
-                      <small
-                        className="text-muted"
-                        style={{ fontSize: "12px" }}
-                      >
-                        This is an estimated fee. Check the transaction links
-                        below for the actual fee charged.
-                      </small>
-                    </div>
-                  </div>
-                )}
-              {proposalData?.status === "Approved" &&
-                transactionInfo.nearTxHash && (
-                  <div className="d-flex flex-column gap-2 mt-3">
-                    <label className="border-top">Transaction Links</label>
-                    <div className="d-flex flex-column gap-2">
-                      <a
-                        href={transactionInfo.nearTxHash}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn btn-outline-primary btn-sm d-flex align-items-center gap-2"
-                        style={{ width: "fit-content" }}
-                      >
-                        View execution on nearblocks.io{" "}
-                        <i className="bi bi-box-arrow-up-right"></i>
-                      </a>
-                      {transactionInfo.targetTxHash && (
-                        <a
-                          href={transactionInfo.targetTxHash}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2"
-                          style={{ width: "fit-content" }}
-                        >
-                          {getExplorerButtonText(transactionInfo.targetTxHash)}{" "}
-                          <i className="bi bi-box-arrow-up-right"></i>
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                )}
-            </div>
-          </div>
-        ),
-        proposalData: proposalData,
-        isDeleted: isDeleted,
-        isCompactVersion,
-        approversGroup: transferApproversGroup,
-        instance,
-        deleteGroup,
-        proposalStatusLabel: {
-          approved: "Payment Request Funded",
-          rejected: "Payment Request Rejected",
-          deleted: "Payment Request Deleted",
-          failed: "Payment Request Failed",
-          expired: "Payment Request Expired",
-        },
-        checkProposalStatus,
-      }}
-    />
   </>
 );

@@ -16,6 +16,7 @@ test("USDC on ETH payment showcase @treasury-testing", async ({
     testInfo.project.name !== "treasury-testing",
     "This test only runs on the treasury-testing project"
   );
+  test.setTimeout(60_000);
 
   const instanceAccount = "webassemblymusic-treasury.near";
   const daoAccount = "webassemblymusic-treasury.sputnik-dao.near";
@@ -74,6 +75,13 @@ test("USDC on ETH payment showcase @treasury-testing", async ({
     page.locator('label:has-text("Transaction Links")')
   ).toBeVisible();
 
+  const networkSection = page.getByText("Network Ethereum");
+  await expect(
+    networkSection.locator(
+      'img[src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgZmlsbD0ibm9uZSIgdmlld0JveD0iMCAwIDI0IDI0Ij4KICAgIDxnIGNsaXAtcGF0aD0idXJsKCNldGhlcmV1bV9fYSkiPgogICAgICAgIDxwYXRoIGZpbGw9IiMwMDAiIGQ9Ik0yNCAwSDB2MjRoMjR6Ii8+CiAgICAgICAgPHBhdGggZmlsbD0iIzhGRkNGMyIgZD0iTTEyIDR2NS45MTJsNSAyLjIzN3oiLz4KICAgICAgICA8cGF0aCBmaWxsPSIjQ0FCQ0Y4IiBkPSJtMTIgNC01IDguMTQ4IDUtMi4yMzV6Ii8+CiAgICAgICAgPHBhdGggZmlsbD0iI0NCQTdGNSIgZD0iTTEyIDE1Ljk4VjIwbDUtNi45MnoiLz4KICAgICAgICA8cGF0aCBmaWxsPSIjNzRBMEYzIiBkPSJNMTIgMjB2LTQuMDJsLTUtMi45eiIvPgogICAgICAgIDxwYXRoIGZpbGw9IiNDQkE3RjUiIGQ9Im0xMiAxNS4wNDkgNS0yLjktNS0yLjIzNnoiLz4KICAgICAgICA8cGF0aCBmaWxsPSIjNzRBMEYzIiBkPSJtNyAxMi4xNDkgNSAyLjlWOS45MTN6Ii8+CiAgICAgICAgPHBhdGggZmlsbD0iIzIwMjY5OSIgZmlsbC1ydWxlPSJldmVub2RkIiBkPSJtMTIgMTUuMDQ4LTUtMi45TDEyIDRsNSA4LjE0OHptLTQuNjctMy4xMzYgNC41ODgtNy40NzV2NS40MzV6bS0uMDY4LjIwNCA0LjY1Ni0yLjA2OHY0Ljc2OHptNC44MTYtMi4wNjh2NC43NjhsNC42NTMtMi43em0wLS4xNzYgNC41ODggMi4wNC00LjU4OC03LjQ3NXoiIGNsaXAtcnVsZT0iZXZlbm9kZCIvPgogICAgICAgIDxwYXRoIGZpbGw9IiMyMDI2OTkiIGZpbGwtcnVsZT0iZXZlbm9kZCIgZD0ibTEyIDE1LjkxNy01LTIuODRMMTIgMjBsNS02LjkyNHptLTQuNDQtMi4zNDEgNC4zNiAyLjQ4djMuNTZ6bTQuNTE5IDIuNDh2My41Nmw0LjM2LTYuMDR6IiBjbGlwLXJ1bGU9ImV2ZW5vZGQiLz4KICAgIDwvZz4KICAgIDxkZWZzPgogICAgICAgIDxjbGlwUGF0aCBpZD0iZXRoZXJldW1fX2EiPgogICAgICAgICAgICA8cGF0aCBmaWxsPSIjZmZmIiBkPSJNMCAwaDI0djI0SDB6Ii8+CiAgICAgICAgPC9jbGlwUGF0aD4KICAgIDwvZGVmcz4KPC9zdmc+Cg=="]'
+    )
+  ).toBeVisible();
+
   // Find and click on the NEAR transaction link
   const nearTxLink = page.locator('a:has-text("on nearblocks.io")');
   await expect(nearTxLink).toBeVisible();
@@ -96,26 +104,20 @@ test("USDC on ETH payment showcase @treasury-testing", async ({
 
   // Find and navigate to the Ethereum transaction link (if available)
   const ethTxLink = page.locator('a:has-text("on etherscan.io")');
-  if (await ethTxLink.isVisible()) {
-    console.log("Found Ethereum transaction link");
+  console.log("Found Ethereum transaction link");
 
-    // Get the href URL and navigate to it in the same tab
-    const ethTxUrl = await ethTxLink.getAttribute("href");
-    console.log("Navigating to Ethereum transaction:", ethTxUrl);
-    await page.goto(ethTxUrl);
+  // Get the href URL and navigate to it in the same tab
+  const ethTxUrl = await ethTxLink.getAttribute("href");
+  console.log("Navigating to Ethereum transaction:", ethTxUrl);
+  await page.goto(ethTxUrl);
 
-    // Wait for the Etherscan page to load
-    await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(3000);
+  // Wait for the Etherscan page to load
+  await page.waitForLoadState("networkidle");
+  await page.waitForTimeout(3000);
 
-    // Navigate back to the treasury page
-    await page.goBack();
-    await page.waitForLoadState("networkidle");
-  } else {
-    console.log(
-      "Ethereum transaction link not yet available - may still be loading from POA Bridge API"
-    );
-  }
+  // Navigate back to the treasury page
+  await page.goBack();
+  await page.waitForLoadState("networkidle");
 
   // Final pause to show the complete page
   await page.waitForTimeout(2000);

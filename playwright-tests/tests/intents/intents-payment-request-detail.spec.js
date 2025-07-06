@@ -56,7 +56,7 @@ test("NEAR Intents payment request for ETH", async ({ page }) => {
   await expect(page.locator("text=Network")).toBeVisible();
   // Look for the network name specifically under the Network label
   await expect(
-    page.locator("span.text-capitalize").filter({ hasText: "eth" })
+    page.locator("span.text-capitalize").filter({ hasText: "Ethereum" })
   ).toBeVisible();
 
   // Check for fee information (if present)
@@ -137,6 +137,9 @@ test("NEAR Intents payment request for NEAR", async ({ page }) => {
 
   // Check that network information is displayed for intents payments
   await expect(page.locator("text=Network")).toBeVisible();
+  await expect(
+    page.locator("span.text-capitalize").filter({ hasText: "Near Protocol" })
+  ).toBeVisible();
 
   // Check for transaction links section - this should always be present for approved proposals
   await expect(page.locator("text=Payment Request Funded")).toBeVisible();
@@ -201,9 +204,9 @@ test("Regular payment request shows transaction links", async ({ page }) => {
 
   // Check for transaction links section - this should always be present for approved proposals
   await expect(page.locator("text=Payment Request Funded")).toBeVisible();
-  await expect(
-    page.locator('label:has-text("Transaction Links")')
-  ).toBeVisible();
+  await expect(page.locator('label:has-text("Transaction Links")')).toBeVisible(
+    { timeout: 15_000 }
+  );
 
   // Check for NEAR Blocks link
   const nearBlocksButton = page.locator('a:has-text("on nearblocks.io")');
