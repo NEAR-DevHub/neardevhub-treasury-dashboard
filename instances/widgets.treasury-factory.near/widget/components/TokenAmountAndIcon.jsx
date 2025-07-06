@@ -26,7 +26,7 @@ if (isWrapNear) {
 
 if (!isNEAR && !isWrapNear) {
   ftMetadata = Near.view(address, "ft_metadata", {});
-  if (ftMetadata === null) return null;
+  if (ftMetadata === null) return <></>;
 }
 
 let amount = amountWithDecimals;
