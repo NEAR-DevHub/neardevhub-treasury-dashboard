@@ -503,6 +503,16 @@ function getExplorerButtonText(url) {
   }
 }
 
+const TransactionLink = styled.a`
+  color: var(--text-color) !important;
+  text-decoration: underline !important;
+
+  &:hover {
+    color: inherit !important;
+    text-decoration: none !important;
+  }
+`;
+
 return (
   <>
     {((proposalData && !proposalData.isIntentsPayment) ||
@@ -647,7 +657,7 @@ return (
                       <label className="border-top">Transaction Links</label>
                       <div className="d-flex flex-column gap-2">
                         <div className="d-flex justify-content-between gap-2 align-items-center flex-wrap">
-                          <a
+                          <TransactionLink
                             href={transactionInfo.nearTxHash}
                             target="_blank"
                             rel="noopener noreferrer"
@@ -655,11 +665,11 @@ return (
                           >
                             View execution on nearblocks.io{" "}
                             <i className="bi bi-box-arrow-up-right"></i>
-                          </a>
+                          </TransactionLink>
                         </div>
                         {transactionInfo.targetTxHash && (
                           <div className="d-flex justify-content-between gap-2 align-items-center flex-wrap">
-                            <a
+                            <TransactionLink
                               href={transactionInfo.targetTxHash}
                               target="_blank"
                               rel="noopener noreferrer"
@@ -669,7 +679,7 @@ return (
                                 transactionInfo.targetTxHash
                               )}{" "}
                               <i className="bi bi-box-arrow-up-right"></i>
-                            </a>
+                            </TransactionLink>
                           </div>
                         )}
                       </div>
