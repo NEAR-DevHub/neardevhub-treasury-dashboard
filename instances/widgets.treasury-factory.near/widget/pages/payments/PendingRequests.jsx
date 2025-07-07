@@ -1,16 +1,19 @@
-const { getApproversAndThreshold, getFilteredProposalsByStatusAndKind } =
-  VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common") || {
-    getApproversAndThreshold: () => {},
-  };
+const {
+  getApproversAndThreshold,
+  getFilteredProposalsByStatusAndKind,
+  getProposalsFromIndexer,
+} = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common") || {
+  getApproversAndThreshold: () => {},
+};
 const instance = props.instance;
-if (!instance || typeof getFilteredProposalsByStatusAndKind !== "function") {
+if (!instance || typeof getProposalsFromIndexer !== "function") {
   return <></>;
 }
 
 const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 
 const [rowsPerPage, setRowsPerPage] = useState(10);
-const [currentPage, setPage] = useState(0);
+const [currentPage, setPage] = useState(1);
 const [offset, setOffset] = useState(null);
 const [proposals, setProposals] = useState(null);
 const [totalLength, setTotalLength] = useState(null);
@@ -33,28 +36,20 @@ const refreshProposalsTableData = Storage.get(
 );
 
 const fetchProposals = useCallback(() => {
+  if (!treasuryDaoID) return;
   setLoading(true);
-  Near.asyncView(treasuryDaoID, "get_last_proposal_id").then((i) => {
-    const lastProposalId = i;
-    getFilteredProposalsByStatusAndKind({
-      treasuryDaoID,
-      resPerPage: rowsPerPage,
-      isPrevPageCalled: isPrevPageCalled,
-      filterKindArray: ["Transfer", "FunctionCall"],
-      filterStatusArray: ["InProgress"],
-      offset: typeof offset === "number" ? offset : lastProposalId,
-      lastProposalId: lastProposalId,
-      currentPage,
-    }).then((r) => {
-      setOffset(r.filteredProposals[r.filteredProposals.length - 1].id);
-      if (currentPage === 0 && !totalLength) {
-        setTotalLength(r.totalLength);
-      }
-      setLoading(false);
-      setProposals(r.filteredProposals);
-    });
+  getProposalsFromIndexer({
+    category: "payments",
+    status: ["InProgress"],
+    page: currentPage,
+    pageSize: rowsPerPage,
+    daoId: treasuryDaoID,
+  }).then((r) => {
+    setProposals(r.proposals);
+    setTotalLength(r.total);
+    setLoading(false);
   });
-}, [rowsPerPage, isPrevPageCalled, currentPage]);
+}, [rowsPerPage, isPrevPageCalled, currentPage, treasuryDaoID]);
 
 useEffect(() => {
   fetchProposals();

@@ -396,6 +396,26 @@ function getFilteredProposalsByStatusAndKind({
   });
 }
 
+function getProposalsFromIndexer({
+  daoId,
+  category,
+  page,
+  pageSize,
+  status,
+  proposalType,
+}) {
+  let query = `${REPL_SPUTNIK_INDEXER}/proposals/${daoId}?page=${page}&page_size=${pageSize}&sort_by=CreationTime&sort_direction=desc&status=${status.join(
+    ","
+  )}`;
+  if (category && category.length > 0) {
+    query += `&category=${category}`;
+  }
+  if (proposalType && proposalType.length > 0) {
+    query += `&proposal_type=${proposalType.join(",")}`;
+  }
+  return asyncFetch(query).then((r) => r.body);
+}
+
 const data = fetch("${REPL_BACKEND_API}".replace("/api", "") + "/headers");
 const gatewayOrigin = data?.body?.headers?.origin ?? "";
 
@@ -1401,4 +1421,5 @@ return {
   getIntentsBalances,
   updateDaoPolicy,
   nearAccountValidation,
+  getProposalsFromIndexer,
 };
