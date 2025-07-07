@@ -288,7 +288,8 @@ useEffect(() => {
 useEffect(() => {
   if (
     proposalData?.isIntentsPayment &&
-    proposalData?.status === "Approved" &&
+    (proposalData?.status === "Approved" ||
+      proposalData?.status === "Failed") &&
     networkInfo.blockchain &&
     networkInfo.blockchain !== "near" &&
     transactionInfo.nearTxHash &&
@@ -368,7 +369,8 @@ useEffect(() => {
 // Fetch execution transaction hash for approved proposals
 useEffect(() => {
   if (
-    proposalData?.status === "Approved" &&
+    (proposalData?.status === "Approved" ||
+      proposalData?.status === "Failed") &&
     proposalData?.submissionTime &&
     proposalPeriod
   ) {
@@ -651,7 +653,8 @@ return (
                       </div>
                     </div>
                   )}
-                {proposalData?.status === "Approved" &&
+                {(proposalData?.status === "Approved" ||
+                  proposalData?.status === "Failed") &&
                   transactionInfo.nearTxHash && (
                     <div className="d-flex flex-column gap-2 mt-1">
                       <label className="border-top">Transaction Links</label>

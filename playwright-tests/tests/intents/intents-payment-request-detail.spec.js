@@ -238,3 +238,60 @@ test("Regular payment request shows transaction links", async ({ page }) => {
   await page.screenshot({ fullPage: true });
   await page.waitForTimeout(1000);
 });
+
+test("Failed payment request shows transaction links", async ({ page }) => {
+  const instanceAccount = "webassemblymusic-treasury.near";
+  const daoAccount = "webassemblymusic-treasury.sputnik-dao.near";
+  const modifiedWidgets = {};
+
+  // Capture browser console logs
+  page.on("console", (msg) => {
+    if (msg.type() === "log" || msg.type() === "error") {
+      console.log(`Browser ${msg.type()}: ${msg.text()}`);
+    }
+  });
+
+  await redirectWeb4({
+    page,
+    contractId: instanceAccount,
+    treasury: daoAccount,
+    networkId: "mainnet",
+    modifiedWidgets,
+    callWidgetNodeURLForContractWidgets: false,
+  });
+
+  // Navigate to a failed payment request with id=0
+  await page.goto(
+    "https://webassemblymusic-treasury.near.page/?page=payments&tab=history&id=0"
+  );
+
+  // Wait for the page to load
+  await page.waitForTimeout(3000);
+
+  // Check that this is a failed proposal
+  await expect(page.locator("text=Payment Request Failed")).toBeVisible();
+
+  // Check for transaction links section - this should be present for failed proposals too
+  await expect(page.locator('label:has-text("Transaction Links")')).toBeVisible(
+    { timeout: 15_000 }
+  );
+
+  // Check for NEAR Blocks link - should show the execution transaction even if it failed
+  const nearBlocksButton = page.locator('a:has-text("on nearblocks.io")');
+  await expect(nearBlocksButton).toBeVisible();
+
+  // Verify the transaction link points to a valid nearblocks URL
+  const nearBlocksLink = await nearBlocksButton.getAttribute("href");
+  expect(nearBlocksLink).toContain("nearblocks.io/txns/");
+
+  console.log(
+    "SUCCESS: Transaction links correctly shown for failed payment request"
+  );
+
+  // Take a screenshot to document the failed payment request display
+  await page.screenshot({
+    path: "test-results/failed-payment-detail.png",
+    fullPage: true,
+  });
+  await page.waitForTimeout(1000);
+});
