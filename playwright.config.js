@@ -33,7 +33,10 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     headless: true,
-    video: process.env.CI ? "on-first-retry" : "on",
+    video: {
+      mode: process.env.CI ? "on-first-retry" : "on",
+      size: { width: 1280, height: 800 },
+    },
     /* Maximum time each action such as `click()` can take. Defaults to 0 (no limit). */
     actionTimeout: 0,
     /* Base URL to use in actions like `await page.goto('/')`. */

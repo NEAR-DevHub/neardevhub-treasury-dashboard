@@ -56,6 +56,7 @@ const generateEnhancedIconHTML = () => {
         
         let tokenIcon = null;
         let networkIcon = null;
+        let networkName = null;
         
         // Find token in web3icons metadata
         const web3IconToken = web3IconsCommon.tokens.find(t => 
@@ -98,6 +99,7 @@ const generateEnhancedIconHTML = () => {
           
           if (web3IconNetwork && web3IconsCore.svgs.networks.background[web3IconNetwork.fileName]) {
             networkIcon = web3IconsCore.svgs.networks.background[web3IconNetwork.fileName].default;
+            networkName = web3IconNetwork.name;
           }
         }
         
@@ -106,6 +108,7 @@ const generateEnhancedIconHTML = () => {
         results[key] = {
           tokenIcon: tokenIcon ? \`data:image/svg+xml;base64,\${btoa(tokenIcon)}\` : null,
           networkIcon: networkIcon ? \`data:image/svg+xml;base64,\${btoa(networkIcon)}\` : null,
+          networkName,
           symbol: symbol,
           networkId: networkId,
         };
