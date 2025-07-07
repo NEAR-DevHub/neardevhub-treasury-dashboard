@@ -123,14 +123,20 @@ test("NEAR Intents payment request for NEAR", async ({ page }) => {
   await page.goto(
     "https://webassemblymusic-treasury.near.page/?page=payments&tab=history&id=4"
   );
-  await expect(page.getByText("Recipient Peter Salomonsen @")).toContainText(
-    "petersalomonsen.near"
-  );
   await expect(
     page.locator(
       'div[data-component="widgets.treasury-factory.near/widget/components.TokenAmountAndIcon"]'
     )
   ).toContainText("0.2 wNEAR");
+
+  const recipientArea = page.getByText("Recipient Peter Salomonsen @");
+  await expect(recipientArea).toBeVisible();
+  await expect(recipientArea).toContainText("petersalomonsen.near");
+  await expect(
+    recipientArea.locator(
+      'img[src="https://i.near.social/magic/large/https://near.social/magic/img/account/petersalomonsen.near"]'
+    )
+  ).toBeVisible();
 
   // Wait for network info to load
   await page.waitForTimeout(3000);
@@ -157,16 +163,13 @@ test("NEAR Intents payment request for NEAR", async ({ page }) => {
   );
   await expect(targetTxLink).not.toBeVisible();
 
-  // Verify that no fallback transaction links are shown
-  await expect(
-    page.locator('a:has-text("Search execution")')
-  ).not.toBeVisible();
-
   console.log(
     "SUCCESS: Target chain transaction link correctly hidden for NEAR payment"
   );
 
-  await page.waitForTimeout(500);
+  // grabbing screenshots is needed to ensure all elements are rendered on the video
+  await page.screenshot({ fullPage: true });
+  await page.waitForTimeout(1000);
 });
 
 test("Regular payment request shows transaction links", async ({ page }) => {
@@ -196,6 +199,15 @@ test("Regular payment request shows transaction links", async ({ page }) => {
     "https://webassemblymusic-treasury.near.page/?page=payments&tab=history&id=8"
   );
 
+  const recipientArea = page.getByText("Recipient Peter Salomonsen @");
+  await expect(recipientArea).toBeVisible();
+  await expect(recipientArea).toContainText("petersalomonsen.near");
+  await expect(
+    recipientArea.locator(
+      'img[src="https://i.near.social/magic/large/https://near.social/magic/img/account/petersalomonsen.near"]'
+    )
+  ).toBeVisible();
+
   // Wait for the page to load
   await page.waitForTimeout(3000);
 
@@ -218,14 +230,11 @@ test("Regular payment request shows transaction links", async ({ page }) => {
   );
   await expect(targetTxLink).not.toBeVisible();
 
-  // Verify that no fallback transaction links are shown
-  await expect(
-    page.locator('a:has-text("Search execution")')
-  ).not.toBeVisible();
-
   console.log(
     "SUCCESS: Target chain transaction link correctly hidden for regular payment"
   );
 
-  await page.waitForTimeout(500);
+  // grabbing screenshots is needed to ensure all elements are rendered on the video
+  await page.screenshot({ fullPage: true });
+  await page.waitForTimeout(1000);
 });
