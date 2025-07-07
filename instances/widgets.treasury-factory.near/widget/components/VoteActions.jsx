@@ -31,6 +31,7 @@ const treasuryWallet = props.treasuryWallet;
 const isHumanReadableCurrentAmount = props.isHumanReadableCurrentAmount;
 const isProposalDetailsPage = props.isProposalDetailsPage;
 const hasOneDeleteIcon = props.hasOneDeleteIcon;
+const isIntentsRequest = props.isIntentsRequest;
 
 const alreadyVoted = Object.keys(votes).includes(accountId);
 const userVote = votes[accountId];
@@ -54,6 +55,18 @@ const [showErrorToast, setShowErrorToast] = useState(false);
 
 const userBalance = isNEAR
   ? nearBalance
+  : isIntentsRequest
+  ? useCache(
+      () =>
+        Near.asyncView("intents.near", "mt_balance_of", {
+          account_id: treasuryDaoID,
+          token_id: `nep141:${currentContract}`,
+        }).then((balance) => {
+          return balance?.toString() || "0";
+        }),
+      "intents-" + currentContract + "-" + treasuryDaoID,
+      { subscribe: false }
+    )
   : useCache(
       () =>
         asyncFetch(`${REPL_RPC_URL}`, {
@@ -192,7 +205,10 @@ const InsufficientBalanceWarning = () => {
           </div>
           <i
             className="bi bi-x-lg h4 mb-0 cursor-pointer"
-            onClick={() => setShowWarning(false)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowWarning(false);
+            }}
           ></i>
         </div>
       </ModalHeader>
@@ -231,7 +247,10 @@ const InsufficientBalanceWarning = () => {
               root: "btn btn-outline-secondary shadow-none no-transparent",
             },
             label: "Cancel",
-            onClick: () => setShowWarning(false),
+            onClick: (e) => {
+              e.stopPropagation();
+              setShowWarning(false);
+            },
           }}
         />
 
@@ -240,7 +259,8 @@ const InsufficientBalanceWarning = () => {
           props={{
             classNames: { root: "theme-btn" },
             label: "Proceed Anyway",
-            onClick: () => {
+            onClick: (e) => {
+              e.stopPropagation();
               setShowWarning(false);
               setConfirmModal(true);
             },

@@ -498,7 +498,7 @@ test("show intents balance in dashboard (sandbox)", async ({
 
   // Intercept RPC calls to redirect intents.near queries to the sandbox
   // Now this block is after worker initialization and sandboxRpcUrl is available
-  await page.route("https://rpc.mainnet.near.org", async (route) => {
+  const rpcRoute = async (route) => {
     const request = route.request();
     if (request.method() === "POST") {
       let postData;
@@ -531,7 +531,9 @@ test("show intents balance in dashboard (sandbox)", async ({
       }
     }
     return await route.fallback(); // Crucial: let other handlers (like from redirectWeb4) process if this one doesn't.
-  });
+  };
+  await page.route("https://rpc.mainnet.near.org", rpcRoute);
+  await page.route("https://rpc.mainnet.fastnear.com", rpcRoute);
 
   await page.goto(`https://${treasury.accountId}.page`);
 
@@ -668,8 +670,11 @@ test("show intents balance in dashboard (sandbox)", async ({
     .locator("div.card-body")
     .filter({ hasText: "Total Balance" });
 
+  await expect(totalBalanceCardLocator).not.toContainText("NaN");
+
   // Ensure that the total balance is more than the intents balance
   const totalBalanceText = await totalBalanceCardLocator.innerText();
+
   const displayedTotalBalanceNumeric = parseFloat(
     totalBalanceText.replace(/[^0-9\.]/g, "")
   );

@@ -41,6 +41,8 @@ const walletOptions = [
 const [selectedWallet, setSelectedWallet] = useState(walletOptions[0]);
 
 const [tokenId, setTokenId] = useState(null);
+const [selectedTokenBlockchain, setSelectedTokenBlockchain] = useState(null);
+const [selectedTokenIsIntent, setSelectedTokenIsIntent] = useState(false);
 const [receiver, setReceiver] = useState(null);
 const [isReceiverAccountValid, setIsReceiverAccountValid] = useState(false);
 const [notes, setNotes] = useState(null);
@@ -94,7 +96,10 @@ useEffect(() => {
 function searchCacheApi() {
   let searchTerm = searchProposalId;
   let searchInput = encodeURI(searchTerm);
-  let searchUrl = `${proposalAPIEndpoint}/proposals/search/${searchInput}`;
+  let searchUrl = `${proposalAPIEndpoint}?customQuestion=title&customAnswer=${searchInput}`;
+  if (!isNaN(parseFloat(searchTerm)) && isFinite(searchTerm)) {
+    searchUrl = `${proposalAPIEndpoint}?sequentialId=${searchInput}`;
+  }
 
   return asyncFetch(searchUrl, {
     method: "GET",
@@ -107,17 +112,17 @@ function searchCacheApi() {
 }
 
 function setProposalData(result) {
-  const body = result.body;
-  const proposalsData = body.records;
+  const proposalsData = result;
   const data = [];
   for (const prop of proposalsData) {
     data.push({
       label: (
         <span className="text-sm">
-          <b>#{prop.proposal_id}</b> {prop.name}{" "}
+          <b>#{prop.sequentialId}</b>{" "}
+          {parseString(prop?.eligibilityAnswers?.[0].answer)}{" "}
         </span>
       ),
-      value: prop.proposal_id,
+      value: prop.sequentialId,
     });
   }
   setProposalsArray(proposalsData);
@@ -127,16 +132,12 @@ function setProposalData(result) {
 
 function searchProposals() {
   searchCacheApi().then((result) => {
-    setProposalData(result);
+    setProposalData(result.body);
   });
 }
 
-function fetchCacheApi(variables) {
-  let fetchUrl = `${proposalAPIEndpoint}/proposals?order=${variables.order}&limit=${variables.limit}`;
-
-  if (variables.stage) {
-    fetchUrl += `&filters.stage=${variables.stage}`;
-  }
+function fetchCacheApi() {
+  let fetchUrl = `${proposalAPIEndpoint}?status=approved`;
 
   return asyncFetch(fetchUrl, {
     method: "GET",
@@ -149,14 +150,9 @@ function fetchCacheApi(variables) {
 }
 
 function fetchProposals() {
-  const FETCH_LIMIT = 10;
-  const variables = {
-    order: "id_desc",
-    limit: FETCH_LIMIT,
-    stage: "PAYMENT",
-  };
-  fetchCacheApi(variables).then((result) => {
-    setProposalData(result);
+  fetchCacheApi().then((result) => {
+    const proposals = (result.body || []).slice(0, 10);
+    setProposalData(proposals);
   });
 }
 
@@ -214,6 +210,8 @@ useEffect(() => {
 }, [isTxnCreated, lastProposalId]);
 
 useEffect(() => {
+  if (!proposalAPIEndpoint) return;
+
   const handler = setTimeout(() => {
     setLoadingProposals(true);
     if (searchProposalId) {
@@ -223,10 +221,8 @@ useEffect(() => {
     }
   }, 500);
 
-  return () => {
-    clearTimeout(handler);
-  };
-}, [searchProposalId]);
+  return () => clearTimeout(handler);
+}, [searchProposalId, proposalAPIEndpoint]);
 
 const Container = styled.div`
   font-size: 14px;
@@ -275,29 +271,53 @@ useEffect(() => {
   return () => clearInterval(interval);
 }, []);
 
+function parseString(string) {
+  if (!string) return "";
+
+  // Remove HTML tags
+  const withoutTags = string.replace(/<[^>]*>/g, "");
+
+  // Decode common HTML entities
+  const entities = {
+    "&amp;": "&",
+    "&lt;": "<",
+    "&gt;": ">",
+    "&quot;": '"',
+    "&#39;": "'",
+  };
+
+  return withoutTags.replace(
+    /&amp;|&lt;|&gt;|&quot;|&#39;/g,
+    (match) => entities[match]
+  );
+}
+
 function onSelectProposal(id) {
   if (!id) {
     setSelectedProposal(null);
     return;
   }
 
-  const proposal = proposalsArray.find((item) => item.proposal_id === id.value);
+  const proposal = proposalsArray.find(
+    (item) => item.sequentialId === id.value
+  );
 
   if (proposal !== null) {
     setSelectedProposal({
-      ...proposal,
-      timeline: JSON.parse(proposal.timeline),
+      name: parseString(proposal.eligibilityAnswers?.[0]?.answer ?? ""),
+      summary: parseString(proposal.eligibilityAnswers?.[1]?.answer ?? ""),
+      proposal_id: proposal.sequentialId,
+      status: proposal.status,
+      url: `https://nearn.io/devhub/${proposal.listing.sequentialId}/${proposal.sequentialId}`,
     });
-    const token = tokenMapping[proposal.requested_sponsorship_paid_in_currency];
+    const token = tokenMapping[proposal.token];
     if (token === tokenMapping.NEAR) {
-      const nearTokens = Big(proposal.requested_sponsorship_usd_amount)
-        .div(nearPrice)
-        .toFixed();
+      const nearTokens = Big(proposal.ask).div(nearPrice).toFixed();
       setAmount(nearTokens);
     } else {
-      setAmount(proposal.requested_sponsorship_usd_amount);
+      setAmount(proposal.ask);
     }
-    const receiverAccount = proposal.receiver_account;
+    const receiverAccount = proposal.user?.publicKey;
     setReceiver(receiverAccount);
     setTokenId(token);
     setSelectedProposalId(id.value);
@@ -328,7 +348,8 @@ useEffect(() => {
 function onSubmitClick() {
   setTxnCreated(true);
   const isNEAR = tokenId === tokenMapping.NEAR;
-  const gas = 270000000000000;
+  const gas = "270000000000000"; // 270 Tgas for transfer
+  const gasForIntentAction = Big(30).mul(Big(10).pow(12)).toFixed(); // 30 Tgas for ft_withdraw
   const deposit = daoPolicy?.proposal_bond || 0;
   const description = {
     title: selectedProposal.name,
@@ -338,9 +359,62 @@ function onSubmitClick() {
 
   if (!isManualRequest) {
     description["proposalId"] = selectedProposalId;
+    description["url"] = selectedProposal.url;
   }
 
   const isLockupTransfer = selectedWallet.value === lockupContract;
+  let proposalKind;
+
+  if (selectedTokenIsIntent) {
+    if (selectedTokenBlockchain && selectedTokenBlockchain !== "near") {
+      // Non-NEAR / Intent-based payment
+      const ftWithdrawArgs = {
+        token: tokenId, // This is the NEAR FT contract, e.g., "btc.omft.near"
+        receiver_id: tokenId, // Per test expectation, this is also the token contract ID for intents.near
+        amount: parsedAmount, // Amount in FT's decimals (e.g., 2 * 10^8 for 2 BTC if 8 decimals)
+        memo: `WITHDRAW_TO:${receiver}`, // `receiver` holds the actual off-chain address
+      };
+
+      proposalKind = {
+        FunctionCall: {
+          receiver_id: "intents.near", // Target contract for intent withdrawals
+          actions: [
+            {
+              method_name: "ft_withdraw",
+              args: Buffer.from(JSON.stringify(ftWithdrawArgs)).toString(
+                "base64"
+              ),
+              deposit: "1", // 1 yoctoNEAR
+              gas: gasForIntentAction,
+            },
+          ],
+        },
+      };
+    } else {
+      // NEAR / Intent-based payment
+      const ftWithdrawArgs = {
+        token: tokenId, // This is the NEAR FT contract, e.g., "wrap.near"
+        receiver_id: receiver,
+        amount: parsedAmount,
+      };
+
+      proposalKind = {
+        FunctionCall: {
+          receiver_id: "intents.near", // Target contract for intent withdrawals
+          actions: [
+            {
+              method_name: "ft_withdraw",
+              args: Buffer.from(JSON.stringify(ftWithdrawArgs)).toString(
+                "base64"
+              ),
+              deposit: "1", // 1 yoctoNEAR
+              gas: gasForIntentAction,
+            },
+          ],
+        },
+      };
+    }
+  }
   if (isLockupTransfer) {
     description["proposal_action"] = "transfer";
   }
@@ -356,7 +430,9 @@ function onSubmitClick() {
       args: {
         proposal: {
           description: encodeToMarkdown(description),
-          kind: isLockupTransfer
+          kind: selectedTokenIsIntent
+            ? proposalKind
+            : isLockupTransfer
             ? {
                 FunctionCall: {
                   receiver_id: lockupContract,
@@ -368,7 +444,7 @@ function onSubmitClick() {
                         receiver_id: receiver,
                       }),
                       deposit: "0",
-                      gas: gas.toFixed(),
+                      gas,
                     },
                   ],
                 },
@@ -382,11 +458,11 @@ function onSubmitClick() {
               },
         },
       },
-      gas: gas,
+      gas,
       deposit,
     },
   ];
-  if (!isReceiverRegistered && !isNEAR) {
+  if (!selectedTokenIsIntent && !isReceiverRegistered && !isNEAR) {
     const depositInYocto = Big(0.125).mul(Big(10).pow(24)).toFixed();
     calls.push({
       contractName: tokenId,
@@ -395,7 +471,7 @@ function onSubmitClick() {
         account_id: receiver,
         registration_only: true,
       },
-      gas: gas,
+      gas,
       deposit: depositInYocto,
     });
   }
@@ -423,6 +499,7 @@ function isAmountValid() {
 
 useEffect(() => {
   if (
+    !selectedTokenIsIntent &&
     tokenId &&
     tokenId !== tokenMapping.NEAR &&
     receiver &&
@@ -438,7 +515,7 @@ useEffect(() => {
       }
     });
   }
-}, [receiver, tokenId]);
+}, [receiver, tokenId, selectedTokenIsIntent]);
 
 return (
   <Container>
@@ -488,7 +565,10 @@ return (
             src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
             props={{
               selectedValue: selectedProposalId,
-              onChange: onSelectProposal,
+              onChange: (e) => {
+                setIsManualRequest(false);
+                onSelectProposal(e);
+              },
               options: proposalsOptions,
               showSearch: true,
               searchInputPlaceholder: "Search by id or title",
@@ -553,43 +633,51 @@ return (
               <Widget
                 src={"${REPL_DEVHUB}/widget/devhub.entity.proposal.StatusTag"}
                 props={{
-                  timelineStatus: selectedProposal.timeline.status,
+                  timelineStatus: selectedProposal.status,
                 }}
               />
             </div>
           </h6>
           <div>{selectedProposal.summary}</div>
-          <Link
+          <a
             target="_blank"
             rel="noopener noreferrer"
-            to={href({
-              widgetSrc: `${REPL_DEVHUB}/widget/app`,
-              params: {
-                page: "proposal",
-                id: selectedProposal.proposal_id,
-              },
-            })}
+            href={selectedProposal.url}
           >
             <button className="btn p-0 d-flex align-items-center gap-2 bolder">
               Open Proposal <i class="bi bi-box-arrow-up-right"></i>
             </button>
-          </Link>
+          </a>
         </div>
       )}
       <div className="d-flex flex-column gap-1">
         <label>Recipient</label>
-        <Widget
-          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.AccountInput"
-          props={{
-            value: receiver,
-            placeholder: "treasury.near",
-            onUpdate: setReceiver,
-            setParentAccountValid: setIsReceiverAccountValid,
-            maxWidth: "100%",
-            instance,
-            allowNonExistentImplicit: true,
-          }}
-        />
+        {selectedTokenBlockchain === "near" ||
+        selectedTokenBlockchain == null ? (
+          <Widget
+            src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.AccountInput"
+            props={{
+              value: receiver,
+              placeholder: "treasury.near",
+              onUpdate: setReceiver,
+              setParentAccountValid: setIsReceiverAccountValid,
+              maxWidth: "100%",
+              instance,
+              allowNonExistentImplicit: true,
+            }}
+          />
+        ) : (
+          <Widget
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OtherChainAccountInput`}
+            props={{
+              blockchain: selectedTokenBlockchain,
+              value: receiver,
+              setValue: setReceiver,
+              setIsValid: setIsReceiverAccountValid,
+              instance: REPL_BASE_DEPLOYMENT_ACCOUNT,
+            }}
+          />
+        )}
       </div>
       <div className="d-flex flex-column gap-1">
         <label>Requested Token</label>
@@ -599,7 +687,15 @@ return (
             daoAccount: selectedWallet.value,
             selectedValue: tokenId,
             onChange: (v) => setTokenId(v),
+            setSelectedTokenBlockchain: (blockchain) => {
+              if (blockchain !== selectedTokenBlockchain) {
+                setReceiver(""); // Reset receiver
+                setIsReceiverAccountValid(false); // Reset validation status
+                setSelectedTokenBlockchain(blockchain);
+              }
+            },
             setTokensAvailable: setSelectedTokensAvailable,
+            setSelectedTokenIsIntent,
             lockupNearBalances,
           }}
         />

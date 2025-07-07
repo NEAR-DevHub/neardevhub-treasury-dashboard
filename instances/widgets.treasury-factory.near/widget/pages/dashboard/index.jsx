@@ -16,6 +16,8 @@ if (
   !instance ||
   typeof getNearBalances !== "function" ||
   !Skeleton ||
+  typeof accountToLockup !== "function" ||
+  !Modal ||
   typeof accountToLockup !== "function"
 ) {
   return <></>;
@@ -369,20 +371,22 @@ return (
           daoFTTokens === null ? (
             <Loading />
           ) : (
-            <div className="fw-bold h3 mb-0">
-              {formatCurrency(totalBalance)} USD
-            </div>
-          )}
-          {showNearIntents && (
-            <button
-              className="btn btn-success mt-2"
-              onClick={() => {
-                setShowDepositModal(true);
-              }}
-              style={{ width: "100%" }} // Make button full width of its container
-            >
-              Deposit
-            </button>
+            <>
+              <div className="fw-bold h3 mb-0">
+                {formatCurrency(totalBalance)} USD
+              </div>
+              {showNearIntents && (
+                <button
+                  className="btn btn-success mt-2"
+                  onClick={() => {
+                    setShowDepositModal(true);
+                  }}
+                  style={{ width: "100%" }} // Make button full width of its container
+                >
+                  Deposit
+                </button>
+              )}
+            </>
           )}
         </div>
         <Widget

@@ -545,7 +545,7 @@ export async function mockWithFTBalance({
       },
     });
   });
-  await page.route(`https://rpc.mainnet.near.org`, async (route) => {
+  await page.route(`https://free.rpc.fastnear.com`, async (route) => {
     const request = await route.request();
     const requestPostData = request.postDataJSON();
 

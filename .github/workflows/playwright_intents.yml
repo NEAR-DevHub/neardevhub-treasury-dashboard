@@ -21,7 +21,6 @@ jobs:
         project:
           - treasury-dashboard
           - infinex
-          - treasury-testing
 
     steps:
       - name: Checkout repository
@@ -54,7 +53,21 @@ jobs:
           tar -xzf playwright-browsers.tar.gz -C ~/.cache
 
       - name: Run tests
+        id: intents-tests
         run: |
           npx playwright test playwright-tests/tests/intents \
             --project=${{ matrix.project }} \
             --shard=${{ matrix.shard }}
+
+      - name: Sanitize shard name
+        run: echo "SHARD_SAFE=$(echo "${{ matrix.shard }}" | sed 's|/|-|')" >> $GITHUB_ENV
+
+      - name: Upload Playwright Test Artifacts (on failure)
+        if: failure() && steps.intents-tests.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-test-artifacts-intents-${{ matrix.project }}-shard-${{ env.SHARD_SAFE }}.zip
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 1

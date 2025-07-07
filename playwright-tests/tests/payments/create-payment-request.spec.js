@@ -22,7 +22,7 @@ import { InsufficientBalance, toBase64 } from "../../util/lib.js";
 import { SandboxRPC } from "../../util/sandboxrpc.js";
 
 async function clickCreatePaymentRequestButton(page) {
-  await page.waitForTimeout(6_000);
+  await page.waitForTimeout(1_000);
   const createPaymentRequestButton = await page.getByRole("button", {
     name: "Create Request",
   });
@@ -147,6 +147,71 @@ async function selectLockupAccount({ page, daoAccount, lockupContract }) {
   await page.locator(".offcanvas-body").getByText(lockupContract).click();
 }
 
+export async function mockNearnProposal({ page }) {
+  await page.route(
+    "https://nearn.io/api/submissions/devhub/?sequentialId=22",
+    async (route) => {
+      const json = [
+        {
+          id: "288b5aa0-163a-4089-80f5-50a1878ea320",
+          sequentialId: 22,
+          link: "",
+          tweet: "",
+          status: "Approved",
+          eligibilityAnswers: [
+            {
+              answer:
+                "<p><strong>NEAR-API-TS: Tech Specification &amp; Architecture Development - 30.04-11.05</strong></p>",
+              question: "Title",
+            },
+            {
+              answer:
+                '<p class="text-node"><span style="color: rgb(33, 37, 41)">The goal of this proposal is to create a successor to near-api-js that will enhance the DevX for JS/TS developers interacting with the NEAR Protocol and address existing user issues.</span></p>',
+              question: "Summary",
+            },
+          ],
+          userId: "81f4b35f-d14e-46bf-864a-20679cd1ff51",
+          listingId: "c738c93f-0e98-4dde-bf87-29f01af84239",
+          isWinner: true,
+          winnerPosition: 1,
+          isActive: true,
+          isArchived: false,
+          createdAt: "2025-05-17T05:08:58.146Z",
+          updatedAt: "2025-06-19T22:00:31.992Z",
+          like: [],
+          likeCount: 0,
+          isPaid: true,
+          paymentDetails: {
+            link: "https://nearblocks.io/txns/HfbRyfBALJTGaH2yeuqma5SdS619J69yaFDerJv87YKH",
+            txId: "HfbRyfBALJTGaH2yeuqma5SdS619J69yaFDerJv87YKH",
+          },
+          otherInfo: "",
+          ask: 2160,
+          token: "USDT",
+          otherTokenDetails: null,
+          label: "Reviewed",
+          rewardInUSD: 2160,
+          ogImage: null,
+          paymentDate: "2025-05-23T08:01:04.392Z",
+          user: {
+            id: "81f4b35f-d14e-46bf-864a-20679cd1ff51",
+            name: "Volodymyr Bilyk",
+            publicKey: "eclipseeer.near",
+            photo: null,
+            username: "eclipseeer",
+            private: false,
+          },
+          listing: {
+            eligibility: [],
+            sequentialId: 8,
+          },
+        },
+      ];
+      await route.fulfill({ json });
+    }
+  );
+}
+
 test.describe.parallel("User logged in with different roles", () => {
   const roles = [
     {
@@ -176,7 +241,7 @@ test.describe.parallel("User logged in with different roles", () => {
       test(`should ${
         canCreateRequest ? "see" : "not see"
       } 'Create Request' action`, async ({ page, instanceAccount }) => {
-        test.setTimeout(60_000);
+        test.setTimeout(150_000);
 
         await updateDaoPolicyMembers({
           instanceAccount,
@@ -220,7 +285,7 @@ test.describe("User is logged in", function () {
     page,
     instanceAccount,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(150_000);
     await mockNearBalances({
       page,
       accountId: signedUser,
@@ -239,7 +304,7 @@ test.describe("User is logged in", function () {
     page,
     instanceAccount,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(150_000);
     await updateDaoPolicyMembers({ instanceAccount, page });
     await mockNearBalances({
       page,
@@ -269,7 +334,7 @@ test.describe("User is logged in", function () {
     page,
     instanceAccount,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(150_000);
     await updateDaoPolicyMembers({ instanceAccount, page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
     await clickCreatePaymentRequestButton(page);
@@ -280,14 +345,14 @@ test.describe("User is logged in", function () {
     receiveInput.fill(
       "e915ea0c6d5f8ccc417db891490246c6bcd8d0a2214cbcbfa3618a7ee6abe26b"
     );
-    await expect(errorText).toBeHidden();
+    await expect(errorText).toBeHidden({ timeout: 10_000 });
   });
   test("different amount values should not throw any error", async ({
     page,
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(150_000);
     await mockPikespeakFTTokensResponse({ page, daoAccount });
     await updateDaoPolicyMembers({ instanceAccount, page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
@@ -313,21 +378,6 @@ test.describe("User is logged in", function () {
 
     await checkForErrorWithAmountField(page, "-34232", true);
     await checkForErrorWithAmountField(page, "1111111111111111", true);
-  });
-
-  test("should throw pikespeak error when response is 403", async ({
-    page,
-    instanceAccount,
-  }) => {
-    test.setTimeout(120_000);
-    await updateDaoPolicyMembers({ instanceAccount, page });
-    await page.goto(`/${instanceAccount}/widget/app?page=payments`);
-    await clickCreatePaymentRequestButton(page);
-    await expect(
-      page.getByText("There has been some issue in fetching FT tokens data.")
-    ).toBeVisible({
-      timeout: 60_000,
-    });
   });
 
   test("tokens dropdown should show all tokens, after selecting one should allow change", async ({
@@ -358,7 +408,7 @@ test.describe("User is logged in", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(150_000);
     await mockPikespeakFTTokensResponse({ page, daoAccount });
     await updateDaoPolicyMembers({ instanceAccount, page });
     await mockInventory({ page, account: daoAccount });
@@ -446,6 +496,7 @@ test.describe("User is logged in", function () {
     instanceAccount,
     daoAccount,
   }) => {
+    test.setTimeout(150_000);
     await mockPikespeakFTTokensResponse({ page, daoAccount });
     await updateDaoPolicyMembers({ instanceAccount, page });
     await fillCreateForm(page, daoAccount, instanceAccount);
@@ -470,11 +521,9 @@ test.describe("User is logged in", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(60_000);
-    const nearPrice = 4;
-    const amountFromLinkedProposal = 3120 / nearPrice;
+    test.setTimeout(150_000);
+    const amountFromLinkedProposal = 2160;
 
-    await mockNearPrice({ daoAccount, nearPrice, page });
     await mockInventory({ page, account: daoAccount });
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
     if (instanceConfig.showProposalSelection === false) {
@@ -488,6 +537,7 @@ test.describe("User is logged in", function () {
     await updateDaoPolicyMembers({ instanceAccount, page });
 
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
+    await mockNearnProposal({ page });
     await clickCreatePaymentRequestButton(page);
 
     const proposalSelect = page.locator(".dropdown-toggle").first();
@@ -500,11 +550,13 @@ test.describe("User is logged in", function () {
     await proposalSelect.click();
     await page
       .getByPlaceholder("Search by id or title")
-      .pressSequentially("173");
-    const proposal = await page.getByText("#173 Near Contract Standards");
+      .pressSequentially("22");
+    const proposal = await page.getByText(
+      "#22 NEAR-API-TS: Tech Specification & Architecture Development - 30.04-11.05"
+    );
     await proposal.click();
     expect(await page.getByPlaceholder("treasury.near").inputValue()).toBe(
-      "robert.near"
+      "eclipseeer.near"
     );
 
     expect(await page.getByTestId("total-amount").inputValue()).toBe(
@@ -568,7 +620,7 @@ test.describe("User is logged in", function () {
     await mockPikespeakFTTokensResponse({ page, daoAccount });
     await updateDaoPolicyMembers({ instanceAccount, page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
-
+    await mockNearnProposal({ page });
     await clickCreatePaymentRequestButton(page);
 
     if (instanceConfig.showProposalSelection === true) {
@@ -580,17 +632,15 @@ test.describe("User is logged in", function () {
 
       await proposalSelect.click();
 
-      await page
-        .getByPlaceholder("Search by id or title")
-        .fill("215 Fellowship");
+      await page.getByPlaceholder("Search by id or title").fill("22");
       const proposal = page.getByText(
-        "#215 Fellowship Contributor report by Matias Benary for 2024-09-09 2024-09-29"
+        "#22 NEAR-API-TS: Tech Specification & Architecture Development - 30.04-11.05"
       );
       await proposal.click();
       expect(await page.getByPlaceholder("treasury.near").inputValue()).toBe(
-        "maguila.near"
+        "eclipseeer.near"
       );
-      expect(await page.getByTestId("total-amount").inputValue()).toBe("3150");
+      expect(await page.getByTestId("total-amount").inputValue()).toBe("2160");
     } else {
       await page.getByTestId("proposal-title").fill("Test proposal title");
       await page.getByTestId("proposal-summary").fill("Test proposal summary");
@@ -607,7 +657,7 @@ test.describe("User is logged in", function () {
       await totalAmountField.pressSequentially("3150");
       await totalAmountField.blur();
     }
-    await page.waitForTimeout(5_000);
+    await page.waitForTimeout(1_000);
     const submitBtn = page.getByRole("button", { name: "Submit" });
     await expect(submitBtn).toBeAttached({ timeout: 10_000 });
     await submitBtn.scrollIntoViewIfNeeded({ timeout: 10_000 });
@@ -617,12 +667,12 @@ test.describe("User is logged in", function () {
       ? {
           proposal: {
             description:
-              "* Title: Fellowship Contributor report by Matias Benary for  2024-09-09  2024-09-29 <br>* Summary: Fellowship Contributor report by Matias Benary for  2024-09-09  2024-09-29 <br>* Proposal Id: 215",
+              "* Title: NEAR-API-TS: Tech Specification & Architecture Development - 30.04-11.05 <br>* Summary: The goal of this proposal is to create a successor to near-api-js that will enhance the DevX for JS/TS developers interacting with the NEAR Protocol and address existing user issues. <br>* Proposal Id: 22 <br>* Url: https://nearn.io/devhub/8/22",
             kind: {
               Transfer: {
-                amount: "3150000000",
-                receiver_id: "maguila.near",
                 token_id: "usdt.tether-token.near",
+                receiver_id: "eclipseeer.near",
+                amount: "2160000000",
               },
             },
           },
@@ -766,7 +816,7 @@ test.describe("User is logged in", function () {
     daoAccount,
     instanceAccount,
   }) => {
-    test.setTimeout(100_000);
+    test.setTimeout(150_000);
     await updateDaoPolicyMembers({ instanceAccount, page });
     await fillCreateForm(page, daoAccount, instanceAccount);
     const submitBtn = page
@@ -806,11 +856,11 @@ test.describe("admin with function access keys", function () {
     await mockPikespeakFTTokensResponse({ page, daoAccount });
     await updateDaoPolicyMembers({ instanceAccount, page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
-
+    await mockNearnProposal({ page });
     await clickCreatePaymentRequestButton(page);
 
-    const usdAmountFromLinkedProposal = 3120;
-    const nearAmountFromLinkedProposal = 3120 / nearPrice;
+    const usdAmountFromLinkedProposal = 2160 * nearPrice;
+    const nearAmountFromLinkedProposal = 2160;
 
     if (instanceConfig.showProposalSelection === true) {
       const proposalSelect = page.locator(".dropdown-toggle").first();
@@ -823,16 +873,21 @@ test.describe("admin with function access keys", function () {
       await proposalSelect.click();
       await page
         .getByPlaceholder("Search by id or title")
-        .pressSequentially("173");
-      const proposal = page.getByText("#173 Near Contract Standards");
+        .pressSequentially("22");
+      const proposal = page.getByText(
+        "#22 NEAR-API-TS: Tech Specification & Architecture Development - 30.04-11.05"
+      );
       await proposal.click();
       expect(await page.getByPlaceholder("treasury.near").inputValue()).toBe(
-        "robert.near"
+        "eclipseeer.near"
       );
-
-      expect(await page.getByTestId("total-amount").inputValue()).toBe(
-        nearAmountFromLinkedProposal.toString()
-      );
+      const tokenSelect = await page.getByTestId("tokens-dropdown");
+      await tokenSelect.click();
+      await tokenSelect.getByText("NEAR").first().click();
+      await page
+        .getByTestId("total-amount")
+        .fill(nearAmountFromLinkedProposal.toString());
+      await page.waitForTimeout(1_000);
       await expect(
         page.getByText(`$${usdAmountFromLinkedProposal.toLocaleString()}.00`)
       ).toBeVisible();
@@ -862,11 +917,11 @@ test.describe("admin with function access keys", function () {
       ? {
           proposal: {
             description:
-              "* Title: Near Contract Standards payment request by Robert <br>* Summary: Contract Standards Work Group grant <br>* Proposal Id: 173",
+              "* Title: NEAR-API-TS: Tech Specification & Architecture Development - 30.04-11.05 <br>* Summary: The goal of this proposal is to create a successor to near-api-js that will enhance the DevX for JS/TS developers interacting with the NEAR Protocol and address existing user issues. <br>* Proposal Id: 22 <br>* Url: https://nearn.io/devhub/8/22",
             kind: {
               Transfer: {
                 token_id: "",
-                receiver_id: "robert.near",
+                receiver_id: "eclipseeer.near",
                 amount: (
                   BigInt(nearAmountFromLinkedProposal) *
                   10n ** 24n

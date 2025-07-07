@@ -6,6 +6,7 @@ const confirmLabel = props.confirmLabel;
 const onCancelClick = props.onCancelClick;
 const onConfirmClick = props.onConfirmClick;
 const wider = props.wider;
+const testId = props["data-testid"];
 
 const Modal = styled.div`
   display: ${({ hidden }) => (hidden ? "none" : "flex")};
@@ -111,7 +112,7 @@ const NoButton = styled.button`
 
 return (
   <>
-    <Modal hidden={!isOpen}>
+    <Modal hidden={!isOpen} data-testid={testId}>
       <ModalBackdrop />
       <ModalDialog className="card" wider={wider}>
         <ModalHeader>

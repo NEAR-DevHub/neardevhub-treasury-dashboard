@@ -322,7 +322,11 @@ function getFilteredProposalsByStatusAndKind({
   const checkForTransferProposals = (item) => {
     return (
       decodeProposalDescription("proposal_action", item.description) ===
-        "transfer" || item.kind?.Transfer
+        "transfer" ||
+      item.kind?.Transfer ||
+      item.kind?.FunctionCall?.actions[0].method_name === "ft_withdraw" ||
+      item.kind?.FunctionCall?.actions[0].method_name === "ft_transfer" ||
+      item.kind?.FunctionCall?.actions[1].method_name === "ft_transfer"
     );
   };
 
@@ -367,8 +371,9 @@ function getFilteredProposalsByStatusAndKind({
       if (
         filterKindArray.includes("Transfer") &&
         !checkForTransferProposals(item)
-      )
+      ) {
         return false;
+      }
       if (isAssetExchange && !checkForExchangeProposals(item)) return false;
       if (isStakeDelegation && !checkForStakeProposals(item)) return false;
       if (isLockup && !checkForLockupProposals(item)) return false;
@@ -391,8 +396,8 @@ function getFilteredProposalsByStatusAndKind({
   });
 }
 
-const data = fetch(`https://httpbin.org/headers`);
-const gatewayOrigin = data?.body?.headers?.Origin ?? "";
+const data = fetch(`https://ref-sdk-test-cold-haze-1300-2.fly.dev/headers`);
+const gatewayOrigin = data?.body?.headers?.origin ?? "";
 
 const isNearSocial =
   gatewayOrigin.includes("near.social") ||
@@ -1054,6 +1059,190 @@ function getUserTreasuries(accountId) {
   });
 }
 
+function getIntentsBalances(accountId) {
+  if (!accountId) {
+    return Promise.all([]);
+  }
+
+  return asyncFetch("https://api-mng-console.chaindefuser.com/api/tokens")
+    .then((resp) => {
+      if (!resp.ok) {
+        console.error("Failed to fetch tokens from Chaindefuser", resp);
+        return []; // Return empty array on error
+      }
+      const initialTokens = resp.body?.items || [];
+      if (initialTokens.length === 0) {
+        return [];
+      }
+
+      const tokenIds = initialTokens.map((t) => t.defuse_asset_id);
+      return Near.asyncView("intents.near", "mt_batch_balance_of", {
+        account_id: accountId,
+        token_ids: tokenIds,
+      })
+        .then((balances) => {
+          if (balances === null || typeof balances === "undefined") {
+            console.error(
+              "Failed to fetch balances from intents.near",
+              balances
+            );
+            return []; // Return empty array on error
+          }
+
+          const tokensWithBalances = initialTokens.map((t, i) => ({
+            ...t, // Spread original token data
+            amount: balances[i],
+          }));
+
+          const filteredTokensWithBalances = tokensWithBalances.filter(
+            (token) => token.amount && Big(token.amount).gt(0)
+          );
+
+          if (filteredTokensWithBalances.length === 0) {
+            return [];
+          }
+
+          const iconPromises = filteredTokensWithBalances.map((token) => {
+            let iconPromise = Promise.resolve(token.icon); // Default to original icon
+            if (
+              token.defuse_asset_id &&
+              token.defuse_asset_id.startsWith("nep141:")
+            ) {
+              const parts = token.defuse_asset_id.split(":");
+              if (parts.length > 1) {
+                const contractId = parts[1];
+                iconPromise = Near.asyncView(contractId, "ft_metadata")
+                  .then((metadata) => metadata?.icon || token.icon)
+                  .catch(() => token.icon); // Fallback to original icon on error
+              }
+            }
+            return iconPromise;
+          });
+
+          return Promise.all(iconPromises)
+            .then((resolvedIcons) => {
+              const finalTokens = filteredTokensWithBalances.map((t, i) => ({
+                // contract_id is needed by TokensDropdown
+                contract_id: t.defuse_asset_id.startsWith("nep141:")
+                  ? t.defuse_asset_id.split(":")[1]
+                  : t.defuse_asset_id,
+                ft_meta: {
+                  symbol: t.symbol,
+                  icon: resolvedIcons[i], // Use icon from ft_metadata or original
+                  decimals: t.decimals,
+                  price: t.price, // Include price if available
+                },
+                amount: t.amount,
+                blockchain: t.blockchain,
+              }));
+              return finalTokens;
+            })
+            .catch((iconError) => {
+              console.error(
+                "Error fetching some token icons, using defaults.",
+                iconError
+              );
+              // Fallback to original icons if Promise.all fails for ft_metadata calls
+              const fallbackTokens = filteredTokensWithBalances.map((t) => ({
+                contract_id: t.defuse_asset_id.startsWith("nep141:")
+                  ? t.defuse_asset_id.split(":")[1]
+                  : t.defuse_asset_id,
+                ft_meta: {
+                  symbol: t.symbol,
+                  icon: t.icon, // Fallback to original icon
+                  decimals: t.decimals,
+                  price: t.price,
+                },
+                amount: t.amount,
+                blockchain: t.blockchain,
+              }));
+              return fallbackTokens;
+            });
+        })
+        .catch((balanceError) => {
+          console.error("Error fetching intents balances:", balanceError);
+          return []; // Return empty array on error
+        });
+    })
+    .catch((fetchError) => {
+      console.error("Error fetching initial tokens for intents:", fetchError);
+      return []; // Return empty array on error
+    });
+}
+
+function updateDaoPolicy(membersList, daoPolicy) {
+  const updatedPolicy = { ...daoPolicy };
+  const additions = [];
+  const edits = [];
+
+  const originalRolesMap = new Map();
+
+  if (Array.isArray(updatedPolicy.roles)) {
+    updatedPolicy.roles.forEach((role) => {
+      if (role.name !== "all" && role.kind.Group) {
+        role.kind.Group.forEach((user) => {
+          if (!originalRolesMap.has(user)) {
+            originalRolesMap.set(user, []);
+          }
+          originalRolesMap.get(user).push(role.name);
+        });
+      }
+    });
+
+    updatedPolicy.roles = updatedPolicy.roles.map((role) => {
+      if (role.name === "all" && role.kind === "Everyone") return role;
+
+      let group = [...(role.kind.Group || [])];
+
+      membersList.forEach(({ member, roles }) => {
+        const shouldHaveRole = roles.includes(role.name);
+        const isAlreadyInRole = group.includes(member);
+
+        if (shouldHaveRole && !isAlreadyInRole) {
+          group.push(member);
+        } else if (!shouldHaveRole && isAlreadyInRole) {
+          group = group.filter((u) => u !== member);
+        }
+      });
+
+      return {
+        ...role,
+        kind: { Group: group },
+      };
+    });
+  }
+
+  membersList.forEach(({ member, roles }) => {
+    const oldRoles = originalRolesMap.get(member) || [];
+    const newRoles = roles;
+
+    const added = newRoles.filter((r) => !oldRoles.includes(r));
+    const removed = oldRoles.filter((r) => !newRoles.includes(r));
+
+    if (oldRoles.length === 0 && newRoles.length > 0) {
+      additions.push(
+        `- add "${member}" to [${newRoles.map((r) => `"${r}"`).join(", ")}]`
+      );
+    } else if (added.length > 0 || removed.length > 0) {
+      edits.push(
+        `- edit "${member}" from [${oldRoles
+          .map((r) => `"${r}"`)
+          .join(", ")}] to [${newRoles.map((r) => `"${r}"`).join(", ")}]`
+      );
+    }
+  });
+
+  const summaryLines = [...additions, ...edits];
+  const summary = summaryLines.length
+    ? `${context.accountId} requested to:\n${summaryLines.join("\n")}`
+    : `${context.accountId} made no permission changes.`;
+
+  return {
+    updatedPolicy,
+    summary,
+  };
+}
+
 return {
   getApproversAndThreshold,
   hasPermission,
@@ -1080,4 +1269,6 @@ return {
   deserializeLockupContract,
   getUserTreasuries,
   getUserDaos,
+  getIntentsBalances,
+  updateDaoPolicy,
 };

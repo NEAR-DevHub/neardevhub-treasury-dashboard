@@ -130,6 +130,38 @@ In the [web4](./web4) folder there is a setup for a web4 gateway. The [public_ht
 
 ## Local development
 
+### Recommended approach: Test driven
+
+You can set up a minimal Playwright test file and use the `redirectWeb4` function to capture the navigation to the web4 page.
+
+```javascript
+import { test } from '../../util/test.js';
+import { expect } from '@playwright/test';
+import { redirectWeb4 } from '../../util/web4.js';
+
+test("check if instance web4 contract is up to date", async ({page, instanceAccount, daoAccount}) => {
+    await redirectWeb4({
+        page,
+        contractId: instanceAccount,
+        treasury: daoAccount
+    });
+    await page.goto(`https://${instanceAccount}.page`);
+
+    // Stop your debugger here, and you then reload the page 
+    await page.waitForTimeout(2000);
+});
+```
+
+Start your test using this command
+
+```bash
+npx playwright test --project=treasury-testing --debug playwright-tests/tests/some-tests-folder/your-playwrigt-test.spec.js
+```
+
+Step through the debugger until the page is loaded, and then you can have normal development and reload page iterations.
+
+### Legacy BOS workspace setup
+
 You can also locally develop the html page served by the web4 gateway. To run a local gateway, type the following:
 
 ```bash

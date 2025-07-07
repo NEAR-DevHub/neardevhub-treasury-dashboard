@@ -120,17 +120,11 @@ function onClose() {
 }
 
 function onSubmit(newData) {
-  let newMembers = [
-    ...members,
-    {
-      accountId: newData.accountId,
-      permissions: newData.permissions,
-    },
-  ];
-  newMembers = newMembers.filter(
-    (el, i) =>
-      newMembers.map((m) => m.accountId).lastIndexOf(el.accountId) === i
+  const merged = [...members, ...newData];
+  const newMembers = Array.from(
+    new Map(merged.map((item) => [item.accountId, item])).values()
   );
+
   setMembers(newMembers);
   setFields({});
   onClose();
@@ -139,37 +133,37 @@ function onSubmit(newData) {
 return (
   <>
     <div>
-      <Widget
-        src={`${REPL_DEVDAO_ACCOUNT}/widget/components.OffCanvas`}
-        props={{
-          title: "New Member",
-          children: (
-            <Widget
-              src={`${REPL_DEVDAO_ACCOUNT}/widget/pages.settings.MembersEditor`}
-              props={{
-                instance: "${REPL_BASE_DEPLOYMENT_ACCOUNT}",
-                refreshMembersTableData: () => {},
-                onCloseCanvas: onClose,
-                availableRoles: Object.values(PERMISSIONS).map((i) => {
-                  return { title: i, value: i };
-                }),
-                selectedMember: fields.accountId
-                  ? {
-                      member: fields.accountId,
-                      roles: fields.permissions,
-                    }
-                  : null,
-                setToastStatus: () => {},
-                isTreasuryFactory: true,
-                onSubmit: onSubmit,
-              }}
-            />
-          ),
-          confirmLabel: "Confirm",
-          showCanvas: showAddMemberModal,
-          onClose,
-        }}
-      />
+      {showAddMemberModal && (
+        <Widget
+          src={`${REPL_DEVDAO_ACCOUNT}/widget/pages.settings.members.MembersForm`}
+          props={{
+            showEditor: showAddMemberModal,
+            setShowEditor: setShowAddMemberModal,
+            instance: "${REPL_BASE_DEPLOYMENT_ACCOUNT}",
+            devdaoAccount: "${REPL_DEVDAO_ACCOUNT}",
+            refreshMembersTableData: () => {},
+            onCloseCanvas: onClose,
+            availableRoles: Object.values(PERMISSIONS).map((i) => {
+              return { title: i, value: i };
+            }),
+            selectedMembers: fields.accountId
+              ? [
+                  {
+                    member: fields.accountId,
+                    roles: fields.permissions,
+                  },
+                ]
+              : [],
+            isEdit: fields.accountId ? true : false,
+            allMembers: members?.map((i) => {
+              return { member: i.accountId, roles: i.permissions };
+            }),
+            setToastStatus: () => {},
+            isTreasuryFactory: true,
+            onSubmit: onSubmit,
+          }}
+        />
+      )}
       <h3>Add Members</h3>
       <p>
         Add members to your treasury and define their roles. You can also do

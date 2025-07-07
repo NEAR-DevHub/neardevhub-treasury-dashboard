@@ -1,4 +1,4 @@
-const { tableProps, warningText, includeExpiryDate } = props;
+const { tableProps, warningText, descriptionText, includeExpiryDate } = props;
 
 const { decodeProposalDescription } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
@@ -12,8 +12,8 @@ const { InfoBlock } = VM.require(
 
 return (
   <div className="d-flex flex-column gap-4">
-    <InfoBlock type="warning" description={warningText} />
-
+    {warningText && <InfoBlock type="warning" description={warningText} />}
+    {descriptionText && <p className="mb-0">{descriptionText}</p>}
     {tableProps.map(({ title, proposals, testId }) => (
       <>
         {proposals.length > 0 && (
@@ -24,15 +24,16 @@ return (
               <table className="table table-simple">
                 <thead>
                   <tr className="text-secondary">
-                    <th>Id</th>
-                    <th>Submission date</th>
+                    <th>#</th>
+                    <th>Created Date</th>
                     {includeExpiryDate && (
                       <>
                         <th>Expiry date</th>
                         <th>New expiry</th>
                       </>
                     )}
-                    <th>Description</th>
+                    <th>Title</th>
+                    <th>Created By</th>
                     <th className="text-right">Actions</th>
                   </tr>
                 </thead>
@@ -74,11 +75,12 @@ return (
                       <td>
                         <div className="text-left text-clamp">
                           {decodeProposalDescription(
-                            "summary",
+                            "title",
                             proposal.description
                           )}
                         </div>
                       </td>
+                      <td>{proposal.proposer}</td>
                       <td className="text-center" style={{ width: "100px" }}>
                         <a
                           target="_blank"

@@ -2,7 +2,7 @@ const { NearToken } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Icons"
 ) || { NearToken: () => <></> };
 
-const { getNearBalances } = VM.require(
+const { getNearBalances, getIntentsBalances } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
 const daoAccount = props.daoAccount;
@@ -12,6 +12,8 @@ const {
   onChange,
   disabled,
   setTokensAvailable,
+  setSelectedTokenBlockchain,
+  setSelectedTokenIsIntent,
   lockupNearBalances,
 } = props;
 
@@ -42,6 +44,7 @@ if (
 const [options, setOptions] = useState([]);
 const [nearStakedTokens, setNearStakedTokens] = useState(null);
 const [lockupStakedTokens, setLockupStakedTokens] = useState(null);
+const [intentsTokens, setIntentsTokens] = useState([]);
 
 // remove near storage, spam tokens
 const tokensWithBalance =
@@ -53,34 +56,33 @@ const tokensWithBalance =
   ) ?? [];
 
 useEffect(() => {
-  const tokens = [
+  let tokens = [
     {
       icon: NearToken,
       title: "NEAR",
       value: "NEAR",
       tokenBalance: nearBalances.availableParsed,
+      blockchain: null,
     },
   ];
 
-  if (
-    tokensWithBalance.length > 0 &&
-    options.length !== tokensWithBalance.length + 1
-  ) {
-    tokens = tokens.concat(
-      tokensWithBalance.map((i) => {
-        return {
-          icon: i.ft_meta.icon,
-          title: i.ft_meta.symbol,
-          value: i.contract,
-          tokenBalance: Big(i.amount ?? "0")
-            .div(Big(10).pow(i.ft_meta.decimals))
-            .toFixed(2),
-        };
-      })
-    );
-  }
+  tokens = tokens.concat(
+    tokensWithBalance.map((i) => {
+      return {
+        icon: i.ft_meta.icon,
+        title: i.ft_meta.symbol,
+        value: i.contract,
+        blockchain: null,
+        tokenBalance: Big(i.amount ?? "0")
+          .div(Big(10).pow(i.ft_meta.decimals))
+          .toFixed(2),
+      };
+    })
+  );
+
+  tokens = tokens.concat(intentsTokens);
   setOptions(tokens);
-}, [tokensWithBalance, isLockupContract]);
+}, [tokensWithBalance, isLockupContract, intentsTokens]);
 
 const [isOpen, setIsOpen] = useState(false);
 const [selectedOptionValue, setSelectedValue] = useState(selectedValue);
@@ -95,16 +97,28 @@ function sendTokensAvailable(value) {
 }
 
 useEffect(() => {
-  if (selectedValue !== selectedOptionValue) {
+  if (selectedValue !== (selectedOptionValue ?? "").replace(/^intents\_/, "")) {
     setSelectedValue(selectedValue);
-    sendTokensAvailable(selectedValue);
+    sendTokensAvailable(
+      selectedToken ? selectedToken.value : selectedOptionValue
+    );
   }
 }, [selectedValue]);
 
 useEffect(() => {
   if (selectedValue !== selectedOptionValue) {
-    onChange(selectedOptionValue);
-    sendTokensAvailable(selectedOptionValue);
+    const selectedToken = options.find((i) => i.value === selectedOptionValue);
+
+    onChange(
+      selectedToken?.isIntent ? selectedToken.tokenId : selectedOptionValue
+    );
+
+    setSelectedValue(selectedToken ? selectedToken.value : null);
+    setSelectedTokenBlockchain(selectedToken ? selectedToken.blockchain : null);
+    setSelectedTokenIsIntent(selectedToken ? selectedToken.isIntent : false);
+    sendTokensAvailable(
+      selectedToken ? selectedToken.value : selectedOptionValue
+    );
   }
 }, [selectedOptionValue]);
 
@@ -169,9 +183,12 @@ const Item = ({ option }) => {
     <div className="d-flex gap-3 align-items-center w-100">
       {typeof option.icon === "string" ? (
         <img src={option.icon} height={30} width={30} />
+      ) : typeof option.icon === "function" ? (
+        <option.icon />
       ) : (
-        <NearToken />
+        option.icon
       )}
+
       <div className="d-flex flex-column gap-1 w-100 text-wrap">
         <div className="h6 mb-0"> {option.title}</div>
         {option.value === "NEAR" && (
@@ -191,6 +208,36 @@ const Item = ({ option }) => {
 
 const selectedOption =
   options.find((item) => item.value === selectedOptionValue) ?? null;
+
+useEffect(() => {
+  if (typeof getIntentsBalances === "function" && daoAccount) {
+    getIntentsBalances(daoAccount).then((balances) => {
+      const formattedIntentsTokens = balances.map((token) => ({
+        icon: token.ft_meta?.icon ? (
+          <img src={token.ft_meta.icon} height={30} width={30} />
+        ) : (
+          <div
+            style={{
+              width: 30,
+              height: 30,
+              borderRadius: "50%",
+              background: "#ccc",
+            }}
+          /> // Placeholder icon
+        ),
+        title: `${token.ft_meta.symbol} (NEAR Intents)`,
+        tokenId: token.contract_id,
+        value: `intents_${token.contract_id}`,
+        tokenBalance: Big(token.amount ?? "0")
+          .div(Big(10).pow(token.ft_meta.decimals))
+          .toFixed(2),
+        blockchain: token.blockchain,
+        isIntent: true,
+      }));
+      setIntentsTokens(formattedIntentsTokens);
+    });
+  }
+}, [daoAccount]);
 
 return (
   <Container>

@@ -26,6 +26,10 @@ const {
   getRolesThresholdDescription: () => {},
 };
 
+const { Modal, ModalContent, ModalHeader } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.modal"
+);
+
 const { instance } = props;
 if (!instance) {
   return <></>;
@@ -73,6 +77,7 @@ const [showErrorToast, setShowErrorToast] = useState(false);
 const [proposals, setProposals] = useState([]);
 
 const [showWarningModal, setShowWarningModal] = useState(false);
+const [isInitialLoading, setIsInitialLoading] = useState(true);
 
 const hasCreatePermission = hasPermission(
   treasuryDaoID,
@@ -80,6 +85,12 @@ const hasCreatePermission = hasPermission(
   "policy",
   "AddProposal"
 );
+
+function getLastProposalId() {
+  return Near.asyncView(treasuryDaoID, "get_last_proposal_id").then(
+    (result) => result
+  );
+}
 
 const fetchProposals = async () =>
   getFilteredProposalsByStatusAndKind({
@@ -95,39 +106,91 @@ const fetchProposals = async () =>
   });
 
 useEffect(() => {
-  if (Array.isArray(rolesData) && rolesData.length) {
-    setSelectedGroup(rolesData[0]);
+  const fetchInitialData = () => {
+    setIsInitialLoading(true);
+
+    Promise.all([
+      getRoleWiseData(treasuryDaoID),
+      Near.asyncView(treasuryDaoID, "get_policy"),
+      getLastProposalId(),
+    ])
+      .then(([roles, policy, proposalId]) => {
+        // remove Create request and Treasury Creator permission group, since we don't need to set threshold for them
+        const filteredRoles = roles.filter(
+          (i) =>
+            i.roleName !== "Create Requests" &&
+            i.roleName !== "Requestor" &&
+            i.roleName !== "Create requests" &&
+            i.roleName !== "all"
+        );
+
+        setRolesData(filteredRoles);
+        setDaoPolicy(policy);
+        setLastProposalId(proposalId);
+
+        // Fetch proposals if user has permission
+        if (hasCreatePermission) {
+          getFilteredProposalsByStatusAndKind({
+            treasuryDaoID,
+            resPerPage: 10,
+            isPrevPageCalled: false,
+            filterKindArray: ["ChangePolicy"],
+            filterStatusArray: ["InProgress"],
+            offset: proposalId,
+            lastProposalId: proposalId,
+          })
+            .then((proposalsResult) => {
+              setProposals(proposalsResult.filteredProposals);
+              setIsInitialLoading(false);
+            })
+            .catch((error) => {
+              console.error("Error fetching proposals:", error);
+              setProposals([]);
+              setIsInitialLoading(false);
+            });
+        } else {
+          setIsInitialLoading(false);
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching initial data:", error);
+        setIsInitialLoading(false);
+      });
+  };
+
+  fetchInitialData();
+}, []);
+
+useEffect(() => {
+  if (props.transactionHashes) {
+    asyncFetch("${REPL_RPC_URL}", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: "dontcare",
+        method: "tx",
+        params: [props.transactionHashes, context.accountId],
+      }),
+    }).then((transaction) => {
+      if (transaction !== null) {
+        const transaction_method_name =
+          transaction?.body?.result?.transaction?.actions[0].FunctionCall
+            .method_name;
+
+        if (transaction_method_name === "add_proposal") {
+          const proposalId = atob(
+            transaction?.body?.result.status.SuccessValue ?? ""
+          );
+          setLastProposalId(proposalId);
+          setToastStatus(true);
+        }
+      }
+    });
   }
-}, [rolesData]);
-
-function getLastProposalId() {
-  return Near.asyncView(treasuryDaoID, "get_last_proposal_id").then(
-    (result) => result
-  );
-}
-
-useEffect(() => {
-  setRolesData([]);
-  getRoleWiseData(treasuryDaoID).then((resp) => {
-    // remove Create request and Treasury Creator permission group, since we don't need to set threshold for them
-    setRolesData(
-      resp.filter(
-        (i) =>
-          i.roleName !== "Create Requests" &&
-          i.roleName !== "Requestor" &&
-          i.roleName !== "Create requests" &&
-          i.roleName !== "all"
-      )
-    );
-  });
-}, []);
-
-useEffect(() => {
-  getLastProposalId().then((i) => setLastProposalId(i));
-  Near.asyncView(treasuryDaoID, "get_policy").then((policy) => {
-    setDaoPolicy(policy);
-  });
-}, []);
+}, [props.transactionHashes]);
 
 useEffect(() => {
   if (isTxnCreated) {
@@ -154,10 +217,10 @@ useEffect(() => {
 }, [isTxnCreated, lastProposalId]);
 
 useEffect(() => {
-  if (lastProposalId && !proposals.length) {
-    fetchProposals();
+  if (Array.isArray(rolesData) && rolesData.length) {
+    setSelectedGroup(rolesData[0]);
   }
-}, [lastProposalId]);
+}, [rolesData]);
 
 function resetForm() {
   setSelectedVoteOption(selectedGroup.isRatio ? options[1] : options[0]);
@@ -482,33 +545,43 @@ return (
       showInProgress={isTxnCreated}
       cancelTxn={() => setTxnCreated(false)}
     />
-    {Array.isArray(rolesData) && rolesData.length && selectedGroup ? (
-      <div className="card rounded-4 d-flex flex-row px-0 flex-wrap">
+    {isInitialLoading ? (
+      <div
+        className="card d-flex justify-content-center align-items-center w-100 h-100"
+        style={{ minHeight: "400px" }}
+      >
         <Widget
-          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
-          props={{
-            instance,
-            heading: "Confirm Your Change",
-            wider: true,
-            content: (
+          src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"}
+        />
+      </div>
+    ) : Array.isArray(rolesData) && rolesData.length && selectedGroup ? (
+      <div className="card rounded-4 d-flex flex-row px-0 flex-wrap">
+        {showWarningModal && (
+          <Modal props={{ minWidth: "700px" }}>
+            <ModalHeader>
+              <h5 className="d-flex gap-2 align-items-center justify-content-between mb-0">
+                <div className="d-flex gap-2 align-items-center">
+                  <i className="bi bi-exclamation-triangle text-warning h5 mb-0"></i>
+                  Resolve Before Proceeding
+                </div>
+                <i
+                  className="bi bi-x-lg h4 mb-0 cursor-pointer"
+                  onClick={() => setShowWarningModal(false)}
+                ></i>
+              </h5>
+            </ModalHeader>
+            <ModalContent>
               <Widget
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.WarningTable`}
                 props={{
+                  descriptionText:
+                    "This action will override your previous pending proposals. Complete existing one before creating a new to avoid conflicting or incomplete updates.",
                   tableProps: [{ proposals }],
-                  warningText:
-                    "This action will override your previous pending proposals. Complete exsisting one before creating a new to avoid conflicting or incomplete updates.",
                 }}
               />
-            ),
-            confirmLabel: "Yes, proceed",
-            isOpen: showWarningModal,
-            onCancelClick: () => setShowWarningModal(false),
-            onConfirmClick: () => {
-              setShowWarningModal(false);
-              setConfirmModal(true);
-            },
-          }}
-        />
+            </ModalContent>
+          </Modal>
+        )}
         <Widget
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
           props={{
@@ -689,9 +762,9 @@ return (
                 <InfoBlock
                   type="warning"
                   description="If you choose a percentage-based threshold, the number of
-                  votes required could change if new members are added or
-                  existing members are removed. However, at least one vote will
-                  always be required, regardless of the percentage."
+                    votes required could change if new members are added or
+                    existing members are removed. However, at least one vote will
+                    always be required, regardless of the percentage."
                 />
               )}
 
@@ -780,7 +853,7 @@ return (
     ) : (
       <div
         className="card rounded-4 d-flex justify-content-center align-items-center w-100 h-100"
-        style={{ minHeight: 300 }}
+        style={{ minHeight: "300px" }}
       >
         <Widget
           src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"}

@@ -184,6 +184,11 @@ async function setupSandboxAndCreateProposal({ daoAccount, page }) {
   return sandbox;
 }
 
+/**
+ *
+ * @param {Object} options - The options object.
+ * @param {import('@playwright/test').Page} options.page - Playwright page object.
+ */
 async function approveProposal({
   page,
   sandbox,
@@ -193,20 +198,19 @@ async function approveProposal({
   instanceAccount,
 }) {
   const isMultiVote = daoAccount === "infinex.sputnik-dao.near";
-  page.evaluate(async () => {
+  await page.evaluate(async () => {
     const selector = await document.querySelector("near-social-viewer")
       .selectorPromise;
 
     const wallet = await selector.wallet();
-
-    return new Promise((resolve) => {
-      wallet["signAndSendTransaction"] = async (transaction) => {
-        resolve(transaction);
-        return new Promise((transactionSentPromiseResolve) => {
-          window.transactionSentPromiseResolve = transactionSentPromiseResolve;
-        });
-      };
-    });
+    const transactionSentPromise = new Promise(
+      (transactionSentPromiseResolve) => {
+        window.transactionSentPromiseResolve = transactionSentPromiseResolve;
+      }
+    );
+    wallet["signAndSendTransaction"] = async (transaction) => {
+      return transactionSentPromise;
+    };
   });
   if (showInsufficientBalanceModal) {
     await expect(page.getByText("Insufficient Balance")).toBeVisible({
@@ -216,7 +220,19 @@ async function approveProposal({
   }
   await page.getByRole("button", { name: "Confirm" }).click();
   await expect(page.getByText("Confirm Transaction")).toBeVisible();
-  await page.getByRole("button", { name: "Confirm" }).click();
+  const confirmTransactionButton = page.getByRole("button", {
+    name: "Confirm",
+  });
+  await expect(confirmTransactionButton).toBeEnabled();
+  if (!isMultiVote) {
+    // The "awaiting transaction confirmation toast should be visible"
+    await expect(
+      page.getByText("Awaiting transaction confirmation")
+    ).toBeVisible({
+      timeout: 10_000,
+    });
+  }
+  await confirmTransactionButton.click();
   const transactionResult = await sandbox.account.functionCall({
     contractId: daoAccount,
     methodName: "act_proposal",
@@ -227,10 +243,23 @@ async function approveProposal({
     gas: "300000000000000",
     attachedDeposit: "0",
   });
-  await page.waitForTimeout(4_000);
+
+  if (isMultiVote) {
+    await expect(page.getByText("1 Approved", { exact: true })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(
+      page.getByText(
+        "Your vote is counted" +
+          (!isCompactVersion ? "." : ", the request is highlighted.")
+      )
+    ).toBeVisible({ timeout: 30_000 });
+  }
+  await page.waitForTimeout(500);
   await page.evaluate(async (transactionResult) => {
     window.transactionSentPromiseResolve(transactionResult);
   }, transactionResult);
+
   await expect(page.locator("div.modal-body code").nth(0)).toBeAttached({
     attached: false,
     timeout: 10_000,
@@ -239,27 +268,14 @@ async function approveProposal({
     attached: false,
     timeout: 10_000,
   });
-  if (isMultiVote) {
-    await expect(page.getByText("1 Approved", { exact: true })).toBeVisible();
-    await expect(
-      page.getByText(
-        "Your vote is counted" +
-          (!isCompactVersion ? "." : ", the request is highlighted.")
-      )
-    ).toBeVisible({ timeout: 30_000 });
-  } else {
-    await expect(page.getByText("Just Now")).toBeVisible({
-      timeout: 30_000,
-    });
-    if (isCompactVersion) {
-      const historyBtn = page.getByText("View in History");
-      await expect(historyBtn).toBeVisible();
-      await Promise.all([page.waitForNavigation(), historyBtn.click()]);
-      const currentUrl = page.url();
-      await expect(currentUrl).toContain(
-        `http://localhost:8080/${instanceAccount}/widget/app?page=asset-exchange&id=0`
-      );
-    }
+  if (!isMultiVote && isCompactVersion) {
+    const historyBtn = page.getByText("View in History");
+    await expect(historyBtn).toBeVisible();
+    await Promise.all([page.waitForNavigation(), historyBtn.click()]);
+    const currentUrl = page.url();
+    await expect(currentUrl).toContain(
+      `http://localhost:8080/${instanceAccount}/widget/app?page=asset-exchange&id=0`
+    );
   }
 }
 
@@ -273,11 +289,12 @@ test.describe
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(200_000);
+    test.setTimeout(60_000);
     const sandbox = await setupSandboxAndCreateProposal({ daoAccount, page });
     await mockWithFTBalance({ page, daoAccount, isSufficient: true });
 
     await page.goto(`/${instanceAccount}/widget/app?page=asset-exchange&id=0`);
+    await page.waitForLoadState("networkidle");
     const approveButton = page
       .getByRole("button", {
         name: "Approve",
@@ -294,7 +311,7 @@ test.describe
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(200_000);
+    test.setTimeout(60_000);
     const sandbox = await setupSandboxAndCreateProposal({ daoAccount, page });
     await page.goto(`/${instanceAccount}/widget/app?page=asset-exchange&id=0`);
     await mockWithFTBalance({ page, daoAccount, isSufficient: false });

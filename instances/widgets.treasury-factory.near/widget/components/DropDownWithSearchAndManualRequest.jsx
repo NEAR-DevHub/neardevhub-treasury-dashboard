@@ -25,10 +25,10 @@ const [selectedOption, setSelectedOption] = useState({
 
 useEffect(() => {
   if (selectedOption.value !== selectedValue) {
+    const option = options?.find((item) => item.value === selectedValue);
     setSelectedOption({
-      label:
-        options?.find((item) => item.value === selectedValue)?.label ??
-        defaultLabel,
+      label: option?.label ?? defaultLabel,
+      icon: option?.icon,
       value: defaultLabel,
     });
   }
@@ -102,6 +102,13 @@ const Container = styled.div`
     overflow: hidden;
     white-space: normal;
   }
+
+  .dropdown-icon {
+    width: 1.25em;
+    height: 1.25em;
+    margin-right: 0.5em;
+    vertical-align: middle;
+  }
 `;
 let searchFocused = false;
 return (
@@ -110,9 +117,13 @@ return (
       className="custom-select"
       tabIndex="0"
       onBlur={() => {
-        setTimeout(() => {
-          setIsOpen(searchFocused || false);
-        }, 0);
+        setTimeout(
+          () => {
+            setIsOpen(searchFocused || false);
+          },
+          // The delay of 200ms is to allow the onClick event of the dropdown items to register before closing the dropdown
+          200
+        );
       }}
     >
       <div className="dropdown-toggle bg-dropdown border rounded-2 btn drop-btn">
@@ -122,6 +133,9 @@ return (
           }`}
           onClick={toggleDropdown}
         >
+          {selectedOption.icon && (
+            <img className="dropdown-icon" src={selectedOption.icon} />
+          )}
           {selectedOption.label ?? defaultLabel}
         </div>
       </div>
@@ -161,6 +175,9 @@ return (
                   }`}
                   onClick={() => handleOptionClick(option)}
                 >
+                  {option.icon && (
+                    <img className="dropdown-icon" src={option.icon} />
+                  )}
                   {option.label}
                 </div>
               ))}

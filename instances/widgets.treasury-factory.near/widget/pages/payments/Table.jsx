@@ -193,15 +193,52 @@ const ProposalsComponent = () => {
         const summary = decodeProposalDescription("summary", item.description);
         const description = !title && !summary && item.description;
         const id = decodeProposalDescription("proposalId", item.description);
+        let proposalUrl = decodeProposalDescription("url", item.description);
+        proposalUrl = (proposalUrl || "").replace(/\.+$/, "");
+
         const proposalId = id ? parseInt(id, 10) : null;
         const isFunctionType =
           Object.values(item?.kind?.FunctionCall ?? {})?.length > 0;
-        const decodedArgs =
+        const isIntentWithdraw =
           isFunctionType &&
-          decodeBase64(item.kind.FunctionCall?.actions[0].args);
-        const args = isFunctionType
+          item.kind.FunctionCall?.actions[0].method_name === "ft_withdraw";
+        let decodedArgs = null;
+        if (isFunctionType) {
+          const actions = item.kind.FunctionCall?.actions || [];
+          const receiverId = item.kind.FunctionCall?.receiver_id;
+
+          // Requests from NEARN
+          if (
+            actions.length >= 2 &&
+            actions[0]?.method_name === "storage_deposit" &&
+            actions[1]?.method_name === "ft_transfer"
+          ) {
+            decodedArgs = {
+              ...decodeBase64(actions[1].args),
+              token_id: receiverId,
+            };
+          } else if (actions[0]?.method_name === "ft_transfer") {
+            decodedArgs = {
+              ...decodeBase64(actions[0].args),
+              token_id: receiverId,
+            };
+          } else {
+            decodedArgs = decodeBase64(actions[0]?.args);
+          }
+        }
+
+        const args = isIntentWithdraw
           ? {
-              token_id: "",
+              token_id: decodedArgs?.token,
+              receiver_id:
+                (decodedArgs?.memo &&
+                  decodedArgs.memo.replace(/^WITHDRAW_TO:/, "")) ||
+                decodedArgs?.receiver_id,
+              amount: decodedArgs?.amount,
+            }
+          : isFunctionType
+          ? {
+              token_id: decodedArgs?.token_id || "",
               receiver_id: decodedArgs?.receiver_id,
               amount: decodedArgs?.amount,
             }
@@ -246,12 +283,20 @@ const ProposalsComponent = () => {
             {lockupContract && (
               <td className={"text-left"}>
                 <div className="text-secondary fw-semi-bold">
-                  {isFunctionType ? "Lockup" : "Sputnik DAO"}
+                  {isIntentWithdraw
+                    ? "Intents"
+                    : isFunctionType
+                    ? "Lockup"
+                    : "Sputnik DAO"}
                 </div>
                 <Widget
                   src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
                   props={{
-                    accountId: isFunctionType ? lockupContract : treasuryDaoID,
+                    accountId: isIntentWithdraw
+                      ? treasuryDaoID
+                      : isFunctionType
+                      ? lockupContract
+                      : treasuryDaoID,
                     showKYC: false,
                     instance,
                     displayImage: false,
@@ -263,21 +308,15 @@ const ProposalsComponent = () => {
             {showReferenceProposal && (
               <td className={isVisible("Reference")}>
                 {typeof proposalId === "number" ? (
-                  <Link
+                  <a
                     target="_blank"
                     rel="noopener noreferrer"
-                    to={href({
-                      widgetSrc: `${REPL_DEVHUB}/widget/app`,
-                      params: {
-                        page: "proposal",
-                        id: proposalId,
-                      },
-                    })}
+                    href={proposalUrl}
                   >
                     <div className="d-flex gap-2 align-items-center text-underline fw-semi-bold">
                       #{proposalId} <i class="bi bi-box-arrow-up-right"> </i>
                     </div>
-                  </Link>
+                  </a>
                 ) : (
                   "-"
                 )}
@@ -430,7 +469,7 @@ const ProposalsComponent = () => {
             )}
             {isPendingRequests &&
               (hasVotingPermission || hasDeletePermission) && (
-                <td className="text-right">
+                <td className="text-right" onClick={(e) => e.stopPropagation()}>
                   <Widget
                     src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.VoteActions`}
                     props={{
@@ -441,10 +480,17 @@ const ProposalsComponent = () => {
                       hasVotingPermission,
                       proposalCreator: item.proposer,
                       hasOneDeleteIcon,
-                      nearBalance: isFunctionType
-                        ? Big(lockupNearBalances.available).toFixed(2)
-                        : nearBalances.available,
-
+                      isIntentsRequest: isIntentWithdraw,
+                      ...(isIntentWithdraw
+                        ? {}
+                        : {
+                            nearBalance:
+                              isFunctionType &&
+                              item.kind.FunctionCall?.actions[0]
+                                ?.method_name === "transfer"
+                                ? Big(lockupNearBalances.available).toFixed(2)
+                                : nearBalances.available,
+                          }),
                       currentAmount: args.amount,
                       currentContract: args.token_id,
                       requiredVotes,
