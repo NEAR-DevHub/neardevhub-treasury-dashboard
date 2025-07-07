@@ -19,22 +19,38 @@ const [loading, setLoading] = useState(false);
 const [firstRender, setFirstRender] = useState(true);
 const [offset, setOffset] = useState(null);
 const [isPrevPageCalled, setIsPrevCalled] = useState(false);
+const [sortDirection, setSortDirection] = useState("desc");
+
+const fetchProposals = useCallback(
+  (direction) => {
+    if (direction === undefined) direction = sortDirection;
+    if (!treasuryDaoID) return;
+    setLoading(true);
+    getProposalsFromIndexer({
+      category: "payments",
+      status: ["Approved", "Rejected", "Expired", "Failed"],
+      page: currentPage,
+      pageSize: rowsPerPage,
+      daoId: treasuryDaoID,
+      sortDirection: direction,
+    }).then((r) => {
+      setProposals(r.proposals);
+      setTotalLength(r.total);
+      setLoading(false);
+    });
+  },
+  [rowsPerPage, currentPage, treasuryDaoID, sortDirection]
+);
+
+const handleSortClick = () => {
+  const newDirection = sortDirection === "desc" ? "asc" : "desc";
+  setSortDirection(newDirection);
+  fetchProposals(newDirection);
+};
 
 useEffect(() => {
-  if (!treasuryDaoID) return;
-  setLoading(true);
-  getProposalsFromIndexer({
-    category: "payments",
-    status: ["Approved", "Rejected", "Expired", "Failed"],
-    page: currentPage,
-    pageSize: rowsPerPage,
-    daoId: treasuryDaoID,
-  }).then((r) => {
-    setProposals(r.proposals);
-    setTotalLength(r.total);
-    setLoading(false);
-  });
-}, [currentPage, rowsPerPage, treasuryDaoID]);
+  fetchProposals();
+}, [currentPage, rowsPerPage]);
 
 const policy = treasuryDaoID
   ? Near.view(treasuryDaoID, "get_policy", {})
@@ -63,6 +79,8 @@ return (
         highlightProposalId,
         loading: loading,
         policy,
+        sortDirection,
+        handleSortClick,
         ...props,
       }}
     />

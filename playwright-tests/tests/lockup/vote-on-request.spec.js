@@ -286,9 +286,7 @@ test.describe("User is logged in", function () {
     const exportLink = page.locator('a[download="proposals.csv"]');
     await expect(exportLink).toBeVisible();
     const href = await exportLink.getAttribute("href");
-    expect(href).toContain(
-      `/proposals/${daoAccount}?proposal_type=FunctionCall&keyword=create%20lockup`
-    );
+    expect(href).toContain(`/proposals/${daoAccount}?category=lockup`);
   });
 });
 

@@ -20,7 +20,7 @@ const { treasuryDaoID, showKYC, showReferenceProposal } = VM.require(
   `${instance}/widget/config.data`
 );
 
-const { TableSkeleton } = VM.require(
+const { RowsSkeleton } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.skeleton"
 );
 
@@ -28,7 +28,7 @@ const lockupContract = accountToLockup(treasuryDaoID);
 
 if (
   !instance ||
-  !TableSkeleton ||
+  !RowsSkeleton ||
   typeof getNearBalances !== "function" ||
   typeof decodeProposalDescription !== "function" ||
   typeof formatSubmissionTimeStamp !== "function"
@@ -496,91 +496,104 @@ return (
         setNearStakedTotalTokens: (v) => setNearStakedTokens(Big(v).toFixed(2)),
       }}
     />
-    {loading === true ||
-    proposals === null ||
-    transferApproversGroup === null ||
-    !nearStakedTokens ||
-    policy === null ? (
-      <TableSkeleton numberOfCols={8} numberOfRows={3} numberOfHiddenRows={4} />
-    ) : (
-      <div className="w-100">
-        {proposals.length === 0 ? (
-          <div
-            style={{ height: "50vh" }}
-            className="d-flex justify-content-center align-items-center"
+    <table className="table">
+      <thead>
+        <tr className="text-secondary">
+          <td className="px-3">#</td>
+          <td
+            className={isVisible("Created Date") + " cursor-pointer"}
+            onClick={props.handleSortClick}
+            style={{ color: "var(--text-color)" }}
           >
-            {isPendingRequests ? (
-              <div className="d-flex justify-content-center align-items-center flex-column gap-2">
-                <h4>No Payment Requests Found</h4>
-                <h6>There are currently no payment requests</h6>
-              </div>
-            ) : (
-              <div className="d-flex justify-content-center align-items-center flex-column gap-2">
-                <h4>No History Requests Found</h4>
-                <h6>There are currently no history requests</h6>
-              </div>
+            Created Date
+            <span style={{ marginLeft: 4 }}>
+              {props.sortDirection === "desc" ? (
+                <i class="bi bi-arrow-down"></i>
+              ) : (
+                <i class="bi bi-arrow-up"></i>
+              )}
+            </span>
+          </td>
+          {!isPendingRequests && <td className="text-center">Status</td>}
+          {lockupContract && <td className={"text-left"}>Treasury Wallet</td>}
+          {showReferenceProposal && (
+            <td className={isVisible("Reference")}>Reference</td>
+          )}
+          <td className={isVisible("Title")}>Title</td>
+          <td className={isVisible("Summary")}>Summary</td>
+          <td className={isVisible("Recipient")}>Recipient</td>
+          <td className={isVisible("Requested Token") + " text-center"}>
+            Requested Token
+          </td>
+          <td className={isVisible("Funding Ask") + " text-right"}>
+            Funding Ask
+          </td>
+          <td className={isVisible("Creator") + " text-center"}>Created by</td>
+          <td className={isVisible("Notes") + " text-left"}>Notes</td>
+          {isPendingRequests && (
+            <td className={isVisible("Required Votes") + " text-center"}>
+              Required Votes
+            </td>
+          )}
+          {isPendingRequests && (
+            <td className={isVisible("Votes") + " text-center"}>Votes</td>
+          )}
+          <td
+            className={
+              isVisible("Approvers") +
+              " text-center " +
+              (hideApproversCol && " display-none")
+            }
+          >
+            Approvers
+          </td>
+          {isPendingRequests && (
+            <td className={isVisible("Expiring Date") + " text-left "}>
+              Expiring Date
+            </td>
+          )}
+          {isPendingRequests &&
+            (hasVotingPermission || hasDeletePermission) && (
+              <td className="text-right">Actions</td>
             )}
-          </div>
-        ) : (
-          <table className="table">
-            <thead>
-              <tr className="text-secondary">
-                <td className="px-3">#</td>
-                <td className={isVisible("Created Date")}>Created Date</td>
-                {!isPendingRequests && <td className="text-center">Status</td>}
-                {lockupContract && (
-                  <td className={"text-left"}>Treasury Wallet</td>
-                )}
-                {showReferenceProposal && (
-                  <td className={isVisible("Reference")}>Reference</td>
-                )}
-                <td className={isVisible("Title")}>Title</td>
-                <td className={isVisible("Summary")}>Summary</td>
-                <td className={isVisible("Recipient")}>Recipient</td>
-                <td className={isVisible("Requested Token") + " text-center"}>
-                  Requested Token
-                </td>
-                <td className={isVisible("Funding Ask") + " text-right"}>
-                  Funding Ask
-                </td>
-                <td className={isVisible("Creator") + " text-center"}>
-                  Created by
-                </td>
-                <td className={isVisible("Notes") + " text-left"}>Notes</td>
-                {isPendingRequests && (
-                  <td className={isVisible("Required Votes") + " text-center"}>
-                    Required Votes
-                  </td>
-                )}
-                {isPendingRequests && (
-                  <td className={isVisible("Votes") + " text-center"}>Votes</td>
-                )}
-                <td
-                  className={
-                    isVisible("Approvers") +
-                    " text-center " +
-                    (hideApproversCol && " display-none")
-                  }
-                >
-                  Approvers
-                </td>
-                {isPendingRequests && (
-                  <td className={isVisible("Expiring Date") + " text-left "}>
-                    Expiring Date
-                  </td>
-                )}
-                {isPendingRequests &&
-                  (hasVotingPermission || hasDeletePermission) && (
-                    <td className="text-right">Actions</td>
-                  )}
-                {/* {!isPendingRequests && <td>Transaction Date</td>}
-          {!isPendingRequests && <td>Transaction</td>} */}
-              </tr>
-            </thead>
-            <ProposalsComponent />
-          </table>
-        )}
-      </div>
-    )}
+        </tr>
+      </thead>
+
+      {loading === true ||
+      proposals === null ||
+      transferApproversGroup === null ||
+      policy === null ||
+      !Array.isArray(proposals) ? (
+        <tbody>
+          <RowsSkeleton
+            numberOfCols={isPendingRequests ? 13 : 11}
+            numberOfRows={3}
+            numberOfHiddenRows={4}
+          />
+        </tbody>
+      ) : proposals.length === 0 ? (
+        <tbody>
+          <tr>
+            <td colSpan={14} className="text-center py-5">
+              {isPendingRequests ? (
+                <>
+                  <h4>No Payment Requests Found</h4>
+                  <h6>There are currently no payment requests</h6>
+                </>
+              ) : (
+                <>
+                  <h4>No History Requests Found</h4>
+                  <h6>There are currently no history requests</h6>
+                </>
+              )}
+            </td>
+          </tr>
+        </tbody>
+      ) : (
+        proposals.map((item, index) => (
+          <ProposalsComponent item={item} key={index} />
+        ))
+      )}
+    </table>
   </Container>
 );

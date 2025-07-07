@@ -21,31 +21,47 @@ const [loading, setLoading] = useState(false);
 const [firstRender, setFirstRender] = useState(true);
 const [offset, setOffset] = useState(null);
 const [isPrevPageCalled, setIsPrevCalled] = useState(false);
+const [sortDirection, setSortDirection] = useState("desc");
+
+const fetchProposals = useCallback(
+  (direction) => {
+    if (direction === undefined) direction = sortDirection;
+    if (!treasuryDaoID) return;
+    setLoading(true);
+    getProposalsFromIndexer({
+      daoId: treasuryDaoID,
+      page: currentPage,
+      pageSize: rowsPerPage,
+      status: ["Approved", "Rejected", "Expired", "Failed"],
+      proposalType: [
+        "ChangeConfig",
+        "ChangePolicy",
+        "AddMemberToRole",
+        "RemoveMemberFromRole",
+        "ChangePolicyAddOrUpdateRole",
+        "ChangePolicyRemoveRole",
+        "ChangePolicyUpdateDefaultVotePolicy",
+        "ChangePolicyUpdateParameters",
+        "UpgradeSelf",
+      ],
+      sortDirection: direction,
+    }).then((r) => {
+      setProposals(r.proposals);
+      setTotalLength(r.total);
+      setLoading(false);
+    });
+  },
+  [rowsPerPage, isPrevPageCalled, currentPage, treasuryDaoID, sortDirection]
+);
+
+const handleSortClick = () => {
+  const newDirection = sortDirection === "desc" ? "asc" : "desc";
+  setSortDirection(newDirection);
+  fetchProposals(newDirection);
+};
 
 useEffect(() => {
-  if (!treasuryDaoID) return;
-  setLoading(true);
-  getProposalsFromIndexer({
-    daoId: treasuryDaoID,
-    page: currentPage,
-    pageSize: rowsPerPage,
-    status: ["Approved", "Rejected", "Expired", "Failed"],
-    proposalType: [
-      "ChangeConfig",
-      "ChangePolicy",
-      "AddMemberToRole",
-      "RemoveMemberFromRole",
-      "ChangePolicyAddOrUpdateRole",
-      "ChangePolicyRemoveRole",
-      "ChangePolicyUpdateDefaultVotePolicy",
-      "ChangePolicyUpdateParameters",
-      "UpgradeSelf",
-    ],
-  }).then((r) => {
-    setProposals(r.proposals);
-    setTotalLength(r.total);
-    setLoading(false);
-  });
+  fetchProposals();
 }, [currentPage, rowsPerPage, treasuryDaoID]);
 
 const policy = treasuryDaoID
@@ -74,6 +90,8 @@ return (
         highlightProposalId,
         loading: loading,
         policy,
+        sortDirection,
+        handleSortClick,
         ...props,
       }}
     />

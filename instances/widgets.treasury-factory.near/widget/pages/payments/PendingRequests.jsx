@@ -19,6 +19,7 @@ const [proposals, setProposals] = useState(null);
 const [totalLength, setTotalLength] = useState(null);
 const [loading, setLoading] = useState(false);
 const [isPrevPageCalled, setIsPrevCalled] = useState(false);
+const [sortDirection, setSortDirection] = useState("desc");
 
 const refreshTableData = Storage.get(
   "REFRESH_TABLE_DATA",
@@ -35,21 +36,32 @@ const refreshProposalsTableData = Storage.get(
   `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.ProposalDetailsPage`
 );
 
-const fetchProposals = useCallback(() => {
-  if (!treasuryDaoID) return;
-  setLoading(true);
-  getProposalsFromIndexer({
-    category: "payments",
-    status: ["InProgress"],
-    page: currentPage,
-    pageSize: rowsPerPage,
-    daoId: treasuryDaoID,
-  }).then((r) => {
-    setProposals(r.proposals);
-    setTotalLength(r.total);
-    setLoading(false);
-  });
-}, [rowsPerPage, isPrevPageCalled, currentPage, treasuryDaoID]);
+const fetchProposals = useCallback(
+  (direction) => {
+    if (direction === undefined) direction = sortDirection;
+    if (!treasuryDaoID) return;
+    setLoading(true);
+    getProposalsFromIndexer({
+      category: "payments",
+      status: ["InProgress"],
+      page: currentPage,
+      pageSize: rowsPerPage,
+      daoId: treasuryDaoID,
+      sortDirection: direction,
+    }).then((r) => {
+      setProposals(r.proposals);
+      setTotalLength(r.total);
+      setLoading(false);
+    });
+  },
+  [rowsPerPage, isPrevPageCalled, currentPage, treasuryDaoID, sortDirection]
+);
+
+const handleSortClick = () => {
+  const newDirection = sortDirection === "desc" ? "asc" : "desc";
+  setSortDirection(newDirection);
+  fetchProposals(newDirection);
+};
 
 useEffect(() => {
   fetchProposals();
@@ -97,6 +109,8 @@ return (
         loading: loading,
         policy,
         refreshTableData: fetchProposals,
+        sortDirection,
+        handleSortClick,
         ...props,
       }}
     />

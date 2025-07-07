@@ -7,13 +7,13 @@ const { formatSubmissionTimeStamp, decodeProposalDescription } = VM.require(
 
 const instance = props.instance;
 const policy = props.policy;
-const { TableSkeleton } = VM.require(
+const { RowsSkeleton } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.skeleton"
 );
 
 if (
   !instance ||
-  !TableSkeleton ||
+  !RowsSkeleton ||
   typeof formatSubmissionTimeStamp !== "function" ||
   typeof decodeProposalDescription !== "function"
 ) {
@@ -301,75 +301,94 @@ const ProposalsComponent = () => {
 
 return (
   <Container style={{ overflowX: "auto" }}>
-    {loading === true ||
-    proposals === null ||
-    settingsApproverGroup === null ||
-    policy === null ? (
-      <TableSkeleton numberOfCols={8} numberOfRows={3} numberOfHiddenRows={4} />
-    ) : (
-      <div className="w-100">
-        {proposals.length === 0 ? (
-          <div
-            style={{ height: "50vh" }}
-            className="d-flex justify-content-center align-items-center"
-          >
-            {isPendingRequests ? (
-              <div className="d-flex justify-content-center align-items-center flex-column gap-2">
-                <h4>No settings proposals found</h4>
-                <h6>There are currently no proposals</h6>
-              </div>
-            ) : (
-              <div className="d-flex justify-content-center align-items-center flex-column gap-2">
-                <h4>No settings proposals found</h4>
-                <h6>There are currently no history proposals</h6>
-              </div>
+    <div className="w-100">
+      <table className="table">
+        <thead>
+          <tr className="text-secondary">
+            <td>#</td>
+            <td
+              className={isVisible("Created Date") + " cursor-pointer"}
+              onClick={props.handleSortClick}
+              style={{ color: "var(--text-color)" }}
+            >
+              Created Date
+              <span style={{ marginLeft: 4 }}>
+                {props.sortDirection === "desc" ? (
+                  <i className="bi bi-arrow-down"></i>
+                ) : (
+                  <i className="bi bi-arrow-up"></i>
+                )}
+              </span>
+            </td>
+            {!isPendingRequests && <td className="text-center">Status</td>}
+
+            <td className={isVisible("Title")}>Title</td>
+
+            <td className={isVisible("Creator") + " text-center"}>
+              Created by
+            </td>
+            {isPendingRequests && (
+              <td className={isVisible("Required Votes") + " text-center"}>
+                Required Votes
+              </td>
             )}
-          </div>
+            {isPendingRequests && (
+              <td className={isVisible("Votes") + " text-center"}>Votes</td>
+            )}
+            <td
+              className={
+                isVisible("Approvers") +
+                " text-center " +
+                (hideApproversCol && " display-none")
+              }
+            >
+              Approvers
+            </td>
+            {isPendingRequests && (
+              <td className={isVisible("Expiring Date") + " text-left "}>
+                Expiring Date
+              </td>
+            )}
+            {isPendingRequests &&
+              (hasVotingPermission || hasDeletePermission) && (
+                <td className="text-right">Actions</td>
+              )}
+          </tr>
+        </thead>
+
+        {loading === true || proposals === null || !Array.isArray(proposals) ? (
+          <tbody>
+            <RowsSkeleton
+              numberOfCols={isPendingRequests ? 8 : 6}
+              numberOfRows={3}
+              numberOfHiddenRows={4}
+            />
+          </tbody>
+        ) : proposals.length === 0 ? (
+          <tr>
+            <td
+              colSpan={isPendingRequests ? 8 : 6}
+              className="text-center py-5"
+            >
+              {isPendingRequests ? (
+                <>
+                  <h4>No Settings Requests Found</h4>
+                  <h6>There are currently no settings requests</h6>
+                </>
+              ) : (
+                <>
+                  <h4>No History Requests Found</h4>
+                  <h6>There are currently no history requests</h6>
+                </>
+              )}
+            </td>
+          </tr>
         ) : (
-          <table className="table">
-            <thead>
-              <tr className="text-secondary">
-                <td>#</td>
-                <td className={isVisible("Created Date")}>Created Date</td>
-                {!isPendingRequests && <td className="text-center">Status</td>}
-
-                <td className={isVisible("Title")}>Title</td>
-
-                <td className={isVisible("Creator") + " text-center"}>
-                  Created by
-                </td>
-                {isPendingRequests && (
-                  <td className={isVisible("Required Votes") + " text-center"}>
-                    Required Votes
-                  </td>
-                )}
-                {isPendingRequests && (
-                  <td className={isVisible("Votes") + " text-center"}>Votes</td>
-                )}
-                <td
-                  className={
-                    isVisible("Approvers") +
-                    " text-center " +
-                    (hideApproversCol && " display-none")
-                  }
-                >
-                  Approvers
-                </td>
-                {isPendingRequests && (
-                  <td className={isVisible("Expiring Date") + " text-left "}>
-                    Expiring Date
-                  </td>
-                )}
-                {isPendingRequests &&
-                  (hasVotingPermission || hasDeletePermission) && (
-                    <td className="text-right">Actions</td>
-                  )}
-              </tr>
-            </thead>
-            <ProposalsComponent />
-          </table>
+          proposals.map((item, index) => (
+            <ProposalsComponent item={item} key={index} />
+          ))
         )}
-      </div>
-    )}
+      </table>
+    </div>
   </Container>
 );
