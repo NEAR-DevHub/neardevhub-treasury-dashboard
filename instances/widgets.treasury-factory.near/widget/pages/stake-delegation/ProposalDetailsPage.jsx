@@ -147,6 +147,7 @@ useEffect(() => {
             : RequestType.UNSTAKE,
           treasuryWallet,
           status,
+          proposal: item,
         });
       })
       .catch(() => {
@@ -222,6 +223,7 @@ return (
                   checkProposalStatus(proposalData?.id),
                 isProposalDetailsPage: true,
                 avoidCheckForBalance: true, // we don't allow user to create request with insufficient balance
+                proposal: proposalData.proposal,
               }}
             />
           ),

@@ -302,6 +302,7 @@ const ProposalsComponent = ({ item }) => {
               requiredVotes,
               checkProposalStatus: () => checkProposalStatus(item.id),
               hasOneDeleteIcon,
+              proposal: item,
             }}
           />
         </td>
