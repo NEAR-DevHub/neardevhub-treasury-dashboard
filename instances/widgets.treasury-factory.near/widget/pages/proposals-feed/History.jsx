@@ -1,9 +1,10 @@
-const { getApproversAndThreshold, getFilteredProposalsByStatusAndKind } =
-  VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common") || {
-    getApproversAndThreshold: () => {},
-  };
+const { getApproversAndThreshold, getProposalsFromIndexer } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+) || {
+  getApproversAndThreshold: () => {},
+};
 const instance = props.instance;
-if (!instance || typeof getFilteredProposalsByStatusAndKind !== "function") {
+if (!instance || typeof getProposalsFromIndexer !== "function") {
   return <></>;
 }
 
@@ -27,41 +28,19 @@ const highlightProposalId =
     : null;
 
 useEffect(() => {
+  if (!treasuryDaoID) return;
   setLoading(true);
-  Near.asyncView(treasuryDaoID, "get_last_proposal_id").then((i) => {
-    const lastProposalId = i;
-    getFilteredProposalsByStatusAndKind({
-      treasuryDaoID,
-      resPerPage: rowsPerPage,
-      isPrevPageCalled: isPrevPageCalled,
-      filterKindArray: [],
-      filterStatusArray: ["Approved", "Rejected", "Expired", "Failed"],
-      offset: typeof offset === "number" ? offset : lastProposalId,
-      lastProposalId: lastProposalId,
-      currentPage,
-    }).then((r) => {
-      if (currentPage === 0 && !totalLength) {
-        setTotalLength(r.totalLength);
-      }
-      setOffset(r.filteredProposals[r.filteredProposals.length - 1].id);
-      if (typeof highlightProposalId === "number" && firstRender) {
-        const proposalExists = r.filteredProposals.find(
-          (i) => i.id === highlightProposalId
-        );
-        if (!proposalExists) {
-          setPage(currentPage + 1);
-        } else {
-          setFirstRender(false);
-          setLoading(false);
-          setProposals(r.filteredProposals);
-        }
-      } else {
-        setLoading(false);
-        setProposals(r.filteredProposals);
-      }
-    });
+  getProposalsFromIndexer({
+    daoId: treasuryDaoID,
+    page: currentPage,
+    pageSize: rowsPerPage,
+    status: ["Approved", "Rejected", "Expired", "Failed"],
+  }).then((r) => {
+    setProposals(r.proposals);
+    setTotalLength(r.total);
+    setLoading(false);
   });
-}, [currentPage, rowsPerPage]);
+}, [currentPage, rowsPerPage, treasuryDaoID]);
 
 const policy = treasuryDaoID
   ? Near.view(treasuryDaoID, "get_policy", {})

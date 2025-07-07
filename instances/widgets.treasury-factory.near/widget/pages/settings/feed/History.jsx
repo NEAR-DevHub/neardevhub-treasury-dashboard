@@ -1,10 +1,11 @@
-const { getApproversAndThreshold, getFilteredProposalsByStatusAndKind } =
-  VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
+const { getApproversAndThreshold, getProposalsFromIndexer } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+);
 const instance = props.instance;
 if (
   !instance ||
   typeof getApproversAndThreshold !== "function" ||
-  typeof getFilteredProposalsByStatusAndKind !== "function"
+  typeof getProposalsFromIndexer !== "function"
 ) {
   return <></>;
 }
@@ -22,38 +23,30 @@ const [offset, setOffset] = useState(null);
 const [isPrevPageCalled, setIsPrevCalled] = useState(false);
 
 useEffect(() => {
+  if (!treasuryDaoID) return;
   setLoading(true);
-  Near.asyncView(treasuryDaoID, "get_last_proposal_id").then((i) => {
-    const lastProposalId = i;
-    getFilteredProposalsByStatusAndKind({
-      treasuryDaoID,
-      resPerPage: rowsPerPage,
-      isPrevPageCalled: isPrevPageCalled,
-      filterKindArray: [
-        "ChangeConfig",
-        "ChangePolicy",
-        "AddMemberToRole",
-        "RemoveMemberFromRole",
-        "ChangePolicyAddOrUpdateRole",
-        "ChangePolicyRemoveRole",
-        "ChangePolicyUpdateDefaultVotePolicy",
-        "ChangePolicyUpdateParameters",
-      ],
-      filterStatusArray: ["Approved", "Rejected", "Expired", "Failed"],
-      offset: typeof offset === "number" ? offset : lastProposalId,
-      lastProposalId: lastProposalId,
-      currentPage,
-    }).then((r) => {
-      if (currentPage === 0 && !totalLength) {
-        setTotalLength(r.totalLength);
-      }
-      setOffset(r.filteredProposals[r.filteredProposals.length - 1].id);
-
-      setLoading(false);
-      setProposals(r.filteredProposals);
-    });
+  getProposalsFromIndexer({
+    daoId: treasuryDaoID,
+    page: currentPage,
+    pageSize: rowsPerPage,
+    status: ["Approved", "Rejected", "Expired", "Failed"],
+    proposalType: [
+      "ChangeConfig",
+      "ChangePolicy",
+      "AddMemberToRole",
+      "RemoveMemberFromRole",
+      "ChangePolicyAddOrUpdateRole",
+      "ChangePolicyRemoveRole",
+      "ChangePolicyUpdateDefaultVotePolicy",
+      "ChangePolicyUpdateParameters",
+      "UpgradeSelf",
+    ],
+  }).then((r) => {
+    setProposals(r.proposals);
+    setTotalLength(r.total);
+    setLoading(false);
   });
-}, [currentPage, rowsPerPage]);
+}, [currentPage, rowsPerPage, treasuryDaoID]);
 
 const policy = treasuryDaoID
   ? Near.view(treasuryDaoID, "get_policy", {})
