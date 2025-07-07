@@ -12,19 +12,19 @@ const generateCsvUrl = () => {
   let endpoint = `${REPL_SPUTNIK_INDEXER}/csv/proposals/${treasuryDaoID}`;
   switch (currentPage) {
     case "payments": {
-      endpoint += `?proposal_type=Transfer`;
+      endpoint += `?category=payments`;
       break;
     }
     case "stake-delegation": {
-      endpoint += `?proposal_type=FunctionCall&keyword=stake,withdraw`;
+      endpoint += `?category=stake-delegation`;
       break;
     }
     case "asset-exchange": {
-      endpoint += `?proposal_type=FunctionCall&keyword=asset-exchange`;
+      endpoint += `?category=asset-exchange`;
       break;
     }
     case "lockup": {
-      endpoint += `?proposal_type=FunctionCall&keyword=create%20lockup`;
+      endpoint += `?category=lockup`;
       break;
     }
     default: {
