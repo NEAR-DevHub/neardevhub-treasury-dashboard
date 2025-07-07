@@ -403,8 +403,9 @@ function getProposalsFromIndexer({
   pageSize,
   status,
   proposalType,
+  sortDirection,
 }) {
-  let query = `${REPL_SPUTNIK_INDEXER}/proposals/${daoId}?page=${page}&page_size=${pageSize}&sort_by=CreationTime&sort_direction=desc&status=${status.join(
+  let query = `${REPL_SPUTNIK_INDEXER}/proposals/${daoId}?page=${page}&page_size=${pageSize}&sort_by=CreationTime&sort_direction=${sortDirection}&status=${status.join(
     ","
   )}`;
   if (category && category.length > 0) {

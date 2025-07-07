@@ -84,7 +84,7 @@ test.describe("payment requests feed", function () {
     const exportLink = page.locator('a[download="proposals.csv"]');
     await expect(exportLink).toBeVisible();
     const href = await exportLink.getAttribute("href");
-    expect(href).toContain(`/proposals/${daoAccount}?proposal_type=Transfer`);
+    expect(href).toContain(`/proposals/${daoAccount}?category=payments`);
   });
 
   test("should display the NEARN proposal correctly", async ({

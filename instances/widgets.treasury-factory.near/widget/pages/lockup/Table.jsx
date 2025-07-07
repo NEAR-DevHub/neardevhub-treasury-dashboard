@@ -20,15 +20,14 @@ const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
 const { decodeBase64 } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
-const { TableSkeleton } = VM.require(
+const { RowsSkeleton } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.skeleton"
 );
 const { treasuryDaoID, allowLockupCancellation } = VM.require(
   `${instance}/widget/config.data`
 );
 
-if (!instance || !TableSkeleton || !decodeBase64 || !treasuryDaoID)
-  return <></>;
+if (!instance || !RowsSkeleton || !decodeBase64 || !treasuryDaoID) return <></>;
 
 const columnsVisibility = JSON.parse(
   Storage.get(
@@ -288,58 +287,76 @@ const ProposalsComponent = ({ item }) => {
 
 return (
   <Container style={{ overflowX: "auto" }}>
-    {loading === true || proposals === null || policy === null ? (
-      <TableSkeleton
-        numberOfCols={columns.filter((i) => i.show).length}
-        numberOfRows={3}
-        numberOfHiddenRows={4}
-      />
-    ) : (
-      <div className="w-100">
-        {proposals.length === 0 ? (
-          <div
-            style={{ height: "50vh" }}
-            className="d-flex justify-content-center align-items-center"
-          >
-            {isPendingRequests ? (
-              <div className="d-flex justify-content-center align-items-center flex-column gap-2">
-                <h4>No Lockup Requests Found</h4>
-                <h6>There are currently no lockup requests</h6>
-              </div>
-            ) : (
-              <div className="d-flex justify-content-center align-items-center flex-column gap-2">
-                <h4>No History Requests Found</h4>
-                <h6>There are currently no history requests</h6>
-              </div>
+    <table className="table">
+      <thead>
+        <tr>
+          {columns
+            .filter((i) => i.show)
+            .map((column) =>
+              column.title === "Created At" ? (
+                <td
+                  key={column.title}
+                  className={isVisible("Created At") + " cursor-pointer"}
+                  onClick={props.handleSortClick}
+                  style={{ color: "var(--text-color)" }}
+                >
+                  Created At
+                  <span style={{ marginLeft: 4 }}>
+                    {props.sortDirection === "desc" ? (
+                      <i className="bi bi-arrow-down"></i>
+                    ) : (
+                      <i className="bi bi-arrow-up"></i>
+                    )}
+                  </span>
+                </td>
+              ) : (
+                <td
+                  key={column.title}
+                  className={`${column.className} ${isVisible(
+                    column.title
+                  )} text-secondary`}
+                >
+                  {column.title}
+                </td>
+              )
             )}
-          </div>
+        </tr>
+      </thead>
+      <tbody style={{ overflowX: "auto" }}>
+        {loading ||
+        proposals === null ||
+        functionCallApproversGroup === null ||
+        policy === null ||
+        !Array.isArray(proposals) ? (
+          <RowsSkeleton
+            numberOfCols={
+              isPendingRequests ? columns.length : columns.length - 1
+            }
+            numberOfRows={3}
+            numberOfHiddenRows={4}
+          />
+        ) : proposals.length === 0 ? (
+          <tr>
+            <td colSpan={columns.length} className="text-center py-5">
+              {isPendingRequests ? (
+                <>
+                  <h4>No Lockup Requests Found</h4>
+                  <h6>There are currently no lockup requests</h6>
+                </>
+              ) : (
+                <>
+                  <h4>No History Requests Found</h4>
+                  <h6>There are currently no history requests</h6>
+                </>
+              )}
+            </td>
+          </tr>
         ) : (
-          <table className="table">
-            <thead>
-              <tr className="text-secondary">
-                {columns
-                  .filter((i) => i.show)
-                  .map((column) => (
-                    <td
-                      key={column.title}
-                      className={`${column.className} ${isVisible(
-                        column.title
-                      )}`}
-                    >
-                      {column.title}
-                    </td>
-                  ))}
-              </tr>
-            </thead>
-
-            <tbody style={{ overflowX: "auto" }}>
-              {proposals?.map((item, index) => (
-                <ProposalsComponent item={item} key={index} />
-              ))}
-            </tbody>
-          </table>
+          proposals.map((item, index) => (
+            <ProposalsComponent item={item} key={index} />
+          ))
         )}
-      </div>
-    )}
+      </tbody>
+    </table>
   </Container>
 );

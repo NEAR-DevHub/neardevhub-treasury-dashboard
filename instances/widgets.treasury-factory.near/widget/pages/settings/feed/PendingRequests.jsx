@@ -17,36 +17,48 @@ const [proposals, setProposals] = useState(null);
 const [totalLength, setTotalLength] = useState(null);
 const [loading, setLoading] = useState(false);
 const [isPrevPageCalled, setIsPrevCalled] = useState(false);
+const [sortDirection, setSortDirection] = useState("desc");
 
 const refreshProposalsTableData = Storage.get(
   "REFRESH_SETTINGS_TABLE_DATA",
   `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.feed.ProposalDetailsPage`
 );
 
-const fetchProposals = ({ fromStart }) => {
-  if (!treasuryDaoID) return;
-  setLoading(true);
-  getProposalsFromIndexer({
-    daoId: treasuryDaoID,
-    page: currentPage,
-    pageSize: rowsPerPage,
-    status: ["InProgress"],
-    proposalType: [
-      "ChangeConfig",
-      "ChangePolicy",
-      "AddMemberToRole",
-      "RemoveMemberFromRole",
-      "ChangePolicyAddOrUpdateRole",
-      "ChangePolicyRemoveRole",
-      "ChangePolicyUpdateDefaultVotePolicy",
-      "ChangePolicyUpdateParameters",
-      "UpgradeSelf",
-    ],
-  }).then((r) => {
-    setProposals(r.proposals);
-    setTotalLength(r.total);
-    setLoading(false);
-  });
+const fetchProposals = useCallback(
+  (direction) => {
+    if (direction === undefined) direction = sortDirection;
+    if (!treasuryDaoID) return;
+    setLoading(true);
+    getProposalsFromIndexer({
+      daoId: treasuryDaoID,
+      page: currentPage,
+      pageSize: rowsPerPage,
+      status: ["InProgress"],
+      proposalType: [
+        "ChangeConfig",
+        "ChangePolicy",
+        "AddMemberToRole",
+        "RemoveMemberFromRole",
+        "ChangePolicyAddOrUpdateRole",
+        "ChangePolicyRemoveRole",
+        "ChangePolicyUpdateDefaultVotePolicy",
+        "ChangePolicyUpdateParameters",
+        "UpgradeSelf",
+      ],
+      sortDirection: direction,
+    }).then((r) => {
+      setProposals(r.proposals);
+      setTotalLength(r.total);
+      setLoading(false);
+    });
+  },
+  [rowsPerPage, isPrevPageCalled, currentPage, treasuryDaoID, sortDirection]
+);
+
+const handleSortClick = () => {
+  const newDirection = sortDirection === "desc" ? "asc" : "desc";
+  setSortDirection(newDirection);
+  fetchProposals(newDirection);
 };
 
 useEffect(() => {
@@ -92,6 +104,8 @@ return (
         loading: loading,
         policy,
         refreshTableData: fetchProposals,
+        sortDirection,
+        handleSortClick,
         ...props,
       }}
     />

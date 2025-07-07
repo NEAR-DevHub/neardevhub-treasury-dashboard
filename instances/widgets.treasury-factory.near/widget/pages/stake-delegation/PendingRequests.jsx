@@ -18,6 +18,7 @@ const [proposals, setProposals] = useState(null);
 const [totalLength, setTotalLength] = useState(null);
 const [loading, setLoading] = useState(false);
 const [isPrevPageCalled, setIsPrevCalled] = useState(false);
+const [sortDirection, setSortDirection] = useState("desc");
 
 const refreshStakeTableData = Storage.get(
   "REFRESH_STAKE_TABLE_DATA",
@@ -39,21 +40,32 @@ const refreshProposalsTableData = Storage.get(
   `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.ProposalDetailsPage`
 );
 
-const fetchProposals = useCallback(() => {
-  if (!treasuryDaoID) return;
-  setLoading(true);
-  getProposalsFromIndexer({
-    category: "stake-delegation",
-    daoId: treasuryDaoID,
-    page: currentPage,
-    pageSize: rowsPerPage,
-    status: ["InProgress"],
-  }).then((r) => {
-    setProposals(r.proposals);
-    setTotalLength(r.total);
-    setLoading(false);
-  });
-}, [rowsPerPage, isPrevPageCalled, currentPage]);
+const fetchProposals = useCallback(
+  (direction) => {
+    if (direction === undefined) direction = sortDirection;
+    if (!treasuryDaoID) return;
+    setLoading(true);
+    getProposalsFromIndexer({
+      category: "stake-delegation",
+      daoId: treasuryDaoID,
+      page: currentPage,
+      pageSize: rowsPerPage,
+      status: ["InProgress"],
+      sortDirection: direction,
+    }).then((r) => {
+      setProposals(r.proposals);
+      setTotalLength(r.total);
+      setLoading(false);
+    });
+  },
+  [rowsPerPage, isPrevPageCalled, currentPage, treasuryDaoID, sortDirection]
+);
+
+const handleSortClick = () => {
+  const newDirection = sortDirection === "desc" ? "asc" : "desc";
+  setSortDirection(newDirection);
+  fetchProposals(newDirection);
+};
 
 useEffect(() => {
   fetchProposals();
@@ -106,6 +118,8 @@ return (
         loading: loading,
         policy,
         refreshTableData: fetchProposals,
+        sortDirection,
+        handleSortClick,
         ...props,
       }}
     />
