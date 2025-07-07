@@ -643,32 +643,34 @@ return (
                   )}
                 {proposalData?.status === "Approved" &&
                   transactionInfo.nearTxHash && (
-                    <div className="d-flex flex-column gap-2 mt-3">
+                    <div className="d-flex flex-column gap-2 mt-1">
                       <label className="border-top">Transaction Links</label>
                       <div className="d-flex flex-column gap-2">
-                        <a
-                          href={transactionInfo.nearTxHash}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2"
-                          style={{ width: "fit-content" }}
-                        >
-                          View execution on nearblocks.io{" "}
-                          <i className="bi bi-box-arrow-up-right"></i>
-                        </a>
-                        {transactionInfo.targetTxHash && (
+                        <div className="d-flex justify-content-between gap-2 align-items-center flex-wrap">
                           <a
-                            href={transactionInfo.targetTxHash}
+                            href={transactionInfo.nearTxHash}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2"
-                            style={{ width: "fit-content" }}
+                            className="d-flex align-items-center gap-2"
                           >
-                            {getExplorerButtonText(
-                              transactionInfo.targetTxHash
-                            )}{" "}
+                            View execution on nearblocks.io{" "}
                             <i className="bi bi-box-arrow-up-right"></i>
                           </a>
+                        </div>
+                        {transactionInfo.targetTxHash && (
+                          <div className="d-flex justify-content-between gap-2 align-items-center flex-wrap">
+                            <a
+                              href={transactionInfo.targetTxHash}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="d-flex align-items-center gap-2"
+                            >
+                              {getExplorerButtonText(
+                                transactionInfo.targetTxHash
+                              )}{" "}
+                              <i className="bi bi-box-arrow-up-right"></i>
+                            </a>
+                          </div>
                         )}
                       </div>
                     </div>
