@@ -140,7 +140,7 @@ function actProposal() {
     args: {
       id: proposalId,
       action: vote,
-      proposal: proposal,
+      proposal: proposal?.kind,
     },
     gas: 300000000000000,
   });
