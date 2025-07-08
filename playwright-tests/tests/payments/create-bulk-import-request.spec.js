@@ -404,10 +404,6 @@ test("should create bulk requests using sandbox", async ({
 
   await worker.rootAccount.importContract({ mainnetContract: web4ContractId });
 
-  const dai = await worker.rootAccount.importContract({
-    mainnetContract: DAIContractId,
-  });
-
   const socialNear = await worker.rootAccount.importContract({
     mainnetContract: socialNearContractId,
   });
@@ -427,8 +423,9 @@ test("should create bulk requests using sandbox", async ({
     userAccount.accountId,
     await userAccount.getKey()
   );
-
+  await page.waitForTimeout(5000);
   await page.getByRole("button", { name: "Create Request" }).click();
+  await page.waitForTimeout(2000);
   await page.getByText("Import Multiple Payment Requests").click();
   const csvText = `Title\tSummary\tRecipient\tRequested Token\tFunding Ask\tNotes
   Test title 1\tSummary 1\tmegha19.near\tnear\t100\tNote1

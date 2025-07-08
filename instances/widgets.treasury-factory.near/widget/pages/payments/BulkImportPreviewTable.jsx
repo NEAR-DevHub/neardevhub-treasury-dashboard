@@ -41,7 +41,8 @@ function getLastProposalId() {
 }
 
 function refreshData() {
-  props.setToastStatus(`BulkProposalAdded: ${selectedMap.size}`);
+  const count = Object.values(selectedMap).filter((v) => v === true).length;
+  props.setToastStatus(`BulkProposalAdded: ${count}`);
   Storage.set("REFRESH_TABLE_DATA", Math.random());
 }
 

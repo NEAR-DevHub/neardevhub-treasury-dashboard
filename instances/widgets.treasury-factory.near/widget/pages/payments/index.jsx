@@ -92,13 +92,15 @@ const ToastStatusContent = () => {
     case "ProposalAdded":
       content = "Payment request has been successfully created.";
       break;
-    case showToastStatus.startsWith("BulkProposalAdded"):
-      content = `Successfully imported ${
-        showToastStatus.split(":")[1]
-      } payment requests.`;
-      break;
+
     default:
-      content = `The payment request is ${showToastStatus}.`;
+      if (showToastStatus.startsWith("BulkProposalAdded")) {
+        content = `Successfully imported ${
+          showToastStatus.split(":")[1]
+        } payment requests.`;
+      } else {
+        content = `The payment request is ${showToastStatus}.`;
+      }
       break;
   }
   return (
