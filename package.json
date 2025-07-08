@@ -53,7 +53,7 @@
     "build:sandbox": "cd sandboxrpc && cargo build",
     "rpcproxy": "node playwright-tests/server/rpcproxy.js",
     "gateway": "bw ws dev -g web4/public_html",
-    "dry-run:instances": "cd ./build/$npm_config_instance && bos components diff $npm_config_instance network-config mainnet",
+    "dry-run:instances": "cd ./build/$npm_config_instance && bos components diff $npm_config_instance network-config mainnet-fastnear",
     "deploy:devdao": "npm run bw:build:devdao && cd ./build/treasury-devdao.near && bos components deploy",
     "dry-run:devdao": "npm run bw:build:devdao && npm run dry-run:instances --instance=treasury-devdao.near",
     "deploy:treasury-factory": "npm run bw:build:treasury-factory && cd ./build/treasury-factory.near && bos components deploy",
