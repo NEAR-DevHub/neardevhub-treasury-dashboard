@@ -121,7 +121,13 @@ test.describe("Withdraw request", function () {
     await expect(await getTransactionModalObject(page)).toEqual(
       expectedTransactionModalObject
     );
-    await checkNewProposalSubmission({ page, sandbox, daoAccount, daoName });
+    await checkNewProposalSubmission({
+      page,
+      sandbox,
+      daoAccount,
+      daoName,
+      requestType: "Withdraw",
+    });
     await sandbox.quitSandbox();
   });
 
@@ -225,6 +231,7 @@ test.describe("Withdraw request", function () {
       daoAccount,
       daoName,
       checkforMultiProposals: true,
+      requestType: "Withdraw",
     });
     await sandbox.quitSandbox();
   });

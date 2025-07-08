@@ -1043,6 +1043,9 @@ test.describe("admin with function access keys", function () {
       visible: false,
     });
     await expect(
+      page.getByText("Payment request has been successfully created.")
+    ).toBeVisible();
+    await expect(
       page.getByRole("cell", { name: `${newProposalId}`, exact: true })
     ).toBeVisible({ timeout: 20_000 });
     const widgetsAccount =

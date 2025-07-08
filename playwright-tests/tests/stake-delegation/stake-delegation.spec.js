@@ -257,7 +257,13 @@ test.describe("Have valid staked requests and sufficient token balance", functio
       await expect(await getTransactionModalObject(page)).toEqual(
         expectedTransactionModalObject
       );
-      await checkNewProposalSubmission({ page, sandbox, daoAccount, daoName });
+      await checkNewProposalSubmission({
+        page,
+        sandbox,
+        daoAccount,
+        daoName,
+        requestType: "Stake",
+      });
       await sandbox.quitSandbox();
     });
 
@@ -350,6 +356,7 @@ test.describe("Have valid staked requests and sufficient token balance", functio
         daoAccount,
         daoName,
         checkforMultiProposals: true,
+        requestType: "Unstake",
       });
 
       await sandbox.quitSandbox();
