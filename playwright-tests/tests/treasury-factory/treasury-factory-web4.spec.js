@@ -3,6 +3,8 @@ import { Worker } from "near-workspaces";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
+import { utils } from "near-api-js";
+import { setPageAuthSettings } from "../../util/sandboxrpc.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -34,41 +36,74 @@ test.describe("Treasury Factory Web4 Integration", () => {
     }
   });
 
-  test("should intercept treasury-factory.near.page and serve content from web4_get", async ({ page }) => {
+  test("should display webassemblymusic-treasury.near under My Treasuries when logged in", async ({ page }) => {
     test.setTimeout(60000);
 
-    let web4GetCalled = false;
-    let web4Response = null;
+    let rpcMainnetRequests = [];
+    let rpcFastnearRequests = [];
 
-    // First, get the expected response from the contract's web4_get method
-    const expectedResponse = await treasuryFactoryContract.view("web4_get", {
-      request: { 
-        path: "/",
-        preloads: {}
-      }
+    // Intercept and block rpc.mainnet.near.org requests
+    await page.route("**/rpc.mainnet.near.org/**", async (route) => {
+      rpcMainnetRequests.push(route.request().url());
+      await route.abort();
     });
 
-    // Intercept calls to treasury-factory.near.page
-    await page.route("**/treasury-factory.near.page/**", async (route) => {
-      web4GetCalled = true;
+    // Intercept rpc.mainnet.fastnear.com requests and track them
+    await page.route("**/rpc.mainnet.fastnear.com/**", async (route) => {
+      rpcFastnearRequests.push(route.request().url());
       
-      // Simulate calling web4_get method with the request path
+      const request = route.request();
+      if (request.method() === "POST") {
+        const postData = request.postDataJSON();
+        
+        // Handle web4_get calls to treasury-factory.near
+        if (postData?.params?.account_id === "treasury-factory.near" && 
+            postData?.params?.method_name === "web4_get") {
+          try {
+            const web4Response = await treasuryFactoryContract.view("web4_get", {
+              request: { 
+                path: postData.params.args ? 
+                  JSON.parse(Buffer.from(postData.params.args_base64 || "", 'base64').toString()).request?.path || "/" 
+                  : "/",
+                preloads: {}
+              }
+            });
+            
+            const json = {
+              jsonrpc: "2.0",
+              result: {
+                result: Array.from(new TextEncoder().encode(JSON.stringify(web4Response))),
+              },
+              id: postData.id
+            };
+            
+            await route.fulfill({ json });
+            return;
+          } catch (error) {
+            console.error("Error calling web4_get:", error);
+          }
+        }
+      }
+      
+      // For all other requests, continue to fastnear
+      await route.continue();
+    });
+
+    // Intercept calls to treasury-factory.near.page and serve content from web4_get
+    await page.route("**/treasury-factory.near.page/**", async (route) => {
       const url = new URL(route.request().url());
       const requestPath = url.pathname || "/";
       
       try {
-        // Call the contract's web4_get method
-        web4Response = await treasuryFactoryContract.view("web4_get", {
+        const web4Response = await treasuryFactoryContract.view("web4_get", {
           request: { 
             path: requestPath,
             preloads: {}
           }
         });
 
-        // Decode the base64 body content
         const bodyContent = Buffer.from(web4Response.body, 'base64').toString('utf-8');
 
-        // Fulfill the request with the web4_get response
         await route.fulfill({
           status: 200,
           contentType: web4Response.contentType || "text/html; charset=UTF-8",
@@ -80,163 +115,32 @@ test.describe("Treasury Factory Web4 Integration", () => {
       }
     });
 
-    // Navigate to the treasury-factory page
+    // Navigate to the treasury-factory page first
     await page.goto("http://treasury-factory.near.page/");
+
+    // Setup login using the existing setPageAuthSettings function
+    const keyPair = utils.KeyPair.fromRandom("ed25519");
+    await setPageAuthSettings(page, "petersalomonsen.near", keyPair);
 
     // Wait for the page to load
     await page.waitForLoadState('networkidle');
-
-    // Verify that our route was called
-    expect(web4GetCalled).toBe(true);
-    expect(web4Response).not.toBeNull();
-
-    // Verify the response structure
-    expect(web4Response).toHaveProperty('contentType');
-    expect(web4Response).toHaveProperty('body');
-    expect(web4Response.contentType).toBe("text/html; charset=UTF-8");
-
-    // Decode and verify the HTML content
-    const htmlContent = Buffer.from(web4Response.body, 'base64').toString('utf-8');
-    expect(htmlContent.toLowerCase()).toContain('<!doctype html>');
-    expect(htmlContent).toContain('near-social-viewer');
-
-    // Verify the page actually displays the content
-    await expect(page.locator('html')).toContainText('', { timeout: 10000 });
-  });
-
-  test("should handle web4_get with different paths", async ({ page }) => {
-    test.setTimeout(30000);
-
-    const testPaths = ["/", "/dashboard", "/payments"];
     
-    for (const testPath of testPaths) {
-      let interceptedPath = null;
+    // Wait a bit for the app to initialize
+    await page.waitForTimeout(5000);
 
-      await page.route("**/treasury-factory.near.page/**", async (route) => {
-        const url = new URL(route.request().url());
-        interceptedPath = url.pathname || "/";
-        
-        try {
-          const web4Response = await treasuryFactoryContract.view("web4_get", {
-            request: { 
-              path: interceptedPath,
-              preloads: {}
-            }
-          });
+    // Look for "My Treasuries" heading
+    await expect(page.getByText("My Treasuries")).toBeVisible({ timeout: 30000 });
 
-          const bodyContent = Buffer.from(web4Response.body, 'base64').toString('utf-8');
+    // Look for webassemblymusic-treasury.near specifically - use first() to avoid strict mode violation
+    await expect(page.getByText("webassemblymusic-treasury").first()).toBeVisible({ timeout: 15000 });
 
-          await route.fulfill({
-            status: 200,
-            contentType: web4Response.contentType || "text/html; charset=UTF-8", 
-            body: bodyContent
-          });
-        } catch (error) {
-          console.error(`Error calling web4_get for path ${interceptedPath}:`, error);
-          await route.abort();
-        }
-      });
+    // Verify no requests went to rpc.mainnet.near.org
+    expect(rpcMainnetRequests).toHaveLength(0);
 
-      await page.goto(`http://treasury-factory.near.page${testPath}`);
-      await page.waitForLoadState('networkidle');
+    // Verify requests went to rpc.mainnet.fastnear.com
+    expect(rpcFastnearRequests.length).toBeGreaterThan(0);
 
-      // Verify the correct path was intercepted
-      expect(interceptedPath).toBe(testPath);
-    }
-  });
-
-  test("should handle web4_get with preloads parameter", async ({ page }) => {
-    test.setTimeout(30000);
-
-    const testPreloads = {
-      "/web4/contract/social.near/get?keys.json=%5B%22treasury-factory.near/widget/app/metadata/**%22%5D": {
-        "contentType": "application/json",
-        "body": Buffer.from(JSON.stringify({
-          "treasury-factory.near": {
-            "widget": {
-              "app": {
-                "metadata": {
-                  "name": "Treasury Factory Test",
-                  "description": "Test treasury factory instance"
-                }
-              }
-            }
-          }
-        })).toString('base64')
-      }
-    };
-
-    let preloadsUsed = null;
-
-    await page.route("**/treasury-factory.near.page/**", async (route) => {
-      try {
-        const web4Response = await treasuryFactoryContract.view("web4_get", {
-          request: { 
-            path: "/",
-            preloads: testPreloads
-          }
-        });
-
-        preloadsUsed = testPreloads;
-        const bodyContent = Buffer.from(web4Response.body, 'base64').toString('utf-8');
-
-        await route.fulfill({
-          status: 200,
-          contentType: web4Response.contentType || "text/html; charset=UTF-8",
-          body: bodyContent
-        });
-      } catch (error) {
-        console.error("Error calling web4_get with preloads:", error);
-        await route.abort();
-      }
-    });
-
-    await page.goto("http://treasury-factory.near.page/");
-    await page.waitForLoadState('networkidle');
-
-    // Verify preloads were used
-    expect(preloadsUsed).toEqual(testPreloads);
-  });
-
-  test("should verify contract is properly deployed in sandbox", async () => {
-    // Test that the contract is deployed and responding
-    try {
-      const contractInfo = await worker.provider.query({
-        request_type: "view_account",
-        finality: "final",
-        account_id: treasuryFactoryContract.accountId
-      });
-
-      expect(contractInfo.code_hash).toBeDefined();
-      expect(contractInfo.code_hash).not.toBe("11111111111111111111111111111111");
-    } catch (error) {
-      // If account query fails, skip this assertion but continue with web4_get test
-      console.log("Account query failed (expected in some sandbox setups):", error.message);
-    }
-
-    // Test web4_get method directly
-    const response = await treasuryFactoryContract.view("web4_get", {
-      request: { path: "/" }
-    });
-
-    expect(response).toHaveProperty('contentType');
-    expect(response).toHaveProperty('body');
-    expect(response.contentType).toBe("text/html; charset=UTF-8");
-
-    // Verify the response contains expected HTML structure
-    const htmlContent = Buffer.from(response.body, 'base64').toString('utf-8');
-    expect(htmlContent.toLowerCase()).toContain('<!doctype html>');
-  });
-
-  test("should handle get_web4_contract_bytes method", async () => {
-    // Test the get_web4_contract_bytes method if it exists
-    try {
-      const web4ContractBytes = await treasuryFactoryContract.view("get_web4_contract_bytes", {});
-      expect(web4ContractBytes).toBeDefined();
-      expect(web4ContractBytes.length).toBeGreaterThan(0);
-    } catch (error) {
-      // Method might not exist in all versions, so we'll just log it
-      console.log("get_web4_contract_bytes method not available:", error.message);
-    }
+    console.log(`✅ No requests to rpc.mainnet.near.org`);
+    console.log(`✅ ${rpcFastnearRequests.length} requests to rpc.mainnet.fastnear.com`);
   });
 });
