@@ -197,6 +197,22 @@ impl Contract {
     }
 
     pub fn web4_get(&self, request: Web4Request) -> Web4Response {
+        let path = request.path.as_str();
+
+        // Serve service worker and cache-related files
+        match path {
+            "/service-worker.js" => {
+                let service_worker_js = include_str!("web4/service-worker.js");
+                return Web4Response::Body {
+                    content_type: "application/javascript".to_owned(),
+                    body: BASE64_STANDARD.encode(service_worker_js),
+                };
+            }
+            _ => {
+                // Continue with regular web4 handling for the main app
+            }
+        }
+
         let current_account_id = env::current_account_id();
         let metadata_preload_url = format!(
             "/web4/contract/social.near/get?keys.json=%5B%22{}/widget/app/metadata/**%22%5D",
