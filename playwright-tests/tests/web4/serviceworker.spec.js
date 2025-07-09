@@ -78,7 +78,22 @@ test.describe("Web4 Service Worker", () => {
 
         const bodyContent = Buffer.from(web4Response.body, 'base64').toString('utf-8');
         
-        console.log(`🌐 Serving ${requestPath}: ${web4Response.contentType}, ${bodyContent.length} bytes`);
+        // For localhost testing, fix the instanceAccount detection
+        let modifiedContent = bodyContent;
+        if (requestPath === "/" && web4Response.contentType.includes('text/html')) {
+          modifiedContent = bodyContent
+            .replace(
+              /if \(location\.host\.endsWith\("\.page"\)\)/g,
+              'if (location.host.includes("localhost"))'
+            )
+            .replace(
+              /const instanceAccount = location\.host\.split\("\."\)\[0\];/g,
+              'const instanceAccount = "treasury-testing";'
+            );
+          console.log(`🔧 Modified HTML for localhost testing`);
+        }
+        
+        console.log(`🌐 Serving ${requestPath}: ${web4Response.contentType}, ${modifiedContent.length} bytes`);
 
         // Set CORS headers to allow service worker registration
         res.setHeader('Access-Control-Allow-Origin', '*');
@@ -87,7 +102,7 @@ test.describe("Web4 Service Worker", () => {
         
         res.setHeader('Content-Type', web4Response.contentType);
         res.statusCode = 200;
-        res.end(bodyContent);
+        res.end(modifiedContent);
       } catch (error) {
         console.error(`Error serving ${requestPath}:`, error);
         res.statusCode = 500;
@@ -133,6 +148,7 @@ test.describe("Web4 Service Worker", () => {
       const context = await browser.newContext({
         serviceWorkers: 'allow' // Enable service workers (experimental feature)
       });
+      
       const page = await context.newPage();
 
       let serviceWorkerRequests = [];
@@ -165,7 +181,7 @@ test.describe("Web4 Service Worker", () => {
 
       console.log(`🌐 Navigating to ${testServerInfo.url}`);
 
-      // Navigate to the main page
+      // Navigate directly to localhost (service workers work on localhost)
       await page.goto(testServerInfo.url);
 
       // Wait for service worker detection and potential registration
@@ -267,7 +283,13 @@ test.describe("Web4 Service Worker", () => {
       expect(content).toContain("self.addEventListener('activate'");
       expect(content).toContain("skipWaiting()");
       
-      console.log(`✅ Service worker contains expected code structure`);
+      // Verify RPC caching functionality is present
+      expect(content).toContain("rpc.mainnet.fastnear.com");
+      expect(content).toContain("handleRpcRequest");
+      expect(content).toContain("CACHE_NAME");
+      expect(content).toContain("POST");
+      
+      console.log(`✅ Service worker contains expected code structure and RPC caching`);
       console.log(`📄 Service worker size: ${content.length} characters`);
     } finally {
       await testServerInfo.close();
