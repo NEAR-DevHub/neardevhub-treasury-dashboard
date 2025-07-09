@@ -862,7 +862,8 @@
     // Register service worker
     if ('serviceWorker' in navigator) {
       window.serviceWorkerRegistrationAttempted = true;
-      window.addEventListener('load', function() {
+      
+      function registerServiceWorker() {
         navigator.serviceWorker.register('/service-worker.js')
           .then(function(registration) {
             console.log('Service Worker registered with scope:', registration.scope);
@@ -870,7 +871,16 @@
           .catch(function(error) {
             console.log('Service Worker registration failed:', error);
           });
-      });
+      }
+      
+      // Check if the document is already loaded
+      if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        // Document is already loaded, register immediately
+        registerServiceWorker();
+      } else {
+        // Document is still loading, wait for load event
+        window.addEventListener('load', registerServiceWorker);
+      }
     }
   </script>
 </html>
