@@ -103,40 +103,6 @@ function checkProposalStatus(proposalId) {
     });
 }
 
-useEffect(() => {
-  if (props.transactionHashes) {
-    asyncFetch("${REPL_RPC_URL}", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id: "dontcare",
-        method: "tx",
-        params: [props.transactionHashes, context.accountId],
-      }),
-    }).then((transaction) => {
-      if (transaction !== null) {
-        const transaction_method_name =
-          transaction?.body?.result?.transaction?.actions[0].FunctionCall
-            .method_name;
-
-        if (transaction_method_name === "act_proposal") {
-          const args =
-            transaction?.body?.result?.transaction?.actions[0].FunctionCall
-              .args;
-          const decodedArgs = JSON.parse(atob(args ?? "") ?? "{}");
-          if (decodedArgs.id) {
-            const proposalId = decodedArgs.id;
-            checkProposalStatus(proposalId);
-          }
-        }
-      }
-    });
-  }
-}, [props.transactionHashes]);
-
 const TooltipContent = ({ title, summary }) => {
   return (
     <div className="p-1">

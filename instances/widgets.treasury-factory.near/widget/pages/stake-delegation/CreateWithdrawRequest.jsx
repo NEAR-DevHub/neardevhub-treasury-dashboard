@@ -68,6 +68,7 @@ function formatNearAmount(amount) {
 }
 
 function refreshData() {
+  props.setToastStatus("WithdrawProposalAdded");
   Storage.set("REFRESH_STAKE_TABLE_DATA", Math.random());
 }
 

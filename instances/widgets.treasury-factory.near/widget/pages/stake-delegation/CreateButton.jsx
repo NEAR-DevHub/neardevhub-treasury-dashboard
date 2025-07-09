@@ -19,6 +19,7 @@ if (!instance) {
 }
 
 const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+const { setToastStatus } = props;
 
 const hasCreatePermission = hasPermission(
   treasuryDaoID,
@@ -186,6 +187,7 @@ return (
             props={{
               instance,
               onCloseCanvas: toggleStakePage,
+              setToastStatus,
             }}
           />
         ),
@@ -203,6 +205,7 @@ return (
             props={{
               instance,
               onCloseCanvas: toggleUnStakePage,
+              setToastStatus,
             }}
           />
         ),
@@ -220,6 +223,7 @@ return (
             props={{
               instance,
               onCloseCanvas: toggleWithdrawPage,
+              setToastStatus,
             }}
           />
         ),

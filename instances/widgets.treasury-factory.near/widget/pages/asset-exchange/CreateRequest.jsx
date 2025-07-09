@@ -41,6 +41,7 @@ useEffect(() => {
 }, []);
 
 function refreshData() {
+  props.setToastStatus("ProposalAdded");
   Storage.set("REFRESH_ASSET_TABLE_DATA", Math.random());
 }
 
