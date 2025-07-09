@@ -64,6 +64,14 @@ jobs:
       - name: Make sandbox executable
         run: chmod +x sandboxrpc/target/debug/sandboxrpc
 
+      - name: Install cargo-near CLI
+        run: curl --proto '=https' --tlsv1.2 -LsSf https://github.com/near/cargo-near/releases/latest/download/cargo-near-installer.sh | sh
+      
+      - name: Build treasury factory contract for use in sandbox
+        run: |
+          cd treasury-factory
+          cargo near build non-reproducible-wasm
+
       - name: Run tests
         id: treasury-factory-tests
         run: |
