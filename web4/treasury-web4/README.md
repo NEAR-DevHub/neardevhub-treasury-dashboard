@@ -11,10 +11,24 @@ This contract includes a **service worker** that caches RPC calls to improve per
 - **Same-origin serving**: Service worker served by the contract itself (required by browser security)
 - **Smart cache keys**: Uses method+params for cache keys, ignoring request IDs
 - **Automatic registration**: Registers on page load with error handling
+- **Automatic updates**: Browser automatically detects and updates service worker when contract is redeployed
+- **Cache versioning**: Each deployment gets a unique cache version based on build timestamp
 - **Comprehensive logging**: Enhanced logging that sends messages to browser clients
-- **Test coverage**: Includes tests to verify service worker functionality
+- **Test coverage**: Includes tests to verify service worker functionality and update mechanism
 
 **Important**: Service workers **must** be served from the same origin as the web page - they cannot be loaded from CDNs due to browser security requirements.
+
+## 🚀 Automatic Service Worker Updates
+
+When you deploy an updated web4 contract, the service worker automatically updates:
+
+1. **Build Process**: Each build embeds a unique timestamp in the service worker
+2. **Browser Detection**: When users visit the site, browsers automatically check for service worker updates
+3. **Seamless Update**: Updated service worker installs and activates without user intervention
+4. **Cache Migration**: Old caches are cleaned up, new cache version is created
+5. **Zero Downtime**: Users experience no interruption during the update process
+
+**No user action required** - the browser handles everything automatically!
 
 ## ⚠️ HTML Editing - Important Build Process
 

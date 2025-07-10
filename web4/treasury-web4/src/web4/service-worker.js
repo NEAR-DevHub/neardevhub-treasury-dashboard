@@ -1,8 +1,11 @@
 // Service Worker for Treasury Dashboard with RPC Caching
 // Caches POST requests to rpc.mainnet.fastnear.com to improve performance
 
+// Build timestamp for cache busting (updated on each contract deployment)
+const BUILD_TIMESTAMP = 1752179978320;
+
 // Cache configuration
-const CACHE_NAME = 'treasury-rpc-cache-v1';
+const CACHE_NAME = `treasury-rpc-cache-v${Math.floor(BUILD_TIMESTAMP / 1000)}`;
 const RPC_ENDPOINTS = ['rpc.mainnet.fastnear.com', 'archival-rpc.mainnet.fastnear.com'];
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
 
@@ -25,13 +28,13 @@ function swLog(message) {
 }
 
 self.addEventListener('install', (event) => {
-  swLog('Service Worker: Installing...');
+  swLog(`Service Worker: Installing... (Build: ${BUILD_TIMESTAMP})`);
   // Skip waiting to activate immediately
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  swLog('Service Worker: Activated');
+  swLog(`Service Worker: Activated (Build: ${BUILD_TIMESTAMP})`);
   // Take control of all pages immediately
   event.waitUntil(
     self.clients.claim().then(() => {

@@ -2,9 +2,17 @@ use std::env;
 use std::fs;
 use std::io::Write;
 use std::path::Path;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 fn main() {
     println!("cargo:rerun-if-changed=./src/web4/index.html");
+    println!("cargo:rerun-if-changed=./src/web4/service-worker.js");
+
+    // Get current timestamp for cache busting
+    let timestamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("Time went backwards")
+        .as_millis();
 
     // Change working directory to the directory of the script (similar to process.chdir)
     let current_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../public_html");
@@ -28,4 +36,16 @@ fn main() {
     output_file
         .write_all(index_html.as_bytes())
         .expect("Failed to write to output file");
+
+    // Process service worker with timestamp
+    let service_worker_src = Path::new(env!("CARGO_MANIFEST_DIR")).join("src/web4/service-worker.js");
+    let mut service_worker_content = fs::read_to_string(&service_worker_src)
+        .expect("Failed to read service-worker.js");
+    
+    // Replace BUILD_TIMESTAMP placeholder with actual timestamp
+    service_worker_content = service_worker_content.replace("__BUILD_TIMESTAMP__", &timestamp.to_string());
+    
+    // Write back the updated service worker
+    fs::write(&service_worker_src, service_worker_content)
+        .expect("Failed to write updated service-worker.js");
 }
