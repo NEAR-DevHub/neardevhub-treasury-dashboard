@@ -84,10 +84,27 @@ async function handleRpcRequest(request) {
     // Read the request body to create a cache key
     const requestBody = await request.clone().text();
     const url = new URL(request.url);
-    const cacheKey = `${url.origin}${url.pathname}:${btoa(requestBody)}`;
+    
+    // Parse the JSON-RPC request to extract method and params for cache key
+    // This ignores the 'id' field which changes but doesn't affect the query
+    let cacheKeyData;
+    try {
+      const jsonBody = JSON.parse(requestBody);
+      cacheKeyData = {
+        method: jsonBody.method,
+        params: jsonBody.params,
+        jsonrpc: jsonBody.jsonrpc
+      };
+    } catch (e) {
+      // If parsing fails, fall back to using the full body
+      swLog(`Service Worker: Failed to parse JSON body, using full body for cache key`);
+      cacheKeyData = requestBody;
+    }
+    
+    const cacheKey = `${url.origin}${url.pathname}:${btoa(JSON.stringify(cacheKeyData))}`;
     
     swLog(`Service Worker: Handling request to ${url.hostname}`);
-    swLog(`Service Worker: Cache key: ${cacheKey.substring(0, 100)}...`);
+    swLog(`Service Worker: Cache key (method+params): ${cacheKey.substring(0, 100)}...`);
     
     // Try to get from cache first
     const cache = await caches.open(CACHE_NAME);
