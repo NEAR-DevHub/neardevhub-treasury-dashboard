@@ -3,26 +3,45 @@
 
 // Cache configuration
 const CACHE_NAME = 'treasury-rpc-cache-v1';
-const RPC_ENDPOINT = 'rpc.mainnet.fastnear.com';
+const RPC_ENDPOINTS = ['rpc.mainnet.fastnear.com', 'archival-rpc.mainnet.fastnear.com'];
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
 
+// Helper function to send messages to all clients
+async function sendMessageToClients(message) {
+  const clients = await self.clients.matchAll();
+  clients.forEach(client => {
+    client.postMessage({
+      type: 'SW_LOG',
+      message: message,
+      timestamp: Date.now()
+    });
+  });
+}
+
+// Enhanced console.log that also sends to clients
+function swLog(message) {
+  console.log(message);
+  sendMessageToClients(message);
+}
+
 self.addEventListener('install', (event) => {
-  console.log('Service Worker: Installing...');
+  swLog('Service Worker: Installing...');
   // Skip waiting to activate immediately
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  console.log('Service Worker: Activated');
+  swLog('Service Worker: Activated');
   // Take control of all pages immediately
   event.waitUntil(
     self.clients.claim().then(() => {
+      swLog('Service Worker: Claimed control of all clients');
       // Clean up old caches if any
       return caches.keys().then(cacheNames => {
         return Promise.all(
           cacheNames.map(cacheName => {
             if (cacheName !== CACHE_NAME) {
-              console.log('Service Worker: Deleting old cache:', cacheName);
+              swLog('Service Worker: Deleting old cache: ' + cacheName);
               return caches.delete(cacheName);
             }
           })
@@ -35,8 +54,16 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   
-  // Only cache POST requests to the Fast NEAR RPC endpoint
-  if (event.request.method === 'POST' && url.hostname === RPC_ENDPOINT) {
+  // Log all requests for debugging
+  if (url.hostname.includes('fastnear.com')) {
+    swLog(`Service Worker: Intercepting request to ${url.hostname}${url.pathname}`);
+    swLog(`Service Worker: Request method: ${event.request.method}`);
+    swLog(`Service Worker: Request URL: ${event.request.url}`);
+  }
+  
+  // Only cache POST requests to Fast NEAR RPC endpoints (regular and archival)
+  if (event.request.method === 'POST' && RPC_ENDPOINTS.includes(url.hostname)) {
+    swLog(`Service Worker: Handling cacheable POST request to ${url.hostname}`);
     event.respondWith(handleRpcRequest(event.request));
   } else {
     // Pass through all other requests
@@ -44,30 +71,49 @@ self.addEventListener('fetch', (event) => {
   }
 });
 
+self.addEventListener('message', (event) => {
+  swLog('Service Worker: Received message: ' + JSON.stringify(event.data));
+  if (event.data && event.data.type === 'CLAIM_CLIENTS') {
+    swLog('Service Worker: Claiming all clients...');
+    self.clients.claim();
+  }
+});
+
 async function handleRpcRequest(request) {
   try {
     // Read the request body to create a cache key
     const requestBody = await request.clone().text();
-    const cacheKey = `${request.url}:${btoa(requestBody)}`;
+    const url = new URL(request.url);
+    const cacheKey = `${url.origin}${url.pathname}:${btoa(requestBody)}`;
+    
+    swLog(`Service Worker: Handling request to ${url.hostname}`);
+    swLog(`Service Worker: Cache key: ${cacheKey.substring(0, 100)}...`);
     
     // Try to get from cache first
     const cache = await caches.open(CACHE_NAME);
-    const cachedResponse = await cache.match(cacheKey);
+    // Create a fake request with the cache key as URL for matching
+    const cacheRequest = new Request(cacheKey);
+    const cachedResponse = await cache.match(cacheRequest);
     
     if (cachedResponse) {
       // Check if cache entry is still valid
       const cacheTime = cachedResponse.headers.get('sw-cache-time');
+      swLog(`Service Worker: Found cached response, cache time: ${cacheTime}`);
+      
       if (cacheTime && (Date.now() - parseInt(cacheTime)) < CACHE_DURATION) {
-        console.log('Service Worker: Returning cached RPC response');
+        swLog(`Service Worker: Returning cached RPC response from ${url.hostname}`);
         return cachedResponse;
       } else {
+        swLog(`Service Worker: Cache expired, removing entry`);
         // Cache expired, remove it
-        await cache.delete(cacheKey);
+        await cache.delete(cacheRequest);
       }
+    } else {
+      swLog(`Service Worker: No cached response found`);
     }
     
     // Make the actual request
-    console.log('Service Worker: Fetching fresh RPC response');
+    swLog(`Service Worker: Fetching fresh RPC response from ${url.hostname}`);
     const response = await fetch(request);
     
     // Only cache successful responses
@@ -83,14 +129,16 @@ async function handleRpcRequest(request) {
         headers: headers
       });
       
-      // Store in cache
-      await cache.put(cacheKey, cachedResponse);
-      console.log('Service Worker: Cached RPC response');
+      // Store in cache using the cacheRequest
+      await cache.put(cacheRequest, cachedResponse);
+      swLog(`Service Worker: Cached RPC response from ${url.hostname}`);
+    } else {
+      swLog(`Service Worker: Not caching response with status ${response.status}`);
     }
     
     return response;
   } catch (error) {
-    console.error('Service Worker: Error handling RPC request:', error);
+    swLog('Service Worker: Error handling RPC request: ' + error.message);
     // Fallback to normal fetch
     return fetch(request);
   }
