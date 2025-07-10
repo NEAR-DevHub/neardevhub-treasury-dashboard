@@ -4,15 +4,17 @@ This is the contract for serving web4 content
 
 ## 🔧 Service Worker Implementation
 
-This contract includes a **minimal service worker** for future caching of repeated RPC calls. The service worker is served from the same origin (required by browsers) at `/service-worker.js`.
+This contract includes a **service worker** that caches RPC calls to improve performance. The service worker is served from the same origin (required by browsers) at `/service-worker.js`.
 
-**Key implementation notes:**
-- Service worker is served by the contract itself (not from CDN)
-- Currently passes through all requests (ready for caching logic)
-- Automatically registers on page load
-- Includes comprehensive test coverage
+**Key implementation features:**
+- **RPC Caching**: Caches POST requests to Fast NEAR RPC endpoints for 5 minutes
+- **Same-origin serving**: Service worker served by the contract itself (required by browser security)
+- **Smart cache keys**: Uses method+params for cache keys, ignoring request IDs
+- **Automatic registration**: Registers on page load with error handling
+- **Comprehensive logging**: Enhanced logging that sends messages to browser clients
+- **Test coverage**: Includes tests to verify service worker functionality
 
-See [`/web4/README-Minimal-Service-Worker.md`](../README-Minimal-Service-Worker.md) for detailed implementation documentation.
+**Important**: Service workers **must** be served from the same origin as the web page - they cannot be loaded from CDNs due to browser security requirements.
 
 ## ⚠️ HTML Editing - Important Build Process
 
@@ -23,7 +25,36 @@ See [`/web4/README-Minimal-Service-Worker.md`](../README-Minimal-Service-Worker.
 
 **DO NOT** edit `/web4/treasury-web4/src/web4/index.html` directly - it gets overwritten by the build script!
 
-The build process copies HTML from `public_html/index.html` to the contract's source directory during compilation.
+**Why this matters:**
+- The build script (`build.rs`) copies HTML from `public_html/index.html` to `src/web4/index.html`
+- The contract embeds HTML using `include_str!()` at compile time
+- Direct edits to `src/web4/index.html` are lost on rebuild
+- Changes to source HTML require a contract rebuild to take effect
+
+### Build Process Details
+1. The `build.rs` script copies HTML from `public_html/index.html`
+2. It processes environment variables (POSTHOG_API_KEY, PIKESPEAK_API_KEY)
+3. It outputs the processed HTML to `src/web4/index.html`
+4. The contract uses `include_str!("web4/index.html")` to embed the HTML at compile time
+
+## Testing Service Worker
+
+After deploying, you can test the service worker in Browser DevTools:
+
+1. **Console Tab**: Look for service worker messages:
+   ```
+   Service Worker: Installing...
+   Service Worker: Activated
+   Service Worker: Cached RPC response from rpc.mainnet.fastnear.com
+   ```
+
+2. **Application Tab > Service Workers**: 
+   - Should show the service worker as "activated" and "running"
+   - URL should be `/service-worker.js`
+
+3. **Network Tab**: 
+   - First RPC requests fetch from network
+   - Subsequent identical requests served from cache (within 5 minutes)
 
 ## How to Build Locally?
 
