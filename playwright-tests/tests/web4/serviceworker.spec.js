@@ -1143,4 +1143,203 @@ test.describe("Web4 Service Worker", () => {
       await testServerInfo.close();
     }
   });
+
+  test("should not cache requests to .sputnik-dao.near contracts", async ({ browser }, testInfo) => {
+    // Skip this test if not running on the treasury-testing project
+    test.skip(
+      testInfo.project.name !== "treasury-testing",
+      "This test only runs on the treasury-testing project"
+    );
+    
+    test.setTimeout(60000);
+
+    // Create test server
+    const testServerInfo = await createTestServer(treasuryWeb4Contract);
+    
+    try {
+      // Create a new browser context with service workers enabled
+      const context = await browser.newContext({
+        serviceWorkers: 'allow'
+      });
+      
+      const page = await context.newPage();
+      
+      // Set up console message collection
+      const consoleMessages = [];
+      
+      page.on('console', msg => {
+        const text = msg.text();
+        if (text.includes('Service Worker:')) {
+          consoleMessages.push(text);
+          console.log(`📝 SW Log: ${text}`);
+        }
+      });
+      
+      // Navigate to the page and wait for service worker to be ready
+      console.log(`🌐 Navigating to ${testServerInfo.url}`);
+      await page.goto(testServerInfo.url);
+      
+      // Wait for service worker to register and activate
+      await page.waitForFunction(
+        () => {
+          return window.navigator.serviceWorker &&
+                 window.navigator.serviceWorker.ready;
+        },
+        { timeout: 10000 }
+      );
+      
+      // Wait for the service worker to take control
+      await page.waitForFunction(
+        () => {
+          return window.navigator.serviceWorker.controller !== null;
+        },
+        { timeout: 15000 }
+      );
+      
+      console.log(`🔧 Service worker is ready and controlling the page`);
+      
+      // Clear existing console messages
+      consoleMessages.length = 0;
+      
+      // Simulate a JSON-RPC request to a .sputnik-dao.near contract
+      console.log(`🧪 Making test RPC request to .sputnik-dao.near contract`);
+      
+      const testRpcRequest = await page.evaluate(async () => {
+        try {
+          const response = await fetch('https://rpc.mainnet.fastnear.com', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              jsonrpc: '2.0',
+              id: 'test-sputnik-dao',
+              method: 'query',
+              params: {
+                request_type: 'call_function',
+                finality: 'final',
+                account_id: 'test.sputnik-dao.near',
+                method_name: 'get_proposals',
+                args_base64: ''
+              }
+            })
+          });
+          
+          return {
+            status: response.status,
+            ok: response.ok
+          };
+        } catch (error) {
+          return {
+            error: error.message
+          };
+        }
+      });
+      
+      console.log(`📊 Test RPC request result:`, testRpcRequest);
+      
+      // Wait for service worker to process the request
+      await page.waitForTimeout(3000);
+      
+      // Look for service worker logs that indicate the request was not cached
+      const sputnikDaoLogs = consoleMessages.filter(msg => 
+        msg.includes('.sputnik-dao.near')
+      );
+      
+      const skippingCacheLogs = consoleMessages.filter(msg => 
+        msg.includes('Skipping cache for .sputnik-dao.near contract call')
+      );
+      
+      console.log(`📊 Service worker logs analysis:`);
+      console.log(`  📝 Total SW messages: ${consoleMessages.length}`);
+      console.log(`  🎯 Messages mentioning .sputnik-dao.near: ${sputnikDaoLogs.length}`);
+      console.log(`  ⏭️  Messages about skipping cache: ${skippingCacheLogs.length}`);
+      
+      // Print relevant logs for debugging
+      sputnikDaoLogs.forEach(log => {
+        console.log(`    📝 ${log}`);
+      });
+      
+      skippingCacheLogs.forEach(log => {
+        console.log(`    ⏭️  ${log}`);
+      });
+      
+      // Now make a second identical request to verify it's not cached
+      console.log(`🔄 Making second identical request to verify no caching`);
+      consoleMessages.length = 0; // Clear logs
+      
+      const secondRpcRequest = await page.evaluate(async () => {
+        try {
+          const response = await fetch('https://rpc.mainnet.fastnear.com', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              jsonrpc: '2.0',
+              id: 'test-sputnik-dao-2',
+              method: 'query',
+              params: {
+                request_type: 'call_function',
+                finality: 'final',
+                account_id: 'test.sputnik-dao.near',
+                method_name: 'get_proposals',
+                args_base64: ''
+              }
+            })
+          });
+          
+          return {
+            status: response.status,
+            ok: response.ok
+          };
+        } catch (error) {
+          return {
+            error: error.message
+          };
+        }
+      });
+      
+      console.log(`📊 Second RPC request result:`, secondRpcRequest);
+      
+      // Wait for service worker to process the second request
+      await page.waitForTimeout(3000);
+      
+      // Check that the second request was also not cached
+      const secondSkippingCacheLogs = consoleMessages.filter(msg => 
+        msg.includes('Skipping cache for .sputnik-dao.near contract call')
+      );
+      
+      const cachedResponseLogs = consoleMessages.filter(msg => 
+        msg.includes('Returning cached RPC response')
+      );
+      
+      console.log(`📊 Second request analysis:`);
+      console.log(`  ⏭️  Second skip cache messages: ${secondSkippingCacheLogs.length}`);
+      console.log(`  📦 Cached response messages: ${cachedResponseLogs.length}`);
+      
+      // The key assertions: 
+      // 1. We should see skip cache messages for .sputnik-dao.near requests
+      // 2. We should NOT see cached response messages for these requests
+      
+      if (skippingCacheLogs.length > 0 || secondSkippingCacheLogs.length > 0) {
+        console.log(`✅ Service worker correctly skipping cache for .sputnik-dao.near contracts`);
+        expect(skippingCacheLogs.length + secondSkippingCacheLogs.length).toBeGreaterThan(0);
+      } else {
+        console.log(`ℹ️  No explicit skip cache logs found - checking that responses weren't cached`);
+        // Even if we don't see the logs, we shouldn't see cached responses for these requests
+        expect(cachedResponseLogs.length).toBe(0);
+      }
+      
+      // Verify that .sputnik-dao.near requests are never returned from cache
+      expect(cachedResponseLogs.length).toBe(0);
+      
+      console.log(`✅ .sputnik-dao.near contract calls are correctly excluded from caching`);
+      
+      await context.close();
+      
+    } finally {
+      await testServerInfo.close();
+    }
+  });
 });

@@ -91,8 +91,9 @@ async function handleRpcRequest(request) {
     // Parse the JSON-RPC request to extract method and params for cache key
     // This ignores the 'id' field which changes but doesn't affect the query
     let cacheKeyData;
+    let jsonBody;
     try {
-      const jsonBody = JSON.parse(requestBody);
+      jsonBody = JSON.parse(requestBody);
       cacheKeyData = {
         method: jsonBody.method,
         params: jsonBody.params,
@@ -102,6 +103,15 @@ async function handleRpcRequest(request) {
       // If parsing fails, fall back to using the full body
       swLog(`Service Worker: Failed to parse JSON body, using full body for cache key`);
       cacheKeyData = requestBody;
+    }
+    
+    // Check if this is a call to a .sputnik-dao.near contract - don't cache these
+    if (jsonBody && jsonBody.params && jsonBody.params.account_id) {
+      const accountId = jsonBody.params.account_id;
+      if (accountId && accountId.endsWith('.sputnik-dao.near')) {
+        swLog(`Service Worker: Skipping cache for .sputnik-dao.near contract call: ${accountId}`);
+        return fetch(request);
+      }
     }
     
     const cacheKey = `${url.origin}${url.pathname}:${btoa(JSON.stringify(cacheKeyData))}`;
