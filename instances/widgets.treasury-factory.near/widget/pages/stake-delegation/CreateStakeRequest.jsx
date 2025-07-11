@@ -69,6 +69,7 @@ function formatNearAmount(amount) {
 }
 
 function refreshData() {
+  props.setToastStatus("StakeProposalAdded");
   Storage.set("REFRESH_STAKE_TABLE_DATA", Math.random());
 }
 

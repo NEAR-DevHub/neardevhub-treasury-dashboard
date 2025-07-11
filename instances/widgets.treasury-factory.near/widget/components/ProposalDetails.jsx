@@ -33,40 +33,6 @@ const proposalStatusLabel = props.proposalStatusLabel;
 const accountId = context.accountId;
 const requiredVotes = approversGroup?.requiredVotes;
 
-useEffect(() => {
-  if (props.transactionHashes) {
-    asyncFetch("${REPL_RPC_URL}", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id: "dontcare",
-        method: "tx",
-        params: [props.transactionHashes, context.accountId],
-      }),
-    }).then((transaction) => {
-      if (transaction !== null) {
-        const transaction_method_name =
-          transaction?.body?.result?.transaction?.actions[0].FunctionCall
-            .method_name;
-
-        if (transaction_method_name === "act_proposal") {
-          const args =
-            transaction?.body?.result?.transaction?.actions[0].FunctionCall
-              .args;
-          const decodedArgs = JSON.parse(atob(args ?? "") ?? "{}");
-          if (decodedArgs.id && typeof checkProposalStatus === "function") {
-            const proposalId = decodedArgs.id;
-            props.checkProposalStatus(proposalId);
-          }
-        }
-      }
-    });
-  }
-}, [props.transactionHashes]);
-
 const Container = styled.div`
   font-size: 14px;
   .flex-1 {
