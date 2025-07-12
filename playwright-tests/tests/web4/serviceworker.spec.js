@@ -1426,7 +1426,9 @@ test.describe("Web4 Service Worker", () => {
       const duplicateDetails = [];
       for (const req of rpcRequests) {
         const normalizedPayload = stripIdFromPayload(req.postData);
-        if (seenPayloads.has(normalizedPayload)) {
+        // Only count as duplicate if NOT served from cache (i.e., not intercepted with swCacheTime)
+        const isTrueNetworkRequest = !(req.intercepted && req.swCacheTime);
+        if (seenPayloads.has(normalizedPayload) && isTrueNetworkRequest) {
           duplicateCount++;
           duplicateDetails.push({
             normalizedPayload,
@@ -1440,7 +1442,7 @@ test.describe("Web4 Service Worker", () => {
       }
 
       if (duplicateCount > 0) {
-        console.log(`❌ Found ${duplicateCount} duplicate POST RPC requests (ignoring 'id' field):`);
+        console.log(`❌ Found ${duplicateCount} duplicate true network POST RPC requests (ignoring 'id' field):`);
         duplicateDetails.forEach((dup, idx) => {
           console.log(`  [${idx + 1}] Normalized payload: ${dup.normalizedPayload}`);
           console.log(`      Original request body: ${dup.original}`);
@@ -1454,7 +1456,7 @@ test.describe("Web4 Service Worker", () => {
           }
         });
       } else {
-        console.log(`✅ Deduplication test: No duplicate POST RPC requests detected (ignoring 'id' field) when loading payments history page.`);
+        console.log(`✅ Deduplication test: No duplicate true network POST RPC requests detected (ignoring 'id' field) when loading payments history page.`);
       }
       expect(duplicateCount).toBe(0);
       await context.close();

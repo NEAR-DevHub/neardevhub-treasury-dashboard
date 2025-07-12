@@ -1,3 +1,5 @@
+// Map to track in-flight requests for deduplication
+const inflightRpcRequests = new Map();
 // Service Worker for Treasury Dashboard with RPC Caching
 // Caches POST requests to rpc.mainnet.fastnear.com to improve performance
 
@@ -105,12 +107,13 @@ async function handleRpcRequest(request) {
       cacheKeyData = requestBody;
     }
     
-    // Check if this is a call to a .sputnik-dao.near contract - don't cache these
+    // Check if this is a call to a .sputnik-dao.near contract - cache for 2 seconds only
+    let sputnikDaoCacheDuration = null;
     if (jsonBody && jsonBody.params && jsonBody.params.account_id) {
       const accountId = jsonBody.params.account_id;
       if (accountId && accountId.endsWith('.sputnik-dao.near')) {
-        swLog(`Service Worker: Skipping cache for .sputnik-dao.near contract call: ${accountId}`);
-        return fetch(request);
+        swLog(`Service Worker: .sputnik-dao.near contract call detected: ${accountId} (cache for 2 seconds)`);
+        sputnikDaoCacheDuration = 2 * 1000; // 2 seconds in ms
       }
     }
     
@@ -124,13 +127,16 @@ async function handleRpcRequest(request) {
     // Create a fake request with the cache key as URL for matching
     const cacheRequest = new Request(cacheKey);
     const cachedResponse = await cache.match(cacheRequest);
-    
+
     if (cachedResponse) {
       // Check if cache entry is still valid
       const cacheTime = cachedResponse.headers.get('sw-cache-time');
       swLog(`Service Worker: Found cached response, cache time: ${cacheTime}`);
-      
-      if (cacheTime && (Date.now() - parseInt(cacheTime)) < CACHE_DURATION) {
+      let duration = CACHE_DURATION;
+      if (sputnikDaoCacheDuration !== null) {
+        duration = sputnikDaoCacheDuration;
+      }
+      if (cacheTime && (Date.now() - parseInt(cacheTime)) < duration) {
         swLog(`Service Worker: Returning cached RPC response from ${url.hostname}`);
         return cachedResponse;
       } else {
@@ -141,32 +147,44 @@ async function handleRpcRequest(request) {
     } else {
       swLog(`Service Worker: No cached response found`);
     }
-    
-    // Make the actual request
-    swLog(`Service Worker: Fetching fresh RPC response from ${url.hostname}`);
-    const response = await fetch(request);
-    
-    // Only cache successful responses
-    if (response.status === 200) {
-      // Clone the response and add cache timestamp
-      const responseToCache = response.clone();
-      const headers = new Headers(responseToCache.headers);
-      headers.set('sw-cache-time', Date.now().toString());
-      
-      const cachedResponse = new Response(responseToCache.body, {
-        status: responseToCache.status,
-        statusText: responseToCache.statusText,
-        headers: headers
-      });
-      
-      // Store in cache using the cacheRequest
-      await cache.put(cacheRequest, cachedResponse);
-      swLog(`Service Worker: Cached RPC response from ${url.hostname}`);
-    } else {
-      swLog(`Service Worker: Not caching response with status ${response.status}`);
+
+    // Deduplication: check if a request for this cacheKey is already in flight
+    if (inflightRpcRequests.has(cacheKey)) {
+      swLog(`Service Worker: Deduplication - waiting for in-flight request for cacheKey: ${cacheKey.substring(0, 100)}...`);
+      return inflightRpcRequests.get(cacheKey);
     }
-    
-    return response;
+
+    // Make the actual request and store the promise in the map
+    swLog(`Service Worker: Fetching fresh RPC response from ${url.hostname}`);
+    const fetchPromise = (async () => {
+      try {
+        const response = await fetch(request);
+        // Only cache successful responses
+        if (response.status === 200) {
+          // Clone the response and add cache timestamp
+          const responseToCache = response.clone();
+          const headers = new Headers(responseToCache.headers);
+          headers.set('sw-cache-time', Date.now().toString());
+          const cachedResponse = new Response(responseToCache.body, {
+            status: responseToCache.status,
+            statusText: responseToCache.statusText,
+            headers: headers
+          });
+          // Store in cache using the cacheRequest
+          await cache.put(cacheRequest, cachedResponse);
+          swLog(`Service Worker: Cached RPC response from ${url.hostname}`);
+          return response;
+        } else {
+          swLog(`Service Worker: Not caching response with status ${response.status}`);
+          return response;
+        }
+      } finally {
+        // Remove from inflight map after completion
+        inflightRpcRequests.delete(cacheKey);
+      }
+    })();
+    inflightRpcRequests.set(cacheKey, fetchPromise);
+    return fetchPromise;
   } catch (error) {
     swLog('Service Worker: Error handling RPC request: ' + error.message);
     // Fallback to normal fetch
