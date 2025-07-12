@@ -111,9 +111,10 @@ async function handleRpcRequest(request) {
     let sputnikDaoCacheDuration = null;
     if (jsonBody && jsonBody.params && jsonBody.params.account_id) {
       const accountId = jsonBody.params.account_id;
-      if (accountId && accountId.endsWith('.sputnik-dao.near')) {
-        swLog(`Service Worker: .sputnik-dao.near contract call detected: ${accountId} (cache for 2 seconds)`);
-        sputnikDaoCacheDuration = 2 * 1000; // 2 seconds in ms
+      const methodName = jsonBody.params.method_name;
+      if (accountId && accountId.endsWith('.sputnik-dao.near') && methodName && methodName.includes('proposal')) {
+        swLog(`Service Worker: .sputnik-dao.near contract call with 'proposal' method detected: ${accountId}, method: ${methodName} (cache for 1 second)`);
+        sputnikDaoCacheDuration = 1 * 1000; // 1 second in ms
       }
     }
     
@@ -136,10 +137,42 @@ async function handleRpcRequest(request) {
       if (sputnikDaoCacheDuration !== null) {
         duration = sputnikDaoCacheDuration;
       }
-      if (cacheTime && (Date.now() - parseInt(cacheTime)) < duration) {
+      let shouldInvalidate = false;
+      if (sputnikDaoCacheDuration === 1 * 1000) {
+        // For 'proposal' methods, compare cached and new response data
+        try {
+          const cachedData = await cachedResponse.clone().json();
+          // Make a fresh request to compare
+          const freshResponse = await fetch(request.clone());
+          if (freshResponse.status === 200) {
+            const freshData = await freshResponse.clone().json();
+            // Compare only result.result arrays
+            const cachedArr = cachedData?.result?.result;
+            const freshArr = freshData?.result?.result;
+            if (JSON.stringify(cachedArr) !== JSON.stringify(freshArr)) {
+              swLog('Service Worker: Cached proposal result array differs from fresh response, invalidating ALL caches.');
+              // Invalidate all cached responses in all caches
+              const cacheNames = await caches.keys();
+              for (const name of cacheNames) {
+                const cacheInst = await caches.open(name);
+                const requests = await cacheInst.keys();
+                for (const req of requests) {
+                  try {
+                    await cacheInst.delete(req);
+                  } catch (e) {}
+                }
+              }
+              shouldInvalidate = true;
+            }
+          }
+        } catch (e) {
+          swLog('Service Worker: Error comparing cached and fresh proposal response: ' + e.message);
+        }
+      }
+      if (!shouldInvalidate && cacheTime && (Date.now() - parseInt(cacheTime)) < duration) {
         swLog(`Service Worker: Returning cached RPC response from ${url.hostname}`);
         return cachedResponse;
-      } else {
+      } else if (!shouldInvalidate) {
         swLog(`Service Worker: Cache expired, removing entry`);
         // Cache expired, remove it
         await cache.delete(cacheRequest);
