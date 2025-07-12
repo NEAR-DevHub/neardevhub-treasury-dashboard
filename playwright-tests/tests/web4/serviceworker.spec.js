@@ -1342,4 +1342,124 @@ test.describe("Web4 Service Worker", () => {
       await testServerInfo.close();
     }
   });
+
+  test("should deduplicate concurrent identical RPC requests on payments history page", async ({ browser }, testInfo) => {
+    test.skip(
+      testInfo.project.name !== "treasury-testing",
+      "This test only runs on the treasury-testing project"
+    );
+    test.setTimeout(60000);
+
+    // Create test server
+    const testServerInfo = await createTestServer(treasuryWeb4Contract);
+    try {
+      const context = await browser.newContext({ serviceWorkers: 'allow' });
+      const page = await context.newPage();
+
+      // Track POST requests to RPC endpoints and their responses
+      let rpcRequests = [];
+      page.on('request', request => {
+        const url = new URL(request.url());
+        if (request.method() === 'POST' && (url.hostname === 'rpc.mainnet.fastnear.com' || url.hostname === 'archival-rpc.mainnet.fastnear.com')) {
+          rpcRequests.push({ url: request.url(), postData: request.postData(), time: Date.now(), intercepted: false });
+        }
+      });
+
+      // Track responses to POST requests to check for service worker interception
+      page.on('response', async response => {
+        const url = new URL(response.url());
+        if (response.request().method() === 'POST' && (url.hostname === 'rpc.mainnet.fastnear.com' || url.hostname === 'archival-rpc.mainnet.fastnear.com')) {
+          // Check for custom header set by service worker (sw-cache-time)
+          const swCacheTime = response.headers()['sw-cache-time'];
+          const idx = rpcRequests.findIndex(r => r.url === response.url() && r.postData === response.request().postData());
+          if (idx !== -1) {
+            rpcRequests[idx].intercepted = !!swCacheTime;
+            rpcRequests[idx].swCacheTime = swCacheTime;
+          }
+        }
+      });
+
+      // Go to the payments history page
+      const historyUrl = `${testServerInfo.url}/?page=payments&tab=history`;
+      await page.goto(historyUrl, { waitUntil: 'networkidle', timeout: 30000 });
+
+      // Wait for service worker to be ready
+      await page.waitForFunction(() => window.navigator.serviceWorker && window.navigator.serviceWorker.ready, { timeout: 10000 });
+
+      // Wait for service worker to control the page
+      await page.waitForFunction(() => window.navigator.serviceWorker.controller !== null, { timeout: 15000 });
+
+      // Reload the page to ensure service worker is controlling
+      rpcRequests = [];
+      await page.reload({ waitUntil: 'networkidle', timeout: 30000 });
+      await page.waitForTimeout(3000);
+
+      // Analyze the POST RPC requests for duplicates
+      // We'll consider requests with identical payloads except for the 'id' field as duplicates
+      function stripIdFromPayload(payload) {
+        try {
+          const obj = JSON.parse(payload);
+          // Remove 'id' field
+          delete obj.id;
+          return JSON.stringify(obj);
+        } catch (e) {
+          return payload; // fallback: use raw payload if not JSON
+        }
+      }
+
+      // Log which requests were intercepted by the service worker
+      rpcRequests.forEach((req, idx) => {
+        console.log(`Request [${idx + 1}]: intercepted by SW: ${req.intercepted ? 'yes' : 'no'}, sw-cache-time: ${req.swCacheTime || 'none'}`);
+        console.log(`  URL: ${req.url}`);
+        console.log(`  Body: ${req.postData}`);
+        if (req.intercepted && req.swCacheTime) {
+          console.log(`  🚦 Service Worker returned cached response (sw-cache-time: ${req.swCacheTime})`);
+        } else if (req.intercepted) {
+          console.log(`  🚦 Service Worker intercepted but did NOT return cached response.`);
+        } else {
+          console.log(`  🚦 Service Worker did NOT intercept this request.`);
+        }
+      });
+
+      const seenPayloads = new Map(); // normalizedPayload -> [original bodies]
+      let duplicateCount = 0;
+      const duplicateDetails = [];
+      for (const req of rpcRequests) {
+        const normalizedPayload = stripIdFromPayload(req.postData);
+        if (seenPayloads.has(normalizedPayload)) {
+          duplicateCount++;
+          duplicateDetails.push({
+            normalizedPayload,
+            original: req.postData,
+            intercepted: req.intercepted,
+            swCacheTime: req.swCacheTime
+          });
+        } else {
+          seenPayloads.set(normalizedPayload, [req.postData]);
+        }
+      }
+
+      if (duplicateCount > 0) {
+        console.log(`❌ Found ${duplicateCount} duplicate POST RPC requests (ignoring 'id' field):`);
+        duplicateDetails.forEach((dup, idx) => {
+          console.log(`  [${idx + 1}] Normalized payload: ${dup.normalizedPayload}`);
+          console.log(`      Original request body: ${dup.original}`);
+          console.log(`      Intercepted by SW: ${dup.intercepted ? 'yes' : 'no'}, sw-cache-time: ${dup.swCacheTime || 'none'}`);
+          if (dup.intercepted && dup.swCacheTime) {
+            console.log(`      🚦 Service Worker returned cached response (sw-cache-time: ${dup.swCacheTime})`);
+          } else if (dup.intercepted) {
+            console.log(`      🚦 Service Worker intercepted but did NOT return cached response.`);
+          } else {
+            console.log(`      🚦 Service Worker did NOT intercept this request.`);
+          }
+        });
+      } else {
+        console.log(`✅ Deduplication test: No duplicate POST RPC requests detected (ignoring 'id' field) when loading payments history page.`);
+      }
+      expect(duplicateCount).toBe(0);
+      await context.close();
+    } finally {
+      await testServerInfo.close();
+    }
+  });
 });
