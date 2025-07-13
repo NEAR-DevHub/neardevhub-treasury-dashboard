@@ -592,7 +592,6 @@ test.describe("Vote on Lockup payment request", function () {
     }
     const { sandbox } = await createSandboxAndLockupRequest({
       page,
-
       daoAccount,
     });
     await updateDaoPolicyMembers({ instanceAccount, page, isMultiVote: true });
@@ -634,6 +633,7 @@ test.describe("Vote on Lockup payment request", function () {
       args: {
         id: 0,
         action: "VoteApprove",
+        proposal: LockupProposalData.kind,
       },
       gas: "300000000000000",
       attachedDeposit: "0",
