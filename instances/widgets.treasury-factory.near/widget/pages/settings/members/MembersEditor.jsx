@@ -369,6 +369,10 @@ const code = `<!DOCTYPE html>
       const membersContainer = document.getElementById("membersContainer");
       
       function isValidNearAccount(account) {
+        if (/[A-Z]/.test(account)) {
+          return false;
+        }
+        
         return (
           account.length === 64 ||
           account.includes(".near") ||
