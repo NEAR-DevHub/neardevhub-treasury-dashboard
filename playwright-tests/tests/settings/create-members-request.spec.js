@@ -638,10 +638,12 @@ test.describe("User is logged in", function () {
     ).toBeVisible({ timeout: 20_000 });
     const iframe = page.locator("iframe").contentFrame();
     await expect(iframe.getByText("Username")).toBeVisible();
-    await expect(iframe.getByText(role, { exact: true })).toBeVisible();
+    await expect(
+      iframe.locator("#selectedRoles-0").getByText(role, { exact: true })
+    ).toBeVisible();
     await expect(
       iframe.getByText(
-        "Only the Requestor role can be assigned to this member, enabling them to create requests in NEARN"
+        `This is a special-purpose account used by NEARN to create proposals on your treasury. It only requires the ${role} permission and should not be given voting, approval, or other DAO roles.`
       )
     ).toBeVisible();
     const submitButton = iframe.getByRole("button", { name: "Submit" });

@@ -132,6 +132,16 @@ useEffect(() => {
   }
 }, [isTxnCreated, lastProposalId, treasuryDaoID]);
 
+const addProposalRole = daoPolicy?.roles?.find((role) =>
+  (role.permissions || []).some(
+    (i) =>
+      i === "transfer:AddProposal" ||
+      i === "*:AddProposal" ||
+      i === "transfer:*" ||
+      i === "*:*"
+  )
+)?.name;
+
 const code = `<!DOCTYPE html>
 <html lang="en">
    <head>
@@ -358,6 +368,7 @@ const code = `<!DOCTYPE html>
       let allMembers = [];
       let selectedMembers = [];
       let cachedProfilesData = null;
+      let addProposalRole = "";
       const NEARN_ACCOUNT_ID = "nearn-io.near";
       const roleDescriptions = {
         Requestor: "Allows to create transaction requests (payments, stake delegation, and asset exchange).",
@@ -628,7 +639,7 @@ const code = `<!DOCTYPE html>
         const isNearnAccount = account === NEARN_ACCOUNT_ID;
         const nearnWarning = document.getElementById("nearnWarning-" + index);
         if (nearnWarning) {
-          if (isNearnAccount) {
+          if (isNearnAccount && addProposalRole) {
             nearnWarning.classList.add("d-flex");
             nearnWarning.classList.remove("d-none");
           } else {
@@ -846,7 +857,7 @@ const code = `<!DOCTYPE html>
               '</div>' +
               '<div id="nearnWarning-' + index + '" class="warning-box rounded-3 d-none gap-2 align-items-center">' +
                 '<i class="bi bi-exclamation-triangle h5 mb-0"></i>' +
-                '<span>Only the Requestor role can be assigned to this member, enabling them to create requests in NEARN.</span>' +
+                '<span>This is a special-purpose account used by NEARN to create proposals on your treasury. It only requires the <strong>' + addProposalRole + '</strong> permission and should not be given voting, approval, or other DAO roles.</span>' +
               '</div>' +
             
             '</div>'          
@@ -915,7 +926,7 @@ const code = `<!DOCTYPE html>
         availableRolesToShow.forEach(function(role) {
           const item = document.createElement("div");
           let isDisabled = false;
-          if (isNearnAccount && role.value !== "Requestor") {
+          if (isNearnAccount && addProposalRole && role.value !== addProposalRole) {
             isDisabled = true;
             item.className = "dropdown-item w-100 my-1 disabled";
             item.style.pointerEvents = "none";
@@ -991,9 +1002,9 @@ const code = `<!DOCTYPE html>
         }
         const isNearnAccount = account === NEARN_ACCOUNT_ID;
         if (selectTag) {
-          if (isNearnAccount) {
-            // Only show if Requestor is not already selected
-            if (selectedRoles.some(r => r.value === "Requestor")) {
+          if (isNearnAccount && addProposalRole) {
+            // Only show if addProposalRole is not already selected
+            if (selectedRoles.some(r => r.value === addProposalRole)) {
               selectTag.classList.add("d-none");
             } else {
               selectTag.classList.remove("d-none");
@@ -1102,6 +1113,7 @@ const code = `<!DOCTYPE html>
           isEdit = event.data.isEdit;
           availableRoles = event.data.availableRoles;
           allMembers = event.data.allMembers || [];
+          addProposalRole = event.data.addProposalRole || "";
         
           if (Array.isArray(event.data.selectedMembers) && event.data.selectedMembers.length > 0) {
             selectedMembers = event.data.selectedMembers;
@@ -1172,6 +1184,7 @@ return (
         selectedMembers,
         disableCancel,
         isSubmitLoading,
+        addProposalRole,
       }}
       onMessage={(e) => {
         switch (e.handler) {
