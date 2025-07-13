@@ -1392,4 +1392,104 @@ test.describe("Web4 Service Worker", () => {
       await testServerInfo.close();
     
   });
+
+  test("should apply special 1-second cache for balance calls", async ({ browser }, testInfo) => {
+    // Skip this test if not running on the treasury-testing project
+    test.skip(
+      testInfo.project.name !== "treasury-testing",
+      "This test only runs on the treasury-testing project"
+    );
+    
+    test.setTimeout(60000);
+
+    // Create test server
+    const testServerInfo = await createTestServer(treasuryWeb4Contract);
+    
+    try {
+      const context = await browser.newContext({ serviceWorkers: 'allow' });
+      const page = await context.newPage();
+
+      // Navigate to the page and wait for service worker to be ready
+      await page.goto(testServerInfo.url, { waitUntil: 'networkidle' });
+      await page.waitForFunction(() => window.navigator.serviceWorker && window.navigator.serviceWorker.ready, { timeout: 10000 });
+      await page.waitForFunction(() => window.navigator.serviceWorker.controller !== null, { timeout: 15000 });
+
+      // Reload to ensure service worker is controlling the page
+      await page.reload({ waitUntil: 'networkidle' });
+      // Add a generous wait for the service worker to be fully active and ready to intercept.
+      await page.waitForTimeout(3000);
+
+      let interceptedRequests = 0;
+      // Use the interception logic from the deduplication test
+      await context.route('**', async route => {
+        const request = route.request();
+        // Check if the request is coming from the service worker
+        if (request.serviceWorker()) {
+          // Check if it's the RPC call we are interested in
+          if(request.url().includes("fastnear") && request.method() === "POST") {
+            const postData = request.postDataJSON();
+            if (postData.params && postData.params.method_name && postData.params.method_name.includes('balance')) {
+                interceptedRequests++;
+            }
+          }
+        }
+        return route.continue();
+      });
+
+      const makeRpcCall = () => {
+        return page.evaluate(() => {
+          // Using a unique ID for each call to better simulate real conditions,
+          // even though the SW should ignore it for caching.
+          const rpcId = `test-balance-${Date.now()}-${Math.random()}`;
+          return fetch('https://rpc.mainnet.fastnear.com', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              jsonrpc: '2.0',
+              id: rpcId,
+              method: 'query',
+              params: {
+                request_type: 'call_function',
+                finality: 'final',
+                account_id: 'wrap.near',
+                method_name: 'ft_balance_of',
+                args_base64: btoa(JSON.stringify({"account_id": "treasury-testing.sputnik-dao.near"}))
+              }
+            })
+          });
+        });
+      };
+
+      // 1. First call - should be fresh (intercepted by service worker)
+      console.log('🧪 Making first balance call...');
+      interceptedRequests = 0;
+      await makeRpcCall();
+      expect(interceptedRequests, "First call should be a fresh fetch and be intercepted.").toBe(1);
+      console.log('✅ First call was a fresh fetch.');
+
+      // 2. Second call (immediately after) - should be cached (not intercepted)
+      console.log('🧪 Making second balance call (quickly)...');
+      interceptedRequests = 0;
+      await makeRpcCall();
+      // Wait for the call to complete. Since it should be cached, it should be fast.
+      await page.waitForTimeout(500);
+      expect(interceptedRequests, "Second call should be cached and not intercepted.").toBe(0);
+      console.log('✅ Second call was served from cache.');
+
+      // 3. Third call (after 2 seconds) - should be fresh again (intercepted)
+      console.log('⏳ Waiting for 2 seconds for cache to expire...');
+      await page.waitForTimeout(2000);
+      console.log('🧪 Making third balance call (after delay)...');
+      interceptedRequests = 0;
+      await makeRpcCall();
+      // Wait for the interception to be registered.
+      await page.waitForTimeout(1000);
+      expect(interceptedRequests, "Third call after expiration should be a fresh fetch.").toBe(1);
+      console.log('✅ Third call was a fresh fetch after cache expired.');
+
+      await context.close();
+    } finally {
+      await testServerInfo.close();
+    }
+  });
 });
