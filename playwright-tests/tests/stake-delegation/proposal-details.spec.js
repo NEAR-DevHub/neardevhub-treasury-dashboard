@@ -217,7 +217,7 @@ async function setupSandboxAndCreateProposal({
 
   if (type === RequestType.UNSTAKE) {
     const args = toBase64({ amount: "300000000000000000000000" });
-    const description = `* Proposal Action: withdraw <br>* Show After Proposal Id Approved: 0 <br>* Custom Notes: Following to [#0](/${instanceAccount}/widget/app?page=stake-delegation&id=0) unstake request`;
+    const description = `* Proposal Action: withdraw <br>* Show After Proposal Id Approved: 0 <br>* Custom Notes: Following to [#0](/${instanceAccount}/widget/app?page=stake-delegation&id=0) unstake request <br>* Amount: 300000000000000000000000`;
     await sandbox.addUnstakeRequestProposal({
       stakedPoolAccount,
       functionCallArgs: args,

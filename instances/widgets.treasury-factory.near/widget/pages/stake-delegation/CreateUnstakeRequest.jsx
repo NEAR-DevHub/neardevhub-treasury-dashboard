@@ -325,6 +325,7 @@ function onSubmitClick(validatorAccount, amount, notes) {
           proposal_action: "withdraw",
           showAfterProposalIdApproved: lastProposalId,
           customNotes: `Following to [#${lastProposalId}](${link}) unstake request`,
+          amount: Big(amount).mul(Big(10).pow(24)).toFixed(),
         }),
         kind: {
           FunctionCall: {
