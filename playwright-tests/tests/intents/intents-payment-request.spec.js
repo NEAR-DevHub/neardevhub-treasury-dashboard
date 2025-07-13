@@ -286,7 +286,7 @@ test("create payment request to transfer BTC", async ({ page }) => {
     daoAccount.accountId,
     "add_proposal",
     {
-      proposal: proposal.kind,
+      proposal: proposal,
     },
     {
       attachedDeposit: PROPOSAL_BOND,
