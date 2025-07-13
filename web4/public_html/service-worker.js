@@ -137,42 +137,10 @@ async function handleRpcRequest(request) {
       if (sputnikDaoCacheDuration !== null) {
         duration = sputnikDaoCacheDuration;
       }
-      let shouldInvalidate = false;
-      if (sputnikDaoCacheDuration === 1 * 1000) {
-        // For 'proposal' methods, compare cached and new response data
-        try {
-          const cachedData = await cachedResponse.clone().json();
-          // Make a fresh request to compare
-          const freshResponse = await fetch(request.clone());
-          if (freshResponse.status === 200) {
-            const freshData = await freshResponse.clone().json();
-            // Compare only result.result arrays
-            const cachedArr = cachedData?.result?.result;
-            const freshArr = freshData?.result?.result;
-            if (JSON.stringify(cachedArr) !== JSON.stringify(freshArr)) {
-              swLog('Service Worker: Cached proposal result array differs from fresh response, invalidating ALL caches.');
-              // Invalidate all cached responses in all caches
-              const cacheNames = await caches.keys();
-              for (const name of cacheNames) {
-                const cacheInst = await caches.open(name);
-                const requests = await cacheInst.keys();
-                for (const req of requests) {
-                  try {
-                    await cacheInst.delete(req);
-                  } catch (e) {}
-                }
-              }
-              shouldInvalidate = true;
-            }
-          }
-        } catch (e) {
-          swLog('Service Worker: Error comparing cached and fresh proposal response: ' + e.message);
-        }
-      }
-      if (!shouldInvalidate && cacheTime && (Date.now() - parseInt(cacheTime)) < duration) {
+      if (cacheTime && (Date.now() - parseInt(cacheTime)) < duration) {
         swLog(`Service Worker: Returning cached RPC response from ${url.hostname}`);
         return cachedResponse;
-      } else if (!shouldInvalidate) {
+      } else {
         swLog(`Service Worker: Cache expired, removing entry`);
         // Cache expired, remove it
         await cache.delete(cacheRequest);
@@ -194,6 +162,36 @@ async function handleRpcRequest(request) {
         const response = await fetch(request);
         // Only cache successful responses
         if (response.status === 200) {
+          // For proposal methods, compare with previous cached value and invalidate all caches if changed
+          if (sputnikDaoCacheDuration === 1 * 1000) {
+            try {
+              // Try to get previous cached value
+              const prevCache = await caches.open(CACHE_NAME);
+              const prevCacheRequest = new Request(cacheKey);
+              const prevCachedResponse = await prevCache.match(prevCacheRequest);
+              if (prevCachedResponse) {
+                const prevData = await prevCachedResponse.clone().json();
+                const newData = await response.clone().json();
+                const prevArr = prevData?.result?.result;
+                const newArr = newData?.result?.result;
+                if (JSON.stringify(prevArr) !== JSON.stringify(newArr)) {
+                  swLog('Service Worker: Proposal result changed, invalidating ALL caches.');
+                  const cacheNames = await caches.keys();
+                  for (const name of cacheNames) {
+                    const cacheInst = await caches.open(name);
+                    const requests = await cacheInst.keys();
+                    for (const req of requests) {
+                      try {
+                        await cacheInst.delete(req);
+                      } catch (e) {}
+                    }
+                  }
+                }
+              }
+            } catch (e) {
+              swLog('Service Worker: Error comparing previous and new proposal response: ' + e.message);
+            }
+          }
           // Clone the response and add cache timestamp
           const responseToCache = response.clone();
           const headers = new Headers(responseToCache.headers);
