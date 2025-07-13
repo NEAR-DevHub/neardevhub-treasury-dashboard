@@ -151,9 +151,12 @@ async function handleRpcRequest(request) {
         swLog(`Service Worker: Returning cached RPC response from ${url.hostname}`);
         return cachedResponse;
       } else {
-        swLog(`Service Worker: Cache expired, removing entry`);
+        swLog(`Service Worker: Cache expired, removing entry if it is not 'invalidateAll'`);
         // Cache expired, remove it
-        await cache.delete(cacheRequest);
+        if (specialCacheDuration === null || !specialCacheDuration.invalidateAll) {
+          await cache.delete(cacheRequest);
+        }
+        
       }
     } else {
       swLog(`Service Worker: No cached response found`);

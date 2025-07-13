@@ -1453,7 +1453,7 @@ test.describe("Web4 Service Worker", () => {
                 finality: 'final',
                 account_id: 'wrap.near',
                 method_name: 'ft_balance_of',
-                args_base64: btoa(JSON.stringify({"account_id": "treasury-testing.sputnik-dao.near"}))
+                args_base64: btoa(JSON.stringify({"account_id": "testing-astradao.sputnik-dao.near"}))
               }
             })
           });
@@ -1486,6 +1486,159 @@ test.describe("Web4 Service Worker", () => {
       await page.waitForTimeout(1000);
       expect(interceptedRequests, "Third call after expiration should be a fresh fetch.").toBe(1);
       console.log('✅ Third call was a fresh fetch after cache expired.');
+
+      await context.close();
+    } finally {
+      await testServerInfo.close();
+    }
+  });
+
+  test("should invalidate cache when a proposal changes", async ({ browser }, testInfo) => {
+    // Skip this test if not running on the treasury-testing project
+    test.skip(
+      testInfo.project.name !== "treasury-testing",
+      "This test only runs on the treasury-testing project"
+    );
+    
+    test.setTimeout(60000);
+
+    // Create test server
+    const testServerInfo = await createTestServer(treasuryWeb4Contract);
+    
+    try {
+      const context = await browser.newContext({ serviceWorkers: 'allow' });
+      const page = await context.newPage();
+
+      // Navigate to the page and wait for service worker to be ready
+      await page.goto(testServerInfo.url, { waitUntil: 'networkidle' });
+      await page.waitForFunction(() => window.navigator.serviceWorker && window.navigator.serviceWorker.ready, { timeout: 10000 });
+      await page.waitForFunction(() => window.navigator.serviceWorker.controller !== null, { timeout: 15000 });
+
+      // Reload to ensure service worker is controlling the page
+      await page.reload({ waitUntil: 'networkidle' });
+      // Add a generous wait for the service worker to be fully active and ready to intercept.
+      await page.waitForTimeout(3000);
+
+      let interceptedRequests = 0;
+
+      let modifyResult = false;
+
+      // Use the interception logic from the deduplication test
+      await context.route('**', async route => {
+        const request = route.request();
+        // Check if the request is coming from the service worker
+        if (request.serviceWorker()) {
+          // Check if it's the RPC call we are interested in
+          if(request.url().includes("fastnear") && request.method() === "POST") {
+            const postData = request.postDataJSON();
+            if (postData.params && postData.params.method_name && (postData.params.method_name === 'get_last_proposal_id' || postData.params.method_name === 'get_config')) {
+                interceptedRequests++;
+                if (modifyResult) {
+                  const result = await route.fetch();
+                  const body = await result.json();
+                  body.result.result = Array.from(Buffer.from(JSON.stringify(99999999)));
+                  return await route.fulfill({
+                    body: JSON.stringify(body)
+                  });
+                }
+            }
+          }
+        }
+        return await route.continue();
+      });
+
+      const makeProposalRpcCall = () => {
+        return page.evaluate(() => {
+          // Using a unique ID for each call to better simulate real conditions,
+          // even though the SW should ignore it for caching.
+          const rpcId = `test-proposal-${Date.now()}-${Math.random()}`;
+          return fetch('https://rpc.mainnet.fastnear.com', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              jsonrpc: '2.0',
+              id: rpcId,
+              method: 'query',
+              params: {
+                request_type: 'call_function',
+                finality: 'final',
+                account_id: 'testing-astradao.sputnik-dao.near',
+                method_name: 'get_last_proposal_id',
+                args_base64: btoa(JSON.stringify({}))
+              }
+            })
+          }).then(r => r.json());;
+        })
+      };
+
+      const makeConfigRpcCall = () => {
+        return page.evaluate(() => {
+          // Using a unique ID for each call to better simulate real conditions,
+          // even though the SW should ignore it for caching.
+          const rpcId = `test-proposal-${Date.now()}-${Math.random()}`;
+          return fetch('https://rpc.mainnet.fastnear.com', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              jsonrpc: '2.0',
+              id: rpcId,
+              method: 'query',
+              params: {
+                request_type: 'call_function',
+                finality: 'final',
+                account_id: 'testing-astradao.sputnik-dao.near',
+                method_name: 'get_config',
+                args_base64: btoa(JSON.stringify({}))
+              }
+            })
+          });
+        });
+      };
+
+      // 1. First call - should be fresh (intercepted by service worker)
+      console.log('🧪 Making first balance call...');
+      interceptedRequests = 0;
+      let result = await makeProposalRpcCall();
+      const firstResult = JSON.parse(Buffer.from(new Uint8Array(result.result.result)).toString());
+      expect(interceptedRequests, "Get last proposal id").toBe(1);
+      console.log('✅ Get last proposal id was a fresh fetch. The result was', firstResult);
+
+      
+      console.log('🧪 Get config');
+      interceptedRequests = 0;
+      await makeConfigRpcCall();
+
+      expect(interceptedRequests, "Get config").toBe(1);
+      console.log('✅ First call for get config was a fresh fetch.');
+
+      await page.waitForTimeout(2000);
+
+      console.log('🧪 Get config');
+      interceptedRequests = 0;
+      await makeConfigRpcCall();
+
+      expect(interceptedRequests, "Get config").toBe(0);
+      console.log('✅ Second call for get config returned a cached response');
+
+      // Modify the result from get_last_proposal_id
+
+      modifyResult = true;
+      interceptedRequests = 0;
+      
+      result = await makeProposalRpcCall();
+      const modifiedResult = JSON.parse(Buffer.from(new Uint8Array(result.result.result)).toString());
+      console.log('🧪 Get last proposal id, now modified', modifiedResult);
+      expect(modifiedResult).toBe(99999999);
+
+      expect(interceptedRequests, "Get last proposal id").toBe(1);
+      console.log('✅ Get last proposal id was a fresh fetch.');
+
+      console.log('🧪 Get config after modified proposal');
+      interceptedRequests = 0;
+      await makeConfigRpcCall();
+
+      expect(interceptedRequests, "Get config").toBe(1);
+      console.log('✅ Call for get config after modified proposal was a fresh fetch.');
 
       await context.close();
     } finally {
