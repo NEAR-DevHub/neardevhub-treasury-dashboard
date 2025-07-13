@@ -97,20 +97,18 @@ return (
         />
       )}
     </Section>
-    <div className="d-flex gap-2">
-      <Widget
-        src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
-        props={{
-          classNames: {
-            root: "btn btn-primary w-100",
-          },
-          disabled: balance > REQUIRED_BALANCE,
-          label: "Continue",
-          onClick: () => {
-            setCurrentPage(1);
-          },
-        }}
-      />
-    </div>
+    <Widget
+      src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
+      props={{
+        classNames: {
+          root: "btn btn-primary w-100",
+        },
+        disabled: balance > REQUIRED_BALANCE,
+        label: "Continue",
+        onClick: () => {
+          setCurrentPage(1);
+        },
+      }}
+    />
   </>
 );

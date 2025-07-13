@@ -9,9 +9,6 @@ const { nearAccountValidation } = VM.require(
 const [alertMsg, setAlertMsg] = useState({});
 const [isValidating, setIsValidating] = useState(false);
 
-// Check if form is valid for submission
-const isFormValid = !(alertMsg?.[".near"] || alertMsg?.[".sputnik-dao.near"]);
-
 const checkAccountAvailability = async (accountId, postfix) => {
   if (!accountId || accountId.length === 0) return;
   return asyncFetch(`${REPL_RPC_URL}`, {
@@ -207,7 +204,10 @@ return (
           classNames: {
             root: `btn btn-primary w-100`,
           },
-          disabled: !isFormValid || isValidating,
+          disabled:
+            alertMsg?.[".near"] ||
+            alertMsg?.[".sputnik-dao.near"] ||
+            isValidating,
           label: "Continue",
           onClick: handleContinue,
           loading: isValidating,
