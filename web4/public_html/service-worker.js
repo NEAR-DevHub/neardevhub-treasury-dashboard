@@ -96,6 +96,11 @@ async function handleRpcRequest(request) {
     let jsonBody;
     try {
       jsonBody = JSON.parse(requestBody);
+      // If not a call_function request, bypass cache and do regular fetch
+      if (!jsonBody.params || jsonBody.params.request_type !== "call_function") {
+        swLog(`Service Worker: Non-call_function request_type detected, bypassing cache and using regular fetch.`);
+        return fetch(request);
+      }
       cacheKeyData = {
         method: jsonBody.method,
         params: jsonBody.params,
@@ -107,14 +112,19 @@ async function handleRpcRequest(request) {
       cacheKeyData = requestBody;
     }
     
-    // Check if this is a call to a .sputnik-dao.near contract - cache for 2 seconds only
-    let sputnikDaoCacheDuration = null;
-    if (jsonBody && jsonBody.params && jsonBody.params.account_id) {
+    // Check for special cache durations
+    let specialCacheDuration = null;
+    if (jsonBody && jsonBody.params) {
       const accountId = jsonBody.params.account_id;
       const methodName = jsonBody.params.method_name;
+      // .sputnik-dao.near contract with 'proposal' method: cache for 1 second and invalidate all caches if changed
       if (accountId && accountId.endsWith('.sputnik-dao.near') && methodName && methodName.includes('proposal')) {
         swLog(`Service Worker: .sputnik-dao.near contract call with 'proposal' method detected: ${accountId}, method: ${methodName} (cache for 1 second)`);
-        sputnikDaoCacheDuration = 1 * 1000; // 1 second in ms
+        specialCacheDuration = { duration: 1 * 1000, invalidateAll: true };
+      } else if (methodName && methodName.includes('balance')) {
+        // Any contract with method_name including 'balance': cache for 1 second, do NOT invalidate other caches
+        swLog(`Service Worker: 'balance' method detected: ${methodName} (cache for 1 second, no invalidation)`);
+        specialCacheDuration = { duration: 1 * 1000, invalidateAll: false };
       }
     }
     
@@ -122,7 +132,7 @@ async function handleRpcRequest(request) {
     
     swLog(`Service Worker: Handling request to ${url.hostname}`);
     swLog(`Service Worker: Cache key (method+params): ${cacheKey.substring(0, 100)}...`);
-    
+
     // Try to get from cache first
     const cache = await caches.open(CACHE_NAME);
     // Create a fake request with the cache key as URL for matching
@@ -134,8 +144,8 @@ async function handleRpcRequest(request) {
       const cacheTime = cachedResponse.headers.get('sw-cache-time');
       swLog(`Service Worker: Found cached response, cache time: ${cacheTime}`);
       let duration = CACHE_DURATION;
-      if (sputnikDaoCacheDuration !== null) {
-        duration = sputnikDaoCacheDuration;
+      if (specialCacheDuration !== null) {
+        duration = specialCacheDuration.duration;
       }
       if (cacheTime && (Date.now() - parseInt(cacheTime)) < duration) {
         swLog(`Service Worker: Returning cached RPC response from ${url.hostname}`);
@@ -163,7 +173,7 @@ async function handleRpcRequest(request) {
         // Only cache successful responses
         if (response.status === 200) {
           // For proposal methods, compare with previous cached value and invalidate all caches if changed
-          if (sputnikDaoCacheDuration === 1 * 1000) {
+          if (specialCacheDuration && specialCacheDuration.invalidateAll) {
             try {
               // Try to get previous cached value
               const prevCache = await caches.open(CACHE_NAME);
@@ -192,6 +202,7 @@ async function handleRpcRequest(request) {
               swLog('Service Worker: Error comparing previous and new proposal response: ' + e.message);
             }
           }
+          // For 'balance' methods, just cache for 1 second, no invalidation
           // Clone the response and add cache timestamp
           const responseToCache = response.clone();
           const headers = new Headers(responseToCache.headers);
