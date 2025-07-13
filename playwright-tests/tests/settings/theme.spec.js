@@ -171,7 +171,7 @@ test.describe("User is logged in", function () {
         "Invalid logo. Please upload a PNG, JPG, or SVG file for your logo that is exactly 256x256 px"
       )
     ).toBeVisible();
-    await expect(submitBtn).toBeDisabled(submitBtn);
+    await expect(submitBtn).toBeDisabled();
     await logoInput.setInputFiles(path.join(__dirname, "./assets/valid.jpg"));
     await submitBtn.click();
     await expect(
@@ -194,6 +194,31 @@ test.describe("User is logged in", function () {
         },
       },
     });
+  });
+
+  test("should show error when upload image fails", async ({ page }) => {
+    test.setTimeout(150_000);
+    await expect(
+      page.frameLocator("iframe").getByRole("button", { name: "Upload Logo" })
+    ).toBeVisible();
+    await page.route("https://ipfs.near.social/add", async (route) => {
+      await route.fulfill({
+        status: 400,
+        contentType: "application/json",
+        body: JSON.stringify({ error: "" }),
+      });
+    });
+    const submitBtn = await page.getByRole("button", {
+      name: "Submit Request",
+    });
+    const logoInput = await page
+      .frameLocator("iframe")
+      .locator("input[type=file]");
+    await logoInput.setInputFiles(path.join(__dirname, "./assets/valid.jpg"));
+    await expect(submitBtn).toBeDisabled();
+    await expect(
+      page.getByText("Error occured while uploading image, please try again.")
+    ).toBeVisible();
   });
 
   test("should be able to change color and theme", async ({ page }) => {
