@@ -103,7 +103,7 @@ return (
         classNames: {
           root: "btn btn-primary w-100",
         },
-        disabled: balance > REQUIRED_BALANCE,
+        disabled: balance < REQUIRED_BALANCE,
         label: "Continue",
         onClick: () => {
           setCurrentPage(1);
