@@ -552,9 +552,9 @@ async fn test_service_worker() -> Result<(), Box<dyn std::error::Error>> {
         String::from_utf8(general_purpose::STANDARD.decode(response.body).unwrap()).unwrap();
 
     // Verify it contains our service worker code
-    assert!(body_string.contains("Minimal Service Worker for Treasury Dashboard"));
-    assert!(body_string.contains("addEventListener('install'"));
-    assert!(body_string.contains("addEventListener('fetch'"));
+    assert!(body_string.contains("Service Worker for Treasury Dashboard with RPC Caching"));
+    assert!(body_string.contains(r#"self.addEventListener("install""#));
+    assert!(body_string.contains(r#"self.addEventListener("fetch""#));
 
     Ok(())
 }
