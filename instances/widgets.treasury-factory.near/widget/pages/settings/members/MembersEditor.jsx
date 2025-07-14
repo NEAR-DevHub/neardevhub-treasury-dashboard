@@ -769,7 +769,7 @@ const code = `<!DOCTYPE html>
             const memberIndex = memberId.replace('member-', '');
             const label = el.querySelector('#memberLabel-' + memberIndex);
             if (label) {
-              label.textContent = 'Member #' + (allMembers.length + visiblePosition);
+              label.textContent = 'Member #' + (visiblePosition);
               visiblePosition++;
             }
       
@@ -806,7 +806,7 @@ const code = `<!DOCTYPE html>
                 "<div class='text-sm text-secondary text-truncate' style='max-width: 400px;'>@" + existingMember.username + "</div>" +
               "</div>"
             : '<div class="d-flex justify-content-between" style="padding-top:12px;">' +
-            '<span id="memberLabel-' + index + '">Member #' + (allMembers.length + visiblePosition) + '</span>' +
+            '<span id="memberLabel-' + index + '">Member #' + (visiblePosition) + '</span>' +
                 (index !== 0
                   ? '<div class="cursor-pointer text-red remove-member-btn" onclick="removeMember(' + index + ')">' +
                       '<i class="bi bi-trash3 h6 mb-0"></i>' +

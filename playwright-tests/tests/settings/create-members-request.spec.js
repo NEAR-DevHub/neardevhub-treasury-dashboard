@@ -261,7 +261,7 @@ test.describe("User is logged in", function () {
 
     const iframe = page.locator("iframe").contentFrame();
 
-    await expect(iframe.getByText("Member #5")).toBeVisible();
+    await expect(iframe.getByText("Member #1")).toBeVisible();
     await expect(iframe.locator("#member-0")).toBeVisible();
 
     const usernameInput = iframe.getByPlaceholder("treasury.near");
@@ -360,7 +360,7 @@ test.describe("User is logged in", function () {
     }
 
     await addButton.click();
-    await expect(iframe.getByText("Member #6")).toBeVisible();
+    await expect(iframe.getByText("Member #2")).toBeVisible();
 
     const usernameInputs = iframe.getByPlaceholder("treasury.near");
     await usernameInputs.nth(1).fill("member1.near");
@@ -369,7 +369,7 @@ test.describe("User is logged in", function () {
     await iframe.locator("#dropdownMenu-1 .dropdown-item").nth(0).click();
 
     await addButton.click();
-    await expect(iframe.getByText("Member #7")).toBeVisible();
+    await expect(iframe.getByText("Member #3")).toBeVisible();
     await expect(iframe.locator("#member-2")).toBeVisible();
     await iframe.locator("#accountInput-2").scrollIntoViewIfNeeded();
     await iframe.locator("#accountInput-2").fill("member3.near");
@@ -379,17 +379,17 @@ test.describe("User is logged in", function () {
     // Remove member and verify renumbering
     await iframe.locator("#member-1 i").first().click();
     await expect(iframe.locator("#member-1")).toHaveCSS("display", "none");
-    await expect(iframe.locator("#memberLabel-2")).toHaveText("Member #6");
+    await expect(iframe.locator("#memberLabel-2")).toHaveText("Member #2");
     await expect(iframe.locator("#member-2")).toBeVisible();
 
-    await expect(iframe.locator("#memberLabel-0")).toHaveText("Member #5");
-    await expect(iframe.locator("#memberLabel-2")).toHaveText("Member #6");
+    await expect(iframe.locator("#memberLabel-0")).toHaveText("Member #1");
+    await expect(iframe.locator("#memberLabel-2")).toHaveText("Member #2");
     await expect(iframe.locator("#member-0")).toBeVisible();
     await expect(iframe.locator("#member-2")).toBeVisible();
 
     // Add another member after removal
     await addButton.click();
-    await expect(iframe.locator("#memberLabel-3")).toHaveText("Member #7");
+    await expect(iframe.locator("#memberLabel-3")).toHaveText("Member #3");
     await expect(iframe.locator("#member-3")).toBeVisible();
     await iframe.locator("#accountInput-3").fill("member3.near");
     await iframe.locator("#selectTag-3").click();

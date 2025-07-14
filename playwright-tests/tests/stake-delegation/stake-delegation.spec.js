@@ -279,7 +279,7 @@ test.describe("Have valid staked requests and sufficient token balance", functio
       await sandbox.attachRoutes(page);
       await sandbox.setupSandboxForSputnikDao(daoName);
       const args = "eyJhbW91bnQiOiIzMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAifQ==";
-      const description = `* Proposal Action: withdraw <br>* Show After Proposal Id Approved: 2 <br>* Custom Notes: Following to [#2](/${instanceAccount}/widget/app?page=stake-delegation&id=2) unstake request`;
+      const description = `* Proposal Action: withdraw <br>* Show After Proposal Id Approved: 2 <br>* Custom Notes: Following to [#2](/${instanceAccount}/widget/app?page=stake-delegation&id=2) unstake request <br>* Amount: 300000000000000000000000`;
       await sandbox.addUnstakeRequestProposal({
         stakedPoolAccount,
         functionCallArgs: args,
