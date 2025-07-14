@@ -132,7 +132,7 @@ useEffect(() => {
   }
 }, [isTxnCreated, lastProposalId, treasuryDaoID]);
 
-const addProposalRole = daoPolicy?.roles?.find((role) =>
+const addProposalRole = (daoPolicy?.roles || [])?.find((role) =>
   (role.permissions || []).some(
     (i) =>
       i === "transfer:AddProposal" ||
