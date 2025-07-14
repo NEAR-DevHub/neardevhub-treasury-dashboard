@@ -79,22 +79,6 @@ const Container = styled.div`
   }
 `;
 
-function uploadImageToServer(file) {
-  asyncFetch("https://ipfs.near.social/add", {
-    method: "POST",
-    headers: { Accept: "application/json" },
-    body: file,
-  })
-    .catch((e) => {
-      setError("Error occured while uploading image, please try again.");
-      console.error("Upload error:", e);
-    })
-    .then((res) => {
-      console.log(e);
-      setImage(`https://ipfs.near.social/ipfs/${res.body.cid}`);
-    });
-}
-
 function getDefaultValues() {
   const defaultImage = (metadata?.flagLogo ?? "")?.includes("ipfs")
     ? metadata.flagLogo
@@ -104,6 +88,27 @@ function getDefaultValues() {
   const defaultColor = metadata?.primaryColor ?? themeColor ?? "#01BF7A";
 
   return { defaultColor, defaultImage, defaultTheme };
+}
+
+function uploadImageToServer(file) {
+  asyncFetch("https://ipfs.near.social/add", {
+    method: "POST",
+    headers: { Accept: "application/json" },
+    body: file,
+  })
+    .catch((e) => {
+      console.error("Upload error:", e);
+      setError("Error occured while uploading image, please try again.");
+      setImage(getDefaultValues().defaultImage);
+    })
+    .then((res) => {
+      if (res.body.cid) {
+        setImage(`https://ipfs.near.social/ipfs/${res.body.cid}`);
+      } else {
+        setError("Error occured while uploading image, please try again.");
+        setImage(getDefaultValues().defaultImage);
+      }
+    });
 }
 
 function isInitialValues() {
