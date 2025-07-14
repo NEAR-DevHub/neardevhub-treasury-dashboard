@@ -341,8 +341,8 @@ test.describe("Web4 Service Worker", () => {
       const content = await response.text();
 
       // Verify it contains service worker code structure
-      expect(content).toContain("self.addEventListener('install'");
-      expect(content).toContain("self.addEventListener('activate'");
+      expect(content).toContain('self.addEventListener("install"');
+      expect(content).toContain('self.addEventListener("activate"');
       expect(content).toContain("skipWaiting()");
 
       // Verify RPC caching functionality is present
