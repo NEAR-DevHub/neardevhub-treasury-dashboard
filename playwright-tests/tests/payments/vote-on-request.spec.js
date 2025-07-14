@@ -12,6 +12,7 @@ import { setDontAskAgainCacheValues } from "../../util/cache";
 import { mockPikespeakFTTokensResponse } from "../../util/pikespeak.js";
 import {
   CurrentTimestampInNanoseconds,
+  LockupProposalData,
   TransferProposalData,
 } from "../../util/inventory.js";
 import { InsufficientBalance, toBase64 } from "../../util/lib.js";
