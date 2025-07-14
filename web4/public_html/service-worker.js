@@ -62,15 +62,6 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
 
-  // Log all requests for debugging
-  if (url.hostname.includes("fastnear.com")) {
-    swLog(
-      `Service Worker: Intercepting request to ${url.hostname}${url.pathname}`
-    );
-    swLog(`Service Worker: Request method: ${event.request.method}`);
-    swLog(`Service Worker: Request URL: ${event.request.url}`);
-  }
-
   // Only cache POST requests to Fast NEAR RPC endpoints (regular and archival)
   if (event.request.method === "POST" && RPC_ENDPOINTS.includes(url.hostname)) {
     swLog(`Service Worker: Handling cacheable POST request to ${url.hostname}`);
