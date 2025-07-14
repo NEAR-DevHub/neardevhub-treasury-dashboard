@@ -7,14 +7,17 @@ This is the contract for serving web4 content
 This contract includes a **service worker** that caches RPC calls to improve performance. The service worker is served from the same origin (required by browsers) at `/service-worker.js`.
 
 **Key implementation features:**
-- **RPC Caching**: Caches POST requests to Fast NEAR RPC endpoints for 5 minutes
-- **Same-origin serving**: Service worker served by the contract itself (required by browser security)
-- **Smart cache keys**: Uses method+params for cache keys, ignoring request IDs
-- **Automatic registration**: Registers on page load with error handling
-- **Automatic updates**: Browser automatically detects and updates service worker when contract is redeployed
-- **Cache versioning**: Each deployment gets a unique cache version based on build timestamp
-- **Comprehensive logging**: Enhanced logging that sends messages to browser clients
-- **Test coverage**: Includes tests to verify service worker functionality and update mechanism
+- **Advanced RPC Caching**: Caches POST requests to Fast NEAR RPC endpoints (`rpc.mainnet.fastnear.com` and `archival-rpc.mainnet.fastnear.com`).
+- **Request Deduplication**: Prevents network waterfalls by deduplicating identical in-flight RPC requests.
+- **Smart Cache Invalidation**:
+    - **Proposal-based**: Invalidates the entire cache when a proposal is updated to ensure data consistency.
+    - **Time-based**: Uses a 1-second cache for balance-related calls to provide a good balance between performance and data freshness.
+- **Same-origin serving**: The service worker is served by the contract itself, which is a security requirement for service workers.
+- **Automatic registration**: The service worker is registered on page load with error handling.
+- **Automatic updates**: The browser automatically detects and updates the service worker when a new version of the contract is deployed.
+- **Cache versioning**: Each deployment gets a unique cache version based on the build timestamp, which ensures that users always have the latest version of the service worker.
+- **Comprehensive logging**: The service worker includes enhanced logging that sends messages to browser clients for easier debugging.
+- **Test coverage**: The implementation includes a comprehensive suite of Playwright tests to verify the service worker's functionality, including caching, automatic updates, and request deduplication.
 
 **Important**: Service workers **must** be served from the same origin as the web page - they cannot be loaded from CDNs due to browser security requirements.
 
