@@ -858,5 +858,39 @@
           : "https://ipfs.near.social/ipfs/bafkreibm63lijt7qs3dzlmrrdbhqgxkt55k5daswgrq5z4stqp4zk46kc4";
       }
     }, 500);
+
+    // Register service worker
+    if ('serviceWorker' in navigator) {
+      window.serviceWorkerRegistrationAttempted = true;
+      
+      function registerServiceWorker() {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(function(registration) {
+            console.log('Service Worker registered with scope:', registration.scope);
+            
+            // Wait for the service worker to be controlling
+            if (navigator.serviceWorker.controller) {
+              console.log('Service Worker is already controlling');
+            } else {
+              console.log('Waiting for Service Worker to take control...');
+              navigator.serviceWorker.addEventListener('controllerchange', function() {
+                console.log('Service Worker is now controlling');
+              });
+            }
+          })
+          .catch(function(error) {
+            console.log('Service Worker registration failed:', error);
+          });
+      }
+      
+      // Check if the document is already loaded
+      if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        // Document is already loaded, register immediately
+        registerServiceWorker();
+      } else {
+        // Document is still loading, wait for load event
+        window.addEventListener('load', registerServiceWorker);
+      }
+    }
   </script>
 </html>

@@ -7,6 +7,7 @@ import { defineConfig, devices } from "@playwright/test";
  */
 process.env.NEAR_CLI_MAINNET_RPC_SERVER_URL =
   "https://archival-rpc.mainnet.fastnear.com";
+process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS = "1";
 
 /**
  * @see https://playwright.dev/docs/test-configuration
