@@ -22,6 +22,7 @@ async function getAvailablePort() {
 }
 
 test.describe("Web4 Service Worker", () => {
+  test.describe.configure({ mode: "serial" });
   let worker;
   let treasuryWeb4Contract;
 
@@ -173,10 +174,10 @@ test.describe("Web4 Service Worker", () => {
 
     // Create test server
     const testServerInfo = await createTestServer(treasuryWeb4Contract);
-
+    let context;
     try {
       // Create a new browser context with service workers enabled
-      const context = await browser.newContext({
+      context = await browser.newContext({
         serviceWorkers: "allow", // Enable service workers (experimental feature)
       });
 
@@ -312,9 +313,8 @@ test.describe("Web4 Service Worker", () => {
           `ℹ️  Service worker state: ${serviceWorkerState.state || "unknown"}`
         );
       }
-
-      await context.close();
     } finally {
+      await context?.close();
       await testServerInfo.close();
     }
   });
@@ -389,8 +389,6 @@ test.describe("Web4 Service Worker", () => {
     }
   });
 
-  
-
   test("should use cached responses on page reload", async ({
     browser,
   }, testInfo) => {
@@ -404,10 +402,10 @@ test.describe("Web4 Service Worker", () => {
 
     // Create test server
     const testServerInfo = await createTestServer(treasuryWeb4Contract);
-
+    let context;
     try {
       // Create a new browser context with service workers enabled
-      const context = await browser.newContext({
+      context = await browser.newContext({
         serviceWorkers: "allow",
       });
 
@@ -557,9 +555,8 @@ test.describe("Web4 Service Worker", () => {
       console.log(
         `ℹ️  This is expected as service worker console runs in a separate context`
       );
-
-      await context.close();
     } finally {
+      await context?.close();
       await testServerInfo.close();
     }
   });
@@ -577,10 +574,10 @@ test.describe("Web4 Service Worker", () => {
 
     // Create test server
     const testServerInfo = await createTestServer(treasuryWeb4Contract);
-
+    let context;
     try {
       // Create a new browser context with service workers enabled
-      const context = await browser.newContext({
+      context = await browser.newContext({
         serviceWorkers: "allow",
       });
 
@@ -720,14 +717,11 @@ test.describe("Web4 Service Worker", () => {
 
       // At minimum, we should see some fastnear.com requests
       expect(allFastnearRequests.length).toBeGreaterThan(0);
-
-      await context.close();
     } finally {
+      await context?.close();
       await testServerInfo.close();
     }
   });
-
-  
 
   test("should update service worker when contract is redeployed with new build timestamp", async ({
     browser,
@@ -811,9 +805,9 @@ test.describe("Web4 Service Worker", () => {
 
     // Step 1: Deploy initial contract and set up service worker
     const testServerInfo = await createTestServer(treasuryWeb4Contract);
-
+    let context;
     try {
-      const context = await browser.newContext({
+      context = await browser.newContext({
         serviceWorkers: "allow",
       });
 
@@ -1176,9 +1170,8 @@ test.describe("Web4 Service Worker", () => {
         `   ✅ Updated service worker is functional and controlling the page`
       );
       console.log(`   ✅ Cache versioning system is working`);
-
-      await context.close();
     } finally {
+      await context?.close();
       await testServerInfo.close();
     }
   });
@@ -1196,10 +1189,10 @@ test.describe("Web4 Service Worker", () => {
 
     // Create test server
     const testServerInfo = await createTestServer(treasuryWeb4Contract);
-
+    let context;
     try {
       // Create a new browser context with service workers enabled
-      const context = await browser.newContext({
+      context = await browser.newContext({
         serviceWorkers: "allow",
       });
 
@@ -1394,9 +1387,8 @@ test.describe("Web4 Service Worker", () => {
       console.log(
         `✅ .sputnik-dao.near contract calls are correctly excluded from caching`
       );
-
-      await context.close();
     } finally {
+      await context?.close();
       await testServerInfo.close();
     }
   });
@@ -1412,67 +1404,72 @@ test.describe("Web4 Service Worker", () => {
 
     // Create test server
     const testServerInfo = await createTestServer(treasuryWeb4Contract);
+    let context;
+    try {
+      context = await browser.newContext({ serviceWorkers: "allow" });
+      const page = await context.newPage();
 
-    const context = await browser.newContext({ serviceWorkers: "allow" });
-    const page = await context.newPage();
+      // Go to the payments history page
+      const historyUrl = `${testServerInfo.url}/?page=payments&tab=history`;
+      await page.goto(historyUrl, { waitUntil: "networkidle", timeout: 30000 });
 
-    // Go to the payments history page
-    const historyUrl = `${testServerInfo.url}/?page=payments&tab=history`;
-    await page.goto(historyUrl, { waitUntil: "networkidle", timeout: 30000 });
+      // Wait for service worker to be ready
+      await page.waitForFunction(
+        () =>
+          window.navigator.serviceWorker &&
+          window.navigator.serviceWorker.ready,
+        { timeout: 10000 }
+      );
 
-    // Wait for service worker to be ready
-    await page.waitForFunction(
-      () =>
-        window.navigator.serviceWorker && window.navigator.serviceWorker.ready,
-      { timeout: 10000 }
-    );
+      // Wait for service worker to control the page
+      await page.waitForFunction(
+        () => window.navigator.serviceWorker.controller !== null,
+        { timeout: 15000 }
+      );
 
-    // Wait for service worker to control the page
-    await page.waitForFunction(
-      () => window.navigator.serviceWorker.controller !== null,
-      { timeout: 15000 }
-    );
+      const functionCallMap = {};
 
-    const functionCallMap = {};
-
-    await context.route("**", async (route) => {
-      const request = route.request();
-      if (request.serviceWorker()) {
-        if (
-          request.url().includes("fastnear") &&
-          request.method() === "POST" &&
-          request.postDataJSON().params.request_type === "call_function"
-        ) {
-          const functionCallKey = JSON.stringify(request.postDataJSON().params);
-          if (!functionCallMap[functionCallKey]) {
-            functionCallMap[functionCallKey] = [];
+      await context.route("**", async (route) => {
+        const request = route.request();
+        if (request.serviceWorker()) {
+          if (
+            request.url().includes("fastnear") &&
+            request.method() === "POST" &&
+            request.postDataJSON().params.request_type === "call_function"
+          ) {
+            const functionCallKey = JSON.stringify(
+              request.postDataJSON().params
+            );
+            if (!functionCallMap[functionCallKey]) {
+              functionCallMap[functionCallKey] = [];
+            }
+            functionCallMap[functionCallKey].push({
+              ts: new Date(),
+              data: request.postDataJSON(),
+            });
           }
-          functionCallMap[functionCallKey].push({
-            ts: new Date(),
-            data: request.postDataJSON(),
-          });
         }
-      }
-      return route.continue();
-    });
-    // Reload the page to ensure service worker is controlling
-    await page.reload({ waitUntil: "networkidle", timeout: 30000 });
-    await page.waitForTimeout(3000);
+        return route.continue();
+      });
+      // Reload the page to ensure service worker is controlling
+      await page.reload({ waitUntil: "networkidle", timeout: 30000 });
+      await page.waitForTimeout(3000);
 
-    const duplicateFunctionCalls = Object.values(functionCallMap).filter(
-      (arr) => arr.length > 1
-    );
-    expect(
-      duplicateFunctionCalls.length,
-      `Found duplicate function calls: ${JSON.stringify(
-        duplicateFunctionCalls,
-        null,
-        1
-      )}`
-    ).toBe(0);
-    await context.close();
-
-    await testServerInfo.close();
+      const duplicateFunctionCalls = Object.values(functionCallMap).filter(
+        (arr) => arr.length > 1
+      );
+      expect(
+        duplicateFunctionCalls.length,
+        `Found duplicate function calls: ${JSON.stringify(
+          duplicateFunctionCalls,
+          null,
+          1
+        )}`
+      ).toBe(0);
+    } finally {
+      await context?.close();
+      await testServerInfo.close();
+    }
   });
 
   test("should apply special 1-second cache for balance calls", async ({
@@ -1488,9 +1485,9 @@ test.describe("Web4 Service Worker", () => {
 
     // Create test server
     const testServerInfo = await createTestServer(treasuryWeb4Contract);
-
+    let context;
     try {
-      const context = await browser.newContext({ serviceWorkers: "allow" });
+      context = await browser.newContext({ serviceWorkers: "allow" });
       const page = await context.newPage();
 
       // Navigate to the page and wait for service worker to be ready
@@ -1577,8 +1574,6 @@ test.describe("Web4 Service Worker", () => {
       console.log("🧪 Making second balance call (quickly)...");
       interceptedRequests = 0;
       await makeRpcCall();
-      // Wait for the call to complete. Since it should be cached, it should be fast.
-      await page.waitForTimeout(500);
       expect(
         interceptedRequests,
         "Second call should be cached and not intercepted."
@@ -1591,16 +1586,13 @@ test.describe("Web4 Service Worker", () => {
       console.log("🧪 Making third balance call (after delay)...");
       interceptedRequests = 0;
       await makeRpcCall();
-      // Wait for the interception to be registered.
-      await page.waitForTimeout(1000);
       expect(
         interceptedRequests,
         "Third call after expiration should be a fresh fetch."
       ).toBe(1);
       console.log("✅ Third call was a fresh fetch after cache expired.");
-
-      await context.close();
     } finally {
+      await context?.close();
       await testServerInfo.close();
     }
   });
@@ -1618,9 +1610,9 @@ test.describe("Web4 Service Worker", () => {
 
     // Create test server
     const testServerInfo = await createTestServer(treasuryWeb4Contract);
-
+    let context;
     try {
-      const context = await browser.newContext({ serviceWorkers: "allow" });
+      context = await browser.newContext({ serviceWorkers: "allow" });
       const page = await context.newPage();
 
       // Navigate to the page and wait for service worker to be ready
@@ -1779,9 +1771,8 @@ test.describe("Web4 Service Worker", () => {
       console.log(
         "✅ Call for get config after modified proposal was a fresh fetch."
       );
-
-      await context.close();
     } finally {
+      await context?.close();
       await testServerInfo.close();
     }
   });
