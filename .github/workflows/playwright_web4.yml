@@ -65,6 +65,11 @@ jobs:
       - name: Make sandbox executable
         run: chmod +x sandboxrpc/target/debug/sandboxrpc
 
+      - name: Build web4 contract for use in sandbox
+        run: |
+          cd web4/treasury-web4
+          cargo near build non-reproducible-wasm
+
       - name: Run tests
         id: web4-tests
         run: |
