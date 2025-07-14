@@ -41,12 +41,16 @@ fn main() {
     let service_worker_template = current_dir.join("service-worker.js");
     let mut service_worker_content = fs::read_to_string(service_worker_template)
         .expect("Failed to read service-worker.js template");
-    
+
     // Replace BUILD_TIMESTAMP placeholder with actual timestamp
-    service_worker_content = service_worker_content.replace("const BUILD_TIMESTAMP = 0; // PLACEHOLDER_BUILD_TIMESTAMP", &format!("const BUILD_TIMESTAMP = {};", timestamp));
-    
+    service_worker_content = service_worker_content.replace(
+        "const BUILD_TIMESTAMP = 0; // PLACEHOLDER_BUILD_TIMESTAMP",
+        &format!("const BUILD_TIMESTAMP = {};", timestamp),
+    );
+
     // Write the processed service worker to the output location
-    let service_worker_output = Path::new(env!("CARGO_MANIFEST_DIR")).join("src/web4/service-worker.js");
+    let service_worker_output =
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("src/web4/service-worker.js");
     fs::write(&service_worker_output, service_worker_content)
         .expect("Failed to write processed service-worker.js");
 }

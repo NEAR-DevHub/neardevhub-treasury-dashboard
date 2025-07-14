@@ -550,7 +550,7 @@ async fn test_service_worker() -> Result<(), Box<dyn std::error::Error>> {
 
     let body_string =
         String::from_utf8(general_purpose::STANDARD.decode(response.body).unwrap()).unwrap();
-    
+
     // Verify it contains our service worker code
     assert!(body_string.contains("Minimal Service Worker for Treasury Dashboard"));
     assert!(body_string.contains("addEventListener('install'"));
