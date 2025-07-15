@@ -211,32 +211,33 @@ test("create payment request to transfer wNEAR to NEAR account", async () => {
   console.log("Recipient initial wNEAR balance:", initialRecipientBalance);
 
   // Create proposal to withdraw wNEAR to recipient account
+  const proposal = {
+    description: "Transfer wNEAR to recipient",
+    kind: {
+      FunctionCall: {
+        receiver_id: intentsContract.accountId,
+        actions: [
+          {
+            method_name: "ft_withdraw",
+            args: Buffer.from(
+              JSON.stringify({
+                token: "wrap.near",
+                receiver_id: recipientAccount.accountId, // Direct transfer to NEAR account
+                amount: parseNEAR("25"), // 25 wNEAR
+              })
+            ).toString("base64"),
+            deposit: 1n.toString(),
+            gas: 30_000_000_000_000n.toString(),
+          },
+        ],
+      },
+    },
+  };
   const proposalId = await creatorAccount.call(
     daoAccount.accountId,
     "add_proposal",
     {
-      proposal: {
-        description: "Transfer wNEAR to recipient",
-        kind: {
-          FunctionCall: {
-            receiver_id: intentsContract.accountId,
-            actions: [
-              {
-                method_name: "ft_withdraw",
-                args: Buffer.from(
-                  JSON.stringify({
-                    token: "wrap.near",
-                    receiver_id: recipientAccount.accountId, // Direct transfer to NEAR account
-                    amount: parseNEAR("25"), // 25 wNEAR
-                  })
-                ).toString("base64"),
-                deposit: 1n.toString(),
-                gas: 30_000_000_000_000n.toString(),
-              },
-            ],
-          },
-        },
-      },
+      proposal: proposal,
     },
     {
       attachedDeposit: PROPOSAL_BOND,
@@ -252,6 +253,7 @@ test("create payment request to transfer wNEAR to NEAR account", async () => {
     {
       id: proposalId,
       action: "VoteApprove",
+      proposal: proposal.kind,
     },
     {
       gas: 300_000_000_000_000n.toString(),

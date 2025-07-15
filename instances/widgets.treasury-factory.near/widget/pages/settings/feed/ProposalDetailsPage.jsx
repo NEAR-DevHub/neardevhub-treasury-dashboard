@@ -108,6 +108,7 @@ useEffect(() => {
           requestType,
           title: title || summary || item.description,
           summary,
+          proposal: item,
         });
       })
       .catch(() => {
@@ -460,6 +461,7 @@ return (
                 checkProposalStatus: () =>
                   checkProposalStatus(proposalData?.id),
                 isProposalDetailsPage: true,
+                proposal: proposalData.proposal,
               }}
             />
           ),

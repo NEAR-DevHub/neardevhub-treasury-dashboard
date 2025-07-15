@@ -299,6 +299,7 @@ const ProposalsComponent = () => {
                       isHumanReadableCurrentAmount: true,
                       checkProposalStatus: () => checkProposalStatus(item.id),
                       hasOneDeleteIcon,
+                      proposal: item,
                     }}
                   />
                 </td>

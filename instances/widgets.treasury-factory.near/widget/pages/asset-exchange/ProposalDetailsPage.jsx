@@ -102,6 +102,7 @@ useEffect(() => {
           tokenIn,
           tokenOut,
           slippage,
+          proposal: item,
         });
       })
       .catch(() => {
@@ -170,6 +171,7 @@ return (
               requiredVotes,
               checkProposalStatus: () => checkProposalStatus(proposalData?.id),
               isProposalDetailsPage: true,
+              proposal: proposalData.proposal,
             }}
           />
         ),

@@ -89,9 +89,6 @@ return (
     />
     <div className="text-center">
       <h5 className="text-center">Congratulations! Your Treasury is ready</h5>
-      <p className="text-sm mb-0">
-        You can access and manage your treasury using any of these gateways.
-      </p>
     </div>
     <div className="card w-100 d-flex flex-column gap-4 border-0">
       <div className="border border-1 rounded-3 p-0">
