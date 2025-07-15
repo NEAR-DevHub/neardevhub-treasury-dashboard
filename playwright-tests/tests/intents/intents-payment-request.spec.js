@@ -258,33 +258,35 @@ test("create payment request to transfer BTC", async ({ page }) => {
     })
   ).toEqual([32_000_000_000_000_000_000n.toString()]);
 
+  const proposal = {
+    description: "Transfer BTC",
+    kind: {
+      FunctionCall: {
+        receiver_id: intentsContract.accountId,
+        actions: [
+          {
+            method_name: "ft_withdraw",
+            args: Buffer.from(
+              JSON.stringify({
+                token: nativeToken.near_token_id, // This is btc.omft.near
+                receiver_id: nativeToken.near_token_id, // Should also be btc.omft.near
+                amount: 1_000_000_000_000_000_000n.toString(),
+                memo: "WITHDRAW_TO:bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh", // Correct: BTC address here
+              })
+            ).toString("base64"),
+            deposit: 1n.toString(),
+            gas: 30_000_000_000_000n.toString(),
+          },
+        ],
+      },
+    },
+  };
+
   const proposalId = await creatorAccount.call(
     daoAccount.accountId,
     "add_proposal",
     {
-      proposal: {
-        description: "Transfer BTC",
-        kind: {
-          FunctionCall: {
-            receiver_id: intentsContract.accountId,
-            actions: [
-              {
-                method_name: "ft_withdraw",
-                args: Buffer.from(
-                  JSON.stringify({
-                    token: nativeToken.near_token_id, // This is btc.omft.near
-                    receiver_id: nativeToken.near_token_id, // Should also be btc.omft.near
-                    amount: 1_000_000_000_000_000_000n.toString(),
-                    memo: "WITHDRAW_TO:bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh", // Correct: BTC address here
-                  })
-                ).toString("base64"),
-                deposit: 1n.toString(),
-                gas: 30_000_000_000_000n.toString(),
-              },
-            ],
-          },
-        },
-      },
+      proposal: proposal,
     },
     {
       attachedDeposit: PROPOSAL_BOND,
@@ -297,6 +299,7 @@ test("create payment request to transfer BTC", async ({ page }) => {
     {
       id: proposalId,
       action: "VoteApprove",
+      proposal: proposal.kind,
     },
     {
       gas: 300_000_000_000_000n.toString(), // Ensure enough gas for voting and potential execution

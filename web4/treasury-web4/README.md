@@ -2,13 +2,88 @@
 
 This is the contract for serving web4 content
 
+## 🔧 Service Worker Implementation
+
+This contract includes a **service worker** that caches RPC calls to improve performance. The service worker is served from the same origin (required by browsers) at `/service-worker.js`.
+
+**Key implementation features:**
+- **Advanced RPC Caching**: Caches POST requests to Fast NEAR RPC endpoints (`rpc.mainnet.fastnear.com` and `archival-rpc.mainnet.fastnear.com`).
+- **Request Deduplication**: Prevents network waterfalls by deduplicating identical in-flight RPC requests.
+- **Smart Cache Invalidation**:
+    - **Proposal-based**: Invalidates the entire cache when a proposal is updated to ensure data consistency.
+    - **Time-based**: Uses a 1-second cache for balance-related calls to provide a good balance between performance and data freshness.
+- **Same-origin serving**: The service worker is served by the contract itself, which is a security requirement for service workers.
+- **Automatic registration**: The service worker is registered on page load with error handling.
+- **Automatic updates**: The browser automatically detects and updates the service worker when a new version of the contract is deployed.
+- **Cache versioning**: Each deployment gets a unique cache version based on the build timestamp, which ensures that users always have the latest version of the service worker.
+- **Comprehensive logging**: The service worker includes enhanced logging that sends messages to browser clients for easier debugging.
+- **Test coverage**: The implementation includes a comprehensive suite of Playwright tests to verify the service worker's functionality, including caching, automatic updates, and request deduplication.
+
+**Important**: Service workers **must** be served from the same origin as the web page - they cannot be loaded from CDNs due to browser security requirements.
+
+## 🚀 Automatic Service Worker Updates
+
+When you deploy an updated web4 contract, the service worker automatically updates:
+
+1. **Build Process**: Each build embeds a unique timestamp in the service worker
+2. **Browser Detection**: When users visit the site, browsers automatically check for service worker updates
+3. **Seamless Update**: Updated service worker installs and activates without user intervention
+4. **Cache Migration**: Old caches are cleaned up, new cache version is created
+5. **Zero Downtime**: Users experience no interruption during the update process
+
+**No user action required** - the browser handles everything automatically!
+
+## ⚠️ HTML Editing - Important Build Process
+
+**To modify the HTML content:**
+
+1. **Edit the source file**: `/web4/public_html/index.html`
+2. **Rebuild the contract**: `cargo clean && cargo near build non-reproducible-wasm`
+
+**DO NOT** edit `/web4/treasury-web4/src/web4/index.html` directly - it gets overwritten by the build script!
+
+**Why this matters:**
+- The build script (`build.rs`) copies HTML from `public_html/index.html` to `src/web4/index.html`
+- The contract embeds HTML using `include_str!()` at compile time
+- Direct edits to `src/web4/index.html` are lost on rebuild
+- Changes to source HTML require a contract rebuild to take effect
+
+### Build Process Details
+1. The `build.rs` script copies HTML from `public_html/index.html`
+2. It processes environment variables (POSTHOG_API_KEY, PIKESPEAK_API_KEY)
+3. It outputs the processed HTML to `src/web4/index.html`
+4. The contract uses `include_str!("web4/index.html")` to embed the HTML at compile time
+
+## Testing Service Worker
+
+After deploying, you can test the service worker in Browser DevTools:
+
+1. **Console Tab**: Look for service worker messages:
+   ```
+   Service Worker: Installing...
+   Service Worker: Activated
+   Service Worker: Cached RPC response from rpc.mainnet.fastnear.com
+   ```
+
+2. **Application Tab > Service Workers**: 
+   - Should show the service worker as "activated" and "running"
+   - URL should be `/service-worker.js`
+
+3. **Network Tab**: 
+   - First RPC requests fetch from network
+   - Subsequent identical requests served from cache (within 5 minutes)
+
 ## How to Build Locally?
 
-Install [`cargo-near`](https://github.com/near/cargo-near) and run:
+Install [`cargo-near`](https://github.com/near/cargo-near)
+
+For development and testing, you can also use the non-reproducible build for faster compilation:
 
 ```bash
-cargo near build
+cargo near build non-reproducible-wasm
 ```
+
+Note: The non-reproducible build is suitable for local development and testing but should not be used for production deployments.
 
 ## How to Test Locally?
 
@@ -22,7 +97,7 @@ Deployment is automated with GitHub Actions CI/CD pipeline.
 To deploy manually, install [`cargo-near`](https://github.com/near/cargo-near) and run:
 
 ```bash
-cargo near deploy <account-id>
+cargo near deploy build-non-reproducible-wasm <account-id>
 ```
 
 ## Useful Links

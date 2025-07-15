@@ -32,6 +32,7 @@ const isHumanReadableCurrentAmount = props.isHumanReadableCurrentAmount;
 const isProposalDetailsPage = props.isProposalDetailsPage;
 const hasOneDeleteIcon = props.hasOneDeleteIcon;
 const isIntentsRequest = props.isIntentsRequest;
+const proposal = props.proposal;
 
 const alreadyVoted = Object.keys(votes).includes(accountId);
 const userVote = votes[accountId];
@@ -139,6 +140,7 @@ function actProposal() {
     args: {
       id: proposalId,
       action: vote,
+      proposal: proposal?.kind,
     },
     gas: 300000000000000,
   });

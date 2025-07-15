@@ -239,6 +239,7 @@ async function approveProposal({
     args: {
       id: 0,
       action: "VoteApprove",
+      proposal: LockupProposalData.kind,
     },
     gas: "300000000000000",
     attachedDeposit: "0",

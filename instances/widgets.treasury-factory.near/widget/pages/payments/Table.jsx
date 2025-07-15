@@ -461,6 +461,7 @@ const ProposalsComponent = () => {
                       currentContract: args.token_id,
                       requiredVotes,
                       checkProposalStatus: () => checkProposalStatus(item.id),
+                      proposal: item,
                     }}
                   />
                 </td>

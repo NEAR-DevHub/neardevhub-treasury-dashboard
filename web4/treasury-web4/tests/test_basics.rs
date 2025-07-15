@@ -533,3 +533,28 @@ async fn test_update_app_widget() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
+
+#[tokio::test]
+async fn test_service_worker() -> Result<(), Box<dyn std::error::Error>> {
+    let sandbox = near_workspaces::sandbox().await?;
+    let contract_wasm = near_workspaces::compile_project("./").await?;
+
+    let contract = sandbox.dev_deploy(&contract_wasm).await?;
+
+    let result = contract
+        .view("web4_get")
+        .args_json(json!({"request": {"path": "/service-worker.js"}}))
+        .await?;
+    let response = result.json::<Web4Response>().unwrap();
+    assert_eq!("application/javascript", response.content_type);
+
+    let body_string =
+        String::from_utf8(general_purpose::STANDARD.decode(response.body).unwrap()).unwrap();
+
+    // Verify it contains our service worker code
+    assert!(body_string.contains("Service Worker for Treasury Dashboard with RPC Caching"));
+    assert!(body_string.contains(r#"self.addEventListener("install""#));
+    assert!(body_string.contains(r#"self.addEventListener("fetch""#));
+
+    Ok(())
+}
