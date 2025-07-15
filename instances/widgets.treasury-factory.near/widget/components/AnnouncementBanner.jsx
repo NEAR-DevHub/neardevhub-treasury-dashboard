@@ -3,6 +3,7 @@ const { Modal, ModalContent, ModalHeader, ModalFooter } = VM.require(
 );
 const data = fetch("${REPL_BACKEND_API}".replace("/api", "") + "/headers");
 const currentGatewayOrigin = data?.body?.headers?.origin ?? "";
+const instance = props.instance;
 
 const showWeb4Gateway =
   currentGatewayOrigin.includes("near.social") ||
@@ -23,10 +24,7 @@ if (showWeb4Gateway) {
       <div className="d-flex gap-2 px-3 py-2 rounded-3 align-items-center justify-content-center">
         <i class="bi bi-exclamation-triangle h5 mb-0 error-icon"></i>
         <div>For best experience, use the Web4 Gateway.</div>
-        <Link
-          className="text-underline"
-          href={`/${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=3`}
-        >
+        <Link className="text-underline" href={`https://${instance}.page/`}>
           Switch Now
         </Link>
 
@@ -53,7 +51,10 @@ if (showWeb4Gateway) {
           <ModalFooter>
             <Link
               className={`btn theme-btn `}
-              href={`/${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=3`}
+              href={`https://${instance}.page/`}
+              onClick={() => {
+                setShowModal(false);
+              }}
             >
               Switch to Web4
             </Link>

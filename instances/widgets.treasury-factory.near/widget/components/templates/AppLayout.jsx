@@ -30,7 +30,6 @@ const AnnouncementBanner = ({ page, instance }) => (
   <Widget
     src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.AnnouncementBanner"
     props={{
-      page,
       instance,
     }}
   />
@@ -618,7 +617,7 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
           minHeight: gatewayURL.includes("near.org") ? "100vh" : "100%",
         }}
       >
-        <AnnouncementBanner />
+        <AnnouncementBanner instance={instance} />
         <UpdateNotificationBanner
           page={page}
           instance={instance}
