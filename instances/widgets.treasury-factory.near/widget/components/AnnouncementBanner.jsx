@@ -65,4 +65,4 @@ if (showWeb4Gateway) {
   );
 }
 
-return null;
+return <></>;
