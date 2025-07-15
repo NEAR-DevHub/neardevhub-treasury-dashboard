@@ -534,6 +534,10 @@ test.describe("Intents Deposit UI", () => {
     instanceAccount,
     // daoAccount, // daoAccount is not used in this test
   }) => {
+    const { networkNames } = await getWeb3IconMaps();
+    const networkNameMap = Object.fromEntries(
+      Object.entries(networkNames).map(([key, value]) => [value, key])
+    );
     test.setTimeout(60_000); // Increased timeout for testing multiple assets
 
     await page.goto(`https://${instanceAccount}.page`);
@@ -664,7 +668,7 @@ test.describe("Intents Deposit UI", () => {
 
       for (const uiNetworkName of uiNetworkNames) {
         // Check if the UI network name follows the expected format: "name ( chainId )"
-        const formatMatch = uiNetworkName.match(/^(.+?)\\s+\\\\((.+?)\\s+\\\\)$/);
+        const formatMatch = uiNetworkName.match(/^(.+?)\s+\((.+?)\)$/);
 
         if (formatMatch) {
           const [, humanReadableName, chainId] = formatMatch;
@@ -684,7 +688,11 @@ test.describe("Intents Deposit UI", () => {
           const correspondingToken = tokensForAsset.find(
             (token) =>
               token.defuse_asset_identifier &&
-              token.defuse_asset_identifier.startsWith(chainId)
+              (token.defuse_asset_identifier.startsWith(chainId) ||
+                (networkNameMap[humanReadableName] &&
+                  token.defuse_asset_identifier.startsWith(
+                    networkNameMap[humanReadableName]
+                  )))
           );
 
           if (correspondingToken) {
