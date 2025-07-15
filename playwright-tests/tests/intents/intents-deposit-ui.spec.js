@@ -614,7 +614,9 @@ test.describe("Intents Deposit UI", () => {
     const assetsToTest = shuffledAssets.slice(0, 10).sort();
 
     console.log(
-      `INFO: Testing ${assetsToTest.length} random assets with NEP-141 tokens: ${assetsToTest.join(", ")}`
+      `INFO: Testing ${
+        assetsToTest.length
+      } random assets with NEP-141 tokens: ${assetsToTest.join(", ")}`
     );
 
     // Test each asset
@@ -866,10 +868,12 @@ test.describe("Intents Deposit UI", () => {
     for (const networkItem of await networkItems.all()) {
       const networkIcon = networkItem.locator(".dropdown-icon");
       const innerText = (await networkItem.innerText()).trim();
-      let networkName = innerText.substring(0, innerText.lastIndexOf('(')).trim();
-      
-      if (networkName === 'Near Protocol') {
-        networkName = 'NEAR';
+      let networkName = innerText
+        .substring(0, innerText.lastIndexOf("("))
+        .trim();
+
+      if (networkName === "Near Protocol") {
+        networkName = "NEAR";
       }
 
       const iconSrc = await networkIcon.getAttribute("src");
