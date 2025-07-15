@@ -238,6 +238,9 @@ const updateNetworksForAsset = (assetName) => {
         chainId = parts[0];
       }
 
+      const networkCache = state.web3IconsCache[chainId];
+      const networkName = networkCache?.networkName;
+
       // The API for all tokens has the property  `defuse_asset_id` which is the same as `intents_token_id`
       const intents_token_id = token.intents_token_id;
       const blockchainName =
@@ -245,7 +248,7 @@ const updateNetworksForAsset = (assetName) => {
 
       return {
         id: chainId, // This is the ID like "eth:1"
-        name: `${blockchainName} ( ${chainId} )`,
+        name: `${networkName ?? blockchainName} (${chainId})`,
         icon: getNetworkIcon(chainId), // Use enhanced network icon lookup
         near_token_id: token.near_token_id,
         originalTokenData: token,
