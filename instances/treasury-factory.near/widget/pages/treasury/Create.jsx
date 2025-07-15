@@ -4,6 +4,7 @@ const widgetBasePath = `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.create
 
 const [formFields, setFormFields] = useState({});
 const [showCongratsModal, setShowCongratsModal] = useState(false);
+const [currentPage, setCurrentPage] = useState(step);
 
 const existingDrafts =
   JSON.parse(
@@ -34,6 +35,9 @@ useEffect(() => {
     ];
     props.updateTreasuryDrafts(updatedDrafts);
   }
+  if (step !== currentPage) {
+    setCurrentPage(step);
+  }
 }, [step]);
 
 useEffect(() => {
@@ -44,14 +48,17 @@ useEffect(() => {
 }, [currentDraft]);
 
 const STEPS = [
-  <Widget src={`${widgetBasePath}.ConfirmWalletStep`} />,
+  <Widget
+    src={`${widgetBasePath}.ConfirmWalletStep`}
+    props={{ setCurrentPage }}
+  />,
   <Widget
     src={`${widgetBasePath}.CreateAppAccountStep`}
-    props={{ formFields, setFormFields }}
+    props={{ formFields, setFormFields, setCurrentPage }}
   />,
   <Widget
     src={`${widgetBasePath}.AddMembersStep`}
-    props={{ formFields, setFormFields }}
+    props={{ formFields, setFormFields, setCurrentPage }}
   />,
   <Widget
     src={`${widgetBasePath}.SummaryStep`}
@@ -62,6 +69,7 @@ const STEPS = [
         removeDeployedTreasuryFromDraft(formFields.accountName);
         setShowCongratsModal(true);
       },
+      setCurrentPage,
     }}
   />,
 ];
@@ -143,9 +151,15 @@ useEffect(() => {
               .args;
           const decodedArgs = JSON.parse(atob(args ?? "") ?? "{}");
           const treasuryName = decodedArgs?.name;
-          Storage.set("TreasuryAccountName", treasuryName);
-          removeDeployedTreasuryFromDraft(treasuryName);
-          setShowCongratsModal(true);
+          Near.asyncView(`${treasuryName}.near`, "web4_get", {
+            request: { path: "/" },
+          }).then((web4) => {
+            if (web4) {
+              Storage.set("TreasuryAccountName", treasuryName);
+              removeDeployedTreasuryFromDraft(treasuryName);
+              setShowCongratsModal(true);
+            }
+          });
         }
       }
     });
@@ -171,7 +185,7 @@ return (
               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.create-treasury.Stepper`}
               props={{
                 steps: STEPS,
-                activeStep: step ?? 0,
+                activeStep: currentPage ?? 0,
               }}
             />
           </div>

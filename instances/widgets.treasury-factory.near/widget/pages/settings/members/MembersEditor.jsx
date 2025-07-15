@@ -337,8 +337,8 @@ const code = `<!DOCTYPE html>
          cursor: not-allowed;
          }
          .account-info {
-          min-width: 0;
-          flex: 1;
+         min-width: 0;
+         flex: 1;
          }
       </style>
    </head>
@@ -368,14 +368,60 @@ const code = `<!DOCTYPE html>
       let memberCount = 0;
       const membersContainer = document.getElementById("membersContainer");
       
-      function isValidNearAccount(account) {
-        return (
-          account.length === 64 ||
-          account.includes(".near") ||
-          account.includes(".tg") ||
-          account.includes(".aurora")
-        );
+      async function isValidNearAccount(account) {
+      // Check if account is 64 characters or has valid suffix
+      const hasValidFormat = 
+        account.length === 64 ||
+        account.endsWith(".near") ||
+        account.endsWith(".tg") ||
+        account.endsWith(".aurora");
+      if (!hasValidFormat) {
+        return false;
       }
+      
+      
+      // Validate NEAR account naming convention
+      const nearAccountRegex = /^(([a-z0-9]+[-_])*[a-z0-9]+\.)*([a-z0-9]+[-_])*[a-z0-9]+$/;
+      
+      if (!nearAccountRegex.test(account)) {
+        return false;
+      }
+      
+      // Check if the account actually exists on-chain
+      try {
+        const resp = await fetch("https://free.rpc.fastnear.com", {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            id: "dontcare",
+            method: "query",
+            params: {
+              request_type: "view_account",
+              finality: "final",
+              account_id: account,
+            },
+          }),
+        });
+      
+        const result = await resp.json();
+      
+        // If account doesn't exist
+        if (result.error?.cause?.name === "UNKNOWN_ACCOUNT" || result.error?.cause?.name === "HANDLER_ERROR") {
+          return false;
+        }
+      
+        // Valid account
+        return true;
+      } catch (err) {
+        console.error("Error validating NEAR account:", err);
+        return false;
+      }
+      }
+      
       
       function getAllEnteredAccounts(skipIndex) {
         const inputs = document.querySelectorAll("input[id^='accountInput-']");
@@ -396,88 +442,97 @@ const code = `<!DOCTYPE html>
       
       
       
-      function validateMember(index) {
-        const input = document.getElementById("accountInput-" + index);
-        const error = document.getElementById("accountError-" + index);
-        const roleError = document.getElementById("roleError-" + index);
-        const selectedRoles = window["selectedRoles_" + index];
-        let isValid = true;
-        let errorMessage = "";
-      
-        const account = input ? input.value.trim() : "";
-        const accountLower = account.toLowerCase();
-      
-        const allAccounts = getAllEnteredAccounts(index); // exclude current index
-      
-        if (!isEdit) {
-          // 1. Empty + no roles
-          if (!account && (!selectedRoles || selectedRoles.length === 0)) {
-            isValid = false;
-            errorMessage = "Username and Permissions are missing.";
-          }
-      
-          // 2. Invalid NEAR account
-          else if (account.length > 0 && !isValidNearAccount(account) && error) {
-            error.textContent = "Please enter a valid account ID.";
-            error.classList.remove("d-none");
-            isValid = false;
-            errorMessage = "Please enter a valid account ID.";
-          }
-          
-          // 3. Duplicate in current list
-          else if (account && allAccounts.includes(accountLower) && error) {
-            // Find the first visible member with this account (excluding current member)
-            const allVisibleInputs = document.querySelectorAll("input[id^='accountInput-']");
-            let firstDuplicateIndex = -1;
-            
-            for (let i = 0; i < allVisibleInputs.length; i++) {
-              if (i === index) continue; // Skip current member
+      async function validateMember(index) {
+          const input = document.getElementById("accountInput-" + index);
+          const error = document.getElementById("accountError-" + index);
+          const roleError = document.getElementById("roleError-" + index);
+          const selectedRoles = window["selectedRoles_" + index];
+          let isValid = true;
+          let errorMessage = "";
+
+          const account = input ? input.value.trim() : "";
+          const accountLower = account.toLowerCase();
+
+          const allAccounts = getAllEnteredAccounts(index); // exclude current index
+
+          if (!isEdit) {
+            // 1. Empty + no roles
+            if (!account && (!selectedRoles || selectedRoles.length === 0)) {
+              isValid = false;
+              errorMessage = "Username and Permissions are missing.";
+            }
+
+            // 2. Invalid NEAR account
+            else if (account.length > 0 && error) {
+              const isAccountValid = await isValidNearAccount(account);
+              if (!isAccountValid) {
+                error.textContent = "Please enter a valid account ID.";
+                error.classList.remove("d-none");
+                isValid = false;
+                errorMessage = "Please enter a valid account ID.";
+              }
               
-              const input = allVisibleInputs[i];
-              if (input.offsetParent === null) continue; // Skip hidden members
-              
-              const inputVal = input.value.trim().toLowerCase();
-              if (inputVal === accountLower) {
-                firstDuplicateIndex = i;
-                break;
+              // 3. Duplicate in current list
+              if (isAccountValid && allAccounts.includes(accountLower)) {
+                // Find the first visible member with this account (excluding current member)
+                const allVisibleInputs = document.querySelectorAll("input[id^='accountInput-']");
+                let firstDuplicateIndex = -1;
+
+                for (let i = 0; i < allVisibleInputs.length; i++) {
+                  if (i === index) continue; // Skip current member
+
+                  const input = allVisibleInputs[i];
+                  if (input.offsetParent === null) continue; // Skip hidden members
+
+                  const inputVal = input.value.trim().toLowerCase();
+                  if (inputVal === accountLower) {
+                    firstDuplicateIndex = i;
+                    break;
+                  }
+                }
+
+                // Only show error if this member has a higher index than the first duplicate
+                if (firstDuplicateIndex >= 0 && index > firstDuplicateIndex) {
+                  error.textContent = "This account is already added above.";
+                  error.classList.remove("d-none");
+                  isValid = false;
+                  errorMessage = "This account is already added above.";
+                } else {
+                  error.classList.add("d-none");
+                }
+              }
+
+              // 4. Already exists in external list
+              else if (
+                !isEdit &&
+                allMembers.map(a => (a?.member ?? '').toLowerCase()).includes(accountLower) &&
+                error
+              ) {
+                error.textContent = "This account is already a member.";
+                error.classList.remove("d-none");
+                isValid = false;
+                errorMessage = "This account is already a member.";
+              } else if (isAccountValid) {
+                error?.classList.add("d-none");
               }
             }
-            
-            // Only show error if this member has a higher index than the first duplicate
-            if (firstDuplicateIndex >= 0 && index > firstDuplicateIndex) {
-              error.textContent = "This account is already added above.";
-              error.classList.remove("d-none");
-              isValid = false;
-              errorMessage = "This account is already added above.";
-            } else {
-              error.classList.add("d-none");
-            }
-          }        
-          // 4. Already exists in external list
-          else if (!isEdit && allMembers.map(a => (a?.member ?? '').toLowerCase()).includes(accountLower) && error) {
-            error.textContent = "This account is already a member.";
-            error.classList.remove("d-none");
+          }
+
+          if ((isEdit || account) && (!selectedRoles || selectedRoles.length === 0)) {
+            roleError?.classList.remove("d-none");
+            roleError?.classList.add("d-flex");
             isValid = false;
-            errorMessage = "This account is already a member.";
+            if (!errorMessage) {
+              errorMessage = "The Permissions are missing.";
+            }
           } else {
-            error?.classList.add("d-none");
+            roleError?.classList.remove("d-flex");
+            roleError?.classList.add("d-none");
           }
-        }
-      
-        if ((isEdit || account) && (!selectedRoles || selectedRoles.length === 0)) {
-          roleError?.classList.remove("d-none");
-          roleError?.classList.add("d-flex");
-          isValid = false;
-          if (!errorMessage) {
-            errorMessage = "The Permissions are missing.";
-          }
-        } else {
-          roleError?.classList.remove("d-flex");
-          roleError?.classList.add("d-none");
-        }
-      
+
         return { isValid, errorMessage };
-      }    
+      }
+
       
       function updateIframeHeight() {
         const height =
@@ -492,7 +547,7 @@ const code = `<!DOCTYPE html>
         );
       }
       
-      function validateAllMembers() {
+      async function validateAllMembers() {
       const memberBlocks = document.querySelectorAll(".member-container");
       let isAllValid = true;
       const roleAssignments = {};
@@ -501,18 +556,19 @@ const code = `<!DOCTYPE html>
         roleAssignments[role.value] = false;
       });
       
-      memberBlocks.forEach(function(el, index) {
-        if (el.style.display === 'none') return; // Skip removed members
+      for (let i = 0; i < memberBlocks.length; i++) {
+        const el = memberBlocks[i];
+        if (el.style.display === 'none') continue; // Skip removed members
       
-        const validation = validateMember(index);
+        const validation = await validateMember(i);
         if (!validation.isValid) {
           isAllValid = false;
-          const memberLabel = el.querySelector("#memberLabel-" + index);
-          const memberNumber = memberLabel ? memberLabel.textContent : "Member #" + (index + 1);
+          const memberLabel = el.querySelector("#memberLabel-" + i);
+          const memberNumber = memberLabel ? memberLabel.textContent : "Member #" + (i + 1);
           errorMessages.push(memberNumber + " - " + validation.errorMessage);
         }
       
-        const roles = window["selectedRoles_" + index];
+        const roles = window["selectedRoles_" + i];
         if (roles && roles.length > 0) {
           roles.forEach(function(r) {
             if (roleAssignments.hasOwnProperty(r.value)) {
@@ -520,7 +576,7 @@ const code = `<!DOCTYPE html>
             }
           });
         }
-      });
+      }
       
       const adminRoleError = document.getElementById("rolesError");
       adminRoleError.innerHTML = "";
@@ -828,7 +884,7 @@ const code = `<!DOCTYPE html>
                     (existingMember ? 'value="' + existingMember.username + '" ' : '') +
                     'oninput="handleAccountInput(' + index + ')" />' +
                   '</div>' +
-                  '<div id="accountError-' + index + '" class="error-text text-sm d-none">Please enter a valid account ID.</div>' +
+                  '<div id="accountError-' + index + '" class="error-text text-sm d-none"></div>' +
                   '<div id="accountSuggestions-' + index + '" class="account-suggestions d-none"></div>' +
                 '</div>'
               : '') +
@@ -904,7 +960,7 @@ const code = `<!DOCTYPE html>
           account = (selectedMembers[index].member || '').toLowerCase();
         }
         const isNearnAccount = account === NEARN_ACCOUNT_ID;
-
+      
         // Filter out already selected roles
         const availableRolesToShow = availableRoles.filter(function(role) {
           return !selectedRoles.some(function(selectedRole) {
@@ -1035,14 +1091,21 @@ const code = `<!DOCTYPE html>
       }
       
       
-      function submitForm() {
-        // Validate all members before submitting
-        const isValid = validateAllMembers();
+      async function submitForm() {
+        // Show loading state
+        const submitBtn = document.getElementById("submitBtn");
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Submit';
+        submitBtn.disabled = true;
         
-        if (!isValid) {
-          // Don't submit if validation fails
-          return;
-        }
+        try {
+          // Validate all members before submitting
+          const isValid = await validateAllMembers();
+          
+          if (!isValid) {
+            // Don't submit if validation fails
+            return;
+          }
         
         const members = [];
       
@@ -1091,6 +1154,13 @@ const code = `<!DOCTYPE html>
           },
           "*"
         );
+        } catch (error) {
+          console.error("Error during validation:", error);
+        } finally {
+          // Restore button state
+          submitBtn.innerHTML = originalText;
+          submitBtn.disabled = false;
+        }
       }
       
       function onCancel() {
