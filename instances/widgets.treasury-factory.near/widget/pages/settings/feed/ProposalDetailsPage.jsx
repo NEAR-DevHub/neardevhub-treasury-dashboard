@@ -443,6 +443,7 @@ return (
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.ProposalDetails`}
       props={{
         ...props,
+        proposalPeriod,
         page: "settings",
         VoteActions: (hasVotingPermission || hasDeletePermission) &&
           proposalData.status === "InProgress" && (

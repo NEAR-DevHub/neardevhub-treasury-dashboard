@@ -205,6 +205,7 @@ return (
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.ProposalDetails`}
       props={{
         ...props,
+        proposalPeriod,
         page: "stake-delegation",
         VoteActions: (hasVotingPermission || hasDeletePermission) &&
           proposalData.status === "InProgress" && (

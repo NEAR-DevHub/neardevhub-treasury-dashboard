@@ -132,6 +132,7 @@ return (
     props={{
       ...props,
       page: "lockup",
+      proposalPeriod,
       VoteActions: (hasVotingPermission || hasDeletePermission) &&
         proposalData.status === "InProgress" && (
           <Widget
