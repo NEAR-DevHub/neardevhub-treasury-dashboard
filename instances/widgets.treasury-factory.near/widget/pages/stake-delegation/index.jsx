@@ -184,6 +184,7 @@ return (
     <VoteSuccessToast />
     {typeof proposalDetailsPageId === "number" ? (
       <Widget
+        loading=""
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.ProposalDetailsPage`}
         props={{
           ...props,
@@ -198,6 +199,7 @@ return (
         <div className="layout-flex-wrap flex-grow-1">
           <div className="layout-main">
             <Widget
+              loading=""
               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Tabs`}
               props={{
                 ...props,
@@ -230,6 +232,7 @@ return (
                 ],
                 SidebarMenu: ({ currentTab }) => (
                   <Widget
+                    loading=""
                     src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.CreateButton`}
                     props={{
                       instance,
@@ -248,6 +251,7 @@ return (
           >
             {typeof showProposalDetailsId === "number" && (
               <Widget
+                loading=""
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.ProposalDetailsPage`}
                 props={{
                   ...props,

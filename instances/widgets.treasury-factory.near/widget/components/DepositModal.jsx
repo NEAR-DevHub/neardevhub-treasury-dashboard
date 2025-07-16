@@ -486,6 +486,7 @@ return (
               Asset
             </label>
             <Widget
+              loading=""
               src={
                 "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
               }
@@ -523,6 +524,7 @@ return (
             </label>
 
             <Widget
+              loading=""
               src={
                 "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
               }
@@ -594,6 +596,7 @@ return (
                     }}
                   >
                     <Widget
+                      loading=""
                       src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.QRCodeGenerator"
                       props={{
                         text: state.intentsDepositAddress,
@@ -633,6 +636,7 @@ return (
                         {state.intentsDepositAddress}
                       </div>
                       <Widget
+                        loading=""
                         src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Copy"
                         props={{
                           label: "",

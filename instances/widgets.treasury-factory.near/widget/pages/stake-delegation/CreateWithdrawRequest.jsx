@@ -151,6 +151,7 @@ const BalanceDisplay = ({ label, balance, tooltipInfo, noBorder }) => {
             {label}
             {"  "}{" "}
             <Widget
+              loading=""
               src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
               props={{
                 popup: tooltipInfo,
@@ -395,6 +396,7 @@ return (
       cancelTxn={() => setTxnCreated(false)}
     />
     <Widget
+      loading=""
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
       props={{
         accountId: treasuryDaoID,
@@ -409,6 +411,7 @@ return (
 
     {lockupContract && (
       <Widget
+        loading=""
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
         props={{
           accountId: lockupContract,
@@ -426,6 +429,7 @@ return (
     <div className="d-flex flex-column gap-3">
       {lockupContract && (
         <Widget
+          loading=""
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.WalletDropdown`}
           props={{
             lockupNearBalances,
@@ -464,6 +468,7 @@ return (
       {showLoader && (
         <div className="d-flex flex-column justify-content-center align-items-center w-100 h-100">
           <Widget
+            loading=""
             src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"}
           />
         </div>
@@ -481,6 +486,7 @@ return (
       {isReadyToWithdraw && (
         <div className="d-flex mt-2 gap-3 justify-content-end">
           <Widget
+            loading=""
             src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
             props={{
               classNames: {
@@ -494,6 +500,7 @@ return (
             }}
           />
           <Widget
+            loading=""
             src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
             props={{
               classNames: { root: "theme-btn" },

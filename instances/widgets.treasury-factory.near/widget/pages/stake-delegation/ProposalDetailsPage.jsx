@@ -203,6 +203,7 @@ const Container = styled.div`
 return (
   <Container>
     <Widget
+      loading=""
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.ProposalDetails`}
       props={{
         ...props,
@@ -210,6 +211,7 @@ return (
         VoteActions: (hasVotingPermission || hasDeletePermission) &&
           proposalData.status === "InProgress" && (
             <Widget
+              loading=""
               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.VoteActions`}
               props={{
                 instance,
@@ -233,6 +235,7 @@ return (
               <label>Request Type</label>
               <div style={{ width: "fit-content" }}>
                 <Widget
+                  loading=""
                   src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.Type`}
                   props={{
                     type: proposalData?.action.method_name,
@@ -245,6 +248,7 @@ return (
                 <label className="border-top">Amount</label>
                 <h5 className="mb-0">
                   <Widget
+                    loading=""
                     src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmountAndIcon`}
                     props={{
                       instance,
@@ -258,6 +262,7 @@ return (
             <div className="d-flex flex-column gap-2 mt-1">
               <label className="border-top">Validator</label>
               <Widget
+                loading=""
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.Validator`}
                 props={{
                   validatorId:
@@ -270,6 +275,7 @@ return (
               <div className="d-flex flex-column gap-2 mt-1">
                 <label className="border-top">Treasury Wallet</label>
                 <Widget
+                  loading=""
                   src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
                   props={{
                     accountId: proposalData?.treasuryWallet,

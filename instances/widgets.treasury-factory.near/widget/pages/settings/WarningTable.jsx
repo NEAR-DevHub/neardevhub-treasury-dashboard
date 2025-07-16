@@ -48,6 +48,7 @@ return (
                       </td>
                       <td style={{ width: "130px" }}>
                         <Widget
+                          loading=""
                           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
                           props={{
                             timestamp:
@@ -60,12 +61,14 @@ return (
                         <>
                           <td style={{ width: "110px" }}>
                             <Widget
+                              loading=""
                               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
                               props={{ timestamp: proposal.currentExpiryTime }}
                             />
                           </td>
                           <td style={{ width: "110px" }}>
                             <Widget
+                              loading=""
                               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
                               props={{ timestamp: proposal.newExpiryTime }}
                             />

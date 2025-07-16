@@ -411,6 +411,7 @@ return (
           style={{ minHeight: 300 }}
         >
           <Widget
+            loading=""
             src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"}
           />
         </div>
@@ -477,6 +478,7 @@ return (
           <div className="d-flex flex-column gap-1">
             <label>Theme</label>
             <Widget
+              loading=""
               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDown`}
               props={{
                 options: ThemeOptions,
@@ -488,6 +490,7 @@ return (
           </div>
           <div className="d-flex mt-2 gap-3 justify-content-end">
             <Widget
+              loading=""
               src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
               props={{
                 classNames: {
@@ -500,10 +503,12 @@ return (
               }}
             />
             <Widget
+              loading=""
               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
               props={{
                 ActionButton: () => (
                   <Widget
+                    loading=""
                     src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
                     props={{
                       classNames: { root: "theme-btn" },

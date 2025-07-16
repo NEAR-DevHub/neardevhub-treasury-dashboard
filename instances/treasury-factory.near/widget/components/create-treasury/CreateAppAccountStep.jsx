@@ -130,6 +130,7 @@ return (
     </div>
 
     <Widget
+      loading=""
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Info`}
       props={{
         type: "info",
@@ -151,6 +152,7 @@ return (
     />
 
     <Widget
+      loading=""
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.NewAccountInput`}
       props={{
         id: "treasury-account",
@@ -177,6 +179,7 @@ return (
 
     {(alertMsg?.[".near"] || alertMsg?.[".sputnik-dao.near"]) && (
       <Widget
+        loading=""
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Info`}
         props={{
           type: "alert",
@@ -187,6 +190,7 @@ return (
 
     <div className="d-flex gap-2">
       <Widget
+        loading=""
         src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
         props={{
           classNames: {
@@ -199,6 +203,7 @@ return (
         }}
       />
       <Widget
+        loading=""
         src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
         props={{
           classNames: {

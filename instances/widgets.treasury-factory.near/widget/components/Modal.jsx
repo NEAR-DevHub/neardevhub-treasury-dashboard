@@ -122,6 +122,7 @@ return (
         <div className="modalfooter d-flex gap-3 align-items-center justify-content-end mt-2">
           {typeof onCancelClick === "function" && (
             <Widget
+              loading=""
               src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
               props={{
                 classNames: {
@@ -134,6 +135,7 @@ return (
           )}
           {typeof onConfirmClick === "function" && (
             <Widget
+              loading=""
               src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
               props={{
                 classNames: { root: "theme-btn" },

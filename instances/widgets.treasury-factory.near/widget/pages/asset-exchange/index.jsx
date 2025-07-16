@@ -39,6 +39,7 @@ const SidebarMenu = ({ currentTab }) => {
     >
       {hasCreatePermission && (
         <Widget
+          loading=""
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
           props={{
             ActionButton: () => (
@@ -53,6 +54,7 @@ const SidebarMenu = ({ currentTab }) => {
         />
       )}
       <Widget
+        loading=""
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.asset-exchange.SettingsDropdown`}
         props={{
           isPendingPage: currentTab.title === "Pending Requests",
@@ -201,6 +203,7 @@ return (
     <VoteSuccessToast />
     {typeof proposalDetailsPageId === "number" ? (
       <Widget
+        loading=""
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.asset-exchange.ProposalDetailsPage`}
         props={{
           ...props,
@@ -213,6 +216,7 @@ return (
     ) : (
       <div className="h-100 w-100 flex-grow-1 d-flex flex-column">
         <Widget
+          loading=""
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OffCanvas`}
           props={{
             showCanvas: showCreateRequest,
@@ -220,6 +224,7 @@ return (
             title: "Create Asset Exchange Request",
             children: (
               <Widget
+                loading=""
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.asset-exchange.CreateRequest`}
                 props={{
                   instance,
@@ -233,6 +238,7 @@ return (
         <div className="layout-flex-wrap flex-grow-1">
           <div className="layout-main">
             <Widget
+              loading=""
               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Tabs`}
               props={{
                 ...props,
@@ -274,6 +280,7 @@ return (
           >
             {typeof showProposalDetailsId === "number" && (
               <Widget
+                loading=""
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.asset-exchange.ProposalDetailsPage`}
                 props={{
                   ...props,

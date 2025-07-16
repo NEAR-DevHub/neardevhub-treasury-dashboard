@@ -130,6 +130,7 @@ return (
         <ModalFooter>
           <div className="d-flex justify-content-end">
             <Widget
+              loading=""
               src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
               props={{
                 classNames: { root: "theme-btn" },
@@ -186,6 +187,7 @@ return (
         <ModalFooter>
           <div className="d-flex gap-3 align-items-center justify-content-end">
             <Widget
+              loading=""
               src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
               props={{
                 classNames: {
@@ -196,6 +198,7 @@ return (
               }}
             />
             <Widget
+              loading=""
               src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
               props={{
                 classNames: { root: "btn btn-danger" },

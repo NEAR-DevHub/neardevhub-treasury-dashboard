@@ -245,6 +245,7 @@ const RoleChangeCard = ({ member, type, oldRoles, newRoles, instance }) => {
         style={{ paddingTop: "11px" }}
       >
         <Widget
+          loading=""
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
           props={{ accountId: member, instance }}
         />
@@ -441,6 +442,7 @@ const Container = styled.div`
 return (
   <Container>
     <Widget
+      loading=""
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.ProposalDetails`}
       props={{
         ...props,
@@ -448,6 +450,7 @@ return (
         VoteActions: (hasVotingPermission || hasDeletePermission) &&
           proposalData.status === "InProgress" && (
             <Widget
+              loading=""
               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.VoteActions`}
               props={{
                 instance,

@@ -34,6 +34,7 @@ useEffect(() => {
 
 return (
   <Widget
+    loading=""
     src={"${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.Chart"}
     props={{
       nearPrice,

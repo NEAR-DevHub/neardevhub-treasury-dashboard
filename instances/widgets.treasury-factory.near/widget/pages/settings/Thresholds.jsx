@@ -551,6 +551,7 @@ return (
         style={{ minHeight: "400px" }}
       >
         <Widget
+          loading=""
           src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"}
         />
       </div>
@@ -572,6 +573,7 @@ return (
             </ModalHeader>
             <ModalContent>
               <Widget
+                loading=""
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.WarningTable`}
                 props={{
                   descriptionText:
@@ -583,6 +585,7 @@ return (
           </Modal>
         )}
         <Widget
+          loading=""
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
           props={{
             instance,
@@ -647,6 +650,7 @@ return (
           <div className="card-title px-3 pb-3">
             Permission Groups{" "}
             <Widget
+              loading=""
               src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
               props={{
                 popup:
@@ -690,6 +694,7 @@ return (
             <div className="d-flex flex-column gap-1">
               <label>Based On</label>
               <Widget
+                loading=""
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDown`}
                 props={{
                   options: options,
@@ -707,6 +712,7 @@ return (
                 {isPercentageSelected ? "Enter percentage" : "Value"}
               </label>
               <Widget
+                loading=""
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
                 props={{
                   className: "flex-grow-1 p-0",
@@ -771,6 +777,7 @@ return (
             {hasCreatePermission && (
               <div className="d-flex mt-2 gap-3 justify-content-end">
                 <Widget
+                  loading=""
                   src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
                   props={{
                     classNames: {
@@ -785,10 +792,12 @@ return (
                   }}
                 />
                 <Widget
+                  loading=""
                   src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
                   props={{
                     ActionButton: () => (
                       <Widget
+                        loading=""
                         src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
                         props={{
                           classNames: { root: "theme-btn" },
@@ -838,6 +847,7 @@ return (
                   style={{ width: "95%" }}
                 >
                   <Widget
+                    loading=""
                     src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
                     props={{
                       accountId: member,
@@ -856,6 +866,7 @@ return (
         style={{ minHeight: "300px" }}
       >
         <Widget
+          loading=""
           src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"}
         />
       </div>

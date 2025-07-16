@@ -21,6 +21,7 @@ return (
     <div className="d-flex gap-2 align-items-center">
       Rows per Page:
       <Widget
+        loading=""
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDown`}
         props={{
           options: paginationOptions,

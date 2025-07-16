@@ -44,6 +44,7 @@ function handleChange(e) {
 
 return (
   <Widget
+    loading=""
     src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
     props={{
       value,

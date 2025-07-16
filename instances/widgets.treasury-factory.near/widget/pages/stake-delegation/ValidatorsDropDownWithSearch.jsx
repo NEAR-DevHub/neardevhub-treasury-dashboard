@@ -23,6 +23,7 @@ if (
   return (
     <div className="d-flex flex-column justify-content-center align-items-center w-100 h-100">
       <Widget
+        loading=""
         src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"}
       />
     </div>

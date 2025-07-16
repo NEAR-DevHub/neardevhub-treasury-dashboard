@@ -49,18 +49,22 @@ useEffect(() => {
 
 const STEPS = [
   <Widget
+    loading=""
     src={`${widgetBasePath}.ConfirmWalletStep`}
     props={{ setCurrentPage }}
   />,
   <Widget
+    loading=""
     src={`${widgetBasePath}.CreateAppAccountStep`}
     props={{ formFields, setFormFields, setCurrentPage }}
   />,
   <Widget
+    loading=""
     src={`${widgetBasePath}.AddMembersStep`}
     props={{ formFields, setFormFields, setCurrentPage }}
   />,
   <Widget
+    loading=""
     src={`${widgetBasePath}.SummaryStep`}
     props={{
       formFields,
@@ -170,6 +174,7 @@ return (
   <div>
     {showCongratsModal ? (
       <Widget
+        loading=""
         src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.treasury.MyTreasuries"
         props={{
           ...propsToSend,
@@ -182,6 +187,7 @@ return (
         {context.accountId ? (
           <div>
             <Widget
+              loading=""
               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.create-treasury.Stepper`}
               props={{
                 steps: STEPS,
@@ -191,6 +197,7 @@ return (
           </div>
         ) : (
           <Widget
+            loading=""
             src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Login`}
           />
         )}

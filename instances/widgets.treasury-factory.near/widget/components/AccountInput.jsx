@@ -121,6 +121,7 @@ const checkAccountAvailability = async () => {
 return (
   <Container>
     <Widget
+      loading=""
       src="${REPL_DEVHUB}/widget/devhub.components.molecule.Input"
       props={{
         className: "flex-grow-1",
@@ -150,6 +151,7 @@ return (
     {showAccountAutocomplete && !selectedFromAutoComplete && account && (
       <AutoComplete>
         <Widget
+          loading=""
           src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.AccountAutocomplete"
           props={{
             term: account,
