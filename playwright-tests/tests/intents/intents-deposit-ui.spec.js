@@ -280,6 +280,7 @@ test.describe("Intents Deposit UI", () => {
     instanceAccount,
     daoAccount,
   }) => {
+    const { networkNames } = await getWeb3IconMaps();
     test.setTimeout(180_000);
     await page.goto(`https://${instanceAccount}.page`);
 
@@ -342,8 +343,11 @@ test.describe("Intents Deposit UI", () => {
       .map(({ name }) => name);
 
     const uniqueAssetNames = shuffled.slice(0, 10).sort();
+    console.log("Assets to test:", uniqueAssetNames);
 
     for (const assetName of uniqueAssetNames) {
+      console.log(`
+INFO: Verifying asset: ${assetName}`);
       // Select the asset in the UI
       // For the first asset, look for the default text
       const assetDropdownSelector = await page
@@ -355,7 +359,8 @@ test.describe("Intents Deposit UI", () => {
           timeout: 15_000,
         });
       }
-      await assetDropdownSelector.click({ timeout: 2_000 });
+      await assetDropdownSelector.click();
+      await page.waitForSelector("div.dropdown-item");
 
       // Use a strict locator for the asset dropdown item to avoid partial matches (e.g., BTC vs wBTC)
       const assetLocator = assetDropdownSelector.locator("div.dropdown-item", {
@@ -363,7 +368,8 @@ test.describe("Intents Deposit UI", () => {
       });
 
       await expect(assetLocator).toBeVisible();
-      await assetLocator.click({ timeout: 2_000 });
+      console.log(`    - Clicking on asset: ${assetName}`);
+      await assetLocator.click();
 
       const tokensOfSelectedAsset = allFetchedTokens.filter(
         (token) => token.asset_name === assetName
@@ -384,6 +390,8 @@ test.describe("Intents Deposit UI", () => {
 
       const firstNetworkName = networksForAsset[0].name;
       for (const network of networksForAsset) {
+        console.log(`  - Verifying network: ${network.name}`);
+        console.log(`    - Looking for network name: ${network.name}`);
         const networkName = network.name;
 
         // Select the network in the UI
@@ -394,8 +402,9 @@ test.describe("Intents Deposit UI", () => {
           await dropdowns.nth(1).click();
         }
         const networkOptionElement = await page.locator("div.dropdown-item", {
-          hasText: `( ${networkName} )`,
+          hasText: `(${networkNames[network.id] ?? network.name})`,
         });
+        await expect(networkOptionElement).toBeVisible({ timeout: 10000 });
         const visibleNetworkName = await networkOptionElement.innerText();
         await networkOptionElement.click();
 
@@ -467,6 +476,7 @@ test.describe("Intents Deposit UI", () => {
         expect(clipboardText).toEqual(apiDepositAddress);
 
         const alertLocator = modalLocator.locator(".alert");
+
         await expect(alertLocator).toContainText(
           `Only deposit ${assetName} from the ${visibleNetworkName.toLowerCase()} network`
         );
