@@ -26,6 +26,15 @@ const UpdateNotificationBanner = ({ page, instance }) => (
   />
 );
 
+const AnnouncementBanner = ({ page, instance }) => (
+  <Widget
+    src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.AnnouncementBanner"
+    props={{
+      instance,
+    }}
+  />
+);
+
 const Theme = styled.div`
   padding-top: calc(-1 * var(--body-top-padding));
 
@@ -570,7 +579,7 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
     : null;
   const metadata = JSON.parse(atob(config.metadata ?? ""));
 
-  const data = fetch(`https://ref-sdk-test-cold-haze-1300-2.fly.dev/headers`);
+  const data = fetch("${REPL_BACKEND_API}".replace("/api", "") + "/headers");
   const gatewayURL = data?.body?.headers?.origin ?? "";
   const isDarkTheme = metadata.theme === "dark";
 
@@ -608,6 +617,7 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
           minHeight: gatewayURL.includes("near.org") ? "100vh" : "100%",
         }}
       >
+        <AnnouncementBanner instance={instance} />
         <UpdateNotificationBanner
           page={page}
           instance={instance}
