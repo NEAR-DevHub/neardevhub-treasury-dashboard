@@ -17,7 +17,6 @@ State.init({
   assetNamesForDropdown: [],
   selectedAssetName: "",
   networksForSelectedAssetDropdown: [],
-  defuse_asset_id_to_chain_map: {},
   selectedNetworkFullInfo: null,
   intentsDepositAddress: "",
   isLoadingTokens: false,
@@ -173,21 +172,6 @@ const fetchIntentsTokens = () => {
               : null,
           allTokensForIcons: allTokensForIcons, // All tokens for one-time fetching
         });
-        asyncFetch("https://api-mng-console.chaindefuser.com/api/tokens").then(
-          (result) => {
-            const allTokens = result.body?.items;
-            const defuse_asset_id_to_chain_map = {};
-
-            for (const token of allTokens) {
-              defuse_asset_id_to_chain_map[token.defuse_asset_id] =
-                token.blockchain;
-            }
-
-            State.update({
-              defuse_asset_id_to_chain_map: defuse_asset_id_to_chain_map,
-            });
-          }
-        );
       } else {
         State.update({
           errorApi: "No bridgeable assets found or unexpected API response.",
@@ -238,14 +222,15 @@ const updateNetworksForAsset = (assetName) => {
         chainId = parts[0];
       }
 
+      const networkCache = state.web3IconsCache[chainId];
+      const networkName = networkCache?.networkName;
+
       // The API for all tokens has the property  `defuse_asset_id` which is the same as `intents_token_id`
       const intents_token_id = token.intents_token_id;
-      const blockchainName =
-        state.defuse_asset_id_to_chain_map[intents_token_id]?.toUpperCase();
 
       return {
         id: chainId, // This is the ID like "eth:1"
-        name: `${blockchainName} ( ${chainId} )`,
+        name: `${networkName} (${chainId})`,
         icon: getNetworkIcon(chainId), // Use enhanced network icon lookup
         near_token_id: token.near_token_id,
         originalTokenData: token,
