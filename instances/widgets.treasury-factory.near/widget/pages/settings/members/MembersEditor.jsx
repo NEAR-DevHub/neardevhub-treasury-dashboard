@@ -132,6 +132,36 @@ useEffect(() => {
   }
 }, [isTxnCreated, lastProposalId, treasuryDaoID]);
 
+const addProposalRole = (daoPolicy?.roles || []).reduce((selected, role) => {
+  const permissions = role.permissions || [];
+
+  // If we already found the best match, keep it
+  if (selected?.priority === 2) return selected;
+
+  if (
+    permissions.includes("transfer:AddProposal") ||
+    permissions.includes("*:AddProposal")
+  ) {
+    return { role, priority: 2 }; // high-priority match
+  }
+
+  if (
+    !selected ||
+    (selected.priority < 1 &&
+      (permissions.includes("transfer:*") || permissions.includes("*:*")))
+  ) {
+    return { role, priority: 1 }; // lower-priority match
+  }
+
+  return selected;
+}, null)?.role;
+
+// check if the role has voting permissions (not the vote type proposal, since that's usually provided to everyone)
+const addRoleHasVotingPermissions = !!(addProposalRole?.permissions || []).some(
+  (p) =>
+    (p.includes("VoteApprove") && p !== "vote:VoteApprove") || p.includes("*:*")
+);
+
 const code = `<!DOCTYPE html>
 <html lang="en">
    <head>
@@ -331,6 +361,16 @@ const code = `<!DOCTYPE html>
          color: ${colors["--other-warning"]} !important;
          }
          }
+        .info-box{
+         background:${colors["--grey-04"]} ;
+         padding: 12px;
+         font-size: 13px;
+         margin-top:12px;
+         i {
+         color: ${colors["--text-color"]} !important;
+         }
+         }
+        
          .select-tag.disabled {
          pointer-events: none;
          opacity: 0.5;
@@ -358,6 +398,8 @@ const code = `<!DOCTYPE html>
       let allMembers = [];
       let selectedMembers = [];
       let cachedProfilesData = null;
+      let addProposalRole = "";
+      let addRoleHasVotingPermissions = false;
       const NEARN_ACCOUNT_ID = "nearn-io.near";
       const roleDescriptions = {
         Requestor: "Allows to create transaction requests (payments, stake delegation, and asset exchange).",
@@ -682,9 +724,11 @@ const code = `<!DOCTYPE html>
           account = (selectedMembers[index].member || '').toLowerCase();
         }
         const isNearnAccount = account === NEARN_ACCOUNT_ID;
+        const selectedRoles = window["selectedRoles_" + index];
+        const hasRoles = selectedRoles && selectedRoles.length > 0;
         const nearnWarning = document.getElementById("nearnWarning-" + index);
         if (nearnWarning) {
-          if (isNearnAccount) {
+          if (isNearnAccount && addProposalRole && hasRoles) {
             nearnWarning.classList.add("d-flex");
             nearnWarning.classList.remove("d-none");
           } else {
@@ -721,13 +765,7 @@ const code = `<!DOCTYPE html>
         
         if (cachedProfilesData) {
           filterAndRenderResults(index, query, cachedProfilesData);
-        } else {
-          await fetchProfileData();
-          if (cachedProfilesData) {
-            filterAndRenderResults(index, query, cachedProfilesData);
-          }
         }
-        
         setTimeout(updateIframeHeight, 0);
         updateNearnWarning(index);
       }
@@ -900,11 +938,23 @@ const code = `<!DOCTYPE html>
                 '<i class="bi bi-exclamation-octagon h5 mb-0"></i>' +
                 '<span>You must assign at least one role.</span>' +
               '</div>' +
-              '<div id="nearnWarning-' + index + '" class="warning-box rounded-3 d-none gap-2 align-items-center">' +
-                '<i class="bi bi-exclamation-triangle h5 mb-0"></i>' +
-                '<span>Only the Requestor role can be assigned to this member, enabling them to create requests in NEARN.</span>' +
-              '</div>' +
-            
+             '<div id="nearnWarning-' + index + '" class="d-none">' +
+                (
+                  addRoleHasVotingPermissions
+                    ? '<div class="warning-box d-flex rounded-3 gap-2 align-items-center">' +
+                        '<i class="bi bi-exclamation-triangle h5 mb-0"></i>' +
+                        '<span>' +
+                        'Heads up: You are assigning the nearn-io.near account to the ' + addProposalRole + ' role, which includes voting permissions. This is a special-purpose account used by NEARN to create proposals only – it does not need or expect voting or approval rights. For better security, we recommend creating a dedicated role with proposal creation permissions only. You can do this using Astra++ or another DAO UI. If you’re assigning this role intentionally and understand the access it grants, you can proceed.' +
+                        '</span>' +
+                      '</div>'
+                    : '<div class="info-box d-flex rounded-3 gap-2 align-items-center">' +
+                        '<i class="bi bi-info-circle h5 mb-0"></i>' +
+                        '<span>' +
+                        'The nearn-io.near account is a special-purpose account used by NEARN to create proposals on your treasury. It only needs the ' + addProposalRole + ' role, which lets it submit proposals — it does not need Approver or Admin permissions.' +
+                        '</span>' +
+                      '</div>'
+                ) +
+              '</div>'
             '</div>'          
           '</div>' +
         '</div>';
@@ -971,7 +1021,7 @@ const code = `<!DOCTYPE html>
         availableRolesToShow.forEach(function(role) {
           const item = document.createElement("div");
           let isDisabled = false;
-          if (isNearnAccount && role.value !== "Requestor") {
+          if (isNearnAccount && addProposalRole && role.value !== addProposalRole) {
             isDisabled = true;
             item.className = "dropdown-item w-100 my-1 disabled";
             item.style.pointerEvents = "none";
@@ -1021,6 +1071,7 @@ const code = `<!DOCTYPE html>
         document.getElementById("dropdownMenu-" + index).classList.remove("show");
         renderSelectedRoles(index);
         setTimeout(updateIframeHeight, 0);
+        updateNearnWarning(index);
       }
       
       
@@ -1032,6 +1083,7 @@ const code = `<!DOCTYPE html>
         window["selectedRoles_" + index] = selectedRoles;
         renderSelectedRoles(index);
         setTimeout(updateIframeHeight, 0);
+        updateNearnWarning(index);
       }
       
       function updateAddPermissionButtonVisibility(index) {
@@ -1047,9 +1099,9 @@ const code = `<!DOCTYPE html>
         }
         const isNearnAccount = account === NEARN_ACCOUNT_ID;
         if (selectTag) {
-          if (isNearnAccount) {
-            // Only show if Requestor is not already selected
-            if (selectedRoles.some(r => r.value === "Requestor")) {
+          if (isNearnAccount && addProposalRole) {
+            // Only show if addProposalRole is not already selected
+            if (selectedRoles.some(r => r.value === addProposalRole)) {
               selectTag.classList.add("d-none");
             } else {
               selectTag.classList.remove("d-none");
@@ -1172,6 +1224,8 @@ const code = `<!DOCTYPE html>
           isEdit = event.data.isEdit;
           availableRoles = event.data.availableRoles;
           allMembers = event.data.allMembers || [];
+          addProposalRole = event.data.addProposalRole || "";
+          addRoleHasVotingPermissions = event.data.addRoleHasVotingPermissions;
         
           if (Array.isArray(event.data.selectedMembers) && event.data.selectedMembers.length > 0) {
             selectedMembers = event.data.selectedMembers;
@@ -1242,6 +1296,8 @@ return (
         selectedMembers,
         disableCancel,
         isSubmitLoading,
+        addProposalRole: addProposalRole?.name,
+        addRoleHasVotingPermissions: addRoleHasVotingPermissions,
       }}
       onMessage={(e) => {
         switch (e.handler) {

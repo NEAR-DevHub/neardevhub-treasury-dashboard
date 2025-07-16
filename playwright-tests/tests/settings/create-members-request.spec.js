@@ -644,18 +644,29 @@ test.describe("User is logged in", function () {
       page,
       isNearnCall: true,
     });
-    const role = daoAccount.includes("infinex") ? "Requestor" : "council";
+    const isInfinex = daoAccount.includes("infinex");
+    const role = isInfinex ? "Requestor" : "council";
     await expect(
       page.getByRole("heading", { name: "Add Members" })
     ).toBeVisible({ timeout: 20_000 });
     const iframe = page.locator("iframe").contentFrame();
     await expect(iframe.getByText("Username")).toBeVisible();
-    await expect(iframe.getByText(role, { exact: true })).toBeVisible();
     await expect(
-      iframe.getByText(
-        "Only the Requestor role can be assigned to this member, enabling them to create requests in NEARN"
-      )
+      iframe.locator("#selectedRoles-0").getByText(role, { exact: true })
     ).toBeVisible();
+    if (!isInfinex) {
+      await expect(
+        iframe.getByText(
+          `Heads up: You are assigning the nearn-io.near account to the ${role} role, which includes voting permissions. This is a special-purpose account used by NEARN to create proposals only – it does not need or expect voting or approval rights. For better security, we recommend creating a dedicated role with proposal creation permissions only. You can do this using Astra++ or another DAO UI. If you’re assigning this role intentionally and understand the access it grants, you can proceed.`
+        )
+      ).toBeVisible();
+    } else {
+      await expect(
+        iframe.getByText(
+          `The nearn-io.near account is a special-purpose account used by NEARN to create proposals on your treasury. It only needs the ${role} role, which lets it submit proposals — it does not need Approver or Admin permissions.`
+        )
+      ).toBeVisible();
+    }
     const submitButton = iframe.getByRole("button", { name: "Submit" });
     await expect(submitButton).toBeEnabled();
 

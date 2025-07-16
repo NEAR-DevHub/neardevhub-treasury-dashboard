@@ -23,14 +23,15 @@ const { formatSubmissionTimeStamp } = VM.require(
 
 const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 
-const proposalData = props.proposalData;
-const isDeleted = props.isDeleted;
-const isCompactVersion = props.isCompactVersion;
-const approversGroup = props.approversGroup;
-const deleteGroup = props.deleteGroup;
-const proposalStatusLabel = props.proposalStatusLabel;
+const {
+  proposalData,
+  isDeleted,
+  isCompactVersion,
+  approversGroup,
+  proposalStatusLabel,
+  proposalPeriod,
+} = props;
 
-const accountId = context.accountId;
 const requiredVotes = approversGroup?.requiredVotes;
 
 const Container = styled.div`
