@@ -1,4 +1,4 @@
-const data = fetch(`https://ref-sdk-test-cold-haze-1300-2.fly.dev/headers`);
+const data = fetch("${REPL_BACKEND_API}".replace("/api", "") + "/headers");
 const gatewayURL = data?.body?.headers?.origin ?? "";
 
 // we need fixed positioning for near social and not for org

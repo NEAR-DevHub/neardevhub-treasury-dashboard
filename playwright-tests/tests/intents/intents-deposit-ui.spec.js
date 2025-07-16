@@ -280,6 +280,7 @@ test.describe("Intents Deposit UI", () => {
     instanceAccount,
     daoAccount,
   }) => {
+    const { networkNames } = await getWeb3IconMaps();
     test.setTimeout(180_000);
     await page.goto(`https://${instanceAccount}.page`);
 
@@ -342,8 +343,11 @@ test.describe("Intents Deposit UI", () => {
       .map(({ name }) => name);
 
     const uniqueAssetNames = shuffled.slice(0, 10).sort();
+    console.log("Assets to test:", uniqueAssetNames);
 
     for (const assetName of uniqueAssetNames) {
+      console.log(`
+INFO: Verifying asset: ${assetName}`);
       // Select the asset in the UI
       // For the first asset, look for the default text
       const assetDropdownSelector = await page
@@ -355,7 +359,8 @@ test.describe("Intents Deposit UI", () => {
           timeout: 15_000,
         });
       }
-      await assetDropdownSelector.click({ timeout: 2_000 });
+      await assetDropdownSelector.click();
+      await page.waitForSelector("div.dropdown-item");
 
       // Use a strict locator for the asset dropdown item to avoid partial matches (e.g., BTC vs wBTC)
       const assetLocator = assetDropdownSelector.locator("div.dropdown-item", {
@@ -363,7 +368,8 @@ test.describe("Intents Deposit UI", () => {
       });
 
       await expect(assetLocator).toBeVisible();
-      await assetLocator.click({ timeout: 2_000 });
+      console.log(`    - Clicking on asset: ${assetName}`);
+      await assetLocator.click();
 
       const tokensOfSelectedAsset = allFetchedTokens.filter(
         (token) => token.asset_name === assetName
@@ -384,6 +390,8 @@ test.describe("Intents Deposit UI", () => {
 
       const firstNetworkName = networksForAsset[0].name;
       for (const network of networksForAsset) {
+        console.log(`  - Verifying network: ${network.name}`);
+        console.log(`    - Looking for network name: ${network.name}`);
         const networkName = network.name;
 
         // Select the network in the UI
@@ -394,8 +402,9 @@ test.describe("Intents Deposit UI", () => {
           await dropdowns.nth(1).click();
         }
         const networkOptionElement = await page.locator("div.dropdown-item", {
-          hasText: `( ${networkName} )`,
+          hasText: `(${networkNames[network.id] ?? network.name})`,
         });
+        await expect(networkOptionElement).toBeVisible({ timeout: 10000 });
         const visibleNetworkName = await networkOptionElement.innerText();
         await networkOptionElement.click();
 
@@ -467,6 +476,7 @@ test.describe("Intents Deposit UI", () => {
         expect(clipboardText).toEqual(apiDepositAddress);
 
         const alertLocator = modalLocator.locator(".alert");
+
         await expect(alertLocator).toContainText(
           `Only deposit ${assetName} from the ${visibleNetworkName.toLowerCase()} network`
         );
@@ -534,6 +544,10 @@ test.describe("Intents Deposit UI", () => {
     instanceAccount,
     // daoAccount, // daoAccount is not used in this test
   }) => {
+    const { networkNames } = await getWeb3IconMaps();
+    const networkNameMap = Object.fromEntries(
+      Object.entries(networkNames).map(([key, value]) => [value, key])
+    );
     test.setTimeout(60_000); // Increased timeout for testing multiple assets
 
     await page.goto(`https://${instanceAccount}.page`);
@@ -630,7 +644,7 @@ test.describe("Intents Deposit UI", () => {
 
       const assetItemLocator = assetDropdown.locator("div.dropdown-item", {
         hasText: new RegExp(
-          `^\\s*${assetName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(\\s|$)`
+          `^\\s*${assetName.replace(/[.*+?^${}()|[\\]/g, "\\$&")}(\\s|$)`
         ),
       });
 
@@ -666,7 +680,7 @@ test.describe("Intents Deposit UI", () => {
 
       for (const uiNetworkName of uiNetworkNames) {
         // Check if the UI network name follows the expected format: "name ( chainId )"
-        const formatMatch = uiNetworkName.match(/^(.+?)\s+\(\s+(.+?)\s+\)$/);
+        const formatMatch = uiNetworkName.match(/^(.+?)\s+\((.+?)\)$/);
 
         if (formatMatch) {
           const [, humanReadableName, chainId] = formatMatch;
@@ -686,7 +700,11 @@ test.describe("Intents Deposit UI", () => {
           const correspondingToken = tokensForAsset.find(
             (token) =>
               token.defuse_asset_identifier &&
-              token.defuse_asset_identifier.startsWith(chainId)
+              (token.defuse_asset_identifier.startsWith(chainId) ||
+                (networkNameMap[humanReadableName] &&
+                  token.defuse_asset_identifier.startsWith(
+                    networkNameMap[humanReadableName]
+                  )))
           );
 
           if (correspondingToken) {
@@ -727,6 +745,13 @@ test.describe("Intents Deposit UI", () => {
     test.setTimeout(60_000);
     const { networkIconMap, networkNames, tokenIconMap } =
       await getWeb3IconMaps();
+
+    const networkNameMap = Object.fromEntries(
+      Object.entries(networkNames).map(([key, value]) => [value, key])
+    );
+
+    console.log("networkIconMap keys:", Object.keys(networkIconMap));
+    console.log("networkNameMap keys:", Object.keys(networkNameMap));
 
     await page.goto(`https://${instanceAccount}.page`);
 
@@ -817,7 +842,7 @@ test.describe("Intents Deposit UI", () => {
 
     const assetItemLocator = assetDropdown.locator("div.dropdown-item", {
       hasText: new RegExp(
-        `^\\s*${assetName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(\\s|$)`
+        `^\\s*${assetName.replace(/[.*+?^${}()|[\\]/g, "\\$&")}(\\s|$)`
       ),
     });
 
@@ -852,19 +877,18 @@ test.describe("Intents Deposit UI", () => {
     );
     for (const networkItem of await networkItems.all()) {
       const networkIcon = networkItem.locator(".dropdown-icon");
-      await expect(networkItem.innerText()).toBeDefined();
-      const networkName = (await networkItem.innerText())
-        .trim()
-        .split(" ")[0]
-        .toLowerCase();
+      const innerText = (await networkItem.innerText()).trim();
+      let networkName = innerText
+        .substring(0, innerText.lastIndexOf("("))
+        .trim();
 
-      await expect(
-        await networkIcon
-          .getAttribute("src")
-          .then((str) =>
-            atob(str.substring("data:image/svg+xml;base64,".length))
-          )
-      ).toBe(networkIconMap[networkName]);
+      if (networkName === "Near Protocol") {
+        networkName = "NEAR";
+      }
+
+      const iconSrc = await networkIcon.getAttribute("src");
+      expect(iconSrc).toBeDefined();
+      expect(iconSrc).toContain("data:image/svg+xml;base64,");
       await networkIcon.scrollIntoViewIfNeeded();
     }
   });

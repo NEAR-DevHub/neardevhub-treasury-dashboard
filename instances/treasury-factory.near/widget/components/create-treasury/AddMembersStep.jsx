@@ -4,7 +4,7 @@ const { getRolesDescription } = VM.require(
   getRolesDescription: () => {},
 };
 
-const { formFields, setFormFields } = props;
+const { formFields, setFormFields, setCurrentPage } = props;
 
 const Badge = styled.div`
   border: 1px solid #e2e6ec;
@@ -230,20 +230,31 @@ return (
       Add Member
     </button>
     <div className="d-flex gap-2">
-      <Link
-        className="btn w-100"
-        href={`/${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=1`}
-      >
-        Back
-      </Link>
-      <Link
-        className={`btn btn-primary w-100 ${
-          members.length > 0 ? "" : "disabled"
-        }`}
-        href={`/${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=3`}
-      >
-        Continue
-      </Link>
+      <Widget
+        src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
+        props={{
+          classNames: {
+            root: "btn w-100 shadow-none no-transparent",
+          },
+          label: "Back",
+          onClick: () => {
+            setCurrentPage(1);
+          },
+        }}
+      />
+      <Widget
+        src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
+        props={{
+          classNames: {
+            root: `btn btn-primary w-100`,
+          },
+          disabled: members.length === 0,
+          label: "Continue",
+          onClick: () => {
+            setCurrentPage(3);
+          },
+        }}
+      />
     </div>
   </>
 );

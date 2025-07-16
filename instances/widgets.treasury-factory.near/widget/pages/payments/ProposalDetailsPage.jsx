@@ -184,6 +184,7 @@ useEffect(() => {
           isIntentsPayment,
           intentsTokenInfo,
           proposalUrl,
+          proposal: item,
         });
       })
       .catch((e) => {
@@ -546,6 +547,7 @@ return (
                   checkProposalStatus: () =>
                     checkProposalStatus(proposalData?.id),
                   isProposalDetailsPage: true,
+                  proposal: proposalData.proposal,
                 }}
               />
             ),

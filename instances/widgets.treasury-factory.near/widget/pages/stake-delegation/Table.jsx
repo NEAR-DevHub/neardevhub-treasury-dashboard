@@ -386,6 +386,7 @@ const ProposalsComponent = () => {
                       validatorAccount,
                       treasuryWallet,
                       hasOneDeleteIcon,
+                      proposal: item,
                     }}
                   />
                 </td>

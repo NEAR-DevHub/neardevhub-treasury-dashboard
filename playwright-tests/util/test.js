@@ -90,10 +90,14 @@ export async function cacheCDN(page) {
           `${cacheFilePath}.type`,
           "utf-8"
         );
-        await route.fulfill({
-          body: cachedContent,
-          headers: { "Content-Type": contentType },
-        });
+        try {
+          await route.fulfill({
+            body: cachedContent,
+            headers: { "Content-Type": contentType },
+          });
+        } catch (e) {
+          console.error(e);
+        }
       } else {
         const response = await route.fetch();
         const body = await response.body();
@@ -103,10 +107,14 @@ export async function cacheCDN(page) {
         await fs.promises.writeFile(cacheFilePath, body);
         await fs.promises.writeFile(`${cacheFilePath}.type`, contentType);
 
-        await route.fulfill({
-          body,
-          headers: response.headers(),
-        });
+        try {
+          await route.fulfill({
+            body,
+            headers: response.headers(),
+          });
+        } catch (e) {
+          console.error(e);
+        }
       }
     });
   };

@@ -261,7 +261,7 @@ test.describe("User is logged in", function () {
 
     const iframe = page.locator("iframe").contentFrame();
 
-    await expect(iframe.getByText("Member #5")).toBeVisible();
+    await expect(iframe.getByText("Member #1")).toBeVisible();
     await expect(iframe.locator("#member-0")).toBeVisible();
 
     const usernameInput = iframe.getByPlaceholder("treasury.near");
@@ -360,40 +360,51 @@ test.describe("User is logged in", function () {
     }
 
     await addButton.click();
-    await expect(iframe.getByText("Member #6")).toBeVisible();
+    await expect(iframe.getByText("Member #2")).toBeVisible();
 
     const usernameInputs = iframe.getByPlaceholder("treasury.near");
-    await usernameInputs.nth(1).fill("member1.near");
+    await usernameInputs.nth(1).fill("invalid__account");
 
     await iframe.getByText("Add Permission").nth(1).click();
     await iframe.locator("#dropdownMenu-1 .dropdown-item").nth(0).click();
 
     await addButton.click();
-    await expect(iframe.getByText("Member #7")).toBeVisible();
+    await expect(iframe.getByText("Member #3")).toBeVisible();
     await expect(iframe.locator("#member-2")).toBeVisible();
     await iframe.locator("#accountInput-2").scrollIntoViewIfNeeded();
-    await iframe.locator("#accountInput-2").fill("member3.near");
+    await iframe.locator("#accountInput-2").fill("CaptialAccount.near");
     await iframe.getByText("Add Permission").nth(2).click();
     await iframe.locator("#dropdownMenu-2 .dropdown-item").nth(0).click();
 
+    await addButton.click();
+    await usernameInputs.nth(3).fill("NonExistent123455.near");
+    await addButton.click();
+    await usernameInputs.nth(4).fill("member3.near");
+    await submitButton.click();
+    await expect(
+      iframe.getByText("This account is already a member.")
+    ).toHaveCount(2);
+    await expect(
+      iframe.getByText("Please enter a valid account ID.")
+    ).toHaveCount(6);
+
     // Remove member and verify renumbering
+    await iframe.locator("#member-3 i").first().click();
+    await iframe.locator("#member-2 i").first().click();
     await iframe.locator("#member-1 i").first().click();
     await expect(iframe.locator("#member-1")).toHaveCSS("display", "none");
-    await expect(iframe.locator("#memberLabel-2")).toHaveText("Member #6");
-    await expect(iframe.locator("#member-2")).toBeVisible();
-
-    await expect(iframe.locator("#memberLabel-0")).toHaveText("Member #5");
-    await expect(iframe.locator("#memberLabel-2")).toHaveText("Member #6");
     await expect(iframe.locator("#member-0")).toBeVisible();
-    await expect(iframe.locator("#member-2")).toBeVisible();
+    await expect(iframe.locator("#member-4")).toBeVisible();
+    await expect(iframe.locator("#memberLabel-0")).toHaveText("Member #1");
+    await expect(iframe.locator("#memberLabel-4")).toHaveText("Member #2");
 
     // Add another member after removal
     await addButton.click();
-    await expect(iframe.locator("#memberLabel-3")).toHaveText("Member #7");
-    await expect(iframe.locator("#member-3")).toBeVisible();
-    await iframe.locator("#accountInput-3").fill("member3.near");
-    await iframe.locator("#selectTag-3").click();
-    await iframe.locator("#dropdownMenu-3 .dropdown-item").nth(0).click();
+    await expect(iframe.locator("#memberLabel-5")).toHaveText("Member #3");
+    await expect(iframe.locator("#member-4")).toBeVisible();
+    await iframe.locator("#accountInput-5").fill("member3.near");
+    await iframe.locator("#selectTag-5").click();
+    await iframe.locator("#dropdownMenu-5 .dropdown-item").nth(0).click();
 
     await addButton.click();
     // Submit and verify errors appear only on submit
@@ -417,11 +428,12 @@ test.describe("User is logged in", function () {
     ).toBeVisible();
 
     // Fix the errors
-    await iframe.locator("#accountInput-0").fill("testmember1.near");
-    await iframe.locator("#accountInput-2").fill("testmember2.near");
-    await iframe.locator("#member-3 i").first().click();
-    await iframe.locator("#member-4 i").first().click();
-
+    await iframe.locator("#accountInput-0").fill("member1.near");
+    await iframe.locator("#accountInput-4").fill("member2.near");
+    await iframe.locator("#selectTag-4").click();
+    await iframe.locator("#dropdownMenu-4 .dropdown-item").nth(0).click();
+    await iframe.locator("#member-5 i").first().click();
+    await iframe.locator("#member-6 i").first().click();
     await submitButton.click();
 
     await submitProposal({ page });
@@ -429,8 +441,8 @@ test.describe("User is logged in", function () {
     await expect(
       page.getByRole("heading", { name: "Update Policy - Add New Members" })
     ).toBeVisible();
-    await expect(page.getByText("@testmember1.near")).toBeVisible();
-    await expect(page.getByText("@testmember2.near")).toBeVisible();
+    await expect(page.getByText("@member1.near")).toBeVisible();
+    await expect(page.getByText("@member2.near")).toBeVisible();
     await expect(page.getByText("Assigned Roles")).toHaveCount(2);
   });
 

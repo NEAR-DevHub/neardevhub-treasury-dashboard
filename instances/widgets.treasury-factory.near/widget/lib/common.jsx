@@ -396,7 +396,7 @@ function getFilteredProposalsByStatusAndKind({
   });
 }
 
-const data = fetch(`https://ref-sdk-test-cold-haze-1300-2.fly.dev/headers`);
+const data = fetch("${REPL_BACKEND_API}".replace("/api", "") + "/headers");
 const gatewayOrigin = data?.body?.headers?.origin ?? "";
 
 const isNearSocial =
@@ -1243,6 +1243,135 @@ function updateDaoPolicy(membersList, daoPolicy) {
   };
 }
 
+function nearAccountValidation(accountId, fieldName, isSputnikDaoCheck) {
+  if (!accountId || typeof accountId !== "string") {
+    return { isValid: false, error: `${fieldName} must be a string` };
+  }
+
+  // Check minimum and maximum length
+  if (accountId.length < 2) {
+    return {
+      isValid: false,
+      error: `${fieldName} must be at least 2 characters long`,
+    };
+  }
+  if (accountId.length > 64) {
+    return {
+      isValid: false,
+      error: `${fieldName} must be at most 64 characters long`,
+    };
+  }
+
+  // If isSputnikCheck is true, disallow hex accounts (implicit accounts) and dots
+  if (isSputnikDaoCheck) {
+    // Check for ETH-implicit account ID (0x followed by 40 hex characters)
+    if (accountId.startsWith("0x")) {
+      return {
+        isValid: false,
+        error: `${fieldName} cannot be an ETH-implicit account (hex address)`,
+      };
+    }
+
+    if (accountId.endsWith(".near")) {
+      return {
+        isValid: false,
+        error: `${fieldName} cannot end with .near`,
+      };
+    }
+
+    // Check for NEAR-implicit account ID (64 lowercase hex characters)
+    if (accountId.length === 64 && /^[0-9a-f]{64}$/.test(accountId)) {
+      return {
+        isValid: false,
+        error: `${fieldName} cannot be a NEAR-implicit account (hex address)`,
+      };
+    }
+
+    // For Sputnik, disallow dots (no subaccounts allowed)
+    if (accountId.includes(".")) {
+      return {
+        isValid: false,
+        error: `${fieldName} cannot contain dots (subaccounts are not allowed)`,
+      };
+    }
+  } else {
+    // Check for ETH-implicit account ID (0x followed by 40 hex characters)
+    if (accountId.startsWith("0x")) {
+      if (accountId.length !== 42) {
+        return {
+          isValid: false,
+          error:
+            "ETH-implicit account ID must be 0x followed by 40 hex characters",
+        };
+      }
+      if (!/^0x[0-9a-f]{40}$/.test(accountId)) {
+        return {
+          isValid: false,
+          error:
+            "ETH-implicit account ID must contain only lowercase hex characters",
+        };
+      }
+      return { isValid: true, error: null };
+    }
+
+    // Check for NEAR-implicit account ID (64 lowercase hex characters)
+    if (accountId.length === 64) {
+      if (!/^[0-9a-f]{64}$/.test(accountId)) {
+        return {
+          isValid: false,
+          error:
+            "NEAR-implicit account ID must contain only lowercase hex characters",
+        };
+      }
+      return { isValid: true, error: null };
+    }
+  }
+
+  // Check for subaccount format (parts separated by dots)
+  const parts = accountId.split(".");
+
+  // Each part must be valid
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i];
+
+    // Each part must be at least 1 character
+    if (part.length === 0) {
+      return { isValid: false, error: `${fieldName} parts cannot be empty` };
+    }
+
+    // Each part must consist of lowercase alphanumeric symbols separated by _ or -
+    if (!/^[a-z0-9_-]+$/.test(part)) {
+      return {
+        isValid: false,
+        error: `${fieldName} parts must contain only lowercase letters, numbers, underscores, and hyphens`,
+      };
+    }
+
+    // Each part cannot start or end with _ or -
+    if (
+      part.startsWith("_") ||
+      part.startsWith("-") ||
+      part.endsWith("_") ||
+      part.endsWith("-")
+    ) {
+      return {
+        isValid: false,
+        error: `${fieldName} parts cannot start or end with underscore or hyphen`,
+      };
+    }
+
+    // Each part cannot have consecutive _ or -
+    if (/[_-]{2,}/.test(part)) {
+      return {
+        isValid: false,
+        error: `${fieldName} parts cannot have consecutive underscores or hyphens`,
+      };
+    }
+  }
+
+  return { isValid: true, error: null };
+}
+
 return {
   getApproversAndThreshold,
   hasPermission,
@@ -1271,4 +1400,5 @@ return {
   getUserDaos,
   getIntentsBalances,
   updateDaoPolicy,
+  nearAccountValidation,
 };
