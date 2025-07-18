@@ -724,11 +724,9 @@ const code = `<!DOCTYPE html>
           account = (selectedMembers[index].member || '').toLowerCase();
         }
         const isNearnAccount = account === NEARN_ACCOUNT_ID;
-        const selectedRoles = window["selectedRoles_" + index];
-        const hasRoles = selectedRoles && selectedRoles.length > 0;
         const nearnWarning = document.getElementById("nearnWarning-" + index);
         if (nearnWarning) {
-          if (isNearnAccount && addProposalRole && hasRoles) {
+          if (isNearnAccount) {
             nearnWarning.classList.add("d-flex");
             nearnWarning.classList.remove("d-none");
           } else {
@@ -1071,7 +1069,6 @@ const code = `<!DOCTYPE html>
         document.getElementById("dropdownMenu-" + index).classList.remove("show");
         renderSelectedRoles(index);
         setTimeout(updateIframeHeight, 0);
-        updateNearnWarning(index);
       }
       
       
@@ -1083,7 +1080,6 @@ const code = `<!DOCTYPE html>
         window["selectedRoles_" + index] = selectedRoles;
         renderSelectedRoles(index);
         setTimeout(updateIframeHeight, 0);
-        updateNearnWarning(index);
       }
       
       function updateAddPermissionButtonVisibility(index) {
