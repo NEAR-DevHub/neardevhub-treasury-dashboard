@@ -92,6 +92,7 @@ useEffect(() => {
 return (
   <div className="d-flex flex-column flex-1 justify-content-between h-100">
     <Widget
+      loading=""
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.Table`}
       props={{
         proposals: proposals,
@@ -107,6 +108,7 @@ return (
     {(proposals ?? [])?.length > 0 && (
       <div>
         <Widget
+          loading=""
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Pagination`}
           props={{
             totalLength: totalLength,

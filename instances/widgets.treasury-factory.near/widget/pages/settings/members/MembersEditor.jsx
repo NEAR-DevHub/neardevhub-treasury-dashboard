@@ -1265,6 +1265,7 @@ return (
     />
 
     <Widget
+      loading=""
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
       props={{
         instance,

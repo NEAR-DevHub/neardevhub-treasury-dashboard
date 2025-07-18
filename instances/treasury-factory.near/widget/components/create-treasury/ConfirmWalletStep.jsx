@@ -56,10 +56,12 @@ return (
     <Section className="d-flex flex-column gap-3">
       <h4>Connected Wallet</h4>
       <Widget
+        loading=""
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
         props={{ accountId: context.accountId }}
       />
       <Widget
+        loading=""
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Info`}
         props={{
           type: "info",
@@ -86,6 +88,7 @@ return (
       </div>
       {balance < REQUIRED_BALANCE && (
         <Widget
+          loading=""
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Info`}
           props={{
             type: "alert",
@@ -98,6 +101,7 @@ return (
       )}
     </Section>
     <Widget
+      loading=""
       src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
       props={{
         classNames: {

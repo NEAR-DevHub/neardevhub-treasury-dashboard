@@ -113,6 +113,7 @@ const Account = ({ accountId }) => {
       onClick={() => onResultClick(accountId)}
     >
       <Widget
+        loading=""
         key={accountId}
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
         props={{

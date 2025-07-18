@@ -5,7 +5,7 @@ import { setPageAuthSettings } from "../../util/sandboxrpc.js";
 import { KeyPairEd25519 } from "near-workspaces";
 
 test("should show system-update for targeted instance", async ({ page }) => {
-  const contractId = "treasury-testing.near";
+  const contractId = "treasury-testing-infinex.near";
   await redirectWeb4({
     contractId,
     page,
@@ -20,7 +20,7 @@ test("should show system-update for targeted instance", async ({ page }) => {
         type: "DAO contract",
         summary: "Update to latest sputnik-dao contract",
         details: "",
-        instances: ["infinex.near", "treasury-testing.near"],
+        instances: ["infinex.near", "treasury-testing-infinex.near"],
         votingRequired: true,
       }
   ];
@@ -41,7 +41,7 @@ test("should show system-update for targeted instance", async ({ page }) => {
 test("should not show system-update for others than targeted instances", async ({
   page,
 }) => {
-  const contractId = "treasury-testing.near";
+  const contractId = "treasury-testing-infinex.near";
   await redirectWeb4({
     contractId,
     page,
@@ -79,7 +79,7 @@ test("should not show system-update for others than targeted instances", async (
 test("should show system-update if no target instances specified", async ({
   page,
 }) => {
-  const contractId = "treasury-testing.near";
+  const contractId = "treasury-testing-infinex.near";
   await redirectWeb4({
     contractId,
     page,

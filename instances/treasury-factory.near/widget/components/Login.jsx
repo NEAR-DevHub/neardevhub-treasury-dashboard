@@ -42,6 +42,7 @@ const SocalSignIn = () => (
     <div className="d-flex flex-1 flex-column gap-2">
       <h4>Click the 'Sign In' button at the top-right corner</h4>
       <Widget
+        loading=""
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Info`}
         props={{
           type: "info",

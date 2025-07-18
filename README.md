@@ -1,11 +1,34 @@
-NEAR DevHub trustees dashboard BOS components
-==============================================
+# NEAR DevHub trustees dashboard BOS components
 
 This is the repository of the BOS components for the NEAR DevHub trustees dashboard.
 
 # Contributing
 
 Please refer to [NEAR DevHub](https://github.com/NEAR-DevHub/neardevhub-bos/blob/main/CONTRIBUTING.md) for general contribution guidelines. Details specific for this repository will be added later.
+
+## Development Guidelines
+
+### VM Widget Loading Pattern
+
+When using VM widgets in your components, always include the `loading=""` prop to ensure your own loading states are shown instead of the default spinner. This provides better user experience and consistent loading behavior across the application.
+
+**Example:**
+
+```jsx
+<Widget
+  loading=""
+  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Votes`}
+  props={{
+    votes: proposalData?.votes,
+  }}
+/>
+```
+
+**Why this matters:**
+
+- Prevents the default VM spinner from appearing
+- Provides better control over the loading experience
+- Ensures consistency across all VM widget usage in the application
 
 ## Running tests
 
@@ -44,6 +67,7 @@ The resulting mp4 file can be directly dragged into the Pull Request description
 The `playwright-video-merger.sh` script is used to process and combine Playwright test videos into a single, presentation-ready video file. It is especially useful for creating demo or showcase videos from your automated test runs.
 
 ### What the Script Does
+
 - **Finds all Playwright test videos** (`video.webm`) in the `test-results/` directory.
 - **Overlays the test title** (from `test-title.txt` if available, or the folder name as a fallback) as a subtitle at the bottom of each video.
 - **Converts each video to mp4** format for compatibility and better compression.
@@ -51,6 +75,7 @@ The `playwright-video-merger.sh` script is used to process and combine Playwrigh
 - **Concatenates all processed videos** (with freeze frames) into a single output file: `final_output.mp4`.
 
 ### How to Use
+
 1. **Run your Playwright tests** with video recording enabled. The test videos will be saved in the `test-results/` directory.
 2. **Ensure test titles are saved**: The test suite should write the test title to a `test-title.txt` file in each test's video folder (this is handled by the provided `afterEach` hook in your tests).
 3. **Run the script:**
@@ -60,6 +85,7 @@ The `playwright-video-merger.sh` script is used to process and combine Playwrigh
 4. **Find your merged video:** The final output will be saved as `final_output.mp4` in the root of your workspace.
 
 ### Notes
+
 - The script also creates intermediate processed videos in the `processed_videos/` directory and freeze frames in the `freeze_frames/` directory.
 - If `test-title.txt` is missing, the script will use the folder name as the overlay text.
 - You can adjust the text wrapping and overlay style by editing the script variables.
@@ -86,39 +112,39 @@ Here is an example of a `devstoragestate.json` file that reflects the data neede
 
 ```json
 {
-    "cookies": [],
-    "origins": [
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "https://webassemblymusic-treasury.near.page",
+      "localStorage": [
         {
-            "origin": "https://webassemblymusic-treasury.near.page",
-            "localStorage": [
-                {
-                    "name": "near-social-vm:v01::accountId:",
-                    "value": "\"petersalomonsen.near\""
-                },
-                {
-                    "name": "near-wallet-selector:contract",
-                    "value": "{\"contractId\":\"social.near\",\"methodNames\":[]}"
-                },
-                {
-                    "name": "near-wallet-selector:ledger:accounts",
-                    "value": "[{\"accountId\":\"petersalomonsen.near\",\"derivationPath\":\"44'/397'/0'/0'/1'\",\"publicKey\":\"A7sZsyaujEaeYpUsw29hCi8vrxiyxXSbaTqbsxoa4AcN\"}]"
-                },
-                {
-                    "name": "near-wallet-selector:recentlySignedInWallets",
-                    "value": "[\"ledger\"]"
-                },
-                {
-                    "name": "near-wallet-selector:rememberRecentWallets",
-                    "value": "\"enabled\""
-                },
-                {
-                    "name": "near-wallet-selector:selectedWalletId",
-                    "value": "\"ledger\""
-                }
-            ]
+          "name": "near-social-vm:v01::accountId:",
+          "value": "\"petersalomonsen.near\""
+        },
+        {
+          "name": "near-wallet-selector:contract",
+          "value": "{\"contractId\":\"social.near\",\"methodNames\":[]}"
+        },
+        {
+          "name": "near-wallet-selector:ledger:accounts",
+          "value": "[{\"accountId\":\"petersalomonsen.near\",\"derivationPath\":\"44'/397'/0'/0'/1'\",\"publicKey\":\"A7sZsyaujEaeYpUsw29hCi8vrxiyxXSbaTqbsxoa4AcN\"}]"
+        },
+        {
+          "name": "near-wallet-selector:recentlySignedInWallets",
+          "value": "[\"ledger\"]"
+        },
+        {
+          "name": "near-wallet-selector:rememberRecentWallets",
+          "value": "\"enabled\""
+        },
+        {
+          "name": "near-wallet-selector:selectedWalletId",
+          "value": "\"ledger\""
         }
-    ],
-    "sessionStorage": []
+      ]
+    }
+  ],
+  "sessionStorage": []
 }
 ```
 
@@ -135,20 +161,24 @@ In the [web4](./web4) folder there is a setup for a web4 gateway. The [public_ht
 You can set up a minimal Playwright test file and use the `redirectWeb4` function to capture the navigation to the web4 page.
 
 ```javascript
-import { test } from '../../util/test.js';
-import { expect } from '@playwright/test';
-import { redirectWeb4 } from '../../util/web4.js';
+import { test } from "../../util/test.js";
+import { expect } from "@playwright/test";
+import { redirectWeb4 } from "../../util/web4.js";
 
-test("check if instance web4 contract is up to date", async ({page, instanceAccount, daoAccount}) => {
-    await redirectWeb4({
-        page,
-        contractId: instanceAccount,
-        treasury: daoAccount
-    });
-    await page.goto(`https://${instanceAccount}.page`);
+test("check if instance web4 contract is up to date", async ({
+  page,
+  instanceAccount,
+  daoAccount,
+}) => {
+  await redirectWeb4({
+    page,
+    contractId: instanceAccount,
+    treasury: daoAccount,
+  });
+  await page.goto(`https://${instanceAccount}.page`);
 
-    // Stop your debugger here, and you then reload the page 
-    await page.waitForTimeout(2000);
+  // Stop your debugger here, and you then reload the page
+  await page.waitForTimeout(2000);
 });
 ```
 

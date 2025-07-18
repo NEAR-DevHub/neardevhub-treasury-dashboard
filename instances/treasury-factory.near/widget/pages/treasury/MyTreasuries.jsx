@@ -318,6 +318,7 @@ const SuccessModal = () => {
         </div>
         <ModalContent>
           <Widget
+            loading=""
             src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.SuccessPage`}
             props={{
               formFields,
@@ -562,7 +563,10 @@ if (accountId) {
 return (
   <div className="d-flex flex-column align-items-center w-100 mb-4">
     <Container>
-      <Widget src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Login`} />
+      <Widget
+        loading=""
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Login`}
+      />
     </Container>
   </div>
 );

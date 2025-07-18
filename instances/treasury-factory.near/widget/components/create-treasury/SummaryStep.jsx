@@ -239,6 +239,7 @@ const ListItem = ({ member }) => (
   <Item className="d-flex align-items-center w-100 gap-3">
     <div style={{ minWidth: "200px", width: "200px" }}>
       <Widget
+        loading=""
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
         props={{ accountId: member.accountId }}
       />
@@ -265,6 +266,7 @@ return (
         <Section withBorder>
           <label>Your Wallet</label>
           <Widget
+            loading=""
             src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
             props={{ accountId: context.accountId }}
           />
@@ -324,6 +326,7 @@ return (
           </Section>
         )}
         <Widget
+          loading=""
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Info`}
           props={{
             type: "info",

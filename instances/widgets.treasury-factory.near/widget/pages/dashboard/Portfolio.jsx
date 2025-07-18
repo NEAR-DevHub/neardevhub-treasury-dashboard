@@ -149,6 +149,7 @@ const BalanceDisplay = ({
             {"  "}{" "}
             {!hideTooltip && (
               <Widget
+                loading=""
                 src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
                 props={{
                   popup: tooltipInfo,
@@ -460,6 +461,7 @@ const LockupRow = ({
             {label}
             {"  "}{" "}
             <Widget
+              loading=""
               src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
               props={{
                 popup: tooltipInfo,
