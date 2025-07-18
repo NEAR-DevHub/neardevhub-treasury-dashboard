@@ -309,7 +309,10 @@ return (
           label: `Submit ${
             proposalList.filter((_, idx) => selectedMap[idx]).length
           } Requests`,
-          disabled: !proposalList.filter((_, idx) => selectedMap[idx]).length,
+          disabled:
+            !proposalList.filter((_, idx) => selectedMap[idx]).length ||
+            isCreatingRequest ||
+            isTxnCreated,
           loading: isCreatingRequest || isTxnCreated,
           onClick: () => {
             setIsCreatingRequest(true);

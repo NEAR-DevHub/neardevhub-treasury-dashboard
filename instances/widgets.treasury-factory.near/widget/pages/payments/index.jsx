@@ -270,9 +270,9 @@ return (
                     instance,
                     onCloseCanvas: toggleCreatePage,
                     showPreviewTable: (data) => {
+                      setBulkPreviewData(data);
                       toggleCreatePage();
                       setIsBulkImport(false);
-                      setBulkPreviewData(data);
                     },
                   }}
                 />
