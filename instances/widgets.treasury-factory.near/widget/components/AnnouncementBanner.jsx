@@ -24,9 +24,9 @@ if (showWeb4Gateway) {
       <div className="d-flex gap-2 px-3 py-2 rounded-3 align-items-center justify-content-center">
         <i class="bi bi-exclamation-triangle h5 mb-0 error-icon"></i>
         <div>For best experience, use the Web4 Gateway.</div>
-        <Link className="text-underline" href={`https://${instance}.page/`}>
+        <a className="text-underline" href={`https://${instance}.page/`}>
           Switch Now
-        </Link>
+        </a>
 
         <i onClick={() => setShowModal(true)} className="bi bi-info-circle"></i>
       </div>
@@ -49,7 +49,7 @@ if (showWeb4Gateway) {
             stay current and avoid issues.
           </ModalContent>
           <ModalFooter>
-            <Link
+            <a
               className={`btn theme-btn `}
               href={`https://${instance}.page/`}
               onClick={() => {
@@ -57,7 +57,7 @@ if (showWeb4Gateway) {
               }}
             >
               Switch to Web4
-            </Link>
+            </a>
           </ModalFooter>
         </Modal>
       )}
