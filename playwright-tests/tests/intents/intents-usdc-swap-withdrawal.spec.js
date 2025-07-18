@@ -33,9 +33,8 @@ import {
  * ✅ NEP-413 signature generation and verification working correctly
  * ✅ JSON deserialization passes
  * ✅ Public key lookup succeeds
- * ❌ Intent execution fails on insufficient balance (expected without token minting)
- * 
- * TODO: Implement proper token minting to see full successful execution
+ * ✅ USDC minting via proper multisig process implemented
+ * ✅ Token balances funded for complete intent execution testing
  */
 test("replicate USDC swap and withdrawal with solver", async ({ page }, testInfo) => {
   // Skip if not running treasury-testing project
@@ -108,6 +107,13 @@ test("replicate USDC swap and withdrawal with solver", async ({ page }, testInfo
     mainnetContract: nearUsdcToken.near_token_id,
   });
   
+  // Create additional accounts needed for multisig operations
+  const masterMinter1 = worker.rootAccount; // Use root as first master minter
+  const masterMinter2 = await worker.rootAccount.createSubAccount("masterminter2");
+  const controller1 = await worker.rootAccount.createSubAccount("controller1"); 
+  const controller2 = await worker.rootAccount.createSubAccount("controller2");
+  const minter = await worker.rootAccount.createSubAccount("minter");
+
   // Initialize it using the same method as wrap.near initialization in other tests
   const nearUsdcMainnetAccount = await mainnet.account(nearUsdcContract.accountId);
   const mainnetMetadata = await nearUsdcMainnetAccount.viewFunction({
@@ -118,12 +124,12 @@ test("replicate USDC swap and withdrawal with solver", async ({ page }, testInfo
   
   await nearUsdcContract.call(nearUsdcContract.accountId, "init", {
     admin_ids: [worker.rootAccount.accountId],
-    master_minter_ids: [worker.rootAccount.accountId],
+    master_minter_ids: [masterMinter1.accountId, masterMinter2.accountId],
     owner_ids: [worker.rootAccount.accountId],
     pauser_ids: [worker.rootAccount.accountId],
     blocklister_id: worker.rootAccount.accountId,
     metadata: mainnetMetadata,
-    approval_threshold: 1, // Use 1 for testing instead of 2
+    approval_threshold: 2, // Require 2 approvals for multisig
     validity_period: "432000000000000", // 5 days in nanoseconds
   });
 
@@ -209,23 +215,150 @@ test("replicate USDC swap and withdrawal with solver", async ({ page }, testInfo
     { attachedDeposit: parseNEAR("0.00125") }
   );
 
-  // Note: For this test, we're focusing on the NEP-413 signature verification
-  // The swap will fail due to insufficient balances, but we can verify the signatures work
-  console.log("✓ Setup complete - testing NEP-413 signature verification");
+  // USDC Minting with Multisig Process
+  // The NEAR USDC contract follows Circle's architecture requiring multisig approval for minting
   
-  /* TODO: Implement proper token minting for full test
-   * 
-   * To see successful execute_intents execution, we need to:
-   * 1. Mint NEAR USDC tokens to user account using nearUsdcContract.mint()
-   * 2. Mint ETH USDC tokens to solver account using OMFT contract's minting functionality
-   *    - Check intents-deposit-other-chain.spec.js for deploy_token pattern
-   *    - Use proper OMFT minting methods
-   * 3. Transfer tokens to intents contract so it has sufficient balance for swaps
-   * 4. Verify balances before/after execution to confirm swap worked
-   * 
-   * Current blocker: Need to understand proper OMFT token minting interface
-   * Reference: intents-deposit-other-chain.spec.js line selection shows deploy_token usage
+  /**
+   * Helper function to execute multisig actions following the pattern from Circle's integration tests
    */
+  async function doMultisigAction(requester1, requester2, contract, action, description) {
+    console.log(`\n--- ${description} ---`);
+    
+    // Step 1: Create multisig request  
+    const requestId = await requester1.call(
+      contract.accountId,
+      "create_multisig_request",
+      action,
+      { gas: "100000000000000" }
+    );
+    
+    console.log(`✓ Created multisig request ${requestId}`);
+    
+    // Step 2: First approval
+    await requester1.call(
+      contract.accountId,
+      "approve_multisig_request",
+      { request_id: requestId },
+      { gas: "100000000000000" }
+    );
+    
+    console.log(`✓ First approval by ${requester1.accountId}`);
+    
+    // Step 3: Second approval  
+    await requester2.call(
+      contract.accountId,
+      "approve_multisig_request", 
+      { request_id: requestId },
+      { gas: "100000000000000" }
+    );
+    
+    console.log(`✓ Second approval by ${requester2.accountId}`);
+    
+    // Step 4: Execute the approved request
+    const result = await requester1.call(
+      contract.accountId,
+      "execute_multisig_request",
+      { request_id: requestId },
+      { gas: "100000000000000" }
+    );
+    
+    console.log(`✓ Executed multisig request ${requestId}`);
+    return result;
+  }
+
+  // Accounts already created earlier before init call
+  // Contract already initialized in earlier init call
+  console.log("✓ USDC contract already initialized with multisig structure");
+
+  // Step 1: Configure Controllers (requires master minter approval)
+  await doMultisigAction(
+    masterMinter1,
+    masterMinter2, 
+    nearUsdcContract,
+    {
+      action: {
+        ConfigureController: {
+          controller_id: controller1.accountId,
+          minter_id: minter.accountId,
+        }
+      }
+    },
+    "Configure Controller 1"
+  );
+
+  await doMultisigAction(
+    masterMinter1,
+    masterMinter2,
+    nearUsdcContract, 
+    {
+      action: {
+        ConfigureController: {
+          controller_id: controller2.accountId,
+          minter_id: minter.accountId,
+        }
+      }
+    },
+    "Configure Controller 2"
+  );
+
+  // Step 2: Configure Minter Allowance (requires controller approval)
+  await doMultisigAction(
+    controller1,
+    controller2,
+    nearUsdcContract,
+    {
+      action: {
+        ConfigureMinterAllowance: {
+          controller_id: controller1.accountId,
+          minter_allowance: "1000000000000", // 1M USDC allowance
+        }
+      }
+    },
+    "Configure Minter Allowance"
+  );
+
+  console.log("✓ Minter configured with 1M USDC allowance");
+
+  // Step 3: Mint USDC tokens to user account
+  await minter.call(
+    nearUsdcContract.accountId,
+    "mint",
+    {
+      to: userAccount.accountId,
+      amount: "100000000", // 100 USDC with 6 decimals
+    },
+    { gas: "100000000000000" }
+  );
+
+  console.log(`✓ Minted 100 USDC to ${userAccount.accountId}`);
+
+  // Step 4: Deposit ETH USDC to intents contract using ft_deposit  
+  await omftContract.call(
+    omftContract.accountId,
+    "ft_deposit",
+    {
+      owner_id: "intents.near",
+      token: "eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48", // ETH USDC token symbol
+      amount: "200000000", // 200 USDC with 6 decimals 
+      msg: JSON.stringify({ receiver_id: solverAccount.accountId }), // Credit to solver account
+    },
+    { attachedDeposit: parseNEAR("1"), gas: "100000000000000" }
+  );
+
+  // Step 5: Transfer user's NEAR USDC to intents contract for the swap
+  await userAccount.call(
+    nearUsdcTokenId,
+    "ft_transfer_call",
+    {
+      receiver_id: intentsContract.accountId,
+      amount: "100000000", // 100 USDC
+      memo: "Deposit for intent execution",
+      msg: ""
+    },
+    { attachedDeposit: "1", gas: "100000000000000" }
+  );
+
+  console.log("✓ Tokens minted and deposited for swap test");
 
   // Define the defuse token IDs using real mainnet token IDs
   const nearUsdcTokenDefuseId = nearUsdcToken.intents_token_id; // Use real mainnet token ID
@@ -271,7 +404,7 @@ test("replicate USDC swap and withdrawal with solver", async ({ page }, testInfo
 
   // Execute intents using proper NEP-413 signed payloads (replicating the mainnet transaction)
   
-  // Create the solver intent message - matching original format exactly
+  // Create the solver intent message - matching the amounts we minted
   const solverMessage = {
     signer_id: solverAccount.accountId,
     deadline: new Date(Date.now() + 10 * 60 * 1000).toISOString(), // 10 minutes from now
@@ -279,22 +412,22 @@ test("replicate USDC swap and withdrawal with solver", async ({ page }, testInfo
       {
         intent: "token_diff",
         diff: {
-          [nearUsdcTokenDefuseId]: "99999900", // Take NEAR USDC
-          [ethUsdcTokenDefuseId]: "-99999900", // Give ETH USDC
+          [nearUsdcTokenDefuseId]: "99999900", // Take 99.9999 NEAR USDC (6 decimals)
+          [ethUsdcTokenDefuseId]: "-99999900", // Give 99.9999 ETH USDC
         },
       },
     ],
   };
 
-  // Create the user intent message - matching original format exactly
+  // Create the user intent message - matching the amounts we minted  
   const userMessage = {
     deadline: new Date(Date.now() + 10 * 60 * 1000).toISOString(), // 10 minutes from now
     intents: [
       {
         intent: "token_diff",
         diff: {
-          [nearUsdcTokenDefuseId]: "-100000000", // Give NEAR USDC
-          [ethUsdcTokenDefuseId]: "99999800", // Get ETH USDC (200 fee)
+          [nearUsdcTokenDefuseId]: "-100000000", // Give 100 NEAR USDC
+          [ethUsdcTokenDefuseId]: "99999800", // Get 99.9998 ETH USDC (200 microUSDC fee)
         },
         referral: "near-intents.intents-referral.near", // Non-existent account (replicating mainnet behavior)
       },
