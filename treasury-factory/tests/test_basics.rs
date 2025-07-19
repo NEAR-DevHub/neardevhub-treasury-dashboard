@@ -1056,3 +1056,56 @@ async fn test_factory_should_refund_if_failing_because_of_existing_dao_but_still
 
     Ok(())
 }
+
+#[tokio::test]
+async fn test_service_worker() -> Result<(), Box<dyn std::error::Error>> {
+    let sandbox = near_workspaces::sandbox().await?;
+    let contract_wasm = build_project_once();
+
+    let contract = sandbox.dev_deploy(&contract_wasm).await?;
+
+    let result = contract
+        .view("web4_get")
+        .args_json(json!({"request": {"path": "/service-worker.js"}}))
+        .await?;
+    let response = result.json::<Web4Response>().unwrap();
+    assert_eq!("application/javascript", response.content_type);
+
+    let body_string =
+        String::from_utf8(BASE64_STANDARD.decode(response.body).unwrap()).unwrap();
+
+    // Verify it contains our service worker code
+    assert!(body_string.contains("Service Worker for Treasury Factory with RPC Caching"));
+    assert!(body_string.contains(r#"self.addEventListener("install""#));
+    assert!(body_string.contains(r#"self.addEventListener("fetch""#));
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn test_html_contains_service_worker_registration() -> Result<(), Box<dyn std::error::Error>> {
+    let sandbox = near_workspaces::sandbox().await?;
+    let contract_wasm = build_project_once();
+
+    let contract = sandbox.dev_deploy(&contract_wasm).await?;
+
+    let result = contract
+        .view("web4_get")
+        .args_json(json!({"request": {"path": "/"}}))
+        .await?;
+    let response = result.json::<Web4Response>().unwrap();
+    assert_eq!("text/html; charset=UTF-8", response.content_type);
+
+    let body_string =
+        String::from_utf8(BASE64_STANDARD.decode(response.body).unwrap()).unwrap();
+
+    // Verify it contains service worker registration code
+    assert!(body_string.contains("serviceWorker' in navigator"));
+    assert!(body_string.contains("navigator.serviceWorker.register('/service-worker.js')"));
+    assert!(body_string.contains("Service Worker registered with scope"));
+    assert!(body_string.contains("Service Worker registration failed"));
+    assert!(body_string.contains("document.readyState === 'complete'"));
+    assert!(body_string.contains("registerServiceWorker"));
+
+    Ok(())
+}
