@@ -237,9 +237,15 @@ export async function redirectWeb4({
       });
     }
 
+    // Decode the body and replace service-worker.js references
+    let decodedBody = atob(viewResult.body);
+
+    // Replace service-worker.js references to prevent service worker registration
+    decodedBody = decodedBody.replace(/service-worker\.js/g, "");
+
     await route.fulfill({
       contentType: viewResult.contentType,
-      body: atob(viewResult.body),
+      body: decodedBody,
     });
   });
 }
