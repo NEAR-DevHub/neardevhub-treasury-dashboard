@@ -10,4 +10,9 @@ file_list.txt
 freeze_frames
 qrcode.png
 playwright-report
+
+# created by MacOS
 .DS_Store
+
+# near-cli-rs creates this ( should report issue )
+~/.near-credentials

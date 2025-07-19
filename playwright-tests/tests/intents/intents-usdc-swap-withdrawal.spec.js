@@ -71,7 +71,7 @@ test("replicate USDC swap and withdrawal with solver", async ({ page }, testInfo
     config: {
       wnear_id: "wrap.near",
       fees: {
-        fee: 100,
+        fee: 1, // 1 basis point = 0.01% (matches mainnet)
         fee_collector: "intents.near",
       },
       roles: {
