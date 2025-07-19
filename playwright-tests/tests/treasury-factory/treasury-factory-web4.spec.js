@@ -143,4 +143,46 @@ test.describe("Treasury Factory Web4 Integration", () => {
     console.log(`✅ No requests to rpc.mainnet.near.org`);
     console.log(`✅ ${rpcFastnearRequests.length} requests to rpc.mainnet.fastnear.com`);
   });
+
+  test("should serve service worker from treasury-factory contract", async ({ page }) => {
+    test.setTimeout(30000);
+
+    // Intercept calls to treasury-factory.near.page/service-worker.js
+    await page.route("**/treasury-factory.near.page/service-worker.js", async (route) => {
+      try {
+        const web4Response = await treasuryFactoryContract.view("web4_get", {
+          request: { 
+            path: "/service-worker.js",
+            preloads: {}
+          }
+        });
+
+        const serviceWorkerContent = Buffer.from(web4Response.body, 'base64').toString('utf-8');
+
+        await route.fulfill({
+          status: 200,
+          contentType: web4Response.contentType || "application/javascript",
+          body: serviceWorkerContent
+        });
+      } catch (error) {
+        console.error("Error calling web4_get for service worker:", error);
+        await route.abort();
+      }
+    });
+
+    // Navigate to the service worker URL
+    const response = await page.goto("http://treasury-factory.near.page/service-worker.js");
+    
+    // Verify response
+    expect(response.status()).toBe(200);
+    expect(response.headers()['content-type']).toBe('application/javascript');
+    
+    // Get the content and verify it contains expected service worker code
+    const content = await response.text();
+    expect(content).toContain('Service Worker for Treasury Factory with RPC Caching');
+    expect(content).toContain('treasury-factory-rpc-cache');
+    expect(content).toContain('rpc.mainnet.fastnear.com');
+    
+    console.log(`✅ Service worker served successfully from treasury-factory contract`);
+  });
 });
