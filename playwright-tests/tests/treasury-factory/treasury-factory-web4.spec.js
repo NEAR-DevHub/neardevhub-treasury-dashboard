@@ -77,6 +77,24 @@ test.describe("Treasury Factory Web4 Integration", () => {
 
         const bodyContent = Buffer.from(web4Response.body, "base64").toString("utf-8");
 
+        // For localhost testing, fix the instanceAccount detection
+        let modifiedContent = bodyContent;
+        if (
+          requestPath === "/" &&
+          web4Response.contentType.includes("text/html")
+        ) {
+          modifiedContent = bodyContent
+            .replace(
+              /if \(location\.host\.endsWith\("\.page"\)\)/g,
+              'if (location.host.includes("localhost"))'
+            )
+            .replace(
+              /const instanceAccount = location\.host\.split\("\."\)\[0\];/g,
+              'const instanceAccount = "treasury-factory";'
+            );
+          console.log(`🔧 Modified HTML for localhost testing`);
+        }
+
         // Set CORS headers to allow service worker registration
         res.setHeader("Access-Control-Allow-Origin", "*");
         res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
@@ -90,7 +108,7 @@ test.describe("Treasury Factory Web4 Integration", () => {
         }
 
         res.writeHead(200);
-        res.end(bodyContent);
+        res.end(modifiedContent);
       } catch (error) {
         console.error("Error handling request:", error);
         res.writeHead(500);
