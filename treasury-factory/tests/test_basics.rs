@@ -1071,8 +1071,7 @@ async fn test_service_worker() -> Result<(), Box<dyn std::error::Error>> {
     let response = result.json::<Web4Response>().unwrap();
     assert_eq!("application/javascript", response.content_type);
 
-    let body_string =
-        String::from_utf8(BASE64_STANDARD.decode(response.body).unwrap()).unwrap();
+    let body_string = String::from_utf8(BASE64_STANDARD.decode(response.body).unwrap()).unwrap();
 
     // Verify it contains our service worker code
     assert!(body_string.contains("Service Worker for Treasury Factory with RPC Caching"));
@@ -1083,7 +1082,8 @@ async fn test_service_worker() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[tokio::test]
-async fn test_html_contains_service_worker_registration() -> Result<(), Box<dyn std::error::Error>> {
+async fn test_html_contains_service_worker_registration() -> Result<(), Box<dyn std::error::Error>>
+{
     let sandbox = near_workspaces::sandbox().await?;
     let contract_wasm = build_project_once();
 
@@ -1096,8 +1096,7 @@ async fn test_html_contains_service_worker_registration() -> Result<(), Box<dyn 
     let response = result.json::<Web4Response>().unwrap();
     assert_eq!("text/html; charset=UTF-8", response.content_type);
 
-    let body_string =
-        String::from_utf8(BASE64_STANDARD.decode(response.body).unwrap()).unwrap();
+    let body_string = String::from_utf8(BASE64_STANDARD.decode(response.body).unwrap()).unwrap();
 
     // Verify it contains service worker registration code
     assert!(body_string.contains("serviceWorker' in navigator"));
