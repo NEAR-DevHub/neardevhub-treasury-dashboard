@@ -21,13 +21,42 @@ test("service worker should not interfere with redirectWeb4 page routes", async 
     );
   `;
 
-  // Set up redirectWeb4 with modified widget
+  // Track requests to see where they're coming from
+  const requestsFromServiceWorker = [];
+  const requestsFromPage = [];
+
+  // Set up context.route to intercept all requests for monitoring
+  await context.route("**", async (route) => {
+    const request = route.request();
+    const url = request.url();
+
+    if (request.serviceWorker()) {
+      requestsFromServiceWorker.push({
+        url,
+        method: request.method(),
+        postData: request.method() === "POST" ? request.postDataJSON() : null,
+      });
+      console.log(`🔧 Request from Service Worker: ${request.method()} ${url}`);
+    } else {
+      requestsFromPage.push({
+        url,
+        method: request.method(),
+      });
+      console.log(`📄 Request from Page: ${request.method()} ${url}`);
+    }
+
+    // Don't continue here - let redirectWeb4 handle the routing
+    await route.continue();
+  });
+
+  // Set up redirectWeb4 with modified widget and service worker enabled
   await redirectWeb4({
     contractId: instanceAccountId,
     page,
     widgetNodeUrl: "https://rpc.mainnet.fastnear.com",
     modifiedWidgets,
     callWidgetNodeURLForContractWidgets: false,
+    disableServiceWorker: false, // Allow service worker for this test
   });
 
   // Navigate to the instance page
@@ -68,6 +97,42 @@ test("service worker should not interfere with redirectWeb4 page routes", async 
     .getByText("Hello World from Modified Widget")
     .isVisible()
     .catch(() => false);
+
+  // Log request analysis BEFORE the assertion so we always see it
+  console.log("\n📊 Request Analysis:");
+  console.log(
+    `Total requests from Service Worker: ${requestsFromServiceWorker.length}`
+  );
+  console.log(`Total requests from Page: ${requestsFromPage.length}`);
+
+  // Show some example requests from service worker
+  if (requestsFromServiceWorker.length > 0) {
+    console.log("\n🔧 Sample Service Worker requests:");
+    requestsFromServiceWorker.slice(0, 5).forEach((req) => {
+      console.log(`  - ${req.method} ${req.url}`);
+      if (
+        req.postData &&
+        req.postData.params &&
+        req.postData.params.account_id
+      ) {
+        console.log(`    Account: ${req.postData.params.account_id}`);
+      }
+    });
+  }
+
+  // Check if social.near requests are being intercepted by service worker
+  const socialNearRequestsFromSW = requestsFromServiceWorker.filter(
+    (req) =>
+      req.postData &&
+      req.postData.params &&
+      req.postData.params.account_id === "social.near"
+  );
+
+  console.log(
+    `\n📱 social.near requests from Service Worker: ${socialNearRequestsFromSW.length}`
+  );
+
+  // Check the actual assertion after logging
   expect(stillVisible).toBe(true);
 
   if (hasServiceWorker) {
@@ -75,4 +140,7 @@ test("service worker should not interfere with redirectWeb4 page routes", async 
       "Service worker is active but redirectWeb4 routes are working correctly"
     );
   }
+
+  // This will help us understand if the service worker is intercepting the requests
+  // that should be handled by redirectWeb4's custom routes
 });

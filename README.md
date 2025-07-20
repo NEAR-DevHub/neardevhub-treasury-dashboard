@@ -190,6 +190,53 @@ npx playwright test --project=treasury-testing --debug playwright-tests/tests/so
 
 Step through the debugger until the page is loaded, and then you can have normal development and reload page iterations.
 
+### Service Workers and Testing
+
+Many treasury instances deploy service workers for caching and performance optimization. However, service workers can interfere with Playwright tests by:
+
+1. **Intercepting requests** that test utilities expect to handle (e.g., mocked balance requests)
+2. **Caching responses** that prevent tests from seeing modified widgets or updated data
+3. **Taking over page routes** that the test framework uses for mocking
+
+#### How `redirectWeb4` Handles Service Workers
+
+The `redirectWeb4` function provides a `disableServiceWorker` parameter (default: `true`) to manage service worker behavior:
+
+```javascript
+await redirectWeb4({
+  page,
+  contractId: instanceAccount,
+  modifiedWidgets: {
+    "account/widget/app": "return <div>Test Widget</div>;"
+  },
+  disableServiceWorker: true  // Default - prevents service worker registration
+});
+```
+
+When `disableServiceWorker` is `true` (default):
+- Service worker registration is prevented by removing "service-worker.js" references from HTML
+- Tests can use page routes for mocking without interference
+- This is the recommended setting for most tests
+
+When `disableServiceWorker` is `false`:
+- Service workers run normally
+- `redirectWeb4` intercepts both page AND service worker requests via context routes
+- Useful for testing service worker behavior specifically
+
+#### Example: Testing with Service Workers Enabled
+
+See `playwright-tests/tests/web4/service-worker-interference.spec.js` for a complete example that:
+- Demonstrates how service workers interfere with test routes
+- Shows how to test with service workers enabled while still using modified widgets
+- Illustrates the difference between `disableServiceWorker: true` (default) and `disableServiceWorker: false`
+
+#### Best Practices
+
+1. **Keep default behavior** (`disableServiceWorker: true`) for most tests to avoid interference
+2. **Only enable service workers** when specifically testing service worker functionality
+3. **Be aware** that enabling service workers may interfere with other page routes used for mocking (e.g., balance mocks)
+4. **Use context.route()** if you need custom routes to work with service workers enabled
+
 ### Legacy BOS workspace setup
 
 You can also locally develop the html page served by the web4 gateway. To run a local gateway, type the following:
