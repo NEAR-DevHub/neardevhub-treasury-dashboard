@@ -52,7 +52,7 @@ useEffect(() => {
 
 function toReadableAmount(amount) {
   if (props.showAllDecimals) {
-    return Number(amount).toLocaleString("en-US", {});
+    return Number(amount).toLocaleString("en-US", { maximumFractionDigits: 6 });
   } else {
     return Number(amount).toLocaleString("en-US", {
       minimumFractionDigits: 2,

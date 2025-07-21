@@ -15,6 +15,7 @@ const Container = styled.div`
 return (
   <Container className="h-100 w-100 flex-grow-1 d-flex flex-column">
     <Widget
+      loading=""
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Tabs`}
       props={{
         ...props,

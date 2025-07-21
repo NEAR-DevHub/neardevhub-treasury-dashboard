@@ -41,6 +41,7 @@ useEffect(() => {
 }, []);
 
 function refreshData() {
+  props.setToastStatus("ProposalAdded");
   Storage.set("REFRESH_ASSET_TABLE_DATA", Math.random());
 }
 
@@ -142,6 +143,7 @@ return (
       cancelTxn={() => setTxnCreated(false)}
     />
     <Widget
+      loading=""
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
       props={{
         instance,
@@ -163,6 +165,7 @@ return (
     />
 
     <Widget
+      loading=""
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
       props={{
         instance,
@@ -180,6 +183,7 @@ return (
     />
 
     <Widget
+      loading=""
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.asset-exchange.ExchangeForm`}
       props={{
         instance,

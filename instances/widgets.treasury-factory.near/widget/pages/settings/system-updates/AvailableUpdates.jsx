@@ -270,6 +270,7 @@ function updateModal(update) {
       </ModalContent>
       <ModalFooter>
         <Widget
+          loading=""
           src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
           props={{
             classNames: {
@@ -280,6 +281,7 @@ function updateModal(update) {
           }}
         />
         <Widget
+          loading=""
           src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
           props={{
             classNames: { root: "theme-btn" },
@@ -338,6 +340,7 @@ return (
               <td>{update.votingRequired ? "Yes" : "No"}</td>
               <td>
                 <Widget
+                  loading=""
                   src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
                   props={{
                     classNames: {

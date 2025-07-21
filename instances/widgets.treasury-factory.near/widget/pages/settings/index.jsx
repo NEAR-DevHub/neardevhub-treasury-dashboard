@@ -42,6 +42,7 @@ const [leftNavbarOptions, setLeftBarOptions] = useState([
 const Menu = useMemo(() => {
   return (
     <Widget
+      loading=""
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.SidebarAndMainLayout`}
       props={{
         leftNavbarOptions,

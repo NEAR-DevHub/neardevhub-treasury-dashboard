@@ -139,40 +139,6 @@ function checkProposalStatus(proposalId) {
     });
 }
 
-useEffect(() => {
-  if (props.transactionHashes) {
-    asyncFetch("${REPL_RPC_URL}", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id: "dontcare",
-        method: "tx",
-        params: [props.transactionHashes, context.accountId],
-      }),
-    }).then((transaction) => {
-      if (transaction !== null) {
-        const transaction_method_name =
-          transaction?.body?.result?.transaction?.actions[0].FunctionCall
-            .method_name;
-
-        if (transaction_method_name === "act_proposal") {
-          const args =
-            transaction?.body?.result?.transaction?.actions[0].FunctionCall
-              .args;
-          const decodedArgs = JSON.parse(atob(args ?? "") ?? "{}");
-          if (decodedArgs.id) {
-            const proposalId = decodedArgs.id;
-            checkProposalStatus(proposalId);
-          }
-        }
-      }
-    });
-  }
-}, [props.transactionHashes]);
-
 const TooltipContent = ({ title, summary }) => {
   return (
     <div className="p-1">
@@ -260,6 +226,7 @@ const ProposalsComponent = () => {
             <td className="fw-semi-bold px-3">{item.id}</td>
             <td className={isVisible("Created Date")}>
               <Widget
+                loading=""
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
                 props={{
                   timestamp: item.submission_time,
@@ -269,6 +236,7 @@ const ProposalsComponent = () => {
             {!isPendingRequests && (
               <td>
                 <Widget
+                  loading=""
                   src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.HistoryStatus`}
                   props={{
                     instance,
@@ -280,6 +248,7 @@ const ProposalsComponent = () => {
             )}
             <td className={isVisible("Type") + " text-center fw-semi-bold"}>
               <Widget
+                loading=""
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.Type`}
                 props={{
                   type: action.method_name,
@@ -288,6 +257,7 @@ const ProposalsComponent = () => {
             </td>
             <td className={isVisible("Amount") + " text-right"}>
               <Widget
+                loading=""
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
                 props={{
                   instance,
@@ -302,6 +272,7 @@ const ProposalsComponent = () => {
                   {isLockup ? "Lockup" : "Sputnik DAO"}
                 </div>
                 <Widget
+                  loading=""
                   src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
                   props={{
                     accountId: treasuryWallet,
@@ -316,6 +287,7 @@ const ProposalsComponent = () => {
 
             <td className={isVisible("Validator")}>
               <Widget
+                loading=""
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.Validator`}
                 props={{
                   validatorId: validatorAccount,
@@ -326,6 +298,7 @@ const ProposalsComponent = () => {
             <td className={"fw-semi-bold text-center " + isVisible("Creator")}>
               <div className="d-inline-block">
                 <Widget
+                  loading=""
                   src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
                   props={{
                     accountId: item.proposer,
@@ -363,6 +336,7 @@ const ProposalsComponent = () => {
             {isPendingRequests && (
               <td className={isVisible("Votes") + " text-center"}>
                 <Widget
+                  loading=""
                   src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Votes`}
                   props={{
                     votes: item.votes,
@@ -381,6 +355,7 @@ const ProposalsComponent = () => {
               style={{ minWidth: 100 }}
             >
               <Widget
+                loading=""
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Approvers`}
                 props={{
                   votes: item.votes,
@@ -405,6 +380,7 @@ const ProposalsComponent = () => {
               (hasVotingPermission || hasDeletePermission) && (
                 <td className="text-right" onClick={(e) => e.stopPropagation()}>
                   <Widget
+                    loading=""
                     src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.VoteActions`}
                     props={{
                       instance,
@@ -420,6 +396,7 @@ const ProposalsComponent = () => {
                       validatorAccount,
                       treasuryWallet,
                       hasOneDeleteIcon,
+                      proposal: item,
                     }}
                   />
                 </td>

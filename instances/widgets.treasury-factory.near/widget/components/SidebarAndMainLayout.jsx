@@ -82,6 +82,7 @@ return (
       {currentTab && (
         <div className="w-100 h-100" key={currentTab.key}>
           <Widget
+            loading=""
             src={currentTab.href}
             props={{ ...props, ...currentTab.props }}
           />

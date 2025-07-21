@@ -170,6 +170,7 @@ useEffect(() => {
 }, []);
 
 function refreshData() {
+  props.setToastStatus("ProposalAdded");
   Storage.set("REFRESH_TABLE_DATA", Math.random());
 }
 
@@ -524,6 +525,7 @@ return (
       cancelTxn={() => setTxnCreated(false)}
     />
     <Widget
+      loading=""
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
       props={{
         instance,
@@ -544,6 +546,7 @@ return (
     <div className="d-flex flex-column gap-3">
       {lockupContract && (
         <Widget
+          loading=""
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.WalletDropdown`}
           props={{
             lockupNearBalances,
@@ -562,6 +565,7 @@ return (
         <div className="d-flex flex-column gap-1">
           <label>Proposal</label>
           <Widget
+            loading=""
             src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
             props={{
               selectedValue: selectedProposalId,
@@ -592,6 +596,7 @@ return (
           <div className="d-flex flex-column gap-1">
             <label>{showProposalSelection && "Proposal"} Title</label>
             <Widget
+              loading=""
               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
               props={{
                 className: "flex-grow-1",
@@ -609,6 +614,7 @@ return (
           <div className="d-flex flex-column gap-1">
             <label>{showProposalSelection && "Proposal"} Summary</label>
             <Widget
+              loading=""
               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
               props={{
                 className: "flex-grow-1",
@@ -631,6 +637,7 @@ return (
             {selectedProposal.name}{" "}
             <div style={{ width: "fit-content" }}>
               <Widget
+                loading=""
                 src={"${REPL_DEVHUB}/widget/devhub.entity.proposal.StatusTag"}
                 props={{
                   timelineStatus: selectedProposal.status,
@@ -655,6 +662,7 @@ return (
         {selectedTokenBlockchain === "near" ||
         selectedTokenBlockchain == null ? (
           <Widget
+            loading=""
             src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.AccountInput"
             props={{
               value: receiver,
@@ -668,6 +676,7 @@ return (
           />
         ) : (
           <Widget
+            loading=""
             src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OtherChainAccountInput`}
             props={{
               blockchain: selectedTokenBlockchain,
@@ -682,6 +691,7 @@ return (
       <div className="d-flex flex-column gap-1">
         <label>Requested Token</label>
         <Widget
+          loading=""
           src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokensDropdown"
           props={{
             daoAccount: selectedWallet.value,
@@ -703,6 +713,7 @@ return (
       <div className="d-flex flex-column gap-1">
         <label>Total Amount</label>
         <Widget
+          loading=""
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
           props={{
             className: "flex-grow-1",
@@ -725,6 +736,7 @@ return (
                   .toFixed(2)
                   .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
               <Widget
+                loading=""
                 src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
                 props={{
                   popup: (
@@ -770,6 +782,7 @@ return (
       <div className="d-flex flex-column gap-1">
         <label>Notes (Optional)</label>
         <Widget
+          loading=""
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
           props={{
             className: "flex-grow-1",
@@ -782,6 +795,7 @@ return (
       </div>
       <div className="d-flex mt-2 gap-3 justify-content-end">
         <Widget
+          loading=""
           src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
           props={{
             classNames: {
@@ -796,6 +810,7 @@ return (
         />
 
         <Widget
+          loading=""
           src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
           props={{
             classNames: { root: "theme-btn" },

@@ -157,6 +157,7 @@ const ReceiverAccountComponent = (
 return (
   <div>
     <Widget
+      loading=""
       src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
       props={{
         popup: <HoverCard />,

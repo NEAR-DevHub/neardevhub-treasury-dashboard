@@ -230,6 +230,7 @@ const ProposalsComponent = () => {
             <td className="fw-semi-bold">{item.id}</td>
             <td className={isVisible("Created Date")}>
               <Widget
+                loading=""
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
                 props={{
                   timestamp: item.submission_time,
@@ -239,6 +240,7 @@ const ProposalsComponent = () => {
             {!isPendingRequests && (
               <td>
                 <Widget
+                  loading=""
                   src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.HistoryStatus`}
                   props={{
                     instance,
@@ -261,6 +263,7 @@ const ProposalsComponent = () => {
             <td className={"fw-semi-bold text-center " + isVisible("Creator")}>
               <div className="d-inline-block">
                 <Widget
+                  loading=""
                   src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
                   props={{
                     accountId: item.proposer,
@@ -274,6 +277,7 @@ const ProposalsComponent = () => {
             </td>
             <td className="text-center">
               <Widget
+                loading=""
                 src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
                 props={{
                   classNames: {
@@ -294,6 +298,7 @@ const ProposalsComponent = () => {
             {isPendingRequests && (
               <td className={isVisible("Votes") + " text-center"}>
                 <Widget
+                  loading=""
                   src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Votes`}
                   props={{
                     votes: item.votes,
@@ -312,6 +317,7 @@ const ProposalsComponent = () => {
               style={{ minWidth: 100 }}
             >
               <Widget
+                loading=""
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Approvers`}
                 props={{
                   votes: item.votes,
@@ -336,6 +342,7 @@ const ProposalsComponent = () => {
               (hasVotingPermission || hasDeletePermission) && (
                 <td className="text-right" onClick={(e) => e.stopPropagation()}>
                   <Widget
+                    loading=""
                     src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.VoteActions`}
                     props={{
                       instance,
@@ -348,6 +355,7 @@ const ProposalsComponent = () => {
                       requiredVotes,
                       checkProposalStatus: () => checkProposalStatus(item.id),
                       hasOneDeleteIcon,
+                      proposal: item,
                     }}
                   />
                 </td>
@@ -368,6 +376,7 @@ return (
     policy === null ? (
       <div className="d-flex justify-content-center align-items-center w-100 h-100">
         <Widget
+          loading=""
           src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"}
         />
       </div>
@@ -375,6 +384,7 @@ return (
       <div>
         {showDetailsProposalKind && (
           <Widget
+            loading=""
             src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
             props={{
               instance,

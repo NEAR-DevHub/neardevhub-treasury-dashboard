@@ -32,6 +32,7 @@ const isHumanReadableCurrentAmount = props.isHumanReadableCurrentAmount;
 const isProposalDetailsPage = props.isProposalDetailsPage;
 const hasOneDeleteIcon = props.hasOneDeleteIcon;
 const isIntentsRequest = props.isIntentsRequest;
+const proposal = props.proposal;
 
 const alreadyVoted = Object.keys(votes).includes(accountId);
 const userVote = votes[accountId];
@@ -139,6 +140,7 @@ function actProposal() {
     args: {
       id: proposalId,
       action: vote,
+      proposal: proposal?.kind,
     },
     gas: 300000000000000,
   });
@@ -217,6 +219,7 @@ const InsufficientBalanceWarning = () => {
         <div className="d-flex pb-1 mt-2 gap-1 align-items-center">
           • Transaction amount:
           <Widget
+            loading=""
             src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
             props={{
               instance,
@@ -230,6 +233,7 @@ const InsufficientBalanceWarning = () => {
         <div className="d-flex gap-1 align-items-center">
           • Your current balance:
           <Widget
+            loading=""
             src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
             props={{
               instance,
@@ -241,6 +245,7 @@ const InsufficientBalanceWarning = () => {
       </ModalContent>
       <ModalFooter>
         <Widget
+          loading=""
           src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
           props={{
             classNames: {
@@ -255,6 +260,7 @@ const InsufficientBalanceWarning = () => {
         />
 
         <Widget
+          loading=""
           src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
           props={{
             classNames: { root: "theme-btn" },
@@ -283,6 +289,7 @@ return (
 
     <InsufficientBalanceWarning />
     <Widget
+      loading=""
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
       props={{
         instance,
@@ -309,6 +316,7 @@ return (
     {alreadyVoted ? (
       <div className={containerClass}>
         <Widget
+          loading=""
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.ProposalStatus`}
           props={{
             isVoteStatus: true,
@@ -324,6 +332,7 @@ return (
           <div className="text-center fw-semi-bold">
             Voting is not available before unstaking release{" "}
             <Widget
+              loading=""
               src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
               props={{
                 popup: (
@@ -342,10 +351,12 @@ return (
           hasVotingPermission && (
             <div className="d-flex gap-2 align-items-center w-100 justify-content-end">
               <Widget
+                loading=""
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
                 props={{
                   ActionButton: () => (
                     <Widget
+                      loading=""
                       src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
                       props={{
                         classNames: {
@@ -374,10 +385,12 @@ return (
                 }}
               />
               <Widget
+                loading=""
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
                 props={{
                   ActionButton: () => (
                     <Widget
+                      loading=""
                       src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
                       props={{
                         classNames: {
@@ -409,6 +422,7 @@ return (
         {hasDeletePermission && proposalCreator === accountId ? (
           <div style={{ width: "fit-content" }}>
             <Widget
+              loading=""
               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
               props={{
                 ActionButton: () => (

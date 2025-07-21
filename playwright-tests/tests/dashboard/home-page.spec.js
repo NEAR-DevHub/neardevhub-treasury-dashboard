@@ -201,6 +201,25 @@ test.describe("Dashboard Page", function () {
     ).toBeVisible();
     await page.waitForTimeout(10_000);
   });
+
+  test("Should show announcement banner and web4 gateway modal", async ({
+    page,
+    instanceAccount,
+  }) => {
+    test.setTimeout(60_000);
+    await expect(
+      page.getByText("For best experience, use the Web4 Gateway.")
+    ).toBeVisible();
+    await page.getByRole("link", { name: "Switch Now" }).click();
+    await expect(page).toHaveURL(`https://${instanceAccount}.page`);
+    await page.goBack();
+    await page.locator(".bi-info-circle").click();
+    await expect(
+      page.getByText("Try Web4 Gateway for a Smoother Experience")
+    ).toBeVisible();
+    await page.getByRole("link", { name: "Switch to Web4" }).click();
+    await expect(page).toHaveURL(`https://${instanceAccount}.page`);
+  });
 });
 
 test.describe("Lockup portfolio", function () {

@@ -34,7 +34,9 @@ const ToastStatusContent = () => {
     case "Removed":
       content = "The request has been successfully deleted.";
       break;
-
+    case "ProposalAdded":
+      content = "Lockup request has been successfully created.";
+      break;
     default:
       content = `The request has ${showToastStatus}.`;
       break;
@@ -50,6 +52,7 @@ const ToastStatusContent = () => {
           <br />
           {showToastStatus !== "InProgress" &&
             showToastStatus !== "Removed" &&
+            showToastStatus !== "ProposalAdded" &&
             typeof proposalDetailsPageId !== "number" && (
               <a
                 className="text-underline"
@@ -87,11 +90,66 @@ const VoteSuccessToast = () => {
   ) : null;
 };
 
+function updateVoteSuccess(status, proposalId) {
+  setVoteProposalId(proposalId);
+  setToastStatus(status);
+}
+
+function checkProposalStatus(proposalId) {
+  Near.asyncView(treasuryDaoID, "get_proposal", {
+    id: proposalId,
+  })
+    .then((result) => {
+      updateVoteSuccess(result.status, proposalId);
+    })
+    .catch(() => {
+      // deleted request (thus proposal won't exist)
+      updateVoteSuccess("Removed", proposalId);
+    });
+}
+
+useEffect(() => {
+  if (props.transactionHashes) {
+    asyncFetch("${REPL_RPC_URL}", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: "dontcare",
+        method: "tx",
+        params: [props.transactionHashes, context.accountId],
+      }),
+    }).then((transaction) => {
+      if (transaction !== null) {
+        const transaction_method_name =
+          transaction?.body?.result?.transaction?.actions[0].FunctionCall
+            .method_name;
+
+        if (transaction_method_name === "act_proposal") {
+          const args =
+            transaction?.body?.result?.transaction?.actions[0].FunctionCall
+              .args;
+          const decodedArgs = JSON.parse(atob(args ?? "") ?? "{}");
+          if (decodedArgs.id) {
+            const proposalId = decodedArgs.id;
+            checkProposalStatus(proposalId);
+          }
+        } else if (transaction_method_name === "add_proposal") {
+          setToastStatus("ProposalAdded");
+        }
+      }
+    });
+  }
+}, [props.transactionHashes]);
+
 return (
   <div className="w-100 h-100 flex-grow-1 d-flex flex-column">
     <VoteSuccessToast />
     {typeof proposalDetailsPageId === "number" ? (
       <Widget
+        loading=""
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.lockup.ProposalDetailsPage`}
         props={{
           ...props,
@@ -106,6 +164,7 @@ return (
         <div className="layout-flex-wrap flex-grow-1">
           <div className="layout-main">
             <Widget
+              loading=""
               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Tabs`}
               props={{
                 ...props,
@@ -137,10 +196,12 @@ return (
                 ],
                 SidebarMenu: ({ currentTab }) => (
                   <Widget
+                    loading=""
                     src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.lockup.CreateButton`}
                     props={{
                       instance,
                       isPendingPage: currentTab.title === "Pending Requests",
+                      setToastStatus,
                     }}
                   />
                 ),
@@ -154,6 +215,7 @@ return (
           >
             {typeof showProposalDetailsId === "number" && (
               <Widget
+                loading=""
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.lockup.ProposalDetailsPage`}
                 props={{
                   ...props,

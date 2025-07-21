@@ -3,7 +3,7 @@ import { SandboxRPC, SPUTNIK_DAO_FACTORY_ID } from "../../util/sandboxrpc";
 import { getLocalWidgetSource } from "../../util/bos-workspace";
 import nearApi from "near-api-js";
 
-async function approveProposal({ daoContract, sandbox, proposalId }) {
+async function approveProposal({ daoContract, sandbox, proposalId, proposal }) {
   // Check if the proposalId is a valid number
   expect(Number(proposalId)).not.toBeNaN();
   const result = await sandbox.account.functionCall({
@@ -12,6 +12,7 @@ async function approveProposal({ daoContract, sandbox, proposalId }) {
     args: {
       id: proposalId,
       action: "VoteApprove",
+      proposal: proposal.kind,
     },
     gas: 300000000000000,
   });
@@ -232,6 +233,23 @@ test("should be able to create a treasury instance with sandbox, and create/exec
   );
   const daoContract = `${instance_name}.sputnik-dao.near`;
   // ChangeConfig proposal
+  const changeConfigProposal = {
+    description: "* Title: Update Config - Theme & logo",
+    kind: {
+      ChangeConfig: {
+        config: {
+          name: "Tesing DAO",
+          purpose: "Testing purpose",
+          metadata: toBase64({
+            primaryColor: "#0000",
+            flagLogo:
+              "https://ipfs.near.social/ipfs/bafkreiboarigt5w26y5jyxyl4au7r2dl76o5lrm2jqjgqpooakck5xsojq",
+            theme: "light",
+          }),
+        },
+      },
+    },
+  };
   let changeConfigProposalId = Number.parseInt(
     Buffer.from(
       (
@@ -239,23 +257,7 @@ test("should be able to create a treasury instance with sandbox, and create/exec
           contractId: daoContract,
           methodName: "add_proposal",
           args: {
-            proposal: {
-              description: "* Title: Update Config - Theme & logo",
-              kind: {
-                ChangeConfig: {
-                  config: {
-                    name: "Tesing DAO",
-                    purpose: "Testing purpose",
-                    metadata: toBase64({
-                      primaryColor: "#0000",
-                      flagLogo:
-                        "https://ipfs.near.social/ipfs/bafkreiboarigt5w26y5jyxyl4au7r2dl76o5lrm2jqjgqpooakck5xsojq",
-                      theme: "light",
-                    }),
-                  },
-                },
-              },
-            },
+            proposal: changeConfigProposal,
           },
           attachedDeposit: "0",
           gas: 300000000000000,
@@ -268,8 +270,16 @@ test("should be able to create a treasury instance with sandbox, and create/exec
     sandbox,
     daoContract,
     proposalId: changeConfigProposalId,
+    proposal: changeConfigProposal,
   });
-
+  const policyProposal = {
+    description: "Update policy - Members Permissions",
+    kind: {
+      ChangePolicy: {
+        policy: policy,
+      },
+    },
+  };
   // ChangePolicy
   let changePolicyProposalId = Number.parseInt(
     Buffer.from(
@@ -278,14 +288,7 @@ test("should be able to create a treasury instance with sandbox, and create/exec
           contractId: daoContract,
           methodName: "add_proposal",
           args: {
-            proposal: {
-              description: "Update policy - Members Permissions",
-              kind: {
-                ChangePolicy: {
-                  policy: policy,
-                },
-              },
-            },
+            proposal: policyProposal,
           },
           attachedDeposit: "0",
           gas: 300000000000000,
@@ -299,8 +302,20 @@ test("should be able to create a treasury instance with sandbox, and create/exec
     sandbox,
     daoContract,
     proposalId: changePolicyProposalId,
+    proposal: policyProposal,
   });
 
+  const durationProposal = {
+    description:
+      "* Title: Update policy - Voting Duration <br>* Summary: theori.near requested to change voting duration from 7 to 10",
+    kind: {
+      ChangePolicyUpdateParameters: {
+        parameters: {
+          proposal_period: (60 * 60 * 24 * 10).toString() + "000000000",
+        },
+      },
+    },
+  };
   // ChangePolicyUpdateParameters
   let changePolicyParametersProposalId = Number.parseInt(
     Buffer.from(
@@ -309,18 +324,7 @@ test("should be able to create a treasury instance with sandbox, and create/exec
           contractId: daoContract,
           methodName: "add_proposal",
           args: {
-            proposal: {
-              description:
-                "* Title: Update policy - Voting Duration <br>* Summary: theori.near requested to change voting duration from 7 to 10",
-              kind: {
-                ChangePolicyUpdateParameters: {
-                  parameters: {
-                    proposal_period:
-                      (60 * 60 * 24 * 10).toString() + "000000000",
-                  },
-                },
-              },
-            },
+            proposal: durationProposal,
           },
           attachedDeposit: "0",
           gas: 300000000000000,
@@ -333,9 +337,21 @@ test("should be able to create a treasury instance with sandbox, and create/exec
     sandbox,
     daoContract,
     proposalId: changePolicyParametersProposalId,
+    proposal: durationProposal,
   });
 
   // Transfer
+  const transferProposal = {
+    description:
+      "* Title: Fellowship Contributor report by Matias Benary for  2024-09-09  2024-09-29 <br>* Summary: Fellowship Contributor report by Matias Benary for  2024-09-09  2024-09-29 <br>* Proposal Id: 215",
+    kind: {
+      Transfer: {
+        amount: nearApi.utils.format.parseNearAmount("0.5"),
+        receiver_id: daoContract,
+        token_id: "",
+      },
+    },
+  };
   let transferProposalId = Number.parseInt(
     Buffer.from(
       (
@@ -343,17 +359,7 @@ test("should be able to create a treasury instance with sandbox, and create/exec
           contractId: daoContract,
           methodName: "add_proposal",
           args: {
-            proposal: {
-              description:
-                "* Title: Fellowship Contributor report by Matias Benary for  2024-09-09  2024-09-29 <br>* Summary: Fellowship Contributor report by Matias Benary for  2024-09-09  2024-09-29 <br>* Proposal Id: 215",
-              kind: {
-                Transfer: {
-                  amount: nearApi.utils.format.parseNearAmount("0.5"),
-                  receiver_id: daoContract,
-                  token_id: "",
-                },
-              },
-            },
+            proposal: transferProposal,
           },
           attachedDeposit: "0",
           gas: 300000000000000,
@@ -366,6 +372,7 @@ test("should be able to create a treasury instance with sandbox, and create/exec
     sandbox,
     daoContract,
     proposalId: transferProposalId,
+    proposal: transferProposal,
   });
 
   await sandbox.quitSandbox();

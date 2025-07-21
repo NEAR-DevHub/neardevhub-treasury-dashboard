@@ -555,6 +555,7 @@ test.describe("Lockup Creation", () => {
           daoAccount,
           enableStaking: true,
           enableCancellation: true,
+          requestType: "Lockup",
         });
         await sandbox.quitSandbox();
       });
@@ -600,6 +601,7 @@ test.describe("Lockup Creation", () => {
           daoAccount,
           enableStaking: false,
           enableCancellation: true,
+          requestType: "Lockup",
         });
 
         await sandbox.quitSandbox();
@@ -638,6 +640,7 @@ test.describe("Lockup Creation", () => {
           daoAccount,
           enableStaking: true,
           enableCancellation: false,
+          requestType: "Lockup",
         });
         await sandbox.quitSandbox();
       });
@@ -675,6 +678,7 @@ test.describe("Lockup Creation", () => {
           daoAccount,
           enableStaking: false,
           enableCancellation: false,
+          requestType: "Lockup",
         });
 
         await sandbox.quitSandbox();

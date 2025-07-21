@@ -38,7 +38,10 @@ const [hideViewMore, setHideViewMore] = useState(false);
 const totalTxnsPerPage = 15;
 
 const loading = (
-  <Widget src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"} />
+  <Widget
+    loading=""
+    src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"}
+  />
 );
 
 function setAPIError() {
@@ -229,6 +232,7 @@ return (
                       </td>
                       <td className="fw-semi-bold account-cell">
                         <Widget
+                          loading=""
                           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
                           props={{
                             accountId: txn.sender,
@@ -241,6 +245,7 @@ return (
                       </td>
                       <td className="fw-semi-bold account-cell">
                         <Widget
+                          loading=""
                           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
                           props={{
                             accountId: txn.receiver,
@@ -265,6 +270,7 @@ return (
                             )}
                           </a>
                           <Widget
+                            loading=""
                             src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Copy`}
                             props={{
                               label: "",

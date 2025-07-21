@@ -93,6 +93,7 @@ if (originalAmount !== null && amountWithoutDecimals !== undefined) {
 
 return needsTilde ? (
   <Widget
+    loading=""
     src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
     props={{
       popup: <TokenAmount showAllDecimals={true} />,

@@ -23,49 +23,16 @@ const { formatSubmissionTimeStamp } = VM.require(
 
 const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 
-const proposalData = props.proposalData;
-const isDeleted = props.isDeleted;
-const isCompactVersion = props.isCompactVersion;
-const approversGroup = props.approversGroup;
-const deleteGroup = props.deleteGroup;
-const proposalStatusLabel = props.proposalStatusLabel;
+const {
+  proposalData,
+  isDeleted,
+  isCompactVersion,
+  approversGroup,
+  proposalStatusLabel,
+  proposalPeriod,
+} = props;
 
-const accountId = context.accountId;
 const requiredVotes = approversGroup?.requiredVotes;
-
-useEffect(() => {
-  if (props.transactionHashes) {
-    asyncFetch("${REPL_RPC_URL}", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id: "dontcare",
-        method: "tx",
-        params: [props.transactionHashes, context.accountId],
-      }),
-    }).then((transaction) => {
-      if (transaction !== null) {
-        const transaction_method_name =
-          transaction?.body?.result?.transaction?.actions[0].FunctionCall
-            .method_name;
-
-        if (transaction_method_name === "act_proposal") {
-          const args =
-            transaction?.body?.result?.transaction?.actions[0].FunctionCall
-              .args;
-          const decodedArgs = JSON.parse(atob(args ?? "") ?? "{}");
-          if (decodedArgs.id && typeof checkProposalStatus === "function") {
-            const proposalId = decodedArgs.id;
-            props.checkProposalStatus(proposalId);
-          }
-        }
-      }
-    });
-  }
-}, [props.transactionHashes]);
 
 const Container = styled.div`
   font-size: 14px;
@@ -232,6 +199,7 @@ const VotesDetails = () => {
     >
       <ProposalStatus />
       <Widget
+        loading=""
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Votes`}
         props={{
           votes: proposalData?.votes,
@@ -243,6 +211,7 @@ const VotesDetails = () => {
       {props.VoteActions}
       {Object.keys(proposalData?.votes ?? {}).length > 0 && (
         <Widget
+          loading=""
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Approvers`}
           props={{
             votes: proposalData?.votes,
@@ -259,6 +228,7 @@ const CopyComponent = () => {
   const clipboardText = `https://near.social/${instance}/widget/app?page=${props.page}&id=${proposalData.id}`;
   return isCompactVersion ? (
     <Widget
+      loading=""
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Copy`}
       props={{
         label: "",
@@ -269,6 +239,7 @@ const CopyComponent = () => {
     />
   ) : (
     <Widget
+      loading=""
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Copy`}
       props={{
         label: "Copy link",
@@ -460,6 +431,7 @@ return (
           >
             <label>Created By</label>
             <Widget
+              loading=""
               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
               props={{
                 accountId: proposalData?.proposer,
@@ -472,6 +444,7 @@ return (
             />
             <label className="border-top">Created Date</label>
             <Widget
+              loading=""
               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
               props={{
                 timestamp: proposalData?.submissionTime,

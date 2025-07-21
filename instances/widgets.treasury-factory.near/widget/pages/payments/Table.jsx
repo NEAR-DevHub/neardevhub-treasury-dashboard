@@ -103,40 +103,6 @@ function checkProposalStatus(proposalId) {
     });
 }
 
-useEffect(() => {
-  if (props.transactionHashes) {
-    asyncFetch("${REPL_RPC_URL}", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id: "dontcare",
-        method: "tx",
-        params: [props.transactionHashes, context.accountId],
-      }),
-    }).then((transaction) => {
-      if (transaction !== null) {
-        const transaction_method_name =
-          transaction?.body?.result?.transaction?.actions[0].FunctionCall
-            .method_name;
-
-        if (transaction_method_name === "act_proposal") {
-          const args =
-            transaction?.body?.result?.transaction?.actions[0].FunctionCall
-              .args;
-          const decodedArgs = JSON.parse(atob(args ?? "") ?? "{}");
-          if (decodedArgs.id) {
-            const proposalId = decodedArgs.id;
-            checkProposalStatus(proposalId);
-          }
-        }
-      }
-    });
-  }
-}, [props.transactionHashes]);
-
 const TooltipContent = ({ title, summary }) => {
   return (
     <div className="p-1">
@@ -261,6 +227,7 @@ const ProposalsComponent = () => {
             <td className="fw-semi-bold px-3">{item.id}</td>
             <td className={isVisible("Created Date")}>
               <Widget
+                loading=""
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
                 props={{
                   timestamp: item.submission_time,
@@ -270,6 +237,7 @@ const ProposalsComponent = () => {
             {!isPendingRequests && (
               <td>
                 <Widget
+                  loading=""
                   src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.HistoryStatus`}
                   props={{
                     instance,
@@ -290,6 +258,7 @@ const ProposalsComponent = () => {
                     : "Sputnik DAO"}
                 </div>
                 <Widget
+                  loading=""
                   src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
                   props={{
                     accountId: isIntentWithdraw
@@ -328,6 +297,7 @@ const ProposalsComponent = () => {
                 description
               ) : (
                 <Widget
+                  loading=""
                   src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
                   props={{
                     popup: <TooltipContent title={title} summary={summary} />,
@@ -346,6 +316,7 @@ const ProposalsComponent = () => {
             </td>
             <td className={isVisible("Summary")}>
               <Widget
+                loading=""
                 src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
                 props={{
                   popup: <TooltipContent title={title} summary={summary} />,
@@ -363,6 +334,7 @@ const ProposalsComponent = () => {
             </td>
             <td className={"fw-semi-bold " + isVisible("Recipient")}>
               <Widget
+                loading=""
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
                 props={{
                   accountId: args.receiver_id,
@@ -373,6 +345,7 @@ const ProposalsComponent = () => {
             </td>
             <td className={isVisible("Requested Token") + " text-center"}>
               <Widget
+                loading=""
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenIcon`}
                 props={{
                   address: args.token_id,
@@ -381,6 +354,7 @@ const ProposalsComponent = () => {
             </td>
             <td className={isVisible("Funding Ask") + " text-right"}>
               <Widget
+                loading=""
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
                 props={{
                   instance,
@@ -392,6 +366,7 @@ const ProposalsComponent = () => {
             <td className={"fw-semi-bold text-center " + isVisible("Creator")}>
               <div className="d-inline-block">
                 <Widget
+                  loading=""
                   src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
                   props={{
                     accountId: item.proposer,
@@ -406,6 +381,7 @@ const ProposalsComponent = () => {
             <td className={"text-sm text-left " + isVisible("Notes")}>
               {notes ? (
                 <Widget
+                  loading=""
                   src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
                   props={{
                     popup: <TooltipContent summary={notes} />,
@@ -429,6 +405,7 @@ const ProposalsComponent = () => {
             {isPendingRequests && (
               <td className={isVisible("Votes") + " text-center"}>
                 <Widget
+                  loading=""
                   src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Votes`}
                   props={{
                     votes: item.votes,
@@ -447,6 +424,7 @@ const ProposalsComponent = () => {
               style={{ minWidth: 100 }}
             >
               <Widget
+                loading=""
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Approvers`}
                 props={{
                   votes: item.votes,
@@ -471,6 +449,7 @@ const ProposalsComponent = () => {
               (hasVotingPermission || hasDeletePermission) && (
                 <td className="text-right" onClick={(e) => e.stopPropagation()}>
                   <Widget
+                    loading=""
                     src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.VoteActions`}
                     props={{
                       instance,
@@ -495,6 +474,7 @@ const ProposalsComponent = () => {
                       currentContract: args.token_id,
                       requiredVotes,
                       checkProposalStatus: () => checkProposalStatus(item.id),
+                      proposal: item,
                     }}
                   />
                 </td>
@@ -509,6 +489,7 @@ const ProposalsComponent = () => {
 return (
   <Container className="h-100 w-100" style={{ overflowX: "auto" }}>
     <Widget
+      loading=""
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
       props={{
         accountId: treasuryDaoID,

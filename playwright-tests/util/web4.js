@@ -69,6 +69,7 @@ export function getLocalWidgetContent(key, context = {}) {
  *     The keys are widget keys (e.g., "account/section/contentKey"), and the values are the modified widget content as strings.
  * @param {boolean} [options.callWidgetNodeURLForContractWidgets=true] - call the provided `widgetNodeUrl` when requesting social db contents under the provided `contractId`
  *     Set to false if you want to provide the modifiedWidgets object also for the contract widgets, otherwise the default is to request these widgets from `widgetNode`
+ * @param {boolean} [options.disableServiceWorker=true] - if true (default), removes service-worker.js references from HTML to prevent service worker registration. Set to false to test with service workers enabled.
  *
  * @returns {Promise<void>} A promise that resolves when the routing setup is complete.
  */
@@ -81,6 +82,7 @@ export async function redirectWeb4({
   sandboxNodeUrl,
   modifiedWidgets = {},
   callWidgetNodeURLForContractWidgets = true,
+  disableServiceWorker = true,
 }) {
   const keyStore = new keyStores.InMemoryKeyStore();
 
@@ -189,11 +191,20 @@ export async function redirectWeb4({
     }
   };
 
-  // Apply the route handler to both mainnet RPC URLs
+  // Get context from page to intercept service worker requests too
+  const browserContext = page.context();
+
+  // Apply the route handler to both mainnet RPC URLs on both page and context
   await page.route("https://rpc.mainnet.near.org", handleRpcRoute);
   await page.route("https://rpc.mainnet.fastnear.com", handleRpcRoute);
+  await browserContext.route("https://rpc.mainnet.near.org", handleRpcRoute);
+  await browserContext.route(
+    "https://rpc.mainnet.fastnear.com",
+    handleRpcRoute
+  );
 
-  await page.route(`https://${contractId}.page/**`, async (route, request) => {
+  // Web4 route handler
+  const handleWeb4Route = async (route, request) => {
     const path = request.url().substring(`https://${contractId}.page`.length);
 
     let viewResult = await contractAccount.viewFunction({
@@ -237,11 +248,22 @@ export async function redirectWeb4({
       });
     }
 
+    // Decode the body
+    let decodedBody = atob(viewResult.body);
+
+    // Optionally remove service-worker.js references to prevent service worker registration
+    if (disableServiceWorker) {
+      decodedBody = decodedBody.replace(/service-worker\.js/g, "");
+    }
+
     await route.fulfill({
       contentType: viewResult.contentType,
-      body: atob(viewResult.body),
+      body: decodedBody,
     });
-  });
+  };
+
+  await page.route(`https://${contractId}.page/**`, handleWeb4Route);
+  await browserContext.route(`https://${contractId}.page/**`, handleWeb4Route);
 }
 
 export async function compareInstanceWeb4WithTreasuryFactory(instance) {

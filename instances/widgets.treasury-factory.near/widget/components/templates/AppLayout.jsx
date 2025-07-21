@@ -8,6 +8,7 @@ const { getAllColorsAsCSSVariables } = VM.require(
 
 const AppHeader = ({ page, instance }) => (
   <Widget
+    loading=""
     src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Navbar"
     props={{
       page,
@@ -18,9 +19,20 @@ const AppHeader = ({ page, instance }) => (
 
 const UpdateNotificationBanner = ({ page, instance }) => (
   <Widget
+    loading=""
     src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.system-updates.UpdateNotificationBanner"
     props={{
       page,
+      instance,
+    }}
+  />
+);
+
+const AnnouncementBanner = ({ page, instance }) => (
+  <Widget
+    loading=""
+    src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.AnnouncementBanner"
+    props={{
       instance,
     }}
   />
@@ -570,7 +582,7 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
     : null;
   const metadata = JSON.parse(atob(config.metadata ?? ""));
 
-  const data = fetch(`https://ref-sdk-test-cold-haze-1300-2.fly.dev/headers`);
+  const data = fetch("${REPL_BACKEND_API}".replace("/api", "") + "/headers");
   const gatewayURL = data?.body?.headers?.origin ?? "";
   const isDarkTheme = metadata.theme === "dark";
 
@@ -608,6 +620,7 @@ function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {
           minHeight: gatewayURL.includes("near.org") ? "100vh" : "100%",
         }}
       >
+        <AnnouncementBanner instance={instance} />
         <UpdateNotificationBanner
           page={page}
           instance={instance}

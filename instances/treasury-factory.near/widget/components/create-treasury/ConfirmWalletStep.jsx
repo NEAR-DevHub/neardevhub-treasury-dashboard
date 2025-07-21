@@ -3,6 +3,7 @@ const { getNearBalances } = VM.require(
 );
 if (!getNearBalances) return <></>;
 
+const { setCurrentPage } = props;
 const REQUIRED_BALANCE = 9;
 
 let balance = getNearBalances(context.accountId);
@@ -55,10 +56,12 @@ return (
     <Section className="d-flex flex-column gap-3">
       <h4>Connected Wallet</h4>
       <Widget
+        loading=""
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
         props={{ accountId: context.accountId }}
       />
       <Widget
+        loading=""
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Info`}
         props={{
           type: "info",
@@ -85,6 +88,7 @@ return (
       </div>
       {balance < REQUIRED_BALANCE && (
         <Widget
+          loading=""
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Info`}
           props={{
             type: "alert",
@@ -96,13 +100,19 @@ return (
         />
       )}
     </Section>
-    <Link
-      className={`btn btn-primary w-100 ${
-        balance < REQUIRED_BALANCE ? "disabled" : "active"
-      }`}
-      href={`/${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=1`}
-    >
-      Continue
-    </Link>
+    <Widget
+      loading=""
+      src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
+      props={{
+        classNames: {
+          root: "btn btn-primary w-100",
+        },
+        disabled: balance < REQUIRED_BALANCE,
+        label: "Continue",
+        onClick: () => {
+          setCurrentPage(1);
+        },
+      }}
+    />
   </>
 );

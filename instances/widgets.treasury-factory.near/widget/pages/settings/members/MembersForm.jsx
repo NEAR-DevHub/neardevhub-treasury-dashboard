@@ -200,6 +200,7 @@ const EditMembersChangesModal = () => {
         <ModalFooter>
           <div className="d-flex mt-2 gap-3 justify-content-end">
             <Widget
+              loading=""
               src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
               props={{
                 classNames: {
@@ -213,6 +214,7 @@ const EditMembersChangesModal = () => {
               }}
             />
             <Widget
+              loading=""
               src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
               props={{
                 classNames: { root: "theme-btn" },
@@ -231,6 +233,7 @@ const EditMembersChangesModal = () => {
       />
 
       <Widget
+        loading=""
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
         props={{
           instance,
@@ -257,6 +260,7 @@ return (
   <div>
     {!isTreasuryFactory && <EditMembersChangesModal />}
     <Widget
+      loading=""
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OffCanvas`}
       props={{
         showCanvas: showEditor,
@@ -266,6 +270,7 @@ return (
         children: (
           <div>
             <Widget
+              loading=""
               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.members.MembersEditor`}
               props={{
                 isEdit,

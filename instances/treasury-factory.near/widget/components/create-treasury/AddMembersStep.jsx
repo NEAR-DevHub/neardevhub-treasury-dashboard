@@ -4,7 +4,7 @@ const { getRolesDescription } = VM.require(
   getRolesDescription: () => {},
 };
 
-const { formFields, setFormFields } = props;
+const { formFields, setFormFields, setCurrentPage } = props;
 
 const Badge = styled.div`
   border: 1px solid #e2e6ec;
@@ -65,6 +65,7 @@ const ListItem = ({ member, key }) => (
   <Item className="d-flex align-items-center gap-3 justify-content-between w-100">
     <div style={{ width: "150px" }}>
       <Widget
+        loading=""
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
         props={{ accountId: member.accountId }}
       />
@@ -135,6 +136,7 @@ return (
     <div>
       {showAddMemberModal && (
         <Widget
+          loading=""
           src={`${REPL_DEVDAO_ACCOUNT}/widget/pages.settings.members.MembersForm`}
           props={{
             showEditor: showAddMemberModal,
@@ -213,6 +215,7 @@ return (
       </div>
     </div>
     <Widget
+      loading=""
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Info`}
       props={{
         type: "info",
@@ -230,20 +233,33 @@ return (
       Add Member
     </button>
     <div className="d-flex gap-2">
-      <Link
-        className="btn w-100"
-        href={`/${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=1`}
-      >
-        Back
-      </Link>
-      <Link
-        className={`btn btn-primary w-100 ${
-          members.length > 0 ? "" : "disabled"
-        }`}
-        href={`/${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=3`}
-      >
-        Continue
-      </Link>
+      <Widget
+        loading=""
+        src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
+        props={{
+          classNames: {
+            root: "btn w-100 shadow-none no-transparent",
+          },
+          label: "Back",
+          onClick: () => {
+            setCurrentPage(1);
+          },
+        }}
+      />
+      <Widget
+        loading=""
+        src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
+        props={{
+          classNames: {
+            root: `btn btn-primary w-100`,
+          },
+          disabled: members.length === 0,
+          label: "Continue",
+          onClick: () => {
+            setCurrentPage(3);
+          },
+        }}
+      />
     </div>
   </>
 );

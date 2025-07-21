@@ -174,6 +174,7 @@ useEffect(() => {
 }, []);
 
 function refreshData() {
+  props.setToastStatus("ProposalAdded");
   Storage.set("REFRESH_LOCKUP_TABLE_DATA", Math.random());
 }
 // close canvas after proposal is submitted
@@ -208,6 +209,7 @@ return (
       cancelTxn={() => setTxnCreated(false)}
     />
     <Widget
+      loading=""
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
       props={{
         instance,
@@ -229,6 +231,7 @@ return (
       <div className="d-flex flex-column gap-1">
         <label className="form-label">Recipient</label>
         <Widget
+          loading=""
           src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.AccountInput"
           props={{
             placeholder: "recipient.near",
@@ -246,6 +249,7 @@ return (
         <div>
           <label className="form-label">Amount</label>
           <Widget
+            loading=""
             src="test-widgets.treasury-factory.near/widget/components.OverlayTrigger"
             props={{
               popup: <span>Minimum amount is {MINIMUM_AMOUNT} NEAR</span>,
@@ -292,6 +296,7 @@ return (
       <div className="d-flex flex-column gap-1">
         <label className="form-label">Start Date</label>
         <Widget
+          loading=""
           src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input"
           props={{
             type: "date",
@@ -309,6 +314,7 @@ return (
       <div className="d-flex flex-column gap-1">
         <label className="form-label fw-semibold">End Date</label>
         <Widget
+          loading=""
           src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input"
           props={{
             type: "date",
@@ -351,6 +357,7 @@ return (
         <div className="d-flex flex-column gap-1">
           <label className="form-label fw-semibold">Cliff Date</label>
           <Widget
+            loading=""
             src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input"
             props={{
               type: "date",
@@ -391,6 +398,7 @@ return (
 
       <div className="d-flex mt-2 gap-3 justify-content-end">
         <Widget
+          loading=""
           src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
           props={{
             classNames: {
@@ -403,6 +411,7 @@ return (
         />
 
         <Widget
+          loading=""
           src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
           props={{
             classNames: { root: "theme-btn" },

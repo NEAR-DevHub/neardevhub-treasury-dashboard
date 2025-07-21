@@ -162,6 +162,7 @@ return (
           {isLoadingProposals ? (
             <div className="d-flex justify-content-center align-items-center w-100 h-100">
               <Widget
+                loading=""
                 src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"}
               />
             </div>

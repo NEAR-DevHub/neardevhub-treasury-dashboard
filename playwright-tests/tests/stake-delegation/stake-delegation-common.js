@@ -479,6 +479,7 @@ export async function checkNewProposalSubmission({
   checkforMultiProposals = false,
   daoAccount,
   daoName,
+  requestType,
 }) {
   const method = checkforMultiProposals
     ? "signAndSendTransactions"
@@ -527,6 +528,9 @@ export async function checkNewProposalSubmission({
   await expect(page.locator(".offcanvas-body")).toBeVisible({
     visible: false,
   });
+  await expect(
+    page.getByText(`${requestType} request has been successfully created.`)
+  ).toBeVisible();
   await expect(
     page
       .getByRole("cell", { name: `${lastProposalId - 1}`, exact: true })

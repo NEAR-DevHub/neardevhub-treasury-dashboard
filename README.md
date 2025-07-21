@@ -1,11 +1,34 @@
-NEAR DevHub trustees dashboard BOS components
-==============================================
+# NEAR DevHub trustees dashboard BOS components
 
 This is the repository of the BOS components for the NEAR DevHub trustees dashboard.
 
 # Contributing
 
 Please refer to [NEAR DevHub](https://github.com/NEAR-DevHub/neardevhub-bos/blob/main/CONTRIBUTING.md) for general contribution guidelines. Details specific for this repository will be added later.
+
+## Development Guidelines
+
+### VM Widget Loading Pattern
+
+When using VM widgets in your components, always include the `loading=""` prop to ensure your own loading states are shown instead of the default spinner. This provides better user experience and consistent loading behavior across the application.
+
+**Example:**
+
+```jsx
+<Widget
+  loading=""
+  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Votes`}
+  props={{
+    votes: proposalData?.votes,
+  }}
+/>
+```
+
+**Why this matters:**
+
+- Prevents the default VM spinner from appearing
+- Provides better control over the loading experience
+- Ensures consistency across all VM widget usage in the application
 
 ## Running tests
 
@@ -44,6 +67,7 @@ The resulting mp4 file can be directly dragged into the Pull Request description
 The `playwright-video-merger.sh` script is used to process and combine Playwright test videos into a single, presentation-ready video file. It is especially useful for creating demo or showcase videos from your automated test runs.
 
 ### What the Script Does
+
 - **Finds all Playwright test videos** (`video.webm`) in the `test-results/` directory.
 - **Overlays the test title** (from `test-title.txt` if available, or the folder name as a fallback) as a subtitle at the bottom of each video.
 - **Converts each video to mp4** format for compatibility and better compression.
@@ -51,6 +75,7 @@ The `playwright-video-merger.sh` script is used to process and combine Playwrigh
 - **Concatenates all processed videos** (with freeze frames) into a single output file: `final_output.mp4`.
 
 ### How to Use
+
 1. **Run your Playwright tests** with video recording enabled. The test videos will be saved in the `test-results/` directory.
 2. **Ensure test titles are saved**: The test suite should write the test title to a `test-title.txt` file in each test's video folder (this is handled by the provided `afterEach` hook in your tests).
 3. **Run the script:**
@@ -60,6 +85,7 @@ The `playwright-video-merger.sh` script is used to process and combine Playwrigh
 4. **Find your merged video:** The final output will be saved as `final_output.mp4` in the root of your workspace.
 
 ### Notes
+
 - The script also creates intermediate processed videos in the `processed_videos/` directory and freeze frames in the `freeze_frames/` directory.
 - If `test-title.txt` is missing, the script will use the folder name as the overlay text.
 - You can adjust the text wrapping and overlay style by editing the script variables.
@@ -86,39 +112,39 @@ Here is an example of a `devstoragestate.json` file that reflects the data neede
 
 ```json
 {
-    "cookies": [],
-    "origins": [
+  "cookies": [],
+  "origins": [
+    {
+      "origin": "https://webassemblymusic-treasury.near.page",
+      "localStorage": [
         {
-            "origin": "https://webassemblymusic-treasury.near.page",
-            "localStorage": [
-                {
-                    "name": "near-social-vm:v01::accountId:",
-                    "value": "\"petersalomonsen.near\""
-                },
-                {
-                    "name": "near-wallet-selector:contract",
-                    "value": "{\"contractId\":\"social.near\",\"methodNames\":[]}"
-                },
-                {
-                    "name": "near-wallet-selector:ledger:accounts",
-                    "value": "[{\"accountId\":\"petersalomonsen.near\",\"derivationPath\":\"44'/397'/0'/0'/1'\",\"publicKey\":\"A7sZsyaujEaeYpUsw29hCi8vrxiyxXSbaTqbsxoa4AcN\"}]"
-                },
-                {
-                    "name": "near-wallet-selector:recentlySignedInWallets",
-                    "value": "[\"ledger\"]"
-                },
-                {
-                    "name": "near-wallet-selector:rememberRecentWallets",
-                    "value": "\"enabled\""
-                },
-                {
-                    "name": "near-wallet-selector:selectedWalletId",
-                    "value": "\"ledger\""
-                }
-            ]
+          "name": "near-social-vm:v01::accountId:",
+          "value": "\"petersalomonsen.near\""
+        },
+        {
+          "name": "near-wallet-selector:contract",
+          "value": "{\"contractId\":\"social.near\",\"methodNames\":[]}"
+        },
+        {
+          "name": "near-wallet-selector:ledger:accounts",
+          "value": "[{\"accountId\":\"petersalomonsen.near\",\"derivationPath\":\"44'/397'/0'/0'/1'\",\"publicKey\":\"A7sZsyaujEaeYpUsw29hCi8vrxiyxXSbaTqbsxoa4AcN\"}]"
+        },
+        {
+          "name": "near-wallet-selector:recentlySignedInWallets",
+          "value": "[\"ledger\"]"
+        },
+        {
+          "name": "near-wallet-selector:rememberRecentWallets",
+          "value": "\"enabled\""
+        },
+        {
+          "name": "near-wallet-selector:selectedWalletId",
+          "value": "\"ledger\""
         }
-    ],
-    "sessionStorage": []
+      ]
+    }
+  ],
+  "sessionStorage": []
 }
 ```
 
@@ -135,20 +161,24 @@ In the [web4](./web4) folder there is a setup for a web4 gateway. The [public_ht
 You can set up a minimal Playwright test file and use the `redirectWeb4` function to capture the navigation to the web4 page.
 
 ```javascript
-import { test } from '../../util/test.js';
-import { expect } from '@playwright/test';
-import { redirectWeb4 } from '../../util/web4.js';
+import { test } from "../../util/test.js";
+import { expect } from "@playwright/test";
+import { redirectWeb4 } from "../../util/web4.js";
 
-test("check if instance web4 contract is up to date", async ({page, instanceAccount, daoAccount}) => {
-    await redirectWeb4({
-        page,
-        contractId: instanceAccount,
-        treasury: daoAccount
-    });
-    await page.goto(`https://${instanceAccount}.page`);
+test("check if instance web4 contract is up to date", async ({
+  page,
+  instanceAccount,
+  daoAccount,
+}) => {
+  await redirectWeb4({
+    page,
+    contractId: instanceAccount,
+    treasury: daoAccount,
+  });
+  await page.goto(`https://${instanceAccount}.page`);
 
-    // Stop your debugger here, and you then reload the page 
-    await page.waitForTimeout(2000);
+  // Stop your debugger here, and you then reload the page
+  await page.waitForTimeout(2000);
 });
 ```
 
@@ -159,6 +189,53 @@ npx playwright test --project=treasury-testing --debug playwright-tests/tests/so
 ```
 
 Step through the debugger until the page is loaded, and then you can have normal development and reload page iterations.
+
+### Service Workers and Testing
+
+Many treasury instances deploy service workers for caching and performance optimization. However, service workers can interfere with Playwright tests by:
+
+1. **Intercepting requests** that test utilities expect to handle (e.g., mocked balance requests)
+2. **Caching responses** that prevent tests from seeing modified widgets or updated data
+3. **Taking over page routes** that the test framework uses for mocking
+
+#### How `redirectWeb4` Handles Service Workers
+
+The `redirectWeb4` function provides a `disableServiceWorker` parameter (default: `true`) to manage service worker behavior:
+
+```javascript
+await redirectWeb4({
+  page,
+  contractId: instanceAccount,
+  modifiedWidgets: {
+    "account/widget/app": "return <div>Test Widget</div>;"
+  },
+  disableServiceWorker: true  // Default - prevents service worker registration
+});
+```
+
+When `disableServiceWorker` is `true` (default):
+- Service worker registration is prevented by removing "service-worker.js" references from HTML
+- Tests can use page routes for mocking without interference
+- This is the recommended setting for most tests
+
+When `disableServiceWorker` is `false`:
+- Service workers run normally
+- `redirectWeb4` intercepts both page AND service worker requests via context routes
+- Useful for testing service worker behavior specifically
+
+#### Example: Testing with Service Workers Enabled
+
+See `playwright-tests/tests/web4/service-worker-interference.spec.js` for a complete example that:
+- Demonstrates how service workers interfere with test routes
+- Shows how to test with service workers enabled while still using modified widgets
+- Illustrates the difference between `disableServiceWorker: true` (default) and `disableServiceWorker: false`
+
+#### Best Practices
+
+1. **Keep default behavior** (`disableServiceWorker: true`) for most tests to avoid interference
+2. **Only enable service workers** when specifically testing service worker functionality
+3. **Be aware** that enabling service workers may interfere with other page routes used for mocking (e.g., balance mocks)
+4. **Use context.route()** if you need custom routes to work with service workers enabled
 
 ### Legacy BOS workspace setup
 

@@ -84,40 +84,6 @@ function checkProposalStatus(proposalId) {
     });
 }
 
-useEffect(() => {
-  if (props.transactionHashes) {
-    asyncFetch("${REPL_RPC_URL}", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id: "dontcare",
-        method: "tx",
-        params: [props.transactionHashes, context.accountId],
-      }),
-    }).then((transaction) => {
-      if (transaction !== null) {
-        const transaction_method_name =
-          transaction?.body?.result?.transaction?.actions[0].FunctionCall
-            .method_name;
-
-        if (transaction_method_name === "act_proposal") {
-          const args =
-            transaction?.body?.result?.transaction?.actions[0].FunctionCall
-              .args;
-          const decodedArgs = JSON.parse(atob(args ?? "") ?? "{}");
-          if (decodedArgs.id) {
-            const proposalId = decodedArgs.id;
-            checkProposalStatus(proposalId);
-          }
-        }
-      }
-    });
-  }
-}, [props.transactionHashes]);
-
 const TooltipContent = ({ title, summary }) => {
   return (
     <div className="p-1">
@@ -185,6 +151,7 @@ const ProposalsComponent = ({ item }) => {
       <td className="fw-semi-bold">{proposalId}</td>
       <td className={isVisible("Created Date")}>
         <Widget
+          loading=""
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
           props={{ timestamp: item.submission_time }}
         />
@@ -192,6 +159,7 @@ const ProposalsComponent = ({ item }) => {
       {!isPendingRequests && (
         <td className={isVisible("Status") + " text-center"}>
           <Widget
+            loading=""
             src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.HistoryStatus`}
             props={{ instance, isVoteStatus: false, status: item.status }}
           />
@@ -214,6 +182,7 @@ const ProposalsComponent = ({ item }) => {
 
       <td className={isVisible("Amount") + " text-right"}>
         <Widget
+          loading=""
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
           props={{
             instance,
@@ -223,12 +192,14 @@ const ProposalsComponent = ({ item }) => {
       </td>
       <td className={isVisible("Start Date")}>
         <Widget
+          loading=""
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
           props={{ timestamp: startTimestamp }}
         />
       </td>
       <td className={isVisible("End Date")}>
         <Widget
+          loading=""
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
           props={{
             timestamp:
@@ -242,6 +213,7 @@ const ProposalsComponent = ({ item }) => {
           <td className={isVisible("Cliff Date")}>
             {vestingSchedule.cliff_timestamp ? (
               <Widget
+                loading=""
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
                 props={{ timestamp: vestingSchedule.cliff_timestamp }}
               />
@@ -265,6 +237,7 @@ const ProposalsComponent = ({ item }) => {
       {isPendingRequests && (
         <td className={isVisible("Votes") + " text-center"}>
           <Widget
+            loading=""
             src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Votes`}
             props={{
               votes: item.votes,
@@ -276,6 +249,7 @@ const ProposalsComponent = ({ item }) => {
       )}
       <td className={isVisible("Approvers") + " text-center"}>
         <Widget
+          loading=""
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Approvers`}
           props={{
             votes: item.votes,
@@ -290,6 +264,7 @@ const ProposalsComponent = ({ item }) => {
           onClick={(e) => e.stopPropagation()}
         >
           <Widget
+            loading=""
             src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.VoteActions`}
             props={{
               instance,
@@ -302,6 +277,7 @@ const ProposalsComponent = ({ item }) => {
               requiredVotes,
               checkProposalStatus: () => checkProposalStatus(item.id),
               hasOneDeleteIcon,
+              proposal: item,
             }}
           />
         </td>

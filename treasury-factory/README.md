@@ -7,7 +7,11 @@ The web4 and helper contract for the treasury factory
 Install [`cargo-near`](https://github.com/near/cargo-near) and run:
 
 ```bash
-cargo near build
+# For non-reproducible build (faster, for development)
+cargo near build non-reproducible-wasm
+
+# For reproducible build (for production deployment)
+cargo near build build-reproducible-wasm
 ```
 
 ## How to Test Locally?
@@ -22,7 +26,11 @@ Deployment is automated with GitHub Actions CI/CD pipeline.
 To deploy manually, install [`cargo-near`](https://github.com/near/cargo-near) and run:
 
 ```bash
-cargo near deploy <account-id>
+cargo near deploy build-reproducible-wasm <account-id> \
+  without-init-call \
+  network-config mainnet \
+  sign-with-plaintext-private-key <private-key> \
+  send
 ```
 
 ## Useful Links

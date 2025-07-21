@@ -1,6 +1,99 @@
-const { formFields, setFormFields } = props;
+const { formFields, setFormFields, setCurrentPage } = props;
 
-const [alertMsg, setAlertMsg] = useState(null);
+const { nearAccountValidation } = VM.require(
+  "${REPL_DEVDAO_ACCOUNT}/widget/lib.common"
+) || {
+  nearAccountValidation: () => ({ isValid: true, error: null }),
+};
+
+const [alertMsg, setAlertMsg] = useState({});
+const [isValidating, setIsValidating] = useState(false);
+
+const checkAccountAvailability = async (accountId, postfix) => {
+  if (!accountId || accountId.length === 0) return;
+  return asyncFetch(`${REPL_RPC_URL}`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: "dontcare",
+      method: "query",
+      params: {
+        request_type: "view_account",
+        finality: "final",
+        account_id: `${accountId}${postfix}`,
+      },
+    }),
+  })
+    .then((resp) => {
+      if (!resp) {
+        return;
+      }
+
+      const err = resp.body?.error?.cause;
+      let errMsg = null;
+
+      if (!err) errMsg = `Account name already exists`;
+      else if (err.name !== "UNKNOWN_ACCOUNT")
+        errMsg = err?.info?.error_message;
+
+      const newAlertMsg = alertMsg ?? {};
+      newAlertMsg[postfix] = errMsg;
+      setAlertMsg(newAlertMsg);
+      return !errMsg;
+    })
+    .catch(() => {
+      return false;
+    });
+};
+
+const validateInput = () => {
+  setAlertMsg({ ".near": null });
+
+  const validation = nearAccountValidation(
+    formFields.accountName,
+    "Name",
+    true
+  );
+  if (!validation.isValid) {
+    setAlertMsg({ ".near": validation.error });
+    return Promise.resolve(false);
+  }
+
+  // Check account availability
+  return Promise.all([
+    checkAccountAvailability(formFields.accountName, ".near"),
+    checkAccountAvailability(formFields.accountName, ".sputnik-dao.near"),
+  ])
+    .then((isValid) => {
+      return isValid.every((isValid) => isValid);
+    })
+    .catch(() => {
+      return false;
+    });
+};
+
+const handleContinue = () => {
+  setIsValidating(true);
+  validateInput().then((isValid) => {
+    setIsValidating(false);
+    if (isValid) {
+      setCurrentPage(2);
+    }
+  });
+};
+
+const handleInputChange = (v) => {
+  setFormFields({
+    ...formFields,
+    accountName: v,
+  });
+
+  setAlertMsg({});
+};
 
 const AccountDisplay = ({ label, prefix, tooltipInfo, noBorder }) => {
   return (
@@ -18,7 +111,7 @@ const AccountDisplay = ({ label, prefix, tooltipInfo, noBorder }) => {
           </div>
           <span className="h6 mb-0 align-items-center">
             <span className="text-primary">{formFields.accountName}</span>
-            <span>{prefix}</span>
+            <span style={{ marginLeft: "-5px" }}>{prefix}</span>
           </span>
         </div>
       </div>
@@ -37,6 +130,7 @@ return (
     </div>
 
     <Widget
+      loading=""
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Info`}
       props={{
         type: "info",
@@ -58,18 +152,13 @@ return (
     />
 
     <Widget
+      loading=""
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.NewAccountInput`}
       props={{
         id: "treasury-account",
-        alertMsg,
-        setAlertMsg,
         label: "Treasury Name",
         defaultValue: formFields.accountName,
-        onChange: (v) =>
-          setFormFields({
-            ...formFields,
-            accountName: v,
-          }),
+        onChange: handleInputChange,
         placeholder: "my-treasury",
       }}
     />
@@ -88,8 +177,9 @@ return (
       />
     </div>
 
-    {(alertMsg[".near"] || alertMsg[".sputnik-dao.near"]) && (
+    {(alertMsg?.[".near"] || alertMsg?.[".sputnik-dao.near"]) && (
       <Widget
+        loading=""
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Info`}
         props={{
           type: "alert",
@@ -99,23 +189,35 @@ return (
     )}
 
     <div className="d-flex gap-2">
-      <Link
-        className="btn w-100"
-        href={`/${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=0`}
-      >
-        Back
-      </Link>
-      <Link
-        className={`btn btn-primary w-100 ${
-          !(alertMsg[".near"] || alertMsg[".sputnik-dao.near"]) &&
-          formFields.accountName
-            ? ""
-            : "disabled"
-        }`}
-        href={`/${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=2`}
-      >
-        Continue
-      </Link>
+      <Widget
+        loading=""
+        src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
+        props={{
+          classNames: {
+            root: "btn w-100 shadow-none no-transparent",
+          },
+          label: "Back",
+          onClick: () => {
+            setCurrentPage(0);
+          },
+        }}
+      />
+      <Widget
+        loading=""
+        src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
+        props={{
+          classNames: {
+            root: `btn btn-primary w-100`,
+          },
+          disabled:
+            alertMsg?.[".near"] ||
+            alertMsg?.[".sputnik-dao.near"] ||
+            isValidating,
+          label: "Continue",
+          onClick: handleContinue,
+          loading: isValidating,
+        }}
+      />
     </div>
   </>
 );

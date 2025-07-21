@@ -41,6 +41,8 @@ function getLastProposalId() {
 }
 
 function refreshData() {
+  const count = Object.values(selectedMap).filter((v) => v === true).length;
+  props.setToastStatus(`BulkProposalAdded: ${count}`);
   Storage.set("REFRESH_TABLE_DATA", Math.random());
 }
 
@@ -187,6 +189,7 @@ return (
       cancelTxn={() => setTxnCreated(false)}
     />
     <Widget
+      loading=""
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
       props={{
         instance,
@@ -252,6 +255,7 @@ return (
                 <td>{item["Summary"]}</td>
                 <td className="fw-semi-bold">
                   <Widget
+                    loading=""
                     src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
                     props={{
                       accountId: item["Recipient"],
@@ -262,12 +266,14 @@ return (
                 </td>
                 <td className="text-center">
                   <Widget
+                    loading=""
                     src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenIcon`}
                     props={{ address: item["Requested Token"] }}
                   />
                 </td>
                 <td className="text-right">
                   <Widget
+                    loading=""
                     src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
                     props={{
                       instance,
@@ -285,6 +291,7 @@ return (
     </ModalContent>
     <ModalFooter>
       <Widget
+        loading=""
         src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
         props={{
           classNames: {
@@ -295,13 +302,17 @@ return (
         }}
       />
       <Widget
+        loading=""
         src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
         props={{
           classNames: { root: "theme-btn" },
           label: `Submit ${
             proposalList.filter((_, idx) => selectedMap[idx]).length
           } Requests`,
-          disabled: !proposalList.filter((_, idx) => selectedMap[idx]).length,
+          disabled:
+            !proposalList.filter((_, idx) => selectedMap[idx]).length ||
+            isCreatingRequest ||
+            isTxnCreated,
           loading: isCreatingRequest || isTxnCreated,
           onClick: () => {
             setIsCreatingRequest(true);

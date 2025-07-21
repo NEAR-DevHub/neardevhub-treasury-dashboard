@@ -167,6 +167,7 @@ return (
       <div className="d-flex gap-3 align-items-center">
         {/* logo can be svg or src */}
         <Widget
+          loading=""
           src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.MyTreasuries"
           props={{ instance }}
         />

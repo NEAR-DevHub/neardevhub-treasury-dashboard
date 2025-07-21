@@ -120,6 +120,7 @@ return (
     <div className="d-flex flex-column gap-1">
       <label>Treasury Wallet</label>
       <Widget
+        loading=""
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDown`}
         props={{
           options: walletOptions,

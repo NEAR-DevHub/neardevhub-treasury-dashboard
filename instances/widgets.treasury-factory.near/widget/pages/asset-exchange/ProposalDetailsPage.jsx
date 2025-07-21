@@ -102,6 +102,7 @@ useEffect(() => {
           tokenIn,
           tokenOut,
           slippage,
+          proposal: item,
         });
       })
       .catch(() => {
@@ -148,13 +149,16 @@ function checkProposalStatus(proposalId) {
 
 return (
   <Widget
+    loading=""
     src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.ProposalDetails`}
     props={{
       ...props,
+      proposalPeriod,
       page: "asset-exchange",
       VoteActions: (hasVotingPermission || hasDeletePermission) &&
         proposalData.status === "InProgress" && (
           <Widget
+            loading=""
             src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.VoteActions`}
             props={{
               instance,
@@ -170,6 +174,7 @@ return (
               requiredVotes,
               checkProposalStatus: () => checkProposalStatus(proposalData?.id),
               isProposalDetailsPage: true,
+              proposal: proposalData.proposal,
             }}
           />
         ),
@@ -179,6 +184,7 @@ return (
             <label>Send</label>
             <h5 className="mb-0">
               <Widget
+                loading=""
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmountAndIcon`}
                 props={{
                   instance,
@@ -193,6 +199,7 @@ return (
             <label className="border-top">Receive</label>
             <h5 className="mb-0">
               <Widget
+                loading=""
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmountAndIcon`}
                 props={{
                   instance,
@@ -207,6 +214,7 @@ return (
             <label className="border-top">
               Price Slippage Limit {"   "}
               <Widget
+                loading=""
                 src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
                 props={{
                   popup:
@@ -224,6 +232,7 @@ return (
             <label className="border-top">
               Minimum Amount Receive {"   "}
               <Widget
+                loading=""
                 src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
                 props={{
                   popup:
@@ -237,6 +246,7 @@ return (
             </label>
             <h5 className="mb-0">
               <Widget
+                loading=""
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmountAndIcon`}
                 props={{
                   instance,
