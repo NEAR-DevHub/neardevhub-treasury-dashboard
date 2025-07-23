@@ -53,6 +53,7 @@ if (!daoPolicy || lastProposalId === null) {
   return (
     <div className="card d-flex justify-content-center align-items-center w-100 h-100">
       <Widget
+        loading=""
         src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"}
       />
     </div>
@@ -375,6 +376,7 @@ return (
         </div>
 
         <Widget
+          loading=""
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
           props={{
             instance,
@@ -388,6 +390,7 @@ return (
                 </p>
 
                 <Widget
+                  loading=""
                   src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.WarningTable`}
                   props={{
                     includeExpiryDate: true,
@@ -468,6 +471,7 @@ return (
         />
         <div className="d-flex mt-2 gap-3 justify-content-end">
           <Widget
+            loading=""
             src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
             props={{
               classNames: {
@@ -479,10 +483,12 @@ return (
             }}
           />
           <Widget
+            loading=""
             src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
             props={{
               ActionButton: () => (
                 <Widget
+                  loading=""
                   src={
                     "${REPL_DEVHUB}/widget/devhub.components.molecule.Button"
                   }

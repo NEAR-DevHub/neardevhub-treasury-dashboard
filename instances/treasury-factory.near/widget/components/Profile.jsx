@@ -6,6 +6,7 @@ const name = profile.name;
 const inner = (
   <div className="d-flex flex-row">
     <Widget
+      loading=""
       src="mob.near/widget/ProfileImage"
       props={{
         fast,
@@ -33,6 +34,7 @@ const inner = (
 
 return props.tooltip ? (
   <Widget
+    loading=""
     src="mob.near/widget/Profile.OverlayTrigger"
     props={{ accountId, children: inner }}
   />

@@ -23,6 +23,7 @@ return (
 
     {/* Single Web3IconFetcher for assets only */}
     <Widget
+      loading=""
       src="widgets.treasury-factory.near/widget/components.Web3IconFetcher"
       props={{
         tokens: state.testTokens,

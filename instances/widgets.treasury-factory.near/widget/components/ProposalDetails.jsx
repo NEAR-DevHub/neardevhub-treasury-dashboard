@@ -199,6 +199,7 @@ const VotesDetails = () => {
     >
       <ProposalStatus />
       <Widget
+        loading=""
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Votes`}
         props={{
           votes: proposalData?.votes,
@@ -210,6 +211,7 @@ const VotesDetails = () => {
       {props.VoteActions}
       {Object.keys(proposalData?.votes ?? {}).length > 0 && (
         <Widget
+          loading=""
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Approvers`}
           props={{
             votes: proposalData?.votes,
@@ -226,6 +228,7 @@ const CopyComponent = () => {
   const clipboardText = `https://near.social/${instance}/widget/app?page=${props.page}&id=${proposalData.id}`;
   return isCompactVersion ? (
     <Widget
+      loading=""
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Copy`}
       props={{
         label: "",
@@ -236,6 +239,7 @@ const CopyComponent = () => {
     />
   ) : (
     <Widget
+      loading=""
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Copy`}
       props={{
         label: "Copy link",
@@ -427,6 +431,7 @@ return (
           >
             <label>Created By</label>
             <Widget
+              loading=""
               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
               props={{
                 accountId: proposalData?.proposer,
@@ -439,6 +444,7 @@ return (
             />
             <label className="border-top">Created Date</label>
             <Widget
+              loading=""
               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
               props={{
                 timestamp: proposalData?.submissionTime,

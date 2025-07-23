@@ -8,6 +8,7 @@ const { getAllColorsAsCSSVariables } = VM.require(
 
 const AppHeader = ({ page, instance }) => (
   <Widget
+    loading=""
     src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Navbar"
     props={{
       page,
@@ -18,6 +19,7 @@ const AppHeader = ({ page, instance }) => (
 
 const UpdateNotificationBanner = ({ page, instance }) => (
   <Widget
+    loading=""
     src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.system-updates.UpdateNotificationBanner"
     props={{
       page,
@@ -28,6 +30,7 @@ const UpdateNotificationBanner = ({ page, instance }) => (
 
 const AnnouncementBanner = ({ page, instance }) => (
   <Widget
+    loading=""
     src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.AnnouncementBanner"
     props={{
       instance,

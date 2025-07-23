@@ -521,6 +521,7 @@ return (
     {((proposalData && !proposalData.isIntentsPayment) ||
       (proposalData && networkInfo.iconLoadFinished)) && (
       <Widget
+        loading=""
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.ProposalDetails`}
         props={{
           ...props,
@@ -529,6 +530,7 @@ return (
           VoteActions: (hasVotingPermission || hasDeletePermission) &&
             proposalData.status === "InProgress" && (
               <Widget
+                loading=""
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.VoteActions`}
                 props={{
                   instance,
@@ -577,6 +579,7 @@ return (
                 <label className="border-top">Recipient</label>
                 <div className="d-flex justify-content-between gap-2 align-items-center flex-wrap">
                   <Widget
+                    loading=""
                     src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
                     props={{
                       accountId: proposalData?.args.receiver_id,
@@ -588,6 +591,7 @@ return (
                     }}
                   />
                   <Widget
+                    loading=""
                     src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Copy`}
                     props={{
                       label: "Copy Address",
@@ -603,6 +607,7 @@ return (
                 <label className="border-top">Funding Ask</label>
                 <h5 className="mb-0">
                   <Widget
+                    loading=""
                     src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmountAndIcon`}
                     props={{
                       instance,
@@ -713,6 +718,7 @@ return (
     )}
     {networkInfo.blockchain && !networkInfo.iconLoadFinished && (
       <Widget
+        loading=""
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Web3IconFetcher`}
         props={{
           tokens: [

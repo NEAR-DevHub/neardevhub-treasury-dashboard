@@ -278,6 +278,7 @@ const TooManyRequestModal = () => {
       </ModalContent>
       <ModalFooter>
         <Widget
+          loading=""
           src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
           props={{
             classNames: {
@@ -289,6 +290,7 @@ const TooManyRequestModal = () => {
         />
         <a style={{ all: "unset" }} href={`app?page=dashboard`}>
           <Widget
+            loading=""
             src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Button"}
             props={{
               classNames: { root: "theme-btn" },
@@ -326,6 +328,7 @@ return (
     {show404Modal && <TooManyRequestModal />}
     {showDepositModal && (
       <Widget
+        loading=""
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DepositModal`}
         props={{
           show: showDepositModal,
@@ -335,6 +338,7 @@ return (
       />
     )}
     <Widget
+      loading=""
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
       props={{
         accountId: treasuryDaoID,
@@ -347,6 +351,7 @@ return (
     />
     {lockupContract && (
       <Widget
+        loading=""
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
         props={{
           accountId: lockupContract,
@@ -390,6 +395,7 @@ return (
           )}
         </div>
         <Widget
+          loading=""
           src={
             "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.Portfolio"
           }
@@ -417,6 +423,7 @@ return (
         />
         {lockupContract && (
           <Widget
+            loading=""
             src={
               "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.Portfolio"
             }
@@ -446,6 +453,7 @@ return (
           />
         )}
         <Widget
+          loading=""
           src={
             "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.IntentsPortfolio"
           }
@@ -463,6 +471,7 @@ return (
       </div>
       <div className="d-flex flex-column gap-2 flex-wrap dashboard-item flex-1 flex-container">
         <Widget
+          loading=""
           src={
             "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.ChartParent"
           }
@@ -481,6 +490,7 @@ return (
 
         {lockupContract && (
           <Widget
+            loading=""
             src={
               "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.ChartParent"
             }
@@ -498,6 +508,7 @@ return (
           />
         )}
         <Widget
+          loading=""
           src={
             "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.TransactionHistory"
           }

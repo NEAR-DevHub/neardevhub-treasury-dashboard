@@ -27,6 +27,22 @@ pub struct Contract {}
 impl Contract {
     #[allow(unused_variables)]
     pub fn web4_get(&self, request: Web4Request) -> Web4Response {
+        let path = request.path.as_str();
+
+        // Serve service worker and cache-related files
+        match path {
+            "/service-worker.js" => {
+                let service_worker_js = include_str!("web4/service-worker.js");
+                return Web4Response::Body {
+                    content_type: "application/javascript".to_owned(),
+                    body: general_purpose::STANDARD.encode(service_worker_js),
+                };
+            }
+            _ => {
+                // Continue with regular web4 handling for the main app
+            }
+        }
+
         Web4Response::Body {
             content_type: "text/html; charset=UTF-8".to_owned(),
             body: include_str!("../index.html.base64.txt").to_string(),

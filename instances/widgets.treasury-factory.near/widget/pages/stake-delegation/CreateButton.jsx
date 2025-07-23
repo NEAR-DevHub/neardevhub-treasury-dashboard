@@ -176,6 +176,7 @@ const CreateBtn = () => {
 return (
   <div>
     <Widget
+      loading=""
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OffCanvas`}
       props={{
         showCanvas: showStakeRequest,
@@ -183,6 +184,7 @@ return (
         title: "Create Stake Request",
         children: (
           <Widget
+            loading=""
             src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.CreateStakeRequest`}
             props={{
               instance,
@@ -194,6 +196,7 @@ return (
       }}
     />
     <Widget
+      loading=""
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OffCanvas`}
       props={{
         showCanvas: showUnStakeRequest,
@@ -201,6 +204,7 @@ return (
         title: "Create Unstake Request",
         children: (
           <Widget
+            loading=""
             src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.CreateUnstakeRequest`}
             props={{
               instance,
@@ -212,6 +216,7 @@ return (
       }}
     />
     <Widget
+      loading=""
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OffCanvas`}
       props={{
         showCanvas: showWithdrawRequest,
@@ -219,6 +224,7 @@ return (
         title: "Create Withdraw Request",
         children: (
           <Widget
+            loading=""
             src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.CreateWithdrawRequest`}
             props={{
               instance,
@@ -236,6 +242,7 @@ return (
     >
       {hasCreatePermission && (
         <Widget
+          loading=""
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
           props={{
             ActionButton: CreateBtn,
@@ -246,6 +253,7 @@ return (
         />
       )}
       <Widget
+        loading=""
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.SettingsDropdown`}
         props={{ isPendingPage: currentTab.title === "Pending Requests" }}
       />

@@ -129,6 +129,7 @@ function checkProposalStatus(proposalId) {
 
 return (
   <Widget
+    loading=""
     src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.ProposalDetails`}
     props={{
       ...props,
@@ -137,6 +138,7 @@ return (
       VoteActions: (hasVotingPermission || hasDeletePermission) &&
         proposalData.status === "InProgress" && (
           <Widget
+            loading=""
             src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.VoteActions`}
             props={{
               instance,
@@ -159,6 +161,7 @@ return (
             <label>Recipient</label>
             <div className="d-flex justify-content-between gap-2 align-items-center flex-wrap">
               <Widget
+                loading=""
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
                 props={{
                   accountId: proposalData?.args?.owner_account_id,
@@ -185,6 +188,7 @@ return (
             <label className="border-top">Amount</label>
             <h5 className="mb-0">
               <Widget
+                loading=""
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmountAndIcon`}
                 props={{
                   instance,
@@ -198,6 +202,7 @@ return (
             <label className="border-top">Start Date</label>
 
             <Widget
+              loading=""
               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
               props={{
                 timestamp: proposalData?.startTimestamp,
@@ -208,6 +213,7 @@ return (
           <div className="d-flex flex-column gap-2 mt-1">
             <label className="border-top">End Date</label>
             <Widget
+              loading=""
               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
               props={{
                 timestamp:
@@ -224,6 +230,7 @@ return (
                 <label className="border-top">Cliff Date</label>
                 {proposalData?.vestingSchedule.cliff_timestamp ? (
                   <Widget
+                    loading=""
                     src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
                     props={{
                       timestamp: proposalData?.vestingSchedule.cliff_timestamp,

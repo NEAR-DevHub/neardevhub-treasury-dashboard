@@ -112,6 +112,7 @@ return (
         {/* show export in all history tabs except settings and system updates */}
         {currentTab.title === "History" && props.page !== "settings" && (
           <Widget
+            loading=""
             src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.ExportTransactions`}
             props={{
               page: props.page,
@@ -125,6 +126,7 @@ return (
     {currentTab && (
       <div className="w-100 h-100 flex-grow-1" key={currentTab.title}>
         <Widget
+          loading=""
           src={currentTab.href}
           props={{ ...currentTabProps, ...props }}
         />

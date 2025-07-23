@@ -32,6 +32,7 @@ const CreateBtn = () => {
 return (
   <div>
     <Widget
+      loading=""
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OffCanvas`}
       props={{
         showCanvas,
@@ -39,6 +40,7 @@ return (
         title: "Create Lockup Request",
         children: (
           <Widget
+            loading=""
             src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.lockup.CreateRequest`}
             props={{
               instance,
@@ -56,6 +58,7 @@ return (
     >
       {hasCreatePermission && (
         <Widget
+          loading=""
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
           props={{
             ActionButton: CreateBtn,
@@ -66,6 +69,7 @@ return (
         />
       )}
       <Widget
+        loading=""
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.lockup.SettingsDropdown`}
         props={{ isPendingPage }}
       />

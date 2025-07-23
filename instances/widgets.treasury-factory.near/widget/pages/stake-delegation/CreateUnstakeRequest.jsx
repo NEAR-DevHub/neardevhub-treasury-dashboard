@@ -216,6 +216,7 @@ const BalanceDisplay = ({ label, balance, tooltipInfo, noBorder }) => {
             {label}
             {"  "}{" "}
             <Widget
+              loading=""
               src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
               props={{
                 popup: tooltipInfo,
@@ -401,6 +402,7 @@ return (
       cancelTxn={() => setTxnCreated(false)}
     />
     <Widget
+      loading=""
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
       props={{
         instance,
@@ -417,6 +419,7 @@ return (
       }}
     />
     <Widget
+      loading=""
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
       props={{
         accountId: treasuryDaoID,
@@ -431,6 +434,7 @@ return (
     <div className="d-flex flex-column gap-3">
       {lockupContract && (
         <Widget
+          loading=""
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.WalletDropdown`}
           props={{
             lockupNearBalances,
@@ -474,6 +478,7 @@ return (
         </div>
       ) : (
         <Widget
+          loading=""
           src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.stake-delegation.ValidatorsDropDownWithSearch"
           props={{
             selectedValue: validatorAccount,
@@ -499,6 +504,7 @@ return (
 
     {lockupContract && (
       <Widget
+        loading=""
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
         props={{
           accountId: lockupContract,

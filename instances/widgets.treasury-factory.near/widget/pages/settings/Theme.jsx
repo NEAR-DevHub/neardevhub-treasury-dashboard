@@ -47,6 +47,7 @@ const [isTxnCreated, setTxnCreated] = useState(false);
 const [showToastStatus, setToastStatus] = useState(false);
 const [lastProposalId, setLastProposalId] = useState(null);
 const [showErrorToast, setShowErrorToast] = useState(false);
+const [uploadingImage, setUploadingImage] = useState(false);
 
 const Container = styled.div`
   max-width: 50rem;
@@ -91,6 +92,7 @@ function getDefaultValues() {
 }
 
 function uploadImageToServer(file) {
+  setUploadingImage(true);
   asyncFetch("https://ipfs.near.social/add", {
     method: "POST",
     headers: { Accept: "application/json" },
@@ -108,6 +110,9 @@ function uploadImageToServer(file) {
         setError("Error occured while uploading image, please try again.");
         setImage(getDefaultValues().defaultImage);
       }
+    })
+    .finally(() => {
+      setUploadingImage(false);
     });
 }
 
@@ -132,111 +137,125 @@ const isDarkTheme = metadata?.theme === "dark";
 const code = `
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link
-  rel="stylesheet"
-  href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-  />   
-  <title>Upload Logo</title>
-  <style>
-    body {
-      --bg-page-color: ${isDarkTheme ? "#222222" : "#FFFFFF"};
-      --text-color: ${isDarkTheme ? "#CACACA" : "#1B1B18"};
-      --border-color: ${isDarkTheme ? "#3B3B3B" : "rgba(226, 230, 236, 1)"};
-      --text-secondary-color: ${isDarkTheme ? "#878787" : "#999999"};
-      --grey-035: ${isDarkTheme ? "#3E3E3E" : "#E6E6E6"};
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif;
-      background-color: var(--bg-page-color);
-      color: var(--text-color);
-    }
-    .btn-outline-secondary {
-      border-color: var(--border-color) !important;
-      color: var(--text-color) !important;
-      border-width: 1px !important;
-      &:hover {
-        color: var(--text-color) !important;
-        border-color: var(--border-color) !important;
-        background: var(--grey-035) !important;
-      }
-    }
-    .btn-container {
-      width:200px;
-    }
-    .text-secondary {
-      color: var(--text-secondary-color);
-      font-size: 12px;
-    }
-    .text-center{
-      text-align:center;
-    }
-  </style>
-</head>
-<body>
-    <div class="btn-container d-flex flex-column gap-2 mt-3">
-      <button class="btn btn-outline-secondary w-100" id="uploadButton">Upload Logo</button>
-      <div class="text-secondary text-center">SVG, PNG, or JPG (256x256 px)</div>
-      <input
-        type="file"
-        id="imageUpload"
-        accept="image/png, image/jpeg, image/svg+xml"
-        style="display: none;"
-      />
-  </div>
+   <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <link
+         rel="stylesheet"
+         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+         />
+      <title>Upload Logo</title>
+      <style>
+         body {
+         --bg-page-color: ${isDarkTheme ? "#222222" : "#FFFFFF"};
+         --text-color: ${isDarkTheme ? "#CACACA" : "#1B1B18"};
+         --border-color: ${isDarkTheme ? "#3B3B3B" : "rgba(226, 230, 236, 1)"};
+         --text-secondary-color: ${isDarkTheme ? "#878787" : "#999999"};
+         --grey-035: ${isDarkTheme ? "#3E3E3E" : "#E6E6E6"};
+         font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif;
+         background-color: var(--bg-page-color);
+         color: var(--text-color);
+         }
+         .btn-outline-secondary {
+         border-color: var(--border-color) !important;
+         color: var(--text-color) !important;
+         border-width: 1px !important;
+         &:hover {
+         color: var(--text-color) !important;
+         border-color: var(--border-color) !important;
+         background: var(--grey-035) !important;
+         }
+         }
+         .btn-container {
+         width:200px;
+         }
+         .text-secondary {
+         color: var(--text-secondary-color);
+         font-size: 12px;
+         }
+         .text-center{
+         text-align:center;
+         }
+      </style>
+   </head>
+   <body>
+      <div class="btn-container d-flex flex-column gap-2 mt-3">
+         <button class="btn btn-outline-secondary w-100" id="uploadButton">Upload Logo</button>
+         <div class="text-secondary text-center">SVG, PNG, or JPG (256x256 px)</div>
+         <input
+            type="file"
+            id="imageUpload"
+            accept="image/png, image/jpeg, image/svg+xml"
+            style="display: none;"
+            />
+      </div>
+      <script>
+         const imageUpload = document.getElementById("imageUpload");
+         const uploadButton = document.getElementById("uploadButton");
+         let hasCreatePermission = true;
+         
+         // Trigger the file input when the button is clicked
+         uploadButton.addEventListener("click", () => {
+           imageUpload.click();
+         });
+         
+         // Handle image upload
+         imageUpload.addEventListener("change", (event) => {
+           const file = event.target.files[0];
+           if (file) {
+             const reader = new FileReader();
+         
+             reader.onload = () => {
+               const img = new Image();
+               img.src = reader.result;
+         
+               img.onload = async () => {
+         
+                 // Check dimensions
+                 if (img.width === 256 && img.height === 256) {
+                   window.parent.postMessage(
+                     { handler: "uploadImage", file: file },
+                     "*"
+                   );
+                 } else {
+                   window.parent.postMessage(
+                     {
+                       handler: "error",
+                       error:
+                         "Invalid logo. Please upload a PNG, JPG, or SVG file for your logo that is exactly 256x256 px",
+                     },
+                     "*"
+                   );
+                 }
+               };
+             };
+         
+             reader.onerror = (error) => {
+               console.error("Error reading file:", error);
+             };
+         
+             reader.readAsDataURL(file);
+           }
+         });
+         
+             window.addEventListener(
+             "message",
+             function (event) {
+             console.log(event.data);
+             document.getElementById("imageUpload").disabled = !event.data.hasCreatePermission   || event.data.uploadingImage;
+             document.getElementById("uploadButton").disabled =  !event.data.hasCreatePermission || event.data.uploadingImage;
+              if (event.data.uploadingImage) {
+                document.getElementById("uploadButton").innerHTML =
+                '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Uploading...';
+              } else {
+                document.getElementById("uploadButton").innerHTML = "Upload Logo";
+              }
 
-  <script>
-    const imageUpload = document.getElementById("imageUpload");
-    const uploadButton = document.getElementById("uploadButton");
-
-    imageUpload.disabled = ${!hasCreatePermission}
-    uploadButton.disabled = ${!hasCreatePermission}
-    // Trigger the file input when the button is clicked
-    uploadButton.addEventListener("click", () => {
-      imageUpload.click();
-    });
-
-    // Handle image upload
-    imageUpload.addEventListener("change", (event) => {
-      const file = event.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-
-        reader.onload = () => {
-          const img = new Image();
-          img.src = reader.result;
-
-          img.onload = async () => {
-            // Check dimensions
-            if (img.width === 256 && img.height === 256) {
-              window.parent.postMessage(
-                { handler: "uploadImage", file: file },
-                "*"
-              );
-            } else {
-              window.parent.postMessage(
-                {
-                  handler: "error",
-                  error:
-                    "Invalid logo. Please upload a PNG, JPG, or SVG file for your logo that is exactly 256x256 px",
-                },
-                "*"
-              );
-            }
-          };
-        };
-
-        reader.onerror = (error) => {
-          console.error("Error reading file:", error);
-        };
-
-        reader.readAsDataURL(file);
-      }
-    });
-
-
-  </script>
-</body>
+                  
+           }
+         );
+      </script>
+   </body>
 </html>
 `;
 
@@ -411,6 +430,7 @@ return (
           style={{ minHeight: 300 }}
         >
           <Widget
+            loading=""
             src={"${REPL_DEVHUB}/widget/devhub.components.molecule.Spinner"}
           />
         </div>
@@ -429,6 +449,10 @@ return (
                 height: "110px",
                 width: "100%",
                 backgroundColor: "var(--bg-page-color)",
+              }}
+              message={{
+                uploadingImage: uploadingImage,
+                hasCreatePermission: hasCreatePermission,
               }}
               onMessage={(e) => {
                 switch (e.handler) {
@@ -477,6 +501,7 @@ return (
           <div className="d-flex flex-column gap-1">
             <label>Theme</label>
             <Widget
+              loading=""
               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDown`}
               props={{
                 options: ThemeOptions,
@@ -488,6 +513,7 @@ return (
           </div>
           <div className="d-flex mt-2 gap-3 justify-content-end">
             <Widget
+              loading=""
               src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
               props={{
                 classNames: {
@@ -500,10 +526,12 @@ return (
               }}
             />
             <Widget
+              loading=""
               src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
               props={{
                 ActionButton: () => (
                   <Widget
+                    loading=""
                     src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
                     props={{
                       classNames: { root: "theme-btn" },

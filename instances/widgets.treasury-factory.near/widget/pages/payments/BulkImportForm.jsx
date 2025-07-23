@@ -389,6 +389,7 @@ const Container = styled.div`
 return (
   <Container className="d-flex flex-column gap-3">
     <Widget
+      loading=""
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
       props={{
         instance,
@@ -424,6 +425,7 @@ return (
       </div>
       <div className="text-sm">Paste Data Below</div>
       <Widget
+        loading=""
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
         props={{
           className: "flex-grow-1",
@@ -464,6 +466,7 @@ return (
 
     <div className="d-flex mt-2 gap-3 justify-content-end">
       <Widget
+        loading=""
         src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
         props={{
           classNames: {
@@ -476,6 +479,7 @@ return (
       />
       {validatedData ? (
         <Widget
+          loading=""
           src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
           props={{
             classNames: { root: "theme-btn" },
@@ -487,6 +491,7 @@ return (
         />
       ) : (
         <Widget
+          loading=""
           src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
           props={{
             classNames: { root: "theme-btn" },
