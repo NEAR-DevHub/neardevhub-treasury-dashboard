@@ -10,33 +10,33 @@ import {
 
 /**
  * Sputnik-DAO + NEAR Intents Integration Test
- * 
+ *
  * This test demonstrates how a DAO can execute cross-network USDC swaps via NEAR Intents
  * while addressing the key security challenge: preventing any individual from gaining control
  * over the DAO's NEAR Intents holdings.
- * 
+ *
  * Security Challenge:
  * - Personal accounts have built-in keys for signing intents
  * - DAO accounts have no keys - they operate through governance
  * - If we gave a DAO member a signing key, they'd control all DAO funds in NEAR Intents
- * 
+ *
  * What This Test Demonstrates:
  * - DAO governance-based approval for intent signing
  * - Cross-network USDC swap (NEAR → Ethereum) using DAO funds
  * - A workflow where signing keys are managed separately from DAO members
- * 
+ *
  * Key Security Requirement Identified:
  * Intent signing must happen in a secure, confidential environment where:
  * - The signing key cannot be accessed by any DAO member
  * - Only the specific intent approved by governance can be signed
  * - No one retains ongoing access to move DAO funds
- * 
+ *
  * Recommended Solution:
  * Technologies like SHADE Agents and TEEs can provide the secure execution environment needed,
  * ensuring keys are generated and used in isolation without human access.
- * 
+ *
  * Test Flow:
- * 1. Deploy and initialize OMFT and intents contracts  
+ * 1. Deploy and initialize OMFT and intents contracts
  * 2. Setup USDC tokens and fund accounts
  * 3. Simulate secure keypair generation and intent signing
  * 4. Solver registers their key independently
@@ -45,21 +45,24 @@ import {
  * 7. Vote and execute proposal (key registered for the intent)
  * 8. Solver provides liquidity and executes intents atomically
  * 9. Cross-chain withdrawal to Ethereum address completes
- * 
+ *
  * This PoC proves the technical feasibility while identifying the need for
  * secure key management solutions in production.
- * 
+ *
  * Current Status:
  * ✅ Sputnik-DAO integration complete
  * ✅ Cross-network USDC swap working with DAO funds
  * ✅ Governance-based approval flow implemented
  * ✅ Security requirements identified for production use
  */
-test("replicate USDC swap and withdrawal with solver", async ({ }, testInfo) => {
+test("replicate USDC swap and withdrawal with solver", async ({}, testInfo) => {
   // Skip if not running treasury-testing project
-  test.skip(testInfo.project.name !== "treasury-testing", "This test only runs in treasury-testing project");
+  test.skip(
+    testInfo.project.name !== "treasury-testing",
+    "This test only runs in treasury-testing project"
+  );
   test.setTimeout(120_000);
-  
+
   const worker = await Worker.init();
   const mainnet = await connect({
     networkId: "mainnet",
@@ -103,19 +106,23 @@ test("replicate USDC swap and withdrawal with solver", async ({ }, testInfo) => 
 
   // Use the real USDC token IDs from the supported tokens API
   const nearUsdcToken = {
-    defuse_asset_identifier: "near:mainnet:17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
-    near_token_id: "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+    defuse_asset_identifier:
+      "near:mainnet:17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+    near_token_id:
+      "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
     decimals: 6,
     asset_name: "USDC",
-    intents_token_id: "nep141:17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1"
+    intents_token_id:
+      "nep141:17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
   };
-  
+
   const ethUsdcToken = {
     defuse_asset_identifier: "eth:1:0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
     near_token_id: "eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
     decimals: 6,
     asset_name: "USDC",
-    intents_token_id: "nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near"
+    intents_token_id:
+      "nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
   };
 
   console.log("Using NEAR USDC token:", nearUsdcToken.near_token_id);
@@ -125,22 +132,26 @@ test("replicate USDC swap and withdrawal with solver", async ({ }, testInfo) => 
   const nearUsdcContract = await worker.rootAccount.importContract({
     mainnetContract: nearUsdcToken.near_token_id,
   });
-  
+
   // Create additional accounts needed for multisig operations
   const masterMinter1 = worker.rootAccount; // Use root as first master minter
-  const masterMinter2 = await worker.rootAccount.createSubAccount("masterminter2");
-  const controller1 = await worker.rootAccount.createSubAccount("controller1"); 
+  const masterMinter2 = await worker.rootAccount.createSubAccount(
+    "masterminter2"
+  );
+  const controller1 = await worker.rootAccount.createSubAccount("controller1");
   const controller2 = await worker.rootAccount.createSubAccount("controller2");
   const minter = await worker.rootAccount.createSubAccount("minter");
 
   // Initialize it using the same method as wrap.near initialization in other tests
-  const nearUsdcMainnetAccount = await mainnet.account(nearUsdcContract.accountId);
+  const nearUsdcMainnetAccount = await mainnet.account(
+    nearUsdcContract.accountId
+  );
   const mainnetMetadata = await nearUsdcMainnetAccount.viewFunction({
     contractId: nearUsdcContract.accountId,
     methodName: "ft_metadata",
   });
   // Note: We don't need to fetch total_supply since we'll mint our own tokens
-  
+
   await nearUsdcContract.call(nearUsdcContract.accountId, "init", {
     admin_ids: [worker.rootAccount.accountId],
     master_minter_ids: [masterMinter1.accountId, masterMinter2.accountId],
@@ -171,7 +182,7 @@ test("replicate USDC swap and withdrawal with solver", async ({ }, testInfo) => 
   const solverAccount = await worker.rootAccount.importContract({
     mainnetContract: "solver-multichain-asset.near",
   });
-  
+
   const userAccount = await worker.rootAccount.importContract({
     mainnetContract: "petersalomonsen.near",
   });
@@ -236,23 +247,29 @@ test("replicate USDC swap and withdrawal with solver", async ({ }, testInfo) => 
 
   // USDC Minting with Multisig Process
   // The NEAR USDC contract follows Circle's architecture requiring multisig approval for minting
-  
+
   /**
    * Helper function to execute multisig actions following the pattern from Circle's integration tests
    */
-  async function doMultisigAction(requester1, requester2, contract, action, description) {
+  async function doMultisigAction(
+    requester1,
+    requester2,
+    contract,
+    action,
+    description
+  ) {
     console.log(`\n--- ${description} ---`);
-    
-    // Step 1: Create multisig request  
+
+    // Step 1: Create multisig request
     const requestId = await requester1.call(
       contract.accountId,
       "create_multisig_request",
       action,
       { gas: "100000000000000" }
     );
-    
+
     console.log(`✓ Created multisig request ${requestId}`);
-    
+
     // Step 2: First approval
     await requester1.call(
       contract.accountId,
@@ -260,19 +277,19 @@ test("replicate USDC swap and withdrawal with solver", async ({ }, testInfo) => 
       { request_id: requestId },
       { gas: "100000000000000" }
     );
-    
+
     console.log(`✓ First approval by ${requester1.accountId}`);
-    
-    // Step 3: Second approval  
+
+    // Step 3: Second approval
     await requester2.call(
       contract.accountId,
-      "approve_multisig_request", 
+      "approve_multisig_request",
       { request_id: requestId },
       { gas: "100000000000000" }
     );
-    
+
     console.log(`✓ Second approval by ${requester2.accountId}`);
-    
+
     // Step 4: Execute the approved request
     const result = await requester1.call(
       contract.accountId,
@@ -280,7 +297,7 @@ test("replicate USDC swap and withdrawal with solver", async ({ }, testInfo) => 
       { request_id: requestId },
       { gas: "100000000000000" }
     );
-    
+
     console.log(`✓ Executed multisig request ${requestId}`);
     return result;
   }
@@ -292,15 +309,15 @@ test("replicate USDC swap and withdrawal with solver", async ({ }, testInfo) => 
   // Step 1: Configure Controllers (requires master minter approval)
   await doMultisigAction(
     masterMinter1,
-    masterMinter2, 
+    masterMinter2,
     nearUsdcContract,
     {
       action: {
         ConfigureController: {
           controller_id: controller1.accountId,
           minter_id: minter.accountId,
-        }
-      }
+        },
+      },
     },
     "Configure Controller 1"
   );
@@ -308,14 +325,14 @@ test("replicate USDC swap and withdrawal with solver", async ({ }, testInfo) => 
   await doMultisigAction(
     masterMinter1,
     masterMinter2,
-    nearUsdcContract, 
+    nearUsdcContract,
     {
       action: {
         ConfigureController: {
           controller_id: controller2.accountId,
           minter_id: minter.accountId,
-        }
-      }
+        },
+      },
     },
     "Configure Controller 2"
   );
@@ -330,8 +347,8 @@ test("replicate USDC swap and withdrawal with solver", async ({ }, testInfo) => 
         ConfigureMinterAllowance: {
           controller_id: controller1.accountId,
           minter_allowance: "1000000000000", // 1M USDC allowance
-        }
-      }
+        },
+      },
     },
     "Configure Minter Allowance"
   );
@@ -351,14 +368,14 @@ test("replicate USDC swap and withdrawal with solver", async ({ }, testInfo) => 
 
   console.log(`✓ Minted 100 USDC to ${userAccount.accountId}`);
 
-  // Step 4: Deposit ETH USDC to intents contract using ft_deposit  
+  // Step 4: Deposit ETH USDC to intents contract using ft_deposit
   await omftContract.call(
     omftContract.accountId,
     "ft_deposit",
     {
       owner_id: "intents.near",
       token: "eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48", // ETH USDC token symbol
-      amount: "200000000", // 200 USDC with 6 decimals 
+      amount: "200000000", // 200 USDC with 6 decimals
       msg: JSON.stringify({ receiver_id: solverAccount.accountId }), // Credit to solver account
     },
     { attachedDeposit: parseNEAR("1"), gas: "100000000000000" }
@@ -372,7 +389,9 @@ test("replicate USDC swap and withdrawal with solver", async ({ }, testInfo) => 
   const nearUsdcTokenDefuseId = nearUsdcToken.intents_token_id; // Use real mainnet token ID
   const ethUsdcTokenDefuseId = ethUsdcToken.intents_token_id;
 
-  console.log("✓ Setup complete - contracts deployed and ready for NEP-413 testing");
+  console.log(
+    "✓ Setup complete - contracts deployed and ready for NEP-413 testing"
+  );
   console.log("Using real mainnet token IDs for intents payload:");
   console.log("NEAR USDC:", nearUsdcTokenDefuseId);
   console.log("ETH USDC:", ethUsdcTokenDefuseId);
@@ -380,13 +399,19 @@ test("replicate USDC swap and withdrawal with solver", async ({ }, testInfo) => 
   // Generate separate keypairs for intent signing (simulating secure key generation)
   const solverSigningKey = KeyPair.fromRandom("ed25519");
   const userSigningKey = KeyPair.fromRandom("ed25519");
-  
+
   console.log("Generated signing keys:");
-  console.log("Solver signing public key:", solverSigningKey.getPublicKey().toString());
-  console.log("User signing public key:", userSigningKey.getPublicKey().toString());
+  console.log(
+    "Solver signing public key:",
+    solverSigningKey.getPublicKey().toString()
+  );
+  console.log(
+    "User signing public key:",
+    userSigningKey.getPublicKey().toString()
+  );
 
   console.log("✓ Signing keys generated (simulating secure environment)");
-  
+
   // Solver registers their own public key (not via DAO proposal)
   console.log("Solver registering their public key independently...");
   await solverAccount.call(
@@ -398,7 +423,7 @@ test("replicate USDC swap and withdrawal with solver", async ({ }, testInfo) => 
     },
     { attachedDeposit: "1", gas: "50000000000000" }
   );
-  
+
   console.log("✓ Solver public key registered independently");
   console.log("✓ User signing key will be added via sputnik-dao proposal");
 
@@ -406,14 +431,19 @@ test("replicate USDC swap and withdrawal with solver", async ({ }, testInfo) => 
   const sputnikFactory = await worker.rootAccount.importContract({
     mainnetContract: SPUTNIK_DAO_FACTORY_ID,
   });
-  
+
   // Initialize the sputnik-dao factory
-  await sputnikFactory.call(SPUTNIK_DAO_FACTORY_ID, "new", {}, { gas: "100000000000000" });
+  await sputnikFactory.call(
+    SPUTNIK_DAO_FACTORY_ID,
+    "new",
+    {},
+    { gas: "100000000000000" }
+  );
 
   // Create a treasury DAO for testing the proposal flow
   const treasuryDaoName = "treasury-test-dao";
   const treasuryDaoId = `${treasuryDaoName}.${SPUTNIK_DAO_FACTORY_ID}`;
-  
+
   const daoConfig = {
     config: {
       name: treasuryDaoName,
@@ -424,35 +454,35 @@ test("replicate USDC swap and withdrawal with solver", async ({ }, testInfo) => 
       roles: [
         {
           kind: {
-            Group: [userAccount.accountId] // Only user account for simplified testing
+            Group: [userAccount.accountId], // Only user account for simplified testing
           },
           name: "council",
           permissions: [
             "call:AddProposal",
-            "call:VoteApprove", 
+            "call:VoteApprove",
             "call:VoteReject",
             "call:Finalize",
-            "call:RemoveProposal"
+            "call:RemoveProposal",
           ],
           vote_policy: {
             call: {
               weight_kind: "RoleWeight",
               quorum: "0",
-              threshold: "1"
-            }
-          }
-        }
+              threshold: "1",
+            },
+          },
+        },
       ],
       default_vote_policy: {
-        weight_kind: "RoleWeight", 
+        weight_kind: "RoleWeight",
         quorum: "0",
-        threshold: "1"
+        threshold: "1",
       },
       proposal_bond: PROPOSAL_BOND.toString(),
       proposal_period: "604800000000000",
       bounty_bond: "100000000000000000000000", // 0.1 NEAR
-      bounty_forgiveness_period: "86400000000000"
-    }
+      bounty_forgiveness_period: "86400000000000",
+    },
   };
 
   console.log("Creating treasury DAO for proposal testing...");
@@ -461,7 +491,7 @@ test("replicate USDC swap and withdrawal with solver", async ({ }, testInfo) => 
     "create",
     {
       name: treasuryDaoName,
-      args: Buffer.from(JSON.stringify(daoConfig)).toString("base64")
+      args: Buffer.from(JSON.stringify(daoConfig)).toString("base64"),
     },
     { attachedDeposit: parseNEAR("6"), gas: "300000000000000" }
   );
@@ -477,14 +507,14 @@ test("replicate USDC swap and withdrawal with solver", async ({ }, testInfo) => 
       receiver_id: intentsContract.accountId,
       amount: "100000000", // 100 USDC
       memo: "Deposit for DAO intent execution",
-      msg: JSON.stringify({ receiver_id: treasuryDaoId })
+      msg: JSON.stringify({ receiver_id: treasuryDaoId }),
     },
     { attachedDeposit: "1", gas: "100000000000000" }
   );
   console.log(`✓ NEAR USDC deposited to intents.near for ${treasuryDaoId}`);
 
   // Execute intents using proper NEP-413 signed payloads (replicating the mainnet transaction)
-  
+
   // Create the solver intent message - matching the amounts we minted
   const solverMessage = {
     signer_id: solverAccount.accountId,
@@ -500,7 +530,7 @@ test("replicate USDC swap and withdrawal with solver", async ({ }, testInfo) => 
     ],
   };
 
-  // Create the user intent message - matching the amounts we minted  
+  // Create the user intent message - matching the amounts we minted
   const userMessage = {
     deadline: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString(), // 10 days from now (to accommodate DAO voting)
     intents: [
@@ -524,72 +554,83 @@ test("replicate USDC swap and withdrawal with solver", async ({ }, testInfo) => 
   };
 
   // Create NEP-413 payloads and sign them with the generated keypairs
-  
+
   /**
    * Creates and signs a NEP-413 payload for intent execution
-   * 
+   *
    * This implements the NEP-413 standard for off-chain message signing, compatible with
    * secure environments where private keys cannot be accessed by any individual.
-   * 
+   *
    * Key implementation details:
    * - Uses Borsh serialization for cross-platform compatibility
    * - Implements hash-then-sign pattern for security
    * - Uses base58 encoding for NEAR ecosystem compatibility
    * - Supports both near-cli-rs (prefix bytes) and MyNearWallet (tag field) approaches
-   * 
+   *
    * @param {Object} message - The intent message to sign
-   * @param {string} recipient - The contract that will verify this signature  
+   * @param {string} recipient - The contract that will verify this signature
    * @param {Uint8Array} nonce - 32-byte random nonce for replay protection
    * @param {KeyPair} signingKey - The keypair to sign with (separate from account access key)
    * @param {string} standard - Signing standard ("nep413" or "raw_ed25519")
    * @returns {Object} Signed payload in format expected by intents.near contract
    */
-  async function createSignedPayload(message, recipient, nonce, signingKey, standard = "nep413") {
+  async function createSignedPayload(
+    message,
+    recipient,
+    nonce,
+    signingKey,
+    standard = "nep413"
+  ) {
     const messageString = JSON.stringify(message);
-    
+
     if (standard === "nep413") {
       // Based on near-cli-rs implementation: prefix bytes + borsh serialized payload
       const payload = {
         message: messageString,
         nonce: Array.from(nonce),
         recipient: recipient,
-        callbackUrl: null // Optional field
+        callbackUrl: null, // Optional field
       };
-      
+
       // Define Borsh schema for the payload (without prefix)
       const payloadSchema = {
         struct: {
-          message: 'string',
-          nonce: { array: { type: 'u8', len: 32 } },
-          recipient: 'string',
-          callbackUrl: { option: 'string' }
-        }
+          message: "string",
+          nonce: { array: { type: "u8", len: 32 } },
+          recipient: "string",
+          callbackUrl: { option: "string" },
+        },
       };
-      
+
       // NEP413_SIGN_MESSAGE_PREFIX: (1 << 31) + 413 = 2147484061
       const prefixValue = 2147484061;
       const prefixBytes = new Uint8Array(4);
       // to_le_bytes() - little endian
-      prefixBytes[0] = prefixValue & 0xFF;
-      prefixBytes[1] = (prefixValue >> 8) & 0xFF;
-      prefixBytes[2] = (prefixValue >> 16) & 0xFF;
-      prefixBytes[3] = (prefixValue >> 24) & 0xFF;
-      
+      prefixBytes[0] = prefixValue & 0xff;
+      prefixBytes[1] = (prefixValue >> 8) & 0xff;
+      prefixBytes[2] = (prefixValue >> 16) & 0xff;
+      prefixBytes[3] = (prefixValue >> 24) & 0xff;
+
       // Serialize payload with Borsh
-      const serializedPayload = utils.serialize.serialize(payloadSchema, payload);
-      
+      const serializedPayload = utils.serialize.serialize(
+        payloadSchema,
+        payload
+      );
+
       // Combine: prefix bytes + serialized payload (matching near-cli-rs)
-      const bytesToSign = new Uint8Array(prefixBytes.length + serializedPayload.length);
+      const bytesToSign = new Uint8Array(
+        prefixBytes.length + serializedPayload.length
+      );
       bytesToSign.set(prefixBytes);
       bytesToSign.set(serializedPayload, prefixBytes.length);
-      
+
       // Hash the combined bytes first, then sign the hash
-      const hashBuffer = await crypto.subtle.digest('SHA-256', bytesToSign);
+      const hashBuffer = await crypto.subtle.digest("SHA-256", bytesToSign);
       const hash = new Uint8Array(hashBuffer);
-      
+
       // Sign the hash (not the raw bytes)
       const signature = signingKey.sign(hash);
-      
+
       return {
         standard: "nep413",
         payload: {
@@ -598,18 +639,22 @@ test("replicate USDC swap and withdrawal with solver", async ({ }, testInfo) => 
           recipient: recipient,
         },
         public_key: signingKey.getPublicKey().toString(),
-        signature: `ed25519:${utils.serialize.base_encode(signature.signature)}`,
+        signature: `ed25519:${utils.serialize.base_encode(
+          signature.signature
+        )}`,
       };
     } else {
       // Raw Ed25519 signing (simple approach)
-      const messageBytes = Buffer.from(messageString, 'utf-8');
+      const messageBytes = Buffer.from(messageString, "utf-8");
       const signature = signingKey.sign(messageBytes);
-      
+
       return {
         standard: "raw_ed25519",
         payload: messageString, // Just the raw message string
         public_key: signingKey.getPublicKey().toString(),
-        signature: `ed25519:${utils.serialize.base_encode(signature.signature)}`,
+        signature: `ed25519:${utils.serialize.base_encode(
+          signature.signature
+        )}`,
       };
     }
   }
@@ -617,7 +662,7 @@ test("replicate USDC swap and withdrawal with solver", async ({ }, testInfo) => 
   // Create proper 32-byte nonces
   const solverNonce = new Uint8Array(32);
   crypto.getRandomValues(solverNonce);
-  
+
   const userNonce = new Uint8Array(32);
   crypto.getRandomValues(userNonce);
 
@@ -656,17 +701,21 @@ test("replicate USDC swap and withdrawal with solver", async ({ }, testInfo) => 
   // Check initial balances (will be 0 for this test)
   console.log("\n=== Initial Balances ===");
   try {
-    const solverEthUsdcBalance = await omftContract.view(ethUsdcTokenId, "ft_balance_of", {
-      account_id: solverAccount.accountId
-    });
+    const solverEthUsdcBalance = await omftContract.view(
+      ethUsdcTokenId,
+      "ft_balance_of",
+      {
+        account_id: solverAccount.accountId,
+      }
+    );
     console.log(`Solver ETH USDC balance: ${solverEthUsdcBalance}`);
   } catch (e) {
     console.log("Solver ETH USDC balance: 0 (account not registered)");
   }
-  
+
   try {
     const userNearUsdcBalance = await nearUsdcContract.view("ft_balance_of", {
-      account_id: userAccount.accountId
+      account_id: userAccount.accountId,
     });
     console.log(`User NEAR USDC balance: ${userNearUsdcBalance}`);
   } catch (e) {
@@ -674,12 +723,18 @@ test("replicate USDC swap and withdrawal with solver", async ({ }, testInfo) => 
   }
 
   // Create sputnik-dao proposal for DAO's key registration + intent execution
-  console.log("\n=== Creating Sputnik-DAO Proposal for Secure Intent Signature ===");
-  console.log("Signed intents payload (NEP-413):", JSON.stringify(signedIntents, null, 2));
-  
+  console.log(
+    "\n=== Creating Sputnik-DAO Proposal for Secure Intent Signature ==="
+  );
+  console.log(
+    "Signed intents payload (NEP-413):",
+    JSON.stringify(signedIntents, null, 2)
+  );
+
   // Create proposal to ONLY add the DAO's public key for the signed intent
   // The solver relay will execute intents independently after the key is registered
-  const proposalDescription = "Add public key for secure cross-network USDC payments";
+  const proposalDescription =
+    "Add public key for secure cross-network USDC payments";
   const proposalKind = {
     FunctionCall: {
       receiver_id: intentsContract.accountId,
@@ -687,10 +742,12 @@ test("replicate USDC swap and withdrawal with solver", async ({ }, testInfo) => 
         // Add only the DAO's public key (not solver's - solver manages their own)
         {
           method_name: "add_public_key",
-          args: Buffer.from(JSON.stringify({
-            account_id: treasuryDaoId, // Use the DAO account
-            public_key: userSigningKey.getPublicKey().toString(),
-          })).toString("base64"),
+          args: Buffer.from(
+            JSON.stringify({
+              account_id: treasuryDaoId, // Use the DAO account
+              public_key: userSigningKey.getPublicKey().toString(),
+            })
+          ).toString("base64"),
           deposit: "1", // 1 yoctoNEAR
           gas: "50000000000000", // 50 Tgas
         },
@@ -699,7 +756,7 @@ test("replicate USDC swap and withdrawal with solver", async ({ }, testInfo) => 
   };
 
   console.log("Creating proposal for DAO key registration...");
-  
+
   try {
     // Create the proposal
     const proposalResult = await userAccount.call(
@@ -713,14 +770,14 @@ test("replicate USDC swap and withdrawal with solver", async ({ }, testInfo) => 
       },
       { attachedDeposit: PROPOSAL_BOND, gas: "100000000000000" }
     );
-    
+
     console.log("✅ Proposal created successfully!");
     console.log("Proposal result:", proposalResult);
-    
+
     // Get the proposal ID (typically returned in the result)
     const proposalId = proposalResult; // Assumes the proposal ID is returned directly
     console.log(`Proposal ID: ${proposalId}`);
-    
+
     // Vote on the proposal (as council member)
     console.log("Voting on the proposal...");
     await userAccount.call(
@@ -732,47 +789,64 @@ test("replicate USDC swap and withdrawal with solver", async ({ }, testInfo) => 
       },
       { attachedDeposit: "0", gas: "300000000000000" } // Increased gas for complex proposal execution
     );
-    
+
     console.log("✅ Proposal approved and executed!");
     console.log("✅ DAO's public key added to intents.near!");
     console.log("💡 Solver's key was registered independently (not via DAO)");
-    
+
     // Now simulate solver relay executing the intents (this would normally be done by the solver network)
     console.log("\n=== Simulating Solver Relay Execution ===");
-    console.log("💡 In production, the solver relay would now execute the intents");
-    console.log("💡 Executing intents directly to demonstrate the complete flow...");
-    
+    console.log(
+      "💡 In production, the solver relay would now execute the intents"
+    );
+    console.log(
+      "💡 Executing intents directly to demonstrate the complete flow..."
+    );
+
     try {
-      const result = await intentsContract.call(intentsContract.accountId, "execute_intents", 
-        { signed: signedIntents }, 
+      const result = await intentsContract.call(
+        intentsContract.accountId,
+        "execute_intents",
+        { signed: signedIntents },
         { attachedDeposit: "0", gas: "300000000000000" }
       );
       console.log("✅ INTENTS EXECUTED SUCCESSFULLY!");
       console.log("✅ Cross-network USDC swap and withdrawal completed!");
       console.log("Transaction result:", result);
     } catch (error) {
-      const errorMessage = error.message.split("Smart contract panicked: ")[1] || error.message;
+      const errorMessage =
+        error.message.split("Smart contract panicked: ")[1] || error.message;
       console.log(`❌ INTENT EXECUTION FAILED: ${errorMessage}`);
-      
+
       if (errorMessage.includes("insufficient balance")) {
-        console.log("💡 This is expected if accounts don't have enough tokens for the swap amounts");
+        console.log(
+          "💡 This is expected if accounts don't have enough tokens for the swap amounts"
+        );
       } else if (errorMessage.includes("invalid signature")) {
-        console.log("💡 Signature verification failed - check NEP-413 implementation");
+        console.log(
+          "💡 Signature verification failed - check NEP-413 implementation"
+        );
       } else {
-        console.log("💡 Unexpected error - check contract state and parameters");
+        console.log(
+          "💡 Unexpected error - check contract state and parameters"
+        );
       }
     }
-    
   } catch (error) {
-    const errorMessage = error.message.split("Smart contract panicked: ")[1] || error.message;
+    const errorMessage =
+      error.message.split("Smart contract panicked: ")[1] || error.message;
     console.log(`❌ PROPOSAL FAILED: ${errorMessage}`);
-    
+
     if (errorMessage.includes("insufficient balance")) {
       console.log("💡 DAO may not have enough funds for the transaction");
     } else if (errorMessage.includes("invalid signature")) {
-      console.log("💡 Signature verification failed - check NEP-413 implementation");
+      console.log(
+        "💡 Signature verification failed - check NEP-413 implementation"
+      );
     } else if (errorMessage.includes("proposal")) {
-      console.log("💡 Proposal creation or voting failed - check DAO configuration");
+      console.log(
+        "💡 Proposal creation or voting failed - check DAO configuration"
+      );
     } else {
       console.log("💡 Unexpected error - check contract state and parameters");
     }
