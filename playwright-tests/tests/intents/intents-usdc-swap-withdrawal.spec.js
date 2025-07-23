@@ -9,50 +9,51 @@ import {
 } from "../../util/sandboxrpc.js";
 
 /**
- * TEE-Signed Intent Test with Sputnik-DAO Integration
+ * Sputnik-DAO + NEAR Intents Integration Test
  * 
- * This test demonstrates how a DAO can securely execute cross-network token swaps
- * using a TEE to generate and sign intents in a single stateless operation.
+ * This test demonstrates how a DAO can execute cross-network USDC swaps via NEAR Intents
+ * while addressing the key security challenge: preventing any individual from gaining control
+ * over the DAO's NEAR Intents holdings.
  * 
- * TEE Stateless Workflow:
- * - DAO member requests a swap (e.g., "swap 100 NEAR USDC for ETH USDC")
- * - TEE generates a fresh keypair, creates the intent, and signs it (all in one operation)
- * - TEE returns the signed intent + public key, then discards the private key
- * - DAO proposal: "Add this public key for this specific signed intent"
- * - The signed intent can be attached to the proposal for transparency
- * - Upon approval, the public key is registered and the intent can be executed
+ * Security Challenge:
+ * - Personal accounts have built-in keys for signing intents
+ * - DAO accounts have no keys - they operate through governance
+ * - If we gave a DAO member a signing key, they'd control all DAO funds in NEAR Intents
  * 
- * Security Benefits:
- * - TEE never stores private keys (completely stateless)
- * - Each intent gets a unique keypair that's immediately discarded
- * - DAO members can review the exact intent before approving the key
- * - No individual has ongoing control over DAO's intent signing capability
+ * What This Test Demonstrates:
+ * - DAO governance-based approval for intent signing
+ * - Cross-network USDC swap (NEAR → Ethereum) using DAO funds
+ * - A workflow where signing keys are managed separately from DAO members
  * 
- * Solver Network:
- * - Solvers monitor for published intents and provide liquidity
- * - Solvers use standard keypairs (TEE not required for solvers)
- * - Atomic execution ensures no counterparty risk
+ * Key Security Requirement Identified:
+ * Intent signing must happen in a secure, confidential environment where:
+ * - The signing key cannot be accessed by any DAO member
+ * - Only the specific intent approved by governance can be signed
+ * - No one retains ongoing access to move DAO funds
+ * 
+ * Recommended Solution:
+ * Technologies like SHADE Agents and TEEs can provide the secure execution environment needed,
+ * ensuring keys are generated and used in isolation without human access.
  * 
  * Test Flow:
  * 1. Deploy and initialize OMFT and intents contracts  
  * 2. Setup USDC tokens and fund accounts
- * 3. TEE generates keypair + signs intent (stateless operation)
+ * 3. Simulate secure keypair generation and intent signing
  * 4. Solver registers their key independently
  * 5. Create sputnik-dao treasury with governance
- * 6. DAO proposal: "Add TEE public key for this specific signed intent"
+ * 6. DAO proposal: "Add public key for this specific signed intent"
  * 7. Vote and execute proposal (key registered for the intent)
- * 8. Solver sees the intent and provides matching liquidity
- * 9. Solver executes both intents atomically via intents.near
- * 10. Cross-chain withdrawal to Ethereum address
+ * 8. Solver provides liquidity and executes intents atomically
+ * 9. Cross-chain withdrawal to Ethereum address completes
  * 
- * Based on NEAR AI TEE infrastructure: https://near.ai/blog/building-next-gen-near-ai-infrastructure-with-tees
+ * This PoC proves the technical feasibility while identifying the need for
+ * secure key management solutions in production.
  * 
  * Current Status:
- * ✅ Complete DAO + TEE integration working
- * ✅ Stateless TEE keypair generation demonstrated
- * ✅ Sputnik-DAO governance for intent-specific key approval
- * ✅ NEP-413 signature verification
- * ✅ Cross-network swap and withdrawal
+ * ✅ Sputnik-DAO integration complete
+ * ✅ Cross-network USDC swap working with DAO funds
+ * ✅ Governance-based approval flow implemented
+ * ✅ Security requirements identified for production use
  */
 test("replicate USDC swap and withdrawal with solver", async ({ }, testInfo) => {
   // Skip if not running treasury-testing project
@@ -376,7 +377,7 @@ test("replicate USDC swap and withdrawal with solver", async ({ }, testInfo) => 
   console.log("NEAR USDC:", nearUsdcTokenDefuseId);
   console.log("ETH USDC:", ethUsdcTokenDefuseId);
 
-  // Generate separate keypairs for intent signing (simulating TEE-generated keys)
+  // Generate separate keypairs for intent signing (simulating secure key generation)
   const solverSigningKey = KeyPair.fromRandom("ed25519");
   const userSigningKey = KeyPair.fromRandom("ed25519");
   
@@ -384,7 +385,7 @@ test("replicate USDC swap and withdrawal with solver", async ({ }, testInfo) => 
   console.log("Solver signing public key:", solverSigningKey.getPublicKey().toString());
   console.log("User signing public key:", userSigningKey.getPublicKey().toString());
 
-  console.log("✓ TEE signing keys generated");
+  console.log("✓ Signing keys generated (simulating secure environment)");
   
   // Solver registers their own public key (not via DAO proposal)
   console.log("Solver registering their public key independently...");
@@ -399,9 +400,9 @@ test("replicate USDC swap and withdrawal with solver", async ({ }, testInfo) => 
   );
   
   console.log("✓ Solver public key registered independently");
-  console.log("✓ User TEE signing key will be added via sputnik-dao proposal");
+  console.log("✓ User signing key will be added via sputnik-dao proposal");
 
-  // Setup sputnik-dao for proposal-based TEE key registration and intent execution
+  // Setup sputnik-dao for proposal-based key registration and intent execution
   const sputnikFactory = await worker.rootAccount.importContract({
     mainnetContract: SPUTNIK_DAO_FACTORY_ID,
   });
@@ -416,7 +417,7 @@ test("replicate USDC swap and withdrawal with solver", async ({ }, testInfo) => 
   const daoConfig = {
     config: {
       name: treasuryDaoName,
-      purpose: "Treasury DAO for testing TEE-signed intent proposals",
+      purpose: "Treasury DAO for testing secure intent signing proposals",
       metadata: "",
     },
     policy: {
@@ -528,7 +529,7 @@ test("replicate USDC swap and withdrawal with solver", async ({ }, testInfo) => 
    * Creates and signs a NEP-413 payload for intent execution
    * 
    * This implements the NEP-413 standard for off-chain message signing, compatible with
-   * TEE environments where private keys are held securely but signatures can be generated.
+   * secure environments where private keys cannot be accessed by any individual.
    * 
    * Key implementation details:
    * - Uses Borsh serialization for cross-platform compatibility
@@ -672,13 +673,13 @@ test("replicate USDC swap and withdrawal with solver", async ({ }, testInfo) => 
     console.log("User NEAR USDC balance: 0 (account not registered)");
   }
 
-  // Create sputnik-dao proposal for DAO's TEE key registration + intent execution
-  console.log("\n=== Creating Sputnik-DAO Proposal for TEE Signature + Intent Execution ===");
+  // Create sputnik-dao proposal for DAO's key registration + intent execution
+  console.log("\n=== Creating Sputnik-DAO Proposal for Secure Intent Signature ===");
   console.log("Signed intents payload (NEP-413):", JSON.stringify(signedIntents, null, 2));
   
-  // Create proposal to ONLY add the DAO's TEE public key
+  // Create proposal to ONLY add the DAO's public key for the signed intent
   // The solver relay will execute intents independently after the key is registered
-  const proposalDescription = "Add TEE public key for cross-network USDC payments";
+  const proposalDescription = "Add public key for secure cross-network USDC payments";
   const proposalKind = {
     FunctionCall: {
       receiver_id: intentsContract.accountId,
@@ -697,7 +698,7 @@ test("replicate USDC swap and withdrawal with solver", async ({ }, testInfo) => 
     },
   };
 
-  console.log("Creating proposal for DAO TEE key registration...");
+  console.log("Creating proposal for DAO key registration...");
   
   try {
     // Create the proposal
@@ -733,7 +734,7 @@ test("replicate USDC swap and withdrawal with solver", async ({ }, testInfo) => 
     );
     
     console.log("✅ Proposal approved and executed!");
-    console.log("✅ DAO's TEE public key added to intents.near!");
+    console.log("✅ DAO's public key added to intents.near!");
     console.log("💡 Solver's key was registered independently (not via DAO)");
     
     // Now simulate solver relay executing the intents (this would normally be done by the solver network)
