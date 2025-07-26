@@ -1,20 +1,57 @@
+import { test, cacheCDN } from "../../util/test.js";
 import { expect } from "@playwright/test";
-import { cacheCDN, test } from "../../util/test.js";
-import { getTransactionModalObject } from "../../util/transaction";
-import { mockNearBalances, updateDaoPolicyMembers } from "../../util/rpcmock";
-import { toBase64 } from "../../util/lib.js";
+import { redirectWeb4, getLocalWidgetContent } from "../../util/web4.js";
+import { parseNEAR, Worker } from "near-workspaces";
+import { setPageAuthSettings } from "../../util/sandboxrpc.js";
+import { mockNearBalances } from "../../util/rpcmock.js";
 import fs from "fs/promises";
 import path from "path";
 
 // Create screenshots directory if it doesn't exist
 const screenshotsDir = path.join(process.cwd(), "screenshots", "1click-integration");
 
+// Sandbox setup variables
+let worker;
+let creatorAccount;
+let socialNearAccount;
+
 test.beforeAll(async () => {
+  test.setTimeout(150000);
+  
   try {
     await fs.mkdir(screenshotsDir, { recursive: true });
   } catch (e) {
     // Directory might already exist
   }
+  
+  // Initialize worker and create account for authentication
+  worker = await Worker.init();
+  
+  // social.near setup (required for BOS widgets)
+  socialNearAccount = await worker.rootAccount.importContract({
+    mainnetContract: "social.near",
+  });
+  await socialNearAccount.call(
+    socialNearAccount.accountId,
+    "new",
+    {},
+    { gas: "300000000000000" }
+  );
+  await socialNearAccount.call(
+    socialNearAccount.accountId,
+    "set_status",
+    { status: "Live" },
+    { gas: "300000000000000" }
+  );
+  
+  // Create account with DAO permissions
+  creatorAccount = await worker.rootAccount.createSubAccount("testcreator", {
+    initialBalance: parseNEAR("10"),
+  });
+});
+
+test.afterAll(async () => {
+  await worker.tearDown();
 });
 
 test.afterEach(async ({ page }, testInfo) => {
@@ -32,7 +69,7 @@ test.afterEach(async ({ page }, testInfo) => {
 });
 
 async function openCreatePage({ page, instanceAccount }) {
-  await page.goto(`/${instanceAccount}/widget/app?page=asset-exchange`);
+  await page.goto(`https://${instanceAccount}.page/?page=asset-exchange`);
   await expect(page.getByText("Pending Requests")).toBeVisible({
     timeout: 15000,
   });
@@ -62,8 +99,92 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     test.setTimeout(60_000);
     await cacheCDN(page);
     
+    // Import required contracts
+    await worker.rootAccount.importContract({
+      mainnetContract: instanceAccount,
+    });
+    
+    // Create DAO contract
+    const daoContract = await worker.rootAccount.importContract({
+      mainnetContract: daoAccount,
+      initialBalance: parseNEAR("10"),
+    });
+    
+    // Initialize DAO with creatorAccount having permissions
+    const daoName = daoAccount.split(".")[0];
+    await daoContract.callRaw(daoAccount, "new", {
+      config: {
+        name: daoName,
+        purpose: "treasury",
+        metadata: "",
+      },
+      policy: {
+        roles: [
+          {
+            kind: {
+              Group: [creatorAccount.accountId],
+            },
+            name: "Create Requests",
+            permissions: [
+              "call:AddProposal",
+              "transfer:AddProposal",
+              "config:Finalize",
+            ],
+            vote_policy: {},
+          },
+        ],
+        default_vote_policy: {
+          weight_kind: "RoleWeight",
+          quorum: "0",
+          threshold: [1, 2],
+        },
+        proposal_bond: "100000000000000000000000", // 0.1 NEAR
+        proposal_period: "604800000000000",
+        bounty_bond: "100000000000000000000000",
+        bounty_forgiveness_period: "604800000000000",
+      },
+    }, {
+      gas: "300000000000000",
+    });
+    
+    // Set up proper Web4 redirection and auth
+    const modifiedWidgets = {};
+    const configKey = `${instanceAccount}/widget/config.data`;
+    
+    modifiedWidgets[configKey] = (
+      await getLocalWidgetContent(configKey, {
+        treasury: daoAccount,
+        account: instanceAccount,
+      })
+    ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
+
+    await redirectWeb4({
+      page,
+      contractId: instanceAccount,
+      treasury: daoAccount,
+      networkId: "sandbox",
+      sandboxNodeUrl: worker.provider.connection.url,
+      modifiedWidgets,
+      callWidgetNodeURLForContractWidgets: false,
+    });
+    
+    // Mock user balance
+    await mockNearBalances({
+      page,
+      accountId: creatorAccount.accountId,
+      balance: (await creatorAccount.availableBalance()).toString(),
+      storage: (await creatorAccount.balance()).staked,
+    });
+
     // Navigate to asset exchange page
-    await page.goto(`/${instanceAccount}/widget/app?page=asset-exchange`);
+    await page.goto(`https://${instanceAccount}.page/?page=asset-exchange`);
+    
+    // Set auth with sandbox account
+    await setPageAuthSettings(
+      page,
+      creatorAccount.accountId,
+      await creatorAccount.getKey()
+    );
     
     // Capture initial page load
     await page.screenshot({ 
@@ -76,7 +197,7 @@ test.describe("1Click API Integration - Asset Exchange", function () {
       timeout: 15000,
     });
     
-    // Verify Create Request button is visible
+    // Verify Create Request button is visible (should now appear with auth)
     const createRequestButton = page.getByRole("button", { name: "Create Request" });
     await expect(createRequestButton).toBeVisible();
     
@@ -84,6 +205,9 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     await createRequestButton.screenshot({ 
       path: path.join(screenshotsDir, "02-create-request-button.png")
     });
+    
+    console.log("✅ Navigation and auth test passed - Create Request button is visible");
+    console.log("🔧 Next step: Click button and add tab switcher implementation");
   });
 
   test("should see tab switcher with Sputnik DAO and Near Intents tabs", async ({

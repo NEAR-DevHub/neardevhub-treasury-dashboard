@@ -352,6 +352,29 @@ Note: No withdrawal step - swaps deliver directly to recipient address on destin
 
 **Primary Focus**: Use Playwright tests with screenshot verification to drive development and ensure UI functionality works correctly.
 
+### Key Requirements for Navigation and Permissions:
+Based on `intents-payment-request-ui.spec.js`, the critical setup includes:
+1. **redirectWeb4()** - Proper Web4 routing for BOS widgets
+2. **setPageAuthSettings()** - Authentication setup for user interactions (CRITICAL - without this, Create Request button won't appear)
+3. **modifiedWidgets** - Feature flag enablement (`showNearIntents: true`)
+4. **Correct URL pattern** - Use `https://${instanceAccount}.page/?page=asset-exchange`
+
+### Test-Driven Development Best Practices:
+**Run only treasury-testing project with specific tests during development:**
+```bash
+# Run single test for focused development
+npx playwright test playwright-tests/tests/asset-exchange/create-1click-exchange-request.spec.js --project=treasury-testing --grep "should navigate to asset-exchange page and see Create Request button"
+
+# Avoid running all tests during iterative development - it's slow and overwhelming
+# Only run full test suite when major milestones are complete
+```
+
+**Why treasury-testing only:**
+- Faster feedback cycle during development
+- Less noise from multiple project failures
+- Focus on one environment at a time
+- Easier to debug issues
+
 ### Screenshot-Driven Development Approach:
 1. **Start with failing Playwright test** - Write test that navigates to asset-exchange and expects NEAR Intents tab
 2. **Run test and capture screenshot** of current state to understand what needs to be implemented
@@ -487,6 +510,60 @@ This ensures:
 - ✅ All features are testable and tested
 - ✅ Development is driven by real user workflows
 - ✅ Each step is validated before moving forward
+
+### Phase 1: Navigation Testing (Current)
+**Focus**: Confirm navigation and basic UI structure works
+**Test file**: `playwright-tests/tests/intents/create-1click-exchange-request.spec.js`
+**Minimal setup**: Just Web4 redirection and basic auth simulation
+
+### Phase 2: Full Sandbox Setup (Future)
+When ready for full integration testing, add to the test:
+
+```javascript
+// Full sandbox setup from intents-payment-request-ui.spec.js pattern
+let worker;
+let socialNearAccount;
+let intentsContract;
+let creatorAccount;
+let daoContract;
+
+test.beforeAll(async () => {
+  // Worker setup
+  worker = await Worker.init();
+  
+  // social.near setup
+  socialNearAccount = await worker.rootAccount.importContract({
+    mainnetContract: "social.near",
+  });
+  
+  // intents.near contract setup
+  intentsContract = await worker.rootAccount.importContract({
+    mainnetContract: "intents.near",
+  });
+  
+  // USDC contract setup
+  const usdcContract = await worker.rootAccount.importContract({
+    mainnetContract: "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+  });
+  
+  // Creator account with permissions
+  creatorAccount = await worker.rootAccount.createSubAccount("testcreator", {
+    initialBalance: parseNEAR("2000"),
+  });
+  
+  // DAO setup with proper policies
+  const daoContract = await worker.rootAccount.importContract({
+    mainnetContract: daoAccount,
+    initialBalance: parseNEAR("24"),
+  });
+});
+```
+
+**Benefits of phased approach:**
+- ✅ Fast iteration on UI development
+- ✅ Can test navigation without waiting for full contract setup
+- ✅ Add complexity incrementally
+- ✅ Easier debugging when things break
 
 ### Key Testing Principles:
 - **Test navigation first** - ensure we can get to the asset-exchange page
