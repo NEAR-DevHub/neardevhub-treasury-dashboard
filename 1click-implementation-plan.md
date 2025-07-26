@@ -1,4 +1,63 @@
-# 1Click API Integration - Implementation Plan
+# 1Click API Integration - UI Implementation Plan
+
+## GitHub Issues Context
+
+This implementation addresses:
+- **Epic**: [NEAR Intents Integration](https://github.com/NEAR-DevHub/neardevhub-treasury-dashboard/issues/621) (#621)
+- **PoC/Workflow Illustration**: [1Click API Integration](https://github.com/NEAR-DevHub/neardevhub-treasury-dashboard/issues/623) (#623) - IN PROGRESS
+- **UI Implementation**: [1Click API UI for Asset Exchange](https://github.com/NEAR-DevHub/neardevhub-treasury-dashboard/issues/627) (#627) - THIS PLAN
+
+## Current Status
+
+### 🔧 PoC/Workflow Illustration In Progress (Issue #623)
+
+**Original Requirements from Issue #623:**
+- ✅ NEAR workspaces setup with Sputnik DAO, Intents and token contracts
+- ✅ Test case implemented with USDC on NEAR to USDC on ETH swap
+- ✅ Real 1Click API integration (using production API for maximum realism)
+- 🚧 Manual mainnet swaps replicated in test (still needed)
+
+**Current Implementation in `intents-usdc-swap-withdrawal.spec.js`:**
+- Real 1Click API quote requests with production endpoints
+- DAO proposal creation with specific deposit addresses from quotes
+- Cryptographic signature verification for dispute resolution
+- Complete tracking via NEAR Intents Explorer integration
+- Production-ready workflow with proper quote deadline management
+
+**Alignment Assessment:**
+Our PoC strongly aligns with issue #623 requirements. We have the automated test with real 1Click API integration and proper contract setup. The main gap is replicating actual mainnet swaps in the test.
+
+### 🚧 Remaining Work for Issue #623
+Complete the "manual mainnet swaps replicated in test" requirement:
+- Create scripts for executing real 1Click swaps on mainnet
+- Capture actual response payloads from successful mainnet swaps  
+- Replicate those exact payloads in test scenarios
+- Verify the test accurately represents real-world swap behavior
+- Document the complete workflow from quote to token delivery
+
+### 🎯 Current Task: UI Implementation
+Create user interface for the 1Click API integration in Asset Exchange.
+
+## Why We're Building This
+
+### Problem
+Currently, Asset Exchange only supports Ref Finance swaps (Sputnik DAO tab). Users who want to do cross-network swaps must use a separate flow in "Create Payment Requests" for withdrawals. This creates a fragmented user experience.
+
+### Solution
+Add a "Near Intents" tab to Asset Exchange that uses the 1Click API for **swap-only operations within NEAR Intents**. This provides:
+
+- **Unified Asset Exchange interface** for both internal (Ref Finance) and cross-network (1Click) swaps
+- **Simplified 1Click integration** - only swaps, no withdrawals
+- **Consistent DAO governance** - both swap types go through proposals
+- **Clear separation of concerns** - withdrawals remain in Payment Requests where NEAR Intents withdrawal is already supported
+
+### Scope Clarification
+- **ONLY swaps** via 1Click API (not withdrawals)
+- **Cross-network swaps** from NEAR tokens to other chains
+- **DAO proposals** for all 1Click operations
+- **No withdrawal functionality** - users continue using "Create Payment Requests" for that
+
+This builds on our PoC that demonstrated intent creation with swap+withdrawal, but simplifies the Asset Exchange to focus only on the swap portion.
 
 ## Observations from Current Codebase
 
@@ -29,21 +88,23 @@
 
 ## Implementation Plan
 
-### Phase 1: Create Separate 1Click Exchange Form Component
+### Component Design: OneClickExchangeForm
 
 **New File**: `pages/asset-exchange/OneClickExchangeForm.jsx`
 
-This will be a **completely separate component** from the existing `ExchangeForm.jsx` (which handles Ref Finance integration). The OneClickExchangeForm will be specifically designed for NEAR Intents using the 1Click API.
+This will be a **completely separate component** from the existing `ExchangeForm.jsx` (which handles Ref Finance integration). The OneClickExchangeForm will be specifically designed for **swap-only operations** using the 1Click API.
 
-Key features:
-- Token selection dropdowns (NEAR tokens to external chains)
-- Amount input with validation
+Key features for **swaps only**:
+- Token selection dropdowns (NEAR tokens to external chain tokens)
+- Amount input with validation  
 - Recipient address input for destination chain
 - Slippage tolerance setting
 - Real-time quote fetching from 1Click API
 - Display quote details (rate, fees, expiry time)
 - Quote expiry countdown timer
 - 1Click-specific validation logic
+
+**Important**: No withdrawal functionality - users will continue using "Create Payment Requests" for NEAR Intents withdrawals.
 
 Implementation approach:
 ```javascript
@@ -114,30 +175,62 @@ const [selectedTab, setSelectedTab] = useState("sputnik-dao");
 )}
 ```
 
-Changes to proposal creation:
-1. Add support for 1Click proposal type
-2. Modify `fillTxn` function to handle 1Click deposits
-3. Update proposal description to include:
-   - Quote ID and expiry
-   - 1Click service signature
-   - Link to 1Click explorer for tracking
-   - Cryptographic proof for dispute resolution
+### DAO Proposal Structure for 1Click Integration
+
+**Contract Call Details:**
+- **Contract**: `intents.near`
+- **Method**: `mt_transfer` (to be verified via scripts in issue #623)
+- **Recipient**: Deposit address returned by 1Click API
+- **Amount**: Exact amount from 1Click quote
+
+**Proposal Description (Free Text):**
+Must include:
+- 1Click API signature (critical for dispute resolution reference)
+- Complete quote information (amounts, rates, expiry)
+- Deposit address and recipient details
+- Link to 1Click explorer for tracking
 
 ```javascript
-// New proposal description format for 1Click
-const description = {
-  proposal_action: "1click-asset-exchange",
-  quote_id: quote.quote_id,
-  quote_expiry: quote.deadline,
-  signature: quote.signature,
-  explorer_url: `https://intents-explorer.near.org/quote/${quote.quote_id}`,
-  notes: proposalDetails.notes,
-  tokenIn: proposalDetails.tokenIn,
-  tokenOut: proposalDetails.tokenOut,
-  amountIn: proposalDetails.amountIn,
-  recipient: proposalDetails.recipient,
+// DAO Proposal Structure
+const proposalKind = {
+  FunctionCall: {
+    receiver_id: "intents.near",
+    actions: [{
+      method_name: "mt_transfer", // To be verified in #623 scripts
+      args: Buffer.from(JSON.stringify({
+        receiver_id: quote.deposit_address, // From 1Click API
+        amount: quote.amount_in,
+        // Additional args TBD based on intents.near contract interface
+      })).toString("base64"),
+      deposit: "1", // TBD - to be determined via testing
+      gas: "100000000000000", // TBD - to be determined via testing
+    }],
+  },
 };
+
+// Proposal Description (Free Text)
+const description = `1Click Cross-Network Swap Request
+
+Quote Information:
+- Amount In: ${quote.amount_in_formatted}
+- Amount Out: ${quote.amount_out_formatted}  
+- Rate: ${quote.rate}
+- Deadline: ${quote.deadline}
+- Deposit Address: ${quote.deposit_address}
+- Recipient: ${quote.recipient}
+
+1Click API Signature (for dispute resolution):
+${quote.signature}
+
+Tracking: ${quote.explorer_url}
+`;
 ```
+
+**Verification Required in Issue #623:**
+- Confirm `mt_transfer` is correct method for `intents.near`
+- Determine exact argument structure for multi-token transfer
+- Test proper gas and deposit amounts
+- Validate complete end-to-end proposal execution
 
 ### Phase 3: Component Structure
 
@@ -195,28 +288,67 @@ Update proposal display components to show 1Click-specific information:
 - Clear error messages for failed quotes
 - **Distinct UI** for 1Click vs Ref Finance forms
 
-### 4. Data Flow
+### 4. Data Flow - Swap Only
 ```
-Tab Selection → OneClickExchangeForm → Get Quote → Display Quote → Create Proposal → DAO Voting → Execute Transfer
+Tab Selection → OneClickExchangeForm → Get Quote → Display Quote → Create Proposal → DAO Voting → Execute Swap
       ↓                ↓                    ↓             ↓              ↓                ↓              ↓
- Near Intents     Validate Input       1Click API   Show Expiry   Add Signature    Track Time    Monitor Status
+ Near Intents     Validate Input       1Click API   Show Expiry   Add Signature    Track Time    Monitor Swap
+
+Note: No withdrawal step - swaps deliver directly to recipient address on destination chain
 ```
 
-## Testing Strategy
+## Testing Strategy - Playwright-Driven Development
 
-1. **Unit Tests**: Test quote parsing, validation logic
-2. **Integration Tests**: Full flow from quote to proposal creation
-3. **E2E Tests**: Already implemented in `intents-usdc-swap-withdrawal.spec.js`
-4. **Manual Testing**: Test various token pairs and edge cases
+**Primary Focus**: Use Playwright tests to drive development and ensure UI functionality works correctly.
 
-## Rollout Plan
+### Test-Driven Development Approach:
+1. **Start with failing Playwright test** - Write test that navigates to asset-exchange and expects NEAR Intents tab
+2. **Implement minimal components** to make test pass
+3. **Iteratively add functionality** with corresponding Playwright tests
+4. **Validate each step** with browser automation before moving to next feature
 
-1. **Phase 1**: Implement OneClickExchangeForm component (1 week)
-2. **Phase 2**: Add tab switcher to CreateRequest component (2 days)
-3. **Phase 3**: Integrate with existing proposal system (3 days)
-4. **Phase 4**: Add quote management and expiry handling (3 days)
-5. **Phase 5**: Testing and bug fixes (1 week)
-6. **Phase 6**: Documentation and deployment (2 days)
+### Playwright Test Progression:
+1. **Navigation Test**: Test navigating to asset-exchange page and opening "Create Request"
+2. **Tab Switcher Test**: Test switching between "Sputnik DAO" and "Near Intents" tabs
+3. **Empty Component Test**: Verify NEAR Intents tab shows placeholder content
+4. **Form Elements Test**: Test form inputs (token selection, amounts, recipient)
+5. **Quote Integration Test**: Test 1Click API integration (mocked)
+6. **Proposal Creation Test**: Test creating DAO proposal with 1Click data
+7. **Full E2E Test**: Complete workflow from quote to proposal
+
+### Existing Test Foundation:
+- Build on `create-exchange-request.spec.js` patterns
+- Use existing `openCreatePage()` helper function
+- Follow existing iframe interaction patterns for form testing
+
+## Implementation Steps - Test-First Approach
+
+### Step 1: Basic Navigation & Tab Switcher
+Create Playwright test and minimal components:
+1. Write Playwright test for asset-exchange navigation and tab switcher
+2. Implement tab switcher in CreateRequest.jsx to make test pass
+
+### Step 2: Empty Component Setup
+1. Create empty OneClickExchangeForm.jsx component  
+2. Add Playwright test to verify tab content switches correctly
+3. Ensure "Near Intents" tab shows placeholder content
+
+### Step 3: Form UI Development
+1. Add Playwright tests for form inputs (token selection, amounts, recipient)
+2. Implement form UI elements to make tests pass
+3. Add validation and input handling with Playwright verification
+
+### Step 4: 1Click API Integration
+1. Write Playwright test with mocked 1Click API responses
+2. Implement quote fetching logic to make tests pass
+
+### Step 5: Proposal Integration  
+1. Add Playwright test for proposal creation with 1Click data
+2. Integrate with existing proposal system
+
+### Step 6: Full E2E Testing
+1. Create comprehensive E2E test covering complete workflow
+2. Bug fixes and edge case handling based on test results
 
 ## Component Separation Benefits
 
@@ -225,9 +357,29 @@ Tab Selection → OneClickExchangeForm → Get Quote → Display Quote → Creat
 - **User Experience**: Tailored UI for each swap type
 - **Feature Development**: Can iterate on 1Click features without affecting existing Ref Finance integration
 
-## Next Steps
+## Next Steps - Playwright-First Development
 
-1. Start with creating the `OneClickExchangeForm.jsx` component
-2. Add basic tab switcher to `CreateRequest.jsx`
-3. Test 1Click API integration in the new component
-4. Coordinate with DAO to understand voting timeline constraints
+### Immediate Action Items:
+1. **CREATE PLAYWRIGHT TEST FIRST** - Write failing test for asset-exchange navigation and tab switcher
+2. **Implement minimal tab switcher** in CreateRequest.jsx to make test pass
+3. **Add empty OneClickExchangeForm.jsx** component with placeholder content
+4. **Verify tab switching works** in Playwright before adding any form logic
+5. **Iteratively add form elements** with corresponding Playwright tests
+
+### Development Workflow:
+```
+Write Playwright Test (failing) → Implement Feature → Run Test (passing) → Repeat
+```
+
+This ensures:
+- ✅ UI actually works in browser
+- ✅ No broken navigation or interactions  
+- ✅ All features are testable and tested
+- ✅ Development is driven by real user workflows
+- ✅ Each step is validated before moving forward
+
+### Key Testing Principles:
+- **Test navigation first** - ensure we can get to the asset-exchange page
+- **Test tab switching** - verify UI responds correctly to user interactions
+- **Test empty states** - make sure placeholder content appears
+- **Test incrementally** - add one feature at a time with corresponding test
