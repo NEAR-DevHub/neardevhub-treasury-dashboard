@@ -348,29 +348,88 @@ Tab Selection → OneClickExchangeForm → Get Quote → Display Quote → Creat
 Note: No withdrawal step - swaps deliver directly to recipient address on destination chain
 ```
 
-## Testing Strategy - Playwright-Driven Development
+## Testing Strategy - Screenshot-Driven Playwright Development
 
-**Primary Focus**: Use Playwright tests to drive development and ensure UI functionality works correctly.
+**Primary Focus**: Use Playwright tests with screenshot verification to drive development and ensure UI functionality works correctly.
 
-### Test-Driven Development Approach:
+### Screenshot-Driven Development Approach:
 1. **Start with failing Playwright test** - Write test that navigates to asset-exchange and expects NEAR Intents tab
-2. **Implement minimal components** to make test pass
-3. **Iteratively add functionality** with corresponding Playwright tests
-4. **Validate each step** with browser automation before moving to next feature
+2. **Run test and capture screenshot** of current state to understand what needs to be implemented
+3. **Implement minimal components** to make test pass
+4. **Run test again with screenshots** to verify visual appearance matches expectations
+5. **Iteratively add functionality** with corresponding Playwright tests and screenshots
+6. **Validate each step** with browser automation and visual inspection before moving to next feature
 
-### Playwright Test Progression:
-1. **Navigation Test**: Test navigating to asset-exchange page and opening "Create Request"
-2. **Tab Switcher Test**: Test switching between "Sputnik DAO" and "Near Intents" tabs
-3. **Empty Component Test**: Verify NEAR Intents tab shows placeholder content
-4. **Form Elements Test**: Test form inputs (token selection, amounts, recipient)
-5. **Quote Integration Test**: Test 1Click API integration (mocked)
-6. **Proposal Creation Test**: Test creating DAO proposal with 1Click data
-7. **Full E2E Test**: Complete workflow from quote to proposal
+### Screenshot Capture Strategy:
+```javascript
+// Capture screenshots at key points for visual verification
+await page.screenshot({ 
+  path: 'screenshots/asset-exchange-initial.png',
+  fullPage: true 
+});
+
+// Capture specific elements
+await page.locator('.tab-switcher').screenshot({ 
+  path: 'screenshots/tab-switcher.png' 
+});
+
+// Capture after interactions
+await page.getByRole("button", { name: "Near Intents" }).click();
+await page.screenshot({ 
+  path: 'screenshots/near-intents-tab-active.png' 
+});
+```
+
+### Playwright Test Progression with Screenshots:
+1. **Navigation Test**: 
+   - Test navigating to asset-exchange page and opening "Create Request"
+   - Screenshot: Initial page state, Create Request button
+2. **Tab Switcher Test**: 
+   - Test switching between "Sputnik DAO" and "Near Intents" tabs
+   - Screenshots: Tab switcher UI, active tab states
+3. **Empty Component Test**: 
+   - Verify NEAR Intents tab shows placeholder content
+   - Screenshot: Placeholder content appearance
+4. **Form Elements Test**: 
+   - Test form inputs (token selection, amounts, recipient)
+   - Screenshots: Each form element, validation states
+5. **Quote Integration Test**: 
+   - Test 1Click API integration (mocked)
+   - Screenshots: Loading state, quote display, error states
+6. **Proposal Creation Test**: 
+   - Test creating DAO proposal with 1Click data
+   - Screenshot: Proposal preview, transaction modal
+7. **Full E2E Test**: 
+   - Complete workflow from quote to proposal
+   - Screenshots: Each major step in the flow
+
+### Development Workflow:
+```bash
+# 1. Write/update test
+# 2. Run test and capture screenshots
+npm run test:e2e -- create-1click-exchange-request.spec.js
+
+# 3. Inspect screenshots
+open screenshots/
+
+# 4. Implement/fix based on visual feedback
+# 5. Re-run test to verify
+# 6. Repeat until test passes and UI looks correct
+```
+
+### Screenshot Inspection Points:
+- **Before implementation**: See current state and plan changes
+- **After minimal implementation**: Verify basic structure
+- **After styling**: Ensure visual consistency
+- **After interactions**: Confirm state changes are visible
+- **Error states**: Verify error handling UI
+- **Edge cases**: Check UI handles all scenarios gracefully
 
 ### Existing Test Foundation:
 - Build on `create-exchange-request.spec.js` patterns
 - Use existing `openCreatePage()` helper function
 - Follow existing iframe interaction patterns for form testing
+- Add screenshot capture to existing test helpers
 
 ## Implementation Steps - Test-First Approach
 
