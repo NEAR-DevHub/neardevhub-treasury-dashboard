@@ -722,29 +722,24 @@ test("replicate USDC swap and withdrawal with solver", async ({}, testInfo) => {
     },
   ];
 
-  // Check initial balances (will be 0 for this test)
+  // Check initial balances using mt_batch_balance_of
   console.log("\n=== Initial Balances ===");
-  try {
-    const solverEthUsdcBalance = await omftContract.view(
-      ethUsdcTokenId,
-      "ft_balance_of",
-      {
-        account_id: solverAccount.accountId,
-      }
-    );
-    console.log(`Solver ETH USDC balance: ${solverEthUsdcBalance}`);
-  } catch (e) {
-    console.log("Solver ETH USDC balance: 0 (account not registered)");
-  }
+  
+  // Check solver's balances in intents
+  const solverInitialBalances = await intentsContract.view("mt_batch_balance_of", {
+    account_id: solverAccount.accountId,
+    token_ids: [nearUsdcTokenDefuseId, ethUsdcTokenDefuseId]
+  });
+  console.log(`Solver NEAR USDC balance in intents: ${solverInitialBalances[0] || "0"}`);
+  console.log(`Solver ETH USDC balance in intents: ${solverInitialBalances[1] || "0"}`);
 
-  try {
-    const userNearUsdcBalance = await nearUsdcContract.view("ft_balance_of", {
-      account_id: userAccount.accountId,
-    });
-    console.log(`User NEAR USDC balance: ${userNearUsdcBalance}`);
-  } catch (e) {
-    console.log("User NEAR USDC balance: 0 (account not registered)");
-  }
+  // Check DAO's initial balance in intents
+  const daoInitialBalances = await intentsContract.view("mt_batch_balance_of", {
+    account_id: treasuryDaoId,
+    token_ids: [nearUsdcTokenDefuseId, ethUsdcTokenDefuseId]
+  });
+  console.log(`DAO NEAR USDC balance in intents: ${daoInitialBalances[0] || "0"}`);
+  console.log(`DAO ETH USDC balance in intents: ${daoInitialBalances[1] || "0"}`);
 
   // Create sputnik-dao proposal for DAO's key registration + intent execution
   console.log(
@@ -781,80 +776,87 @@ test("replicate USDC swap and withdrawal with solver", async ({}, testInfo) => {
 
   console.log("Creating proposal for DAO key registration...");
 
-  try {
-    // Create the proposal
-    const proposalResult = await userAccount.call(
-      treasuryDaoId,
-      "add_proposal",
-      {
-        proposal: {
-          description: proposalDescription,
-          kind: proposalKind,
-        },
+  // Create the proposal
+  const proposalResult = await userAccount.call(
+    treasuryDaoId,
+    "add_proposal",
+    {
+      proposal: {
+        description: proposalDescription,
+        kind: proposalKind,
       },
-      { attachedDeposit: PROPOSAL_BOND, gas: "100000000000000" }
-    );
+    },
+    { attachedDeposit: PROPOSAL_BOND, gas: "100000000000000" }
+  );
 
-    console.log("✅ Proposal created successfully!");
-    console.log("Proposal result:", proposalResult);
+  console.log("✅ Proposal created successfully!");
+  console.log("Proposal result:", proposalResult);
 
-    // Get the proposal ID (typically returned in the result)
-    const proposalId = proposalResult; // Assumes the proposal ID is returned directly
-    console.log(`Proposal ID: ${proposalId}`);
+  // Get the proposal ID (typically returned in the result)
+  const proposalId = proposalResult; // Assumes the proposal ID is returned directly
+  console.log(`Proposal ID: ${proposalId}`);
 
-    // Vote on the proposal (as council member)
-    console.log("Voting on the proposal...");
-    await userAccount.call(
-      treasuryDaoId,
-      "act_proposal",
-      {
-        id: proposalId,
-        action: "VoteApprove",
-      },
-      { attachedDeposit: "0", gas: "300000000000000" } // Increased gas for complex proposal execution
-    );
+  // Vote on the proposal (as council member)
+  console.log("Voting on the proposal...");
+  await userAccount.call(
+    treasuryDaoId,
+    "act_proposal",
+    {
+      id: proposalId,
+      action: "VoteApprove",
+    },
+    { attachedDeposit: "0", gas: "300000000000000" } // Increased gas for complex proposal execution
+  );
 
-    console.log("✅ Proposal approved and executed!");
-    console.log("✅ DAO's public key added to intents.near!");
-    console.log("💡 Solver's key was registered independently (not via DAO)");
+  console.log("✅ Proposal approved and executed!");
+  console.log("✅ DAO's public key added to intents.near!");
+  console.log("💡 Solver's key was registered independently (not via DAO)");
 
-    // Now simulate solver relay executing the intents (this would normally be done by the solver network)
-    console.log("\n=== Simulating Solver Relay Execution ===");
-    console.log(
-      "💡 In production, the solver relay would now execute the intents"
-    );
-    console.log(
-      "💡 Executing intents directly to demonstrate the complete flow..."
-    );
+  // Now simulate solver relay executing the intents (this would normally be done by the solver network)
+  console.log("\n=== Simulating Solver Relay Execution ===");
+  console.log(
+    "💡 In production, the solver relay would now execute the intents"
+  );
+  console.log(
+    "💡 Executing intents directly to demonstrate the complete flow..."
+  );
 
-    const result = await intentsContract.call(
-      intentsContract.accountId,
-      "execute_intents",
-      { signed: signedIntents },
-      { attachedDeposit: "0", gas: "300000000000000" }
-    );
-    console.log("✅ INTENTS EXECUTED SUCCESSFULLY!");
-    console.log("✅ Cross-network USDC swap and withdrawal completed!");
-    console.log("Transaction result:", result);
-  } catch (error) {
-    const errorMessage =
-      error.message.split("Smart contract panicked: ")[1] || error.message;
-    console.log(`❌ PROPOSAL FAILED: ${errorMessage}`);
+  const result = await intentsContract.call(
+    intentsContract.accountId,
+    "execute_intents",
+    { signed: signedIntents },
+    { attachedDeposit: "0", gas: "300000000000000" }
+  );
+  console.log("✅ INTENTS EXECUTED SUCCESSFULLY!");
+  console.log("✅ Cross-network USDC swap and withdrawal completed!");
+  console.log("Transaction result:", result);
 
-    if (errorMessage.includes("insufficient balance")) {
-      console.log("💡 DAO may not have enough funds for the transaction");
-    } else if (errorMessage.includes("invalid signature")) {
-      console.log(
-        "💡 Signature verification failed - check NEP-413 implementation"
-      );
-    } else if (errorMessage.includes("proposal")) {
-      console.log(
-        "💡 Proposal creation or voting failed - check DAO configuration"
-      );
-    } else {
-      console.log("💡 Unexpected error - check contract state and parameters");
-    }
-  }
+  // Verify final balances
+  console.log("\n=== Final Balance Verification ===");
+  
+  // Check solver's final balances
+  const solverFinalBalances = await intentsContract.view("mt_batch_balance_of", {
+    account_id: solverAccount.accountId,
+    token_ids: [nearUsdcTokenDefuseId, ethUsdcTokenDefuseId]
+  });
+  console.log(`Solver final NEAR USDC: ${solverFinalBalances[0]} (gained 99999900 from swap)`);
+  console.log(`Solver final ETH USDC: ${solverFinalBalances[1]} (200000000 - 99999900 - 100 fee = 100000100)`);
+  
+  // Verify solver gained NEAR USDC and spent ETH USDC
+  expect(solverFinalBalances[0]).toBe("99999900"); // Gained from swap
+  expect(solverFinalBalances[1]).toBe("100000100"); // Started with 200000000, gave 99999900, paid 100 fee
+  
+  // Check DAO's final balance - should have 0 in intents (withdrawn to Ethereum)
+  const daoFinalBalances = await intentsContract.view("mt_batch_balance_of", {
+    account_id: treasuryDaoId,
+    token_ids: [nearUsdcTokenDefuseId, ethUsdcTokenDefuseId]
+  });
+  console.log(`DAO final NEAR USDC: ${daoFinalBalances[0]} (100000000 - 100000000 - 100 fee = 0)`);
+  console.log(`DAO final ETH USDC: ${daoFinalBalances[1]} (should be 0 after withdrawal)`);
+  
+  // DAO should have spent all NEAR USDC and withdrawn all ETH USDC
+  expect(daoFinalBalances[0]).toBe("0");
+  expect(daoFinalBalances[1]).toBe("0"); // Withdrawn to Ethereum address
 
   await worker.tearDown();
 });
