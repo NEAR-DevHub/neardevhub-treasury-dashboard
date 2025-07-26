@@ -232,6 +232,110 @@ async function setupUSDCContracts(worker, omftContract, intentsContract, mainnet
 }
 
 /**
+ * Creates a signed intent payload according to the NEAR Intents spec.
+ * This matches the production implementation used by NEAR Intents frontend.
+ *
+ * Key features:
+ * - Implements NEP-413 standard with proper prefix bytes
+ * - Uses Borsh serialization for payload
+ * - Matches near-cli-rs message signing approach
+ * - Includes proper nonce for replay protection
+ * - Uses base58 encoding for NEAR ecosystem compatibility
+ * - Supports both near-cli-rs (prefix bytes) and MyNearWallet (tag field) approaches
+ *
+ * @param {Object} message - The intent message to sign
+ * @param {string} recipient - The contract that will verify this signature
+ * @param {Uint8Array} nonce - 32-byte random nonce for replay protection
+ * @param {KeyPair} signingKey - The keypair to sign with (separate from account access key)
+ * @param {string} standard - Signing standard ("nep413" or "raw_ed25519")
+ * @returns {Object} Signed payload in format expected by intents.near contract
+ */
+async function createSignedPayload(
+  message,
+  recipient,
+  nonce,
+  signingKey,
+  standard = "nep413"
+) {
+  const messageString = JSON.stringify(message);
+
+  if (standard === "nep413") {
+    // Based on near-cli-rs implementation: prefix bytes + borsh serialized payload
+    const payload = {
+      message: messageString,
+      nonce: Array.from(nonce),
+      recipient: recipient,
+      callbackUrl: null, // Optional field
+    };
+
+    // Define Borsh schema for the payload (without prefix)
+    const payloadSchema = {
+      struct: {
+        message: "string",
+        nonce: { array: { type: "u8", len: 32 } },
+        recipient: "string",
+        callbackUrl: { option: "string" },
+      },
+    };
+
+    // NEP413_SIGN_MESSAGE_PREFIX: (1 << 31) + 413 = 2147484061
+    const prefixValue = 2147484061;
+    const prefixBytes = new Uint8Array(4);
+    // to_le_bytes() - little endian
+    prefixBytes[0] = prefixValue & 0xff;
+    prefixBytes[1] = (prefixValue >> 8) & 0xff;
+    prefixBytes[2] = (prefixValue >> 16) & 0xff;
+    prefixBytes[3] = (prefixValue >> 24) & 0xff;
+
+    // Serialize payload with Borsh
+    const serializedPayload = utils.serialize.serialize(
+      payloadSchema,
+      payload
+    );
+
+    // Combine: prefix bytes + serialized payload (matching near-cli-rs)
+    const bytesToSign = new Uint8Array(
+      prefixBytes.length + serializedPayload.length
+    );
+    bytesToSign.set(prefixBytes);
+    bytesToSign.set(serializedPayload, prefixBytes.length);
+
+    // Hash the combined bytes first, then sign the hash
+    const hashBuffer = await crypto.subtle.digest("SHA-256", bytesToSign);
+    const hash = new Uint8Array(hashBuffer);
+
+    // Sign the hash (not the raw bytes)
+    const signature = signingKey.sign(hash);
+
+    return {
+      standard: "nep413",
+      payload: {
+        message: messageString,
+        nonce: Buffer.from(nonce).toString("base64"), // Convert to base64 for JSON transport
+        recipient: recipient,
+      },
+      public_key: signingKey.getPublicKey().toString(),
+      signature: `ed25519:${utils.serialize.base_encode(
+        signature.signature
+      )}`,
+    };
+  } else {
+    // Raw Ed25519 signing (simple approach)
+    const messageBytes = Buffer.from(messageString, "utf-8");
+    const signature = signingKey.sign(messageBytes);
+
+    return {
+      standard: "raw_ed25519",
+      payload: messageString, // Just the raw message string
+      public_key: signingKey.getPublicKey().toString(),
+      signature: `ed25519:${utils.serialize.base_encode(
+        signature.signature
+      )}`,
+    };
+  }
+}
+
+/**
  * Sputnik-DAO + NEAR Intents Integration Test
  *
  * This test demonstrates how a DAO can execute cross-network USDC swaps via NEAR Intents
@@ -578,109 +682,6 @@ test("replicate USDC swap and withdrawal with solver", async ({}, testInfo) => {
 
   // Create NEP-413 payloads and sign them with the generated keypairs
 
-  /**
-   * Creates and signs a NEP-413 payload for intent execution
-   *
-   * This implements the NEP-413 standard for off-chain message signing, compatible with
-   * secure environments where private keys cannot be accessed by any individual.
-   *
-   * Key implementation details:
-   * - Uses Borsh serialization for cross-platform compatibility
-   * - Implements hash-then-sign pattern for security
-   * - Uses base58 encoding for NEAR ecosystem compatibility
-   * - Supports both near-cli-rs (prefix bytes) and MyNearWallet (tag field) approaches
-   *
-   * @param {Object} message - The intent message to sign
-   * @param {string} recipient - The contract that will verify this signature
-   * @param {Uint8Array} nonce - 32-byte random nonce for replay protection
-   * @param {KeyPair} signingKey - The keypair to sign with (separate from account access key)
-   * @param {string} standard - Signing standard ("nep413" or "raw_ed25519")
-   * @returns {Object} Signed payload in format expected by intents.near contract
-   */
-  async function createSignedPayload(
-    message,
-    recipient,
-    nonce,
-    signingKey,
-    standard = "nep413"
-  ) {
-    const messageString = JSON.stringify(message);
-
-    if (standard === "nep413") {
-      // Based on near-cli-rs implementation: prefix bytes + borsh serialized payload
-      const payload = {
-        message: messageString,
-        nonce: Array.from(nonce),
-        recipient: recipient,
-        callbackUrl: null, // Optional field
-      };
-
-      // Define Borsh schema for the payload (without prefix)
-      const payloadSchema = {
-        struct: {
-          message: "string",
-          nonce: { array: { type: "u8", len: 32 } },
-          recipient: "string",
-          callbackUrl: { option: "string" },
-        },
-      };
-
-      // NEP413_SIGN_MESSAGE_PREFIX: (1 << 31) + 413 = 2147484061
-      const prefixValue = 2147484061;
-      const prefixBytes = new Uint8Array(4);
-      // to_le_bytes() - little endian
-      prefixBytes[0] = prefixValue & 0xff;
-      prefixBytes[1] = (prefixValue >> 8) & 0xff;
-      prefixBytes[2] = (prefixValue >> 16) & 0xff;
-      prefixBytes[3] = (prefixValue >> 24) & 0xff;
-
-      // Serialize payload with Borsh
-      const serializedPayload = utils.serialize.serialize(
-        payloadSchema,
-        payload
-      );
-
-      // Combine: prefix bytes + serialized payload (matching near-cli-rs)
-      const bytesToSign = new Uint8Array(
-        prefixBytes.length + serializedPayload.length
-      );
-      bytesToSign.set(prefixBytes);
-      bytesToSign.set(serializedPayload, prefixBytes.length);
-
-      // Hash the combined bytes first, then sign the hash
-      const hashBuffer = await crypto.subtle.digest("SHA-256", bytesToSign);
-      const hash = new Uint8Array(hashBuffer);
-
-      // Sign the hash (not the raw bytes)
-      const signature = signingKey.sign(hash);
-
-      return {
-        standard: "nep413",
-        payload: {
-          message: messageString,
-          nonce: Buffer.from(nonce).toString("base64"), // Convert to base64 for JSON transport
-          recipient: recipient,
-        },
-        public_key: signingKey.getPublicKey().toString(),
-        signature: `ed25519:${utils.serialize.base_encode(
-          signature.signature
-        )}`,
-      };
-    } else {
-      // Raw Ed25519 signing (simple approach)
-      const messageBytes = Buffer.from(messageString, "utf-8");
-      const signature = signingKey.sign(messageBytes);
-
-      return {
-        standard: "raw_ed25519",
-        payload: messageString, // Just the raw message string
-        public_key: signingKey.getPublicKey().toString(),
-        signature: `ed25519:${utils.serialize.base_encode(
-          signature.signature
-        )}`,
-      };
-    }
-  }
 
   // Create proper 32-byte nonces
   const solverNonce = new Uint8Array(32);
@@ -917,7 +918,7 @@ test("1Click API integration with DAO treasury", async ({}, testInfo) => {
     config: {
       wnear_id: "wrap.near",
       fees: {
-        fee: 100,
+        fee: 1, // 1 basis point = 0.01% (matches mainnet)
         fee_collector: "intents.near",
       },
       roles: {
