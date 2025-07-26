@@ -27,13 +27,62 @@ This implementation addresses:
 **Alignment Assessment:**
 Our PoC strongly aligns with issue #623 requirements. We have the automated test with real 1Click API integration and proper contract setup. The main gap is replicating actual mainnet swaps in the test.
 
-### 🚧 Remaining Work for Issue #623
-Complete the "manual mainnet swaps replicated in test" requirement:
-- Create scripts for executing real 1Click swaps on mainnet
-- Capture actual response payloads from successful mainnet swaps  
-- Replicate those exact payloads in test scenarios
-- Verify the test accurately represents real-world swap behavior
-- Document the complete workflow from quote to token delivery
+### ✅ Completed Work for Issue #623
+Successfully executed real 1Click swap on mainnet:
+- ✅ Created manual swap script (`manual-1click-swap.js`) for executing real 1Click swaps
+- ✅ Captured actual response payloads from successful mainnet swap
+- ✅ Replicated exact payloads in test scenarios
+- ✅ Verified test accurately represents real-world swap behavior
+- ✅ Documented complete workflow from quote to token delivery
+
+### 📊 Real-World Mainnet Execution Reference
+
+**Successful 1Click Swap Execution Details:**
+- **DAO**: webassemblymusic-treasury.sputnik-dao.near
+- **Proposal ID**: 15
+- **Transaction Hash**: [H8U1Xz56LQAXWhk58Q6EJjApiwZzXioX9qxbAmHTMGCY](https://explorer.near.org/transactions/H8U1Xz56LQAXWhk58Q6EJjApiwZzXioX9qxbAmHTMGCY)
+- **Amount**: 1.0 USDC (NEAR) → 0.999998 USDC (Ethereum)
+- **Deposit Address**: `3ccf686b516ede32e2936c25798378623c99a5fce5bf56f5433005c8c12ba49c`
+- **Tracking**: [NEAR Intents Explorer](https://explorer.near-intents.org/?depositAddress=3ccf686b516ede32e2936c25798378623c99a5fce5bf56f5433005c8c12ba49c)
+
+**Key Implementation Details Verified:**
+1. **Contract Method**: `mt_transfer` on `intents.near` (confirmed working)
+2. **Token ID Format**: Must use full `nep141:` prefix (e.g., `nep141:17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1`)
+3. **Recipient Type**: Use `recipientType: "INTENTS"` for DAO receiving on NEAR Intents
+4. **Gas**: 100 Tgas sufficient for mt_transfer
+5. **Deposit**: 1 yoctoNEAR for function call
+
+**1Click API Response Structure:**
+```json
+{
+  "quote": {
+    "amountIn": "1000000",
+    "amountInFormatted": "1.0",
+    "amountInUsd": "0.9998",
+    "amountOut": "999998",
+    "amountOutFormatted": "0.999998",
+    "timeEstimate": 10,
+    "deadline": "2025-07-27T16:03:03.540Z",
+    "depositAddress": "3ccf686b516ede32e2936c25798378623c99a5fce5bf56f5433005c8c12ba49c"
+  },
+  "signature": "ed25519:2gwvazipVnPYqYYyBYTAb5M8dcKoJBFmJADuL5VebL2RTMZEQpvZ8iyDq6GAkvudW5aAkRKr7U7LdynhguSy84De"
+}
+```
+
+**Event Emitted:**
+```json
+EVENT_JSON: {
+  "standard": "nep245",
+  "version": "1.0.0",
+  "event": "mt_transfer",
+  "data": [{
+    "old_owner_id": "webassemblymusic-treasury.sputnik-dao.near",
+    "new_owner_id": "3ccf686b516ede32e2936c25798378623c99a5fce5bf56f5433005c8c12ba49c",
+    "token_ids": ["nep141:17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1"],
+    "amounts": ["1000000"]
+  }]
+}
+```
 
 ### 🎯 Current Task: UI Implementation
 Create user interface for the 1Click API integration in Asset Exchange.
@@ -175,62 +224,64 @@ const [selectedTab, setSelectedTab] = useState("sputnik-dao");
 )}
 ```
 
-### DAO Proposal Structure for 1Click Integration
+### DAO Proposal Structure for 1Click Integration (VERIFIED)
 
-**Contract Call Details:**
+**Contract Call Details (Confirmed Working):**
 - **Contract**: `intents.near`
-- **Method**: `mt_transfer` (to be verified via scripts in issue #623)
-- **Recipient**: Deposit address returned by 1Click API
-- **Amount**: Exact amount from 1Click quote
+- **Method**: `mt_transfer` ✅
+- **Args Structure**: 
+  - `receiver_id`: Deposit address from 1Click API
+  - `amount`: Amount in base units (e.g., "1000000" for 1 USDC)
+  - `token_id`: Full token ID with `nep141:` prefix
+- **Gas**: `100000000000000` (100 Tgas) ✅
+- **Deposit**: `1` (1 yoctoNEAR) ✅
 
-**Proposal Description (Free Text):**
-Must include:
-- 1Click API signature (critical for dispute resolution reference)
-- Complete quote information (amounts, rates, expiry)
-- Deposit address and recipient details
-- Link to 1Click explorer for tracking
+**Proposal Description Format (From Real Execution):**
+```
+1Click USDC Cross-Network Swap (NEAR → Ethereum)
 
+Swap Details:
+- Amount In: 1.0 USDC (NEAR)
+- Amount Out: 0.999998 USDC (Ethereum)
+- Rate: 1 USDC (NEAR) = 0.999998 USDC (Ethereum)
+- Destination: webassemblymusic-treasury.sputnik-dao.near (NEAR Intents)
+- Time Estimate: 10 minutes
+- Quote Deadline: 2025-07-27T16:03:03.540Z
+
+Deposit Address: 3ccf686b516ede32e2936c25798378623c99a5fce5bf56f5433005c8c12ba49c
+
+🔗 TRACKING:
+Monitor status: https://explorer.near-intents.org/?depositAddress=3ccf686b516ede32e2936c25798378623c99a5fce5bf56f5433005c8c12ba49c
+
+1Click Service Signature (for dispute resolution):
+ed25519:2gwvazipVnPYqYYyBYTAb5M8dcKoJBFmJADuL5VebL2RTMZEQpvZ8iyDq6GAkvudW5aAkRKr7U7LdynhguSy84De
+
+EXECUTION:
+This proposal authorizes transferring 1.0 USDC (NEAR) to 1Click's deposit address.
+1Click will execute the cross-network swap and deliver 0.999998 USDC (Ethereum) back to the DAO's NEAR Intents account.
+
+The signature above provides cryptographic guarantees and can be used for dispute resolution.
+```
+
+**Implementation Code (Verified Working):**
 ```javascript
-// DAO Proposal Structure
+// DAO Proposal Structure - PRODUCTION READY
 const proposalKind = {
   FunctionCall: {
     receiver_id: "intents.near",
     actions: [{
-      method_name: "mt_transfer", // To be verified in #623 scripts
+      method_name: "mt_transfer",
       args: Buffer.from(JSON.stringify({
-        receiver_id: quote.deposit_address, // From 1Click API
-        amount: quote.amount_in,
-        // Additional args TBD based on intents.near contract interface
+        receiver_id: quote.depositAddress, // From 1Click API
+        amount: quote.amountIn, // Base units
+        token_id: quoteRequest.originAsset, // Full nep141: format
       })).toString("base64"),
-      deposit: "1", // TBD - to be determined via testing
-      gas: "100000000000000", // TBD - to be determined via testing
+      deposit: "1",
+      gas: "100000000000000",
     }],
   },
 };
-
-// Proposal Description (Free Text)
-const description = `1Click Cross-Network Swap Request
-
-Quote Information:
-- Amount In: ${quote.amount_in_formatted}
-- Amount Out: ${quote.amount_out_formatted}  
-- Rate: ${quote.rate}
-- Deadline: ${quote.deadline}
-- Deposit Address: ${quote.deposit_address}
-- Recipient: ${quote.recipient}
-
-1Click API Signature (for dispute resolution):
-${quote.signature}
-
-Tracking: ${quote.explorer_url}
-`;
 ```
-
-**Verification Required in Issue #623:**
-- Confirm `mt_transfer` is correct method for `intents.near`
-- Determine exact argument structure for multi-token transfer
-- Test proper gas and deposit amounts
-- Validate complete end-to-end proposal execution
 
 ### Phase 3: Component Structure
 
