@@ -401,19 +401,130 @@ function getProposalsFromIndexer({
   category,
   page,
   pageSize,
-  status,
+  statuses,
   proposalType,
   sortDirection,
+  filters,
+  search,
+  amountValues,
 }) {
-  let query = `${REPL_SPUTNIK_INDEXER}/proposals/${daoId}?page=${page}&page_size=${pageSize}&sort_by=CreationTime&sort_direction=${sortDirection}&status=${status.join(
-    ","
-  )}`;
+  let query = `${REPL_SPUTNIK_INDEXER}/proposals/${daoId}?page=${page}&page_size=${pageSize}&sort_by=CreationTime&sort_direction=${sortDirection}`;
+
   if (category && category.length > 0) {
     query += `&category=${category}`;
   }
   if (proposalType && proposalType.length > 0) {
-    query += `&proposal_type=${proposalType.join(",")}`;
+    query += `&proposal_types=${proposalType.join(",")}`;
   }
+
+  // Handle search
+  if (search && search.trim()) {
+    query += `&search=${encodeURIComponent(search.trim())}`;
+  }
+
+  // Handle statuses - use filters.statuses if available, otherwise use statuses parameter
+  let hasStatusesInFilters = false;
+  if (
+    filters &&
+    filters.statuses &&
+    filters.statuses.values &&
+    filters.statuses.values.length > 0
+  ) {
+    hasStatusesInFilters = true;
+  }
+
+  if (!hasStatusesInFilters && statuses && statuses.length > 0) {
+    query += `&statuses=${statuses.join(",")}`;
+  }
+
+  // Handle filters object
+  if (filters && typeof filters === "object") {
+    // Iterate through each filter key
+    Object.keys(filters).forEach((filterKey) => {
+      const filter = filters[filterKey];
+
+      if (filter && filter.values && filter.values.length > 0) {
+        const values = filter.values.filter((value) => value && value !== ""); // Filter out empty values
+
+        if (values.length > 0) {
+          // Only add if we have non-empty values
+          const include = filter.include !== false; // default to true if not specified
+
+          // Map filter keys to URL parameters
+          switch (filterKey) {
+            case "statuses":
+              query += `&statuses=${values.join(",")}`;
+              break;
+
+            case "proposers":
+              if (include) {
+                query += `&proposers=${values.join(",")}`;
+              } else {
+                query += `&proposers_not=${values.join(",")}`;
+              }
+              break;
+
+            case "approvers":
+              if (include) {
+                query += `&approvers=${values.join(",")}`;
+              } else {
+                query += `&approvers_not=${values.join(",")}`;
+              }
+              break;
+
+            case "recipients":
+              if (include) {
+                query += `&recipients=${values.join(",")}`;
+              } else {
+                query += `&recipients_not=${values.join(",")}`;
+              }
+              break;
+
+            case "token":
+              query += `&tokens=${values.join(",")}`;
+              break;
+
+            case "created_date":
+              // For date filters, preserve the original array structure
+              const originalValues = filter.values;
+              const fromDate = originalValues[0];
+              const toDate = originalValues[1];
+
+              if (fromDate && toDate) {
+                query += `&created_date_from=${fromDate}&created_date_to=${toDate}`;
+              } else if (fromDate) {
+                query += `&created_date_from=${fromDate}`;
+              } else if (toDate) {
+                query += `&created_date_to=${toDate}`;
+              }
+              break;
+
+            default:
+              break;
+          }
+        }
+      }
+    });
+  }
+
+  if (amountValues) {
+    const amountParams = [];
+
+    if (amountValues.min && amountValues.min !== "") {
+      amountParams.push(`amount_min=${amountValues.min}`);
+    }
+    if (amountValues.max && amountValues.max !== "") {
+      amountParams.push(`amount_max=${amountValues.max}`);
+    }
+    if (amountValues.equal && amountValues.equal !== "") {
+      amountParams.push(`amount_equal=${amountValues.equal}`);
+    }
+
+    if (amountParams.length > 0) {
+      query += `&${amountParams.join("&")}`;
+    }
+  }
+
   return asyncFetch(query).then((r) => r.body);
 }
 

@@ -37,7 +37,7 @@ const fetchProposals = useCallback(
       daoId: treasuryDaoID,
       page: currentPage,
       pageSize: rowsPerPage,
-      status: ["InProgress"],
+      statuses: ["InProgress"],
       sortDirection: direction,
     }).then((r) => {
       setProposals(r.proposals);

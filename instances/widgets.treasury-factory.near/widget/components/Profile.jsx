@@ -12,6 +12,8 @@ const accountId = props.accountId;
 const displayName = props.displayName ?? true;
 const displayImage = props.displayImage ?? true;
 const profileClass = props.profileClass ?? "";
+const displayAddress = props.displayAddress ?? true;
+const imageSize = props.imageSize ?? { width: 35, height: 35 };
 
 const [isVerfied, setIsVerfied] = useState(false);
 const [verificationStatus, setVerificationStatus] = useState(null);
@@ -120,12 +122,17 @@ const ReceiverAccountComponent = (
       <div
         style={{
           flex: "0 0 auto",
-          width: 35,
-          height: 35,
+          width: imageSize.width,
+          height: imageSize.height,
           position: "relative",
         }}
       >
-        <img src={imageSrc} height={35} width={35} className="rounded-circle" />
+        <img
+          src={imageSrc}
+          height={imageSize.height}
+          width={imageSize.width}
+          className="rounded-circle"
+        />
         <div style={{ position: "absolute", bottom: "-5px", right: "-5px" }}>
           {verificationStatus &&
             (isVerfied ? <VerifiedTick /> : <NotVerfiedTick />)}
@@ -139,17 +146,19 @@ const ReceiverAccountComponent = (
           {name}
         </div>
       )}
-      <div
-        className={`text-truncate ${profileClass}`}
-        title={accountId}
-        style={{
-          overflow: "hidden",
-          whiteSpace: "nowrap",
-          textOverflow: "ellipsis",
-        }}
-      >
-        {displayName ? "@" + accountId : accountId}
-      </div>
+      {displayAddress && (
+        <div
+          className={`text-truncate ${profileClass}`}
+          title={accountId}
+          style={{
+            overflow: "hidden",
+            whiteSpace: "nowrap",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {displayName ? "@" + accountId : accountId}
+        </div>
+      )}
     </div>
   </div>
 );
