@@ -4,6 +4,7 @@ import { redirectWeb4, getLocalWidgetContent } from "../../util/web4.js";
 import { parseNEAR, Worker } from "near-workspaces";
 import { setPageAuthSettings } from "../../util/sandboxrpc.js";
 import { mockNearBalances } from "../../util/rpcmock.js";
+import { getTransactionModalObject } from "../../util/transaction.js";
 import fs from "fs/promises";
 import path from "path";
 
@@ -14,6 +15,9 @@ const screenshotsDir = path.join(process.cwd(), "screenshots", "1click-integrati
 let worker;
 let creatorAccount;
 let socialNearAccount;
+let intentsContract;
+let omftContract;
+let usdcContract;
 
 test.beforeAll(async () => {
   test.setTimeout(150000);
@@ -47,6 +51,49 @@ test.beforeAll(async () => {
   // Create account with DAO permissions
   creatorAccount = await worker.rootAccount.createSubAccount("testcreator", {
     initialBalance: parseNEAR("10"),
+  });
+  
+  // Set up intents.near contract
+  intentsContract = await worker.rootAccount.importContract({
+    mainnetContract: "intents.near",
+  });
+  await intentsContract.call(intentsContract.accountId, "new", {
+    config: {
+      wnear_id: "wrap.near",
+      fees: {
+        fee: 100,
+        fee_collector: "intents.near",
+      },
+      roles: {
+        super_admins: ["intents.near"],
+        admins: {},
+        grantees: {},
+      },
+    },
+  });
+  
+  // Set up omft contracts for multi-chain tokens
+  omftContract = await worker.rootAccount.importContract({
+    mainnetContract: "eth.omft.near",
+  });
+  // Initialize eth.omft.near for ETH, BTC, USDC
+  await omftContract.call(omftContract.accountId, "new", {
+    owner_id: "omft.near",
+    intents_account_id: intentsContract.accountId,
+  });
+  
+  // Import btc.omft.near for BTC
+  const btcOmftContract = await worker.rootAccount.importContract({
+    mainnetContract: "btc.omft.near",
+  });
+  await btcOmftContract.call(btcOmftContract.accountId, "new", {
+    owner_id: "omft.near",
+    intents_account_id: intentsContract.accountId,
+  });
+  
+  // Import USDC contract on NEAR (already deployed on mainnet, no need to initialize)
+  usdcContract = await worker.rootAccount.importContract({
+    mainnetContract: "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
   });
 });
 
@@ -88,6 +135,110 @@ async function mock1ClickApiResponse({ page, response }) {
       });
     }
   );
+}
+
+// Helper function to deposit tokens to treasury via intents
+async function depositTokensToTreasury({ daoAccount }) {
+  // First register storage for intents contract on omft tokens
+  await omftContract.call(
+    omftContract.accountId,
+    "storage_deposit",
+    {
+      account_id: intentsContract.accountId,
+      registration_only: true,
+    },
+    { attachedDeposit: "1250000000000000000000" }
+  );
+  
+  await omftContract.call(
+    "btc.omft.near",
+    "storage_deposit",
+    {
+      account_id: intentsContract.accountId,
+      registration_only: true,
+    },
+    { attachedDeposit: "1250000000000000000000" }
+  );
+  
+  // Register storage for all tokens
+  await omftContract.call(
+    omftContract.accountId,
+    "storage_deposit",
+    {
+      account_id: daoAccount,
+      registration_only: true,
+    },
+    { attachedDeposit: "1250000000000000000000" }
+  );
+  
+  await omftContract.call(
+    "btc.omft.near",
+    "storage_deposit",
+    {
+      account_id: daoAccount,
+      registration_only: true,
+    },
+    { attachedDeposit: "1250000000000000000000" }
+  );
+  
+  // Skip USDC on NEAR registration as it requires specific initialization
+  
+  // Deposit ETH on Ethereum to treasury
+  await omftContract.call(
+    omftContract.accountId,
+    "ft_deposit",
+    {
+      owner_id: intentsContract.accountId,
+      token: "eth",
+      amount: "5000000000000000000", // 5 ETH
+      msg: JSON.stringify({ receiver_id: daoAccount }),
+      memo: `BRIDGED_FROM:${JSON.stringify({
+        networkType: "eth",
+        chainId: "1",
+        txHash: "0xethhash",
+      })}`,
+    },
+    { attachedDeposit: parseNEAR("0.00125"), gas: "300000000000000" }
+  );
+  
+  // Deposit BTC on Bitcoin to treasury
+  await omftContract.call(
+    "btc.omft.near",
+    "ft_deposit",
+    {
+      owner_id: intentsContract.accountId,
+      token: "btc",
+      amount: "200000000", // 2 BTC (8 decimals)
+      msg: JSON.stringify({ receiver_id: daoAccount }),
+      memo: `BRIDGED_FROM:${JSON.stringify({
+        networkType: "btc",
+        chainId: "mainnet",
+        txHash: "0xbtchash",
+      })}`,
+    },
+    { attachedDeposit: parseNEAR("0.00125"), gas: "300000000000000" }
+  );
+  
+  // Deposit USDC on Ethereum to treasury
+  await omftContract.call(
+    omftContract.accountId,
+    "ft_deposit",
+    {
+      owner_id: intentsContract.accountId,
+      token: "usdc",
+      amount: "10000000000", // 10k USDC on ETH (6 decimals)
+      msg: JSON.stringify({ receiver_id: daoAccount }),
+      memo: `BRIDGED_FROM:${JSON.stringify({
+        networkType: "eth",
+        chainId: "1",
+        txHash: "0xusdcethhash",
+      })}`,
+    },
+    { attachedDeposit: parseNEAR("0.00125"), gas: "300000000000000" }
+  );
+  
+  // Deposit USDC on NEAR to treasury - since we can't mint, skip this for now
+  // In a real test environment, the USDC contract would need to have tokens already
 }
 
 test.describe("1Click API Integration - Asset Exchange", function () {
@@ -185,6 +336,9 @@ test.describe("1Click API Integration - Asset Exchange", function () {
       creatorAccount.accountId,
       await creatorAccount.getKey()
     );
+    
+    // Deposit tokens to treasury for testing
+    await depositTokensToTreasury({ daoAccount });
     
     // Capture initial page load
     await page.screenshot({ 
@@ -346,7 +500,7 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     console.log("🔧 Next step: Implement actual 1Click form fields");
   });
 
-  test("should switch to Near Intents tab and see 1Click form", async ({
+  test("should switch to Near Intents tab and see 1Click form fields", async ({
     page,
     instanceAccount,
     daoAccount,
@@ -354,17 +508,127 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     test.setTimeout(60_000);
     await cacheCDN(page);
     
-    // Open create page
-    await openCreatePage({ page, instanceAccount });
+    // Use same setup as previous tests
+    await worker.rootAccount.importContract({
+      mainnetContract: instanceAccount,
+    });
     
-    // Wait for the form to load
+    const daoContract = await worker.rootAccount.importContract({
+      mainnetContract: daoAccount,
+      initialBalance: parseNEAR("10"),
+    });
+    
+    const daoName = daoAccount.split(".")[0];
+    await daoContract.callRaw(daoAccount, "new", {
+      config: {
+        name: daoName,
+        purpose: "treasury",
+        metadata: "",
+      },
+      policy: {
+        roles: [
+          {
+            kind: {
+              Group: [creatorAccount.accountId],
+            },
+            name: "Create Requests",
+            permissions: [
+              "call:AddProposal",
+              "transfer:AddProposal",
+              "config:Finalize",
+            ],
+            vote_policy: {},
+          },
+        ],
+        default_vote_policy: {
+          weight_kind: "RoleWeight",
+          quorum: "0",
+          threshold: [1, 2],
+        },
+        proposal_bond: "100000000000000000000000",
+        proposal_period: "604800000000000",
+        bounty_bond: "100000000000000000000000",
+        bounty_forgiveness_period: "604800000000000",
+      },
+    }, {
+      gas: "300000000000000",
+    });
+    
+    const modifiedWidgets = {};
+    const configKey = `${instanceAccount}/widget/config.data`;
+    
+    modifiedWidgets[configKey] = (
+      await getLocalWidgetContent(configKey, {
+        treasury: daoAccount,
+        account: instanceAccount,
+      })
+    ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
+
+    await redirectWeb4({
+      page,
+      contractId: instanceAccount,
+      treasury: daoAccount,
+      networkId: "sandbox",
+      sandboxNodeUrl: worker.provider.connection.url,
+      modifiedWidgets,
+      callWidgetNodeURLForContractWidgets: false,
+    });
+    
+    await mockNearBalances({
+      page,
+      accountId: creatorAccount.accountId,
+      balance: (await creatorAccount.availableBalance()).toString(),
+      storage: (await creatorAccount.balance()).staked,
+    });
+
+    await page.goto(`https://${instanceAccount}.page/?page=asset-exchange`);
+    
+    await setPageAuthSettings(
+      page,
+      creatorAccount.accountId,
+      await creatorAccount.getKey()
+    );
+    
+    // Click Create Request and then Near Intents tab
+    const createRequestButton = page.getByRole("button", { name: "Create Request" });
+    await expect(createRequestButton).toBeVisible();
+    await createRequestButton.click();
     await page.waitForTimeout(2000);
     
-    // Click on Near Intents tab
     await page.getByRole("button", { name: "Near Intents" }).click();
+    await page.waitForTimeout(1000);
     
-    // Verify we see the 1Click form (placeholder for now)
-    await expect(page.getByText("1Click Cross-Network Swap")).toBeVisible();
+    // Verify form fields are present
+    await expect(page.getByText("Exchange tokens within your NEAR Intents holdings using 1Click API")).toBeVisible();
+    
+    // Check Send section
+    await expect(page.getByText("Send", { exact: true })).toBeVisible();
+    await expect(page.getByPlaceholder("0.00")).toBeVisible();
+    
+    // Check token selectors (should now be 3: send token, receive token, network)
+    const tokenSelectors = page.locator("select.form-select");
+    await expect(tokenSelectors).toHaveCount(3);
+    
+    // Check Receive section
+    await expect(page.getByText("Receive", { exact: true })).toBeVisible();
+    await expect(page.getByText("Swapped tokens will remain in the treasury's NEAR Intents account")).toBeVisible();
+    
+    // Verify NO recipient address field exists
+    await expect(page.getByText("Recipient Address")).not.toBeVisible();
+    
+    // Check buttons
+    await expect(page.getByRole("button", { name: "Cancel" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Get Quote" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Get Quote" })).toBeDisabled(); // Should be disabled initially
+    
+    // Capture screenshot of the form
+    await page.screenshot({ 
+      path: path.join(screenshotsDir, "06-oneclick-form-fields.png"),
+      fullPage: true 
+    });
+    
+    console.log("✅ Form fields test passed - All form elements are present");
+    console.log("🔧 Next step: Implement 1Click API quote fetching");
   });
 
   test("should fetch 1Click quote when form is filled", async ({

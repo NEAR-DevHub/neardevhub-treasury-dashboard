@@ -10,6 +10,17 @@ The 1Click API integration for Asset Exchange serves **dual purposes**:
 
 This is a **general-purpose swapping tool** that enhances the treasury's flexibility in managing assets across multiple blockchains through NEAR Intents.
 
+## Understanding NEAR Intents Architecture
+
+**Key Concept**: NEAR Intents (intents.near) maintains balances of tokens from multiple networks within the NEAR blockchain. When users deposit tokens from other chains (e.g., USDC from Ethereum), those tokens are locked on the source chain and the user receives a balance entry in the intents.near contract.
+
+**Important**: A swap on NEAR Intents is **only a transaction to the intents.near contract** that updates balance entries. It does NOT require moving any tokens on other chains, even though the swap involves tokens from different networks. This is why:
+
+1. Swaps are instant once the intent is executed
+2. No gas fees on destination chains
+3. No recipient address needed - tokens stay within the user's intents.near account
+4. The treasury's holdings are simply rebalanced within the intents.near ledger
+
 ## GitHub Issues Context
 
 This implementation addresses:
@@ -154,14 +165,15 @@ This builds on our PoC that demonstrated intent creation with swap+withdrawal, b
 This will be a **completely separate component** from the existing `ExchangeForm.jsx` (which handles Ref Finance integration). The OneClickExchangeForm will be specifically designed for **swap-only operations** using the 1Click API.
 
 Key features for **swaps only**:
-- Token selection dropdowns (NEAR tokens to external chain tokens)
-- Amount input with validation  
-- Recipient address input for destination chain
+- **Send Token**: Dropdown showing treasury's existing tokens in NEAR Intents (same list as payment requests)
+- **Receive Token**: Dropdown showing all available tokens from depositmodal list
+- **Destination Network**: Network selector for the receive token (e.g., Ethereum, Base, Arbitrum)
+- Amount input with validation
+- NO recipient address (swaps stay within treasury's NEAR Intents account)
 - Slippage tolerance setting
 - Real-time quote fetching from 1Click API
 - Display quote details (rate, fees, expiry time)
 - Quote expiry countdown timer
-- 1Click-specific validation logic
 
 **Important**: No withdrawal functionality - users will continue using "Create Payment Requests" for NEAR Intents withdrawals.
 
