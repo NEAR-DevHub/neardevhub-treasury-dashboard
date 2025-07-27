@@ -384,9 +384,7 @@ return (
             </td>
           </tr>
         ) : (
-          proposals.map((item, index) => (
-            <ProposalsComponent item={item} key={index} />
-          ))
+          <ProposalsComponent />
         )}
       </table>
     </div>

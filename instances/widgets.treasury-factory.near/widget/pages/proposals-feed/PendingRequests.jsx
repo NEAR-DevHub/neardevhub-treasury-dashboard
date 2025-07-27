@@ -25,7 +25,7 @@ const fetchProposals = useCallback(() => {
     daoId: treasuryDaoID,
     page: currentPage,
     pageSize: rowsPerPage,
-    status: ["InProgress"],
+    statuses: ["InProgress"],
   }).then((r) => {
     setProposals(r.proposals);
     setTotalLength(r.total);

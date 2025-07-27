@@ -31,7 +31,7 @@ const fetchProposals = useCallback(
       daoId: treasuryDaoID,
       page: currentPage,
       pageSize: rowsPerPage,
-      status: ["InProgress"],
+      statuses: ["InProgress"],
       proposalType: [
         "ChangeConfig",
         "ChangePolicy",

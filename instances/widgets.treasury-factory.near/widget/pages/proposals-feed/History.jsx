@@ -34,7 +34,7 @@ useEffect(() => {
     daoId: treasuryDaoID,
     page: currentPage,
     pageSize: rowsPerPage,
-    status: ["Approved", "Rejected", "Expired", "Failed"],
+    statuses: ["Approved", "Rejected", "Expired", "Failed"],
   }).then((r) => {
     setProposals(r.proposals);
     setTotalLength(r.total);
