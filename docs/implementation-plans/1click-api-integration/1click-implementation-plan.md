@@ -1,5 +1,15 @@
 # 1Click API Integration - UI Implementation Plan
 
+## Purpose and Scope
+
+The 1Click API integration for Asset Exchange serves **dual purposes**:
+
+1. **Direct Treasury Management** - Enable treasury managers to swap tokens across networks as part of their portfolio management strategy (e.g., diversification, rebalancing)
+
+2. **Payment Request Support** - When payment requests require tokens not currently in the treasury, this swapping feature can be used to obtain the necessary tokens before fulfilling the payment
+
+This is a **general-purpose swapping tool** that enhances the treasury's flexibility in managing assets across multiple blockchains through NEAR Intents.
+
 ## GitHub Issues Context
 
 This implementation addresses:
