@@ -225,8 +225,42 @@ return (
           instance,
           onCancel: () => setShowCancelModal(true),
           onSubmit: (args) => {
-            // TODO: Implement 1Click submission logic
-            console.log("1Click form submitted:", args);
+            // Format the 1Click proposal
+            const proposalDescription = `1Click Cross-Network Swap
+
+Swap Details:
+- Amount In: ${args.quote.amountInFormatted} ${args.tokenIn.split(":")[1]?.split(".")[0]?.toUpperCase() || args.tokenIn}
+- Amount Out: ${args.quote.amountOutFormatted} ${args.tokenOut}
+- Destination Network: ${args.networkOut}
+- Time Estimate: ${args.quote.timeEstimate} minutes
+- Quote Deadline: ${new Date(args.quote.deadline).toLocaleString()}
+
+Deposit Address: ${args.quote.depositAddress}
+
+1Click Service Signature: ${args.quote.signature}
+
+This proposal authorizes transferring tokens to 1Click's deposit address.
+1Click will execute the cross-network swap and deliver the swapped tokens back to the treasury's NEAR Intents account.`;
+
+            const proposalDetails = {
+              description: proposalDescription,
+              transactions: [{
+                treasuryKind: "NEAR_INTENTS",
+                receiver_id: "intents.near",
+                functionCalls: [{
+                  methodName: "mt_transfer",
+                  args: {
+                    receiver_id: args.quote.depositAddress,
+                    amount: args.quote.amountIn,
+                    token_id: args.quote.requestPayload.originAsset,
+                  },
+                  amount: "1", // 1 yoctoNEAR
+                  gas: "100000000000000", // 100 TGas
+                }],
+              }],
+            };
+            
+            onSubmitClick(proposalDetails);
           },
         }}
       />

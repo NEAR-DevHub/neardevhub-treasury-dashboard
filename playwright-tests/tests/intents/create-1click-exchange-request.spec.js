@@ -352,52 +352,88 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     });
     console.log("Direct balance check result:", checkBalance);
     
-    // Verify we have tokens (should include ETH, BTC, USDC)
+    // Verify we have tokens
     expect(sendTokenOptions.length).toBeGreaterThan(1); // More than just "Select token"
     
-    // TODO: Select a token from the dropdown (e.g., ETH)
-    // await sendTokenDropdown.selectOption({ label: /ETH/ });
+    console.log("Selecting ETH from Send dropdown...");
     
-    // TODO: Enter amount to swap
-    // await page.getByPlaceholder("0.00").fill("1");
+    // Select ETH from the dropdown
+    await sendTokenDropdown.selectOption("eth.omft.near");
+    await page.waitForTimeout(1000);
     
-    // TODO: Select receive token
-    // const receiveTokenDropdown = page.locator("select.form-select").nth(1);
-    // await receiveTokenDropdown.selectOption("USDC");
+    // Enter amount to swap
+    console.log("Entering amount to swap...");
+    await page.getByPlaceholder("0.00").fill("0.1");
     
-    // TODO: Select network for receive token
-    // const networkDropdown = page.locator("select.form-select").nth(2);
-    // await networkDropdown.selectOption("Ethereum");
+    // Select receive token
+    console.log("Selecting receive token...");
+    const receiveTokenDropdown = page.locator("select.form-select").nth(1);
+    await receiveTokenDropdown.click();
+    await page.waitForTimeout(500);
+    await receiveTokenDropdown.selectOption("USDC");
     
-    // TODO: Click Get Quote button
-    // await page.getByRole("button", { name: "Get Quote" }).click();
+    // Select network for receive token
+    console.log("Selecting network...");
+    const networkDropdown = page.locator("select.form-select").nth(2);
+    await networkDropdown.click();
+    await page.waitForTimeout(500);
+    await networkDropdown.selectOption("eth:1"); // Ethereum mainnet
     
-    // TODO: Intercept 1Click API response and replace deposit address
-    // const ourKeypair = await generateKeypair();
-    // await intercept1ClickQuote({ page, ourDepositAddress: ourKeypair.publicKey });
+    // Mock the 1Click API response
+    console.log("Setting up 1Click API mock...");
+    await page.route("https://1click.chaindefuser.com/v0/quote", async (route) => {
+      const request = route.request();
+      const requestBody = request.postDataJSON();
+      console.log("1Click API request:", requestBody);
+      
+      // Generate a mock quote response
+      const mockResponse = {
+        quote: {
+          amountIn: requestBody.amount,
+          amountInFormatted: "0.1",
+          amountInUsd: "250.00",
+          amountOut: "250000000", // 250 USDC (6 decimals)
+          amountOutFormatted: "250.00",
+          amountOutUsd: "250.00",
+          timeEstimate: 10,
+          deadline: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
+          depositAddress: "3ccf686b516ede32e2936c25798378623c99a5fce5bf56f5433005c8c12ba49c"
+        },
+        signature: "ed25519:2gwvazipVnPYqYYyBYTAb5M8dcKoJBFmJADuL5VebL2RTMZEQpvZ8iyDq6GAkvudW5aAkRKr7U7LdynhguSy84De"
+      };
+      
+      console.log("Returning mock quote response:", mockResponse);
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(mockResponse)
+      });
+    });
     
-    // TODO: Wait for quote to appear
-    // await expect(page.getByText(/Quote:/)).toBeVisible();
+    // Click Get Quote button
+    console.log("Clicking Get Quote button...");
+    await page.getByRole("button", { name: "Get Quote" }).click();
     
-    // TODO: Click Create Proposal button
-    // await page.getByRole("button", { name: "Create Proposal" }).click();
+    // Wait for quote to appear
+    console.log("Waiting for quote to appear...");
+    await expect(page.getByText("Quote Details")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText("You send:")).toBeVisible();
+    await expect(page.getByText("0.1 ETH")).toBeVisible();
+    await expect(page.getByText("You receive:")).toBeVisible();
+    await expect(page.getByText("250.00 USDC")).toBeVisible();
     
-    // TODO: Wait for transaction modal
-    // const transactionModal = await getTransactionModalObject(page);
-    // await expect(transactionModal).toBeAttached();
+    // Take screenshot of the quote
+    await page.screenshot({ 
+      path: path.join(screenshotsDir, "08-quote-displayed.png"),
+      fullPage: true 
+    });
     
-    // TODO: Verify the transaction contains correct mt_transfer to intents.near
-    // with our deposit address and signed payload
+    // Verify Create Proposal button is now visible
+    await expect(page.getByRole("button", { name: "Create Proposal" })).toBeVisible();
     
-    // TODO: Simulate what 1Click API would do - execute the intent
-    // await simulateIntentExecution({ 
-    //   intentsContract,
-    //   depositAddress: ourKeypair.publicKey,
-    //   secretKey: ourKeypair.secretKey 
-    // });
-    
-    console.log("✅ Complete flow test - tokens should be visible in Send dropdown");
-    console.log("🔧 Next steps: Implement quote fetching and intent execution");
+    console.log("✅ Successfully implemented quote fetching from 1Click API!");
+    console.log("✅ Quote shows: 0.1 ETH → 250.00 USDC");
+    console.log("🔧 Next steps: Implement proposal creation and transaction modal");
   });
   
   // Comment out other tests for now

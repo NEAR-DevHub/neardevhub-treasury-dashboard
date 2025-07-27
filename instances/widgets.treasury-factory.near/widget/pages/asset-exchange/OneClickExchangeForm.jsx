@@ -19,6 +19,8 @@ const [intentsTokensIn, setIntentsTokensIn] = useState([]);
 const [allTokensOut, setAllTokensOut] = useState([]);
 const [isLoadingTokens, setIsLoadingTokens] = useState(false);
 const [errorApi, setErrorApi] = useState(null);
+const [quote, setQuote] = useState(null);
+const [isLoadingQuote, setIsLoadingQuote] = useState(false);
 
 // Fetch treasury's NEAR Intents tokens for Send dropdown
 useEffect(() => {
@@ -121,16 +123,122 @@ const getAvailableNetworks = () => {
   return networks;
 };
 
-const handleSubmit = () => {
+// Find the token details for the quote request
+const getTokenDetails = () => {
+  if (!tokenIn || !tokenOut || !networkOut) return null;
+  
+  // Find the input token from intents tokens
+  const inputToken = intentsTokensIn.find(t => t.id === tokenIn);
+  if (!inputToken) return null;
+  
+  // Find the output token with the correct network
+  const outputToken = allTokensOut.find(
+    t => t.symbol === tokenOut && t.network === networkOut
+  );
+  if (!outputToken) return null;
+  
+  return { inputToken, outputToken };
+};
+
+// Fetch quote from 1Click API
+const fetchQuote = () => {
+  const tokenDetails = getTokenDetails();
+  if (!tokenDetails) return;
+  
+  const { inputToken, outputToken } = tokenDetails;
+  
+  // Convert amount to smallest unit
+  const amountInSmallestUnit = Big(amountIn)
+    .mul(Big(10).pow(inputToken.decimals))
+    .toFixed(0);
+  
+  setIsLoadingQuote(true);
+  setQuote(null);
+  setErrorApi(null);
+  
+  // Calculate deadline (7 days for DAO voting)
+  const deadline = new Date();
+  deadline.setDate(deadline.getDate() + 7);
+  
+  // Prepare the quote request in the format expected by 1Click API v0
+  const quoteRequest = {
+    dry: false,
+    swapType: "EXACT_INPUT",
+    slippageTolerance: 100, // 1% slippage
+    originAsset: inputToken.id.startsWith("nep141:") 
+      ? inputToken.id 
+      : `nep141:${inputToken.id}`,
+    depositType: "INTENTS",
+    destinationAsset: outputToken.id,
+    refundTo: treasuryDaoID,
+    refundType: "INTENTS",
+    recipient: treasuryDaoID, // Swapped tokens stay in treasury's NEAR Intents
+    recipientType: "INTENTS",
+    deadline: deadline.toISOString(),
+    amount: amountInSmallestUnit
+  };
+  
+  console.log("Fetching quote:", quoteRequest);
+  
+  asyncFetch("https://1click.chaindefuser.com/v0/quote", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(quoteRequest),
+  })
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      const data = res.body;
+      if (data.error) {
+        throw new Error(data.error || "Error fetching quote.");
+      }
+      
+      // The API returns a response with quote object and signature
+      if (!data.quote) {
+        throw new Error("Invalid quote response format");
+      }
+      
+      // Format the quote for display
+      const formattedQuote = {
+        ...data.quote,
+        signature: data.signature,
+        amountOutFormatted: data.quote.amountOutFormatted || 
+          Big(data.quote.amountOut || "0")
+            .div(Big(10).pow(18)) // TODO: Get actual decimals for output token
+            .toFixed(6),
+        amountInFormatted: data.quote.amountInFormatted || amountIn,
+        requestPayload: quoteRequest,
+      };
+      
+      setQuote(formattedQuote);
+    })
+    .catch((err) => {
+      console.error("Failed to fetch quote:", err);
+      setErrorApi(err.message || "Failed to fetch quote.");
+    })
+    .finally(() => {
+      setIsLoadingQuote(false);
+    });
+};
+
+const handleGetQuote = () => {
   if (!tokenIn || !tokenOut || !networkOut || !amountIn) {
     return;
   }
+  
+  fetchQuote();
+};
+
+const handleSubmit = () => {
+  if (!quote) return;
   
   onSubmit({
     tokenIn,
     tokenOut,
     networkOut,
     amountIn,
+    quote,
   });
 };
 
@@ -235,10 +343,34 @@ return (
       </small>
     </div>
     
-    {/* Quote Preview (placeholder for now) */}
-    {tokenIn && tokenOut && networkOut && amountIn && (
-      <div className="alert alert-secondary mb-4">
-        <small className="text-muted">Quote preview will appear here</small>
+    {/* Quote Display */}
+    {quote && (
+      <div className="alert alert-info mb-4">
+        <h6 className="mb-2">Quote Details</h6>
+        <div className="d-flex justify-content-between mb-2">
+          <span>You send:</span>
+          <strong>{quote.amountInFormatted} {intentsTokensIn.find(t => t.id === tokenIn)?.symbol}</strong>
+        </div>
+        <div className="d-flex justify-content-between mb-2">
+          <span>You receive:</span>
+          <strong>{quote.amountOutFormatted} {tokenOut}</strong>
+        </div>
+        {quote.timeEstimate && (
+          <div className="d-flex justify-content-between mb-2">
+            <span>Estimated time:</span>
+            <span>{quote.timeEstimate} minutes</span>
+          </div>
+        )}
+        {quote.depositAddress && (
+          <div className="mt-2">
+            <small className="text-muted">Deposit address: {quote.depositAddress.substring(0, 16)}...</small>
+          </div>
+        )}
+        {quote.deadline && (
+          <div className="mt-2">
+            <small className="text-muted">Quote expires: {new Date(quote.deadline).toLocaleString()}</small>
+          </div>
+        )}
       </div>
     )}
     
@@ -247,13 +379,30 @@ return (
       <button className="btn btn-outline-secondary" onClick={onCancel}>
         Cancel
       </button>
-      <button 
-        className="btn btn-primary" 
-        onClick={handleSubmit}
-        disabled={!isFormValid || isLoading}
-      >
-        {isLoading ? "Processing..." : "Get Quote"}
-      </button>
+      {!quote ? (
+        <button 
+          className="btn btn-primary" 
+          onClick={handleGetQuote}
+          disabled={!isFormValid || isLoadingQuote}
+        >
+          {isLoadingQuote ? (
+            <>
+              <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+              Fetching Quote...
+            </>
+          ) : (
+            "Get Quote"
+          )}
+        </button>
+      ) : (
+        <button 
+          className="btn btn-success" 
+          onClick={handleSubmit}
+          disabled={isLoading}
+        >
+          {isLoading ? "Creating Proposal..." : "Create Proposal"}
+        </button>
+      )}
     </div>
   </div>
 );
