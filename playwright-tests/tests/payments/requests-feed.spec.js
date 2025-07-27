@@ -31,25 +31,26 @@ test.describe("payment requests feed", function () {
         return originalResult;
       },
     });
-    await mockRpcRequest({
-      page,
-      filterParams: {
-        method_name: "get_proposals",
-      },
-      modifyOriginalResultFunction: () => {
-        let originalResult = [
-          JSON.parse(JSON.stringify(TransferProposalData)),
-          JSON.parse(JSON.stringify(TransferProposalData)),
-        ];
-        originalResult[0].id = 0;
-        originalResult[1].id = 1;
+
+    await page.route(
+      /https:\/\/sputnik-indexer-divine-fog-3863\.fly\.dev\/proposals\/.*\?.*category=payments/,
+      async (route) => {
+        let originalResult = {
+          proposals: [
+            JSON.parse(JSON.stringify(TransferProposalData)),
+            JSON.parse(JSON.stringify(TransferProposalData)),
+          ],
+          total: 2,
+        };
+        originalResult.proposals[0].id = 0;
+        originalResult.proposals[1].id = 1;
         // non expired request
         originalResult[0].submission_time = CurrentTimestampInNanoseconds;
         // expired request
         originalResult[1].submission_time = "1715761329133693174";
-        return originalResult;
-      },
-    });
+        await route.fulfill({ json: originalResult });
+      }
+    );
 
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
     await page.waitForTimeout(10_000);
@@ -92,28 +93,31 @@ test.describe("payment requests feed", function () {
     daoAccount,
     instanceAccount,
   }) => {
-    await mockRpcRequest({
-      page,
-      filterParams: {
-        method_name: "get_proposals",
-      },
-      modifyOriginalResultFunction: () => {
-        return [
-          JSON.parse(
-            JSON.stringify({
-              ...NearnFTProposal,
-              submission_time: CurrentTimestampInNanoseconds,
-            })
-          ),
-          JSON.parse(
-            JSON.stringify({
-              ...NearnFTProposalWithStorage,
-              submission_time: CurrentTimestampInNanoseconds,
-            })
-          ),
-        ];
-      },
-    });
+    await page.route(
+      /https:\/\/sputnik-indexer-divine-fog-3863\.fly\.dev\/proposals\/.*\?.*category=payments/,
+      async (route) => {
+        await route.fulfill({
+          json: {
+            proposals: [
+              JSON.parse(
+                JSON.stringify({
+                  ...NearnFTProposal,
+                  submission_time: CurrentTimestampInNanoseconds,
+                })
+              ),
+              JSON.parse(
+                JSON.stringify({
+                  ...NearnFTProposalWithStorage,
+                  submission_time: CurrentTimestampInNanoseconds,
+                })
+              ),
+            ],
+            total: 2,
+          },
+        });
+      }
+    );
+
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
     await page.waitForTimeout(10_000);
     if (!daoAccount.includes("infinex")) {

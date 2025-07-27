@@ -49,12 +49,17 @@ async function voteOnProposal({
     return originalResult;
   };
 
-  await mockRpcRequest({
-    page,
-    filterParams: { method_name: "get_proposals" },
-    modifyOriginalResultFunction: updateProposalStatus,
-  });
-
+  await page.route(
+    /https:\/\/sputnik-indexer-divine-fog-3863\.fly\.dev\/proposals\/.*\?.*category=lockup/,
+    async (route) => {
+      await route.fulfill({
+        json: {
+          proposals: [updateProposalStatus()],
+          total: 1,
+        },
+      });
+    }
+  );
   await mockRpcRequest({
     page,
     filterParams: { method_name: "get_proposal" },
@@ -128,19 +133,24 @@ async function performVoteAction({
 }
 
 async function mockLockupProposals({ page }) {
-  await mockRpcRequest({
-    page,
-    filterParams: { method_name: "get_proposals" },
-    modifyOriginalResultFunction: () => {
-      return [
-        {
-          ...JSON.parse(JSON.stringify(LockupProposalData)),
-          id: 0,
-          submission_time: CurrentTimestampInNanoseconds,
+  await page.route(
+    /https:\/\/sputnik-indexer-divine-fog-3863\.fly\.dev\/proposals\/.*\?.*category=lockup/,
+    async (route) => {
+      await route.fulfill({
+        json: {
+          proposals: [
+            {
+              ...JSON.parse(JSON.stringify(LockupProposalData)),
+              id: 0,
+              submission_time: CurrentTimestampInNanoseconds,
+              status: "InProgress",
+            },
+          ],
+          total: 1,
         },
-      ];
-    },
-  });
+      });
+    }
+  );
 }
 test.afterEach(async ({ page }, testInfo) => {
   console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
@@ -183,16 +193,24 @@ test.describe.parallel("User logged in with different roles", () => {
             hasAllRole: canVote,
           });
 
-          await mockRpcRequest({
-            page,
-            filterParams: { method_name: "get_proposals" },
-            modifyOriginalResultFunction: () => {
-              const result = JSON.parse(JSON.stringify(LockupProposalData));
-              result.submission_time = CurrentTimestampInNanoseconds;
-              result.status = "InProgress";
-              return result;
-            },
-          });
+          await page.route(
+            /https:\/\/sputnik-indexer-divine-fog-3863\.fly\.dev\/proposals\/.*\?.*category=lockup/,
+            async (route) => {
+              await route.fulfill({
+                json: {
+                  proposals: [
+                    {
+                      ...JSON.parse(JSON.stringify(LockupProposalData)),
+                      id: 0,
+                      submission_time: CurrentTimestampInNanoseconds,
+                      status: "InProgress",
+                    },
+                  ],
+                  total: 1,
+                },
+              });
+            }
+          );
 
           await page.goto(`/${instanceAccount}/widget/app?page=lockup`);
 

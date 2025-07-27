@@ -13,19 +13,24 @@ import { SandboxRPC } from "../../util/sandboxrpc.js";
 import { toBase64 } from "../../util/lib.js";
 
 async function mockPaymentProposals({ page, status }) {
-  await mockRpcRequest({
-    page,
-    filterParams: {
-      method_name: "get_proposals",
-    },
-    modifyOriginalResultFunction: () => {
-      let originalResult = [JSON.parse(JSON.stringify(TransferProposalData))];
-      originalResult[0].id = 0;
-      originalResult[0].status = status;
-      originalResult[0].submission_time = CurrentTimestampInNanoseconds;
-      return originalResult;
-    },
-  });
+  await page.route(
+    /https:\/\/sputnik-indexer-divine-fog-3863\.fly\.dev\/proposals\/.*\?.*category=payments/,
+    async (route) => {
+      await route.fulfill({
+        json: {
+          proposals: [
+            {
+              ...JSON.parse(JSON.stringify(TransferProposalData)),
+              id: 0,
+              submission_time: CurrentTimestampInNanoseconds,
+              status: status,
+            },
+          ],
+          total: 1,
+        },
+      });
+    }
+  );
 }
 
 async function mockPaymentProposal({ page, status }) {

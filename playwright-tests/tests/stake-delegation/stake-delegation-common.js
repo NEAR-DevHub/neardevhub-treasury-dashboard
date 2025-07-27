@@ -19,12 +19,9 @@ export const stakedPoolAccount = "astro-stakers.poolv1.near";
 export const multiStakedPoolAccount = "nearfans.poolv1.near";
 
 export async function mockStakeProposals({ page }) {
-  await mockRpcRequest({
-    page,
-    filterParams: {
-      method_name: "get_proposals",
-    },
-    modifyOriginalResultFunction: () => {
+  await page.route(
+    /https:\/\/sputnik-indexer-divine-fog-3863\.fly\.dev\/proposals\/.*\?.*category=stake-delegation/,
+    async (route) => {
       let originalResult = [
         JSON.parse(JSON.stringify(StakeProposalData)),
         JSON.parse(JSON.stringify(UnStakeProposalData)),
@@ -35,9 +32,14 @@ export async function mockStakeProposals({ page }) {
       originalResult[0].submission_time = CurrentTimestampInNanoseconds;
       // expired request
       originalResult[1].submission_time = "1715761329133693174";
-      return originalResult;
-    },
-  });
+      await route.fulfill({
+        json: {
+          proposals: originalResult,
+          total: 2,
+        },
+      });
+    }
+  );
 }
 
 export async function mockOldJSONStakeProposals({ page }) {
@@ -51,17 +53,19 @@ export async function mockOldJSONStakeProposals({ page }) {
       return originalResult;
     },
   });
-  await mockRpcRequest({
-    page,
-    filterParams: {
-      method_name: "get_proposals",
-    },
-    modifyOriginalResultFunction: () => {
+  await page.route(
+    /https:\/\/sputnik-indexer-divine-fog-3863\.fly\.dev\/proposals\/.*\?.*category=stake-delegation/,
+    async (route) => {
       let originalResult = [JSON.parse(JSON.stringify(OldJsonProposalData))];
       originalResult[0].submission_time = CurrentTimestampInNanoseconds;
-      return originalResult;
-    },
-  });
+      await route.fulfill({
+        json: {
+          proposals: originalResult,
+          total: 1,
+        },
+      });
+    }
+  );
 }
 
 export async function mockUnstakeAndWithdrawBalance({
@@ -386,12 +390,9 @@ export async function voteOnProposal({
   let isTransactionCompleted = false;
   await updateDaoPolicyMembers({ instanceAccount, page });
   const contractId = daoAccount;
-  await mockRpcRequest({
-    page,
-    filterParams: {
-      method_name: "get_proposals",
-    },
-    modifyOriginalResultFunction: () => {
+  await page.route(
+    /https:\/\/sputnik-indexer-divine-fog-3863\.fly\.dev\/proposals\/.*\?.*category=stake-delegation/,
+    async (route) => {
       let originalResult = [
         JSON.parse(
           JSON.stringify(
@@ -406,9 +407,14 @@ export async function voteOnProposal({
       } else {
         originalResult.status = "InProgress";
       }
-      return originalResult;
-    },
-  });
+      await route.fulfill({
+        json: {
+          proposals: originalResult,
+          total: 1,
+        },
+      });
+    }
+  );
   await mockRpcRequest({
     page,
     filterParams: {

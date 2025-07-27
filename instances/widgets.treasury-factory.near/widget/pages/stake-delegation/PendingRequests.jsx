@@ -12,12 +12,10 @@ const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 
 const [rowsPerPage, setRowsPerPage] = useState(10);
 const [currentPage, setPage] = useState(0);
-const [offset, setOffset] = useState(null);
 
 const [proposals, setProposals] = useState(null);
 const [totalLength, setTotalLength] = useState(null);
 const [loading, setLoading] = useState(false);
-const [isPrevPageCalled, setIsPrevCalled] = useState(false);
 const [sortDirection, setSortDirection] = useState("desc");
 
 const refreshStakeTableData = Storage.get(
@@ -58,7 +56,7 @@ const fetchProposals = useCallback(
       setLoading(false);
     });
   },
-  [rowsPerPage, isPrevPageCalled, currentPage, treasuryDaoID, sortDirection]
+  [rowsPerPage, currentPage, treasuryDaoID, sortDirection]
 );
 
 const handleSortClick = () => {
@@ -73,8 +71,6 @@ useEffect(() => {
 
 useEffect(() => {
   // need to clear all pagination related filters to fetch correct result
-  setIsPrevCalled(false);
-  setOffset(null);
   setPage(0);
   fetchProposals();
 }, [
@@ -132,20 +128,14 @@ return (
             totalLength: totalLength,
             totalPages: Math.ceil(totalLength / rowsPerPage),
             onNextClick: () => {
-              setIsPrevCalled(false);
-              setOffset(proposals[proposals.length - 1].id);
               setPage(currentPage + 1);
             },
             onPrevClick: () => {
-              setIsPrevCalled(true);
-              setOffset(proposals[0].id);
               setPage(currentPage - 1);
             },
             currentPage: currentPage,
             rowsPerPage: rowsPerPage,
             onRowsChange: (v) => {
-              setIsPrevCalled(false);
-              setOffset(null);
               setPage(0);
               setRowsPerPage(parseInt(v));
             },

@@ -25,12 +25,9 @@ async function mockSettingsProposals({ page }) {
       return lastProposalId;
     },
   });
-  await mockRpcRequest({
-    page,
-    filterParams: {
-      method_name: "get_proposals",
-    },
-    modifyOriginalResultFunction: () => {
+  await page.route(
+    /https:\/\/sputnik-indexer-divine-fog-3863\.fly\.dev\/proposals\/.*\?.*/,
+    async (route) => {
       let originalResult = [
         JSON.parse(JSON.stringify(SettingsVotingDurationProposalData)),
         JSON.parse(JSON.stringify(OldSettingsProposalData)),
@@ -39,9 +36,14 @@ async function mockSettingsProposals({ page }) {
       originalResult[1].id = 1;
       // non expired request
       originalResult[0].submission_time = CurrentTimestampInNanoseconds;
-      return originalResult;
-    },
-  });
+      await route.fulfill({
+        json: {
+          proposals: originalResult,
+          total: 2,
+        },
+      });
+    }
+  );
 }
 
 async function voteOnProposal({
@@ -54,13 +56,10 @@ async function voteOnProposal({
 }) {
   let isTransactionCompleted = false;
   const contractId = daoAccount;
-  await mockRpcRequest({
-    page,
-    filterParams: {
-      method_name: "get_proposals",
-    },
-    modifyOriginalResultFunction: (originalResult) => {
-      originalResult = JSON.parse(
+  await page.route(
+    /https:\/\/sputnik-indexer-divine-fog-3863\.fly\.dev\/proposals\/.*\?.*/,
+    async (route) => {
+      let originalResult = JSON.parse(
         JSON.stringify(SettingsVotingDurationProposalData)
       );
       originalResult.submission_time = CurrentTimestampInNanoseconds;
@@ -69,9 +68,15 @@ async function voteOnProposal({
       } else {
         originalResult.status = "InProgress";
       }
-      return originalResult;
-    },
-  });
+      await route.fulfill({
+        json: {
+          proposals: [originalResult],
+          total: 1,
+        },
+      });
+    }
+  );
+
   await mockRpcRequest({
     page,
     filterParams: {
@@ -211,20 +216,22 @@ test.describe.parallel("User logged in with different roles", function () {
           hasAllRole: hasAllRole,
         });
 
-        await mockRpcRequest({
-          page,
-          filterParams: {
-            method_name: "get_proposals",
-          },
-          modifyOriginalResultFunction: (originalResult) => {
-            originalResult = JSON.parse(
+        await page.route(
+          /https:\/\/sputnik-indexer-divine-fog-3863\.fly\.dev\/proposals\/.*\?.*/,
+          async (route) => {
+            let originalResult = JSON.parse(
               JSON.stringify(SettingsVotingDurationProposalData)
             );
             originalResult.submission_time = CurrentTimestampInNanoseconds;
             originalResult.status = "InProgress";
-            return originalResult;
-          },
-        });
+            await route.fulfill({
+              json: {
+                proposals: [originalResult],
+                total: 1,
+              },
+            });
+          }
+        );
 
         await page.goto(`/${instanceAccount}/widget/app?page=settings`);
         await expect(page.getByText("Pending Requests").nth(1)).toBeVisible({
@@ -408,15 +415,17 @@ test.describe("don't ask again", function () {
     );
     proposalData.submission_time = CurrentTimestampInNanoseconds;
     proposalData.status = "InProgress";
-    await mockRpcRequest({
-      page,
-      filterParams: {
-        method_name: "get_proposals",
-      },
-      modifyOriginalResultFunction: () => {
-        return [proposalData];
-      },
-    });
+    await page.route(
+      /https:\/\/sputnik-indexer-divine-fog-3863\.fly\.dev\/proposals\/.*\?.*/,
+      async (route) => {
+        await route.fulfill({
+          json: {
+            proposals: [proposalData],
+            total: 1,
+          },
+        });
+      }
+    );
     await mockRpcRequest({
       page,
       filterParams: {
