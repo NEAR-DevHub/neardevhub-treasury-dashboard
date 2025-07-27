@@ -338,9 +338,9 @@ Update proposal display components to show 1Click-specific information:
 
 ### 2. Security
 - Validate all input addresses
-- Store cryptographic signatures in proposal for dispute resolution
+- Store deposit addresses from 1Click API in proposal for tracking
 - Never expose private keys or sensitive data
-- Implement NEP-413 message signing for additional security
+- **Note**: 1Click API handles all NEP-413 signing and intent execution internally
 
 ### 3. User Experience
 - Clear indication of quote expiry time
