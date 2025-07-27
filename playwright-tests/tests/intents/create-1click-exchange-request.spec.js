@@ -218,8 +218,101 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     test.setTimeout(60_000);
     await cacheCDN(page);
     
-    // Open create page
-    await openCreatePage({ page, instanceAccount });
+    // Use same setup as first test
+    // Import required contracts
+    await worker.rootAccount.importContract({
+      mainnetContract: instanceAccount,
+    });
+    
+    // Create DAO contract
+    const daoContract = await worker.rootAccount.importContract({
+      mainnetContract: daoAccount,
+      initialBalance: parseNEAR("10"),
+    });
+    
+    // Initialize DAO with creatorAccount having permissions
+    const daoName = daoAccount.split(".")[0];
+    await daoContract.callRaw(daoAccount, "new", {
+      config: {
+        name: daoName,
+        purpose: "treasury",
+        metadata: "",
+      },
+      policy: {
+        roles: [
+          {
+            kind: {
+              Group: [creatorAccount.accountId],
+            },
+            name: "Create Requests",
+            permissions: [
+              "call:AddProposal",
+              "transfer:AddProposal",
+              "config:Finalize",
+            ],
+            vote_policy: {},
+          },
+        ],
+        default_vote_policy: {
+          weight_kind: "RoleWeight",
+          quorum: "0",
+          threshold: [1, 2],
+        },
+        proposal_bond: "100000000000000000000000", // 0.1 NEAR
+        proposal_period: "604800000000000",
+        bounty_bond: "100000000000000000000000",
+        bounty_forgiveness_period: "604800000000000",
+      },
+    }, {
+      gas: "300000000000000",
+    });
+    
+    // Set up proper Web4 redirection and auth
+    const modifiedWidgets = {};
+    const configKey = `${instanceAccount}/widget/config.data`;
+    
+    modifiedWidgets[configKey] = (
+      await getLocalWidgetContent(configKey, {
+        treasury: daoAccount,
+        account: instanceAccount,
+      })
+    ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
+
+    await redirectWeb4({
+      page,
+      contractId: instanceAccount,
+      treasury: daoAccount,
+      networkId: "sandbox",
+      sandboxNodeUrl: worker.provider.connection.url,
+      modifiedWidgets,
+      callWidgetNodeURLForContractWidgets: false,
+    });
+    
+    // Mock user balance
+    await mockNearBalances({
+      page,
+      accountId: creatorAccount.accountId,
+      balance: (await creatorAccount.availableBalance()).toString(),
+      storage: (await creatorAccount.balance()).staked,
+    });
+
+    // Navigate to asset exchange page
+    await page.goto(`https://${instanceAccount}.page/?page=asset-exchange`);
+    
+    // Set auth with sandbox account
+    await setPageAuthSettings(
+      page,
+      creatorAccount.accountId,
+      await creatorAccount.getKey()
+    );
+    
+    // Click Create Request button
+    const createRequestButton = page.getByRole("button", { name: "Create Request" });
+    await expect(createRequestButton).toBeVisible();
+    await createRequestButton.click();
+    
+    // Wait for the form to load
+    await page.waitForTimeout(2000);
     
     // Capture screenshot after clicking Create Request
     await page.screenshot({ 
@@ -227,27 +320,30 @@ test.describe("1Click API Integration - Asset Exchange", function () {
       fullPage: true 
     });
     
-    // Wait for the form to load
-    await page.waitForTimeout(2000);
-    
     // Look for tab switcher - it should have both tabs
-    // Note: This will fail initially as the tabs don't exist yet
-    try {
-      await expect(page.getByRole("button", { name: "Sputnik DAO" })).toBeVisible({ timeout: 5000 });
-      await expect(page.getByRole("button", { name: "Near Intents" })).toBeVisible({ timeout: 5000 });
-      
-      // If tabs exist, capture them
-      await page.locator('.tab-switcher').screenshot({ 
-        path: path.join(screenshotsDir, "04-tab-switcher.png")
-      });
-    } catch (e) {
-      // Capture current state to see what needs to be implemented
-      console.log("Tab switcher not found - capturing current state");
-      await page.screenshot({ 
-        path: path.join(screenshotsDir, "04-tab-switcher-missing.png"),
-        fullPage: true 
-      });
-    }
+    await expect(page.getByRole("button", { name: "Sputnik DAO" })).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole("button", { name: "Near Intents" })).toBeVisible({ timeout: 5000 });
+    
+    // Capture tab switcher
+    await page.locator('.tab-switcher').screenshot({ 
+      path: path.join(screenshotsDir, "04-tab-switcher.png")
+    });
+    
+    // Click on Near Intents tab
+    await page.getByRole("button", { name: "Near Intents" }).click();
+    await page.waitForTimeout(1000);
+    
+    // Verify we see the 1Click form placeholder
+    await expect(page.getByText("1Click Cross-Network Swap")).toBeVisible();
+    
+    // Capture the 1Click form
+    await page.screenshot({ 
+      path: path.join(screenshotsDir, "05-near-intents-form.png"),
+      fullPage: true 
+    });
+    
+    console.log("✅ Tab switcher test passed - Both tabs work correctly");
+    console.log("🔧 Next step: Implement actual 1Click form fields");
   });
 
   test("should switch to Near Intents tab and see 1Click form", async ({
