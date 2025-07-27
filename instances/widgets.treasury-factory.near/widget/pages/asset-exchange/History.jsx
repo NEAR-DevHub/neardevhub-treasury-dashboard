@@ -16,9 +16,6 @@ const [currentPage, setPage] = useState(0);
 const [proposals, setProposals] = useState(null);
 const [totalLength, setTotalLength] = useState(null);
 const [loading, setLoading] = useState(false);
-const [firstRender, setFirstRender] = useState(true);
-const [offset, setOffset] = useState(null);
-const [isPrevPageCalled, setIsPrevCalled] = useState(false);
 const [sortDirection, setSortDirection] = useState("desc");
 
 const fetchProposals = useCallback(
@@ -73,7 +70,7 @@ return (
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.asset-exchange.Table`}
       props={{
         instance,
-        proposals: proposals,
+        proposals,
         isPendingRequests: false,
         functionCallApproversGroup,
         highlightProposalId,
@@ -93,20 +90,14 @@ return (
             totalLength: totalLength,
             totalPages: Math.ceil(totalLength / rowsPerPage),
             onNextClick: () => {
-              setIsPrevCalled(false);
-              setOffset(proposals[proposals.length - 1].id);
               setPage(currentPage + 1);
             },
             onPrevClick: () => {
-              setIsPrevCalled(true);
-              setOffset(proposals[0].id);
               setPage(currentPage - 1);
             },
             currentPage: currentPage,
             rowsPerPage: rowsPerPage,
             onRowsChange: (v) => {
-              setIsPrevCalled(false);
-              setOffset(null);
               setPage(0);
               setRowsPerPage(parseInt(v));
             },

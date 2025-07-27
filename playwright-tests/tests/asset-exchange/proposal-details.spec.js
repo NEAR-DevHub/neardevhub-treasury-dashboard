@@ -8,19 +8,16 @@ import { mockRpcRequest, mockWithFTBalance } from "../../util/rpcmock.js";
 import { SandboxRPC } from "../../util/sandboxrpc.js";
 
 async function mockExchangeProposals({ page, status }) {
-  await mockRpcRequest({
-    page,
-    filterParams: {
-      method_name: "get_proposals",
-    },
-    modifyOriginalResultFunction: () => {
+  await page.route(
+    /https:\/\/sputnik-indexer-divine-fog-3863\.fly\.dev\/proposals\/.*\?.*category=asset-exchange/,
+    async (route) => {
       let originalResult = [JSON.parse(JSON.stringify(SwapProposalData))];
       originalResult[0].id = 0;
       originalResult[0].status = status;
       originalResult[0].submission_time = CurrentTimestampInNanoseconds;
-      return originalResult;
-    },
-  });
+      await route.fulfill({ json: { proposals: originalResult, total: 1 } });
+    }
+  );
 }
 
 async function mockExchangeProposal({ page, status }) {

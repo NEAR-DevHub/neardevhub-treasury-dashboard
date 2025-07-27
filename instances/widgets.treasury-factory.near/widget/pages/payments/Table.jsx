@@ -149,7 +149,6 @@ useEffect(() => {
     });
   }
 }, [lockupContract]);
-
 const ProposalsComponent = () => {
   return (
     <tbody style={{ overflowX: "auto" }}>
@@ -292,7 +291,7 @@ const ProposalsComponent = () => {
               </td>
             )}
 
-            <td className={isVisible("Title")}>
+            <td className={isVisible("Title")} style={{ minWidth: 200 }}>
               {description ? (
                 description
               ) : (
@@ -566,7 +565,7 @@ return (
       !Array.isArray(proposals) ? (
         <tbody>
           <RowsSkeleton
-            numberOfCols={isPendingRequests ? 13 : 11}
+            numberOfCols={isPendingRequests ? 13 : 12}
             numberOfRows={3}
             numberOfHiddenRows={4}
           />
@@ -590,9 +589,7 @@ return (
           </tr>
         </tbody>
       ) : (
-        proposals.map((item, index) => (
-          <ProposalsComponent item={item} key={index} />
-        ))
+        <ProposalsComponent />
       )}
     </table>
   </Container>
