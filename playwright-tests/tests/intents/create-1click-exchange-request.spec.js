@@ -1,9 +1,9 @@
-import { test, cacheCDN } from "../../util/test.js";
+import { test } from "../../util/test.js";
 import { expect } from "@playwright/test";
 import { redirectWeb4, getLocalWidgetContent } from "../../util/web4.js";
 import { parseNEAR, Worker, Account } from "near-workspaces";
 import { connect } from "near-api-js";
-import { setPageAuthSettings } from "../../util/sandboxrpc.js";
+import { PROPOSAL_BOND, setPageAuthSettings } from "../../util/sandboxrpc.js";
 import { mockNearBalances } from "../../util/rpcmock.js";
 import { getTransactionModalObject } from "../../util/transaction.js";
 import fs from "fs/promises";
@@ -200,7 +200,6 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     daoAccount,
   }) => {
     test.setTimeout(120_000);
-    await cacheCDN(page);
     
     console.log("Setting up contracts...");
     
@@ -217,38 +216,60 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     
     // Initialize DAO with creatorAccount having permissions
     const daoName = daoAccount.split(".")[0];
-    await daoContract.callRaw(daoAccount, "new", {
-      config: {
-        name: daoName,
-        purpose: "treasury",
-        metadata: "",
-      },
-      policy: {
-        roles: [
-          {
-            kind: {
-              Group: [creatorAccount.accountId],
-            },
-            name: "Create Requests",
-            permissions: [
-              "call:AddProposal",
-              "transfer:AddProposal",
-              "config:Finalize",
-            ],
-            vote_policy: {},
-          },
-        ],
-        default_vote_policy: {
-          weight_kind: "RoleWeight",
-          quorum: "0",
-          threshold: [1, 2],
+    const create_testdao_args = {
+        config: {
+          name: daoName,
+          purpose: "treasury",
+          metadata: "",
         },
-        proposal_bond: "100000000000000000000000",
-        proposal_period: "604800000000000",
-        bounty_bond: "100000000000000000000000",
-        bounty_forgiveness_period: "604800000000000",
-      },
-    }, {
+        policy: {
+          roles: [
+            {
+              kind: {
+                Group: [creatorAccount.accountId], // creatorAccount from beforeAll
+              },
+              name: "Create Requests",
+              permissions: [
+                "call:AddProposal",
+                "transfer:AddProposal",
+                "config:Finalize",
+              ],
+              vote_policy: {},
+            },
+            {
+              kind: {
+                Group: [creatorAccount.accountId],
+              },
+              name: "Manage Members",
+              permissions: [
+                "config:*",
+                "policy:*",
+                "add_member_to_role:*",
+                "remove_member_from_role:*",
+              ],
+              vote_policy: {},
+            },
+            {
+              kind: {
+                Group: [creatorAccount.accountId],
+              },
+              name: "Vote",
+              permissions: ["*:VoteReject", "*:VoteApprove", "*:VoteRemove"],
+              vote_policy: {},
+            },
+          ],
+          default_vote_policy: {
+            weight_kind: "RoleWeight",
+            quorum: "0",
+            threshold: [1, 2],
+          },
+          proposal_bond: PROPOSAL_BOND,
+          proposal_period: "604800000000000",
+          bounty_bond: "100000000000000000000000",
+          bounty_forgiveness_period: "604800000000000",
+        },
+      };
+    await daoContract.callRaw(daoAccount, "new", create_testdao_args, {
       gas: "300000000000000",
     });
     
@@ -286,10 +307,18 @@ test.describe("1Click API Integration - Asset Exchange", function () {
       storage: (await creatorAccount.balance()).staked,
     });
     
-    console.log("Navigating to asset exchange page...");
+    // Mock DAO balance - this is crucial for auth to work properly
+    await mockNearBalances({
+      page,
+      accountId: daoContract.accountId,
+      balance: (
+        await daoContract.getAccount(daoAccount).availableBalance()
+      ).toString(),
+      storage: (await daoContract.getAccount(daoAccount).balance()).staked,
+    });
     
-    // Navigate to asset exchange page
-    await page.goto(`https://${instanceAccount}.page/?page=asset-exchange`);
+    // Navigate to main page first (like payment request test)
+    await page.goto(`https://${instanceAccount}.page/`);
     
     // Set auth with sandbox account
     await setPageAuthSettings(
@@ -297,6 +326,11 @@ test.describe("1Click API Integration - Asset Exchange", function () {
       creatorAccount.accountId,
       await creatorAccount.getKey()
     );
+    
+    console.log("Navigating to asset exchange page...");
+    
+    // Now navigate to asset exchange
+    await page.goto(`https://${instanceAccount}.page/?page=asset-exchange`);
     
     // Wait for page to load
     await expect(page.getByText("Pending Requests")).toBeVisible({
@@ -438,24 +472,67 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     console.log("\nClicking Create Proposal button...");
     await page.getByRole("button", { name: "Create Proposal" }).click();
     
-    // Wait a bit for any response
-    await page.waitForTimeout(3000);
+    // Wait for transaction modal
+    console.log("Waiting for transaction modal...");
+    await expect(page.getByText("Confirm Transaction")).toBeVisible({ timeout: 10000 });
     
-    // Take a screenshot to see what happened
+    // Take screenshot of the transaction modal
     await page.screenshot({ 
-      path: path.join(screenshotsDir, "09-after-create-proposal.png"),
+      path: path.join(screenshotsDir, "09-transaction-modal.png"),
       fullPage: true 
     });
     
-    console.log("✅ Clicked Create Proposal button!");
-    console.log("🔧 Check screenshot to see the result");
+    // Verify transaction details in the modal
+    // Verify it's calling the DAO with add_proposal
+    await expect(page.locator(".modal-content")).toContainText(daoAccount);
+    await expect(page.locator(".modal-content")).toContainText("add_proposal");
     
-    // For now, let's end the test here
-    console.log("\n✅ Successfully implemented:");
-    console.log("  - Token dropdown with NEAR Intents balances");
-    console.log("  - Quote fetching from 1Click API");
-    console.log("  - Create Proposal button functionality");
-    console.log("\n🔧 Next steps: Debug transaction modal and complete the flow");
+    // Click Confirm button to submit the transaction
+    console.log("Clicking Confirm button to submit transaction...");
+    await page.getByRole("button", { name: "Confirm" }).click();
+    
+    // Wait for the Confirm button to disappear - this ensures transaction completes
+    await expect(page.getByRole("button", { name: "Confirm" })).not.toBeVisible();
+    
+    // Wait a bit for the proposal to be created
+    console.log("Waiting for proposal to be created...");
+    await page.waitForTimeout(5000);
+    
+    // Navigate back to asset exchange page to see the proposal
+    console.log("Navigating to Pending Requests to verify proposal...");
+    await page.goto(`https://${instanceAccount}.page/?page=asset-exchange`);
+    
+    // Wait for the table to load
+    await expect(page.getByText("Pending Requests")).toBeVisible({ timeout: 15000 });
+    
+    // Wait for table rows to be visible before taking screenshot
+    const tableRows = page.locator('tr[data-component="widgets.treasury-factory.near/widget/pages.asset-exchange.Table"]');
+    await expect(tableRows.first()).toBeVisible({ timeout: 10000 });
+    
+    // Additional wait to ensure table is fully rendered
+    await page.waitForTimeout(2000);
+    
+    // Take screenshot to see what's on the page
+    await page.screenshot({ 
+      path: path.join(screenshotsDir, "10-pending-requests-page.png"),
+      fullPage: true 
+    });
+    
+    // Get the data row (the table has a header row and data rows)
+    const proposalRow = tableRows.nth(1);  // Second row is the first data row
+    await expect(proposalRow).toBeVisible();
+    
+    // Get the proposal content
+    const proposalContent = await proposalRow.textContent();
+    console.log("Proposal found in table:", proposalContent);
+    
+    // Verify it contains our swap details - the table will show the token amounts
+    await expect(proposalRow).toContainText("ETH");
+    await expect(proposalRow).toContainText("USDC");
+    
+    console.log("✅ Successfully created 1Click swap proposal!");
+    console.log("✅ Proposal appears in Pending Requests table with correct details");
+    console.log("\n🎉 Complete 1Click integration test passed!");
   });
   
   // Comment out other tests for now

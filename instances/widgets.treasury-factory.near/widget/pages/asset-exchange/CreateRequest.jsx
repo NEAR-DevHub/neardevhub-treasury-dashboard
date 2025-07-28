@@ -83,27 +83,8 @@ function fillTxn(proposalDetails, args, isStorageDeposit) {
       gas: call.gas,
     }));
   } else {
-    // Check if this is a 1Click swap (has different description format)
-    const is1ClickSwap = args.treasuryKind === "NEAR_INTENTS" && 
-                         typeof proposalDetails.description === "string" &&
-                         proposalDetails.description.includes("1Click");
-    
-    let description;
-    if (is1ClickSwap) {
-      // For 1Click swaps, use the pre-formatted description
-      description = proposalDetails.description;
-    } else {
-      // For regular swaps, use the structured format
-      description = encodeToMarkdown({
-        proposal_action: "asset-exchange",
-        notes: proposalDetails.notes,
-        tokenIn: proposalDetails.tokenIn,
-        tokenOut: proposalDetails.tokenOut,
-        amountIn: proposalDetails.amountIn,
-        slippage: proposalDetails.slippage,
-        amountOut: proposalDetails.amountOut,
-      });
-    }
+    // All asset exchange proposals use the same encoded format
+    const description = proposalDetails.description;
     
     const gas = "270000000000000";
     return [
@@ -238,8 +219,10 @@ return (
           instance,
           onCancel: () => setShowCancelModal(true),
           onSubmit: (args) => {
-            // Format the 1Click proposal
-            const proposalDescription = `1Click Cross-Network Swap
+            // Format the 1Click proposal with encoded metadata
+            const proposalDescription = encodeToMarkdown({
+              proposal_action: "asset-exchange",
+              notes: `1Click Cross-Network Swap
 
 Swap Details:
 - Amount In: ${args.quote.amountInFormatted} ${args.tokenInSymbol}
@@ -253,13 +236,18 @@ Deposit Address: ${args.quote.depositAddress}
 1Click Service Signature: ${args.quote.signature}
 
 This proposal authorizes transferring tokens to 1Click's deposit address.
-1Click will execute the cross-network swap and deliver the swapped tokens back to the treasury's NEAR Intents account.`;
+1Click will execute the cross-network swap and deliver the swapped tokens back to the treasury's NEAR Intents account.`,
+              tokenIn: args.tokenInSymbol,
+              tokenOut: args.tokenOut,
+              amountIn: args.quote.amountInFormatted,
+              amountOut: args.quote.amountOutFormatted,
+            });
 
             const proposalDetails = {
               description: proposalDescription,
               transactions: [{
                 treasuryKind: "NEAR_INTENTS",
-                receiver_id: "intents.near",
+                receiverId: "intents.near",  // Changed from receiver_id to receiverId
                 functionCalls: [{
                   methodName: "mt_transfer",
                   args: {
