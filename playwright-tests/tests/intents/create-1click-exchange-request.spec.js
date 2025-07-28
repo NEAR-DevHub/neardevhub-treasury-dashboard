@@ -666,6 +666,11 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     // The actual quote amount will vary based on current rates
     await expect(page.getByText(/\d+\.\d+ USDC/)).toBeVisible();
     
+    // Scroll to the quote details for better video visibility
+    const quoteSection = page.getByText("You receive:").first();
+    await quoteSection.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(1000); // Wait 1 second to show the quote
+    
     // Take screenshot of the quote
     await page.screenshot({ 
       path: path.join(screenshotsDir, "08-quote-displayed.png"),
@@ -999,6 +1004,11 @@ test.describe("1Click API Integration - Asset Exchange", function () {
       '.card div.d-flex.flex-column.border-bottom:has(div.h6.mb-0.text-truncate:has-text("USDC"))'
     );
     await expect(usdcBalanceRowLocator).toBeVisible();
+    
+    // Scroll to USDC balance for better video visibility
+    await usdcBalanceRowLocator.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(1000); // Wait 1 second to show the USDC balance
+    
     // Dashboard shows balance with 2 decimal places
     await expect(usdcBalanceRowLocator).toContainText(/\d+\.\d{2}/);
     console.log("✅ Verified new USDC balance on dashboard");
