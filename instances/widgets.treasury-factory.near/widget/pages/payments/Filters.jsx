@@ -19,7 +19,7 @@ const [availableFilters] = useState([
           multiple: false,
         },
         {
-          key: "statuses",
+          key: "status",
           label: "Status",
           type: "status",
           multiple: false,
@@ -119,8 +119,7 @@ const handleFilterSelection = (filterKey, selectedValues, include) => {
   setActiveFilters((prev) => ({
     ...prev,
     [filterKey]: {
-      include:
-        include !== undefined ? include : prev[filterKey]?.include || true,
+      include: include !== undefined ? include : prev[filterKey]?.include,
       values: selectedValues,
     },
   }));
@@ -207,6 +206,7 @@ return (
             label: getFilterLabel(filterKey),
             type: getFilterType(filterKey),
             selected: filterData.values || [],
+            include: filterData.include,
             setSelected: (values) => handleFilterSelection(filterKey, values),
             onIncludeChange: (include) =>
               updateFilterInclude(filterKey, include),
