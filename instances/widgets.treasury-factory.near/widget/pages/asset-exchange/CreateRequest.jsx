@@ -10,7 +10,7 @@ const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
 };
 const { encodeToMarkdown } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
-);
+) || { encodeToMarkdown: (data) => JSON.stringify(data) };
 const instance = props.instance;
 const onCloseCanvas = props.onCloseCanvas ?? (() => {});
 
@@ -83,15 +83,28 @@ function fillTxn(proposalDetails, args, isStorageDeposit) {
       gas: call.gas,
     }));
   } else {
-    const description = {
-      proposal_action: "asset-exchange",
-      notes: proposalDetails.notes,
-      tokenIn: proposalDetails.tokenIn,
-      tokenOut: proposalDetails.tokenOut,
-      amountIn: proposalDetails.amountIn,
-      slippage: proposalDetails.slippage,
-      amountOut: proposalDetails.amountOut,
-    };
+    // Check if this is a 1Click swap (has different description format)
+    const is1ClickSwap = args.treasuryKind === "NEAR_INTENTS" && 
+                         typeof proposalDetails.description === "string" &&
+                         proposalDetails.description.includes("1Click");
+    
+    let description;
+    if (is1ClickSwap) {
+      // For 1Click swaps, use the pre-formatted description
+      description = proposalDetails.description;
+    } else {
+      // For regular swaps, use the structured format
+      description = encodeToMarkdown({
+        proposal_action: "asset-exchange",
+        notes: proposalDetails.notes,
+        tokenIn: proposalDetails.tokenIn,
+        tokenOut: proposalDetails.tokenOut,
+        amountIn: proposalDetails.amountIn,
+        slippage: proposalDetails.slippage,
+        amountOut: proposalDetails.amountOut,
+      });
+    }
+    
     const gas = "270000000000000";
     return [
       {
@@ -99,7 +112,7 @@ function fillTxn(proposalDetails, args, isStorageDeposit) {
         methodName: "add_proposal",
         args: {
           proposal: {
-            description: encodeToMarkdown(description),
+            description: description,
             kind: {
               FunctionCall: {
                 receiver_id: args.receiverId,
