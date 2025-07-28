@@ -50,7 +50,7 @@ const [proposerOptions, setProposerOptions] = useState([]);
 
 // Fetch options from API
 const fetchOptions = (endpoint, setter, key) => {
-  asyncFetch(`http://localhost:5001/proposals/${treasuryDaoID}/${endpoint}`)
+  asyncFetch(`${REPL_SPUTNIK_INDEXER}/proposals/${treasuryDaoID}/${endpoint}`)
     .then((response) => {
       if (response.status === 200) {
         setter(response.body?.[key]);

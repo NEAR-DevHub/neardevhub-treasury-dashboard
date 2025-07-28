@@ -117,6 +117,7 @@ function fetchProposals(customSortDirection) {
     search: search,
     filters: activeFilters,
     amountValues: amountValues,
+    accountId: context.accountId,
   })
     .then((r) => {
       setProposals(r.proposals || []);
@@ -131,10 +132,30 @@ function fetchProposals(customSortDirection) {
     });
 }
 
+// Helper function to check if filters have meaningful values
+const hasMeaningfulFilters = (filters) => {
+  if (!filters || Object.keys(filters).length === 0) return false;
+
+  return Object.values(filters).some((filter) => {
+    // Check if filter has values with meaningful content
+    return (
+      filter.values &&
+      filter.values.length > 0 &&
+      filter.values.some((value) => value && value !== "")
+    );
+  });
+};
+
 useEffect(() => {
   setPage(0);
   const timeout = setTimeout(() => {
-    fetchProposals();
+    // Only fetch if filters have meaningful values or if there are no filters
+    if (
+      hasMeaningfulFilters(activeFilters) ||
+      Object.keys(activeFilters).length === 0
+    ) {
+      fetchProposals();
+    }
   }, 500);
 
   return () => clearTimeout(timeout);
@@ -143,7 +164,19 @@ useEffect(() => {
 useEffect(() => {
   setPage(0);
   const timeout = setTimeout(() => {
-    fetchProposals();
+    // Only fetch if amountValues have meaningful values
+    const hasAmountValues =
+      amountValues &&
+      ((amountValues.min && amountValues.min !== "") ||
+        (amountValues.max && amountValues.max !== "") ||
+        (amountValues.equal && amountValues.equal !== ""));
+
+    if (
+      hasAmountValues ||
+      (!amountValues.min && !amountValues.max && !amountValues.equal)
+    ) {
+      fetchProposals();
+    }
   }, 2000);
 
   return () => clearTimeout(timeout);
