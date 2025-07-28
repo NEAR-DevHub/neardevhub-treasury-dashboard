@@ -336,6 +336,7 @@ const OptionRender = () => {
                       instance,
                       isVoteStatus: false,
                       status: status,
+                      isPaymentsPage: true,
                     }}
                   />
                 </div>

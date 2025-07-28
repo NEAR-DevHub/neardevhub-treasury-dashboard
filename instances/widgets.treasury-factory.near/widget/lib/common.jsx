@@ -407,6 +407,7 @@ function getProposalsFromIndexer({
   filters,
   search,
   amountValues,
+  accountId,
 }) {
   let query = `${REPL_SPUTNIK_INDEXER}/proposals/${daoId}?page=${page}&page_size=${pageSize}&sort_by=CreationTime&sort_direction=${sortDirection}`;
 
@@ -499,6 +500,32 @@ function getProposalsFromIndexer({
               }
               break;
 
+            case "votes":
+              if (values[0] === "Approved") {
+                query += `&voter_votes=${accountId}:approved`;
+              } else if (values[0] === "Rejected") {
+                query += `&voter_votes=${accountId}:rejected`;
+              } else if (values[0] === "Awaiting Decision") {
+                // Check if approvers_not already exists in the query
+                const existingApproversNot = query.match(
+                  /&approvers_not=([^&]+)/
+                );
+                if (existingApproversNot) {
+                  // Combine existing and new values
+                  const existingValues = existingApproversNot[1].split(",");
+                  const allValues = [
+                    ...new Set([...existingValues, accountId]),
+                  ];
+                  // Replace the existing approvers_not with combined values
+                  query = query.replace(
+                    /&approvers_not=[^&]+/,
+                    `&approvers_not=${allValues.join(",")}`
+                  );
+                } else {
+                  query += `&approvers_not=${accountId}`;
+                }
+              }
+              break;
             default:
               break;
           }

@@ -22,6 +22,7 @@ jobs:
         project:
           - treasury-dashboard
           - infinex
+          - treasury-testing
 
     steps:
       - name: Checkout repository
@@ -70,9 +71,18 @@ jobs:
       - name: Run tests
         id: payments-tests
         run: |
-          npx playwright test playwright-tests/tests/payments \
-            --project=${{ matrix.project }} \
-            --shard=${{ matrix.shard }}
+          # Run filters tests only with treasury-testing project (since that has most amount of proposals)
+          if [ "${{ matrix.project }}" = "treasury-testing" ]; then
+            npx playwright test playwright-tests/tests/payments/filters.spec.js \
+              --project=${{ matrix.project }} \
+              --shard=${{ matrix.shard }}
+          else
+            # Run all other payments tests except filters
+            npx playwright test playwright-tests/tests/payments \
+              --project=${{ matrix.project }} \
+              --shard=${{ matrix.shard }} \
+              --grep-invert="filters"
+          fi
 
       - name: Sanitize shard name
         run: echo "SHARD_SAFE=$(echo "${{ matrix.shard }}" | sed 's|/|-|')" >> $GITHUB_ENV
