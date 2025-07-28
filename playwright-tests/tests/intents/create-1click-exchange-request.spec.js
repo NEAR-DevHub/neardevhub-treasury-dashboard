@@ -532,7 +532,65 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     
     console.log("✅ Successfully created 1Click swap proposal!");
     console.log("✅ Proposal appears in Pending Requests table with correct details");
-    console.log("\n🎉 Complete 1Click integration test passed!");
+    
+    // Now approve the proposal
+    console.log("\nApproving the 1Click swap proposal...");
+    
+    // Click on the proposal row to expand it
+    await proposalRow.click();
+    
+    // Wait for the Approve button to be visible and click it
+    await page.waitForTimeout(1000);
+    const approveButton = page.getByRole("button", { name: "Approve" }).nth(1);
+    await expect(approveButton).toBeVisible();
+    await approveButton.click();
+    
+    // Confirm the approval transaction
+    console.log("Confirming approval transaction...");
+    await expect(page.getByRole("button", { name: "Confirm" })).toBeVisible();
+    await page.getByRole("button", { name: "Confirm" }).click();
+    
+    // Wait for the second confirmation (if needed)
+    await expect(page.getByText("Confirm Transaction")).toBeVisible();
+    await page.getByRole("button", { name: "Confirm" }).click();
+    
+    // Wait for success message
+    console.log("Waiting for approval to complete...");
+    
+    // Take screenshot to see what happens after approval
+    await page.waitForTimeout(3000);
+    await page.screenshot({ 
+      path: path.join(screenshotsDir, "11-after-approval.png"),
+      fullPage: true 
+    });
+    
+    // For asset exchange, the success message might be different
+    // Let's check for either a success message or the proposal being executed
+    const successMessage = page.getByText(/successfully executed|approved|completed/i);
+    const proposalExecuted = page.getByText("Executed");
+    
+    // Wait for either condition
+    await Promise.race([
+      expect(successMessage).toBeVisible({ timeout: 15000 }),
+      expect(proposalExecuted).toBeVisible({ timeout: 15000 })
+    ]).catch(() => {
+      console.log("No success message found, checking if proposal status changed...");
+    });
+    
+    // Verify the swap was executed by checking balances
+    console.log("Verifying token balances after swap...");
+    
+    // Check that ETH balance decreased
+    const ethBalanceAfter = await intentsContract.view("mt_balance_of", {
+      account_id: daoAccount,
+      token_id: "nep141:eth.omft.near",
+    });
+    console.log("ETH balance after swap:", ethBalanceAfter);
+    
+    // The balance should have decreased by 0.1 ETH (100000000000000000 wei)
+    expect(BigInt(ethBalanceAfter)).toBe(BigInt("4900000000000000000")); // 5 ETH - 0.1 ETH = 4.9 ETH
+    
+    console.log("\n🎉 Complete 1Click integration test with approval passed!");
   });
   
   // Comment out other tests for now
