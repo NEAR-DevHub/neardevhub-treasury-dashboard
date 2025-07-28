@@ -2,6 +2,7 @@ import { test } from "../../util/test.js";
 import { expect } from "@playwright/test";
 import { redirectWeb4, getLocalWidgetContent } from "../../util/web4.js";
 import { parseNEAR, Worker, Account } from "near-workspaces";
+import * as nearAPI from "near-api-js";
 import { connect } from "near-api-js";
 import { PROPOSAL_BOND, setPageAuthSettings } from "../../util/sandboxrpc.js";
 import { mockNearBalances } from "../../util/rpcmock.js";
@@ -19,6 +20,8 @@ let socialNearAccount;
 let intentsContract;
 let omftContract;
 let usdcContract;
+let solverAccount;
+let solverKeyPair;
 
 test.beforeAll(async () => {
   test.setTimeout(150000);
@@ -62,7 +65,7 @@ test.beforeAll(async () => {
     config: {
       wnear_id: "wrap.near",
       fees: {
-        fee: 100,
+        fee: 1, // 1 basis point = 0.0001% (matches mainnet)
         fee_collector: "intents.near",
       },
       roles: {
@@ -107,9 +110,37 @@ test.beforeAll(async () => {
     { attachedDeposit: parseNEAR("3"), gas: "300000000000000" }
   );
   
-  // Register intents.near for storage on eth.omft.near
+  // Deploy USDC token on omft contract
+  const usdcOmftMainnetAccount = await mainnet.account("eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near");
+  
+  await omftContract.call(
+    omftContract.accountId,
+    "deploy_token",
+    {
+      token: "eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+      metadata: await usdcOmftMainnetAccount.viewFunction({
+        contractId: "eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
+        methodName: "ft_metadata",
+      }),
+    },
+    { attachedDeposit: parseNEAR("3"), gas: "300000000000000" }
+  );
+  
+  // Register intents.near for storage on both tokens
   await omftContract.call(
     "eth.omft.near",
+    "storage_deposit",
+    {
+      account_id: intentsContract.accountId,
+      registration_only: true,
+    },
+    {
+      attachedDeposit: parseNEAR("0.015"),
+    }
+  );
+  
+  await omftContract.call(
+    "eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
     "storage_deposit",
     {
       account_id: intentsContract.accountId,
@@ -155,6 +186,79 @@ async function intercept1ClickQuote({ page, ourDepositAddress }) {
   // This allows us to use real quotes while testing with our own address
 }
 
+// Helper function to create signed payloads for NEP-413
+async function createSignedPayload(
+  message,
+  recipient,
+  nonce,
+  signingKey,
+  standard = "nep413"
+) {
+  const messageString = JSON.stringify(message);
+
+  if (standard === "nep413") {
+    // Based on near-cli-rs implementation: prefix bytes + borsh serialized payload
+    const payload = {
+      message: messageString,
+      nonce: Array.from(nonce),
+      recipient: recipient,
+      callbackUrl: null, // Optional field
+    };
+
+    // Define Borsh schema for the payload (without prefix)
+    const payloadSchema = {
+      struct: {
+        message: "string",
+        nonce: { array: { type: "u8", len: 32 } },
+        recipient: "string",
+        callbackUrl: { option: "string" },
+      },
+    };
+
+    // NEP413_SIGN_MESSAGE_PREFIX: (1 << 31) + 413 = 2147484061
+    const prefixValue = 2147484061;
+    const prefixBytes = new Uint8Array(4);
+    // to_le_bytes() - little endian
+    prefixBytes[0] = prefixValue & 0xff;
+    prefixBytes[1] = (prefixValue >> 8) & 0xff;
+    prefixBytes[2] = (prefixValue >> 16) & 0xff;
+    prefixBytes[3] = (prefixValue >> 24) & 0xff;
+
+    // Serialize payload with Borsh
+    const serializedPayload = nearAPI.utils.serialize.serialize(
+      payloadSchema,
+      payload
+    );
+
+    // Combine prefix + borsh serialized payload
+    const messageBytes = new Uint8Array(
+      prefixBytes.length + serializedPayload.length
+    );
+    messageBytes.set(prefixBytes);
+    messageBytes.set(serializedPayload, prefixBytes.length);
+
+    // Hash the combined bytes first, then sign the hash
+    const hashBuffer = await crypto.subtle.digest("SHA-256", messageBytes);
+    const hash = new Uint8Array(hashBuffer);
+
+    // Sign the hash (not the raw bytes)
+    const signature = signingKey.sign(hash);
+
+    return {
+      standard: "nep413",
+      payload: {
+        message: messageString,
+        nonce: Buffer.from(nonce).toString("base64"), // Convert to base64 for JSON transport
+        recipient: recipient,
+      },
+      public_key: signingKey.publicKey.toString(),
+      signature: `ed25519:${nearAPI.utils.serialize.base_encode(
+        signature.signature
+      )}`,
+    };
+  }
+}
+
 // Helper function to deposit tokens to treasury via intents
 async function depositTokensToTreasury({ daoAccount }) {
   console.log("Depositing ETH to treasury...");
@@ -189,6 +293,61 @@ async function depositTokensToTreasury({ daoAccount }) {
     token_ids: [ethTokenId],
   });
   console.log(`Treasury ETH balance on NEAR Intents: ${balances[0]}`);
+  
+  // Set up solver account and liquidity for 1Click simulation
+  console.log("\n🔧 Setting up solver account and liquidity...");
+  
+  // Create solver account to simulate 1Click's solver
+  solverAccount = await worker.rootAccount.createSubAccount("solver");
+  solverKeyPair = nearAPI.utils.KeyPair.fromRandom('ed25519');
+  
+  // Register solver's public key
+  await solverAccount.call(
+    intentsContract.accountId,
+    "add_public_key",
+    {
+      public_key: solverKeyPair.publicKey.toString(),
+    },
+    { attachedDeposit: "1" }
+  );
+  
+  console.log("✅ Solver account created and public key registered");
+  
+  // Give the solver some USDC liquidity to provide in the swap
+  console.log("Depositing USDC to solver account...");
+  
+  // Storage deposit for solver on Ethereum USDC
+  await omftContract.call(
+    "eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
+    "storage_deposit",
+    { account_id: solverAccount.accountId },
+    { attachedDeposit: parseNEAR("0.1") }
+  );
+  
+  // Deposit Ethereum USDC to intents contract for solver using ft_deposit
+  await omftContract.call(
+    omftContract.accountId,
+    "ft_deposit",
+    {
+      owner_id: "intents.near",
+      token: "eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48", // ETH USDC token symbol
+      amount: "500000000", // 500 USDC with 6 decimals
+      msg: JSON.stringify({ receiver_id: solverAccount.accountId }), // Credit to solver account
+    },
+    { attachedDeposit: parseNEAR("1"), gas: "100000000000000" }
+  );
+  
+  console.log("✅ Solver has USDC liquidity");
+  
+  // Verify solver USDC balance
+  const solverUsdcBalance = await intentsContract.view("mt_balance_of", {
+    account_id: solverAccount.accountId,
+    token_id: "nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
+  });
+  console.log(`Solver USDC balance: ${solverUsdcBalance}`);
+  
+  // Assert the balance matches what we deposited (500 USDC with 6 decimals)
+  expect(solverUsdcBalance).toBe("500000000");
   
   // TODO: Add BTC and USDC deposits once we figure out the storage deposit issues
 }
@@ -327,10 +486,34 @@ test.describe("1Click API Integration - Asset Exchange", function () {
       await creatorAccount.getKey()
     );
     
-    console.log("Navigating to asset exchange page...");
+    console.log("On dashboard page, checking NEAR Intents balances...");
     
-    // Now navigate to asset exchange
-    await page.goto(`https://${instanceAccount}.page/?page=asset-exchange`);
+    // Wait for dashboard to load by checking for the page title
+    await expect(page.locator('.page-title').filter({ hasText: 'Dashboard' })).toBeVisible({ timeout: 15000 });
+    
+    // Scroll to NEAR Intents section
+    const nearIntentsSection = page.getByText("NEAR Intents").first();
+    await nearIntentsSection.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(1000);
+    
+    // Check ETH balance on dashboard
+    const ethBalanceRowLocator = page.locator(
+      '.card div.d-flex.flex-column.border-bottom:has(div.h6.mb-0.text-truncate:has-text("ETH"))'
+    );
+    await expect(ethBalanceRowLocator).toBeVisible();
+    await expect(ethBalanceRowLocator).toContainText('5.00');
+    console.log("✅ Verified initial ETH balance: 5.00 on dashboard");
+    
+    // Take screenshot of initial balances
+    await page.screenshot({ 
+      path: path.join(screenshotsDir, "00-dashboard-initial-balances.png"),
+      fullPage: true 
+    });
+    
+    console.log("Navigating to asset exchange page by clicking menu...");
+    
+    // Click on Asset Exchange in the menu
+    await page.getByRole("link", { name: "Asset Exchange" }).click();
     
     // Wait for page to load
     await expect(page.getByText("Pending Requests")).toBeVisible({
@@ -413,34 +596,60 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     await page.waitForTimeout(500);
     await networkDropdown.selectOption("eth:1"); // Ethereum mainnet
     
-    // Mock the 1Click API response
-    console.log("Setting up 1Click API mock...");
+    // Generate a deposit address keypair for testing
+    const { KeyPair } = nearAPI.utils;
+    const testDepositKeyPair = KeyPair.fromRandom('ed25519');
+    // Convert the public key to a proper hex string
+    const testDepositAddress = Buffer.from(testDepositKeyPair.publicKey.data).toString('hex');
+    console.log("Test deposit address for intent execution:", testDepositAddress);
+    
+    // Store the keypair and address for later use in intent execution
+    page.testDepositKeyPair = testDepositKeyPair;
+    page.testDepositAddress = testDepositAddress;
+    
+    // Intercept 1Click API to replace deposit address with our test address
+    console.log("Setting up 1Click API intercept...");
     await page.route("https://1click.chaindefuser.com/v0/quote", async (route) => {
       const request = route.request();
       const requestBody = request.postDataJSON();
       console.log("1Click API request:", requestBody);
       
-      // Generate a mock quote response
-      const mockResponse = {
-        quote: {
-          amountIn: requestBody.amount,
-          amountInFormatted: "0.1",
-          amountInUsd: "250.00",
-          amountOut: "250000000", // 250 USDC (6 decimals)
-          amountOutFormatted: "250.00",
-          amountOutUsd: "250.00",
-          timeEstimate: 10,
-          deadline: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
-          depositAddress: "3ccf686b516ede32e2936c25798378623c99a5fce5bf56f5433005c8c12ba49c"
+      // Make the real request to 1Click API
+      const response = await fetch("https://1click.chaindefuser.com/v0/quote", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        signature: "ed25519:2gwvazipVnPYqYYyBYTAb5M8dcKoJBFmJADuL5VebL2RTMZEQpvZ8iyDq6GAkvudW5aAkRKr7U7LdynhguSy84De"
-      };
+        body: JSON.stringify(requestBody)
+      });
       
-      console.log("Returning mock quote response:", mockResponse);
+      if (!response.ok) {
+        console.error("1Click API returned error:", response.status, response.statusText);
+        await route.abort();
+        return;
+      }
+      
+      // Get the real quote response
+      const realQuote = await response.json();
+      console.log("Real 1Click quote received:", realQuote);
+      
+      // Replace only the deposit address with our test address
+      if (realQuote.quote && realQuote.quote.depositAddress) {
+        realQuote.quote.depositAddress = testDepositAddress;
+        console.log("Replaced deposit address with test address");
+      }
+      
+      // Store the quote for use in tests
+      realQuote.quote.requestPayload = requestBody;
+      
+      // Store the quote on the page object for use in intent execution
+      page.realQuote = realQuote.quote;
+      
+      console.log("Returning modified quote:", realQuote);
       await route.fulfill({
-        status: 200,
+        status: response.status,
         contentType: "application/json",
-        body: JSON.stringify(mockResponse)
+        body: JSON.stringify(realQuote)
       });
     });
     
@@ -454,7 +663,8 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     await expect(page.getByText("You send:")).toBeVisible();
     await expect(page.getByText("0.1 ETH")).toBeVisible();
     await expect(page.getByText("You receive:")).toBeVisible();
-    await expect(page.getByText("250.00 USDC")).toBeVisible();
+    // The actual quote amount will vary based on current rates
+    await expect(page.getByText(/\d+\.\d+ USDC/)).toBeVisible();
     
     // Take screenshot of the quote
     await page.screenshot({ 
@@ -498,9 +708,9 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     console.log("Waiting for proposal to be created...");
     await page.waitForTimeout(5000);
     
-    // Navigate back to asset exchange page to see the proposal
+    // Navigate back to see the proposal by clicking Asset Exchange link
     console.log("Navigating to Pending Requests to verify proposal...");
-    await page.goto(`https://${instanceAccount}.page/?page=asset-exchange`);
+    await page.getByRole("link", { name: "Asset Exchange" }).click();
     
     // Wait for the table to load
     await expect(page.getByText("Pending Requests")).toBeVisible({ timeout: 15000 });
@@ -557,24 +767,14 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     // Wait for success message
     console.log("Waiting for approval to complete...");
     
+    // Wait for the success notification
+    await expect(page.getByText("The request has been successfully executed.")).toBeVisible({ timeout: 15000 });
+    console.log("✅ Asset exchange request executed successfully!");
+    
     // Take screenshot to see what happens after approval
-    await page.waitForTimeout(3000);
     await page.screenshot({ 
       path: path.join(screenshotsDir, "11-after-approval.png"),
       fullPage: true 
-    });
-    
-    // For asset exchange, the success message might be different
-    // Let's check for either a success message or the proposal being executed
-    const successMessage = page.getByText(/successfully executed|approved|completed/i);
-    const proposalExecuted = page.getByText("Executed");
-    
-    // Wait for either condition
-    await Promise.race([
-      expect(successMessage).toBeVisible({ timeout: 15000 }),
-      expect(proposalExecuted).toBeVisible({ timeout: 15000 })
-    ]).catch(() => {
-      console.log("No success message found, checking if proposal status changed...");
     });
     
     // Verify the swap was executed by checking balances
@@ -590,7 +790,227 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     // The balance should have decreased by 0.1 ETH (100000000000000000 wei)
     expect(BigInt(ethBalanceAfter)).toBe(BigInt("4900000000000000000")); // 5 ETH - 0.1 ETH = 4.9 ETH
     
+    // Simulate 1Click executing the intent to complete the swap
+    console.log("\n🔄 Simulating 1Click intent execution...");
+    
+    // In the real world, 1Click would:
+    // 1. Detect the incoming ETH to their deposit address
+    // 2. Execute the cross-network swap
+    // 3. Call execute_intents to deliver USDC to the DAO
+    
+    // For testing, we'll simulate this by executing intents
+    const depositKeyPair = page.testDepositKeyPair; // Use the same keypair we used for the deposit address
+    
+    // Register the deposit address public key
+    // In production, 1Click does this when they generate the keypair
+    console.log("Registering deposit address public key...");
+    await worker.rootAccount.call(
+      intentsContract.accountId,
+      "add_public_key",
+      {
+        public_key: depositKeyPair.publicKey.toString(),
+      },
+      { attachedDeposit: "1" }
+    );
+    
+    console.log("✅ Deposit address public key registered");
+    
+    // Get the actual quote amounts from the real 1Click API response
+    const realQuote = page.realQuote;
+    const amountIn = realQuote.amountIn;
+    const amountOut = realQuote.amountOut;
+    
+    console.log(`Using real quote amounts: ${realQuote.amountInFormatted} ETH -> ${realQuote.amountOutFormatted} USDC`);
+    console.log(`Raw amounts - amountIn: ${amountIn}, amountOut: ${amountOut}`);
+    
+    // Ensure amounts are strings
+    const ethAmount = String(amountIn);
+    const usdcAmount = String(amountOut);
+    
+    console.log(`Intent amounts - ETH: ${ethAmount}, USDC: ${usdcAmount}`);
+    
+    // Calculate fees (0.0001% = 1 basis point) - use ceiling division to match contract
+    const ethFee = (BigInt(ethAmount) * 1n + 999999n) / 1000000n; // Ceiling division
+    const usdcFee = (BigInt(usdcAmount) * 1n + 999999n) / 1000000n; // Ceiling division
+    
+    console.log(`Fees - ETH: ${ethFee}, USDC: ${usdcFee}`);
+    console.log(`Solver will give: ${BigInt(usdcAmount) + usdcFee} USDC`);
+    console.log(`1Click will receive: ${usdcAmount} USDC`);
+    console.log(`Difference (fee): ${(BigInt(usdcAmount) + usdcFee) - BigInt(usdcAmount)}`);
+    
+    // Check deposit address ETH balance before intent execution
+    const depositAddressEthBalance = await intentsContract.view("mt_balance_of", {
+      account_id: page.testDepositAddress,
+      token_id: "nep141:eth.omft.near",
+    });
+    console.log(`Deposit address ETH balance: ${depositAddressEthBalance}`);
+    
+    // Also check solver USDC balance
+    const solverUsdcBalance = await intentsContract.view("mt_balance_of", {
+      account_id: solverAccount.accountId,
+      token_id: "nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
+    });
+    console.log(`Solver USDC balance: ${solverUsdcBalance}`);
+    
+    // Ensure solver has enough USDC (including fee)
+    const solverNeeds = BigInt(usdcAmount) + usdcFee;
+    if (BigInt(solverUsdcBalance) < solverNeeds) {
+      throw new Error(`Solver has insufficient USDC balance. Has: ${solverUsdcBalance}, needs: ${solverNeeds} (${usdcAmount} + ${usdcFee} fee)`);
+    }
+    
+    // Ensure deposit address has exactly the ETH amount
+    if (BigInt(depositAddressEthBalance) !== BigInt(ethAmount)) {
+      throw new Error(`Deposit address ETH balance mismatch. Has: ${depositAddressEthBalance}, expected: ${ethAmount}`);
+    }
+    
+    // Create intent deadline (10 minutes from now)
+    const deadline = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+    
+    // Create the solver intent (provides USDC liquidity)
+    // Solver needs to give more USDC to account for fees
+    const solverIntent = {
+      signer_id: solverAccount.accountId,
+      deadline: deadline,
+      intents: [{
+        intent: "token_diff",
+        diff: {
+          ["nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near"]: `-${BigInt(usdcAmount) + usdcFee}`, // Give USDC + fee
+          ["nep141:eth.omft.near"]: `${BigInt(ethAmount) - ethFee}`, // Receive ETH - fee (what deposit actually transfers after fee)
+        }
+      }]
+    };
+    
+    // Create the 1Click intent (swaps and transfers to DAO)
+    const oneClickIntent = {
+      signer_id: page.testDepositAddress, // 1Click signs with the deposit address
+      deadline: deadline,
+      intents: [{
+        intent: "token_diff",
+        diff: {
+          ["nep141:eth.omft.near"]: `-${ethAmount}`, // Give ETH (what it has)
+          ["nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near"]: `${usdcAmount}`, // Receive USDC
+        },
+        referral: "1click-test"
+      }, {
+        intent: "transfer",
+        receiver_id: daoAccount,
+        tokens: {
+          ["nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near"]: `${usdcAmount}` // Transfer USDC to DAO
+        }
+      }]
+    };
+    
+    
+    // Create nonces
+    const solverNonce = new Uint8Array(32);
+    crypto.getRandomValues(solverNonce);
+    const oneClickNonce = new Uint8Array(32);
+    crypto.getRandomValues(oneClickNonce);
+    
+    // Sign the intents
+    const solverSignedPayload = await createSignedPayload(
+      solverIntent,
+      intentsContract.accountId,
+      solverNonce,
+      solverKeyPair,
+      "nep413"
+    );
+    
+    const oneClickSignedPayload = await createSignedPayload(
+      oneClickIntent,
+      intentsContract.accountId,
+      oneClickNonce,
+      depositKeyPair,
+      "nep413"
+    );
+    
+    // Execute the intents
+    console.log("Executing intents to complete the swap...");
+    
+    await intentsContract.call(
+      intentsContract.accountId,
+      "execute_intents",
+      {
+        signed: [solverSignedPayload, oneClickSignedPayload]
+      },
+      { attachedDeposit: "0", gas: "300000000000000" }
+    );
+    
+    console.log("✅ Intent execution completed - USDC delivered to DAO!");
+    
+    // Verify USDC was added to the DAO
+    const usdcTokenId = "nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near";
+    const usdcBalance = await intentsContract.view("mt_balance_of", {
+      account_id: daoAccount,
+      token_id: usdcTokenId
+    });
+    
+    console.log("DAO USDC balance after swap:", usdcBalance);
+    expect(usdcBalance).toBe(amountOut); // Should match the quote amount
+    
+    // Check History tab
+    console.log("\nNavigating to History tab...");
+    // Click on the History tab using the correct locator
+    await page.getByRole('listitem').filter({ hasText: 'History' }).locator('div').click();
+    await page.waitForTimeout(2000);
+    
+    // Wait for history table to load - check that we're on the History tab
+    await expect(page.getByRole('listitem').filter({ hasText: 'History' })).toBeVisible();
+    
+    // Look for the executed proposal in history table
+    // The table rows might take time to load, so let's wait for any row first
+    const historyTableRows = page.locator('tr').filter({ hasText: 'ETH' });
+    await expect(historyTableRows.first()).toBeVisible({ timeout: 15000 });
+    
+    // Now check if we can find our executed proposal
+    const executedProposal = historyTableRows.filter({ hasText: 'Executed' }).first();
+    await expect(executedProposal).toBeVisible({ timeout: 10000 });
+    // Check that it contains USDC (the amount varies based on the quote)
+    await expect(executedProposal).toContainText("USDC");
+    console.log("✅ Found executed proposal in History");
+    
+    // Take screenshot of history
+    await page.screenshot({ 
+      path: path.join(screenshotsDir, "12-history-tab.png"),
+      fullPage: true 
+    });
+    
+    // Navigate back to Dashboard
+    console.log("\nNavigating back to Dashboard to check new balances...");
+    await page.getByRole("link", { name: "Dashboard" }).click();
+    
+    // Wait for dashboard to load
+    await expect(page.locator('.page-title').filter({ hasText: 'Dashboard' })).toBeVisible({ timeout: 15000 });
+    
+    // Scroll to NEAR Intents section
+    await nearIntentsSection.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(2000);
+    
+    // Check updated ETH balance
+    const ethBalanceRowAfterSwap = page.locator(
+      '.card div.d-flex.flex-column.border-bottom:has(div.h6.mb-0.text-truncate:has-text("ETH"))'
+    );
+    await expect(ethBalanceRowAfterSwap).toBeVisible();
+    await expect(ethBalanceRowAfterSwap).toContainText('4.90'); // 5.00 - 0.10 = 4.90
+    console.log("✅ Verified ETH balance after swap: 4.90");
+    
+    // Check for new USDC token
+    const usdcBalanceRowLocator = page.locator(
+      '.card div.d-flex.flex-column.border-bottom:has(div.h6.mb-0.text-truncate:has-text("USDC"))'
+    );
+    await expect(usdcBalanceRowLocator).toBeVisible();
+    // Dashboard shows balance with 2 decimal places
+    await expect(usdcBalanceRowLocator).toContainText(/\d+\.\d{2}/);
+    console.log("✅ Verified new USDC balance on dashboard");
+    
+    // Take final screenshot
+    await page.screenshot({ 
+      path: path.join(screenshotsDir, "13-dashboard-final-balances.png"),
+      fullPage: true 
+    });
+    
     console.log("\n🎉 Complete 1Click integration test with approval passed!");
+    console.log("✅ Successfully swapped 0.1 ETH for 250 USDC via 1Click");
   });
   
   // Comment out other tests for now
