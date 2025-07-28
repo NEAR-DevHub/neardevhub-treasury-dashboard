@@ -427,9 +427,9 @@ function getProposalsFromIndexer({
   let hasStatusesInFilters = false;
   if (
     filters &&
-    filters.statuses &&
-    filters.statuses.values &&
-    filters.statuses.values.length > 0
+    filters.status &&
+    filters.status.values &&
+    filters.status.values.length > 0
   ) {
     hasStatusesInFilters = true;
   }
@@ -453,8 +453,23 @@ function getProposalsFromIndexer({
 
           // Map filter keys to URL parameters
           switch (filterKey) {
-            case "statuses":
-              query += `&statuses=${values.join(",")}`;
+            case "status":
+              if (include) {
+                query += `&statuses=${values.join(",")}`;
+              } else {
+                // When "is not" is selected, send all statuses except the selected ones
+                const allStatuses = [
+                  "Approved",
+                  "Rejected",
+                  "Failed",
+                  "Expired",
+                ];
+                const excludedStatuses = values;
+                const includedStatuses = allStatuses.filter(
+                  (status) => !excludedStatuses.includes(status)
+                );
+                query += `&statuses=${includedStatuses.join(",")}`;
+              }
               break;
 
             case "proposers":
