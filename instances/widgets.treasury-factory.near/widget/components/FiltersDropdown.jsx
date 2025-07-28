@@ -10,14 +10,15 @@ const {
   setAmountValues,
   amountValues,
   removeFilter,
+  include,
 } = props;
 
-const [includes, setIncludes] = useState(true);
 const [search, setSearch] = useState("");
 const [isOpen, setIsOpen] = useState(false);
 const [tokenDropdownOpen, setTokenDropdownOpen] = useState(false);
 const [amountTypeDropdownOpen, setAmountTypeDropdownOpen] = useState(false);
 const [includeDropdownOpen, setIncludeDropdownOpen] = useState(false);
+const hideInclude = type === "vote" || type === "date";
 
 const Container = styled.div`
   font-size: 14px;
@@ -35,13 +36,49 @@ const Container = styled.div`
   .hide-border {
     border: none !important;
   }
+
+  .dropdown-item {
+    padding: 8px 12px !important;
+  }
+
+  /* Custom styles not available in Tailwind */
+  .search-input-container {
+    position: relative;
+    padding: 4px 12px;
+  }
+
+  .search-input {
+    padding-left: 2.5rem;
+    font-size: 14px !important;
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 25px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+  }
+
+  .scrollable-options {
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .token-dropdown-container {
+    padding-inline: 12px;
+  }
+
+  .date-dropdown-container {
+    padding: 0px 8px 12px;
+  }
 `;
 
 const statusOptions = ["Approved", "Rejected", "Failed", "Expired"];
 const voteOptions = ["Approved", "Rejected", "Awaiting Decision"];
 const includeOptions = [
   { value: true, label: multiple ? "is any" : "is" },
-  { value: false, label: "is not" },
+  { value: false, label: multiple ? "is not all" : "is not" },
 ];
 const amountOptions = [
   { label: "Is", value: "is" },
@@ -96,30 +133,21 @@ const OptionRender = () => {
 
       return (
         <div>
-          <div className="mb-2 position-relative">
+          <div className="search-input-container">
             <input
               type="text"
-              className="form-control"
+              className="form-control search-input"
               placeholder="Search by account address"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              style={{ paddingLeft: "2.5rem" }}
             />
-            <i
-              className="bi bi-search position-absolute"
-              style={{
-                left: "12px",
-                top: "50%",
-                transform: "translateY(-50%)",
-                color: "#6c757d",
-              }}
-            />
+            <i className="bi bi-search search-icon" />
           </div>
-          <div style={{ maxHeight: "200px", overflowY: "auto" }}>
+          <div className="scrollable-options">
             {filteredAccounts.map((account) => (
               <div
                 key={account}
-                className="d-flex align-items-center gap-2 dropdown-item"
+                className="d-flex align-items-center gap-2 dropdown-item cursor-pointer"
                 onClick={(e) => handleSelection(account, e)}
               >
                 <input
@@ -155,7 +183,7 @@ const OptionRender = () => {
 
       return (
         <div
-          className="mt-2 d-flex flex-column gap-2"
+          className="pb-2 d-flex flex-column gap-2 token-dropdown-container"
           onClick={(e) => e.stopPropagation()}
           onBlur={() => {
             setTimeout(() => setTokenDropdownOpen(false), 200);
@@ -185,7 +213,7 @@ const OptionRender = () => {
               </div>
             </button>
             {tokenDropdownOpen && (
-              <div className="dropdown-menu show">
+              <div className="dropdown-menu show w-100">
                 {filteredTokens.map((token) => (
                   <div
                     key={token}
@@ -210,7 +238,7 @@ const OptionRender = () => {
           </div>
 
           {selected.length > 0 && (
-            <div className="d-flex flex-column gap-2">
+            <div className="d-flex flex-column">
               <div className="d-flex align-items-center gap-2">
                 <div className="text-secondary text-sm">Amount</div>
                 <div
@@ -376,7 +404,7 @@ const OptionRender = () => {
 
     case "date":
       return (
-        <div className="d-flex flex-column gap-2">
+        <div className="d-flex flex-column gap-2 date-dropdown-container">
           <div className="d-flex align-items-center gap-2">
             <div>
               <label className="text-secondary text-sm">From Date</label>
@@ -501,17 +529,16 @@ return (
       data-bs-toggle="dropdown"
       aria-haspopup="true"
       aria-expanded="true"
-      style={{ minWidth: "200px", backgroundColor: "var(--grey-05)" }}
+      style={{ backgroundColor: "var(--grey-05)" }}
     >
       <div className="d-flex align-items-center gap-2 text-start">
         <span className="text-secondary">{label}</span>
         {selected.length > 0 && (
           <div className="d-flex align-items-center gap-2 text-start">
-            {!includes && (
+            {!include && (
               <span
                 style={{
-                  display:
-                    type === "vote" || type === "date" ? "none" : "inline",
+                  display: hideInclude ? "none" : "inline",
                 }}
               >
                 {includeOptions[1]?.label}
@@ -525,16 +552,19 @@ return (
     </button>
 
     <div
-      className="dropdown-menu rounded-2 dropdown-menu-start px-2 shadow w-100"
-      style={{ maxWidth: "300px", minWidth: "300px" }}
+      className="dropdown-menu rounded-2 dropdown-menu-start shadow w-100 p-0"
+      style={{ maxWidth: "320px", minWidth: "320px" }}
     >
       <div
-        className="d-flex align-items-center gap-1 mb-1"
+        className="d-flex align-items-center gap-1"
         onBlur={() => {
           setTimeout(() => setIncludeDropdownOpen(false), 200);
         }}
+        style={{ padding: hideInclude ? "8px 12px" : "4px 12px" }}
       >
-        <span className="text-secondary">{label}</span>
+        <span className="text-secondary" style={{ fontSize: "14px" }}>
+          {label}
+        </span>
         <div className="dropdown">
           <button
             className="btn btn-sm btn-outline-secondary dropdown-toggle hide-border"
@@ -547,10 +577,10 @@ return (
               setIncludeDropdownOpen(!includeDropdownOpen);
             }}
             style={{
-              display: type === "vote" || type === "date" ? "none" : "block",
+              display: hideInclude ? "none" : "block",
             }}
           >
-            {includeOptions.find((option) => option.value === includes)?.label}
+            {includeOptions.find((option) => option.value === include)?.label}
           </button>
           {includeDropdownOpen && (
             <ul className="dropdown-menu show">
@@ -558,12 +588,11 @@ return (
                 <li key={option.value}>
                   <button
                     className={`dropdown-item ${
-                      includes === option.value ? "active" : ""
+                      include === option.value ? "active" : ""
                     }`}
                     onClick={(e) => {
                       e.stopPropagation();
-                      setIncludes(option.value);
-                      if (onIncludeChange) onIncludeChange(option.value);
+                      onIncludeChange(option.value);
                       setIncludeDropdownOpen(false);
                     }}
                   >

@@ -14,6 +14,7 @@ const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
 };
 
 const NavUnderline = styled.ul`
+  min-width: 300px;
   cursor: pointer;
   font-size: 16px;
   font-weight: 500;
@@ -28,6 +29,18 @@ const NavUnderline = styled.ul`
   }
   .nav-link:hover {
     color: var(--text-color) !important;
+  }
+`;
+
+const Container = styled.div`
+  .input-responsive {
+    width: 300px;
+  }
+
+  @media (max-width: 992px) {
+    .input-responsive {
+      width: 200px;
+    }
   }
 `;
 
@@ -200,12 +213,16 @@ useEffect(() => {
   refreshPaymentsTableData,
 ]);
 
+useEffect(() => {
+  fetchProposals();
+}, [page, rowsPerPage]);
+
 const SidebarMenu = () => {
   return (
     <div>
       {/* Tabs */}
       <div
-        className="d-flex justify-content-between border-bottom gap-2 align-items-center flex-wrap flex-sm-nowrap"
+        className="d-flex justify-content-between border-bottom gap-2 align-items-center flex-wrap flex-md-nowrap"
         style={{ paddingRight: "10px" }}
       >
         <NavUnderline className="nav gap-2 w-100">
@@ -241,75 +258,76 @@ const SidebarMenu = () => {
           )}
         </NavUnderline>
 
-        {/* Search and Filters */}
-        <div style={{ width: "450px" }}>
+        <div className="d-flex gap-2 align-items-center flex-wrap flex-sm-nowrap">
+          {/* Search and Filters */}
+          <div className="input-responsive">
+            <Widget
+              loading=""
+              src="${REPL_DEVHUB}/widget/devhub.components.molecule.Input"
+              props={{
+                className: "flex-grow-1",
+                value: search,
+                onChange: (e) => {
+                  setSearch(e.target.value);
+                },
+                skipPaddingGap: true,
+                placeholder: "Search by ID, title or summary",
+                inputProps: {
+                  prefix: <i class="bi bi-search"></i>,
+                  width: "100%",
+                },
+              }}
+            />
+          </div>
+
+          {/* Export button for History tab */}
+          {currentTab.title === "History" && (
+            <div style={{ minWidth: "155px" }}>
+              <Widget
+                loading=""
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.ExportTransactions`}
+                props={{
+                  page: "payments",
+                  instance: props.instance,
+                }}
+              />
+            </div>
+          )}
+
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="btn btn-outline-secondary"
+          >
+            <i class="bi bi-funnel"></i>
+          </button>
           <Widget
             loading=""
-            src="${REPL_DEVHUB}/widget/devhub.components.molecule.Input"
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.SettingsDropdown`}
             props={{
-              className: "flex-grow-1",
-              value: search,
-              onChange: (e) => {
-                setSearch(e.target.value);
-              },
-              skipPaddingGap: true,
-              placeholder: "Search by ID, title or summary",
-              inputProps: {
-                prefix: <i class="bi bi-search"></i>,
-                width: "100%",
-              },
+              isPendingPage: currentTab.title === "Pending Requests",
+              instance,
             }}
           />
+          {hasCreatePermission && (
+            <div style={{ minWidth: "170px" }}>
+              <Widget
+                loading=""
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
+                props={{
+                  ActionButton: () => (
+                    <button className="btn primary-button d-flex align-items-center gap-2 mb-0">
+                      <i class="bi bi-plus-lg h5 mb-0"></i>Create Request
+                    </button>
+                  ),
+                  checkForDeposit: true,
+                  treasuryDaoID,
+                  callbackAction: () => setShowCreateRequest(true),
+                }}
+              />
+            </div>
+          )}
         </div>
-
-        {/* Export button for History tab */}
-        {currentTab.title === "History" && (
-          <div style={{ minWidth: "155px" }}>
-            <Widget
-              loading=""
-              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.ExportTransactions`}
-              props={{
-                page: "payments",
-                instance: props.instance,
-              }}
-            />
-          </div>
-        )}
-
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className="btn btn-outline-secondary"
-        >
-          <i class="bi bi-funnel"></i>
-        </button>
-        <Widget
-          loading=""
-          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.SettingsDropdown`}
-          props={{
-            isPendingPage: currentTab.title === "Pending Requests",
-            instance,
-          }}
-        />
-        {hasCreatePermission && (
-          <div style={{ minWidth: "170px" }}>
-            <Widget
-              loading=""
-              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
-              props={{
-                ActionButton: () => (
-                  <button className="btn primary-button d-flex align-items-center gap-2 mb-0">
-                    <i class="bi bi-plus-lg h5 mb-0"></i>Create Request
-                  </button>
-                ),
-                checkForDeposit: true,
-                treasuryDaoID,
-                callbackAction: () => setShowCreateRequest(true),
-              }}
-            />
-          </div>
-        )}
       </div>
-
       {showFilters && (
         <div className="border-bottom">
           <Widget
@@ -497,7 +515,7 @@ const handleSortClick = () => {
 };
 
 return (
-  <div className="w-100 h-100 flex-grow-1 d-flex flex-column">
+  <Container className="w-100 h-100 flex-grow-1 d-flex flex-column">
     <VoteSuccessToast />
     {typeof proposalDetailsPageId === "number" ? (
       <Widget
@@ -666,5 +684,5 @@ return (
         </div>
       </div>
     )}
-  </div>
+  </Container>
 );
