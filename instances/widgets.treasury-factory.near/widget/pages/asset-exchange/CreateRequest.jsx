@@ -242,7 +242,7 @@ return (
             const proposalDescription = `1Click Cross-Network Swap
 
 Swap Details:
-- Amount In: ${args.quote.amountInFormatted} ${args.tokenIn.split(":")[1]?.split(".")[0]?.toUpperCase() || args.tokenIn}
+- Amount In: ${args.quote.amountInFormatted} ${args.tokenInSymbol}
 - Amount Out: ${args.quote.amountOutFormatted} ${args.tokenOut}
 - Destination Network: ${args.networkOut}
 - Time Estimate: ${args.quote.timeEstimate} minutes

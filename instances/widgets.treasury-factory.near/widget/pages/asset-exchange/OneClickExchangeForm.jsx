@@ -233,8 +233,19 @@ const handleGetQuote = () => {
 const handleSubmit = () => {
   if (!quote) return;
   
+  // Find the selected token info to get the symbol
+  const selectedTokenIn = intentsTokensIn.find(t => t.id === tokenIn);
+  
+  // Don't submit if we can't find the token info
+  if (!selectedTokenIn) {
+    console.error("Cannot find token information for:", tokenIn);
+    setErrorApi("Cannot find token information. Please try again.");
+    return;
+  }
+  
   onSubmit({
     tokenIn,
+    tokenInSymbol: selectedTokenIn.symbol,
     tokenOut,
     networkOut,
     amountIn,
