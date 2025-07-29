@@ -277,23 +277,28 @@ const SidebarMenu = () => {
         <div className="d-flex gap-2 align-items-center flex-wrap flex-sm-nowrap">
           {/* Search and Filters */}
           <div className="input-responsive">
-            <Widget
-              loading=""
-              src="${REPL_DEVHUB}/widget/devhub.components.molecule.Input"
-              props={{
-                className: "flex-grow-1",
-                value: search,
-                onChange: (e) => {
-                  setSearch(e.target.value);
-                },
-                skipPaddingGap: true,
-                placeholder: "Search by ID, title or summary",
-                inputProps: {
-                  prefix: <i class="bi bi-search"></i>,
-                  width: "100%",
-                },
-              }}
-            />
+            <div className="input-group flex-grow-1">
+              <span className="input-group-text bg-transparent">
+                <i class="bi bi-search text-secondary"></i>
+              </span>
+              <input
+                type="text"
+                className={`form-control border-start-0 ${
+                  search ? "border-end-0" : ""
+                }`}
+                placeholder="Search by ID, title or summary"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              {search && (
+                <span className="input-group-text bg-transparent border-start-0">
+                  <i
+                    class="bi bi-x-lg cursor-pointer text-secondary"
+                    onClick={() => setSearch("")}
+                  ></i>
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Export button for History tab */}

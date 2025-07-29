@@ -79,7 +79,6 @@ const Container = styled.div`
 
   table {
     overflow-x: auto;
-    height: fit-content;
   }
 `;
 
@@ -573,7 +572,7 @@ return (
       ) : proposals.length === 0 ? (
         <tbody>
           <tr>
-            <td colSpan={14} className="text-center py-5">
+            <td colSpan={14} rowSpan={10} className="text-center align-middle">
               {isPendingRequests ? (
                 <>
                   <h4>No Payment Requests Found</h4>
@@ -587,6 +586,9 @@ return (
               )}
             </td>
           </tr>
+          {[...Array(8)].map((_, index) => (
+            <tr key={index}></tr>
+          ))}
         </tbody>
       ) : (
         <ProposalsComponent />
