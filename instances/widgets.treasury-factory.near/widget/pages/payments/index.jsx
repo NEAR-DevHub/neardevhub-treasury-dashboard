@@ -135,6 +135,22 @@ const Container = styled.div`
   .layout-main:has(~ .layout-secondary.show) .responsive-text {
     display: none !important;
   }
+
+  .active-filter {
+    background-color: var(--grey-05);
+    position: relative;
+  }
+
+  .active-filter:after {
+    width: 6px;
+    height: 6px;
+    content: "";
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    border-radius: 50%;
+    background-color: rgb(0, 122, 255);
+  }
 `;
 
 const normalize = (text) =>
@@ -306,7 +322,7 @@ const SidebarMenu = () => {
       {/* Tabs */}
       <div
         className="d-flex justify-content-between border-bottom gap-2 align-items-center flex-wrap flex-md-nowrap"
-        style={{ paddingRight: "10px" }}
+        style={{ paddingRight: "10px", overflowX: "auto" }}
       >
         <NavUnderline className="nav gap-2 flex-shrink-0">
           {[{ title: "Pending Requests" }, { title: "History" }].map(
