@@ -148,7 +148,10 @@ const availableFiltersToAdd = availableFilters.filter(
 );
 
 return (
-  <div className="d-flex align-items-center p-3" style={{ gap: "12px" }}>
+  <div
+    className="d-flex align-items-center p-3 flex-wrap"
+    style={{ gap: "12px" }}
+  >
     {/* Clear All Button */}
     <button
       className="btn btn-sm btn-outline-secondary"
@@ -157,32 +160,6 @@ return (
     >
       <i className="bi bi-x-lg"></i>
     </button>
-
-    {/* Add Filter Dropdown */}
-    {availableFiltersToAdd.length > 0 && (
-      <div className="dropdown">
-        <button
-          className="btn btn-outline-secondary dropdown-toggle"
-          type="button"
-          data-bs-toggle="dropdown"
-          aria-expanded="false"
-        >
-          <i className="bi bi-plus-lg"></i> Add Filter
-        </button>
-        <ul className="dropdown-menu">
-          {availableFiltersToAdd.map((filter) => (
-            <li key={filter.key}>
-              <button
-                className="dropdown-item"
-                onClick={() => addFilter(filter.key)}
-              >
-                {filter.label}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
-    )}
 
     {/* Separator */}
     {Object.entries(activeFilters).length > 0 && (
@@ -220,5 +197,30 @@ return (
         />
       </div>
     ))}
+    {/* Add Filter Dropdown */}
+    {availableFiltersToAdd.length > 0 && (
+      <div className="dropdown">
+        <button
+          className="btn btn-outline-secondary"
+          type="button"
+          data-bs-toggle="dropdown"
+          aria-expanded="false"
+        >
+          <i className="bi bi-plus-lg"></i> Add Filter
+        </button>
+        <ul className="dropdown-menu">
+          {availableFiltersToAdd.map((filter) => (
+            <li key={filter.key}>
+              <button
+                className="dropdown-item"
+                onClick={() => addFilter(filter.key)}
+              >
+                {filter.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+    )}
   </div>
 );

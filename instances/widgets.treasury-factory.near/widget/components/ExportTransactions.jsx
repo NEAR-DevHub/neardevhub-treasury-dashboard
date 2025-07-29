@@ -49,7 +49,7 @@ return (
       >
         <button className="btn btn-outline-secondary d-flex gap-1 align-items-center">
           <i class="bi bi-download h6 mb-0"></i>
-          Export as CSV
+          <span className="d-none d-lg-inline">Export as CSV</span>
         </button>
       </a>
     )}

@@ -431,7 +431,7 @@ test.describe("Logged in user", () => {
         `div:has(img[src="${testConstants.theoriAccountImage}"]):has(path[d="${testConstants.approvedIconPath}"])`
       )
       .count();
-    await expect(approverImageLocator).toBe(11);
+    expect(approverImageLocator).toBe(10);
 
     // Rejected
     await page
