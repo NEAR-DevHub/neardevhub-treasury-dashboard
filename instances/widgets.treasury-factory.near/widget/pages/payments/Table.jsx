@@ -72,7 +72,6 @@ const hasDeletePermission = (deleteGroup?.approverAccounts ?? []).includes(
 const Container = styled.div`
   font-size: 13px;
   min-height: 60vh;
-  display: flex;
 
   thead td {
     text-wrap: nowrap;
@@ -80,6 +79,7 @@ const Container = styled.div`
 
   table {
     overflow-x: auto;
+    height: fit-content;
   }
 `;
 

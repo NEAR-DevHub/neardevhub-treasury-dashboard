@@ -42,6 +42,22 @@ const Container = styled.div`
       width: 200px;
     }
   }
+
+  .active-filter {
+    background-color: var(--grey-05);
+    position: relative;
+  }
+
+  .active-filter:after {
+    width: 6px;
+    height: 6px;
+    content: "";
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    border-radius: 50%;
+    background-color: rgb(0, 122, 255);
+  }
 `;
 
 const normalize = (text) =>
@@ -224,7 +240,7 @@ const SidebarMenu = () => {
       {/* Tabs */}
       <div
         className="d-flex justify-content-between border-bottom gap-2 align-items-center flex-wrap flex-md-nowrap"
-        style={{ paddingRight: "10px" }}
+        style={{ paddingRight: "10px", overflowX: "auto" }}
       >
         <NavUnderline className="nav gap-2 w-100">
           {[{ title: "Pending Requests" }, { title: "History" }].map(
@@ -283,7 +299,7 @@ const SidebarMenu = () => {
 
           {/* Export button for History tab */}
           {currentTab.title === "History" && (
-            <div style={{ minWidth: "155px" }}>
+            <div style={{ minWidth: "fit-content" }}>
               <Widget
                 loading=""
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.ExportTransactions`}
@@ -297,7 +313,10 @@ const SidebarMenu = () => {
 
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="btn btn-outline-secondary"
+            className={`btn btn-outline-secondary ${
+              Object.keys(activeFilters ?? {}).length > 0 ? "active-filter" : ""
+            }`}
+            title="Filters"
           >
             <i class="bi bi-funnel"></i>
           </button>
@@ -310,14 +329,15 @@ const SidebarMenu = () => {
             }}
           />
           {hasCreatePermission && (
-            <div style={{ minWidth: "170px" }}>
+            <div style={{ minWidth: "fit-content" }}>
               <Widget
                 loading=""
                 src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
                 props={{
                   ActionButton: () => (
                     <button className="btn primary-button d-flex align-items-center gap-2 mb-0">
-                      <i class="bi bi-plus-lg h5 mb-0"></i>Create Request
+                      <i class="bi bi-plus-lg h5 mb-0"></i>
+                      <span className="d-none d-lg-inline">Create Request</span>
                     </button>
                   ),
                   checkForDeposit: true,
@@ -630,49 +650,47 @@ return (
               <SidebarMenu />
 
               {/* Content */}
-              <div className="d-flex flex-column flex-1 justify-content-between h-100">
-                <Widget
-                  loading=""
-                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.Table`}
-                  props={{
-                    proposals,
-                    isPendingRequests: currentTab.title === "Pending Requests",
-                    transferApproversGroup,
-                    deleteGroup,
-                    loading: loading,
-                    policy,
-                    refreshTableData: fetchProposals,
-                    sortDirection,
-                    handleSortClick,
-                    onSelectRequest: (id) => setShowProposalId(id),
-                    ...props,
-                  }}
-                />
-                {(proposals ?? [])?.length > 0 && (
-                  <div>
-                    <Widget
-                      loading=""
-                      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Pagination`}
-                      props={{
-                        totalLength: totalLength,
-                        totalPages: Math.ceil(totalLength / rowsPerPage),
-                        onNextClick: () => {
-                          setPage(page + 1);
-                        },
-                        onPrevClick: () => {
-                          setPage(page - 1);
-                        },
-                        currentPage: page,
-                        rowsPerPage: rowsPerPage,
-                        onRowsChange: (v) => {
-                          setPage(0);
-                          setRowsPerPage(parseInt(v));
-                        },
-                      }}
-                    />
-                  </div>
-                )}
-              </div>
+              <Widget
+                loading=""
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.Table`}
+                props={{
+                  proposals,
+                  isPendingRequests: currentTab.title === "Pending Requests",
+                  transferApproversGroup,
+                  deleteGroup,
+                  loading: loading,
+                  policy,
+                  refreshTableData: fetchProposals,
+                  sortDirection,
+                  handleSortClick,
+                  onSelectRequest: (id) => setShowProposalId(id),
+                  ...props,
+                }}
+              />
+              {(proposals ?? [])?.length > 0 && (
+                <div>
+                  <Widget
+                    loading=""
+                    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Pagination`}
+                    props={{
+                      totalLength: totalLength,
+                      totalPages: Math.ceil(totalLength / rowsPerPage),
+                      onNextClick: () => {
+                        setPage(page + 1);
+                      },
+                      onPrevClick: () => {
+                        setPage(page - 1);
+                      },
+                      currentPage: page,
+                      rowsPerPage: rowsPerPage,
+                      onRowsChange: (v) => {
+                        setPage(0);
+                        setRowsPerPage(parseInt(v));
+                      },
+                    }}
+                  />
+                </div>
+              )}
             </div>
           </div>
           <div
