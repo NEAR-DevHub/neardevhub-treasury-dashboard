@@ -144,6 +144,14 @@ test.describe("Payments Filters", () => {
       name: "Megha @megha19.near",
     });
     await expect(recipientCells).toHaveCount(10);
+    // check for not
+    await page.getByRole("button", { name: "is any" }).click();
+    await page.getByRole("button", { name: "is not all" }).click();
+    await page.waitForTimeout(1000);
+    const recipientCellsNotAll = page.getByRole("cell", {
+      name: "Megha @megha19.near",
+    });
+    await expect(recipientCellsNotAll).toHaveCount(0);
   });
 
   test("should select token in Token filter, add amount filter and display it", async ({
@@ -228,6 +236,13 @@ test.describe("Payments Filters", () => {
       .count();
 
     expect(proposerCells).toBeGreaterThanOrEqual(6);
+    await page.getByRole("button", { name: "is any" }).click();
+    await page.getByRole("button", { name: "is not all" }).click();
+    await page.waitForTimeout(1000);
+    const proposerCellsNotAll = page.getByText("petersalomonsen.near", {
+      exact: true,
+    });
+    await expect(proposerCellsNotAll).toHaveCount(0);
   });
 
   test("should add and display Approver filter", async ({ page }) => {
@@ -243,10 +258,43 @@ test.describe("Payments Filters", () => {
     await page.waitForTimeout(1000);
     const approverImageCells = await page
       .locator(
-        'img[src="https://i.near.social/magic/large/https://near.social/magic/img/account/frol.near"]'
+        'div[data-component="test-widgets.treasury-factory.near/widget/components.Approvers"][style*="https://i.near.social/magic/large/https://near.social/magic/img/account/frol.near"]'
       )
       .count();
-    await expect(approverImageCells).toBeGreaterThanOrEqual(3);
+
+    expect(approverImageCells).toBeGreaterThanOrEqual(3);
+    await page.getByRole("button", { name: "is any" }).click();
+    await page.getByRole("button", { name: "is not all" }).click();
+    await page.waitForTimeout(1000);
+    const approverCellsNotAll = await page
+      .locator(
+        'div[data-component="test-widgets.treasury-factory.near/widget/components.Approvers"][style*="https://i.near.social/magic/large/https://near.social/magic/img/account/frol.near"]'
+      )
+      .count();
+
+    expect(approverCellsNotAll).toBe(0);
+  });
+
+  test("should add and display status filter", async ({ page }) => {
+    await switchToHistoryTab(page);
+    await addFilter(page, {
+      filterName: "Status",
+      isMultiple: false,
+    });
+    await page.getByText("Funded").first().click();
+    await page.waitForTimeout(1000);
+    const statusCells = await page
+      .getByRole("cell", { name: "Funded" })
+      .count();
+    expect(statusCells).toBeGreaterThanOrEqual(10);
+    await page.getByRole("button", { name: "Status : Approved" }).click();
+    await page.getByRole("button", { name: "is" }).click();
+    await page.getByRole("button", { name: "is not" }).click();
+    await page.waitForTimeout(1000);
+    const statusCellsNotAll = await page
+      .getByRole("cell", { name: "Funded" })
+      .count();
+    expect(statusCellsNotAll).toBe(0);
   });
 
   test("should remove filter when trash icon is clicked", async ({ page }) => {
