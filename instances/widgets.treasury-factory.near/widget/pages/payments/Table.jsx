@@ -79,7 +79,6 @@ const Container = styled.div`
 
   table {
     overflow-x: auto;
-    height: fit-content;
   }
 `;
 
