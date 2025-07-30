@@ -66,7 +66,12 @@ async function doMultisigAction(
 /**
  * Helper function to setup USDC contracts with proper initialization and minting
  */
-async function setupUSDCContracts(worker, omftContract, intentsContract, mainnet) {
+async function setupUSDCContracts(
+  worker,
+  omftContract,
+  intentsContract,
+  mainnet
+) {
   // Token configuration
   const nearUsdcToken = {
     defuse_asset_identifier:
@@ -99,13 +104,17 @@ async function setupUSDCContracts(worker, omftContract, intentsContract, mainnet
 
   // Create additional accounts needed for multisig operations
   const masterMinter1 = worker.rootAccount; // Use root as first master minter
-  const masterMinter2 = await worker.rootAccount.createSubAccount("masterminter2");
+  const masterMinter2 = await worker.rootAccount.createSubAccount(
+    "masterminter2"
+  );
   const controller1 = await worker.rootAccount.createSubAccount("controller1");
   const controller2 = await worker.rootAccount.createSubAccount("controller2");
   const minter = await worker.rootAccount.createSubAccount("minter");
 
   // Initialize NEAR USDC contract
-  const nearUsdcMainnetAccount = await mainnet.account(nearUsdcContract.accountId);
+  const nearUsdcMainnetAccount = await mainnet.account(
+    nearUsdcContract.accountId
+  );
   const mainnetMetadata = await nearUsdcMainnetAccount.viewFunction({
     contractId: nearUsdcContract.accountId,
     methodName: "ft_metadata",
@@ -128,7 +137,7 @@ async function setupUSDCContracts(worker, omftContract, intentsContract, mainnet
     contractId: ethUsdcToken.near_token_id,
     methodName: "ft_metadata",
   });
-  
+
   await omftContract.call(
     omftContract.accountId,
     "deploy_token",
@@ -288,10 +297,7 @@ async function createSignedPayload(
     prefixBytes[3] = (prefixValue >> 24) & 0xff;
 
     // Serialize payload with Borsh
-    const serializedPayload = utils.serialize.serialize(
-      payloadSchema,
-      payload
-    );
+    const serializedPayload = utils.serialize.serialize(payloadSchema, payload);
 
     // Combine: prefix bytes + serialized payload (matching near-cli-rs)
     const bytesToSign = new Uint8Array(
@@ -315,9 +321,7 @@ async function createSignedPayload(
         recipient: recipient,
       },
       public_key: signingKey.getPublicKey().toString(),
-      signature: `ed25519:${utils.serialize.base_encode(
-        signature.signature
-      )}`,
+      signature: `ed25519:${utils.serialize.base_encode(signature.signature)}`,
     };
   } else {
     // Raw Ed25519 signing (simple approach)
@@ -328,9 +332,7 @@ async function createSignedPayload(
       standard: "raw_ed25519",
       payload: messageString, // Just the raw message string
       public_key: signingKey.getPublicKey().toString(),
-      signature: `ed25519:${utils.serialize.base_encode(
-        signature.signature
-      )}`,
+      signature: `ed25519:${utils.serialize.base_encode(signature.signature)}`,
     };
   }
 }
@@ -477,7 +479,6 @@ test("replicate USDC swap and withdrawal with solver", async ({}, testInfo) => {
     },
     { attachedDeposit: parseNEAR("0.00125") }
   );
-
 
   // USDC contract already set up by setupUSDCContracts function
   console.log("✓ USDC contracts initialized and configured");
@@ -682,7 +683,6 @@ test("replicate USDC swap and withdrawal with solver", async ({}, testInfo) => {
 
   // Create NEP-413 payloads and sign them with the generated keypairs
 
-
   // Create proper 32-byte nonces
   const solverNonce = new Uint8Array(32);
   crypto.getRandomValues(solverNonce);
@@ -724,22 +724,33 @@ test("replicate USDC swap and withdrawal with solver", async ({}, testInfo) => {
 
   // Check initial balances using mt_batch_balance_of
   console.log("\n=== Initial Balances ===");
-  
+
   // Check solver's balances in intents
-  const solverInitialBalances = await intentsContract.view("mt_batch_balance_of", {
-    account_id: solverAccount.accountId,
-    token_ids: [nearUsdcTokenDefuseId, ethUsdcTokenDefuseId]
-  });
-  console.log(`Solver NEAR USDC balance in intents: ${solverInitialBalances[0] || "0"}`);
-  console.log(`Solver ETH USDC balance in intents: ${solverInitialBalances[1] || "0"}`);
+  const solverInitialBalances = await intentsContract.view(
+    "mt_batch_balance_of",
+    {
+      account_id: solverAccount.accountId,
+      token_ids: [nearUsdcTokenDefuseId, ethUsdcTokenDefuseId],
+    }
+  );
+  console.log(
+    `Solver NEAR USDC balance in intents: ${solverInitialBalances[0] || "0"}`
+  );
+  console.log(
+    `Solver ETH USDC balance in intents: ${solverInitialBalances[1] || "0"}`
+  );
 
   // Check DAO's initial balance in intents
   const daoInitialBalances = await intentsContract.view("mt_batch_balance_of", {
     account_id: treasuryDaoId,
-    token_ids: [nearUsdcTokenDefuseId, ethUsdcTokenDefuseId]
+    token_ids: [nearUsdcTokenDefuseId, ethUsdcTokenDefuseId],
   });
-  console.log(`DAO NEAR USDC balance in intents: ${daoInitialBalances[0] || "0"}`);
-  console.log(`DAO ETH USDC balance in intents: ${daoInitialBalances[1] || "0"}`);
+  console.log(
+    `DAO NEAR USDC balance in intents: ${daoInitialBalances[0] || "0"}`
+  );
+  console.log(
+    `DAO ETH USDC balance in intents: ${daoInitialBalances[1] || "0"}`
+  );
 
   // Create sputnik-dao proposal for DAO's key registration + intent execution
   console.log(
@@ -833,27 +844,38 @@ test("replicate USDC swap and withdrawal with solver", async ({}, testInfo) => {
 
   // Verify final balances
   console.log("\n=== Final Balance Verification ===");
-  
+
   // Check solver's final balances
-  const solverFinalBalances = await intentsContract.view("mt_batch_balance_of", {
-    account_id: solverAccount.accountId,
-    token_ids: [nearUsdcTokenDefuseId, ethUsdcTokenDefuseId]
-  });
-  console.log(`Solver final NEAR USDC: ${solverFinalBalances[0]} (gained 99999900 from swap)`);
-  console.log(`Solver final ETH USDC: ${solverFinalBalances[1]} (200000000 - 99999900 - 100 fee = 100000100)`);
-  
+  const solverFinalBalances = await intentsContract.view(
+    "mt_batch_balance_of",
+    {
+      account_id: solverAccount.accountId,
+      token_ids: [nearUsdcTokenDefuseId, ethUsdcTokenDefuseId],
+    }
+  );
+  console.log(
+    `Solver final NEAR USDC: ${solverFinalBalances[0]} (gained 99999900 from swap)`
+  );
+  console.log(
+    `Solver final ETH USDC: ${solverFinalBalances[1]} (200000000 - 99999900 - 100 fee = 100000100)`
+  );
+
   // Verify solver gained NEAR USDC and spent ETH USDC
   expect(solverFinalBalances[0]).toBe("99999900"); // Gained from swap
   expect(solverFinalBalances[1]).toBe("100000100"); // Started with 200000000, gave 99999900, paid 100 fee
-  
+
   // Check DAO's final balance - should have 0 in intents (withdrawn to Ethereum)
   const daoFinalBalances = await intentsContract.view("mt_batch_balance_of", {
     account_id: treasuryDaoId,
-    token_ids: [nearUsdcTokenDefuseId, ethUsdcTokenDefuseId]
+    token_ids: [nearUsdcTokenDefuseId, ethUsdcTokenDefuseId],
   });
-  console.log(`DAO final NEAR USDC: ${daoFinalBalances[0]} (100000000 - 100000000 - 100 fee = 0)`);
-  console.log(`DAO final ETH USDC: ${daoFinalBalances[1]} (should be 0 after withdrawal)`);
-  
+  console.log(
+    `DAO final NEAR USDC: ${daoFinalBalances[0]} (100000000 - 100000000 - 100 fee = 0)`
+  );
+  console.log(
+    `DAO final ETH USDC: ${daoFinalBalances[1]} (should be 0 after withdrawal)`
+  );
+
   // DAO should have spent all NEAR USDC and withdrawn all ETH USDC
   expect(daoFinalBalances[0]).toBe("0");
   expect(daoFinalBalances[1]).toBe("0"); // Withdrawn to Ethereum address
@@ -915,7 +937,7 @@ test("1Click API integration with DAO treasury", async ({}, testInfo) => {
   const intentsContract = await worker.rootAccount.importContract({
     mainnetContract: "intents.near",
   });
-  
+
   await intentsContract.call(intentsContract.accountId, "new", {
     config: {
       wnear_id: "wrap.near",
@@ -958,7 +980,12 @@ test("1Click API integration with DAO treasury", async ({}, testInfo) => {
     mainnetContract: SPUTNIK_DAO_FACTORY_ID,
   });
 
-  await sputnikFactory.call(SPUTNIK_DAO_FACTORY_ID, "new", {}, { gas: "100000000000000" });
+  await sputnikFactory.call(
+    SPUTNIK_DAO_FACTORY_ID,
+    "new",
+    {},
+    { gas: "100000000000000" }
+  );
 
   const treasuryDaoName = "treasury-dao";
   const treasuryDaoId = `${treasuryDaoName}.${SPUTNIK_DAO_FACTORY_ID}`;
@@ -1015,7 +1042,7 @@ test("1Click API integration with DAO treasury", async ({}, testInfo) => {
 
   // Setup: Give DAO some USDC tokens in NEAR Intents
   console.log("\n=== Setup: Funding DAO with USDC in NEAR Intents ===");
-  
+
   // First, give user some USDC tokens
   await nearUsdcContract.call(
     nearUsdcToken.near_token_id,
@@ -1023,7 +1050,7 @@ test("1Click API integration with DAO treasury", async ({}, testInfo) => {
     { account_id: userAccount.accountId },
     { attachedDeposit: parseNEAR("0.1") }
   );
-  
+
   // Mint USDC to user account
   await minter.call(
     nearUsdcContract.accountId,
@@ -1034,7 +1061,7 @@ test("1Click API integration with DAO treasury", async ({}, testInfo) => {
     },
     { gas: "100000000000000" }
   );
-  
+
   // Storage deposit for intents contract
   await intentsContract.call(
     nearUsdcToken.near_token_id,
@@ -1045,7 +1072,7 @@ test("1Click API integration with DAO treasury", async ({}, testInfo) => {
     },
     { attachedDeposit: parseNEAR("0.1") }
   );
-  
+
   // Now deposit USDC to DAO via intents
   await userAccount.call(
     nearUsdcToken.near_token_id,
@@ -1057,65 +1084,80 @@ test("1Click API integration with DAO treasury", async ({}, testInfo) => {
     },
     { attachedDeposit: "1", gas: "100000000000000" }
   );
-  
+
   // Verify DAO has USDC in intents
   const daoInitialBalance = await intentsContract.view("mt_batch_balance_of", {
     account_id: treasuryDaoId,
     token_ids: ["nep141:" + nearUsdcToken.near_token_id],
   });
-  
-  console.log(`✓ DAO USDC balance in NEAR Intents: ${daoInitialBalance[0]} (${parseInt(daoInitialBalance[0]) / 1000000} USDC)`);
+
+  console.log(
+    `✓ DAO USDC balance in NEAR Intents: ${daoInitialBalance[0]} (${
+      parseInt(daoInitialBalance[0]) / 1000000
+    } USDC)`
+  );
 
   // Step 1: Frontend gets real 1Click quote first
   console.log("\n=== Step 1: Frontend Gets 1Click Quote ===");
-  
+
   console.log("Frontend requests quote from 1Click API:");
   console.log("API Endpoint: https://1click.chaindefuser.com/v0/quote");
-  
+
   // Use the actual request payload from the successful mainnet test
   const quoteRequest = {
     dry: false,
     swapType: "EXACT_INPUT",
     slippageTolerance: 100,
-    originAsset: "nep141:17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+    originAsset:
+      "nep141:17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
     depositType: "INTENTS",
-    destinationAsset: "nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
+    destinationAsset:
+      "nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
     refundTo: treasuryDaoId,
     refundType: "INTENTS",
     recipient: treasuryDaoId, // DAO receives the swapped USDC on NEAR Intents
     recipientType: "INTENTS",
     deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-    amount: "1000000" // 1 USDC with 6 decimals
+    amount: "1000000", // 1 USDC with 6 decimals
   };
 
-  console.log("Using real API response structure with sandbox-generated keypair...");
+  console.log(
+    "Using real API response structure with sandbox-generated keypair..."
+  );
 
   // Generate a keypair for the deposit address (simulating what 1Click does)
-  const depositKeyPair = KeyPair.fromRandom('ed25519');
-  const depositPublicKeyHex = Buffer.from(depositKeyPair.publicKey.data).toString('hex');
-  console.log(`Generated deposit keypair with public key: ${depositPublicKeyHex}`);
+  const depositKeyPair = KeyPair.fromRandom("ed25519");
+  const depositPublicKeyHex = Buffer.from(
+    depositKeyPair.publicKey.data
+  ).toString("hex");
+  console.log(
+    `Generated deposit keypair with public key: ${depositPublicKeyHex}`
+  );
 
   // Use the actual API response structure but with our generated deposit address
   const apiResponse = {
-    "quote": {
-      "amountIn": "1000000",
-      "amountInFormatted": "1.0",
-      "amountInUsd": "0.9998",
-      "minAmountIn": "1000000",
-      "amountOut": "999998",
-      "amountOutFormatted": "0.999998",
-      "amountOutUsd": "0.9998",
-      "minAmountOut": "989998",
-      "timeEstimate": 10,
-      "deadline": new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Set a fresh deadline
-      "timeWhenInactive": new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-      "depositAddress": depositPublicKeyHex // Use our generated public key as deposit address
+    quote: {
+      amountIn: "1000000",
+      amountInFormatted: "1.0",
+      amountInUsd: "0.9998",
+      minAmountIn: "1000000",
+      amountOut: "999998",
+      amountOutFormatted: "0.999998",
+      amountOutUsd: "0.9998",
+      minAmountOut: "989998",
+      timeEstimate: 10,
+      deadline: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Set a fresh deadline
+      timeWhenInactive: new Date(
+        Date.now() + 24 * 60 * 60 * 1000
+      ).toISOString(),
+      depositAddress: depositPublicKeyHex, // Use our generated public key as deposit address
     },
-    "quoteRequest": quoteRequest,
-    "signature": "ed25519:2gwvazipVnPYqYYyBYTAb5M8dcKoJBFmJADuL5VebL2RTMZEQpvZ8iyDq6GAkvudW5aAkRKr7U7LdynhguSy84De",
-    "timestamp": new Date().toISOString()
+    quoteRequest: quoteRequest,
+    signature:
+      "ed25519:2gwvazipVnPYqYYyBYTAb5M8dcKoJBFmJADuL5VebL2RTMZEQpvZ8iyDq6GAkvudW5aAkRKr7U7LdynhguSy84De",
+    timestamp: new Date().toISOString(),
   };
-  
+
   const quoteData = {
     quote_id: `1click_${Date.now()}`,
     deposit_address: apiResponse.quote.depositAddress,
@@ -1133,14 +1175,20 @@ test("1Click API integration with DAO treasury", async ({}, testInfo) => {
   };
 
   console.log("✅ Real 1Click quote received!");
-  console.log(`  • Amount In: ${quoteData.amount_in_formatted} USDC ($${quoteData.amount_in_usd})`);
-  console.log(`  • Amount Out: ${quoteData.amount_out_formatted} USDC ($${quoteData.amount_out_usd})`);
+  console.log(
+    `  • Amount In: ${quoteData.amount_in_formatted} USDC ($${quoteData.amount_in_usd})`
+  );
+  console.log(
+    `  • Amount Out: ${quoteData.amount_out_formatted} USDC ($${quoteData.amount_out_usd})`
+  );
   console.log(`  • Deposit Address: ${quoteData.deposit_address}`);
   console.log(`  • Quote Deadline: ${quoteData.deadline}`);
   console.log(`  • Time Estimate: ${quoteData.time_estimate_minutes} minutes`);
 
   // Step 2: Create DAO proposal with the specific deposit address
-  console.log("\n=== Step 2: Create DAO Proposal with Specific Deposit Address ===");
+  console.log(
+    "\n=== Step 2: Create DAO Proposal with Specific Deposit Address ==="
+  );
 
   console.log("Creating DAO proposal with REAL 1Click quote data...");
 
@@ -1150,7 +1198,10 @@ test("1Click API integration with DAO treasury", async ({}, testInfo) => {
 Swap Details:
 - Amount In: ${quoteData.amount_in_formatted} USDC (NEAR)
 - Amount Out: ${quoteData.amount_out_formatted} USDC (Ethereum)
-- Rate: 1 USDC (NEAR) = ${(parseFloat(quoteData.amount_out_formatted) / parseFloat(quoteData.amount_in_formatted)).toFixed(6)} USDC (Ethereum)
+- Rate: 1 USDC (NEAR) = ${(
+    parseFloat(quoteData.amount_out_formatted) /
+    parseFloat(quoteData.amount_in_formatted)
+  ).toFixed(6)} USDC (Ethereum)
 - Destination: ${treasuryDaoId} (NEAR Intents)
 - Time Estimate: ${quoteData.time_estimate_minutes} minutes
 - Quote Deadline: ${quoteData.deadline}
@@ -1158,14 +1209,20 @@ Swap Details:
 Deposit Address: ${quoteData.deposit_address}
 
 🔗 TRACKING:
-Monitor status: https://explorer.near-intents.org/?depositAddress=${quoteData.deposit_address}
+Monitor status: https://explorer.near-intents.org/?depositAddress=${
+    quoteData.deposit_address
+  }
 
 1Click Service Signature (for dispute resolution):
 ${quoteData.signature}
 
 EXECUTION:
-This proposal authorizes transferring ${quoteData.amount_in_formatted} USDC (NEAR) to 1Click's deposit address.
-1Click will execute the cross-network swap and deliver ${quoteData.amount_out_formatted} USDC (Ethereum) back to the DAO's NEAR Intents account.
+This proposal authorizes transferring ${
+    quoteData.amount_in_formatted
+  } USDC (NEAR) to 1Click's deposit address.
+1Click will execute the cross-network swap and deliver ${
+    quoteData.amount_out_formatted
+  } USDC (Ethereum) back to the DAO's NEAR Intents account.
 
 The signature above provides cryptographic guarantees and can be used for dispute resolution.`;
 
@@ -1191,15 +1248,23 @@ The signature above provides cryptographic guarantees and can be used for disput
   };
 
   console.log("Creating REAL 1Click transfer proposal...");
-  console.log(`Proposal will transfer ${quoteData.amount_in_formatted} USDC to: ${quoteData.deposit_address}`);
-  console.log("📝 IMPORTANT: Using REAL 1Click quote with cryptographic signature");
+  console.log(
+    `Proposal will transfer ${quoteData.amount_in_formatted} USDC to: ${quoteData.deposit_address}`
+  );
+  console.log(
+    "📝 IMPORTANT: Using REAL 1Click quote with cryptographic signature"
+  );
   console.log(`🔐 Signature: ${quoteData.signature.substring(0, 50)}...`);
   console.log(`⏰ Quote expires: ${quoteData.deadline}`);
   console.log("");
   console.log("🔗 TRACKING included in proposal:");
-  console.log(`   Track swap: https://explorer.near-intents.org/?depositAddress=${quoteData.deposit_address}`);
+  console.log(
+    `   Track swap: https://explorer.near-intents.org/?depositAddress=${quoteData.deposit_address}`
+  );
   console.log(`   1Click API: https://1click.chaindefuser.com/v0/quote`);
-  console.log(`   Documentation: https://docs.near-intents.org/near-intents/integration/distribution-channels/1click-api`);
+  console.log(
+    `   Documentation: https://docs.near-intents.org/near-intents/integration/distribution-channels/1click-api`
+  );
   console.log("💡 DAO members can monitor the swap progress in real-time");
 
   // Create the actual proposal
@@ -1236,61 +1301,87 @@ The signature above provides cryptographic guarantees and can be used for disput
 
   // Step 3: Check if the transfer was executed
   console.log("\n=== Step 3: Verify Transfer Execution ===");
-  
+
   // Verify the deposit address received the tokens
   console.log("Checking balance of 1Click deposit address...");
-  
-  const depositAddressBalance = await intentsContract.view("mt_batch_balance_of", {
-    account_id: quoteData.deposit_address,
-    token_ids: [quoteRequest.originAsset] // nep141:... format
-  });
-  
-  console.log(`✅ 1Click deposit address balance check:`, depositAddressBalance);
+
+  const depositAddressBalance = await intentsContract.view(
+    "mt_batch_balance_of",
+    {
+      account_id: quoteData.deposit_address,
+      token_ids: [quoteRequest.originAsset], // nep141:... format
+    }
+  );
+
+  console.log(
+    `✅ 1Click deposit address balance check:`,
+    depositAddressBalance
+  );
   expect(depositAddressBalance).toEqual([quoteData.amount_in]); // Should have received the exact amount
-  console.log(`✅ Confirmed: ${quoteData.deposit_address} received ${quoteData.amount_in_formatted} USDC`);
-  
+  console.log(
+    `✅ Confirmed: ${quoteData.deposit_address} received ${quoteData.amount_in_formatted} USDC`
+  );
+
   // Important: The deposit address is actually a public key!
   console.log("\n📝 KEY INSIGHT: The deposit address IS a public key");
   console.log(`  • Deposit address: ${quoteData.deposit_address}`);
   console.log(`  • This is a hex-encoded ed25519 public key`);
   console.log(`  • 1Click holds the private key for this address`);
   console.log(`  • Only 1Click can sign intents to move these tokens`);
-  
+
   // Also verify DAO balance decreased
   const daoFinalBalance = await intentsContract.view("mt_batch_balance_of", {
     account_id: treasuryDaoId,
     token_ids: [quoteRequest.originAsset],
   });
-  
-  console.log(`✅ DAO final balance: ${daoFinalBalance[0]} (${parseInt(daoFinalBalance[0]) / 1000000} USDC)`);
-  const expectedDaoBalance = (parseInt(daoInitialBalance[0]) - parseInt(quoteData.amount_in)).toString();
+
+  console.log(
+    `✅ DAO final balance: ${daoFinalBalance[0]} (${
+      parseInt(daoFinalBalance[0]) / 1000000
+    } USDC)`
+  );
+  const expectedDaoBalance = (
+    parseInt(daoInitialBalance[0]) - parseInt(quoteData.amount_in)
+  ).toString();
   expect(daoFinalBalance).toEqual([expectedDaoBalance]);
-  console.log(`✅ DAO balance correctly decreased by ${quoteData.amount_in_formatted} USDC`);
+  console.log(
+    `✅ DAO balance correctly decreased by ${quoteData.amount_in_formatted} USDC`
+  );
 
   console.log("\nTransfer details:");
   console.log(`• Amount: ${quoteData.amount_in_formatted} USDC`);
   console.log(`• To: ${quoteData.deposit_address}`);
   console.log(`• Quote expires: ${quoteData.deadline}`);
-  console.log(`• Expected output: ${quoteData.amount_out_formatted} USDC on Ethereum`);
+  console.log(
+    `• Expected output: ${quoteData.amount_out_formatted} USDC on Ethereum`
+  );
   console.log("");
   console.log("🔍 1Click will now:");
   console.log("1. 📡 Detect the deposit to their address");
-  console.log(`2. 🔄 Execute cross-network swap within ${quoteData.time_estimate_minutes} minutes`);
-  console.log(`3. 💸 Send ${quoteData.amount_out_formatted} USDC to Ethereum address`);
+  console.log(
+    `2. 🔄 Execute cross-network swap within ${quoteData.time_estimate_minutes} minutes`
+  );
+  console.log(
+    `3. 💸 Send ${quoteData.amount_out_formatted} USDC to Ethereum address`
+  );
   console.log("4. 📊 Update transaction status in Explorer API");
 
   // Step 4: Show transaction tracking
   console.log("\n=== Step 4: Real-Time Transaction Tracking ===");
 
-  console.log("In production, you can track the 1Click transaction using the Intents Explorer API:");
+  console.log(
+    "In production, you can track the 1Click transaction using the Intents Explorer API:"
+  );
   console.log(`Base URL: https://explorer.near-intents.org/api/v0/`);
   console.log(`Endpoints: /transactions or /transactions-pages`);
   console.log("");
   console.log("Expected transaction structure based on real 1Click data:");
-  
+
   const expectedTransactionStructure = {
-    originAsset: "nep141:17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
-    destinationAsset: "nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
+    originAsset:
+      "nep141:17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+    destinationAsset:
+      "nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
     depositAddress: quoteData.deposit_address,
     recipient: treasuryDaoId, // DAO receives on NEAR Intents
     recipientType: "INTENTS",
@@ -1321,15 +1412,17 @@ The signature above provides cryptographic guarantees and can be used for disput
   console.log("\n💡 Example Explorer API Query:");
   console.log("// To track this specific transaction in production:");
   console.log(`// GET https://explorer.near-intents.org/api/v0/transactions`);
-  
+
   // Step 4b: Simulate 1Click executing the intents (what happens after deposit)
   console.log("\n=== Step 4b: Simulating 1Click Intent Execution ===");
-  console.log("In production, 1Click would execute intents similar to transaction 829hR9HE1rfhHVTSV5vLGsDh5rcp4VRfxsu2U6d1Db6A");
-  
+  console.log(
+    "In production, 1Click would execute intents similar to transaction 829hR9HE1rfhHVTSV5vLGsDh5rcp4VRfxsu2U6d1Db6A"
+  );
+
   // Create solver account to simulate 1Click's solver
   const solverAccount = await worker.rootAccount.createSubAccount("solver");
-  const solverKeyPair = KeyPair.fromRandom('ed25519');
-  
+  const solverKeyPair = KeyPair.fromRandom("ed25519");
+
   // Register solver's public key
   await solverAccount.call(
     intentsContract.accountId,
@@ -1339,7 +1432,7 @@ The signature above provides cryptographic guarantees and can be used for disput
     },
     { attachedDeposit: "1" }
   );
-  
+
   // IMPORTANT: Register the deposit address public key too!
   // In production, 1Click does this when they generate the keypair
   await worker.rootAccount.call(
@@ -1350,10 +1443,10 @@ The signature above provides cryptographic guarantees and can be used for disput
     },
     { attachedDeposit: "1" }
   );
-  
+
   // Give solver some Ethereum USDC to fulfill the swap
   const ethUsdcTokenId = ethUsdcToken.near_token_id;
-  
+
   // Storage deposit for solver on Ethereum USDC
   await omftContract.call(
     ethUsdcTokenId,
@@ -1361,7 +1454,7 @@ The signature above provides cryptographic guarantees and can be used for disput
     { account_id: solverAccount.accountId },
     { attachedDeposit: parseNEAR("0.1") }
   );
-  
+
   // Deposit Ethereum USDC to intents contract for solver using ft_deposit
   await omftContract.call(
     omftContract.accountId,
@@ -1374,25 +1467,27 @@ The signature above provides cryptographic guarantees and can be used for disput
     },
     { attachedDeposit: parseNEAR("1"), gas: "100000000000000" }
   );
-  
+
   console.log("✓ Deposited 2 Ethereum USDC to solver account in intents");
-  
+
   // Create the intents similar to the real transaction
   const deadline = new Date(Date.now() + 300000).toISOString(); // 5 minutes
-  
+
   // Solver's intent - provides liquidity
   const solverIntent = {
     signer_id: solverAccount.accountId,
     deadline: deadline,
-    intents: [{
-      intent: "token_diff",
-      diff: {
-        ["nep141:" + nearUsdcToken.near_token_id]: "999999", // Take 0.999999 NEAR USDC
-        ["nep141:" + ethUsdcTokenId]: "-999999", // Give 0.999999 Ethereum USDC
-      }
-    }]
+    intents: [
+      {
+        intent: "token_diff",
+        diff: {
+          ["nep141:" + nearUsdcToken.near_token_id]: "999999", // Take 0.999999 NEAR USDC
+          ["nep141:" + ethUsdcTokenId]: "-999999", // Give 0.999999 Ethereum USDC
+        },
+      },
+    ],
   };
-  
+
   // 1Click deposit address intent - executes the swap
   const depositAddressIntent = {
     signer_id: quoteData.deposit_address,
@@ -1404,35 +1499,36 @@ The signature above provides cryptographic guarantees and can be used for disput
           ["nep141:" + nearUsdcToken.near_token_id]: "-1000000", // Give 1.0 NEAR USDC
           ["nep141:" + ethUsdcTokenId]: "999998", // Receive 0.999998 Ethereum USDC
         },
-        referral: "1click-unknown"
+        referral: "1click-unknown",
       },
       {
         intent: "transfer",
         receiver_id: treasuryDaoId,
         tokens: {
           ["nep141:" + ethUsdcTokenId]: "999998", // Transfer Ethereum USDC to DAO
-        }
-      }
-    ]
+        },
+      },
+    ],
   };
-  
+
   console.log("Creating signed intents for execute_intents call...");
-  console.log("- Solver provides liquidity: 0.999999 Ethereum USDC for 0.999999 NEAR USDC");
+  console.log(
+    "- Solver provides liquidity: 0.999999 Ethereum USDC for 0.999999 NEAR USDC"
+  );
   console.log("- 1Click swaps: 1.0 NEAR USDC for 0.999998 Ethereum USDC");
   console.log("- 1Click transfers: 0.999998 Ethereum USDC to DAO");
   console.log("- Spread: 0.000001 USDC (solver profit)");
-  
+
   // Since we have the private key for our deposit address, we can actually execute!
   console.log("\nExecuting intents in sandbox environment...");
-  
-  
+
   // Create nonces
   const solverNonce = new Uint8Array(32);
   crypto.getRandomValues(solverNonce);
-  
+
   const depositNonce = new Uint8Array(32);
   crypto.getRandomValues(depositNonce);
-  
+
   // Sign both intents using the proper NEP-413 implementation
   const solverSignedPayload = await createSignedPayload(
     solverIntent,
@@ -1441,7 +1537,7 @@ The signature above provides cryptographic guarantees and can be used for disput
     solverKeyPair,
     "nep413"
   );
-  
+
   const depositSignedPayload = await createSignedPayload(
     depositAddressIntent,
     intentsContract.accountId,
@@ -1449,39 +1545,47 @@ The signature above provides cryptographic guarantees and can be used for disput
     depositKeyPair, // We can sign because we have the private key!
     "nep413"
   );
-  
+
   // Execute the intents
   console.log("Calling execute_intents with signed payloads...");
-  
+
   const executeResult = await intentsContract.call(
     intentsContract.accountId,
     "execute_intents",
     {
-      signed: [solverSignedPayload, depositSignedPayload]
+      signed: [solverSignedPayload, depositSignedPayload],
     },
     { attachedDeposit: "0", gas: "300000000000000" }
   );
-  
+
   console.log("✅ Execute intents successful!");
   console.log("Result:", executeResult);
-  
+
   // Verify final balances
   const finalDAOBalance = await intentsContract.view("mt_batch_balance_of", {
     account_id: treasuryDaoId,
     token_ids: [
       quoteRequest.originAsset, // NEAR USDC
-      "nep141:" + ethUsdcTokenId // Ethereum USDC
-    ]
+      "nep141:" + ethUsdcTokenId, // Ethereum USDC
+    ],
   });
-  
+
   console.log("\n✅ Final DAO balances after swap:");
-  console.log(`  • NEAR USDC: ${finalDAOBalance[0]} (${parseInt(finalDAOBalance[0]) / 1000000} USDC)`);
-  console.log(`  • Ethereum USDC: ${finalDAOBalance[1]} (${parseInt(finalDAOBalance[1]) / 1000000} USDC)`);
-  
+  console.log(
+    `  • NEAR USDC: ${finalDAOBalance[0]} (${
+      parseInt(finalDAOBalance[0]) / 1000000
+    } USDC)`
+  );
+  console.log(
+    `  • Ethereum USDC: ${finalDAOBalance[1]} (${
+      parseInt(finalDAOBalance[1]) / 1000000
+    } USDC)`
+  );
+
   // Verify the swap completed correctly
   expect(finalDAOBalance[0]).toEqual("4000000"); // 4 NEAR USDC (5 - 1)
   expect(finalDAOBalance[1]).toEqual("999998"); // 0.999998 Ethereum USDC received
-  
+
   console.log("\n✅ Complete 1Click swap flow validated in sandbox!");
   console.log("  • Generated keypair for deposit address");
   console.log("  • Executed mt_transfer to deposit address");
@@ -1494,24 +1598,36 @@ The signature above provides cryptographic guarantees and can be used for disput
 
   console.log("✅ WORKFLOW COMPLETED:");
   console.log("1. Frontend obtained real 1Click quote with deposit address");
-  console.log("2. DAO proposal created with specific transfer to deposit address");
+  console.log(
+    "2. DAO proposal created with specific transfer to deposit address"
+  );
   console.log("3. DAO voted and approved the transfer proposal");
   console.log("4. Transfer executed to 1Click deposit address via mt_transfer");
   console.log("5. 1Click processes and delivers USDC to Ethereum");
-  
+
   console.log("\n📝 MAINNET EXECUTION COMMANDS:");
   console.log("// Create proposal:");
-  console.log("near contract call-function as-transaction webassemblymusic-treasury.sputnik-dao.near add_proposal file-args dao-proposal.json prepaid-gas '100.0 Tgas' attached-deposit '0.1 NEAR' sign-as <account> network-config mainnet sign-with-keychain send");
+  console.log(
+    "near contract call-function as-transaction webassemblymusic-treasury.sputnik-dao.near add_proposal file-args dao-proposal.json prepaid-gas '100.0 Tgas' attached-deposit '0.1 NEAR' sign-as <account> network-config mainnet sign-with-keychain send"
+  );
   console.log("");
   console.log("// Approve and execute:");
-  console.log("near contract call-function as-transaction webassemblymusic-treasury.sputnik-dao.near act_proposal json-args '{\"id\": 15, \"action\": \"VoteApprove\"}' prepaid-gas '300.0 Tgas' attached-deposit '0 NEAR' sign-as <account> network-config mainnet sign-with-keychain send");
+  console.log(
+    "near contract call-function as-transaction webassemblymusic-treasury.sputnik-dao.near act_proposal json-args '{\"id\": 15, \"action\": \"VoteApprove\"}' prepaid-gas '300.0 Tgas' attached-deposit '0 NEAR' sign-as <account> network-config mainnet sign-with-keychain send"
+  );
 
   console.log("\n💡 KEY SUCCESS FACTORS:");
-  console.log(`• Real quote obtained: ${quoteData.amount_in_formatted} USDC → ${quoteData.amount_out_formatted} USDC`);
+  console.log(
+    `• Real quote obtained: ${quoteData.amount_in_formatted} USDC → ${quoteData.amount_out_formatted} USDC`
+  );
   console.log(`• Specific deposit address: ${quoteData.deposit_address}`);
-  console.log(`• Cryptographic guarantee: ${quoteData.signature.substring(0, 32)}...`);
+  console.log(
+    `• Cryptographic guarantee: ${quoteData.signature.substring(0, 32)}...`
+  );
   console.log(`• Quote deadline: ${quoteData.deadline}`);
-  console.log(`• Real-time tracking: https://explorer.near-intents.org/?depositAddress=${quoteData.deposit_address}`);
+  console.log(
+    `• Real-time tracking: https://explorer.near-intents.org/?depositAddress=${quoteData.deposit_address}`
+  );
 
   console.log("\n=== PRODUCTION-READY 1Click Integration Test Summary ===");
   console.log("✅ Real 1Click API quote obtained with deposit address");
@@ -1523,17 +1639,27 @@ The signature above provides cryptographic guarantees and can be used for disput
   console.log("✅ Complete end-to-end workflow demonstrated");
   console.log("");
   console.log("💾 KEY FINDINGS FROM REAL TRANSACTION ANALYSIS:");
-  console.log("✅ Transaction 829hR9HE1rfhHVTSV5vLGsDh5rcp4VRfxsu2U6d1Db6A shows:");
+  console.log(
+    "✅ Transaction 829hR9HE1rfhHVTSV5vLGsDh5rcp4VRfxsu2U6d1Db6A shows:"
+  );
   console.log("  • 1Click uses execute_intents with two signed intents");
-  console.log("  • Solver provides liquidity: 999,999 Ethereum USDC for 999,999 NEAR USDC");
-  console.log("  • 1Click swaps: 1,000,000 NEAR USDC for 999,998 Ethereum USDC");
-  console.log("  • Transfer to DAO: 999,998 Ethereum USDC delivered to NEAR Intents");
+  console.log(
+    "  • Solver provides liquidity: 999,999 Ethereum USDC for 999,999 NEAR USDC"
+  );
+  console.log(
+    "  • 1Click swaps: 1,000,000 NEAR USDC for 999,998 Ethereum USDC"
+  );
+  console.log(
+    "  • Transfer to DAO: 999,998 Ethereum USDC delivered to NEAR Intents"
+  );
   console.log("  • Spread: 1 USDC unit (0.0001%) captured by solver");
   console.log("  • Referral field: '1click-unknown' for tracking");
   console.log("");
   console.log("🎯 PRODUCTION INTEGRATION PROVEN:");
   console.log("  • Frontend gets 1Click quote with real deposit address");
-  console.log("  • DAO proposal transfers to specific deposit address via mt_transfer");
+  console.log(
+    "  • DAO proposal transfers to specific deposit address via mt_transfer"
+  );
   console.log("  • Balance checks confirm token movement");
   console.log("  • 1Click executes intents to complete the swap");
   console.log("  • DAO receives swapped tokens in NEAR Intents");

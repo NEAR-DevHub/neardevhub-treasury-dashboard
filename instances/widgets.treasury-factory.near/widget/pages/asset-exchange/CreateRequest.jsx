@@ -85,7 +85,7 @@ function fillTxn(proposalDetails, args, isStorageDeposit) {
   } else {
     // All asset exchange proposals use the same encoded format
     const description = proposalDetails.description;
-    
+
     const gas = "270000000000000";
     return [
       {
@@ -179,14 +179,18 @@ return (
 
     {/* Tab Switcher */}
     <div className="tab-switcher d-flex gap-2 mb-3">
-      <button 
-        className={`btn ${activeTab === "sputnik-dao" ? "btn-primary" : "btn-outline-secondary"}`}
+      <button
+        className={`btn ${
+          activeTab === "sputnik-dao" ? "btn-primary" : "btn-outline-secondary"
+        }`}
         onClick={() => setActiveTab("sputnik-dao")}
       >
         Sputnik DAO
       </button>
-      <button 
-        className={`btn ${activeTab === "near-intents" ? "btn-primary" : "btn-outline-secondary"}`}
+      <button
+        className={`btn ${
+          activeTab === "near-intents" ? "btn-primary" : "btn-outline-secondary"
+        }`}
         onClick={() => setActiveTab("near-intents")}
       >
         Near Intents
@@ -245,22 +249,26 @@ This proposal authorizes transferring tokens to 1Click's deposit address.
 
             const proposalDetails = {
               description: proposalDescription,
-              transactions: [{
-                treasuryKind: "NEAR_INTENTS",
-                receiverId: "intents.near",  // Changed from receiver_id to receiverId
-                functionCalls: [{
-                  methodName: "mt_transfer",
-                  args: {
-                    receiver_id: args.quote.depositAddress,
-                    amount: args.quote.amountIn,
-                    token_id: args.quote.requestPayload.originAsset,
-                  },
-                  amount: "1", // 1 yoctoNEAR
-                  gas: "100000000000000", // 100 TGas
-                }],
-              }],
+              transactions: [
+                {
+                  treasuryKind: "NEAR_INTENTS",
+                  receiverId: "intents.near", // Changed from receiver_id to receiverId
+                  functionCalls: [
+                    {
+                      methodName: "mt_transfer",
+                      args: {
+                        receiver_id: args.quote.depositAddress,
+                        amount: args.quote.amountIn,
+                        token_id: args.quote.requestPayload.originAsset,
+                      },
+                      amount: "1", // 1 yoctoNEAR
+                      gas: "100000000000000", // 100 TGas
+                    },
+                  ],
+                },
+              ],
             };
-            
+
             onSubmitClick(proposalDetails);
           },
         }}

@@ -1081,13 +1081,13 @@ function getIntentsBalances(accountId) {
             return [];
           }
           const allTokens = resp.body?.items || [];
-          
+
           // Filter to only tokens owned by the account
-          const ownedTokenIds = ownedTokens.map(t => t.token_id);
-          const relevantTokens = allTokens.filter(t => 
+          const ownedTokenIds = ownedTokens.map((t) => t.token_id);
+          const relevantTokens = allTokens.filter((t) =>
             ownedTokenIds.includes(t.defuse_asset_id)
           );
-          
+
           if (relevantTokens.length === 0) {
             return [];
           }
@@ -1112,70 +1112,74 @@ function getIntentsBalances(accountId) {
                 amount: balances[i],
               }));
 
-          const filteredTokensWithBalances = tokensWithBalances.filter(
-            (token) => token.amount && Big(token.amount).gt(0)
-          );
-
-          if (filteredTokensWithBalances.length === 0) {
-            return [];
-          }
-
-          const iconPromises = filteredTokensWithBalances.map((token) => {
-            let iconPromise = Promise.resolve(token.icon); // Default to original icon
-            if (
-              token.defuse_asset_id &&
-              token.defuse_asset_id.startsWith("nep141:")
-            ) {
-              const parts = token.defuse_asset_id.split(":");
-              if (parts.length > 1) {
-                const contractId = parts[1];
-                iconPromise = Near.asyncView(contractId, "ft_metadata")
-                  .then((metadata) => metadata?.icon || token.icon)
-                  .catch(() => token.icon); // Fallback to original icon on error
-              }
-            }
-            return iconPromise;
-          });
-
-          return Promise.all(iconPromises)
-            .then((resolvedIcons) => {
-              const finalTokens = filteredTokensWithBalances.map((t, i) => ({
-                // contract_id is needed by TokensDropdown
-                contract_id: t.defuse_asset_id.startsWith("nep141:")
-                  ? t.defuse_asset_id.split(":")[1]
-                  : t.defuse_asset_id,
-                ft_meta: {
-                  symbol: t.symbol,
-                  icon: resolvedIcons[i], // Use icon from ft_metadata or original
-                  decimals: t.decimals,
-                  price: t.price, // Include price if available
-                },
-                amount: t.amount,
-                blockchain: t.blockchain,
-              }));
-              return finalTokens;
-            })
-            .catch((iconError) => {
-              console.error(
-                "Error fetching some token icons, using defaults.",
-                iconError
+              const filteredTokensWithBalances = tokensWithBalances.filter(
+                (token) => token.amount && Big(token.amount).gt(0)
               );
-              // Fallback to original icons if Promise.all fails for ft_metadata calls
-              const fallbackTokens = filteredTokensWithBalances.map((t) => ({
-                contract_id: t.defuse_asset_id.startsWith("nep141:")
-                  ? t.defuse_asset_id.split(":")[1]
-                  : t.defuse_asset_id,
-                ft_meta: {
-                  symbol: t.symbol,
-                  icon: t.icon, // Fallback to original icon
-                  decimals: t.decimals,
-                  price: t.price,
-                },
-                amount: t.amount,
-                blockchain: t.blockchain,
-              }));
-              return fallbackTokens;
-            });
+
+              if (filteredTokensWithBalances.length === 0) {
+                return [];
+              }
+
+              const iconPromises = filteredTokensWithBalances.map((token) => {
+                let iconPromise = Promise.resolve(token.icon); // Default to original icon
+                if (
+                  token.defuse_asset_id &&
+                  token.defuse_asset_id.startsWith("nep141:")
+                ) {
+                  const parts = token.defuse_asset_id.split(":");
+                  if (parts.length > 1) {
+                    const contractId = parts[1];
+                    iconPromise = Near.asyncView(contractId, "ft_metadata")
+                      .then((metadata) => metadata?.icon || token.icon)
+                      .catch(() => token.icon); // Fallback to original icon on error
+                  }
+                }
+                return iconPromise;
+              });
+
+              return Promise.all(iconPromises)
+                .then((resolvedIcons) => {
+                  const finalTokens = filteredTokensWithBalances.map(
+                    (t, i) => ({
+                      // contract_id is needed by TokensDropdown
+                      contract_id: t.defuse_asset_id.startsWith("nep141:")
+                        ? t.defuse_asset_id.split(":")[1]
+                        : t.defuse_asset_id,
+                      ft_meta: {
+                        symbol: t.symbol,
+                        icon: resolvedIcons[i], // Use icon from ft_metadata or original
+                        decimals: t.decimals,
+                        price: t.price, // Include price if available
+                      },
+                      amount: t.amount,
+                      blockchain: t.blockchain,
+                    })
+                  );
+                  return finalTokens;
+                })
+                .catch((iconError) => {
+                  console.error(
+                    "Error fetching some token icons, using defaults.",
+                    iconError
+                  );
+                  // Fallback to original icons if Promise.all fails for ft_metadata calls
+                  const fallbackTokens = filteredTokensWithBalances.map(
+                    (t) => ({
+                      contract_id: t.defuse_asset_id.startsWith("nep141:")
+                        ? t.defuse_asset_id.split(":")[1]
+                        : t.defuse_asset_id,
+                      ft_meta: {
+                        symbol: t.symbol,
+                        icon: t.icon, // Fallback to original icon
+                        decimals: t.decimals,
+                        price: t.price,
+                      },
+                      amount: t.amount,
+                      blockchain: t.blockchain,
+                    })
+                  );
+                  return fallbackTokens;
+                });
             })
             .catch((balanceError) => {
               console.error("Error fetching intents balances:", balanceError);
