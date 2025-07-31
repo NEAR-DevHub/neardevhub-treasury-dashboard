@@ -570,18 +570,8 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     // Wait a bit more for the form to fully load
     await page.waitForTimeout(3000);
 
-    // Take screenshot to see debug output
-    await page.screenshot({
-      path: path.join(screenshotsDir, "06a-debug-output.png"),
-      fullPage: true,
-    });
-
     // Wait for tokens to load - check if dropdown button is no longer showing "Loading tokens..."
     const sendTokenDropdown = page.locator(".dropdown-toggle.drop-btn").first();
-
-    // Check if debug output is visible
-    const debugOutput = await page.locator(".alert-info").first().textContent();
-    console.log("Debug output from form:", debugOutput);
 
     // Instead of waiting for loading to disappear, wait for token to appear
     await expect(sendTokenDropdown).toContainText("Select token", {

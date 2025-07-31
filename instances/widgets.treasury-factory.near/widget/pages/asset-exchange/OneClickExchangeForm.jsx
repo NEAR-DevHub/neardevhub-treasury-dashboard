@@ -30,6 +30,9 @@ const [isLoadingTokens, setIsLoadingTokens] = useState(false);
 const [errorApi, setErrorApi] = useState(null);
 const [quote, setQuote] = useState(null);
 const [isLoadingQuote, setIsLoadingQuote] = useState(false);
+const [web3IconsCache, setWeb3IconsCache] = useState({});
+const [tokenIconMap, setTokenIconMap] = useState({});
+const [allIconsFetched, setAllIconsFetched] = useState(false);
 
 // Fetch treasury's NEAR Intents tokens for Send dropdown
 useEffect(() => {
@@ -118,6 +121,62 @@ const networkNames = {
   "sol:mainnet-beta": "Solana",
 };
 
+// Handle icons loaded from Web3IconFetcher
+const handleAllIconsLoaded = (iconCache) => {
+  const newTokenIconMap = {};
+  
+  // Process the icon cache to build token icon map
+  Object.keys(iconCache).forEach((key) => {
+    const cached = iconCache[key];
+    if (cached !== "NOT_FOUND" && cached.tokenIcon) {
+      // Map by symbol for tokens
+      newTokenIconMap[cached.symbol] = cached.tokenIcon;
+      // Also map by uppercase symbol for case-insensitive matching
+      newTokenIconMap[cached.symbol.toUpperCase()] = cached.tokenIcon;
+    }
+  });
+
+  setTokenIconMap(newTokenIconMap);
+  setWeb3IconsCache(iconCache);
+  setAllIconsFetched(true);
+};
+
+// Get token icon from map or from token metadata
+const getTokenIcon = (symbol) => {
+  if (!symbol) return null;
+  
+  // First check if we have it in the icon map
+  if (tokenIconMap) {
+    const icon = tokenIconMap[symbol] || tokenIconMap[symbol.toUpperCase()];
+    if (icon) return icon;
+  }
+  
+  // Then check if the token already has an icon in its metadata
+  // For intents tokens (Send dropdown)
+  const intentsToken = intentsTokensIn.find(t => t.symbol === symbol);
+  if (intentsToken && intentsToken.icon) {
+    return intentsToken.icon;
+  }
+  
+  // For all tokens out (Receive dropdown)
+  const outToken = allTokensOut.find(t => t.symbol === symbol);
+  if (outToken && outToken.icon) {
+    return outToken.icon;
+  }
+  
+  return null;
+};
+
+// Get network icon from cache
+const getNetworkIcon = (networkId) => {
+  if (!networkId || !web3IconsCache) return null;
+  const cached = web3IconsCache[networkId];
+  if (cached && cached !== "NOT_FOUND" && cached.networkIcon) {
+    return cached.networkIcon;
+  }
+  return null;
+};
+
 // Get unique networks from selected token
 const getAvailableNetworks = () => {
   if (!tokenOut) return [];
@@ -128,6 +187,7 @@ const getAvailableNetworks = () => {
       id: token.network,
       name: networkNames[token.network] || token.network,
       tokenId: token.id,
+      icon: getNetworkIcon(token.network),
     }));
 
   return networks;
@@ -266,6 +326,16 @@ const handleSubmit = () => {
 
 const isFormValid = tokenIn && tokenOut && networkOut && amountIn;
 
+// Prepare tokens for icon fetching
+const allTokensForIcons = [
+  ...intentsTokensIn.map((t) => ({
+    symbol: t.symbol,
+    networkId: t.blockchain,
+  })),
+  ...allTokensOut.map((t) => ({ symbol: t.symbol, networkId: t.network })),
+];
+
+
 return (
   <Container>
     <div className="one-click-exchange-form">
@@ -274,6 +344,18 @@ return (
           Exchange tokens within your NEAR Intents holdings using 1Click API
         </h6>
       </div>
+
+      {/* Web3IconFetcher - Load icons asynchronously without blocking UI */}
+      {allTokensForIcons.length > 0 && (
+        <Widget
+          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Web3IconFetcher"
+          props={{
+            tokens: allTokensForIcons,
+            onIconsLoaded: handleAllIconsLoaded,
+            fetchNetworkIcons: true,
+          }}
+        />
+      )}
 
       {/* Error display */}
       {errorApi && (
@@ -305,7 +387,7 @@ return (
                 options: intentsTokensIn.map((token) => ({
                   label: `${token.symbol} (${token.balance} available)`,
                   value: token.id,
-                  icon: token.icon,
+                  icon: token.icon || getTokenIcon(token.symbol),
                 })),
                 defaultLabel: "Select token",
                 showSearch: true,
@@ -340,6 +422,7 @@ return (
                   .map((symbol) => ({
                     label: symbol,
                     value: symbol,
+                    icon: getTokenIcon(symbol),
                   })),
                 defaultLabel: "Select token",
                 showSearch: true,
@@ -357,6 +440,7 @@ return (
                 options: getAvailableNetworks().map((network) => ({
                   label: network.name,
                   value: network.id,
+                  icon: network.icon,
                 })),
                 defaultLabel: !tokenOut
                   ? "Select token first"
