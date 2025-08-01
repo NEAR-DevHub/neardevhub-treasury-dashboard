@@ -136,18 +136,48 @@ const Container = styled.div`
     display: none !important;
   }
 
+  @media (max-width: 768px) {
+    .input-responsive {
+      width: 180px;
+      max-width: 200px;
+    }
+
+    .layout-secondary.show ~ .layout-main .input-responsive,
+    .layout-main:has(~ .layout-secondary.show) .input-responsive {
+      width: 120px;
+      min-width: 60px;
+      max-width: 150px;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .input-responsive {
+      width: 150px;
+      min-width: 120px;
+      max-width: 180px;
+    }
+
+    .layout-secondary.show ~ .layout-main .input-responsive,
+    .layout-main:has(~ .layout-secondary.show) .input-responsive {
+      width: 100px;
+      min-width: 50px;
+      max-width: 120px;
+    }
+  }
+
+  /* Active filter indicator */
   .active-filter {
     background-color: var(--grey-05);
     position: relative;
   }
 
-  .active-filter:after {
-    width: 6px;
-    height: 6px;
+  .active-filter::after {
     content: "";
     position: absolute;
     top: 10px;
     right: 10px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     background-color: rgb(0, 122, 255);
   }
@@ -322,7 +352,7 @@ const SidebarMenu = () => {
       {/* Tabs */}
       <div
         className="d-flex justify-content-between border-bottom gap-2 align-items-center flex-wrap flex-md-nowrap"
-        style={{ paddingRight: "10px", overflowX: "auto" }}
+        style={{ paddingRight: "10px" }}
       >
         <NavUnderline className="nav gap-2 flex-shrink-0">
           {[{ title: "Pending Requests" }, { title: "History" }].map(
