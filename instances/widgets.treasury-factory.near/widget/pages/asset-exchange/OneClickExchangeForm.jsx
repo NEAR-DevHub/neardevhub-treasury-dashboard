@@ -338,6 +338,30 @@ const allTokensForIcons = [
 return (
   <Container>
     <div className="one-click-exchange-form">
+      {/* Treasury Wallet Dropdown */}
+      <div className="mb-3">
+        <label className="form-label">Treasury Wallet</label>
+        <div className="dropdown-container">
+          <Widget
+            src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
+            props={{
+              selectedValue: props.treasuryWallet || "near-intents",
+              onChange: (option) => {
+                if (props.onTreasuryWalletChange) {
+                  props.onTreasuryWalletChange(option.value);
+                }
+              },
+              options: [
+                { label: "SputnikDAO", value: "sputnik-dao" },
+                { label: "NEAR Intents", value: "near-intents" },
+              ],
+              defaultLabel: "Select wallet",
+              showSearch: false,
+            }}
+          />
+        </div>
+      </div>
+
       <div className="mb-4">
         <h6 className="text-muted mb-3">
           Exchange tokens within your NEAR Intents holdings using 1Click API

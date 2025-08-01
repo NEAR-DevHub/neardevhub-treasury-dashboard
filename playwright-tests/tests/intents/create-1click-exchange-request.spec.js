@@ -544,10 +544,16 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     // Wait for form to load
     await page.waitForTimeout(2000);
 
-    console.log("Clicking Near Intents tab...");
+    // NEAR Intents should be selected by default now
+    console.log(
+      "Verifying NEAR Intents is selected in Treasury Wallet dropdown..."
+    );
 
-    // Click on Near Intents tab
-    await page.getByRole("button", { name: "Near Intents" }).click();
+    // Check that NEAR Intents is selected
+    const treasuryWalletDropdown = page
+      .locator(".dropdown-toggle.drop-btn")
+      .first();
+    await expect(treasuryWalletDropdown).toContainText("NEAR Intents");
     await page.waitForTimeout(2000);
 
     // Verify we see the 1Click form
@@ -571,7 +577,8 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     await page.waitForTimeout(3000);
 
     // Wait for tokens to load - check if dropdown button is no longer showing "Loading tokens..."
-    const sendTokenDropdown = page.locator(".dropdown-toggle.drop-btn").first();
+    // Skip the first dropdown which is Treasury Wallet
+    const sendTokenDropdown = page.locator(".dropdown-toggle.drop-btn").nth(1);
 
     // Instead of waiting for loading to disappear, wait for token to appear
     await expect(sendTokenDropdown).toContainText("Select token", {
@@ -618,7 +625,7 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     console.log("Selecting receive token...");
     const receiveTokenDropdown = page
       .locator(".dropdown-toggle.drop-btn")
-      .nth(1);
+      .nth(2);
     await receiveTokenDropdown.click();
     await page.waitForTimeout(500);
 
@@ -632,7 +639,7 @@ test.describe("1Click API Integration - Asset Exchange", function () {
 
     // Select network for receive token
     console.log("Selecting network...");
-    const networkDropdown = page.locator(".dropdown-toggle.drop-btn").nth(2);
+    const networkDropdown = page.locator(".dropdown-toggle.drop-btn").nth(3);
     await networkDropdown.click();
     await page.waitForTimeout(500);
 

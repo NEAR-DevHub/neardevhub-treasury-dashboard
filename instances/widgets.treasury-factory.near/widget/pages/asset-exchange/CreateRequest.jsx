@@ -26,7 +26,7 @@ const [lastProposalId, setLastProposalId] = useState(null);
 const [showCancelModal, setShowCancelModal] = useState(false);
 const [showRateWarningModal, setShowRateWarningModal] = useState(false);
 const [exchangeDetails, setExchangeDetails] = useState(null);
-const [activeTab, setActiveTab] = useState("sputnik-dao");
+const [treasuryWallet, setTreasuryWallet] = useState("near-intents");
 
 function getLastProposalId() {
   return Near.asyncView(treasuryDaoID, "get_last_proposal_id").then(
@@ -177,50 +177,15 @@ return (
       }}
     />
 
-    {/* Tab Switcher */}
-    <div className="tab-switcher d-flex gap-2 mb-3">
-      <button
-        className={`btn ${
-          activeTab === "sputnik-dao" ? "btn-primary" : "btn-outline-secondary"
-        }`}
-        onClick={() => setActiveTab("sputnik-dao")}
-      >
-        Sputnik DAO
-      </button>
-      <button
-        className={`btn ${
-          activeTab === "near-intents" ? "btn-primary" : "btn-outline-secondary"
-        }`}
-        onClick={() => setActiveTab("near-intents")}
-      >
-        Near Intents
-      </button>
-    </div>
-
-    {/* Conditional Form Rendering */}
-    {activeTab === "sputnik-dao" ? (
-      <Widget
-        loading=""
-        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.asset-exchange.ExchangeForm`}
-        props={{
-          instance,
-          onCancel: () => setShowCancelModal(true),
-          onSubmit: (args) => {
-            setExchangeDetails(args);
-            if (args.rateDifference && args.rateDifference < -1) {
-              setShowRateWarningModal(true);
-            } else {
-              onSubmitClick(args);
-            }
-          },
-        }}
-      />
-    ) : (
+    {/* Conditional Form Rendering based on treasury wallet */}
+    {treasuryWallet === "near-intents" ? (
       <Widget
         loading=""
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.asset-exchange.OneClickExchangeForm`}
         props={{
           instance,
+          treasuryWallet,
+          onTreasuryWalletChange: setTreasuryWallet,
           onCancel: () => setShowCancelModal(true),
           onSubmit: (args) => {
             // Format the 1Click proposal with encoded metadata
@@ -270,6 +235,25 @@ This proposal authorizes transferring tokens to 1Click's deposit address.
             };
 
             onSubmitClick(proposalDetails);
+          },
+        }}
+      />
+    ) : (
+      <Widget
+        loading=""
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.asset-exchange.ExchangeForm`}
+        props={{
+          instance,
+          treasuryWallet,
+          onTreasuryWalletChange: setTreasuryWallet,
+          onCancel: () => setShowCancelModal(true),
+          onSubmit: (args) => {
+            setExchangeDetails(args);
+            if (args.rateDifference && args.rateDifference < -1) {
+              setShowRateWarningModal(true);
+            } else {
+              onSubmitClick(args);
+            }
           },
         }}
       />
