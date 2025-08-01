@@ -122,6 +122,23 @@ const Container = styled.div`
     border-radius: 50%;
     background-color: rgb(0, 122, 255);
   }
+
+  /* Responsive text behavior */
+  .responsive-text {
+    display: none; /* Hidden by default on small screens */
+  }
+
+  @media (min-width: 992px) {
+    .responsive-text {
+      display: inline; /* Show on large screens */
+    }
+  }
+
+  /* Hide responsive text when proposal details panel is open */
+  .layout-secondary.show ~ .layout-main .responsive-text,
+  .layout-main:has(~ .layout-secondary.show) .responsive-text {
+    display: none !important;
+  }
 `;
 
 const normalize = (text) =>
@@ -406,15 +423,7 @@ const SidebarMenu = () => {
                   ActionButton: () => (
                     <button className="btn primary-button d-flex align-items-center gap-2 mb-0">
                       <i class="bi bi-plus-lg h5 mb-0"></i>
-                      <span
-                        className={
-                          typeof showProposalDetailsId === "number"
-                            ? "d-none"
-                            : "d-none d-lg-inline"
-                        }
-                      >
-                        Create Request
-                      </span>
+                      <span className="responsive-text">Create Request</span>
                     </button>
                   ),
                   checkForDeposit: true,

@@ -193,6 +193,7 @@ return (
             setAmountValues,
             amountValues,
             removeFilter: () => removeFilter(filterKey),
+            isPendingRequests,
           }}
         />
       </div>

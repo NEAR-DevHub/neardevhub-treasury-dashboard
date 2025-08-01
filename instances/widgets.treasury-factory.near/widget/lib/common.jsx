@@ -524,7 +524,10 @@ function getProposalsFromIndexer({
                 query += `&voter_votes=${accountId}:approved`;
               } else if (values[0] === "Rejected") {
                 query += `&voter_votes=${accountId}:rejected`;
-              } else if (values[0] === "Awaiting Decision") {
+              } else if (
+                values[0] === "Awaiting Decision" ||
+                values[0] === "Not Voted"
+              ) {
                 // Check if approvers_not already exists in the query
                 const existingApproversNot = query.match(
                   /&approvers_not=([^&]+)/

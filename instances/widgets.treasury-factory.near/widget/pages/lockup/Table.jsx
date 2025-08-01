@@ -103,7 +103,7 @@ const columns = [
   { title: "Cliff Date", show: allowLockupCancellation },
   { title: "Allow Cancellation", show: allowLockupCancellation },
   { title: "Allow Staking", show: true },
-  { title: "Required Votes", show: true },
+  { title: "Required Votes", show: isPendingRequests },
   { title: "Votes", show: isPendingRequests, className: "text-center" },
   { title: "Approvers", show: true },
   { title: "Actions", show: isPendingRequests, className: "text-right" },
@@ -230,9 +230,11 @@ const ProposalsComponent = ({ item }) => {
           ? "No"
           : "Yes"}
       </td>
-      <td className={isVisible("Required Votes") + " text-center"}>
-        {requiredVotes ?? "-"}
-      </td>
+      {isPendingRequests && (
+        <td className={isVisible("Required Votes") + " text-center"}>
+          {requiredVotes ?? "-"}
+        </td>
+      )}
       {isPendingRequests && (
         <td className={isVisible("Votes") + " text-center"}>
           <Widget
@@ -330,7 +332,7 @@ return (
         !Array.isArray(proposals) ? (
           <RowsSkeleton
             numberOfCols={
-              isPendingRequests ? columns.length : columns.length - 1
+              isPendingRequests ? columns.length : columns.length - 2
             }
             numberOfRows={3}
             numberOfHiddenRows={4}

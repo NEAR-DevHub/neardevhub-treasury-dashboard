@@ -14,6 +14,7 @@ const displayImage = props.displayImage ?? true;
 const profileClass = props.profileClass ?? "";
 const displayAddress = props.displayAddress ?? true;
 const imageSize = props.imageSize ?? { width: 35, height: 35 };
+const displayHoverCard = props.displayHoverCard ?? true;
 
 const [isVerfied, setIsVerfied] = useState(false);
 const [verificationStatus, setVerificationStatus] = useState(null);
@@ -165,16 +166,20 @@ const ReceiverAccountComponent = (
 
 return (
   <div>
-    <Widget
-      loading=""
-      src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
-      props={{
-        popup: <HoverCard />,
-        children: ReceiverAccountComponent,
-        instance: props.instance,
-        rootClose: false,
-        containerClass: "d-flex",
-      }}
-    />
+    {displayHoverCard ? (
+      <Widget
+        loading=""
+        src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+        props={{
+          popup: <HoverCard />,
+          children: ReceiverAccountComponent,
+          instance: props.instance,
+          rootClose: false,
+          containerClass: "d-flex",
+        }}
+      />
+    ) : (
+      ReceiverAccountComponent
+    )}
   </div>
 );

@@ -11,6 +11,7 @@ const {
   amountValues,
   removeFilter,
   include,
+  isPendingRequests,
 } = props;
 
 const [search, setSearch] = useState("");
@@ -75,7 +76,11 @@ const Container = styled.div`
 `;
 
 const statusOptions = ["Approved", "Rejected", "Failed", "Expired"];
-const voteOptions = ["Approved", "Rejected", "Awaiting Decision"];
+const voteOptions = [
+  "Approved",
+  "Rejected",
+  isPendingRequests ? "Awaiting Decision" : "Not Voted",
+];
 const includeOptions = [
   { value: true, label: multiple ? "is any" : "is" },
   { value: false, label: multiple ? "is not all" : "is not" },
@@ -167,6 +172,7 @@ const OptionRender = () => {
                       displayName: true,
                       instance,
                       profileClass: "text-secondary text-sm",
+                      displayHoverCard: false,
                     }}
                   />
                 </div>
@@ -388,13 +394,6 @@ const OptionRender = () => {
                 className="d-flex align-items-center gap-2 dropdown-item"
                 onClick={(e) => handleSelection(vote, e)}
               >
-                <input
-                  type="checkbox"
-                  className="form-check-input"
-                  role="switch"
-                  checked={selected.includes(vote)}
-                  readOnly
-                />
                 <span>{vote}</span>
               </div>
             ))}
@@ -516,6 +515,8 @@ const getDisplayValue = () => {
       }
     }
     return "";
+  } else if (type === "status") {
+    return selected[0] === "Approved" ? "Funded" : selected[0];
   } else {
     return selected.join(", ");
   }
