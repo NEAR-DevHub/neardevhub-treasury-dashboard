@@ -124,7 +124,7 @@ const networkNames = {
 // Handle icons loaded from Web3IconFetcher
 const handleAllIconsLoaded = (iconCache) => {
   const newTokenIconMap = {};
-  
+
   // Process the icon cache to build token icon map
   Object.keys(iconCache).forEach((key) => {
     const cached = iconCache[key];
@@ -144,26 +144,26 @@ const handleAllIconsLoaded = (iconCache) => {
 // Get token icon from map or from token metadata
 const getTokenIcon = (symbol) => {
   if (!symbol) return null;
-  
+
   // First check if we have it in the icon map
   if (tokenIconMap) {
     const icon = tokenIconMap[symbol] || tokenIconMap[symbol.toUpperCase()];
     if (icon) return icon;
   }
-  
+
   // Then check if the token already has an icon in its metadata
   // For intents tokens (Send dropdown)
-  const intentsToken = intentsTokensIn.find(t => t.symbol === symbol);
+  const intentsToken = intentsTokensIn.find((t) => t.symbol === symbol);
   if (intentsToken && intentsToken.icon) {
     return intentsToken.icon;
   }
-  
+
   // For all tokens out (Receive dropdown)
-  const outToken = allTokensOut.find(t => t.symbol === symbol);
+  const outToken = allTokensOut.find((t) => t.symbol === symbol);
   if (outToken && outToken.icon) {
     return outToken.icon;
   }
-  
+
   return null;
 };
 
@@ -334,7 +334,6 @@ const allTokensForIcons = [
   })),
   ...allTokensOut.map((t) => ({ symbol: t.symbol, networkId: t.network })),
 ];
-
 
 return (
   <Container>
