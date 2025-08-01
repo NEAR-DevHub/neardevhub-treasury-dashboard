@@ -237,7 +237,7 @@ const OptionRender = () => {
             )}
           </div>
 
-          {selected.length > 0 && (
+          {selected.length > 0 && include && (
             <div className="d-flex flex-column">
               <div className="d-flex align-items-center gap-2">
                 <div className="text-secondary text-sm">Amount</div>

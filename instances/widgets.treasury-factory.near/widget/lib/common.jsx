@@ -497,7 +497,11 @@ function getProposalsFromIndexer({
               break;
 
             case "token":
-              query += `&tokens=${values.join(",")}`;
+              if (include) {
+                query += `&tokens=${values.join(",")}`;
+              } else {
+                query += `&tokens_not=${values.join(",")}`;
+              }
               break;
 
             case "created_date":
