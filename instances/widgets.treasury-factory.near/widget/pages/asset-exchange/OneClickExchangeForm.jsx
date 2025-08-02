@@ -100,9 +100,12 @@ const Container = styled.div`
 
     .amount-input {
       flex: 1;
-      border-top-right-radius: 0;
-      border-bottom-right-radius: 0;
-      border-right: 0;
+
+      input.form-control {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+        border-right: 0;
+      }
     }
 
     .token-dropdown {
@@ -626,17 +629,26 @@ return (
       <div className="form-section">
         <label className="form-label">Send</label>
         <div className="input-row">
-          <input
-            type="number"
-            className="form-control amount-input"
-            placeholder="0.00"
-            value={amountIn}
-            onChange={(e) => {
-              setAmountIn(e.target.value);
-              setQuote(null);
+          <Widget
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
+            props={{
+              className: "amount-input",
+              onChange: (e) => {
+                setAmountIn(e.target.value);
+                setQuote(null);
+              },
+              placeholder: "0.00",
+              value: amountIn,
+              inputProps: {
+                min: "0",
+                type: "number",
+                step: "any",
+                className: "form-control amount-input",
+              },
+              skipPaddingGap: true,
+              debounceTimeout: 300,
+              style: { flex: 1 },
             }}
-            min="0"
-            step="any"
           />
           <div className="token-dropdown dropdown-container">
             <Widget
