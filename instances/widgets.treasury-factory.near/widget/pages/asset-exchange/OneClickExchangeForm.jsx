@@ -17,8 +17,31 @@ const Container = styled.div`
     }
   }
 
-  .available-balance-box {
+  .info-message {
     background-color: var(--bs-gray-100);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+
+    .info-icon {
+      color: var(--bs-secondary);
+      font-size: 20px;
+      margin-top: 2px;
+    }
+
+    .info-text {
+      color: var(--bs-gray-700);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+  }
+
+  .available-balance-box {
+    background-color: white;
+    border: 1px solid var(--bs-gray-300);
     border-radius: 8px;
     padding: 16px;
     margin-bottom: 20px;
@@ -427,11 +450,13 @@ return (
         </div>
       </div>
 
-      <div className="mb-4">
-        <h6 className="text-muted mb-3">
+      {/* Info Message */}
+      <div className="info-message">
+        <i className="bi bi-info-circle-fill info-icon"></i>
+        <div className="info-text">
           Swap tokens in your NEAR Intents holdings via the 1Click API.
           Exchanged tokens stay in your treasury account.
-        </h6>
+        </div>
       </div>
 
       {/* Web3IconFetcher - Load icons asynchronously without blocking UI */}
