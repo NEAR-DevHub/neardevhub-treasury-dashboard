@@ -763,6 +763,24 @@ test.describe("1Click API Integration - Asset Exchange", function () {
       fullPage: true,
     });
 
+    // Expand quote details
+    console.log("Expanding quote details...");
+    const detailsToggle = await page.locator(".details-toggle");
+    await detailsToggle.click();
+    await page.waitForTimeout(500); // Wait for animation
+
+    // Scroll the quote details into view
+    const quoteDisplay = await page.locator(".quote-display");
+    await quoteDisplay.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(500); // Wait for scroll to complete
+
+    // Take screenshot with expanded details
+    await page.screenshot({
+      path: path.join(screenshotsDir, "09-quote-details-expanded.png"),
+      fullPage: true,
+    });
+    console.log("✅ Quote details expanded and screenshot taken");
+
     // Verify Create Proposal button is now visible
     await expect(
       page.locator('button:has-text("Create Proposal")')
