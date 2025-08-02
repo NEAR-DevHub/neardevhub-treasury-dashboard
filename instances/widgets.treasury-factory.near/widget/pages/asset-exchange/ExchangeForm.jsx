@@ -240,14 +240,6 @@ const code = `
         </head>
         <body data-bs-theme=${isDarkTheme ? "dark" : "light"}>
             <div class="d-flex flex-column gap-3">
-            <!-- Treasury Wallet Dropdown -->
-            <div class="d-flex flex-column gap-2">
-                <label>Treasury Wallet</label>
-                <select id="treasury-wallet" class="form-select" onchange="handleTreasuryWalletChange()">
-                    <option value="sputnik-dao">SputnikDAO</option>
-                    <option value="near-intents">NEAR Intents</option>
-                </select>
-            </div>
             <!-- Send Section -->
             <div class="d-flex flex-column gap-2">
                 <label>Send</label>
@@ -1241,13 +1233,6 @@ const code = `
                 window.parent.postMessage({ handler: "onCancel" }, "*");
             }
 
-            function handleTreasuryWalletChange() {
-                const selectedValue = document.getElementById("treasury-wallet").value;
-                window.parent.postMessage({ 
-                    handler: "onTreasuryWalletChange", 
-                    value: selectedValue 
-                }, "*");
-            }
 
             window.addEventListener("message", function (event) {
                 whitelistTokenAPI = event.data.whitelistTokenAPI;
@@ -1290,12 +1275,6 @@ return (
         }
         case "onSubmit": {
           onSubmit(e.args);
-          break;
-        }
-        case "onTreasuryWalletChange": {
-          if (props.onTreasuryWalletChange) {
-            props.onTreasuryWalletChange(e.value);
-          }
           break;
         }
         case "updateIframeHeight": {

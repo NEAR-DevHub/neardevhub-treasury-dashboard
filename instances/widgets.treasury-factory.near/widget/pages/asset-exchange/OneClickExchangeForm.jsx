@@ -16,6 +16,49 @@ const Container = styled.div`
       width: 100%;
     }
   }
+
+  .available-balance-box {
+    background-color: var(--bs-gray-100);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+
+    .balance-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      font-weight: 500;
+      color: var(--bs-gray-700);
+    }
+
+    .balance-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .balance-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--bs-gray-900);
+      font-size: 14px;
+    }
+
+    .token-info {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .token-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+  }
 `;
 
 // State management
@@ -338,33 +381,56 @@ const allTokensForIcons = [
 return (
   <Container>
     <div className="one-click-exchange-form">
-      {/* Treasury Wallet Dropdown */}
-      <div className="mb-3">
-        <label className="form-label">Treasury Wallet</label>
-        <div className="dropdown-container">
+      {/* Available Balance Box */}
+      <div className="available-balance-box">
+        <div className="balance-header">
+          <span>Available Balance</span>
           <Widget
-            src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
+            src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
             props={{
-              selectedValue: props.treasuryWallet || "near-intents",
-              onChange: (option) => {
-                if (props.onTreasuryWalletChange) {
-                  props.onTreasuryWalletChange(option.value);
-                }
-              },
-              options: [
-                { label: "SputnikDAO", value: "sputnik-dao" },
-                { label: "NEAR Intents", value: "near-intents" },
-              ],
-              defaultLabel: "Select wallet",
-              showSearch: false,
+              popup: (
+                <div className="p-2">
+                  <small>
+                    These are the tokens available in your NEAR Intents treasury
+                  </small>
+                </div>
+              ),
+              children: <i className="bi bi-info-circle text-muted" />,
             }}
           />
+        </div>
+        <div className="balance-list">
+          {intentsTokensIn.length > 0 ? (
+            intentsTokensIn.map((token) => (
+              <div key={token.id} className="balance-item">
+                <div className="token-info">
+                  {(token.icon || getTokenIcon(token.symbol)) && (
+                    <img
+                      src={token.icon || getTokenIcon(token.symbol)}
+                      alt={token.symbol}
+                      className="token-icon"
+                      onError={(e) => {
+                        e.target.style.display = "none";
+                      }}
+                    />
+                  )}
+                  <span>{token.symbol}</span>
+                </div>
+                <span>
+                  {token.balance} {token.symbol}
+                </span>
+              </div>
+            ))
+          ) : (
+            <div className="text-muted small">Loading balances...</div>
+          )}
         </div>
       </div>
 
       <div className="mb-4">
         <h6 className="text-muted mb-3">
-          Exchange tokens within your NEAR Intents holdings using 1Click API
+          Swap tokens in your NEAR Intents holdings via the 1Click API.
+          Exchanged tokens stay in your treasury account.
         </h6>
       </div>
 

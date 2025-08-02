@@ -544,22 +544,53 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     // Wait for form to load
     await page.waitForTimeout(2000);
 
-    // NEAR Intents should be selected by default now
-    console.log(
-      "Verifying NEAR Intents is selected in Treasury Wallet dropdown..."
-    );
+    console.log("Switching to NEAR Intents form...");
 
-    // Check that NEAR Intents is selected
-    const treasuryWalletDropdown = page
-      .locator(".dropdown-toggle.drop-btn")
-      .first();
-    await expect(treasuryWalletDropdown).toContainText("NEAR Intents");
+    // Take a screenshot to see what's on the page
+    await page.screenshot({
+      path: path.join(screenshotsDir, "form-loaded.png"),
+      fullPage: true,
+    });
+
+    // Wait for form to load
     await page.waitForTimeout(2000);
+
+    console.log("Looking for Treasury Wallet dropdown (outside iframe)...");
+
+    // Treasury Wallet dropdown is now outside the iframe
+    // Wait for the Treasury Wallet label to be visible
+    await expect(page.getByText("Treasury Wallet")).toBeVisible({
+      timeout: 10000,
+    });
+
+    // Find and click the Treasury Wallet dropdown
+    const treasuryWalletDropdown = page
+      .locator('.form-label:has-text("Treasury Wallet")')
+      .locator("~ div .dropdown-toggle")
+      .first();
+    await treasuryWalletDropdown.click();
+    console.log("Clicked Treasury Wallet dropdown");
+
+    // Wait for dropdown menu to appear
+    await page.waitForTimeout(500);
+
+    // Click on NEAR Intents option
+    await page.getByText("NEAR Intents", { exact: true }).click();
+    console.log("Selected NEAR Intents from dropdown");
+
+    await page.waitForTimeout(2000);
+
+    // Take another screenshot to see if form changed
+    await page.screenshot({
+      path: path.join(screenshotsDir, "after-near-intents-selection.png"),
+      fullPage: true,
+    });
 
     // Verify we see the 1Click form
     await expect(
       page.getByText(
-        "Exchange tokens within your NEAR Intents holdings using 1Click API"
+        "Swap tokens in your NEAR Intents holdings via the 1Click API",
+        { exact: false }
       )
     ).toBeVisible();
 
@@ -577,8 +608,9 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     await page.waitForTimeout(3000);
 
     // Wait for tokens to load - check if dropdown button is no longer showing "Loading tokens..."
-    // Skip the first dropdown which is Treasury Wallet
-    const sendTokenDropdown = page.locator(".dropdown-toggle.drop-btn").nth(1);
+    // Now we need to skip the Treasury Wallet dropdown (index 0) and get the Send token dropdown (index 1)
+    const dropdownSelector = ".dropdown-toggle";
+    const sendTokenDropdown = page.locator(dropdownSelector).nth(1);
 
     // Instead of waiting for loading to disappear, wait for token to appear
     await expect(sendTokenDropdown).toContainText("Select token", {
@@ -623,9 +655,7 @@ test.describe("1Click API Integration - Asset Exchange", function () {
 
     // Select receive token
     console.log("Selecting receive token...");
-    const receiveTokenDropdown = page
-      .locator(".dropdown-toggle.drop-btn")
-      .nth(2);
+    const receiveTokenDropdown = page.locator(dropdownSelector).nth(2);
     await receiveTokenDropdown.click();
     await page.waitForTimeout(500);
 
@@ -639,7 +669,7 @@ test.describe("1Click API Integration - Asset Exchange", function () {
 
     // Select network for receive token
     console.log("Selecting network...");
-    const networkDropdown = page.locator(".dropdown-toggle.drop-btn").nth(3);
+    const networkDropdown = page.locator(dropdownSelector).nth(3);
     await networkDropdown.click();
     await page.waitForTimeout(500);
 
