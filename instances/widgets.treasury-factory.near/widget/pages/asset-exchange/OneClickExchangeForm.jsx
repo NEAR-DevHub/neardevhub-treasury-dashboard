@@ -94,16 +94,24 @@ const Container = styled.div`
 
     .input-row {
       display: flex;
-      gap: 12px;
+      gap: 0;
       margin-bottom: 8px;
     }
 
     .amount-input {
       flex: 1;
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+      border-right: 0;
     }
 
     .token-dropdown {
       flex: 1;
+
+      .dropdown button {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+      }
     }
 
     .network-dropdown {
@@ -453,7 +461,7 @@ return (
         <div className="balance-header">
           <span>Available Balance</span>
           <Widget
-            src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger`}
             props={{
               popup: (
                 <div className="p-2">
@@ -506,7 +514,7 @@ return (
       {/* Web3IconFetcher - Load icons asynchronously without blocking UI */}
       {allTokensForIcons.length > 0 && (
         <Widget
-          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Web3IconFetcher"
+          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Web3IconFetcher`}
           props={{
             tokens: allTokensForIcons,
             onIconsLoaded: handleAllIconsLoaded,
@@ -541,7 +549,7 @@ return (
           />
           <div className="token-dropdown dropdown-container">
             <Widget
-              src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
+              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest`}
               props={{
                 selectedValue: tokenIn,
                 onChange: (option) => {
@@ -549,7 +557,7 @@ return (
                   setQuote(null);
                 },
                 options: intentsTokensIn.map((token) => ({
-                  label: `${token.symbol} (${token.balance} available)`,
+                  label: token.symbol,
                   value: token.id,
                   icon: token.icon || getTokenIcon(token.symbol),
                 })),
@@ -561,6 +569,13 @@ return (
             />
           </div>
         </div>
+        {tokenIn && (
+          <div className="helper-text">
+            Current Balance:{" "}
+            {intentsTokensIn.find((t) => t.id === tokenIn)?.balance || "0.00"}{" "}
+            {intentsTokensIn.find((t) => t.id === tokenIn)?.symbol}
+          </div>
+        )}
       </div>
 
       {/* Swap Icon */}
@@ -587,7 +602,7 @@ return (
           />
           <div className="token-dropdown dropdown-container">
             <Widget
-              src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
+              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest`}
               props={{
                 selectedValue: tokenOut,
                 onChange: (option) => {
@@ -620,7 +635,7 @@ return (
         <label className="form-label">Network</label>
         <div className="network-dropdown dropdown-container">
           <Widget
-            src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest`}
             props={{
               selectedValue: networkOut,
               onChange: (option) => {
