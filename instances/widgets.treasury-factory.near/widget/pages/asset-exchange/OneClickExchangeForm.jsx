@@ -516,6 +516,13 @@ const handleGetQuote = () => {
 const handleSubmit = () => {
   if (!quote) return;
 
+  // Don't submit if quote has no deadline
+  if (!quote.deadline) {
+    console.error("Quote has no deadline:", quote);
+    setErrorApi("Invalid quote: No expiry deadline provided");
+    return;
+  }
+
   // Find the selected token info to get the symbol
   const selectedTokenIn = intentsTokensIn.find((t) => t.id === tokenIn);
 
@@ -537,6 +544,29 @@ const handleSubmit = () => {
 };
 
 const isFormValid = tokenIn && tokenOut && networkOut && amountIn;
+
+// Calculate time remaining for quote expiry
+const getTimeRemaining = (deadline) => {
+  if (!deadline) return null;
+
+  const now = new Date();
+  const expiryDate = new Date(deadline);
+  const diffMs = expiryDate - now;
+
+  if (diffMs <= 0) return "expired";
+
+  const hours = Math.floor(diffMs / (1000 * 60 * 60));
+  const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+  if (hours > 24) {
+    const days = Math.floor(hours / 24);
+    return `${days} day${days > 1 ? "s" : ""}`;
+  } else if (hours > 0) {
+    return `${hours} hour${hours > 1 ? "s" : ""}`;
+  } else {
+    return `${minutes} minute${minutes > 1 ? "s" : ""}`;
+  }
+};
 
 // Prepare tokens for icon fetching
 const allTokensForIcons = [
@@ -764,13 +794,21 @@ return (
       {quote && (
         <div className="quote-display">
           {/* Expiry Alert */}
-          <div className="quote-alert">
-            <i className="bi bi-exclamation-triangle-fill alert-icon"></i>
-            <span>
-              Please approve this request within 24 hours - otherwise, it will
-              be expired. We recommend confirming as soon as possible.
-            </span>
-          </div>
+          {quote.deadline ? (
+            <div className="quote-alert">
+              <i className="bi bi-exclamation-triangle-fill alert-icon"></i>
+              <span>
+                Please approve this request within{" "}
+                {getTimeRemaining(quote.deadline)} - otherwise, it will be
+                expired. We recommend confirming as soon as possible.
+              </span>
+            </div>
+          ) : (
+            <div className="alert alert-danger">
+              <i className="bi bi-exclamation-triangle-fill me-2"></i>
+              Invalid quote: No expiry deadline provided
+            </div>
+          )}
 
           {/* Quote Summary */}
           <div className="quote-summary">
@@ -855,7 +893,7 @@ return (
           <button
             className="btn btn-success"
             onClick={handleSubmit}
-            disabled={isLoading}
+            disabled={isLoading || !quote.deadline}
           >
             {isLoading ? "Creating Proposal..." : "Create Proposal"}
           </button>
