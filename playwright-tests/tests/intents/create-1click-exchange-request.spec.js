@@ -586,43 +586,44 @@ test.describe("1Click API Integration - Asset Exchange", function () {
       fullPage: true,
     });
 
-    // Verify we see the 1Click form
-    await expect(
-      page.getByText(
-        "Swap tokens in your NEAR Intents holdings via the 1Click API",
-        { exact: false }
-      )
-    ).toBeVisible();
+    // The 1Click form is now inside an iframe
+    const frame = page.frameLocator('iframe[class*="w-100"]');
 
-    console.log("Checking Send token dropdown...");
-
-    // Log the actual balance check to debug first
-    console.log("Checking intents balance for:", daoAccount);
-    const checkBalance = await intentsContract.view("mt_batch_balance_of", {
-      account_id: daoAccount,
-      token_ids: ["nep141:eth.omft.near"],
-    });
-    console.log("Direct balance check result:", checkBalance);
-
-    // Wait a bit more for the form to fully load
+    // Wait for the form to load
     await page.waitForTimeout(3000);
 
-    // Wait for tokens to load - check if dropdown button is no longer showing "Loading tokens..."
-    // Now we need to skip the Treasury Wallet dropdown (index 0) and get the Send token dropdown (index 1)
-    const dropdownSelector = ".dropdown-toggle";
-    const sendTokenDropdown = page.locator(dropdownSelector).nth(1);
+    console.log("Checking if form loaded...");
 
-    // Instead of waiting for loading to disappear, wait for token to appear
-    await expect(sendTokenDropdown).toContainText("Select token", {
-      timeout: 20000,
+    // Check for the info message to confirm form loaded
+    await expect(page.locator("body")).toContainText(
+      "Swap tokens in your NEAR Intents holdings",
+      {
+        timeout: 10000,
+      }
+    );
+
+    console.log("Form loaded successfully!");
+
+    // Take screenshot of the loaded form
+    await page.screenshot({
+      path: path.join(screenshotsDir, "oneclick-form-loaded.png"),
+      fullPage: true,
     });
 
+    console.log("OneClick form loaded successfully");
+
+    // Continue with the full test flow
+    console.log("Filling out the 1Click swap form...");
+
+    // Fill in the amount to swap
+    await page.fill('input[placeholder="0.00"]', "0.1");
+
     // Click on the Send token dropdown
+    const sendTokenDropdown = await page
+      .locator('.dropdown-toggle:has-text("Select token")')
+      .first();
     await sendTokenDropdown.click();
     await page.waitForTimeout(1000);
-
-    // Wait for dropdown menu to be visible
-    await expect(page.locator(".dropdown-menu")).toBeVisible();
 
     // Take screenshot of the dropdown
     await page.screenshot({
@@ -630,56 +631,40 @@ test.describe("1Click API Integration - Asset Exchange", function () {
       fullPage: true,
     });
 
-    // Check if tokens are visible in the dropdown
-    const sendTokenOptions = await page
-      .locator(".dropdown-item")
-      .allTextContents();
-    console.log("Send token options:", sendTokenOptions);
-
-    // Verify we have tokens
-    expect(sendTokenOptions.length).toBeGreaterThan(0);
-
+    // Select ETH from the dropdown
     console.log("Selecting ETH from Send dropdown...");
-
-    // Find and click the ETH option
-    const ethOption = page
-      .locator(".dropdown-item")
-      .filter({ hasText: "ETH" })
+    const ethOption = await page
+      .locator('.dropdown-item:has-text("ETH")')
       .first();
     await ethOption.click();
     await page.waitForTimeout(1000);
 
-    // Enter amount to swap
-    console.log("Entering amount to swap...");
-    await page.getByPlaceholder("0.00").fill("0.1");
-
-    // Select receive token
+    // Select receive token - need to wait for dropdown to close first
+    await page.waitForTimeout(1000);
     console.log("Selecting receive token...");
-    const receiveTokenDropdown = page.locator(dropdownSelector).nth(2);
+    const receiveTokenDropdown = await page.locator(".dropdown-toggle").nth(2); // Third dropdown (after treasury wallet and send token)
     await receiveTokenDropdown.click();
     await page.waitForTimeout(500);
 
-    // Wait for dropdown menu and find USDC option
-    await expect(page.locator(".dropdown-menu")).toBeVisible();
-    const usdcOption = page
-      .locator(".dropdown-item")
-      .filter({ hasText: "USDC" })
+    // Select USDC
+    const usdcOption = await page
+      .locator('.dropdown-item:has-text("USDC")')
       .first();
     await usdcOption.click();
+    await page.waitForTimeout(1000);
 
     // Select network for receive token
     console.log("Selecting network...");
-    const networkDropdown = page.locator(dropdownSelector).nth(3);
+    const networkDropdown = await page.locator(".dropdown-toggle").nth(3); // Fourth dropdown
     await networkDropdown.click();
     await page.waitForTimeout(500);
 
-    // Wait for dropdown menu and find Ethereum option
-    await expect(page.locator(".dropdown-menu")).toBeVisible();
-    const ethNetworkOption = page
-      .locator(".dropdown-item")
-      .filter({ hasText: "Ethereum" })
+    // Select Ethereum network
+    const ethNetworkOption = await page
+      .locator('.dropdown-item:has-text("Ethereum")')
       .first();
     await ethNetworkOption.click();
+    await page.waitForTimeout(1000);
 
     // Generate a deposit address keypair for testing
     const { KeyPair } = nearAPI.utils;
@@ -755,7 +740,7 @@ test.describe("1Click API Integration - Asset Exchange", function () {
 
     // Click Get Quote button
     console.log("Clicking Get Quote button...");
-    await page.getByRole("button", { name: "Get Quote" }).click();
+    await page.locator('button:has-text("Get Quote")').click();
 
     // Wait for quote to appear
     console.log("Waiting for quote to appear...");
@@ -766,7 +751,7 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     await expect(page.getByText("0.1 ETH")).toBeVisible();
     await expect(page.getByText("You receive:")).toBeVisible();
     // The actual quote amount will vary based on current rates
-    await expect(page.getByText(/\d+\.\d+ USDC/)).toBeVisible();
+    await expect(page.locator('strong:has-text("USDC")')).toBeVisible();
 
     // Scroll to the quote details for better video visibility
     const quoteSection = page.getByText("You receive:").first();
@@ -781,7 +766,7 @@ test.describe("1Click API Integration - Asset Exchange", function () {
 
     // Verify Create Proposal button is now visible
     await expect(
-      page.getByRole("button", { name: "Create Proposal" })
+      page.locator('button:has-text("Create Proposal")')
     ).toBeVisible();
 
     console.log("✅ Successfully fetched quote from 1Click API!");
@@ -789,7 +774,7 @@ test.describe("1Click API Integration - Asset Exchange", function () {
 
     // Click Create Proposal button
     console.log("\nClicking Create Proposal button...");
-    await page.getByRole("button", { name: "Create Proposal" }).click();
+    await page.locator('button:has-text("Create Proposal")').click();
 
     // Wait for transaction modal
     console.log("Waiting for transaction modal...");

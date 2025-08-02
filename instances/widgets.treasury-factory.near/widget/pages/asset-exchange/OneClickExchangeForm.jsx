@@ -82,6 +82,50 @@ const Container = styled.div`
       object-fit: cover;
     }
   }
+
+  .form-section {
+    margin-bottom: 24px;
+
+    .form-label {
+      color: var(--bs-gray-700);
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .amount-input {
+      flex: 1;
+    }
+
+    .token-dropdown {
+      flex: 1;
+    }
+
+    .network-dropdown {
+      width: 100%;
+    }
+
+    .helper-text {
+      color: var(--bs-gray-600);
+      font-size: 13px;
+      margin-top: 4px;
+    }
+  }
+
+  .swap-icon-container {
+    text-align: center;
+    margin: 16px 0;
+
+    .swap-icon {
+      color: var(--bs-gray-400);
+      font-size: 24px;
+    }
+  }
 `;
 
 // State management
@@ -480,24 +524,30 @@ return (
       )}
 
       {/* Send Section */}
-      <div className="mb-3">
+      <div className="form-section">
         <label className="form-label">Send</label>
-        <div className="d-flex gap-2">
+        <div className="input-row">
           <input
             type="number"
-            className="form-control"
+            className="form-control amount-input"
             placeholder="0.00"
             value={amountIn}
-            onChange={(e) => setAmountIn(e.target.value)}
+            onChange={(e) => {
+              setAmountIn(e.target.value);
+              setQuote(null);
+            }}
             min="0"
             step="any"
           />
-          <div style={{ minWidth: "250px" }} className="dropdown-container">
+          <div className="token-dropdown dropdown-container">
             <Widget
               src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
               props={{
                 selectedValue: tokenIn,
-                onChange: (option) => setTokenIn(option.value),
+                onChange: (option) => {
+                  setTokenIn(option.value);
+                  setQuote(null);
+                },
                 options: intentsTokensIn.map((token) => ({
                   label: `${token.symbol} (${token.balance} available)`,
                   value: token.id,
@@ -514,15 +564,28 @@ return (
       </div>
 
       {/* Swap Icon */}
-      <div className="text-center my-2">
-        <i className="bi bi-arrow-down-circle h4 text-muted"></i>
+      <div className="swap-icon-container">
+        <i className="bi bi-arrow-down-circle swap-icon"></i>
       </div>
 
       {/* Receive Section */}
-      <div className="mb-3">
+      <div className="form-section">
         <label className="form-label">Receive</label>
-        <div className="d-flex gap-2">
-          <div style={{ flex: 1 }} className="dropdown-container">
+        <div className="input-row">
+          <input
+            type="text"
+            className="form-control amount-input"
+            placeholder={
+              isLoadingQuote
+                ? "Fetching..."
+                : quote && quote.amountOutFormatted
+                ? quote.amountOutFormatted
+                : "0.00"
+            }
+            readOnly
+            disabled
+          />
+          <div className="token-dropdown dropdown-container">
             <Widget
               src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
               props={{
@@ -530,6 +593,7 @@ return (
                 onChange: (option) => {
                   setTokenOut(option.value);
                   setNetworkOut(null); // Reset network selection
+                  setQuote(null);
                 },
                 options: [...new Set(allTokensOut.map((t) => t.symbol))]
                   .sort()
@@ -545,28 +609,37 @@ return (
               }}
             />
           </div>
-          <div style={{ minWidth: "200px" }} className="dropdown-container">
-            <Widget
-              src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
-              props={{
-                selectedValue: networkOut,
-                onChange: (option) => setNetworkOut(option.value),
-                options: getAvailableNetworks().map((network) => ({
-                  label: network.name,
-                  value: network.id,
-                  icon: network.icon,
-                })),
-                defaultLabel: !tokenOut
-                  ? "Select token first"
-                  : "Select network",
-                showSearch: false, // Network list is shorter, search not needed
-              }}
-            />
-          </div>
         </div>
-        <small className="text-muted">
+        {tokenOut && (
+          <div className="helper-text">Current Balance: 0.00 {tokenOut}</div>
+        )}
+      </div>
+
+      {/* Network Section */}
+      <div className="form-section">
+        <label className="form-label">Network</label>
+        <div className="network-dropdown dropdown-container">
+          <Widget
+            src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
+            props={{
+              selectedValue: networkOut,
+              onChange: (option) => {
+                setNetworkOut(option.value);
+                setQuote(null);
+              },
+              options: getAvailableNetworks().map((network) => ({
+                label: network.name,
+                value: network.id,
+                icon: network.icon,
+              })),
+              defaultLabel: !tokenOut ? "Select token first" : "Select network",
+              showSearch: false, // Network list is shorter, search not needed
+            }}
+          />
+        </div>
+        <div className="helper-text">
           Swapped tokens will remain in the treasury's NEAR Intents account
-        </small>
+        </div>
       </div>
 
       {/* Quote Display */}
