@@ -108,9 +108,14 @@ const Container = styled.div`
     .token-dropdown {
       flex: 1;
 
-      .dropdown button {
-        border-top-left-radius: 0;
-        border-bottom-left-radius: 0;
+      .dropdown-toggle {
+        border-top-left-radius: 0 !important;
+        border-bottom-left-radius: 0 !important;
+        border-left: 1px solid #dee2e6;
+      }
+
+      .custom-select > div.dropdown-toggle {
+        border-radius: 0 0.375rem 0.375rem 0 !important;
       }
     }
 
