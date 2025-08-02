@@ -321,17 +321,6 @@ useEffect(() => {
     });
 }, []);
 
-// Network names mapping
-const networkNames = {
-  "eth:1": "Ethereum",
-  "base:8453": "Base",
-  "arbitrum:42161": "Arbitrum",
-  "optimism:10": "Optimism",
-  "near:near": "NEAR",
-  "btc:mainnet": "Bitcoin",
-  "sol:mainnet-beta": "Solana",
-};
-
 // Handle icons loaded from Web3IconFetcher
 const handleAllIconsLoaded = (iconCache) => {
   const newTokenIconMap = {};
@@ -394,12 +383,17 @@ const getAvailableNetworks = () => {
 
   const networks = allTokensOut
     .filter((token) => token.symbol === tokenOut)
-    .map((token) => ({
-      id: token.network,
-      name: networkNames[token.network] || token.network,
-      tokenId: token.id,
-      icon: getNetworkIcon(token.network),
-    }));
+    .map((token) => {
+      const networkCache = web3IconsCache && web3IconsCache[token.network];
+      const networkName = networkCache?.networkName || token.network;
+
+      return {
+        id: token.network,
+        name: networkName,
+        tokenId: token.id,
+        icon: getNetworkIcon(token.network),
+      };
+    });
 
   return networks;
 };
