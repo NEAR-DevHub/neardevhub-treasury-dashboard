@@ -18,7 +18,9 @@ if (!instance) {
   return <></>;
 }
 
-const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+const { treasuryDaoID, showNearIntents } = VM.require(
+  `${instance}/widget/config.data`
+);
 
 const [isTxnCreated, setTxnCreated] = useState(false);
 const [daoPolicy, setDaoPolicy] = useState(null);
@@ -138,23 +140,25 @@ return (
       cancelTxn={() => setTxnCreated(false)}
     />
 
-    {/* Treasury Wallet Dropdown - Outside iframe */}
-    <div className="mb-3">
-      <label className="form-label">Treasury Wallet</label>
-      <Widget
-        src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
-        props={{
-          selectedValue: treasuryWallet,
-          onChange: (option) => setTreasuryWallet(option.value),
-          options: [
-            { label: "SputnikDAO", value: "sputnik-dao" },
-            { label: "NEAR Intents", value: "near-intents" },
-          ],
-          defaultLabel: "Select wallet",
-          showSearch: false,
-        }}
-      />
-    </div>
+    {/* Treasury Wallet Dropdown - Only show if showNearIntents is enabled */}
+    {showNearIntents && (
+      <div className="mb-3">
+        <label className="form-label">Treasury Wallet</label>
+        <Widget
+          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
+          props={{
+            selectedValue: treasuryWallet,
+            onChange: (option) => setTreasuryWallet(option.value),
+            options: [
+              { label: "SputnikDAO", value: "sputnik-dao" },
+              { label: "NEAR Intents", value: "near-intents" },
+            ],
+            defaultLabel: "Select wallet",
+            showSearch: false,
+          }}
+        />
+      </div>
+    )}
 
     <Widget
       loading=""
@@ -197,7 +201,7 @@ return (
     />
 
     {/* Conditional Form Rendering based on treasury wallet */}
-    {treasuryWallet === "near-intents" ? (
+    {showNearIntents && treasuryWallet === "near-intents" ? (
       <Widget
         loading=""
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.asset-exchange.OneClickExchangeForm`}
