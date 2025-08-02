@@ -134,6 +134,90 @@ const Container = styled.div`
       font-size: 24px;
     }
   }
+
+  .quote-display {
+    background-color: var(--bs-light);
+    border: 1px solid var(--bs-gray-300);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 24px;
+
+    .quote-alert {
+      background-color: #fef3cd;
+      border: 1px solid #ffeeba;
+      color: #856404;
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+
+      .alert-icon {
+        color: #f0ad4e;
+        font-size: 18px;
+      }
+    }
+
+    .quote-summary {
+      font-size: 18px;
+      font-weight: 500;
+      color: var(--bs-gray-900);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .arrow-icon {
+        color: var(--bs-gray-600);
+      }
+    }
+
+    .quote-details {
+      border-top: 1px solid var(--bs-gray-300);
+      padding-top: 16px;
+      margin-top: 16px;
+
+      .detail-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        color: var(--bs-gray-700);
+        font-size: 14px;
+
+        &:not(:last-child) {
+          border-bottom: 1px solid var(--bs-gray-200);
+        }
+
+        .detail-label {
+          color: var(--bs-gray-600);
+        }
+
+        .detail-value {
+          font-weight: 500;
+          color: var(--bs-gray-900);
+        }
+      }
+    }
+
+    .details-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      margin-top: 12px;
+      color: var(--bs-primary);
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      gap: 4px;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
 `;
 
 // State management
@@ -151,6 +235,7 @@ const [isLoadingQuote, setIsLoadingQuote] = useState(false);
 const [web3IconsCache, setWeb3IconsCache] = useState({});
 const [tokenIconMap, setTokenIconMap] = useState({});
 const [allIconsFetched, setAllIconsFetched] = useState(false);
+const [showQuoteDetails, setShowQuoteDetails] = useState(false);
 
 // Fetch treasury's NEAR Intents tokens for Send dropdown
 useEffect(() => {
@@ -343,6 +428,7 @@ const fetchQuote = () => {
   setIsLoadingQuote(true);
   setQuote(null);
   setErrorApi(null);
+  setShowQuoteDetails(false);
 
   // Calculate deadline (7 days for DAO voting)
   const deadline = new Date();
@@ -659,41 +745,68 @@ return (
 
       {/* Quote Display */}
       {quote && (
-        <div className="alert alert-info mb-4">
-          <h6 className="mb-2">Quote Details</h6>
-          <div className="d-flex justify-content-between mb-2">
-            <span>You send:</span>
-            <strong>
+        <div className="quote-display">
+          {/* Expiry Alert */}
+          <div className="quote-alert">
+            <i className="bi bi-exclamation-triangle-fill alert-icon"></i>
+            <span>
+              Please approve this request within 24 hours - otherwise, it will
+              be expired. We recommend confirming as soon as possible.
+            </span>
+          </div>
+
+          {/* Quote Summary */}
+          <div className="quote-summary">
+            <span>
               {quote.amountInFormatted}{" "}
-              {intentsTokensIn.find((t) => t.id === tokenIn)?.symbol}
-            </strong>
+              {intentsTokensIn.find((t) => t.id === tokenIn)?.symbol}($
+              {quote.amountInUsd || "0.00"})
+            </span>
+            <i className="bi bi-arrow-right arrow-icon"></i>
+            <span>
+              {quote.amountOutFormatted} {tokenOut}($
+              {quote.amountOutUsd || "0.00"})
+            </span>
           </div>
-          <div className="d-flex justify-content-between mb-2">
-            <span>You receive:</span>
-            <strong>
-              {quote.amountOutFormatted} {tokenOut}
-            </strong>
+
+          {/* Collapsible Details */}
+          {showQuoteDetails && (
+            <div className="quote-details">
+              <div className="detail-row">
+                <span className="detail-label">Estimated time</span>
+                <span className="detail-value">
+                  {quote.timeEstimate || 10} minutes
+                </span>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Deposit address</span>
+                <span className="detail-value">
+                  {quote.depositAddress
+                    ? `${quote.depositAddress.substring(0, 20)}...`
+                    : "N/A"}
+                </span>
+              </div>
+              {quote.deadline && (
+                <div className="detail-row">
+                  <span className="detail-label">Quote expires</span>
+                  <span className="detail-value">
+                    {new Date(quote.deadline).toLocaleString()}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Details Toggle */}
+          <div
+            className="details-toggle"
+            onClick={() => setShowQuoteDetails(!showQuoteDetails)}
+          >
+            <span>Details</span>
+            <i
+              className={`bi bi-chevron-${showQuoteDetails ? "up" : "down"}`}
+            ></i>
           </div>
-          {quote.timeEstimate && (
-            <div className="d-flex justify-content-between mb-2">
-              <span>Estimated time:</span>
-              <span>{quote.timeEstimate} minutes</span>
-            </div>
-          )}
-          {quote.depositAddress && (
-            <div className="mt-2">
-              <small className="text-muted">
-                Deposit address: {quote.depositAddress.substring(0, 16)}...
-              </small>
-            </div>
-          )}
-          {quote.deadline && (
-            <div className="mt-2">
-              <small className="text-muted">
-                Quote expires: {new Date(quote.deadline).toLocaleString()}
-              </small>
-            </div>
-          )}
         </div>
       )}
 

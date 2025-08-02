@@ -744,17 +744,16 @@ test.describe("1Click API Integration - Asset Exchange", function () {
 
     // Wait for quote to appear
     console.log("Waiting for quote to appear...");
-    await expect(page.getByText("Quote Details")).toBeVisible({
+    await expect(page.getByText("Please approve this request")).toBeVisible({
       timeout: 10000,
     });
-    await expect(page.getByText("You send:")).toBeVisible();
-    await expect(page.getByText("0.1 ETH")).toBeVisible();
-    await expect(page.getByText("You receive:")).toBeVisible();
-    // The actual quote amount will vary based on current rates
-    await expect(page.locator('strong:has-text("USDC")')).toBeVisible();
+    // Check for the quote summary (e.g., "0.1 ETH($347.00) → 347.00 USDC($347.00)")
+    await expect(page.locator(".quote-summary")).toBeVisible();
+    await expect(page.locator('.quote-summary:has-text("ETH")')).toBeVisible();
+    await expect(page.locator('.quote-summary:has-text("USDC")')).toBeVisible();
 
     // Scroll to the quote details for better video visibility
-    const quoteSection = page.getByText("You receive:").first();
+    const quoteSection = page.locator(".quote-display").first();
     await quoteSection.scrollIntoViewIfNeeded();
     await page.waitForTimeout(1000); // Wait 1 second to show the quote
 
