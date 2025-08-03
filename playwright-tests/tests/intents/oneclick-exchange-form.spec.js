@@ -15,6 +15,9 @@ const screenshotsDir = path.join(
 test.describe("OneClickExchangeForm Component", () => {
   test.setTimeout(60000); // Increase timeout to 60 seconds
 
+  // Set viewport to match the OffCanvas width (30% of 1920px = 576px)
+  test.use({ viewport: { width: 576, height: 800 } });
+
   test.beforeEach(async ({ page, instanceAccount, daoAccount }) => {
     // Create screenshots directory
     await fs.mkdir(screenshotsDir, { recursive: true });
@@ -352,9 +355,9 @@ test.describe("OneClickExchangeForm Component", () => {
     await setupComponent(page, instanceAccount);
 
     // Find slippage input
-    const slippageInput = page.locator(
-      '.form-section:has-text("Price Slippage Limit") input'
-    );
+    const slippageInput = page
+      .locator('.form-section:has(.form-label:text("Price Slippage Limit"))')
+      .locator("input");
     await expect(slippageInput).toBeVisible();
 
     // Check default value (should be 1.0%)
@@ -370,10 +373,14 @@ test.describe("OneClickExchangeForm Component", () => {
     // Check the actual input value - may need to check after React re-render
     await page.waitForFunction(
       () => {
-        const input = document.querySelector(
-          '.form-section:has-text("Price Slippage Limit") input'
-        );
-        return input && input.value === "0.2";
+        const sections = document.querySelectorAll(".form-section");
+        for (const section of sections) {
+          if (section.textContent.includes("Price Slippage Limit")) {
+            const input = section.querySelector("input");
+            return input && input.value === "0.2";
+          }
+        }
+        return false;
       },
       { timeout: 2000 }
     );
@@ -408,9 +415,9 @@ test.describe("OneClickExchangeForm Component", () => {
 
     // Check that the percentage symbol is displayed
     await expect(
-      page.locator(
-        '.form-section:has-text("Price Slippage Limit") span:text("%")'
-      )
+      page
+        .locator('.form-section:has(.form-label:text("Price Slippage Limit"))')
+        .locator('span:text("%")')
     ).toBeVisible();
   });
 
