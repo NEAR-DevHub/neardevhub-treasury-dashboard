@@ -150,6 +150,43 @@ const Container = styled.div`
     padding: 20px;
     margin-bottom: 24px;
 
+    .slippage-section {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid var(--bs-gray-300);
+
+      .slippage-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+        font-weight: 500;
+        color: var(--bs-gray-700);
+      }
+
+      .slippage-input-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+
+        .slippage-input {
+          width: 100px;
+        }
+
+        .slippage-help {
+          color: var(--bs-gray-600);
+          font-size: 13px;
+        }
+      }
+
+      .slippage-info {
+        margin-top: 8px;
+        color: var(--bs-gray-600);
+        font-size: 13px;
+        line-height: 1.5;
+      }
+    }
+
     .quote-alert {
       background-color: #fef3cd;
       border: 1px solid #ffeeba;
@@ -244,6 +281,7 @@ const [web3IconsCache, setWeb3IconsCache] = useState({});
 const [tokenIconMap, setTokenIconMap] = useState({});
 const [allIconsFetched, setAllIconsFetched] = useState(false);
 const [showQuoteDetails, setShowQuoteDetails] = useState(false);
+const [slippageTolerance, setSlippageTolerance] = useState("100"); // Default 1% = 100 basis points
 
 // Fetch treasury's NEAR Intents tokens for Send dropdown
 useEffect(() => {
@@ -440,7 +478,7 @@ const fetchQuote = () => {
   const quoteRequest = {
     dry: false,
     swapType: "EXACT_INPUT",
-    slippageTolerance: 100, // 1% slippage
+    slippageTolerance: parseInt(slippageTolerance), // Convert to number
     originAsset: inputToken.id.startsWith("nep141:")
       ? inputToken.id
       : `nep141:${inputToken.id}`,
@@ -784,6 +822,58 @@ return (
         </div>
       </div>
 
+      {/* Price Slippage Limit Section */}
+      <div className="form-section">
+        <label className="form-label">
+          Price Slippage Limit
+          <Widget
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger`}
+            props={{
+              popup: (
+                <div className="p-2">
+                  <small>
+                    Maximum price change you're willing to accept. The swap will
+                    fail if the price moves beyond this limit.
+                  </small>
+                </div>
+              ),
+              children: <i className="bi bi-info-circle text-muted ms-2" />,
+            }}
+          />
+        </label>
+        <div className="input-row">
+          <Widget
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
+            props={{
+              onChange: (e) => {
+                const value = e.target.value;
+                // Convert percentage to basis points (e.g., 1% = 100 basis points)
+                const basisPoints = parseFloat(value || "0") * 100;
+                setSlippageTolerance(basisPoints.toString());
+                setQuote(null); // Clear quote when slippage changes
+              },
+              placeholder: "1.0",
+              value: (parseFloat(slippageTolerance) / 100).toString(),
+              inputProps: {
+                min: "0",
+                max: "50",
+                type: "number",
+                step: "0.1",
+                className: "form-control",
+              },
+              skipPaddingGap: true,
+              debounceTimeout: 300,
+              style: { flex: 1 },
+            }}
+          />
+          <span className="ms-2">%</span>
+        </div>
+        <div className="helper-text">
+          Your transaction will revert if the price changes unfavorably by more
+          than this percentage.
+        </div>
+      </div>
+
       {/* Quote Display */}
       {quote && (
         <div className="quote-display">
@@ -825,6 +915,19 @@ return (
                 <span className="detail-label">Estimated time</span>
                 <span className="detail-value">
                   {quote.timeEstimate || 10} minutes
+                </span>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">Minimum received</span>
+                <span className="detail-value">
+                  {quote.minAmountOut &&
+                  quote.amountOut &&
+                  quote.amountOutFormatted
+                    ? `${Big(quote.minAmountOut)
+                        .mul(Big(quote.amountOutFormatted))
+                        .div(Big(quote.amountOut))
+                        .toFixed(6)} ${tokenOut}`
+                    : "N/A"}
                 </span>
               </div>
               <div className="detail-row">

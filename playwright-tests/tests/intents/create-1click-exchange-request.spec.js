@@ -666,6 +666,15 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     await ethNetworkOption.click();
     await page.waitForTimeout(1000);
 
+    // Test the Price Slippage Limit field before getting quote
+    console.log("Setting Price Slippage Limit to 2%...");
+    const slippageInput = await page.locator(
+      '.form-section:has-text("Price Slippage Limit") input'
+    );
+    await slippageInput.fill("2");
+    await page.waitForTimeout(500);
+    console.log("✅ Price Slippage Limit set to 2%");
+
     // Generate a deposit address keypair for testing
     const { KeyPair } = nearAPI.utils;
     const testDepositKeyPair = KeyPair.fromRandom("ed25519");
@@ -690,6 +699,12 @@ test.describe("1Click API Integration - Asset Exchange", function () {
         const request = route.request();
         const requestBody = request.postDataJSON();
         console.log("1Click API request:", requestBody);
+
+        // Log the slippage tolerance to verify it's 200 (2%)
+        console.log(
+          "Slippage tolerance in request:",
+          requestBody.slippageTolerance
+        );
 
         // Make the real request to 1Click API
         const response = await fetch(
