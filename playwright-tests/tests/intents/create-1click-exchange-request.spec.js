@@ -604,6 +604,18 @@ test.describe("1Click API Integration - Asset Exchange", function () {
 
     console.log("Form loaded successfully!");
 
+    // Wait for available balances to load (important!)
+    console.log("Waiting for NEAR Intents balances to load...");
+    await expect(
+      page.locator(".available-balance-box").locator(".balance-item").first()
+    ).toBeVisible({ timeout: 15000 });
+
+    // Verify ETH balance is visible in the available balance section
+    await expect(page.locator('.balance-item:has-text("ETH")')).toBeVisible({
+      timeout: 10000,
+    });
+    console.log("NEAR Intents balances loaded successfully");
+
     // Take screenshot of the loaded form
     await page.screenshot({
       path: path.join(screenshotsDir, "oneclick-form-loaded.png"),
@@ -615,16 +627,45 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     // Continue with the full test flow
     console.log("Filling out the 1Click swap form...");
 
-    // Fill in the amount to swap
-    await page.fill('input[placeholder="0.00"]', "0.1");
+    // Wait for form to be fully loaded and interactive
+    await page.waitForTimeout(5000);
+    
+    // Wait for Get Quote button to be present (indicates form is ready)
+    await expect(page.locator('button:text("Get Quote")')).toBeVisible({ timeout: 15000 });
+
+    // Check if dropdowns are loaded
+    const dropdownCount = await page.locator(".dropdown-toggle").count();
+    console.log(`Found ${dropdownCount} dropdowns on the page`);
+
+    // Fill in the amount to swap - select the non-disabled input
+    const amountInput = page.locator('input[placeholder="0.00"]:not([disabled])').first();
+    await expect(amountInput).toBeVisible({ timeout: 10000 });
+    await amountInput.fill("0.1");
+    
+    // Wait for form to process the amount input
+    await page.waitForTimeout(2000);
 
     // Click on the Send token dropdown
-    const sendTokenDropdown = await page
-      .locator('.dropdown-toggle:has-text("Select token")')
-      .first();
+    console.log("Looking for Send token dropdown...");
+    const sendSection = page.locator('.form-section').filter({ has: page.locator('.form-label:text("Send")') });
+    const sendTokenDropdown = sendSection.locator('.dropdown-toggle').first();
+    await expect(sendTokenDropdown).toBeVisible({ timeout: 10000 });
+    
+    console.log("Clicking Send token dropdown...");
     await sendTokenDropdown.click();
-    await page.waitForTimeout(1000);
-
+    
+    // Wait for dropdown to open - Bootstrap dropdown might take a moment
+    await page.waitForTimeout(2000);
+    
+    // Wait for dropdown menu to appear
+    await page.waitForFunction(() => {
+      const menus = document.querySelectorAll('.dropdown-menu');
+      return Array.from(menus).some(menu => 
+        menu.classList.contains('show') || 
+        window.getComputedStyle(menu).display !== 'none'
+      );
+    }, { timeout: 10000 });
+    
     // Take screenshot of the dropdown
     await page.screenshot({
       path: path.join(screenshotsDir, "07-send-token-dropdown.png"),
@@ -632,45 +673,64 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     });
 
     // Select ETH from the dropdown
-    console.log("Selecting ETH from Send dropdown...");
-    const ethOption = await page
-      .locator('.dropdown-item:has-text("ETH")')
-      .first();
+    console.log("Looking for ETH option...");
+    
+    // Try a simpler approach - just look for dropdown items with ETH text
+    const ethOption = page.locator('.dropdown-item').filter({ hasText: 'ETH' }).first();
+    
+    // Wait for it to be visible and click
+    await expect(ethOption).toBeVisible({ timeout: 5000 });
+    console.log("Clicking ETH option...");
     await ethOption.click();
     await page.waitForTimeout(1000);
 
     // Select receive token - need to wait for dropdown to close first
     await page.waitForTimeout(1000);
     console.log("Selecting receive token...");
-    const receiveTokenDropdown = await page.locator(".dropdown-toggle").nth(2); // Third dropdown (after treasury wallet and send token)
+
+    // Find receive token dropdown more reliably
+    const receiveSection = page
+      .locator(".form-section")
+      .filter({ has: page.locator('.form-label:text("Receive")') });
+    const receiveTokenDropdown = receiveSection
+      .locator(".dropdown-toggle")
+      .first();
+    await expect(receiveTokenDropdown).toBeVisible({ timeout: 10000 });
     await receiveTokenDropdown.click();
     await page.waitForTimeout(500);
 
     // Select USDC
-    const usdcOption = await page
-      .locator('.dropdown-item:has-text("USDC")')
-      .first();
+    console.log("Looking for USDC option...");
+    const usdcOption = page.locator('.dropdown-item').filter({ hasText: 'USDC' }).first();
+    await expect(usdcOption).toBeVisible({ timeout: 5000 });
+    console.log("Clicking USDC option...");
     await usdcOption.click();
     await page.waitForTimeout(1000);
 
     // Select network for receive token
     console.log("Selecting network...");
-    const networkDropdown = await page.locator(".dropdown-toggle").nth(3); // Fourth dropdown
+
+    // Find network dropdown more reliably
+    const networkSection = page
+      .locator(".form-section")
+      .filter({ has: page.locator('.form-label:text("Network")') });
+    const networkDropdown = networkSection.locator(".dropdown-toggle").first();
+    await expect(networkDropdown).toBeVisible({ timeout: 10000 });
     await networkDropdown.click();
     await page.waitForTimeout(500);
 
     // Select Ethereum network
-    const ethNetworkOption = await page
-      .locator('.dropdown-item:has-text("Ethereum")')
-      .first();
+    console.log("Looking for Ethereum network option...");
+    const ethNetworkOption = page.locator('.dropdown-item').filter({ hasText: 'Ethereum' }).first();
+    await expect(ethNetworkOption).toBeVisible({ timeout: 5000 });
+    console.log("Clicking Ethereum network option...");
     await ethNetworkOption.click();
     await page.waitForTimeout(1000);
 
     // Test the Price Slippage Limit field before getting quote
     console.log("Setting Price Slippage Limit to 2%...");
-    const slippageInput = await page.locator(
-      '.form-section:has-text("Price Slippage Limit") input'
-    );
+    const slippageSection = page.locator('.form-section').filter({ has: page.locator('.form-label:text("Price Slippage Limit")') });
+    const slippageInput = slippageSection.locator('input[type="number"]').first();
     await slippageInput.fill("2");
     await page.waitForTimeout(500);
     console.log("✅ Price Slippage Limit set to 2%");
