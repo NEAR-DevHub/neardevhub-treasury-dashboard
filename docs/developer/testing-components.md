@@ -198,14 +198,69 @@ The test framework runs tests across multiple instances automatically. You can s
 
 Each test is run with different `instanceAccount` and `daoAccount` values.
 
+## Testing Themes
+
+The treasury dashboard supports light and dark themes that are configured per instance. To ensure consistent test results, use the theme mocking utilities:
+
+```javascript
+import { mockTheme, unmockTheme, getThemeColors, THEME_COLORS } from "../../util/theme.js";
+
+test.describe("Component Theme Tests", () => {
+  test.beforeEach(async ({ page, instanceAccount, daoAccount }) => {
+    // Set up redirectWeb4 first
+    await redirectWeb4({ page, contractId: instanceAccount, treasury: daoAccount });
+    
+    // IMPORTANT: Mock theme AFTER redirectWeb4 but BEFORE navigation
+    // This ensures the theme mock can override the RPC routes set by redirectWeb4
+    await mockTheme(page, "light");
+    
+    await page.goto(`https://${instanceAccount}.page/`);
+  });
+
+  test("renders in light theme", async ({ page }) => {
+    // Your component setup
+    
+    // Verify theme colors
+    const colors = await getThemeColors(page, ".my-component");
+    expect(colors.bgPageColor).toBe(THEME_COLORS.light.bgPageColor);
+    expect(colors.textColor).toBe(THEME_COLORS.light.textColor);
+  });
+
+  // For dark theme tests, create a nested describe block
+  test.describe("Dark Theme", () => {
+    test.beforeEach(async ({ page }) => {
+      // Override the theme mock
+      await unmockTheme(page);
+      await mockTheme(page, "dark");
+    });
+
+    test("renders in dark theme", async ({ page }) => {
+      // Your component setup
+      
+      const colors = await getThemeColors(page, ".my-component");
+      expect(colors.bgPageColor).toBe(THEME_COLORS.dark.bgPageColor);
+      expect(colors.textColor).toBe(THEME_COLORS.dark.textColor);
+    });
+  });
+});
+```
+
+### Theme Utility Functions
+
+- `mockTheme(page, theme, primaryColor)` - Mocks the theme configuration
+- `unmockTheme(page)` - Removes theme mocking routes
+- `getThemeColors(page, selector)` - Gets computed theme colors for an element
+- `THEME_COLORS` - Expected color values for light and dark themes
+
 ## Best Practices
 
 1. **Always use redirectWeb4 in beforeEach**: This ensures widgets are loaded from your local filesystem
 2. **Navigate to the instance page**: Use `https://${instanceAccount}.page/` as your base URL
 3. **Mock external dependencies**: Mock API and RPC calls to make tests reliable
 4. **Use appropriate timeouts**: Components may take time to load, use `waitForTimeout` or `waitForSelector`
-5. **Test multiple themes**: If your component supports themes, test both light and dark modes
+5. **Test multiple themes**: Use the theme utilities to test both light and dark modes consistently
 6. **Clean up viewers**: Always remove existing viewers before creating new ones
+7. **Mock themes after redirectWeb4**: Always call `mockTheme` AFTER `redirectWeb4` but before navigation to ensure the mock can override RPC routes
 
 ## Example: Complete Component Test
 

@@ -4,7 +4,9 @@ if (!instance) {
   return <></>;
 }
 
-const { treasuryDaoID, themeColor } = VM.require(`${instance}/widget/config.data`);
+const { treasuryDaoID, themeColor } = VM.require(
+  `${instance}/widget/config.data`
+);
 const { getIntentsBalances, getAllColorsAsObject } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
