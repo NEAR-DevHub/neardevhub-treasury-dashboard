@@ -75,7 +75,7 @@
     "deploy:widgets": "npm run bw:build:widgets && cd ./build/widgets.treasury-factory.near && bos components deploy",
     "dry-run:widgets": "npm run bw:build:widgets && npm run dry-run:instances --instance=widgets.treasury-factory.near",
     "test": "npx playwright test",
-    "test:watch:codespaces": "npm test -- --ui"
+    "test:watch:codespaces": "npm test -- --ui-host=0.0.0.0"
   },
   "husky": {
     "hooks": {
@@ -107,6 +107,5 @@
   "bugs": {
     "url": "https://github.com/NEAR-DevHub/neardevhub-treasury-dashboard.git"
   },
-  "homepage": "https://github.com/NEAR-DevHub/neardevhub-treasury-dashboard.git#readme",
-  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+  "homepage": "https://github.com/NEAR-DevHub/neardevhub-treasury-dashboard.git#readme"
 }
