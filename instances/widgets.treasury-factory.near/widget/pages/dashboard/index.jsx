@@ -461,8 +461,27 @@ return (
             onTotalBalanceChange: setIntentsTotalUsdBalance,
             treasuryDaoID,
             heading: (
-              <div className="d-flex flex-column gap-1 px-3 pt-3 pb-2">
-                <div className="h5 mb-0">NEAR Intents</div>
+              <div className="px-3 pt-3 pb-2">
+                <div className="d-flex align-items-center gap-2">
+                  <div className="h5 mb-0">NEAR Intents </div>
+                  <Widget
+                    loading=""
+                    src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+                    props={{
+                      popup: (
+                        <div>
+                          The total token amount includes all transfers across
+                          different networks. Network details are available
+                          below in the distribution section.
+                        </div>
+                      ),
+                      children: (
+                        <i className="bi bi-info-circle text-secondary"></i>
+                      ),
+                      instance,
+                    }}
+                  />
+                </div>
               </div>
             ),
             instance,

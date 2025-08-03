@@ -9,11 +9,12 @@ const props = typeof props !== "undefined" ? props : {};
 const treasuryDaoID = props.treasuryDaoID;
 const heading = props.heading;
 const instance = props.instance;
-const onTotalBalanceChange = props.onTotalBalanceChange; // New prop
+const onTotalBalanceChange = props.onTotalBalanceChange;
 
 const [tokens, setTokens] = useState(null);
 const [loading, setLoading] = useState(true);
 const [error, setError] = useState(false);
+const [expandedTokens, setExpandedTokens] = useState({});
 
 function formatCurrency(amount) {
   const formattedAmount = Number(amount).toLocaleString("en-US", {
@@ -35,6 +36,38 @@ function formatPrice(price) {
     return "< $0.01";
   }
   return "$" + Big(price ?? "0").toFixed(2);
+}
+
+// Function to aggregate tokens by symbol
+function aggregateTokensBySymbol(tokens) {
+  const aggregated = {};
+
+  tokens.forEach((token) => {
+    const { symbol, icon, decimals, price } = token.ft_meta;
+    const amount = token.amount;
+
+    if (!aggregated[symbol]) {
+      aggregated[symbol] = {
+        symbol,
+        icon,
+        decimals,
+        price,
+        totalAmount: "0",
+        tokens: [],
+      };
+    }
+
+    const readableAmount = convertBalanceToReadableFormat(amount, decimals);
+    aggregated[symbol].totalAmount = Big(aggregated[symbol].totalAmount)
+      .plus(Big(readableAmount))
+      .toFixed(2);
+    aggregated[symbol].tokens.push({
+      ...token,
+      readableAmount,
+    });
+  });
+
+  return Object.values(aggregated);
 }
 
 useEffect(() => {
@@ -121,19 +154,16 @@ useEffect(() => {
                 },
                 amount: t.amount, // Amount is already on 't' from filteredTokensWithBalances
               }));
-              setTokens(finalTokens);
+
+              // Aggregate tokens by symbol
+              const aggregatedTokens = aggregateTokensBySymbol(finalTokens);
+              setTokens(aggregatedTokens);
               setLoading(false);
 
               // Calculate and pass up the total USD balance
               if (typeof onTotalBalanceChange === "function") {
-                const totalUsd = finalTokens.reduce((acc, token) => {
-                  const readableAmount = convertBalanceToReadableFormat(
-                    token.amount,
-                    token.ft_meta.decimals
-                  );
-                  const usdValue = Big(readableAmount).mul(
-                    token.ft_meta.price || 0
-                  );
+                const totalUsd = aggregatedTokens.reduce((acc, token) => {
+                  const usdValue = Big(token.totalAmount).mul(token.price || 0);
                   return acc.plus(usdValue);
                 }, Big(0));
                 onTotalBalanceChange(totalUsd.toFixed(2));
@@ -154,18 +184,15 @@ useEffect(() => {
                 },
                 amount: t.amount,
               }));
-              setTokens(fallbackTokens);
+
+              // Aggregate tokens by symbol
+              const aggregatedTokens = aggregateTokensBySymbol(fallbackTokens);
+              setTokens(aggregatedTokens);
               setLoading(false); // Ensure loading is set to false
               // Calculate and pass up the total USD balance even on icon error
               if (typeof onTotalBalanceChange === "function") {
-                const totalUsd = fallbackTokens.reduce((acc, token) => {
-                  const readableAmount = convertBalanceToReadableFormat(
-                    token.amount,
-                    token.ft_meta.decimals
-                  );
-                  const usdValue = Big(readableAmount).mul(
-                    token.ft_meta.price || 0
-                  );
+                const totalUsd = aggregatedTokens.reduce((acc, token) => {
+                  const usdValue = Big(token.totalAmount).mul(token.price || 0);
                   return acc.plus(usdValue);
                 }, Big(0));
                 onTotalBalanceChange(totalUsd.toFixed(2));
@@ -201,7 +228,7 @@ const Loading = () => (
         className="rounded-circle"
       />
     </div>
-    <div className="d-flex flex-column gap-1 w-75">
+    <div className="d-flex flex-column gap-1" style={{ width: "60%" }}>
       <Skeleton
         style={{ height: "24px", width: "100%" }}
         className="rounded-1"
@@ -211,7 +238,7 @@ const Loading = () => (
         className="rounded-2"
       />
     </div>
-    <div className="d-flex flex-column gap-1 w-25">
+    <div className="d-flex flex-column gap-1" style={{ width: "20%" }}>
       <Skeleton
         style={{ height: "24px", width: "100%" }}
         className="rounded-1"
@@ -224,12 +251,24 @@ const Loading = () => (
   </div>
 );
 
-const TokenCard = ({ token }) => {
-  const { ft_meta, amount } = token;
-  const { symbol, icon, decimals, price } = ft_meta;
-  const tokensNumber = convertBalanceToReadableFormat(amount, decimals);
+const TokenCard = ({ token, id }) => {
+  const { symbol, icon, price, totalAmount } = token;
+  const individualTokens = token.tokens;
+  const isExpanded = expandedTokens[symbol] || false;
+
+  const toggleExpanded = () => {
+    setExpandedTokens((prev) => ({
+      ...prev,
+      [symbol]: !prev[symbol],
+    }));
+  };
+
   return (
-    <div className="d-flex flex-column border-bottom">
+    <div
+      className={
+        "d-flex flex-column " + (id !== tokens.length - 1 && " border-bottom")
+      }
+    >
       <div className="py-2 d-flex gap-2 align-items-center justify-content-between px-3">
         <div className="d-flex align-items-center gap-2">
           {icon ? (
@@ -249,17 +288,79 @@ const TokenCard = ({ token }) => {
         </div>
         <div className="d-flex gap-2 align-items-center justify-content-end">
           <div className="d-flex flex-column align-items-end">
-            <div className="h6 mb-0">{tokensNumber}</div>
+            <div className="h6 mb-0">{totalAmount}</div>
             <div className="text-sm text-secondary">
               {formatCurrency(
-                Big(tokensNumber)
+                Big(totalAmount)
                   .mul(price ?? 0)
                   .toFixed(2)
               )}
             </div>
           </div>
+          <div
+            style={{
+              width: 20,
+              paddingLeft: 10,
+            }}
+          >
+            {individualTokens.length > 1 && (
+              <i
+                onClick={toggleExpanded}
+                className={
+                  (isExpanded ? "bi bi-chevron-up" : "bi bi-chevron-down") +
+                  " text-secondary h6 mb-0"
+                }
+              ></i>
+            )}
+          </div>
         </div>
       </div>
+
+      {isExpanded && individualTokens.length > 1 && (
+        <div
+          className="d-flex flex-column"
+          style={{ backgroundColor: "var(--bg-system-color)" }}
+        >
+          {individualTokens.map((individualToken, idx) => (
+            <div
+              key={idx}
+              className={
+                "d-flex align-items-center justify-content-between px-4 py-2 " +
+                (idx !== individualTokens.length && "border-top")
+              }
+            >
+              <div style={{ paddingLeft: "5px" }}>
+                {(individualToken.blockchain || "").toUpperCase() || "Unknown"}
+              </div>
+              <div className="d-flex gap-1">
+                <div>
+                  {icon ? (
+                    <img src={icon} height={16} width={16} />
+                  ) : (
+                    <NearToken height={16} width={16} />
+                  )}
+                </div>
+                <div className="d-flex flex-column align-items-end">
+                  <div className="">{individualToken.readableAmount}</div>
+                  <div className="text-sm text-secondary">
+                    {formatCurrency(
+                      Big(individualToken.readableAmount)
+                        .mul(price ?? 0)
+                        .toFixed(2)
+                    )}
+                  </div>
+                </div>
+                <div
+                  style={{
+                    width: 20,
+                    paddingLeft: 10,
+                  }}
+                ></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
@@ -282,13 +383,14 @@ if (error)
   );
 
 const filtered = (tokens || []).filter(
-  (token) => token.amount && Big(token.amount).gt(0)
+  (token) => token.totalAmount && Big(token.totalAmount).gt(0)
 );
+
 return filtered.length > 0 ? (
-  <div className="card flex-1 overflow-hidden border-bottom">
+  <div className="card flex-1 overflow-hidden">
     {heading}
     {filtered.map((token, idx) => (
-      <TokenCard key={idx} token={token} />
+      <TokenCard key={idx} token={token} id={idx} />
     ))}
   </div>
 ) : (
