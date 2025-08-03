@@ -211,7 +211,6 @@ const proposalDetailsPageId =
   id || id === "0" || id === 0 ? parseInt(id) : null;
 
 function fetchProposals(customSortDirection) {
-  console.log("fetching proposals", activeFilters, search);
   setLoading(true);
 
   getProposalsFromIndexer({
@@ -323,7 +322,7 @@ const SidebarMenu = () => {
         className="d-flex justify-content-between border-bottom gap-2 align-items-center flex-wrap flex-md-nowrap"
         style={{ paddingRight: "10px" }}
       >
-        <NavUnderline className="nav gap-2 w-100">
+        <NavUnderline className="nav gap-2 flex-shrink-0">
           {[{ title: "Pending Requests" }, { title: "History" }].map(
             ({ title }) =>
               title && (
@@ -356,7 +355,7 @@ const SidebarMenu = () => {
           )}
         </NavUnderline>
 
-        <div className="d-flex gap-2 align-items-center flex-wrap flex-sm-nowrap pb-2 pb-md-0 ps-2 ps-md-0">
+        <div className="d-flex gap-2 align-items-center flex-wrap flex-sm-nowrap pb-2 pb-md-0 ps-2 ps-md-0 flex-grow-1 justify-content-start justify-content-md-end">
           {/* Search and Filters */}
           <div className="input-responsive">
             <div className="input-group flex-grow-1">
@@ -392,6 +391,9 @@ const SidebarMenu = () => {
                 props={{
                   page: "payments",
                   instance: props.instance,
+                  activeFilters,
+                  amountValues,
+                  search,
                 }}
               />
             </div>

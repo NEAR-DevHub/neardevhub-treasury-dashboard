@@ -7,6 +7,43 @@ async function openFiltersPanel(page) {
   await expect(page.locator("text=Add Filter")).toBeVisible();
 }
 
+// Helper function to check export URL contains correct filter parameters
+async function checkExportUrlWithFilters(page, expectedParams) {
+  // Verify export dropdown exists (when filters are active)
+  const exportDropdown = page.locator("button:has(i.bi-download)");
+  await expect(exportDropdown).toBeVisible();
+
+  // Should be a dropdown when filters are active
+  await expect(exportDropdown).toHaveAttribute("data-bs-toggle", "dropdown");
+
+  const filteredLink = page.getByTestId("export-filtered");
+  const allLink = page.getByTestId("export-all");
+
+  await expect(filteredLink).toBeAttached();
+  await expect(allLink).toBeAttached();
+
+  const href = await filteredLink.getAttribute("href");
+  const allHref = await allLink.getAttribute("href");
+
+  // Check that allHref only contains category parameter
+  expect(allHref).toContain("?category=payments");
+
+  const allUrl = new URL(allHref);
+  const allQueryParams = new URLSearchParams(allUrl.search);
+
+  expect(allQueryParams.size).toBe(1);
+  expect(allQueryParams.get("category")).toBe("payments");
+
+  // Check that the URL contains the expected parameters
+  for (const [param, value] of Object.entries(expectedParams)) {
+    // Parse the href URL to get the actual parameter values
+    const url = new URL(href);
+    const queryParams = new URLSearchParams(url.search);
+    const actualValue = queryParams.get(param);
+    expect(actualValue).toBe(value);
+  }
+}
+
 async function checkAllAmountCells(page, amount, operator) {
   const cells = await page.getByRole("cell", { name: /not defined/ }).all();
 
@@ -107,6 +144,16 @@ test.describe("Payments Filters", () => {
   }) => {
     await switchToHistoryTab(page);
 
+    // check export button is visible
+    const exportButton = page.getByRole("button", { name: "Export as CSV" });
+    await expect(exportButton).toBeVisible();
+
+    // Should NOT be a dropdown
+    await expect(exportButton).not.toHaveAttribute(
+      "data-bs-toggle",
+      "dropdown"
+    );
+
     // Open filters panel
     await page.click("button:has(i.bi-funnel)");
 
@@ -144,6 +191,12 @@ test.describe("Payments Filters", () => {
       name: "Megha @megha19.near",
     });
     await expect(recipientCells).toHaveCount(10);
+
+    // Check export URL contains recipient filter
+    await checkExportUrlWithFilters(page, {
+      recipients: "megha19.near",
+    });
+
     // check for not
     await page.getByRole("button", { name: "is any" }).click();
     await page.getByRole("button", { name: "is not all" }).click();
@@ -152,6 +205,11 @@ test.describe("Payments Filters", () => {
       name: "Megha @megha19.near",
     });
     await expect(recipientCellsNotAll).toHaveCount(0);
+
+    // Check export URL contains recipient_not filter
+    await checkExportUrlWithFilters(page, {
+      recipients_not: "megha19.near",
+    });
   });
 
   test("should select token in Token filter, add amount filter and display it", async ({
@@ -175,6 +233,13 @@ test.describe("Payments Filters", () => {
     await expect(
       page.getByRole("button", { name: "Token : not defined USDC" })
     ).toBeVisible();
+
+    // Check export URL contains token filter
+    await checkExportUrlWithFilters(page, {
+      tokens:
+        "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+    });
+
     // Amount filter :
     // 1) between
     await expect(page.getByRole("button", { name: "Between" })).toBeVisible();
@@ -187,6 +252,14 @@ test.describe("Payments Filters", () => {
     await checkAllAmountCells(page, 100, ">");
     await checkAllAmountCells(page, 200, "<");
 
+    // Check export URL contains amount range
+    await checkExportUrlWithFilters(page, {
+      tokens:
+        "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+      amount_min: "100",
+      amount_max: "200",
+    });
+
     // 2) Is
     await page.getByRole("button", { name: "Between" }).click();
     await page.getByText("Is", { exact: true }).click();
@@ -196,6 +269,13 @@ test.describe("Payments Filters", () => {
     ).toBeVisible();
     await page.waitForTimeout(3000);
     await checkAllAmountCells(page, 100, "=");
+
+    // Check export URL contains amount equal
+    await checkExportUrlWithFilters(page, {
+      tokens:
+        "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+      amount_equal: "100",
+    });
 
     // 3) less than
     await page.getByRole("button", { name: "Is", exact: true }).click();
@@ -207,6 +287,13 @@ test.describe("Payments Filters", () => {
     await page.waitForTimeout(3000);
     await checkAllAmountCells(page, 200, "<");
 
+    // Check export URL contains amount max
+    await checkExportUrlWithFilters(page, {
+      tokens:
+        "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+      amount_max: "200",
+    });
+
     // 4) More than
     await page.getByRole("button", { name: "Less than" }).click();
     await page.getByText("More than").click();
@@ -216,6 +303,13 @@ test.describe("Payments Filters", () => {
     ).toBeVisible();
     await page.waitForTimeout(3000);
     await checkAllAmountCells(page, 100, ">");
+
+    // Check export URL contains amount min
+    await checkExportUrlWithFilters(page, {
+      tokens:
+        "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+      amount_min: "100",
+    });
   });
 
   test("should add and display Created by filter", async ({ page }) => {
@@ -236,6 +330,12 @@ test.describe("Payments Filters", () => {
       .count();
 
     expect(proposerCells).toBeGreaterThanOrEqual(6);
+
+    // Check export URL contains proposer filter
+    await checkExportUrlWithFilters(page, {
+      proposers: "petersalomonsen.near",
+    });
+
     await page.getByRole("button", { name: "is any" }).click();
     await page.getByRole("button", { name: "is not all" }).click();
     await page.waitForTimeout(1000);
@@ -243,6 +343,11 @@ test.describe("Payments Filters", () => {
       exact: true,
     });
     await expect(proposerCellsNotAll).toHaveCount(0);
+
+    // Check export URL contains proposer_not filter
+    await checkExportUrlWithFilters(page, {
+      proposers_not: "petersalomonsen.near",
+    });
   });
 
   test("should add and display Approver filter", async ({ page }) => {
@@ -263,6 +368,12 @@ test.describe("Payments Filters", () => {
       .count();
 
     expect(approverImageCells).toBeGreaterThanOrEqual(3);
+
+    // Check export URL contains approver filter
+    await checkExportUrlWithFilters(page, {
+      approvers: "frol.near",
+    });
+
     await page.getByRole("button", { name: "is any" }).click();
     await page.getByRole("button", { name: "is not all" }).click();
     await page.waitForTimeout(1000);
@@ -273,6 +384,11 @@ test.describe("Payments Filters", () => {
       .count();
 
     expect(approverCellsNotAll).toBe(0);
+
+    // Check export URL contains approver_not filter
+    await checkExportUrlWithFilters(page, {
+      approvers_not: "frol.near",
+    });
   });
 
   test("should add and display status filter", async ({ page }) => {
@@ -287,7 +403,13 @@ test.describe("Payments Filters", () => {
       .getByRole("cell", { name: "Funded" })
       .count();
     expect(statusCells).toBeGreaterThanOrEqual(10);
-    await page.getByRole("button", { name: "Status : Approved" }).click();
+
+    // Check export URL contains status filter
+    await checkExportUrlWithFilters(page, {
+      statuses: "Approved",
+    });
+
+    await page.getByRole("button", { name: "Status : Funded" }).click();
     await page.getByRole("button", { name: "is" }).click();
     await page.getByRole("button", { name: "is not" }).click();
     await page.waitForTimeout(1000);
@@ -295,6 +417,11 @@ test.describe("Payments Filters", () => {
       .getByRole("cell", { name: "Funded" })
       .count();
     expect(statusCellsNotAll).toBe(0);
+
+    // Check export URL contains status filter (excluding Approved)
+    await checkExportUrlWithFilters(page, {
+      statuses: "Rejected,Failed,Expired",
+    });
   });
 
   test("should remove filter when trash icon is clicked", async ({ page }) => {
@@ -370,6 +497,12 @@ test.describe("Payments Filters", () => {
 
       expect(parsedDate >= startDate && parsedDate <= endDate).toBeTruthy();
     }
+
+    // Check export URL contains date range
+    await checkExportUrlWithFilters(page, {
+      created_date_from: "2024-01-01",
+      created_date_to: "2024-12-31",
+    });
   });
 
   test("should switch between tabs and verify filters are cleared", async ({
@@ -396,6 +529,64 @@ test.describe("Payments Filters", () => {
     await expect(
       page.getByRole("button", { name: "Add Filter" })
     ).not.toBeVisible();
+  });
+
+  test("should search by search input", async ({ page }) => {
+    await switchToHistoryTab(page);
+
+    // Get the search input
+    const searchInput = page.getByPlaceholder("Search by ID, title or summary");
+    await expect(searchInput).toBeVisible();
+
+    // Step 1: Search by title
+    await searchInput.fill("megha");
+    await page.waitForTimeout(3000);
+
+    // Verify title search results
+    const titleSearchRows = page.locator("tbody tr");
+    const titleSearchCount = await titleSearchRows.count();
+    expect(titleSearchCount).toBeGreaterThan(0);
+
+    // Verify that results contain "megha"
+    const meghaCells = page.getByRole("cell", { name: /megha/i });
+    const meghaCellCount = await meghaCells.count();
+    expect(meghaCellCount).toBeGreaterThanOrEqual(6);
+
+    // Check CSV export URL contains search parameter
+    await checkExportUrlWithFilters(page, {
+      search: "megha",
+    });
+
+    // Step 2: Search by specific ID
+
+    await searchInput.fill("124");
+    await page.waitForTimeout(3000);
+
+    // Verify ID search results
+    const idSearchRows = page.locator("tbody tr");
+    const idSearchCount = await idSearchRows.count();
+
+    // Should have exactly 1 result for specific ID
+    expect(idSearchCount).toBe(1);
+    expect(page.getByRole("cell", { name: "124" })).toBeVisible();
+
+    // Check CSV export URL contains search parameter for ID
+    await checkExportUrlWithFilters(page, {
+      search: "124",
+    });
+
+    // Step 3: Clear search
+    await page.locator(".bi.bi-x-lg").click();
+    await expect(searchInput).toBeEmpty();
+    await page.waitForTimeout(3000);
+
+    // Verify all results are back
+    const allRows = page.locator("tbody tr");
+    const allRowCount = await allRows.count();
+    console.log("allRowCount", allRowCount);
+
+    // Should have more results than the ID search (which had 1)
+    expect(allRowCount).toBe(10);
   });
 });
 
@@ -433,6 +624,11 @@ test.describe("Logged in user", () => {
       .count();
     expect(approverImageLocator).toBe(10);
 
+    // Check export URL contains approved vote filter
+    await checkExportUrlWithFilters(page, {
+      voter_votes: "theori.near:approved",
+    });
+
     // Rejected
     await page
       .getByRole("button", { name: "My Vote Status : Approved" })
@@ -447,11 +643,16 @@ test.describe("Logged in user", () => {
       .count();
     await expect(rejectedImageLocator).toBeGreaterThanOrEqual(2);
 
+    // Check export URL contains rejected vote filter
+    await checkExportUrlWithFilters(page, {
+      voter_votes: "theori.near:rejected",
+    });
+
     // Awaiting Decision
     await page
       .getByRole("button", { name: "My Vote Status : Rejected" })
       .click();
-    await page.getByText("Awaiting Decision", { exact: true }).click();
+    await page.getByText("Not Voted", { exact: true }).click();
     await page.waitForTimeout(3000);
     // no approver or reject votes
     await expect(
@@ -465,5 +666,10 @@ test.describe("Logged in user", () => {
         `div:has(img[src="${testConstants.theoriAccountImage}"]):has(path[d="${testConstants.approvedIconPath}"])`
       )
     ).toHaveCount(0);
+
+    // Check export URL contains approvers_not filter for "Not Voted"
+    await checkExportUrlWithFilters(page, {
+      approvers_not: "theori.near",
+    });
   });
 });

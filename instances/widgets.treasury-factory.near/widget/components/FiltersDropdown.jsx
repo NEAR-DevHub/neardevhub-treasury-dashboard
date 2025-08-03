@@ -604,14 +604,28 @@ return (
             </ul>
           )}
         </div>
-        <div
-          className="text-red cursor-pointer ms-auto"
-          onClick={(e) => {
-            e.stopPropagation();
-            removeFilter();
-          }}
-        >
-          <i className="bi bi-trash"></i>
+        <div className="ms-auto d-flex align-items-center gap-2">
+          {multiple && selected.length > 0 && (
+            <div
+              className="cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelected([]);
+              }}
+              style={{ fontSize: "14px" }}
+            >
+              Clear
+            </div>
+          )}
+          <div
+            className="text-red cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation();
+              removeFilter();
+            }}
+          >
+            <i className="bi bi-trash"></i>
+          </div>
         </div>
       </div>
       <OptionRender />
