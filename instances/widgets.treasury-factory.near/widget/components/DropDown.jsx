@@ -52,7 +52,11 @@ return (
         aria-expanded="false"
         data-testid="dropdown-btn"
       >
-        {SelectedValueRender ? <SelectedValueRender /> : selected.label}
+        {SelectedValueRender ? (
+          <SelectedValueRender />
+        ) : (
+          selected.label || props.defaultLabel
+        )}
       </button>
       <ul className="dropdown-menu dropdown-menu-end dropdown-menu-lg-start px-2 shadow w-100">
         {options.map((item) =>
