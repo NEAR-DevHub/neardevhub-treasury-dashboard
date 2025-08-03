@@ -4,13 +4,24 @@ if (!instance) {
   return <></>;
 }
 
-const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
-const { getIntentsBalances } = VM.require(
+const { treasuryDaoID, themeColor } = VM.require(`${instance}/widget/config.data`);
+const { getIntentsBalances, getAllColorsAsObject } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
 
+// Get theme configuration
+const config = treasuryDaoID ? Near.view(treasuryDaoID, "get_config") : null;
+const metadata = config ? JSON.parse(atob(config.metadata ?? "")) : {};
+const isDarkTheme = metadata.theme === "dark";
+const primaryColor = metadata?.primaryColor || themeColor || "#01BF7A";
+const colors = getAllColorsAsObject(isDarkTheme, primaryColor);
+
 // Styled components
 const Container = styled.div`
+  ${JSON.stringify(colors)
+    .replace(/[{}]/g, "")
+    .replace(/,/g, ";")
+    .replace(/"/g, "")}
   .dropdown-container {
     .custom-select {
       width: 100%;
@@ -18,7 +29,7 @@ const Container = styled.div`
   }
 
   .info-message {
-    background-color: var(--bs-gray-100);
+    background-color: var(--grey-04);
     border-radius: 8px;
     padding: 16px;
     margin-bottom: 20px;
@@ -27,21 +38,21 @@ const Container = styled.div`
     gap: 12px;
 
     .info-icon {
-      color: var(--bs-secondary);
+      color: var(--text-secondary-color);
       font-size: 20px;
       margin-top: 2px;
     }
 
     .info-text {
-      color: var(--bs-gray-700);
+      color: var(--text-color);
       font-size: 14px;
       line-height: 1.5;
     }
   }
 
   .available-balance-box {
-    background-color: white;
-    border: 1px solid var(--bs-gray-300);
+    background-color: var(--bg-page-color);
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 16px;
     margin-bottom: 20px;
@@ -52,7 +63,7 @@ const Container = styled.div`
       gap: 8px;
       margin-bottom: 12px;
       font-weight: 500;
-      color: var(--bs-gray-700);
+      color: var(--text-color);
     }
 
     .balance-list {
@@ -65,7 +76,7 @@ const Container = styled.div`
       display: flex;
       justify-content: space-between;
       align-items: center;
-      color: var(--bs-gray-900);
+      color: var(--grey-01);
       font-size: 14px;
     }
 
@@ -114,7 +125,7 @@ const Container = styled.div`
       .dropdown-toggle {
         border-top-left-radius: 0 !important;
         border-bottom-left-radius: 0 !important;
-        border-left: 1px solid #dee2e6;
+        border-left: 1px solid var(--border-color);
       }
 
       .custom-select > div.dropdown-toggle {
@@ -127,7 +138,7 @@ const Container = styled.div`
     }
 
     .helper-text {
-      color: var(--bs-gray-600);
+      color: var(--text-secondary-color);
       font-size: 13px;
       margin-top: 4px;
     }
@@ -138,14 +149,14 @@ const Container = styled.div`
     margin: 16px 0;
 
     .swap-icon {
-      color: var(--bs-gray-400);
+      color: var(--grey-03);
       font-size: 24px;
     }
   }
 
   .quote-display {
-    background-color: var(--bs-light);
-    border: 1px solid var(--bs-gray-300);
+    background-color: var(--bg-system-color);
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 20px;
     margin-bottom: 24px;
@@ -161,7 +172,7 @@ const Container = styled.div`
         gap: 8px;
         margin-bottom: 12px;
         font-weight: 500;
-        color: var(--bs-gray-700);
+        color: var(--text-color);
       }
 
       .slippage-input-group {
@@ -174,23 +185,23 @@ const Container = styled.div`
         }
 
         .slippage-help {
-          color: var(--bs-gray-600);
+          color: var(--text-secondary-color);
           font-size: 13px;
         }
       }
 
       .slippage-info {
         margin-top: 8px;
-        color: var(--bs-gray-600);
+        color: var(--text-secondary-color);
         font-size: 13px;
         line-height: 1.5;
       }
     }
 
     .quote-alert {
-      background-color: #fef3cd;
-      border: 1px solid #ffeeba;
-      color: #856404;
+      background-color: rgba(177, 113, 8, 0.1);
+      border: 1px solid var(--other-warning);
+      color: var(--other-warning);
       padding: 12px;
       border-radius: 6px;
       margin-bottom: 16px;
@@ -200,7 +211,7 @@ const Container = styled.div`
       font-size: 14px;
 
       .alert-icon {
-        color: #f0ad4e;
+        color: var(--other-warning);
         font-size: 18px;
       }
     }
@@ -208,14 +219,14 @@ const Container = styled.div`
     .quote-summary {
       font-size: 18px;
       font-weight: 500;
-      color: var(--bs-gray-900);
+      color: var(--grey-01);
       margin-bottom: 20px;
       display: flex;
       align-items: center;
       gap: 8px;
 
       .arrow-icon {
-        color: var(--bs-gray-600);
+        color: var(--text-secondary-color);
       }
     }
 
@@ -229,7 +240,7 @@ const Container = styled.div`
         justify-content: space-between;
         align-items: center;
         padding: 8px 0;
-        color: var(--bs-gray-700);
+        color: var(--text-color);
         font-size: 14px;
 
         &:not(:last-child) {
@@ -237,12 +248,12 @@ const Container = styled.div`
         }
 
         .detail-label {
-          color: var(--bs-gray-600);
+          color: var(--text-secondary-color);
         }
 
         .detail-value {
           font-weight: 500;
-          color: var(--bs-gray-900);
+          color: var(--grey-01);
         }
       }
     }
@@ -252,7 +263,7 @@ const Container = styled.div`
       align-items: center;
       justify-content: flex-end;
       margin-top: 12px;
-      color: var(--bs-primary);
+      color: var(--theme-color);
       cursor: pointer;
       font-size: 14px;
       font-weight: 500;
