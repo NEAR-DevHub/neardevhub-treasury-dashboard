@@ -2,6 +2,10 @@ const { Modal, ModalContent, ModalHeader, ModalFooter } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.modal"
 );
 
+const { CardSkeleton } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.skeleton"
+) || { CardSkeleton: () => <></> };
+
 if (!Modal || !ModalContent || !ModalHeader || !ModalFooter) {
   return <></>;
 }
@@ -9,6 +13,143 @@ if (!Modal || !ModalContent || !ModalHeader || !ModalFooter) {
 if (!props.show) {
   return <></>;
 }
+
+const Container = styled.div`
+  min-height: 500px;
+  .warning-box {
+    background: rgba(255, 158, 0, 0.1);
+    color: var(--other-warning);
+    font-weight: 500;
+    font-size: 13px;
+  }
+
+  .drop-btn {
+    width: 100%;
+    text-align: left;
+  }
+
+  /* Fix dropdown toggle icon wrapping for DropDownWithSearchAndManualRequest */
+  .custom-select .dropdown-toggle {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .custom-select .dropdown-toggle .bi {
+    flex-shrink: 0;
+    margin-left: auto;
+  }
+
+  /* Fix Bootstrap dropdown arrow positioning */
+  .custom-select .dropdown-toggle:after {
+    flex-shrink: 0;
+    margin-left: 8px;
+    position: static !important;
+    top: auto !important;
+    right: auto !important;
+  }
+
+  /* Ensure dropdown container has proper flex properties */
+  .custom-select {
+    min-width: 0;
+  }
+
+  /* Fix selected option text wrapping */
+  .custom-select .selected-option {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+  }
+
+  /* Ensure dropdown menu maintains full width */
+  .custom-select .dropdown-menu {
+    width: 100% !important;
+    min-width: 100% !important;
+    left: 0 !important;
+    right: auto !important;
+  }
+
+  /* Fix dropdown container positioning */
+  .custom-select {
+    position: relative;
+    width: 100%;
+  }
+
+  .info-box {
+    background: var(--grey-04);
+    color: var(--grey-02);
+    font-weight: 500;
+    font-size: 13px;
+    padding: 12px;
+  }
+`;
+
+const DepositAddressSection = ({ address, warningMessage, warningDetails }) => {
+  return (
+    <>
+      <h5 className="mt-3">Use this deposit address</h5>
+      <p className="mt-2 text-secondary">
+        Always double-check your deposit address — it may change without notice.
+      </p>
+      <div className="d-flex align-items-start mb-2">
+        <div className="me-3">
+          {address && (
+            <div className="d-inline-block rounded-3 p-3 border border-1">
+              <Widget
+                src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.QRCodeGenerator"
+                props={{
+                  text: address,
+                }}
+              />
+            </div>
+          )}
+        </div>
+        <div className="w-100" style={{ overflow: "auto" }}>
+          <div className="d-flex flex-column gap-3">
+            <div className="d-flex flex-column gap-1">
+              <label>Deposit Address</label>
+              <div className="d-flex align-items-center w-100">
+                <div
+                  className="d-flex form-control border border-1 pe-1"
+                  style={{
+                    fontFamily: "monospace",
+                    fontSize: "1.1em",
+                  }}
+                >
+                  <div className="text-truncate flex-grow-1">{address}</div>
+                  <Widget
+                    src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Copy"
+                    props={{
+                      label: "",
+                      clipboardText: address,
+                      className: "px-2",
+                      showLogo: true,
+                      logoDimensions: { height: 20, width: 20 },
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+            {warningMessage && (
+              <div className="px-3 py-2 warning-box rounded-3 d-flex flex-column gap-1">
+                <div className="fw-bolder">{warningMessage}</div>
+                <div>
+                  We recommend starting with a small test transaction to ensure
+                  everything works correctly before sending the full amount.
+                  Using a different network may result in the loss of funds.
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
 
 // Initialize state for the entire component
 State.init({
@@ -319,32 +460,11 @@ useEffect(() => {
   }
 }, [activeTab]);
 
-const sputnikWarning = (
-  <div
-    className="alert mt-2 mb-0 px-3 py-2"
-    style={{
-      background: "#47391c",
-      color: "#ffb84d",
-      fontWeight: 500,
-      border: "none",
-    }}
-  >
-    Only deposit from the NEAR network
-    <br />
-    <span style={{ fontWeight: 400, color: "#ffb84dcc" }}>
-      Depositing using a different network will result in loss of funds.
-    </span>
-  </div>
-);
-
 const DynamicIntentsWarning = () => {
   if (!state.selectedAssetName || !state.selectedNetworkFullInfo) {
     return (
-      <div
-        className="alert alert-info d-flex align-items-center mt-2"
-        role="alert"
-      >
-        <i className="bi bi-info-circle-fill me-2"></i>
+      <div className="info-box d-flex align-items-center gap-2 rounded-3">
+        <i className="bi bi-info-circle"></i>
         <div>
           Select an asset and network to see deposit instructions and address.
         </div>
@@ -358,8 +478,9 @@ const DynamicIntentsWarning = () => {
 return (
   <Modal props={{ minWidth: "700px" }}>
     <ModalHeader>
-      <div className="d-flex align-items-center justify-content-between mb-2">
-        <div className="d-flex gap-3">Deposit</div>
+      <div className="d-flex align-items-center justify-content-between">
+        <div className="h4 mb-0">Deposit</div>
+
         <i
           className="bi bi-x-lg h4 mb-0 cursor-pointer"
           onClick={props.onClose}
@@ -367,330 +488,174 @@ return (
       </div>
     </ModalHeader>
     <ModalContent>
-      <ul className="nav nav-tabs mt-3">
-        <li className="nav-item">
-          <button
-            className={`nav-link ${activeTab === "sputnik" ? "active" : ""}`}
-            onClick={() => {
-              State.update({ activeTab: "sputnik" });
-            }}
-          >
-            Sputnik DAO
-          </button>
-        </li>
-        <li className="nav-item">
-          <button
-            className={`nav-link ${activeTab === "intents" ? "active" : ""}`}
-            onClick={() => {
-              const newTab = "intents";
-              State.update({ activeTab: newTab });
-            }}
-          >
-            NEAR Intents
-          </button>
-        </li>
-      </ul>
+      <Container>
+        <Widget
+          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TabsToggle"
+          props={{
+            options: [
+              { label: "Sputnik DAO", value: "sputnik" },
+              { label: "NEAR Intents", value: "intents" },
+            ],
+            activeTab: activeTab,
+            onTabChange: (tabValue) => {
+              State.update({ activeTab: tabValue });
+            },
+          }}
+        />
 
-      {activeTab === "sputnik" && (
-        <>
-          <h5 className="mt-3">Use this deposit address</h5>
-          <p className="mt-2 text-muted">
-            Always double-check your deposit address — it may change without
-            notice.
-          </p>
-          <div
-            className="row g-0 align-items-start mb-2"
-            style={{ marginTop: 8 }}
-          >
-            <div className="col-auto" style={{ paddingRight: 20 }}>
-              {sputnikAddress && (
-                <div
-                  className="bg-dark-subtle rounded p-2"
-                  style={{
-                    display: "inline-block",
-                    border: "1.5px solid #444",
-                  }}
-                >
-                  <Widget
-                    src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.QRCodeGenerator"
-                    props={{
-                      text: sputnikAddress,
-                      cellSize: 4,
-                      margin: 4,
-                    }}
-                  />
-                </div>
-              )}
+        {activeTab === "sputnik" && (
+          <DepositAddressSection
+            address={sputnikAddress}
+            warningMessage="Only deposit from the NEAR network"
+          />
+        )}
+
+        {activeTab === "intents" && (
+          <>
+            {/* Single Web3IconFetcher for all icons - optimized to fetch all asset and network icons at once */}
+            {state.allTokensForIcons.length > 0 && !state.allIconsFetched && (
+              <Widget
+                src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Web3IconFetcher"
+                props={{
+                  tokens: state.allTokensForIcons,
+                  onIconsLoaded: handleAllIconsLoaded,
+                  fetchNetworkIcons: true, // Enable both asset and network icon fetching
+                }}
+              />
+            )}
+            <h6 className="my-3">Select asset and network</h6>
+            {/* Asset Selector */}
+            <div className="mb-3">
+              <Widget
+                loading=""
+                src={
+                  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
+                }
+                props={{
+                  selectedValue: state.selectedAssetName,
+                  onChange: (option) => {
+                    const newAssetName =
+                      option && option.value !== undefined ? option.value : "";
+                    State.update({ selectedAssetName: newAssetName });
+                    updateNetworksForAsset(newAssetName);
+                  },
+                  options: state.assetNamesForDropdown.map((assetName) => ({
+                    value: assetName,
+                    label: assetName,
+                    icon: state.tokenIconMap[assetName],
+                  })),
+                  defaultLabel: state.isLoadingTokens
+                    ? "Loading assets..."
+                    : state.assetNamesForDropdown.length === 0
+                    ? "No assets found"
+                    : !state.allIconsFetched
+                    ? "Loading asset icons..."
+                    : "Select Asset",
+                  showSearch: true,
+                  searchInputPlaceholder: "Search assets",
+                  searchByLabel: true,
+                }}
+              />
             </div>
-            <div className="col ps-0">
-              <label className="form-label mb-1" style={{ fontWeight: 500 }}>
-                Deposit Address
-              </label>
-              <div
-                className="d-flex align-items-center mb-2"
-                style={{ maxWidth: 420 }}
-              >
-                <div
-                  className="form-control bg-dark-subtle text-light border-secondary pe-1"
-                  style={{
-                    fontFamily: "monospace",
-                    fontSize: "1.1em",
-                    display: "flex",
-                  }}
-                >
-                  <div
-                    style={{
-                      textOverflow: "ellipsis",
-                      overflow: "hidden",
-                      whiteSpace: "nowrap",
-                      flexGrow: "1",
-                    }}
-                  >
-                    {sputnikAddress}
+
+            {/* Network Selector */}
+            <div className="mb-3">
+              <Widget
+                loading=""
+                src={
+                  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
+                }
+                props={{
+                  selectedValue: state.selectedNetworkFullInfo
+                    ? state.selectedNetworkFullInfo.id
+                    : "",
+                  onChange: (option) => {
+                    const networkInfo =
+                      option && option.value !== undefined
+                        ? state.networksForSelectedAssetDropdown.find(
+                            (n) => n.id === option.value
+                          )
+                        : null;
+                    State.update({ selectedNetworkFullInfo: networkInfo });
+                    fetchDepositAddress(networkInfo);
+                  },
+                  options: state.networksForSelectedAssetDropdown.map(
+                    (network) => ({
+                      value: network.id,
+                      label: network.name,
+                      icon: network.icon,
+                    })
+                  ),
+                  defaultLabel: !state.selectedAssetName
+                    ? "Select Asset first"
+                    : state.networksForSelectedAssetDropdown.length === 0 &&
+                      state.selectedAssetName &&
+                      !state.isLoadingTokens
+                    ? "No networks for this asset"
+                    : "Select Network",
+                  showSearch: true,
+                  searchInputPlaceholder: "Search networks",
+                  searchByLabel: true,
+                  disabled:
+                    state.isLoadingTokens ||
+                    state.isLoadingAddress ||
+                    !state.selectedAssetName ||
+                    state.networksForSelectedAssetDropdown.length === 0,
+                }}
+              />
+            </div>
+
+            {state.isLoadingAddress && (
+              <div className="d-flex flex-column gap-3">
+                <div className="d-flex flex-column gap-3 w-100">
+                  <div style={{ height: 20, width: "20%" }}>
+                    <CardSkeleton />
                   </div>
-                  <Widget
-                    src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Copy"
-                    props={{
-                      label: "",
-                      clipboardText: sputnikAddress,
-                      className:
-                        "btn btn-sm btn-outline-secondary ms-n5 end-0 me-2",
-                      iconOnly: true,
-                    }}
-                  />
-                </div>
-              </div>
-              {sputnikWarning}
-            </div>
-          </div>
-        </>
-      )}
-
-      {activeTab === "intents" && (
-        <>
-          {/* Single Web3IconFetcher for all icons - optimized to fetch all asset and network icons at once */}
-          {state.allTokensForIcons.length > 0 && !state.allIconsFetched && (
-            <Widget
-              src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Web3IconFetcher"
-              props={{
-                tokens: state.allTokensForIcons,
-                onIconsLoaded: handleAllIconsLoaded,
-                fetchNetworkIcons: true, // Enable both asset and network icon fetching
-              }}
-            />
-          )}
-          <h6 className="mt-3">Select asset and network</h6>
-          {/* Asset Selector */}
-          <div className="mb-3">
-            <label htmlFor="assetSelectIntents" className="form-label">
-              Asset
-            </label>
-            <Widget
-              loading=""
-              src={
-                "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
-              }
-              props={{
-                selectedValue: state.selectedAssetName,
-                onChange: (option) => {
-                  const newAssetName =
-                    option && option.value !== undefined ? option.value : "";
-                  State.update({ selectedAssetName: newAssetName });
-                  updateNetworksForAsset(newAssetName);
-                },
-                options: state.assetNamesForDropdown.map((assetName) => ({
-                  value: assetName,
-                  label: assetName,
-                  icon: state.tokenIconMap[assetName],
-                })),
-                defaultLabel: state.isLoadingTokens
-                  ? "Loading assets..."
-                  : state.assetNamesForDropdown.length === 0
-                  ? "No assets found"
-                  : !state.allIconsFetched
-                  ? "Loading asset icons..."
-                  : "Select an asset",
-                showSearch: true,
-                searchInputPlaceholder: "Search assets",
-                searchByLabel: true,
-              }}
-            />
-          </div>
-
-          {/* Network Selector */}
-          <div className="mb-3">
-            <label htmlFor="networkSelectIntents" className="form-label">
-              Network
-            </label>
-
-            <Widget
-              loading=""
-              src={
-                "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
-              }
-              props={{
-                selectedValue: state.selectedNetworkFullInfo
-                  ? state.selectedNetworkFullInfo.id
-                  : "",
-                onChange: (option) => {
-                  const networkInfo =
-                    option && option.value !== undefined
-                      ? state.networksForSelectedAssetDropdown.find(
-                          (n) => n.id === option.value
-                        )
-                      : null;
-                  State.update({ selectedNetworkFullInfo: networkInfo });
-                  fetchDepositAddress(networkInfo);
-                },
-                options: state.networksForSelectedAssetDropdown.map(
-                  (network) => ({
-                    value: network.id,
-                    label: network.name,
-                    icon: network.icon,
-                  })
-                ),
-                defaultLabel: !state.selectedAssetName
-                  ? "Select an asset first"
-                  : state.networksForSelectedAssetDropdown.length === 0 &&
-                    state.selectedAssetName &&
-                    !state.isLoadingTokens
-                  ? "No networks for this asset"
-                  : "Select a network",
-                showSearch: true,
-                searchInputPlaceholder: "Search networks",
-                searchByLabel: true,
-                disabled:
-                  state.isLoadingTokens ||
-                  state.isLoadingAddress ||
-                  !state.selectedAssetName ||
-                  state.networksForSelectedAssetDropdown.length === 0,
-              }}
-            />
-          </div>
-
-          {state.isLoadingAddress && (
-            <p className="mt-2">Loading deposit address...</p>
-          )}
-          {state.errorApi && (
-            <div className="alert alert-danger mt-2">{state.errorApi}</div>
-          )}
-
-          {!state.isLoadingAddress && state.intentsDepositAddress ? (
-            <>
-              <h5>Use this deposit address</h5>
-              <p className="mt-2 text-muted">
-                Always double-check your deposit address — it may change without
-                notice.
-              </p>
-
-              <div
-                className="row g-0 align-items-start mb-2"
-                style={{ marginTop: 8 }}
-              >
-                <div className="col-auto" style={{ paddingRight: 20 }}>
-                  <div
-                    className="bg-dark-subtle rounded p-2"
-                    style={{
-                      display: "inline-block",
-                      border: "1.5px solid #444",
-                    }}
-                  >
-                    <Widget
-                      loading=""
-                      src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.QRCodeGenerator"
-                      props={{
-                        text: state.intentsDepositAddress,
-                        cellSize: 4,
-                        margin: 4,
-                      }}
-                    />
+                  <div style={{ height: 20, width: "50%" }}>
+                    <CardSkeleton />
                   </div>
                 </div>
-                <div className="col ps-0">
-                  <label
-                    className="form-label mb-1"
-                    style={{ fontWeight: 500 }}
-                  >
-                    Deposit Address
-                  </label>
-                  <div
-                    className="d-flex align-items-center mb-2"
-                    style={{ maxWidth: 420 }}
-                  >
-                    <div
-                      className="form-control bg-dark-subtle text-light border-secondary pe-1"
-                      style={{
-                        fontFamily: "monospace",
-                        fontSize: "1.1em",
-                        display: "flex",
-                      }}
-                    >
-                      <div
-                        style={{
-                          textOverflow: "ellipsis",
-                          overflow: "hidden",
-                          whiteSpace: "nowrap",
-                          flexGrow: "1",
-                        }}
-                      >
-                        {state.intentsDepositAddress}
-                      </div>
-                      <Widget
-                        loading=""
-                        src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Copy"
-                        props={{
-                          label: "",
-                          clipboardText: state.intentsDepositAddress,
-                          className:
-                            "btn btn-sm btn-outline-secondary ms-n5 end-0 me-2",
-                          iconOnly: true,
-                        }}
-                      />
+                <div className=" d-flex gap-2">
+                  <div style={{ height: 150, width: "40%" }}>
+                    <CardSkeleton />
+                  </div>
+                  <div className="d-flex flex-column gap-3 w-100">
+                    <div style={{ height: 20, width: "100%" }}>
+                      <CardSkeleton />
+                    </div>
+                    <div style={{ height: 30, width: "100%" }}>
+                      <CardSkeleton />
                     </div>
                   </div>
-                  <div
-                    className="alert mt-2 mb-0 px-3 py-2"
-                    style={{
-                      background: "#47391c",
-                      color: "#ffb84d",
-                      fontWeight: 500,
-                      border: "none",
-                    }}
-                  >
-                    Only deposit {state.selectedAssetName} from the{" "}
-                    {state.selectedNetworkFullInfo?.name?.toLowerCase()} network
-                    <br />
-                    <span style={{ fontWeight: 400, color: "#ffb84dcc" }}>
-                      Depositing other assets or using a different network will
-                      result in loss of funds
-                    </span>
-                  </div>
                 </div>
               </div>
-            </>
-          ) : (
-            !state.isLoadingAddress &&
-            state.selectedAssetName &&
-            state.selectedNetworkFullInfo &&
-            !state.errorApi && (
-              <p className="mt-3 fst-italic">
-                Could not load deposit address. Please ensure your selection is
-                valid or try again.
-              </p>
-            )
-          )}
-          <DynamicIntentsWarning />
-        </>
-      )}
+            )}
+            {state.errorApi && (
+              <div className="alert alert-danger mt-2">{state.errorApi}</div>
+            )}
+
+            {!state.isLoadingAddress && state.intentsDepositAddress ? (
+              <DepositAddressSection
+                address={state.intentsDepositAddress}
+                warningMessage={`Only deposit ${
+                  state.selectedAssetName
+                } from the ${state.selectedNetworkFullInfo?.name?.toLowerCase()} network`}
+              />
+            ) : (
+              !state.isLoadingAddress &&
+              state.selectedAssetName &&
+              state.selectedNetworkFullInfo &&
+              !state.errorApi && (
+                <p className="mt-3 fst-italic">
+                  Could not load deposit address. Please ensure your selection
+                  is valid or try again.
+                </p>
+              )
+            )}
+            <DynamicIntentsWarning />
+          </>
+        )}
+      </Container>
     </ModalContent>
-    <ModalFooter>
-      <button
-        type="button"
-        className="btn btn-secondary"
-        onClick={props.onClose}
-      >
-        Close
-      </button>
-    </ModalFooter>
   </Modal>
 );
