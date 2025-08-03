@@ -396,6 +396,155 @@ function getFilteredProposalsByStatusAndKind({
   });
 }
 
+function generateFilteredProposalsQuery(
+  filters,
+  accountId,
+  amountValues,
+  search
+) {
+  let queryParams = [];
+
+  // Handle search parameter
+  if (search && search.trim()) {
+    queryParams.push(`search=${encodeURIComponent(search.trim())}`);
+  }
+
+  // Handle filters object
+  if (filters && typeof filters === "object") {
+    // Iterate through each filter key
+    Object.keys(filters).forEach((filterKey) => {
+      const filter = filters[filterKey];
+
+      if (filter && filter.values && filter.values.length > 0) {
+        const values = filter.values.filter((value) => value && value !== ""); // Filter out empty values
+
+        if (values.length > 0) {
+          // Only add if we have non-empty values
+          const include = filter.include !== false; // default to true if not specified
+
+          // Map filter keys to URL parameters
+          switch (filterKey) {
+            case "status":
+              if (include) {
+                queryParams.push(`statuses=${values.join(",")}`);
+              } else {
+                // When "is not" is selected, send all statuses except the selected ones
+                const allStatuses = [
+                  "Approved",
+                  "Rejected",
+                  "Failed",
+                  "Expired",
+                ];
+                const excludedStatuses = values;
+                const includedStatuses = allStatuses.filter(
+                  (status) => !excludedStatuses.includes(status)
+                );
+                queryParams.push(`statuses=${includedStatuses.join(",")}`);
+              }
+              break;
+
+            case "proposers":
+              if (include) {
+                queryParams.push(`proposers=${values.join(",")}`);
+              } else {
+                queryParams.push(`proposers_not=${values.join(",")}`);
+              }
+              break;
+
+            case "approvers":
+              if (include) {
+                queryParams.push(`approvers=${values.join(",")}`);
+              } else {
+                queryParams.push(`approvers_not=${values.join(",")}`);
+              }
+              break;
+
+            case "recipients":
+              if (include) {
+                queryParams.push(`recipients=${values.join(",")}`);
+              } else {
+                queryParams.push(`recipients_not=${values.join(",")}`);
+              }
+              break;
+
+            case "token":
+              if (include) {
+                queryParams.push(`tokens=${values.join(",")}`);
+              } else {
+                queryParams.push(`tokens_not=${values.join(",")}`);
+              }
+              break;
+
+            case "created_date":
+              // For date filters, preserve the original array structure
+              const originalValues = filter.values;
+              const fromDate = originalValues[0];
+              const toDate = originalValues[1];
+
+              if (fromDate && toDate) {
+                queryParams.push(
+                  `created_date_from=${fromDate}&created_date_to=${toDate}`
+                );
+              } else if (fromDate) {
+                queryParams.push(`created_date_from=${fromDate}`);
+              } else if (toDate) {
+                queryParams.push(`created_date_to=${toDate}`);
+              }
+              break;
+
+            case "votes":
+              if (values[0] === "Approved") {
+                queryParams.push(`voter_votes=${accountId}:approved`);
+              } else if (values[0] === "Rejected") {
+                queryParams.push(`voter_votes=${accountId}:rejected`);
+              } else if (
+                values[0] === "Awaiting Decision" ||
+                values[0] === "Not Voted"
+              ) {
+                // Check if approvers_not already exists in the query
+                const existingApproversNotIndex = queryParams.findIndex(
+                  (param) => param.startsWith("approvers_not=")
+                );
+                if (existingApproversNotIndex !== -1) {
+                  // Combine existing and new values
+                  const existingParam = queryParams[existingApproversNotIndex];
+                  const existingValues = existingParam.split("=")[1].split(",");
+                  const allValues = [
+                    ...new Set([...existingValues, accountId]),
+                  ];
+                  // Replace the existing approvers_not with combined values
+                  queryParams[
+                    existingApproversNotIndex
+                  ] = `approvers_not=${allValues.join(",")}`;
+                } else {
+                  queryParams.push(`approvers_not=${accountId}`);
+                }
+              }
+              break;
+            default:
+              break;
+          }
+        }
+      }
+    });
+  }
+
+  // Handle amount values
+  if (amountValues) {
+    if (amountValues.min && amountValues.min !== "") {
+      queryParams.push(`amount_min=${amountValues.min}`);
+    }
+    if (amountValues.max && amountValues.max !== "") {
+      queryParams.push(`amount_max=${amountValues.max}`);
+    }
+    if (amountValues.equal && amountValues.equal !== "") {
+      queryParams.push(`amount_equal=${amountValues.equal}`);
+    }
+  }
+
+  return queryParams.join("&");
+}
+
 function getProposalsFromIndexer({
   daoId,
   category,
@@ -418,11 +567,6 @@ function getProposalsFromIndexer({
     query += `&proposal_types=${proposalType.join(",")}`;
   }
 
-  // Handle search
-  if (search && search.trim()) {
-    query += `&search=${encodeURIComponent(search.trim())}`;
-  }
-
   // Handle statuses - use filters.statuses if available, otherwise use statuses parameter
   let hasStatusesInFilters = false;
   if (
@@ -438,140 +582,15 @@ function getProposalsFromIndexer({
     query += `&statuses=${statuses.join(",")}`;
   }
 
-  // Handle filters object
-  if (filters && typeof filters === "object") {
-    // Iterate through each filter key
-    Object.keys(filters).forEach((filterKey) => {
-      const filter = filters[filterKey];
-
-      if (filter && filter.values && filter.values.length > 0) {
-        const values = filter.values.filter((value) => value && value !== ""); // Filter out empty values
-
-        if (values.length > 0) {
-          // Only add if we have non-empty values
-          const include = filter.include !== false; // default to true if not specified
-
-          // Map filter keys to URL parameters
-          switch (filterKey) {
-            case "status":
-              if (include) {
-                query += `&statuses=${values.join(",")}`;
-              } else {
-                // When "is not" is selected, send all statuses except the selected ones
-                const allStatuses = [
-                  "Approved",
-                  "Rejected",
-                  "Failed",
-                  "Expired",
-                ];
-                const excludedStatuses = values;
-                const includedStatuses = allStatuses.filter(
-                  (status) => !excludedStatuses.includes(status)
-                );
-                query += `&statuses=${includedStatuses.join(",")}`;
-              }
-              break;
-
-            case "proposers":
-              if (include) {
-                query += `&proposers=${values.join(",")}`;
-              } else {
-                query += `&proposers_not=${values.join(",")}`;
-              }
-              break;
-
-            case "approvers":
-              if (include) {
-                query += `&approvers=${values.join(",")}`;
-              } else {
-                query += `&approvers_not=${values.join(",")}`;
-              }
-              break;
-
-            case "recipients":
-              if (include) {
-                query += `&recipients=${values.join(",")}`;
-              } else {
-                query += `&recipients_not=${values.join(",")}`;
-              }
-              break;
-
-            case "token":
-              if (include) {
-                query += `&tokens=${values.join(",")}`;
-              } else {
-                query += `&tokens_not=${values.join(",")}`;
-              }
-              break;
-
-            case "created_date":
-              // For date filters, preserve the original array structure
-              const originalValues = filter.values;
-              const fromDate = originalValues[0];
-              const toDate = originalValues[1];
-
-              if (fromDate && toDate) {
-                query += `&created_date_from=${fromDate}&created_date_to=${toDate}`;
-              } else if (fromDate) {
-                query += `&created_date_from=${fromDate}`;
-              } else if (toDate) {
-                query += `&created_date_to=${toDate}`;
-              }
-              break;
-
-            case "votes":
-              if (values[0] === "Approved") {
-                query += `&voter_votes=${accountId}:approved`;
-              } else if (values[0] === "Rejected") {
-                query += `&voter_votes=${accountId}:rejected`;
-              } else if (
-                values[0] === "Awaiting Decision" ||
-                values[0] === "Not Voted"
-              ) {
-                // Check if approvers_not already exists in the query
-                const existingApproversNot = query.match(
-                  /&approvers_not=([^&]+)/
-                );
-                if (existingApproversNot) {
-                  // Combine existing and new values
-                  const existingValues = existingApproversNot[1].split(",");
-                  const allValues = [
-                    ...new Set([...existingValues, accountId]),
-                  ];
-                  // Replace the existing approvers_not with combined values
-                  query = query.replace(
-                    /&approvers_not=[^&]+/,
-                    `&approvers_not=${allValues.join(",")}`
-                  );
-                } else {
-                  query += `&approvers_not=${accountId}`;
-                }
-              }
-              break;
-            default:
-              break;
-          }
-        }
-      }
-    });
-  }
-
-  if (amountValues) {
-    const amountParams = [];
-
-    if (amountValues.min && amountValues.min !== "") {
-      amountParams.push(`amount_min=${amountValues.min}`);
-    }
-    if (amountValues.max && amountValues.max !== "") {
-      amountParams.push(`amount_max=${amountValues.max}`);
-    }
-    if (amountValues.equal && amountValues.equal !== "") {
-      amountParams.push(`amount_equal=${amountValues.equal}`);
-    }
-
-    if (amountParams.length > 0) {
-      query += `&${amountParams.join("&")}`;
-    }
+  // Add filter-related query parameters (including search)
+  const filterQueryParams = generateFilteredProposalsQuery(
+    filters,
+    accountId,
+    amountValues,
+    search
+  );
+  if (filterQueryParams) {
+    query += `&${filterQueryParams}`;
   }
 
   return asyncFetch(query).then((r) => r.body);
