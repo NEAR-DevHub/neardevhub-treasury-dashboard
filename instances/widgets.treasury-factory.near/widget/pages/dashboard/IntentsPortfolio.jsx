@@ -153,6 +153,7 @@ useEffect(() => {
                   price: t.price,
                 },
                 amount: t.amount, // Amount is already on 't' from filteredTokensWithBalances
+                blockchain: t.blockchain,
               }));
 
               // Aggregate tokens by symbol
@@ -183,6 +184,7 @@ useEffect(() => {
                   price: t.price,
                 },
                 amount: t.amount,
+                blockchain: t.blockchain,
               }));
 
               // Aggregate tokens by symbol
@@ -300,7 +302,6 @@ const TokenCard = ({ token, id }) => {
           <div
             style={{
               width: 20,
-              paddingLeft: 10,
             }}
           >
             {individualTokens.length > 1 && (
@@ -333,7 +334,7 @@ const TokenCard = ({ token, id }) => {
                 {(individualToken.blockchain || "").toUpperCase() || "Unknown"}
               </div>
               <div className="d-flex gap-1">
-                <div>
+                <div style={{ marginTop: "-5px" }}>
                   {icon ? (
                     <img src={icon} height={16} width={16} />
                   ) : (
@@ -341,7 +342,9 @@ const TokenCard = ({ token, id }) => {
                   )}
                 </div>
                 <div className="d-flex flex-column align-items-end">
-                  <div className="">{individualToken.readableAmount}</div>
+                  <div className="h6 mb-0">
+                    {individualToken.readableAmount}
+                  </div>
                   <div className="text-sm text-secondary">
                     {formatCurrency(
                       Big(individualToken.readableAmount)
@@ -353,7 +356,6 @@ const TokenCard = ({ token, id }) => {
                 <div
                   style={{
                     width: 20,
-                    paddingLeft: 10,
                   }}
                 ></div>
               </div>
