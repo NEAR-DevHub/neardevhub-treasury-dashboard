@@ -19,7 +19,7 @@
  * - Amount: 1.0 USDC → 0.999998 USDC
  */
 
-import { NearRpcClient } from "@psalomo/jsonrpc-client";
+import { NearRpcClient, viewFunctionAsJson } from "@psalomo/jsonrpc-client";
 
 // Configuration
 const DAO_ACCOUNT = "webassemblymusic-treasury.sputnik-dao.near";
@@ -32,7 +32,7 @@ const USDC_CONTRACT =
 const ETH_CONTRACT = "eth.omft.near";
 
 // RPC client
-const rpc = new NearRpcClient(RPC_URL);
+const client = new NearRpcClient({ endpoint: RPC_URL });
 
 async function checkBalance(
   accountId,
@@ -41,18 +41,16 @@ async function checkBalance(
   decimals = 6
 ) {
   try {
-    const result = await rpc.query({
-      request_type: "call_function",
-      finality: "final",
-      account_id: tokenContract,
-      method_name: "ft_balance_of",
-      args_base64: Buffer.from(
+    const balance = await viewFunctionAsJson(client, {
+      accountId: tokenContract,
+      methodName: "ft_balance_of",
+      argsBase64: Buffer.from(
         JSON.stringify({ account_id: accountId })
       ).toString("base64"),
+      finality: "final",
     });
 
-    if (result.result && result.result.length > 0) {
-      const balance = JSON.parse(Buffer.from(result.result).toString());
+    if (balance) {
       const formattedBalance = (
         parseInt(balance) / Math.pow(10, decimals)
       ).toFixed(decimals);
@@ -74,28 +72,21 @@ async function checkBalance(
 
 async function checkStorageDeposit(accountId, tokenContract, tokenSymbol) {
   try {
-    const result = await rpc.query({
-      request_type: "call_function",
-      finality: "final",
-      account_id: tokenContract,
-      method_name: "storage_balance_of",
-      args_base64: Buffer.from(
+    const storageBalance = await viewFunctionAsJson(client, {
+      accountId: tokenContract,
+      methodName: "storage_balance_of",
+      argsBase64: Buffer.from(
         JSON.stringify({ account_id: accountId })
       ).toString("base64"),
+      finality: "final",
     });
 
-    if (result.result && result.result.length > 0) {
-      const storageBalance = JSON.parse(Buffer.from(result.result).toString());
-      console.log(
-        `🏦 ${tokenSymbol} Storage Deposit: ${
-          storageBalance ? "Registered" : "Not registered"
-        }`
-      );
-      return storageBalance;
-    } else {
-      console.log(`🏦 ${tokenSymbol} Storage Deposit: Not registered`);
-      return null;
-    }
+    console.log(
+      `🏦 ${tokenSymbol} Storage Deposit: ${
+        storageBalance ? "Registered" : "Not registered"
+      }`
+    );
+    return storageBalance;
   } catch (error) {
     console.log(`❌ Error checking ${tokenSymbol} storage: ${error.message}`);
     return null;
@@ -109,103 +100,88 @@ async function checkIntentsTokens(accountId) {
     );
 
     // First get the list of token IDs
-    const tokensResult = await rpc.query({
-      request_type: "call_function",
-      finality: "final",
-      account_id: "intents.near",
-      method_name: "mt_tokens_for_owner",
-      args_base64: Buffer.from(
+    const tokenIds = await viewFunctionAsJson(client, {
+      accountId: "intents.near",
+      methodName: "mt_tokens_for_owner",
+      argsBase64: Buffer.from(
         JSON.stringify({ account_id: accountId })
       ).toString("base64"),
+      finality: "final",
     });
 
-    if (tokensResult.result && tokensResult.result.length > 0) {
-      const tokenIds = JSON.parse(Buffer.from(tokensResult.result).toString());
+    if (tokenIds && tokenIds.length > 0) {
+      console.log(`💰 Found ${tokenIds.length} token(s) in NEAR Intents`);
+      console.log(`Debug - Token IDs:`, tokenIds);
 
-      if (tokenIds && tokenIds.length > 0) {
-        console.log(`💰 Found ${tokenIds.length} token(s) in NEAR Intents`);
-        console.log(`Debug - Token IDs:`, tokenIds);
+      // Extract just the token ID strings
+      const tokenIdStrings = tokenIds.map((tokenObj) => tokenObj.token_id);
+      console.log(`Debug - Token ID strings:`, tokenIdStrings);
 
-        // Extract just the token ID strings
-        const tokenIdStrings = tokenIds.map((tokenObj) => tokenObj.token_id);
-        console.log(`Debug - Token ID strings:`, tokenIdStrings);
+      // Now get the balances for all tokens
+      try {
+        const balances = await viewFunctionAsJson(client, {
+          accountId: "intents.near",
+          methodName: "mt_batch_balance_of",
+          argsBase64: Buffer.from(
+            JSON.stringify({
+              account_id: accountId,
+              token_ids: tokenIdStrings,
+            })
+          ).toString("base64"),
+          finality: "final",
+        });
 
-        // Now get the balances for all tokens
-        try {
-          const balancesResult = await rpc.query({
-            request_type: "call_function",
-            finality: "final",
-            account_id: "intents.near",
-            method_name: "mt_batch_balance_of",
-            args_base64: Buffer.from(
-              JSON.stringify({
-                account_id: accountId,
-                token_ids: tokenIdStrings,
-              })
-            ).toString("base64"),
-          });
+        console.log(`Debug - Balances response:`, balances);
 
-          console.log(`Debug - Balance query result:`, balancesResult);
+        if (balances && balances.length > 0) {
+          // Combine token IDs with their balances
+          const tokensWithBalances = tokenIdStrings.map((tokenId, index) => ({
+            token_id: tokenId,
+            balance: balances[index],
+          }));
 
-          if (balancesResult.result && balancesResult.result.length > 0) {
-            const balances = JSON.parse(
-              Buffer.from(balancesResult.result).toString()
-            );
+          console.log(`\nToken Details:`);
+          for (const tokenInfo of tokensWithBalances) {
+            console.log(`   • Token ID: ${tokenInfo.token_id}`);
+            console.log(`     Balance: ${tokenInfo.balance}`);
 
-            console.log(`Debug - Balances response:`, balances);
-
-            // Combine token IDs with their balances
-            const tokensWithBalances = tokenIdStrings.map((tokenId, index) => ({
-              token_id: tokenId,
-              balance: balances[index],
-            }));
-
-            console.log(`\nToken Details:`);
-            for (const tokenInfo of tokensWithBalances) {
-              console.log(`   • Token ID: ${tokenInfo.token_id}`);
-              console.log(`     Balance: ${tokenInfo.balance}`);
-
-              // Format known tokens - token IDs already include nep141: prefix
-              if (tokenInfo.token_id === `nep141:${USDC_CONTRACT}`) {
-                const formattedBalance = (
-                  parseInt(tokenInfo.balance) / 1000000
-                ).toFixed(6);
-                console.log(`     Formatted: ${formattedBalance} USDC`);
-              } else if (tokenInfo.token_id === "nep141:wrap.near") {
-                const formattedBalance = (
-                  parseInt(tokenInfo.balance) / Math.pow(10, 24)
-                ).toFixed(8);
-                console.log(`     Formatted: ${formattedBalance} wNEAR`);
-              } else if (tokenInfo.token_id === "nep141:eth.omft.near") {
-                const formattedBalance = (
-                  parseInt(tokenInfo.balance) / Math.pow(10, 18)
-                ).toFixed(8);
-                console.log(`     Formatted: ${formattedBalance} ETH`);
-              } else if (
-                tokenInfo.token_id.includes(
-                  "eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
-                )
-              ) {
-                const formattedBalance = (
-                  parseInt(tokenInfo.balance) / 1000000
-                ).toFixed(6);
-                console.log(
-                  `     Formatted: ${formattedBalance} USDC (Ethereum)`
-                );
-              }
+            // Format known tokens - token IDs already include nep141: prefix
+            if (tokenInfo.token_id === `nep141:${USDC_CONTRACT}`) {
+              const formattedBalance = (
+                parseInt(tokenInfo.balance) / 1000000
+              ).toFixed(6);
+              console.log(`     Formatted: ${formattedBalance} USDC`);
+            } else if (tokenInfo.token_id === "nep141:wrap.near") {
+              const formattedBalance = (
+                parseInt(tokenInfo.balance) / Math.pow(10, 24)
+              ).toFixed(8);
+              console.log(`     Formatted: ${formattedBalance} wNEAR`);
+            } else if (tokenInfo.token_id === "nep141:eth.omft.near") {
+              const formattedBalance = (
+                parseInt(tokenInfo.balance) / Math.pow(10, 18)
+              ).toFixed(8);
+              console.log(`     Formatted: ${formattedBalance} ETH`);
+            } else if (
+              tokenInfo.token_id.includes(
+                "eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
+              )
+            ) {
+              const formattedBalance = (
+                parseInt(tokenInfo.balance) / 1000000
+              ).toFixed(6);
+              console.log(
+                `     Formatted: ${formattedBalance} USDC (Ethereum)`
+              );
             }
-
-            return tokensWithBalances;
-          } else {
-            console.log(`❌ Failed to get balances - no result`);
-            return [];
           }
-        } catch (balanceError) {
-          console.log(`❌ Error getting balances: ${balanceError.message}`);
+
+          return tokensWithBalances;
+        } else {
+          console.log(`❌ Failed to get balances - no result`);
           return [];
         }
-      } else {
-        console.log(`💰 No tokens found in NEAR Intents for this account`);
+      } catch (balanceError) {
+        console.log(`❌ Error getting balances: ${balanceError.message}`);
         return [];
       }
     } else {
@@ -400,13 +376,13 @@ async function main() {
     console.log(`📈 Quote Details:`);
     console.log(`   Amount In: ${quote.response.quote.amountInFormatted} USDC`);
     console.log(
-      `   Amount Out: ${quote.response.quote.amountOutFormatted} ETH`
+      `   Amount Out: ${quote.response.quote.amountOutFormatted} USDC`
     );
     console.log(
-      `   Rate: 1 USDC = ${(
+      `   Rate: 1 USDC (NEAR) = ${(
         parseFloat(quote.response.quote.amountOutFormatted) /
         parseFloat(quote.response.quote.amountInFormatted)
-      ).toFixed(8)} ETH`
+      ).toFixed(8)} USDC (Ethereum)`
     );
     console.log(`   Deposit Address: ${quote.response.quote.depositAddress}`);
     console.log(
