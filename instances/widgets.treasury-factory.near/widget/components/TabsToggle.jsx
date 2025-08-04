@@ -5,7 +5,7 @@ return (
     <div
       className="d-flex align-items-center rounded-3 w-100"
       style={{
-        backgroundColor: "var(--bg-system-color)",
+        backgroundColor: "var(--grey-05)",
         padding: "4px",
         border: "1px solid var(--border-color)",
       }}
@@ -14,9 +14,9 @@ return (
         <button
           key={index}
           onClick={() => onTabChange(option.value)}
-          className={`btn  rounded-3 px-3 py-2 flex-1 ${
+          className={`btn rounded-3 px-3 py-2 flex-1 ${
             activeTab === option.value
-              ? "bg-white text-dark shadow-sm border border-1"
+              ? "bg-white text-color shadow-sm border border-1"
               : "bg-transparent text-secondary border-0"
           }`}
           style={{
