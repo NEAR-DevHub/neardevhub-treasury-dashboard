@@ -540,17 +540,15 @@ test("show intents balance in dashboard (sandbox)", async ({
   await expect(page.getByText("Near Intents")).toBeVisible();
 
   // Scope token symbol assertions to the IntentsPortfolio component
-  const intentsPortfolioLocator = page.locator(
-    '[data-component="widgets.treasury-factory.near/widget/pages.dashboard.IntentsPortfolio"]'
-  );
+  const intentsPortfolioLocator = page.getByTestId("intents-portfolio");
   await expect(intentsPortfolioLocator.getByText("ETH")).toBeVisible();
   await expect(intentsPortfolioLocator.getByText("WNEAR")).toBeVisible();
   await expect(intentsPortfolioLocator.getByText("BTC")).toBeVisible();
   await expect(intentsPortfolioLocator.getByText("SOL")).toBeVisible();
 
   // Locate the ETH row and check its balance
-  const ethRowLocator = page.locator(
-    '.card div.d-flex.flex-column.border-bottom:has(div.h6.mb-0.text-truncate:has-text("ETH"))'
+  const ethRowLocator = intentsPortfolioLocator.locator(
+    'div.d-flex.flex-column:has(div.h6.mb-0.text-truncate:has-text("ETH"))'
   );
   const ethAmountElement = ethRowLocator.locator(
     "div.d-flex.gap-2.align-items-center.justify-content-end div.d-flex.flex-column.align-items-end div.h6.mb-0"
@@ -558,8 +556,8 @@ test("show intents balance in dashboard (sandbox)", async ({
   await expect(ethAmountElement).toHaveText("128.23", { timeout: 10000 }); // Rounded for display
 
   // Locate the WNEAR row and check its balance
-  const wnearRowLocator = page.locator(
-    '.card div.d-flex.flex-column.border-bottom:has(div.h6.mb-0.text-truncate:has-text("WNEAR"))'
+  const wnearRowLocator = intentsPortfolioLocator.locator(
+    'div.d-flex.flex-column:has(div.h6.mb-0.text-truncate:has-text("WNEAR"))'
   );
   const wnearAmountElement = wnearRowLocator.locator(
     "div.d-flex.gap-2.align-items-center.justify-content-end div.d-flex.flex-column.align-items-end div.h6.mb-0"
@@ -567,8 +565,8 @@ test("show intents balance in dashboard (sandbox)", async ({
   await expect(wnearAmountElement).toHaveText("342.66");
 
   // Locate the BTC row and check its balance
-  const btcRowLocator = page.locator(
-    '.card div.d-flex.flex-column.border-bottom:has(div.h6.mb-0.text-truncate:has-text("BTC"))'
+  const btcRowLocator = intentsPortfolioLocator.locator(
+    'div.d-flex.flex-column:has(div.h6.mb-0.text-truncate:has-text("BTC"))'
   );
   const btcAmountElement = btcRowLocator.locator(
     "div.d-flex.gap-2.align-items-center.justify-content-end div.d-flex.flex-column.align-items-end div.h6.mb-0"
@@ -576,8 +574,8 @@ test("show intents balance in dashboard (sandbox)", async ({
   await expect(btcAmountElement).toHaveText("0.50");
 
   // Locate the SOL row and check its balance
-  const solRowLocator = page.locator(
-    '.card div.d-flex.flex-column.border-bottom:has(div.h6.mb-0.text-truncate:has-text("SOL"))'
+  const solRowLocator = intentsPortfolioLocator.locator(
+    'div.d-flex.flex-column:has(div.h6.mb-0.text-truncate:has-text("SOL"))'
   );
   const solAmountElement = solRowLocator.locator(
     "div.d-flex.gap-2.align-items-center.justify-content-end div.d-flex.flex-column.align-items-end div.h6.mb-0"

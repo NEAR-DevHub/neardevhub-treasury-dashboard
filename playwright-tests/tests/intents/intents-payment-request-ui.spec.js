@@ -364,9 +364,11 @@ test("payment request to BTC address", async ({
     await creatorAccount.getKey()
   );
 
-  const btcRowLocator = page.locator(
-    '.card div.d-flex.flex-column.border-bottom:has(div.h6.mb-0.text-truncate:has-text("BTC"))'
-  );
+  const btcRowLocator = page
+    .getByTestId("intents-portfolio")
+    .locator(
+      'div.d-flex.flex-column:has(div.h6.mb-0.text-truncate:has-text("BTC"))'
+    );
   const btcAmountElement = btcRowLocator.locator(
     "div.d-flex.gap-2.align-items-center.justify-content-end div.d-flex.flex-column.align-items-end div.h6.mb-0"
   );
@@ -656,9 +658,11 @@ test("payment request to USDC address on BASE", async ({
     await creatorAccount.getKey()
   );
 
-  const usdcRowLocator = page.locator(
-    '.card div.d-flex.flex-column.border-bottom:has(div.h6.mb-0.text-truncate:has-text("USDC"))'
-  );
+  const usdcRowLocator = page
+    .getByTestId("intents-portfolio")
+    .locator(
+      'div.d-flex.flex-column:has(div.h6.mb-0.text-truncate:has-text("USDC"))'
+    );
   await expect(usdcRowLocator).toBeAttached();
   const usdcAmountElement = usdcRowLocator.locator(
     "div.d-flex.gap-2.align-items-center.justify-content-end div.d-flex.flex-column.align-items-end div.h6.mb-0"
@@ -984,9 +988,11 @@ test("payment request for wNEAR token on NEAR intents", async ({
   );
 
   // Check that NEAR (NEAR Intents) balance shows up in the dashboard
-  const nearBalanceRowLocator = page.locator(
-    '.card div.d-flex.flex-column.border-bottom:has(div.h6.mb-0.text-truncate:has-text("wNEAR"))'
-  );
+  const nearBalanceRowLocator = page
+    .getByTestId("intents-portfolio")
+    .locator(
+      'div.d-flex.flex-column:has(div.h6.mb-0.text-truncate:has-text("wNEAR"))'
+    );
 
   const nearBalanceLocator = nearBalanceRowLocator.locator(
     "div.d-flex.gap-2.align-items-center.justify-content-end div.d-flex.flex-column.align-items-end div.h6.mb-0"
@@ -1282,9 +1288,11 @@ test("insufficient balance alert for BTC payment request exceeding available bal
   );
 
   // Verify the DAO has 100 BTC available
-  const btcRowLocator = page.locator(
-    '.card div.d-flex.flex-column.border-bottom:has(div.h6.mb-0.text-truncate:has-text("BTC"))'
-  );
+  const btcRowLocator = page
+    .getByTestId("intents-portfolio")
+    .locator(
+      'div.d-flex.flex-column:has(div.h6.mb-0.text-truncate:has-text("BTC"))'
+    );
   const btcAmountElement = btcRowLocator.locator(
     "div.d-flex.gap-2.align-items-center.justify-content-end div.d-flex.flex-column.align-items-end div.h6.mb-0"
   );
@@ -1556,9 +1564,11 @@ test("insufficient balance alert for wNEAR payment request exceeding available b
   );
 
   // Verify the DAO has 25 wNEAR available in intents
-  const nearBalanceRowLocator = page.locator(
-    '.card div.d-flex.flex-column.border-bottom:has(div.h6.mb-0.text-truncate:has-text("wNEAR"))'
-  );
+  const nearBalanceRowLocator = page
+    .getByTestId("intents-portfolio")
+    .locator(
+      'div.d-flex.flex-column:has(div.h6.mb-0.text-truncate:has-text("wNEAR"))'
+    );
   const nearBalanceLocator = nearBalanceRowLocator.locator(
     "div.d-flex.gap-2.align-items-center.justify-content-end div.d-flex.flex-column.align-items-end div.h6.mb-0"
   );
