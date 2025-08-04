@@ -387,7 +387,7 @@ const filtered = (tokens || []).filter(
 );
 
 return filtered.length > 0 ? (
-  <div className="card flex-1 overflow-hidden">
+  <div data-testid="intents-portfolio" className="card flex-1 overflow-hidden">
     {heading}
     {filtered.map((token, idx) => (
       <TokenCard key={idx} token={token} id={idx} />
