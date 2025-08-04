@@ -191,7 +191,7 @@ test("show intents balance in dashboard (sandbox)", async ({
     },
   });
 
-  // Deploy ETH token
+  // Deploy ETH token (Ethereum chain)
   await omft.call(
     omft.accountId,
     "deploy_token",
@@ -202,6 +202,44 @@ test("show intents balance in dashboard (sandbox)", async ({
         name: "Ethereum",
         symbol: "ETH",
         icon: "", // The test will later assert the icon fetched from ft_metadata
+        reference: null,
+        reference_hash: null,
+        decimals: 18,
+      },
+    },
+    { attachedDeposit: parseNEAR("3"), gas: "300000000000000" }
+  );
+
+  // Deploy ETH token (Arbitrum chain) 
+  await omft.call(
+    omft.accountId,
+    "deploy_token",
+    {
+      token: "arb",
+      metadata: {
+        spec: "ft-1.0.0",
+        name: "Ethereum",
+        symbol: "ETH",
+        icon: "",
+        reference: null,
+        reference_hash: null,
+        decimals: 18,
+      },
+    },
+    { attachedDeposit: parseNEAR("3"), gas: "300000000000000" }
+  );
+
+  // Deploy ETH token (Base chain) 
+  await omft.call(
+    omft.accountId,
+    "deploy_token",
+    {
+      token: "base",
+      metadata: {
+        spec: "ft-1.0.0",
+        name: "Ethereum",
+        symbol: "ETH",
+        icon: "",
         reference: null,
         reference_hash: null,
         decimals: 18,
@@ -269,7 +307,7 @@ test("show intents balance in dashboard (sandbox)", async ({
     },
   });
 
-  // Register storage for treasury and intents (ETH)
+  // Register storage for treasury and intents (ETH - Ethereum chain)
   await omft.call(
     "eth.omft.near",
     "storage_deposit",
@@ -282,6 +320,48 @@ test("show intents balance in dashboard (sandbox)", async ({
 
   await omft.call(
     "eth.omft.near",
+    "storage_deposit",
+    {
+      account_id: intents.accountId,
+      registration_only: true,
+    },
+    { attachedDeposit: "1250000000000000000000" }
+  );
+
+  // Register storage for treasury and intents (ETH - Arbitrum chain)
+  await omft.call(
+    "arb.omft.near",
+    "storage_deposit",
+    {
+      account_id: daoTreasuryAccountId,
+      registration_only: true,
+    },
+    { attachedDeposit: "1250000000000000000000" }
+  );
+
+  await omft.call(
+    "arb.omft.near",
+    "storage_deposit",
+    {
+      account_id: intents.accountId,
+      registration_only: true,
+    },
+    { attachedDeposit: "1250000000000000000000" }
+  );
+
+  // Register storage for treasury and intents (ETH - Base chain)
+  await omft.call(
+    "base.omft.near",
+    "storage_deposit",
+    {
+      account_id: daoTreasuryAccountId,
+      registration_only: true,
+    },
+    { attachedDeposit: "1250000000000000000000" }
+  );
+
+  await omft.call(
+    "base.omft.near",
     "storage_deposit",
     {
       account_id: intents.accountId,
@@ -393,7 +473,7 @@ test("show intents balance in dashboard (sandbox)", async ({
     { attachedDeposit: "1" }
   );
 
-  // Deposit ETH token to treasury via intents
+  // Deposit ETH token (Ethereum chain) to treasury via intents
   await omft.call(
     omft.accountId,
     "ft_deposit",
@@ -406,6 +486,42 @@ test("show intents balance in dashboard (sandbox)", async ({
         networkType: "eth",
         chainId: "1",
         txHash: "0xethhash",
+      })}`,
+    },
+    { attachedDeposit: parseNEAR("0.00125"), gas: "300000000000000" }
+  );
+
+  // Deposit ETH token (Arbitrum chain) to treasury via intents
+  await omft.call(
+    omft.accountId,
+    "ft_deposit",
+    {
+      owner_id: intents.accountId,
+      token: "arb",
+      amount: "50000000000000000000", // 50 ETH on Arbitrum
+      msg: JSON.stringify({ receiver_id: daoTreasuryAccountId }),
+      memo: `BRIDGED_FROM:${JSON.stringify({
+        networkType: "eth",
+        chainId: "42161",
+        txHash: "0xetharbhash",
+      })}`,
+    },
+    { attachedDeposit: parseNEAR("0.00125"), gas: "300000000000000" }
+  );
+
+  // Deposit ETH token (Base chain) to treasury via intents
+  await omft.call(
+    omft.accountId,
+    "ft_deposit",
+    {
+      owner_id: intents.accountId,
+      token: "base",
+      amount: "25000000000000000000", // 25 ETH on Base
+      msg: JSON.stringify({ receiver_id: daoTreasuryAccountId }),
+      memo: `BRIDGED_FROM:${JSON.stringify({
+        networkType: "eth",
+        chainId: "8453",
+        txHash: "0xethbasehash",
       })}`,
     },
     { attachedDeposit: parseNEAR("0.00125"), gas: "300000000000000" }
@@ -461,16 +577,32 @@ test("show intents balance in dashboard (sandbox)", async ({
 
   // --- CONTRACT BALANCE CHECKS ---
   const ethTokenId = "nep141:eth.omft.near";
+  const ethArbTokenId = "nep141:arb.omft.near";
+  const ethBaseTokenId = "nep141:base.omft.near";
   const wnearTokenId = "nep141:wrap.near";
   const btcTokenId = "nep141:btc.omft.near";
   const solTokenId = "nep141:sol.omft.near";
 
-  // Check ETH balance
+  // Check ETH balance (Ethereum chain)
   const ethBalance = await intents.view("mt_balance_of", {
     account_id: daoTreasuryAccountId,
     token_id: ethTokenId,
   });
   expect(ethBalance).toEqual("128226700000000000000");
+
+  // Check ETH balance (Arbitrum chain)
+  const ethArbBalance = await intents.view("mt_balance_of", {
+    account_id: daoTreasuryAccountId,
+    token_id: ethArbTokenId,
+  });
+  expect(ethArbBalance).toEqual("50000000000000000000");
+
+  // Check ETH balance (Base chain)
+  const ethBaseBalance = await intents.view("mt_balance_of", {
+    account_id: daoTreasuryAccountId,
+    token_id: ethBaseTokenId,
+  });
+  expect(ethBaseBalance).toEqual("25000000000000000000");
 
   // Check wNEAR balance
   const wnearBalance = await intents.view("mt_balance_of", {
@@ -546,14 +678,41 @@ test("show intents balance in dashboard (sandbox)", async ({
   await expect(intentsPortfolioLocator.getByText("BTC")).toBeVisible();
   await expect(intentsPortfolioLocator.getByText("SOL")).toBeVisible();
 
-  // Locate the ETH row and check its balance
+  // Locate the ETH row and check its aggregated balance
   const ethRowLocator = intentsPortfolioLocator.locator(
     'div.d-flex.flex-column:has(div.h6.mb-0.text-truncate:has-text("ETH"))'
   );
   const ethAmountElement = ethRowLocator.locator(
     "div.d-flex.gap-2.align-items-center.justify-content-end div.d-flex.flex-column.align-items-end div.h6.mb-0"
   );
-  await expect(ethAmountElement).toHaveText("128.23", { timeout: 10000 }); // Rounded for display
+  // Total ETH should be 128.23 + 50 + 25 = 203.23 ETH
+  await expect(ethAmountElement).toHaveText("203.23", { timeout: 10000 }); // Aggregated display
+
+  // Check that the ETH row has an expandable dropdown (chevron icon) since it has multiple chains
+  const ethChevronLocator = ethRowLocator.locator(
+    "i.bi.bi-chevron-down.text-secondary.h6.mb-0"
+  );
+  await expect(ethChevronLocator).toBeVisible();
+
+  // Click on the ETH row to expand and see individual chain balances
+  await ethChevronLocator.click();
+
+  // Check individual chain balances in the expanded view
+  const expandedEthSection = ethRowLocator
+    .locator("div.d-flex.flex-column")
+    .filter({ hasText: "ETH" });
+
+  // Check Ethereum chain balance
+  await expect(expandedEthSection.getByText("ETH")).toBeVisible();
+  await expect(expandedEthSection.getByText("128.23")).toBeVisible();
+
+  // Check Arbitrum chain balance
+  await expect(expandedEthSection.getByText("ARB")).toBeVisible();
+  await expect(expandedEthSection.getByText("50.00")).toBeVisible();
+
+  // Check Base chain balance
+  await expect(expandedEthSection.getByText("BASE")).toBeVisible();
+  await expect(expandedEthSection.getByText("25.00")).toBeVisible();
 
   // Locate the WNEAR row and check its balance
   const wnearRowLocator = intentsPortfolioLocator.locator(
@@ -644,6 +803,10 @@ test("show intents balance in dashboard (sandbox)", async ({
 
   // Calculate expected Intents USD total using on-chain balances
   const ethAmount = Number(BigInt(ethBalance)) / Math.pow(10, decimals.ETH);
+  const ethArbAmount =
+    Number(BigInt(ethArbBalance)) / Math.pow(10, decimals.ETH);
+  const ethBaseAmount =
+    Number(BigInt(ethBaseBalance)) / Math.pow(10, decimals.ETH);
   const wnearAmount =
     Number(BigInt(wnearBalance)) / Math.pow(10, decimals.WNEAR); // wnearBalance is from mt_balance_of for wnearTokenId
   const btcAmount = Number(BigInt(btcBalance)) / Math.pow(10, decimals.BTC);
@@ -655,7 +818,7 @@ test("show intents balance in dashboard (sandbox)", async ({
   const solPrice = getPrice(solTokenId);
 
   const intentsExpectedUsdTotal =
-    ethAmount * ethPrice +
+    (ethAmount + ethArbAmount + ethBaseAmount) * ethPrice +
     wnearAmount * wnearPriceForIntents +
     btcAmount * btcPrice +
     solAmount * solPrice;
