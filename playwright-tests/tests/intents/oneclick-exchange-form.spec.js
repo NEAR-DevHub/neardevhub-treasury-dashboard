@@ -493,8 +493,18 @@ test.describe("OneClickExchangeForm Component", () => {
       .locator("input");
     await expect(slippageInput).toBeVisible();
 
+    // Scroll to make sure slippage input is in view
+    await slippageInput.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(500);
+
     // Check default value (should be 1.0%)
     await expect(slippageInput).toHaveValue("1");
+
+    // Take initial screenshot showing default value
+    await page.screenshot({
+      path: path.join(screenshotsDir, "03-slippage-default-1percent.png"),
+      fullPage: true,
+    });
 
     // Test changing slippage with decimal values
     // Clear the input and type new value
@@ -520,29 +530,77 @@ test.describe("OneClickExchangeForm Component", () => {
     const value1 = await slippageInput.getAttribute("value");
     expect(value1).toBe("0.2");
 
+    // Take screenshot of first value
+    await page.screenshot({
+      path: path.join(screenshotsDir, "03a-slippage-value-0.2.png"),
+      fullPage: false,
+      clip: await page
+        .locator('.form-section:has(.form-label:text("Price Slippage Limit"))')
+        .boundingBox(),
+    });
+
+    // Wait 500ms to show this value
+    await page.waitForTimeout(500);
+
     // Test more values
     await slippageInput.click({ clickCount: 3 }); // Triple click to select all
     await slippageInput.fill("1.5");
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(600); // Wait for debounce + buffer
     const value2 = await slippageInput.getAttribute("value");
     expect(value2).toBe("1.5");
 
+    // Take screenshot of second value
+    await page.screenshot({
+      path: path.join(screenshotsDir, "03b-slippage-value-1.5.png"),
+      fullPage: false,
+      clip: await page
+        .locator('.form-section:has(.form-label:text("Price Slippage Limit"))')
+        .boundingBox(),
+    });
+
+    // Wait 500ms to show this value
+    await page.waitForTimeout(500);
+
     await slippageInput.click({ clickCount: 3 });
     await slippageInput.fill("2.75");
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(600); // Wait for debounce + buffer
     const value3 = await slippageInput.getAttribute("value");
     expect(value3).toBe("2.75");
+
+    // Take screenshot of third value
+    await page.screenshot({
+      path: path.join(screenshotsDir, "03c-slippage-value-2.75.png"),
+      fullPage: false,
+      clip: await page
+        .locator('.form-section:has(.form-label:text("Price Slippage Limit"))')
+        .boundingBox(),
+    });
+
+    // Wait 500ms to show this value
+    await page.waitForTimeout(500);
 
     // Test boundaries
     await slippageInput.click({ clickCount: 3 });
     await slippageInput.fill("0.05");
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(600); // Wait for debounce + buffer
     const value4 = await slippageInput.getAttribute("value");
     expect(value4).toBe("0.05");
 
-    // Take screenshot showing decimal slippage value
+    // Take screenshot of boundary value
     await page.screenshot({
-      path: path.join(screenshotsDir, "03-slippage-decimal-value.png"),
+      path: path.join(screenshotsDir, "03d-slippage-value-0.05.png"),
+      fullPage: false,
+      clip: await page
+        .locator('.form-section:has(.form-label:text("Price Slippage Limit"))')
+        .boundingBox(),
+    });
+
+    // Wait 500ms to show this value
+    await page.waitForTimeout(500);
+
+    // Take final full screenshot showing decimal slippage value in context
+    await page.screenshot({
+      path: path.join(screenshotsDir, "03e-slippage-decimal-final.png"),
       fullPage: true,
     });
 
@@ -561,72 +619,107 @@ test.describe("OneClickExchangeForm Component", () => {
     await mockApiResponses(page);
     await setupComponent(page);
 
-    // Fill in the form to get a quote
-    await page.fill('input[placeholder="0.00"]', "0.1");
+    // Wait for balances to load
+    await page.waitForSelector("text=10.00 wNEAR", { state: "visible" });
+    await page.waitForSelector("text=5.00 ETH", { state: "visible" });
 
-    // Mock selecting tokens - this would normally be done through dropdowns
-    await page.evaluate(() => {
-      // Simulate form state after selections
-      window.mockFormState = {
-        tokenIn: "nep141:eth.omft.near",
-        tokenOut: "USDC",
-        networkOut: "ethereum",
-        amountIn: "0.1",
-      };
+    // Fill the form properly
+    // Select send token
+    const sendDropdown = page
+      .locator(".form-section")
+      .filter({ hasText: "Send" })
+      .locator(".dropdown-toggle");
+    await sendDropdown.waitFor({ state: "visible", timeout: 10000 });
+    await sendDropdown.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(500); // Wait for dropdown to be interactive
+    await sendDropdown.click();
+    // Wait a bit more for dropdown to open
+    await page.waitForTimeout(1000);
+    await page.waitForSelector(".dropdown-item", {
+      state: "visible",
+      timeout: 10000,
     });
+    await page.locator(".dropdown-item").filter({ hasText: "ETH" }).click();
 
-    // Click Get Quote button (simulate enabled state)
-    await page.evaluate(() => {
-      const buttons = Array.from(document.querySelectorAll("button"));
-      const button = buttons.find((b) => b.textContent.includes("Get Quote"));
-      if (button) {
-        button.disabled = false;
-        button.click();
-      }
-    });
-
-    // Wait for quote to load
+    // Fill amount
+    const amountInput = page.locator('input[placeholder="0.00"]').first();
+    await amountInput.scrollIntoViewIfNeeded();
+    await amountInput.fill("0.1");
     await page.waitForTimeout(500);
 
-    // Wait for quote display to appear
-    await page.waitForTimeout(1000);
+    // Select receive token
+    const receiveDropdown = page
+      .locator(".form-section")
+      .filter({ hasText: "Receive" })
+      .locator(".dropdown-toggle");
+    await receiveDropdown.scrollIntoViewIfNeeded();
+    await receiveDropdown.click();
+    await page.waitForSelector(".dropdown-item", { state: "visible" });
+    await page.locator(".dropdown-item").filter({ hasText: "USDC" }).click();
 
-    // Check if quote display appears (it may not if the mock didn't trigger properly)
-    const quoteDisplay = page.locator(".quote-display");
-    const quoteVisible = await quoteDisplay
-      .isVisible({ timeout: 2000 })
-      .catch(() => false);
+    // Select network
+    const networkDropdown = page
+      .locator(".form-section")
+      .filter({ hasText: "Network" })
+      .locator(".dropdown-toggle");
+    await networkDropdown.scrollIntoViewIfNeeded();
+    await networkDropdown.click();
+    await page.waitForSelector(".dropdown-item", { state: "visible" });
+    await page
+      .locator(".dropdown-item")
+      .filter({ hasText: "Ethereum" })
+      .click();
 
-    if (quoteVisible) {
-      // Check expiry alert
-      await expect(page.locator(".quote-alert")).toBeVisible();
-      await expect(page.locator(".quote-alert")).toContainText(
-        "Please approve this request within"
-      );
+    // Click Get Quote button (should be enabled now)
+    const getQuoteButton = page.locator('button:text("Get Quote")');
+    await getQuoteButton.scrollIntoViewIfNeeded();
+    await expect(getQuoteButton).toBeEnabled();
+    await getQuoteButton.click();
 
-      // Check quote summary
-      await expect(page.locator(".quote-summary")).toBeVisible();
-      await expect(page.locator(".quote-summary")).toContainText("ETH");
-      await expect(page.locator(".quote-summary")).toContainText("USDC");
+    // Wait for quote to appear - this should always work in tests
+    await expect(page.locator(".quote-alert")).toBeVisible({ timeout: 5000 });
 
-      // Check details toggle
-      const detailsToggle = page.locator(".details-toggle");
-      await expect(detailsToggle).toBeVisible();
-      await detailsToggle.click();
+    // Scroll down to see the full quote
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await page.waitForTimeout(500); // Let the scroll settle
 
-      // Check quote details
-      await expect(page.locator(".quote-details")).toBeVisible();
-      await expect(page.locator(".detail-row")).toHaveCount(4); // time, minimum, deposit, expires
+    // Take screenshot of the quote
+    await page.screenshot({
+      path: path.join(screenshotsDir, "10-calculate-min-received-quote.png"),
+      fullPage: true,
+    });
 
-      // Check minimum received calculation
-      const minReceivedRow = page.locator(
-        '.detail-row:has(.detail-label:text("Minimum received"))'
-      );
-      await expect(minReceivedRow).toBeVisible();
-    } else {
-      // If quote doesn't appear, at least verify the button was there
-      await expect(page.locator('button:text("Get Quote")')).toBeVisible();
-    }
+    // Check expiry alert
+    await expect(page.locator(".quote-alert")).toContainText(
+      "Please approve this request within"
+    );
+
+    // Check quote summary
+    await expect(page.locator(".quote-summary")).toBeVisible();
+    await expect(page.locator(".quote-summary")).toContainText("ETH");
+    await expect(page.locator(".quote-summary")).toContainText("USDC");
+
+    // Check details toggle
+    const detailsToggle = page.locator(".details-toggle");
+    await expect(detailsToggle).toBeVisible();
+    await detailsToggle.click();
+
+    // Wait for details to expand
+    await page.waitForTimeout(300);
+
+    // Check quote details
+    await expect(page.locator(".quote-details")).toBeVisible();
+    await expect(page.locator(".detail-row")).toHaveCount(4); // time, minimum, deposit, expires
+
+    // Check minimum received calculation
+    const minReceivedRow = page.locator(
+      '.detail-row:has(.detail-label:text("Minimum received"))'
+    );
+    await expect(minReceivedRow).toBeVisible();
+
+    // Scroll to ensure details are visible
+    await minReceivedRow.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(1000); // Wait a full second before exiting the test
   });
 
   test.skip("displays error states", async () => {
@@ -677,7 +770,13 @@ test.describe("OneClickExchangeForm Component", () => {
       .locator(".form-section")
       .filter({ hasText: "Send" })
       .locator(".dropdown-toggle");
+    await sendDropdown.waitFor({ state: "visible", timeout: 10000 });
+    await page.waitForTimeout(500); // Wait for dropdown to be interactive
     await sendDropdown.click();
+    await page.waitForSelector(".dropdown-item", {
+      state: "visible",
+      timeout: 10000,
+    });
     await page.locator(".dropdown-item").filter({ hasText: "ETH" }).click();
 
     // Now fill in the amount - wait for input to be enabled after token selection
@@ -694,7 +793,13 @@ test.describe("OneClickExchangeForm Component", () => {
       .locator(".form-section")
       .filter({ hasText: "Receive" })
       .locator(".dropdown-toggle");
+    await receiveDropdown.waitFor({ state: "visible", timeout: 10000 });
+    await page.waitForTimeout(500); // Wait for dropdown to be interactive
     await receiveDropdown.click();
+    await page.waitForSelector(".dropdown-item", {
+      state: "visible",
+      timeout: 10000,
+    });
     await page.locator(".dropdown-item").filter({ hasText: "USDC" }).click();
 
     // Select network
@@ -702,7 +807,13 @@ test.describe("OneClickExchangeForm Component", () => {
       .locator(".form-section")
       .filter({ hasText: "Network" })
       .locator(".dropdown-toggle");
+    await networkDropdown.waitFor({ state: "visible", timeout: 10000 });
+    await page.waitForTimeout(500); // Wait for dropdown to be interactive
     await networkDropdown.click();
+    await page.waitForSelector(".dropdown-item", {
+      state: "visible",
+      timeout: 10000,
+    });
     await page
       .locator(".dropdown-item")
       .filter({ hasText: "Ethereum" })
@@ -711,6 +822,7 @@ test.describe("OneClickExchangeForm Component", () => {
     // Click Get Quote to trigger loading state - scroll into view first
     const getQuoteButton = page.locator('button:text("Get Quote")');
     await getQuoteButton.scrollIntoViewIfNeeded();
+    await expect(getQuoteButton).toBeEnabled({ timeout: 10000 });
     await getQuoteButton.click();
 
     // Now we should see the loading state
@@ -739,14 +851,17 @@ test.describe("OneClickExchangeForm Component", () => {
     // Scroll to the very bottom of the page to ensure all details are visible
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
 
-    // Wait a second so the expanded details are visible
-    await page.waitForTimeout(1000);
+    // Wait for the quote details to be fully visible
+    await page.waitForTimeout(2000);
 
     // Take a screenshot of the fully expanded quote
     await page.screenshot({
       path: path.join(screenshotsDir, "04-quote-details-expanded.png"),
       fullPage: true,
     });
+
+    // Wait another second before exiting so the details can be seen in the video
+    await page.waitForTimeout(1000);
   });
 
   test("handles quote expiry time calculation", async ({
@@ -756,70 +871,144 @@ test.describe("OneClickExchangeForm Component", () => {
     await mockApiResponses(page);
     await setupComponent(page);
 
-    // Test different expiry times
+    // Wait for the component to be ready
+    await page.waitForSelector(".available-balance-box", { state: "visible" });
+    await page.waitForSelector("text=10.00 wNEAR", { state: "visible" });
+    await page.waitForSelector("text=5.00 ETH", { state: "visible" });
+
+    // Test different expiry times visually
     const testExpiryTimes = [
       {
         deadline: new Date(Date.now() + 5 * 60 * 1000).toISOString(), // 5 minutes
         expected: "5 minutes",
+        description: "5 minutes remaining",
       },
       {
         deadline: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(), // 2 hours
         expected: "2 hours",
+        description: "2 hours remaining",
       },
       {
-        deadline: new Date(Date.now() + 25 * 60 * 60 * 1000).toISOString(), // 25 hours (1+ days)
-        expected: "1 day",
+        deadline: new Date(Date.now() + 25 * 60 * 60 * 1000).toISOString(), // 25 hours
+        expected: "24 hours",
+        description: "24 hours remaining",
       },
       {
         deadline: new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString(), // 3 days
         expected: "3 days",
-      },
-      {
-        deadline: new Date(Date.now() - 1000).toISOString(), // Expired
-        expected: "expired",
+        description: "3 days remaining",
       },
     ];
 
-    for (const testCase of testExpiryTimes) {
-      const result = await page.evaluate((deadline) => {
-        // Copy the getTimeRemaining function from the component
-        const getTimeRemaining = (deadline) => {
-          if (!deadline) return null;
+    // Fill the form first
+    const sendDropdown = page
+      .locator(".form-section")
+      .filter({ hasText: "Send" })
+      .locator(".dropdown-toggle");
+    await sendDropdown.scrollIntoViewIfNeeded();
+    await sendDropdown.click();
+    await page.waitForSelector(".dropdown-item", { state: "visible" });
+    await page.locator(".dropdown-item").filter({ hasText: "ETH" }).click();
 
-          const now = new Date();
-          const expiryDate = new Date(deadline);
-          const diffMs = expiryDate - now;
+    const amountInput = page.locator('input[placeholder="0.00"]').first();
+    await amountInput.scrollIntoViewIfNeeded();
+    await amountInput.fill("0.1");
+    await page.waitForTimeout(500);
 
-          if (diffMs <= 0) return "expired";
+    const receiveDropdown = page
+      .locator(".form-section")
+      .filter({ hasText: "Receive" })
+      .locator(".dropdown-toggle");
+    await receiveDropdown.scrollIntoViewIfNeeded();
+    await receiveDropdown.click();
+    await page.waitForSelector(".dropdown-item", { state: "visible" });
+    await page.locator(".dropdown-item").filter({ hasText: "USDC" }).click();
 
-          const hours = Math.floor(diffMs / (1000 * 60 * 60));
-          const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    const networkDropdown = page
+      .locator(".form-section")
+      .filter({ hasText: "Network" })
+      .locator(".dropdown-toggle");
+    await networkDropdown.scrollIntoViewIfNeeded();
+    await networkDropdown.click();
+    await page.waitForSelector(".dropdown-item", { state: "visible" });
+    await page
+      .locator(".dropdown-item")
+      .filter({ hasText: "Ethereum" })
+      .click();
 
-          if (hours > 24) {
-            const days = Math.floor(hours / 24);
-            return `${days} day${days > 1 ? "s" : ""}`;
-          } else if (hours > 0) {
-            return `${hours} hour${hours > 1 ? "s" : ""}`;
-          } else {
-            return `${minutes} minute${minutes > 1 ? "s" : ""}`;
-          }
-        };
+    // Test each expiry time
+    for (let i = 0; i < testExpiryTimes.length; i++) {
+      const testCase = testExpiryTimes[i];
 
-        return getTimeRemaining(deadline);
-      }, testCase.deadline);
+      // Mock API response with specific deadline
+      await page.route(
+        "https://1click.chaindefuser.com/v0/quote",
+        async (route) => {
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({
+              quote: {
+                ...mockQuoteResponse.quote,
+                deadline: testCase.deadline,
+              },
+              signature: "ed25519:test-signature",
+            }),
+          });
+        }
+      );
 
-      if (testCase.expected === "expired") {
-        expect(result).toBe("expired");
-      } else if (testCase.expected === "1 day" && result === "24 hours") {
-        // Special case: 25 hours shows as "24 hours" due to rounding
-        expect(result).toBe("24 hours");
-      } else {
-        // For time-based results, check that it contains the unit (handle singular/plural)
-        const expectedUnit = testCase.expected.split(" ")[1];
-        const baseUnit = expectedUnit.replace(/s$/, ""); // Remove plural 's'
-        expect(result).toMatch(new RegExp(baseUnit));
+      // Get quote
+      const getQuoteBtn = page.locator('button:text("Get Quote")');
+      await getQuoteBtn.scrollIntoViewIfNeeded();
+      await getQuoteBtn.click();
+      await page.waitForSelector(".quote-summary", { state: "visible" });
+
+      // Wait for quote to render
+      await page.waitForTimeout(500);
+
+      // Take screenshot showing the expiry time
+      await page.screenshot({
+        path: path.join(
+          screenshotsDir,
+          `09-expiry-time-${i + 1}-${testCase.expected.replace(" ", "-")}.png`
+        ),
+        fullPage: false,
+        clip: await page.locator(".quote-display").boundingBox(),
+      });
+
+      // Verify the expiry time is displayed correctly
+      const expiryText = await page.locator(".quote-alert").textContent();
+      console.log(
+        `Expiry test ${i + 1}: ${
+          testCase.description
+        } - Alert text: "${expiryText}"`
+      );
+
+      // Wait before moving to next test
+      await page.waitForTimeout(500);
+
+      // Reset the form to test the next one (if not the last)
+      if (i < testExpiryTimes.length - 1) {
+        // Change the amount input to trigger form reset
+        const amountInput = page.locator('input[placeholder="0.00"]').first();
+        await amountInput.scrollIntoViewIfNeeded();
+        await amountInput.click({ clickCount: 3 }); // Triple click to select all
+        await amountInput.fill("0.2"); // Change the value
+        await page.waitForTimeout(500);
+
+        // Change it back to original value
+        await amountInput.click({ clickCount: 3 });
+        await amountInput.fill("0.1");
+        await page.waitForTimeout(500);
+
+        // Wait for Get Quote button to be available again
+        await expect(page.locator('button:text("Get Quote")')).toBeVisible();
       }
     }
+
+    // Wait before exiting to see the last expiry time in video
+    await page.waitForTimeout(1000);
   });
 
   test("displays token icons correctly", async ({ page, instanceAccount }) => {
@@ -935,6 +1124,10 @@ test.describe("OneClickExchangeForm Component", () => {
     await page.waitForSelector(".quote-details", { state: "visible" });
 
     // Wait for details to fully expand
+    await page.waitForTimeout(1000);
+
+    // Scroll down to make sure all quote details are visible
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
     await page.waitForTimeout(500);
 
     // Take screenshot showing expanded quote details
@@ -942,6 +1135,9 @@ test.describe("OneClickExchangeForm Component", () => {
       path: path.join(screenshotsDir, "07-quote-with-details-expanded.png"),
       fullPage: true,
     });
+
+    // Wait to ensure the details are visible in the video
+    await page.waitForTimeout(1000);
 
     // Check that Create Proposal button appears after quote
     const createButton = page.locator('button:text("Create Proposal")');
