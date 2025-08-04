@@ -1,6 +1,6 @@
 const textToEncode = props.text;
 
-const widthheight = 200;
+const widthheight = 150;
 
 const iframeSrcDoc = `
 <html>

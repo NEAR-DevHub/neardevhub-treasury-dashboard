@@ -20,6 +20,7 @@ useEffect(() => {
 return (
   <div>
     <div
+      data-testid="copy-button"
       className={className}
       style={{ cursor: "pointer" }}
       onClick={(e) => {
