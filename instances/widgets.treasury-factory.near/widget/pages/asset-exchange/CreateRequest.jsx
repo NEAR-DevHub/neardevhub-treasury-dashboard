@@ -267,11 +267,27 @@ This proposal authorizes transferring tokens to 1Click's deposit address.
           instance,
           onCancel: () => setShowCancelModal(true),
           onSubmit: (args) => {
-            setExchangeDetails(args);
+            // Generate description for SputnikDAO asset exchange
+            const description = encodeToMarkdown({
+              proposal_action: "asset-exchange",
+              notes: args.notes,
+              tokenIn: args.tokenIn,
+              tokenOut: args.tokenOut,
+              amountIn: args.amountIn,
+              slippage: args.slippage,
+              amountOut: args.amountOut,
+            });
+
+            const proposalDetailsWithDescription = {
+              ...args,
+              description: description,
+            };
+
+            setExchangeDetails(proposalDetailsWithDescription);
             if (args.rateDifference && args.rateDifference < -1) {
               setShowRateWarningModal(true);
             } else {
-              onSubmitClick(args);
+              onSubmitClick(proposalDetailsWithDescription);
             }
           },
         }}

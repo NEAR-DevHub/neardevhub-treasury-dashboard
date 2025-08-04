@@ -748,11 +748,9 @@ test.describe("1Click API Integration - Asset Exchange", function () {
 
     // Test the Price Slippage Limit field before getting quote
     console.log("Setting Price Slippage Limit to 2%...");
-    const slippageSection = page
-      .locator(".form-section")
-      .filter({
-        has: page.locator('.form-label:text("Price Slippage Limit")'),
-      });
+    const slippageSection = page.locator(".form-section").filter({
+      has: page.locator('.form-label:text("Price Slippage Limit")'),
+    });
     const slippageInput = slippageSection
       .locator('input[type="number"]')
       .first();

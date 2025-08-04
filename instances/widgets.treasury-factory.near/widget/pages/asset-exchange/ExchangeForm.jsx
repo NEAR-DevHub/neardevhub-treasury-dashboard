@@ -1233,15 +1233,9 @@ const code = `
                 window.parent.postMessage({ handler: "onCancel" }, "*");
             }
 
-
             window.addEventListener("message", function (event) {
                 whitelistTokenAPI = event.data.whitelistTokenAPI;
                 treasuryDaoID = event.data.treasuryDaoID;
-                
-                // Set treasury wallet if provided
-                if (event.data.treasuryWallet) {
-                    document.getElementById("treasury-wallet").value = event.data.treasuryWallet;
-                }
                 swapAPI = event.data.swapAPI;
                 priceAPI = event.data.priceAPI;
                 fetchTokens();
@@ -1265,7 +1259,6 @@ return (
       treasuryDaoID,
       swapAPI,
       priceAPI,
-      treasuryWallet: props.treasuryWallet || "sputnik-dao",
     }}
     onMessage={(e) => {
       switch (e.handler) {
