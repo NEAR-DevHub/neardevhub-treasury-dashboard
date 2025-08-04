@@ -65,7 +65,56 @@ instances/
 
 ## Loading a Specific Component
 
-To load and test a specific component without the full application:
+### New Approach: Using modifiedWidgets
+
+The recommended approach for testing individual components is to use the `modifiedWidgets` parameter of `redirectWeb4`. This approach avoids nested viewer structures and prevents element overlap issues:
+
+```javascript
+test.beforeEach(async ({ page, instanceAccount, daoAccount }) => {
+  // Create a simple app widget that only renders the specific component
+  const appWidgetContent = `
+    return (
+      <div style={{ padding: "10px" }}>
+        <Widget
+          src="widgets.treasury-factory.near/widget/pages.asset-exchange.OneClickExchangeForm"
+          props={{ instance: "${instanceAccount}" }}
+        />
+      </div>
+    );
+  `;
+  
+  // Set up redirectWeb4 with the modified app widget
+  await redirectWeb4({
+    page,
+    contractId: instanceAccount,
+    treasury: daoAccount,
+    modifiedWidgets: {
+      [`${instanceAccount}/widget/app`]: appWidgetContent
+    },
+    callWidgetNodeURLForContractWidgets: false  // Important: Use our modified widget
+  });
+
+  // Navigate to the instance page - this will now load only your component
+  await page.goto(`https://${instanceAccount}.page/`);
+  
+  // Simple helper to wait for component to be ready
+  const setupComponent = async (page) => {
+    await page.waitForSelector('.one-click-exchange-form', { state: 'visible' });
+    await page.waitForTimeout(500); // Small delay for animations
+  };
+});
+```
+
+**Advantages of this approach:**
+- Avoids nested viewer structures that can cause element overlap issues
+- Works seamlessly with the existing navigation and routing
+- Allows you to wrap components with custom styling (like padding)
+- Prevents interference from the main app UI
+- More reliable for interaction tests (clicking, typing, etc.)
+
+### Legacy Approach: Creating a New Viewer
+
+The older approach of creating a new viewer element is still supported but may cause issues with overlapping elements:
 
 ```javascript
 const setupComponent = async (page, instanceAccount, theme = "light") => {
@@ -75,41 +124,40 @@ const setupComponent = async (page, instanceAccount, theme = "light") => {
       document.querySelectorAll("near-social-viewer").forEach((el) => el.remove());
       
       const viewer = document.createElement("near-social-viewer");
-      
-      // Set initial props - instance should be the instanceAccount
       viewer.setAttribute(
         "initialProps",
         JSON.stringify({
-          instance: instanceAccount,  // This tells the component which instance it belongs to
-          // Add any other props your component needs
+          instance: instanceAccount,
         })
       );
-      
-      // Set the source - always from widgets.treasury-factory.near
       viewer.setAttribute(
         "src",
         "widgets.treasury-factory.near/widget/pages.asset-exchange.OneClickExchangeForm"
       );
-      
       document.body.appendChild(viewer);
     },
     { instanceAccount, theme }
   );
 
-  // Wait for component to load
   await page.waitForTimeout(2000);
 };
 ```
 
 ## Using redirectWeb4
 
-`redirectWeb4` sets up request interception to load widgets from your local filesystem instead of from the blockchain. Here's how it works:
+`redirectWeb4` sets up request interception to load widgets from your local filesystem instead of from the blockchain. Here's the complete API:
 
 ```javascript
 await redirectWeb4({
   page,                    // The Playwright page object
   contractId: instanceAccount,  // The instance account (NOT the widget account)
   treasury: daoAccount,    // The associated DAO account
+  modifiedWidgets: {       // Optional: Override specific widgets
+    [`${instanceAccount}/widget/app`]: 'widget content',
+    'widgets.treasury-factory.near/widget/path': 'widget content'
+  },
+  callWidgetNodeURLForContractWidgets: true  // Whether to fetch contract widgets from RPC (default: true)
+                                             // Set to false when providing modified contract widgets
 });
 ```
 
@@ -254,55 +302,60 @@ test.describe("Component Theme Tests", () => {
 
 ## Best Practices
 
-1. **Always use redirectWeb4 in beforeEach**: This ensures widgets are loaded from your local filesystem
-2. **Navigate to the instance page**: Use `https://${instanceAccount}.page/` as your base URL
-3. **Mock external dependencies**: Mock API and RPC calls to make tests reliable
-4. **Use appropriate timeouts**: Components may take time to load, use `waitForTimeout` or `waitForSelector`
-5. **Test multiple themes**: Use the theme utilities to test both light and dark modes consistently
-6. **Clean up viewers**: Always remove existing viewers before creating new ones
-7. **Mock themes after redirectWeb4**: Always call `mockTheme` AFTER `redirectWeb4` but before navigation to ensure the mock can override RPC routes
+1. **Use modifiedWidgets for component isolation**: This is the recommended approach for testing individual components
+2. **Always use redirectWeb4 in beforeEach**: This ensures widgets are loaded from your local filesystem
+3. **Set callWidgetNodeURLForContractWidgets to false**: When using modifiedWidgets to override the app widget
+4. **Navigate to the instance page**: Use `https://${instanceAccount}.page/` as your base URL
+5. **Mock external dependencies**: Mock API and RPC calls to make tests reliable
+6. **Use appropriate timeouts**: Components may take time to load, use `waitForTimeout` or `waitForSelector`
+7. **Test multiple themes**: Use the theme utilities to test both light and dark modes consistently
+8. **Mock themes after redirectWeb4**: Always call `mockTheme` AFTER `redirectWeb4` but before navigation to ensure the mock can override RPC routes
+9. **Add padding to isolated components**: Wrap components in a div with padding for better visual testing
 
 ## Example: Complete Component Test
 
-Here's a complete example testing a form component:
+Here's a complete example testing a form component using the recommended approach:
 
 ```javascript
 import { expect } from "@playwright/test";
 import { test } from "../../util/test.js";
 import { redirectWeb4 } from "../../util/web4.js";
+import { mockTheme } from "../../util/theme.js";
 
 test.describe("FormComponent", () => {
   test.beforeEach(async ({ page, instanceAccount, daoAccount }) => {
+    // Create app widget that only renders our form component
+    const appWidgetContent = `
+      return (
+        <div style={{ padding: "20px" }}>
+          <Widget
+            src="widgets.treasury-factory.near/widget/components.MyForm"
+            props={{ instance: "${instanceAccount}" }}
+          />
+        </div>
+      );
+    `;
+    
+    // Set up redirectWeb4 with modified app widget
     await redirectWeb4({
       page,
       contractId: instanceAccount,
       treasury: daoAccount,
+      modifiedWidgets: {
+        [`${instanceAccount}/widget/app`]: appWidgetContent
+      },
+      callWidgetNodeURLForContractWidgets: false
     });
     
-    await page.goto(`https://${instanceAccount}.page/`);
-  });
-
-  const setupComponent = async (page, instanceAccount) => {
-    await page.evaluate(
-      ({ instanceAccount }) => {
-        document.querySelectorAll("near-social-viewer").forEach(el => el.remove());
-        
-        const viewer = document.createElement("near-social-viewer");
-        viewer.setAttribute(
-          "initialProps",
-          JSON.stringify({ instance: instanceAccount })
-        );
-        viewer.setAttribute(
-          "src",
-          "widgets.treasury-factory.near/widget/components.MyForm"
-        );
-        document.body.appendChild(viewer);
-      },
-      { instanceAccount }
-    );
+    // Mock theme if needed
+    await mockTheme(page, "light");
     
-    await page.waitForTimeout(2000);
-  };
+    // Navigate to the page
+    await page.goto(`https://${instanceAccount}.page/`);
+    
+    // Wait for component to be ready
+    await page.waitForSelector('.my-form', { state: 'visible' });
+  });
 
   test("submits form successfully", async ({ page, instanceAccount }) => {
     // Mock API endpoints
@@ -313,15 +366,20 @@ test.describe("FormComponent", () => {
       });
     });
 
-    // Set up component
-    await setupComponent(page, instanceAccount);
-
     // Fill form
     await page.fill('input[name="email"]', "test@example.com");
     await page.click('button[type="submit"]');
 
     // Verify success
     await expect(page.locator(".success-message")).toBeVisible();
+  });
+  
+  test("shows validation errors", async ({ page }) => {
+    // Submit empty form
+    await page.click('button[type="submit"]');
+    
+    // Check for validation message
+    await expect(page.locator('.error-message')).toContainText('Email is required');
   });
 });
 ```

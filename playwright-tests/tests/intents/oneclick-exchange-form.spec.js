@@ -2,6 +2,8 @@ import { expect } from "@playwright/test";
 import { test } from "../../util/test.js";
 import { redirectWeb4 } from "../../util/web4.js";
 import { mockTheme, getThemeColors, THEME_COLORS } from "../../util/theme.js";
+import { setPageAuthSettings } from "../../util/sandboxrpc.js";
+import { KeyPairEd25519 } from "near-api-js/lib/utils/key_pair.js";
 import path from "path";
 import { promises as fs } from "fs";
 
@@ -21,43 +23,45 @@ test.describe("OneClickExchangeForm Component", () => {
   test.beforeEach(async ({ page, instanceAccount, daoAccount }) => {
     // Create screenshots directory
     await fs.mkdir(screenshotsDir, { recursive: true });
-    // Set up redirectWeb4 to load components from local filesystem
+
+    // Create a simple app widget that only renders the OneClickExchangeForm with padding
+    const appWidgetContent = `
+      return (
+        <div style={{ padding: "10px" }}>
+          <Widget
+            src="widgets.treasury-factory.near/widget/pages.asset-exchange.OneClickExchangeForm"
+            props={{ instance: "${instanceAccount}" }}
+          />
+        </div>
+      );
+    `;
+
+    // Set up redirectWeb4 with modified app widget
     await redirectWeb4({
       page,
       contractId: instanceAccount,
       treasury: daoAccount,
+      modifiedWidgets: {
+        [`${instanceAccount}/widget/app`]: appWidgetContent,
+      },
+      callWidgetNodeURLForContractWidgets: false,
     });
 
     // IMPORTANT: Set up theme mock AFTER redirectWeb4
     // This ensures our mock can override the RPC routes properly
     await mockTheme(page, "light");
 
+    // Set up RPC mocks BEFORE navigating to the page
+    await mockRpcResponses(page);
+
     // Navigate to the instance page
     await page.goto(`https://${instanceAccount}.page/`);
-    await page.waitForTimeout(1000);
+
+    // Set up auth settings AFTER navigating to the page (so localStorage is available)
+    await setPageAuthSettings(page, "theori.near", KeyPairEd25519.fromRandom());
   });
 
   // Mock data for test scenarios
-  const mockTokens = [
-    {
-      id: "nep141:wrap.near",
-      symbol: "WNEAR",
-      name: "Wrapped NEAR",
-      icon: "https://assets.coingecko.com/coins/images/10365/large/near.jpg",
-      balance: "10.00",
-      decimals: 24,
-      blockchain: "near",
-    },
-    {
-      id: "nep141:eth.omft.near",
-      symbol: "ETH",
-      name: "Ethereum",
-      icon: "https://assets.coingecko.com/coins/images/279/large/ethereum.png",
-      balance: "5.00",
-      decimals: 18,
-      blockchain: "ethereum",
-    },
-  ];
 
   const mockTokensOut = [
     { id: "usdc", symbol: "USDC", network: "ethereum" },
@@ -81,38 +85,13 @@ test.describe("OneClickExchangeForm Component", () => {
     signature: "ed25519:test-signature",
   };
 
-  // Helper function to set up the component viewer
-  const setupComponent = async (page, instanceAccount, theme = "light") => {
-    await page.evaluate(
-      ({ instanceAccount, theme }) => {
-        // Clear any existing viewers
-        document
-          .querySelectorAll("near-social-viewer")
-          .forEach((el) => el.remove());
-
-        const viewer = document.createElement("near-social-viewer");
-        viewer.setAttribute(
-          "initialProps",
-          JSON.stringify({
-            instance: instanceAccount,
-          })
-        );
-        viewer.setAttribute(
-          "src",
-          "widgets.treasury-factory.near/widget/pages.asset-exchange.OneClickExchangeForm"
-        );
-        document.body.appendChild(viewer);
-
-        // Mock theme for get_config RPC call
-        window.mockGetConfig = {
-          metadata: btoa(JSON.stringify({ theme, primaryColor: "#01BF7A" })),
-        };
-      },
-      { instanceAccount, theme }
-    );
-
-    // Wait for component to load
-    await page.waitForTimeout(2000);
+  // Helper function to wait for component to be ready
+  const setupComponent = async (page) => {
+    // Just wait for the component to be visible since it's already loaded via modifiedWidgets
+    await page.waitForSelector(".one-click-exchange-form", {
+      state: "visible",
+    });
+    await page.waitForTimeout(500); // Small delay for any animations
   };
 
   // Helper function to mock API responses
@@ -159,37 +138,93 @@ test.describe("OneClickExchangeForm Component", () => {
 
   // Helper function to mock RPC responses for intents balances
   const mockRpcResponses = async (page) => {
-    await page.route("**/rpc", async (route) => {
-      const request = route.request();
-      const body = request.postDataJSON();
+    // Match mainnet RPC URLs (both near.org and fastnear.com)
+    await page.route(
+      /https:\/\/rpc\.mainnet\.(near\.org|fastnear\.com)/,
+      async (route) => {
+        const request = route.request();
+        const body = request.postDataJSON();
 
-      if (
-        body.params?.method_name === "mt_batch_balance_of" ||
-        body.method === "getIntentsBalances"
-      ) {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            jsonrpc: "2.0",
-            id: body.id,
-            result: {
-              result: Array.from(
-                new TextEncoder().encode(JSON.stringify(mockTokens))
-              ),
-            },
-          }),
-        });
-      } else {
-        await route.continue();
+        // Only intercept mt_batch_balance_of and mt_tokens_for_owner calls
+        if (
+          body.params?.method_name === "mt_batch_balance_of" ||
+          body.params?.method_name === "mt_tokens_for_owner"
+        ) {
+          // Only mock for intents.near
+          if (body.params?.account_id === "intents.near") {
+            if (body.params?.method_name === "mt_batch_balance_of") {
+              // Decode the args to see what token_ids are being requested
+              const args = JSON.parse(
+                Buffer.from(body.params.args_base64, "base64").toString()
+              );
+              console.log("mt_batch_balance_of called with:", args);
+
+              // Create balance array based on number of token_ids requested
+              const balances = args.token_ids.map((tokenId) => {
+                if (tokenId.includes("wrap.near")) {
+                  return "10000000000000000000000000"; // 10 WNEAR with 24 decimals
+                } else if (tokenId.includes("eth.omft.near")) {
+                  return "5000000000000000000"; // 5 ETH with 18 decimals
+                } else {
+                  return "0";
+                }
+              });
+
+              await route.fulfill({
+                status: 200,
+                contentType: "application/json",
+                body: JSON.stringify({
+                  jsonrpc: "2.0",
+                  id: body.id,
+                  result: {
+                    result: Array.from(
+                      new TextEncoder().encode(JSON.stringify(balances))
+                    ),
+                  },
+                }),
+              });
+            } else if (body.params?.method_name === "mt_tokens_for_owner") {
+              // Decode the args to see what account is being queried
+              const args = JSON.parse(
+                Buffer.from(body.params.args_base64, "base64").toString()
+              );
+              console.log("mt_tokens_for_owner called with:", args);
+
+              // Return token objects with token_id property
+              const tokens = [
+                { token_id: "nep141:wrap.near" },
+                { token_id: "nep141:eth.omft.near" },
+              ];
+
+              await route.fulfill({
+                status: 200,
+                contentType: "application/json",
+                body: JSON.stringify({
+                  jsonrpc: "2.0",
+                  id: body.id,
+                  result: {
+                    result: Array.from(
+                      new TextEncoder().encode(JSON.stringify(tokens))
+                    ),
+                  },
+                }),
+              });
+            }
+          } else {
+            // Let calls to other accounts go through
+            await route.fallback();
+          }
+        } else {
+          // Let all other RPC calls through
+          await route.fallback();
+        }
       }
-    });
+    );
   };
 
   test("renders in light theme", async ({ page, instanceAccount }) => {
     await mockApiResponses(page);
-    await mockRpcResponses(page);
-    await setupComponent(page, instanceAccount, "light");
+    await setupComponent(page);
 
     // Check that component renders
     await expect(page.locator(".one-click-exchange-form")).toBeVisible();
@@ -272,24 +307,44 @@ test.describe("OneClickExchangeForm Component", () => {
     instanceAccount,
     daoAccount,
   }) => {
-    // Set up redirectWeb4 first
+    // Create a simple app widget that only renders the OneClickExchangeForm with padding
+    const appWidgetContent = `
+      return (
+        <div style={{ padding: "10px" }}>
+          <Widget
+            src="widgets.treasury-factory.near/widget/pages.asset-exchange.OneClickExchangeForm"
+            props={{ instance: "${instanceAccount}" }}
+          />
+        </div>
+      );
+    `;
+
+    // Set up redirectWeb4 with modified app widget
     await redirectWeb4({
       page,
       contractId: instanceAccount,
       treasury: daoAccount,
+      modifiedWidgets: {
+        [`${instanceAccount}/widget/app`]: appWidgetContent,
+      },
+      callWidgetNodeURLForContractWidgets: false,
     });
 
     // Then mock the dark theme
     await mockTheme(page, "dark");
 
+    // Mock RPC responses (since we're overriding the beforeEach setup)
+    await mockRpcResponses(page, daoAccount);
+
     // Navigate to the instance page
     await page.goto(`https://${instanceAccount}.page/`);
-    await page.waitForTimeout(1000);
+
+    // Set up auth settings AFTER navigating to the page
+    await setPageAuthSettings(page, "theori.near", KeyPairEd25519.fromRandom());
 
     // Now set up the test
     await mockApiResponses(page);
-    await mockRpcResponses(page);
-    await setupComponent(page, instanceAccount, "dark");
+    await setupComponent(page);
 
     // Wait for component to load
     await page.waitForTimeout(2000);
@@ -323,8 +378,7 @@ test.describe("OneClickExchangeForm Component", () => {
 
   test("validates form fields", async ({ page, instanceAccount }) => {
     await mockApiResponses(page);
-    await mockRpcResponses(page);
-    await setupComponent(page, instanceAccount);
+    await setupComponent(page);
 
     // Initially Get Quote button should be disabled
     await expect(page.locator('button:text("Get Quote")')).toBeDisabled();
@@ -351,8 +405,7 @@ test.describe("OneClickExchangeForm Component", () => {
     instanceAccount,
   }) => {
     await mockApiResponses(page);
-    await mockRpcResponses(page);
-    await setupComponent(page, instanceAccount);
+    await setupComponent(page);
 
     // Find slippage input
     const slippageInput = page
@@ -426,8 +479,7 @@ test.describe("OneClickExchangeForm Component", () => {
     instanceAccount,
   }) => {
     await mockApiResponses(page);
-    await mockRpcResponses(page);
-    await setupComponent(page, instanceAccount);
+    await setupComponent(page);
 
     // Fill in the form to get a quote
     await page.fill('input[placeholder="0.00"]', "0.1");
@@ -503,38 +555,118 @@ test.describe("OneClickExchangeForm Component", () => {
   });
 
   test("displays loading states", async ({ page, instanceAccount }) => {
-    // Don't mock RPC responses initially to see loading state
     await mockApiResponses(page);
-    await setupComponent(page, instanceAccount);
 
-    // Check if loading state is visible (may be too quick to catch)
-    const balanceList = page.locator(".balance-list");
-    const hasLoadingText = await balanceList.textContent();
+    // Mock a delayed 1Click API response to see the loading state
+    let resolveQuote;
+    const quotePromise = new Promise((resolve) => (resolveQuote = resolve));
 
-    // If balances already loaded, that's okay - component loads quickly
-    if (hasLoadingText && hasLoadingText.includes("Loading balances...")) {
-      await expect(balanceList).toContainText("Loading balances...");
-    }
-
-    // Mock loading state for quote
-    await page.evaluate(() => {
-      // Simulate loading state
-      const buttons = Array.from(document.querySelectorAll("button"));
-      const button = buttons.find((b) => b.textContent.includes("Get Quote"));
-      if (button) {
-        button.disabled = true;
-        button.innerHTML = `
-          <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-          Fetching Quote...
-        `;
+    await page.route(
+      "https://1click.chaindefuser.com/v0/quote",
+      async (route) => {
+        await quotePromise;
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            quote: {
+              amountIn: "100000000000000000", // 0.1 ETH
+              amountInFormatted: "0.1",
+              amountOut: "350000000",
+              amountOutFormatted: "350.00",
+              minAmountOut: "343000000",
+              depositAddress: "test-address",
+              deadline: new Date(Date.now() + 300000).toISOString(),
+              timeEstimate: 5,
+            },
+            signature: "test-signature",
+          }),
+        });
       }
-    });
+    );
 
-    // Check loading spinner
-    await expect(page.locator(".spinner-border")).toBeVisible();
+    await setupComponent(page);
+
+    // Wait for the component to be fully loaded and balances to appear
+    await page.waitForSelector(".available-balance-box", { state: "visible" });
+    await page.waitForSelector("text=10.00 wNEAR", { state: "visible" });
+    await page.waitForSelector("text=5.00 ETH", { state: "visible" });
+
+    // First select the send token (ETH)
+    const sendDropdown = page
+      .locator(".form-section")
+      .filter({ hasText: "Send" })
+      .locator(".dropdown-toggle");
+    await sendDropdown.click();
+    await page.locator(".dropdown-item").filter({ hasText: "ETH" }).click();
+
+    // Now fill in the amount - wait for input to be enabled after token selection
+    const amountInput = page.locator('input[placeholder="0.00"]').first();
+    await amountInput.waitFor({ state: "visible" });
+    await amountInput.click();
+    await amountInput.fill("1");
+
+    // Wait half a second after filling the amount
+    await page.waitForTimeout(500);
+
+    // Select the receive token
+    const receiveDropdown = page
+      .locator(".form-section")
+      .filter({ hasText: "Receive" })
+      .locator(".dropdown-toggle");
+    await receiveDropdown.click();
+    await page.locator(".dropdown-item").filter({ hasText: "USDC" }).click();
+
+    // Select network
+    const networkDropdown = page
+      .locator(".form-section")
+      .filter({ hasText: "Network" })
+      .locator(".dropdown-toggle");
+    await networkDropdown.click();
+    await page
+      .locator(".dropdown-item")
+      .filter({ hasText: "Ethereum" })
+      .click();
+
+    // Click Get Quote to trigger loading state - scroll into view first
+    const getQuoteButton = page.locator('button:text("Get Quote")');
+    await getQuoteButton.scrollIntoViewIfNeeded();
+    await getQuoteButton.click();
+
+    // Now we should see the loading state
     await expect(
       page.locator('button:text("Fetching Quote...")')
     ).toBeVisible();
+    await expect(page.locator(".spinner-border")).toBeVisible();
+
+    // Resolve the quote to complete the test
+    resolveQuote();
+
+    // Wait for quote to appear
+    await expect(page.locator(".quote-summary")).toBeVisible({ timeout: 5000 });
+
+    // Expand the quote details
+    const detailsToggle = page.locator(".details-toggle");
+    await detailsToggle.click();
+
+    // Wait for details to be visible
+    await expect(page.locator(".quote-details")).toBeVisible();
+
+    // Scroll to the bottom to see the full quote details
+    const quoteDetails = page.locator(".quote-details");
+    await quoteDetails.scrollIntoViewIfNeeded();
+
+    // Scroll to the very bottom of the page to ensure all details are visible
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+
+    // Wait a second so the expanded details are visible
+    await page.waitForTimeout(1000);
+
+    // Take a screenshot of the fully expanded quote
+    await page.screenshot({
+      path: path.join(screenshotsDir, "04-quote-details-expanded.png"),
+      fullPage: true,
+    });
   });
 
   test("handles quote expiry time calculation", async ({
@@ -542,8 +674,7 @@ test.describe("OneClickExchangeForm Component", () => {
     instanceAccount,
   }) => {
     await mockApiResponses(page);
-    await mockRpcResponses(page);
-    await setupComponent(page, instanceAccount);
+    await setupComponent(page);
 
     // Test different expiry times
     const testExpiryTimes = [
@@ -613,8 +744,7 @@ test.describe("OneClickExchangeForm Component", () => {
 
   test("displays token icons correctly", async ({ page, instanceAccount }) => {
     await mockApiResponses(page);
-    await mockRpcResponses(page);
-    await setupComponent(page, instanceAccount);
+    await setupComponent(page);
 
     // Wait for tokens to load
     await page.waitForTimeout(1000);
@@ -635,8 +765,7 @@ test.describe("OneClickExchangeForm Component", () => {
 
   test("handles form submission", async ({ page, instanceAccount }) => {
     await mockApiResponses(page);
-    await mockRpcResponses(page);
-    await setupComponent(page, instanceAccount);
+    await setupComponent(page);
 
     // Mock a complete form state with quote
     await page.evaluate(() => {
@@ -685,8 +814,7 @@ test.describe("OneClickExchangeForm Component", () => {
 
   test("validates quote deadline", async ({ page, instanceAccount }) => {
     await mockApiResponses(page);
-    await mockRpcResponses(page);
-    await setupComponent(page, instanceAccount);
+    await setupComponent(page);
 
     // Test quote without deadline
     await page.evaluate(() => {
