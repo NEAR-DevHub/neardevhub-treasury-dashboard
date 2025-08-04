@@ -67,7 +67,11 @@ instances/
 
 ### New Approach: Using modifiedWidgets
 
-The recommended approach for testing individual components is to use the `modifiedWidgets` parameter of `redirectWeb4`. This approach avoids nested viewer structures and prevents element overlap issues:
+The recommended approach for testing individual components is to use the `modifiedWidgets` parameter of `redirectWeb4`. This approach avoids nested viewer structures and prevents element overlap issues.
+
+#### Simple Component Wrapper
+
+For most tests, a simple wrapper is sufficient:
 
 ```javascript
 test.beforeEach(async ({ page, instanceAccount, daoAccount }) => {
@@ -111,6 +115,16 @@ test.beforeEach(async ({ page, instanceAccount, daoAccount }) => {
 - Allows you to wrap components with custom styling (like padding)
 - Prevents interference from the main app UI
 - More reliable for interaction tests (clicking, typing, etc.)
+
+#### When to Use AppLayout
+
+Use the AppLayout wrapper approach (shown in the Theme Testing section) when:
+- Testing components that depend on theme CSS variables
+- Testing dark theme rendering
+- Testing components that expect global styles from the parent app
+- Components use `var(--theme-color)`, `var(--bg-page-color)`, etc.
+
+For simple functional testing, the basic wrapper approach is usually sufficient.
 
 ### Legacy Approach: Creating a New Viewer
 
@@ -250,6 +264,73 @@ Each test is run with different `instanceAccount` and `daoAccount` values.
 
 The treasury dashboard supports light and dark themes that are configured per instance. To ensure consistent test results, use the theme mocking utilities:
 
+### Using AppLayout for Theme Support
+
+When testing components that need proper theme application (especially for dark theme testing), you should wrap your component in the AppLayout widget. This ensures that all theme CSS variables and styles are properly applied:
+
+```javascript
+test("renders in dark theme", async ({ page, instanceAccount, daoAccount }) => {
+  // Create an app widget that uses AppLayout to handle theme
+  const appWidgetContent = `
+    const { AppLayout } = VM.require(
+      "widgets.treasury-factory.near/widget/components.templates.AppLayout"
+    ) || { AppLayout: () => <></> };
+    
+    const instance = "${instanceAccount}";
+    const treasuryDaoID = "${daoAccount}";
+    
+    function Page() {
+      return (
+        <div style={{ padding: "10px" }}>
+          <Widget
+            src="widgets.treasury-factory.near/widget/pages.my-component"
+            props={{ instance: instance }}
+          />
+        </div>
+      );
+    }
+    
+    return (
+      <AppLayout
+        page="my-page"
+        instance={instance}
+        treasuryDaoID={treasuryDaoID}
+        accountId={context.accountId}
+      >
+        <Page />
+      </AppLayout>
+    );
+  `;
+  
+  // Set up redirectWeb4 with the modified app widget
+  await redirectWeb4({
+    page,
+    contractId: instanceAccount,
+    treasury: daoAccount,
+    modifiedWidgets: {
+      [`${instanceAccount}/widget/app`]: appWidgetContent
+    },
+    callWidgetNodeURLForContractWidgets: false
+  });
+  
+  // Mock the dark theme
+  await mockTheme(page, "dark");
+  
+  // Navigate to the page
+  await page.goto(`https://${instanceAccount}.page/`);
+  
+  // Your test assertions here
+});
+```
+
+**Important:** AppLayout requires these props:
+- `page`: The page identifier
+- `instance`: The instance account
+- `treasuryDaoID`: The DAO treasury account
+- `accountId`: The current user account (from context)
+
+### Basic Theme Testing
+
 ```javascript
 import { mockTheme, unmockTheme, getThemeColors, THEME_COLORS } from "../../util/theme.js";
 
@@ -311,6 +392,7 @@ test.describe("Component Theme Tests", () => {
 7. **Test multiple themes**: Use the theme utilities to test both light and dark modes consistently
 8. **Mock themes after redirectWeb4**: Always call `mockTheme` AFTER `redirectWeb4` but before navigation to ensure the mock can override RPC routes
 9. **Add padding to isolated components**: Wrap components in a div with padding for better visual testing
+10. **Use AppLayout for theme-dependent tests**: When testing components that rely on theme CSS variables, wrap them in AppLayout to ensure proper theme application
 
 ## Example: Complete Component Test
 
