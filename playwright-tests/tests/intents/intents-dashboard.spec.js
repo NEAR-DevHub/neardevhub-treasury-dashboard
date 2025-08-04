@@ -210,7 +210,7 @@ test("show intents balance in dashboard (sandbox)", async ({
     { attachedDeposit: parseNEAR("3"), gas: "300000000000000" }
   );
 
-  // Deploy ETH token (Arbitrum chain) 
+  // Deploy ETH token (Arbitrum chain)
   await omft.call(
     omft.accountId,
     "deploy_token",
@@ -229,7 +229,7 @@ test("show intents balance in dashboard (sandbox)", async ({
     { attachedDeposit: parseNEAR("3"), gas: "300000000000000" }
   );
 
-  // Deploy ETH token (Base chain) 
+  // Deploy ETH token (Base chain)
   await omft.call(
     omft.accountId,
     "deploy_token",
