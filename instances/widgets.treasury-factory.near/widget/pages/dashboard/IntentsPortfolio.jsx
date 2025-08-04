@@ -333,18 +333,21 @@ const TokenCard = ({ token, id }) => {
               <div style={{ paddingLeft: "5px" }}>
                 {(individualToken.blockchain || "").toUpperCase() || "Unknown"}
               </div>
-              <div className="d-flex gap-1">
-                <div style={{ marginTop: "-5px" }}>
-                  {icon ? (
-                    <img src={icon} height={16} width={16} />
-                  ) : (
-                    <NearToken height={16} width={16} />
-                  )}
-                </div>
+              <div className="d-flex justify-content-end">
                 <div className="d-flex flex-column align-items-end">
-                  <div className="h6 mb-0">
-                    {individualToken.readableAmount}
+                  <div className="d-flex gap-1">
+                    <div style={{ marginTop: "-5px" }}>
+                      {icon ? (
+                        <img src={icon} height={16} width={16} />
+                      ) : (
+                        <NearToken height={16} width={16} />
+                      )}
+                    </div>
+                    <div className="h6 mb-0">
+                      {individualToken.readableAmount}
+                    </div>
                   </div>
+
                   <div className="text-sm text-secondary">
                     {formatCurrency(
                       Big(individualToken.readableAmount)
