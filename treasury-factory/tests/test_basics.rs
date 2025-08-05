@@ -24,13 +24,24 @@ const WIDGET_REFERENCE_ACCOUNT_ID: &str = "treasury-testing.near";
 
 fn build_project_once() -> Vec<u8> {
     INIT.call_once(|| {
-        let build_opts = BuildOpts::builder().build();
-        let build_artifact = cargo_near_build::build(build_opts).expect("Failed to build contract");
+        // Try to use existing wasm file first
+        let wasm_path = "./target/near/treasury_factory.wasm";
+        if std::path::Path::new(wasm_path).exists() {
+            println!("Using existing contract wasm at {}", wasm_path);
+            let wasm = fs::read(wasm_path).expect("Unable to read existing contract wasm");
+            let mut contract_wasm = CONTRACT_WASM.lock().unwrap();
+            *contract_wasm = wasm;
+        } else {
+            // Fall back to building if wasm doesn't exist
+            let build_opts = BuildOpts::builder().build();
+            let build_artifact =
+                cargo_near_build::build(build_opts).expect("Failed to build contract");
 
-        println!("Building contract");
-        let wasm = fs::read(build_artifact.path).expect("Unable to read contract wasm");
-        let mut contract_wasm = CONTRACT_WASM.lock().unwrap();
-        *contract_wasm = wasm;
+            println!("Building contract");
+            let wasm = fs::read(build_artifact.path).expect("Unable to read contract wasm");
+            let mut contract_wasm = CONTRACT_WASM.lock().unwrap();
+            *contract_wasm = wasm;
+        }
     });
 
     CONTRACT_WASM.lock().unwrap().clone()
@@ -122,7 +133,7 @@ async fn test_web4() -> Result<(), Box<dyn std::error::Error>> {
 
 #[tokio::test]
 async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
-    let mainnet = near_workspaces::mainnet().await?;
+    let mainnet = near_workspaces::custom("https://rpc.mainnet.fastnear.com").await?;
     let sputnikdao_factory_contract_id: AccountId = SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT.parse()?;
     let socialdb_contract_id: AccountId = SOCIALDB_ACCOUNT.parse()?;
     let treasury_factory_contract_id: AccountId = TREASURY_FACTORY_CONTRACT_ACCOUNT.parse()?;
@@ -526,7 +537,7 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
 #[tokio::test]
 async fn test_factory_should_refund_if_failing_because_of_existing_account(
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let mainnet = near_workspaces::mainnet().await?;
+    let mainnet = near_workspaces::custom("https://rpc.mainnet.fastnear.com").await?;
     let sputnikdao_factory_contract_id: AccountId = SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT.parse()?;
     let socialdb_contract_id: AccountId = SOCIALDB_ACCOUNT.parse()?;
     let treasury_factory_contract_id: AccountId = TREASURY_FACTORY_CONTRACT_ACCOUNT.parse()?;
@@ -753,7 +764,7 @@ async fn test_factory_should_refund_if_failing_because_of_existing_account(
 #[tokio::test]
 async fn test_factory_should_refund_if_failing_because_of_existing_dao_but_still_create_web4_and_set_social_metadata(
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let mainnet = near_workspaces::mainnet().await?;
+    let mainnet = near_workspaces::custom("https://rpc.mainnet.fastnear.com").await?;
     let sputnikdao_factory_contract_id: AccountId = SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT.parse()?;
     let socialdb_contract_id: AccountId = SOCIALDB_ACCOUNT.parse()?;
     let treasury_factory_contract_id: AccountId = TREASURY_FACTORY_CONTRACT_ACCOUNT.parse()?;

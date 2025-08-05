@@ -7,7 +7,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     const SOCIALDB_ACCOUNT: &str = "social.near";
     let socialdb_contract_id: AccountId = SOCIALDB_ACCOUNT.parse()?;
 
-    let mainnet: Worker<Mainnet> = mainnet().await?;
+    let mainnet: Worker<Mainnet> = near_workspaces::custom("https://rpc.mainnet.fastnear.com").await?;
     let worker = sandbox().await?;
 
     let sputnik_dao_contract = worker
