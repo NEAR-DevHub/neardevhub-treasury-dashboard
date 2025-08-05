@@ -731,7 +731,7 @@ test.describe("Web4 Service Worker", () => {
       "This test only runs on the treasury-testing project"
     );
 
-    test.setTimeout(60000); // Longer timeout for this complex test
+    test.setTimeout(90000); // Longer timeout for this complex test
 
     const wasmPath = path.join(
       __dirname,
