@@ -901,6 +901,7 @@ test.describe("OneClickExchangeForm Component", () => {
     ];
 
     // Fill the form first
+    await page.waitForTimeout(500);
     const sendDropdown = page
       .locator(".form-section")
       .filter({ hasText: "Send" })
@@ -908,6 +909,7 @@ test.describe("OneClickExchangeForm Component", () => {
     await sendDropdown.scrollIntoViewIfNeeded();
     await sendDropdown.click();
     await page.waitForSelector(".dropdown-item", { state: "visible" });
+    await page.waitForTimeout(500);
     await page.locator(".dropdown-item").filter({ hasText: "ETH" }).click();
 
     const amountInput = page.locator('input[placeholder="0.00"]').first();
@@ -924,6 +926,7 @@ test.describe("OneClickExchangeForm Component", () => {
     await page.waitForSelector(".dropdown-item", { state: "visible" });
     await page.locator(".dropdown-item").filter({ hasText: "USDC" }).click();
 
+    await page.waitForTimeout(500);
     const networkDropdown = page
       .locator(".form-section")
       .filter({ hasText: "Network" })
