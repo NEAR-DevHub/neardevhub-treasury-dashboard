@@ -106,8 +106,6 @@ export class SandboxRPC {
   }
 
   async startIndexerWithSandboxRpc() {
-    console.log(`Starting indexer with sandbox RPC URL: ${this.rpc_url}`);
-
     this.indexer = new Indexer(this.rpc_url);
     await this.indexer.init();
   }
