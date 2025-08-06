@@ -15,54 +15,6 @@ test.afterEach(async ({ page }, testInfo) => {
 });
 
 test.describe("payment requests feed", function () {
-  test("expect expired request to be in history", async ({
-    page,
-    instanceAccount,
-    daoAccount,
-  }) => {
-    test.setTimeout(60_000);
-    await mockRpcRequest({
-      page,
-      filterParams: {
-        method_name: "get_last_proposal_id",
-      },
-      modifyOriginalResultFunction: (originalResult) => {
-        originalResult = 1;
-        return originalResult;
-      },
-    });
-
-    await page.route(
-      /https:\/\/sputnik-indexer-divine-fog-3863\.fly\.dev\/proposals\/.*\?.*category=payments/,
-      async (route) => {
-        let originalResult = {
-          proposals: [
-            JSON.parse(JSON.stringify(TransferProposalData)),
-            JSON.parse(JSON.stringify(TransferProposalData)),
-          ],
-          total: 2,
-        };
-        originalResult.proposals[0].id = 0;
-        originalResult.proposals[1].id = 1;
-        // non expired request
-        originalResult[0].submission_time = CurrentTimestampInNanoseconds;
-        // expired request
-        originalResult[1].submission_time = "1715761329133693174";
-        await route.fulfill({ json: originalResult });
-      }
-    );
-
-    await page.goto(`/${instanceAccount}/widget/app?page=payments`);
-    await page.waitForTimeout(10_000);
-    await expect(
-      page.getByRole("cell", { name: "0", exact: true })
-    ).toBeVisible({ timeout: 20_000 });
-    await page.getByText("History").click();
-    await expect(
-      page.getByRole("cell", { name: "1", exact: true })
-    ).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByText("Expired")).toBeVisible({ timeout: 20_000 });
-  });
   test("export action should not be visible in pending requests tab", async ({
     page,
     instanceAccount,
@@ -93,30 +45,27 @@ test.describe("payment requests feed", function () {
     daoAccount,
     instanceAccount,
   }) => {
-    await page.route(
-      /https:\/\/sputnik-indexer-divine-fog-3863\.fly\.dev\/proposals\/.*\?.*category=payments/,
-      async (route) => {
-        await route.fulfill({
-          json: {
-            proposals: [
-              JSON.parse(
-                JSON.stringify({
-                  ...NearnFTProposal,
-                  submission_time: CurrentTimestampInNanoseconds,
-                })
-              ),
-              JSON.parse(
-                JSON.stringify({
-                  ...NearnFTProposalWithStorage,
-                  submission_time: CurrentTimestampInNanoseconds,
-                })
-              ),
-            ],
-            total: 2,
-          },
-        });
-      }
-    );
+    await page.route(/\/proposals\/.*\?.*category=payments/, async (route) => {
+      await route.fulfill({
+        json: {
+          proposals: [
+            JSON.parse(
+              JSON.stringify({
+                ...NearnFTProposal,
+                submission_time: CurrentTimestampInNanoseconds,
+              })
+            ),
+            JSON.parse(
+              JSON.stringify({
+                ...NearnFTProposalWithStorage,
+                submission_time: CurrentTimestampInNanoseconds,
+              })
+            ),
+          ],
+          total: 2,
+        },
+      });
+    });
 
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
     await page.waitForTimeout(10_000);

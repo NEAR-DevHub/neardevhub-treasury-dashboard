@@ -9,7 +9,7 @@ import { SandboxRPC } from "../../util/sandboxrpc.js";
 
 async function mockExchangeProposals({ page, status }) {
   await page.route(
-    /https:\/\/sputnik-indexer-divine-fog-3863\.fly\.dev\/proposals\/.*\?.*category=asset-exchange/,
+    /\/proposals\/.*\?.*category=asset-exchange/,
     async (route) => {
       let originalResult = [JSON.parse(JSON.stringify(SwapProposalData))];
       originalResult[0].id = 0;
@@ -287,7 +287,7 @@ test.describe
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(120_000);
     const sandbox = await setupSandboxAndCreateProposal({ daoAccount, page });
     await mockWithFTBalance({ page, daoAccount, isSufficient: true });
 
@@ -309,7 +309,7 @@ test.describe
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(120_000);
     const sandbox = await setupSandboxAndCreateProposal({ daoAccount, page });
     await page.goto(`/${instanceAccount}/widget/app?page=asset-exchange&id=0`);
     await mockWithFTBalance({ page, daoAccount, isSufficient: false });

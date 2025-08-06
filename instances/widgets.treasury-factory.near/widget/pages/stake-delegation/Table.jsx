@@ -96,7 +96,6 @@ const hasDeletePermission = (deleteGroup?.approverAccounts ?? []).includes(
 const Container = styled.div`
   font-size: 13px;
   min-height: 60vh;
-  display: flex;
 
   table {
     overflow-x: auto;
@@ -479,25 +478,32 @@ return (
               numberOfHiddenRows={4}
             />
           </tbody>
-        ) : visibleProposals.length === 0 ? (
-          <tr>
-            <td
-              colSpan={isPendingRequests ? 12 : 10}
-              className="text-center py-5"
-            >
-              {isPendingRequests ? (
-                <>
-                  <h4>No Stake Delegation Requests Found</h4>
-                  <h6>There are currently no stake delegation requests</h6>
-                </>
-              ) : (
-                <>
-                  <h4>No History Requests Found</h4>
-                  <h6>There are currently no history requests</h6>
-                </>
-              )}
-            </td>
-          </tr>
+        ) : !Array.isArray(visibleProposals) ||
+          visibleProposals.length === 0 ? (
+          <tbody>
+            <tr>
+              <td
+                colSpan={14}
+                rowSpan={10}
+                className="text-center align-middle"
+              >
+                {isPendingRequests ? (
+                  <>
+                    <h4>No Stake Delegation Requests Found</h4>
+                    <h6>There are currently no stake delegation requests</h6>
+                  </>
+                ) : (
+                  <>
+                    <h4>No History Requests Found</h4>
+                    <h6>There are currently no history requests</h6>
+                  </>
+                )}
+              </td>
+            </tr>
+            {[...Array(8)].map((_, index) => (
+              <tr key={index}></tr>
+            ))}
+          </tbody>
         ) : (
           <ProposalsComponent />
         )}

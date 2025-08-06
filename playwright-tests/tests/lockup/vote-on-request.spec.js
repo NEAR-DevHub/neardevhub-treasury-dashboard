@@ -49,17 +49,14 @@ async function voteOnProposal({
     return originalResult;
   };
 
-  await page.route(
-    /https:\/\/sputnik-indexer-divine-fog-3863\.fly\.dev\/proposals\/.*\?.*category=lockup/,
-    async (route) => {
-      await route.fulfill({
-        json: {
-          proposals: [updateProposalStatus()],
-          total: 1,
-        },
-      });
-    }
-  );
+  await page.route(/\/proposals\/.*\?.*category=lockup/, async (route) => {
+    await route.fulfill({
+      json: {
+        proposals: [updateProposalStatus()],
+        total: 1,
+      },
+    });
+  });
   await mockRpcRequest({
     page,
     filterParams: { method_name: "get_proposal" },
@@ -133,24 +130,21 @@ async function performVoteAction({
 }
 
 async function mockLockupProposals({ page }) {
-  await page.route(
-    /https:\/\/sputnik-indexer-divine-fog-3863\.fly\.dev\/proposals\/.*\?.*category=lockup/,
-    async (route) => {
-      await route.fulfill({
-        json: {
-          proposals: [
-            {
-              ...JSON.parse(JSON.stringify(LockupProposalData)),
-              id: 0,
-              submission_time: CurrentTimestampInNanoseconds,
-              status: "InProgress",
-            },
-          ],
-          total: 1,
-        },
-      });
-    }
-  );
+  await page.route(/\/proposals\/.*\?.*category=lockup/, async (route) => {
+    await route.fulfill({
+      json: {
+        proposals: [
+          {
+            ...JSON.parse(JSON.stringify(LockupProposalData)),
+            id: 0,
+            submission_time: CurrentTimestampInNanoseconds,
+            status: "InProgress",
+          },
+        ],
+        total: 1,
+      },
+    });
+  });
 }
 test.afterEach(async ({ page }, testInfo) => {
   console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
@@ -194,7 +188,7 @@ test.describe.parallel("User logged in with different roles", () => {
           });
 
           await page.route(
-            /https:\/\/sputnik-indexer-divine-fog-3863\.fly\.dev\/proposals\/.*\?.*category=lockup/,
+            /\/proposals\/.*\?.*category=lockup/,
             async (route) => {
               await route.fulfill({
                 json: {

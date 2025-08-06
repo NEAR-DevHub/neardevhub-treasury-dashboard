@@ -7,14 +7,12 @@ import { getLocalWidgetSource } from "./bos-workspace.js";
 import { expect } from "@playwright/test";
 import { overlayMessage, removeOverlayMessage } from "./test.js";
 import { getLocalWidgetContent, redirectWeb4 } from "./web4.js";
+import { Indexer } from "./indexer.js";
 
 export const SPUTNIK_DAO_CONTRACT_ID = "sputnik-dao.near";
-// we don't have proposal bond for any instance (in this repo)
 export const PROPOSAL_BOND = "0";
-
 export const DEFAULT_WIDGET_REFERENCE_ACCOUNT_ID =
   "bootstrap.treasury-factory.near";
-
 export const TREASURY_FACTORY_ACCOUNT_ID = "treasury-factory.near";
 export const SPUTNIK_DAO_FACTORY_ID = "sputnik-dao.near";
 
@@ -55,20 +53,37 @@ export async function setPageAuthSettings(page, accountId, keyPair) {
 export class SandboxRPC {
   constructor() {
     this.modifiedWidgets = {};
+    this.indexer = null;
   }
 
   async init() {
-    await new Promise((resolve) => {
+    console.log("Initializing SandboxRPC...");
+
+    // Start sandbox
+    await this.startSandbox();
+
+    // Start indexer
+    await this.startIndexerWithSandboxRpc();
+
+    // Setup NEAR connection
+    await this.setupNearConnection();
+
+    console.log("SandboxRPC initialization complete");
+  }
+
+  async startSandbox() {
+    return new Promise((resolve, reject) => {
       this.sandbox = exec(
         new URL("../../sandboxrpc/target/debug/sandboxrpc", import.meta.url)
           .pathname
       );
 
-      this.sandbox.stdout.on("data", (/** @type String */ data) => {
+      this.sandbox.stdout.on("data", (data) => {
         const configLine = data
           .split("\n")
           .find((line) => line.startsWith("{"));
         if (configLine && !this.rpc_url) {
+          console.log("Sandbox config received:", configLine);
           const sandboxConfig = JSON.parse(configLine);
           this.rpc_url = sandboxConfig.rpc_url;
           this.account_id = sandboxConfig.account_id;
@@ -80,27 +95,33 @@ export class SandboxRPC {
       });
 
       this.sandbox.stderr.on("data", (data) => {
-        console.error(`Error output: ${data}`);
+        console.error(`Sandbox error: ${data}`);
+      });
+
+      this.sandbox.on("error", (error) => {
+        console.error("Sandbox process error:", error);
+        reject(error);
       });
     });
+  }
 
+  async startIndexerWithSandboxRpc() {
+    console.log(`Starting indexer with sandbox RPC URL: ${this.rpc_url}`);
+
+    this.indexer = new Indexer(this.rpc_url);
+    await this.indexer.init();
+  }
+
+  async setupNearConnection() {
     this.keyStore = new keyStores.InMemoryKeyStore();
-    this.keyStore.setKey(
-      "sandbox",
-      this.account_id,
-      utils.KeyPair.fromString(this.secret_key)
-    );
-    this.keyStore.setKey(
-      "sandbox",
-      TREASURY_FACTORY_ACCOUNT_ID,
-      utils.KeyPair.fromString(this.secret_key)
-    );
-    this.keyStore.setKey(
-      "sandbox",
-      SPUTNIK_DAO_FACTORY_ID,
-      utils.KeyPair.fromString(this.secret_key)
-    );
 
+    // Setup key pairs
+    const keyPair = utils.KeyPair.fromString(this.secret_key);
+    this.keyStore.setKey("sandbox", this.account_id, keyPair);
+    this.keyStore.setKey("sandbox", TREASURY_FACTORY_ACCOUNT_ID, keyPair);
+    this.keyStore.setKey("sandbox", SPUTNIK_DAO_FACTORY_ID, keyPair);
+
+    // Connect to NEAR
     this.near = await connect({
       networkId: "sandbox",
       nodeUrl: this.rpc_url,
@@ -159,6 +180,7 @@ export class SandboxRPC {
    * @param {string[]} accounts - List of account IDs to redirect to the sandbox
    */
   async attachRoutes(page, accounts = []) {
+    // Redirect RPC calls to sandbox
     await page.route(MOCK_RPC_URL, async (route, request) => {
       const postData = request.postDataJSON();
       if (
@@ -170,12 +192,13 @@ export class SandboxRPC {
         await route.fallback();
       }
     });
+
+    // Redirect indexer calls to local indexer if indexer is available
+    if (this.indexer) {
+      await this.indexer.attachIndexerRoutes(page);
+    }
   }
 
-  /**
-   *
-   *
-   */
   async getDevUserAccountAccessKey() {
     const accessKeyView = this.account.findAccessKey(this.account_id, []);
     return accessKeyView;
@@ -183,7 +206,6 @@ export class SandboxRPC {
 
   async setupDefaultWidgetReferenceAccount() {
     const reference_widget_account_id = DEFAULT_WIDGET_REFERENCE_ACCOUNT_ID;
-
     const keyPair = utils.KeyPair.fromString(this.secret_key);
 
     await this.keyStore.setKey("sandbox", reference_widget_account_id, keyPair);
@@ -334,6 +356,7 @@ export class SandboxRPC {
             log.includes("was successfully created")
           ) {
             // Extract the contract ID using a regular expression
+
             const match = log.match(
               /The lockup contract (.+?) was successfully created/
             );
@@ -464,14 +487,6 @@ export class SandboxRPC {
       },
       gas: 300000000000000,
       attachedDeposit: utils.format.parseNearAmount("15"),
-    });
-  }
-
-  async getProposals(daoName, from_index, limit) {
-    return this.account.viewFunction({
-      contractId: `${daoName}.${SPUTNIK_DAO_CONTRACT_ID}`,
-      methodName: "get_proposals",
-      args: { from_index, limit },
     });
   }
 
@@ -651,6 +666,19 @@ export class SandboxRPC {
   }
 
   async quitSandbox() {
-    this.sandbox.stdin.write("quit\n");
+    console.log("Shutting down SandboxRPC...");
+
+    // Stop the indexer
+    if (this.indexer) {
+      await this.indexer.stop();
+    }
+
+    // Stop the sandbox
+    if (this.sandbox) {
+      this.sandbox.stdin.write("quit\n");
+      console.log("✅ Sandbox stopped");
+    }
+
+    console.log("SandboxRPC shutdown complete");
   }
 }

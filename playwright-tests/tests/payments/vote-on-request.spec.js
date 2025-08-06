@@ -30,30 +30,27 @@ async function voteOnProposal({
   let lastProposalId = transferProposalData.id;
   let isTransactionCompleted = false;
   const contractId = daoAccount;
-  await page.route(
-    /https:\/\/sputnik-indexer-divine-fog-3863\.fly\.dev\/proposals\/.*\?.*category=payments/,
-    async (route) => {
-      let originalResult = transferProposalData;
-      if (isTransactionCompleted && !isMultiVote) {
-        originalResult.status = voteStatus;
-      } else {
-        originalResult.status = "InProgress";
-      }
-      if (isMultiVote && !isTransactionCompleted) {
-        originalResult.votes = {
-          "mugen2_ipf1.near": "Approve",
-          "kmao.near": "Approve",
-          "zorsub.near": "Approve",
-        };
-      }
-      await route.fulfill({
-        json: {
-          proposals: [originalResult],
-          total: 1,
-        },
-      });
+  await page.route(/\/proposals\/.*\?.*category=payments/, async (route) => {
+    let originalResult = transferProposalData;
+    if (isTransactionCompleted && !isMultiVote) {
+      originalResult.status = voteStatus;
+    } else {
+      originalResult.status = "InProgress";
     }
-  );
+    if (isMultiVote && !isTransactionCompleted) {
+      originalResult.votes = {
+        "mugen2_ipf1.near": "Approve",
+        "kmao.near": "Approve",
+        "zorsub.near": "Approve",
+      };
+    }
+    await route.fulfill({
+      json: {
+        proposals: [originalResult],
+        total: 1,
+      },
+    });
+  });
 
   await mockRpcRequest({
     page,
@@ -123,22 +120,19 @@ async function voteOnProposal({
 }
 
 async function mockPaymentProposals({ page }) {
-  await page.route(
-    /https:\/\/sputnik-indexer-divine-fog-3863\.fly\.dev\/proposals\/.*\?.*category=payments/,
-    async (route) => {
-      let originalResult = [JSON.parse(JSON.stringify(TransferProposalData))];
-      originalResult[0].id = 0;
-      // non expired request
-      originalResult[0].submission_time = CurrentTimestampInNanoseconds;
+  await page.route(/\/proposals\/.*\?.*category=payments/, async (route) => {
+    let originalResult = [JSON.parse(JSON.stringify(TransferProposalData))];
+    originalResult[0].id = 0;
+    // non expired request
+    originalResult[0].submission_time = CurrentTimestampInNanoseconds;
 
-      await route.fulfill({
-        json: {
-          proposals: [originalResult],
-          total: 1,
-        },
-      });
-    }
-  );
+    await route.fulfill({
+      json: {
+        proposals: originalResult,
+        total: 1,
+      },
+    });
+  });
 }
 
 test.afterEach(async ({ page }, testInfo) => {
@@ -183,7 +177,7 @@ test.describe.parallel("User logged in with different roles", () => {
           });
 
           await page.route(
-            /https:\/\/sputnik-indexer-divine-fog-3863\.fly\.dev\/proposals\/.*\?.*category=payments/,
+            /\/proposals\/.*\?.*category=payments/,
             async (route) => {
               const result = JSON.parse(JSON.stringify(TransferProposalData));
               result.submission_time = CurrentTimestampInNanoseconds;

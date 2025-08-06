@@ -20,7 +20,7 @@ export const multiStakedPoolAccount = "nearfans.poolv1.near";
 
 export async function mockStakeProposals({ page }) {
   await page.route(
-    /https:\/\/sputnik-indexer-divine-fog-3863\.fly\.dev\/proposals\/.*\?.*category=stake-delegation/,
+    /\/proposals\/.*\?.*category=stake-delegation/,
     async (route) => {
       let originalResult = [
         JSON.parse(JSON.stringify(StakeProposalData)),
@@ -54,7 +54,7 @@ export async function mockOldJSONStakeProposals({ page }) {
     },
   });
   await page.route(
-    /https:\/\/sputnik-indexer-divine-fog-3863\.fly\.dev\/proposals\/.*\?.*category=stake-delegation/,
+    /\/proposals\/.*\?.*category=stake-delegation/,
     async (route) => {
       let originalResult = [JSON.parse(JSON.stringify(OldJsonProposalData))];
       originalResult[0].submission_time = CurrentTimestampInNanoseconds;
@@ -393,7 +393,7 @@ export async function voteOnProposal({
   await updateDaoPolicyMembers({ instanceAccount, page });
   const contractId = daoAccount;
   await page.route(
-    /https:\/\/sputnik-indexer-divine-fog-3863\.fly\.dev\/proposals\/.*\?.*category=stake-delegation/,
+    /\/proposals\/.*\?.*category=stake-delegation/,
     async (route) => {
       let originalResult = [
         JSON.parse(

@@ -52,14 +52,11 @@ async function voteOnProposal({
     return originalResult;
   };
 
-  page.route(
-    /https:\/\/sputnik-indexer-divine-fog-3863\.fly\.dev\/proposals\/.*\?.*category=asset-exchange/,
-    async (route) => {
-      await route.fulfill({
-        json: { proposals: updateProposalStatus(), total: 1 },
-      });
-    }
-  );
+  page.route(/\/proposals\/.*\?.*category=asset-exchange/, async (route) => {
+    await route.fulfill({
+      json: { proposals: [updateProposalStatus()], total: 1 },
+    });
+  });
 
   await mockRpcRequest({
     page,
@@ -136,19 +133,19 @@ async function performVoteAction({
 
 async function mockAssetExchangeProposals({ page }) {
   await page.route(
-    /https:\/\/sputnik-indexer-divine-fog-3863\.fly\.dev\/proposals\/.*\?.*category=asset-exchange/,
+    /\/proposals\/.*\?.*category=asset-exchange/,
     async (route) => {
       await route.fulfill({
         json: {
           proposals: [
             {
               ...JSON.parse(JSON.stringify(SwapProposalData)),
-              id: 0,
+              id: 1,
               submission_time: CurrentTimestampInNanoseconds,
             },
           ],
+          total: 1,
         },
-        total: 1,
       });
     }
   );
@@ -196,7 +193,7 @@ test.describe.parallel("User logged in with different roles", () => {
           });
 
           await page.route(
-            /https:\/\/sputnik-indexer-divine-fog-3863\.fly\.dev\/proposals\/.*\?.*category=asset-exchange/,
+            /\/proposals\/.*\?.*category=asset-exchange/,
             async (route) => {
               await route.fulfill({
                 json: {

@@ -61,7 +61,6 @@ const columnsVisibility = JSON.parse(
 const Container = styled.div`
   font-size: 13px;
   min-height: 60vh;
-  display: flex;
 
   table {
     overflow-x: auto;
@@ -365,24 +364,30 @@ return (
             />
           </tbody>
         ) : proposals.length === 0 ? (
-          <tr>
-            <td
-              colSpan={isPendingRequests ? 8 : 6}
-              className="text-center py-5"
-            >
-              {isPendingRequests ? (
-                <>
-                  <h4>No Settings Requests Found</h4>
-                  <h6>There are currently no settings requests</h6>
-                </>
-              ) : (
-                <>
-                  <h4>No History Requests Found</h4>
-                  <h6>There are currently no history requests</h6>
-                </>
-              )}
-            </td>
-          </tr>
+          <tbody>
+            <tr>
+              <td
+                colSpan={14}
+                rowSpan={10}
+                className="text-center align-middle"
+              >
+                {isPendingRequests ? (
+                  <>
+                    <h4>No Settings Requests Found</h4>
+                    <h6>There are currently no settings requests</h6>
+                  </>
+                ) : (
+                  <>
+                    <h4>No History Requests Found</h4>
+                    <h6>There are currently no history requests</h6>
+                  </>
+                )}
+              </td>
+            </tr>
+            {[...Array(8)].map((_, index) => (
+              <tr key={index}></tr>
+            ))}
+          </tbody>
         ) : (
           <ProposalsComponent />
         )}

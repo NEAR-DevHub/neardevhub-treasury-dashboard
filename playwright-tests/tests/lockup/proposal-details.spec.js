@@ -9,24 +9,21 @@ import { SandboxRPC } from "../../util/sandboxrpc.js";
 import { formatTimestamp, toBase64 } from "../../util/lib.js";
 
 async function mockLockupProposals({ page, status }) {
-  await page.route(
-    /https:\/\/sputnik-indexer-divine-fog-3863\.fly\.dev\/proposals\/.*\?.*category=lockup/,
-    async (route) => {
-      await route.fulfill({
-        json: {
-          proposals: [
-            {
-              ...JSON.parse(JSON.stringify(LockupProposalData)),
-              id: 0,
-              submission_time: CurrentTimestampInNanoseconds,
-              status: status,
-            },
-          ],
-          total: 1,
-        },
-      });
-    }
-  );
+  await page.route(/\/proposals\/.*\?.*category=lockup/, async (route) => {
+    await route.fulfill({
+      json: {
+        proposals: [
+          {
+            ...JSON.parse(JSON.stringify(LockupProposalData)),
+            id: 0,
+            submission_time: CurrentTimestampInNanoseconds,
+            status: status,
+          },
+        ],
+        total: 1,
+      },
+    });
+  });
 }
 
 async function mockLockupProposal({ page, status }) {

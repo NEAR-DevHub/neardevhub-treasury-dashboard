@@ -48,7 +48,6 @@ const hasDeletePermission = (deleteGroup?.approverAccounts ?? []).includes(
 const Container = styled.div`
   font-size: 14px;
   min-height: 60vh;
-  display: flex;
 
   table {
     overflow-x: auto;
@@ -324,12 +323,13 @@ return (
             )}
         </tr>
       </thead>
-      <tbody style={{ overflowX: "auto" }}>
-        {loading ||
-        proposals === null ||
-        functionCallApproversGroup === null ||
-        policy === null ||
-        !Array.isArray(proposals) ? (
+
+      {loading ||
+      proposals === null ||
+      functionCallApproversGroup === null ||
+      policy === null ||
+      !Array.isArray(proposals) ? (
+        <tbody>
           <RowsSkeleton
             numberOfCols={
               isPendingRequests ? columns.length : columns.length - 2
@@ -337,9 +337,11 @@ return (
             numberOfRows={3}
             numberOfHiddenRows={4}
           />
-        ) : proposals.length === 0 ? (
+        </tbody>
+      ) : !Array.isArray(proposals) || proposals.length === 0 ? (
+        <tbody>
           <tr>
-            <td colSpan={columns.length} className="text-center py-5">
+            <td colSpan={14} rowSpan={10} className="text-center align-middle">
               {isPendingRequests ? (
                 <>
                   <h4>No Lockup Requests Found</h4>
@@ -353,12 +355,17 @@ return (
               )}
             </td>
           </tr>
-        ) : (
-          proposals.map((item, index) => (
+          {[...Array(8)].map((_, index) => (
+            <tr key={index}></tr>
+          ))}
+        </tbody>
+      ) : (
+        <tbody style={{ overflowX: "auto" }}>
+          {proposals.map((item, index) => (
             <ProposalsComponent item={item} key={index} />
-          ))
-        )}
-      </tbody>
+          ))}
+        </tbody>
+      )}
     </table>
   </Container>
 );

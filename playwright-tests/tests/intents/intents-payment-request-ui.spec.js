@@ -6,6 +6,7 @@ import { connect } from "near-api-js";
 import { PROPOSAL_BOND, setPageAuthSettings } from "../../util/sandboxrpc.js";
 import { mockNearBalances } from "../../util/rpcmock.js";
 import { mockInventory } from "../../util/inventory.js";
+import { Indexer } from "../../util/indexer.js";
 
 let worker;
 let availableTokensList;
@@ -215,7 +216,7 @@ test("payment request to BTC address", async ({
   instanceAccount,
   daoAccount,
 }) => {
-  test.setTimeout(150000);
+  test.setTimeout(350000);
   // Import contract for the specific instance being tested
   // instanceAccount is an Account object provided by the test fixture
   await worker.rootAccount.importContract({
@@ -321,6 +322,9 @@ test("payment request to BTC address", async ({
     })
   ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
 
+  const indexer = new Indexer(worker.provider.connection.url);
+  await indexer.init();
+  await indexer.attachIndexerRoutes(page);
   await redirectWeb4({
     page,
     contractId: instanceAccount,
@@ -609,6 +613,10 @@ test("payment request to USDC address on BASE", async ({
       account: instanceAccount,
     })
   ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
+
+  const indexer = new Indexer(worker.provider.connection.url);
+  await indexer.init();
+  await indexer.attachIndexerRoutes(page);
 
   await redirectWeb4({
     page,
@@ -933,7 +941,9 @@ test("payment request for wNEAR token on NEAR intents", async ({
       account: instanceAccount,
     })
   ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
-
+  const indexer = new Indexer(worker.provider.connection.url);
+  await indexer.init();
+  await indexer.attachIndexerRoutes(page);
   await redirectWeb4({
     page,
     contractId: instanceAccount,
@@ -1227,7 +1237,9 @@ test("insufficient balance alert for BTC payment request exceeding available bal
       account: instanceAccount,
     })
   ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
-
+  const indexer = new Indexer(worker.provider.connection.url);
+  await indexer.init();
+  await indexer.attachIndexerRoutes(page);
   await redirectWeb4({
     page,
     contractId: instanceAccount,
@@ -1497,7 +1509,9 @@ test("insufficient balance alert for wNEAR payment request exceeding available b
       account: instanceAccount,
     })
   ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
-
+  const indexer = new Indexer(worker.provider.connection.url);
+  await indexer.init();
+  await indexer.attachIndexerRoutes(page);
   await redirectWeb4({
     page,
     contractId: instanceAccount,

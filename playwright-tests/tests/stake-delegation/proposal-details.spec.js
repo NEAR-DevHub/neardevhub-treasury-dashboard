@@ -28,7 +28,7 @@ function getProposalDataByType(type) {
 
 async function mockStakeDelegationProposals({ page, status, type }) {
   await page.route(
-    /https:\/\/sputnik-indexer-divine-fog-3863\.fly\.dev\/proposals\/.*\?.*category=lockup/,
+    /\/proposals\/.*\?.*category=stake-delegation/,
     async (route) => {
       const proposal = getProposalDataByType(type);
       let originalResult = [JSON.parse(JSON.stringify(proposal))];
@@ -37,7 +37,7 @@ async function mockStakeDelegationProposals({ page, status, type }) {
       originalResult[0].submission_time = CurrentTimestampInNanoseconds;
       await route.fulfill({
         json: {
-          proposals: [proposal],
+          proposals: originalResult,
           total: 1,
         },
       });

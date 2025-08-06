@@ -54,21 +54,16 @@ async function checkVotingDropdownChange({ page }) {
 }
 
 async function mockSettingsProposals({ page }) {
-  await page.route(
-    /https:\/\/sputnik-indexer-divine-fog-3863\.fly\.dev\/proposals\/.*\?.*/,
-    async (route) => {
-      let originalResult = JSON.parse(
-        JSON.stringify(SettingsMemberProposalData)
-      );
-      originalResult.submission_time = CurrentTimestampInNanoseconds;
-      await route.fulfill({
-        json: {
-          proposals: [originalResult],
-          total: 1,
-        },
-      });
-    }
-  );
+  await page.route(/\/proposals\/.*\?.*/, async (route) => {
+    let originalResult = JSON.parse(JSON.stringify(SettingsMemberProposalData));
+    originalResult.submission_time = CurrentTimestampInNanoseconds;
+    await route.fulfill({
+      json: {
+        proposals: [originalResult],
+        total: 1,
+      },
+    });
+  });
 }
 
 test.afterEach(async ({ page }, testInfo) => {

@@ -8,6 +8,7 @@ import {
 } from "../../util/sandboxrpc.js";
 import nearApi from "near-api-js";
 import { redirectWeb4 } from "../../util/web4.js";
+import { Indexer } from "../../util/indexer.js";
 
 async function pasteAndValidateCorrectData(page, csvText, proposalsNo) {
   const textarea = await page.getByTestId("csv-data");
@@ -410,6 +411,9 @@ test("should create bulk requests using sandbox", async ({
   await socialNear.call(socialNearContractId, "new", {});
   await socialNear.call(socialNearContractId, "set_status", { status: "Live" });
 
+  const indexer = new Indexer(worker.provider.connection.url);
+  await indexer.init();
+  await indexer.attachIndexerRoutes(page);
   await redirectWeb4({
     page,
     contractId: web4ContractId,

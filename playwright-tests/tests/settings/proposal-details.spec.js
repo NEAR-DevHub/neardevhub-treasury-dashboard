@@ -34,22 +34,19 @@ function getProposalDataByType(type) {
 }
 
 async function mockSettingsProposals({ page, status, type }) {
-  await page.route(
-    /https:\/\/sputnik-indexer-divine-fog-3863\.fly\.dev\/proposals\/.*\?.*/,
-    async (route) => {
-      const proposal = getProposalDataByType(type);
-      let originalResult = [JSON.parse(JSON.stringify(proposal))];
-      originalResult[0].id = 0;
-      originalResult[0].status = status;
-      originalResult[0].submission_time = CurrentTimestampInNanoseconds;
-      await route.fulfill({
-        json: {
-          proposals: [originalResult],
-          total: 1,
-        },
-      });
-    }
-  );
+  await page.route(/\/proposals\/.*\?proposal_types=*/, async (route) => {
+    const proposal = getProposalDataByType(type);
+    let originalResult = [JSON.parse(JSON.stringify(proposal))];
+    originalResult[0].id = 0;
+    originalResult[0].status = status;
+    originalResult[0].submission_time = CurrentTimestampInNanoseconds;
+    await route.fulfill({
+      json: {
+        proposals: originalResult,
+        total: 1,
+      },
+    });
+  });
 }
 
 async function mockSettingProposal({ page, status, type }) {

@@ -916,7 +916,13 @@ test.describe("admin with function access keys", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(150_000);
+    test.setTimeout(250_000);
+    const daoName = daoAccount.split(".")[0];
+    const sandbox = new SandboxRPC();
+    await sandbox.init();
+    await sandbox.attachRoutes(page);
+    await sandbox.setupSandboxForSputnikDao(daoName);
+    await sandbox.startSandbox();
     const nearPrice = 4;
     await mockInventory({ page, account: daoAccount });
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
@@ -1019,86 +1025,34 @@ test.describe("admin with function access keys", function () {
     await expect(
       page.getByText("Awaiting transaction confirmation...")
     ).toBeVisible();
-    let isTransactionCompleted = false;
-    let retryCountAfterComplete = 0;
-    let newProposalId;
-    await mockTransactionSubmitRPCResponses(
-      page,
-      async ({
-        route,
-        request,
-        transaction_completed,
-        last_receiver_id,
-        requestPostData,
-      }) => {
-        isTransactionCompleted = transaction_completed;
-        if (
-          isTransactionCompleted &&
-          requestPostData.params &&
-          requestPostData.params.method_name === "get_last_proposal_id"
-        ) {
-          const response = await route.fetch();
-          const json = await response.json();
-          let result = JSON.parse(
-            new TextDecoder().decode(new Uint8Array(json.result.result))
-          );
-          if (retryCountAfterComplete === 2) {
-            result++;
-            newProposalId = result;
-          } else {
-            retryCountAfterComplete++;
-          }
-
-          json.result.result = Array.from(
-            new TextEncoder().encode(JSON.stringify(result))
-          );
-          await route.fulfill({ response, json });
-        } else if (
-          isTransactionCompleted &&
-          newProposalId &&
-          requestPostData.params &&
-          requestPostData.params.method_name === "get_proposals"
-        ) {
-          const response = await route.fetch();
-          const json = await response.json();
-          let result = JSON.parse(
-            new TextDecoder().decode(new Uint8Array(json.result.result))
-          );
-
-          result.push({
-            id: newProposalId,
-            proposer: "tfdevhub.near",
-            description: expectedTransactionModalObject.proposal.description,
-            kind: {
-              Transfer: {
-                token_id:
-                  expectedTransactionModalObject.proposal.kind.Transfer
-                    .token_id,
-                receiver_id:
-                  expectedTransactionModalObject.proposal.kind.Transfer
-                    .receiver_id,
-                amount:
-                  expectedTransactionModalObject.proposal.kind.Transfer.amount,
-                msg: null,
-              },
-            },
-            status: "InProgress",
-            vote_counts: {},
-            votes: {},
-            submission_time: CurrentTimestampInNanoseconds,
+    const transactionResult = await sandbox.addPaymentRequestProposal({
+      title: "Test proposal title",
+      summary: "Test proposal summary",
+      amount: "20",
+      receiver_id: "webassemblymusic.near",
+      daoName,
+    });
+    page.evaluate(async () => {
+      const selector = await document.querySelector("near-social-viewer")
+        .selectorPromise;
+      const wallet = await selector.wallet();
+      return new Promise((resolve) => {
+        wallet["signAndSendTransaction"] = async (transaction) => {
+          resolve(transaction);
+          return new Promise((transactionSentPromiseResolve) => {
+            window.transactionSentPromiseResolve =
+              transactionSentPromiseResolve;
           });
-
-          json.result.result = Array.from(
-            new TextEncoder().encode(JSON.stringify(result))
-          );
-          await route.fulfill({ response, json });
-        } else {
-          await route.fallback();
-        }
-      }
-    );
+        };
+      });
+    });
 
     await page.getByRole("button", { name: "Confirm" }).click();
+    await page.evaluate(async (transactionResult) => {
+      window.transactionSentPromiseResolve(transactionResult);
+    }, transactionResult);
+    const lastProposalId = await sandbox.getLastProposalId(daoName);
+
     await expect(page.locator("div.modal-body code")).toBeAttached({
       attached: false,
       timeout: 10_000,
@@ -1114,7 +1068,7 @@ test.describe("admin with function access keys", function () {
       page.getByText("Payment request has been successfully created.")
     ).toBeVisible();
     await expect(
-      page.getByRole("cell", { name: `${newProposalId}`, exact: true })
+      page.getByRole("cell", { name: `${lastProposalId - 1}`, exact: true })
     ).toBeVisible({ timeout: 20_000 });
     const widgetsAccount =
       (instanceAccount.includes("testing") ? "test-widgets" : "widgets") +

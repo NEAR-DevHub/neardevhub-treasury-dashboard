@@ -1,13 +1,9 @@
-const {
-  hasPermission,
-  getProposalsFromIndexer,
-  getApproversAndThreshold,
-  getFilteredProposalsByStatusAndKind,
-} = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common") || {
-  hasPermission: () => {},
-  getProposalsFromIndexer: () => {},
-  getApproversAndThreshold: () => {},
-};
+const { hasPermission, getProposalsFromIndexer, getApproversAndThreshold } =
+  VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common") || {
+    hasPermission: () => {},
+    getProposalsFromIndexer: () => {},
+    getApproversAndThreshold: () => {},
+  };
 
 const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
@@ -185,12 +181,19 @@ const [currentPage, setCurrentPage] = useState(1);
 const [rowsPerPage, setRowsPerPage] = useState(10);
 const [sortDirection, setSortDirection] = useState("desc");
 const [page, setPage] = useState(0);
+const [proposalUrl, setProposalUrl] = useState(null);
 const [amountValues, setAmountValues] = useState({
   min: "",
   max: "",
   equal: "",
   value: "between",
 });
+
+useEffect(() => {
+  if (tab === "history") {
+    setCurrentTab({ title: "History" });
+  }
+}, [tab]);
 
 const refreshTableData = Storage.get(
   "REFRESH_TABLE_DATA",
@@ -203,16 +206,16 @@ const refreshPaymentsTableData = Storage.get(
 );
 
 const refreshProposalsTableData = Storage.get(
-  "REFRESH_TABLE_DATA",
+  "REFRESH_PAYMENTS_TABLE_DATA",
   `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.ProposalDetailsPage`
 );
 
 const proposalDetailsPageId =
   id || id === "0" || id === 0 ? parseInt(id) : null;
 
-function fetchProposals(customSortDirection) {
+function fetchProposals({ customSortDirection, hardRefresh }) {
   setLoading(true);
-
+  console.log("fetching proposals");
   getProposalsFromIndexer({
     category: "payments",
     statuses:
@@ -227,8 +230,11 @@ function fetchProposals(customSortDirection) {
     filters: activeFilters,
     amountValues: amountValues,
     accountId: context.accountId,
+    existingQuery: hardRefresh ? null : proposalUrl,
+    existingProposals: proposals,
   })
     .then((r) => {
+      setProposalUrl(r.url);
       setProposals(r.proposals || []);
       setTotalLength(r.total || 0);
       setLoading(false);
@@ -241,30 +247,10 @@ function fetchProposals(customSortDirection) {
     });
 }
 
-// Helper function to check if filters have meaningful values
-const hasMeaningfulFilters = (filters) => {
-  if (!filters || Object.keys(filters).length === 0) return false;
-
-  return Object.values(filters).some((filter) => {
-    // Check if filter has values with meaningful content
-    return (
-      filter.values &&
-      filter.values.length > 0 &&
-      filter.values.some((value) => value && value !== "")
-    );
-  });
-};
-
 useEffect(() => {
   setPage(0);
   const timeout = setTimeout(() => {
-    // Only fetch if filters have meaningful values or if there are no filters
-    if (
-      hasMeaningfulFilters(activeFilters) ||
-      Object.keys(activeFilters).length === 0
-    ) {
-      fetchProposals();
-    }
+    fetchProposals();
   }, 500);
 
   return () => clearTimeout(timeout);
@@ -273,36 +259,16 @@ useEffect(() => {
 useEffect(() => {
   setPage(0);
   const timeout = setTimeout(() => {
-    // Only fetch if amountValues have meaningful values
-    const hasAmountValues =
-      amountValues &&
-      ((amountValues.min && amountValues.min !== "") ||
-        (amountValues.max && amountValues.max !== "") ||
-        (amountValues.equal && amountValues.equal !== ""));
-
-    if (
-      hasAmountValues ||
-      (!amountValues.min && !amountValues.max && !amountValues.equal)
-    ) {
-      fetchProposals();
-    }
-  }, 2000);
-
-  return () => clearTimeout(timeout);
-}, [amountValues]);
-
-useEffect(() => {
-  setPage(0);
-  const timeout = setTimeout(() => {
     fetchProposals();
   }, 1000);
 
   return () => clearTimeout(timeout);
-}, [search]);
+}, [search, amountValues]);
 
 useEffect(() => {
+  console.log("refreshTableData");
   setPage(0);
-  fetchProposals();
+  fetchProposals({ hardRefresh: true });
 }, [
   currentTab,
   refreshTableData,
@@ -620,7 +586,7 @@ const deleteGroup = getApproversAndThreshold(
 const handleSortClick = () => {
   const newDirection = sortDirection === "desc" ? "asc" : "desc";
   setSortDirection(newDirection);
-  fetchProposals(newDirection);
+  fetchProposals({ customSortDirection: newDirection });
 };
 
 return (
@@ -748,10 +714,18 @@ return (
                   deleteGroup,
                   loading: loading,
                   policy,
-                  refreshTableData: fetchProposals,
+                  refreshTableData: () => fetchProposals({ hardRefresh: true }),
                   sortDirection,
                   handleSortClick,
                   onSelectRequest: (id) => setShowProposalId(id),
+                  highlightProposalId:
+                    props.highlightProposalId ||
+                    (typeof showProposalDetailsId === "number"
+                      ? showProposalDetailsId
+                      : voteProposalId),
+                  setToastStatus,
+                  setVoteProposalId,
+                  selectedProposalDetailsId: showProposalDetailsId,
                   ...props,
                 }}
               />

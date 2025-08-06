@@ -8,6 +8,7 @@ import {
   SPUTNIK_DAO_FACTORY_ID,
 } from "../../util/sandboxrpc";
 import crypto from "crypto";
+import { Indexer } from "../../util/indexer.js";
 
 test("update infinex.sputnik-dao.near", async ({ page }) => {
   test.setTimeout(120_000);
@@ -241,7 +242,9 @@ test("update infinex.sputnik-dao.near", async ({ page }) => {
   });
   await socialNear.call(socialNearContractId, "new", {});
   await socialNear.call(socialNearContractId, "set_status", { status: "Live" });
-
+  const indexer = new Indexer(worker.provider.connection.url);
+  await indexer.init();
+  await indexer.attachIndexerRoutes(page);
   await redirectWeb4({
     page,
     contractId: web4ContractId,
