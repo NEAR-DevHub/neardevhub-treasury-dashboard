@@ -10,7 +10,7 @@ const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
 };
 const { encodeToMarkdown } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
-);
+) || { encodeToMarkdown: (data) => JSON.stringify(data) };
 const instance = props.instance;
 const onCloseCanvas = props.onCloseCanvas ?? (() => {});
 
@@ -18,7 +18,9 @@ if (!instance) {
   return <></>;
 }
 
-const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+const { treasuryDaoID, showNearIntents } = VM.require(
+  `${instance}/widget/config.data`
+);
 
 const [isTxnCreated, setTxnCreated] = useState(false);
 const [daoPolicy, setDaoPolicy] = useState(null);
@@ -26,6 +28,7 @@ const [lastProposalId, setLastProposalId] = useState(null);
 const [showCancelModal, setShowCancelModal] = useState(false);
 const [showRateWarningModal, setShowRateWarningModal] = useState(false);
 const [exchangeDetails, setExchangeDetails] = useState(null);
+const [treasuryWallet, setTreasuryWallet] = useState("sputnik-dao");
 
 function getLastProposalId() {
   return Near.asyncView(treasuryDaoID, "get_last_proposal_id").then(
@@ -82,15 +85,9 @@ function fillTxn(proposalDetails, args, isStorageDeposit) {
       gas: call.gas,
     }));
   } else {
-    const description = {
-      proposal_action: "asset-exchange",
-      notes: proposalDetails.notes,
-      tokenIn: proposalDetails.tokenIn,
-      tokenOut: proposalDetails.tokenOut,
-      amountIn: proposalDetails.amountIn,
-      slippage: proposalDetails.slippage,
-      amountOut: proposalDetails.amountOut,
-    };
+    // All asset exchange proposals use the same encoded format
+    const description = proposalDetails.description;
+
     const gas = "270000000000000";
     return [
       {
@@ -98,7 +95,7 @@ function fillTxn(proposalDetails, args, isStorageDeposit) {
         methodName: "add_proposal",
         args: {
           proposal: {
-            description: encodeToMarkdown(description),
+            description: description,
             kind: {
               FunctionCall: {
                 receiver_id: args.receiverId,
@@ -142,6 +139,27 @@ return (
       showInProgress={isTxnCreated}
       cancelTxn={() => setTxnCreated(false)}
     />
+
+    {/* Treasury Wallet Dropdown - Only show if showNearIntents is enabled */}
+    {showNearIntents && (
+      <div className="mb-3">
+        <label className="form-label">Treasury Wallet</label>
+        <Widget
+          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
+          props={{
+            selectedValue: treasuryWallet,
+            onChange: (option) => setTreasuryWallet(option.value),
+            options: [
+              { label: "SputnikDAO", value: "sputnik-dao" },
+              { label: "NEAR Intents", value: "near-intents" },
+            ],
+            defaultLabel: "Select wallet",
+            showSearch: false,
+          }}
+        />
+      </div>
+    )}
+
     <Widget
       loading=""
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
@@ -182,21 +200,98 @@ return (
       }}
     />
 
-    <Widget
-      loading=""
-      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.asset-exchange.ExchangeForm`}
-      props={{
-        instance,
-        onCancel: () => setShowCancelModal(true),
-        onSubmit: (args) => {
-          setExchangeDetails(args);
-          if (args.rateDifference && args.rateDifference < -1) {
-            setShowRateWarningModal(true);
-          } else {
-            onSubmitClick(args);
-          }
-        },
-      }}
-    />
+    {/* Conditional Form Rendering based on treasury wallet */}
+    {showNearIntents && treasuryWallet === "near-intents" ? (
+      <Widget
+        loading=""
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.asset-exchange.OneClickExchangeForm`}
+        props={{
+          instance,
+          onCancel: () => setShowCancelModal(true),
+          onSubmit: (args) => {
+            // Format the 1Click proposal with encoded metadata
+            const proposalDescription = encodeToMarkdown({
+              proposal_action: "asset-exchange",
+              notes: `1Click Cross-Network Swap
+
+Swap Details:
+- Amount In: ${args.quote.amountInFormatted} ${args.tokenInSymbol}
+- Amount Out: ${args.quote.amountOutFormatted} ${args.tokenOut}
+- Destination Network: ${args.networkOut}
+- Time Estimate: ${args.quote.timeEstimate} minutes
+- Quote Deadline: ${new Date(args.quote.deadline).toLocaleString()}
+
+Deposit Address: ${args.quote.depositAddress}
+
+1Click Service Signature: ${args.quote.signature}
+
+This proposal authorizes transferring tokens to 1Click's deposit address.
+1Click will execute the cross-network swap and deliver the swapped tokens back to the treasury's NEAR Intents account.`,
+              tokenIn: args.tokenInSymbol,
+              tokenOut: args.tokenOut,
+              amountIn: args.quote.amountInFormatted,
+              amountOut: args.quote.amountOutFormatted,
+            });
+
+            const proposalDetails = {
+              description: proposalDescription,
+              transactions: [
+                {
+                  treasuryKind: "NEAR_INTENTS",
+                  receiverId: "intents.near", // Changed from receiver_id to receiverId
+                  functionCalls: [
+                    {
+                      methodName: "mt_transfer",
+                      args: {
+                        receiver_id: args.quote.depositAddress,
+                        amount: args.quote.amountIn,
+                        token_id: args.quote.requestPayload.originAsset,
+                      },
+                      amount: "1", // 1 yoctoNEAR
+                      gas: "100000000000000", // 100 TGas
+                    },
+                  ],
+                },
+              ],
+            };
+
+            onSubmitClick(proposalDetails);
+          },
+        }}
+      />
+    ) : (
+      <Widget
+        loading=""
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.asset-exchange.ExchangeForm`}
+        props={{
+          instance,
+          onCancel: () => setShowCancelModal(true),
+          onSubmit: (args) => {
+            // Generate description for SputnikDAO asset exchange
+            const description = encodeToMarkdown({
+              proposal_action: "asset-exchange",
+              notes: args.notes,
+              tokenIn: args.tokenIn,
+              tokenOut: args.tokenOut,
+              amountIn: args.amountIn,
+              slippage: args.slippage,
+              amountOut: args.amountOut,
+            });
+
+            const proposalDetailsWithDescription = {
+              ...args,
+              description: description,
+            };
+
+            setExchangeDetails(proposalDetailsWithDescription);
+            if (args.rateDifference && args.rateDifference < -1) {
+              setShowRateWarningModal(true);
+            } else {
+              onSubmitClick(proposalDetailsWithDescription);
+            }
+          },
+        }}
+      />
+    )}
   </div>
 );

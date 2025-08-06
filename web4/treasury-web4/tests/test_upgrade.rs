@@ -6,7 +6,7 @@ use web4_utils::call_web4_get_with_preload_result;
 #[tokio::test]
 
 async fn test_upgrade() -> Result<(), Box<dyn std::error::Error>> {
-    let mainnet = near_workspaces::mainnet().await?;
+    let mainnet = near_workspaces::custom("https://rpc.mainnet.fastnear.com").await?;
     let sandbox = near_workspaces::sandbox().await?;
     let contract_wasm = near_workspaces::compile_project("./").await?;
 
