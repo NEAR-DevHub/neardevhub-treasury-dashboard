@@ -42,13 +42,11 @@ const [availableFilters] = useState([
     : []),
 ]);
 
-// State for API options
 const [approverOptions, setApproverOptions] = useState([]);
 const [recipientOptions, setRecipientOptions] = useState([]);
 const [tokenOptions, setTokenOptions] = useState([]);
 const [proposerOptions, setProposerOptions] = useState([]);
 
-// Fetch options from API
 const fetchOptions = (endpoint, setter, key) => {
   asyncFetch(`${REPL_SPUTNIK_INDEXER}/proposals/${treasuryDaoID}/${endpoint}`)
     .then((response) => {
@@ -65,7 +63,6 @@ const fetchOptions = (endpoint, setter, key) => {
     });
 };
 
-// Fetch all options on component mount
 useEffect(() => {
   if (treasuryDaoID) {
     fetchOptions("approvers", setApproverOptions, "approvers");
@@ -75,7 +72,6 @@ useEffect(() => {
   }
 }, [treasuryDaoID]);
 
-// Get options for specific filter type
 const getOptionsForFilter = (filterKey) => {
   const optionsMap = {
     approvers: approverOptions,
@@ -86,7 +82,6 @@ const getOptionsForFilter = (filterKey) => {
   return optionsMap[filterKey] || [];
 };
 
-// Filter utility functions
 const addFilter = (filterKey) => {
   setActiveFilters((prev) => ({
     ...prev,
@@ -129,7 +124,6 @@ const clearAllFilters = () => {
   setActiveFilters({});
 };
 
-// Helper functions for filter configuration
 const getFilterLabel = (key) => {
   return availableFilters.find((f) => f.key === key)?.label || key;
 };
@@ -142,7 +136,6 @@ const getFilterMultiple = (key) => {
   return availableFilters.find((f) => f.key === key)?.multiple || false;
 };
 
-// Get available filters that haven't been added yet
 const availableFiltersToAdd = availableFilters.filter(
   (filter) => !activeFilters[filter.key]
 );

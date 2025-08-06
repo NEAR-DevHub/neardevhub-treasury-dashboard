@@ -216,7 +216,7 @@ test("payment request to BTC address", async ({
   instanceAccount,
   daoAccount,
 }) => {
-  test.setTimeout(350000);
+  test.setTimeout(150000);
   // Import contract for the specific instance being tested
   // instanceAccount is an Account object provided by the test fixture
   await worker.rootAccount.importContract({
