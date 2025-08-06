@@ -152,7 +152,7 @@ This builds on our PoC that demonstrated intent creation with swap+withdrawal, b
 5. If approved, transaction executes automatically
 
 ### 4. Critical Issues Discovered
-- **Timeline Mismatch**: 1Click quotes expire in ~24 hours while DAO proposals can take days/weeks
+- **Timeline Mismatch**: 1Click quotes expire in ~24 hours but DAO proposals often take several days (or even weeks) to pass, depending on when the required voting threshold is reached. This gap can lead to expired quotes before execution.
 - **Quote Immutability**: 1Click API ignores requested deadlines and always returns ~24 hour expiry
 - **Frontend-First Design**: Quote must be obtained before creating proposal (not after approval)
 
