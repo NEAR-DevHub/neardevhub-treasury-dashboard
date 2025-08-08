@@ -908,8 +908,7 @@ test.describe("User is logged in", function () {
 
 test.describe("admin with function access keys", function () {
   test.use({
-    storageState:
-      "playwright-tests/storage-states/wallet-connected-admin-with-accesskey.json",
+    storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
   });
   test("create NEAR transfer payment request, and after submission it should be visible in pending request, and the form should be cleared", async ({
     page,
@@ -922,7 +921,6 @@ test.describe("admin with function access keys", function () {
     await sandbox.init();
     await sandbox.attachRoutes(page);
     await sandbox.setupSandboxForSputnikDao(daoName);
-    await sandbox.startSandbox();
     const nearPrice = 4;
     await mockInventory({ page, account: daoAccount });
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
@@ -945,6 +943,7 @@ test.describe("admin with function access keys", function () {
       ).toBeVisible();
 
       await proposalSelect.click();
+      await page.waitForTimeout(2_000);
       await page
         .getByPlaceholder("Search by id or title")
         .pressSequentially("22");
@@ -982,9 +981,11 @@ test.describe("admin with function access keys", function () {
       await totalAmountField.pressSequentially("20");
       await totalAmountField.blur();
     }
+
     const submitBtn = await page.getByRole("button", { name: "Submit" });
     await expect(submitBtn).toBeEnabled({ timeout: 20_000 });
     await submitBtn.scrollIntoViewIfNeeded({ timeout: 20_000 });
+    await page.waitForTimeout(3_000);
     await submitBtn.click();
 
     const expectedTransactionModalObject = instanceConfig.showProposalSelection
@@ -1025,13 +1026,7 @@ test.describe("admin with function access keys", function () {
     await expect(
       page.getByText("Awaiting transaction confirmation...")
     ).toBeVisible();
-    const transactionResult = await sandbox.addPaymentRequestProposal({
-      title: "Test proposal title",
-      summary: "Test proposal summary",
-      amount: "20",
-      receiver_id: "webassemblymusic.near",
-      daoName,
-    });
+
     page.evaluate(async () => {
       const selector = await document.querySelector("near-social-viewer")
         .selectorPromise;
@@ -1046,7 +1041,13 @@ test.describe("admin with function access keys", function () {
         };
       });
     });
-
+    const transactionResult = await sandbox.addPaymentRequestProposal({
+      title: "Test proposal title",
+      summary: "Test proposal summary",
+      amount: "20",
+      receiver_id: "webassemblymusic.near",
+      daoName,
+    });
     await page.getByRole("button", { name: "Confirm" }).click();
     await page.evaluate(async (transactionResult) => {
       window.transactionSentPromiseResolve(transactionResult);
@@ -1094,5 +1095,6 @@ test.describe("admin with function access keys", function () {
     await page.waitForTimeout(2_000);
     await page.reload();
     await checkThatFormIsCleared();
+    await sandbox.quitSandbox();
   });
 });
