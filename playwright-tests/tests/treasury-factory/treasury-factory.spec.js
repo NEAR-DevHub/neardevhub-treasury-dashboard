@@ -32,6 +32,7 @@ test("should be able to create a treasury instance with sandbox, and create/exec
   test.setTimeout(200_000);
   const sandbox = new SandboxRPC();
   await sandbox.init();
+  await sandbox.indexer.attachIndexerRoutes(page);
 
   const widget_reference_account_id = "treasury-testing.near";
 

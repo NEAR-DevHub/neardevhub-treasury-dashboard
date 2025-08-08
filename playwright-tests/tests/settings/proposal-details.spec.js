@@ -34,7 +34,7 @@ function getProposalDataByType(type) {
 }
 
 async function mockSettingsProposals({ page, status, type }) {
-  await page.route(/\/proposals\/.*\?proposal_types=*/, async (route) => {
+  await page.route(/\/proposals\/.*\?.*proposal_types=.*/, async (route) => {
     const proposal = getProposalDataByType(type);
     let originalResult = [JSON.parse(JSON.stringify(proposal))];
     originalResult[0].id = 0;

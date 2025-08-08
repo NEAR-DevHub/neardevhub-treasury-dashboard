@@ -262,7 +262,6 @@ const proposalDetailsPageId =
 
 function fetchProposals({ customSortDirection, hardRefresh }) {
   setLoading(true);
-  console.log("fetching proposals");
   getProposalsFromIndexer({
     category: "payments",
     statuses:
@@ -333,7 +332,6 @@ useEffect(() => {
 }, [search, amountValues]);
 
 useEffect(() => {
-  console.log("refreshTableData");
   setPage(0);
   fetchProposals({ hardRefresh: true });
 }, [

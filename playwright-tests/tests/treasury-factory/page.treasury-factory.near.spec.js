@@ -32,6 +32,7 @@ test.describe("connected with ledger", function () {
 
     const sandbox = new SandboxRPC();
     await sandbox.init();
+    await sandbox.indexer.attachIndexerRoutes(page);
 
     await page.getByRole("button", { name: "Continue" }).click();
 

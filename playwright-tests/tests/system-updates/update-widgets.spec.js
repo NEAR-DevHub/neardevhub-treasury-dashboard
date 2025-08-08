@@ -15,6 +15,7 @@ test("should update bootstrap widget and upgrade instance with it", async ({
 
   const sandbox = new SandboxRPC();
   await sandbox.init();
+  await sandbox.indexer.attachIndexerRoutes(page);
 
   const widget_reference_account_id = DEFAULT_WIDGET_REFERENCE_ACCOUNT_ID;
   await sandbox.setupDefaultWidgetReferenceAccount();

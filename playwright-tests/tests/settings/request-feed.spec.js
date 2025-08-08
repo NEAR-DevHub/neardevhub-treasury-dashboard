@@ -26,7 +26,7 @@ async function voteOnProposal({
 }) {
   let isTransactionCompleted = false;
   const contractId = daoAccount;
-  await page.route(/\/proposals\/.*\?proposal_types=*/, async (route) => {
+  await page.route(/\/proposals\/.*\?.*proposal_types=.*/, async (route) => {
     let originalResult = JSON.parse(
       JSON.stringify(SettingsVotingDurationProposalData)
     );
@@ -168,19 +168,22 @@ test.describe.parallel("User logged in with different roles", function () {
           hasAllRole: hasAllRole,
         });
 
-        await page.route(/\/proposals\/.*\?proposal_types=*/, async (route) => {
-          let originalResult = JSON.parse(
-            JSON.stringify(SettingsVotingDurationProposalData)
-          );
-          originalResult.submission_time = CurrentTimestampInNanoseconds;
-          originalResult.status = "InProgress";
-          await route.fulfill({
-            json: {
-              proposals: [originalResult],
-              total: 1,
-            },
-          });
-        });
+        await page.route(
+          /\/proposals\/.*\?.*proposal_types=.*/,
+          async (route) => {
+            let originalResult = JSON.parse(
+              JSON.stringify(SettingsVotingDurationProposalData)
+            );
+            originalResult.submission_time = CurrentTimestampInNanoseconds;
+            originalResult.status = "InProgress";
+            await route.fulfill({
+              json: {
+                proposals: [originalResult],
+                total: 1,
+              },
+            });
+          }
+        );
 
         await page.goto(`/${instanceAccount}/widget/app?page=settings`);
         await expect(page.getByText("Pending Requests").nth(1)).toBeVisible({
@@ -364,7 +367,7 @@ test.describe("don't ask again", function () {
     );
     proposalData.submission_time = CurrentTimestampInNanoseconds;
     proposalData.status = "InProgress";
-    await page.route(/\/proposals\/.*\?proposal_types=*/, async (route) => {
+    await page.route(/\/proposals\/.*\?.*proposal_types=.*/, async (route) => {
       await route.fulfill({
         json: {
           proposals: [proposalData],
