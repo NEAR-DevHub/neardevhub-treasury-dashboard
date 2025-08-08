@@ -535,7 +535,7 @@ test.describe("Payments Filters", () => {
     await switchToHistoryTab(page);
 
     // Get the search input
-    const searchInput = page.getByPlaceholder("Search by ID, title or summary");
+    const searchInput = page.getByPlaceholder("Search");
     await expect(searchInput).toBeVisible();
 
     // Step 1: Search by title

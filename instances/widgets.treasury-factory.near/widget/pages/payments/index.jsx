@@ -234,6 +234,7 @@ const [amountValues, setAmountValues] = useState({
   equal: "",
   value: "between",
 });
+const [isSearchFocused, setIsSearchFocused] = useState(false);
 
 useEffect(() => {
   if (tab === "history") {
@@ -399,9 +400,13 @@ const SidebarMenu = () => {
                 className={`form-control border-start-0 ${
                   search ? "border-end-0" : ""
                 }`}
-                placeholder="Search by ID, title or summary"
+                placeholder={
+                  isSearchFocused ? "Search by id, title or summary" : "Search"
+                }
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
+                onFocus={() => setIsSearchFocused(true)}
+                onBlur={() => setIsSearchFocused(false)}
               />
               {search && (
                 <span className="input-group-text bg-transparent border-start-0">
@@ -434,9 +439,10 @@ const SidebarMenu = () => {
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`btn btn-outline-secondary ${
-              Object.keys(activeFilters ?? {}).length > 0 ? "active-filter" : ""
+              showFilters || Object.keys(activeFilters ?? {}).length > 0
+                ? "active-filter"
+                : ""
             }`}
-            title="Filters"
           >
             <i class="bi bi-funnel"></i>
           </button>
@@ -482,6 +488,7 @@ const SidebarMenu = () => {
               treasuryDaoID,
               amountValues,
               setAmountValues,
+              setShowFilters,
             }}
           />
         </div>

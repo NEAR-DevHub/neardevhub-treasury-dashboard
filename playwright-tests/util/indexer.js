@@ -49,23 +49,11 @@ function getIndexerBinaryPath() {
   const buildsDir = join(__dirname, "..", "indexer-builds");
 
   if (OS_INFO.platform === "darwin") {
-    // macOS
-    if (OS_INFO.architecture === "arm64") {
-      OS_INFO.binaryPath = join(buildsDir, "sputnik-indexer-macos-arm64");
-    } else {
-      OS_INFO.binaryPath = join(buildsDir, "sputnik-indexer-macos-x64");
-    }
+    // macOS - use unified binary for both architectures
+    OS_INFO.binaryPath = join(buildsDir, "sputnik-indexer-mac");
   } else if (OS_INFO.platform === "linux") {
-    // Linux - check for available binaries
-    const linuxX64Path = join(buildsDir, "sputnik-indexer-linux-x64");
-    const linuxArm64Path = join(buildsDir, "sputnik-indexer-linux-arm64");
-
-    // Try to find an available Linux binary
-    if (OS_INFO.architecture === "arm64") {
-      OS_INFO.binaryPath = linuxArm64Path;
-    } else {
-      OS_INFO.binaryPath = linuxX64Path;
-    }
+    // Linux - use unified binary for both architectures
+    OS_INFO.binaryPath = join(buildsDir, "sputnik-indexer-linux");
   } else {
     throw new Error(
       `Unsupported OS: ${OS_INFO.platform} (${OS_INFO.architecture})`

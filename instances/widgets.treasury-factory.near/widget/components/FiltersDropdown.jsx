@@ -73,6 +73,18 @@ const Container = styled.div`
   .date-dropdown-container {
     padding: 0px 8px 12px;
   }
+
+  /* Remove focus outline from input fields */
+  .input-group .form-control:focus {
+    outline: none;
+    box-shadow: none;
+    border-color: var(--bs-border-color);
+  }
+
+  .input-group .form-control:focus-visible {
+    outline: none;
+    box-shadow: none;
+  }
 `;
 
 const statusOptions = ["Approved", "Rejected", "Failed", "Expired"];

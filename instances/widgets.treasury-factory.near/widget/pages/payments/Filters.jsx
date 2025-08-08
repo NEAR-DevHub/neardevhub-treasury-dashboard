@@ -6,6 +6,7 @@ const {
   isPendingRequests,
   amountValues,
   setAmountValues,
+  setShowFilters,
 } = props;
 
 // Available filters configuration
@@ -121,6 +122,7 @@ const handleFilterSelection = (filterKey, selectedValues, include) => {
 };
 
 const clearAllFilters = () => {
+  setShowFilters(false);
   setActiveFilters({});
 };
 
@@ -149,7 +151,6 @@ return (
     <button
       className="btn btn-sm btn-outline-secondary"
       onClick={clearAllFilters}
-      title="Clear all filters"
     >
       <i className="bi bi-x-lg"></i>
     </button>
