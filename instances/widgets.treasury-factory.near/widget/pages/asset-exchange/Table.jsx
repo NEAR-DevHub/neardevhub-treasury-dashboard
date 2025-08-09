@@ -148,6 +148,23 @@ const ProposalsComponent = () => {
         const minAmountReceive = Number(
           outEstimate * (1 - slippageValue / 100)
         );
+
+        // Extract quote deadline from notes for 1Click API proposals
+        let quoteDeadline = null;
+        let isQuoteExpired = false;
+        if (
+          notes &&
+          typeof notes === "string" &&
+          notes.includes("Quote Deadline:")
+        ) {
+          const deadlineMatch = notes.match(/Quote Deadline:\s*([^\n]+)/);
+          if (deadlineMatch && deadlineMatch[1]) {
+            const deadlineStr = deadlineMatch[1].trim();
+            quoteDeadline = new Date(deadlineStr);
+            const currentTime = Date.now();
+            isQuoteExpired = quoteDeadline.getTime() < currentTime;
+          }
+        }
         return (
           <tr
             data-testid={"proposal-request-#" + item.id}
@@ -309,6 +326,8 @@ const ProposalsComponent = () => {
                       checkProposalStatus: () => checkProposalStatus(item.id),
                       hasOneDeleteIcon,
                       proposal: item,
+                      isQuoteExpired,
+                      quoteDeadline,
                     }}
                   />
                 </td>
