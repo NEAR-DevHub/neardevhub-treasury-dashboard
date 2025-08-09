@@ -27,7 +27,7 @@ test.describe("Asset Exchange - Expired Quote Voting Prevention", () => {
 
     // Create proposal with expired quote deadline using encodeToMarkdown
     const proposalWithExpiredQuote = {
-      id: 100,
+      id: 7,
       proposer: "user.near",
       votes: {},
       submission_time: CurrentTimestampInNanoseconds,
@@ -93,7 +93,7 @@ test.describe("Asset Exchange - Expired Quote Voting Prevention", () => {
 
     // Navigate to the proposal details page
     await page.goto(
-      `https://${instanceAccount}.page?page=asset-exchange&id=100`
+      `https://${instanceAccount}.page?page=asset-exchange&id=7`
     );
 
     // Set up auth settings
@@ -133,7 +133,7 @@ test.describe("Asset Exchange - Expired Quote Voting Prevention", () => {
 
     // Create proposal with valid quote deadline using encodeToMarkdown
     const proposalWithValidQuote = {
-      id: 101,
+      id: 8,
       proposer: "user.near",
       votes: {},
       submission_time: CurrentTimestampInNanoseconds,
@@ -199,7 +199,7 @@ test.describe("Asset Exchange - Expired Quote Voting Prevention", () => {
 
     // Navigate to the proposal details page
     await page.goto(
-      `https://${instanceAccount}.page?page=asset-exchange&id=101`
+      `https://${instanceAccount}.page?page=asset-exchange&id=8`
     );
 
     // Set up auth settings
