@@ -33,6 +33,8 @@ const isProposalDetailsPage = props.isProposalDetailsPage;
 const hasOneDeleteIcon = props.hasOneDeleteIcon;
 const isIntentsRequest = props.isIntentsRequest;
 const proposal = props.proposal;
+const isQuoteExpired = props.isQuoteExpired;
+const quoteDeadline = props.quoteDeadline;
 
 const alreadyVoted = Object.keys(votes).includes(accountId);
 const userVote = votes[accountId];
@@ -328,7 +330,40 @@ return (
       </div>
     ) : (
       <div className={containerClass}>
-        {!isReadyToBeWithdrawn ? (
+        {isQuoteExpired ? (
+          <div className="d-flex align-items-center gap-2 w-100">
+            <div className="d-flex align-items-center gap-2 text-muted flex-grow-1">
+              <i className="bi bi-info-circle"></i>
+              <span>
+                Voting is no longer available. The 1Click API quote for this request expired on {quoteDeadline.toLocaleString()}.
+                <Widget
+                  loading=""
+                  src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+                  props={{
+                    popup: (
+                      <div>
+                        The exchange rate quoted by 1Click API has expired. Voting is disabled to prevent
+                        potential loss of funds from executing the swap at an outdated rate.
+                      </div>
+                    ),
+                    children: (
+                      <span className="text-decoration-underline ms-1" style={{ cursor: "pointer" }}>
+                        Learn more
+                      </span>
+                    ),
+                    instance,
+                  }}
+                />
+              </span>
+            </div>
+            <button className="btn btn-success" disabled style={{ opacity: 0.5 }}>
+              Approve
+            </button>
+            <button className="btn btn-danger" disabled style={{ opacity: 0.5 }}>
+              Reject
+            </button>
+          </div>
+        ) : !isReadyToBeWithdrawn ? (
           <div className="text-center fw-semi-bold">
             Voting is not available before unstaking release{" "}
             <Widget

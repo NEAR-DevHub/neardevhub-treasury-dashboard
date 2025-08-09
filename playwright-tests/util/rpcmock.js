@@ -1,4 +1,11 @@
 export const MOCK_RPC_URL = "http://127.0.0.1:14500";
+// Add support for fastnear RPC endpoints used by web4
+const RPC_URL_PATTERNS = [
+  MOCK_RPC_URL,
+  "**/rpc.mainnet.fastnear.com/**",
+  "**/free.rpc.fastnear.com/**",
+  "**/rpc.mainnet.near.org/**"
+];
 
 export async function mockRpcRequest({
   page,
@@ -6,7 +13,8 @@ export async function mockRpcRequest({
   mockedResult = {},
   modifyOriginalResultFunction = null,
 }) {
-  await page.route(MOCK_RPC_URL, async (route, request) => {
+  // Create a route handler that works for all RPC endpoints
+  const routeHandler = async (route, request) => {
     const postData = request.postDataJSON();
 
     const filterParamsKeys = Object.keys(filterParams);
@@ -64,7 +72,12 @@ export async function mockRpcRequest({
     } else {
       route.fallback();
     }
-  });
+  };
+  
+  // Apply the route handler to all RPC URL patterns
+  for (const pattern of RPC_URL_PATTERNS) {
+    await page.route(pattern, routeHandler);
+  }
 }
 
 export function getOldPolicy(

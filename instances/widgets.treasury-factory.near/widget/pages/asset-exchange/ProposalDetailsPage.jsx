@@ -71,6 +71,17 @@ useEffect(() => {
           "amountOut",
           item.description
         );
+        
+        // Extract quote deadline from notes for 1Click API proposals
+        let quoteDeadline = null;
+        if (notes && typeof notes === 'string' && notes.includes('Quote Deadline:')) {
+          const deadlineMatch = notes.match(/Quote Deadline:\s*([^\n]+)/);
+          if (deadlineMatch && deadlineMatch[1]) {
+            // Parse the deadline date string
+            const deadlineStr = deadlineMatch[1].trim();
+            quoteDeadline = new Date(deadlineStr);
+          }
+        }
 
         const outEstimate = parseFloat(amountOut) || 0;
         const slippageValue = parseFloat(slippage) || 0;
@@ -103,6 +114,7 @@ useEffect(() => {
           tokenOut,
           slippage,
           proposal: item,
+          quoteDeadline,
         });
       })
       .catch(() => {
@@ -175,6 +187,9 @@ return (
               checkProposalStatus: () => checkProposalStatus(proposalData?.id),
               isProposalDetailsPage: true,
               proposal: proposalData.proposal,
+              // Pass quote deadline to disable voting if expired
+              isQuoteExpired: proposalData.quoteDeadline && new Date() > proposalData.quoteDeadline,
+              quoteDeadline: proposalData.quoteDeadline,
             }}
           />
         ),
@@ -257,6 +272,29 @@ return (
               />
             </h5>
           </div>
+          {proposalData?.quoteDeadline && (
+            <div className="d-flex flex-column gap-2 mt-1">
+              <label className="border-top">
+                1Click Quote Deadline {"   "}
+                <Widget
+                  loading=""
+                  src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+                  props={{
+                    popup:
+                      "This is the expiry time for the 1Click API quote. After this time, the quoted exchange rate is no longer valid and voting will be disabled to prevent loss of funds.",
+                    children: (
+                      <i className="bi bi-info-circle text-secondary"></i>
+                    ),
+                    instance,
+                  }}
+                />
+              </label>
+              <div className={new Date() > proposalData.quoteDeadline ? "text-danger fw-bold" : ""}>
+                {proposalData.quoteDeadline.toLocaleString()}
+                {new Date() > proposalData.quoteDeadline && " (EXPIRED)"}
+              </div>
+            </div>
+          )}
         </div>
       ),
       proposalData: proposalData,
