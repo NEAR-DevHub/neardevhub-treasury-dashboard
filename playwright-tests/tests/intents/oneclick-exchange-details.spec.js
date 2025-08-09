@@ -49,7 +49,7 @@ test.describe("OneClick Exchange Proposal Details", () => {
       status: "InProgress",
       description: encodeToMarkdown({
         proposal_action: "asset-exchange",
-        notes: `1Click Cross-Network Swap to ethereum. This proposal authorizes transferring tokens to 1Click's deposit address for cross-network swap execution.`,
+        notes: `1Click Cross-Network Swap: 0.1 ETH → 350.00 USDC (ethereum). This proposal authorizes transferring tokens to 1Click's deposit address for cross-network swap execution.`,
         tokenIn: "eth.omft.near",
         tokenOut: "usdc.omft.near",
         amountIn: "0.1",
@@ -249,7 +249,7 @@ test.describe("OneClick Exchange Proposal Details", () => {
       status: "InProgress",
       description: encodeToMarkdown({
         proposal_action: "asset-exchange",
-        notes: `1Click Cross-Network Swap to ethereum. This proposal authorizes transferring tokens to 1Click's deposit address for cross-network swap execution.`,
+        notes: `1Click Cross-Network Swap: 0.1 ETH → 350.00 USDC (ethereum). This proposal authorizes transferring tokens to 1Click's deposit address for cross-network swap execution.`,
         tokenIn: "eth.omft.near",
         tokenOut: "usdc.omft.near",
         amountIn: "0.1",

@@ -210,9 +210,13 @@ return (
           onCancel: () => setShowCancelModal(true),
           onSubmit: (args) => {
             // Format the 1Click proposal with encoded metadata
+            // Include full swap details in notes for table view clarity
+            const sourceInfo = args.tokenInBlockchain
+              ? ` (${args.tokenInBlockchain})`
+              : "";
             const proposalDescription = encodeToMarkdown({
               proposal_action: "asset-exchange",
-              notes: `1Click Cross-Network Swap to ${args.networkOut}. This proposal authorizes transferring tokens to 1Click's deposit address for cross-network swap execution.`,
+              notes: `1Click Cross-Network Swap: ${args.quote.amountInFormatted} ${args.tokenInSymbol}${sourceInfo} → ${args.quote.amountOutFormatted} ${args.tokenOut} (${args.networkOut}). This proposal authorizes transferring tokens to 1Click's deposit address for cross-network swap execution.`,
               tokenIn: args.tokenInSymbol,
               tokenOut: args.tokenOut,
               amountIn: args.quote.amountInFormatted,

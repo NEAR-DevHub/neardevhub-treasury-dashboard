@@ -34,7 +34,7 @@ test.describe("Asset Exchange - Expired Quote Voting Prevention", () => {
       status: "InProgress",
       description: encodeToMarkdown({
         proposal_action: "asset-exchange",
-        notes: `1Click Cross-Network Swap to ethereum. This proposal authorizes transferring tokens to 1Click's deposit address for cross-network swap execution.`,
+        notes: `1Click Cross-Network Swap: 1.5 ETH → 5,250.00 USDC (ethereum). This proposal authorizes transferring tokens to 1Click's deposit address for cross-network swap execution.`,
         tokenIn: "eth.omft.near",
         tokenOut: "usdc.omft.near",
         amountIn: "1.5",
@@ -140,7 +140,7 @@ test.describe("Asset Exchange - Expired Quote Voting Prevention", () => {
       status: "InProgress",
       description: encodeToMarkdown({
         proposal_action: "asset-exchange",
-        notes: `1Click Cross-Network Swap to polygon. This proposal authorizes transferring tokens to 1Click's deposit address for cross-network swap execution.`,
+        notes: `1Click Cross-Network Swap: 2.0 ETH → 7,000.00 MATIC (polygon). This proposal authorizes transferring tokens to 1Click's deposit address for cross-network swap execution.`,
         tokenIn: "eth.omft.near",
         tokenOut: "matic.omft.near",
         amountIn: "2.0",
