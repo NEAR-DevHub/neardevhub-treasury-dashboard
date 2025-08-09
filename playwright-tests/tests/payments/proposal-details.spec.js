@@ -375,6 +375,7 @@ test.describe("Should vote on proposal using sandbox RPC and show updated status
     const proposalCell = page.getByTestId("proposal-request-#0");
     await expect(proposalCell).toBeVisible({ timeout: 20_000 });
     await proposalCell.click();
+    await page.waitForTimeout(2_000);
     await expect(page.getByRole("heading", { name: "#0" })).toBeVisible();
     const approveButton = page
       .getByRole("button", {

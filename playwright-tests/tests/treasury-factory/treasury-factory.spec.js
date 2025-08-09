@@ -28,11 +28,12 @@ function toBase64(json) {
   return Buffer.from(JSON.stringify(json)).toString("base64");
 }
 
-test("should be able to create a treasury instance with sandbox, and create/execute all types of proposals", async () => {
+test("should be able to create a treasury instance with sandbox, and create/execute all types of proposals", async ({
+
+}) => {
   test.setTimeout(200_000);
   const sandbox = new SandboxRPC();
   await sandbox.init();
-  await sandbox.indexer.attachIndexerRoutes(page);
 
   const widget_reference_account_id = "treasury-testing.near";
 
