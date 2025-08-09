@@ -466,17 +466,230 @@ test.describe("FormComponent", () => {
 });
 ```
 
+## Testing Full Pages (Recommended Approach)
+
+### Direct Page Navigation with Web4
+
+The recommended approach for testing pages is to use `redirectWeb4` and navigate directly to the specific page you want to test. **Avoid using the localhost/bos-workspace approach** as it adds unnecessary complexity.
+
+```javascript
+test("tests a specific page", async ({ page, instanceAccount, daoAccount }) => {
+  // 1. Set up redirectWeb4 to load widgets from local filesystem
+  await redirectWeb4({
+    page,
+    contractId: instanceAccount,
+    treasury: daoAccount,
+  });
+  
+  // 2. Mock any RPC data your page needs
+  await mockRpcRequest({
+    page,
+    filterParams: { method_name: "get_proposal" },
+    modifyOriginalResultFunction: () => mockProposalData,
+  });
+  
+  // 3. Mock theme AFTER redirectWeb4 (important for proper override)
+  await mockTheme(page, "light");
+  
+  // 4. Navigate directly to the specific page
+  await page.goto(`https://${instanceAccount}.page?page=asset-exchange&id=28`);
+  
+  // 5. Set up auth AFTER navigation (this will reload the page)
+  await setPageAuthSettings(page, "theori.near", KeyPairEd25519.fromRandom());
+  
+  // 6. Wait for page to reload and stabilize after auth
+  await page.waitForTimeout(5000);
+  
+  // 7. Your test assertions
+  await expect(page.locator("#proposal-28")).toBeVisible();
+});
+```
+
+### Key Insights:
+
+1. **Direct Navigation Works**: You can navigate directly to any page using query parameters:
+   - `?page=asset-exchange&id=28` - Specific proposal
+   - `?page=payments&tab=history` - Specific tab
+   - `?page=settings` - Settings page
+
+2. **Auth Settings Reload the Page**: `setPageAuthSettings` updates localStorage and reloads the page automatically. Always:
+   - Navigate to the page first
+   - Then set auth settings
+   - Wait for the page to stabilize after reload
+
+3. **Order Matters**:
+   - `redirectWeb4` first (sets up widget loading)
+   - Mock RPC data (before navigation)
+   - Mock theme AFTER `redirectWeb4` (to override RPC routes)
+   - Navigate to page
+   - Set auth settings last (causes reload)
+
+### Why Not Use Localhost/Bos-Workspace?
+
+- **Complexity**: Requires running a local bos-workspace server
+- **Different RPC endpoints**: Uses localhost:14500 instead of fastnear.com
+- **Less reliable**: More moving parts that can fail
+- **Not production-like**: Web4 approach better mimics production behavior
+
+## RPC Mocking
+
+Use the `mockRpcRequest` utility function from `playwright-tests/util/rpcmock.js`:
+
+```javascript
+import { mockRpcRequest } from "../../util/rpcmock.js";
+
+// Mock a specific RPC method
+await mockRpcRequest({
+  page,
+  filterParams: { method_name: "get_proposal" },
+  modifyOriginalResultFunction: (originalResult, postData, args) => {
+    // Return your mock data or modify the original
+    return mockProposalData;
+  }
+});
+```
+
+See the [mockRpcRequest JSDoc](../../playwright-tests/util/rpcmock.js) for detailed documentation.
+
+### Common RPC Methods to Mock
+
+- `get_proposal` - Single proposal data
+- `get_proposals` - List of proposals
+- `get_policy` - DAO policy configuration
+- `get_config` - Instance configuration (theme, etc.)
+- `get_last_proposal_id` - Latest proposal ID
+
+## Button and Element Selectors
+
+### Best Practices for Button Selectors
+
+Prefer `getByRole` over text selectors for better reliability:
+
+```javascript
+// ❌ Less reliable - may fail with different text formats
+const approveButton = page.locator('button:text("Approve")');
+const approveButton = page.locator('button:has-text("Approve")');
+
+// ✅ More reliable - works with various button implementations
+const approveButton = page.getByRole('button', { name: 'Approve' });
+const rejectButton = page.getByRole('button', { name: 'Reject' });
+
+// ✅ For buttons with specific test IDs
+const deleteButton = page.getByTestId('delete-btn');
+```
+
+### Using Playwright Inspector
+
+When debugging selector issues, use Playwright Inspector to find the correct selector:
+
+```bash
+# Run test with inspector
+npx playwright test --debug
+
+# Or pause in your test
+await page.pause();
+```
+
+The inspector will show you the exact selector format that works for your element.
+
+## Testing Time-Sensitive Features
+
+### Testing Expired States
+
+When testing features that depend on time (like expired quotes, deadlines):
+
+```javascript
+test("handles expired state", async ({ page }) => {
+  // Create an expired date
+  const expiredDate = new Date(Date.now() - 24 * 60 * 60 * 1000); // 1 day ago
+  
+  // Create a future date
+  const futureDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
+  
+  // Mock data with the specific date
+  const mockData = {
+    deadline: expiredDate.toISOString(),
+    // or for display
+    deadlineText: expiredDate.toLocaleString()
+  };
+  
+  // Test both expired and valid states
+});
+```
+
+## Common Test Patterns
+
+### Testing Component Visibility Based on State
+
+```javascript
+// Check for conditional rendering
+if (await element.isVisible()) {
+  console.log("✓ Element is displayed");
+  // Additional checks when visible
+} else {
+  console.log("✗ Element is not displayed");
+  // Debug why it's not visible
+  await page.screenshot({ path: 'debug.png' });
+}
+
+// Using catch for safety
+const isVisible = await element.isVisible().catch(() => false);
+const isEnabled = await button.isEnabled().catch(() => false);
+```
+
+### Waiting for Dynamic Content
+
+```javascript
+// Wait for specific content to load
+await page.waitForSelector("text=#28", { 
+  state: "visible",
+  timeout: 30_000 
+});
+
+// Wait with timeout for slow-loading content
+await page.waitForTimeout(5000); // Give time for widgets to load
+
+// Wait for multiple elements
+await Promise.all([
+  page.waitForSelector(".element1"),
+  page.waitForSelector(".element2")
+]);
+```
+
 ## Troubleshooting
 
-### Component not rendering
-- Check that `redirectWeb4` is called with the correct `contractId` (instance account)
-- Verify the component source path is correct and uses `widgets.treasury-factory.near`
-- Ensure you've navigated to a page before creating the viewer
+### Page doesn't load after auth
+- **Issue**: Page is blank or components missing after `setPageAuthSettings`
+- **Solution**: Always wait after setting auth (it reloads the page):
+  ```javascript
+  await setPageAuthSettings(page, "theori.near", keypair);
+  await page.waitForTimeout(5000); // Wait for reload
+  ```
 
-### RPC errors
-- Make sure to mock RPC responses for methods your component uses
-- Check that the response format matches what the component expects
+### RPC mocks not working
+- **Issue**: Your mocked data isn't being used
+- **Solution**: Ensure `mockRpcRequest` is called BEFORE navigation
+- **Check**: The function now handles both localhost and fastnear.com endpoints automatically
+- **Debug**: Add console.log in your `modifyOriginalResultFunction` to verify it's called
 
-### "Route already handled" errors
-- This usually means multiple route handlers are trying to handle the same request
-- Ensure your route patterns are specific enough to avoid conflicts
+### Wrong button selector
+- **Issue**: `button:text("Approve")` not finding button
+- **Solution**: Use `getByRole` instead:
+  ```javascript
+  // ✅ Correct
+  page.getByRole('button', { name: 'Approve' })
+  // ❌ Avoid
+  page.locator('button:text("Approve")')
+  ```
+- **Debug**: Use Playwright Inspector to find the right selector:
+  ```bash
+  npx playwright test --debug
+  ```
+
+### Theme not applying
+- **Issue**: Theme mock not working
+- **Solution**: Always call `mockTheme` AFTER `redirectWeb4`:
+  ```javascript
+  await redirectWeb4({ page, contractId, treasury });
+  await mockTheme(page, "light"); // Must be after redirectWeb4
+  ```

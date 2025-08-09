@@ -71,10 +71,14 @@ useEffect(() => {
           "amountOut",
           item.description
         );
-        
+
         // Extract quote deadline from notes for 1Click API proposals
         let quoteDeadline = null;
-        if (notes && typeof notes === 'string' && notes.includes('Quote Deadline:')) {
+        if (
+          notes &&
+          typeof notes === "string" &&
+          notes.includes("Quote Deadline:")
+        ) {
           const deadlineMatch = notes.match(/Quote Deadline:\s*([^\n]+)/);
           if (deadlineMatch && deadlineMatch[1]) {
             // Parse the deadline date string
@@ -188,7 +192,9 @@ return (
               isProposalDetailsPage: true,
               proposal: proposalData.proposal,
               // Pass quote deadline to disable voting if expired
-              isQuoteExpired: proposalData.quoteDeadline && new Date() > proposalData.quoteDeadline,
+              isQuoteExpired:
+                proposalData.quoteDeadline &&
+                new Date() > proposalData.quoteDeadline,
               quoteDeadline: proposalData.quoteDeadline,
             }}
           />
@@ -289,7 +295,13 @@ return (
                   }}
                 />
               </label>
-              <div className={new Date() > proposalData.quoteDeadline ? "text-danger fw-bold" : ""}>
+              <div
+                className={
+                  new Date() > proposalData.quoteDeadline
+                    ? "text-danger fw-bold"
+                    : ""
+                }
+              >
                 {proposalData.quoteDeadline.toLocaleString()}
                 {new Date() > proposalData.quoteDeadline && " (EXPIRED)"}
               </div>

@@ -335,19 +335,24 @@ return (
             <div className="d-flex align-items-center gap-2 text-muted flex-grow-1">
               <i className="bi bi-info-circle"></i>
               <span>
-                Voting is no longer available. The 1Click API quote for this request expired on {quoteDeadline.toLocaleString()}.
+                Voting is no longer available. The 1Click API quote for this
+                request expired on {quoteDeadline.toLocaleString()}.
                 <Widget
                   loading=""
                   src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
                   props={{
                     popup: (
                       <div>
-                        The exchange rate quoted by 1Click API has expired. Voting is disabled to prevent
-                        potential loss of funds from executing the swap at an outdated rate.
+                        The exchange rate quoted by 1Click API has expired.
+                        Voting is disabled to prevent potential loss of funds
+                        from executing the swap at an outdated rate.
                       </div>
                     ),
                     children: (
-                      <span className="text-decoration-underline ms-1" style={{ cursor: "pointer" }}>
+                      <span
+                        className="text-decoration-underline ms-1"
+                        style={{ cursor: "pointer" }}
+                      >
                         Learn more
                       </span>
                     ),
@@ -356,10 +361,18 @@ return (
                 />
               </span>
             </div>
-            <button className="btn btn-success" disabled style={{ opacity: 0.5 }}>
+            <button
+              className="btn btn-success"
+              disabled
+              style={{ opacity: 0.5 }}
+            >
               Approve
             </button>
-            <button className="btn btn-danger" disabled style={{ opacity: 0.5 }}>
+            <button
+              className="btn btn-danger"
+              disabled
+              style={{ opacity: 0.5 }}
+            >
               Reject
             </button>
           </div>
