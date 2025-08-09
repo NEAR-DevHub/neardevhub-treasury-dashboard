@@ -42,7 +42,7 @@ test.describe("OneClick Exchange Proposal Details", () => {
 
     // Create proposal with expired quote deadline using encodeToMarkdown format
     const proposalWithExpiredQuote = {
-      id: 28,
+      id: 7,
       proposer: "user.near",
       votes: { "frol.near": "VoteApprove" },
       submission_time: CurrentTimestampInNanoseconds,
@@ -107,9 +107,7 @@ test.describe("OneClick Exchange Proposal Details", () => {
     await mockTheme(page, "dark");
 
     // Navigate directly to the proposal details page
-    await page.goto(
-      `https://${instanceAccount}.page?page=asset-exchange&id=28`
-    );
+    await page.goto(`https://${instanceAccount}.page?page=asset-exchange&id=7`);
 
     // Set up auth settings AFTER navigating to the page (so localStorage is available)
     await setPageAuthSettings(page, "theori.near", KeyPairEd25519.fromRandom());
@@ -119,10 +117,10 @@ test.describe("OneClick Exchange Proposal Details", () => {
 
     // Check for proposal ID
     const proposalIdVisible = await page
-      .locator("text=#28")
+      .locator("text=#7")
       .isVisible()
       .catch(() => false);
-    console.log(`Proposal #28 visible: ${proposalIdVisible}`);
+    console.log(`Proposal #7 visible: ${proposalIdVisible}`);
 
     // Check that the expired quote message is displayed
     const expiredMessage = page.getByText("Voting is no longer available");
@@ -242,7 +240,7 @@ test.describe("OneClick Exchange Proposal Details", () => {
 
     // Create proposal with valid quote deadline using encodeToMarkdown format
     const proposalWithValidQuote = {
-      id: 29,
+      id: 8,
       proposer: "user.near",
       votes: {},
       submission_time: CurrentTimestampInNanoseconds,
@@ -307,9 +305,7 @@ test.describe("OneClick Exchange Proposal Details", () => {
     await mockTheme(page, "light");
 
     // Navigate directly to the proposal details page
-    await page.goto(
-      `https://${instanceAccount}.page?page=asset-exchange&id=29`
-    );
+    await page.goto(`https://${instanceAccount}.page?page=asset-exchange&id=8`);
 
     // Set up auth settings AFTER navigating to the page (so localStorage is available)
     await setPageAuthSettings(page, "theori.near", KeyPairEd25519.fromRandom());

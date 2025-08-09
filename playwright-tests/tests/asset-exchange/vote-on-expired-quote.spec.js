@@ -92,9 +92,7 @@ test.describe("Asset Exchange - Expired Quote Voting Prevention", () => {
     await mockTheme(page, "dark");
 
     // Navigate to the proposal details page
-    await page.goto(
-      `https://${instanceAccount}.page?page=asset-exchange&id=7`
-    );
+    await page.goto(`https://${instanceAccount}.page?page=asset-exchange&id=7`);
 
     // Set up auth settings
     await setPageAuthSettings(page, "theori.near", KeyPairEd25519.fromRandom());
@@ -198,9 +196,7 @@ test.describe("Asset Exchange - Expired Quote Voting Prevention", () => {
     await mockTheme(page, "light");
 
     // Navigate to the proposal details page
-    await page.goto(
-      `https://${instanceAccount}.page?page=asset-exchange&id=8`
-    );
+    await page.goto(`https://${instanceAccount}.page?page=asset-exchange&id=8`);
 
     // Set up auth settings
     await setPageAuthSettings(page, "theori.near", KeyPairEd25519.fromRandom());
