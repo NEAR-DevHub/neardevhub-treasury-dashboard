@@ -212,25 +212,17 @@ return (
             // Format the 1Click proposal with encoded metadata
             const proposalDescription = encodeToMarkdown({
               proposal_action: "asset-exchange",
-              notes: `1Click Cross-Network Swap
-
-Swap Details:
-- Amount In: ${args.quote.amountInFormatted} ${args.tokenInSymbol}
-- Amount Out: ${args.quote.amountOutFormatted} ${args.tokenOut}
-- Destination Network: ${args.networkOut}
-- Time Estimate: ${args.quote.timeEstimate} minutes
-- Quote Deadline: ${new Date(args.quote.deadline).toLocaleString()}
-
-Deposit Address: ${args.quote.depositAddress}
-
-1Click Service Signature: ${args.quote.signature}
-
-This proposal authorizes transferring tokens to 1Click's deposit address.
-1Click will execute the cross-network swap and deliver the swapped tokens back to the treasury's NEAR Intents account.`,
+              notes: `1Click Cross-Network Swap to ${args.networkOut}. This proposal authorizes transferring tokens to 1Click's deposit address for cross-network swap execution.`,
               tokenIn: args.tokenInSymbol,
               tokenOut: args.tokenOut,
               amountIn: args.quote.amountInFormatted,
               amountOut: args.quote.amountOutFormatted,
+              slippage: args.slippage || "2",
+              quoteDeadline: args.quote.deadline, // Already ISO string from API
+              destinationNetwork: args.networkOut,
+              timeEstimate: `${args.quote.timeEstimate} minutes`,
+              depositAddress: args.quote.depositAddress,
+              signature: args.quote.signature,
             });
 
             const proposalDetails = {

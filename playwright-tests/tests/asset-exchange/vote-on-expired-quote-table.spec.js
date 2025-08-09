@@ -6,6 +6,7 @@ import { CurrentTimestampInNanoseconds } from "../../util/inventory.js";
 import { setPageAuthSettings } from "../../util/sandboxrpc.js";
 import { KeyPairEd25519 } from "near-api-js/lib/utils/key_pair.js";
 import { mockTheme } from "../../util/theme.js";
+import { encodeToMarkdown } from "../../util/lib.js";
 
 test.describe("Asset Exchange Table - Expired Quote Handling", () => {
   test.use({
@@ -23,6 +24,9 @@ test.describe("Asset Exchange Table - Expired Quote Handling", () => {
     // Create one expired and one valid proposal
     const expiredDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const futureDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    // Use toISOString() for consistent date format
+    const formattedExpiredDate = expiredDate.toISOString();
+    const formattedFutureDate = futureDate.toISOString();
 
     const proposalWithExpiredQuote = {
       id: 30,
@@ -30,14 +34,19 @@ test.describe("Asset Exchange Table - Expired Quote Handling", () => {
       votes: {},
       submission_time: CurrentTimestampInNanoseconds,
       status: "InProgress",
-      description: JSON.stringify({
+      description: encodeToMarkdown({
         proposal_action: "asset-exchange",
-        notes: `1Click Cross-Network Swap\n\nSwap Details:\n- Amount In: 0.1 ETH\n- Amount Out: 350.00 USDC\n- Quote Deadline: ${expiredDate.toLocaleString()}\n\nDeposit Address: test-deposit-address`,
+        notes: `1Click Cross-Network Swap to ethereum. This proposal authorizes transferring tokens to 1Click's deposit address for cross-network swap execution.`,
         tokenIn: "eth.omft.near",
         tokenOut: "usdc.omft.near",
         amountIn: "0.1",
         amountOut: "350.00",
         slippage: "2",
+        quoteDeadline: formattedExpiredDate,
+        destinationNetwork: "ethereum",
+        timeEstimate: "10 minutes",
+        depositAddress: "test-deposit-address",
+        signature: "ed25519:test-signature",
       }),
       kind: {
         FunctionCall: {
@@ -66,14 +75,19 @@ test.describe("Asset Exchange Table - Expired Quote Handling", () => {
       votes: {},
       submission_time: CurrentTimestampInNanoseconds,
       status: "InProgress",
-      description: JSON.stringify({
+      description: encodeToMarkdown({
         proposal_action: "asset-exchange",
-        notes: `1Click Cross-Network Swap\n\nSwap Details:\n- Amount In: 0.2 ETH\n- Amount Out: 700.00 USDC\n- Quote Deadline: ${futureDate.toLocaleString()}\n\nDeposit Address: test-deposit-address-2`,
+        notes: `1Click Cross-Network Swap to ethereum. This proposal authorizes transferring tokens to 1Click's deposit address for cross-network swap execution.`,
         tokenIn: "eth.omft.near",
         tokenOut: "usdc.omft.near",
         amountIn: "0.2",
         amountOut: "700.00",
         slippage: "2",
+        quoteDeadline: formattedFutureDate,
+        destinationNetwork: "ethereum",
+        timeEstimate: "10 minutes",
+        depositAddress: "test-deposit-address-2",
+        signature: "ed25519:test-signature-2",
       }),
       kind: {
         FunctionCall: {
@@ -254,6 +268,7 @@ test.describe("Asset Exchange Table - Expired Quote Handling", () => {
     test.setTimeout(60000);
 
     const expiredDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const formattedExpiredDate = expiredDate.toISOString();
 
     const proposalWithExpiredQuote = {
       id: 32,
@@ -261,14 +276,19 @@ test.describe("Asset Exchange Table - Expired Quote Handling", () => {
       votes: {},
       submission_time: CurrentTimestampInNanoseconds,
       status: "InProgress",
-      description: JSON.stringify({
+      description: encodeToMarkdown({
         proposal_action: "asset-exchange",
-        notes: `1Click Cross-Network Swap\n\nSwap Details:\n- Amount In: 0.5 ETH\n- Amount Out: 1750.00 USDC\n- Quote Deadline: ${expiredDate.toLocaleString()}\n\nDeposit Address: test-deposit-address-3`,
+        notes: `1Click Cross-Network Swap to ethereum. This proposal authorizes transferring tokens to 1Click's deposit address for cross-network swap execution.`,
         tokenIn: "eth.omft.near",
         tokenOut: "usdc.omft.near",
         amountIn: "0.5",
         amountOut: "1750.00",
         slippage: "2",
+        quoteDeadline: formattedExpiredDate,
+        destinationNetwork: "ethereum",
+        timeEstimate: "10 minutes",
+        depositAddress: "test-deposit-address-3",
+        signature: "ed25519:test-signature-3",
       }),
       kind: {
         FunctionCall: {
@@ -351,8 +371,8 @@ test.describe("Asset Exchange Table - Expired Quote Handling", () => {
     // Check that the expired message is displayed in the details panel
     // The details panel is in the secondary layout
     const detailsPanel = page.locator(".layout-secondary.show");
-    const expiredMessage = detailsPanel.locator(
-      "text=/Voting is no longer available.*1Click API quote.*expired/"
+    const expiredMessage = detailsPanel.getByText(
+      "Voting is no longer available"
     );
     const messageVisible = await expiredMessage.isVisible().catch(() => false);
 

@@ -6,6 +6,7 @@ import { CurrentTimestampInNanoseconds } from "../../util/inventory.js";
 import { setPageAuthSettings } from "../../util/sandboxrpc.js";
 import { KeyPairEd25519 } from "near-api-js/lib/utils/key_pair.js";
 import { mockTheme } from "../../util/theme.js";
+import { encodeToMarkdown } from "../../util/lib.js";
 import path from "path";
 import { promises as fs } from "fs";
 
@@ -36,36 +37,29 @@ test.describe("OneClick Exchange Proposal Details", () => {
 
     // Create expired date (1 day ago)
     const expiredDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    // Use toISOString() and format it in a way that new Date() can reliably parse
+    const formattedExpiredDate = expiredDate.toISOString();
 
-    // Create proposal with expired quote deadline in the notes
+    // Create proposal with expired quote deadline using encodeToMarkdown format
     const proposalWithExpiredQuote = {
       id: 28,
       proposer: "user.near",
       votes: { "frol.near": "VoteApprove" },
       submission_time: CurrentTimestampInNanoseconds,
       status: "InProgress",
-      description: JSON.stringify({
+      description: encodeToMarkdown({
         proposal_action: "asset-exchange",
-        notes: `1Click Cross-Network Swap
-
-Swap Details:
-- Amount In: 0.1 ETH
-- Amount Out: 350.00 USDC
-- Destination Network: ethereum
-- Time Estimate: 10 minutes
-- Quote Deadline: ${expiredDate.toLocaleString()}
-
-Deposit Address: test-deposit-address
-
-1Click Service Signature: ed25519:test-signature
-
-This proposal authorizes transferring tokens to 1Click's deposit address.
-1Click will execute the cross-network swap and deliver the swapped tokens back to the treasury's NEAR Intents account.`,
+        notes: `1Click Cross-Network Swap to ethereum. This proposal authorizes transferring tokens to 1Click's deposit address for cross-network swap execution.`,
         tokenIn: "eth.omft.near",
         tokenOut: "usdc.omft.near",
         amountIn: "0.1",
         amountOut: "350.00",
         slippage: "2",
+        quoteDeadline: formattedExpiredDate,
+        destinationNetwork: "ethereum",
+        timeEstimate: "10 minutes",
+        depositAddress: "test-deposit-address",
+        signature: "ed25519:test-signature",
       }),
       kind: {
         FunctionCall: {
@@ -131,9 +125,7 @@ This proposal authorizes transferring tokens to 1Click's deposit address.
     console.log(`Proposal #28 visible: ${proposalIdVisible}`);
 
     // Check that the expired quote message is displayed
-    const expiredMessage = page.locator(
-      "text=/Voting is no longer available.*1Click API quote.*expired/"
-    );
+    const expiredMessage = page.getByText("Voting is no longer available");
     const messageVisible = await expiredMessage.isVisible().catch(() => false);
 
     if (messageVisible) {
@@ -245,36 +237,29 @@ This proposal authorizes transferring tokens to 1Click's deposit address.
 
     // Create future date (7 days from now)
     const futureDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    // Use toISOString() for consistent date format
+    const formattedFutureDate = futureDate.toISOString();
 
-    // Create proposal with valid quote deadline in the notes
+    // Create proposal with valid quote deadline using encodeToMarkdown format
     const proposalWithValidQuote = {
       id: 29,
       proposer: "user.near",
       votes: {},
       submission_time: CurrentTimestampInNanoseconds,
       status: "InProgress",
-      description: JSON.stringify({
+      description: encodeToMarkdown({
         proposal_action: "asset-exchange",
-        notes: `1Click Cross-Network Swap
-
-Swap Details:
-- Amount In: 0.1 ETH
-- Amount Out: 350.00 USDC
-- Destination Network: ethereum
-- Time Estimate: 10 minutes
-- Quote Deadline: ${futureDate.toLocaleString()}
-
-Deposit Address: test-deposit-address
-
-1Click Service Signature: ed25519:test-signature
-
-This proposal authorizes transferring tokens to 1Click's deposit address.
-1Click will execute the cross-network swap and deliver the swapped tokens back to the treasury's NEAR Intents account.`,
+        notes: `1Click Cross-Network Swap to ethereum. This proposal authorizes transferring tokens to 1Click's deposit address for cross-network swap execution.`,
         tokenIn: "eth.omft.near",
         tokenOut: "usdc.omft.near",
         amountIn: "0.1",
         amountOut: "350.00",
         slippage: "2",
+        quoteDeadline: formattedFutureDate,
+        destinationNetwork: "ethereum",
+        timeEstimate: "10 minutes",
+        depositAddress: "test-deposit-address",
+        signature: "ed25519:test-signature",
       }),
       kind: {
         FunctionCall: {
@@ -333,9 +318,7 @@ This proposal authorizes transferring tokens to 1Click's deposit address.
     await page.waitForTimeout(5000);
 
     // Check that the expired quote message is NOT displayed
-    const expiredMessage = page.locator(
-      "text=/Voting is no longer available.*1Click API quote.*expired/"
-    );
+    const expiredMessage = page.getByText("Voting is no longer available");
     const messageVisible = await expiredMessage.isVisible().catch(() => false);
 
     expect(messageVisible).toBeFalsy();

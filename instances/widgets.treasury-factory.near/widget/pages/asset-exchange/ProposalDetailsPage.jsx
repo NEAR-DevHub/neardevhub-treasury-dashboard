@@ -72,19 +72,15 @@ useEffect(() => {
           item.description
         );
 
-        // Extract quote deadline from notes for 1Click API proposals
+        // Extract quote deadline from JSON for 1Click API proposals
         let quoteDeadline = null;
-        if (
-          notes &&
-          typeof notes === "string" &&
-          notes.includes("Quote Deadline:")
-        ) {
-          const deadlineMatch = notes.match(/Quote Deadline:\s*([^\n]+)/);
-          if (deadlineMatch && deadlineMatch[1]) {
-            // Parse the deadline date string
-            const deadlineStr = deadlineMatch[1].trim();
-            quoteDeadline = new Date(deadlineStr);
-          }
+        const quoteDeadlineStr = decodeProposalDescription(
+          "quoteDeadline",
+          item.description
+        );
+        if (quoteDeadlineStr) {
+          // Parse the ISO string deadline
+          quoteDeadline = new Date(quoteDeadlineStr);
         }
 
         const outEstimate = parseFloat(amountOut) || 0;
@@ -302,7 +298,16 @@ return (
                     : ""
                 }
               >
-                {proposalData.quoteDeadline.toLocaleString()}
+                {proposalData.quoteDeadline.toLocaleString("en-US", {
+                  month: "short",
+                  day: "2-digit",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  hour12: true,
+                  timeZone: "UTC",
+                  timeZoneName: "short",
+                })}
                 {new Date() > proposalData.quoteDeadline && " (EXPIRED)"}
               </div>
             </div>
