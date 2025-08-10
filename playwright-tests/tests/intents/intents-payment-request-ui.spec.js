@@ -1292,7 +1292,10 @@ test("insufficient balance alert for BTC payment request exceeding available bal
     .getByTestId("proposal-summary")
     .fill("requesting more BTC than available");
   await page.getByTestId("tokens-dropdown").getByText("Select").click();
-  await page.getByText("BTC (NEAR Intents)").click();
+  await page
+    .getByTestId("tokens-dropdown")
+    .getByText("BTC", { exact: true })
+    .click();
   // Request 500 BTC when only 100 BTC is available
   await page.getByTestId("total-amount").click();
   await page.getByTestId("total-amount").fill("500");
@@ -1559,7 +1562,10 @@ test("insufficient balance alert for wNEAR payment request exceeding available b
     .getByTestId("proposal-summary")
     .fill("requesting more wNEAR than available");
   await page.getByTestId("tokens-dropdown").getByText("Select").click();
-  await page.getByText("wNEAR (NEAR Intents)", { exact: true }).click();
+  await page
+    .getByTestId("tokens-dropdown")
+    .getByText("wNEAR", { exact: true })
+    .click();
   // Request 100 wNEAR when only 25 wNEAR is available
   await page.getByTestId("total-amount").click();
   await page.getByTestId("total-amount").fill("100");
