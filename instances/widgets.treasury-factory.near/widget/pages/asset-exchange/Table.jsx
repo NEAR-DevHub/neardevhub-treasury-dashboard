@@ -47,8 +47,38 @@ const refreshTableData = props.refreshTableData;
 
 const accountId = context.accountId;
 
-// State for token icons
+// State for token icons and token mapping
 const [tokenIcons, setTokenIcons] = useState({});
+const [tokenMap, setTokenMap] = useState({});
+
+// Fetch 1Click token mappings
+useEffect(() => {
+  asyncFetch("https://1click.chaindefuser.com/v0/tokens")
+    .then((res) => {
+      if (res.body && Array.isArray(res.body)) {
+        const mapping = {};
+        // Create a mapping from NEAR contract addresses to symbols
+        // Look for tokens that have assetId starting with "nep141:" and extract the contract address
+        for (const token of res.body) {
+          if (token.assetId && token.assetId.startsWith("nep141:")) {
+            // Extract the contract address from assetId (e.g., "nep141:eth.omft.near" -> "eth.omft.near")
+            const contractAddress = token.assetId.replace("nep141:", "");
+            mapping[contractAddress.toLowerCase()] = token.symbol;
+          }
+        }
+        setTokenMap(mapping);
+      }
+    })
+    .catch((err) => {
+      console.log("Failed to fetch 1Click token mappings:", err);
+    });
+}, []);
+
+// Map 1Click contract addresses to token symbols using fetched data
+function getTokenSymbolFromAddress(address) {
+  if (!address || typeof address !== "string") return address;
+  return tokenMap[address.toLowerCase()] || address;
+}
 
 const hasVotingPermission = (
   functionCallApproversGroup?.approverAccounts ?? []
@@ -131,11 +161,23 @@ if (proposals) {
     const item = proposals[i];
     const tokenIn = decodeProposalDescription("tokenIn", item.description);
     const tokenOut = decodeProposalDescription("tokenOut", item.description);
+    const quoteDeadlineStr = decodeProposalDescription(
+      "quoteDeadline",
+      item.description
+    );
 
-    if (tokenIn && !tokenIn.includes(".") && !tokenSet.has(tokenIn)) {
+    // For 1Click exchanges, fetch icons for the mapped symbols
+    if (quoteDeadlineStr && tokenIn) {
+      const tokenSymbol = getTokenSymbolFromAddress(tokenIn);
+      if (!tokenSymbol.includes(".") && !tokenSet.has(tokenSymbol)) {
+        tokenSet.add(tokenSymbol);
+        tokensToFetch.push(tokenSymbol);
+      }
+    } else if (tokenIn && !tokenIn.includes(".") && !tokenSet.has(tokenIn)) {
       tokenSet.add(tokenIn);
       tokensToFetch.push(tokenIn);
     }
+
     if (tokenOut && !tokenOut.includes(".") && !tokenSet.has(tokenOut)) {
       tokenSet.add(tokenOut);
       tokensToFetch.push(tokenOut);
@@ -224,18 +266,8 @@ const ProposalsComponent = () => {
             )}
 
             <td className={"text-right " + isVisible("Send")}>
-              {tokenIn?.includes(".") ? (
-                <Widget
-                  loading=""
-                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmountAndIcon`}
-                  props={{
-                    instance,
-                    amountWithDecimals: amountIn,
-                    address: tokenIn,
-                    showUSDValue: true,
-                  }}
-                />
-              ) : (
+              {quoteDeadlineStr ? (
+                // For 1Click exchanges, use TokenAmount with symbol prop
                 <div className="d-flex align-items-center justify-content-end gap-1">
                   <Widget
                     loading=""
@@ -243,34 +275,36 @@ const ProposalsComponent = () => {
                     props={{
                       instance,
                       amountWithDecimals: amountIn,
-                      symbol: tokenIn, // Pass as symbol for 1Click tokens
+                      symbol: getTokenSymbolFromAddress(tokenIn), // Pass mapped symbol for 1Click tokens
                       showUSDValue: true,
                     }}
                   />
-                  {tokenIcons[tokenIn] && (
+                  {tokenIcons[getTokenSymbolFromAddress(tokenIn)] && (
                     <img
-                      src={tokenIcons[tokenIn]}
+                      src={tokenIcons[getTokenSymbolFromAddress(tokenIn)]}
                       width="16"
                       height="16"
-                      alt={tokenIn}
+                      alt={getTokenSymbolFromAddress(tokenIn)}
                     />
                   )}
                 </div>
-              )}
-            </td>
-            <td className={isVisible("Receive") + " text-right"}>
-              {tokenOut?.includes(".") ? (
+              ) : (
+                // For regular exchanges, use TokenAmount with address prop (original behavior)
                 <Widget
                   loading=""
-                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmountAndIcon`}
+                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
                   props={{
                     instance,
-                    amountWithDecimals: amountOut,
-                    address: tokenOut,
+                    amountWithDecimals: amountIn,
+                    address: tokenIn,
                     showUSDValue: true,
                   }}
                 />
-              ) : (
+              )}
+            </td>
+            <td className={isVisible("Receive") + " text-right"}>
+              {quoteDeadlineStr ? (
+                // For 1Click exchanges, use TokenAmount with symbol prop
                 <div className="d-flex align-items-center justify-content-end gap-1">
                   <Widget
                     loading=""
@@ -278,7 +312,7 @@ const ProposalsComponent = () => {
                     props={{
                       instance,
                       amountWithDecimals: amountOut,
-                      symbol: tokenOut, // Pass as symbol for 1Click tokens
+                      symbol: tokenOut, // tokenOut is already a symbol, not a contract address
                       showUSDValue: true,
                     }}
                   />
@@ -291,21 +325,23 @@ const ProposalsComponent = () => {
                     />
                   )}
                 </div>
-              )}
-            </td>
-            <td className={isVisible("Minimum received") + " text-right"}>
-              {tokenOut?.includes(".") ? (
+              ) : (
+                // For regular exchanges, use TokenAmount with address prop (original behavior)
                 <Widget
                   loading=""
-                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmountAndIcon`}
+                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
                   props={{
                     instance,
-                    amountWithDecimals: minAmountReceive,
+                    amountWithDecimals: amountOut,
                     address: tokenOut,
                     showUSDValue: true,
                   }}
                 />
-              ) : (
+              )}
+            </td>
+            <td className={isVisible("Minimum received") + " text-right"}>
+              {quoteDeadlineStr ? (
+                // For 1Click exchanges, use TokenAmount with symbol prop
                 <div className="d-flex align-items-center justify-content-end gap-1">
                   <Widget
                     loading=""
@@ -313,7 +349,7 @@ const ProposalsComponent = () => {
                     props={{
                       instance,
                       amountWithDecimals: minAmountReceive,
-                      symbol: tokenOut, // Pass as symbol for 1Click tokens
+                      symbol: tokenOut, // tokenOut is already a symbol, not a contract address
                       showUSDValue: true,
                     }}
                   />
@@ -326,6 +362,18 @@ const ProposalsComponent = () => {
                     />
                   )}
                 </div>
+              ) : (
+                // For regular exchanges, use TokenAmount with address prop (original behavior)
+                <Widget
+                  loading=""
+                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
+                  props={{
+                    instance,
+                    amountWithDecimals: minAmountReceive,
+                    address: tokenOut,
+                    showUSDValue: true,
+                  }}
+                />
               )}
             </td>
 

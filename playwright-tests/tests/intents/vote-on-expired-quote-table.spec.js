@@ -251,6 +251,30 @@ test.describe("Asset Exchange Table - Expired Quote Handling", () => {
       console.log("✗ Proposal #31 row not found");
     }
 
+    // Check that token symbols are displayed in table, not contract addresses
+    const ethSymbolVisible = await page
+      .locator("text=0.1 ETH")
+      .first()
+      .isVisible()
+      .catch(() => false);
+    const contractAddressVisible = await page
+      .locator("text=eth.omft.near")
+      .isVisible()
+      .catch(() => false);
+
+    if (ethSymbolVisible && !contractAddressVisible) {
+      console.log(
+        "✓ Token symbol 'ETH' is displayed in table instead of contract address"
+      );
+    } else {
+      console.log(
+        "✗ Contract address is shown in table instead of token symbol"
+      );
+    }
+
+    expect(ethSymbolVisible).toBeTruthy();
+    expect(contractAddressVisible).toBeFalsy();
+
     // Take a screenshot of the final state
     await page.screenshot({
       path: "screenshots/asset-exchange-table-expired-quotes.png",

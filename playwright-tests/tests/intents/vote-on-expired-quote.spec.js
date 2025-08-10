@@ -115,6 +115,27 @@ test.describe("Asset Exchange - Expired Quote Voting Prevention", () => {
     await expect(page.locator("text=Quote Deadline")).toBeVisible();
     await expect(page.locator("text=(EXPIRED)")).toBeVisible();
 
+    // Check that token symbols are displayed, not contract addresses
+    const sendETHVisible = await page
+      .getByText("Send 1.5 ETH")
+      .isVisible()
+      .catch(() => false);
+    const contractAddressVisible = await page
+      .getByText("eth.omft.near")
+      .isVisible()
+      .catch(() => false);
+
+    if (sendETHVisible && !contractAddressVisible) {
+      console.log(
+        "✓ Token symbol 'ETH' is displayed instead of contract address"
+      );
+    } else {
+      console.log("✗ Contract address is shown instead of token symbol");
+    }
+
+    expect(sendETHVisible).toBeTruthy();
+    expect(contractAddressVisible).toBeFalsy();
+
     console.log("✓ Expired quote voting prevention test passed");
   });
 
@@ -218,6 +239,27 @@ test.describe("Asset Exchange - Expired Quote Voting Prevention", () => {
     // Verify the quote deadline is shown but NOT expired
     await expect(page.locator("text=Quote Deadline")).toBeVisible();
     await expect(page.locator("text=(EXPIRED)")).not.toBeVisible();
+
+    // Check that token symbols are displayed, not contract addresses
+    const sendETHVisible = await page
+      .getByText("Send 2.0 ETH")
+      .isVisible()
+      .catch(() => false);
+    const contractAddressVisible = await page
+      .getByText("eth.omft.near")
+      .isVisible()
+      .catch(() => false);
+
+    if (sendETHVisible && !contractAddressVisible) {
+      console.log(
+        "✓ Token symbol 'ETH' is displayed instead of contract address"
+      );
+    } else {
+      console.log("✗ Contract address is shown instead of token symbol");
+    }
+
+    expect(sendETHVisible).toBeTruthy();
+    expect(contractAddressVisible).toBeFalsy();
 
     console.log("✓ Valid quote voting enabled test passed");
   });

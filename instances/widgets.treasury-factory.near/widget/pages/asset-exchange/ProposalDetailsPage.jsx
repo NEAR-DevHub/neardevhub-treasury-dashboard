@@ -18,13 +18,52 @@ const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 const [proposalData, setProposalData] = useState(null);
 const [isDeleted, setIsDeleted] = useState(false);
 const [tokenIcons, setTokenIcons] = useState({});
+const [tokenMap, setTokenMap] = useState({});
+const [tokenMapLoaded, setTokenMapLoaded] = useState(false);
+
+// Fetch 1Click token mappings
+useEffect(() => {
+  asyncFetch("https://1click.chaindefuser.com/v0/tokens")
+    .then((res) => {
+      if (res.body && Array.isArray(res.body)) {
+        const mapping = {};
+        // Create a mapping from NEAR contract addresses to symbols
+        // Look for tokens that have assetId starting with "nep141:" and extract the contract address
+        for (const token of res.body) {
+          if (token.assetId && token.assetId.startsWith("nep141:")) {
+            // Extract the contract address from assetId (e.g., "nep141:eth.omft.near" -> "eth.omft.near")
+            const contractAddress = token.assetId.replace("nep141:", "");
+            mapping[contractAddress.toLowerCase()] = token.symbol;
+          }
+        }
+        setTokenMap(mapping);
+        setTokenMapLoaded(true);
+      }
+    })
+    .catch((err) => {
+      console.log("Failed to fetch 1Click token mappings:", err);
+    });
+}, []);
+
+// Map 1Click contract addresses to token symbols using fetched data
+function getTokenSymbolFromAddress(address) {
+  if (!address || typeof address !== "string") return address;
+  return tokenMap[address.toLowerCase()] || address;
+}
 
 // Collect tokens that need icons
 const tokensToFetch = [];
 if (proposalData) {
-  if (proposalData.tokenIn && !proposalData.tokenIn.includes(".")) {
+  // For 1Click exchanges, fetch icons based on mapped symbols
+  if (proposalData.quoteDeadline && proposalData.tokenIn) {
+    const tokenSymbol = getTokenSymbolFromAddress(proposalData.tokenIn);
+    if (!tokenSymbol.includes(".")) {
+      tokensToFetch.push(tokenSymbol);
+    }
+  } else if (proposalData.tokenIn && !proposalData.tokenIn.includes(".")) {
     tokensToFetch.push(proposalData.tokenIn);
   }
+
   if (proposalData.tokenOut && !proposalData.tokenOut.includes(".")) {
     tokensToFetch.push(proposalData.tokenOut);
   }
@@ -127,7 +166,7 @@ useEffect(() => {
           amountIn,
           amountOut,
           minAmountReceive,
-          tokenIn,
+          tokenIn, // Store original, will map when displaying
           tokenOut,
           slippage,
           proposal: item,
@@ -220,7 +259,35 @@ return (
             <div className="d-flex flex-column gap-2">
               <label>Send</label>
               <h5 className="mb-0">
-                {proposalData?.tokenIn?.includes(".") ? (
+                {proposalData?.quoteDeadline ? (
+                  // For 1Click exchanges, show custom display with optional icon
+                  <div
+                    className="d-flex align-items-center gap-1"
+                    style={{ fontSize: "18px" }}
+                  >
+                    {tokenIcons[
+                      getTokenSymbolFromAddress(proposalData?.tokenIn)
+                    ] && (
+                      <img
+                        src={
+                          tokenIcons[
+                            getTokenSymbolFromAddress(proposalData?.tokenIn)
+                          ]
+                        }
+                        width="20"
+                        height="20"
+                        alt={getTokenSymbolFromAddress(proposalData?.tokenIn)}
+                      />
+                    )}
+                    <span className="bolder mb-0">
+                      {proposalData?.amountIn}
+                    </span>
+                    <span>
+                      {getTokenSymbolFromAddress(proposalData?.tokenIn)}
+                    </span>
+                  </div>
+                ) : (
+                  // For regular exchanges, use TokenAmountAndIcon (original behavior)
                   <Widget
                     loading=""
                     src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmountAndIcon`}
@@ -231,42 +298,14 @@ return (
                       showUSDValue: true,
                     }}
                   />
-                ) : (
-                  <div
-                    className="d-flex align-items-center gap-1"
-                    style={{ fontSize: "18px" }}
-                  >
-                    {tokenIcons[proposalData?.tokenIn] && (
-                      <img
-                        src={tokenIcons[proposalData?.tokenIn]}
-                        width="20"
-                        height="20"
-                        alt={proposalData?.tokenIn}
-                      />
-                    )}
-                    <span className="bolder mb-0">
-                      {proposalData?.amountIn}
-                    </span>
-                    <span>{proposalData?.tokenIn}</span>
-                  </div>
                 )}
               </h5>
             </div>
             <div className="d-flex flex-column gap-2 mt-1">
               <label className="border-top">Receive</label>
               <h5 className="mb-0">
-                {proposalData?.tokenOut?.includes(".") ? (
-                  <Widget
-                    loading=""
-                    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmountAndIcon`}
-                    props={{
-                      instance,
-                      amountWithDecimals: proposalData?.amountOut,
-                      address: proposalData?.tokenOut,
-                      showUSDValue: true,
-                    }}
-                  />
-                ) : (
+                {proposalData?.quoteDeadline ? (
+                  // For 1Click exchanges, show custom display with optional icon
                   <div
                     className="d-flex align-items-center gap-1"
                     style={{ fontSize: "18px" }}
@@ -284,6 +323,18 @@ return (
                     </span>
                     <span>{proposalData?.tokenOut}</span>
                   </div>
+                ) : (
+                  // For regular exchanges, use TokenAmountAndIcon (original behavior)
+                  <Widget
+                    loading=""
+                    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmountAndIcon`}
+                    props={{
+                      instance,
+                      amountWithDecimals: proposalData?.amountOut,
+                      address: proposalData?.tokenOut,
+                      showUSDValue: true,
+                    }}
+                  />
                 )}
               </h5>
               {proposalData?.destinationNetwork && (
@@ -338,18 +389,8 @@ return (
                 />
               </label>
               <h5 className="mb-0">
-                {proposalData?.tokenOut?.includes(".") ? (
-                  <Widget
-                    loading=""
-                    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmountAndIcon`}
-                    props={{
-                      instance,
-                      amountWithDecimals: proposalData?.minAmountReceive,
-                      address: proposalData?.tokenOut,
-                      showUSDValue: true,
-                    }}
-                  />
-                ) : (
+                {proposalData?.quoteDeadline ? (
+                  // For 1Click exchanges, show custom display with optional icon
                   <div
                     className="d-flex align-items-center gap-1"
                     style={{ fontSize: "18px" }}
@@ -369,6 +410,18 @@ return (
                     </span>
                     <span>{proposalData?.tokenOut}</span>
                   </div>
+                ) : (
+                  // For regular exchanges, use TokenAmountAndIcon (original behavior)
+                  <Widget
+                    loading=""
+                    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmountAndIcon`}
+                    props={{
+                      instance,
+                      amountWithDecimals: proposalData?.minAmountReceive,
+                      address: proposalData?.tokenOut,
+                      showUSDValue: true,
+                    }}
+                  />
                 )}
               </h5>
             </div>

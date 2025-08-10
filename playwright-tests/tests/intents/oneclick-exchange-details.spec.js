@@ -167,6 +167,28 @@ test.describe("OneClick Exchange Proposal Details", () => {
         }
       }
 
+      // Check that token symbols are displayed, not contract addresses
+      const sendETHVisible = await page
+        .getByText("Send 0.1 ETH")
+        .isVisible()
+        .catch(() => false);
+      const contractAddressVisible = await page
+        .getByText("eth.omft.near")
+        .isVisible()
+        .catch(() => false);
+
+      if (sendETHVisible && !contractAddressVisible) {
+        console.log(
+          "✓ Token symbol 'ETH' is displayed instead of contract address"
+        );
+      } else {
+        console.log("✗ Contract address is shown instead of token symbol");
+      }
+
+      // These assertions will fail the test if the token symbol is not displayed correctly
+      expect(sendETHVisible).toBeTruthy();
+      expect(contractAddressVisible).toBeFalsy();
+
       // Check that the quote deadline info is shown in the proposal content
       const deadlineLabel = await page
         .locator("text=1Click Quote Deadline")
@@ -344,6 +366,28 @@ test.describe("OneClick Exchange Proposal Details", () => {
     expect(deadlineLabel).toBeTruthy();
     expect(expiredText).toBeFalsy();
     console.log("✓ Quote deadline is shown as valid");
+
+    // Check that token symbols are displayed, not contract addresses
+    const sendETHVisible = await page
+      .getByText("Send 0.1 ETH")
+      .isVisible()
+      .catch(() => false);
+    const contractAddressVisible = await page
+      .getByText("eth.omft.near")
+      .isVisible()
+      .catch(() => false);
+
+    if (sendETHVisible && !contractAddressVisible) {
+      console.log(
+        "✓ Token symbol 'ETH' is displayed instead of contract address"
+      );
+    } else {
+      console.log("✗ Contract address is shown instead of token symbol");
+    }
+
+    // These assertions will fail the test if the token symbol is not displayed correctly
+    expect(sendETHVisible).toBeTruthy();
+    expect(contractAddressVisible).toBeFalsy();
 
     // Take a screenshot showing the valid state
     await page.screenshot({
