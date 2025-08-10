@@ -50,7 +50,7 @@ test.describe("OneClick Exchange Proposal Details", () => {
       description: encodeToMarkdown({
         proposal_action: "asset-exchange",
         notes: `1Click Cross-Network Swap: 0.1 ETH → 350.00 USDC (ethereum). This proposal authorizes transferring tokens to 1Click's deposit address for cross-network swap execution.`,
-        tokenIn: "eth.omft.near",
+        tokenIn: "ETH",
         tokenOut: "USDC",
         amountIn: "0.1",
         amountOut: "350.00",
@@ -270,7 +270,7 @@ test.describe("OneClick Exchange Proposal Details", () => {
       description: encodeToMarkdown({
         proposal_action: "asset-exchange",
         notes: `1Click Cross-Network Swap: 0.1 ETH → 350.00 USDC (ethereum). This proposal authorizes transferring tokens to 1Click's deposit address for cross-network swap execution.`,
-        tokenIn: "eth.omft.near",
+        tokenIn: "ETH",
         tokenOut: "USDC",
         amountIn: "0.1",
         amountOut: "350.00",
