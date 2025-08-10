@@ -47,6 +47,9 @@ const refreshTableData = props.refreshTableData;
 
 const accountId = context.accountId;
 
+// State for token icons
+const [tokenIcons, setTokenIcons] = useState({});
+
 const hasVotingPermission = (
   functionCallApproversGroup?.approverAccounts ?? []
 ).includes(accountId);
@@ -119,6 +122,26 @@ const hasOneDeleteIcon =
       i.proposer === accountId &&
       !Object.keys(i.votes ?? {}).includes(accountId)
   );
+
+// Collect tokens that need icons to be fetched
+const tokensToFetch = [];
+const tokenSet = new Set();
+if (proposals) {
+  for (let i = 0; i < proposals.length; i++) {
+    const item = proposals[i];
+    const tokenIn = decodeProposalDescription("tokenIn", item.description);
+    const tokenOut = decodeProposalDescription("tokenOut", item.description);
+
+    if (tokenIn && !tokenIn.includes(".") && !tokenSet.has(tokenIn)) {
+      tokenSet.add(tokenIn);
+      tokensToFetch.push(tokenIn);
+    }
+    if (tokenOut && !tokenOut.includes(".") && !tokenSet.has(tokenOut)) {
+      tokenSet.add(tokenOut);
+      tokensToFetch.push(tokenOut);
+    }
+  }
+}
 
 const ProposalsComponent = () => {
   return (
@@ -201,40 +224,121 @@ const ProposalsComponent = () => {
             )}
 
             <td className={"text-right " + isVisible("Send")}>
-              <Widget
-                loading=""
-                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
-                props={{
-                  instance,
-                  amountWithDecimals: amountIn,
-                  address: tokenIn,
-                  showUSDValue: true,
-                }}
-              />
+              {tokenIn?.includes(".") ? (
+                <Widget
+                  loading=""
+                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmountAndIcon`}
+                  props={{
+                    instance,
+                    amountWithDecimals: amountIn,
+                    address: tokenIn,
+                    showUSDValue: true,
+                  }}
+                />
+              ) : (
+                <div className="d-flex align-items-center justify-content-end gap-1">
+                  <Widget
+                    loading=""
+                    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
+                    props={{
+                      instance,
+                      amountWithDecimals: amountIn,
+                      address: tokenIn,
+                      showUSDValue: true,
+                    }}
+                  />
+                  {tokenIcons[tokenIn] ? (
+                    <img
+                      src={tokenIcons[tokenIn]}
+                      width="16"
+                      height="16"
+                      alt={tokenIn}
+                    />
+                  ) : (
+                    <span className="text-muted" style={{ fontSize: "14px" }}>
+                      {tokenIn}
+                    </span>
+                  )}
+                </div>
+              )}
             </td>
             <td className={isVisible("Receive") + " text-right"}>
-              <Widget
-                loading=""
-                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
-                props={{
-                  instance,
-                  amountWithDecimals: amountOut,
-                  address: tokenOut,
-                  showUSDValue: true,
-                }}
-              />
+              {tokenOut?.includes(".") ? (
+                <Widget
+                  loading=""
+                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmountAndIcon`}
+                  props={{
+                    instance,
+                    amountWithDecimals: amountOut,
+                    address: tokenOut,
+                    showUSDValue: true,
+                  }}
+                />
+              ) : (
+                <div className="d-flex align-items-center justify-content-end gap-1">
+                  <Widget
+                    loading=""
+                    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
+                    props={{
+                      instance,
+                      amountWithDecimals: amountOut,
+                      address: tokenOut,
+                      showUSDValue: true,
+                    }}
+                  />
+                  {tokenIcons[tokenOut] ? (
+                    <img
+                      src={tokenIcons[tokenOut]}
+                      width="16"
+                      height="16"
+                      alt={tokenOut}
+                    />
+                  ) : (
+                    <span className="text-muted" style={{ fontSize: "14px" }}>
+                      {tokenOut}
+                    </span>
+                  )}
+                </div>
+              )}
             </td>
             <td className={isVisible("Minimum received") + " text-right"}>
-              <Widget
-                loading=""
-                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
-                props={{
-                  instance,
-                  amountWithDecimals: minAmountReceive,
-                  address: tokenOut,
-                  showUSDValue: true,
-                }}
-              />
+              {tokenOut?.includes(".") ? (
+                <Widget
+                  loading=""
+                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmountAndIcon`}
+                  props={{
+                    instance,
+                    amountWithDecimals: minAmountReceive,
+                    address: tokenOut,
+                    showUSDValue: true,
+                  }}
+                />
+              ) : (
+                <div className="d-flex align-items-center justify-content-end gap-1">
+                  <Widget
+                    loading=""
+                    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
+                    props={{
+                      instance,
+                      amountWithDecimals: minAmountReceive,
+                      address: tokenOut,
+                      showUSDValue: true,
+                    }}
+                  />
+                  {tokenIcons[tokenOut] ? (
+                    <img
+                      src={tokenIcons[tokenOut]}
+                      width="16"
+                      height="16"
+                      alt={tokenOut}
+                    />
+                  ) : (
+                    <span className="text-muted" style={{ fontSize: "14px" }}>
+                      {tokenOut}
+                    </span>
+                  )}
+                </div>
+              )}
             </td>
 
             <td className={"fw-semi-bold text-center " + isVisible("Creator")}>
@@ -416,6 +520,30 @@ return (
           </table>
         )}
       </div>
+    )}
+    {/* Web3IconFetcher for loading token icons */}
+    {tokensToFetch.length > 0 && (
+      <Widget
+        loading=""
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Web3IconFetcher`}
+        props={{
+          tokens: tokensToFetch,
+          onIconsLoaded: (iconCache) => {
+            const newIcons = {};
+            for (let i = 0; i < tokensToFetch.length; i++) {
+              const token = tokensToFetch[i];
+              const icon = iconCache[token];
+              if (icon && icon.tokenIcon) {
+                newIcons[token] = icon.tokenIcon;
+              }
+            }
+            if (Object.keys(newIcons).length > 0) {
+              setTokenIcons({ ...tokenIcons, ...newIcons });
+            }
+          },
+          fetchNetworkIcons: false,
+        }}
+      />
     )}
   </Container>
 );

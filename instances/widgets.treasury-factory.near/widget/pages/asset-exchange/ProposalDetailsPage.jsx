@@ -19,6 +19,17 @@ const [proposalData, setProposalData] = useState(null);
 const [isDeleted, setIsDeleted] = useState(false);
 const [tokenIcons, setTokenIcons] = useState({});
 
+// Collect tokens that need icons
+const tokensToFetch = [];
+if (proposalData) {
+  if (proposalData.tokenIn && !proposalData.tokenIn.includes(".")) {
+    tokensToFetch.push(proposalData.tokenIn);
+  }
+  if (proposalData.tokenOut && !proposalData.tokenOut.includes(".")) {
+    tokensToFetch.push(proposalData.tokenOut);
+  }
+}
+
 const isCompactVersion = props.isCompactVersion;
 const accountId = context.accountId;
 const functionCallApproversGroup = getApproversAndThreshold(
@@ -209,16 +220,48 @@ return (
             <div className="d-flex flex-column gap-2">
               <label>Send</label>
               <h5 className="mb-0">
-                <Widget
-                  loading=""
-                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmountAndIcon`}
-                  props={{
-                    instance,
-                    amountWithDecimals: proposalData?.amountIn,
-                    address: proposalData?.tokenIn,
-                    showUSDValue: true,
-                  }}
-                />
+                {proposalData?.tokenIn?.includes(".") ? (
+                  <Widget
+                    loading=""
+                    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmountAndIcon`}
+                    props={{
+                      instance,
+                      amountWithDecimals: proposalData?.amountIn,
+                      address: proposalData?.tokenIn,
+                      showUSDValue: true,
+                    }}
+                  />
+                ) : (
+                  <div
+                    className="d-flex align-items-center gap-1"
+                    style={{ fontSize: "18px" }}
+                  >
+                    {tokenIcons[proposalData?.tokenIn] ? (
+                      <img
+                        src={tokenIcons[proposalData?.tokenIn]}
+                        width="20"
+                        height="20"
+                        alt={proposalData?.tokenIn}
+                      />
+                    ) : (
+                      <div
+                        className="d-flex align-items-center justify-content-center bg-secondary bg-opacity-10 rounded-circle"
+                        style={{ width: "20px", height: "20px" }}
+                      >
+                        <span
+                          className="text-secondary"
+                          style={{ fontSize: "10px", fontWeight: "bold" }}
+                        >
+                          {proposalData?.tokenIn?.substring(0, 2).toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                    <span className="bolder mb-0">
+                      {proposalData?.amountIn}
+                    </span>
+                    <span>{proposalData?.tokenIn}</span>
+                  </div>
+                )}
               </h5>
             </div>
             <div className="d-flex flex-column gap-2 mt-1">
@@ -426,24 +469,33 @@ return (
       }}
     />
     {/* Web3IconFetcher for loading token icons */}
-    {proposalData?.tokenOut && !proposalData?.tokenOut?.includes(".") && (
-      <Widget
-        loading=""
-        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Web3IconFetcher`}
-        props={{
-          tokens: [proposalData.tokenOut],
-          onIconsLoaded: (iconCache) => {
-            const icon = iconCache[proposalData.tokenOut];
-            if (icon && icon.tokenIcon) {
-              setTokenIcons((prev) => ({
-                ...prev,
-                [proposalData.tokenOut]: icon.tokenIcon,
-              }));
-            }
-          },
-          fetchNetworkIcons: false,
-        }}
-      />
+    {proposalData && (
+      <>
+        {/* Fetch icons for tokens that are not contract addresses */}
+        {tokensToFetch.length > 0 && (
+          <Widget
+            loading=""
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Web3IconFetcher`}
+            props={{
+              tokens: tokensToFetch,
+              onIconsLoaded: (iconCache) => {
+                const newIcons = {};
+                for (let i = 0; i < tokensToFetch.length; i++) {
+                  const token = tokensToFetch[i];
+                  const icon = iconCache[token];
+                  if (icon && icon.tokenIcon) {
+                    newIcons[token] = icon.tokenIcon;
+                  }
+                }
+                if (Object.keys(newIcons).length > 0) {
+                  setTokenIcons({ ...tokenIcons, ...newIcons });
+                }
+              },
+              fetchNetworkIcons: false,
+            }}
+          />
+        )}
+      </>
     )}
   </>
 );
