@@ -9,7 +9,7 @@ test("Asset exchange table doesn't show placeholder icons for 1Click tokens", as
 }) => {
   const modifiedWidgets = {};
   const appKey = `${instanceAccount}/widget/app`;
-  
+
   // Create a test widget that shows the asset exchange table with 1Click tokens
   modifiedWidgets[appKey] = `
     const instance = "treasury-testing.near";
@@ -110,7 +110,7 @@ test("Asset exchange table doesn't show placeholder icons for 1Click tokens", as
       </div>
     );
   `;
-  
+
   await redirectWeb4({
     page,
     contractId: instanceAccount,
@@ -120,56 +120,56 @@ test("Asset exchange table doesn't show placeholder icons for 1Click tokens", as
   });
 
   await page.goto(`https://${instanceAccount}.page/`);
-  
+
   // Wait for the page to load
   await expect(page.locator(".container").first()).toBeVisible();
   await expect(page.locator("h1")).toContainText("Asset Exchange Icons Test");
-  
+
   // Give time for components to render
   await page.waitForTimeout(3000);
-  
+
   // Test individual TokenAmount components
   console.log("Testing individual TokenAmount components...");
-  
+
   // Check ETH token amount
   const ethElement = page.locator('[data-testid="token-amount-eth"]');
   await expect(ethElement).toBeVisible();
   const ethText = await ethElement.textContent();
   console.log(`ETH TokenAmount text: "${ethText}"`);
-  
+
   // Should show "0.10 ETH" without any placeholder icon
   expect(ethText).toContain("0.10");
   expect(ethText).toContain("ETH");
-  
+
   // Check that there's no img tag with broken source
   const ethImgCount = await ethElement.locator('img[src="null"]').count();
   expect(ethImgCount).toBe(0);
   console.log("✓ ETH shows no placeholder icon");
-  
+
   // Check USDC token amount
   const usdcElement = page.locator('[data-testid="token-amount-usdc"]');
   await expect(usdcElement).toBeVisible();
   const usdcText = await usdcElement.textContent();
   console.log(`USDC TokenAmount text: "${usdcText}"`);
-  
+
   expect(usdcText).toContain("350.00");
   expect(usdcText).toContain("USDC");
-  
+
   const usdcImgCount = await usdcElement.locator('img[src="null"]').count();
   expect(usdcImgCount).toBe(0);
   console.log("✓ USDC shows no placeholder icon");
-  
+
   // Check wNEAR (should have icon)
   const wnearElement = page.locator('[data-testid="token-amount-wnear"]');
   await expect(wnearElement).toBeVisible();
   const wnearText = await wnearElement.textContent();
   console.log(`wNEAR TokenAmount text: "${wnearText}"`);
-  
+
   expect(wnearText).toContain("100.00");
   // wNEAR should have an actual icon
-  const wnearImgCount = await wnearElement.locator('img').count();
+  const wnearImgCount = await wnearElement.locator("img").count();
   expect(wnearImgCount).toBeGreaterThan(0);
   console.log("✓ wNEAR shows proper icon");
-  
+
   console.log("\nAll tests passed! No placeholder icons for 1Click tokens.");
 });
