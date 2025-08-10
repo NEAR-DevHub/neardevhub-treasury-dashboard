@@ -236,25 +236,13 @@ return (
                     className="d-flex align-items-center gap-1"
                     style={{ fontSize: "18px" }}
                   >
-                    {tokenIcons[proposalData?.tokenIn] ? (
+                    {tokenIcons[proposalData?.tokenIn] && (
                       <img
                         src={tokenIcons[proposalData?.tokenIn]}
                         width="20"
                         height="20"
                         alt={proposalData?.tokenIn}
                       />
-                    ) : (
-                      <div
-                        className="d-flex align-items-center justify-content-center bg-secondary bg-opacity-10 rounded-circle"
-                        style={{ width: "20px", height: "20px" }}
-                      >
-                        <span
-                          className="text-secondary"
-                          style={{ fontSize: "10px", fontWeight: "bold" }}
-                        >
-                          {proposalData?.tokenIn?.substring(0, 2).toUpperCase()}
-                        </span>
-                      </div>
                     )}
                     <span className="bolder mb-0">
                       {proposalData?.amountIn}
@@ -283,27 +271,13 @@ return (
                     className="d-flex align-items-center gap-1"
                     style={{ fontSize: "18px" }}
                   >
-                    {tokenIcons[proposalData?.tokenOut] ? (
+                    {tokenIcons[proposalData?.tokenOut] && (
                       <img
                         src={tokenIcons[proposalData?.tokenOut]}
                         width="20"
                         height="20"
                         alt={proposalData?.tokenOut}
                       />
-                    ) : (
-                      <div
-                        className="d-flex align-items-center justify-content-center bg-secondary bg-opacity-10 rounded-circle"
-                        style={{ width: "20px", height: "20px" }}
-                      >
-                        <span
-                          className="text-secondary"
-                          style={{ fontSize: "10px", fontWeight: "bold" }}
-                        >
-                          {proposalData?.tokenOut
-                            ?.substring(0, 2)
-                            .toUpperCase()}
-                        </span>
-                      </div>
                     )}
                     <span className="bolder mb-0">
                       {proposalData?.amountOut}
@@ -380,27 +354,13 @@ return (
                     className="d-flex align-items-center gap-1"
                     style={{ fontSize: "18px" }}
                   >
-                    {tokenIcons[proposalData?.tokenOut] ? (
+                    {tokenIcons[proposalData?.tokenOut] && (
                       <img
                         src={tokenIcons[proposalData?.tokenOut]}
                         width="20"
                         height="20"
                         alt={proposalData?.tokenOut}
                       />
-                    ) : (
-                      <div
-                        className="d-flex align-items-center justify-content-center bg-secondary bg-opacity-10 rounded-circle"
-                        style={{ width: "20px", height: "20px" }}
-                      >
-                        <span
-                          className="text-secondary"
-                          style={{ fontSize: "10px", fontWeight: "bold" }}
-                        >
-                          {proposalData?.tokenOut
-                            ?.substring(0, 2)
-                            .toUpperCase()}
-                        </span>
-                      </div>
                     )}
                     <span className="bolder mb-0">
                       {proposalData?.minAmountReceive?.toFixed

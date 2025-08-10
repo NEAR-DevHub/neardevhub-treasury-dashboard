@@ -243,21 +243,17 @@ const ProposalsComponent = () => {
                     props={{
                       instance,
                       amountWithDecimals: amountIn,
-                      address: tokenIn,
+                      symbol: tokenIn, // Pass as symbol for 1Click tokens
                       showUSDValue: true,
                     }}
                   />
-                  {tokenIcons[tokenIn] ? (
+                  {tokenIcons[tokenIn] && (
                     <img
                       src={tokenIcons[tokenIn]}
                       width="16"
                       height="16"
                       alt={tokenIn}
                     />
-                  ) : (
-                    <span className="text-muted" style={{ fontSize: "14px" }}>
-                      {tokenIn}
-                    </span>
                   )}
                 </div>
               )}
@@ -282,21 +278,17 @@ const ProposalsComponent = () => {
                     props={{
                       instance,
                       amountWithDecimals: amountOut,
-                      address: tokenOut,
+                      symbol: tokenOut, // Pass as symbol for 1Click tokens
                       showUSDValue: true,
                     }}
                   />
-                  {tokenIcons[tokenOut] ? (
+                  {tokenIcons[tokenOut] && (
                     <img
                       src={tokenIcons[tokenOut]}
                       width="16"
                       height="16"
                       alt={tokenOut}
                     />
-                  ) : (
-                    <span className="text-muted" style={{ fontSize: "14px" }}>
-                      {tokenOut}
-                    </span>
                   )}
                 </div>
               )}
@@ -321,21 +313,17 @@ const ProposalsComponent = () => {
                     props={{
                       instance,
                       amountWithDecimals: minAmountReceive,
-                      address: tokenOut,
+                      symbol: tokenOut, // Pass as symbol for 1Click tokens
                       showUSDValue: true,
                     }}
                   />
-                  {tokenIcons[tokenOut] ? (
+                  {tokenIcons[tokenOut] && (
                     <img
                       src={tokenIcons[tokenOut]}
                       width="16"
                       height="16"
                       alt={tokenOut}
                     />
-                  ) : (
-                    <span className="text-muted" style={{ fontSize: "14px" }}>
-                      {tokenOut}
-                    </span>
                   )}
                 </div>
               )}
