@@ -342,16 +342,15 @@ return (
                   popup: (
                     <div>
                       The 1Click API quote for this request expired on{" "}
-                      {quoteDeadline.toLocaleString("en-US", {
-                        month: "numeric",
-                        day: "numeric",
+                      {`${quoteDeadline.toLocaleString("en-US", {
+                        month: "short",
+                        day: "2-digit",
                         year: "numeric",
                         hour: "2-digit",
                         minute: "2-digit",
-                        second: "2-digit",
                         hour12: true,
                         timeZone: "UTC",
-                      })}
+                      })} UTC`}
                       . Voting is disabled to prevent potential loss of funds
                       from executing the swap at an outdated rate.
                     </div>
@@ -388,16 +387,15 @@ return (
                 <span>
                   Voting is no longer available. The 1Click API quote for this
                   request expired on{" "}
-                  {quoteDeadline.toLocaleString("en-US", {
-                    month: "numeric",
-                    day: "numeric",
+                  {`${quoteDeadline.toLocaleString("en-US", {
+                    month: "short",
+                    day: "2-digit",
                     year: "numeric",
                     hour: "2-digit",
                     minute: "2-digit",
-                    second: "2-digit",
                     hour12: true,
                     timeZone: "UTC",
-                  })}
+                  })} UTC`}
                   .
                   <Widget
                     loading=""
