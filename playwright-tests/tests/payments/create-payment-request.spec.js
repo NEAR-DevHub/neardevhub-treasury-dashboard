@@ -21,6 +21,36 @@ import {
 import { InsufficientBalance, toBase64 } from "../../util/lib.js";
 import { SandboxRPC } from "../../util/sandboxrpc.js";
 
+async function selectDAOWallet(page) {
+  await expect(page.getByText("Treasury Wallet")).toBeVisible();
+  await page.getByTestId("dropdown-btn").click();
+  await expect(page.getByText("SputnikDAO")).toBeVisible();
+  await page.getByText("SputnikDAO").click();
+  await expect(page.getByRole("button", { name: "Submit" })).toBeVisible({
+    timeout: 14_000,
+  });
+}
+
+async function selectLockupWallet(page) {
+  await expect(page.getByText("Treasury Wallet")).toBeVisible();
+  await page.getByTestId("dropdown-btn").click();
+  await expect(page.getByText("Lockup")).toBeVisible();
+  await page.getByText("Lockup").click();
+  await expect(page.getByRole("button", { name: "Submit" })).toBeVisible({
+    timeout: 14_000,
+  });
+}
+
+async function selectIntentsWallet(page) {
+  await expect(page.getByText("Treasury Wallet")).toBeVisible();
+  await page.getByTestId("dropdown-btn").click();
+  await expect(page.getByText("NEAR Intents")).toBeVisible();
+  await page.getByText("NEAR Intents").click();
+  await expect(page.getByRole("button", { name: "Submit" })).toBeVisible({
+    timeout: 14_000,
+  });
+}
+
 async function clickCreatePaymentRequestButton(page) {
   await page.waitForTimeout(1_000);
   const createPaymentRequestButton = await page.getByRole("button", {
@@ -29,6 +59,7 @@ async function clickCreatePaymentRequestButton(page) {
   await expect(createPaymentRequestButton).toBeVisible({ timeout: 20_000 });
   await page.waitForTimeout(1_000);
   await createPaymentRequestButton.click();
+  await selectDAOWallet(page);
   return createPaymentRequestButton;
 }
 
@@ -40,7 +71,7 @@ async function fillCreateForm(page, daoAccount, instanceAccount) {
   await clickCreatePaymentRequestButton(page);
 
   if (instanceConfig.showProposalSelection === true) {
-    const proposalSelect = await page.locator(".dropdown-toggle").first();
+    const proposalSelect = await page.locator(".dropdown-toggle").nth(1);
     await expect(proposalSelect).toBeVisible();
     await expect(
       await proposalSelect.getByText("Select", { exact: true })
@@ -138,14 +169,6 @@ test.describe("User is not logged in", function () {
     ).toBeHidden();
   });
 });
-
-async function selectLockupAccount({ page, daoAccount, lockupContract }) {
-  await page
-    .locator(".offcanvas-body")
-    .getByRole("button", { name: daoAccount })
-    .click();
-  await page.locator(".offcanvas-body").getByText(lockupContract).click();
-}
 
 export async function mockNearnProposal({ page }) {
   await page.route(
@@ -719,8 +742,14 @@ test.describe("User is logged in", function () {
     await sandbox.setupLockupContract(daoName);
     await updateDaoPolicyMembers({ instanceAccount, page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
-    await clickCreatePaymentRequestButton(page);
-    await selectLockupAccount({ page, daoAccount, lockupContract });
+    await page.waitForTimeout(1_000);
+    const createPaymentRequestButton = await page.getByRole("button", {
+      name: "Create Request",
+    });
+    await expect(createPaymentRequestButton).toBeVisible({ timeout: 20_000 });
+    await page.waitForTimeout(1_000);
+    await createPaymentRequestButton.click();
+    await selectLockupWallet(page);
     await page.getByTestId("proposal-title").fill(proposalTitle);
     await page.getByTestId("proposal-summary").fill(proposalSummary);
 
@@ -835,6 +864,41 @@ test.describe("User is logged in", function () {
       .click();
     await expect(loader).toBeHidden();
     await expect(submitBtn).toBeEnabled();
+  });
+
+  test("show deposit modal for intents wallet", async ({
+    page,
+    instanceAccount,
+  }) => {
+    test.setTimeout(150_000);
+    await updateDaoPolicyMembers({ instanceAccount, page });
+    await page.goto(`/${instanceAccount}/widget/app?page=payments`);
+    await page.waitForTimeout(1_000);
+    const createPaymentRequestButton = await page.getByRole("button", {
+      name: "Create Request",
+    });
+    await expect(createPaymentRequestButton).toBeVisible({ timeout: 20_000 });
+    await createPaymentRequestButton.click();
+    await page.route(
+      "https://api-mng-console.chaindefuser.com/api/tokens",
+      async (route) => {
+        await route.fulfill({
+          status: 200,
+          body: JSON.stringify({
+            items: [],
+          }),
+        });
+      }
+    );
+    await selectIntentsWallet(page);
+    await page
+      .getByText(
+        "Your NEAR Intents wallet has no tokens. Fund it now to start using the platform’s features"
+      )
+      .click();
+    await expect(page.getByRole("button", { name: "Deposit" })).toBeVisible();
+    await page.getByRole("button", { name: "Deposit" }).click();
+    await expect(page.getByText("Use this deposit address")).toBeVisible();
   });
 });
 

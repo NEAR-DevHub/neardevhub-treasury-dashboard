@@ -220,10 +220,24 @@ export async function mockLockupNearBalances({ page, balance }) {
   });
 }
 
-async function selectLockupAccount({ page, daoAccount, lockupContract }) {
-  await page.waitForTimeout(5_000);
-  await page.getByRole("button", { name: daoAccount }).click();
-  await page.getByText(lockupContract).click();
+async function selectDAOWallet(page) {
+  await expect(page.getByText("Treasury Wallet")).toBeVisible();
+  await page.getByTestId("dropdown-btn").click();
+  await expect(page.getByText("SputnikDAO")).toBeVisible();
+  await page.getByText("SputnikDAO").click();
+  await expect(page.getByRole("button", { name: "Submit" })).toBeVisible({
+    timeout: 14_000,
+  });
+}
+
+async function selectLockupWallet(page) {
+  await expect(page.getByText("Treasury Wallet")).toBeVisible();
+  await page.getByTestId("dropdown-btn").click();
+  await expect(page.getByText("Lockup")).toBeVisible();
+  await page.getByText("Lockup").click();
+  await expect(page.getByRole("button", { name: "Submit" })).toBeVisible({
+    timeout: 14_000,
+  });
 }
 
 export async function openWithdrawForm({
@@ -242,7 +256,9 @@ export async function openWithdrawForm({
   ).toBeVisible(10_000);
   await page.waitForTimeout(10_000);
   if (isLockup) {
-    await selectLockupAccount({ page, daoAccount, lockupContract });
+    await selectLockupWallet(page);
+  } else {
+    await selectDAOWallet(page);
   }
 }
 
@@ -260,7 +276,9 @@ export async function openUnstakeForm({
   ).toBeVisible(10_000);
   await page.waitForTimeout(10_000);
   if (isLockup) {
-    await selectLockupAccount({ page, daoAccount, lockupContract });
+    await selectLockupWallet(page);
+  } else {
+    await selectDAOWallet(page);
   }
 }
 
@@ -278,7 +296,9 @@ export async function openStakeForm({
   ).toBeVisible({ timeout: 20_000 });
   await page.waitForTimeout(10_000);
   if (isLockup) {
-    await selectLockupAccount({ page, daoAccount, lockupContract });
+    await selectLockupWallet(page);
+  } else {
+    await selectDAOWallet(page);
   }
 }
 

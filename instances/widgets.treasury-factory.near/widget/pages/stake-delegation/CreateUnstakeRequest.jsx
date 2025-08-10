@@ -36,7 +36,7 @@ const lockupContract = accountToLockup(treasuryDaoID);
 
 const walletOptions = [
   {
-    label: treasuryDaoID,
+    label: "SputnikDAO",
     value: treasuryDaoID,
   },
 ];

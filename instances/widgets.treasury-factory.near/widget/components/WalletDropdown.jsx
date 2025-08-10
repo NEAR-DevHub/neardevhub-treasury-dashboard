@@ -8,6 +8,7 @@ const lockupNearBalances = props.lockupNearBalances;
 const instance = props.instance;
 const selectedValue = props.selectedValue;
 const onUpdate = props.onUpdate;
+const showIntents = props.showIntents;
 
 if (!instance || typeof accountToLockup !== "function") {
   return <></>;
@@ -21,23 +22,36 @@ const [walletOptions, setWalletOptions] = useState([
     label: "SputnikDAO",
     value: treasuryDaoID,
   },
-  {
-    label: "NEAR Intents",
-    value: "intents.near",
-  },
 ]);
 
 useEffect(() => {
+  const baseOptions = [
+    {
+      label: "SputnikDAO",
+      value: treasuryDaoID,
+    },
+  ];
+
+  const additionalOptions = [];
+
+  // Add lockup option if contract exists
   if (lockupContract) {
-    setWalletOptions([
-      ...walletOptions,
-      {
-        label: "Lockup",
-        value: lockupContract,
-      },
-    ]);
+    additionalOptions.push({
+      label: "Lockup",
+      value: lockupContract,
+    });
   }
-}, [lockupContract]);
+
+  // Add intents option if showIntents is true
+  if (showIntents) {
+    additionalOptions.push({
+      label: "NEAR Intents",
+      value: "intents.near",
+    });
+  }
+
+  setWalletOptions([...baseOptions, ...additionalOptions]);
+}, [lockupContract, showIntents, treasuryDaoID]);
 
 return (
   <div className="d-flex flex-column gap-1">

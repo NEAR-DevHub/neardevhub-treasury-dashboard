@@ -10,8 +10,12 @@ const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
 
-const { encodeToMarkdown, LOCKUP_MIN_BALANCE_FOR_STORAGE, accountToLockup } =
-  VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
+const {
+  encodeToMarkdown,
+  LOCKUP_MIN_BALANCE_FOR_STORAGE,
+  accountToLockup,
+  getIntentsBalances,
+} = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
 
 const onCloseCanvas = props.onCloseCanvas ?? (() => {});
 
@@ -64,7 +68,7 @@ const [isLoadingProposals, setLoadingProposals] = useState(false);
 const [showCancelModal, setShowCancelModal] = useState(false);
 const [showErrorToast, setShowErrorToast] = useState(false);
 const [nearPrice, setNearPrice] = useState("1"); // setting 1 as default, so VM doesn't throw any error
-
+const [intentsBalances, setIntentsBalances] = useState(null);
 const [lockupNearBalances, setLockupNearBalances] = useState(null);
 
 useEffect(() => {
@@ -182,6 +186,12 @@ function cleanInputs() {
   setNotes("");
   setTokenId("");
 }
+
+useEffect(() => {
+  getIntentsBalances(treasuryDaoID).then((balances) => {
+    setIntentsBalances(balances);
+  });
+}, []);
 
 // close canvas after proposal is submitted
 useEffect(() => {
@@ -548,6 +558,7 @@ return (
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.WalletDropdown`}
         props={{
           instance,
+          showIntents: true,
           selectedValue: selectedWallet,
           onUpdate: (v) => {
             setSelectedTokenBlockchain(null);
@@ -560,6 +571,19 @@ return (
       />
       {selectedWallet && (
         <div className="d-flex flex-column gap-3">
+          {!intentsBalances?.length &&
+            selectedWallet.value === "intents.near" && (
+              <div className="d-flex flex-column gap-2 border border-1 px-4 py-3 rounded-3 text-center justify-content-center align-items-center">
+                Your NEAR Intents wallet has no tokens. Fund it now to start
+                using the platform’s features
+                <button
+                  onClick={() => props.setShowDepositModal(true)}
+                  className="btn theme-btn "
+                >
+                  Deposit
+                </button>
+              </div>
+            )}
           {showProposalSelection && (
             <div className="d-flex flex-column gap-1">
               <label>Proposal</label>
