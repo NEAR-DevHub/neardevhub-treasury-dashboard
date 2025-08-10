@@ -578,11 +578,17 @@ const handleSubmit = () => {
     return;
   }
 
+  // Get the network name from the available networks
+  const selectedNetwork = getAvailableNetworks().find(
+    (n) => n.id === networkOut
+  );
+  const networkName = selectedNetwork ? selectedNetwork.name : networkOut;
+
   onSubmit({
     tokenIn,
     tokenInSymbol: selectedTokenIn.symbol,
     tokenOut,
-    networkOut,
+    networkOut: networkName, // Pass the display name instead of the ID
     amountIn,
     quote,
   });
