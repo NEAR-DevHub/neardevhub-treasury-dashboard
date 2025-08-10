@@ -204,7 +204,7 @@ async function setupSandboxAndCreateLockupTransferProposal({
       amount: "3000000000000000000000000",
       receiver_id: receiverAccount,
     }),
-    receiver_id: daoAccount,
+    receiver_id: "lockup.near",
     description,
     daoName,
   });
@@ -424,7 +424,7 @@ test.describe("Should vote on proposal using sandbox RPC and show updated status
       await sandbox.quitSandbox();
     });
 
-    test(`Proposal details pag: should show insufficient balance error`, async ({
+    test(`Proposal details page: should show insufficient balance error`, async ({
       page,
       instanceAccount,
       daoAccount,
