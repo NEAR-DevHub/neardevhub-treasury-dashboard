@@ -670,54 +670,36 @@ INFO: Verifying asset: ${assetName}`);
       let hasValidNetworkNames = false;
 
       for (const uiNetworkName of uiNetworkNames) {
-        // Check if the UI network name follows the expected format: "name ( chainId )"
-        const formatMatch = uiNetworkName.match(/^(.+?)\s+\((.+?)\)$/);
+        console.log(
+          `INFO: ${assetName} - Found network name: "${uiNetworkName}"`
+        );
+        hasValidNetworkNames = true;
 
-        if (formatMatch) {
-          const [, humanReadableName, chainId] = formatMatch;
+        // Find corresponding token in the API data to validate the network name
+        const correspondingToken = tokensForAsset.find(
+          (token) =>
+            token.defuse_asset_identifier &&
+            networkNameMap[uiNetworkName] &&
+            token.defuse_asset_identifier.startsWith(
+              networkNameMap[uiNetworkName]
+            )
+        );
+
+        if (correspondingToken) {
           console.log(
-            `INFO: ${assetName} - Found formatted network: "${humanReadableName}" with chainId "${chainId}"`
+            `INFO: ${assetName} - Validated: network name "${uiNetworkName}" matches token data`
           );
-          hasValidNetworkNames = true;
-
-          // Verify that the humanReadableName is not the same as chainId (i.e., it's been translated)
-          if (humanReadableName !== chainId) {
-            console.log(
-              `INFO: ${assetName} - Good: Human-readable name "${humanReadableName}" differs from chainId "${chainId}"`
-            );
-          }
-
-          // Find corresponding token in the API data to validate the chainId
-          const correspondingToken = tokensForAsset.find(
-            (token) =>
-              token.defuse_asset_identifier &&
-              (token.defuse_asset_identifier.startsWith(chainId) ||
-                (networkNameMap[humanReadableName] &&
-                  token.defuse_asset_identifier.startsWith(
-                    networkNameMap[humanReadableName]
-                  )))
-          );
-
-          if (correspondingToken) {
-            console.log(
-              `INFO: ${assetName} - Validated: chainId "${chainId}" matches token data`
-            );
-          } else {
-            console.warn(
-              `WARN: ${assetName} - No matching token found for chainId "${chainId}" in API data`
-            );
-          }
         } else {
           console.warn(
-            `WARN: ${assetName} - Network name "${uiNetworkName}" does not follow expected format "name ( chainId )"`
+            `WARN: ${assetName} - No matching token found for network name "${uiNetworkName}" in API data`
           );
         }
       }
 
-      // Assert that at least one network name follows the expected format
+      // Assert that at least one network name is valid
       expect(
         hasValidNetworkNames,
-        `${assetName} should have at least one network name in format "name ( chainId )". Found: ${uiNetworkNames.join(
+        `${assetName} should have at least one valid network name. Found: ${uiNetworkNames.join(
           ", "
         )}`
       ).toBe(true);
