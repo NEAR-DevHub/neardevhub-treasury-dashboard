@@ -968,8 +968,61 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     // Click on the proposal row to expand it
     await proposalRow.click();
 
-    // Wait for the Approve button to be visible and click it
+    // Wait for the expanded details to be visible
     await page.waitForTimeout(1000);
+
+    // Verify all 1Click fields are visible in the expanded view
+    console.log("Verifying 1Click fields are displayed...");
+
+    // Get the actual values from the real quote that was created
+    const actualDepositAddress = page.testDepositAddress;
+    const actualSignature = page.realQuote.signature || "";
+    const actualTimeEstimate = page.realQuote.timeEstimate || 10;
+
+    // Find the expanded proposal details section (not the table)
+    const expandedDetails = page.locator(
+      '[data-component="widgets.treasury-factory.near/widget/pages.asset-exchange.ProposalDetailsPage"]'
+    );
+
+    // Verify Deposit Address is shown in the expanded details
+    await expect(
+      expandedDetails.locator("label:has-text('Deposit Address')")
+    ).toBeVisible();
+    await expect(
+      expandedDetails.locator(`text=${actualDepositAddress}`)
+    ).toBeVisible();
+    console.log(`✓ Deposit address displayed: ${actualDepositAddress}`);
+
+    // Verify Quote Signature is shown
+    await expect(
+      expandedDetails.locator("label:has-text('Quote Signature')")
+    ).toBeVisible();
+    if (actualSignature) {
+      await expect(
+        expandedDetails.locator(`text=${actualSignature}`)
+      ).toBeVisible();
+      console.log(
+        `✓ Signature displayed: ${actualSignature.substring(0, 20)}...`
+      );
+    }
+
+    // Verify Estimated Time is shown
+    await expect(
+      expandedDetails.locator("label:has-text('Estimated Time')")
+    ).toBeVisible();
+    const timeText = `${actualTimeEstimate} minutes`;
+    await expect(expandedDetails.locator(`text=${timeText}`)).toBeVisible();
+    console.log(`✓ Time estimate displayed: ${timeText}`);
+
+    // Verify Quote Deadline is shown
+    await expect(
+      expandedDetails.locator("label:has-text('1Click Quote Deadline')")
+    ).toBeVisible();
+    console.log("✓ Quote Deadline field is visible");
+
+    console.log("All 1Click fields verified successfully!\n");
+
+    // Now proceed to approve the proposal
     const approveButton = page.getByRole("button", { name: "Approve" }).nth(1);
     await expect(approveButton).toBeVisible();
     await approveButton.click();
