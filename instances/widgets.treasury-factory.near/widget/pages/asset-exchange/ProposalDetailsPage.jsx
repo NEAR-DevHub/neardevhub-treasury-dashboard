@@ -139,6 +139,20 @@ useEffect(() => {
           item.description
         );
 
+        // Extract additional 1Click fields
+        const timeEstimate = decodeProposalDescription(
+          "timeEstimate",
+          item.description
+        );
+        const depositAddress = decodeProposalDescription(
+          "depositAddress",
+          item.description
+        );
+        const signature = decodeProposalDescription(
+          "signature",
+          item.description
+        );
+
         const outEstimate = parseFloat(amountOut) || 0;
         const slippageValue = parseFloat(slippage) || 0;
         const minAmountReceive = Number(
@@ -172,6 +186,9 @@ useEffect(() => {
           proposal: item,
           quoteDeadline,
           destinationNetwork,
+          timeEstimate,
+          depositAddress,
+          signature,
         });
       })
       .catch(() => {
@@ -426,42 +443,114 @@ return (
               </h5>
             </div>
             {proposalData?.quoteDeadline && (
-              <div className="d-flex flex-column gap-2 mt-1">
-                <label className="border-top">
-                  1Click Quote Deadline {"   "}
-                  <Widget
-                    loading=""
-                    src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
-                    props={{
-                      popup:
-                        "This is the expiry time for the 1Click API quote. After this time, the quoted exchange rate is no longer valid and voting will be disabled to prevent loss of funds.",
-                      children: (
-                        <i className="bi bi-info-circle text-secondary"></i>
-                      ),
-                      instance,
-                    }}
-                  />
-                </label>
-                <div
-                  className={
-                    new Date() > proposalData.quoteDeadline
-                      ? "text-danger fw-bold"
-                      : ""
-                  }
-                >
-                  {proposalData.quoteDeadline.toLocaleString("en-US", {
-                    month: "short",
-                    day: "2-digit",
-                    year: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    hour12: true,
-                    timeZone: "UTC",
-                    timeZoneName: "short",
-                  })}
-                  {new Date() > proposalData.quoteDeadline && " (EXPIRED)"}
+              <>
+                <div className="d-flex flex-column gap-2 mt-1">
+                  <label className="border-top">
+                    1Click Quote Deadline {"   "}
+                    <Widget
+                      loading=""
+                      src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+                      props={{
+                        popup:
+                          "This is the expiry time for the 1Click API quote. After this time, the quoted exchange rate is no longer valid and voting will be disabled to prevent loss of funds.",
+                        children: (
+                          <i className="bi bi-info-circle text-secondary"></i>
+                        ),
+                        instance,
+                      }}
+                    />
+                  </label>
+                  <div
+                    className={
+                      new Date() > proposalData.quoteDeadline
+                        ? "text-danger fw-bold"
+                        : ""
+                    }
+                  >
+                    {proposalData.quoteDeadline.toLocaleString("en-US", {
+                      month: "short",
+                      day: "2-digit",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: true,
+                      timeZone: "UTC",
+                      timeZoneName: "short",
+                    })}
+                    {new Date() > proposalData.quoteDeadline && " (EXPIRED)"}
+                  </div>
                 </div>
-              </div>
+                {proposalData?.timeEstimate && (
+                  <div className="d-flex flex-column gap-2 mt-1">
+                    <label className="border-top">
+                      Estimated Time {"   "}
+                      <Widget
+                        loading=""
+                        src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+                        props={{
+                          popup:
+                            "Estimated time for the cross-chain swap to complete once the proposal is approved.",
+                          children: (
+                            <i className="bi bi-info-circle text-secondary"></i>
+                          ),
+                          instance,
+                        }}
+                      />
+                    </label>
+                    <div>{proposalData.timeEstimate}</div>
+                  </div>
+                )}
+                {proposalData?.depositAddress && (
+                  <div className="d-flex flex-column gap-2 mt-1">
+                    <label className="border-top">
+                      Deposit Address {"   "}
+                      <Widget
+                        loading=""
+                        src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+                        props={{
+                          popup:
+                            "The 1Click deposit address where tokens will be sent for the cross-chain swap execution.",
+                          children: (
+                            <i className="bi bi-info-circle text-secondary"></i>
+                          ),
+                          instance,
+                        }}
+                      />
+                    </label>
+                    <div
+                      className="text-break"
+                      style={{ fontFamily: "monospace", fontSize: "14px" }}
+                    >
+                      {proposalData.depositAddress}
+                    </div>
+                  </div>
+                )}
+                {proposalData?.signature && (
+                  <div className="d-flex flex-column gap-2 mt-1">
+                    <label className="border-top">
+                      Quote Signature {"   "}
+                      <Widget
+                        loading=""
+                        src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+                        props={{
+                          popup:
+                            "The cryptographic signature from 1Click API that validates this quote.",
+                          children: (
+                            <i className="bi bi-info-circle text-secondary"></i>
+                          ),
+                          instance,
+                        }}
+                      />
+                    </label>
+                    <div
+                      className="text-break"
+                      style={{ fontFamily: "monospace", fontSize: "12px" }}
+                    >
+                      {proposalData.signature}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         ),

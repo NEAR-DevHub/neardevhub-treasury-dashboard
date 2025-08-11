@@ -203,6 +203,35 @@ test.describe("OneClick Exchange Proposal Details", () => {
         console.log("✓ Quote deadline is shown as expired in proposal content");
       }
 
+      // Check that all 1Click fields are displayed
+      const timeEstimateVisible = await page
+        .locator("text=10 minutes")
+        .isVisible()
+        .catch(() => false);
+      const depositAddressVisible = await page
+        .locator("text=test-deposit-address")
+        .isVisible()
+        .catch(() => false);
+      const signatureVisible = await page
+        .locator("text=ed25519:test-signature")
+        .isVisible()
+        .catch(() => false);
+
+      if (timeEstimateVisible) {
+        console.log("✓ Time estimate is displayed");
+      }
+      if (depositAddressVisible) {
+        console.log("✓ Deposit address is displayed");
+      }
+      if (signatureVisible) {
+        console.log("✓ Quote signature is displayed");
+      }
+
+      // Assert that all required fields are present
+      expect(timeEstimateVisible).toBeTruthy();
+      expect(depositAddressVisible).toBeTruthy();
+      expect(signatureVisible).toBeTruthy();
+
       // All checks passed
       expect(messageVisible).toBeTruthy();
       expect(approveDisabled).toBeTruthy();
@@ -388,6 +417,35 @@ test.describe("OneClick Exchange Proposal Details", () => {
     // These assertions will fail the test if the token symbol is not displayed correctly
     expect(sendETHVisible).toBeTruthy();
     expect(contractAddressVisible).toBeFalsy();
+
+    // Check that all 1Click fields are displayed for valid quote
+    const timeEstimateVisible = await page
+      .locator("text=10 minutes")
+      .isVisible()
+      .catch(() => false);
+    const depositAddressVisible = await page
+      .locator("text=test-deposit-address")
+      .isVisible()
+      .catch(() => false);
+    const signatureVisible = await page
+      .locator("text=ed25519:test-signature")
+      .isVisible()
+      .catch(() => false);
+
+    if (timeEstimateVisible) {
+      console.log("✓ Time estimate is displayed");
+    }
+    if (depositAddressVisible) {
+      console.log("✓ Deposit address is displayed");
+    }
+    if (signatureVisible) {
+      console.log("✓ Quote signature is displayed");
+    }
+
+    // Assert that all required fields are present
+    expect(timeEstimateVisible).toBeTruthy();
+    expect(depositAddressVisible).toBeTruthy();
+    expect(signatureVisible).toBeTruthy();
 
     // Take a screenshot showing the valid state
     await page.screenshot({
