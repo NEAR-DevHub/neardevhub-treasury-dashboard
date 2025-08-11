@@ -566,7 +566,7 @@ test.describe("User is logged in", function () {
     await mockNearnProposal({ page });
     await clickCreatePaymentRequestButton(page);
 
-    const proposalSelect = page.locator(".dropdown-toggle").first();
+    const proposalSelect = page.locator(".dropdown-toggle").nth(1);
     await expect(proposalSelect).toBeVisible();
 
     await expect(
@@ -574,6 +574,7 @@ test.describe("User is logged in", function () {
     ).toBeVisible();
 
     await proposalSelect.click();
+    await page.waitForTimeout(2_000);
     await page
       .getByPlaceholder("Search by id or title")
       .pressSequentially("22");
@@ -597,7 +598,7 @@ test.describe("User is logged in", function () {
 
     await clickCreatePaymentRequestButton(page);
 
-    await expect(await page.locator(".dropdown-toggle").first()).toHaveText(
+    await expect(await page.locator(".dropdown-toggle").nth(1)).toHaveText(
       "Select"
     );
     expect(await page.getByPlaceholder("treasury.near").inputValue()).toBe("");
