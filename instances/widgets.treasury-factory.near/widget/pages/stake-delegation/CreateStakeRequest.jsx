@@ -437,6 +437,7 @@ return (
               setValidatorAccount(null);
               setSelectedWallet(v);
             },
+            isStakingDelegationPage: true,
           }}
         />
       )}

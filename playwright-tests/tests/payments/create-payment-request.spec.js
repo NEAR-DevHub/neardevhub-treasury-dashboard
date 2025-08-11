@@ -441,7 +441,7 @@ test.describe("User is logged in", function () {
     await clickCreatePaymentRequestButton(page);
 
     if (instanceConfig.showProposalSelection === true) {
-      const proposalSelect = await page.locator(".dropdown-toggle").first();
+      const proposalSelect = await page.locator(".dropdown-toggle").nth(1);
       await expect(proposalSelect).toBeVisible();
       await expect(
         await proposalSelect.getByText("Select", { exact: true })
@@ -647,7 +647,7 @@ test.describe("User is logged in", function () {
     await clickCreatePaymentRequestButton(page);
 
     if (instanceConfig.showProposalSelection === true) {
-      const proposalSelect = page.locator(".dropdown-toggle").first();
+      const proposalSelect = page.locator(".dropdown-toggle").nth(1);
       await expect(proposalSelect).toBeVisible();
       await expect(
         proposalSelect.getByText("Select", { exact: true })
@@ -927,7 +927,7 @@ test.describe("admin with function access keys", function () {
     const nearAmountFromLinkedProposal = 2160;
 
     if (instanceConfig.showProposalSelection === true) {
-      const proposalSelect = page.locator(".dropdown-toggle").first();
+      const proposalSelect = page.locator(".dropdown-toggle").nth(1);
       await expect(proposalSelect).toBeVisible();
 
       await expect(
@@ -1129,7 +1129,7 @@ test.describe("admin with function access keys", function () {
       await page.getByRole("button", { name: " Create Request" }).click();
 
       if (instanceConfig.showProposalSelection === true) {
-        const proposalSelect = page.locator(".dropdown-toggle").first();
+        const proposalSelect = page.locator(".dropdown-toggle").nth(1);
         await expect(proposalSelect).toBeVisible();
         await expect(
           proposalSelect.getByText("Select", { exact: true })

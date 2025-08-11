@@ -439,6 +439,7 @@ return (
               setShowLoader(true);
               setSelectedWallet(v);
             },
+            isStakingDelegationPage: true,
           }}
         />
       )}
