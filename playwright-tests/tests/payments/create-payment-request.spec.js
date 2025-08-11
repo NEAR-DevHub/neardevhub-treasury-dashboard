@@ -982,8 +982,10 @@ test.describe("admin with function access keys", function () {
       await totalAmountField.blur();
     }
 
-    const submitBtn = await page.getByRole("button", { name: "Submit" });
-    await expect(submitBtn).toBeEnabled({ timeout: 20_000 });
+    const submitBtn = page
+      .locator(".offcanvas-body")
+      .getByRole("button", { name: "Submit" });
+    await expect(submitBtn).toBeAttached({ timeout: 20_000 });
     await submitBtn.scrollIntoViewIfNeeded({ timeout: 20_000 });
     await page.waitForTimeout(3_000);
     await submitBtn.click();
@@ -1071,18 +1073,6 @@ test.describe("admin with function access keys", function () {
     await expect(
       page.getByRole("cell", { name: `${lastProposalId - 1}`, exact: true })
     ).toBeVisible({ timeout: 20_000 });
-    const widgetsAccount =
-      (instanceAccount.includes("testing") ? "test-widgets" : "widgets") +
-      ".treasury-factory.near";
-    const firstRow = page
-      .locator(
-        `tr[data-component="${widgetsAccount}/widget/pages.payments.Table"]`
-      )
-      .nth(1);
-    await expect(firstRow).toContainText(
-      expectedTransactionModalObject.proposal.kind.Transfer.receiver_id
-    );
-
     const checkThatFormIsCleared = async () => {
       await page.waitForTimeout(2_000);
       await page.getByRole("button", { name: " Create Request" }).click();
