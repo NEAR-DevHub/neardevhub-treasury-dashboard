@@ -9,6 +9,7 @@ import { mockNearBalances } from "../../util/rpcmock.js";
 import { getTransactionModalObject } from "../../util/transaction.js";
 import fs from "fs/promises";
 import path from "path";
+import { Indexer } from "../../util/indexer.js";
 
 // Create screenshots directory if it doesn't exist
 const screenshotsDir = path.join(
@@ -458,6 +459,9 @@ test.describe("1Click API Integration - Asset Exchange", function () {
       })
     ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
 
+    const indexer = new Indexer(worker.provider.connection.url);
+    await indexer.init();
+    await indexer.attachIndexerRoutes(page);
     await redirectWeb4({
       page,
       contractId: instanceAccount,
@@ -917,6 +921,7 @@ test.describe("1Click API Integration - Asset Exchange", function () {
       page.getByRole("button", { name: "Confirm" })
     ).not.toBeVisible();
 
+    await page.reload();
     // Wait a bit for the proposal to be created
     console.log("Waiting for proposal to be created...");
     await page.waitForTimeout(5000);

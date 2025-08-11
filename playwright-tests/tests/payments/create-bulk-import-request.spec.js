@@ -454,6 +454,8 @@ test("should create bulk requests using sandbox", async ({
     page.getByText("Successfully imported 1 payment requests.")
   ).toBeVisible();
   await expect(table).toBeHidden();
+  await page.reload();
+  await page.waitForTimeout(5000);
   await expect(
     page.getByRole("cell", { name: "0", exact: true })
   ).toBeVisible();
