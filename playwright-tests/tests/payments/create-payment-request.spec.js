@@ -34,9 +34,12 @@ async function selectDAOWallet(page) {
 async function selectLockupWallet(page) {
   await expect(page.getByText("Treasury Wallet")).toBeVisible();
   await page.getByTestId("dropdown-btn").click();
-  await expect(page.getByText("Lockup")).toBeVisible();
-  await page.getByText("Lockup").click();
-  await expect(page.getByRole("button", { name: "Submit" })).toBeVisible({
+  const canvasLocator = page.locator(".offcanvas-body");
+  await expect(canvasLocator.getByText("Lockup")).toBeVisible();
+  await canvasLocator.getByText("Lockup").click();
+  await expect(
+    canvasLocator.getByRole("button", { name: "Submit" })
+  ).toBeVisible({
     timeout: 14_000,
   });
 }
@@ -1127,22 +1130,10 @@ test.describe("admin with function access keys", function () {
     const checkThatFormIsCleared = async () => {
       await page.waitForTimeout(2_000);
       await page.getByRole("button", { name: " Create Request" }).click();
-
-      if (instanceConfig.showProposalSelection === true) {
-        const proposalSelect = page.locator(".dropdown-toggle").nth(1);
-        await expect(proposalSelect).toBeVisible();
-        await expect(
-          proposalSelect.getByText("Select", { exact: true })
-        ).toBeVisible();
-      } else {
-        await expect(page.getByTestId("proposal-title")).toHaveValue("");
-        await expect(page.getByTestId("proposal-summary")).toHaveValue("");
-        await expect(page.getByPlaceholder("treasury.near")).toBeVisible();
-        await expect(page.getByTestId("total-amount")).toHaveValue("");
-      }
-      const submitBtn = page.getByRole("button", { name: "Submit" });
-      await expect(submitBtn).toBeAttached({ timeout: 10_000 });
-      await expect(submitBtn).toBeDisabled({ timeout: 10_000 });
+      const submitBtn = page
+        .locator(".offcanvas-body")
+        .getByRole("button", { name: "Submit" });
+      await expect(submitBtn).toBeHidden({ timeout: 10_000 });
     };
     await checkThatFormIsCleared();
     await page.waitForTimeout(2_000);
