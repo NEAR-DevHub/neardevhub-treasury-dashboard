@@ -517,7 +517,7 @@ test.describe("1Click API Integration - Asset Exchange", function () {
 
     // Check ETH balance on dashboard
     const ethBalanceRowLocator = page.locator(
-      '.card div.d-flex.flex-column.border-bottom:has(div.h6.mb-0.text-truncate:has-text("ETH"))'
+      'div.d-flex.flex-column:has(div.h6.mb-0.text-truncate:has-text("ETH"))'
     );
     await expect(ethBalanceRowLocator).toBeVisible();
     await expect(ethBalanceRowLocator).toContainText("5.00");
@@ -1327,7 +1327,7 @@ test.describe("1Click API Integration - Asset Exchange", function () {
 
     // Check updated ETH balance
     const ethBalanceRowAfterSwap = page.locator(
-      '.card div.d-flex.flex-column.border-bottom:has(div.h6.mb-0.text-truncate:has-text("ETH"))'
+      'div.d-flex.flex-column:has(div.h6.mb-0.text-truncate:has-text("ETH"))'
     );
     await expect(ethBalanceRowAfterSwap).toBeVisible();
     await expect(ethBalanceRowAfterSwap).toContainText("4.90"); // 5.00 - 0.10 = 4.90
@@ -1335,7 +1335,7 @@ test.describe("1Click API Integration - Asset Exchange", function () {
 
     // Check for new USDC token
     const usdcBalanceRowLocator = page.locator(
-      '.card div.d-flex.flex-column.border-bottom:has(div.h6.mb-0.text-truncate:has-text("USDC"))'
+      'div.d-flex.flex-column:has(div.h6.mb-0.text-truncate:has-text("USDC"))'
     );
     await expect(usdcBalanceRowLocator).toBeVisible();
 
