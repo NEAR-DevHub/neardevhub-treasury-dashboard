@@ -216,7 +216,7 @@ return (
               : "";
             const proposalDescription = encodeToMarkdown({
               proposal_action: "asset-exchange",
-              notes: `1Click Cross-Network Swap: ${args.quote.amountInFormatted} ${args.tokenInSymbol}${sourceInfo} → ${args.quote.amountOutFormatted} ${args.tokenOut} (${args.networkOut}). This proposal authorizes transferring tokens to 1Click's deposit address for cross-network swap execution.`,
+              notes: `**Must be executed before ${args.quote.deadline}** for transferring tokens to 1Click's deposit address for swap execution.`,
               tokenIn: args.tokenInSymbol,
               tokenOut: args.tokenOut,
               amountIn: args.quote.amountInFormatted,

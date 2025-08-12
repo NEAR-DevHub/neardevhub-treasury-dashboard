@@ -971,6 +971,34 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     // Wait for the expanded details to be visible
     await page.waitForTimeout(1000);
 
+    // Verify the notes contain the critical deadline information
+    console.log("Verifying proposal notes contain deadline information...");
+
+    // The notes are visible in both the table row and the expanded details
+    // Check that at least one instance is visible (use .first() to avoid strict mode violation)
+    await expect(
+      page.locator("text=Must be executed before").first()
+    ).toBeVisible();
+
+    // Get the actual deadline from the quote
+    const quoteDeadline = page.realQuote.deadline;
+
+    // Verify the deadline timestamp is shown (also use .first() since it appears in multiple places)
+    await expect(page.locator(`text=${quoteDeadline}`).first()).toBeVisible();
+
+    // Verify the full text about transferring to 1Click's deposit address
+    await expect(
+      page
+        .locator(
+          "text=for transferring tokens to 1Click's deposit address for swap execution"
+        )
+        .first()
+    ).toBeVisible();
+
+    console.log(
+      `✓ Notes contain critical deadline information with timestamp: ${quoteDeadline}`
+    );
+
     // Verify all 1Click fields are visible in the expanded view
     console.log("Verifying 1Click fields are displayed...");
 
