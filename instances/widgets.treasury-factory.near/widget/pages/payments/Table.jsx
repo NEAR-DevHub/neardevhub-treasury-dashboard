@@ -565,7 +565,7 @@ return (
       !Array.isArray(proposals) ? (
         <tbody>
           <RowsSkeleton
-            numberOfCols={isPendingRequests ? 13 : 12}
+            numberOfCols={isPendingRequests ? 14 : 13}
             numberOfRows={3}
             numberOfHiddenRows={4}
           />
