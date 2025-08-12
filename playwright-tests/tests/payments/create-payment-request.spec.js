@@ -22,19 +22,22 @@ import { InsufficientBalance, toBase64 } from "../../util/lib.js";
 import { SandboxRPC } from "../../util/sandboxrpc.js";
 
 async function selectDAOWallet(page) {
-  await expect(page.getByText("Treasury Wallet")).toBeVisible();
-  await page.getByRole("button", { name: "Select Wallet" }).click();
-  await expect(page.getByText("SputnikDAO")).toBeVisible();
-  await page.getByText("SputnikDAO").click();
-  await expect(page.getByRole("button", { name: "Submit" })).toBeVisible({
+  const canvasLocator = page.locator(".offcanvas-body");
+  await expect(canvasLocator.getByText("Treasury Wallet")).toBeVisible();
+  await canvasLocator.getByRole("button", { name: "Select Wallet" }).click();
+  await expect(canvasLocator.getByText("SputnikDAO")).toBeVisible();
+  await canvasLocator.getByText("SputnikDAO").click();
+  await expect(
+    canvasLocator.getByRole("button", { name: "Submit" })
+  ).toBeVisible({
     timeout: 14_000,
   });
 }
 
 async function selectLockupWallet(page) {
-  await expect(page.getByText("Treasury Wallet")).toBeVisible();
-  await page.getByRole("button", { name: "Select Wallet" }).click();
   const canvasLocator = page.locator(".offcanvas-body");
+  await expect(canvasLocator.getByText("Treasury Wallet")).toBeVisible();
+  await canvasLocator.getByRole("button", { name: "Select Wallet" }).click();
   await expect(canvasLocator.getByText("Lockup")).toBeVisible();
   await canvasLocator.getByText("Lockup").click();
   await expect(
@@ -45,11 +48,14 @@ async function selectLockupWallet(page) {
 }
 
 async function selectIntentsWallet(page) {
-  await expect(page.getByText("Treasury Wallet")).toBeVisible();
-  await page.getByRole("button", { name: "Select Wallet" }).click();
-  await expect(page.getByText("NEAR Intents")).toBeVisible();
-  await page.getByText("NEAR Intents").click();
-  await expect(page.getByRole("button", { name: "Submit" })).toBeVisible({
+  const canvasLocator = page.locator(".offcanvas-body");
+  await expect(canvasLocator.getByText("Treasury Wallet")).toBeVisible();
+  await canvasLocator.getByRole("button", { name: "Select Wallet" }).click();
+  await expect(canvasLocator.getByText("NEAR Intents")).toBeVisible();
+  await canvasLocator.getByText("NEAR Intents").click();
+  await expect(
+    canvasLocator.getByRole("button", { name: "Submit" })
+  ).toBeVisible({
     timeout: 14_000,
   });
 }
@@ -529,7 +535,7 @@ test.describe("User is logged in", function () {
     const cancelBtn = page.getByRole("button", { name: "Cancel" });
     await expect(cancelBtn).toBeAttached({ timeout: 10_000 });
 
-    cancelBtn.click();
+    await cancelBtn.click();
     await page.locator("button", { hasText: "Yes" }).click();
 
     await clickCreatePaymentRequestButton(page);
@@ -593,7 +599,7 @@ test.describe("User is logged in", function () {
     const cancelBtn = page.getByRole("button", { name: "Cancel" });
     await expect(cancelBtn).toBeAttached({ timeout: 10_000 });
 
-    cancelBtn.click();
+    await cancelBtn.click();
     await page.locator("button", { hasText: "Yes" }).click();
 
     await clickCreatePaymentRequestButton(page);

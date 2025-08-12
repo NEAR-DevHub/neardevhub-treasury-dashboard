@@ -207,11 +207,14 @@ async function getColumnIndex(page, headerName) {
 }
 
 async function selectIntentsWallet(page) {
-  await expect(page.getByText("Treasury Wallet")).toBeVisible();
-  await page.getByRole("button", { name: "Select Wallet" }).click();
-  await expect(page.getByText("NEAR Intents")).toBeVisible();
-  await page.getByText("NEAR Intents").click();
-  await expect(page.getByRole("button", { name: "Submit" })).toBeVisible({
+  const canvasLocator = page.locator(".offcanvas-body");
+  await expect(canvasLocator.getByText("Treasury Wallet")).toBeVisible();
+  await canvasLocator.getByRole("button", { name: "Select Wallet" }).click();
+  await expect(canvasLocator.getByText("NEAR Intents")).toBeVisible();
+  await canvasLocator.getByText("NEAR Intents").click();
+  await expect(
+    canvasLocator.getByRole("button", { name: "Submit" })
+  ).toBeVisible({
     timeout: 14_000,
   });
   await page.waitForTimeout(2_000);

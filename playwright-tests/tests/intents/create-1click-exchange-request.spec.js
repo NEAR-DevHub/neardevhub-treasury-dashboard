@@ -28,7 +28,7 @@ let usdcContract;
 let solverAccount;
 let solverKeyPair;
 
-test.beforeAll(async ({ page }) => {
+test.beforeAll(async () => {
   test.setTimeout(150000);
 
   try {
