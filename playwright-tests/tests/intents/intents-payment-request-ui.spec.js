@@ -6,6 +6,7 @@ import { connect } from "near-api-js";
 import { PROPOSAL_BOND, setPageAuthSettings } from "../../util/sandboxrpc.js";
 import { mockNearBalances } from "../../util/rpcmock.js";
 import { mockInventory } from "../../util/inventory.js";
+import { Indexer } from "../../util/indexer.js";
 
 let worker;
 let availableTokensList;
@@ -179,6 +180,12 @@ test.afterAll(async () => {
   await worker.tearDown();
 });
 
+async function setupIndexer(page, worker) {
+  const indexer = new Indexer(worker.provider.connection.url);
+  await indexer.init();
+  await indexer.attachIndexerRoutes(page);
+}
+
 // Helper function to find column index by header name
 async function getColumnIndex(page, headerName) {
   const headerRow = page
@@ -197,6 +204,20 @@ async function getColumnIndex(page, headerName) {
     }
   }
   throw new Error(`Column header "${headerName}" not found`);
+}
+
+async function selectIntentsWallet(page) {
+  const canvasLocator = page.locator(".offcanvas-body");
+  await expect(canvasLocator.getByText("Treasury Wallet")).toBeVisible();
+  await canvasLocator.getByRole("button", { name: "Select Wallet" }).click();
+  await expect(canvasLocator.getByText("NEAR Intents")).toBeVisible();
+  await canvasLocator.getByText("NEAR Intents").click();
+  await expect(
+    canvasLocator.getByRole("button", { name: "Submit" })
+  ).toBeVisible({
+    timeout: 14_000,
+  });
+  await page.waitForTimeout(2_000);
 }
 
 test("payment request to BTC address", async ({
@@ -309,7 +330,7 @@ test("payment request to BTC address", async ({
       account: instanceAccount,
     })
   ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
-
+  await setupIndexer(page, worker);
   await redirectWeb4({
     page,
     contractId: instanceAccount,
@@ -359,30 +380,21 @@ test("payment request to BTC address", async ({
 
   const createRequestButton = await page.getByText("Create Request");
   await createRequestButton.click();
+
   await expect(page.getByText("Create Payment Request")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Submit" })).toBeVisible({
-    timeout: 14_000,
-  });
+  await selectIntentsWallet(page);
 
   await page.getByTestId("tokens-dropdown").locator("div").first().click();
 
   await expect(
-    await page
+    page
       .getByTestId("tokens-dropdown")
       .locator("div.d-flex.flex-column.gap-1.w-100.text-wrap")
-      .filter({ hasText: "NEAR" })
-      .first()
-  ).toBeVisible();
-
-  await expect(
-    await page
-      .getByTestId("tokens-dropdown")
-      .locator("div.d-flex.flex-column.gap-1.w-100.text-wrap")
-      .filter({ hasText: "BTC (NEAR Intents)" })
+      .filter({ hasText: "BTC" })
   ).toBeVisible();
 
   if (!(await page.getByTestId("proposal-title").isVisible())) {
-    await page.locator(".dropdown-toggle").first().click();
+    await page.locator(".dropdown-toggle").nth(1).click();
     await page.getByText("Add manual request").click();
   }
   await page.getByTestId("proposal-title").click();
@@ -392,7 +404,11 @@ test("payment request to BTC address", async ({
     .getByTestId("proposal-summary")
     .fill("describing the btc payment request proposal");
   await page.getByTestId("tokens-dropdown").getByText("Select").click();
-  await page.getByText("BTC (NEAR Intents)").click();
+  await expect(page.getByText("through BTC")).toBeVisible();
+  await page
+    .getByTestId("tokens-dropdown")
+    .getByText("BTC", { exact: true })
+    .click();
   await page.getByTestId("total-amount").click();
   await page.getByTestId("total-amount").fill("2");
   await page.getByTestId("btc-recipient").click();
@@ -443,6 +459,8 @@ test("payment request to BTC address", async ({
   await page.getByRole("button", { name: "Confirm" }).click();
 
   await expect(page.getByRole("button", { name: "Confirm" })).not.toBeVisible();
+  await page.reload();
+  await page.waitForTimeout(5_000);
   const proposalColumns = page
     .locator(
       'tr[data-component="widgets.treasury-factory.near/widget/pages.payments.Table"]'
@@ -604,6 +622,7 @@ test("payment request to USDC address on BASE", async ({
     })
   ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
 
+  await setupIndexer(page, worker);
   await redirectWeb4({
     page,
     contractId: instanceAccount,
@@ -655,9 +674,7 @@ test("payment request to USDC address on BASE", async ({
   const createRequestButton = await page.getByText("Create Request");
   await createRequestButton.click();
   await expect(page.getByText("Create Payment Request")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Submit" })).toBeVisible({
-    timeout: 14_000,
-  });
+  await selectIntentsWallet(page);
 
   await page.getByTestId("tokens-dropdown").locator("div").first().click();
 
@@ -665,11 +682,11 @@ test("payment request to USDC address on BASE", async ({
     await page
       .getByTestId("tokens-dropdown")
       .locator("div.d-flex.flex-column.gap-1.w-100.text-wrap")
-      .filter({ hasText: "USDC (NEAR Intents)" })
+      .filter({ hasText: "USDC" })
   ).toBeVisible();
 
   if (!(await page.getByTestId("proposal-title").isVisible())) {
-    await page.locator(".dropdown-toggle").first().click();
+    await page.locator(".dropdown-toggle").nth(1).click();
     await page.getByText("Add manual request").click();
   }
   await page.getByTestId("proposal-title").click();
@@ -679,7 +696,11 @@ test("payment request to USDC address on BASE", async ({
     .getByTestId("proposal-summary")
     .fill("describing the usdc payment request proposal");
   await page.getByTestId("tokens-dropdown").getByText("Select").click();
-  await page.getByText("USDC (NEAR Intents)").click();
+  await expect(page.getByText("through BASE")).toBeVisible();
+  await page
+    .getByTestId("tokens-dropdown")
+    .getByText("USDC", { exact: true })
+    .click();
   await page.getByTestId("total-amount").click();
   await page.getByTestId("total-amount").fill("2500");
   await page.getByPlaceholder("Enter BASE Address (0x...)").click();
@@ -728,8 +749,10 @@ test("payment request to USDC address on BASE", async ({
   );
   await expect(page.getByRole("button", { name: "Confirm" })).toBeVisible();
   await page.getByRole("button", { name: "Confirm" }).click();
-
   await expect(page.getByRole("button", { name: "Confirm" })).not.toBeVisible();
+
+  await page.reload();
+  await page.waitForTimeout(5_000);
   const proposalColumns = page
     .locator(
       'tr[data-component="widgets.treasury-factory.near/widget/pages.payments.Table"]'
@@ -768,6 +791,7 @@ test("payment request to USDC address on BASE", async ({
   await expect(
     page.getByText("The payment request has been successfully executed.")
   ).toBeVisible({ timeout: 15_000 });
+  await page.waitForTimeout(1_000);
   expect(
     await intentsContract.view("mt_batch_balance_of", {
       account_id: daoAccount,
@@ -925,7 +949,7 @@ test("payment request for wNEAR token on NEAR intents", async ({
       account: instanceAccount,
     })
   ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
-
+  await setupIndexer(page, worker);
   await redirectWeb4({
     page,
     contractId: instanceAccount,
@@ -980,12 +1004,10 @@ test("payment request for wNEAR token on NEAR intents", async ({
   await expect(createRequestButton).toBeEnabled();
   await createRequestButton.click();
   await expect(page.getByText("Create Payment Request")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Submit" })).toBeVisible({
-    timeout: 14_000,
-  });
+  await selectIntentsWallet(page);
 
   if (!(await page.getByTestId("proposal-title").isVisible())) {
-    await page.locator(".dropdown-toggle").first().click();
+    await page.locator(".dropdown-toggle").nth(1).click();
     await page.getByText("Add manual request").click();
   }
   await page.getByTestId("proposal-title").click();
@@ -997,7 +1019,11 @@ test("payment request for wNEAR token on NEAR intents", async ({
     .getByTestId("proposal-summary")
     .fill("Withdrawal of wNEAR tokens from intents contract");
   await page.getByTestId("tokens-dropdown").getByText("Select").click();
-  await page.getByText("wNEAR (NEAR Intents)", { exact: true }).click();
+  await expect(page.getByText("through NEAR")).toBeVisible();
+  await page
+    .getByTestId("tokens-dropdown")
+    .getByText("wNEAR", { exact: true })
+    .click();
   await page.getByTestId("total-amount").click();
   await page.getByTestId("total-amount").fill("50");
   await page.getByPlaceholder("treasury.near").click();
@@ -1047,6 +1073,9 @@ test("payment request for wNEAR token on NEAR intents", async ({
   await page.getByRole("button", { name: "Confirm" }).click();
 
   await expect(page.getByRole("button", { name: "Confirm" })).not.toBeVisible();
+
+  await page.reload();
+  await page.waitForTimeout(5_000);
 
   // Helper function to find column index by header name
   const proposalColumns = page
@@ -1218,6 +1247,7 @@ test("insufficient balance alert for BTC payment request exceeding available bal
     })
   ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
 
+  await setupIndexer(page, worker);
   await redirectWeb4({
     page,
     contractId: instanceAccount,
@@ -1269,12 +1299,10 @@ test("insufficient balance alert for BTC payment request exceeding available bal
   const createRequestButton = await page.getByText("Create Request");
   await createRequestButton.click();
   await expect(page.getByText("Create Payment Request")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Submit" })).toBeVisible({
-    timeout: 14_000,
-  });
+  await selectIntentsWallet(page);
 
   if (!(await page.getByTestId("proposal-title").isVisible())) {
-    await page.locator(".dropdown-toggle").first().click();
+    await page.locator(".dropdown-toggle").nth(1).click();
     await page.getByText("Add manual request").click();
   }
   await page.getByTestId("proposal-title").click();
@@ -1284,7 +1312,10 @@ test("insufficient balance alert for BTC payment request exceeding available bal
     .getByTestId("proposal-summary")
     .fill("requesting more BTC than available");
   await page.getByTestId("tokens-dropdown").getByText("Select").click();
-  await page.getByText("BTC (NEAR Intents)").click();
+  await page
+    .getByTestId("tokens-dropdown")
+    .getByText("BTC", { exact: true })
+    .click();
   // Request 500 BTC when only 100 BTC is available
   await page.getByTestId("total-amount").click();
   await page.getByTestId("total-amount").fill("500");
@@ -1306,6 +1337,9 @@ test("insufficient balance alert for BTC payment request exceeding available bal
   await page.getByRole("button", { name: "Confirm" }).click();
 
   await expect(page.getByRole("button", { name: "Confirm" })).not.toBeVisible();
+
+  await page.reload();
+  await page.waitForTimeout(5_000);
 
   // Wait for the proposal to be created and navigate to the proposal
   const proposalColumns = page
@@ -1487,6 +1521,7 @@ test("insufficient balance alert for wNEAR payment request exceeding available b
     })
   ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
 
+  await setupIndexer(page, worker);
   await redirectWeb4({
     page,
     contractId: instanceAccount,
@@ -1538,12 +1573,10 @@ test("insufficient balance alert for wNEAR payment request exceeding available b
   const createRequestButton = await page.getByText("Create Request");
   await createRequestButton.click();
   await expect(page.getByText("Create Payment Request")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Submit" })).toBeVisible({
-    timeout: 14_000,
-  });
+  await selectIntentsWallet(page);
 
   if (!(await page.getByTestId("proposal-title").isVisible())) {
-    await page.locator(".dropdown-toggle").first().click();
+    await page.locator(".dropdown-toggle").nth(1).click();
     await page.getByText("Add manual request").click();
   }
   await page.getByTestId("proposal-title").click();
@@ -1553,7 +1586,10 @@ test("insufficient balance alert for wNEAR payment request exceeding available b
     .getByTestId("proposal-summary")
     .fill("requesting more wNEAR than available");
   await page.getByTestId("tokens-dropdown").getByText("Select").click();
-  await page.getByText("wNEAR (NEAR Intents)", { exact: true }).click();
+  await page
+    .getByTestId("tokens-dropdown")
+    .getByText("wNEAR", { exact: true })
+    .click();
   // Request 100 wNEAR when only 25 wNEAR is available
   await page.getByTestId("total-amount").click();
   await page.getByTestId("total-amount").fill("100");
@@ -1573,6 +1609,9 @@ test("insufficient balance alert for wNEAR payment request exceeding available b
   await page.getByRole("button", { name: "Confirm" }).click();
 
   await expect(page.getByRole("button", { name: "Confirm" })).not.toBeVisible();
+
+  await page.reload();
+  await page.waitForTimeout(5_000);
 
   // Wait for the proposal to be created and navigate to the proposal
   const proposalColumns = page

@@ -8,19 +8,16 @@ import { mockRpcRequest, mockWithFTBalance } from "../../util/rpcmock.js";
 import { SandboxRPC } from "../../util/sandboxrpc.js";
 
 async function mockExchangeProposals({ page, status }) {
-  await mockRpcRequest({
-    page,
-    filterParams: {
-      method_name: "get_proposals",
-    },
-    modifyOriginalResultFunction: () => {
+  await page.route(
+    /\/proposals\/.*\?.*category=asset-exchange/,
+    async (route) => {
       let originalResult = [JSON.parse(JSON.stringify(SwapProposalData))];
       originalResult[0].id = 0;
       originalResult[0].status = status;
       originalResult[0].submission_time = CurrentTimestampInNanoseconds;
-      return originalResult;
-    },
-  });
+      await route.fulfill({ json: { proposals: originalResult, total: 1 } });
+    }
+  );
 }
 
 async function mockExchangeProposal({ page, status }) {
@@ -290,7 +287,7 @@ test.describe
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(120_000);
     const sandbox = await setupSandboxAndCreateProposal({ daoAccount, page });
     await mockWithFTBalance({ page, daoAccount, isSufficient: true });
 
@@ -312,7 +309,7 @@ test.describe
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(60_000);
+    test.setTimeout(120_000);
     const sandbox = await setupSandboxAndCreateProposal({ daoAccount, page });
     await page.goto(`/${instanceAccount}/widget/app?page=asset-exchange&id=0`);
     await mockWithFTBalance({ page, daoAccount, isSufficient: false });

@@ -19,12 +19,9 @@ export const stakedPoolAccount = "astro-stakers.poolv1.near";
 export const multiStakedPoolAccount = "nearfans.poolv1.near";
 
 export async function mockStakeProposals({ page }) {
-  await mockRpcRequest({
-    page,
-    filterParams: {
-      method_name: "get_proposals",
-    },
-    modifyOriginalResultFunction: () => {
+  await page.route(
+    /\/proposals\/.*\?.*category=stake-delegation/,
+    async (route) => {
       let originalResult = [
         JSON.parse(JSON.stringify(StakeProposalData)),
         JSON.parse(JSON.stringify(UnStakeProposalData)),
@@ -35,9 +32,14 @@ export async function mockStakeProposals({ page }) {
       originalResult[0].submission_time = CurrentTimestampInNanoseconds;
       // expired request
       originalResult[1].submission_time = "1715761329133693174";
-      return originalResult;
-    },
-  });
+      await route.fulfill({
+        json: {
+          proposals: originalResult,
+          total: 2,
+        },
+      });
+    }
+  );
 }
 
 export async function mockOldJSONStakeProposals({ page }) {
@@ -51,17 +53,19 @@ export async function mockOldJSONStakeProposals({ page }) {
       return originalResult;
     },
   });
-  await mockRpcRequest({
-    page,
-    filterParams: {
-      method_name: "get_proposals",
-    },
-    modifyOriginalResultFunction: () => {
+  await page.route(
+    /\/proposals\/.*\?.*category=stake-delegation/,
+    async (route) => {
       let originalResult = [JSON.parse(JSON.stringify(OldJsonProposalData))];
       originalResult[0].submission_time = CurrentTimestampInNanoseconds;
-      return originalResult;
-    },
-  });
+      await route.fulfill({
+        json: {
+          proposals: originalResult,
+          total: 1,
+        },
+      });
+    }
+  );
 }
 
 export async function mockUnstakeAndWithdrawBalance({
@@ -220,10 +224,12 @@ export async function mockLockupNearBalances({ page, balance }) {
   });
 }
 
-async function selectLockupAccount({ page, daoAccount, lockupContract }) {
-  await page.waitForTimeout(5_000);
-  await page.getByRole("button", { name: daoAccount }).click();
-  await page.getByText(lockupContract).click();
+async function selectLockupWallet(page) {
+  const canvasLocator = page.locator(".offcanvas-body");
+  await expect(canvasLocator.getByText("Treasury Wallet")).toBeVisible();
+  await canvasLocator.getByRole("button", { name: "SputnikDAO" }).click();
+  await expect(canvasLocator.getByText("Lockup")).toBeVisible();
+  await canvasLocator.getByText("Lockup").click();
 }
 
 export async function openWithdrawForm({
@@ -242,7 +248,7 @@ export async function openWithdrawForm({
   ).toBeVisible(10_000);
   await page.waitForTimeout(10_000);
   if (isLockup) {
-    await selectLockupAccount({ page, daoAccount, lockupContract });
+    await selectLockupWallet(page);
   }
 }
 
@@ -260,7 +266,7 @@ export async function openUnstakeForm({
   ).toBeVisible(10_000);
   await page.waitForTimeout(10_000);
   if (isLockup) {
-    await selectLockupAccount({ page, daoAccount, lockupContract });
+    await selectLockupWallet(page);
   }
 }
 
@@ -278,7 +284,7 @@ export async function openStakeForm({
   ).toBeVisible({ timeout: 20_000 });
   await page.waitForTimeout(10_000);
   if (isLockup) {
-    await selectLockupAccount({ page, daoAccount, lockupContract });
+    await selectLockupWallet(page);
   }
 }
 
@@ -386,12 +392,9 @@ export async function voteOnProposal({
   let isTransactionCompleted = false;
   await updateDaoPolicyMembers({ instanceAccount, page });
   const contractId = daoAccount;
-  await mockRpcRequest({
-    page,
-    filterParams: {
-      method_name: "get_proposals",
-    },
-    modifyOriginalResultFunction: () => {
+  await page.route(
+    /\/proposals\/.*\?.*category=stake-delegation/,
+    async (route) => {
       let originalResult = [
         JSON.parse(
           JSON.stringify(
@@ -406,9 +409,14 @@ export async function voteOnProposal({
       } else {
         originalResult.status = "InProgress";
       }
-      return originalResult;
-    },
-  });
+      await route.fulfill({
+        json: {
+          proposals: originalResult,
+          total: 1,
+        },
+      });
+    }
+  );
   await mockRpcRequest({
     page,
     filterParams: {

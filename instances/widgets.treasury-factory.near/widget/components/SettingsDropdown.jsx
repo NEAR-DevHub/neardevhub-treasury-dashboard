@@ -134,7 +134,7 @@ return (
         className={"dropdown-toggle btn btn-outline-secondary"}
         onClick={toggleDropdown}
       >
-        <i class="bi bi-gear"></i>
+        <i class="bi bi-gear h5 mb-0"></i>
       </div>
 
       {isOpen && (

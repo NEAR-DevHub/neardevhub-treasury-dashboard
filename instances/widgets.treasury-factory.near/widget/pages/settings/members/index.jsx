@@ -13,13 +13,13 @@ const {
   getPolicyApproverGroup,
   hasPermission,
   getRolesDescription,
-  getFilteredProposalsByStatusAndKind,
+  getProposalsFromIndexer,
 } = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common") || {
   getDaoRoles: () => {},
   getPolicyApproverGroup: () => {},
   hasPermission: () => {},
   getRolesDescription: () => {},
-  getFilteredProposalsByStatusAndKind: () => {},
+  getProposalsFromIndexer: () => {},
 };
 
 const instance = props.instance;
@@ -75,20 +75,13 @@ useEffect(() => {
     getMembersAndPermissions(treasuryDaoID).then((res) => {
       setAllMembers(res);
       if (treasuryDaoID && !isTreasuryFactory && hasCreatePermission) {
-        getLastProposalId()
-          .then((i) => {
-            fetchProposals(i)
-              .then((prpls) => {
-                setProposals(prpls);
-                setLoading(false);
-              })
-              .catch((error) => {
-                console.error("Error fetching proposals:", error);
-                setLoading(false);
-              });
+        fetchProposals()
+          .then((prpls) => {
+            setProposals(prpls);
+            setLoading(false);
           })
           .catch((error) => {
-            console.error("Error getting last proposal ID:", error);
+            console.error("Error fetching proposals:", error);
             setLoading(false);
           });
       } else {
@@ -434,17 +427,15 @@ useEffect(() => {
   }
 }, [props.transactionHashes]);
 
-const fetchProposals = (proposalId) =>
-  getFilteredProposalsByStatusAndKind({
-    treasuryDaoID,
-    resPerPage: 10,
-    isPrevPageCalled: false,
-    filterKindArray: ["ChangePolicy"],
-    filterStatusArray: ["InProgress"],
-    offset: proposalId,
-    lastProposalId: proposalId,
+const fetchProposals = () =>
+  getProposalsFromIndexer({
+    daoId: treasuryDaoID,
+    page: 0,
+    pageSize: 10,
+    proposalType: ["ChangePolicy"],
+    statuses: ["InProgress"],
   }).then((r) => {
-    return r.filteredProposals;
+    return r.proposals;
   });
 
 const checkAndExecuteAction = (action) => {

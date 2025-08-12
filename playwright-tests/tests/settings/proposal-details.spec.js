@@ -34,19 +34,18 @@ function getProposalDataByType(type) {
 }
 
 async function mockSettingsProposals({ page, status, type }) {
-  await mockRpcRequest({
-    page,
-    filterParams: {
-      method_name: "get_proposals",
-    },
-    modifyOriginalResultFunction: () => {
-      const proposal = getProposalDataByType(type);
-      let originalResult = [JSON.parse(JSON.stringify(proposal))];
-      originalResult[0].id = 0;
-      originalResult[0].status = status;
-      originalResult[0].submission_time = CurrentTimestampInNanoseconds;
-      return originalResult;
-    },
+  await page.route(/\/proposals\/.*\?.*proposal_types=.*/, async (route) => {
+    const proposal = getProposalDataByType(type);
+    let originalResult = [JSON.parse(JSON.stringify(proposal))];
+    originalResult[0].id = 0;
+    originalResult[0].status = status;
+    originalResult[0].submission_time = CurrentTimestampInNanoseconds;
+    await route.fulfill({
+      json: {
+        proposals: originalResult,
+        total: 1,
+      },
+    });
   });
 }
 

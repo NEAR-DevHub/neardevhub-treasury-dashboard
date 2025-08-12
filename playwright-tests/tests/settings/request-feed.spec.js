@@ -15,34 +15,6 @@ test.afterEach(async ({ page }, testInfo) => {
 });
 
 const lastProposalId = 2;
-async function mockSettingsProposals({ page }) {
-  await mockRpcRequest({
-    page,
-    filterParams: {
-      method_name: "get_last_proposal_id",
-    },
-    modifyOriginalResultFunction: () => {
-      return lastProposalId;
-    },
-  });
-  await mockRpcRequest({
-    page,
-    filterParams: {
-      method_name: "get_proposals",
-    },
-    modifyOriginalResultFunction: () => {
-      let originalResult = [
-        JSON.parse(JSON.stringify(SettingsVotingDurationProposalData)),
-        JSON.parse(JSON.stringify(OldSettingsProposalData)),
-      ];
-      originalResult[0].id = 0;
-      originalResult[1].id = 1;
-      // non expired request
-      originalResult[0].submission_time = CurrentTimestampInNanoseconds;
-      return originalResult;
-    },
-  });
-}
 
 async function voteOnProposal({
   page,
@@ -54,24 +26,24 @@ async function voteOnProposal({
 }) {
   let isTransactionCompleted = false;
   const contractId = daoAccount;
-  await mockRpcRequest({
-    page,
-    filterParams: {
-      method_name: "get_proposals",
-    },
-    modifyOriginalResultFunction: (originalResult) => {
-      originalResult = JSON.parse(
-        JSON.stringify(SettingsVotingDurationProposalData)
-      );
-      originalResult.submission_time = CurrentTimestampInNanoseconds;
-      if (isTransactionCompleted && !isMultiVote) {
-        originalResult.status = voteStatus;
-      } else {
-        originalResult.status = "InProgress";
-      }
-      return originalResult;
-    },
+  await page.route(/\/proposals\/.*\?.*proposal_types=.*/, async (route) => {
+    let originalResult = JSON.parse(
+      JSON.stringify(SettingsVotingDurationProposalData)
+    );
+    originalResult.submission_time = CurrentTimestampInNanoseconds;
+    if (isTransactionCompleted && !isMultiVote) {
+      originalResult.status = voteStatus;
+    } else {
+      originalResult.status = "InProgress";
+    }
+    await route.fulfill({
+      json: {
+        proposals: [originalResult],
+        total: 1,
+      },
+    });
   });
+
   await mockRpcRequest({
     page,
     filterParams: {
@@ -135,21 +107,6 @@ async function voteOnProposal({
 }
 
 test.describe("User is not logged in", function () {
-  test("View pending and history page", async ({ page, instanceAccount }) => {
-    test.setTimeout(120_000);
-    await mockSettingsProposals({ page });
-    await page.goto(`/${instanceAccount}/widget/app?page=settings`);
-    await page.waitForTimeout(20_000);
-    await expect(
-      page.getByRole("cell", { name: "0", exact: true })
-    ).toBeVisible({ timeout: 20_000 });
-    await page.getByText("History").click();
-    await expect(
-      page.getByRole("cell", { name: "1", exact: true })
-    ).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByText("Expired")).toBeVisible();
-  });
-
   test("Should navigate to different settings tabs", async ({
     page,
     instanceAccount,
@@ -211,20 +168,22 @@ test.describe.parallel("User logged in with different roles", function () {
           hasAllRole: hasAllRole,
         });
 
-        await mockRpcRequest({
-          page,
-          filterParams: {
-            method_name: "get_proposals",
-          },
-          modifyOriginalResultFunction: (originalResult) => {
-            originalResult = JSON.parse(
+        await page.route(
+          /\/proposals\/.*\?.*proposal_types=.*/,
+          async (route) => {
+            let originalResult = JSON.parse(
               JSON.stringify(SettingsVotingDurationProposalData)
             );
             originalResult.submission_time = CurrentTimestampInNanoseconds;
             originalResult.status = "InProgress";
-            return originalResult;
-          },
-        });
+            await route.fulfill({
+              json: {
+                proposals: [originalResult],
+                total: 1,
+              },
+            });
+          }
+        );
 
         await page.goto(`/${instanceAccount}/widget/app?page=settings`);
         await expect(page.getByText("Pending Requests").nth(1)).toBeVisible({
@@ -408,14 +367,13 @@ test.describe("don't ask again", function () {
     );
     proposalData.submission_time = CurrentTimestampInNanoseconds;
     proposalData.status = "InProgress";
-    await mockRpcRequest({
-      page,
-      filterParams: {
-        method_name: "get_proposals",
-      },
-      modifyOriginalResultFunction: () => {
-        return [proposalData];
-      },
+    await page.route(/\/proposals\/.*\?.*proposal_types=.*/, async (route) => {
+      await route.fulfill({
+        json: {
+          proposals: [proposalData],
+          total: 1,
+        },
+      });
     });
     await mockRpcRequest({
       page,

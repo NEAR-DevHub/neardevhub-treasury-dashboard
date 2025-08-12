@@ -9,12 +9,12 @@ const {
 
 const instance = props.instance;
 const policy = props.policy;
-const { TableSkeleton } = VM.require(
+const { RowsSkeleton } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.skeleton"
 );
 if (
   !instance ||
-  !TableSkeleton ||
+  !RowsSkeleton ||
   typeof getNearBalances !== "function" ||
   typeof decodeProposalDescription !== "function" ||
   typeof formatSubmissionTimeStamp !== "function"
@@ -91,7 +91,6 @@ const hasDeletePermission = (deleteGroup?.approverAccounts ?? []).includes(
 const Container = styled.div`
   font-size: 13px;
   min-height: 60vh;
-  display: flex;
 
   table {
     overflow-x: auto;
@@ -478,85 +477,100 @@ const ProposalsComponent = () => {
 
 return (
   <Container style={{ overflowX: "auto" }}>
-    {loading === true ||
-    proposals === null ||
-    functionCallApproversGroup === null ||
-    policy === null ? (
-      <TableSkeleton numberOfCols={8} numberOfRows={3} numberOfHiddenRows={4} />
-    ) : (
-      <div className="w-100">
-        {proposals.length === 0 ? (
-          <div
-            style={{ height: "50vh" }}
-            className="d-flex justify-content-center align-items-center"
+    <table className="table">
+      <thead>
+        <tr className="text-secondary">
+          <td>#</td>
+          <td
+            className={isVisible("Created Date") + " cursor-pointer"}
+            onClick={props.handleSortClick}
+            style={{ color: "var(--text-color)" }}
           >
-            {isPendingRequests ? (
-              <div className="d-flex justify-content-center align-items-center flex-column gap-2">
-                <h4>No Asset Exchange Requests Found</h4>
-                <h6>There are currently no asset exchange requests</h6>
-              </div>
-            ) : (
-              <div className="d-flex justify-content-center align-items-center flex-column gap-2">
-                <h4>No History Exchange Requests Found</h4>
-                <h6>There are currently no history exchange requests</h6>
-              </div>
+            Created Date
+            <span style={{ marginLeft: 4 }}>
+              {props.sortDirection === "desc" ? (
+                <i class="bi bi-arrow-down"></i>
+              ) : (
+                <i class="bi bi-arrow-up"></i>
+              )}
+            </span>
+          </td>
+          {!isPendingRequests && <td className={"text-center"}>Status</td>}
+
+          <td className={isVisible("Send") + " text-right"}>Send</td>
+          <td className={isVisible("Receive") + " text-right"}>Receive</td>
+          <td className={isVisible("Minimum received") + " text-right"}>
+            Minimum received
+          </td>
+
+          <td className={isVisible("Creator") + " text-center"}>Created by</td>
+          <td className={isVisible("Notes") + " text-left"}>Notes</td>
+          {isPendingRequests && (
+            <td className={isVisible("Required Votes") + " text-center"}>
+              Required Votes
+            </td>
+          )}
+          {isPendingRequests && (
+            <td className={isVisible("Votes") + " text-center"}>Votes</td>
+          )}
+          <td
+            className={
+              isVisible("Approvers") +
+              " text-center " +
+              (hideApproversCol && " display-none")
+            }
+          >
+            Approvers
+          </td>
+          {isPendingRequests && (
+            <td className={isVisible("Expiring Date") + " text-left "}>
+              Expiring Date
+            </td>
+          )}
+          {isPendingRequests &&
+            (hasVotingPermission || hasDeletePermission) && (
+              <td className="text-right">Actions</td>
             )}
-          </div>
-        ) : (
-          <table className="table">
-            <thead>
-              <tr className="text-secondary">
-                <td>#</td>
-                <td className={isVisible("Created Date")}>Created Date</td>
-                {!isPendingRequests && (
-                  <td className={"text-center"}>Status</td>
-                )}
+        </tr>
+      </thead>
 
-                <td className={isVisible("Send") + " text-right"}>Send</td>
-                <td className={isVisible("Receive") + " text-right"}>
-                  Receive
-                </td>
-                <td className={isVisible("Minimum received") + " text-right"}>
-                  Minimum received
-                </td>
-
-                <td className={isVisible("Creator") + " text-center"}>
-                  Created by
-                </td>
-                <td className={isVisible("Notes") + " text-left"}>Notes</td>
-                {isPendingRequests && (
-                  <td className={isVisible("Required Votes") + " text-center"}>
-                    Required Votes
-                  </td>
-                )}
-                {isPendingRequests && (
-                  <td className={isVisible("Votes") + " text-center"}>Votes</td>
-                )}
-                <td
-                  className={
-                    isVisible("Approvers") +
-                    " text-center " +
-                    (hideApproversCol && " display-none")
-                  }
-                >
-                  Approvers
-                </td>
-                {isPendingRequests && (
-                  <td className={isVisible("Expiring Date") + " text-left "}>
-                    Expiring Date
-                  </td>
-                )}
-                {isPendingRequests &&
-                  (hasVotingPermission || hasDeletePermission) && (
-                    <td className="text-right">Actions</td>
-                  )}
-              </tr>
-            </thead>
-            <ProposalsComponent />
-          </table>
-        )}
-      </div>
-    )}
+      {loading === true ||
+      proposals === null ||
+      functionCallApproversGroup === null ||
+      policy === null ||
+      !Array.isArray(proposals) ? (
+        <tbody>
+          <RowsSkeleton
+            numberOfCols={isPendingRequests ? 11 : 9}
+            numberOfRows={4}
+            numberOfHiddenRows={4}
+          />
+        </tbody>
+      ) : !Array.isArray(proposals) || proposals.length === 0 ? (
+        <tbody>
+          <tr>
+            <td colSpan={14} rowSpan={10} className="text-center align-middle">
+              {isPendingRequests ? (
+                <>
+                  <h4>No Asset Exchange Requests Found</h4>
+                  <h6>There are currently no asset exchange requests</h6>
+                </>
+              ) : (
+                <>
+                  <h4>No History Exchange Requests Found</h4>
+                  <h6>There are currently no history exchange requests</h6>
+                </>
+              )}
+            </td>
+          </tr>
+          {[...Array(8)].map((_, index) => (
+            <tr key={index}></tr>
+          ))}
+        </tbody>
+      ) : (
+        <ProposalsComponent />
+      )}
+    </table>
     {/* Web3IconFetcher for loading token icons */}
     {tokensToFetch.length > 0 && (
       <Widget

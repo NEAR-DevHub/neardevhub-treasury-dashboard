@@ -8,6 +8,7 @@ import {
   SPUTNIK_DAO_FACTORY_ID,
 } from "../../util/sandboxrpc";
 import crypto from "crypto";
+import { Indexer } from "../../util/indexer.js";
 
 test("update infinex.sputnik-dao.near", async ({ page }) => {
   test.setTimeout(120_000);
@@ -17,6 +18,9 @@ test("update infinex.sputnik-dao.near", async ({ page }) => {
   const socialNearContractId = "social.near";
 
   const worker = await Worker.init();
+  const indexer = new Indexer(worker.provider.connection.url);
+  await indexer.init();
+  await indexer.attachIndexerRoutes(page);
 
   // Import factory at the time infinex was created
   const factoryContract = await worker.rootAccount.importContract({

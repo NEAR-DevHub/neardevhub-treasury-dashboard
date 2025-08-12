@@ -70,8 +70,37 @@ const TableSkeleton = ({ numberOfCols, numberOfRows, numberOfHiddenRows }) => {
   );
 };
 
+const RowsSkeleton = ({ numberOfCols, numberOfRows, numberOfHiddenRows }) => {
+  const Row = ({ hidden, key }) => (
+    <tr key={key}>
+      {[...Array(numberOfCols)].map((_, i) => (
+        <td key={i}>
+          {hidden ? (
+            <div style={{ height: "30px", width: "100%" }} />
+          ) : (
+            <Skeleton
+              style={{ height: "30px", width: "100%" }}
+              className="rounded-3"
+            />
+          )}
+        </td>
+      ))}
+    </tr>
+  );
+  return (
+    <>
+      {[...Array(numberOfRows)].map((_, i) => (
+        <Row key={"row-" + i} />
+      ))}
+      {[...Array(numberOfHiddenRows)].map((_, i) => (
+        <Row key={"hidden-" + i} hidden />
+      ))}
+    </>
+  );
+};
+
 const CardSkeleton = () => {
   return <Skeleton className="rounded-2 w-100 h-100" />;
 };
 
-return { Skeleton, TableSkeleton, CardSkeleton };
+return { Skeleton, TableSkeleton, RowsSkeleton, CardSkeleton };

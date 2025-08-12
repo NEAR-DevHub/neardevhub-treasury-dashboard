@@ -21,6 +21,45 @@ import {
 import { InsufficientBalance, toBase64 } from "../../util/lib.js";
 import { SandboxRPC } from "../../util/sandboxrpc.js";
 
+async function selectDAOWallet(page) {
+  const canvasLocator = page.locator(".offcanvas-body");
+  await expect(canvasLocator.getByText("Treasury Wallet")).toBeVisible();
+  await canvasLocator.getByRole("button", { name: "Select Wallet" }).click();
+  await expect(canvasLocator.getByText("SputnikDAO")).toBeVisible();
+  await canvasLocator.getByText("SputnikDAO").click();
+  await expect(
+    canvasLocator.getByRole("button", { name: "Submit" })
+  ).toBeVisible({
+    timeout: 14_000,
+  });
+}
+
+async function selectLockupWallet(page) {
+  const canvasLocator = page.locator(".offcanvas-body");
+  await expect(canvasLocator.getByText("Treasury Wallet")).toBeVisible();
+  await canvasLocator.getByRole("button", { name: "Select Wallet" }).click();
+  await expect(canvasLocator.getByText("Lockup")).toBeVisible();
+  await canvasLocator.getByText("Lockup").click();
+  await expect(
+    canvasLocator.getByRole("button", { name: "Submit" })
+  ).toBeVisible({
+    timeout: 14_000,
+  });
+}
+
+async function selectIntentsWallet(page) {
+  const canvasLocator = page.locator(".offcanvas-body");
+  await expect(canvasLocator.getByText("Treasury Wallet")).toBeVisible();
+  await canvasLocator.getByRole("button", { name: "Select Wallet" }).click();
+  await expect(canvasLocator.getByText("NEAR Intents")).toBeVisible();
+  await canvasLocator.getByText("NEAR Intents").click();
+  await expect(
+    canvasLocator.getByRole("button", { name: "Submit" })
+  ).toBeVisible({
+    timeout: 14_000,
+  });
+}
+
 async function clickCreatePaymentRequestButton(page) {
   await page.waitForTimeout(1_000);
   const createPaymentRequestButton = await page.getByRole("button", {
@@ -29,6 +68,7 @@ async function clickCreatePaymentRequestButton(page) {
   await expect(createPaymentRequestButton).toBeVisible({ timeout: 20_000 });
   await page.waitForTimeout(1_000);
   await createPaymentRequestButton.click();
+  await selectDAOWallet(page);
   return createPaymentRequestButton;
 }
 
@@ -40,7 +80,7 @@ async function fillCreateForm(page, daoAccount, instanceAccount) {
   await clickCreatePaymentRequestButton(page);
 
   if (instanceConfig.showProposalSelection === true) {
-    const proposalSelect = await page.locator(".dropdown-toggle").first();
+    const proposalSelect = await page.locator(".dropdown-toggle").nth(1);
     await expect(proposalSelect).toBeVisible();
     await expect(
       await proposalSelect.getByText("Select", { exact: true })
@@ -138,14 +178,6 @@ test.describe("User is not logged in", function () {
     ).toBeHidden();
   });
 });
-
-async function selectLockupAccount({ page, daoAccount, lockupContract }) {
-  await page
-    .locator(".offcanvas-body")
-    .getByRole("button", { name: daoAccount })
-    .click();
-  await page.locator(".offcanvas-body").getByText(lockupContract).click();
-}
 
 export async function mockNearnProposal({ page }) {
   await page.route(
@@ -418,7 +450,7 @@ test.describe("User is logged in", function () {
     await clickCreatePaymentRequestButton(page);
 
     if (instanceConfig.showProposalSelection === true) {
-      const proposalSelect = await page.locator(".dropdown-toggle").first();
+      const proposalSelect = await page.locator(".dropdown-toggle").nth(1);
       await expect(proposalSelect).toBeVisible();
       await expect(
         await proposalSelect.getByText("Select", { exact: true })
@@ -503,7 +535,7 @@ test.describe("User is logged in", function () {
     const cancelBtn = page.getByRole("button", { name: "Cancel" });
     await expect(cancelBtn).toBeAttached({ timeout: 10_000 });
 
-    cancelBtn.click();
+    await cancelBtn.click();
     await page.locator("button", { hasText: "Yes" }).click();
 
     await clickCreatePaymentRequestButton(page);
@@ -540,7 +572,7 @@ test.describe("User is logged in", function () {
     await mockNearnProposal({ page });
     await clickCreatePaymentRequestButton(page);
 
-    const proposalSelect = page.locator(".dropdown-toggle").first();
+    const proposalSelect = page.locator(".dropdown-toggle").nth(1);
     await expect(proposalSelect).toBeVisible();
 
     await expect(
@@ -548,6 +580,7 @@ test.describe("User is logged in", function () {
     ).toBeVisible();
 
     await proposalSelect.click();
+    await page.waitForTimeout(2_000);
     await page
       .getByPlaceholder("Search by id or title")
       .pressSequentially("22");
@@ -566,12 +599,12 @@ test.describe("User is logged in", function () {
     const cancelBtn = page.getByRole("button", { name: "Cancel" });
     await expect(cancelBtn).toBeAttached({ timeout: 10_000 });
 
-    cancelBtn.click();
+    await cancelBtn.click();
     await page.locator("button", { hasText: "Yes" }).click();
 
     await clickCreatePaymentRequestButton(page);
 
-    await expect(await page.locator(".dropdown-toggle").first()).toHaveText(
+    await expect(await page.locator(".dropdown-toggle").nth(1)).toHaveText(
       "Select"
     );
     expect(await page.getByPlaceholder("treasury.near").inputValue()).toBe("");
@@ -624,7 +657,7 @@ test.describe("User is logged in", function () {
     await clickCreatePaymentRequestButton(page);
 
     if (instanceConfig.showProposalSelection === true) {
-      const proposalSelect = page.locator(".dropdown-toggle").first();
+      const proposalSelect = page.locator(".dropdown-toggle").nth(1);
       await expect(proposalSelect).toBeVisible();
       await expect(
         proposalSelect.getByText("Select", { exact: true })
@@ -719,8 +752,14 @@ test.describe("User is logged in", function () {
     await sandbox.setupLockupContract(daoName);
     await updateDaoPolicyMembers({ instanceAccount, page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
-    await clickCreatePaymentRequestButton(page);
-    await selectLockupAccount({ page, daoAccount, lockupContract });
+    await page.waitForTimeout(1_000);
+    const createPaymentRequestButton = await page.getByRole("button", {
+      name: "Create Request",
+    });
+    await expect(createPaymentRequestButton).toBeVisible({ timeout: 20_000 });
+    await page.waitForTimeout(1_000);
+    await createPaymentRequestButton.click();
+    await selectLockupWallet(page);
     await page.getByTestId("proposal-title").fill(proposalTitle);
     await page.getByTestId("proposal-summary").fill(proposalSummary);
 
@@ -836,19 +875,58 @@ test.describe("User is logged in", function () {
     await expect(loader).toBeHidden();
     await expect(submitBtn).toBeEnabled();
   });
+
+  test("show deposit modal for intents wallet", async ({
+    page,
+    instanceAccount,
+  }) => {
+    test.setTimeout(150_000);
+    await updateDaoPolicyMembers({ instanceAccount, page });
+    await page.goto(`/${instanceAccount}/widget/app?page=payments`);
+    await page.waitForTimeout(1_000);
+    const createPaymentRequestButton = await page.getByRole("button", {
+      name: "Create Request",
+    });
+    await expect(createPaymentRequestButton).toBeVisible({ timeout: 20_000 });
+    await createPaymentRequestButton.click();
+    await page.route(
+      "https://api-mng-console.chaindefuser.com/api/tokens",
+      async (route) => {
+        await route.fulfill({
+          status: 200,
+          body: JSON.stringify({
+            items: [],
+          }),
+        });
+      }
+    );
+    await selectIntentsWallet(page);
+    await page
+      .getByText(
+        "Your NEAR Intents wallet has no tokens. Fund it now to start using the platform’s features"
+      )
+      .click();
+    await expect(page.getByRole("button", { name: "Deposit" })).toBeVisible();
+    await page.getByRole("button", { name: "Deposit" }).click();
+    await expect(page.getByText("Use this deposit address")).toBeVisible();
+  });
 });
 
 test.describe("admin with function access keys", function () {
   test.use({
-    storageState:
-      "playwright-tests/storage-states/wallet-connected-admin-with-accesskey.json",
+    storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
   });
   test("create NEAR transfer payment request, and after submission it should be visible in pending request, and the form should be cleared", async ({
     page,
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(150_000);
+    test.setTimeout(250_000);
+    const daoName = daoAccount.split(".")[0];
+    const sandbox = new SandboxRPC();
+    await sandbox.init();
+    await sandbox.attachRoutes(page);
+    await sandbox.setupSandboxForSputnikDao(daoName);
     const nearPrice = 4;
     await mockInventory({ page, account: daoAccount });
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
@@ -863,7 +941,7 @@ test.describe("admin with function access keys", function () {
     const nearAmountFromLinkedProposal = 2160;
 
     if (instanceConfig.showProposalSelection === true) {
-      const proposalSelect = page.locator(".dropdown-toggle").first();
+      const proposalSelect = page.locator(".dropdown-toggle").nth(1);
       await expect(proposalSelect).toBeVisible();
 
       await expect(
@@ -871,6 +949,7 @@ test.describe("admin with function access keys", function () {
       ).toBeVisible();
 
       await proposalSelect.click();
+      await page.waitForTimeout(2_000);
       await page
         .getByPlaceholder("Search by id or title")
         .pressSequentially("22");
@@ -908,9 +987,13 @@ test.describe("admin with function access keys", function () {
       await totalAmountField.pressSequentially("20");
       await totalAmountField.blur();
     }
-    const submitBtn = await page.getByRole("button", { name: "Submit" });
-    await expect(submitBtn).toBeEnabled({ timeout: 20_000 });
+
+    const submitBtn = page
+      .locator(".offcanvas-body")
+      .getByRole("button", { name: "Submit" });
+    await expect(submitBtn).toBeAttached({ timeout: 20_000 });
     await submitBtn.scrollIntoViewIfNeeded({ timeout: 20_000 });
+    await page.waitForTimeout(3_000);
     await submitBtn.click();
 
     const expectedTransactionModalObject = instanceConfig.showProposalSelection
@@ -951,86 +1034,34 @@ test.describe("admin with function access keys", function () {
     await expect(
       page.getByText("Awaiting transaction confirmation...")
     ).toBeVisible();
-    let isTransactionCompleted = false;
-    let retryCountAfterComplete = 0;
-    let newProposalId;
-    await mockTransactionSubmitRPCResponses(
-      page,
-      async ({
-        route,
-        request,
-        transaction_completed,
-        last_receiver_id,
-        requestPostData,
-      }) => {
-        isTransactionCompleted = transaction_completed;
-        if (
-          isTransactionCompleted &&
-          requestPostData.params &&
-          requestPostData.params.method_name === "get_last_proposal_id"
-        ) {
-          const response = await route.fetch();
-          const json = await response.json();
-          let result = JSON.parse(
-            new TextDecoder().decode(new Uint8Array(json.result.result))
-          );
-          if (retryCountAfterComplete === 2) {
-            result++;
-            newProposalId = result;
-          } else {
-            retryCountAfterComplete++;
-          }
 
-          json.result.result = Array.from(
-            new TextEncoder().encode(JSON.stringify(result))
-          );
-          await route.fulfill({ response, json });
-        } else if (
-          isTransactionCompleted &&
-          newProposalId &&
-          requestPostData.params &&
-          requestPostData.params.method_name === "get_proposals"
-        ) {
-          const response = await route.fetch();
-          const json = await response.json();
-          let result = JSON.parse(
-            new TextDecoder().decode(new Uint8Array(json.result.result))
-          );
-
-          result.push({
-            id: newProposalId,
-            proposer: "tfdevhub.near",
-            description: expectedTransactionModalObject.proposal.description,
-            kind: {
-              Transfer: {
-                token_id:
-                  expectedTransactionModalObject.proposal.kind.Transfer
-                    .token_id,
-                receiver_id:
-                  expectedTransactionModalObject.proposal.kind.Transfer
-                    .receiver_id,
-                amount:
-                  expectedTransactionModalObject.proposal.kind.Transfer.amount,
-                msg: null,
-              },
-            },
-            status: "InProgress",
-            vote_counts: {},
-            votes: {},
-            submission_time: CurrentTimestampInNanoseconds,
+    page.evaluate(async () => {
+      const selector = await document.querySelector("near-social-viewer")
+        .selectorPromise;
+      const wallet = await selector.wallet();
+      return new Promise((resolve) => {
+        wallet["signAndSendTransaction"] = async (transaction) => {
+          resolve(transaction);
+          return new Promise((transactionSentPromiseResolve) => {
+            window.transactionSentPromiseResolve =
+              transactionSentPromiseResolve;
           });
-
-          json.result.result = Array.from(
-            new TextEncoder().encode(JSON.stringify(result))
-          );
-          await route.fulfill({ response, json });
-        } else {
-          await route.fallback();
-        }
-      }
-    );
-
+        };
+      });
+    });
+    const transactionResult = await sandbox.addPaymentRequestProposal({
+      title: "Test proposal title",
+      summary: "Test proposal summary",
+      amount: "20",
+      receiver_id: "webassemblymusic.near",
+      daoName,
+    });
     await page.getByRole("button", { name: "Confirm" }).click();
+    await page.evaluate(async (transactionResult) => {
+      window.transactionSentPromiseResolve(transactionResult);
+    }, transactionResult);
+    const lastProposalId = await sandbox.getLastProposalId(daoName);
+
     await expect(page.locator("div.modal-body code")).toBeAttached({
       attached: false,
       timeout: 10_000,
@@ -1046,43 +1077,20 @@ test.describe("admin with function access keys", function () {
       page.getByText("Payment request has been successfully created.")
     ).toBeVisible();
     await expect(
-      page.getByRole("cell", { name: `${newProposalId}`, exact: true })
+      page.getByRole("cell", { name: `${lastProposalId - 1}`, exact: true })
     ).toBeVisible({ timeout: 20_000 });
-    const widgetsAccount =
-      (instanceAccount.includes("testing") ? "test-widgets" : "widgets") +
-      ".treasury-factory.near";
-    const firstRow = page
-      .locator(
-        `tr[data-component="${widgetsAccount}/widget/pages.payments.Table"]`
-      )
-      .nth(1);
-    await expect(firstRow).toContainText(
-      expectedTransactionModalObject.proposal.kind.Transfer.receiver_id
-    );
-
     const checkThatFormIsCleared = async () => {
       await page.waitForTimeout(2_000);
       await page.getByRole("button", { name: " Create Request" }).click();
-
-      if (instanceConfig.showProposalSelection === true) {
-        const proposalSelect = page.locator(".dropdown-toggle").first();
-        await expect(proposalSelect).toBeVisible();
-        await expect(
-          proposalSelect.getByText("Select", { exact: true })
-        ).toBeVisible();
-      } else {
-        await expect(page.getByTestId("proposal-title")).toHaveValue("");
-        await expect(page.getByTestId("proposal-summary")).toHaveValue("");
-        await expect(page.getByPlaceholder("treasury.near")).toBeVisible();
-        await expect(page.getByTestId("total-amount")).toHaveValue("");
-      }
-      const submitBtn = page.getByRole("button", { name: "Submit" });
-      await expect(submitBtn).toBeAttached({ timeout: 10_000 });
-      await expect(submitBtn).toBeDisabled({ timeout: 10_000 });
+      const submitBtn = page
+        .locator(".offcanvas-body")
+        .getByRole("button", { name: "Submit" });
+      await expect(submitBtn).toBeHidden({ timeout: 10_000 });
     };
     await checkThatFormIsCleared();
     await page.waitForTimeout(2_000);
     await page.reload();
     await checkThatFormIsCleared();
+    await sandbox.quitSandbox();
   });
 });

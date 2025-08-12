@@ -52,7 +52,8 @@ export function getLocalWidgetContent(key, context = {}) {
     )
     .replaceAll("${REPL_DEVHUB}", "devhub.near")
     .replaceAll("${REPL_WRAP_NEAR_ICON}", replacements["REPL_WRAP_NEAR_ICON"])
-    .replaceAll("${REPL_RPC_URL}", nodeUrl);
+    .replaceAll("${REPL_RPC_URL}", nodeUrl)
+    .replaceAll("${REPL_SPUTNIK_INDEXER}", "https://sputnik-indexer.fly.dev");
   return content;
 }
 /**

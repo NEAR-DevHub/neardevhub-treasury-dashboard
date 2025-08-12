@@ -1,10 +1,11 @@
-const { getApproversAndThreshold, getFilteredProposalsByStatusAndKind } =
-  VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
+const { getApproversAndThreshold, getProposalsFromIndexer } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+);
 const instance = props.instance;
 if (
   !instance ||
   typeof getApproversAndThreshold !== "function" ||
-  typeof getFilteredProposalsByStatusAndKind !== "function"
+  typeof getProposalsFromIndexer !== "function"
 ) {
   return <></>;
 }
@@ -17,19 +18,19 @@ const [currentPage, setPage] = useState(0);
 const [proposals, setProposals] = useState(null);
 const [totalLength, setTotalLength] = useState(null);
 const [loading, setLoading] = useState(false);
-const [firstRender, setFirstRender] = useState(true);
-const [offset, setOffset] = useState(null);
-const [isPrevPageCalled, setIsPrevCalled] = useState(false);
+const [sortDirection, setSortDirection] = useState("desc");
 
-useEffect(() => {
-  setLoading(true);
-  Near.asyncView(treasuryDaoID, "get_last_proposal_id").then((i) => {
-    const lastProposalId = i;
-    getFilteredProposalsByStatusAndKind({
-      treasuryDaoID,
-      resPerPage: rowsPerPage,
-      isPrevPageCalled: isPrevPageCalled,
-      filterKindArray: [
+const fetchProposals = useCallback(
+  (direction) => {
+    if (direction === undefined) direction = sortDirection;
+    if (!treasuryDaoID) return;
+    setLoading(true);
+    getProposalsFromIndexer({
+      daoId: treasuryDaoID,
+      page: currentPage,
+      pageSize: rowsPerPage,
+      statuses: ["Approved", "Rejected", "Expired", "Failed"],
+      proposalType: [
         "ChangeConfig",
         "ChangePolicy",
         "AddMemberToRole",
@@ -38,22 +39,27 @@ useEffect(() => {
         "ChangePolicyRemoveRole",
         "ChangePolicyUpdateDefaultVotePolicy",
         "ChangePolicyUpdateParameters",
+        "UpgradeSelf",
       ],
-      filterStatusArray: ["Approved", "Rejected", "Expired", "Failed"],
-      offset: typeof offset === "number" ? offset : lastProposalId,
-      lastProposalId: lastProposalId,
-      currentPage,
+      sortDirection: direction,
     }).then((r) => {
-      if (currentPage === 0 && !totalLength) {
-        setTotalLength(r.totalLength);
-      }
-      setOffset(r.filteredProposals[r.filteredProposals.length - 1].id);
-
+      setProposals(r.proposals);
+      setTotalLength(r.total);
       setLoading(false);
-      setProposals(r.filteredProposals);
     });
-  });
-}, [currentPage, rowsPerPage]);
+  },
+  [rowsPerPage, currentPage, treasuryDaoID, sortDirection]
+);
+
+const handleSortClick = () => {
+  const newDirection = sortDirection === "desc" ? "asc" : "desc";
+  setSortDirection(newDirection);
+  fetchProposals(newDirection);
+};
+
+useEffect(() => {
+  fetchProposals();
+}, [currentPage, rowsPerPage, treasuryDaoID]);
 
 const policy = treasuryDaoID
   ? Near.view(treasuryDaoID, "get_policy", {})
@@ -81,6 +87,8 @@ return (
         highlightProposalId,
         loading: loading,
         policy,
+        sortDirection,
+        handleSortClick,
         ...props,
       }}
     />
@@ -93,20 +101,14 @@ return (
             totalLength: totalLength,
             totalPages: Math.ceil(totalLength / rowsPerPage),
             onNextClick: () => {
-              setIsPrevCalled(false);
-              setOffset(proposals[proposals.length - 1].id);
               setPage(currentPage + 1);
             },
             onPrevClick: () => {
-              setIsPrevCalled(true);
-              setOffset(proposals[0].id);
               setPage(currentPage - 1);
             },
             currentPage: currentPage,
             rowsPerPage: rowsPerPage,
             onRowsChange: (v) => {
-              setIsPrevCalled(false);
-              setOffset(null);
               setPage(0);
               setRowsPerPage(parseInt(v));
             },
