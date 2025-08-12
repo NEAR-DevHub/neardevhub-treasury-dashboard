@@ -124,6 +124,21 @@ test.describe("Asset Exchange Table - Expired Quote Handling", () => {
       hasAllRole: true,
     });
 
+    // Mock the indexer API call to return both proposals
+    await page.route(
+      `https://sputnik-indexer.fly.dev/proposals/${daoAccount}?**`,
+      (route) => {
+        route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            proposals: [proposalWithValidQuote, proposalWithExpiredQuote],
+            total: 2,
+          }),
+        });
+      }
+    );
+
     // Mock the get_proposals RPC call to return both proposals
     await mockRpcRequest({
       page,
@@ -348,6 +363,21 @@ test.describe("Asset Exchange Table - Expired Quote Handling", () => {
       page,
       hasAllRole: true,
     });
+
+    // Mock the indexer API call
+    await page.route(
+      `https://sputnik-indexer.fly.dev/proposals/${daoAccount}?**`,
+      (route) => {
+        route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            proposals: [proposalWithExpiredQuote],
+            total: 1,
+          }),
+        });
+      }
+    );
 
     // Mock the get_proposals RPC call
     await mockRpcRequest({
