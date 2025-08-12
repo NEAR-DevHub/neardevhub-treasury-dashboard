@@ -53,9 +53,6 @@ test.beforeAll(async () => {
 
   // Worker setup
   worker = await Worker.init();
-  const indexer = new Indexer(worker.provider.connection.url);
-  await indexer.init();
-  await indexer.attachIndexerRoutes(page);
 
   // social.near setup
   socialNearAccount = await worker.rootAccount.importContract({
@@ -183,6 +180,12 @@ test.afterAll(async () => {
   await worker.tearDown();
 });
 
+async function setupIndexer(page, worker) {
+  const indexer = new Indexer(worker.provider.connection.url);
+  await indexer.init();
+  await indexer.attachIndexerRoutes(page);
+}
+
 // Helper function to find column index by header name
 async function getColumnIndex(page, headerName) {
   const headerRow = page
@@ -205,7 +208,7 @@ async function getColumnIndex(page, headerName) {
 
 async function selectIntentsWallet(page) {
   await expect(page.getByText("Treasury Wallet")).toBeVisible();
-  await page.getByTestId("dropdown-btn").click();
+  await page.getByRole("button", { name: "Select Wallet" }).click();
   await expect(page.getByText("NEAR Intents")).toBeVisible();
   await page.getByText("NEAR Intents").click();
   await expect(page.getByRole("button", { name: "Submit" })).toBeVisible({
@@ -324,7 +327,7 @@ test("payment request to BTC address", async ({
       account: instanceAccount,
     })
   ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
-
+  await setupIndexer(page, worker);
   await redirectWeb4({
     page,
     contractId: instanceAccount,
@@ -616,6 +619,7 @@ test("payment request to USDC address on BASE", async ({
     })
   ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
 
+  await setupIndexer(page, worker);
   await redirectWeb4({
     page,
     contractId: instanceAccount,
@@ -942,6 +946,7 @@ test("payment request for wNEAR token on NEAR intents", async ({
       account: instanceAccount,
     })
   ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
+  await setupIndexer(page, worker);
   await redirectWeb4({
     page,
     contractId: instanceAccount,
@@ -1239,6 +1244,7 @@ test("insufficient balance alert for BTC payment request exceeding available bal
     })
   ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
 
+  await setupIndexer(page, worker);
   await redirectWeb4({
     page,
     contractId: instanceAccount,
@@ -1512,6 +1518,7 @@ test("insufficient balance alert for wNEAR payment request exceeding available b
     })
   ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
 
+  await setupIndexer(page, worker);
   await redirectWeb4({
     page,
     contractId: instanceAccount,

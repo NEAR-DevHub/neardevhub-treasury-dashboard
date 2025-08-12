@@ -39,9 +39,6 @@ test.beforeAll(async ({ page }) => {
 
   // Initialize worker and create account for authentication
   worker = await Worker.init();
-  const indexer = new Indexer(worker.provider.connection.url);
-  await indexer.init();
-  await indexer.attachIndexerRoutes(page);
 
   // social.near setup (required for BOS widgets)
   socialNearAccount = await worker.rootAccount.importContract({
@@ -182,6 +179,12 @@ test.afterEach(async ({ page }, testInfo) => {
 
   await page.unrouteAll({ behavior: "ignoreErrors" });
 });
+
+async function setupIndexer(page, worker) {
+  const indexer = new Indexer(worker.provider.connection.url);
+  await indexer.init();
+  await indexer.attachIndexerRoutes(page);
+}
 
 async function openCreatePage({ page, instanceAccount }) {
   await page.goto(`https://${instanceAccount}.page/?page=asset-exchange`);
@@ -461,6 +464,7 @@ test.describe("1Click API Integration - Asset Exchange", function () {
         account: instanceAccount,
       })
     ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
+    await setupIndexer(page, worker);
 
     await redirectWeb4({
       page,
@@ -471,7 +475,6 @@ test.describe("1Click API Integration - Asset Exchange", function () {
       modifiedWidgets,
       callWidgetNodeURLForContractWidgets: false,
     });
-
     // Mock user balance
     await mockNearBalances({
       page,

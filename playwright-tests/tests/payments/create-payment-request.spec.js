@@ -23,7 +23,7 @@ import { SandboxRPC } from "../../util/sandboxrpc.js";
 
 async function selectDAOWallet(page) {
   await expect(page.getByText("Treasury Wallet")).toBeVisible();
-  await page.getByTestId("dropdown-btn").click();
+  await page.getByRole("button", { name: "Select Wallet" }).click();
   await expect(page.getByText("SputnikDAO")).toBeVisible();
   await page.getByText("SputnikDAO").click();
   await expect(page.getByRole("button", { name: "Submit" })).toBeVisible({
@@ -33,7 +33,7 @@ async function selectDAOWallet(page) {
 
 async function selectLockupWallet(page) {
   await expect(page.getByText("Treasury Wallet")).toBeVisible();
-  await page.getByTestId("dropdown-btn").click();
+  await page.getByRole("button", { name: "Select Wallet" }).click();
   const canvasLocator = page.locator(".offcanvas-body");
   await expect(canvasLocator.getByText("Lockup")).toBeVisible();
   await canvasLocator.getByText("Lockup").click();
@@ -46,7 +46,7 @@ async function selectLockupWallet(page) {
 
 async function selectIntentsWallet(page) {
   await expect(page.getByText("Treasury Wallet")).toBeVisible();
-  await page.getByTestId("dropdown-btn").click();
+  await page.getByRole("button", { name: "Select Wallet" }).click();
   await expect(page.getByText("NEAR Intents")).toBeVisible();
   await page.getByText("NEAR Intents").click();
   await expect(page.getByRole("button", { name: "Submit" })).toBeVisible({
