@@ -28,7 +28,7 @@ let usdcContract;
 let solverAccount;
 let solverKeyPair;
 
-test.beforeAll(async () => {
+test.beforeAll(async ({ page }) => {
   test.setTimeout(150000);
 
   try {
@@ -39,6 +39,9 @@ test.beforeAll(async () => {
 
   // Initialize worker and create account for authentication
   worker = await Worker.init();
+  const indexer = new Indexer(worker.provider.connection.url);
+  await indexer.init();
+  await indexer.attachIndexerRoutes(page);
 
   // social.near setup (required for BOS widgets)
   socialNearAccount = await worker.rootAccount.importContract({
@@ -459,9 +462,6 @@ test.describe("1Click API Integration - Asset Exchange", function () {
       })
     ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
 
-    const indexer = new Indexer(worker.provider.connection.url);
-    await indexer.init();
-    await indexer.attachIndexerRoutes(page);
     await redirectWeb4({
       page,
       contractId: instanceAccount,

@@ -53,6 +53,9 @@ test.beforeAll(async () => {
 
   // Worker setup
   worker = await Worker.init();
+  const indexer = new Indexer(worker.provider.connection.url);
+  await indexer.init();
+  await indexer.attachIndexerRoutes(page);
 
   // social.near setup
   socialNearAccount = await worker.rootAccount.importContract({
@@ -322,9 +325,6 @@ test("payment request to BTC address", async ({
     })
   ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
 
-  const indexer = new Indexer(worker.provider.connection.url);
-  await indexer.init();
-  await indexer.attachIndexerRoutes(page);
   await redirectWeb4({
     page,
     contractId: instanceAccount,
@@ -615,10 +615,6 @@ test("payment request to USDC address on BASE", async ({
       account: instanceAccount,
     })
   ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
-
-  const indexer = new Indexer(worker.provider.connection.url);
-  await indexer.init();
-  await indexer.attachIndexerRoutes(page);
 
   await redirectWeb4({
     page,
@@ -946,9 +942,6 @@ test("payment request for wNEAR token on NEAR intents", async ({
       account: instanceAccount,
     })
   ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
-  const indexer = new Indexer(worker.provider.connection.url);
-  await indexer.init();
-  await indexer.attachIndexerRoutes(page);
   await redirectWeb4({
     page,
     contractId: instanceAccount,
@@ -1245,9 +1238,7 @@ test("insufficient balance alert for BTC payment request exceeding available bal
       account: instanceAccount,
     })
   ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
-  const indexer = new Indexer(worker.provider.connection.url);
-  await indexer.init();
-  await indexer.attachIndexerRoutes(page);
+
   await redirectWeb4({
     page,
     contractId: instanceAccount,
@@ -1520,9 +1511,7 @@ test("insufficient balance alert for wNEAR payment request exceeding available b
       account: instanceAccount,
     })
   ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
-  const indexer = new Indexer(worker.provider.connection.url);
-  await indexer.init();
-  await indexer.attachIndexerRoutes(page);
+
   await redirectWeb4({
     page,
     contractId: instanceAccount,

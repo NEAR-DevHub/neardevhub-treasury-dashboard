@@ -319,6 +319,9 @@ test("should create bulk requests using sandbox", async ({
     "6b175474e89094c44da98b954eedeac495271d0f.factory.bridge.near";
 
   const worker = await Worker.init();
+  const indexer = new Indexer(worker.provider.connection.url);
+  await indexer.init();
+  await indexer.attachIndexerRoutes(page);
 
   const factoryContract = await worker.rootAccount.importContract({
     mainnetContract: SPUTNIK_DAO_FACTORY_ID,
@@ -411,9 +414,6 @@ test("should create bulk requests using sandbox", async ({
   await socialNear.call(socialNearContractId, "new", {});
   await socialNear.call(socialNearContractId, "set_status", { status: "Live" });
 
-  const indexer = new Indexer(worker.provider.connection.url);
-  await indexer.init();
-  await indexer.attachIndexerRoutes(page);
   await redirectWeb4({
     page,
     contractId: web4ContractId,

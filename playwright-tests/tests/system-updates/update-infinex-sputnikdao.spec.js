@@ -18,6 +18,9 @@ test("update infinex.sputnik-dao.near", async ({ page }) => {
   const socialNearContractId = "social.near";
 
   const worker = await Worker.init();
+  const indexer = new Indexer(worker.provider.connection.url);
+  await indexer.init();
+  await indexer.attachIndexerRoutes(page);
 
   // Import factory at the time infinex was created
   const factoryContract = await worker.rootAccount.importContract({
@@ -242,9 +245,7 @@ test("update infinex.sputnik-dao.near", async ({ page }) => {
   });
   await socialNear.call(socialNearContractId, "new", {});
   await socialNear.call(socialNearContractId, "set_status", { status: "Live" });
-  const indexer = new Indexer(worker.provider.connection.url);
-  await indexer.init();
-  await indexer.attachIndexerRoutes(page);
+
   await redirectWeb4({
     page,
     contractId: web4ContractId,
