@@ -1,12 +1,59 @@
 export const MOCK_RPC_URL = "http://127.0.0.1:14500";
+// Add support for fastnear RPC endpoints used by web4
+const RPC_URL_PATTERNS = [
+  MOCK_RPC_URL,
+  "**/rpc.mainnet.fastnear.com/**",
+  "**/free.rpc.fastnear.com/**",
+  "**/rpc.mainnet.near.org/**",
+];
 
+/**
+ * Mocks RPC requests for testing NEAR blockchain interactions.
+ *
+ * This function intercepts RPC calls to both localhost (bos-workspace) and fastnear.com endpoints (web4).
+ * It allows you to mock specific RPC method responses or modify the original responses.
+ *
+ * @param {Object} params - The parameters for mocking RPC requests
+ * @param {Page} params.page - The Playwright page object
+ * @param {Object} params.filterParams - Filter parameters to match specific RPC calls (e.g., { method_name: "get_proposal" })
+ * @param {Object} params.mockedResult - The mocked result to return (if not using modifyOriginalResultFunction)
+ * @param {Function} params.modifyOriginalResultFunction - Function to modify the original RPC response
+ *                                                          Receives (originalResult, postData, args) as parameters
+ *
+ * @example
+ * // Mock a specific proposal
+ * await mockRpcRequest({
+ *   page,
+ *   filterParams: { method_name: "get_proposal" },
+ *   modifyOriginalResultFunction: () => mockProposalData
+ * });
+ *
+ * @example
+ * // Mock with conditional logic
+ * await mockRpcRequest({
+ *   page,
+ *   filterParams: { method_name: "get_proposals" },
+ *   modifyOriginalResultFunction: (originalResult, postData, args) => {
+ *     // Modify based on the request arguments
+ *     if (args.from_index === 0) {
+ *       return [mockProposal1, mockProposal2];
+ *     }
+ *     return originalResult;
+ *   }
+ * });
+ *
+ * @note When using redirectWeb4 (recommended), RPC calls go to fastnear.com endpoints.
+ *       When using bos-workspace locally, RPC calls go to localhost:14500.
+ *       This function handles both scenarios automatically.
+ */
 export async function mockRpcRequest({
   page,
   filterParams = {},
   mockedResult = {},
   modifyOriginalResultFunction = null,
 }) {
-  await page.route(MOCK_RPC_URL, async (route, request) => {
+  // Create a route handler that works for all RPC endpoints
+  const routeHandler = async (route, request) => {
     const postData = request.postDataJSON();
 
     const filterParamsKeys = Object.keys(filterParams);
@@ -64,7 +111,12 @@ export async function mockRpcRequest({
     } else {
       route.fallback();
     }
-  });
+  };
+
+  // Apply the route handler to all RPC URL patterns
+  for (const pattern of RPC_URL_PATTERNS) {
+    await page.route(pattern, routeHandler);
+  }
 }
 
 export function getOldPolicy(

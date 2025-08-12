@@ -3,11 +3,12 @@ const { NearToken } = VM.require(
 ) || { NearToken: () => <></> };
 
 const address = props.address ?? ""; // Empty string for NEAR
+const symbol = props.symbol; // Optional symbol prop for non-contract tokens
 const amountWithDecimals = props.amountWithDecimals ?? 0;
 const amountWithoutDecimals = props.amountWithoutDecimals;
 const showUSDValue = props.showUSDValue;
 
-const isNEAR = address === "" || address.toLowerCase() === "near";
+const isNEAR = !symbol && (address === "" || address.toLowerCase() === "near");
 const isWrapNear = address === "wrap.near";
 
 const [tokenUSDValue, setTokenUSDValue] = useState(null);
@@ -25,8 +26,19 @@ if (isWrapNear) {
   };
 }
 if (!isNEAR && !isWrapNear) {
-  ftMetadata = Near.view(address, "ft_metadata", {});
-  if (ftMetadata === null) return null;
+  if (symbol) {
+    // If symbol is explicitly provided (for non-contract tokens like 1Click tokens)
+    // Don't fetch metadata, just use the symbol
+    ftMetadata = {
+      symbol: symbol,
+      decimals: 1, // We'll use amountWithDecimals directly, no conversion needed
+      icon: null, // No icon for symbol-only tokens
+    };
+  } else {
+    // For contract addresses, fetch metadata from the contract
+    ftMetadata = Near.view(address, "ft_metadata", {});
+    if (ftMetadata === null) return null;
+  }
 }
 let amount = amountWithDecimals;
 let originalAmount = amountWithDecimals;
@@ -58,8 +70,11 @@ const TokenAmount = ({ showAllDecimals, showTilde }) => {
         </span>
         {isNEAR ? (
           <NearToken width={16} height={16} />
-        ) : (
+        ) : ftMetadata.icon ? (
           <img width="16" height="16" src={ftMetadata.icon} />
+        ) : (
+          // For token symbols without icons, show the symbol text
+          ftMetadata.symbol && <span>{ftMetadata.symbol}</span>
         )}
       </div>
       {tokenUSDValue && (

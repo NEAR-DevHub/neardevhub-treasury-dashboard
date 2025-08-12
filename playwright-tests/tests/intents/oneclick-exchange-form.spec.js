@@ -26,11 +26,39 @@ test.describe("OneClickExchangeForm Component", () => {
 
     // Create a simple app widget that only renders the OneClickExchangeForm with padding
     const appWidgetContent = `
+      const [submittedData, setSubmittedData] = useState(null);
+      
+      const handleSubmit = (data) => {
+        console.log("Form submitted with data:", JSON.stringify(data));
+        setSubmittedData(data);
+      };
+      
       return (
         <div style={{ padding: "10px" }}>
+          {submittedData && (
+            <div id="submission-result" style={{ 
+              padding: "10px", 
+              background: "#d4edda", 
+              border: "1px solid #c3e6cb",
+              borderRadius: "4px",
+              marginBottom: "10px"
+            }}>
+              <strong>Form Submitted!</strong>
+              <div data-testid="submitted-token-in">{submittedData.tokenInSymbol}</div>
+              <div data-testid="submitted-token-out">{submittedData.tokenOut}</div>
+              <div data-testid="submitted-network">{submittedData.networkOut}</div>
+              <div data-testid="submitted-amount">{submittedData.amountIn}</div>
+              <div data-testid="submitted-data" style={{ display: "none" }}>
+                {JSON.stringify(submittedData)}
+              </div>
+            </div>
+          )}
           <Widget
             src="widgets.treasury-factory.near/widget/pages.asset-exchange.OneClickExchangeForm"
-            props={{ instance: "${instanceAccount}" }}
+            props={{ 
+              instance: "${instanceAccount}",
+              onSubmit: handleSubmit
+            }}
           />
         </div>
       );
@@ -1151,6 +1179,45 @@ test.describe("OneClickExchangeForm Component", () => {
 
     // Click Create Proposal to demonstrate the full flow
     await createButton.click();
+
+    // Wait for the submission result to appear
+    await page.waitForSelector("#submission-result", { state: "visible" });
+
+    // Verify the submitted data
+    const submittedTokenIn = await page
+      .locator('[data-testid="submitted-token-in"]')
+      .textContent();
+    const submittedTokenOut = await page
+      .locator('[data-testid="submitted-token-out"]')
+      .textContent();
+    const submittedNetwork = await page
+      .locator('[data-testid="submitted-network"]')
+      .textContent();
+    const submittedAmount = await page
+      .locator('[data-testid="submitted-amount"]')
+      .textContent();
+
+    // Check that the correct values were submitted
+    expect(submittedTokenIn).toBe("ETH");
+    expect(submittedTokenOut).toBe("USDC");
+    expect(submittedNetwork).toBe("Ethereum"); // Should be the display name, not the ID
+    expect(submittedAmount).toBe("0.1");
+
+    // Get the full submitted data for additional verification
+    const submittedDataJson = await page
+      .locator('[data-testid="submitted-data"]')
+      .textContent();
+    const submittedData = JSON.parse(submittedDataJson);
+
+    // Verify the quote is included
+    expect(submittedData.quote).toBeTruthy();
+    expect(submittedData.quote.deadline).toBeTruthy();
+
+    console.log("✓ Form submitted with correct data:");
+    console.log(`  - Token In: ${submittedTokenIn}`);
+    console.log(`  - Token Out: ${submittedTokenOut}`);
+    console.log(`  - Network: ${submittedNetwork}`);
+    console.log(`  - Amount: ${submittedAmount}`);
 
     // Wait for the proposal creation modal or next step
     await page.waitForTimeout(1000);
