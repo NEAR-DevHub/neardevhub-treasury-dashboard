@@ -14,7 +14,7 @@ test("should update sputnik-dao contract", async ({ page }) => {
 
   const sandbox = new SandboxRPC();
   await sandbox.init();
-
+  await sandbox.indexer.attachIndexerRoutes(page);
   await page.route(
     `https://api.fastnear.com/v1/account/${sandbox.account_id}/full`,
     async (route) => {

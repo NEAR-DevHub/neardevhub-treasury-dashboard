@@ -6,6 +6,7 @@ const address = props.address ?? ""; // Empty string for NEAR
 
 const isNEAR = address === "" || address.toLowerCase() === "near";
 const isWrapNear = address === "wrap.near";
+const number = props.number ?? false;
 
 let ftMetadata = {
   symbol: "NEAR",
@@ -31,6 +32,7 @@ return (
     ) : (
       <img width="24" height="24" src={ftMetadata.icon} />
     )}
+    {number && number}
     {ftMetadata.symbol}
   </div>
 );

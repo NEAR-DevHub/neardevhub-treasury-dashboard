@@ -15,6 +15,7 @@ test("should update treasury factory with new web4 contract and self upgrade ins
 
   const sandbox = new SandboxRPC();
   await sandbox.init();
+  await sandbox.indexer.attachIndexerRoutes(page);
 
   const widget_reference_account_id = DEFAULT_WIDGET_REFERENCE_ACCOUNT_ID;
   await sandbox.setupDefaultWidgetReferenceAccount();

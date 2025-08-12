@@ -54,16 +54,15 @@ async function checkVotingDropdownChange({ page }) {
 }
 
 async function mockSettingsProposals({ page }) {
-  await mockRpcRequest({
-    page,
-    filterParams: { method_name: "get_proposals" },
-    modifyOriginalResultFunction: () => {
-      let originalResult = JSON.parse(
-        JSON.stringify(SettingsMemberProposalData)
-      );
-      originalResult.submission_time = CurrentTimestampInNanoseconds;
-      return originalResult;
-    },
+  await page.route(/\/proposals\/.*\?.*/, async (route) => {
+    let originalResult = JSON.parse(JSON.stringify(SettingsMemberProposalData));
+    originalResult.submission_time = CurrentTimestampInNanoseconds;
+    await route.fulfill({
+      json: {
+        proposals: [originalResult],
+        total: 1,
+      },
+    });
   });
 }
 

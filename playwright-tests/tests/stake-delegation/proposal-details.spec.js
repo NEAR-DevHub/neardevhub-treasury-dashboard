@@ -27,20 +27,22 @@ function getProposalDataByType(type) {
 }
 
 async function mockStakeDelegationProposals({ page, status, type }) {
-  await mockRpcRequest({
-    page,
-    filterParams: {
-      method_name: "get_proposals",
-    },
-    modifyOriginalResultFunction: () => {
+  await page.route(
+    /\/proposals\/.*\?.*category=stake-delegation/,
+    async (route) => {
       const proposal = getProposalDataByType(type);
       let originalResult = [JSON.parse(JSON.stringify(proposal))];
       originalResult[0].id = 0;
       originalResult[0].status = status;
       originalResult[0].submission_time = CurrentTimestampInNanoseconds;
-      return originalResult;
-    },
-  });
+      await route.fulfill({
+        json: {
+          proposals: originalResult,
+          total: 1,
+        },
+      });
+    }
+  );
 }
 
 async function mockStakeDelegationProposal({ page, status, type }) {

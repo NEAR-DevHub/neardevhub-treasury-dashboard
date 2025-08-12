@@ -6,6 +6,7 @@ import { connect } from "near-api-js";
 import { PROPOSAL_BOND, setPageAuthSettings } from "../../util/sandboxrpc.js";
 import { mockNearBalances } from "../../util/rpcmock.js";
 import { mockInventory } from "../../util/inventory.js";
+import { Indexer } from "../../util/indexer.js";
 
 let worker;
 let availableTokensList;
@@ -179,6 +180,12 @@ test.afterAll(async () => {
   await worker.tearDown();
 });
 
+async function setupIndexer(page, worker) {
+  const indexer = new Indexer(worker.provider.connection.url);
+  await indexer.init();
+  await indexer.attachIndexerRoutes(page);
+}
+
 // Helper function to find column index by header name
 async function getColumnIndex(page, headerName) {
   const headerRow = page
@@ -200,11 +207,14 @@ async function getColumnIndex(page, headerName) {
 }
 
 async function selectIntentsWallet(page) {
-  await expect(page.getByText("Treasury Wallet")).toBeVisible();
-  await page.getByTestId("dropdown-btn").click();
-  await expect(page.getByText("NEAR Intents")).toBeVisible();
-  await page.getByText("NEAR Intents").click();
-  await expect(page.getByRole("button", { name: "Submit" })).toBeVisible({
+  const canvasLocator = page.locator(".offcanvas-body");
+  await expect(canvasLocator.getByText("Treasury Wallet")).toBeVisible();
+  await canvasLocator.getByRole("button", { name: "Select Wallet" }).click();
+  await expect(canvasLocator.getByText("NEAR Intents")).toBeVisible();
+  await canvasLocator.getByText("NEAR Intents").click();
+  await expect(
+    canvasLocator.getByRole("button", { name: "Submit" })
+  ).toBeVisible({
     timeout: 14_000,
   });
   await page.waitForTimeout(2_000);
@@ -320,7 +330,7 @@ test("payment request to BTC address", async ({
       account: instanceAccount,
     })
   ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
-
+  await setupIndexer(page, worker);
   await redirectWeb4({
     page,
     contractId: instanceAccount,
@@ -449,6 +459,8 @@ test("payment request to BTC address", async ({
   await page.getByRole("button", { name: "Confirm" }).click();
 
   await expect(page.getByRole("button", { name: "Confirm" })).not.toBeVisible();
+  await page.reload();
+  await page.waitForTimeout(5_000);
   const proposalColumns = page
     .locator(
       'tr[data-component="widgets.treasury-factory.near/widget/pages.payments.Table"]'
@@ -610,6 +622,7 @@ test("payment request to USDC address on BASE", async ({
     })
   ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
 
+  await setupIndexer(page, worker);
   await redirectWeb4({
     page,
     contractId: instanceAccount,
@@ -736,8 +749,10 @@ test("payment request to USDC address on BASE", async ({
   );
   await expect(page.getByRole("button", { name: "Confirm" })).toBeVisible();
   await page.getByRole("button", { name: "Confirm" }).click();
-
   await expect(page.getByRole("button", { name: "Confirm" })).not.toBeVisible();
+
+  await page.reload();
+  await page.waitForTimeout(5_000);
   const proposalColumns = page
     .locator(
       'tr[data-component="widgets.treasury-factory.near/widget/pages.payments.Table"]'
@@ -776,6 +791,7 @@ test("payment request to USDC address on BASE", async ({
   await expect(
     page.getByText("The payment request has been successfully executed.")
   ).toBeVisible({ timeout: 15_000 });
+  await page.waitForTimeout(1_000);
   expect(
     await intentsContract.view("mt_batch_balance_of", {
       account_id: daoAccount,
@@ -933,7 +949,7 @@ test("payment request for wNEAR token on NEAR intents", async ({
       account: instanceAccount,
     })
   ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
-
+  await setupIndexer(page, worker);
   await redirectWeb4({
     page,
     contractId: instanceAccount,
@@ -1057,6 +1073,9 @@ test("payment request for wNEAR token on NEAR intents", async ({
   await page.getByRole("button", { name: "Confirm" }).click();
 
   await expect(page.getByRole("button", { name: "Confirm" })).not.toBeVisible();
+
+  await page.reload();
+  await page.waitForTimeout(5_000);
 
   // Helper function to find column index by header name
   const proposalColumns = page
@@ -1228,6 +1247,7 @@ test("insufficient balance alert for BTC payment request exceeding available bal
     })
   ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
 
+  await setupIndexer(page, worker);
   await redirectWeb4({
     page,
     contractId: instanceAccount,
@@ -1317,6 +1337,9 @@ test("insufficient balance alert for BTC payment request exceeding available bal
   await page.getByRole("button", { name: "Confirm" }).click();
 
   await expect(page.getByRole("button", { name: "Confirm" })).not.toBeVisible();
+
+  await page.reload();
+  await page.waitForTimeout(5_000);
 
   // Wait for the proposal to be created and navigate to the proposal
   const proposalColumns = page
@@ -1498,6 +1521,7 @@ test("insufficient balance alert for wNEAR payment request exceeding available b
     })
   ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
 
+  await setupIndexer(page, worker);
   await redirectWeb4({
     page,
     contractId: instanceAccount,
@@ -1585,6 +1609,9 @@ test("insufficient balance alert for wNEAR payment request exceeding available b
   await page.getByRole("button", { name: "Confirm" }).click();
 
   await expect(page.getByRole("button", { name: "Confirm" })).not.toBeVisible();
+
+  await page.reload();
+  await page.waitForTimeout(5_000);
 
   // Wait for the proposal to be created and navigate to the proposal
   const proposalColumns = page

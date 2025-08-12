@@ -1,10 +1,6 @@
-const {
-  encodeToMarkdown,
-  getFilteredProposalsByStatusAndKind,
-  getAllColorsAsObject,
-  updateDaoPolicy,
-} = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common") || {
-  getFilteredProposalsByStatusAndKind: () => {},
+const { encodeToMarkdown, getAllColorsAsObject, updateDaoPolicy } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+) || {
   getAllColorsAsObject: () => {},
 };
 

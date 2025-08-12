@@ -1,12 +1,199 @@
-const { hasPermission } = VM.require(
-  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
-) || {
-  hasPermission: () => {},
-};
+const { hasPermission, getProposalsFromIndexer, getApproversAndThreshold } =
+  VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common") || {
+    hasPermission: () => {},
+    getProposalsFromIndexer: () => {},
+    getApproversAndThreshold: () => {},
+  };
 
 const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
+
+const NavUnderline = styled.ul`
+  min-width: 300px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+
+  .nav-link {
+    color: var(--text-secondary-color) !important;
+    padding-bottom: 24px;
+  }
+  .active {
+    color: var(--text-color) !important;
+    border-bottom: 3px solid var(--theme-color);
+  }
+  .nav-link:hover {
+    color: var(--text-color) !important;
+  }
+`;
+
+const Container = styled.div`
+  .input-responsive {
+    width: 300px;
+    min-width: 150px;
+    flex: 1;
+    max-width: 400px;
+  }
+
+  /* When proposal details panel is open */
+  .layout-secondary.show ~ .layout-main .input-responsive,
+  .layout-main:has(~ .layout-secondary.show) .input-responsive {
+    width: 200px;
+    min-width: 120px;
+    max-width: 350px;
+  }
+
+  /* Responsive breakpoints */
+  @media (max-width: 1200px) {
+    .input-responsive {
+      width: 250px;
+      max-width: 300px;
+    }
+
+    .layout-secondary.show ~ .layout-main .input-responsive,
+    .layout-main:has(~ .layout-secondary.show) .input-responsive {
+      width: 180px;
+      min-width: 100px;
+      max-width: 200px;
+    }
+  }
+
+  @media (max-width: 992px) {
+    .input-responsive {
+      width: 200px;
+      max-width: 250px;
+    }
+
+    .layout-secondary.show ~ .layout-main .input-responsive,
+    .layout-main:has(~ .layout-secondary.show) .input-responsive {
+      width: 150px;
+      min-width: 80px;
+      max-width: 180px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .input-responsive {
+      width: 180px;
+      max-width: 200px;
+    }
+
+    .layout-secondary.show ~ .layout-main .input-responsive,
+    .layout-main:has(~ .layout-secondary.show) .input-responsive {
+      width: 120px;
+      min-width: 60px;
+      max-width: 150px;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .input-responsive {
+      width: 150px;
+      min-width: 120px;
+      max-width: 180px;
+    }
+
+    .layout-secondary.show ~ .layout-main .input-responsive,
+    .layout-main:has(~ .layout-secondary.show) .input-responsive {
+      width: 100px;
+      min-width: 50px;
+      max-width: 120px;
+    }
+  }
+
+  /* Active filter indicator */
+  .active-filter {
+    background-color: var(--grey-05);
+    position: relative;
+  }
+
+  .active-filter::after {
+    content: "";
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: rgb(0, 122, 255);
+  }
+
+  /* Responsive text behavior */
+  .responsive-text {
+    display: none; /* Hidden by default on small screens */
+  }
+
+  @media (min-width: 992px) {
+    .responsive-text {
+      display: inline; /* Show on large screens */
+    }
+  }
+
+  /* Hide responsive text when proposal details panel is open */
+  .layout-secondary.show ~ .layout-main .responsive-text,
+  .layout-main:has(~ .layout-secondary.show) .responsive-text {
+    display: none !important;
+  }
+
+  @media (max-width: 768px) {
+    .input-responsive {
+      width: 180px;
+      max-width: 200px;
+    }
+
+    .layout-secondary.show ~ .layout-main .input-responsive,
+    .layout-main:has(~ .layout-secondary.show) .input-responsive {
+      width: 120px;
+      min-width: 60px;
+      max-width: 150px;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .input-responsive {
+      width: 150px;
+      min-width: 120px;
+      max-width: 180px;
+    }
+
+    .layout-secondary.show ~ .layout-main .input-responsive,
+    .layout-main:has(~ .layout-secondary.show) .input-responsive {
+      width: 100px;
+      min-width: 50px;
+      max-width: 120px;
+    }
+  }
+
+  /* Active filter indicator */
+  .active-filter {
+    background-color: var(--grey-05);
+    position: relative;
+  }
+
+  .active-filter::after {
+    content: "";
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: rgb(0, 122, 255);
+  }
+`;
+
+const normalize = (text) =>
+  text
+    ? text
+        .replaceAll(/[- \.]/g, "_")
+        .replaceAll(/[^\w]+/g, "")
+        .replaceAll(/_+/g, "-")
+        .replace(/^-+/, "")
+        .replace(/-+$/, "")
+        .toLowerCase()
+        .trim("-")
+    : "";
 
 const { tab, instance, id } = props;
 
@@ -26,43 +213,284 @@ const hasCreatePermission = hasPermission(
   "transfer",
   "AddProposal"
 );
-const [currentTab, setCurrentTab] = useState(null);
+const [currentTab, setCurrentTab] = useState({ title: "Pending Requests" });
 const [isBulkImport, setIsBulkImport] = useState(false);
 const [bulkPreviewData, setBulkPreviewData] = useState(null);
 const [showDepositModal, setShowDepositModal] = useState(false);
+const [search, setSearch] = useState("");
+const [showFilters, setShowFilters] = useState(false);
+const [activeFilters, setActiveFilters] = useState({});
+const [proposals, setProposals] = useState([]);
+const [totalLength, setTotalLength] = useState(0);
+const [loading, setLoading] = useState(false);
+const [currentPage, setCurrentPage] = useState(1);
+const [rowsPerPage, setRowsPerPage] = useState(10);
+const [sortDirection, setSortDirection] = useState("desc");
+const [page, setPage] = useState(0);
+const [proposalUrl, setProposalUrl] = useState(null);
+const [amountValues, setAmountValues] = useState({
+  min: "",
+  max: "",
+  equal: "",
+  value: "between",
+});
+const [isSearchFocused, setIsSearchFocused] = useState(false);
+
+useEffect(() => {
+  if (tab === "history") {
+    setCurrentTab({ title: "History" });
+  }
+}, [tab]);
+
+const refreshTableData = Storage.get(
+  "REFRESH_TABLE_DATA",
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.CreatePaymentRequest`
+);
+
+const refreshPaymentsTableData = Storage.get(
+  "REFRESH_TABLE_DATA",
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.BulkImportPreviewTable`
+);
+
+const refreshProposalsTableData = Storage.get(
+  "REFRESH_PAYMENTS_TABLE_DATA",
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.ProposalDetailsPage`
+);
+
 const proposalDetailsPageId =
   id || id === "0" || id === 0 ? parseInt(id) : null;
 
-const SidebarMenu = ({ currentTab }) => {
+function fetchProposals({ customSortDirection, hardRefresh }) {
+  setLoading(true);
+  getProposalsFromIndexer({
+    category: "payments",
+    statuses:
+      currentTab.title === "Pending Requests"
+        ? ["InProgress"]
+        : ["Approved", "Rejected", "Expired", "Failed"],
+    page: page,
+    pageSize: rowsPerPage,
+    daoId: treasuryDaoID,
+    sortDirection: customSortDirection || sortDirection,
+    search: search,
+    filters: activeFilters,
+    amountValues: amountValues,
+    accountId: context.accountId,
+    existingQuery: hardRefresh ? null : proposalUrl,
+    existingProposals: proposals,
+  })
+    .then((r) => {
+      setProposalUrl(r.url);
+      setProposals(r.proposals || []);
+      setTotalLength(r.total || 0);
+      setLoading(false);
+    })
+    .catch((error) => {
+      console.error("Error fetching proposals:", error);
+      setProposals([]);
+      setTotalLength(0);
+      setLoading(false);
+    });
+}
+
+// Helper function to check if filters have meaningful values
+const hasMeaningfulFilters = (filters) => {
+  if (!filters || Object.keys(filters).length === 0) return false;
+
+  return Object.values(filters).some((filter) => {
+    // Check if filter has values with meaningful content
+    return (
+      filter.values &&
+      filter.values.length > 0 &&
+      filter.values.some((value) => value && value !== "")
+    );
+  });
+};
+
+useEffect(() => {
+  setPage(0);
+  const timeout = setTimeout(() => {
+    // Only fetch if filters have meaningful values or if there are no filters
+    if (
+      hasMeaningfulFilters(activeFilters) ||
+      Object.keys(activeFilters).length === 0
+    ) {
+      fetchProposals();
+    }
+  }, 500);
+
+  return () => clearTimeout(timeout);
+}, [activeFilters]);
+
+useEffect(() => {
+  setPage(0);
+  const timeout = setTimeout(() => {
+    fetchProposals();
+  }, 1000);
+
+  return () => clearTimeout(timeout);
+}, [search, amountValues]);
+
+useEffect(() => {
+  setPage(0);
+  fetchProposals({ hardRefresh: true });
+}, [
+  currentTab,
+  refreshTableData,
+  refreshProposalsTableData,
+  refreshPaymentsTableData,
+]);
+
+useEffect(() => {
+  fetchProposals();
+}, [page, rowsPerPage]);
+
+const SidebarMenu = () => {
   return (
-    <div
-      className="d-flex gap-2 align-items-center"
-      style={{ paddingBottom: "16px" }}
-    >
-      {hasCreatePermission && (
-        <Widget
-          loading=""
-          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
-          props={{
-            ActionButton: () => (
-              <button className="btn primary-button d-flex align-items-center gap-2 mb-0">
-                <i class="bi bi-plus-lg h5 mb-0"></i>Create Request
-              </button>
-            ),
-            checkForDeposit: true,
-            treasuryDaoID,
-            callbackAction: () => setShowCreateRequest(true),
-          }}
-        />
+    <div>
+      {/* Tabs */}
+      <div
+        className="d-flex justify-content-between border-bottom gap-2 align-items-center flex-wrap flex-md-nowrap"
+        style={{ paddingRight: "10px" }}
+      >
+        <NavUnderline className="nav gap-2 flex-shrink-0">
+          {[{ title: "Pending Requests" }, { title: "History" }].map(
+            ({ title }) =>
+              title && (
+                <li key={title}>
+                  <div
+                    onClick={() => {
+                      setCurrentTab({ title });
+                      // Clear filters when switching tabs since available filters change
+                      setActiveFilters({});
+                      setAmountValues({
+                        min: "",
+                        max: "",
+                        equal: "",
+                        value: "between",
+                      });
+                      setSearch("");
+                      setShowFilters(false);
+                    }}
+                    className={[
+                      "d-inline-flex gap-2 nav-link",
+                      normalize(currentTab.title) === normalize(title)
+                        ? "active"
+                        : "",
+                    ].join(" ")}
+                  >
+                    <span>{title}</span>
+                  </div>
+                </li>
+              )
+          )}
+        </NavUnderline>
+
+        <div className="d-flex gap-2 align-items-center flex-wrap flex-sm-nowrap pb-2 pb-md-0 ps-2 ps-md-0 flex-grow-1 justify-content-start justify-content-md-end">
+          {/* Search and Filters */}
+          <div className="input-responsive">
+            <div className="input-group flex-grow-1">
+              <span className="input-group-text bg-transparent">
+                <i class="bi bi-search text-secondary"></i>
+              </span>
+              <input
+                type="text"
+                className={`form-control border-start-0 ${
+                  search ? "border-end-0" : ""
+                }`}
+                placeholder={
+                  isSearchFocused ? "Search by id, title or summary" : "Search"
+                }
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onFocus={() => setIsSearchFocused(true)}
+                onBlur={() => setIsSearchFocused(false)}
+              />
+              {search && (
+                <span className="input-group-text bg-transparent border-start-0">
+                  <i
+                    class="bi bi-x-lg cursor-pointer text-secondary"
+                    onClick={() => setSearch("")}
+                  ></i>
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Export button for History tab */}
+          {currentTab.title === "History" && (
+            <div style={{ minWidth: "fit-content" }}>
+              <Widget
+                loading=""
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.ExportTransactions`}
+                props={{
+                  page: "payments",
+                  instance: props.instance,
+                  activeFilters,
+                  amountValues,
+                  search,
+                }}
+              />
+            </div>
+          )}
+
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`btn btn-outline-secondary ${
+              showFilters || Object.keys(activeFilters ?? {}).length > 0
+                ? "active-filter"
+                : ""
+            }`}
+          >
+            <i class="bi bi-funnel"></i>
+          </button>
+          <Widget
+            loading=""
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.SettingsDropdown`}
+            props={{
+              isPendingPage: currentTab.title === "Pending Requests",
+              instance,
+            }}
+          />
+          {hasCreatePermission && (
+            <div style={{ minWidth: "fit-content" }}>
+              <Widget
+                loading=""
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InsufficientBannerModal`}
+                props={{
+                  ActionButton: () => (
+                    <button className="btn primary-button d-flex align-items-center gap-2 mb-0">
+                      <i class="bi bi-plus-lg h5 mb-0"></i>
+                      <span className="responsive-text">Create Request</span>
+                    </button>
+                  ),
+                  checkForDeposit: true,
+                  treasuryDaoID,
+                  callbackAction: () => setShowCreateRequest(true),
+                }}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+      {showFilters && (
+        <div className="border-bottom">
+          <Widget
+            loading=""
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.Filters`}
+            props={{
+              isPendingRequests: currentTab.title === "Pending Requests",
+              instance,
+              activeFilters,
+              setActiveFilters,
+              treasuryDaoID,
+              amountValues,
+              setAmountValues,
+              setShowFilters,
+            }}
+          />
+        </div>
       )}
-      <Widget
-        loading=""
-        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.SettingsDropdown`}
-        props={{
-          isPendingPage: currentTab.title === "Pending Requests",
-          instance,
-        }}
-      />
     </div>
   );
 };
@@ -209,8 +637,31 @@ useEffect(() => {
   }
 }, [props.transactionHashes]);
 
+const policy = treasuryDaoID
+  ? Near.view(treasuryDaoID, "get_policy", {})
+  : null;
+
+const transferApproversGroup = getApproversAndThreshold(
+  treasuryDaoID,
+  "transfer",
+  context.accountId
+);
+
+const deleteGroup = getApproversAndThreshold(
+  treasuryDaoID,
+  "transfer",
+  context.accountId,
+  true
+);
+
+const handleSortClick = () => {
+  const newDirection = sortDirection === "desc" ? "asc" : "desc";
+  setSortDirection(newDirection);
+  fetchProposals({ customSortDirection: newDirection });
+};
+
 return (
-  <div className="w-100 h-100 flex-grow-1 d-flex flex-column">
+  <Container className="w-100 h-100 flex-grow-1 d-flex flex-column">
     <VoteSuccessToast />
     {typeof proposalDetailsPageId === "number" ? (
       <Widget
@@ -319,41 +770,61 @@ return (
         />
         <div className="layout-flex-wrap flex-grow-1">
           <div className="layout-main">
-            <Widget
-              loading=""
-              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Tabs`}
-              props={{
-                ...props,
-                page: "payments",
-                selectedProposalDetailsId: showProposalDetailsId,
-                setCurrentTab,
-                highlightProposalId:
-                  props.highlightProposalId || voteProposalId,
-                tabs: [
-                  {
-                    title: "Pending Requests",
-                    href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.PendingRequests`,
-                    props: {
-                      ...props,
-                      onSelectRequest: (id) => setShowProposalId(id),
-                      setToastStatus,
-                      setVoteProposalId,
-                    },
-                  },
-                  {
-                    title: "History",
-                    href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.History`,
-                    props: {
-                      ...props,
-                      onSelectRequest: (id) => setShowProposalId(id),
-                      setToastStatus,
-                      setVoteProposalId,
-                    },
-                  },
-                ],
-                SidebarMenu: SidebarMenu,
-              }}
-            />
+            <div className="card py-3 d-flex flex-column w-100 h-100 flex-grow-1">
+              {/* Sidebar Menu */}
+              <SidebarMenu />
+
+              {/* Content */}
+              <Widget
+                loading=""
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.Table`}
+                props={{
+                  proposals,
+                  isPendingRequests: currentTab.title === "Pending Requests",
+                  transferApproversGroup,
+                  deleteGroup,
+                  loading: loading,
+                  policy,
+                  refreshTableData: () => fetchProposals({ hardRefresh: true }),
+                  sortDirection,
+                  handleSortClick,
+                  onSelectRequest: (id) => setShowProposalId(id),
+                  highlightProposalId:
+                    props.highlightProposalId ||
+                    (typeof showProposalDetailsId === "number"
+                      ? showProposalDetailsId
+                      : voteProposalId),
+                  setToastStatus,
+                  setVoteProposalId,
+                  selectedProposalDetailsId: showProposalDetailsId,
+                  ...props,
+                }}
+              />
+              {(proposals ?? [])?.length > 0 && (
+                <div>
+                  <Widget
+                    loading=""
+                    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Pagination`}
+                    props={{
+                      totalLength: totalLength,
+                      totalPages: Math.ceil(totalLength / rowsPerPage),
+                      onNextClick: () => {
+                        setPage(page + 1);
+                      },
+                      onPrevClick: () => {
+                        setPage(page - 1);
+                      },
+                      currentPage: page,
+                      rowsPerPage: rowsPerPage,
+                      onRowsChange: (v) => {
+                        setPage(0);
+                        setRowsPerPage(parseInt(v));
+                      },
+                    }}
+                  />
+                </div>
+              )}
+            </div>
           </div>
           <div
             className={`layout-secondary ${
@@ -380,5 +851,5 @@ return (
         </div>
       </div>
     )}
-  </div>
+  </Container>
 );
