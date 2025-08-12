@@ -557,6 +557,8 @@ function getProposalsFromIndexer({
   search,
   amountValues,
   accountId,
+  existingQuery,
+  existingProposals,
 }) {
   let query = `${REPL_SPUTNIK_INDEXER}/proposals/${daoId}?page=${page}&page_size=${pageSize}&sort_by=CreationTime&sort_direction=${sortDirection}`;
 
@@ -593,7 +595,21 @@ function getProposalsFromIndexer({
     query += `&${filterQueryParams}`;
   }
 
-  return asyncFetch(query).then((r) => r.body);
+  // if the query is the same as the existing query, return the existing proposals
+  if (existingQuery && query && query === existingQuery) {
+    return Promise.resolve({
+      proposals: existingProposals,
+      url: query,
+    });
+  } else {
+    // if the query is different from the existing query, fetch the new proposals
+    return asyncFetch(query).then((r) => {
+      return {
+        ...r.body,
+        url: query,
+      };
+    });
+  }
 }
 
 const data = fetch("${REPL_BACKEND_API}".replace("/api", "") + "/headers");

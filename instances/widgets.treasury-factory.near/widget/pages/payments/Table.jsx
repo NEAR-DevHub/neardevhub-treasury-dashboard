@@ -219,8 +219,10 @@ const ProposalsComponent = () => {
           (intentsTokensData || []).find(
             (token) => token.near_token_id === args.token_id
           );
-        const blockchain = intentsToken
-          ? intentsToken.defuse_asset_identifier.split(":")[0]
+        const blockchain = isIntentWithdraw
+          ? "NEAR Protocol"
+          : intentsToken
+          ? intentsToken.defuse_asset_identifier.split(":")[0].toUpperCase()
           : null;
 
         return (
@@ -262,13 +264,11 @@ const ProposalsComponent = () => {
               </td>
             )}
 
-            <td className={"text-left"}>
+            <td className={"text-left"} style={{ minWidth: 150 }}>
               <div className="fw-semi-bold">
                 {sourceWallet}
                 {blockchain && (
-                  <div className="text-secondary">
-                    {blockchain.toUpperCase()}
-                  </div>
+                  <div className="text-secondary">{blockchain}</div>
                 )}
               </div>
             </td>
