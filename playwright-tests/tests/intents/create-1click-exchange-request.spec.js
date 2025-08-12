@@ -516,9 +516,11 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     await page.waitForTimeout(1000);
 
     // Check ETH balance on dashboard
-    const ethBalanceRowLocator = page.locator(
-      'div.d-flex.flex-column:has(div.h6.mb-0.text-truncate:has-text("ETH"))'
-    );
+    const ethBalanceRowLocator = page
+      .getByTestId("intents-portfolio")
+      .locator(
+        'div.d-flex.flex-column:has(div.h6.mb-0.text-truncate:has-text("ETH"))'
+      );
     await expect(ethBalanceRowLocator).toBeVisible();
     await expect(ethBalanceRowLocator).toContainText("5.00");
     console.log("✅ Verified initial ETH balance: 5.00 on dashboard");
@@ -1245,17 +1247,21 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     await page.waitForTimeout(2000);
 
     // Check updated ETH balance
-    const ethBalanceRowAfterSwap = page.locator(
-      'div.d-flex.flex-column:has(div.h6.mb-0.text-truncate:has-text("ETH"))'
-    );
+    const ethBalanceRowAfterSwap = page
+      .getByTestId("intents-portfolio")
+      .locator(
+        'div.d-flex.flex-column:has(div.h6.mb-0.text-truncate:has-text("ETH"))'
+      );
     await expect(ethBalanceRowAfterSwap).toBeVisible();
     await expect(ethBalanceRowAfterSwap).toContainText("4.90"); // 5.00 - 0.10 = 4.90
     console.log("✅ Verified ETH balance after swap: 4.90");
 
     // Check for new USDC token
-    const usdcBalanceRowLocator = page.locator(
-      'div.d-flex.flex-column:has(div.h6.mb-0.text-truncate:has-text("USDC"))'
-    );
+    const usdcBalanceRowLocator = page
+      .getByTestId("intents-portfolio")
+      .locator(
+        'div.d-flex.flex-column:has(div.h6.mb-0.text-truncate:has-text("USDC"))'
+      );
     await expect(usdcBalanceRowLocator).toBeVisible();
 
     // Scroll to USDC balance for better video visibility
