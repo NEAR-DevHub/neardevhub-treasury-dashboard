@@ -58,7 +58,7 @@ const deleteGroup = props.deleteGroup;
 const [nearStakedTokens, setNearStakedTokens] = useState(null);
 const [lockupNearBalances, setLockupNearBalances] = useState(null);
 const refreshTableData = props.refreshTableData;
-
+const [intentsTokensData, setIntentsTokensData] = useState(null);
 const accountId = context.accountId;
 
 const hasVotingPermission = (
@@ -208,6 +208,21 @@ const ProposalsComponent = () => {
             }
           : item.kind.Transfer;
 
+        const sourceWallet = isIntentWithdraw
+          ? "Intents"
+          : isFunctionType &&
+            item.kind.FunctionCall?.actions[0]?.method_name === "transfer"
+          ? "Lockup"
+          : "SputnikDAO";
+        const intentsToken =
+          isIntentWithdraw &&
+          (intentsTokensData || []).find(
+            (token) => token.near_token_id === args.token_id
+          );
+        const blockchain = intentsToken
+          ? intentsToken.defuse_asset_identifier.split(":")[0]
+          : null;
+
         return (
           <tr
             data-testid={"proposal-request-#" + item.id}
@@ -246,32 +261,18 @@ const ProposalsComponent = () => {
                 />
               </td>
             )}
-            {lockupContract && (
-              <td className={"text-left"}>
-                <div className="text-secondary fw-semi-bold">
-                  {isIntentWithdraw
-                    ? "Intents"
-                    : isFunctionType
-                    ? "Lockup"
-                    : "Sputnik DAO"}
-                </div>
-                <Widget
-                  loading=""
-                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
-                  props={{
-                    accountId: isIntentWithdraw
-                      ? treasuryDaoID
-                      : isFunctionType
-                      ? lockupContract
-                      : treasuryDaoID,
-                    showKYC: false,
-                    instance,
-                    displayImage: false,
-                    displayName: false,
-                  }}
-                />
-              </td>
-            )}
+
+            <td className={"text-left"}>
+              <div className="fw-semi-bold">
+                {sourceWallet}
+                {blockchain && (
+                  <div className="text-secondary">
+                    {blockchain.toUpperCase()}
+                  </div>
+                )}
+              </div>
+            </td>
+
             {showReferenceProposal && (
               <td className={isVisible("Reference")}>
                 {typeof proposalId === "number" ? (
@@ -513,7 +514,7 @@ return (
             </span>
           </td>
           {!isPendingRequests && <td className="text-center">Status</td>}
-          {lockupContract && <td className={"text-left"}>Treasury Wallet</td>}
+          <td className={"text-left"}>Source Wallet</td>
           {showReferenceProposal && (
             <td className={isVisible("Reference")}>Reference</td>
           )}
