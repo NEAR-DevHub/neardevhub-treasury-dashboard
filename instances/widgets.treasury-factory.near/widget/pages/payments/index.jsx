@@ -29,7 +29,7 @@ const hasCreatePermission = hasPermission(
 const [currentTab, setCurrentTab] = useState(null);
 const [isBulkImport, setIsBulkImport] = useState(false);
 const [bulkPreviewData, setBulkPreviewData] = useState(null);
-
+const [showDepositModal, setShowDepositModal] = useState(false);
 const proposalDetailsPageId =
   id || id === "0" || id === 0 ? parseInt(id) : null;
 
@@ -226,6 +226,17 @@ return (
       />
     ) : (
       <div className="h-100 w-100 flex-grow-1 d-flex flex-column">
+        {showDepositModal && (
+          <Widget
+            loading=""
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DepositModal`}
+            props={{
+              show: showDepositModal,
+              onClose: () => setShowDepositModal(false),
+              treasuryDaoID: treasuryDaoID,
+            }}
+          />
+        )}
         {bulkPreviewData && (
           <Widget
             loading=""
@@ -296,6 +307,10 @@ return (
                     instance,
                     onCloseCanvas: toggleCreatePage,
                     setToastStatus,
+                    setShowDepositModal: () => {
+                      toggleCreatePage();
+                      setShowDepositModal(true);
+                    },
                   }}
                 />
               </div>

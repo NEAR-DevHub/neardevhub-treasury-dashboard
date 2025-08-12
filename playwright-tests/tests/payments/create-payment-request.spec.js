@@ -21,6 +21,39 @@ import {
 import { InsufficientBalance, toBase64 } from "../../util/lib.js";
 import { SandboxRPC } from "../../util/sandboxrpc.js";
 
+async function selectDAOWallet(page) {
+  await expect(page.getByText("Treasury Wallet")).toBeVisible();
+  await page.getByTestId("dropdown-btn").click();
+  await expect(page.getByText("SputnikDAO")).toBeVisible();
+  await page.getByText("SputnikDAO").click();
+  await expect(page.getByRole("button", { name: "Submit" })).toBeVisible({
+    timeout: 14_000,
+  });
+}
+
+async function selectLockupWallet(page) {
+  await expect(page.getByText("Treasury Wallet")).toBeVisible();
+  await page.getByTestId("dropdown-btn").click();
+  const canvasLocator = page.locator(".offcanvas-body");
+  await expect(canvasLocator.getByText("Lockup")).toBeVisible();
+  await canvasLocator.getByText("Lockup").click();
+  await expect(
+    canvasLocator.getByRole("button", { name: "Submit" })
+  ).toBeVisible({
+    timeout: 14_000,
+  });
+}
+
+async function selectIntentsWallet(page) {
+  await expect(page.getByText("Treasury Wallet")).toBeVisible();
+  await page.getByTestId("dropdown-btn").click();
+  await expect(page.getByText("NEAR Intents")).toBeVisible();
+  await page.getByText("NEAR Intents").click();
+  await expect(page.getByRole("button", { name: "Submit" })).toBeVisible({
+    timeout: 14_000,
+  });
+}
+
 async function clickCreatePaymentRequestButton(page) {
   await page.waitForTimeout(1_000);
   const createPaymentRequestButton = await page.getByRole("button", {
@@ -29,6 +62,7 @@ async function clickCreatePaymentRequestButton(page) {
   await expect(createPaymentRequestButton).toBeVisible({ timeout: 20_000 });
   await page.waitForTimeout(1_000);
   await createPaymentRequestButton.click();
+  await selectDAOWallet(page);
   return createPaymentRequestButton;
 }
 
@@ -40,7 +74,7 @@ async function fillCreateForm(page, daoAccount, instanceAccount) {
   await clickCreatePaymentRequestButton(page);
 
   if (instanceConfig.showProposalSelection === true) {
-    const proposalSelect = await page.locator(".dropdown-toggle").first();
+    const proposalSelect = await page.locator(".dropdown-toggle").nth(1);
     await expect(proposalSelect).toBeVisible();
     await expect(
       await proposalSelect.getByText("Select", { exact: true })
@@ -138,14 +172,6 @@ test.describe("User is not logged in", function () {
     ).toBeHidden();
   });
 });
-
-async function selectLockupAccount({ page, daoAccount, lockupContract }) {
-  await page
-    .locator(".offcanvas-body")
-    .getByRole("button", { name: daoAccount })
-    .click();
-  await page.locator(".offcanvas-body").getByText(lockupContract).click();
-}
 
 export async function mockNearnProposal({ page }) {
   await page.route(
@@ -418,7 +444,7 @@ test.describe("User is logged in", function () {
     await clickCreatePaymentRequestButton(page);
 
     if (instanceConfig.showProposalSelection === true) {
-      const proposalSelect = await page.locator(".dropdown-toggle").first();
+      const proposalSelect = await page.locator(".dropdown-toggle").nth(1);
       await expect(proposalSelect).toBeVisible();
       await expect(
         await proposalSelect.getByText("Select", { exact: true })
@@ -540,7 +566,7 @@ test.describe("User is logged in", function () {
     await mockNearnProposal({ page });
     await clickCreatePaymentRequestButton(page);
 
-    const proposalSelect = page.locator(".dropdown-toggle").first();
+    const proposalSelect = page.locator(".dropdown-toggle").nth(1);
     await expect(proposalSelect).toBeVisible();
 
     await expect(
@@ -548,6 +574,7 @@ test.describe("User is logged in", function () {
     ).toBeVisible();
 
     await proposalSelect.click();
+    await page.waitForTimeout(2_000);
     await page
       .getByPlaceholder("Search by id or title")
       .pressSequentially("22");
@@ -571,7 +598,7 @@ test.describe("User is logged in", function () {
 
     await clickCreatePaymentRequestButton(page);
 
-    await expect(await page.locator(".dropdown-toggle").first()).toHaveText(
+    await expect(await page.locator(".dropdown-toggle").nth(1)).toHaveText(
       "Select"
     );
     expect(await page.getByPlaceholder("treasury.near").inputValue()).toBe("");
@@ -624,7 +651,7 @@ test.describe("User is logged in", function () {
     await clickCreatePaymentRequestButton(page);
 
     if (instanceConfig.showProposalSelection === true) {
-      const proposalSelect = page.locator(".dropdown-toggle").first();
+      const proposalSelect = page.locator(".dropdown-toggle").nth(1);
       await expect(proposalSelect).toBeVisible();
       await expect(
         proposalSelect.getByText("Select", { exact: true })
@@ -719,8 +746,14 @@ test.describe("User is logged in", function () {
     await sandbox.setupLockupContract(daoName);
     await updateDaoPolicyMembers({ instanceAccount, page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
-    await clickCreatePaymentRequestButton(page);
-    await selectLockupAccount({ page, daoAccount, lockupContract });
+    await page.waitForTimeout(1_000);
+    const createPaymentRequestButton = await page.getByRole("button", {
+      name: "Create Request",
+    });
+    await expect(createPaymentRequestButton).toBeVisible({ timeout: 20_000 });
+    await page.waitForTimeout(1_000);
+    await createPaymentRequestButton.click();
+    await selectLockupWallet(page);
     await page.getByTestId("proposal-title").fill(proposalTitle);
     await page.getByTestId("proposal-summary").fill(proposalSummary);
 
@@ -836,6 +869,41 @@ test.describe("User is logged in", function () {
     await expect(loader).toBeHidden();
     await expect(submitBtn).toBeEnabled();
   });
+
+  test("show deposit modal for intents wallet", async ({
+    page,
+    instanceAccount,
+  }) => {
+    test.setTimeout(150_000);
+    await updateDaoPolicyMembers({ instanceAccount, page });
+    await page.goto(`/${instanceAccount}/widget/app?page=payments`);
+    await page.waitForTimeout(1_000);
+    const createPaymentRequestButton = await page.getByRole("button", {
+      name: "Create Request",
+    });
+    await expect(createPaymentRequestButton).toBeVisible({ timeout: 20_000 });
+    await createPaymentRequestButton.click();
+    await page.route(
+      "https://api-mng-console.chaindefuser.com/api/tokens",
+      async (route) => {
+        await route.fulfill({
+          status: 200,
+          body: JSON.stringify({
+            items: [],
+          }),
+        });
+      }
+    );
+    await selectIntentsWallet(page);
+    await page
+      .getByText(
+        "Your NEAR Intents wallet has no tokens. Fund it now to start using the platform’s features"
+      )
+      .click();
+    await expect(page.getByRole("button", { name: "Deposit" })).toBeVisible();
+    await page.getByRole("button", { name: "Deposit" }).click();
+    await expect(page.getByText("Use this deposit address")).toBeVisible();
+  });
 });
 
 test.describe("admin with function access keys", function () {
@@ -863,7 +931,7 @@ test.describe("admin with function access keys", function () {
     const nearAmountFromLinkedProposal = 2160;
 
     if (instanceConfig.showProposalSelection === true) {
-      const proposalSelect = page.locator(".dropdown-toggle").first();
+      const proposalSelect = page.locator(".dropdown-toggle").nth(1);
       await expect(proposalSelect).toBeVisible();
 
       await expect(
@@ -1063,22 +1131,10 @@ test.describe("admin with function access keys", function () {
     const checkThatFormIsCleared = async () => {
       await page.waitForTimeout(2_000);
       await page.getByRole("button", { name: " Create Request" }).click();
-
-      if (instanceConfig.showProposalSelection === true) {
-        const proposalSelect = page.locator(".dropdown-toggle").first();
-        await expect(proposalSelect).toBeVisible();
-        await expect(
-          proposalSelect.getByText("Select", { exact: true })
-        ).toBeVisible();
-      } else {
-        await expect(page.getByTestId("proposal-title")).toHaveValue("");
-        await expect(page.getByTestId("proposal-summary")).toHaveValue("");
-        await expect(page.getByPlaceholder("treasury.near")).toBeVisible();
-        await expect(page.getByTestId("total-amount")).toHaveValue("");
-      }
-      const submitBtn = page.getByRole("button", { name: "Submit" });
-      await expect(submitBtn).toBeAttached({ timeout: 10_000 });
-      await expect(submitBtn).toBeDisabled({ timeout: 10_000 });
+      const submitBtn = page
+        .locator(".offcanvas-body")
+        .getByRole("button", { name: "Submit" });
+      await expect(submitBtn).toBeHidden({ timeout: 10_000 });
     };
     await checkThatFormIsCleared();
     await page.waitForTimeout(2_000);

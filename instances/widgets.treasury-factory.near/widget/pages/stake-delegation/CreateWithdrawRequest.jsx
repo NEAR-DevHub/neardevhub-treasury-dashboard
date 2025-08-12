@@ -29,7 +29,7 @@ const lockupContract = accountToLockup(treasuryDaoID);
 
 const walletOptions = [
   {
-    label: treasuryDaoID,
+    label: "SputnikDAO",
     value: treasuryDaoID,
   },
 ];
@@ -439,6 +439,7 @@ return (
               setShowLoader(true);
               setSelectedWallet(v);
             },
+            isStakingDelegationPage: true,
           }}
         />
       )}
