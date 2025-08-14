@@ -144,7 +144,7 @@ return (
                   rel="noopener noreferrer"
                   href={`${isWeb4Page ? "https://" : "https://near.social/"}${
                     option.instanceAccount
-                  }/widget/app`}
+                  }${isWeb4Page ? ".page" : ""}/widget/app`}
                   className={`dropdown-item cursor-pointer w-100 text-wrap d-flex gap-2 align-items-center`}
                 >
                   <img

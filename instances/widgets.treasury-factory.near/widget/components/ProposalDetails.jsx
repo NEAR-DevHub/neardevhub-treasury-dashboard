@@ -227,7 +227,9 @@ const VotesDetails = () => {
 const CopyComponent = () => {
   const clipboardText = `${
     isWeb4Page ? "https://" : "https://near.social/"
-  }${instance}/widget/app?page=${props.page}&id=${proposalData.id}`;
+  }${instance}${isWeb4Page ? ".page" : ""}/widget/app?page=${props.page}&id=${
+    proposalData.id
+  }`;
   return isCompactVersion ? (
     <Widget
       loading=""
