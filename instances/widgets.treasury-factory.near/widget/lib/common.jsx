@@ -405,6 +405,8 @@ const isNearSocial =
   gatewayOrigin.includes("testnet.page") ||
   gatewayOrigin.includes("near.page");
 
+const isWeb4Page = gatewayOrigin.includes("near.page");
+
 function getMembersAndPermissions(treasuryDaoID) {
   return fetchDaoPolicy(treasuryDaoID).then((daoPolicy) => {
     const memberMap = new Map();
@@ -1401,4 +1403,5 @@ return {
   getIntentsBalances,
   updateDaoPolicy,
   nearAccountValidation,
+  isWeb4Page,
 };
