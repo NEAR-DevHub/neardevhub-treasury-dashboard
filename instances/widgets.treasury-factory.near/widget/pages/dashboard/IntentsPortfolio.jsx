@@ -27,7 +27,7 @@ function formatCurrency(amount) {
 function convertBalanceToReadableFormat(amount, decimals) {
   return Big(amount ?? "0")
     .div(Big(10).pow(decimals ?? "1"))
-    .toFixed(2);
+    .toString();
 }
 
 function formatPrice(price) {
@@ -60,7 +60,7 @@ function aggregateTokensBySymbol(tokens) {
     const readableAmount = convertBalanceToReadableFormat(amount, decimals);
     aggregated[symbol].totalAmount = Big(aggregated[symbol].totalAmount)
       .plus(Big(readableAmount))
-      .toFixed(2);
+      .toString();
     aggregated[symbol].tokens.push({
       ...token,
       readableAmount,
@@ -290,7 +290,7 @@ const TokenCard = ({ token, id }) => {
         </div>
         <div className="d-flex gap-2 align-items-center justify-content-end">
           <div className="d-flex flex-column align-items-end">
-            <div className="h6 mb-0">{totalAmount}</div>
+            <div className="h6 mb-0">{Big(totalAmount || 0).toFixed(2)}</div>
             <div className="text-sm text-secondary">
               {formatCurrency(
                 Big(totalAmount)
@@ -344,7 +344,7 @@ const TokenCard = ({ token, id }) => {
                       )}
                     </div>
                     <div className="h6 mb-0">
-                      {individualToken.readableAmount}
+                      {Big(individualToken.readableAmount || 0).toFixed(2)}
                     </div>
                   </div>
 
@@ -387,8 +387,8 @@ if (error)
     </div>
   );
 
-const filtered = (tokens || []).filter(
-  (token) => token.totalAmount && Big(token.totalAmount).gt(0)
+const filtered = (tokens || []).filter((token) =>
+  Big(token.totalAmount || "0").gt(0)
 );
 
 return filtered.length > 0 ? (

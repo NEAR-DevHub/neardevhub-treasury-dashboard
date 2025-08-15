@@ -148,6 +148,31 @@ useEffect(() => {
     });
   }
 }, [lockupContract]);
+
+// Fetch network information for intents payments
+useEffect(() => {
+  asyncFetch("https://bridge.chaindefuser.com/rpc", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      id: "supportedTokensFetchAll",
+      jsonrpc: "2.0",
+      method: "supported_tokens",
+      params: [{}],
+    }),
+  })
+    .then((response) => {
+      if (!response || !response.body) {
+        return;
+      }
+      const intentsTokensData = response.body?.result.tokens || [];
+      setIntentsTokensData(intentsTokensData);
+    })
+    .catch((error) => {
+      console.error("Failed to fetch network info:", error);
+    });
+}, []);
+
 const ProposalsComponent = () => {
   return (
     <tbody style={{ overflowX: "auto" }}>
@@ -220,9 +245,9 @@ const ProposalsComponent = () => {
             (token) => token.near_token_id === args.token_id
           );
         const blockchain = isIntentWithdraw
-          ? "NEAR Protocol"
-          : intentsToken
-          ? intentsToken.defuse_asset_identifier.split(":")[0].toUpperCase()
+          ? intentsToken
+            ? intentsToken.defuse_asset_identifier.split(":")[0].toUpperCase()
+            : "NEAR Protocol"
           : null;
 
         return (
