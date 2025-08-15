@@ -1,4 +1,4 @@
-const { getNearBalances, accountToLockup } = VM.require(
+const { getNearBalances, accountToLockup, getIntentsBalances } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
 
@@ -92,6 +92,7 @@ const [disableRefreshBtn, setDisableRefreshBtn] = useState(false);
 const [lockupState, setLockupState] = useState(false);
 const [showDepositModal, setShowDepositModal] = useState(false);
 const [intentsTotalUsdBalance, setIntentsTotalUsdBalance] = useState("0"); // New state for intents balance
+const [intentsTokens, setIntentsTokens] = useState(null); // New state for intents tokens data
 
 useEffect(() => {
   asyncFetch(`${REPL_BACKEND_API}/near-price`)
@@ -117,6 +118,29 @@ useEffect(() => {
       setShow404Modal(true);
     });
 }, []);
+
+useEffect(() => {
+  if (showNearIntents && treasuryDaoID && typeof getIntentsBalances === "function") {
+    getIntentsBalances(treasuryDaoID).then((tokens) => {
+      if (tokens && tokens.length > 0) {
+        const formattedTokens = tokens.map((token) => ({
+          contract: `intents_${token.contract_id || token.defuse_asset_id}`,
+          amount: token.amount,
+          ft_meta: {
+            symbol: token.ft_meta.symbol, // Remove "(NEAR Intents)" suffix
+            decimals: token.ft_meta.decimals,
+            price: token.ft_meta.price,
+            icon: token.ft_meta.icon
+          }
+        }));
+        setIntentsTokens(formattedTokens);
+      }
+    }).catch((error) => {
+      console.error("Error fetching NEAR Intents tokens for chart:", error);
+      setIntentsTokens([]);
+    });
+  }
+}, [treasuryDaoID, showNearIntents]);
 
 // disable refresh btn for 30 seconds
 useEffect(() => {
@@ -473,40 +497,21 @@ return (
         <Widget
           loading=""
           src={
-            "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.ChartParent"
+            "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.ChartTabs"
           }
           props={{
-            title: "Treasury Assets: Sputnik DAO",
             nearPrice,
-            nearBalance: nearBalances?.totalParsed ?? "0",
-            totalBalance: formatCurrency(
-              Big(nearBalances?.totalParsed ?? "0").mul(nearPrice ?? 1)
-            ),
-            ftTokens: daoFTTokens.fts ? daoFTTokens.fts : null,
+            accountId: accountId,
+            treasuryDaoID,
+            lockupContract,
+            daoFTTokens,
+            intentsTokens,
+            nearBalances,
+            lockupNearBalances,
             instance,
-            accountId: treasuryDaoID,
+            intentsTotalUsdBalance,
           }}
         />
-
-        {lockupContract && (
-          <Widget
-            loading=""
-            src={
-              "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.ChartParent"
-            }
-            props={{
-              title: "Treasury Assets: Lockup",
-              nearPrice,
-              instance,
-              nearBalance: lockupNearBalances?.totalParsed ?? "0",
-              totalBalance: formatCurrency(
-                Big(lockupNearBalances?.totalParsed ?? "0").mul(nearPrice ?? 1)
-              ),
-              ftTokens: [], // lockup doesn't have any FTs
-              accountId: lockupContract,
-            }}
-          />
-        )}
         <Widget
           loading=""
           src={

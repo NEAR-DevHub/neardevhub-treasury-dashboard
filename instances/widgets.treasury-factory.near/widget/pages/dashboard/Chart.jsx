@@ -1,6 +1,7 @@
 const {
   nearPrice,
   ftTokens,
+  intentsTokens,
   accountId,
   title,
   instance,
@@ -49,9 +50,9 @@ const sortTokens = (tokens) => {
   return tokens.sort((a, b) => tokenEvaluation(b) - tokenEvaluation(a));
 };
 
-const tokens = Array.isArray(ftTokens)
-  ? [nearTokenInfo, ...sortTokens(ftTokens)]
-  : [nearTokenInfo];
+const regularTokens = Array.isArray(ftTokens) ? ftTokens : [];
+const intents = Array.isArray(intentsTokens) ? intentsTokens : [];
+const tokens = [nearTokenInfo, ...sortTokens(regularTokens), ...sortTokens(intents)];
 
 const periodMap = {
   "1H": { value: 1 / 6, interval: 6 },
@@ -411,7 +412,7 @@ return (
                 </span>
                 <span>
                   {
-                    [nearTokenInfo, ...(ftTokens ?? [])].find(
+                    [nearTokenInfo, ...(ftTokens ?? []), ...(intentsTokens ?? [])].find(
                       (t) => t.contract === selectedToken
                     )?.ft_meta?.symbol
                   }
@@ -451,14 +452,14 @@ return (
 
       {tokens ? (
         <div className="d-flex gap-4 mt-2 flex-wrap align-items-center">
-          {tokens.slice(0, 5).map((item, _index) => {
+          {tokens.slice(0, 8).map((item, _index) => {
             const { contract, ft_meta } = item;
             const { symbol } = ft_meta;
 
             return (
               <RadioButton
                 className="d-flex align-items-center"
-                key={`${accountId}-${idx}`}
+                key={`${accountId}-${_index}`}
               >
                 <input
                   style={{ visibility: "hidden", width: 0, padding: 0 }}
