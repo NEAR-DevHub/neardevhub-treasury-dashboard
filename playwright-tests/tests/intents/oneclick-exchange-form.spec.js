@@ -157,7 +157,7 @@ test.describe("OneClickExchangeForm Component", () => {
       async (route) => {
         const request = route.request();
         const body = request.postDataJSON();
-        
+
         // Verify it's a dry quote request
         if (body.dry === true) {
           await route.fulfill({
@@ -171,60 +171,62 @@ test.describe("OneClickExchangeForm Component", () => {
             status: 403,
             contentType: "application/json",
             body: JSON.stringify({
-              error: "Direct API access not allowed. Please use the treasury backend."
+              error:
+                "Direct API access not allowed. Please use the treasury backend.",
             }),
           });
         }
       }
     );
-    
+
     // Mock our custom backend endpoint for actual proposal creation
-    await page.route(
-      "**/api/treasury/oneclick-quote",
-      async (route) => {
-        const request = route.request();
-        const body = request.postDataJSON();
-        
-        // Validate that it's a sputnik-dao address
-        if (!body.treasuryDaoID || !body.treasuryDaoID.endsWith(".sputnik-dao.near")) {
-          await route.fulfill({
-            status: 403,
-            contentType: "application/json",
-            body: JSON.stringify({
-              error: "Invalid treasury DAO ID. Only sputnik-dao.near addresses are allowed."
-            }),
-          });
-          return;
-        }
-        
-        // Return a successful proposal payload
+    await page.route("**/api/treasury/oneclick-quote", async (route) => {
+      const request = route.request();
+      const body = request.postDataJSON();
+
+      // Validate that it's a sputnik-dao address
+      if (
+        !body.treasuryDaoID ||
+        !body.treasuryDaoID.endsWith(".sputnik-dao.near")
+      ) {
         await route.fulfill({
-          status: 200,
+          status: 403,
           contentType: "application/json",
           body: JSON.stringify({
-            success: true,
-            proposalPayload: {
-              tokenIn: body.inputToken.id,
-              tokenInSymbol: body.inputToken.symbol,
-              tokenOut: body.outputToken.id,
-              networkOut: body.networkOut,
-              amountIn: mockQuoteResponse.quote.amountInFormatted, // Use formatted amount from quote
-              quote: {
-                ...mockQuoteResponse.quote,
-                signature: mockQuoteResponse.signature,
-                // Include actual quote with API key validation
-                dry: false
-              }
-            },
-            quoteRequest: {
-              dry: false,
-              treasuryDaoID: body.treasuryDaoID,
-              // ... other fields
-            }
+            error:
+              "Invalid treasury DAO ID. Only sputnik-dao.near addresses are allowed.",
           }),
         });
+        return;
       }
-    );
+
+      // Return a successful proposal payload
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          proposalPayload: {
+            tokenIn: body.inputToken.id,
+            tokenInSymbol: body.inputToken.symbol,
+            tokenOut: body.outputToken.id,
+            networkOut: body.networkOut,
+            amountIn: mockQuoteResponse.quote.amountInFormatted, // Use formatted amount from quote
+            quote: {
+              ...mockQuoteResponse.quote,
+              signature: mockQuoteResponse.signature,
+              // Include actual quote with API key validation
+              dry: false,
+            },
+          },
+          quoteRequest: {
+            dry: false,
+            treasuryDaoID: body.treasuryDaoID,
+            // ... other fields
+          },
+        }),
+      });
+    });
   };
 
   // Helper function to mock RPC responses for intents balances
@@ -907,9 +909,9 @@ test.describe("OneClickExchangeForm Component", () => {
 
     // Auto-fetch should trigger the loading state after all fields are filled
     // We should see the loading state
-    await expect(
-      page.locator('button:text("Fetching Quote...")')
-    ).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('button:text("Fetching Quote...")')).toBeVisible({
+      timeout: 10000,
+    });
     await expect(page.locator(".spinner-border")).toBeVisible();
 
     // Resolve the quote to complete the test
@@ -1043,7 +1045,10 @@ test.describe("OneClickExchangeForm Component", () => {
       );
 
       // Wait for auto-fetched quote to appear
-      await page.waitForSelector(".quote-summary", { state: "visible", timeout: 10000 });
+      await page.waitForSelector(".quote-summary", {
+        state: "visible",
+        timeout: 10000,
+      });
 
       // Wait for quote to render
       await page.waitForTimeout(500);
@@ -1193,7 +1198,10 @@ test.describe("OneClickExchangeForm Component", () => {
 
     // Wait for auto-fetched quote to appear
     // The quote should appear automatically after filling all fields
-    await page.waitForSelector(".quote-summary", { state: "visible", timeout: 10000 });
+    await page.waitForSelector(".quote-summary", {
+      state: "visible",
+      timeout: 10000,
+    });
 
     // Expand quote details to show all information
     const detailsToggle = page.locator(".details-toggle");

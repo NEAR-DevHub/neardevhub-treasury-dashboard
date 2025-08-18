@@ -305,7 +305,13 @@ useEffect(() => {
   }
 
   // Check if we have all required fields
-  if (!tokenIn || !tokenOut || !networkOut || !amountIn || parseFloat(amountIn) <= 0) {
+  if (
+    !tokenIn ||
+    !tokenOut ||
+    !networkOut ||
+    !amountIn ||
+    parseFloat(amountIn) <= 0
+  ) {
     setQuote(null);
     return;
   }
@@ -408,7 +414,16 @@ useEffect(() => {
       clearTimeout(timeoutId);
     }
   };
-}, [tokenIn, tokenOut, networkOut, amountIn, slippageTolerance, treasuryDaoID, intentsTokensIn, allTokensOut]);
+}, [
+  tokenIn,
+  tokenOut,
+  networkOut,
+  amountIn,
+  slippageTolerance,
+  treasuryDaoID,
+  intentsTokensIn,
+  allTokensOut,
+]);
 
 // Fetch treasury's NEAR Intents tokens for Send dropdown
 useEffect(() => {
@@ -613,7 +628,7 @@ const handleSubmit = () => {
     outputToken: selectedTokenOut,
     amountIn: amountInSmallestUnit,
     slippageTolerance: parseInt(slippageTolerance),
-    networkOut: networkName
+    networkOut: networkName,
   };
 
   console.log("Fetching actual quote from backend:", backendRequest);
@@ -639,13 +654,15 @@ const handleSubmit = () => {
       // Submit the proposal payload (ensure tokenOut is the symbol)
       const payload = {
         ...data.proposalPayload,
-        tokenOut: selectedTokenOut.symbol // Use symbol instead of ID
+        tokenOut: selectedTokenOut.symbol, // Use symbol instead of ID
       };
       onSubmit(payload);
     })
     .catch((err) => {
       console.error("Failed to fetch actual quote:", err);
-      setErrorApi(err.message || "Failed to create proposal. Please try again.");
+      setErrorApi(
+        err.message || "Failed to create proposal. Please try again."
+      );
     })
     .finally(() => {
       setIsLoading(false);
