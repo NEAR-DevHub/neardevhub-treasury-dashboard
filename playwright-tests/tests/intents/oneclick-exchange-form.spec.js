@@ -151,14 +151,77 @@ test.describe("OneClickExchangeForm Component", () => {
       }
     });
 
-    // Mock 1Click quote API
+    // Mock 1Click quote API for dry quotes (auto-fetch)
     await page.route(
       "https://1click.chaindefuser.com/v0/quote",
       async (route) => {
+        const request = route.request();
+        const body = request.postDataJSON();
+        
+        // Verify it's a dry quote request
+        if (body.dry === true) {
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify(mockQuoteResponse),
+          });
+        } else {
+          // For non-dry quotes, return an error since they should go through our backend
+          await route.fulfill({
+            status: 403,
+            contentType: "application/json",
+            body: JSON.stringify({
+              error: "Direct API access not allowed. Please use the treasury backend."
+            }),
+          });
+        }
+      }
+    );
+    
+    // Mock our custom backend endpoint for actual proposal creation
+    await page.route(
+      "**/api/treasury/oneclick-quote",
+      async (route) => {
+        const request = route.request();
+        const body = request.postDataJSON();
+        
+        // Validate that it's a sputnik-dao address
+        if (!body.treasuryDaoID || !body.treasuryDaoID.endsWith(".sputnik-dao.near")) {
+          await route.fulfill({
+            status: 403,
+            contentType: "application/json",
+            body: JSON.stringify({
+              error: "Invalid treasury DAO ID. Only sputnik-dao.near addresses are allowed."
+            }),
+          });
+          return;
+        }
+        
+        // Return a successful proposal payload
         await route.fulfill({
           status: 200,
           contentType: "application/json",
-          body: JSON.stringify(mockQuoteResponse),
+          body: JSON.stringify({
+            success: true,
+            proposalPayload: {
+              tokenIn: body.inputToken.id,
+              tokenInSymbol: body.inputToken.symbol,
+              tokenOut: body.outputToken.id,
+              networkOut: body.networkOut,
+              amountIn: mockQuoteResponse.quote.amountInFormatted, // Use formatted amount from quote
+              quote: {
+                ...mockQuoteResponse.quote,
+                signature: mockQuoteResponse.signature,
+                // Include actual quote with API key validation
+                dry: false
+              }
+            },
+            quoteRequest: {
+              dry: false,
+              treasuryDaoID: body.treasuryDaoID,
+              // ... other fields
+            }
+          }),
         });
       }
     );
@@ -698,14 +761,9 @@ test.describe("OneClickExchangeForm Component", () => {
       .filter({ hasText: "Ethereum" })
       .click();
 
-    // Click Get Quote button (should be enabled now)
-    const getQuoteButton = page.locator('button:text("Get Quote")');
-    await getQuoteButton.scrollIntoViewIfNeeded();
-    await expect(getQuoteButton).toBeEnabled();
-    await getQuoteButton.click();
-
-    // Wait for quote to appear - this should always work in tests
-    await expect(page.locator(".quote-alert")).toBeVisible({ timeout: 5000 });
+    // Wait for auto-fetched quote to appear (triggered by form field changes)
+    // The quote should appear automatically after filling all fields
+    await expect(page.locator(".quote-alert")).toBeVisible({ timeout: 10000 });
 
     // Scroll down to see the full quote
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
@@ -847,16 +905,11 @@ test.describe("OneClickExchangeForm Component", () => {
       .filter({ hasText: "Ethereum" })
       .click();
 
-    // Click Get Quote to trigger loading state - scroll into view first
-    const getQuoteButton = page.locator('button:text("Get Quote")');
-    await getQuoteButton.scrollIntoViewIfNeeded();
-    await expect(getQuoteButton).toBeEnabled({ timeout: 10000 });
-    await getQuoteButton.click();
-
-    // Now we should see the loading state
+    // Auto-fetch should trigger the loading state after all fields are filled
+    // We should see the loading state
     await expect(
       page.locator('button:text("Fetching Quote...")')
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 10000 });
     await expect(page.locator(".spinner-border")).toBeVisible();
 
     // Resolve the quote to complete the test
@@ -989,11 +1042,8 @@ test.describe("OneClickExchangeForm Component", () => {
         }
       );
 
-      // Get quote
-      const getQuoteBtn = page.locator('button:text("Get Quote")');
-      await getQuoteBtn.scrollIntoViewIfNeeded();
-      await getQuoteBtn.click();
-      await page.waitForSelector(".quote-summary", { state: "visible" });
+      // Wait for auto-fetched quote to appear
+      await page.waitForSelector(".quote-summary", { state: "visible", timeout: 10000 });
 
       // Wait for quote to render
       await page.waitForTimeout(500);
@@ -1141,13 +1191,9 @@ test.describe("OneClickExchangeForm Component", () => {
       fullPage: true,
     });
 
-    // Click Get Quote
-    const getQuoteButton = page.locator('button:text("Get Quote")');
-    await expect(getQuoteButton).toBeEnabled();
-    await getQuoteButton.click();
-
-    // Wait for quote to appear
-    await page.waitForSelector(".quote-summary", { state: "visible" });
+    // Wait for auto-fetched quote to appear
+    // The quote should appear automatically after filling all fields
+    await page.waitForSelector(".quote-summary", { state: "visible", timeout: 10000 });
 
     // Expand quote details to show all information
     const detailsToggle = page.locator(".details-toggle");
