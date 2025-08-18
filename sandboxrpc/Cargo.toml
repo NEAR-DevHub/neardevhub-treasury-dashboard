@@ -4,6 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-near-workspaces = { version = "0.14.1", features = ["unstable"] }
+near-workspaces = { version = "0.21.0", features = ["unstable"] }
 serde_json = "1.0.134"
 tokio = { version = "1.41.1", features = ["full"] }
