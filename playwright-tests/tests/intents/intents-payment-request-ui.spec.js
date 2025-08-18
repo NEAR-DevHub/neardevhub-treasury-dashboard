@@ -1362,6 +1362,7 @@ test("insufficient balance alert for BTC payment request exceeding available bal
 
   // Click on the proposal to view details
   await proposalColumns.nth(fundingColumnIndex).click();
+  await page.waitForTimeout(2_000);
 
   // Try to approve the request - this should trigger the insufficient balance warning
   await page.getByRole("button", { name: "Approve" }).nth(1).click();
@@ -1385,8 +1386,6 @@ test("insufficient balance alert for BTC payment request exceeding available bal
   await expect(
     page.getByRole("button", { name: "Proceed Anyway" })
   ).toBeVisible();
-
-  await page.waitForTimeout(1_000);
 
   // Cancel the transaction to verify the modal closes and we're back to the proposal
   await page.getByRole("button", { name: "Cancel" }).click();
