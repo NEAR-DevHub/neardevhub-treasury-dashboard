@@ -225,7 +225,7 @@ test.describe("User is logged in", function () {
     test.setTimeout(150_000);
     const newColor = "#0000";
     await page.getByRole("textbox").nth(1).fill(newColor);
-    await page.getByTestId("dropdown-btn").click();
+    await page.getByTestId("theme-dropdown-btn").click();
     await page.getByText("Light").click();
     await page.getByRole("button", { name: "Submit Request" }).click();
     await expect(

@@ -103,6 +103,7 @@ return (
         selectedValue,
         onUpdate,
         defaultLabel: "Select Wallet",
+        dataTestId: "wallet-dropdown",
       }}
     />
   </div>
