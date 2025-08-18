@@ -148,6 +148,31 @@ useEffect(() => {
     });
   }
 }, [lockupContract]);
+
+// Fetch network information for intents payments
+useEffect(() => {
+  asyncFetch("https://bridge.chaindefuser.com/rpc", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      id: "supportedTokensFetchAll",
+      jsonrpc: "2.0",
+      method: "supported_tokens",
+      params: [{}],
+    }),
+  })
+    .then((response) => {
+      if (!response || !response.body) {
+        return;
+      }
+      const intentsTokensData = response.body?.result.tokens || [];
+      setIntentsTokensData(intentsTokensData);
+    })
+    .catch((error) => {
+      console.error("Failed to fetch network info:", error);
+    });
+}, []);
+
 const ProposalsComponent = () => {
   return (
     <tbody style={{ overflowX: "auto" }}>
@@ -219,8 +244,10 @@ const ProposalsComponent = () => {
           (intentsTokensData || []).find(
             (token) => token.near_token_id === args.token_id
           );
-        const blockchain = intentsToken
-          ? intentsToken.defuse_asset_identifier.split(":")[0]
+        const blockchain = isIntentWithdraw
+          ? intentsToken
+            ? intentsToken.defuse_asset_identifier.split(":")[0].toUpperCase()
+            : "NEAR Protocol"
           : null;
 
         return (
@@ -262,13 +289,11 @@ const ProposalsComponent = () => {
               </td>
             )}
 
-            <td className={"text-left"}>
+            <td className={"text-left"} style={{ minWidth: 150 }}>
               <div className="fw-semi-bold">
                 {sourceWallet}
                 {blockchain && (
-                  <div className="text-secondary">
-                    {blockchain.toUpperCase()}
-                  </div>
+                  <div className="text-secondary">{blockchain}</div>
                 )}
               </div>
             </td>
