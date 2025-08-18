@@ -624,6 +624,7 @@ return (
                   },
                   showManualRequest: true,
                   isLoadingProposals,
+                  dataTestId: "proposal-dropdown",
                 }}
               />
             </div>

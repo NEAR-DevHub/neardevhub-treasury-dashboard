@@ -508,6 +508,7 @@ return (
                 selectedValue: selectedTheme ?? ThemeOptions[0],
                 onUpdate: setSelectedTheme,
                 disabled: !hasCreatePermission,
+                dataTestId: "theme-dropdown",
               }}
             />
           </div>

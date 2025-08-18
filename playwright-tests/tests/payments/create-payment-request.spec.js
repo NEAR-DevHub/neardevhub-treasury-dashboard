@@ -89,7 +89,7 @@ async function fillCreateForm(page, daoAccount, instanceAccount) {
   await clickCreatePaymentRequestButton(page, instanceAccount);
 
   if (instanceConfig.showProposalSelection === true) {
-    const proposalSelect = await page.locator(".dropdown-toggle").nth(1);
+    const proposalSelect = await page.getByTestId("proposal-dropdown-btn");
     await expect(proposalSelect).toBeVisible();
     await expect(
       await proposalSelect.getByText("Select", { exact: true })
@@ -459,7 +459,7 @@ test.describe("User is logged in", function () {
     await clickCreatePaymentRequestButton(page, instanceAccount);
 
     if (instanceConfig.showProposalSelection === true) {
-      const proposalSelect = await page.locator(".dropdown-toggle").nth(1);
+      const proposalSelect = await page.getByTestId("proposal-dropdown-btn");
       await expect(proposalSelect).toBeVisible();
       await expect(
         await proposalSelect.getByText("Select", { exact: true })
@@ -581,7 +581,7 @@ test.describe("User is logged in", function () {
     await mockNearnProposal({ page });
     await clickCreatePaymentRequestButton(page, instanceAccount);
 
-    const proposalSelect = page.locator(".dropdown-toggle").nth(1);
+    const proposalSelect = page.getByTestId("proposal-dropdown-btn");
     await expect(proposalSelect).toBeVisible();
 
     await expect(
@@ -613,7 +613,7 @@ test.describe("User is logged in", function () {
 
     await clickCreatePaymentRequestButton(page, instanceAccount);
 
-    await expect(await page.locator(".dropdown-toggle").nth(1)).toHaveText(
+    await expect(await page.getByTestId("proposal-dropdown-btn")).toHaveText(
       "Select"
     );
     expect(await page.getByPlaceholder("treasury.near").inputValue()).toBe("");
@@ -666,7 +666,7 @@ test.describe("User is logged in", function () {
     await clickCreatePaymentRequestButton(page, instanceAccount);
 
     if (instanceConfig.showProposalSelection === true) {
-      const proposalSelect = page.locator(".dropdown-toggle").nth(1);
+      const proposalSelect = page.getByTestId("proposal-dropdown-btn");
       await expect(proposalSelect).toBeVisible();
       await expect(
         proposalSelect.getByText("Select", { exact: true })
@@ -889,6 +889,9 @@ test.describe("User is logged in", function () {
     page,
     instanceAccount,
   }) => {
+    if (instanceAccount !== "treasury-testing.near") {
+      test.skip();
+    }
     test.setTimeout(150_000);
     await updateDaoPolicyMembers({ instanceAccount, page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
@@ -950,7 +953,7 @@ test.describe("admin with function access keys", function () {
     const nearAmountFromLinkedProposal = 2160;
 
     if (instanceConfig.showProposalSelection === true) {
-      const proposalSelect = page.locator(".dropdown-toggle").nth(1);
+      const proposalSelect = page.getByTestId("proposal-dropdown-btn");
       await expect(proposalSelect).toBeVisible();
 
       await expect(

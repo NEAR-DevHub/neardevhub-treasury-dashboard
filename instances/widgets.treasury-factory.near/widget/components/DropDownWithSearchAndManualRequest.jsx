@@ -11,6 +11,7 @@ const {
   showManualRequest,
   onClickOfManualRequest,
   isLoadingProposals,
+  dataTestId,
 } = props;
 
 const [searchTerm, setSearchTerm] = useState("");
@@ -126,7 +127,10 @@ return (
         );
       }}
     >
-      <div className="dropdown-toggle bg-dropdown border rounded-2 btn drop-btn">
+      <div
+        className="dropdown-toggle bg-dropdown border rounded-2 btn drop-btn"
+        data-testid={`${dataTestId}-btn`}
+      >
         <div
           className={`selected-option w-100 text-wrap ${
             selectedOption.label === defaultLabel ? "text-secondary" : ""

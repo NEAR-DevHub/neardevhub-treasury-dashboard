@@ -397,7 +397,7 @@ test("payment request to BTC address", async ({
   ).toBeVisible();
 
   if (!(await page.getByTestId("proposal-title").isVisible())) {
-    await page.locator(".dropdown-toggle").nth(1).click();
+    await page.getByTestId("proposal-dropdown-btn").click();
     await page.getByText("Add manual request").click();
   }
   await page.getByTestId("proposal-title").click();
@@ -689,7 +689,7 @@ test("payment request to USDC address on BASE", async ({
   ).toBeVisible();
 
   if (!(await page.getByTestId("proposal-title").isVisible())) {
-    await page.locator(".dropdown-toggle").nth(1).click();
+    await page.getByTestId("proposal-dropdown-btn").click();
     await page.getByText("Add manual request").click();
   }
   await page.getByTestId("proposal-title").click();
@@ -1010,7 +1010,7 @@ test("payment request for wNEAR token on NEAR intents", async ({
   await selectIntentsWallet(page, instanceAccount);
 
   if (!(await page.getByTestId("proposal-title").isVisible())) {
-    await page.locator(".dropdown-toggle").nth(1).click();
+    await page.getByTestId("proposal-dropdown-btn").click();
     await page.getByText("Add manual request").click();
   }
   await page.getByTestId("proposal-title").click();
@@ -1305,7 +1305,7 @@ test("insufficient balance alert for BTC payment request exceeding available bal
   await selectIntentsWallet(page, instanceAccount);
 
   if (!(await page.getByTestId("proposal-title").isVisible())) {
-    await page.locator(".dropdown-toggle").nth(1).click();
+    await page.getByTestId("proposal-dropdown-btn").click();
     await page.getByText("Add manual request").click();
   }
   await page.getByTestId("proposal-title").click();
@@ -1579,7 +1579,7 @@ test("insufficient balance alert for wNEAR payment request exceeding available b
   await selectIntentsWallet(page, instanceAccount);
 
   if (!(await page.getByTestId("proposal-title").isVisible())) {
-    await page.locator(".dropdown-toggle").nth(1).click();
+    await page.getByTestId("proposal-dropdown-btn").click();
     await page.getByText("Add manual request").click();
   }
   await page.getByTestId("proposal-title").click();
