@@ -1092,7 +1092,11 @@ test.describe("admin with function access keys", function () {
       const submitBtn = page
         .locator(".offcanvas-body")
         .getByRole("button", { name: "Submit" });
-      await expect(submitBtn).toBeHidden({ timeout: 10_000 });
+      if (instanceAccount === "treasury-testing.near") {
+        await expect(submitBtn).toBeHidden({ timeout: 10_000 });
+      } else {
+        await expect(submitBtn).toBeVisible({ timeout: 10_000 });
+      }
     };
     await checkThatFormIsCleared();
     await page.waitForTimeout(2_000);
