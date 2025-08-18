@@ -37,13 +37,10 @@ async function selectDAOWallet(page, instanceAccount) {
   });
 }
 
-async function selectLockupWallet(page, instanceAccount) {
-  if (instanceAccount !== "treasury-testing.near") {
-    return;
-  }
+async function selectLockupWallet(page) {
   const canvasLocator = page.locator(".offcanvas-body");
   await expect(canvasLocator.getByText("Treasury Wallet")).toBeVisible();
-  await canvasLocator.getByRole("button", { name: "Select Wallet" }).click();
+  await canvasLocator.getByTestId("wallet-dropdown-btn").click();
   await expect(canvasLocator.getByText("Lockup")).toBeVisible();
   await canvasLocator.getByText("Lockup").click();
   await expect(
@@ -768,7 +765,7 @@ test.describe("User is logged in", function () {
     await expect(createPaymentRequestButton).toBeVisible({ timeout: 20_000 });
     await page.waitForTimeout(1_000);
     await createPaymentRequestButton.click();
-    await selectLockupWallet(page, instanceAccount);
+    await selectLockupWallet(page);
     await page.getByTestId("proposal-title").fill(proposalTitle);
     await page.getByTestId("proposal-summary").fill(proposalSummary);
 
@@ -1000,9 +997,7 @@ test.describe("admin with function access keys", function () {
       await totalAmountField.blur();
     }
 
-    const submitBtn = page
-      .locator(".offcanvas-body")
-      .getByRole("button", { name: "Submit" });
+    const submitBtn = page.getByRole("button", { name: "Submit" });
     await expect(submitBtn).toBeAttached({ timeout: 20_000 });
     await submitBtn.scrollIntoViewIfNeeded({ timeout: 20_000 });
     await page.waitForTimeout(3_000);

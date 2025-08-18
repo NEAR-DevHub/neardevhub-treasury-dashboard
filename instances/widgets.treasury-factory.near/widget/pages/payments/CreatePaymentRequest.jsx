@@ -41,7 +41,7 @@ const lockupContract = accountToLockup(treasuryDaoID);
 
 const walletOptions = [
   {
-    label: treasuryDaoID,
+    label: "SputnikDAO",
     value: treasuryDaoID,
   },
 ];
@@ -563,7 +563,7 @@ return (
       }}
     />
     <div className="d-flex flex-column gap-3">
-      {showNearIntents && (
+      {(showNearIntents || lockupContract) && (
         <Widget
           loading=""
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.WalletDropdown`}

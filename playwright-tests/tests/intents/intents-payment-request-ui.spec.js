@@ -206,10 +206,7 @@ async function getColumnIndex(page, headerName) {
   throw new Error(`Column header "${headerName}" not found`);
 }
 
-async function selectIntentsWallet(page, instanceAccount) {
-  if (instanceAccount !== "treasury-testing.near") {
-    return;
-  }
+async function selectIntentsWallet(page) {
   const canvasLocator = page.locator(".offcanvas-body");
   await expect(canvasLocator.getByText("Treasury Wallet")).toBeVisible();
   await canvasLocator.getByRole("button", { name: "Select Wallet" }).click();
@@ -385,7 +382,7 @@ test("payment request to BTC address", async ({
   await createRequestButton.click();
 
   await expect(page.getByText("Create Payment Request")).toBeVisible();
-  await selectIntentsWallet(page, instanceAccount);
+  await selectIntentsWallet(page);
 
   await page.getByTestId("tokens-dropdown").locator("div").first().click();
 
@@ -677,7 +674,7 @@ test("payment request to USDC address on BASE", async ({
   const createRequestButton = await page.getByText("Create Request");
   await createRequestButton.click();
   await expect(page.getByText("Create Payment Request")).toBeVisible();
-  await selectIntentsWallet(page, instanceAccount);
+  await selectIntentsWallet(page);
 
   await page.getByTestId("tokens-dropdown").locator("div").first().click();
 
@@ -1007,7 +1004,7 @@ test("payment request for wNEAR token on NEAR intents", async ({
   await expect(createRequestButton).toBeEnabled();
   await createRequestButton.click();
   await expect(page.getByText("Create Payment Request")).toBeVisible();
-  await selectIntentsWallet(page, instanceAccount);
+  await selectIntentsWallet(page);
 
   if (!(await page.getByTestId("proposal-title").isVisible())) {
     await page.getByTestId("proposal-dropdown-btn").click();
@@ -1302,7 +1299,7 @@ test("insufficient balance alert for BTC payment request exceeding available bal
   const createRequestButton = await page.getByText("Create Request");
   await createRequestButton.click();
   await expect(page.getByText("Create Payment Request")).toBeVisible();
-  await selectIntentsWallet(page, instanceAccount);
+  await selectIntentsWallet(page);
 
   if (!(await page.getByTestId("proposal-title").isVisible())) {
     await page.getByTestId("proposal-dropdown-btn").click();
@@ -1576,7 +1573,7 @@ test("insufficient balance alert for wNEAR payment request exceeding available b
   const createRequestButton = await page.getByText("Create Request");
   await createRequestButton.click();
   await expect(page.getByText("Create Payment Request")).toBeVisible();
-  await selectIntentsWallet(page, instanceAccount);
+  await selectIntentsWallet(page);
 
   if (!(await page.getByTestId("proposal-title").isVisible())) {
     await page.getByTestId("proposal-dropdown-btn").click();
