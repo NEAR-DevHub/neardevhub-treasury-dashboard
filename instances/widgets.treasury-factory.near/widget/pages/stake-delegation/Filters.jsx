@@ -1,3 +1,11 @@
+const { StakeIcon, UnstakeIcon, WithdrawIcon } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Icons"
+) || {
+  StakeIcon: () => <></>,
+  UnstakeIcon: () => <></>,
+  WithdrawIcon: () => <></>,
+};
+
 const {
   activeFilters,
   setActiveFilters,
@@ -9,7 +17,6 @@ const {
   setShowFilters,
 } = props;
 
-// Available filters configuration
 const [availableFilters] = useState([
   ...(!isPendingRequests
     ? [
@@ -27,8 +34,19 @@ const [availableFilters] = useState([
         },
       ]
     : []),
-  { key: "recipients", label: "Recipient", type: "account", multiple: true },
-  { key: "token", label: "Token", type: "token", multiple: false },
+  {
+    key: "type",
+    label: "Type",
+    type: "type",
+    multiple: false,
+  },
+  {
+    key: "amount",
+    label: "Amount",
+    type: "amount",
+    multiple: false,
+  },
+  { key: "validators", label: "Validator", type: "options", multiple: true },
   { key: "proposers", label: "Created by", type: "account", multiple: true },
   { key: "approvers", label: "Approver", type: "account", multiple: true },
   ...(context.accountId
@@ -44,8 +62,7 @@ const [availableFilters] = useState([
 ]);
 
 const [approverOptions, setApproverOptions] = useState([]);
-const [recipientOptions, setRecipientOptions] = useState([]);
-const [tokenOptions, setTokenOptions] = useState([]);
+const [validatorOptions, setValidatorOptions] = useState([]);
 const [proposerOptions, setProposerOptions] = useState([]);
 
 const fetchOptions = (endpoint, setter, key) => {
@@ -67,8 +84,7 @@ const fetchOptions = (endpoint, setter, key) => {
 useEffect(() => {
   if (treasuryDaoID) {
     fetchOptions("approvers", setApproverOptions, "approvers");
-    fetchOptions("recipients", setRecipientOptions, "recipients");
-    fetchOptions("requested-tokens", setTokenOptions, "requested_tokens");
+    fetchOptions("validators", setValidatorOptions, "validators");
     fetchOptions("proposers", setProposerOptions, "proposers");
   }
 }, [treasuryDaoID]);
@@ -76,9 +92,13 @@ useEffect(() => {
 const getOptionsForFilter = (filterKey) => {
   const optionsMap = {
     approvers: approverOptions,
-    recipients: recipientOptions,
-    token: tokenOptions,
+    validators: validatorOptions,
     proposers: proposerOptions,
+    type: [
+      { label: "Stake", Icon: StakeIcon },
+      { label: "Unstake", Icon: UnstakeIcon },
+      { label: "Withdraw", Icon: WithdrawIcon },
+    ],
   };
   return optionsMap[filterKey] || [];
 };
@@ -124,6 +144,12 @@ const handleFilterSelection = (filterKey, selectedValues, include) => {
 const clearAllFilters = () => {
   setShowFilters(false);
   setActiveFilters({});
+  setAmountValues({
+    min: "",
+    max: "",
+    equal: "",
+    value: "between",
+  });
 };
 
 const getFilterLabel = (key) => {
@@ -188,7 +214,7 @@ return (
             amountValues,
             removeFilter: () => removeFilter(filterKey),
             isPendingRequests,
-            isPaymentsPage: true,
+            isPaymentsPage: false,
           }}
         />
       </div>
