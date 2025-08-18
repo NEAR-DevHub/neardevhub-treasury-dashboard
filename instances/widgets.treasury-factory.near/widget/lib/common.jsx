@@ -396,6 +396,206 @@ function getFilteredProposalsByStatusAndKind({
   });
 }
 
+function generateFilteredProposalsQuery(
+  filters,
+  accountId,
+  amountValues,
+  search
+) {
+  let queryParams = [];
+
+  // Handle search parameter
+  if (search && search.trim()) {
+    queryParams.push(`search=${encodeURIComponent(search.trim())}`);
+  }
+
+  // Handle filters object
+  if (filters && typeof filters === "object") {
+    // Iterate through each filter key
+    Object.keys(filters).forEach((filterKey) => {
+      const filter = filters[filterKey];
+
+      if (filter && filter.values && filter.values.length > 0) {
+        const values = filter.values.filter((value) => value && value !== ""); // Filter out empty values
+
+        if (values.length > 0) {
+          // Only add if we have non-empty values
+          const include = filter.include !== false; // default to true if not specified
+
+          // Map filter keys to URL parameters
+          switch (filterKey) {
+            case "status":
+              if (include) {
+                queryParams.push(`statuses=${values.join(",")}`);
+              } else {
+                // When "is not" is selected, send all statuses except the selected ones
+                const allStatuses = [
+                  "Approved",
+                  "Rejected",
+                  "Failed",
+                  "Expired",
+                ];
+                const excludedStatuses = values;
+                const includedStatuses = allStatuses.filter(
+                  (status) => !excludedStatuses.includes(status)
+                );
+                queryParams.push(`statuses=${includedStatuses.join(",")}`);
+              }
+              break;
+
+            case "proposers":
+              if (include) {
+                queryParams.push(`proposers=${values.join(",")}`);
+              } else {
+                queryParams.push(`proposers_not=${values.join(",")}`);
+              }
+              break;
+
+            case "approvers":
+              if (include) {
+                queryParams.push(`approvers=${values.join(",")}`);
+              } else {
+                queryParams.push(`approvers_not=${values.join(",")}`);
+              }
+              break;
+
+            case "recipients":
+              if (include) {
+                queryParams.push(`recipients=${values.join(",")}`);
+              } else {
+                queryParams.push(`recipients_not=${values.join(",")}`);
+              }
+              break;
+
+            case "token":
+              if (include) {
+                queryParams.push(`tokens=${values.join(",")}`);
+              } else {
+                queryParams.push(`tokens_not=${values.join(",")}`);
+              }
+              break;
+
+            case "created_date":
+              // For date filters, preserve the original array structure
+              const originalValues = filter.values;
+              const fromDate = originalValues[0];
+              const toDate = originalValues[1];
+
+              if (fromDate && toDate) {
+                queryParams.push(
+                  `created_date_from=${fromDate}&created_date_to=${toDate}`
+                );
+              } else if (fromDate) {
+                queryParams.push(`created_date_from=${fromDate}`);
+              } else if (toDate) {
+                queryParams.push(`created_date_to=${toDate}`);
+              }
+              break;
+
+            case "votes":
+              if (values[0] === "Approved") {
+                queryParams.push(`voter_votes=${accountId}:approved`);
+              } else if (values[0] === "Rejected") {
+                queryParams.push(`voter_votes=${accountId}:rejected`);
+              } else if (
+                values[0] === "Awaiting Decision" ||
+                values[0] === "Not Voted"
+              ) {
+                // Check if approvers_not already exists in the query
+                const existingApproversNotIndex = queryParams.findIndex(
+                  (param) => param.startsWith("approvers_not=")
+                );
+                if (existingApproversNotIndex !== -1) {
+                  // Combine existing and new values
+                  const existingParam = queryParams[existingApproversNotIndex];
+                  const existingValues = existingParam.split("=")[1].split(",");
+                  const allValues = [
+                    ...new Set([...existingValues, accountId]),
+                  ];
+                  // Replace the existing approvers_not with combined values
+                  queryParams[
+                    existingApproversNotIndex
+                  ] = `approvers_not=${allValues.join(",")}`;
+                } else {
+                  queryParams.push(`approvers_not=${accountId}`);
+                }
+              }
+              break;
+            default:
+              break;
+          }
+        }
+      }
+    });
+  }
+
+  // Handle amount values
+  if (amountValues) {
+    if (amountValues.min && amountValues.min !== "") {
+      queryParams.push(`amount_min=${amountValues.min}`);
+    }
+    if (amountValues.max && amountValues.max !== "") {
+      queryParams.push(`amount_max=${amountValues.max}`);
+    }
+    if (amountValues.equal && amountValues.equal !== "") {
+      queryParams.push(`amount_equal=${amountValues.equal}`);
+    }
+  }
+
+  return queryParams.join("&");
+}
+
+function getProposalsFromIndexer({
+  daoId,
+  category,
+  page,
+  pageSize,
+  statuses,
+  proposalType,
+  sortDirection,
+  filters,
+  search,
+  amountValues,
+  accountId,
+}) {
+  let query = `${REPL_SPUTNIK_INDEXER}/proposals/${daoId}?page=${page}&page_size=${pageSize}&sort_by=CreationTime&sort_direction=${sortDirection}`;
+
+  if (category && category.length > 0) {
+    query += `&category=${category}`;
+  }
+  if (proposalType && proposalType.length > 0) {
+    query += `&proposal_types=${proposalType.join(",")}`;
+  }
+
+  // Handle statuses - use filters.statuses if available, otherwise use statuses parameter
+  let hasStatusesInFilters = false;
+  if (
+    filters &&
+    filters.status &&
+    filters.status.values &&
+    filters.status.values.length > 0
+  ) {
+    hasStatusesInFilters = true;
+  }
+
+  if (!hasStatusesInFilters && statuses && statuses.length > 0) {
+    query += `&statuses=${statuses.join(",")}`;
+  }
+
+  // Add filter-related query parameters (including search)
+  const filterQueryParams = generateFilteredProposalsQuery(
+    filters,
+    accountId,
+    amountValues,
+    search
+  );
+  if (filterQueryParams) {
+    query += `&${filterQueryParams}`;
+  }
+
+  return asyncFetch(query).then((r) => r.body);
+}
+
 const data = fetch("${REPL_BACKEND_API}".replace("/api", "") + "/headers");
 const gatewayOrigin = data?.body?.headers?.origin ?? "";
 
@@ -1066,108 +1266,135 @@ function getIntentsBalances(accountId) {
     return Promise.all([]);
   }
 
-  return asyncFetch("https://api-mng-console.chaindefuser.com/api/tokens")
-    .then((resp) => {
-      if (!resp.ok) {
-        console.error("Failed to fetch tokens from Chaindefuser", resp);
-        return []; // Return empty array on error
-      }
-      const initialTokens = resp.body?.items || [];
-      if (initialTokens.length === 0) {
+  // First get tokens owned by this account
+  return Near.asyncView("intents.near", "mt_tokens_for_owner", {
+    account_id: accountId,
+  })
+    .then((ownedTokens) => {
+      if (!ownedTokens || ownedTokens.length === 0) {
         return [];
       }
 
-      const tokenIds = initialTokens.map((t) => t.defuse_asset_id);
-      return Near.asyncView("intents.near", "mt_batch_balance_of", {
-        account_id: accountId,
-        token_ids: tokenIds,
-      })
-        .then((balances) => {
-          if (balances === null || typeof balances === "undefined") {
-            console.error(
-              "Failed to fetch balances from intents.near",
-              balances
-            );
-            return []; // Return empty array on error
+      // Get metadata from chaindefuser API for all tokens
+      return asyncFetch("https://api-mng-console.chaindefuser.com/api/tokens")
+        .then((resp) => {
+          if (!resp.ok) {
+            console.error("Failed to fetch tokens from Chaindefuser", resp);
+            return [];
           }
+          const allTokens = resp.body?.items || [];
 
-          const tokensWithBalances = initialTokens.map((t, i) => ({
-            ...t, // Spread original token data
-            amount: balances[i],
-          }));
-
-          const filteredTokensWithBalances = tokensWithBalances.filter(
-            (token) => token.amount && Big(token.amount).gt(0)
+          // Filter to only tokens owned by the account
+          const ownedTokenIds = ownedTokens.map((t) => t.token_id);
+          const relevantTokens = allTokens.filter((t) =>
+            ownedTokenIds.includes(t.defuse_asset_id)
           );
 
-          if (filteredTokensWithBalances.length === 0) {
+          if (relevantTokens.length === 0) {
             return [];
           }
 
-          const iconPromises = filteredTokensWithBalances.map((token) => {
-            let iconPromise = Promise.resolve(token.icon); // Default to original icon
-            if (
-              token.defuse_asset_id &&
-              token.defuse_asset_id.startsWith("nep141:")
-            ) {
-              const parts = token.defuse_asset_id.split(":");
-              if (parts.length > 1) {
-                const contractId = parts[1];
-                iconPromise = Near.asyncView(contractId, "ft_metadata")
-                  .then((metadata) => metadata?.icon || token.icon)
-                  .catch(() => token.icon); // Fallback to original icon on error
+          // Get balances for owned tokens
+          const tokenIds = relevantTokens.map((t) => t.defuse_asset_id);
+          return Near.asyncView("intents.near", "mt_batch_balance_of", {
+            account_id: accountId,
+            token_ids: tokenIds,
+          })
+            .then((balances) => {
+              if (balances === null || typeof balances === "undefined") {
+                console.error(
+                  "Failed to fetch balances from intents.near",
+                  balances
+                );
+                return []; // Return empty array on error
               }
-            }
-            return iconPromise;
-          });
 
-          return Promise.all(iconPromises)
-            .then((resolvedIcons) => {
-              const finalTokens = filteredTokensWithBalances.map((t, i) => ({
-                // contract_id is needed by TokensDropdown
-                contract_id: t.defuse_asset_id.startsWith("nep141:")
-                  ? t.defuse_asset_id.split(":")[1]
-                  : t.defuse_asset_id,
-                ft_meta: {
-                  symbol: t.symbol,
-                  icon: resolvedIcons[i], // Use icon from ft_metadata or original
-                  decimals: t.decimals,
-                  price: t.price, // Include price if available
-                },
-                amount: t.amount,
-                blockchain: t.blockchain,
+              const tokensWithBalances = relevantTokens.map((t, i) => ({
+                ...t, // Spread original token data
+                amount: balances[i],
               }));
-              return finalTokens;
-            })
-            .catch((iconError) => {
-              console.error(
-                "Error fetching some token icons, using defaults.",
-                iconError
+
+              const filteredTokensWithBalances = tokensWithBalances.filter(
+                (token) => token.amount && Big(token.amount).gt(0)
               );
-              // Fallback to original icons if Promise.all fails for ft_metadata calls
-              const fallbackTokens = filteredTokensWithBalances.map((t) => ({
-                contract_id: t.defuse_asset_id.startsWith("nep141:")
-                  ? t.defuse_asset_id.split(":")[1]
-                  : t.defuse_asset_id,
-                ft_meta: {
-                  symbol: t.symbol,
-                  icon: t.icon, // Fallback to original icon
-                  decimals: t.decimals,
-                  price: t.price,
-                },
-                amount: t.amount,
-                blockchain: t.blockchain,
-              }));
-              return fallbackTokens;
+
+              if (filteredTokensWithBalances.length === 0) {
+                return [];
+              }
+
+              const iconPromises = filteredTokensWithBalances.map((token) => {
+                let iconPromise = Promise.resolve(token.icon); // Default to original icon
+                if (
+                  token.defuse_asset_id &&
+                  token.defuse_asset_id.startsWith("nep141:")
+                ) {
+                  const parts = token.defuse_asset_id.split(":");
+                  if (parts.length > 1) {
+                    const contractId = parts[1];
+                    iconPromise = Near.asyncView(contractId, "ft_metadata")
+                      .then((metadata) => metadata?.icon || token.icon)
+                      .catch(() => token.icon); // Fallback to original icon on error
+                  }
+                }
+                return iconPromise;
+              });
+
+              return Promise.all(iconPromises)
+                .then((resolvedIcons) => {
+                  const finalTokens = filteredTokensWithBalances.map(
+                    (t, i) => ({
+                      // contract_id is needed by TokensDropdown
+                      contract_id: t.defuse_asset_id.startsWith("nep141:")
+                        ? t.defuse_asset_id.split(":")[1]
+                        : t.defuse_asset_id,
+                      ft_meta: {
+                        symbol: t.symbol,
+                        icon: resolvedIcons[i], // Use icon from ft_metadata or original
+                        decimals: t.decimals,
+                        price: t.price, // Include price if available
+                      },
+                      amount: t.amount,
+                      blockchain: t.blockchain,
+                    })
+                  );
+                  return finalTokens;
+                })
+                .catch((iconError) => {
+                  console.error(
+                    "Error fetching some token icons, using defaults.",
+                    iconError
+                  );
+                  // Fallback to original icons if Promise.all fails for ft_metadata calls
+                  const fallbackTokens = filteredTokensWithBalances.map(
+                    (t) => ({
+                      contract_id: t.defuse_asset_id.startsWith("nep141:")
+                        ? t.defuse_asset_id.split(":")[1]
+                        : t.defuse_asset_id,
+                      ft_meta: {
+                        symbol: t.symbol,
+                        icon: t.icon, // Fallback to original icon
+                        decimals: t.decimals,
+                        price: t.price,
+                      },
+                      amount: t.amount,
+                      blockchain: t.blockchain,
+                    })
+                  );
+                  return fallbackTokens;
+                });
+            })
+            .catch((balanceError) => {
+              console.error("Error fetching intents balances:", balanceError);
+              return []; // Return empty array on error
             });
         })
-        .catch((balanceError) => {
-          console.error("Error fetching intents balances:", balanceError);
+        .catch((fetchError) => {
+          console.error("Error fetching token metadata:", fetchError);
           return []; // Return empty array on error
         });
     })
     .catch((fetchError) => {
-      console.error("Error fetching initial tokens for intents:", fetchError);
+      console.error("Error fetching owned tokens:", fetchError);
       return []; // Return empty array on error
     });
 }
@@ -1404,4 +1631,6 @@ return {
   updateDaoPolicy,
   nearAccountValidation,
   isWeb4Page,
+  getProposalsFromIndexer,
+  generateFilteredProposalsQuery,
 };

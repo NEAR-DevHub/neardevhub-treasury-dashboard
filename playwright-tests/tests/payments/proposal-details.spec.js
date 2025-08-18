@@ -13,18 +13,20 @@ import { SandboxRPC } from "../../util/sandboxrpc.js";
 import { toBase64 } from "../../util/lib.js";
 
 async function mockPaymentProposals({ page, status }) {
-  await mockRpcRequest({
-    page,
-    filterParams: {
-      method_name: "get_proposals",
-    },
-    modifyOriginalResultFunction: () => {
-      let originalResult = [JSON.parse(JSON.stringify(TransferProposalData))];
-      originalResult[0].id = 0;
-      originalResult[0].status = status;
-      originalResult[0].submission_time = CurrentTimestampInNanoseconds;
-      return originalResult;
-    },
+  await page.route(/\/proposals\/.*\?.*category=payments/, async (route) => {
+    await route.fulfill({
+      json: {
+        proposals: [
+          {
+            ...JSON.parse(JSON.stringify(TransferProposalData)),
+            id: 0,
+            submission_time: CurrentTimestampInNanoseconds,
+            status: status,
+          },
+        ],
+        total: 1,
+      },
+    });
   });
 }
 
@@ -202,7 +204,7 @@ async function setupSandboxAndCreateLockupTransferProposal({
       amount: "3000000000000000000000000",
       receiver_id: receiverAccount,
     }),
-    receiver_id: daoAccount,
+    receiver_id: "lockup.near",
     description,
     daoName,
   });
@@ -373,6 +375,7 @@ test.describe("Should vote on proposal using sandbox RPC and show updated status
     const proposalCell = page.getByTestId("proposal-request-#0");
     await expect(proposalCell).toBeVisible({ timeout: 20_000 });
     await proposalCell.click();
+    await page.waitForTimeout(2_000);
     await expect(page.getByRole("heading", { name: "#0" })).toBeVisible();
     const approveButton = page
       .getByRole("button", {
@@ -421,7 +424,7 @@ test.describe("Should vote on proposal using sandbox RPC and show updated status
       await sandbox.quitSandbox();
     });
 
-    test(`Proposal details pag: should show insufficient balance error`, async ({
+    test(`Proposal details page: should show insufficient balance error`, async ({
       page,
       instanceAccount,
       daoAccount,

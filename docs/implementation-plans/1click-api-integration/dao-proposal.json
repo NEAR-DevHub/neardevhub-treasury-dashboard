@@ -1,0 +1,18 @@
+{
+  "proposal": {
+    "description": "1Click USDC Cross-Network Swap (NEAR → Ethereum)\n\nSwap Details:\n- Amount In: 1.0 USDC (NEAR)\n- Amount Out: 0.999998 USDC (Ethereum)\n- Rate: 1 USDC (NEAR) = 0.999998 USDC (Ethereum)\n- Destination: webassemblymusic-treasury.sputnik-dao.near (NEAR Intents)\n- Time Estimate: 10 minutes\n- Quote Deadline: 2025-07-27T16:03:03.540Z\n\nDeposit Address: 3ccf686b516ede32e2936c25798378623c99a5fce5bf56f5433005c8c12ba49c\n\n🔗 TRACKING:\nMonitor status: https://explorer.near-intents.org/?depositAddress=3ccf686b516ede32e2936c25798378623c99a5fce5bf56f5433005c8c12ba49c\n\n1Click Service Signature (for dispute resolution):\ned25519:2gwvazipVnPYqYYyBYTAb5M8dcKoJBFmJADuL5VebL2RTMZEQpvZ8iyDq6GAkvudW5aAkRKr7U7LdynhguSy84De\n\nEXECUTION:\nThis proposal authorizes transferring 1.0 USDC (NEAR) to 1Click's deposit address.\n1Click will execute the cross-network swap and deliver 0.999998 USDC (Ethereum) back to the DAO's NEAR Intents account.\n\nThe signature above provides cryptographic guarantees and can be used for dispute resolution.",
+    "kind": {
+      "FunctionCall": {
+        "receiver_id": "intents.near",
+        "actions": [
+          {
+            "method_name": "mt_transfer",
+            "args": "eyJyZWNlaXZlcl9pZCI6IjNjY2Y2ODZiNTE2ZWRlMzJlMjkzNmMyNTc5ODM3ODYyM2M5OWE1ZmNlNWJmNTZmNTQzMzAwNWM4YzEyYmE0OWMiLCJhbW91bnQiOiIxMDAwMDAwIiwidG9rZW5faWQiOiJuZXAxNDE6MTcyMDg2MjhmODRmNWQ2YWQzM2YwZGEzYmJiZWIyN2ZmY2IzOThlYWM1MDFhMzFiZDZhZDIwMTFlMzYxMzNhMSJ9",
+            "deposit": "1",
+            "gas": "100000000000000"
+          }
+        ]
+      }
+    }
+  }
+}

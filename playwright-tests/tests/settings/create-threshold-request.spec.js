@@ -43,7 +43,7 @@ async function checkVotingDropdownChange({ page }) {
     )
   ).toBeVisible();
   await expect(page.getByText("Enter Percentage")).toBeVisible();
-  await page.getByTestId("dropdown-btn").click();
+  await page.getByTestId("threshold-dropdown-btn").click();
   await page.getByText("Number of votes").click();
   await expect(
     page.getByText(
@@ -54,16 +54,15 @@ async function checkVotingDropdownChange({ page }) {
 }
 
 async function mockSettingsProposals({ page }) {
-  await mockRpcRequest({
-    page,
-    filterParams: { method_name: "get_proposals" },
-    modifyOriginalResultFunction: () => {
-      let originalResult = JSON.parse(
-        JSON.stringify(SettingsMemberProposalData)
-      );
-      originalResult.submission_time = CurrentTimestampInNanoseconds;
-      return originalResult;
-    },
+  await page.route(/\/proposals\/.*\?.*/, async (route) => {
+    let originalResult = JSON.parse(JSON.stringify(SettingsMemberProposalData));
+    originalResult.submission_time = CurrentTimestampInNanoseconds;
+    await route.fulfill({
+      json: {
+        proposals: [originalResult],
+        total: 1,
+      },
+    });
   });
 }
 
@@ -157,7 +156,7 @@ test.describe.parallel("User logged in with different roles", function () {
         await expect(page.getByText("Permission Groups")).toBeVisible({
           timeout: 20_000,
         });
-        const dropdownButton = page.getByTestId("dropdown-btn");
+        const dropdownButton = page.getByTestId("threshold-dropdown-btn");
         const submitRequestButton = page.getByText("Submit Request");
         const thresholdInput = page.getByTestId("threshold-input");
 
@@ -247,13 +246,13 @@ test.describe("User is logged in", function () {
 
   test("should allow only valid input for threshold", async ({ page }) => {
     test.setTimeout(60_000);
-    await page.getByTestId("dropdown-btn").click();
+    await page.getByTestId("threshold-dropdown-btn").click();
     await page.getByRole("list").getByText("Number of votes").click();
     await fillInput(page, "20097292");
     await fillInput(page, "10.323");
     await fillInput(page, "werwr");
     await fillInput(page, "$&$^&%&");
-    await page.getByTestId("dropdown-btn").click();
+    await page.getByTestId("threshold-dropdown-btn").click();
     await page.getByRole("list").getByText("Percentage of members").click();
     await fillInput(page, "3423");
     await fillInput(page, "13.123");
@@ -268,7 +267,7 @@ test.describe("User is logged in", function () {
     const hasNewPolicy = instanceAccount.includes("testing");
     test.setTimeout(150_000);
     const submitBtn = page.getByText("Submit Request");
-    await page.getByTestId("dropdown-btn").click();
+    await page.getByTestId("threshold-dropdown-btn").click();
     await page.getByRole("list").getByText("Number of votes").click();
     const thresholdInput = page.getByTestId("threshold-input");
     await thresholdInput.fill("20");
@@ -315,7 +314,7 @@ test.describe("User is logged in", function () {
     test.setTimeout(150_000);
     const hasNewPolicy = instanceAccount.includes("testing");
     const submitBtn = page.getByText("Submit Request");
-    await page.getByTestId("dropdown-btn").click();
+    await page.getByTestId("threshold-dropdown-btn").click();
     await page.getByRole("list").getByText("Percentage of members").click();
     const thresholdInput = page.getByTestId("threshold-input");
     await thresholdInput.fill("101");
@@ -391,7 +390,7 @@ test.describe("User is logged in", function () {
     test.setTimeout(150_000);
     const submitBtn = page.getByText("Submit Request");
     // Number of votes
-    await page.getByTestId("dropdown-btn").click();
+    await page.getByTestId("threshold-dropdown-btn").click();
     await page.getByRole("list").getByText("Number of votes").click();
     const thresholdInput = page.getByTestId("threshold-input");
     await thresholdInput.fill("1", { force: true });
@@ -402,7 +401,7 @@ test.describe("User is logged in", function () {
     });
     await expect(submitBtn).toBeDisabled();
     // Percentage
-    await page.getByTestId("dropdown-btn").click();
+    await page.getByTestId("threshold-dropdown-btn").click();
     await page.getByRole("list").getByText("Percentage of members").click();
     await thresholdInput.click();
     await page.waitForTimeout(200);

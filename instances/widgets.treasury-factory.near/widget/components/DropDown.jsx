@@ -5,6 +5,7 @@ const disabled = props.disabled;
 const [selected, setSelected] = useState(selectedValue);
 const DropdownItemRender = props.DropdownItemRender;
 const SelectedValueRender = props.SelectedValueRender;
+const dataTestId = props.dataTestId;
 
 useEffect(() => {
   if (JSON.stringify(selected) !== JSON.stringify(selectedValue)) {
@@ -43,16 +44,20 @@ useEffect(() => {
 
 return (
   <StyledDropdown>
-    <div className="dropdown w-100" data-testid="dropdown">
+    <div className="dropdown w-100" data-testid={dataTestId}>
       <button
         disabled={disabled}
         className="btn drop-btn text-truncate dropdown-toggle bg-dropdown border rounded-2 no-transparent"
         type="button"
         data-bs-toggle="dropdown"
         aria-expanded="false"
-        data-testid="dropdown-btn"
+        data-testid={`${dataTestId}-btn`}
       >
-        {SelectedValueRender ? <SelectedValueRender /> : selected.label}
+        {SelectedValueRender ? (
+          <SelectedValueRender />
+        ) : (
+          selected.label || props.defaultLabel
+        )}
       </button>
       <ul className="dropdown-menu dropdown-menu-end dropdown-menu-lg-start px-2 shadow w-100">
         {options.map((item) =>

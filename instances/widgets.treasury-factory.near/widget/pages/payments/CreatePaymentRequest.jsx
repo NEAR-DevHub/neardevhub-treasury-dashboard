@@ -10,8 +10,12 @@ const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
 
-const { encodeToMarkdown, LOCKUP_MIN_BALANCE_FOR_STORAGE, accountToLockup } =
-  VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
+const {
+  encodeToMarkdown,
+  LOCKUP_MIN_BALANCE_FOR_STORAGE,
+  accountToLockup,
+  getIntentsBalances,
+} = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
 
 const onCloseCanvas = props.onCloseCanvas ?? (() => {});
 
@@ -26,19 +30,23 @@ if (!instance || typeof accountToLockup !== "function") {
   return <></>;
 }
 
-const { treasuryDaoID, proposalAPIEndpoint, showProposalSelection } =
-  VM.require(`${instance}/widget/config.data`);
+const {
+  treasuryDaoID,
+  proposalAPIEndpoint,
+  showProposalSelection,
+  showNearIntents,
+} = VM.require(`${instance}/widget/config.data`);
 
 const lockupContract = accountToLockup(treasuryDaoID);
 
 const walletOptions = [
   {
-    label: treasuryDaoID,
+    label: "SputnikDAO",
     value: treasuryDaoID,
   },
 ];
 
-const [selectedWallet, setSelectedWallet] = useState(walletOptions[0]);
+const [selectedWallet, setSelectedWallet] = useState(null);
 
 const [tokenId, setTokenId] = useState(null);
 const [selectedTokenBlockchain, setSelectedTokenBlockchain] = useState(null);
@@ -64,7 +72,7 @@ const [isLoadingProposals, setLoadingProposals] = useState(false);
 const [showCancelModal, setShowCancelModal] = useState(false);
 const [showErrorToast, setShowErrorToast] = useState(false);
 const [nearPrice, setNearPrice] = useState("1"); // setting 1 as default, so VM doesn't throw any error
-
+const [intentsBalances, setIntentsBalances] = useState(null);
 const [lockupNearBalances, setLockupNearBalances] = useState(null);
 
 useEffect(() => {
@@ -72,6 +80,12 @@ useEffect(() => {
     setIsManualRequest(true);
   }
 }, [showProposalSelection]);
+
+useEffect(() => {
+  if (!showNearIntents && !selectedWallet) {
+    setSelectedWallet(walletOptions[0]);
+  }
+}, [showNearIntents]);
 
 function formatNearAmount(amount) {
   return Big(amount ?? "0")
@@ -182,6 +196,12 @@ function cleanInputs() {
   setNotes("");
   setTokenId("");
 }
+
+useEffect(() => {
+  getIntentsBalances(treasuryDaoID).then((balances) => {
+    setIntentsBalances(balances);
+  });
+}, []);
 
 // close canvas after proposal is submitted
 useEffect(() => {
@@ -542,17 +562,17 @@ return (
         },
       }}
     />
-
     <div className="d-flex flex-column gap-3">
-      {lockupContract && (
+      {(showNearIntents || lockupContract) && (
         <Widget
           loading=""
           src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.WalletDropdown`}
           props={{
-            lockupNearBalances,
             instance,
+            showIntents: true,
             selectedValue: selectedWallet,
             onUpdate: (v) => {
+              setSelectedTokenBlockchain(null);
               if (v.value !== selectedWallet.value) {
                 cleanInputs();
               }
@@ -561,273 +581,306 @@ return (
           }}
         />
       )}
-      {showProposalSelection && (
-        <div className="d-flex flex-column gap-1">
-          <label>Proposal</label>
-          <Widget
-            loading=""
-            src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
-            props={{
-              selectedValue: selectedProposalId,
-              onChange: (e) => {
-                setIsManualRequest(false);
-                onSelectProposal(e);
-              },
-              options: proposalsOptions,
-              showSearch: true,
-              searchInputPlaceholder: "Search by id or title",
-              defaultLabel: isManualRequest ? "Add manual request" : "Select",
-              searchByValue: true,
-              onSearch: (value) => {
-                setSearchProposalId(value);
-              },
-              onClickOfManualRequest: () => {
-                cleanInputs();
-                setIsManualRequest(true);
-              },
-              showManualRequest: true,
-              isLoadingProposals,
-            }}
-          />
-        </div>
-      )}
-      {isManualRequest && (
+      {selectedWallet && (
         <div className="d-flex flex-column gap-3">
-          <div className="d-flex flex-column gap-1">
-            <label>{showProposalSelection && "Proposal"} Title</label>
-            <Widget
-              loading=""
-              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
-              props={{
-                className: "flex-grow-1",
-                key: `proposal-title`,
-                onBlur: (e) =>
-                  setSelectedProposal((prev) => ({
-                    ...prev,
-                    name: e.target.value,
-                  })),
-                value: selectedProposal?.name ?? "",
-                multiline: true,
-              }}
-            />
-          </div>
-          <div className="d-flex flex-column gap-1">
-            <label>{showProposalSelection && "Proposal"} Summary</label>
-            <Widget
-              loading=""
-              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
-              props={{
-                className: "flex-grow-1",
-                key: `proposal-summary`,
-                onBlur: (e) =>
-                  setSelectedProposal((prev) => ({
-                    ...prev,
-                    summary: e.target.value,
-                  })),
-                value: selectedProposal?.summary ?? "",
-                multiline: true,
-              }}
-            />
-          </div>
-        </div>
-      )}
-      {selectedProposal && !isManualRequest && (
-        <div className="border p-3 rounded-3 d-flex flex-column gap-2">
-          <h6 className="d-flex gap-2 mb-0">
-            {selectedProposal.name}{" "}
-            <div style={{ width: "fit-content" }}>
+          {!intentsBalances?.length &&
+            selectedWallet.value === "intents.near" && (
+              <div className="d-flex flex-column gap-2 border border-1 px-4 py-3 rounded-3 text-center justify-content-center align-items-center">
+                Your NEAR Intents wallet has no tokens. Fund it now to start
+                using the platform’s features
+                <button
+                  onClick={() => props.setShowDepositModal(true)}
+                  className="btn theme-btn "
+                >
+                  Deposit
+                </button>
+              </div>
+            )}
+          {showProposalSelection && (
+            <div className="d-flex flex-column gap-1">
+              <label>Proposal</label>
               <Widget
                 loading=""
-                src={"${REPL_DEVHUB}/widget/devhub.entity.proposal.StatusTag"}
+                src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
                 props={{
-                  timelineStatus: selectedProposal.status,
+                  selectedValue: selectedProposalId,
+                  onChange: (e) => {
+                    setIsManualRequest(false);
+                    onSelectProposal(e);
+                  },
+                  options: proposalsOptions,
+                  showSearch: true,
+                  searchInputPlaceholder: "Search by id or title",
+                  defaultLabel: isManualRequest
+                    ? "Add manual request"
+                    : "Select",
+                  searchByValue: true,
+                  onSearch: (value) => {
+                    setSearchProposalId(value);
+                  },
+                  onClickOfManualRequest: () => {
+                    cleanInputs();
+                    setIsManualRequest(true);
+                  },
+                  showManualRequest: true,
+                  isLoadingProposals,
+                  dataTestId: "proposal-dropdown",
                 }}
               />
             </div>
-          </h6>
-          <div>{selectedProposal.summary}</div>
-          <a
-            target="_blank"
-            rel="noopener noreferrer"
-            href={selectedProposal.url}
-          >
-            <button className="btn p-0 d-flex align-items-center gap-2 bolder">
-              Open Proposal <i class="bi bi-box-arrow-up-right"></i>
-            </button>
-          </a>
-        </div>
-      )}
-      <div className="d-flex flex-column gap-1">
-        <label>Recipient</label>
-        {selectedTokenBlockchain === "near" ||
-        selectedTokenBlockchain == null ? (
-          <Widget
-            loading=""
-            src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.AccountInput"
-            props={{
-              value: receiver,
-              placeholder: "treasury.near",
-              onUpdate: setReceiver,
-              setParentAccountValid: setIsReceiverAccountValid,
-              maxWidth: "100%",
-              instance,
-              allowNonExistentImplicit: true,
-            }}
-          />
-        ) : (
-          <Widget
-            loading=""
-            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OtherChainAccountInput`}
-            props={{
-              blockchain: selectedTokenBlockchain,
-              value: receiver,
-              setValue: setReceiver,
-              setIsValid: setIsReceiverAccountValid,
-              instance: REPL_BASE_DEPLOYMENT_ACCOUNT,
-            }}
-          />
-        )}
-      </div>
-      <div className="d-flex flex-column gap-1">
-        <label>Requested Token</label>
-        <Widget
-          loading=""
-          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokensDropdown"
-          props={{
-            daoAccount: selectedWallet.value,
-            selectedValue: tokenId,
-            onChange: (v) => setTokenId(v),
-            setSelectedTokenBlockchain: (blockchain) => {
-              if (blockchain !== selectedTokenBlockchain) {
-                setReceiver(""); // Reset receiver
-                setIsReceiverAccountValid(false); // Reset validation status
-                setSelectedTokenBlockchain(blockchain);
-              }
-            },
-            setTokensAvailable: setSelectedTokensAvailable,
-            setSelectedTokenIsIntent,
-            lockupNearBalances,
-          }}
-        />
-      </div>
-      <div className="d-flex flex-column gap-1">
-        <label>Total Amount</label>
-        <Widget
-          loading=""
-          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
-          props={{
-            className: "flex-grow-1",
-            key: `total-amount`,
-            onChange: (e) => setAmount(e.target.value),
-            placeholder: "Enter amount",
-            value: amount,
-            inputProps: {
-              min: "0",
-              type: "number",
-            },
-          }}
-        />
-        {tokenId === tokenMapping.NEAR && (
-          <div className="d-flex gap-2 align-items-center justify-content-between">
-            <div className="d-flex gap-1 align-items-center">
-              {"$" +
-                Big(amount ? amount : 0)
-                  .mul(nearPrice)
-                  .toFixed(2)
-                  .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+          )}
+          {isManualRequest && (
+            <div className="d-flex flex-column gap-3">
+              <div className="d-flex flex-column gap-1">
+                <label>{showProposalSelection && "Proposal"} Title</label>
+                <Widget
+                  loading=""
+                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
+                  props={{
+                    className: "flex-grow-1",
+                    key: `proposal-title`,
+                    onBlur: (e) =>
+                      setSelectedProposal((prev) => ({
+                        ...prev,
+                        name: e.target.value,
+                      })),
+                    value: selectedProposal?.name ?? "",
+                    multiline: true,
+                  }}
+                />
+              </div>
+              <div className="d-flex flex-column gap-1">
+                <label>{showProposalSelection && "Proposal"} Summary</label>
+                <Widget
+                  loading=""
+                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
+                  props={{
+                    className: "flex-grow-1",
+                    key: `proposal-summary`,
+                    onBlur: (e) =>
+                      setSelectedProposal((prev) => ({
+                        ...prev,
+                        summary: e.target.value,
+                      })),
+                    value: selectedProposal?.summary ?? "",
+                    multiline: true,
+                  }}
+                />
+              </div>
+            </div>
+          )}
+          {selectedProposal && !isManualRequest && (
+            <div className="border p-3 rounded-3 d-flex flex-column gap-2">
+              <h6 className="d-flex gap-2 mb-0">
+                {selectedProposal.name}{" "}
+                <div style={{ width: "fit-content" }}>
+                  <Widget
+                    loading=""
+                    src={
+                      "${REPL_DEVHUB}/widget/devhub.entity.proposal.StatusTag"
+                    }
+                    props={{
+                      timelineStatus: selectedProposal.status,
+                    }}
+                  />
+                </div>
+              </h6>
+              <div>{selectedProposal.summary}</div>
+              <a
+                target="_blank"
+                rel="noopener noreferrer"
+                href={selectedProposal.url}
+              >
+                <button className="btn p-0 d-flex align-items-center gap-2 bolder">
+                  Open Proposal <i class="bi bi-box-arrow-up-right"></i>
+                </button>
+              </a>
+            </div>
+          )}
+
+          <div className="d-flex flex-column gap-1">
+            <label>Requested Token</label>
+            <Widget
+              loading=""
+              src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokensDropdown"
+              props={{
+                daoAccount: selectedWallet.value,
+                selectedValue: tokenId,
+                onChange: (v) => setTokenId(v),
+                setSelectedTokenBlockchain: (blockchain) => {
+                  if (blockchain !== selectedTokenBlockchain) {
+                    setReceiver(""); // Reset receiver
+                    setIsReceiverAccountValid(false); // Reset validation status
+                    setSelectedTokenBlockchain(blockchain);
+                  }
+                },
+                setTokensAvailable: setSelectedTokensAvailable,
+                setSelectedTokenIsIntent,
+                lockupNearBalances,
+                lockupContract,
+                daoAccount: treasuryDaoID,
+                selectedWallet: selectedWallet.value,
+              }}
+            />
+          </div>
+          <div className="d-flex flex-column gap-1">
+            <label>Recipient</label>
+            {selectedTokenBlockchain === "near" ||
+            selectedTokenBlockchain == null ? (
               <Widget
                 loading=""
-                src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+                src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.AccountInput"
                 props={{
-                  popup: (
-                    <div>
-                      The USD value is calculated based on token prices from{" "}
-                      <a
-                        href={nearPriceAPI}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="primary-text"
-                      >
-                        {" "}
-                        CoinGecko
-                      </a>{" "}
-                      and updates automatically every minute.
-                    </div>
-                  ),
-                  children: (
-                    <i className="bi bi-info-circle primary-icon h6 mb-0"></i>
-                  ),
+                  value: receiver,
+                  placeholder: "treasury.near",
+                  onUpdate: setReceiver,
+                  setParentAccountValid: setIsReceiverAccountValid,
+                  maxWidth: "100%",
                   instance,
+                  allowNonExistentImplicit: true,
                 }}
               />
-            </div>
-            <div>${Big(nearPrice).toFixed(2)}</div>
+            ) : (
+              <div className="d-flex flex-column gap-1">
+                <Widget
+                  loading=""
+                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OtherChainAccountInput`}
+                  props={{
+                    blockchain: selectedTokenBlockchain,
+                    value: receiver,
+                    setValue: setReceiver,
+                    setIsValid: setIsReceiverAccountValid,
+                    instance: REPL_BASE_DEPLOYMENT_ACCOUNT,
+                  }}
+                />
+                {receiver && !isReceiverAccountValid && (
+                  <div className="text-sm mt-2 text-red">
+                    Please enter valid account ID
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-        )}
-      </div>
-      {selectedTokensAvailable &&
-        amount &&
-        parseFloat(selectedTokensAvailable) <
-          parseFloat(amount ? amount : 0) && (
-          <div className="d-flex gap-3 align-items-center warning px-3 py-2 rounded-3">
-            <i class="bi bi-exclamation-triangle warning-icon h5"></i>
-            <div>
-              The treasury balance is insufficient to cover the payment. You can
-              create the request, but it won’t be approved until the balance is
-              topped up.
-            </div>
+          <div className="d-flex flex-column gap-1">
+            <label>Total Amount</label>
+            <Widget
+              loading=""
+              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
+              props={{
+                className: "flex-grow-1",
+                key: `total-amount`,
+                onChange: (e) => setAmount(e.target.value),
+                placeholder: "Enter amount",
+                value: amount,
+                inputProps: {
+                  min: "0",
+                  type: "number",
+                },
+              }}
+            />
+            {tokenId === tokenMapping.NEAR && (
+              <div className="d-flex gap-2 align-items-center justify-content-between">
+                <div className="d-flex gap-1 align-items-center">
+                  {"$" +
+                    Big(amount ? amount : 0)
+                      .mul(nearPrice)
+                      .toFixed(2)
+                      .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                  <Widget
+                    loading=""
+                    src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+                    props={{
+                      popup: (
+                        <div>
+                          The USD value is calculated based on token prices from{" "}
+                          <a
+                            href={nearPriceAPI}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="primary-text"
+                          >
+                            {" "}
+                            CoinGecko
+                          </a>{" "}
+                          and updates automatically every minute.
+                        </div>
+                      ),
+                      children: (
+                        <i className="bi bi-info-circle primary-icon h6 mb-0"></i>
+                      ),
+                      instance,
+                    }}
+                  />
+                </div>
+                <div>${Big(nearPrice).toFixed(2)}</div>
+              </div>
+            )}
           </div>
-        )}
+          {selectedTokensAvailable &&
+            amount &&
+            parseFloat(selectedTokensAvailable) <
+              parseFloat(amount ? amount : 0) && (
+              <div className="d-flex gap-3 align-items-center warning px-3 py-2 rounded-3">
+                <i class="bi bi-exclamation-triangle warning-icon h5"></i>
+                <div>
+                  The treasury balance is insufficient to cover the payment. You
+                  can create the request, but it won’t be approved until the
+                  balance is topped up.
+                </div>
+              </div>
+            )}
 
-      <div className="d-flex flex-column gap-1">
-        <label>Notes (Optional)</label>
-        <Widget
-          loading=""
-          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
-          props={{
-            className: "flex-grow-1",
-            key: `notes`,
-            onChange: (e) => setNotes(e.target.value),
-            value: notes,
-            multiline: true,
-          }}
-        />
-      </div>
-      <div className="d-flex mt-2 gap-3 justify-content-end">
-        <Widget
-          loading=""
-          src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
-          props={{
-            classNames: {
-              root: "btn btn-outline-secondary shadow-none no-transparent",
-            },
-            label: "Cancel",
-            onClick: () => {
-              setShowCancelModal(true);
-            },
-            disabled: isTxnCreated,
-          }}
-        />
+          <div className="d-flex flex-column gap-1">
+            <label>Notes (Optional)</label>
+            <Widget
+              loading=""
+              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
+              props={{
+                className: "flex-grow-1",
+                key: `notes`,
+                onChange: (e) => setNotes(e.target.value),
+                value: notes,
+                multiline: true,
+              }}
+            />
+          </div>
+          <div className="d-flex mt-2 gap-3 justify-content-end">
+            <Widget
+              loading=""
+              src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
+              props={{
+                classNames: {
+                  root: "btn btn-outline-secondary shadow-none no-transparent",
+                },
+                label: "Cancel",
+                onClick: () => {
+                  setShowCancelModal(true);
+                },
+                disabled: isTxnCreated,
+              }}
+            />
 
-        <Widget
-          loading=""
-          src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
-          props={{
-            classNames: { root: "theme-btn" },
-            disabled:
-              !amount ||
-              !receiver ||
-              !selectedProposal?.name ||
-              !tokenId ||
-              !isReceiverAccountValid ||
-              !isAmountValid() ||
-              isTxnCreated,
-            label: "Submit",
-            onClick: onSubmitClick,
-            loading: isTxnCreated,
-          }}
-        />
-      </div>
+            <Widget
+              loading=""
+              src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
+              props={{
+                classNames: { root: "theme-btn" },
+                disabled:
+                  !amount ||
+                  !receiver ||
+                  !selectedProposal?.name ||
+                  !tokenId ||
+                  !isReceiverAccountValid ||
+                  !isAmountValid() ||
+                  isTxnCreated,
+                label: "Submit",
+                onClick: onSubmitClick,
+                loading: isTxnCreated,
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   </Container>
 );

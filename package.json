@@ -107,5 +107,8 @@
   "bugs": {
     "url": "https://github.com/NEAR-DevHub/neardevhub-treasury-dashboard.git"
   },
-  "homepage": "https://github.com/NEAR-DevHub/neardevhub-treasury-dashboard.git#readme"
+  "homepage": "https://github.com/NEAR-DevHub/neardevhub-treasury-dashboard.git#readme",
+  "dependencies": {
+    "@psalomo/jsonrpc-client": "^1.3.1"
+  }
 }

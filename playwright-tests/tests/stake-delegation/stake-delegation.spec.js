@@ -121,7 +121,7 @@ test.describe("Have valid staked requests and sufficient token balance", functio
       await expect(exportLink).toBeVisible();
       const href = await exportLink.getAttribute("href");
       expect(href).toContain(
-        `/proposals/${daoAccount}?proposal_type=FunctionCall&keyword=stake,withdraw`
+        `/proposals/${daoAccount}?category=stake-delegation`
       );
     });
   });

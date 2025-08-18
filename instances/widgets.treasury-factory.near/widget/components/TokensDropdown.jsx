@@ -5,7 +5,10 @@ const { NearToken } = VM.require(
 const { getNearBalances, getIntentsBalances } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
-const daoAccount = props.daoAccount;
+
+const { CardSkeleton } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.skeleton"
+) || { CardSkeleton: () => <></> };
 
 const {
   selectedValue,
@@ -15,31 +18,48 @@ const {
   setSelectedTokenBlockchain,
   setSelectedTokenIsIntent,
   lockupNearBalances,
+  selectedWallet,
+  lockupContract,
+  daoAccount,
 } = props;
 
 onChange = onChange || (() => {});
 
-const isLockupContract = daoAccount.includes("lockup.near");
+const getWalletConfig = (selectedWallet) => {
+  if (selectedWallet === "intents.near") {
+    return {
+      account: daoAccount,
+      showIntentsTokens: true,
+      ftTokensResp: { body: { fts: [] } },
+      nearBalances: { availableParsed: "0" },
+    };
+  } else if (selectedWallet === lockupContract) {
+    return {
+      account: lockupContract,
+      showNear: true,
+      showLockedNear: true,
+      ftTokensResp: { body: { fts: [] } },
+      nearBalances: lockupNearBalances,
+      isLockup: true,
+    };
+  } else {
+    // SputnikDAO (default)
+    return {
+      account: daoAccount,
+      showNear: true,
+      showFTTokens: true,
+      ftTokensResp: fetch(
+        `${REPL_BACKEND_API}/ft-tokens?account_id=${daoAccount}`
+      ),
+      nearBalances: getNearBalances(daoAccount),
+    };
+  }
+};
 
-const ftTokensResp = isLockupContract
-  ? { body: { fts: [] } }
-  : fetch(`${REPL_BACKEND_API}/ft-tokens?account_id=${daoAccount}`);
-
-const nearBalances = isLockupContract
-  ? lockupNearBalances
-  : getNearBalances(daoAccount);
-
-if (
-  !ftTokensResp ||
-  !Array.isArray(ftTokensResp?.body?.fts) ||
-  typeof getNearBalances !== "function"
-) {
-  return (
-    <div className="alert alert-danger">
-      There has been some issue in fetching FT tokens data.
-    </div>
-  );
-}
+const walletConfig = getWalletConfig(selectedWallet);
+const account = walletConfig.account;
+const ftTokensResp = walletConfig.ftTokensResp;
+const nearBalances = walletConfig.nearBalances;
 
 const [options, setOptions] = useState([]);
 const [nearStakedTokens, setNearStakedTokens] = useState(null);
@@ -56,33 +76,43 @@ const tokensWithBalance =
   ) ?? [];
 
 useEffect(() => {
-  let tokens = [
-    {
+  let tokens = [];
+
+  // Add NEAR token if configured to show
+  if (walletConfig.showNear) {
+    tokens.push({
       icon: NearToken,
       title: "NEAR",
       value: "NEAR",
       tokenBalance: nearBalances.availableParsed,
       blockchain: null,
-    },
-  ];
+    });
+  }
 
-  tokens = tokens.concat(
-    tokensWithBalance.map((i) => {
-      return {
-        icon: i.ft_meta.icon,
-        title: i.ft_meta.symbol,
-        value: i.contract,
-        blockchain: null,
-        tokenBalance: Big(i.amount ?? "0")
-          .div(Big(10).pow(i.ft_meta.decimals))
-          .toFixed(2),
-      };
-    })
-  );
+  // Add FT tokens if configured to show
+  if (walletConfig.showFTTokens) {
+    tokens = tokens.concat(
+      tokensWithBalance.map((i) => {
+        return {
+          icon: i.ft_meta.icon,
+          title: i.ft_meta.symbol,
+          value: i.contract,
+          blockchain: null,
+          tokenBalance: Big(i.amount ?? "0")
+            .div(Big(10).pow(i.ft_meta.decimals))
+            .toFixed(2),
+        };
+      })
+    );
+  }
 
-  tokens = tokens.concat(intentsTokens);
+  // Add Intents tokens if configured to show
+  if (walletConfig.showIntentsTokens) {
+    tokens = tokens.concat(intentsTokens);
+  }
+
   setOptions(tokens);
-}, [tokensWithBalance, isLockupContract, intentsTokens]);
+}, [tokensWithBalance, intentsTokens, selectedWallet, walletConfig]);
 
 const [isOpen, setIsOpen] = useState(false);
 const [selectedOptionValue, setSelectedValue] = useState(selectedValue);
@@ -173,7 +203,9 @@ const Container = styled.div`
   }
 `;
 
-const stakedTokens = isLockupContract ? lockupStakedTokens : nearStakedTokens;
+const stakedTokens = walletConfig.isLockup
+  ? lockupStakedTokens
+  : nearStakedTokens;
 
 const Item = ({ option }) => {
   if (!option) {
@@ -199,7 +231,9 @@ const Item = ({ option }) => {
           </div>
         )}
         <div className="text-sm text-secondary w-100 text-wrap">
-          Tokens available: {option.tokenBalance}
+          Tokens available: {option.tokenBalance}{" "}
+          {option.isIntent &&
+            "through " + (option.blockchain || "").toUpperCase()}
         </div>
       </div>
     </div>
@@ -210,8 +244,13 @@ const selectedOption =
   options.find((item) => item.value === selectedOptionValue) ?? null;
 
 useEffect(() => {
-  if (typeof getIntentsBalances === "function" && daoAccount) {
-    getIntentsBalances(daoAccount).then((balances) => {
+  if (
+    typeof getIntentsBalances === "function" &&
+    account &&
+    walletConfig.showIntentsTokens &&
+    !intentsTokens?.length
+  ) {
+    getIntentsBalances(account).then((balances) => {
       const formattedIntentsTokens = balances.map((token) => ({
         icon: token.ft_meta?.icon ? (
           <img src={token.ft_meta.icon} height={30} width={30} />
@@ -225,7 +264,7 @@ useEffect(() => {
             }}
           /> // Placeholder icon
         ),
-        title: `${token.ft_meta.symbol} (NEAR Intents)`,
+        title: token.ft_meta.symbol,
         tokenId: token.contract_id,
         value: `intents_${token.contract_id}`,
         tokenBalance: Big(token.amount ?? "0")
@@ -237,24 +276,42 @@ useEffect(() => {
       setIntentsTokens(formattedIntentsTokens);
     });
   }
-}, [daoAccount]);
+}, [daoAccount, walletConfig.showIntentsTokens]);
 
+const Loader = (
+  <div className="d-flex gap-4 w-100 align-items-center px-3 py-2">
+    <div className="rounded-circle" style={{ width: 40, height: 40 }}>
+      <CardSkeleton />
+    </div>
+    <div className="d-flex flex-column gap-2 w-100">
+      <div className="rounded-2 " style={{ width: "80%", height: 20 }}>
+        <CardSkeleton />
+      </div>
+      <div className="rounded-2" style={{ width: "80%", height: 20 }}>
+        <CardSkeleton />
+      </div>
+    </div>
+  </div>
+);
 return (
   <Container>
-    <Widget
-      loading=""
-      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
-      props={{
-        accountId: daoAccount,
-        setNearStakedTotalTokens: (v) => setNearStakedTokens(Big(v).toFixed(2)),
-      }}
-    />
-    {isLockupContract && (
+    {walletConfig.showNear && (
       <Widget
         loading=""
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
         props={{
-          accountId: daoAccount,
+          accountId: account,
+          setNearStakedTotalTokens: (v) =>
+            setNearStakedTokens(Big(v).toFixed(2)),
+        }}
+      />
+    )}
+    {walletConfig.showLockedNear && (
+      <Widget
+        loading=""
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
+        props={{
+          accountId: account,
           setNearStakedTokens: (v) => setLockupStakedTokens(Big(v).toFixed(2)),
         }}
       />
@@ -279,19 +336,19 @@ return (
 
       {isOpen && (
         <div className="dropdown-menu rounded-2 dropdown-menu-end dropdown-menu-lg-start px-2 shadow show w-100">
-          <div>
-            {options.map((option) => (
-              <div
-                key={option.value}
-                className={`dropdown-item cursor-pointer w-100 my-1 ${
-                  selectedOption.value === option.value ? "selected" : ""
-                }`}
-                onClick={() => handleOptionClick(option)}
-              >
-                <Item option={option} />
-              </div>
-            ))}
-          </div>
+          {!Array.isArray(options) || options?.length === 0
+            ? Loader
+            : options.map((option) => (
+                <div
+                  key={option.value}
+                  className={`dropdown-item cursor-pointer w-100 my-1 ${
+                    selectedOption.value === option.value ? "selected" : ""
+                  }`}
+                  onClick={() => handleOptionClick(option)}
+                >
+                  <Item option={option} />
+                </div>
+              ))}
         </div>
       )}
     </div>

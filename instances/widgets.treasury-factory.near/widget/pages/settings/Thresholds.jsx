@@ -9,10 +9,10 @@ const { InfoBlock } = VM.require(
   `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.InfoBlock`
 ) || { InfoBlock: () => <></> };
 
-const { getFilteredProposalsByStatusAndKind } = VM.require(
+const { getProposalsFromIndexer } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 ) || {
-  getFilteredProposalsByStatusAndKind: () => {},
+  getProposalsFromIndexer: () => {},
 };
 
 const {
@@ -92,19 +92,6 @@ function getLastProposalId() {
   );
 }
 
-const fetchProposals = async () =>
-  getFilteredProposalsByStatusAndKind({
-    treasuryDaoID,
-    resPerPage: 10,
-    isPrevPageCalled: false,
-    filterKindArray: ["ChangePolicy"],
-    filterStatusArray: ["InProgress"],
-    offset: lastProposalId,
-    lastProposalId,
-  }).then((r) => {
-    setProposals(r.filteredProposals);
-  });
-
 useEffect(() => {
   const fetchInitialData = () => {
     setIsInitialLoading(true);
@@ -130,17 +117,16 @@ useEffect(() => {
 
         // Fetch proposals if user has permission
         if (hasCreatePermission) {
-          getFilteredProposalsByStatusAndKind({
-            treasuryDaoID,
-            resPerPage: 10,
-            isPrevPageCalled: false,
-            filterKindArray: ["ChangePolicy"],
-            filterStatusArray: ["InProgress"],
-            offset: proposalId,
-            lastProposalId: proposalId,
+          getProposalsFromIndexer({
+            daoId: treasuryDaoID,
+            page: 0,
+            pageSize: 10,
+            proposalType: ["ChangePolicy"],
+            statuses: ["InProgress"],
+            sortDirection: "desc",
           })
             .then((proposalsResult) => {
-              setProposals(proposalsResult.filteredProposals);
+              setProposals(proposalsResult.proposals);
               setIsInitialLoading(false);
             })
             .catch((error) => {
@@ -704,6 +690,7 @@ return (
                     setValueError(null);
                   },
                   disabled: !hasCreatePermission,
+                  dataTestId: "threshold-dropdown",
                 }}
               />
             </div>
