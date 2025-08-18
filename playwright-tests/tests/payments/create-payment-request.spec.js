@@ -21,7 +21,7 @@ import {
 import { InsufficientBalance, toBase64 } from "../../util/lib.js";
 import { SandboxRPC } from "../../util/sandboxrpc.js";
 
-async function selectDAOWallet(page) {
+async function selectDAOWallet(page, instanceAccount) {
   if (instanceAccount !== "treasury-testing.near") {
     return;
   }
