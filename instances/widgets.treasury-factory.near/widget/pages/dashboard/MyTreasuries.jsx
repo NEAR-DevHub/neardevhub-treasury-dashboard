@@ -1,4 +1,4 @@
-const { getUserTreasuries } = VM.require(
+const { getUserTreasuries, isWeb4Page } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
 
@@ -142,7 +142,9 @@ return (
                 <a
                   target="_blank"
                   rel="noopener noreferrer"
-                  href={`${option.instanceAccount}/widget/app`}
+                  href={`${isWeb4Page ? "https://" : "https://near.social/"}${
+                    option.instanceAccount
+                  }${isWeb4Page ? ".page" : ""}/widget/app`}
                   className={`dropdown-item cursor-pointer w-100 text-wrap d-flex gap-2 align-items-center`}
                 >
                   <img
