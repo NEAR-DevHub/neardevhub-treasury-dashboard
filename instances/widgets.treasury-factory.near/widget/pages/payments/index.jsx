@@ -119,30 +119,10 @@ function fetchProposals({ customSortDirection, hardRefresh }) {
     });
 }
 
-// Helper function to check if filters have meaningful values
-const hasMeaningfulFilters = (filters) => {
-  if (!filters || Object.keys(filters).length === 0) return false;
-
-  return Object.values(filters).some((filter) => {
-    // Check if filter has values with meaningful content
-    return (
-      filter.values &&
-      filter.values.length > 0 &&
-      filter.values.some((value) => value && value !== "")
-    );
-  });
-};
-
 useEffect(() => {
   setPage(0);
   const timeout = setTimeout(() => {
-    // Only fetch if filters have meaningful values or if there are no filters
-    if (
-      hasMeaningfulFilters(activeFilters) ||
-      Object.keys(activeFilters).length === 0
-    ) {
-      fetchProposals();
-    }
+    fetchProposals();
   }, 500);
 
   return () => clearTimeout(timeout);

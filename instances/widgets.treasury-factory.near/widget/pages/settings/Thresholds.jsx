@@ -690,6 +690,7 @@ return (
                     setValueError(null);
                   },
                   disabled: !hasCreatePermission,
+                  dataTestId: "threshold-dropdown",
                 }}
               />
             </div>

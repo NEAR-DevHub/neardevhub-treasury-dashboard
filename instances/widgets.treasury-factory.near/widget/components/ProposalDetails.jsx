@@ -17,7 +17,7 @@ const instance = props.instance;
 if (!instance) {
   return <></>;
 }
-const { formatSubmissionTimeStamp } = VM.require(
+const { formatSubmissionTimeStamp, isWeb4Page } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
 
@@ -225,7 +225,11 @@ const VotesDetails = () => {
 };
 
 const CopyComponent = () => {
-  const clipboardText = `https://near.social/${instance}/widget/app?page=${props.page}&id=${proposalData.id}`;
+  const clipboardText = `${
+    isWeb4Page ? "https://" : "https://near.social/"
+  }${instance}${isWeb4Page ? ".page" : ""}/widget/app?page=${props.page}&id=${
+    proposalData.id
+  }`;
   return isCompactVersion ? (
     <Widget
       loading=""
