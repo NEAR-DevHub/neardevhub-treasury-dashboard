@@ -30,14 +30,18 @@ if (!instance || typeof accountToLockup !== "function") {
   return <></>;
 }
 
-const { treasuryDaoID, proposalAPIEndpoint, showProposalSelection } =
-  VM.require(`${instance}/widget/config.data`);
+const {
+  treasuryDaoID,
+  proposalAPIEndpoint,
+  showProposalSelection,
+  showNearIntents,
+} = VM.require(`${instance}/widget/config.data`);
 
 const lockupContract = accountToLockup(treasuryDaoID);
 
 const walletOptions = [
   {
-    label: treasuryDaoID,
+    label: "SputnikDAO",
     value: treasuryDaoID,
   },
 ];
@@ -76,6 +80,12 @@ useEffect(() => {
     setIsManualRequest(true);
   }
 }, [showProposalSelection]);
+
+useEffect(() => {
+  if (!showNearIntents && !selectedWallet) {
+    setSelectedWallet(walletOptions[0]);
+  }
+}, [showNearIntents]);
 
 function formatNearAmount(amount) {
   return Big(amount ?? "0")
@@ -553,22 +563,24 @@ return (
       }}
     />
     <div className="d-flex flex-column gap-3">
-      <Widget
-        loading=""
-        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.WalletDropdown`}
-        props={{
-          instance,
-          showIntents: true,
-          selectedValue: selectedWallet,
-          onUpdate: (v) => {
-            setSelectedTokenBlockchain(null);
-            if (v.value !== selectedWallet.value) {
-              cleanInputs();
-            }
-            setSelectedWallet(v);
-          },
-        }}
-      />
+      {(showNearIntents || lockupContract) && (
+        <Widget
+          loading=""
+          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.WalletDropdown`}
+          props={{
+            instance,
+            showIntents: true,
+            selectedValue: selectedWallet,
+            onUpdate: (v) => {
+              setSelectedTokenBlockchain(null);
+              if (v.value !== selectedWallet.value) {
+                cleanInputs();
+              }
+              setSelectedWallet(v);
+            },
+          }}
+        />
+      )}
       {selectedWallet && (
         <div className="d-flex flex-column gap-3">
           {!intentsBalances?.length &&
@@ -612,6 +624,7 @@ return (
                   },
                   showManualRequest: true,
                   isLoadingProposals,
+                  dataTestId: "proposal-dropdown",
                 }}
               />
             </div>
