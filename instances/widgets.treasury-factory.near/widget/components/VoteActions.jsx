@@ -167,9 +167,11 @@ useEffect(() => {
           if (
             JSON.stringify(sortedProposalVotes) !== JSON.stringify(sortedVotes)
           ) {
-            checkProposalStatus();
-            clearTimeout(checkTxnTimeout);
-            setTxnCreated(false);
+            setTimeout(() => {
+              checkProposalStatus();
+              clearTimeout(checkTxnTimeout);
+              setTxnCreated(false);
+            }, 1000);
           } else {
             checkTxnTimeout = setTimeout(checkForVoteOnProposal, 1000);
           }

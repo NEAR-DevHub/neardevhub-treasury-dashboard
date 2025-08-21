@@ -211,11 +211,14 @@ useEffect(() => {
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
         if (typeof lastProposalId === "number" && lastProposalId !== id) {
-          cleanInputs();
-          onCloseCanvas();
-          clearTimeout(checkTxnTimeout);
-          refreshData();
-          setTxnCreated(false);
+          console.log("new proposal created", new Date());
+          setTimeout(() => {
+            cleanInputs();
+            onCloseCanvas();
+            clearTimeout(checkTxnTimeout);
+            refreshData();
+            setTxnCreated(false);
+          }, 1000);
         } else {
           checkTxnTimeout = setTimeout(() => checkForNewProposal(), 1000);
         }

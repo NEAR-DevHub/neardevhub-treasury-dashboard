@@ -461,8 +461,6 @@ test("payment request to BTC address", async ({
   await page.getByRole("button", { name: "Confirm" }).click();
 
   await expect(page.getByRole("button", { name: "Confirm" })).not.toBeVisible();
-  await page.reload();
-  await page.waitForTimeout(5_000);
   const proposalColumns = page
     .locator(
       'tr[data-component="widgets.treasury-factory.near/widget/pages.payments.Table"]'
@@ -754,9 +752,6 @@ test("payment request to USDC address on BASE", async ({
   await expect(page.getByRole("button", { name: "Confirm" })).toBeVisible();
   await page.getByRole("button", { name: "Confirm" }).click();
   await expect(page.getByRole("button", { name: "Confirm" })).not.toBeVisible();
-
-  await page.reload();
-  await page.waitForTimeout(5_000);
   const proposalColumns = page
     .locator(
       'tr[data-component="widgets.treasury-factory.near/widget/pages.payments.Table"]'
@@ -1080,9 +1075,6 @@ test("payment request for wNEAR token on NEAR intents", async ({
 
   await expect(page.getByRole("button", { name: "Confirm" })).not.toBeVisible();
 
-  await page.reload();
-  await page.waitForTimeout(5_000);
-
   // Helper function to find column index by header name
   const proposalColumns = page
     .locator(
@@ -1345,9 +1337,6 @@ test("insufficient balance alert for BTC payment request exceeding available bal
   await page.getByRole("button", { name: "Confirm" }).click();
 
   await expect(page.getByRole("button", { name: "Confirm" })).not.toBeVisible();
-
-  await page.reload();
-  await page.waitForTimeout(5_000);
 
   // Wait for the proposal to be created and navigate to the proposal
   const proposalColumns = page
@@ -1618,9 +1607,6 @@ test("insufficient balance alert for wNEAR payment request exceeding available b
   await page.getByRole("button", { name: "Confirm" }).click();
 
   await expect(page.getByRole("button", { name: "Confirm" })).not.toBeVisible();
-
-  await page.reload();
-  await page.waitForTimeout(5_000);
 
   // Wait for the proposal to be created and navigate to the proposal
   const proposalColumns = page
