@@ -470,7 +470,9 @@ function refreshData() {
     return;
   }
   if (isCompactVersion) {
-    Storage.set("REFRESH_PAYMENTS_TABLE_DATA", Math.random());
+    setTimeout(() => {
+      Storage.set("REFRESH_PAYMENTS_TABLE_DATA", Math.random());
+    }, 1000);
   }
 }
 

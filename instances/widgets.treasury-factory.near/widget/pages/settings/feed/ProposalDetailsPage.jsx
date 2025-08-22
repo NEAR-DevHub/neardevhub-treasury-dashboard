@@ -125,13 +125,16 @@ useEffect(() => {
 }, [id]);
 
 function refreshData() {
+  setProposalData(null);
+
   if (props.transactionHashes) {
     return;
   }
   if (isCompactVersion) {
-    Storage.set("REFRESH_SETTINGS_TABLE_DATA", Math.random());
+    setTimeout(() => {
+      Storage.set("REFRESH_SETTINGS_TABLE_DATA", Math.random());
+    }, 1000);
   }
-  setProposalData(null);
 }
 
 function updateVoteSuccess(status, proposalId) {
