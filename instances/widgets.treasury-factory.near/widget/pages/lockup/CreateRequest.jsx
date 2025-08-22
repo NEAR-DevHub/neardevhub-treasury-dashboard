@@ -187,9 +187,9 @@ useEffect(() => {
         if (lastProposalId !== id) {
           setTimeout(() => {
             cleanInputs();
-            onCloseCanvas();
             refreshData();
             setTxnCreated(false);
+            onCloseCanvas();
           }, 1000);
         } else {
           checkTxnTimeout = setTimeout(() => checkForNewProposal(), 1000);

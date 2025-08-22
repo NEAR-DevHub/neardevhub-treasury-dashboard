@@ -213,10 +213,10 @@ useEffect(() => {
         if (typeof lastProposalId === "number" && lastProposalId !== id) {
           setTimeout(() => {
             cleanInputs();
-            onCloseCanvas();
             clearTimeout(checkTxnTimeout);
             refreshData();
             setTxnCreated(false);
+            onCloseCanvas();
           }, 1000);
         } else {
           checkTxnTimeout = setTimeout(() => checkForNewProposal(), 1000);
