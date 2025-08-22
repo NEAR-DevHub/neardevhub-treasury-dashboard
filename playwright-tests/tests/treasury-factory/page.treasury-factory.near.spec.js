@@ -125,7 +125,8 @@ test.describe("connected with ledger", function () {
     await expect(
       page.getByRole("heading", { name: "Add Members" }),
     ).toBeVisible();
-    await expect(page.getByText("Ori theori.near Requestor")).toBeVisible();
+  
+    await expect(page.getByText('@theori.near')).toBeVisible();
 
     await page.getByRole('button', { name: ' Add Member' }).click()
     await page.waitForTimeout(3_000)
@@ -136,7 +137,7 @@ test.describe("connected with ledger", function () {
     await iframe.getByText("Add Permission").click();
     await iframe.locator(".dropdown-item").first().click();
     await submitButton.click()
-    await expect(page.getByText('testingaccount.near Requestor')).toBeVisible()
+    await expect(page.getByText('@testingaccount.near')).toBeVisible()
     await page.getByRole("button", { name: "Continue" }).click();
 
     // confirm transaction step
