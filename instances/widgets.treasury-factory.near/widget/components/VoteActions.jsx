@@ -178,9 +178,11 @@ useEffect(() => {
         })
         .catch(() => {
           // if proposal data doesn't exist, it means the proposal is deleted
-          checkProposalStatus();
-          clearTimeout(checkTxnTimeout);
-          setTxnCreated(false);
+          setTimeout(() => {
+            checkProposalStatus();
+            clearTimeout(checkTxnTimeout);
+            setTxnCreated(false);
+          }, 1000);
         });
     };
 

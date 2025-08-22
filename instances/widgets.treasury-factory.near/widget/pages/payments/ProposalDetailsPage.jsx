@@ -465,13 +465,13 @@ useEffect(() => {
 }, [id]);
 
 function refreshData() {
+  setProposalData(null);
   if (props.transactionHashes) {
     return;
   }
   if (isCompactVersion) {
     Storage.set("REFRESH_PAYMENTS_TABLE_DATA", Math.random());
   }
-  setProposalData(null);
 }
 
 function updateVoteSuccess(status, proposalId) {
