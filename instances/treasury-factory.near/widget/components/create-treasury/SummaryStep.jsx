@@ -240,8 +240,11 @@ const ListItem = ({ member }) => (
     <div style={{ minWidth: "200px", width: "200px" }}>
       <Widget
         loading=""
-        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
-        props={{ accountId: member.accountId }}
+        src={`${REPL_DEVDAO_ACCOUNT}/widget/components.Profile`}
+        props={{
+          accountId: member.accountId,
+          instance: "${REPL_BASE_DEPLOYMENT_ACCOUNT}",
+        }}
       />
     </div>
 

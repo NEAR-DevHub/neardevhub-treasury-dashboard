@@ -188,6 +188,7 @@ return (
             amountValues,
             removeFilter: () => removeFilter(filterKey),
             isPendingRequests,
+            isPaymentsPage: true,
           }}
         />
       </div>

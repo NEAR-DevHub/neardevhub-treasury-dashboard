@@ -12,6 +12,7 @@ const {
   removeFilter,
   include,
   isPendingRequests,
+  isPaymentsPage,
 } = props;
 
 const [search, setSearch] = useState("");
@@ -140,6 +141,127 @@ const handleAmountValueChange = (field, value) => {
   });
 };
 
+const AmountOptions = ({ showDelete }) => {
+  return (
+    <div className="d-flex flex-column">
+      <div className="d-flex justify-content-between align-items-center">
+        <div className="d-flex align-items-center gap-2">
+          <div
+            className="text-secondary"
+            style={{ fontSize: showDelete ? "14px" : "12px" }}
+          >
+            Amount
+          </div>
+          <div
+            onBlur={() => {
+              setTimeout(() => setAmountTypeDropdownOpen(false), 200);
+            }}
+          >
+            <div className="dropdown">
+              <button
+                className="btn btn-sm btn-outline-secondary dropdown-toggle hide-border"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setAmountTypeDropdownOpen(!amountTypeDropdownOpen);
+                }}
+              >
+                {
+                  amountOptions.find(
+                    (option) => option.value === amountValues.value
+                  )?.label
+                }
+              </button>
+              {amountTypeDropdownOpen && (
+                <div className="dropdown-menu show">
+                  {amountOptions.map((option) => (
+                    <div
+                      key={option.value}
+                      className="dropdown-item cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAmountTypeChange(option);
+                      }}
+                    >
+                      {option.label}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        <div
+          className="text-red cursor-pointer"
+          onClick={(e) => {
+            e.stopPropagation();
+            removeFilter();
+          }}
+        >
+          <i className="bi bi-trash"></i>
+        </div>
+      </div>
+
+      {amountValues.value && (
+        <div className="d-flex align-items-center gap-2">
+          {amountValues.value === "between" ? (
+            <div className="d-flex align-items-center gap-2">
+              <div>
+                <label>From</label>
+                <input
+                  type="number"
+                  className="form-control form-control-sm"
+                  placeholder="0"
+                  value={amountValues.min}
+                  onChange={(e) =>
+                    handleAmountValueChange("min", e.target.value)
+                  }
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
+              <div>
+                <label>To</label>
+                <input
+                  type="number"
+                  className="form-control form-control-sm"
+                  placeholder="0"
+                  value={amountValues.max}
+                  onChange={(e) =>
+                    handleAmountValueChange("max", e.target.value)
+                  }
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
+            </div>
+          ) : (
+            <input
+              type="number"
+              className="form-control form-control-sm"
+              placeholder="0"
+              value={
+                amountValues.value === ">"
+                  ? amountValues.min
+                  : amountValues.value === "<"
+                  ? amountValues.max
+                  : amountValues.equal
+              }
+              onChange={(e) => {
+                const field =
+                  amountValues.value === ">"
+                    ? "min"
+                    : amountValues.value === "<"
+                    ? "max"
+                    : "equal";
+                handleAmountValueChange(field, e.target.value);
+              }}
+              onClick={(e) => e.stopPropagation()}
+            />
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Render different filter types
 const OptionRender = () => {
   switch (type) {
@@ -255,108 +377,7 @@ const OptionRender = () => {
             )}
           </div>
 
-          {selected.length > 0 && include && (
-            <div className="d-flex flex-column">
-              <div className="d-flex align-items-center gap-2">
-                <div className="text-secondary text-sm">Amount</div>
-                <div
-                  onBlur={() => {
-                    setTimeout(() => setAmountTypeDropdownOpen(false), 200);
-                  }}
-                >
-                  <div className="dropdown">
-                    <button
-                      className="btn btn-sm btn-outline-secondary dropdown-toggle hide-border"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setAmountTypeDropdownOpen(!amountTypeDropdownOpen);
-                      }}
-                    >
-                      {
-                        amountOptions.find(
-                          (option) => option.value === amountValues.value
-                        )?.label
-                      }
-                    </button>
-                    {amountTypeDropdownOpen && (
-                      <div className="dropdown-menu show">
-                        {amountOptions.map((option) => (
-                          <div
-                            key={option.value}
-                            className="dropdown-item cursor-pointer"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleAmountTypeChange(option);
-                            }}
-                          >
-                            {option.label}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {amountValues.value && (
-                <div className="d-flex align-items-center gap-2">
-                  {amountValues.value === "between" ? (
-                    <div className="d-flex align-items-center gap-2">
-                      <div>
-                        <label>From</label>
-                        <input
-                          type="number"
-                          className="form-control form-control-sm"
-                          placeholder="0"
-                          value={amountValues.min}
-                          onChange={(e) =>
-                            handleAmountValueChange("min", e.target.value)
-                          }
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                      </div>
-                      <div>
-                        <label>To</label>
-                        <input
-                          type="number"
-                          className="form-control form-control-sm"
-                          placeholder="0"
-                          value={amountValues.max}
-                          onChange={(e) =>
-                            handleAmountValueChange("max", e.target.value)
-                          }
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    <input
-                      type="number"
-                      className="form-control form-control-sm"
-                      placeholder="0"
-                      value={
-                        amountValues.value === ">"
-                          ? amountValues.min
-                          : amountValues.value === "<"
-                          ? amountValues.max
-                          : amountValues.equal
-                      }
-                      onChange={(e) => {
-                        const field =
-                          amountValues.value === ">"
-                            ? "min"
-                            : amountValues.value === "<"
-                            ? "max"
-                            : "equal";
-                        handleAmountValueChange(field, e.target.value);
-                      }}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  )}
-                </div>
-              )}
-            </div>
-          )}
+          {selected.length > 0 && include && <AmountOptions />}
         </div>
       );
 
@@ -382,7 +403,7 @@ const OptionRender = () => {
                       instance,
                       isVoteStatus: false,
                       status: status,
-                      isPaymentsPage: true,
+                      isPaymentsPage: isPaymentsPage,
                     }}
                   />
                 </div>
@@ -443,6 +464,70 @@ const OptionRender = () => {
         </div>
       );
 
+    case "type":
+      return (
+        <div>
+          <div style={{ maxHeight: "200px", overflowY: "auto" }}>
+            {options.map(({ label, Icon }) => (
+              <div
+                key={label}
+                className="dropdown-item cursor-pointer"
+                onClick={(e) => handleSelection(label, e)}
+              >
+                <div className="d-flex align-items-center gap-2">
+                  {Icon && <Icon />}
+                  <span>{label}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    case "options":
+      const filteredOptions = options.filter((option) =>
+        (option || "")?.toLowerCase().includes(search.toLowerCase())
+      );
+      return (
+        <div>
+          <div className="search-input-container">
+            <input
+              type="text"
+              className="form-control search-input"
+              placeholder="Search by name"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <i className="bi bi-search search-icon" />
+          </div>
+          <div className="scrollable-options">
+            {filteredOptions.map((option) => (
+              <div
+                key={option}
+                className="d-flex align-items-center gap-2 dropdown-item cursor-pointer"
+                onClick={(e) => handleSelection(option, e)}
+              >
+                <input
+                  type="checkbox"
+                  className="form-check-input"
+                  role="switch"
+                  checked={selected.includes(option)}
+                />
+                <div className="text-truncate">
+                  <span>{option}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+
+    case "amount":
+      return (
+        <div className="p-2">
+          <AmountOptions showDelete={true} />
+        </div>
+      );
+
     default:
       return (
         <div className="p-2">
@@ -452,9 +537,26 @@ const OptionRender = () => {
   }
 };
 
-const getDisplayValue = () => {
-  if (selected.length === 0) return "";
+const getAmountDisplay = () => {
+  if (amountValues && amountValues.value) {
+    if (
+      amountValues.value === "between" &&
+      amountValues.min &&
+      amountValues.max
+    ) {
+      return `${amountValues.min}-${amountValues.max}`;
+    } else if (amountValues.value === ">" && amountValues.min) {
+      return `> ${amountValues.min}`;
+    } else if (amountValues.value === "<" && amountValues.max) {
+      return `< ${amountValues.max}`;
+    } else if (amountValues.value === "is" && amountValues.equal) {
+      return `${amountValues.equal}`;
+    }
+  }
+  return "";
+};
 
+const getDisplayValue = () => {
   if (type === "account") {
     return (
       <div className="d-flex align-items-center">
@@ -481,32 +583,15 @@ const getDisplayValue = () => {
       </div>
     );
   } else if (type === "token") {
-    if (amountValues.value) {
-      let amountDisplay = "";
-
-      if (
-        amountValues.value === "between" &&
-        amountValues.min &&
-        amountValues.max
-      ) {
-        amountDisplay = `${amountValues.min}-${amountValues.max}`;
-      } else if (amountValues.value === ">" && amountValues.min) {
-        amountDisplay = `> ${amountValues.min}`;
-      } else if (amountValues.value === "<" && amountValues.max) {
-        amountDisplay = `< ${amountValues.max}`;
-      } else if (amountValues.value === "is" && amountValues.equal) {
-        amountDisplay = `${amountValues.equal}`;
-      }
-
-      if (amountDisplay) {
-        return (
-          <Widget
-            loading=""
-            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenIcon`}
-            props={{ address: selected[0], number: amountDisplay }}
-          />
-        );
-      }
+    const amountDisplay = getAmountDisplay();
+    if (amountDisplay) {
+      return (
+        <Widget
+          loading=""
+          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenIcon`}
+          props={{ address: selected[0], number: amountDisplay }}
+        />
+      );
     }
 
     return (
@@ -528,7 +613,32 @@ const getDisplayValue = () => {
     }
     return "";
   } else if (type === "status") {
-    return selected[0] === "Approved" ? "Funded" : selected[0];
+    return selected[0] === "Approved"
+      ? isPaymentsPage
+        ? "Funded"
+        : "Executed"
+      : selected[0];
+  } else if (type === "type") {
+    return selected[0];
+  } else if (type === "amount") {
+    const amountDisplay = getAmountDisplay();
+    if (amountDisplay) {
+      return (
+        <Widget
+          loading=""
+          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenIcon`}
+          props={{ address: "", number: amountDisplay }}
+        />
+      );
+    }
+    return "";
+  } else if (type === "options") {
+    if (selected.length === 1) {
+      return selected[0];
+    } else if (selected.length > 1) {
+      return `${selected[0]}, ...`;
+    }
+    return "";
   } else {
     return selected.join(", ");
   }
@@ -546,7 +656,7 @@ return (
     >
       <div className="d-flex align-items-center gap-2 text-start">
         <span className="text-secondary">{label}</span>
-        {selected.length > 0 && (
+        {(selected.length > 0 || type === "amount") && (
           <div className="d-flex align-items-center gap-2 text-start">
             {!include && (
               <span
@@ -568,78 +678,80 @@ return (
       className="dropdown-menu rounded-2 dropdown-menu-start shadow w-100 p-0"
       style={{ maxWidth: "320px", minWidth: "320px" }}
     >
-      <div
-        className="d-flex align-items-center gap-1"
-        onBlur={() => {
-          setTimeout(() => setIncludeDropdownOpen(false), 200);
-        }}
-        style={{ padding: hideInclude ? "8px 12px" : "4px 12px" }}
-      >
-        <span className="text-secondary" style={{ fontSize: "14px" }}>
-          {label}
-        </span>
-        <div className="dropdown">
-          <button
-            className="btn btn-sm btn-outline-secondary dropdown-toggle hide-border"
-            type="button"
-            data-bs-toggle="dropdown"
-            data-bs-auto-close="false"
-            aria-expanded="false"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIncludeDropdownOpen(!includeDropdownOpen);
-            }}
-            style={{
-              display: hideInclude ? "none" : "block",
-            }}
-          >
-            {includeOptions.find((option) => option.value === include)?.label}
-          </button>
-          {includeDropdownOpen && (
-            <ul className="dropdown-menu show">
-              {includeOptions.map((option) => (
-                <li key={option.value}>
-                  <button
-                    className={`dropdown-item ${
-                      include === option.value ? "active" : ""
-                    }`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onIncludeChange(option.value);
-                      setIncludeDropdownOpen(false);
-                    }}
-                  >
-                    {option.label}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-        <div className="ms-auto d-flex align-items-center gap-2">
-          {multiple && selected.length > 0 && (
-            <div
-              className="cursor-pointer"
+      {type !== "amount" && (
+        <div
+          className="d-flex align-items-center gap-1"
+          onBlur={() => {
+            setTimeout(() => setIncludeDropdownOpen(false), 200);
+          }}
+          style={{ padding: hideInclude ? "8px 12px" : "4px 12px" }}
+        >
+          <span className="text-secondary" style={{ fontSize: "14px" }}>
+            {label}
+          </span>
+          <div className="dropdown">
+            <button
+              className="btn btn-sm btn-outline-secondary dropdown-toggle hide-border"
+              type="button"
+              data-bs-toggle="dropdown"
+              data-bs-auto-close="false"
+              aria-expanded="false"
               onClick={(e) => {
                 e.stopPropagation();
-                setSelected([]);
+                setIncludeDropdownOpen(!includeDropdownOpen);
               }}
-              style={{ fontSize: "14px" }}
+              style={{
+                display: hideInclude ? "none" : "block",
+              }}
             >
-              Clear
+              {includeOptions.find((option) => option.value === include)?.label}
+            </button>
+            {includeDropdownOpen && (
+              <ul className="dropdown-menu show">
+                {includeOptions.map((option) => (
+                  <li key={option.value}>
+                    <button
+                      className={`dropdown-item ${
+                        include === option.value ? "active" : ""
+                      }`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onIncludeChange(option.value);
+                        setIncludeDropdownOpen(false);
+                      }}
+                    >
+                      {option.label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+          <div className="ms-auto d-flex align-items-center gap-2">
+            {multiple && selected.length > 0 && (
+              <div
+                className="cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelected([]);
+                }}
+                style={{ fontSize: "14px" }}
+              >
+                Clear
+              </div>
+            )}
+            <div
+              className="text-red cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                removeFilter();
+              }}
+            >
+              <i className="bi bi-trash"></i>
             </div>
-          )}
-          <div
-            className="text-red cursor-pointer"
-            onClick={(e) => {
-              e.stopPropagation();
-              removeFilter();
-            }}
-          >
-            <i className="bi bi-trash"></i>
           </div>
         </div>
-      </div>
+      )}
       <OptionRender />
     </div>
   </Container>
