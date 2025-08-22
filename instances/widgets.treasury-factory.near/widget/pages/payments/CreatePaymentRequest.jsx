@@ -211,7 +211,6 @@ useEffect(() => {
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
         if (typeof lastProposalId === "number" && lastProposalId !== id) {
-          console.log("new proposal created", new Date());
           setTimeout(() => {
             cleanInputs();
             onCloseCanvas();
