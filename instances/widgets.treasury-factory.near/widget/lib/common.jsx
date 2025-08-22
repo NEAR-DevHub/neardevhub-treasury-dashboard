@@ -521,6 +521,24 @@ function generateFilteredProposalsQuery(
                 }
               }
               break;
+
+            // Stake-delegation specific filters
+            case "type":
+              if (include) {
+                queryParams.push(`stake_type=${values[0].toLowerCase()}`);
+              } else {
+                queryParams.push(`stake_type_not=${values[0].toLowerCase()}`);
+              }
+              break;
+
+            case "validators":
+              if (include) {
+                queryParams.push(`validators=${values.join(",")}`);
+              } else {
+                queryParams.push(`validators_not=${values.join(",")}`);
+              }
+              break;
+
             default:
               break;
           }

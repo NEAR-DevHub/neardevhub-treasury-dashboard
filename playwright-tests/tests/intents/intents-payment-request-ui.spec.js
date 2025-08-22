@@ -480,7 +480,7 @@ test("payment request to BTC address", async ({
   await expect(proposalColumns.nth(fundingColumnIndex)).toHaveText("2.00");
 
   await proposalColumns.nth(fundingColumnIndex).click();
-
+  await page.waitForTimeout(2_000);
   await page.getByRole("button", { name: "Approve" }).nth(1).click();
 
   expect(
@@ -772,6 +772,7 @@ test("payment request to USDC address on BASE", async ({
 
   await proposalColumns.nth(fundingColumnIndex).click();
 
+  await page.waitForTimeout(2_000);
   await page.getByRole("button", { name: "Approve" }).nth(1).click();
 
   expect(
@@ -1096,6 +1097,7 @@ test("payment request for wNEAR token on NEAR intents", async ({
 
   await proposalColumns.nth(fundingColumnIndex).click();
 
+  await page.waitForTimeout(2_000);
   await page.getByRole("button", { name: "Approve" }).nth(1).click();
 
   // Check intents balance before execution
@@ -1621,6 +1623,7 @@ test("insufficient balance alert for wNEAR payment request exceeding available b
 
   // Click on the proposal to view details
   await proposalColumns.nth(fundingColumnIndex).click();
+  await page.waitForTimeout(2_000);
 
   // Try to approve the request - this should trigger the insufficient balance warning
   await page.getByRole("button", { name: "Approve" }).nth(1).click();
