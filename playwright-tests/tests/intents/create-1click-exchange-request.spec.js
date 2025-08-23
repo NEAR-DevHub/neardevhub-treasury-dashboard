@@ -926,11 +926,6 @@ test.describe("1Click API Integration - Asset Exchange", function () {
       page.getByRole("button", { name: "Confirm" })
     ).not.toBeVisible();
 
-    await page.reload();
-    // Wait a bit for the proposal to be created
-    console.log("Waiting for proposal to be created...");
-    await page.waitForTimeout(5000);
-
     // Navigate back to see the proposal by clicking Asset Exchange link
     console.log("Navigating to Pending Requests to verify proposal...");
     await page.getByRole("link", { name: "Asset Exchange" }).click();
