@@ -390,8 +390,11 @@ test.describe("OneClickExchangeForm Component", () => {
 
     // Check buttons
     await expect(page.locator('button:text("Cancel")')).toBeVisible();
-    await expect(page.locator('button:text("Get Quote")')).toBeVisible();
-    await expect(page.locator('button:text("Get Quote")')).toBeDisabled();
+    // With auto-fetch, Create Proposal button appears when quote is fetched
+    // Initially it shouldn't be visible as no quote is fetched yet
+    await expect(
+      page.locator('button:text("Create Proposal")')
+    ).not.toBeVisible();
 
     // Verify light theme CSS variables are applied
     const containerStyles = await page
@@ -553,24 +556,34 @@ test.describe("OneClickExchangeForm Component", () => {
     await mockApiResponses(page);
     await setupComponent(page);
 
-    // Initially Get Quote button should be disabled
-    await expect(page.locator('button:text("Get Quote")')).toBeDisabled();
+    // Initially Create Proposal button shouldn't be visible (no quote fetched)
+    await expect(
+      page.locator('button:text("Create Proposal")')
+    ).not.toBeVisible();
 
-    // Fill amount only - button should still be disabled
+    // Fill amount only - button should still not be visible (incomplete form)
     await page.fill('input[placeholder="0.00"]', "1.0");
-    await expect(page.locator('button:text("Get Quote")')).toBeDisabled();
+    await expect(
+      page.locator('button:text("Create Proposal")')
+    ).not.toBeVisible();
 
     // Test invalid amount (empty)
     await page.fill('input[placeholder="0.00"]', "");
-    await expect(page.locator('button:text("Get Quote")')).toBeDisabled();
+    await expect(
+      page.locator('button:text("Create Proposal")')
+    ).not.toBeVisible();
 
     // Test invalid amount (zero)
     await page.fill('input[placeholder="0.00"]', "0");
-    await expect(page.locator('button:text("Get Quote")')).toBeDisabled();
+    await expect(
+      page.locator('button:text("Create Proposal")')
+    ).not.toBeVisible();
 
     // Test negative amount
     await page.fill('input[placeholder="0.00"]', "-1");
-    await expect(page.locator('button:text("Get Quote")')).toBeDisabled();
+    await expect(
+      page.locator('button:text("Create Proposal")')
+    ).not.toBeVisible();
   });
 
   test("handles slippage tolerance input", async ({
@@ -1053,6 +1066,9 @@ test.describe("OneClickExchangeForm Component", () => {
       // Wait for quote to render
       await page.waitForTimeout(500);
 
+      // Scroll the quote display into view before screenshot
+      await page.locator(".quote-display").scrollIntoViewIfNeeded();
+
       // Take screenshot showing the expiry time
       await page.screenshot({
         path: path.join(
@@ -1088,8 +1104,10 @@ test.describe("OneClickExchangeForm Component", () => {
         await amountInput.fill("0.1");
         await page.waitForTimeout(500);
 
-        // Wait for Get Quote button to be available again
-        await expect(page.locator('button:text("Get Quote")')).toBeVisible();
+        // Wait for Create Proposal button to be visible (quote auto-fetched)
+        await expect(
+          page.locator('button:text("Create Proposal")')
+        ).toBeVisible();
       }
     }
 
