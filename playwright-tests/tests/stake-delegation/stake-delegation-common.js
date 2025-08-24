@@ -521,6 +521,7 @@ export async function checkNewProposalSubmission({
     args: transaction.actions[0].params.args,
     attachedDeposit: transaction.actions[0].params.deposit,
   });
+  await page.waitForTimeout(2000);
   await page.evaluate(async (transactionResult) => {
     window.transactionSentPromiseResolve(transactionResult);
   }, transactionResult);

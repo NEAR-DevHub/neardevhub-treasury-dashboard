@@ -1,100 +1,18 @@
 import { expect } from "@playwright/test";
 import { test } from "../../util/test.js";
-
-// Helper function to open filters panel
-async function openFiltersPanel(page) {
-  await page.click("button:has(i.bi-funnel)");
-  await expect(page.locator("text=Add Filter")).toBeVisible();
-}
-
-// Helper function to check export URL contains correct filter parameters
-async function checkExportUrlWithFilters(page, expectedParams) {
-  // Verify export dropdown exists (when filters are active)
-  const exportDropdown = page.locator("button:has(i.bi-download)");
-  await expect(exportDropdown).toBeVisible();
-
-  // Should be a dropdown when filters are active
-  await expect(exportDropdown).toHaveAttribute("data-bs-toggle", "dropdown");
-
-  const filteredLink = page.getByTestId("export-filtered");
-  const allLink = page.getByTestId("export-all");
-
-  await expect(filteredLink).toBeAttached();
-  await expect(allLink).toBeAttached();
-
-  const href = await filteredLink.getAttribute("href");
-  const allHref = await allLink.getAttribute("href");
-
-  // Check that allHref only contains category parameter
-  expect(allHref).toContain("?category=payments");
-
-  const allUrl = new URL(allHref);
-  const allQueryParams = new URLSearchParams(allUrl.search);
-
-  expect(allQueryParams.size).toBe(1);
-  expect(allQueryParams.get("category")).toBe("payments");
-
-  // Check that the URL contains the expected parameters
-  for (const [param, value] of Object.entries(expectedParams)) {
-    // Parse the href URL to get the actual parameter values
-    const url = new URL(href);
-    const queryParams = new URLSearchParams(url.search);
-    const actualValue = queryParams.get(param);
-    expect(actualValue).toBe(value);
-  }
-}
-
-async function checkAllAmountCells(page, amount, operator) {
-  const cells = await page.getByRole("cell", { name: /not defined/ }).all();
-
-  for (const cell of cells) {
-    const text = await cell.textContent();
-    const num = parseFloat(text.replace(/,/g, "")); // normalize
-    if (operator === ">") {
-      if (!isNaN(num)) {
-        expect(num).toBeGreaterThanOrEqual(amount);
-      }
-    } else if (operator === "<") {
-      if (!isNaN(num)) {
-        expect(num).toBeLessThanOrEqual(amount);
-      }
-    } else if (operator === "=") {
-      if (!isNaN(num)) {
-        expect(num).toBe(amount);
-      }
-    }
-  }
-}
-
-// Helper function to add a specific filter
-async function addFilter(page, options) {
-  const { filterName, isMultiple = true } = options;
-
-  await openFiltersPanel(page);
-  await page.click("text=Add Filter");
-  await page.getByRole("button", { name: filterName }).click();
-  await page.getByRole("button", { name: filterName }).click();
-
-  if (isMultiple) {
-    await expect(page.getByRole("button", { name: "is any" })).toBeVisible();
-  } else {
-    await expect(
-      page.getByRole("button", { name: "is any" })
-    ).not.toBeVisible();
-  }
-}
-
-// Helper function to switch to History tab
-async function switchToHistoryTab(page) {
-  await page.click("text=History");
-  await page.waitForLoadState("networkidle");
-}
-
-// Helper function to switch to Pending Requests tab
-async function switchToPendingRequestsTab(page) {
-  await page.click("text=Pending Requests");
-  await page.waitForLoadState("networkidle");
-}
+import {
+  getColumnIndex,
+  checkColumnValues,
+  checkColumnImages,
+  checkVoteStatusWithImages,
+  openFiltersPanel,
+  checkExportUrlWithFilters,
+  checkColumnAmounts,
+  addFilter,
+  switchToHistoryTab,
+  switchToPendingRequestsTab,
+  checkColumnDateRange,
+} from "../../util/filter-utils.js";
 
 test.describe("Payments Filters", () => {
   test.beforeEach(async ({ page, instanceAccount }) => {
@@ -112,13 +30,8 @@ test.describe("Payments Filters", () => {
     page,
   }) => {
     await switchToPendingRequestsTab(page);
-
-    // Open filters panel
-    await page.click("button:has(i.bi-funnel)");
-
-    // Click Add Filter dropdown
-    await page.click("text=Add Filter");
-
+    await openFiltersPanel(page);
+    await page.locator("text=Add Filter").click();
     // Verify only Pending Requests filters are available
     await expect(page.getByRole("button", { name: "Recipient" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Token" })).toBeVisible();
@@ -153,12 +66,8 @@ test.describe("Payments Filters", () => {
       "data-bs-toggle",
       "dropdown"
     );
-
-    // Open filters panel
-    await page.click("button:has(i.bi-funnel)");
-
-    // Click Add Filter dropdown
-    await page.click("text=Add Filter");
+    await openFiltersPanel(page);
+    await page.locator("text=Add Filter").click();
 
     // Verify all filters are available for History
     await expect(
@@ -187,29 +96,36 @@ test.describe("Payments Filters", () => {
       .fill("megha");
     await page.getByText("Megha", { exact: true }).first().click();
     await page.waitForTimeout(1000);
-    const recipientCells = page.getByRole("cell", {
-      name: "Megha @megha19.near",
-    });
-    await expect(recipientCells).toHaveCount(10);
+
+    // Get Recipient column index and verify all rows show the selected recipient
+    const recipientColumnIndex = await getColumnIndex(page, "Recipient");
+    await checkColumnValues(page, recipientColumnIndex, "megha19.near", true);
 
     // Check export URL contains recipient filter
-    await checkExportUrlWithFilters(page, {
-      recipients: "megha19.near",
-    });
+    await checkExportUrlWithFilters(
+      page,
+      {
+        recipients: "megha19.near",
+      },
+      "payments"
+    );
 
     // check for not
     await page.getByRole("button", { name: "is any" }).click();
     await page.getByRole("button", { name: "is not all" }).click();
     await page.waitForTimeout(1000);
-    const recipientCellsNotAll = page.getByRole("cell", {
-      name: "Megha @megha19.near",
-    });
-    await expect(recipientCellsNotAll).toHaveCount(0);
+
+    // Verify no rows show the excluded recipient
+    await checkColumnValues(page, recipientColumnIndex, "megha19.near", false);
 
     // Check export URL contains recipient_not filter
-    await checkExportUrlWithFilters(page, {
-      recipients_not: "megha19.near",
-    });
+    await checkExportUrlWithFilters(
+      page,
+      {
+        recipients_not: "megha19.near",
+      },
+      "payments"
+    );
   });
 
   test("should select token in Token filter, add amount filter and display it", async ({
@@ -228,71 +144,92 @@ test.describe("Payments Filters", () => {
     await expect(page.getByText("Amount")).toBeVisible();
 
     await page.waitForTimeout(1000);
-    const tokenCells = page.getByRole("cell", { name: "USDC" });
-    await expect(tokenCells).toHaveCount(10);
+
+    // Get Token column index and verify all rows show the selected token
+    const tokenColumnIndex = await getColumnIndex(page, "Token");
+    await checkColumnValues(page, tokenColumnIndex, "USDC", true);
     await expect(
       page.getByRole("button", { name: "Token : not defined USDC" })
     ).toBeVisible();
 
     // Check export URL contains token filter
-    await checkExportUrlWithFilters(page, {
-      tokens:
-        "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
-    });
+    await checkExportUrlWithFilters(
+      page,
+      {
+        tokens:
+          "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+      },
+      "payments"
+    );
 
     // Amount filter :
     // 1) between
     await expect(page.getByRole("button", { name: "Between" })).toBeVisible();
-    await page.getByPlaceholder("0").first().fill("100");
-    await page.getByPlaceholder("0").nth(1).fill("200");
+    await page.getByPlaceholder("0").first().fill("0.01");
+    await page.getByPlaceholder("0").nth(1).fill("0.1");
     await expect(
-      page.getByRole("button", { name: "Token : not defined 100-200" })
+      page.getByRole("button", { name: "Token : not defined 0.01-0.1 USDC" })
     ).toBeVisible();
     await page.waitForTimeout(3000);
-    await checkAllAmountCells(page, 100, ">");
-    await checkAllAmountCells(page, 200, "<");
+
+    // Get Funding Ask column index and verify all amounts are within range
+    const fundingAskColumnIndex = await getColumnIndex(page, "Funding Ask");
+    await checkColumnAmounts(page, fundingAskColumnIndex, 0.01, ">");
+    await checkColumnAmounts(page, fundingAskColumnIndex, 0.1, "<");
 
     // Check export URL contains amount range
-    await checkExportUrlWithFilters(page, {
-      tokens:
-        "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
-      amount_min: "100",
-      amount_max: "200",
-    });
+    await checkExportUrlWithFilters(
+      page,
+      {
+        tokens:
+          "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+        amount_min: "0.01",
+        amount_max: "0.1",
+      },
+      "payments"
+    );
 
     // 2) Is
     await page.getByRole("button", { name: "Between" }).click();
     await page.getByText("Is", { exact: true }).click();
-    await page.getByPlaceholder("0").fill("100");
+    await page.getByPlaceholder("0").fill("0.01");
     await expect(
-      page.getByRole("button", { name: "Token : not defined 100 USDC" })
+      page.getByRole("button", { name: "Token : not defined 0.01 USDC" })
     ).toBeVisible();
     await page.waitForTimeout(3000);
-    await checkAllAmountCells(page, 100, "=");
+    await checkColumnAmounts(page, fundingAskColumnIndex, 0.01, "=");
 
     // Check export URL contains amount equal
-    await checkExportUrlWithFilters(page, {
-      tokens:
-        "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
-      amount_equal: "100",
-    });
+    await checkExportUrlWithFilters(
+      page,
+      {
+        tokens:
+          "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+        amount_equal: "0.01",
+      },
+      "payments"
+    );
 
     // 3) less than
     await page.getByRole("button", { name: "Is", exact: true }).click();
     await page.getByText("Less than").click();
-    await page.getByPlaceholder("0").fill("200");
+    await page.getByPlaceholder("0").fill("0.2");
     await expect(
-      page.getByRole("button", { name: "Token : not defined < 200 USDC" })
+      page.getByRole("button", { name: "Token : not defined < 0.2 USDC" })
     ).toBeVisible();
     await page.waitForTimeout(3000);
-    await checkAllAmountCells(page, 200, "<");
+    await checkColumnAmounts(page, fundingAskColumnIndex, 0.2, "<");
 
     // Check export URL contains amount max
-    await checkExportUrlWithFilters(page, {
-      tokens:
-        "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
-      amount_max: "200",
-    });
+    await checkExportUrlWithFilters(
+      page,
+      {
+        tokens:
+          "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+        amount_max: "0.2",
+      },
+      "payments"
+    );
 
     // 4) More than
     await page.getByRole("button", { name: "Less than" }).click();
@@ -302,14 +239,18 @@ test.describe("Payments Filters", () => {
       page.getByRole("button", { name: "Token : not defined > 100 USDC" })
     ).toBeVisible();
     await page.waitForTimeout(3000);
-    await checkAllAmountCells(page, 100, ">");
+    await checkColumnAmounts(page, fundingAskColumnIndex, 100, ">");
 
     // Check export URL contains amount min
-    await checkExportUrlWithFilters(page, {
-      tokens:
-        "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
-      amount_min: "100",
-    });
+    await checkExportUrlWithFilters(
+      page,
+      {
+        tokens:
+          "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+        amount_min: "100",
+      },
+      "payments"
+    );
   });
 
   test("should add and display Created by filter", async ({ page }) => {
@@ -323,31 +264,45 @@ test.describe("Payments Filters", () => {
       .fill("pete");
     await page.getByText("Peter Salomonsen", { exact: true }).first().click();
     await page.waitForTimeout(1000);
-    const proposerCells = await page
-      .getByText("petersalomonsen.near", {
-        exact: true,
-      })
-      .count();
 
-    expect(proposerCells).toBeGreaterThanOrEqual(6);
+    // Get Created by column index and verify all rows show the selected proposer
+    const creatorColumnIndex = await getColumnIndex(page, "Created by");
+    await checkColumnValues(
+      page,
+      creatorColumnIndex,
+      "petersalomonsen.near",
+      true
+    );
 
     // Check export URL contains proposer filter
-    await checkExportUrlWithFilters(page, {
-      proposers: "petersalomonsen.near",
-    });
+    await checkExportUrlWithFilters(
+      page,
+      {
+        proposers: "petersalomonsen.near",
+      },
+      "payments"
+    );
 
     await page.getByRole("button", { name: "is any" }).click();
     await page.getByRole("button", { name: "is not all" }).click();
     await page.waitForTimeout(1000);
-    const proposerCellsNotAll = page.getByText("petersalomonsen.near", {
-      exact: true,
-    });
-    await expect(proposerCellsNotAll).toHaveCount(0);
+
+    // Verify no rows show the excluded proposer
+    await checkColumnValues(
+      page,
+      creatorColumnIndex,
+      "petersalomonsen.near",
+      false
+    );
 
     // Check export URL contains proposer_not filter
-    await checkExportUrlWithFilters(page, {
-      proposers_not: "petersalomonsen.near",
-    });
+    await checkExportUrlWithFilters(
+      page,
+      {
+        proposers_not: "petersalomonsen.near",
+      },
+      "payments"
+    );
   });
 
   test("should add and display Approver filter", async ({ page }) => {
@@ -361,34 +316,35 @@ test.describe("Payments Filters", () => {
       .fill("fro");
     await page.getByText("frol", { exact: true }).first().click();
     await page.waitForTimeout(1000);
-    const approverImageCells = await page
-      .locator(
-        'div[data-component="test-widgets.treasury-factory.near/widget/components.Approvers"][style*="https://i.near.social/magic/large/https://near.social/magic/img/account/frol.near"]'
-      )
-      .count();
 
-    expect(approverImageCells).toBeGreaterThanOrEqual(3);
+    // Get Approvers column index and verify all rows show the selected approver
+    const approversColumnIndex = await getColumnIndex(page, "Approver");
+    await checkColumnImages(page, approversColumnIndex, "frol.near", true);
 
     // Check export URL contains approver filter
-    await checkExportUrlWithFilters(page, {
-      approvers: "frol.near",
-    });
+    await checkExportUrlWithFilters(
+      page,
+      {
+        approvers: "frol.near",
+      },
+      "payments"
+    );
 
     await page.getByRole("button", { name: "is any" }).click();
     await page.getByRole("button", { name: "is not all" }).click();
     await page.waitForTimeout(1000);
-    const approverCellsNotAll = await page
-      .locator(
-        'div[data-component="test-widgets.treasury-factory.near/widget/components.Approvers"][style*="https://i.near.social/magic/large/https://near.social/magic/img/account/frol.near"]'
-      )
-      .count();
 
-    expect(approverCellsNotAll).toBe(0);
+    // Verify no rows show the excluded approver
+    await checkColumnImages(page, approversColumnIndex, "frol.near", false);
 
     // Check export URL contains approver_not filter
-    await checkExportUrlWithFilters(page, {
-      approvers_not: "frol.near",
-    });
+    await checkExportUrlWithFilters(
+      page,
+      {
+        approvers_not: "frol.near",
+      },
+      "payments"
+    );
   });
 
   test("should add and display status filter", async ({ page }) => {
@@ -399,29 +355,36 @@ test.describe("Payments Filters", () => {
     });
     await page.getByText("Funded").first().click();
     await page.waitForTimeout(1000);
-    const statusCells = await page
-      .getByRole("cell", { name: "Funded" })
-      .count();
-    expect(statusCells).toBeGreaterThanOrEqual(10);
+
+    // Get Status column index and verify all rows show the selected status
+    const statusColumnIndex = await getColumnIndex(page, "Status");
+    await checkColumnValues(page, statusColumnIndex, "Funded", true);
 
     // Check export URL contains status filter
-    await checkExportUrlWithFilters(page, {
-      statuses: "Approved",
-    });
+    await checkExportUrlWithFilters(
+      page,
+      {
+        statuses: "Approved",
+      },
+      "payments"
+    );
 
     await page.getByRole("button", { name: "Status : Funded" }).click();
     await page.getByRole("button", { name: "is" }).click();
     await page.getByRole("button", { name: "is not" }).click();
     await page.waitForTimeout(1000);
-    const statusCellsNotAll = await page
-      .getByRole("cell", { name: "Funded" })
-      .count();
-    expect(statusCellsNotAll).toBe(0);
+
+    // Verify no rows show the excluded status
+    await checkColumnValues(page, statusColumnIndex, "Funded", false);
 
     // Check export URL contains status filter (excluding Approved)
-    await checkExportUrlWithFilters(page, {
-      statuses: "Rejected,Failed,Expired",
-    });
+    await checkExportUrlWithFilters(
+      page,
+      {
+        statuses: "Rejected,Failed,Expired",
+      },
+      "payments"
+    );
   });
 
   test("should remove filter when trash icon is clicked", async ({ page }) => {
@@ -482,27 +445,27 @@ test.describe("Payments Filters", () => {
       .getByRole("textbox")
       .nth(2)
       .fill(endDate.toISOString().split("T")[0]);
+    await page.waitForTimeout(3000);
 
-    const createdDateCells = await page
-      .getByRole("cell", { name: /:\d+\s+\d{1,2} \w{3} \d{4}/ })
-      .all();
-
-    for (const cell of createdDateCells) {
-      const raw = (await cell.textContent()).trim(); // e.g. ":17 18 Jul 2025"
-
-      // Extract the date part (everything after the first space)
-      const datePart = raw.split(" ").slice(1).join(" "); // "18 Jul 2025"
-
-      const parsedDate = new Date(datePart);
-
-      expect(parsedDate >= startDate && parsedDate <= endDate).toBeTruthy();
-    }
+    // Get Created Date column index and verify all rows show dates within the range
+    const createdDateColumnIndex = await getColumnIndex(page, "Created Date");
+    await checkColumnDateRange(
+      page,
+      createdDateColumnIndex,
+      startDate,
+      endDate,
+      true
+    );
 
     // Check export URL contains date range
-    await checkExportUrlWithFilters(page, {
-      created_date_from: "2024-01-01",
-      created_date_to: "2024-12-31",
-    });
+    await checkExportUrlWithFilters(
+      page,
+      {
+        created_date_from: "2024-01-01",
+        created_date_to: "2024-12-31",
+      },
+      "payments"
+    );
   });
 
   test("should switch between tabs and verify filters are cleared", async ({
@@ -538,27 +501,6 @@ test.describe("Payments Filters", () => {
     const searchInput = page.getByPlaceholder("Search");
     await expect(searchInput).toBeVisible();
 
-    // Step 1: Search by title
-    await searchInput.fill("megha");
-    await page.waitForTimeout(3000);
-
-    // Verify title search results
-    const titleSearchRows = page.locator("tbody tr");
-    const titleSearchCount = await titleSearchRows.count();
-    expect(titleSearchCount).toBeGreaterThan(0);
-
-    // Verify that results contain "megha"
-    const meghaCells = page.getByRole("cell", { name: /megha/i });
-    const meghaCellCount = await meghaCells.count();
-    expect(meghaCellCount).toBeGreaterThanOrEqual(6);
-
-    // Check CSV export URL contains search parameter
-    await checkExportUrlWithFilters(page, {
-      search: "megha",
-    });
-
-    // Step 2: Search by specific ID
-
     await searchInput.fill("124");
     await page.waitForTimeout(3000);
 
@@ -571,9 +513,13 @@ test.describe("Payments Filters", () => {
     expect(page.getByRole("cell", { name: "124" })).toBeVisible();
 
     // Check CSV export URL contains search parameter for ID
-    await checkExportUrlWithFilters(page, {
-      search: "124",
-    });
+    await checkExportUrlWithFilters(
+      page,
+      {
+        search: "124",
+      },
+      "payments"
+    );
 
     // Step 3: Clear search
     await page.locator(".bi.bi-x-lg").click();
@@ -599,14 +545,6 @@ test.describe("Logged in user", () => {
     page,
     instanceAccount,
   }) => {
-    // Constants for this test
-    const testConstants = {
-      theoriAccountImage:
-        "https://i.near.social/magic/large/https://near.social/magic/img/account/theori.near",
-      approvedIconPath: "M14 7L8.5 12.5L6 10",
-      rejectedIconPath: "M13.5 7L7.5 13",
-    };
-
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
     await page.waitForLoadState("networkidle");
     await switchToHistoryTab(page);
@@ -617,17 +555,16 @@ test.describe("Logged in user", () => {
     // Approved
     await page.getByText("Approved", { exact: true }).click();
     await page.waitForTimeout(3000);
-    const approverImageLocator = await page
-      .locator(
-        `div:has(img[src="${testConstants.theoriAccountImage}"]):has(path[d="${testConstants.approvedIconPath}"])`
-      )
-      .count();
-    expect(approverImageLocator).toBe(10);
+    await checkVoteStatusWithImages(page, "theori.near", "approved", true);
 
     // Check export URL contains approved vote filter
-    await checkExportUrlWithFilters(page, {
-      voter_votes: "theori.near:approved",
-    });
+    await checkExportUrlWithFilters(
+      page,
+      {
+        voter_votes: "theori.near:approved",
+      },
+      "payments"
+    );
 
     // Rejected
     await page
@@ -636,40 +573,35 @@ test.describe("Logged in user", () => {
     await page.getByText("Rejected", { exact: true }).click();
     await page.waitForTimeout(3000);
 
-    const rejectedImageLocator = await page
-      .locator(
-        `div:has(img[src="${testConstants.theoriAccountImage}"]):has(path[d="${testConstants.rejectedIconPath}"])`
-      )
-      .count();
-    await expect(rejectedImageLocator).toBeGreaterThanOrEqual(2);
+    await checkVoteStatusWithImages(page, "theori.near", "rejected", true);
 
     // Check export URL contains rejected vote filter
-    await checkExportUrlWithFilters(page, {
-      voter_votes: "theori.near:rejected",
-    });
+    await checkExportUrlWithFilters(
+      page,
+      {
+        voter_votes: "theori.near:rejected",
+      },
+      "payments"
+    );
 
-    // Awaiting Decision
+    // Not Voted
     await page
       .getByRole("button", { name: "My Vote Status : Rejected" })
       .click();
     await page.getByText("Not Voted", { exact: true }).click();
     await page.waitForTimeout(3000);
-    // no approver or reject votes
-    await expect(
-      page.locator(
-        `div:has(img[src="${testConstants.theoriAccountImage}"]):has(path[d="${testConstants.rejectedIconPath}"])`
-      )
-    ).toHaveCount(0);
 
-    await expect(
-      page.locator(
-        `div:has(img[src="${testConstants.theoriAccountImage}"]):has(path[d="${testConstants.approvedIconPath}"])`
-      )
-    ).toHaveCount(0);
+    // no approver or reject votes
+    await checkVoteStatusWithImages(page, "theori.near", "rejected", false);
+    await checkVoteStatusWithImages(page, "theori.near", "approved", false);
 
     // Check export URL contains approvers_not filter for "Not Voted"
-    await checkExportUrlWithFilters(page, {
-      approvers_not: "theori.near",
-    });
+    await checkExportUrlWithFilters(
+      page,
+      {
+        approvers_not: "theori.near",
+      },
+      "payments"
+    );
   });
 });

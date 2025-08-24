@@ -6,7 +6,7 @@ import {
   updateDaoPolicyMembers,
 } from "../../util/rpcmock.js";
 import { InsufficientBalance, encodeToMarkdown } from "../../util/lib.js";
-import { Worker } from "near-workspaces";
+import { parseNEAR, Worker } from "near-workspaces";
 import nearApi from "near-api-js";
 import { redirectWeb4 } from "../../util/web4";
 import {
@@ -43,10 +43,11 @@ async function setupWorker({ daoAccount, instanceAccount, page, isNearnCall }) {
   const userAccount2 = await worker.rootAccount.importContract({
     mainnetContract: "peter.near",
   });
-
   const userAccount3 = await worker.rootAccount.importContract({
     mainnetContract: "frol.near",
   });
+
+  await worker.rootAccount.transfer(creatorAccount.accountId, parseNEAR("100"));
 
   const isInfinex = daoAccount.includes("infinex");
   const create_args = {

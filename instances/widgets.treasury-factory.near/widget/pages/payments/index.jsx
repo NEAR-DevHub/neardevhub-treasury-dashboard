@@ -9,180 +9,6 @@ const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
 
-const NavUnderline = styled.ul`
-  min-width: 300px;
-  cursor: pointer;
-  font-size: 16px;
-  font-weight: 500;
-
-  .nav-link {
-    color: var(--text-secondary-color) !important;
-    padding-bottom: 24px;
-  }
-  .active {
-    color: var(--text-color) !important;
-    border-bottom: 3px solid var(--theme-color);
-  }
-  .nav-link:hover {
-    color: var(--text-color) !important;
-  }
-`;
-
-const Container = styled.div`
-  .input-responsive {
-    width: 300px;
-    min-width: 150px;
-    flex: 1;
-    max-width: 400px;
-  }
-
-  /* When proposal details panel is open */
-  .layout-secondary.show ~ .layout-main .input-responsive,
-  .layout-main:has(~ .layout-secondary.show) .input-responsive {
-    width: 200px;
-    min-width: 120px;
-    max-width: 350px;
-  }
-
-  /* Responsive breakpoints */
-  @media (max-width: 1200px) {
-    .input-responsive {
-      width: 250px;
-      max-width: 300px;
-    }
-
-    .layout-secondary.show ~ .layout-main .input-responsive,
-    .layout-main:has(~ .layout-secondary.show) .input-responsive {
-      width: 180px;
-      min-width: 100px;
-      max-width: 200px;
-    }
-  }
-
-  @media (max-width: 992px) {
-    .input-responsive {
-      width: 200px;
-      max-width: 250px;
-    }
-
-    .layout-secondary.show ~ .layout-main .input-responsive,
-    .layout-main:has(~ .layout-secondary.show) .input-responsive {
-      width: 150px;
-      min-width: 80px;
-      max-width: 180px;
-    }
-  }
-
-  @media (max-width: 768px) {
-    .input-responsive {
-      width: 180px;
-      max-width: 200px;
-    }
-
-    .layout-secondary.show ~ .layout-main .input-responsive,
-    .layout-main:has(~ .layout-secondary.show) .input-responsive {
-      width: 120px;
-      min-width: 60px;
-      max-width: 150px;
-    }
-  }
-
-  @media (max-width: 576px) {
-    .input-responsive {
-      width: 150px;
-      min-width: 120px;
-      max-width: 180px;
-    }
-
-    .layout-secondary.show ~ .layout-main .input-responsive,
-    .layout-main:has(~ .layout-secondary.show) .input-responsive {
-      width: 100px;
-      min-width: 50px;
-      max-width: 120px;
-    }
-  }
-
-  /* Active filter indicator */
-  .active-filter {
-    background-color: var(--grey-05);
-    position: relative;
-  }
-
-  .active-filter::after {
-    content: "";
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background-color: rgb(0, 122, 255);
-  }
-
-  /* Responsive text behavior */
-  .responsive-text {
-    display: none; /* Hidden by default on small screens */
-  }
-
-  @media (min-width: 992px) {
-    .responsive-text {
-      display: inline; /* Show on large screens */
-    }
-  }
-
-  /* Hide responsive text when proposal details panel is open */
-  .layout-secondary.show ~ .layout-main .responsive-text,
-  .layout-main:has(~ .layout-secondary.show) .responsive-text {
-    display: none !important;
-  }
-
-  @media (max-width: 768px) {
-    .input-responsive {
-      width: 180px;
-      max-width: 200px;
-    }
-
-    .layout-secondary.show ~ .layout-main .input-responsive,
-    .layout-main:has(~ .layout-secondary.show) .input-responsive {
-      width: 120px;
-      min-width: 60px;
-      max-width: 150px;
-    }
-  }
-
-  @media (max-width: 576px) {
-    .input-responsive {
-      width: 150px;
-      min-width: 120px;
-      max-width: 180px;
-    }
-
-    .layout-secondary.show ~ .layout-main .input-responsive,
-    .layout-main:has(~ .layout-secondary.show) .input-responsive {
-      width: 100px;
-      min-width: 50px;
-      max-width: 120px;
-    }
-  }
-
-  /* Active filter indicator */
-  .active-filter {
-    background-color: var(--grey-05);
-    position: relative;
-  }
-
-  .active-filter::after {
-    content: "";
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background-color: rgb(0, 122, 255);
-  }
-`;
-
 const normalize = (text) =>
   text
     ? text
@@ -293,30 +119,10 @@ function fetchProposals({ customSortDirection, hardRefresh }) {
     });
 }
 
-// Helper function to check if filters have meaningful values
-const hasMeaningfulFilters = (filters) => {
-  if (!filters || Object.keys(filters).length === 0) return false;
-
-  return Object.values(filters).some((filter) => {
-    // Check if filter has values with meaningful content
-    return (
-      filter.values &&
-      filter.values.length > 0 &&
-      filter.values.some((value) => value && value !== "")
-    );
-  });
-};
-
 useEffect(() => {
   setPage(0);
   const timeout = setTimeout(() => {
-    // Only fetch if filters have meaningful values or if there are no filters
-    if (
-      hasMeaningfulFilters(activeFilters) ||
-      Object.keys(activeFilters).length === 0
-    ) {
-      fetchProposals();
-    }
+    fetchProposals();
   }, 500);
 
   return () => clearTimeout(timeout);
@@ -353,7 +159,7 @@ const SidebarMenu = () => {
         className="d-flex justify-content-between border-bottom gap-2 align-items-center flex-wrap flex-md-nowrap"
         style={{ paddingRight: "10px" }}
       >
-        <NavUnderline className="nav gap-2 flex-shrink-0">
+        <ul className="custom-tabs nav gap-2 flex-shrink-0">
           {[{ title: "Pending Requests" }, { title: "History" }].map(
             ({ title }) =>
               title && (
@@ -384,7 +190,7 @@ const SidebarMenu = () => {
                 </li>
               )
           )}
-        </NavUnderline>
+        </ul>
 
         <div className="d-flex gap-2 align-items-center flex-wrap flex-sm-nowrap pb-2 pb-md-0 ps-2 ps-md-0 flex-grow-1 justify-content-start justify-content-md-end">
           {/* Search and Filters */}
@@ -661,7 +467,7 @@ const handleSortClick = () => {
 };
 
 return (
-  <Container className="w-100 h-100 flex-grow-1 d-flex flex-column">
+  <div className="w-100 h-100 flex-grow-1 d-flex flex-column">
     <VoteSuccessToast />
     {typeof proposalDetailsPageId === "number" ? (
       <Widget
@@ -851,5 +657,5 @@ return (
         </div>
       </div>
     )}
-  </Container>
+  </div>
 );

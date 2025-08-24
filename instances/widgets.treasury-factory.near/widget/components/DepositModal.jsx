@@ -15,7 +15,6 @@ if (!props.show) {
 }
 
 const Container = styled.div`
-  min-height: 500px;
   .warning-box {
     background: rgba(255, 158, 0, 0.1);
     color: var(--other-warning);
@@ -85,6 +84,12 @@ const Container = styled.div`
     font-weight: 500;
     font-size: 13px;
     padding: 12px;
+  }
+
+  /* Increase the entire modal container height when any dropdown is open */
+  &:has(.dropdown-menu.show) {
+    height: 500px !important;
+    min-height: 500px !important;
   }
 `;
 
@@ -371,7 +376,7 @@ const updateNetworksForAsset = (assetName) => {
 
       return {
         id: chainId, // This is the ID like "eth:1"
-        name: `${networkName} (${chainId})`,
+        name: networkName,
         icon: getNetworkIcon(chainId), // Use enhanced network icon lookup
         near_token_id: token.near_token_id,
         originalTokenData: token,

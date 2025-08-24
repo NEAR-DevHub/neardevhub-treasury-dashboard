@@ -157,6 +157,12 @@ useEffect(() => {
   if (isTxnCreated) {
     let checkTxnTimeout = null;
 
+    function updateProposalData() {
+      checkProposalStatus();
+      clearTimeout(checkTxnTimeout);
+      setTxnCreated(false);
+    }
+
     const checkForVoteOnProposal = () => {
       getProposalData()
         .then((proposal) => {
@@ -164,21 +170,26 @@ useEffect(() => {
             Object.keys(proposal?.votes ?? {}).sort()
           );
           const sortedVotes = JSON.stringify(Object.keys(votes ?? {}).sort());
+
           if (
             JSON.stringify(sortedProposalVotes) !== JSON.stringify(sortedVotes)
           ) {
-            checkProposalStatus();
-            clearTimeout(checkTxnTimeout);
-            setTxnCreated(false);
+            if (isProposalDetailsPage) {
+              updateProposalData();
+            } else {
+              setTimeout(() => {
+                updateProposalData();
+              }, 1000);
+            }
           } else {
             checkTxnTimeout = setTimeout(checkForVoteOnProposal, 1000);
           }
         })
         .catch(() => {
           // if proposal data doesn't exist, it means the proposal is deleted
-          checkProposalStatus();
-          clearTimeout(checkTxnTimeout);
-          setTxnCreated(false);
+          setTimeout(() => {
+            updateProposalData();
+          }, 1000);
         });
     };
 

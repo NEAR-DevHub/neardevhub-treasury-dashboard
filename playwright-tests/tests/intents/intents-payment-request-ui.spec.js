@@ -364,9 +364,11 @@ test("payment request to BTC address", async ({
     await creatorAccount.getKey()
   );
 
-  const btcRowLocator = page.locator(
-    '.card div.d-flex.flex-column.border-bottom:has(div.h6.mb-0.text-truncate:has-text("BTC"))'
-  );
+  const btcRowLocator = page
+    .getByTestId("intents-portfolio")
+    .locator(
+      'div.d-flex.flex-column:has(div.h6.mb-0.text-truncate:has-text("BTC"))'
+    );
   const btcAmountElement = btcRowLocator.locator(
     "div.d-flex.gap-2.align-items-center.justify-content-end div.d-flex.flex-column.align-items-end div.h6.mb-0"
   );
@@ -459,8 +461,6 @@ test("payment request to BTC address", async ({
   await page.getByRole("button", { name: "Confirm" }).click();
 
   await expect(page.getByRole("button", { name: "Confirm" })).not.toBeVisible();
-  await page.reload();
-  await page.waitForTimeout(5_000);
   const proposalColumns = page
     .locator(
       'tr[data-component="widgets.treasury-factory.near/widget/pages.payments.Table"]'
@@ -480,7 +480,7 @@ test("payment request to BTC address", async ({
   await expect(proposalColumns.nth(fundingColumnIndex)).toHaveText("2.00");
 
   await proposalColumns.nth(fundingColumnIndex).click();
-
+  await page.waitForTimeout(2_000);
   await page.getByRole("button", { name: "Approve" }).nth(1).click();
 
   expect(
@@ -656,9 +656,11 @@ test("payment request to USDC address on BASE", async ({
     await creatorAccount.getKey()
   );
 
-  const usdcRowLocator = page.locator(
-    '.card div.d-flex.flex-column.border-bottom:has(div.h6.mb-0.text-truncate:has-text("USDC"))'
-  );
+  const usdcRowLocator = page
+    .getByTestId("intents-portfolio")
+    .locator(
+      'div.d-flex.flex-column:has(div.h6.mb-0.text-truncate:has-text("USDC"))'
+    );
   await expect(usdcRowLocator).toBeAttached();
   const usdcAmountElement = usdcRowLocator.locator(
     "div.d-flex.gap-2.align-items-center.justify-content-end div.d-flex.flex-column.align-items-end div.h6.mb-0"
@@ -750,9 +752,6 @@ test("payment request to USDC address on BASE", async ({
   await expect(page.getByRole("button", { name: "Confirm" })).toBeVisible();
   await page.getByRole("button", { name: "Confirm" }).click();
   await expect(page.getByRole("button", { name: "Confirm" })).not.toBeVisible();
-
-  await page.reload();
-  await page.waitForTimeout(5_000);
   const proposalColumns = page
     .locator(
       'tr[data-component="widgets.treasury-factory.near/widget/pages.payments.Table"]'
@@ -773,6 +772,7 @@ test("payment request to USDC address on BASE", async ({
 
   await proposalColumns.nth(fundingColumnIndex).click();
 
+  await page.waitForTimeout(2_000);
   await page.getByRole("button", { name: "Approve" }).nth(1).click();
 
   expect(
@@ -984,9 +984,11 @@ test("payment request for wNEAR token on NEAR intents", async ({
   );
 
   // Check that NEAR (NEAR Intents) balance shows up in the dashboard
-  const nearBalanceRowLocator = page.locator(
-    '.card div.d-flex.flex-column.border-bottom:has(div.h6.mb-0.text-truncate:has-text("wNEAR"))'
-  );
+  const nearBalanceRowLocator = page
+    .getByTestId("intents-portfolio")
+    .locator(
+      'div.d-flex.flex-column:has(div.h6.mb-0.text-truncate:has-text("wNEAR"))'
+    );
 
   const nearBalanceLocator = nearBalanceRowLocator.locator(
     "div.d-flex.gap-2.align-items-center.justify-content-end div.d-flex.flex-column.align-items-end div.h6.mb-0"
@@ -1074,9 +1076,6 @@ test("payment request for wNEAR token on NEAR intents", async ({
 
   await expect(page.getByRole("button", { name: "Confirm" })).not.toBeVisible();
 
-  await page.reload();
-  await page.waitForTimeout(5_000);
-
   // Helper function to find column index by header name
   const proposalColumns = page
     .locator(
@@ -1098,6 +1097,7 @@ test("payment request for wNEAR token on NEAR intents", async ({
 
   await proposalColumns.nth(fundingColumnIndex).click();
 
+  await page.waitForTimeout(2_000);
   await page.getByRole("button", { name: "Approve" }).nth(1).click();
 
   // Check intents balance before execution
@@ -1282,9 +1282,11 @@ test("insufficient balance alert for BTC payment request exceeding available bal
   );
 
   // Verify the DAO has 100 BTC available
-  const btcRowLocator = page.locator(
-    '.card div.d-flex.flex-column.border-bottom:has(div.h6.mb-0.text-truncate:has-text("BTC"))'
-  );
+  const btcRowLocator = page
+    .getByTestId("intents-portfolio")
+    .locator(
+      'div.d-flex.flex-column:has(div.h6.mb-0.text-truncate:has-text("BTC"))'
+    );
   const btcAmountElement = btcRowLocator.locator(
     "div.d-flex.gap-2.align-items-center.justify-content-end div.d-flex.flex-column.align-items-end div.h6.mb-0"
   );
@@ -1338,9 +1340,6 @@ test("insufficient balance alert for BTC payment request exceeding available bal
 
   await expect(page.getByRole("button", { name: "Confirm" })).not.toBeVisible();
 
-  await page.reload();
-  await page.waitForTimeout(5_000);
-
   // Wait for the proposal to be created and navigate to the proposal
   const proposalColumns = page
     .locator(
@@ -1354,6 +1353,7 @@ test("insufficient balance alert for BTC payment request exceeding available bal
 
   // Click on the proposal to view details
   await proposalColumns.nth(fundingColumnIndex).click();
+  await page.waitForTimeout(2_000);
 
   // Try to approve the request - this should trigger the insufficient balance warning
   await page.getByRole("button", { name: "Approve" }).nth(1).click();
@@ -1377,8 +1377,6 @@ test("insufficient balance alert for BTC payment request exceeding available bal
   await expect(
     page.getByRole("button", { name: "Proceed Anyway" })
   ).toBeVisible();
-
-  await page.waitForTimeout(1_000);
 
   // Cancel the transaction to verify the modal closes and we're back to the proposal
   await page.getByRole("button", { name: "Cancel" }).click();
@@ -1556,9 +1554,11 @@ test("insufficient balance alert for wNEAR payment request exceeding available b
   );
 
   // Verify the DAO has 25 wNEAR available in intents
-  const nearBalanceRowLocator = page.locator(
-    '.card div.d-flex.flex-column.border-bottom:has(div.h6.mb-0.text-truncate:has-text("wNEAR"))'
-  );
+  const nearBalanceRowLocator = page
+    .getByTestId("intents-portfolio")
+    .locator(
+      'div.d-flex.flex-column:has(div.h6.mb-0.text-truncate:has-text("wNEAR"))'
+    );
   const nearBalanceLocator = nearBalanceRowLocator.locator(
     "div.d-flex.gap-2.align-items-center.justify-content-end div.d-flex.flex-column.align-items-end div.h6.mb-0"
   );
@@ -1610,9 +1610,6 @@ test("insufficient balance alert for wNEAR payment request exceeding available b
 
   await expect(page.getByRole("button", { name: "Confirm" })).not.toBeVisible();
 
-  await page.reload();
-  await page.waitForTimeout(5_000);
-
   // Wait for the proposal to be created and navigate to the proposal
   const proposalColumns = page
     .locator(
@@ -1626,6 +1623,7 @@ test("insufficient balance alert for wNEAR payment request exceeding available b
 
   // Click on the proposal to view details
   await proposalColumns.nth(fundingColumnIndex).click();
+  await page.waitForTimeout(2_000);
 
   // Try to approve the request - this should trigger the insufficient balance warning
   await page.getByRole("button", { name: "Approve" }).nth(1).click();

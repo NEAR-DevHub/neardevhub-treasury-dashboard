@@ -521,6 +521,24 @@ function generateFilteredProposalsQuery(
                 }
               }
               break;
+
+            // Stake-delegation specific filters
+            case "type":
+              if (include) {
+                queryParams.push(`stake_type=${values[0].toLowerCase()}`);
+              } else {
+                queryParams.push(`stake_type_not=${values[0].toLowerCase()}`);
+              }
+              break;
+
+            case "validators":
+              if (include) {
+                queryParams.push(`validators=${values.join(",")}`);
+              } else {
+                queryParams.push(`validators_not=${values.join(",")}`);
+              }
+              break;
+
             default:
               break;
           }
@@ -557,6 +575,8 @@ function getProposalsFromIndexer({
   search,
   amountValues,
   accountId,
+  existingQuery,
+  existingProposals,
 }) {
   let query = `${REPL_SPUTNIK_INDEXER}/proposals/${daoId}?page=${page}&page_size=${pageSize}&sort_by=CreationTime&sort_direction=${sortDirection}`;
 
@@ -593,7 +613,21 @@ function getProposalsFromIndexer({
     query += `&${filterQueryParams}`;
   }
 
-  return asyncFetch(query).then((r) => r.body);
+  // if the query is the same as the existing query, return the existing proposals
+  if (existingQuery && query && query === existingQuery) {
+    return Promise.resolve({
+      proposals: existingProposals,
+      url: query,
+    });
+  } else {
+    // if the query is different from the existing query, fetch the new proposals
+    return asyncFetch(query).then((r) => {
+      return {
+        ...r.body,
+        url: query,
+      };
+    });
+  }
 }
 
 const data = fetch("${REPL_BACKEND_API}".replace("/api", "") + "/headers");
@@ -604,6 +638,8 @@ const isNearSocial =
   gatewayOrigin.includes("127.0.0.1:8080") ||
   gatewayOrigin.includes("testnet.page") ||
   gatewayOrigin.includes("near.page");
+
+const isWeb4Page = gatewayOrigin.includes("near.page");
 
 function getMembersAndPermissions(treasuryDaoID) {
   return fetchDaoPolicy(treasuryDaoID).then((daoPolicy) => {
@@ -1628,6 +1664,7 @@ return {
   getIntentsBalances,
   updateDaoPolicy,
   nearAccountValidation,
+  isWeb4Page,
   getProposalsFromIndexer,
   generateFilteredProposalsQuery,
 };

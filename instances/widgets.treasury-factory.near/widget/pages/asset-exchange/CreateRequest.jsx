@@ -56,10 +56,12 @@ useEffect(() => {
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
         if (typeof lastProposalId === "number" && lastProposalId !== id) {
-          onCloseCanvas();
-          clearTimeout(checkTxnTimeout);
-          refreshData();
-          setTxnCreated(false);
+          setTimeout(() => {
+            clearTimeout(checkTxnTimeout);
+            refreshData();
+            setTxnCreated(false);
+            onCloseCanvas();
+          }, 1000);
         } else {
           checkTxnTimeout = setTimeout(() => checkForNewProposal(), 1000);
         }
