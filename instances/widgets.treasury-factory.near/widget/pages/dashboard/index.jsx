@@ -483,6 +483,18 @@ return (
             }}
           />
         )}
+        {Array.isArray(ftLockups) &&
+          ftLockups.map((ftLockup) => (
+            <Widget
+              loading=""
+              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.FtLockupPortfolio`}
+              props={{
+                contractId: ftLockup,
+                instance,
+                treasuryDaoID,
+              }}
+            />
+          ))}
         <Widget
           loading=""
           src={

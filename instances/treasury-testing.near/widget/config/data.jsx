@@ -48,4 +48,5 @@ return {
   ),
   themeColor: "#05a36e",
   allowLockupCancellation: true,
+  ftLockups: ["ft-lockup.megha19.near"],
 };
