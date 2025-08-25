@@ -363,12 +363,12 @@ test.describe("OneClickExchangeForm Component", () => {
     // Note: Available balance box has been removed from the UI
     // Balance is now shown only when a token is selected
 
-    // Check form sections
+    // Check form sections with new structure
     await expect(
-      page.locator('.form-section:has(.form-label:text("Send"))')
+      page.locator('.send-section')
     ).toBeVisible();
     await expect(
-      page.locator('.form-section:has(.form-label:text("Receive"))')
+      page.locator('.receive-section')
     ).toBeVisible();
     await expect(
       page.locator('.form-section:has(.form-label:text("Network"))')
@@ -729,8 +729,7 @@ test.describe("OneClickExchangeForm Component", () => {
     // Fill the form properly
     // Select send token
     const sendDropdown = page
-      .locator(".form-section")
-      .filter({ hasText: "Send" })
+      .locator(".send-section")
       .locator(".dropdown-toggle");
     await sendDropdown.waitFor({ state: "visible", timeout: 10000 });
     await sendDropdown.scrollIntoViewIfNeeded();
@@ -752,8 +751,7 @@ test.describe("OneClickExchangeForm Component", () => {
 
     // Select receive token
     const receiveDropdown = page
-      .locator(".form-section")
-      .filter({ hasText: "Receive" })
+      .locator(".receive-section")
       .locator(".dropdown-toggle");
     await receiveDropdown.scrollIntoViewIfNeeded();
     await receiveDropdown.click();
@@ -864,8 +862,7 @@ test.describe("OneClickExchangeForm Component", () => {
 
     // First select the send token (ETH)
     const sendDropdown = page
-      .locator(".form-section")
-      .filter({ hasText: "Send" })
+      .locator(".send-section")
       .locator(".dropdown-toggle");
     await sendDropdown.waitFor({ state: "visible", timeout: 10000 });
     await page.waitForTimeout(500); // Wait for dropdown to be interactive
@@ -887,8 +884,7 @@ test.describe("OneClickExchangeForm Component", () => {
 
     // Select the receive token
     const receiveDropdown = page
-      .locator(".form-section")
-      .filter({ hasText: "Receive" })
+      .locator(".receive-section")
       .locator(".dropdown-toggle");
     await receiveDropdown.waitFor({ state: "visible", timeout: 10000 });
     await page.waitForTimeout(500); // Wait for dropdown to be interactive
@@ -994,8 +990,7 @@ test.describe("OneClickExchangeForm Component", () => {
     // Fill the form first
     await page.waitForTimeout(500);
     const sendDropdown = page
-      .locator(".form-section")
-      .filter({ hasText: "Send" })
+      .locator(".send-section")
       .locator(".dropdown-toggle");
     await sendDropdown.scrollIntoViewIfNeeded();
     await sendDropdown.click();
@@ -1009,8 +1004,7 @@ test.describe("OneClickExchangeForm Component", () => {
     await page.waitForTimeout(500);
 
     const receiveDropdown = page
-      .locator(".form-section")
-      .filter({ hasText: "Receive" })
+      .locator(".receive-section")
       .locator(".dropdown-toggle");
     await receiveDropdown.scrollIntoViewIfNeeded();
     await receiveDropdown.click();
@@ -1120,8 +1114,7 @@ test.describe("OneClickExchangeForm Component", () => {
 
     // Open Send dropdown to see token icons
     const sendDropdown = page
-      .locator(".form-section")
-      .filter({ hasText: "Send" })
+      .locator(".send-section")
       .locator(".dropdown-toggle");
     await sendDropdown.click();
     await page.waitForSelector(".dropdown-item", { state: "visible" });
@@ -1205,8 +1198,7 @@ test.describe("OneClickExchangeForm Component", () => {
 
     // Open Send dropdown to see token balances
     const sendDropdown = page
-      .locator(".form-section")
-      .filter({ hasText: "Send" })
+      .locator(".send-section")
       .locator(".dropdown-toggle");
     
     // Scroll to dropdown and click
@@ -1320,8 +1312,7 @@ test.describe("OneClickExchangeForm Component", () => {
     // Fill the form properly to get a real quote
     // Select send token
     const sendDropdown = page
-      .locator(".form-section")
-      .filter({ hasText: "Send" })
+      .locator(".send-section")
       .locator(".dropdown-toggle");
     await sendDropdown.click();
     await page.locator(".dropdown-item").filter({ hasText: "ETH" }).click();
@@ -1332,8 +1323,7 @@ test.describe("OneClickExchangeForm Component", () => {
 
     // Select receive token
     const receiveDropdown = page
-      .locator(".form-section")
-      .filter({ hasText: "Receive" })
+      .locator(".receive-section")
       .locator(".dropdown-toggle");
     await receiveDropdown.click();
     await page.locator(".dropdown-item").filter({ hasText: "USDC" }).click();

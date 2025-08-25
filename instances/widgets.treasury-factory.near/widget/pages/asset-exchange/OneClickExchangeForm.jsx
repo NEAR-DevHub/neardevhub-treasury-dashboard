@@ -52,6 +52,111 @@ const Container = styled.div`
     }
   }
 
+  .exchange-sections {
+    position: relative;
+    
+    .send-section, .receive-section {
+      background-color: var(--bg-system-color);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+      
+      .section-label {
+        color: var(--text-secondary-color);
+        font-size: 14px;
+        font-weight: 500;
+        margin-bottom: 12px;
+      }
+      
+      .input-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 8px;
+      }
+      
+      .amount-input {
+        flex: 1;
+        
+        input {
+          background: transparent;
+          border: none;
+          font-size: 24px;
+          font-weight: 500;
+          padding: 0;
+          color: var(--text-color);
+          
+          &:focus {
+            outline: none;
+            box-shadow: none;
+          }
+          
+          &::placeholder {
+            color: var(--text-secondary-color);
+          }
+        }
+      }
+      
+      .token-dropdown {
+        flex: 0 0 auto;
+        
+        .dropdown-toggle {
+          background-color: var(--bg-page-color);
+          border: 1px solid var(--border-color);
+          border-radius: 8px;
+          padding: 8px 16px;
+          min-width: 150px;
+        }
+      }
+      
+      .value-display {
+        color: var(--text-secondary-color);
+        font-size: 14px;
+        margin-top: 4px;
+      }
+    }
+    
+    .send-section {
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+      border-bottom: none;
+    }
+    
+    .receive-section {
+      border-top-left-radius: 0;
+      border-top-right-radius: 0;
+    }
+    
+    .swap-divider {
+      position: relative;
+      height: 1px;
+      background-color: var(--border-color);
+      margin: 0;
+      
+      .swap-icon-container {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        background-color: var(--bg-system-color);
+        border: 1px solid var(--border-color);
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1;
+        
+        .swap-icon {
+          color: var(--text-secondary-color);
+          font-size: 20px;
+          transform: rotate(90deg);
+        }
+      }
+    }
+  }
+  
   .form-section {
     margin-bottom: 24px;
 
@@ -59,36 +164,6 @@ const Container = styled.div`
       color: var(--bs-gray-700);
       font-weight: 500;
       margin-bottom: 8px;
-    }
-
-    .input-row {
-      display: flex;
-      gap: 0;
-      margin-bottom: 8px;
-    }
-
-    .amount-input {
-      flex: 1;
-
-      input.form-control {
-        border-top-right-radius: 0;
-        border-bottom-right-radius: 0;
-        border-right: 0;
-      }
-    }
-
-    .token-dropdown {
-      flex: 1;
-
-      .dropdown-toggle {
-        border-top-left-radius: 0 !important;
-        border-bottom-left-radius: 0 !important;
-        border-left: 1px solid var(--border-color);
-      }
-
-      .custom-select > div.dropdown-toggle {
-        border-radius: 0 0.375rem 0.375rem 0 !important;
-      }
     }
 
     .network-dropdown {
@@ -99,16 +174,6 @@ const Container = styled.div`
       color: var(--text-secondary-color);
       font-size: 13px;
       margin-top: 4px;
-    }
-  }
-
-  .swap-icon-container {
-    text-align: center;
-    margin: 16px 0;
-
-    .swap-icon {
-      color: var(--grey-03);
-      font-size: 24px;
     }
   }
 
@@ -691,113 +756,118 @@ return (
         </div>
       )}
 
-      {/* Send Section */}
-      <div className="form-section">
-        <label className="form-label">Send</label>
-        <div className="input-row">
-          <Widget
-            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Input`}
-            props={{
-              className: "amount-input",
-              onChange: (e) => {
-                setAmountIn(e.target.value);
-                setQuote(null);
-              },
-              placeholder: "0.00",
-              value: amountIn,
-              inputProps: {
-                min: "0",
-                type: "number",
-                step: "any",
-                className: "form-control amount-input",
-              },
-              skipPaddingGap: true,
-              debounceTimeout: 300,
-              style: { flex: 1 },
-            }}
-          />
-          <div className="token-dropdown dropdown-container">
-            <Widget
-              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest`}
-              props={{
-                selectedValue: tokenIn,
-                onChange: (option) => {
-                  setTokenIn(option.value);
+      {/* Exchange Sections Container */}
+      <div className="exchange-sections">
+        {/* Send Section */}
+        <div className="send-section">
+          <div className="section-label">Send</div>
+          <div className="input-row">
+            <div className="amount-input">
+              <input
+                type="number"
+                placeholder="00.00"
+                value={amountIn}
+                onChange={(e) => {
+                  setAmountIn(e.target.value);
                   setQuote(null);
-                },
-                options: intentsTokensIn.map((token) => ({
-                  label: token.symbol,
-                  value: token.id,
-                  icon: token.icon || getTokenIcon(token.symbol),
-                  subLabel: `Tokens available: ${token.balance} / ${token.blockchain || 'NEAR Protocol'}`,
-                })),
-                defaultLabel: "Select token",
-                showSearch: true,
-                searchInputPlaceholder: "Search token...",
-                searchByLabel: true,
-              }}
-            />
-          </div>
-        </div>
-        {tokenIn && (
-          <div className="helper-text">
-            NEAR Intents balance:{" "}
-            {intentsTokensIn.find((t) => t.id === tokenIn)?.balance || "0.00"}{" "}
-            {intentsTokensIn.find((t) => t.id === tokenIn)?.symbol}
-          </div>
-        )}
-      </div>
-
-      {/* Swap Icon */}
-      <div className="swap-icon-container">
-        <i className="bi bi-arrow-down-circle swap-icon"></i>
-      </div>
-
-      {/* Receive Section */}
-      <div className="form-section">
-        <label className="form-label">Receive</label>
-        <div className="input-row">
-          <input
-            type="text"
-            className="form-control amount-input"
-            placeholder={
-              isLoadingQuote
-                ? "Fetching..."
-                : quote && quote.amountOutFormatted
-                ? quote.amountOutFormatted
-                : "0.00"
-            }
-            readOnly
-            disabled
-          />
-          <div className="token-dropdown dropdown-container">
-            <Widget
-              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest`}
-              props={{
-                selectedValue: tokenOut,
-                onChange: (option) => {
-                  setTokenOut(option.value);
-                  setNetworkOut(null); // Reset network selection
-                  setQuote(null);
-                },
-                options: [...new Set(allTokensOut.map((t) => t.symbol))]
-                  .sort()
-                  .map((symbol) => ({
-                    label: symbol,
-                    value: symbol,
-                    icon: getTokenIcon(symbol),
+                }}
+                min="0"
+                step="any"
+              />
+            </div>
+            <div className="token-dropdown dropdown-container">
+              <Widget
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest`}
+                props={{
+                  selectedValue: tokenIn,
+                  onChange: (option) => {
+                    setTokenIn(option.value);
+                    setQuote(null);
+                  },
+                  options: intentsTokensIn.map((token) => ({
+                    label: token.symbol,
+                    value: token.id,
+                    icon: token.icon || getTokenIcon(token.symbol),
+                    subLabel: `Tokens available: ${token.balance} / ${token.blockchain || 'NEAR Protocol'}`,
                   })),
-                defaultLabel: "Select token",
-                showSearch: true,
-                searchInputPlaceholder: "Search token...",
-                searchByLabel: true,
-              }}
-            />
+                  defaultLabel: "Select token",
+                  showSearch: true,
+                  searchInputPlaceholder: "Search token...",
+                  searchByLabel: true,
+                }}
+              />
+            </div>
+          </div>
+          <div className="value-display">
+            {tokenIn && intentsTokensIn.find((t) => t.id === tokenIn) ? (
+              <>
+                $
+                {parseFloat(amountIn || 0).toFixed(2)}
+                {" • "}
+                NEAR Intents balance:{" "}
+                {intentsTokensIn.find((t) => t.id === tokenIn)?.balance || "0.00"}{" "}
+                {intentsTokensIn.find((t) => t.id === tokenIn)?.symbol}
+              </>
+            ) : (
+              "$00.00"
+            )}
           </div>
         </div>
-        {tokenOut && (
-          <div className="helper-text">Current Balance: 0.00 {tokenOut}</div>
-        )}
+
+        {/* Swap Divider with Icon */}
+        <div className="swap-divider">
+          <div className="swap-icon-container">
+            <i className="bi bi-arrow-down-up swap-icon"></i>
+          </div>
+        </div>
+
+        {/* Receive Section */}
+        <div className="receive-section">
+          <div className="section-label">Receive</div>
+          <div className="input-row">
+            <div className="amount-input">
+              <input
+                type="text"
+                placeholder={
+                  isLoadingQuote
+                    ? "Fetching..."
+                    : quote && quote.amountOutFormatted
+                    ? quote.amountOutFormatted
+                    : "00.00"
+                }
+                readOnly
+                disabled
+              />
+            </div>
+            <div className="token-dropdown dropdown-container">
+              <Widget
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest`}
+                props={{
+                  selectedValue: tokenOut,
+                  onChange: (option) => {
+                    setTokenOut(option.value);
+                    setNetworkOut(null); // Reset network selection
+                    setQuote(null);
+                  },
+                  options: [...new Set(allTokensOut.map((t) => t.symbol))]
+                    .sort()
+                    .map((symbol) => ({
+                      label: symbol,
+                      value: symbol,
+                      icon: getTokenIcon(symbol),
+                    })),
+                  defaultLabel: "Select token",
+                  showSearch: true,
+                  searchInputPlaceholder: "Search token...",
+                  searchByLabel: true,
+                }}
+              />
+            </div>
+          </div>
+          <div className="value-display">
+            {quote && quote.amountOutUsd ? `$${quote.amountOutUsd}` : "$00.00"}
+          </div>
+        </div>
       </div>
 
       {/* Network Section */}
