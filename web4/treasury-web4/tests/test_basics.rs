@@ -35,7 +35,7 @@ async fn test_web4() -> Result<(), Box<dyn std::error::Error>> {
 async fn test_social_metadata() -> Result<(), Box<dyn std::error::Error>> {
     const SOCIALDB_ACCOUNT: &str = "social.near";
 
-    let mainnet = near_workspaces::mainnet().await?;
+    let mainnet = near_workspaces::custom("https://rpc.mainnet.fastnear.com").await?;
     let sandbox = near_workspaces::sandbox().await?;
     let contract_wasm = near_workspaces::compile_project("./").await?;
 
@@ -116,7 +116,7 @@ async fn test_update_widgets() -> Result<(), Box<dyn std::error::Error>> {
     const SOCIALDB_ACCOUNT: &str = "social.near";
     const WIDGET_REFERENCE_ACCOUNT_ID: &str = "treasury-testing.near";
 
-    let mainnet = near_workspaces::mainnet().await?;
+    let mainnet = near_workspaces::custom("https://rpc.mainnet.fastnear.com").await?;
     let sandbox = near_workspaces::sandbox().await?;
     let contract_wasm = near_workspaces::compile_project("./").await?;
 
@@ -217,7 +217,7 @@ async fn test_update_widgets_and_set_social_metadata_defaults(
     const SOCIALDB_ACCOUNT: &str = "social.near";
     const WIDGET_REFERENCE_ACCOUNT_ID: &str = "treasury-testing.near";
 
-    let mainnet = near_workspaces::mainnet().await?;
+    let mainnet = near_workspaces::custom("https://rpc.mainnet.fastnear.com").await?;
     let sandbox = near_workspaces::sandbox().await?;
     let contract_wasm = near_workspaces::compile_project("./").await?;
 
@@ -389,7 +389,7 @@ async fn test_update_app_widget() -> Result<(), Box<dyn std::error::Error>> {
     const SOCIALDB_ACCOUNT: &str = "social.near";
     const WIDGET_REFERENCE_ACCOUNT_ID: &str = "bootstrap.treasury-factory.near";
 
-    let mainnet = near_workspaces::mainnet().await?;
+    let mainnet = near_workspaces::custom("https://rpc.mainnet.fastnear.com").await?;
     let sandbox = near_workspaces::sandbox().await?;
     let contract_wasm = near_workspaces::compile_project("./").await?;
 

@@ -1,59 +1,130 @@
 import { expect } from "@playwright/test";
-import { test } from "../../util/test.js";
+import { overlayMessage, removeOverlayMessage, test } from "../../util/test.js";
+import { Worker, parseNEAR } from "near-workspaces";
 import {
-  DEFAULT_WIDGET_REFERENCE_ACCOUNT_ID,
-  SandboxRPC,
+  PROPOSAL_BOND,
   SPUTNIK_DAO_FACTORY_ID,
+  TREASURY_FACTORY_ACCOUNT_ID,
 } from "../../util/sandboxrpc.js";
-import { createDAOargs } from "../../util/sputnikdao.js";
-import nearApi from "near-api-js";
+import { Indexer } from "../../util/indexer.js";
+import { redirectWeb4 } from "../../util/web4.js";
+import { setPageAuthSettings } from "../../util/sandboxrpc.js";
 
 test("should update treasury factory with new web4 contract and self upgrade instance", async ({
   page,
+  instanceAccount,
+  daoAccount,
 }) => {
   test.setTimeout(150_000);
+  const socialNearContractId = "social.near";
 
-  const sandbox = new SandboxRPC();
-  await sandbox.init();
+  const worker = await Worker.init();
+  const indexer = new Indexer(worker.provider.connection.url);
+  await indexer.init();
+  await indexer.attachIndexerRoutes(page);
 
-  const widget_reference_account_id = DEFAULT_WIDGET_REFERENCE_ACCOUNT_ID;
-  await sandbox.setupDefaultWidgetReferenceAccount();
-
-  const instanceName = "theupgradable";
-
-  const instanceAccountId = `${instanceName}.near`;
-
-  const createInstanceResult = await sandbox.account.functionCall({
-    contractId: "treasury-factory.near",
-    methodName: "create_instance",
-    args: {
-      sputnik_dao_factory_account_id: SPUTNIK_DAO_FACTORY_ID,
-      social_db_account_id: "social.near",
-      widget_reference_account_id: widget_reference_account_id,
-      name: instanceName,
-      create_dao_args: Buffer.from(
-        JSON.stringify(
-          createDAOargs({
-            instanceName: instanceName,
-            adminAccountId: sandbox.account.accountId,
-          })
-        )
-      ).toString("base64"),
-    },
-    gas: 300000000000000,
-    attachedDeposit: nearApi.utils.format.parseNearAmount("9"),
+  const creatorAccount = await worker.rootAccount.importContract({
+    mainnetContract: "megha19.near",
   });
 
-  expect(
-    createInstanceResult.receipts_outcome.filter(
-      (receipt_outcome) => receipt_outcome.outcome.status.Failure
-    ).length
-  ).toBe(0);
+  const daoName = daoAccount.split(".")[0];
+  const create_testdao_args = {
+    name: daoName,
+    args: Buffer.from(
+      JSON.stringify({
+        config: {
+          name: daoName,
+          purpose: "creating dao treasury",
+          metadata: "",
+        },
+        policy: {
+          roles: [
+            {
+              kind: {
+                Group: [creatorAccount.accountId],
+              },
+              name: "Create Requests",
+              permissions: [
+                "call:AddProposal",
+                "transfer:AddProposal",
+                "config:Finalize",
+              ],
+              vote_policy: {},
+            },
+            {
+              kind: {
+                Group: [creatorAccount.accountId],
+              },
+              name: "Manage Members",
+              permissions: [
+                "config:*",
+                "policy:*",
+                "add_member_to_role:*",
+                "remove_member_from_role:*",
+              ],
+              vote_policy: {},
+            },
+            {
+              kind: {
+                Group: [creatorAccount.accountId],
+              },
+              name: "Vote",
+              permissions: ["*:VoteReject", "*:VoteApprove", "*:VoteRemove"],
+              vote_policy: {},
+            },
+          ],
+          default_vote_policy: {
+            weight_kind: "RoleWeight",
+            quorum: "0",
+            threshold: [1, 2],
+          },
+          proposal_bond: PROPOSAL_BOND,
+          proposal_period: "604800000000000",
+          bounty_bond: "100000000000000000000000",
+          bounty_forgiveness_period: "604800000000000",
+        },
+      })
+    ).toString("base64"),
+  };
+
+  const sputnikDaoFactoryContract = await worker.rootAccount.importContract({
+    mainnetContract: SPUTNIK_DAO_FACTORY_ID,
+  });
+  await sputnikDaoFactoryContract.call(
+    SPUTNIK_DAO_FACTORY_ID,
+    "new",
+    {},
+    { gas: 300_000_000_000_000 }
+  );
+
+  await worker.rootAccount.transfer(creatorAccount.accountId, parseNEAR("100"));
+  await creatorAccount.call(
+    SPUTNIK_DAO_FACTORY_ID,
+    "create",
+    create_testdao_args,
+    {
+      gas: 300_000_000_000_000,
+      attachedDeposit: parseNEAR("6"),
+    }
+  );
+
+  const socialNear = await worker.rootAccount.importContract({
+    mainnetContract: socialNearContractId,
+  });
+  await socialNear.call(socialNearContractId, "new", {});
+  await socialNear.call(socialNearContractId, "set_status", { status: "Live" });
+
+  await worker.rootAccount.importContract({
+    mainnetContract: instanceAccount,
+  });
+
+  const web4FactoryContract = await worker.rootAccount.importContract({
+    mainnetContract: TREASURY_FACTORY_ACCOUNT_ID,
+  });
 
   // The initial update that is already applied, so should automatically be dismissed when visiting the updates page
-  await sandbox.modifyWidget(
-    "widgets.treasury-factory.near/widget/pages.settings.system-updates.UpdateRegistry",
-    `
+  const modifiedWidgets = {
+    "widgets.treasury-factory.near/widget/pages.settings.system-updates.UpdateRegistry": `
     return [
       {
         id: 1,
@@ -65,12 +136,20 @@ test("should update treasury factory with new web4 contract and self upgrade ins
         votingRequired: false,
       }
   ];
-  `
-  );
+  `,
+  };
 
-  await sandbox.redirectWeb4(instanceAccountId, page);
+  await redirectWeb4({
+    page,
+    contractId: instanceAccount,
+    treasury: daoAccount,
+    networkId: "sandbox",
+    sandboxNodeUrl: worker.provider.connection.url,
+    modifiedWidgets,
+    callWidgetNodeURLForContractWidgets: false,
+  });
 
-  await page.goto(`https://${instanceName}.near.page`);
+  await page.goto(`https://${instanceAccount}.page/`);
 
   // Normal users should not see the update banner
   await page.waitForTimeout(500);
@@ -78,7 +157,11 @@ test("should update treasury factory with new web4 contract and self upgrade ins
     await page.getByRole("link", { name: "Review" })
   ).not.toBeVisible();
 
-  await sandbox.setPageAuthSettingsWithSandboxAccountKeys(page);
+  await setPageAuthSettings(
+    page,
+    creatorAccount.accountId,
+    await creatorAccount.getKey()
+  );
 
   await expect(await page.getByRole("link", { name: "Review" })).toBeVisible();
   await page.getByRole("link", { name: "Review" }).click();
@@ -97,32 +180,65 @@ test("should update treasury factory with new web4 contract and self upgrade ins
   });
 
   // Visiting the updates page above should have automatically marked the web4 contract as up to date, and notification banner should disappear
-  await page.goto(`https://${instanceName}.near.page/`);
+  await page.goto(`https://${instanceAccount}.page/`);
   await page.waitForTimeout(500);
   await expect(
     await page.getByRole("link", { name: "Review" })
   ).not.toBeVisible();
 
-  // Deploy the new treasury factory with an updated web4 contract
-
-  await sandbox.deployNewTreasuryFactoryWithUpdatedWeb4Contract(page);
-  await sandbox.modifyWidget(
-    "widgets.treasury-factory.near/widget/pages.settings.system-updates.UpdateRegistry",
-    `
-    return [
-      {
-          id: 99999999,
-          createdDate: "2025-04-05",
-          version: "n/a",
-          type: "Web4 Contract",
-          summary: "contract update test",
-          votingRequired: false
-      }
-  ];
-  `
+  await overlayMessage(
+    page,
+    "Development team is deploying new treasury factory with updated web4 contract"
   );
 
-  await page.goto(`https://${instanceName}.near.page/`);
+  const result = await worker.provider.query({
+    request_type: "view_code",
+    account_id: TREASURY_FACTORY_ACCOUNT_ID,
+    finality: "final",
+  });
+  const currentCode = Buffer.from(result.code_base64, "base64");
+  // Convert the binary to a string and search for "Select Gateway"
+  const searchString = "Select Gateway";
+  const replaceString = "Gateway Select";
+
+  const searchBuffer = Buffer.from(searchString, "utf-8");
+  const replaceBuffer = Buffer.from(replaceString, "utf-8");
+
+  const index = currentCode.indexOf(searchBuffer);
+  if (index === -1) {
+    console.error(`String "${searchString}" not found in the WASM binary.`);
+    return;
+  }
+
+  // Replace the string in the binary
+  replaceBuffer.copy(currentCode, index);
+
+  // Deploy new treasury factory with updated web4 contract
+  await web4FactoryContract.deploy(currentCode);
+  await removeOverlayMessage(page);
+  await redirectWeb4({
+    page,
+    contractId: instanceAccount,
+    treasury: daoAccount,
+    networkId: "sandbox",
+    sandboxNodeUrl: worker.provider.connection.url,
+    modifiedWidgets: {
+      "widgets.treasury-factory.near/widget/pages.settings.system-updates.UpdateRegistry": `
+      return [
+        {
+            id: 99999999,
+            createdDate: "2025-04-05",
+            version: "n/a",
+            type: "Web4 Contract",
+            summary: "contract update test",
+            votingRequired: false
+        }
+    ];
+    `,
+    },
+    callWidgetNodeURLForContractWidgets: false,
+  });
+  await page.goto(`https://${instanceAccount}.page/`);
 
   await expect(await page.getByRole("link", { name: "Review" })).toBeVisible({
     timeout: 10_000,
@@ -157,7 +273,7 @@ test("should update treasury factory with new web4 contract and self upgrade ins
   });
 
   await page.waitForTimeout(500);
-  await page.goto(`https://${instanceName}.near.page/`);
+  await page.goto(`https://${instanceAccount}.page/`);
 
   await page.waitForTimeout(500);
   await expect(
@@ -174,5 +290,5 @@ test("should update treasury factory with new web4 contract and self upgrade ins
   await page.waitForTimeout(500);
 
   await page.unrouteAll({ behavior: "ignoreErrors" });
-  await sandbox.quitSandbox();
+  await worker.tearDown();
 });

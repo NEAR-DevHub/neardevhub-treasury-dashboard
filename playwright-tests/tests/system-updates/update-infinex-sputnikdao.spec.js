@@ -1,6 +1,6 @@
 import { expect } from "@playwright/test";
 import { test } from "../../util/test.js";
-import { Worker } from "near-workspaces";
+import { parseNEAR, Worker } from "near-workspaces";
 import nearApi from "near-api-js";
 import { redirectWeb4 } from "../../util/web4";
 import {
@@ -8,6 +8,7 @@ import {
   SPUTNIK_DAO_FACTORY_ID,
 } from "../../util/sandboxrpc";
 import crypto from "crypto";
+import { Indexer } from "../../util/indexer.js";
 
 test("update infinex.sputnik-dao.near", async ({ page }) => {
   test.setTimeout(120_000);
@@ -17,6 +18,9 @@ test("update infinex.sputnik-dao.near", async ({ page }) => {
   const socialNearContractId = "social.near";
 
   const worker = await Worker.init();
+  const indexer = new Indexer(worker.provider.connection.url);
+  await indexer.init();
+  await indexer.attachIndexerRoutes(page);
 
   // Import factory at the time infinex was created
   const factoryContract = await worker.rootAccount.importContract({
@@ -43,6 +47,7 @@ test("update infinex.sputnik-dao.near", async ({ page }) => {
   const userAccount2 = await worker.rootAccount.importContract({
     mainnetContract: "theori.near",
   });
+  await worker.rootAccount.transfer(creatorAccount.accountId, parseNEAR("100"));
 
   const create_infinex_args = {
     name: "infinex",

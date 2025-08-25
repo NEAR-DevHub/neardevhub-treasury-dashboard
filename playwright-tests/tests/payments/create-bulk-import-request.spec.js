@@ -8,6 +8,7 @@ import {
 } from "../../util/sandboxrpc.js";
 import nearApi from "near-api-js";
 import { redirectWeb4 } from "../../util/web4.js";
+import { Indexer } from "../../util/indexer.js";
 
 async function pasteAndValidateCorrectData(page, csvText, proposalsNo) {
   const textarea = await page.getByTestId("csv-data");
@@ -318,6 +319,9 @@ test("should create bulk requests using sandbox", async ({
     "6b175474e89094c44da98b954eedeac495271d0f.factory.bridge.near";
 
   const worker = await Worker.init();
+  const indexer = new Indexer(worker.provider.connection.url);
+  await indexer.init();
+  await indexer.attachIndexerRoutes(page);
 
   const factoryContract = await worker.rootAccount.importContract({
     mainnetContract: SPUTNIK_DAO_FACTORY_ID,
@@ -450,6 +454,7 @@ test("should create bulk requests using sandbox", async ({
     page.getByText("Successfully imported 1 payment requests.")
   ).toBeVisible();
   await expect(table).toBeHidden();
+  await page.waitForTimeout(5000);
   await expect(
     page.getByRole("cell", { name: "0", exact: true })
   ).toBeVisible();

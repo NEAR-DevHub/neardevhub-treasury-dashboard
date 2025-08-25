@@ -33,6 +33,8 @@ const isProposalDetailsPage = props.isProposalDetailsPage;
 const hasOneDeleteIcon = props.hasOneDeleteIcon;
 const isIntentsRequest = props.isIntentsRequest;
 const proposal = props.proposal;
+const isQuoteExpired = props.isQuoteExpired;
+const quoteDeadline = props.quoteDeadline;
 
 const alreadyVoted = Object.keys(votes).includes(accountId);
 const userVote = votes[accountId];
@@ -155,6 +157,12 @@ useEffect(() => {
   if (isTxnCreated) {
     let checkTxnTimeout = null;
 
+    function updateProposalData() {
+      checkProposalStatus();
+      clearTimeout(checkTxnTimeout);
+      setTxnCreated(false);
+    }
+
     const checkForVoteOnProposal = () => {
       getProposalData()
         .then((proposal) => {
@@ -162,21 +170,26 @@ useEffect(() => {
             Object.keys(proposal?.votes ?? {}).sort()
           );
           const sortedVotes = JSON.stringify(Object.keys(votes ?? {}).sort());
+
           if (
             JSON.stringify(sortedProposalVotes) !== JSON.stringify(sortedVotes)
           ) {
-            checkProposalStatus();
-            clearTimeout(checkTxnTimeout);
-            setTxnCreated(false);
+            if (isProposalDetailsPage) {
+              updateProposalData();
+            } else {
+              setTimeout(() => {
+                updateProposalData();
+              }, 1000);
+            }
           } else {
             checkTxnTimeout = setTimeout(checkForVoteOnProposal, 1000);
           }
         })
         .catch(() => {
           // if proposal data doesn't exist, it means the proposal is deleted
-          checkProposalStatus();
-          clearTimeout(checkTxnTimeout);
-          setTxnCreated(false);
+          setTimeout(() => {
+            updateProposalData();
+          }, 1000);
         });
     };
 
@@ -328,7 +341,114 @@ return (
       </div>
     ) : (
       <div className={containerClass}>
-        {!isReadyToBeWithdrawn ? (
+        {isQuoteExpired ? (
+          // Check if we're in table view (hasOneDeleteIcon is only passed from table)
+          props.hasOneDeleteIcon !== undefined ? (
+            // Compact version for table view
+            <div className="d-flex align-items-center gap-2">
+              <Widget
+                loading=""
+                src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+                props={{
+                  popup: (
+                    <div>
+                      The 1Click API quote for this request expired on{" "}
+                      {`${quoteDeadline.toLocaleString("en-US", {
+                        month: "short",
+                        day: "2-digit",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: true,
+                        timeZone: "UTC",
+                      })} UTC`}
+                      . Voting is disabled to prevent potential loss of funds
+                      from executing the swap at an outdated rate.
+                    </div>
+                  ),
+                  children: (
+                    <i
+                      className="bi bi-info-circle text-muted"
+                      style={{ cursor: "pointer" }}
+                    ></i>
+                  ),
+                  instance,
+                }}
+              />
+              <button
+                className="btn btn-sm btn-success"
+                disabled
+                style={{ opacity: 0.5 }}
+              >
+                Approve
+              </button>
+              <button
+                className="btn btn-sm btn-danger"
+                disabled
+                style={{ opacity: 0.5 }}
+              >
+                Reject
+              </button>
+            </div>
+          ) : (
+            // Full version for details page
+            <div className="d-flex align-items-center gap-2 w-100">
+              <div className="d-flex align-items-center gap-2 text-muted flex-grow-1">
+                <i className="bi bi-info-circle"></i>
+                <span>
+                  Voting is no longer available. The 1Click API quote for this
+                  request expired on{" "}
+                  {`${quoteDeadline.toLocaleString("en-US", {
+                    month: "short",
+                    day: "2-digit",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: true,
+                    timeZone: "UTC",
+                  })} UTC`}
+                  .
+                  <Widget
+                    loading=""
+                    src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+                    props={{
+                      popup: (
+                        <div>
+                          The exchange rate quoted by 1Click API has expired.
+                          Voting is disabled to prevent potential loss of funds
+                          from executing the swap at an outdated rate.
+                        </div>
+                      ),
+                      children: (
+                        <span
+                          className="text-decoration-underline ms-1"
+                          style={{ cursor: "pointer" }}
+                        >
+                          Learn more
+                        </span>
+                      ),
+                      instance,
+                    }}
+                  />
+                </span>
+              </div>
+              <button
+                className="btn btn-success"
+                disabled
+                style={{ opacity: 0.5 }}
+              >
+                Approve
+              </button>
+              <button
+                className="btn btn-danger"
+                disabled
+                style={{ opacity: 0.5 }}
+              >
+                Reject
+              </button>
+            </div>
+          )
+        ) : !isReadyToBeWithdrawn ? (
           <div className="text-center fw-semi-bold">
             Voting is not available before unstaking release{" "}
             <Widget

@@ -36,8 +36,8 @@ async function voteOnProposal({
   let isTransactionCompleted = false;
   const contractId = daoAccount;
 
-  const updateProposalStatus = (originalResult) => {
-    originalResult = JSON.parse(JSON.stringify({ ...swapProposal }));
+  const updateProposalStatus = () => {
+    let originalResult = JSON.parse(JSON.stringify({ ...swapProposal }));
     if (isTransactionCompleted) {
       if (!isMultiVote) originalResult.status = voteStatus;
       if (vote === "Remove" && !isMultiVote) {
@@ -52,10 +52,10 @@ async function voteOnProposal({
     return originalResult;
   };
 
-  await mockRpcRequest({
-    page,
-    filterParams: { method_name: "get_proposals" },
-    modifyOriginalResultFunction: updateProposalStatus,
+  page.route(/\/proposals\/.*\?.*category=asset-exchange/, async (route) => {
+    await route.fulfill({
+      json: { proposals: [updateProposalStatus()], total: 1 },
+    });
   });
 
   await mockRpcRequest({
@@ -132,19 +132,23 @@ async function performVoteAction({
 }
 
 async function mockAssetExchangeProposals({ page }) {
-  await mockRpcRequest({
-    page,
-    filterParams: { method_name: "get_proposals" },
-    modifyOriginalResultFunction: () => {
-      return [
-        {
-          ...JSON.parse(JSON.stringify(SwapProposalData)),
-          id: 0,
-          submission_time: CurrentTimestampInNanoseconds,
+  await page.route(
+    /\/proposals\/.*\?.*category=asset-exchange/,
+    async (route) => {
+      await route.fulfill({
+        json: {
+          proposals: [
+            {
+              ...JSON.parse(JSON.stringify(SwapProposalData)),
+              id: 1,
+              submission_time: CurrentTimestampInNanoseconds,
+            },
+          ],
+          total: 1,
         },
-      ];
-    },
-  });
+      });
+    }
+  );
 }
 
 test.afterEach(async ({ page }, testInfo) => {
@@ -188,16 +192,24 @@ test.describe.parallel("User logged in with different roles", () => {
             hasAllRole: canVote,
           });
 
-          await mockRpcRequest({
-            page,
-            filterParams: { method_name: "get_proposals" },
-            modifyOriginalResultFunction: () => {
-              const result = JSON.parse(JSON.stringify(SwapProposalData));
-              result.submission_time = CurrentTimestampInNanoseconds;
-              result.status = "InProgress";
-              return result;
-            },
-          });
+          await page.route(
+            /\/proposals\/.*\?.*category=asset-exchange/,
+            async (route) => {
+              await route.fulfill({
+                json: {
+                  proposals: [
+                    {
+                      ...JSON.parse(JSON.stringify(SwapProposalData)),
+                      id: 0,
+                      submission_time: CurrentTimestampInNanoseconds,
+                      status: "InProgress",
+                    },
+                  ],
+                  total: 1,
+                },
+              });
+            }
+          );
 
           await page.goto(`/${instanceAccount}/widget/app?page=asset-exchange`);
           await page.waitForTimeout(5_000);
@@ -249,9 +261,7 @@ test.describe("User is logged in", function () {
     const exportLink = page.locator('a[download="proposals.csv"]');
     await expect(exportLink).toBeVisible();
     const href = await exportLink.getAttribute("href");
-    expect(href).toContain(
-      `/proposals/${daoAccount}?proposal_type=FunctionCall&keyword=asset-exchange`
-    );
+    expect(href).toContain(`/proposals/${daoAccount}?category=asset-exchange`);
   });
 
   test("submit action should show transaction loader and handle cancellation correctly", async ({

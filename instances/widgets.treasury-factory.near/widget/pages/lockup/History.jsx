@@ -1,9 +1,10 @@
-const { getApproversAndThreshold, getFilteredProposalsByStatusAndKind } =
-  VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common") || {
-    getApproversAndThreshold: () => {},
-  };
+const { getApproversAndThreshold, getProposalsFromIndexer } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+) || {
+  getApproversAndThreshold: () => {},
+};
 const instance = props.instance;
-if (!instance || typeof getFilteredProposalsByStatusAndKind !== "function") {
+if (!instance || typeof getProposalsFromIndexer !== "function") {
   return <></>;
 }
 
@@ -15,34 +16,37 @@ const [currentPage, setPage] = useState(0);
 const [proposals, setProposals] = useState(null);
 const [totalLength, setTotalLength] = useState(null);
 const [loading, setLoading] = useState(false);
-const [firstRender, setFirstRender] = useState(true);
-const [offset, setOffset] = useState(null);
-const [isPrevPageCalled, setIsPrevCalled] = useState(false);
+const [sortDirection, setSortDirection] = useState("desc");
+
+const fetchProposals = useCallback(
+  (direction) => {
+    if (direction === undefined) direction = sortDirection;
+    if (!treasuryDaoID) return;
+    setLoading(true);
+    getProposalsFromIndexer({
+      category: "lockup",
+      daoId: treasuryDaoID,
+      page: currentPage,
+      pageSize: rowsPerPage,
+      statuses: ["Approved", "Rejected", "Expired", "Failed"],
+      sortDirection: direction,
+    }).then((r) => {
+      setProposals(r.proposals);
+      setTotalLength(r.total);
+      setLoading(false);
+    });
+  },
+  [rowsPerPage, currentPage, treasuryDaoID, sortDirection]
+);
+
+const handleSortClick = () => {
+  const newDirection = sortDirection === "desc" ? "asc" : "desc";
+  setSortDirection(newDirection);
+  fetchProposals(newDirection);
+};
 
 useEffect(() => {
-  setLoading(true);
-  Near.asyncView(treasuryDaoID, "get_last_proposal_id").then((i) => {
-    const lastProposalId = i;
-
-    getFilteredProposalsByStatusAndKind({
-      treasuryDaoID,
-      resPerPage: rowsPerPage,
-      isPrevPageCalled: isPrevPageCalled,
-      filterKindArray: ["FunctionCall"],
-      filterStatusArray: ["Approved", "Rejected", "Expired", "Failed"],
-      offset: typeof offset === "number" ? offset : lastProposalId,
-      lastProposalId: lastProposalId,
-      currentPage,
-      isLockup: true,
-    }).then((r) => {
-      if (currentPage === 0 && !totalLength) {
-        setTotalLength(r.totalLength);
-      }
-      setOffset(r.filteredProposals[r.filteredProposals.length - 1].id);
-      setLoading(false);
-      setProposals(r.filteredProposals);
-    });
-  });
+  fetchProposals();
 }, [currentPage, rowsPerPage]);
 
 const policy = treasuryDaoID
@@ -71,6 +75,8 @@ return (
         policy,
         functionCallApproversGroup,
         refreshTableData: fetchProposals,
+        sortDirection,
+        handleSortClick,
         ...props,
       }}
     />
@@ -83,20 +89,14 @@ return (
             totalLength: totalLength,
             totalPages: Math.ceil(totalLength / rowsPerPage),
             onNextClick: () => {
-              setIsPrevCalled(false);
-              setOffset(proposals[proposals.length - 1].id);
               setPage(currentPage + 1);
             },
             onPrevClick: () => {
-              setIsPrevCalled(true);
-              setOffset(proposals[0].id);
               setPage(currentPage - 1);
             },
             currentPage: currentPage,
             rowsPerPage: rowsPerPage,
             onRowsChange: (v) => {
-              setIsPrevCalled(false);
-              setOffset(null);
               setPage(0);
               setRowsPerPage(parseInt(v));
             },

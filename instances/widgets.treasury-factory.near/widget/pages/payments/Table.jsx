@@ -20,7 +20,7 @@ const { treasuryDaoID, showKYC, showReferenceProposal } = VM.require(
   `${instance}/widget/config.data`
 );
 
-const { TableSkeleton } = VM.require(
+const { RowsSkeleton } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.skeleton"
 );
 
@@ -28,7 +28,7 @@ const lockupContract = accountToLockup(treasuryDaoID);
 
 if (
   !instance ||
-  !TableSkeleton ||
+  !RowsSkeleton ||
   typeof getNearBalances !== "function" ||
   typeof decodeProposalDescription !== "function" ||
   typeof formatSubmissionTimeStamp !== "function"
@@ -58,7 +58,7 @@ const deleteGroup = props.deleteGroup;
 const [nearStakedTokens, setNearStakedTokens] = useState(null);
 const [lockupNearBalances, setLockupNearBalances] = useState(null);
 const refreshTableData = props.refreshTableData;
-
+const [intentsTokensData, setIntentsTokensData] = useState(null);
 const accountId = context.accountId;
 
 const hasVotingPermission = (
@@ -72,7 +72,6 @@ const hasDeletePermission = (deleteGroup?.approverAccounts ?? []).includes(
 const Container = styled.div`
   font-size: 13px;
   min-height: 60vh;
-  display: flex;
 
   thead td {
     text-wrap: nowrap;
@@ -150,6 +149,30 @@ useEffect(() => {
   }
 }, [lockupContract]);
 
+// Fetch network information for intents payments
+useEffect(() => {
+  asyncFetch("https://bridge.chaindefuser.com/rpc", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      id: "supportedTokensFetchAll",
+      jsonrpc: "2.0",
+      method: "supported_tokens",
+      params: [{}],
+    }),
+  })
+    .then((response) => {
+      if (!response || !response.body) {
+        return;
+      }
+      const intentsTokensData = response.body?.result.tokens || [];
+      setIntentsTokensData(intentsTokensData);
+    })
+    .catch((error) => {
+      console.error("Failed to fetch network info:", error);
+    });
+}, []);
+
 const ProposalsComponent = () => {
   return (
     <tbody style={{ overflowX: "auto" }}>
@@ -210,6 +233,23 @@ const ProposalsComponent = () => {
             }
           : item.kind.Transfer;
 
+        const sourceWallet = isIntentWithdraw
+          ? "Intents"
+          : isFunctionType &&
+            item.kind.FunctionCall?.actions[0]?.method_name === "transfer"
+          ? "Lockup"
+          : "SputnikDAO";
+        const intentsToken =
+          isIntentWithdraw &&
+          (intentsTokensData || []).find(
+            (token) => token.near_token_id === args.token_id
+          );
+        const blockchain = isIntentWithdraw
+          ? intentsToken
+            ? intentsToken.defuse_asset_identifier.split(":")[0].toUpperCase()
+            : "NEAR Protocol"
+          : null;
+
         return (
           <tr
             data-testid={"proposal-request-#" + item.id}
@@ -248,32 +288,16 @@ const ProposalsComponent = () => {
                 />
               </td>
             )}
-            {lockupContract && (
-              <td className={"text-left"}>
-                <div className="text-secondary fw-semi-bold">
-                  {isIntentWithdraw
-                    ? "Intents"
-                    : isFunctionType
-                    ? "Lockup"
-                    : "Sputnik DAO"}
-                </div>
-                <Widget
-                  loading=""
-                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Profile`}
-                  props={{
-                    accountId: isIntentWithdraw
-                      ? treasuryDaoID
-                      : isFunctionType
-                      ? lockupContract
-                      : treasuryDaoID,
-                    showKYC: false,
-                    instance,
-                    displayImage: false,
-                    displayName: false,
-                  }}
-                />
-              </td>
-            )}
+
+            <td className={"text-left"} style={{ minWidth: 150 }}>
+              <div className="fw-semi-bold">
+                {sourceWallet}
+                {blockchain && (
+                  <div className="text-secondary">{blockchain}</div>
+                )}
+              </div>
+            </td>
+
             {showReferenceProposal && (
               <td className={isVisible("Reference")}>
                 {typeof proposalId === "number" ? (
@@ -292,7 +316,7 @@ const ProposalsComponent = () => {
               </td>
             )}
 
-            <td className={isVisible("Title")}>
+            <td className={isVisible("Title")} style={{ minWidth: 200 }}>
               {description ? (
                 description
               ) : (
@@ -496,91 +520,105 @@ return (
         setNearStakedTotalTokens: (v) => setNearStakedTokens(Big(v).toFixed(2)),
       }}
     />
-    {loading === true ||
-    proposals === null ||
-    transferApproversGroup === null ||
-    !nearStakedTokens ||
-    policy === null ? (
-      <TableSkeleton numberOfCols={8} numberOfRows={3} numberOfHiddenRows={4} />
-    ) : (
-      <div className="w-100">
-        {proposals.length === 0 ? (
-          <div
-            style={{ height: "50vh" }}
-            className="d-flex justify-content-center align-items-center"
+    <table className="table">
+      <thead>
+        <tr className="text-secondary">
+          <td className="px-3">#</td>
+          <td
+            className={isVisible("Created Date") + " cursor-pointer"}
+            onClick={props.handleSortClick}
+            style={{ color: "var(--text-color)" }}
           >
-            {isPendingRequests ? (
-              <div className="d-flex justify-content-center align-items-center flex-column gap-2">
-                <h4>No Payment Requests Found</h4>
-                <h6>There are currently no payment requests</h6>
-              </div>
-            ) : (
-              <div className="d-flex justify-content-center align-items-center flex-column gap-2">
-                <h4>No History Requests Found</h4>
-                <h6>There are currently no history requests</h6>
-              </div>
+            Created Date
+            <span style={{ marginLeft: 4 }}>
+              {props.sortDirection === "desc" ? (
+                <i class="bi bi-arrow-down"></i>
+              ) : (
+                <i class="bi bi-arrow-up"></i>
+              )}
+            </span>
+          </td>
+          {!isPendingRequests && <td className="text-center">Status</td>}
+          <td className={"text-left"}>Source Wallet</td>
+          {showReferenceProposal && (
+            <td className={isVisible("Reference")}>Reference</td>
+          )}
+          <td className={isVisible("Title")}>Title</td>
+          <td className={isVisible("Summary")}>Summary</td>
+          <td className={isVisible("Recipient")}>Recipient</td>
+          <td className={isVisible("Requested Token") + " text-center"}>
+            Requested Token
+          </td>
+          <td className={isVisible("Funding Ask") + " text-right"}>
+            Funding Ask
+          </td>
+          <td className={isVisible("Creator") + " text-center"}>Created by</td>
+          <td className={isVisible("Notes") + " text-left"}>Notes</td>
+          {isPendingRequests && (
+            <td className={isVisible("Required Votes") + " text-center"}>
+              Required Votes
+            </td>
+          )}
+          {isPendingRequests && (
+            <td className={isVisible("Votes") + " text-center"}>Votes</td>
+          )}
+          <td
+            className={
+              isVisible("Approvers") +
+              " text-center " +
+              (hideApproversCol && " display-none")
+            }
+          >
+            Approvers
+          </td>
+          {isPendingRequests && (
+            <td className={isVisible("Expiring Date") + " text-left "}>
+              Expiring Date
+            </td>
+          )}
+          {isPendingRequests &&
+            (hasVotingPermission || hasDeletePermission) && (
+              <td className="text-right">Actions</td>
             )}
-          </div>
-        ) : (
-          <table className="table">
-            <thead>
-              <tr className="text-secondary">
-                <td className="px-3">#</td>
-                <td className={isVisible("Created Date")}>Created Date</td>
-                {!isPendingRequests && <td className="text-center">Status</td>}
-                {lockupContract && (
-                  <td className={"text-left"}>Treasury Wallet</td>
-                )}
-                {showReferenceProposal && (
-                  <td className={isVisible("Reference")}>Reference</td>
-                )}
-                <td className={isVisible("Title")}>Title</td>
-                <td className={isVisible("Summary")}>Summary</td>
-                <td className={isVisible("Recipient")}>Recipient</td>
-                <td className={isVisible("Requested Token") + " text-center"}>
-                  Requested Token
-                </td>
-                <td className={isVisible("Funding Ask") + " text-right"}>
-                  Funding Ask
-                </td>
-                <td className={isVisible("Creator") + " text-center"}>
-                  Created by
-                </td>
-                <td className={isVisible("Notes") + " text-left"}>Notes</td>
-                {isPendingRequests && (
-                  <td className={isVisible("Required Votes") + " text-center"}>
-                    Required Votes
-                  </td>
-                )}
-                {isPendingRequests && (
-                  <td className={isVisible("Votes") + " text-center"}>Votes</td>
-                )}
-                <td
-                  className={
-                    isVisible("Approvers") +
-                    " text-center " +
-                    (hideApproversCol && " display-none")
-                  }
-                >
-                  Approvers
-                </td>
-                {isPendingRequests && (
-                  <td className={isVisible("Expiring Date") + " text-left "}>
-                    Expiring Date
-                  </td>
-                )}
-                {isPendingRequests &&
-                  (hasVotingPermission || hasDeletePermission) && (
-                    <td className="text-right">Actions</td>
-                  )}
-                {/* {!isPendingRequests && <td>Transaction Date</td>}
-          {!isPendingRequests && <td>Transaction</td>} */}
-              </tr>
-            </thead>
-            <ProposalsComponent />
-          </table>
-        )}
-      </div>
-    )}
+        </tr>
+      </thead>
+
+      {loading === true ||
+      proposals === null ||
+      transferApproversGroup === null ||
+      policy === null ||
+      !Array.isArray(proposals) ? (
+        <tbody>
+          <RowsSkeleton
+            numberOfCols={isPendingRequests ? 14 : 13}
+            numberOfRows={3}
+            numberOfHiddenRows={4}
+          />
+        </tbody>
+      ) : proposals.length === 0 ? (
+        <tbody>
+          <tr>
+            <td colSpan={14} rowSpan={10} className="text-center align-middle">
+              {isPendingRequests ? (
+                <>
+                  <h4>No Payment Requests Found</h4>
+                  <h6>There are currently no payment requests</h6>
+                </>
+              ) : (
+                <>
+                  <h4>No History Requests Found</h4>
+                  <h6>There are currently no history requests</h6>
+                </>
+              )}
+            </td>
+          </tr>
+          {[...Array(8)].map((_, index) => (
+            <tr key={index}></tr>
+          ))}
+        </tbody>
+      ) : (
+        <ProposalsComponent />
+      )}
+    </table>
   </Container>
 );

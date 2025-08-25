@@ -9,12 +9,12 @@ const {
 
 const instance = props.instance;
 const policy = props.policy;
-const { TableSkeleton } = VM.require(
+const { RowsSkeleton } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.skeleton"
 );
 if (
   !instance ||
-  !TableSkeleton ||
+  !RowsSkeleton ||
   typeof getNearBalances !== "function" ||
   typeof decodeProposalDescription !== "function" ||
   typeof formatSubmissionTimeStamp !== "function"
@@ -47,6 +47,39 @@ const refreshTableData = props.refreshTableData;
 
 const accountId = context.accountId;
 
+// State for token icons and token mapping
+const [tokenIcons, setTokenIcons] = useState({});
+const [tokenMap, setTokenMap] = useState({});
+
+// Fetch 1Click token mappings
+useEffect(() => {
+  asyncFetch("https://1click.chaindefuser.com/v0/tokens")
+    .then((res) => {
+      if (res.body && Array.isArray(res.body)) {
+        const mapping = {};
+        // Create a mapping from NEAR contract addresses to symbols
+        // Look for tokens that have assetId starting with "nep141:" and extract the contract address
+        for (const token of res.body) {
+          if (token.assetId && token.assetId.startsWith("nep141:")) {
+            // Extract the contract address from assetId (e.g., "nep141:eth.omft.near" -> "eth.omft.near")
+            const contractAddress = token.assetId.replace("nep141:", "");
+            mapping[contractAddress.toLowerCase()] = token.symbol;
+          }
+        }
+        setTokenMap(mapping);
+      }
+    })
+    .catch((err) => {
+      console.log("Failed to fetch 1Click token mappings:", err);
+    });
+}, []);
+
+// Map 1Click contract addresses to token symbols using fetched data
+function getTokenSymbolFromAddress(address) {
+  if (!address || typeof address !== "string") return address;
+  return tokenMap[address.toLowerCase()] || address;
+}
+
 const hasVotingPermission = (
   functionCallApproversGroup?.approverAccounts ?? []
 ).includes(accountId);
@@ -58,7 +91,6 @@ const hasDeletePermission = (deleteGroup?.approverAccounts ?? []).includes(
 const Container = styled.div`
   font-size: 13px;
   min-height: 60vh;
-  display: flex;
 
   table {
     overflow-x: auto;
@@ -120,6 +152,38 @@ const hasOneDeleteIcon =
       !Object.keys(i.votes ?? {}).includes(accountId)
   );
 
+// Collect tokens that need icons to be fetched
+const tokensToFetch = [];
+const tokenSet = new Set();
+if (proposals) {
+  for (let i = 0; i < proposals.length; i++) {
+    const item = proposals[i];
+    const tokenIn = decodeProposalDescription("tokenIn", item.description);
+    const tokenOut = decodeProposalDescription("tokenOut", item.description);
+    const quoteDeadlineStr = decodeProposalDescription(
+      "quoteDeadline",
+      item.description
+    );
+
+    // For 1Click exchanges, fetch icons for the mapped symbols
+    if (quoteDeadlineStr && tokenIn) {
+      const tokenSymbol = getTokenSymbolFromAddress(tokenIn);
+      if (!tokenSymbol.includes(".") && !tokenSet.has(tokenSymbol)) {
+        tokenSet.add(tokenSymbol);
+        tokensToFetch.push(tokenSymbol);
+      }
+    } else if (tokenIn && !tokenIn.includes(".") && !tokenSet.has(tokenIn)) {
+      tokenSet.add(tokenIn);
+      tokensToFetch.push(tokenIn);
+    }
+
+    if (tokenOut && !tokenOut.includes(".") && !tokenSet.has(tokenOut)) {
+      tokenSet.add(tokenOut);
+      tokensToFetch.push(tokenOut);
+    }
+  }
+}
+
 const ProposalsComponent = () => {
   return (
     <tbody style={{ overflowX: "auto" }}>
@@ -148,6 +212,20 @@ const ProposalsComponent = () => {
         const minAmountReceive = Number(
           outEstimate * (1 - slippageValue / 100)
         );
+
+        // Extract quote deadline from JSON for 1Click API proposals
+        let quoteDeadline = null;
+        let isQuoteExpired = false;
+        const quoteDeadlineStr = decodeProposalDescription(
+          "quoteDeadline",
+          item.description
+        );
+        if (quoteDeadlineStr) {
+          // Parse the ISO string deadline
+          quoteDeadline = new Date(quoteDeadlineStr);
+          const currentTime = Date.now();
+          isQuoteExpired = quoteDeadline.getTime() < currentTime;
+        }
         return (
           <tr
             data-testid={"proposal-request-#" + item.id}
@@ -187,40 +265,115 @@ const ProposalsComponent = () => {
             )}
 
             <td className={"text-right " + isVisible("Send")}>
-              <Widget
-                loading=""
-                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
-                props={{
-                  instance,
-                  amountWithDecimals: amountIn,
-                  address: tokenIn,
-                  showUSDValue: true,
-                }}
-              />
+              {quoteDeadlineStr ? (
+                // For 1Click exchanges, use TokenAmount with symbol prop
+                <div className="d-flex align-items-center justify-content-end gap-1">
+                  <Widget
+                    loading=""
+                    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
+                    props={{
+                      instance,
+                      amountWithDecimals: amountIn,
+                      symbol: getTokenSymbolFromAddress(tokenIn), // Pass mapped symbol for 1Click tokens
+                      showUSDValue: true,
+                    }}
+                  />
+                  {tokenIcons[getTokenSymbolFromAddress(tokenIn)] && (
+                    <img
+                      src={tokenIcons[getTokenSymbolFromAddress(tokenIn)]}
+                      width="16"
+                      height="16"
+                      alt={getTokenSymbolFromAddress(tokenIn)}
+                    />
+                  )}
+                </div>
+              ) : (
+                // For regular exchanges, use TokenAmount with address prop (original behavior)
+                <Widget
+                  loading=""
+                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
+                  props={{
+                    instance,
+                    amountWithDecimals: amountIn,
+                    address: tokenIn,
+                    showUSDValue: true,
+                  }}
+                />
+              )}
             </td>
             <td className={isVisible("Receive") + " text-right"}>
-              <Widget
-                loading=""
-                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
-                props={{
-                  instance,
-                  amountWithDecimals: amountOut,
-                  address: tokenOut,
-                  showUSDValue: true,
-                }}
-              />
+              {quoteDeadlineStr ? (
+                // For 1Click exchanges, use TokenAmount with symbol prop
+                <div className="d-flex align-items-center justify-content-end gap-1">
+                  <Widget
+                    loading=""
+                    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
+                    props={{
+                      instance,
+                      amountWithDecimals: amountOut,
+                      symbol: tokenOut, // tokenOut is already a symbol, not a contract address
+                      showUSDValue: true,
+                    }}
+                  />
+                  {tokenIcons[tokenOut] && (
+                    <img
+                      src={tokenIcons[tokenOut]}
+                      width="16"
+                      height="16"
+                      alt={tokenOut}
+                    />
+                  )}
+                </div>
+              ) : (
+                // For regular exchanges, use TokenAmount with address prop (original behavior)
+                <Widget
+                  loading=""
+                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
+                  props={{
+                    instance,
+                    amountWithDecimals: amountOut,
+                    address: tokenOut,
+                    showUSDValue: true,
+                  }}
+                />
+              )}
             </td>
             <td className={isVisible("Minimum received") + " text-right"}>
-              <Widget
-                loading=""
-                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
-                props={{
-                  instance,
-                  amountWithDecimals: minAmountReceive,
-                  address: tokenOut,
-                  showUSDValue: true,
-                }}
-              />
+              {quoteDeadlineStr ? (
+                // For 1Click exchanges, use TokenAmount with symbol prop
+                <div className="d-flex align-items-center justify-content-end gap-1">
+                  <Widget
+                    loading=""
+                    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
+                    props={{
+                      instance,
+                      amountWithDecimals: minAmountReceive,
+                      symbol: tokenOut, // tokenOut is already a symbol, not a contract address
+                      showUSDValue: true,
+                    }}
+                  />
+                  {tokenIcons[tokenOut] && (
+                    <img
+                      src={tokenIcons[tokenOut]}
+                      width="16"
+                      height="16"
+                      alt={tokenOut}
+                    />
+                  )}
+                </div>
+              ) : (
+                // For regular exchanges, use TokenAmount with address prop (original behavior)
+                <Widget
+                  loading=""
+                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
+                  props={{
+                    instance,
+                    amountWithDecimals: minAmountReceive,
+                    address: tokenOut,
+                    showUSDValue: true,
+                  }}
+                />
+              )}
             </td>
 
             <td className={"fw-semi-bold text-center " + isVisible("Creator")}>
@@ -309,6 +462,8 @@ const ProposalsComponent = () => {
                       checkProposalStatus: () => checkProposalStatus(item.id),
                       hasOneDeleteIcon,
                       proposal: item,
+                      isQuoteExpired,
+                      quoteDeadline,
                     }}
                   />
                 </td>
@@ -322,84 +477,123 @@ const ProposalsComponent = () => {
 
 return (
   <Container style={{ overflowX: "auto" }}>
-    {loading === true ||
-    proposals === null ||
-    functionCallApproversGroup === null ||
-    policy === null ? (
-      <TableSkeleton numberOfCols={8} numberOfRows={3} numberOfHiddenRows={4} />
-    ) : (
-      <div className="w-100">
-        {proposals.length === 0 ? (
-          <div
-            style={{ height: "50vh" }}
-            className="d-flex justify-content-center align-items-center"
+    <table className="table">
+      <thead>
+        <tr className="text-secondary">
+          <td>#</td>
+          <td
+            className={isVisible("Created Date") + " cursor-pointer"}
+            onClick={props.handleSortClick}
+            style={{ color: "var(--text-color)" }}
           >
-            {isPendingRequests ? (
-              <div className="d-flex justify-content-center align-items-center flex-column gap-2">
-                <h4>No Asset Exchange Requests Found</h4>
-                <h6>There are currently no asset exchange requests</h6>
-              </div>
-            ) : (
-              <div className="d-flex justify-content-center align-items-center flex-column gap-2">
-                <h4>No History Exchange Requests Found</h4>
-                <h6>There are currently no history exchange requests</h6>
-              </div>
+            Created Date
+            <span style={{ marginLeft: 4 }}>
+              {props.sortDirection === "desc" ? (
+                <i class="bi bi-arrow-down"></i>
+              ) : (
+                <i class="bi bi-arrow-up"></i>
+              )}
+            </span>
+          </td>
+          {!isPendingRequests && <td className={"text-center"}>Status</td>}
+
+          <td className={isVisible("Send") + " text-right"}>Send</td>
+          <td className={isVisible("Receive") + " text-right"}>Receive</td>
+          <td className={isVisible("Minimum received") + " text-right"}>
+            Minimum received
+          </td>
+
+          <td className={isVisible("Creator") + " text-center"}>Created by</td>
+          <td className={isVisible("Notes") + " text-left"}>Notes</td>
+          {isPendingRequests && (
+            <td className={isVisible("Required Votes") + " text-center"}>
+              Required Votes
+            </td>
+          )}
+          {isPendingRequests && (
+            <td className={isVisible("Votes") + " text-center"}>Votes</td>
+          )}
+          <td
+            className={
+              isVisible("Approvers") +
+              " text-center " +
+              (hideApproversCol && " display-none")
+            }
+          >
+            Approvers
+          </td>
+          {isPendingRequests && (
+            <td className={isVisible("Expiring Date") + " text-left "}>
+              Expiring Date
+            </td>
+          )}
+          {isPendingRequests &&
+            (hasVotingPermission || hasDeletePermission) && (
+              <td className="text-right">Actions</td>
             )}
-          </div>
-        ) : (
-          <table className="table">
-            <thead>
-              <tr className="text-secondary">
-                <td>#</td>
-                <td className={isVisible("Created Date")}>Created Date</td>
-                {!isPendingRequests && (
-                  <td className={"text-center"}>Status</td>
-                )}
+        </tr>
+      </thead>
 
-                <td className={isVisible("Send") + " text-right"}>Send</td>
-                <td className={isVisible("Receive") + " text-right"}>
-                  Receive
-                </td>
-                <td className={isVisible("Minimum received") + " text-right"}>
-                  Minimum received
-                </td>
-
-                <td className={isVisible("Creator") + " text-center"}>
-                  Created by
-                </td>
-                <td className={isVisible("Notes") + " text-left"}>Notes</td>
-                {isPendingRequests && (
-                  <td className={isVisible("Required Votes") + " text-center"}>
-                    Required Votes
-                  </td>
-                )}
-                {isPendingRequests && (
-                  <td className={isVisible("Votes") + " text-center"}>Votes</td>
-                )}
-                <td
-                  className={
-                    isVisible("Approvers") +
-                    " text-center " +
-                    (hideApproversCol && " display-none")
-                  }
-                >
-                  Approvers
-                </td>
-                {isPendingRequests && (
-                  <td className={isVisible("Expiring Date") + " text-left "}>
-                    Expiring Date
-                  </td>
-                )}
-                {isPendingRequests &&
-                  (hasVotingPermission || hasDeletePermission) && (
-                    <td className="text-right">Actions</td>
-                  )}
-              </tr>
-            </thead>
-            <ProposalsComponent />
-          </table>
-        )}
-      </div>
+      {loading === true ||
+      proposals === null ||
+      functionCallApproversGroup === null ||
+      policy === null ||
+      !Array.isArray(proposals) ? (
+        <tbody>
+          <RowsSkeleton
+            numberOfCols={isPendingRequests ? 11 : 9}
+            numberOfRows={4}
+            numberOfHiddenRows={4}
+          />
+        </tbody>
+      ) : !Array.isArray(proposals) || proposals.length === 0 ? (
+        <tbody>
+          <tr>
+            <td colSpan={14} rowSpan={10} className="text-center align-middle">
+              {isPendingRequests ? (
+                <>
+                  <h4>No Asset Exchange Requests Found</h4>
+                  <h6>There are currently no asset exchange requests</h6>
+                </>
+              ) : (
+                <>
+                  <h4>No History Exchange Requests Found</h4>
+                  <h6>There are currently no history exchange requests</h6>
+                </>
+              )}
+            </td>
+          </tr>
+          {[...Array(8)].map((_, index) => (
+            <tr key={index}></tr>
+          ))}
+        </tbody>
+      ) : (
+        <ProposalsComponent />
+      )}
+    </table>
+    {/* Web3IconFetcher for loading token icons */}
+    {tokensToFetch.length > 0 && (
+      <Widget
+        loading=""
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Web3IconFetcher`}
+        props={{
+          tokens: tokensToFetch,
+          onIconsLoaded: (iconCache) => {
+            const newIcons = {};
+            for (let i = 0; i < tokensToFetch.length; i++) {
+              const token = tokensToFetch[i];
+              const icon = iconCache[token];
+              if (icon && icon.tokenIcon) {
+                newIcons[token] = icon.tokenIcon;
+              }
+            }
+            if (Object.keys(newIcons).length > 0) {
+              setTokenIcons({ ...tokenIcons, ...newIcons });
+            }
+          },
+          fetchNetworkIcons: false,
+        }}
+      />
     )}
   </Container>
 );

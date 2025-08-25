@@ -29,7 +29,7 @@ const lockupContract = accountToLockup(treasuryDaoID);
 
 const walletOptions = [
   {
-    label: treasuryDaoID,
+    label: "SputnikDAO",
     value: treasuryDaoID,
   },
 ];
@@ -125,10 +125,12 @@ useEffect(() => {
     const checkForNewProposal = () => {
       getLastProposalId().then((id) => {
         if (typeof lastProposalId === "number" && lastProposalId !== id) {
-          onCloseCanvas();
-          refreshData();
-          clearTimeout(checkTxnTimeout);
-          setTxnCreated(false);
+          setTimeout(() => {
+            clearTimeout(checkTxnTimeout);
+            refreshData();
+            setTxnCreated(false);
+            onCloseCanvas();
+          }, 1000);
         } else {
           checkTxnTimeout = setTimeout(() => checkForNewProposal(), 1000);
         }
@@ -439,6 +441,7 @@ return (
               setShowLoader(true);
               setSelectedWallet(v);
             },
+            isStakingDelegationPage: true,
           }}
         />
       )}

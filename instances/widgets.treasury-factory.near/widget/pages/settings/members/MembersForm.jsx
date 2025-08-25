@@ -1,8 +1,6 @@
-const {
-  encodeToMarkdown,
-  getFilteredProposalsByStatusAndKind,
-  updateDaoPolicy,
-} = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
+const { encodeToMarkdown, updateDaoPolicy } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+);
 
 const { Modal, ModalContent, ModalHeader, ModalFooter } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.modal"
@@ -45,11 +43,7 @@ useEffect(() => {
   setUpdatedList([]);
 }, [selectedMembers]);
 
-if (
-  !availableRoles.length ||
-  typeof getFilteredProposalsByStatusAndKind !== "function"
-)
-  return <></>;
+if (!availableRoles.length) return <></>;
 
 const daoPolicy =
   treasuryDaoID && !isTreasuryFactory
