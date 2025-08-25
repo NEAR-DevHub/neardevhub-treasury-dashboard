@@ -52,50 +52,6 @@ const Container = styled.div`
     }
   }
 
-  .available-balance-box {
-    background-color: var(--bg-page-color);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 16px;
-    margin-bottom: 20px;
-
-    .balance-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 12px;
-      font-weight: 500;
-      color: var(--text-color);
-    }
-
-    .balance-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .balance-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      color: var(--grey-01);
-      font-size: 14px;
-    }
-
-    .token-info {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .token-icon {
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      object-fit: cover;
-    }
-  }
-
   .form-section {
     margin-bottom: 24px;
 
@@ -706,52 +662,6 @@ const allTokensForIcons = [
 return (
   <Container>
     <div className="one-click-exchange-form">
-      {/* Available Balance Box */}
-      <div className="available-balance-box">
-        <div className="balance-header">
-          <span>Available Balance</span>
-          <Widget
-            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger`}
-            props={{
-              popup: (
-                <div className="p-2">
-                  <small>
-                    These are the tokens available in your NEAR Intents treasury
-                  </small>
-                </div>
-              ),
-              children: <i className="bi bi-info-circle text-muted" />,
-            }}
-          />
-        </div>
-        <div className="balance-list">
-          {intentsTokensIn.length > 0 ? (
-            intentsTokensIn.map((token) => (
-              <div key={token.id} className="balance-item">
-                <div className="token-info">
-                  {(token.icon || getTokenIcon(token.symbol)) && (
-                    <img
-                      src={token.icon || getTokenIcon(token.symbol)}
-                      alt={token.symbol}
-                      className="token-icon"
-                      onError={(e) => {
-                        e.target.style.display = "none";
-                      }}
-                    />
-                  )}
-                  <span>{token.symbol}</span>
-                </div>
-                <span>
-                  {token.balance} {token.symbol}
-                </span>
-              </div>
-            ))
-          ) : (
-            <div className="text-muted small">Loading balances...</div>
-          )}
-        </div>
-      </div>
-
       {/* Info Message */}
       <div className="info-message">
         <i className="bi bi-info-circle-fill info-icon"></i>
@@ -819,6 +729,7 @@ return (
                   label: token.symbol,
                   value: token.id,
                   icon: token.icon || getTokenIcon(token.symbol),
+                  subLabel: `Tokens available: ${token.balance} / ${token.blockchain || 'NEAR Protocol'}`,
                 })),
                 defaultLabel: "Select token",
                 showSearch: true,
@@ -830,7 +741,7 @@ return (
         </div>
         {tokenIn && (
           <div className="helper-text">
-            Current Balance:{" "}
+            NEAR Intents balance:{" "}
             {intentsTokensIn.find((t) => t.id === tokenIn)?.balance || "0.00"}{" "}
             {intentsTokensIn.find((t) => t.id === tokenIn)?.symbol}
           </div>

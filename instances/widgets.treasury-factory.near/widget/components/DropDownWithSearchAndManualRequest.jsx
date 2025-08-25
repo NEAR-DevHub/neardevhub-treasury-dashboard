@@ -180,10 +180,17 @@ return (
                   }`}
                   onClick={() => handleOptionClick(option)}
                 >
-                  {option.icon && (
-                    <img className="dropdown-icon" src={option.icon} />
-                  )}
-                  {option.label}
+                  <div className="d-flex align-items-start">
+                    {option.icon && (
+                      <img className="dropdown-icon" src={option.icon} />
+                    )}
+                    <div className="flex-grow-1">
+                      <div>{option.label}</div>
+                      {option.subLabel && (
+                        <small className="text-muted d-block">{option.subLabel}</small>
+                      )}
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
