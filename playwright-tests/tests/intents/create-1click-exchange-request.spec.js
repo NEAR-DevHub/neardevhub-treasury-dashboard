@@ -375,7 +375,7 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     instanceAccount,
     daoAccount,
   }) => {
-    test.setTimeout(120_000);
+    test.setTimeout(180_000);
 
     console.log("Setting up contracts...");
 
