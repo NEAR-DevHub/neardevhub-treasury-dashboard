@@ -114,13 +114,23 @@ test("should update treasury factory with new web4 contract and self upgrade ins
   await socialNear.call(socialNearContractId, "new", {});
   await socialNear.call(socialNearContractId, "set_status", { status: "Live" });
 
-  await worker.rootAccount.importContract({
+  const instanceContract = await worker.rootAccount.importContract({
     mainnetContract: instanceAccount,
   });
 
   const web4FactoryContract = await worker.rootAccount.importContract({
     mainnetContract: TREASURY_FACTORY_ACCOUNT_ID,
   });
+
+  // Ensure the instance has the latest web4 contract by calling self_upgrade
+  // Any account can call self_upgrade, so we use rootAccount which has sufficient gas
+  await worker.rootAccount.call(
+    instanceAccount,
+    "self_upgrade",
+    {},
+    { gas: 300_000_000_000_000 }
+  );
+  console.log("Instance self-upgraded to latest web4 contract");
 
   // The initial update that is already applied, so should automatically be dismissed when visiting the updates page
   const modifiedWidgets = {
