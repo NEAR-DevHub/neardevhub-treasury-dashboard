@@ -21,10 +21,7 @@ import {
 import { InsufficientBalance, toBase64 } from "../../util/lib.js";
 import { SandboxRPC } from "../../util/sandboxrpc.js";
 
-async function selectDAOWallet(page, instanceAccount) {
-  if (instanceAccount !== "treasury-testing.near") {
-    return;
-  }
+async function selectDAOWallet(page) {
   const canvasLocator = page.locator(".offcanvas-body");
   await expect(canvasLocator.getByText("Treasury Wallet")).toBeVisible();
   await canvasLocator.getByRole("button", { name: "Select Wallet" }).click();
@@ -50,10 +47,7 @@ async function selectLockupWallet(page) {
   });
 }
 
-async function selectIntentsWallet(page, instanceAccount) {
-  if (instanceAccount !== "treasury-testing.near") {
-    return;
-  }
+async function selectIntentsWallet(page) {
   const canvasLocator = page.locator(".offcanvas-body");
   await expect(canvasLocator.getByText("Treasury Wallet")).toBeVisible();
   await canvasLocator.getByRole("button", { name: "Select Wallet" }).click();
@@ -66,7 +60,7 @@ async function selectIntentsWallet(page, instanceAccount) {
   });
 }
 
-async function clickCreatePaymentRequestButton(page, instanceAccount) {
+async function clickCreatePaymentRequestButton(page) {
   await page.waitForTimeout(1_000);
   const createPaymentRequestButton = await page.getByRole("button", {
     name: "Create Request",
@@ -74,7 +68,7 @@ async function clickCreatePaymentRequestButton(page, instanceAccount) {
   await expect(createPaymentRequestButton).toBeVisible({ timeout: 20_000 });
   await page.waitForTimeout(1_000);
   await createPaymentRequestButton.click();
-  await selectDAOWallet(page, instanceAccount);
+  await selectDAOWallet(page);
   return createPaymentRequestButton;
 }
 
@@ -83,7 +77,7 @@ async function fillCreateForm(page, daoAccount, instanceAccount) {
   const instanceConfig = await getInstanceConfig({ page, instanceAccount });
   await page.goto(`/${instanceAccount}/widget/app?page=payments`);
 
-  await clickCreatePaymentRequestButton(page, instanceAccount);
+  await clickCreatePaymentRequestButton(page);
 
   if (instanceConfig.showProposalSelection === true) {
     const proposalSelect = await page.getByTestId("proposal-dropdown-btn");
@@ -375,7 +369,7 @@ test.describe("User is logged in", function () {
     test.setTimeout(150_000);
     await updateDaoPolicyMembers({ instanceAccount, page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
-    await clickCreatePaymentRequestButton(page, instanceAccount);
+    await clickCreatePaymentRequestButton(page);
     const receiveInput = page.getByPlaceholder("treasury.near");
     await receiveInput.pressSequentially("webass", { delay: 100 });
     const errorText = page.getByText("Please enter valid account ID");
@@ -395,7 +389,7 @@ test.describe("User is logged in", function () {
     await updateDaoPolicyMembers({ instanceAccount, page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
 
-    await clickCreatePaymentRequestButton(page, instanceAccount);
+    await clickCreatePaymentRequestButton(page);
     await checkForErrorWithAmountField(page, "1.2342");
     await checkForErrorWithAmountField(page, "35435435dfdsfsdfsd", false);
     await checkForErrorWithAmountField(page, "not an number");
@@ -427,7 +421,7 @@ test.describe("User is logged in", function () {
     await mockPikespeakFTTokensResponse({ page, daoAccount });
     await updateDaoPolicyMembers({ instanceAccount, page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
-    await clickCreatePaymentRequestButton(page, instanceAccount);
+    await clickCreatePaymentRequestButton(page);
     const tokenSelect = page.getByTestId("tokens-dropdown");
     await tokenSelect.click();
     await tokenSelect.getByText("NEAR").first().click();
@@ -453,7 +447,7 @@ test.describe("User is logged in", function () {
     const instanceConfig = await getInstanceConfig({ page, instanceAccount });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
 
-    await clickCreatePaymentRequestButton(page, instanceAccount);
+    await clickCreatePaymentRequestButton(page);
 
     if (instanceConfig.showProposalSelection === true) {
       const proposalSelect = await page.getByTestId("proposal-dropdown-btn");
@@ -544,7 +538,7 @@ test.describe("User is logged in", function () {
     await cancelBtn.click();
     await page.locator("button", { hasText: "Yes" }).click();
 
-    await clickCreatePaymentRequestButton(page, instanceAccount);
+    await clickCreatePaymentRequestButton(page);
 
     if (daoAccount === "infinex.sputnik-dao.near") {
       expect(await page.getByTestId("proposal-title").inputValue()).toBe("");
@@ -576,7 +570,7 @@ test.describe("User is logged in", function () {
 
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
     await mockNearnProposal({ page });
-    await clickCreatePaymentRequestButton(page, instanceAccount);
+    await clickCreatePaymentRequestButton(page);
 
     const proposalSelect = page.getByTestId("proposal-dropdown-btn");
     await expect(proposalSelect).toBeVisible();
@@ -608,7 +602,7 @@ test.describe("User is logged in", function () {
     await cancelBtn.click();
     await page.locator("button", { hasText: "Yes" }).click();
 
-    await clickCreatePaymentRequestButton(page, instanceAccount);
+    await clickCreatePaymentRequestButton(page);
 
     await expect(await page.getByTestId("proposal-dropdown-btn")).toHaveText(
       "Select"
@@ -660,7 +654,7 @@ test.describe("User is logged in", function () {
     await updateDaoPolicyMembers({ instanceAccount, page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
     await mockNearnProposal({ page });
-    await clickCreatePaymentRequestButton(page, instanceAccount);
+    await clickCreatePaymentRequestButton(page);
 
     if (instanceConfig.showProposalSelection === true) {
       const proposalSelect = page.getByTestId("proposal-dropdown-btn");
@@ -886,9 +880,6 @@ test.describe("User is logged in", function () {
     page,
     instanceAccount,
   }) => {
-    if (instanceAccount !== "treasury-testing.near") {
-      test.skip();
-    }
     test.setTimeout(150_000);
     await updateDaoPolicyMembers({ instanceAccount, page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
@@ -909,15 +900,15 @@ test.describe("User is logged in", function () {
         });
       }
     );
-    await selectIntentsWallet(page, instanceAccount);
+    await selectIntentsWallet(page);
     await page
       .getByText(
         "Your NEAR Intents wallet has no tokens. Fund it now to start using the platform’s features"
       )
       .click();
-    await expect(page.getByRole("button", { name: "Deposit" })).toBeVisible();
-    await page.getByRole("button", { name: "Deposit" }).click();
-    await expect(page.getByText("Use this deposit address")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Deposit" })).toBeVisible();
+    await page.getByRole("link", { name: "Deposit" }).click();
+    await expect(page.getByText("NEAR Intents", { exact: true })).toBeVisible();
   });
 });
 
@@ -944,7 +935,7 @@ test.describe("admin with function access keys", function () {
     await updateDaoPolicyMembers({ instanceAccount, page });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
     await mockNearnProposal({ page });
-    await clickCreatePaymentRequestButton(page, instanceAccount);
+    await clickCreatePaymentRequestButton(page);
 
     const usdAmountFromLinkedProposal = 2160 * nearPrice;
     const nearAmountFromLinkedProposal = 2160;
@@ -1092,11 +1083,7 @@ test.describe("admin with function access keys", function () {
       const submitBtn = page
         .locator(".offcanvas-body")
         .getByRole("button", { name: "Submit" });
-      if (instanceAccount === "treasury-testing.near") {
-        await expect(submitBtn).toBeHidden({ timeout: 10_000 });
-      } else {
-        await expect(submitBtn).toBeVisible({ timeout: 10_000 });
-      }
+      await expect(submitBtn).toBeHidden({ timeout: 10_000 });
     };
     await checkThatFormIsCleared();
     await page.waitForTimeout(2_000);

@@ -319,17 +319,6 @@ test("payment request to BTC address", async ({
       gas: "300000000000000",
     }
   );
-
-  const modifiedWidgets = {};
-  const configKey = `${instanceAccount}/widget/config.data`;
-
-  // Enable feature flag
-  modifiedWidgets[configKey] = (
-    await getLocalWidgetContent(configKey, {
-      treasury: daoAccount,
-      account: instanceAccount,
-    })
-  ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
   await setupIndexer(page, worker);
   await redirectWeb4({
     page,
@@ -337,7 +326,7 @@ test("payment request to BTC address", async ({
     treasury: daoAccount,
     networkId: "sandbox",
     sandboxNodeUrl: worker.provider.connection.url,
-    modifiedWidgets,
+    modifiedWidgets: {},
     callWidgetNodeURLForContractWidgets: false,
   });
 
@@ -613,15 +602,6 @@ test("payment request to USDC address on BASE", async ({
     }
   );
 
-  const modifiedWidgets = {};
-  const configKey = `${instanceAccount}/widget/config.data`;
-  modifiedWidgets[configKey] = (
-    await getLocalWidgetContent(configKey, {
-      treasury: daoAccount,
-      account: instanceAccount,
-    })
-  ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
-
   await setupIndexer(page, worker);
   await redirectWeb4({
     page,
@@ -629,7 +609,7 @@ test("payment request to USDC address on BASE", async ({
     treasury: daoAccount,
     networkId: "sandbox",
     sandboxNodeUrl: worker.provider.connection.url,
-    modifiedWidgets,
+    modifiedWidgets: {},
     callWidgetNodeURLForContractWidgets: false,
   });
 
@@ -941,14 +921,6 @@ test("payment request for wNEAR token on NEAR intents", async ({
     account_id: creatorAccount.accountId,
   });
 
-  const modifiedWidgets = {};
-  const configKey = `${instanceAccount}/widget/config.data`;
-  modifiedWidgets[configKey] = (
-    await getLocalWidgetContent(configKey, {
-      treasury: daoAccount,
-      account: instanceAccount,
-    })
-  ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
   await setupIndexer(page, worker);
   await redirectWeb4({
     page,
@@ -956,7 +928,7 @@ test("payment request for wNEAR token on NEAR intents", async ({
     treasury: daoAccount,
     networkId: "sandbox",
     sandboxNodeUrl: worker.provider.connection.url,
-    modifiedWidgets,
+    modifiedWidgets: {},
     callWidgetNodeURLForContractWidgets: false,
   });
 
@@ -1236,17 +1208,6 @@ test("insufficient balance alert for BTC payment request exceeding available bal
     }
   );
 
-  const modifiedWidgets = {};
-  const configKey = `${instanceAccount}/widget/config.data`;
-
-  // Enable feature flag
-  modifiedWidgets[configKey] = (
-    await getLocalWidgetContent(configKey, {
-      treasury: daoAccount,
-      account: instanceAccount,
-    })
-  ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
-
   await setupIndexer(page, worker);
   await redirectWeb4({
     page,
@@ -1254,7 +1215,7 @@ test("insufficient balance alert for BTC payment request exceeding available bal
     treasury: daoAccount,
     networkId: "sandbox",
     sandboxNodeUrl: worker.provider.connection.url,
-    modifiedWidgets,
+    modifiedWidgets: {},
     callWidgetNodeURLForContractWidgets: false,
   });
 
@@ -1510,15 +1471,6 @@ test("insufficient balance alert for wNEAR payment request exceeding available b
     { attachedDeposit: "1", gas: "50000000000000" }
   );
 
-  const modifiedWidgets = {};
-  const configKey = `${instanceAccount}/widget/config.data`;
-  modifiedWidgets[configKey] = (
-    await getLocalWidgetContent(configKey, {
-      treasury: daoAccount,
-      account: instanceAccount,
-    })
-  ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
-
   await setupIndexer(page, worker);
   await redirectWeb4({
     page,
@@ -1526,7 +1478,7 @@ test("insufficient balance alert for wNEAR payment request exceeding available b
     treasury: daoAccount,
     networkId: "sandbox",
     sandboxNodeUrl: worker.provider.connection.url,
-    modifiedWidgets,
+    modifiedWidgets: {},
     callWidgetNodeURLForContractWidgets: false,
   });
 
