@@ -402,10 +402,10 @@ INFO: Verifying asset: ${assetName}`);
         // Select the network in the UI
         const networkDropdown = page.locator("div.custom-select").nth(1);
         await networkDropdown.click();
-        
+
         // Wait for dropdown items to be visible
         await page.waitForSelector("div.dropdown-item", { timeout: 5000 });
-        
+
         // Get all available network options to see what's actually in the dropdown
         const allNetworkItems = await page.locator("div.dropdown-item").all();
         const availableNetworks = [];
@@ -413,20 +413,26 @@ INFO: Verifying asset: ${assetName}`);
           const text = await item.innerText();
           availableNetworks.push(text.trim());
         }
-        
-        console.log(`    Available networks for ${assetName}:`, availableNetworks);
-        
+
+        console.log(
+          `    Available networks for ${assetName}:`,
+          availableNetworks
+        );
+
         // Try to find the network - the UI might display it differently
         // First try with human readable name, then try partial match
         const humanReadableName = networkNames[network.id];
         let networkOptionElement;
-        
+
         if (humanReadableName) {
           // Try to find by the human readable name (might be partial match)
-          networkOptionElement = page.locator("div.dropdown-item").filter({ 
-            hasText: humanReadableName 
-          }).first();
-          
+          networkOptionElement = page
+            .locator("div.dropdown-item")
+            .filter({
+              hasText: humanReadableName,
+            })
+            .first();
+
           // If not found, try to find any item containing the readable name
           const count = await networkOptionElement.count();
           if (count === 0) {
@@ -435,7 +441,9 @@ INFO: Verifying asset: ${assetName}`);
               networkOptionElement = page.locator("div.dropdown-item").first();
             } else {
               // Skip this network if we can't find it
-              console.log(`    WARNING: Could not find network ${humanReadableName} or ${network.id}, skipping`);
+              console.log(
+                `    WARNING: Could not find network ${humanReadableName} or ${network.id}, skipping`
+              );
               // Close dropdown by clicking outside
               await page.locator(".h4").first().click();
               await page.waitForTimeout(500);
@@ -447,14 +455,16 @@ INFO: Verifying asset: ${assetName}`);
           if (availableNetworks.length === 1) {
             networkOptionElement = page.locator("div.dropdown-item").first();
           } else {
-            console.log(`    WARNING: No mapping for network ${network.id} and multiple options available, skipping`);
+            console.log(
+              `    WARNING: No mapping for network ${network.id} and multiple options available, skipping`
+            );
             // Close dropdown by clicking outside
             await page.locator(".h4").first().click();
             await page.waitForTimeout(500);
             continue;
           }
         }
-        
+
         await expect(networkOptionElement).toBeVisible({ timeout: 10000 });
         const visibleNetworkName = await networkOptionElement.innerText();
         await networkOptionElement.click();
@@ -527,7 +537,7 @@ INFO: Verifying asset: ${assetName}`);
 
         // The warning message format has changed in the new UI
         const alertLocator = page.locator(".warning-box");
-        
+
         // Just verify that a warning exists with the network name
         await expect(alertLocator).toContainText("Only deposit from the");
 
