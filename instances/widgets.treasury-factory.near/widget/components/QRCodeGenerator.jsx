@@ -1,6 +1,12 @@
 const textToEncode = props.text;
+const instance = props.instance;
+const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 
-const widthheight = 150;
+const config = treasuryDaoID ? Near.view(treasuryDaoID, "get_config") : null;
+const metadata = JSON.parse(atob(config.metadata ?? ""));
+const isDarkTheme = metadata.theme === "dark";
+
+const widthheight = 120;
 
 const iframeSrcDoc = `
 <html>
@@ -23,7 +29,7 @@ const iframeSrcDoc = `
           msg: textForQR,
           dim: ${widthheight},
           pad: 0,
-          pal: ["#000", "#fff"]
+          pal: ["#000", "${isDarkTheme ? "#CACACA" : "#fff"}"]
         });
         svg.style.marginTop = "0rem";
         document.getElementById('qrCodeImageElement').appendChild(svg);

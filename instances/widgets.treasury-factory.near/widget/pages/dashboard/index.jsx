@@ -9,7 +9,9 @@ const { Skeleton } = VM.require(
 const { Modal, ModalContent, ModalHeader, ModalFooter } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.modal"
 );
-
+const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
+  href: () => {},
+};
 const instance = props.instance;
 
 if (
@@ -22,10 +24,51 @@ if (
 ) {
   return <></>;
 }
+if (props.deposit) {
+  return (
+    <div className="w-100 h-100">
+      <div className="d-flex flex-column gap-4">
+        <div className="d-flex justify-content-between align-items-center">
+          <a
+            className="btn btn-outline-secondary"
+            href={href({
+              widgetSrc: `${instance}/widget/app`,
+              params: {
+                page: "dashboard",
+              },
+            })}
+          >
+            Back
+          </a>
+          <div className="h3 mb-0 position-absolute start-50 translate-middle-x">
+            Deposit
+          </div>
+        </div>
 
-const { treasuryDaoID, showNearIntents } = VM.require(
-  `${instance}/widget/config.data`
-);
+        <div className="mx-auto">
+          {props.deposit === "sputnik-dao" ? (
+            <Widget
+              loading=""
+              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.intents-deposit.SputnikDao`}
+              props={{
+                instance,
+              }}
+            />
+          ) : (
+            <Widget
+              loading=""
+              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.intents-deposit.Intents`}
+              props={{
+                instance,
+              }}
+            />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 
 const lockupContract = accountToLockup(treasuryDaoID);
 
@@ -90,7 +133,6 @@ const [daoFTTokens, setFTTokens] = useState(null);
 const [show404Modal, setShow404Modal] = useState(false);
 const [disableRefreshBtn, setDisableRefreshBtn] = useState(false);
 const [lockupState, setLockupState] = useState(false);
-const [showDepositModal, setShowDepositModal] = useState(false);
 const [intentsTotalUsdBalance, setIntentsTotalUsdBalance] = useState("0"); // New state for intents balance
 
 useEffect(() => {
@@ -326,17 +368,7 @@ const Loading = () => {
 return (
   <Wrapper>
     {show404Modal && <TooManyRequestModal />}
-    {showDepositModal && (
-      <Widget
-        loading=""
-        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DepositModal`}
-        props={{
-          show: showDepositModal,
-          onClose: () => setShowDepositModal(false),
-          treasuryDaoID: treasuryDaoID,
-        }}
-      />
-    )}
+
     <Widget
       loading=""
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.StakedNearIframe`}
@@ -379,18 +411,16 @@ return (
             <>
               <div className="fw-bold h3 mb-0">
                 {formatCurrency(totalBalance)} USD
+                <div className="mt-2">
+                  <Widget
+                    loading=""
+                    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.intents-deposit.DepositButton`}
+                    props={{
+                      instance,
+                    }}
+                  />
+                </div>
               </div>
-              {showNearIntents && (
-                <button
-                  className="btn btn-success mt-2"
-                  onClick={() => {
-                    setShowDepositModal(true);
-                  }}
-                  style={{ width: "100%" }} // Make button full width of its container
-                >
-                  Deposit
-                </button>
-              )}
             </>
           )}
         </div>
