@@ -93,7 +93,7 @@ test.describe("Intents Deposit UI", () => {
       name: "Deposit",
     });
     await expect(depositButton).toBeVisible({ timeout: 15_000 });
-    await expect(depositButton).toHaveClass(/btn-primary/); // Changed from btn-success to btn-primary
+    await expect(depositButton).toHaveClass(/theme-btn/);
   });
 
   test("clicking deposit button shows dropdown and navigating to Sputnik DAO page shows correct content", async ({
@@ -132,8 +132,8 @@ test.describe("Intents Deposit UI", () => {
       page.locator(".h3").filter({ hasText: "Deposit" })
     ).toBeVisible({ timeout: 10000 });
 
-    // Check Cancel button is visible
-    await expect(page.getByRole("link", { name: "Cancel" })).toBeVisible();
+    // Check Back button is visible
+    await expect(page.getByRole("link", { name: "Back" })).toBeVisible();
 
     // Check Sputnik DAO content is visible - address is displayed as text truncate (use nth to avoid multiple matches)
     await expect(
@@ -187,7 +187,7 @@ test.describe("Intents Deposit UI", () => {
     expect(clipboardText).toEqual(daoAccount);
 
     // Navigate back to dashboard
-    await page.getByRole("link", { name: "Cancel" }).click();
+    await page.getByRole("link", { name: "Back" }).click();
     await page.waitForURL(/page=dashboard/);
 
     // Navigate to NEAR Intents deposit page
