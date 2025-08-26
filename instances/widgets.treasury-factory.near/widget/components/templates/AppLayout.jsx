@@ -692,6 +692,10 @@ const Theme = styled.div`
       color: var(--text-color) !important;
     }
   }
+
+  .text-primary {
+    color: var(--theme-color) !important;
+  }
 `;
 
 function AppLayout({ page, instance, children, treasuryDaoID, accountId }) {

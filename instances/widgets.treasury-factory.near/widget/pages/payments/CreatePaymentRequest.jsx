@@ -590,12 +590,18 @@ return (
               <div className="d-flex flex-column gap-2 border border-1 px-4 py-3 rounded-3 text-center justify-content-center align-items-center">
                 Your NEAR Intents wallet has no tokens. Fund it now to start
                 using the platform’s features
-                <button
-                  onClick={() => props.setShowDepositModal(true)}
+                <a
+                  href={href({
+                    widgetSrc: `${instance}/widget/app`,
+                    params: {
+                      page: "dashboard",
+                      deposit: "intents",
+                    },
+                  })}
                   className="btn theme-btn "
                 >
                   Deposit
-                </button>
+                </a>
               </div>
             )}
           {showProposalSelection && (
