@@ -22,7 +22,7 @@ const [ftMetadata, setFtMetadata] = useState(null);
 const [isTxnCreated, setTxnCreated] = useState(false);
 const [lastProposalId, setLastProposalId] = useState(null);
 const [expanded, setExpanded] = useState(false);
-const [showToastStatus, setShowToastStatus] = useState("ClaimSuccess");
+const [showToastStatus, setShowToastStatus] = useState(null);
 const [daoPolicy, setDaoPolicy] = useState(null);
 
 const hasPermissionToClaim = hasPermission(
@@ -167,7 +167,7 @@ useEffect(() => {
       setAccountMetadata(metadata);
     }
   );
-}, [contractId, treasuryDaoID]);
+}, [contractId]);
 
 function fetchFtMetadata() {
   asyncFetch(
@@ -255,7 +255,7 @@ const Row = ({ label, value, tooltip, showBorder, showSymbol, innerItem }) => {
           "py-2 d-flex gap-2 align-items-center justify-content-between px-3 "
         }
       >
-        <div className="d-flex gap-1 align-items-center">
+        <div className="d-flex gap-2 align-items-center">
           {label} <CustomTooltip info={tooltip} />{" "}
         </div>
         <div className="d-flex gap-1 align-items-center">
@@ -290,9 +290,8 @@ const FtAmountDetails = () => {
     >
       <div className={expanded && "border-bottom"}>
         <div className="py-2 d-flex gap-2 align-items-center justify-content-between px-3 flex-wrap">
-          <div className="h6 mb-0 d-flex align-items-center gap-1">
+          <div className="h6 mb-0 d-flex align-items-center gap-2">
             Original Allocated Amount
-            {"  "}{" "}
             <CustomTooltip info="This is the total amount of tokens allocated." />
           </div>
           <div className="d-flex gap-2 align-items-center justify-content-end">
@@ -527,8 +526,10 @@ const ClaimFunds = () => {
   return (
     Big(accountMetadata.unclaimed_amount ?? 0).gt(0) && (
       <div
-        className="border border-1 rounded-3 overflow-hidden"
-        style={{ backgroundColor: "var(--bg-system-color)" }}
+        className="border border-1 rounded-3 overflow-hidden reverse-border-color"
+        style={{
+          backgroundColor: "var(--bg-system-color)",
+        }}
       >
         <div className="d-flex flex-column">
           <div className="border-bottom px-3 py-2">
@@ -547,7 +548,7 @@ const ClaimFunds = () => {
               </div>
             }
             value={
-              <div className="d-flex flex-column">
+              <div className="d-flex flex-column justify-content-end">
                 <div>
                   {convertBalanceToReadableFormat(
                     accountMetadata.unclaimed_amount,
@@ -567,7 +568,7 @@ const ClaimFunds = () => {
             showBorder={true}
           />
 
-          <div className="py-2 px-3">
+          <div className="p-3">
             <button
               disabled={isTxnCreated || !hasPermissionToClaim}
               className="btn btn-outline-secondary text-center w-100 btn-sm"
