@@ -27,6 +27,14 @@ const Container = styled.div`
     background-color: var(--grey-04);
     color: var(--text-secondary);
   }
+
+  .fw-bold {
+    font-weight: 600 !important;
+  }
+
+  .gap-md {
+    gap: 0.7rem !important;
+  }
 `;
 
 const currentStep = state.currentStep;
@@ -324,10 +332,24 @@ const AssetSelector = ({ isActive }) => {
     return <div className="text-secondary h5 fw-bold mb-0">Select Asset</div>;
 
   return (
-    <div className="d-flex flex-column gap-3">
+    <div className="d-flex flex-column gap-md">
       <div className="h5 fw-bold mb-0">Select Asset</div>
-      {state.isLoadingTokens ? (
-        <div></div>
+      {state.isLoadingTokens ||
+      state.allFetchedTokens.length === 0 ||
+      !state.allIconsFetched ? (
+        <div>
+          <Widget
+            loading=""
+            src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
+            props={{
+              options: [],
+              disabled: true,
+              defaultLabel: (
+                <div className="spinner-border spinner-border-sm" />
+              ),
+            }}
+          />
+        </div>
       ) : (
         <Widget
           loading=""
@@ -364,7 +386,7 @@ const NetworkSelector = ({ isActive }) => {
     return <div className="text-secondary h5 fw-bold mb-0">Select Network</div>;
 
   return (
-    <div className="d-flex flex-column gap-3">
+    <div className="d-flex flex-column gap-md">
       <div className="h5 fw-bold mb-0">Select Network</div>
       <Widget
         loading=""
@@ -413,7 +435,7 @@ const DepositAddressSection = ({ isActive }) => {
     );
 
   return (
-    <div className="d-flex flex-column gap-2">
+    <div className="d-flex flex-column gap-md">
       <div className="h5 fw-bold mb-0">Deposit Address</div>
       <div className="text-muted">
         Always double-check your deposit address — it may change without notice.
@@ -424,6 +446,7 @@ const DepositAddressSection = ({ isActive }) => {
           props={{
             address: state.intentsDepositAddress,
             warningMessage: `Only deposit from the ${selectedNetworkFullInfo.name} network.`,
+            instance,
           }}
         />
       )}
@@ -439,7 +462,7 @@ return (
     <div className="card card-body" style={{ maxWidth: "700px" }}>
       <div className="d-flex flex-column gap-2">
         <div className="h4 mb-0">NEAR Intents</div>
-        <div className="fw-bolder">
+        <div style={{ fontWeight: 500 }}>
           Best for tokens from other blockchains (BTC, ETH, USDC, etc.) or
           sending cross-chain. Supports payments only. Token exchange coming
           soon.
@@ -463,7 +486,7 @@ return (
             className="position-absolute"
             style={{
               left: "12px",
-              top: "0px",
+              top: "10px",
               bottom: "10px",
               width: "2px",
               backgroundColor: "var(--border-color)",
@@ -474,7 +497,7 @@ return (
 
           {/* Step 1: Select Asset */}
           <div
-            className="d-flex align-items-start gap-3 w-100"
+            className="d-flex align-items-start gap-3 w-100 mt-2"
             style={{ marginBottom: "2rem" }}
           >
             <div style={{ position: "relative", zIndex: 2 }}>
@@ -537,7 +560,7 @@ return (
           className="text-primary"
           target="_blank"
           rel="noopener noreferrer"
-          href={"https://docs.neartreasury.com/permissions"}
+          href={"https://docs.neartreasury.com/payments/intents"}
         >
           Learn More
         </a>

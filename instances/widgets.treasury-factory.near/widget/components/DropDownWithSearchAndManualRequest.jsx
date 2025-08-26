@@ -12,6 +12,7 @@ const {
   onClickOfManualRequest,
   isLoadingProposals,
   dataTestId,
+  disabled,
 } = props;
 
 const [searchTerm, setSearchTerm] = useState("");
@@ -135,7 +136,7 @@ return (
           className={`selected-option w-100 text-wrap ${
             selectedOption.label === defaultLabel ? "text-secondary" : ""
           }`}
-          onClick={toggleDropdown}
+          onClick={!disabled && toggleDropdown}
         >
           {selectedOption.icon && (
             <img className="dropdown-icon" src={selectedOption.icon} />

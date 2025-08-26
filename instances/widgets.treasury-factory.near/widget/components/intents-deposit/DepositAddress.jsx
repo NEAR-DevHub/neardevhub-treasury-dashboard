@@ -1,4 +1,4 @@
-const { address, warningMessage } = props;
+const { address, warningMessage, instance } = props;
 
 const Container = styled.div`
   .warning-box {
@@ -16,6 +16,7 @@ return (
           src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.QRCodeGenerator"
           props={{
             text: address,
+            instance,
           }}
         />
         <div className="w-75 text-truncate d-flex flex-column gap-2">

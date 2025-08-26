@@ -19,7 +19,7 @@ const options = [
 return (
   <div className="dropdown w-100">
     <button
-      className="btn btn-primary w-100"
+      className="btn theme-btn w-100"
       type="button"
       data-bs-toggle="dropdown"
       aria-expanded="false"

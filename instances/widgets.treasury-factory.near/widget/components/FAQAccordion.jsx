@@ -9,6 +9,7 @@ const Container = styled.div`
 
   .faq-question.expanded {
     border-bottom: none;
+    padding-bottom: 1rem !important;
   }
 
   .faq-answer {
@@ -32,6 +33,7 @@ const Container = styled.div`
 
   .faq-question.last-child {
     border-bottom: none !important;
+    padding-bottom: 0px;
   }
 `;
 

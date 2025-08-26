@@ -38,7 +38,7 @@ if (props.deposit) {
               },
             })}
           >
-            Cancel
+            Back
           </a>
           <div className="h3 mb-0 position-absolute start-50 translate-middle-x">
             Deposit

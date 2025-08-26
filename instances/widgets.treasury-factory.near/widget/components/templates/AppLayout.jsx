@@ -695,6 +695,10 @@ const Theme = styled.div`
 
   .text-primary {
     color: var(--theme-color) !important;
+
+    &:hover {
+      color: var(--theme-color-dark) !important;
+    }
   }
 `;
 
