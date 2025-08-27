@@ -13,6 +13,7 @@ const {
   isLoadingProposals,
   dataTestId,
   disabled,
+  showCircularIcon,
 } = props;
 
 const [searchTerm, setSearchTerm] = useState("");
@@ -106,9 +107,9 @@ const Container = styled.div`
   }
 
   .dropdown-icon {
-    width: 1.25em;
-    height: 1.25em;
-    margin-right: 0.5em;
+    width: 1.3em;
+    height: 1.3em;
+    margin-right: 0.3em;
     vertical-align: middle;
   }
 `;
@@ -139,7 +140,12 @@ return (
           onClick={!disabled && toggleDropdown}
         >
           {selectedOption.icon && (
-            <img className="dropdown-icon" src={selectedOption.icon} />
+            <img
+              className={`dropdown-icon ${
+                showCircularIcon ? "rounded-circle object-fit-cover" : ""
+              }`}
+              src={selectedOption.icon}
+            />
           )}
           {selectedOption.label ?? defaultLabel}
         </div>
@@ -182,7 +188,14 @@ return (
                   onClick={() => handleOptionClick(option)}
                 >
                   {option.icon && (
-                    <img className="dropdown-icon" src={option.icon} />
+                    <img
+                      className={`dropdown-icon ${
+                        showCircularIcon
+                          ? "rounded-circle object-fit-cover"
+                          : ""
+                      }`}
+                      src={option.icon}
+                    />
                   )}
                   {option.label}
                 </div>

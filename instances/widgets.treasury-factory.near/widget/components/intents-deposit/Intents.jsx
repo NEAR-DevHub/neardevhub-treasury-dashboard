@@ -18,6 +18,8 @@ State.init({
   allIconsFetched: false, // Track if all icons have been fetched
 });
 
+const placeholderIcon =
+  "https://ipfs.near.social/ipfs/bafkreib7ahtyc3p6txuwcnn6kmfo5naiyjzomqnpt26crv27prd5f3ogt4";
 const Container = styled.div`
   .bg-theme-color {
     background-color: var(--theme-color);
@@ -368,12 +370,13 @@ const AssetSelector = ({ isActive }) => {
             options: state.assetNamesForDropdown.map((assetName) => ({
               value: assetName,
               label: assetName,
-              icon: state.tokenIconMap[assetName],
+              icon: state.tokenIconMap[assetName] || placeholderIcon,
             })),
             defaultLabel: "Select Asset",
             showSearch: true,
             searchInputPlaceholder: "Search assets",
             searchByLabel: true,
+            showCircularIcon: true,
           }}
         />
       )}
@@ -411,12 +414,13 @@ const NetworkSelector = ({ isActive }) => {
           options: state.networksForSelectedAssetDropdown.map((network) => ({
             value: network.id,
             label: network.name,
-            icon: network.icon,
+            icon: network.icon || placeholderIcon,
           })),
           defaultLabel: "Select Network",
           showSearch: true,
           searchInputPlaceholder: "Search networks",
           searchByLabel: true,
+          showCircularIcon: true,
           disabled:
             state.isLoadingTokens ||
             state.isLoadingAddress ||
@@ -456,7 +460,7 @@ const DepositAddressSection = ({ isActive }) => {
 
 return (
   <Container
-    className="d-flex gap-4 align-items-start"
+    className="d-flex gap-4 align-items-start flex-wrap flex-md-nowrap"
     style={{ fontSize: "14px" }}
   >
     <div className="card card-body" style={{ maxWidth: "700px" }}>

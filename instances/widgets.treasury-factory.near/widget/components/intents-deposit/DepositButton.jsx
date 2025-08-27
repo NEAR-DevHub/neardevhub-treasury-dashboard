@@ -38,7 +38,7 @@ return (
             },
           })}
           rel="noopener noreferrer"
-          className="dropdown-item cursor-pointer"
+          className="dropdown-item cursor-pointer py-2"
         >
           {item.label}
 
