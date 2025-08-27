@@ -10,14 +10,6 @@ return (
     <div style={{ fontWeight: 500 }}>
       Best for tokens on NEAR with full treasury control: payments, staking,
       asset exchange and lockups.
-      <a
-        className="text-primary"
-        target="_blank"
-        rel="noopener noreferrer"
-        href={"https://docs.neartreasury.com/payments/intents"}
-      >
-        Learn More
-      </a>
     </div>
     <div className="mt-2">
       <Widget

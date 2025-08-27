@@ -624,18 +624,19 @@ return (
               {proposalData?.isIntentsPayment && networkInfo.blockchain && (
                 <div className="d-flex flex-column gap-2 mt-3">
                   <label className="border-top">Network</label>
-                  <div className="d-flex gap-2 align-items-center">
+                  <div className="d-flex gap-1 align-items-center">
                     {networkInfo.blockchainIcon && (
                       <img
                         src={networkInfo.blockchainIcon}
-                        width="20"
-                        height="20"
+                        width="25"
+                        height="25"
                         alt={networkInfo.blockchain}
+                        className="rounded-circle object-fit-cover"
                       />
                     )}
                     <span
-                      style={{ fontSize: "18px", fontWeight: "bold" }}
-                      className="text-capitalize"
+                      style={{ fontSize: "18px" }}
+                      className="text-capitalize fw-semi-bold"
                     >
                       {networkInfo.name ?? networkInfo.blockchain}
                     </span>

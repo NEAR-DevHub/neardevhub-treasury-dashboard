@@ -1,13 +1,13 @@
 const faqItems = [
   {
-    question: "What is NEAR Intents and why is it useful??",
+    question: "What is NEAR Intents and why is it useful?",
     answer:
-      "NEAR Intents is a feature in the Treasury Dashboard that allows DAOs to manage assets and payment operations across multiple blockchains from a single interface. It enables organizations to accept deposits from different networks and request payouts in various cryptocurrencies while keeping everything in one place..",
+      "NEAR Intents is a feature in the Treasury Dashboard that allows DAOs to manage assets and payment operations across multiple blockchains from a single interface. It enables organizations to accept deposits from different networks and request payouts in various cryptocurrencies while keeping everything in one place.",
   },
   {
     question: "How can I use my tokens on NEAR Intents?",
     answer:
-      "Manage all your assets in one place and easily create payment requests. Store and control all your assets in a single dashboard and send payout requests.",
+      "You can manage all your tokens in one place and easily create payment requests. You can also store and control all your assets in a single dashboard and send payout requests.",
   },
   {
     question: "From which blockchains can I deposit using NEAR Intents?",
@@ -19,7 +19,7 @@ const faqItems = [
 - Arbitrum (USDC, GMX, ARB)
 - NEAR (wNEAR, REF, AURORA)
 - XRP (XRP)
-- TRON (TRX, USDT).`,
+- TRON (TRX, USDT)`,
   },
   {
     question: "Which cryptocurrencies are supported in NEAR Intents?",
@@ -57,7 +57,7 @@ return (
     className="border border-1 rounded-4 p-3"
     style={{ backgroundColor: "var(--grey-05)" }}
   >
-    <div className="h5 fw-bold mb-3">FAQ</div>
+    <div className="h5 fw-bold mb-0">FAQ</div>
     {faqItems.map((item, index) => (
       <Widget
         key={index}

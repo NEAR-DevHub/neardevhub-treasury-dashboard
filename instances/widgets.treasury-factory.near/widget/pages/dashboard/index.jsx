@@ -28,41 +28,42 @@ if (props.deposit) {
   return (
     <div className="w-100 h-100">
       <div className="d-flex flex-column gap-4">
-        <div className="d-flex justify-content-between align-items-center">
-          <a
-            className="btn btn-outline-secondary"
-            href={href({
-              widgetSrc: `${instance}/widget/app`,
-              params: {
-                page: "dashboard",
-              },
-            })}
-          >
-            Back
-          </a>
-          <div className="h3 mb-0 position-absolute start-50 translate-middle-x">
-            Deposit
-          </div>
-        </div>
-
         <div className="mx-auto">
-          {props.deposit === "sputnik-dao" ? (
-            <Widget
-              loading=""
-              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.intents-deposit.SputnikDao`}
-              props={{
-                instance,
-              }}
-            />
-          ) : (
-            <Widget
-              loading=""
-              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.intents-deposit.Intents`}
-              props={{
-                instance,
-              }}
-            />
-          )}
+          <div className="d-flex flex-column gap-3">
+            <div className="d-flex justify-content-between align-items-center">
+              <a
+                className="btn btn-outline-secondary d-flex gap-1 align-items-center"
+                href={href({
+                  widgetSrc: `${instance}/widget/app`,
+                  params: {
+                    page: "dashboard",
+                  },
+                })}
+              >
+                <i class="bi bi-arrow-left"></i> Back
+              </a>
+              <div className="h3 mb-0 position-absolute start-50 translate-middle-x">
+                Deposit
+              </div>
+            </div>
+            {props.deposit === "sputnik-dao" ? (
+              <Widget
+                loading=""
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.intents-deposit.SputnikDao`}
+                props={{
+                  instance,
+                }}
+              />
+            ) : (
+              <Widget
+                loading=""
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.intents-deposit.Intents`}
+                props={{
+                  instance,
+                }}
+              />
+            )}
+          </div>
         </div>
       </div>
     </div>
