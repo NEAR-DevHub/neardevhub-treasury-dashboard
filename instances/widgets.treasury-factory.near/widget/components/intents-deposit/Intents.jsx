@@ -18,8 +18,10 @@ State.init({
   allIconsFetched: false, // Track if all icons have been fetched
 });
 
-const placeholderIcon =
+const placeholderAssetIcon =
   "https://ipfs.near.social/ipfs/bafkreib7ahtyc3p6txuwcnn6kmfo5naiyjzomqnpt26crv27prd5f3ogt4";
+const placeholderNetworkIcon =
+  "https://ipfs.near.social/ipfs/bafkreihc5rbvgxf4sz36pqdbg2gv2ag5erjm472zo2hapeh24idcvumt7m";
 const Container = styled.div`
   .bg-theme-color {
     background-color: var(--theme-color);
@@ -370,7 +372,7 @@ const AssetSelector = ({ isActive }) => {
             options: state.assetNamesForDropdown.map((assetName) => ({
               value: assetName,
               label: assetName,
-              icon: state.tokenIconMap[assetName] || placeholderIcon,
+              icon: state.tokenIconMap[assetName] || placeholderAssetIcon,
             })),
             defaultLabel: "Select Asset",
             showSearch: true,
@@ -414,7 +416,7 @@ const NetworkSelector = ({ isActive }) => {
           options: state.networksForSelectedAssetDropdown.map((network) => ({
             value: network.id,
             label: network.name,
-            icon: network.icon || placeholderIcon,
+            icon: network.icon || placeholderNetworkIcon,
           })),
           defaultLabel: "Select Network",
           showSearch: true,

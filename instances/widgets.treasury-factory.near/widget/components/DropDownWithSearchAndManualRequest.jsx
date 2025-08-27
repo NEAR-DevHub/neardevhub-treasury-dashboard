@@ -134,7 +134,7 @@ return (
         data-testid={`${dataTestId}-btn`}
       >
         <div
-          className={`selected-option w-100 text-wrap ${
+          className={`selected-option d-flex align-items-center w-100 text-wrap ${
             selectedOption.label === defaultLabel ? "text-secondary" : ""
           }`}
           onClick={!disabled && toggleDropdown}
@@ -182,7 +182,7 @@ return (
               {filteredOptions.map((option) => (
                 <div
                   key={option.value}
-                  className={`dropdown-item cursor-pointer w-100 text-wrap ${
+                  className={`dropdown-item cursor-pointer w-100 text-wrap py-1 ${
                     selectedOption.value === option.value ? "selected" : ""
                   }`}
                   onClick={() => handleOptionClick(option)}
