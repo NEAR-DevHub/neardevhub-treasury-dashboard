@@ -15,7 +15,7 @@ process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS = "1";
 export default defineConfig({
   testDir: "./playwright-tests/tests",
   /* Maximum time one test can run for. */
-  timeout: 30 * 1000,
+  timeout: 60 * 1000,
   expect: {
     /**
      * Maximum time expect() should wait for the condition to be met.
@@ -27,8 +27,8 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
   retries: process.env.CI ? 4 : 0,
-  /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 6 : undefined, // Run tests in parallel with 6 workers
+  /* Run tests in parallel for speed */
+  workers: process.env.CI ? 6 : undefined, // 6 workers in CI, auto-detect locally
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: "line",
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */

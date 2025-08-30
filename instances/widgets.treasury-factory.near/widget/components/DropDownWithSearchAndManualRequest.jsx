@@ -12,6 +12,8 @@ const {
   onClickOfManualRequest,
   isLoadingProposals,
   dataTestId,
+  disabled,
+  showCircularIcon,
 } = props;
 
 const [searchTerm, setSearchTerm] = useState("");
@@ -105,9 +107,9 @@ const Container = styled.div`
   }
 
   .dropdown-icon {
-    width: 1.25em;
-    height: 1.25em;
-    margin-right: 0.5em;
+    width: 1.3em;
+    height: 1.3em;
+    margin-right: 0.3em;
     vertical-align: middle;
   }
 `;
@@ -132,13 +134,18 @@ return (
         data-testid={`${dataTestId}-btn`}
       >
         <div
-          className={`selected-option w-100 text-wrap ${
+          className={`selected-option d-flex align-items-center w-100 text-wrap ${
             selectedOption.label === defaultLabel ? "text-secondary" : ""
           }`}
-          onClick={toggleDropdown}
+          onClick={!disabled && toggleDropdown}
         >
           {selectedOption.icon && (
-            <img className="dropdown-icon" src={selectedOption.icon} />
+            <img
+              className={`dropdown-icon ${
+                showCircularIcon ? "rounded-circle object-fit-cover" : ""
+              }`}
+              src={selectedOption.icon}
+            />
           )}
           {selectedOption.label ?? defaultLabel}
         </div>
@@ -175,13 +182,20 @@ return (
               {filteredOptions.map((option) => (
                 <div
                   key={option.value}
-                  className={`dropdown-item cursor-pointer w-100 text-wrap ${
+                  className={`dropdown-item cursor-pointer w-100 text-wrap py-1 ${
                     selectedOption.value === option.value ? "selected" : ""
                   }`}
                   onClick={() => handleOptionClick(option)}
                 >
                   {option.icon && (
-                    <img className="dropdown-icon" src={option.icon} />
+                    <img
+                      className={`dropdown-icon ${
+                        showCircularIcon
+                          ? "rounded-circle object-fit-cover"
+                          : ""
+                      }`}
+                      src={option.icon}
+                    />
                   )}
                   {option.label}
                 </div>
