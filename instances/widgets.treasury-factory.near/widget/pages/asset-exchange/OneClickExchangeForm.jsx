@@ -766,7 +766,7 @@ return (
             <div className="amount-input">
               <input
                 type="number"
-                placeholder="00.00"
+                placeholder="0.00"
                 value={amountIn}
                 onChange={(e) => {
                   setAmountIn(e.target.value);
