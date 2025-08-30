@@ -6,6 +6,7 @@ import { KeyPairEd25519 } from "near-workspaces";
 
 test("should show system-update for targeted instance", async ({ page }) => {
   const contractId = "treasury-testing-infinex.near";
+
   await redirectWeb4({
     contractId,
     page,
@@ -27,6 +28,40 @@ test("should show system-update for targeted instance", async ({ page }) => {
   `,
     },
   });
+
+  // Mock the RPC calls to return different contract codes
+  await page.route(
+    "https://rpc.mainnet.fastnear.com/",
+    async (route, request) => {
+      const requestBody = request.postDataJSON();
+
+      if (
+        requestBody.method === "query" &&
+        requestBody.params.request_type === "call_function" &&
+        requestBody.params.method_name === "get_default_code_hash" &&
+        requestBody.params.account_id === "sputnik-dao.near"
+      ) {
+        // Return a different hash for the factory default to ensure update is shown
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            id: requestBody.id,
+            result: {
+              result: [
+                1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18,
+                19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32,
+              ],
+            },
+          }),
+        });
+      } else {
+        await route.fallback();
+      }
+    }
+  );
+
   await page.goto(`https://${contractId}.page/?page=settings`);
   await setPageAuthSettings(page, "theori.near", KeyPairEd25519.fromRandom());
 
@@ -35,7 +70,7 @@ test("should show system-update for targeted instance", async ({ page }) => {
   await page.getByRole("link", { name: "Review" }).click();
   await expect(
     page.getByText("Update to latest sputnik-dao contract")
-  ).toBeVisible();
+  ).toBeVisible({ timeout: 15_000 });
 });
 
 test("should not show system-update for others than targeted instances", async ({

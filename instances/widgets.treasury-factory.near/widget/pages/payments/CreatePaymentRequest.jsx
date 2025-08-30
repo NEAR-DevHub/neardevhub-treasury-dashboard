@@ -30,12 +30,8 @@ if (!instance || typeof accountToLockup !== "function") {
   return <></>;
 }
 
-const {
-  treasuryDaoID,
-  proposalAPIEndpoint,
-  showProposalSelection,
-  showNearIntents,
-} = VM.require(`${instance}/widget/config.data`);
+const { treasuryDaoID, proposalAPIEndpoint, showProposalSelection } =
+  VM.require(`${instance}/widget/config.data`);
 
 const lockupContract = accountToLockup(treasuryDaoID);
 
@@ -80,12 +76,6 @@ useEffect(() => {
     setIsManualRequest(true);
   }
 }, [showProposalSelection]);
-
-useEffect(() => {
-  if (!showNearIntents && !selectedWallet) {
-    setSelectedWallet(walletOptions[0]);
-  }
-}, [showNearIntents]);
 
 function formatNearAmount(amount) {
   return Big(amount ?? "0")
@@ -565,37 +555,42 @@ return (
       }}
     />
     <div className="d-flex flex-column gap-3">
-      {(showNearIntents || lockupContract) && (
-        <Widget
-          loading=""
-          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.WalletDropdown`}
-          props={{
-            instance,
-            showIntents: true,
-            selectedValue: selectedWallet,
-            onUpdate: (v) => {
-              setSelectedTokenBlockchain(null);
-              if (v.value !== selectedWallet.value) {
-                cleanInputs();
-              }
-              setSelectedWallet(v);
-            },
-          }}
-        />
-      )}
+      <Widget
+        loading=""
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.WalletDropdown`}
+        props={{
+          instance,
+          showIntents: true,
+          selectedValue: selectedWallet,
+          onUpdate: (v) => {
+            setSelectedTokenBlockchain(null);
+            if (v.value !== selectedWallet.value) {
+              cleanInputs();
+            }
+            setSelectedWallet(v);
+          },
+        }}
+      />
       {selectedWallet && (
         <div className="d-flex flex-column gap-3">
-          {!intentsBalances?.length &&
+          {intentsBalances &&
+            !intentsBalances?.length &&
             selectedWallet.value === "intents.near" && (
               <div className="d-flex flex-column gap-2 border border-1 px-4 py-3 rounded-3 text-center justify-content-center align-items-center">
                 Your NEAR Intents wallet has no tokens. Fund it now to start
                 using the platform’s features
-                <button
-                  onClick={() => props.setShowDepositModal(true)}
+                <a
+                  href={href({
+                    widgetSrc: `${instance}/widget/app`,
+                    params: {
+                      page: "dashboard",
+                      deposit: "intents",
+                    },
+                  })}
                   className="btn theme-btn "
                 >
                   Deposit
-                </button>
+                </a>
               </div>
             )}
           {showProposalSelection && (
