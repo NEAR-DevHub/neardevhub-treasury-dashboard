@@ -60,7 +60,7 @@ test.describe("User is logged in", () => {
     await newPage.waitForLoadState();
 
     expect(newPage.url()).toContain(
-      "https://docs.neartreasury.com/bulk-import"
+      "https://docs.neartreasury.com/payments/bulk-import"
     );
   });
 
