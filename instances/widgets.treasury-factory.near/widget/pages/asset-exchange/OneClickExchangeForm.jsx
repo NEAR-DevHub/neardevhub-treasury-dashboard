@@ -54,30 +54,31 @@ const Container = styled.div`
 
   .exchange-sections {
     position: relative;
-    
-    .send-section, .receive-section {
+
+    .send-section,
+    .receive-section {
       background-color: var(--bg-system-color);
       border: 1px solid var(--border-color);
       border-radius: 12px;
       padding: 20px;
-      
+
       .section-label {
         color: var(--text-secondary-color);
         font-size: 14px;
         font-weight: 500;
         margin-bottom: 12px;
       }
-      
+
       .input-row {
         display: flex;
         align-items: center;
         gap: 12px;
         margin-bottom: 8px;
       }
-      
+
       .amount-input {
         flex: 1;
-        
+
         input {
           background: transparent;
           border: none;
@@ -85,21 +86,21 @@ const Container = styled.div`
           font-weight: 500;
           padding: 0;
           color: var(--text-color);
-          
+
           &:focus {
             outline: none;
             box-shadow: none;
           }
-          
+
           &::placeholder {
             color: var(--text-secondary-color);
           }
         }
       }
-      
+
       .token-dropdown {
         flex: 0 0 auto;
-        
+
         .dropdown-toggle {
           background-color: var(--bg-page-color);
           border: 1px solid var(--border-color);
@@ -108,31 +109,31 @@ const Container = styled.div`
           min-width: 150px;
         }
       }
-      
+
       .value-display {
         color: var(--text-secondary-color);
         font-size: 14px;
         margin-top: 4px;
       }
     }
-    
+
     .send-section {
       border-bottom-left-radius: 0;
       border-bottom-right-radius: 0;
       border-bottom: none;
     }
-    
+
     .receive-section {
       border-top-left-radius: 0;
       border-top-right-radius: 0;
     }
-    
+
     .swap-divider {
       position: relative;
       height: 1px;
       background-color: var(--border-color);
       margin: 0;
-      
+
       .swap-icon-container {
         position: absolute;
         left: 50%;
@@ -147,7 +148,7 @@ const Container = styled.div`
         align-items: center;
         justify-content: center;
         z-index: 1;
-        
+
         .swap-icon {
           color: var(--text-secondary-color);
           font-size: 20px;
@@ -156,7 +157,7 @@ const Container = styled.div`
       }
     }
   }
-  
+
   .form-section {
     margin-bottom: 24px;
 
@@ -788,7 +789,9 @@ return (
                     label: token.symbol,
                     value: token.id,
                     icon: token.icon || getTokenIcon(token.symbol),
-                    subLabel: `Tokens available: ${token.balance} / ${token.blockchain || 'NEAR Protocol'}`,
+                    subLabel: `Tokens available: ${token.balance} / ${
+                      token.blockchain || "NEAR Protocol"
+                    }`,
                   })),
                   defaultLabel: "Select token",
                   showSearch: true,
@@ -801,11 +804,11 @@ return (
           <div className="value-display">
             {tokenIn && intentsTokensIn.find((t) => t.id === tokenIn) ? (
               <>
-                $
-                {parseFloat(amountIn || 0).toFixed(2)}
+                ${parseFloat(amountIn || 0).toFixed(2)}
                 {" • "}
                 NEAR Intents balance:{" "}
-                {intentsTokensIn.find((t) => t.id === tokenIn)?.balance || "0.00"}{" "}
+                {intentsTokensIn.find((t) => t.id === tokenIn)?.balance ||
+                  "0.00"}{" "}
                 {intentsTokensIn.find((t) => t.id === tokenIn)?.symbol}
               </>
             ) : (

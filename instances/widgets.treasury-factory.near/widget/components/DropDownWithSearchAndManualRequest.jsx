@@ -189,19 +189,21 @@ return (
                 >
                   <div className="d-flex align-items-start">
                     {option.icon && (
-                      <img 
+                      <img
                         className={`dropdown-icon ${
                           showCircularIcon
                             ? "rounded-circle object-fit-cover"
                             : ""
                         }`}
-                        src={option.icon} 
+                        src={option.icon}
                       />
                     )}
                     <div className="flex-grow-1">
                       <div>{option.label}</div>
                       {option.subLabel && (
-                        <small className="text-muted d-block">{option.subLabel}</small>
+                        <small className="text-muted d-block">
+                          {option.subLabel}
+                        </small>
                       )}
                     </div>
                   </div>
