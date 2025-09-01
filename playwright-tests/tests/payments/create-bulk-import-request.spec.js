@@ -1,6 +1,9 @@
 import { expect } from "@playwright/test";
 import { test } from "../../util/test.js";
-import { updateDaoPolicyMembers } from "../../util/rpcmock.js";
+import {
+  updateDaoPolicyMembers,
+  mockNearBalances,
+} from "../../util/rpcmock.js";
 import { Worker } from "near-workspaces";
 import {
   SPUTNIK_DAO_FACTORY_ID,
@@ -40,6 +43,12 @@ test.describe("User is logged in", () => {
   test.beforeEach(async ({ page, instanceAccount }) => {
     test.setTimeout(60_000);
     await updateDaoPolicyMembers({ instanceAccount, page });
+    // Mock sufficient balance to prevent insufficient funds modal
+    await mockNearBalances({
+      page,
+      accountId: "theori.near",
+      balance: BigInt(10 * 10 ** 24).toString(), // 10 NEAR
+    });
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
     await page.waitForTimeout(5_000);
     await page.getByRole("button", { name: "Create Request" }).click();
