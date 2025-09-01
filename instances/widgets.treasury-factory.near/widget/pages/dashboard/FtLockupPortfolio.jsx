@@ -44,6 +44,7 @@ const [expanded, setExpanded] = useState(false);
 const [showToastStatus, setShowToastStatus] = useState(null);
 const [showLockupInfoModal, setShowLockupInfoModal] = useState(false);
 const [accountMetadata, setAccountMetadata] = useState(null);
+const [isFTRegistered, setIsFTRegistered] = useState(false);
 
 useEffect(() => {
   if (metadata && !accountMetadata) {
@@ -52,6 +53,16 @@ useEffect(() => {
 }, [metadata]);
 
 const hasPermissionToClaim = context.accountId;
+
+useEffect(() => {
+  if (hasPermissionToClaim && contractMetadata) {
+    Near.asyncView(contractMetadata?.token_account_id, "storage_balance_of", {
+      account_id: treasuryDaoID,
+    }).then((res) => {
+      setIsFTRegistered(res.total);
+    });
+  }
+}, [contractMetadata]);
 
 function formatPrice(price) {
   const numAmount = Number(price ?? 0);
@@ -549,17 +560,30 @@ const LockupDetails = () => {
 
 function onClaim() {
   setTxnCreated(true);
-  Near.call([
-    {
-      contractName: contractId,
-      methodName: "claim",
+  const calls = [];
+
+  if (!isFTRegistered) {
+    calls.push({
+      contractName: contractMetadata?.token_account_id,
+      methodName: "storage_deposit",
       args: {
         account_id: treasuryDaoID,
+        registration_only: true,
       },
       gas: 300000000000000,
-      deposit: 0,
+      deposit: Big(0.125).mul(Big(10).pow(24)).toFixed(),
+    });
+  }
+
+  calls.push({
+    contractName: contractId,
+    methodName: "claim",
+    args: {
+      account_id: treasuryDaoID,
     },
-  ]);
+  });
+
+  Near.call(calls);
 }
 
 function fetchAcountMetadata() {
