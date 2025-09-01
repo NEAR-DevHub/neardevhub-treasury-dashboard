@@ -3,7 +3,6 @@ import { test } from "../../util/test.js";
 import { Worker, parseNEAR } from "near-workspaces";
 import { redirectWeb4, getLocalWidgetContent } from "../../util/web4.js";
 import { PROPOSAL_BOND, setPageAuthSettings } from "../../util/sandboxrpc.js";
-import { Indexer } from "../../util/indexer.js";
 
 let worker;
 let creatorAccount;
@@ -202,7 +201,7 @@ test("should display FT lockup portfolio with no claim available", async ({
     "ft_transfer_call",
     {
       receiver_id: lockupContract.accountId,
-      amount: "100000000", // 10 USDT (10 * 10^6)
+      amount: "100000000", // 100 USDT
       msg: daoAccount,
     },
     { attachedDeposit: "1", gas: "300000000000000" }
@@ -212,7 +211,7 @@ test("should display FT lockup portfolio with no claim available", async ({
   const configKey = `${instanceAccount}/widget/config.data`;
 
   // Enable feature flag - add ftLockups to the config
-  const configContent = await getLocalWidgetContent(configKey, {
+  const configContent = getLocalWidgetContent(configKey, {
     treasury: daoAccount,
     account: instanceAccount,
   });
@@ -223,9 +222,6 @@ test("should display FT lockup portfolio with no claim available", async ({
     `allowLockupCancellation: true,
   ftLockups: ["${lockupContract.accountId}"],`
   );
-  const indexer = new Indexer(worker.provider.connection.url);
-  await indexer.init();
-  await indexer.attachIndexerRoutes(page);
   await redirectWeb4({
     page,
     contractId: instanceAccount,
@@ -243,12 +239,18 @@ test("should display FT lockup portfolio with no claim available", async ({
     await creatorAccount.getKey()
   );
 
-  await page.waitForLoadState("networkidle");
-
-  await expect(page.getByText("FT Lockup")).toBeVisible();
+  await page.waitForTimeout(5_000);
 
   await expect(page.getByText(lockupContract.accountId)).toBeVisible();
 
+  await page.locator(".bi.bi-question-circle").click();
+  await expect(
+    page.getByRole("heading", { name: "How to Claim Tokens " })
+  ).toBeVisible();
+  await page
+    .getByRole("heading", { name: "How to Claim Tokens " })
+    .locator("i")
+    .click();
   await expect(
     page.getByText("No tokens are ready to be claimed")
   ).toBeVisible();
@@ -261,12 +263,9 @@ test("should display FT lockup portfolio with no claim available", async ({
   await page.getByText("Original Allocated Amount").click();
 
   // Verify expanded details
-  await expect(page.getByText("Unreleased")).toBeVisible();
-  await expect(page.getByText("100 USDt")).toBeVisible();
-
-  await expect(page.getByText("Unclaimed")).toBeVisible();
-  await expect(page.getByText("Claimed", { exact: true })).toBeVisible();
-  expect(await page.getByText("0 USDt").count()).toBeGreaterThanOrEqual(2);
+  await expect(page.getByText("Unreleased 100 USDt")).toBeVisible();
+  await expect(page.getByText("Unclaimed 0 USDt")).toBeVisible();
+  await expect(page.getByText("Claimed 0 USDt", { exact: true })).toBeVisible();
 
   // Verify lockup details
   await expect(page.getByText("Start Date")).toBeVisible();
@@ -275,10 +274,10 @@ test("should display FT lockup portfolio with no claim available", async ({
   const startDate = new Date(parseInt(startTimestamp) * 1000);
   const formattedDate = startDate.toLocaleDateString("en-US", {
     year: "numeric",
-    month: "long",
+    month: "short",
     day: "numeric",
   });
-  await expect(page.getByText(formattedDate)).toBeVisible();
+  await expect(page.getByText(formattedDate, { exact: true })).toBeVisible();
   await expect(page.getByText("Rounds")).toBeVisible();
   await expect(page.getByText("0 / 10")).toBeVisible();
 
@@ -310,13 +309,21 @@ test("should display FT lockup portfolio with claim available", async ({
     release_per_session: "10000000", // 10 USDT
   });
 
+  // register dao account to ft contract
+  await ftContract.call(
+    ftContract.accountId,
+    "storage_deposit",
+    { account_id: daoAccount, registration_only: true },
+    { attachedDeposit: parseNEAR("0.01"), gas: "300000000000000" }
+  );
+
   // Transfer FT tokens to lockup account
   await ftContract.call(
     ftContract.accountId,
     "ft_transfer_call",
     {
       receiver_id: lockupContract.accountId,
-      amount: "100000000", // 10 USDT (10 * 10^6)
+      amount: "100000000", // 100 USDT
       msg: daoAccount,
     },
     { attachedDeposit: "1", gas: "300000000000000" }
@@ -326,7 +333,7 @@ test("should display FT lockup portfolio with claim available", async ({
   const configKey = `${instanceAccount}/widget/config.data`;
 
   // Enable feature flag - add ftLockups to the config
-  const configContent = await getLocalWidgetContent(configKey, {
+  const configContent = getLocalWidgetContent(configKey, {
     treasury: daoAccount,
     account: instanceAccount,
   });
@@ -337,9 +344,6 @@ test("should display FT lockup portfolio with claim available", async ({
     `allowLockupCancellation: true,
   ftLockups: ["${lockupContract.accountId}"],`
   );
-  const indexer = new Indexer(worker.provider.connection.url);
-  await indexer.init();
-  await indexer.attachIndexerRoutes(page);
   await redirectWeb4({
     page,
     contractId: instanceAccount,
@@ -351,15 +355,16 @@ test("should display FT lockup portfolio with claim available", async ({
   });
   await mockFtMetadata({ page });
   await page.goto(`https://${instanceAccount}.page/`);
+  await expect(
+    page.getByText("Login with your NEAR account to claim tokens")
+  ).toBeVisible({ timeout: 15_000 });
   await setPageAuthSettings(
     page,
     creatorAccount.accountId,
     await creatorAccount.getKey()
   );
 
-  await page.waitForLoadState("networkidle");
-
-  await expect(page.getByText("FT Lockup")).toBeVisible();
+  await page.waitForTimeout(5_000);
 
   await expect(page.getByText(lockupContract.accountId)).toBeVisible();
 
@@ -377,13 +382,9 @@ test("should display FT lockup portfolio with claim available", async ({
   await page.getByText("Original Allocated Amount").click();
 
   // Verify expanded details
-  await expect(page.getByText("Unreleased")).toBeVisible();
-  await expect(page.getByText("90 USDt")).toBeVisible();
-
-  await expect(page.getByText("Unclaimed")).toBeVisible();
-  await expect(page.getByText("10 USDt", { exact: true })).toBeVisible();
-  await expect(page.getByText("Claimed", { exact: true })).toBeVisible();
-  expect(await page.getByText("0 USDt").count()).toBeGreaterThanOrEqual(1);
+  await expect(page.getByText("Unreleased 90 USDt")).toBeVisible();
+  await expect(page.getByText("Unclaimed 10 USDt")).toBeVisible();
+  await expect(page.getByText("Claimed 0 USDt", { exact: true })).toBeVisible();
 
   // Verify lockup details
   await expect(page.getByText("Start Date")).toBeVisible();
@@ -392,12 +393,12 @@ test("should display FT lockup portfolio with claim available", async ({
   const startDate = new Date(parseInt(startTimestamp) * 1000);
   const formattedDate = startDate.toLocaleDateString("en-US", {
     year: "numeric",
-    month: "long",
+    month: "short",
     day: "numeric",
   });
-  await expect(page.getByText(formattedDate)).toBeVisible();
+  await expect(page.getByText(formattedDate, { exact: true })).toBeVisible();
   await expect(page.getByText("Rounds")).toBeVisible();
-  await expect(page.getByText("0 / 10")).toBeVisible();
+  await expect(page.getByText("1 / 10")).toBeVisible();
 
   await expect(page.getByText("Release Interval")).toBeVisible();
   await expect(page.getByText("Every quarter")).toBeVisible();
@@ -406,34 +407,115 @@ test("should display FT lockup portfolio with claim available", async ({
   await expect(page.getByRole("button", { name: "Claim" })).toBeVisible();
   await page.getByRole("button", { name: "Claim" }).click();
   await expect(page.getByText("Confirm Transaction")).toBeVisible();
-  const transactionContent = JSON.stringify(
-    JSON.parse(await page.locator("pre div").innerText())
-  );
-  expect(transactionContent).toBe(
-    JSON.stringify({
-      proposal: {
-        description:
-          "* Title: Claim FT Unlocked tokens <br>* Token Id: usdt.tether-token.near <br>* Amount: 10000000",
-        kind: {
-          FunctionCall: {
-            receiver_id: lockupContract.accountId,
-            actions: [
-              {
-                method_name: "claim",
-                args: "",
-                deposit: "0",
-                gas: "200000000000000",
-              },
-            ],
-          },
-        },
-      },
-    })
-  );
+
   await expect(page.getByRole("button", { name: "Confirm" })).toBeVisible();
   await page.getByRole("button", { name: "Confirm" }).click();
 
   await expect(page.getByRole("button", { name: "Confirm" })).not.toBeVisible();
 
-  await page.waitForTimeout(10_000);
+  await expect(
+    page.getByText("Tokens are successfully claimed.")
+  ).toBeVisible();
+  await expect(
+    page.getByText(
+      "No tokens are ready to be claimed. Please wait for the next round."
+    )
+  ).toBeVisible();
+  await expect(
+    page.getByText("🎉 You have funds available to claim")
+  ).not.toBeVisible();
+  await expect(page.getByText("Unreleased 90 USDt")).toBeVisible();
+  await expect(page.getByText("Unclaimed 0 USDt")).toBeVisible();
+  await expect(
+    page.getByText("Claimed 10 USDt", { exact: true })
+  ).toBeVisible();
+});
+
+test("should hide FT lockup portfolio with all amount is claimed", async ({
+  page,
+  instanceAccount,
+  daoAccount,
+}) => {
+  test.setTimeout(200_000);
+  await setupDaoAccount({ page, daoAccount, instanceAccount });
+  const startTimestamp = Math.floor(
+    Date.now() / 1000 - 12 * 30 * 24 * 60 * 60
+  ).toString();
+
+  await creatorAccount.call(lockupContract.accountId, "add_account", {
+    account_id: daoAccount,
+    start_timestamp: startTimestamp,
+    session_interval: "2592000",
+    session_num: 10,
+    release_per_session: "10000000", // 10 USDT
+  });
+
+  // register dao account to ft contract
+  await ftContract.call(
+    ftContract.accountId,
+    "storage_deposit",
+    { account_id: daoAccount, registration_only: true },
+    { attachedDeposit: parseNEAR("0.01"), gas: "300000000000000" }
+  );
+
+  // Transfer FT tokens to lockup account
+  await ftContract.call(
+    ftContract.accountId,
+    "ft_transfer_call",
+    {
+      receiver_id: lockupContract.accountId,
+      amount: "100000000", // 100 USDT
+      msg: daoAccount,
+    },
+    { attachedDeposit: "1", gas: "300000000000000" }
+  );
+
+  await creatorAccount.call(
+    lockupContract.accountId,
+    "claim",
+    { account_id: daoAccount },
+    { attachedDeposit: "0", gas: "300000000000000" }
+  );
+
+  const modifiedWidgets = {};
+  const configKey = `${instanceAccount}/widget/config.data`;
+
+  // Enable feature flag - add ftLockups to the config
+  const configContent = getLocalWidgetContent(configKey, {
+    treasury: daoAccount,
+    account: instanceAccount,
+  });
+
+  // Add ftLockups to the config
+  modifiedWidgets[configKey] = configContent.replace(
+    `allowLockupCancellation: true,`,
+    `allowLockupCancellation: true,
+  ftLockups: ["${lockupContract.accountId}"],`
+  );
+  await redirectWeb4({
+    page,
+    contractId: instanceAccount,
+    treasury: daoAccount,
+    networkId: "sandbox",
+    sandboxNodeUrl: worker.provider.connection.url,
+    modifiedWidgets,
+    callWidgetNodeURLForContractWidgets: false,
+  });
+  await mockFtMetadata({ page });
+  await page.goto(`https://${instanceAccount}.page/`);
+  await expect(page.getByText("Show History")).toBeVisible();
+  await page.getByText("Show History").click();
+  await expect(page.getByText(lockupContract.accountId)).toBeVisible();
+  await expect(
+    page.getByText("All tokens have already been claimed")
+  ).toBeVisible();
+  await expect(page.getByText("Original Allocated Amount")).toBeVisible();
+  await page.getByText("Original Allocated Amount").click();
+  await expect(page.getByText("Unreleased 0 USDt")).toBeVisible();
+  await expect(page.getByText("Unclaimed 0 USDt")).toBeVisible();
+  await expect(
+    page.getByText("Claimed 100 USDt", { exact: true })
+  ).toBeVisible();
+  await page.getByText("Show less").click();
+  await expect(page.getByText(lockupContract.accountId)).not.toBeVisible();
 });
