@@ -540,6 +540,10 @@ export async function checkNewProposalSubmission({
   await expect(
     page.getByText(`${requestType} request has been successfully created.`)
   ).toBeVisible();
+  const viewRequestLink = page.locator('a:has-text("View Request")');
+  await expect(viewRequestLink).toBeVisible();
+  const href = await viewRequestLink.getAttribute("href");
+  expect(href).toContain(`?page=stake-delegation&id=${lastProposalId - 1}`);
   await expect(
     page
       .getByRole("cell", { name: `${lastProposalId - 1}`, exact: true })
