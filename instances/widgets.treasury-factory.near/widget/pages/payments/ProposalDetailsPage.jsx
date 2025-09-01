@@ -133,24 +133,8 @@ useEffect(() => {
           const actions = item.kind.FunctionCall?.actions || [];
           const receiverId = item.kind.FunctionCall?.receiver_id;
 
-          // claim FT token
-          if (actions.length === 1 && actions[0]?.method_name === "claim") {
-            const tokenId = decodeProposalDescription(
-              "tokenId",
-              item.description
-            );
-            const amount = decodeProposalDescription(
-              "amount",
-              item.description
-            );
-            args = {
-              token_id: tokenId,
-              amount: amount,
-              receiver_id: treasuryDaoID,
-            };
-          }
           // Requests from NEARN
-          else if (
+          if (
             actions.length >= 2 &&
             actions[0]?.method_name === "storage_deposit" &&
             actions[1]?.method_name === "ft_transfer"

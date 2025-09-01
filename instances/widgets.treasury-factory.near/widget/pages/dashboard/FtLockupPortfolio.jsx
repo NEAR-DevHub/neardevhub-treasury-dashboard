@@ -46,7 +46,6 @@ const [showLockupInfoModal, setShowLockupInfoModal] = useState(false);
 const [accountMetadata, setAccountMetadata] = useState(null);
 
 useEffect(() => {
-  console.log("metadata", metadata);
   if (metadata && !accountMetadata) {
     setAccountMetadata(metadata);
   }
