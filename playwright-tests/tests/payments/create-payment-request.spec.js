@@ -1074,6 +1074,10 @@ test.describe("admin with function access keys", function () {
     await expect(
       page.getByText("Payment request has been successfully created.")
     ).toBeVisible();
+    const viewRequestLink = page.locator('a:has-text("View Request")');
+    await expect(viewRequestLink).toBeVisible();
+    const href = await viewRequestLink.getAttribute("href");
+    expect(href).toContain(`?page=payments&id=${lastProposalId - 1}`);
     await expect(
       page.getByRole("cell", { name: `${lastProposalId - 1}`, exact: true })
     ).toBeVisible({ timeout: 20_000 });
