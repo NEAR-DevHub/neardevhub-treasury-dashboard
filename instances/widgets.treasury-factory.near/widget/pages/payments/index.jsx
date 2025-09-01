@@ -530,7 +530,7 @@ return (
                     target="_blank"
                     rel="noopener noreferrer"
                     className="primary-text-color cursor-pointer"
-                    href="https://docs.neartreasury.com/bulk-import"
+                    href="https://docs.neartreasury.com/payments/bulk-import"
                   >
                     View Step-by-Step Instructions
                   </a>

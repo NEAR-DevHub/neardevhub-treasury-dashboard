@@ -216,13 +216,13 @@ export async function addFilter(page, options) {
 // Helper function to switch to History tab
 export async function switchToHistoryTab(page) {
   await page.click("text=History");
-  await page.waitForLoadState("networkidle");
+  await page.waitForTimeout(5_000);
 }
 
 // Helper function to switch to Pending Requests tab
 export async function switchToPendingRequestsTab(page) {
   await page.click("text=Pending Requests");
-  await page.waitForLoadState("networkidle");
+  await page.waitForTimeout(5_000);
 }
 
 // Helper function to check all rows in a specific column contain dates within a range
