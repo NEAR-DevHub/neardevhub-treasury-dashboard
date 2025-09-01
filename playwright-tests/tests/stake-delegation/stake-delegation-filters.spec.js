@@ -17,7 +17,7 @@ import {
 test.describe("Stake Delegation Filters", () => {
   test.beforeEach(async ({ page, instanceAccount }) => {
     await page.goto(`/${instanceAccount}/widget/app?page=stake-delegation`);
-    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(5_000);
   });
 
   test("should open filters panel when filter button is clicked", async ({
@@ -611,7 +611,7 @@ test.describe("Logged in user - Stake Delegation", () => {
     instanceAccount,
   }) => {
     await page.goto(`/${instanceAccount}/widget/app?page=stake-delegation`);
-    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(5_000);
     await switchToHistoryTab(page);
     await addFilter(page, {
       filterName: "My Vote Status",

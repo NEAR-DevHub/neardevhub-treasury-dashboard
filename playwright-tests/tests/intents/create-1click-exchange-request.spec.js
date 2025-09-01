@@ -192,7 +192,7 @@ async function openCreatePage({ page, instanceAccount }) {
     timeout: 15000,
   });
   await page.getByRole("button", { name: "Create Request" }).click();
-  await page.waitForLoadState("networkidle");
+  await page.waitForTimeout(5_000);
 }
 
 // Helper function to intercept 1Click API quote and replace deposit address
