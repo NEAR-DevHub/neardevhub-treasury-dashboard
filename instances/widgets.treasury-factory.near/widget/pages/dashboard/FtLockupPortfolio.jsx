@@ -713,7 +713,7 @@ const FundsNotAvailableForClaim = () => {
     accountMetadata.last_claim_session < accountMetadata.session_num && (
       <div
         className="border border-1 rounded-3 overflow-hidden"
-        style={{ backgroundColor: "var(--bg-system-color)" }}
+        style={{ backgroundColor: "var(--bg-system-color)", fontSize: "14px" }}
       >
         <div className="px-3 py-2">
           No tokens are ready to be claimed. Please wait for the next round.
@@ -732,7 +732,7 @@ const FundsAlreadyClaimed = () => {
     ) && (
       <div
         className="border border-1 rounded-3 overflow-hidden"
-        style={{ backgroundColor: "var(--bg-system-color)" }}
+        style={{ backgroundColor: "var(--bg-system-color)", fontSize: "14px" }}
       >
         <div className="px-3 py-2">All tokens have already been claimed</div>
       </div>

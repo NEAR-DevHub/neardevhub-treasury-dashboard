@@ -117,6 +117,10 @@ const Wrapper = styled.div`
       width: 100%;
     }
   }
+
+  .flex-3 {
+    flex: 3;
+  }
 `;
 
 const [nearStakedTokens, setNearStakedTokens] = useState(null);
@@ -447,7 +451,7 @@ return (
       />
     )}
     <div className="d-flex gap-3 flex-wrap">
-      <div className="d-flex flex-column gap-3 flex-container">
+      <div className="d-flex flex-column gap-3 flex-container flex-1">
         <div className="card card-body" style={{ minHeight: "100px" }}>
           {" "}
           {/* Adjusted minHeight for button */}
@@ -621,7 +625,7 @@ return (
           </div>
         )}
       </div>
-      <div className="d-flex flex-column gap-2 flex-wrap dashboard-item flex-1 flex-container">
+      <div className="d-flex flex-column gap-2 flex-wrap dashboard-item flex-1 flex-container flex-3">
         <Widget
           loading=""
           src={
