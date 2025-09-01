@@ -1,7 +1,6 @@
 import { chromium } from "@playwright/test";
 import { redirectWeb4 } from "../util/web4.js";
 import fs from "fs";
-import { cacheCDN } from "../util/test.js";
 
 // Update argument parsing logic to handle `=` correctly
 const args = process.argv.slice(2).reduce((acc, arg) => {
@@ -45,6 +44,10 @@ const storageState = storageStateFile
 const context = await browser.newContext({ storageState });
 const page = await context.newPage();
 
-await cacheCDN(page);
-await redirectWeb4({ contractId, page, treasury });
+await redirectWeb4({
+  contractId,
+  page,
+  treasury,
+  sandboxNodeUrl: "https://rpc.mainnet.fastnear.com",
+});
 await page.goto(`https://${contractId}.page`);
