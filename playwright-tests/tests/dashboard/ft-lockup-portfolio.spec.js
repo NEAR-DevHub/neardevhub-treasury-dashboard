@@ -51,7 +51,7 @@ test.beforeAll(async () => {
 
   // Lockup contract setup
   lockupContract = await worker.rootAccount.importContract({
-    mainnetContract: "ft-lockup.megha19.near",
+    mainnetContract: "ft-lockup-testing.near",
   });
 
   // Initialize lockup contract

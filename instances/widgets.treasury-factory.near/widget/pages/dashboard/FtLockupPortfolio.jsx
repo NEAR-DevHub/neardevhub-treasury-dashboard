@@ -666,7 +666,7 @@ const ClaimFunds = () => {
               </div>
             }
             value={
-              <div className="d-flex flex-column justify-content-end">
+              <div className="d-flex flex-column align-items-end">
                 <div>
                   {convertBalanceToReadableFormat(
                     accountMetadata.unclaimed_amount,
