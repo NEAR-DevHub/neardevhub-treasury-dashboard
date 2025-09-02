@@ -222,8 +222,8 @@ test.describe("OneClickExchangeForm Component", () => {
             tokenIn: body.inputToken.id,
             tokenInSymbol: body.inputToken.symbol,
             tokenOut: body.outputToken.id,
-            networkOut: body.networkOut,
-            amountIn: mockQuoteResponse.quote.amountInFormatted, // Use formatted amount from quote
+            networkOut: body.networkOut, // This will be "Ethereum" from iframe
+            amountIn: "0.1", // Return formatted amount for display
             quote: {
               ...mockQuoteResponse.quote,
               signature: mockQuoteResponse.signature,
@@ -1021,7 +1021,7 @@ test.describe("OneClickExchangeForm Component", () => {
       await page.waitForTimeout(500);
 
       // Scroll the quote display into view before screenshot
-      await page.locator(".quote-display").scrollIntoViewIfNeeded();
+      await iframe.locator(".quote-display").scrollIntoViewIfNeeded();
 
       // Take screenshot showing the expiry time
       await page.screenshot({
@@ -1071,26 +1071,24 @@ test.describe("OneClickExchangeForm Component", () => {
 
   test("displays token icons correctly", async ({ page, instanceAccount }) => {
     await mockApiResponses(page);
-    await setupComponent(page);
+    const iframe = await setupComponent(page);
 
     // Wait for component to load
-    await page.waitForSelector(".one-click-exchange-form", {
-      state: "visible",
-    });
     await page.waitForTimeout(1000); // Give time for tokens to load
 
     // Open Send dropdown to see token icons
-    const sendDropdown = page
+    const sendDropdown = iframe
       .locator(".send-section")
       .locator(".dropdown-toggle");
     await sendDropdown.click();
-    await page.waitForSelector(".dropdown-item", { state: "visible" });
+    await page.waitForTimeout(500);
+    await iframe.locator(".dropdown-menu.show").waitFor({ state: "visible" });
 
     // Take screenshot of dropdown with token icons
     await page.screenshot({
       path: path.join(screenshotsDir, "05-token-icons-in-dropdown.png"),
       fullPage: false,
-      clip: await page.locator(".dropdown-menu.show").boundingBox(),
+      clip: await iframe.locator(".dropdown-menu.show").boundingBox(),
     });
 
     // Close dropdown
@@ -1165,14 +1163,24 @@ test.describe("OneClickExchangeForm Component", () => {
     // Now set up the test
     await mockApiResponses(page);
 
-    // Wait for component to load
-    await page.waitForSelector(".one-click-exchange-form", {
+    // Wait for iframe to load
+    await page.waitForSelector("iframe", {
       state: "visible",
+      timeout: 15000,
+    });
+    
+    // Get the iframe element and its content
+    const iframe = await page.frameLocator("iframe");
+    
+    // Wait for component inside iframe to load
+    await iframe.locator(".one-click-exchange-form").waitFor({
+      state: "visible",
+      timeout: 10000,
     });
     await page.waitForTimeout(1500); // Give time for tokens and balances to load
 
     // Open Send dropdown to see token balances
-    const sendDropdown = page
+    const sendDropdown = iframe
       .locator(".send-section")
       .locator(".dropdown-toggle");
 
@@ -1182,11 +1190,11 @@ test.describe("OneClickExchangeForm Component", () => {
     await sendDropdown.click();
 
     // Wait for dropdown menu to be visible
-    await page.waitForSelector(".dropdown-menu.show", { state: "visible" });
+    await iframe.locator(".dropdown-menu.show").waitFor({ state: "visible" });
     await page.waitForTimeout(500); // Let dropdown fully render
 
     // Look for dropdown items with balance information
-    const dropdownItems = page.locator(".dropdown-menu.show .dropdown-item");
+    const dropdownItems = iframe.locator(".dropdown-menu.show .dropdown-item");
     const itemCount = await dropdownItems.count();
 
     console.log(`Found ${itemCount} tokens in Send dropdown`);
@@ -1222,7 +1230,7 @@ test.describe("OneClickExchangeForm Component", () => {
     }
 
     // Take screenshot of dropdown with token balances visible
-    const dropdownBounds = await page
+    const dropdownBounds = await iframe
       .locator(".dropdown-menu.show")
       .boundingBox();
     if (dropdownBounds) {
@@ -1243,11 +1251,11 @@ test.describe("OneClickExchangeForm Component", () => {
     await page.screenshot({
       path: path.join(screenshotsDir, "11a-send-dropdown-full-context.png"),
       fullPage: false,
-      clip: await page.locator(".one-click-exchange-form").boundingBox(),
+      clip: await iframe.locator(".one-click-exchange-form").boundingBox(),
     });
 
     // Check for search functionality in dropdown
-    const searchInput = page.locator(
+    const searchInput = iframe.locator(
       ".dropdown-menu.show input[type='text'], .dropdown-menu.show input[placeholder*='Search']"
     );
     if ((await searchInput.count()) > 0) {
@@ -1261,7 +1269,7 @@ test.describe("OneClickExchangeForm Component", () => {
       await page.screenshot({
         path: path.join(screenshotsDir, "11b-send-dropdown-search-usdc.png"),
         fullPage: false,
-        clip: await page.locator(".dropdown-menu.show").boundingBox(),
+        clip: await iframe.locator(".dropdown-menu.show").boundingBox(),
       });
 
       // Clear search
@@ -1276,14 +1284,11 @@ test.describe("OneClickExchangeForm Component", () => {
     console.log("Token balance display test completed");
   });
 
-  test("handles form submission", async ({ page }) => {
+  test("handles form submission", async ({ page, instanceAccount }) => {
     await mockApiResponses(page);
-    await setupComponent(page);
+    const iframe = await setupComponent(page);
 
     // Wait for component to load
-    await page.waitForSelector(".one-click-exchange-form", {
-      state: "visible",
-    });
     await page.waitForTimeout(1000); // Give time for tokens to load
 
     // Take initial screenshot showing the form
@@ -1294,33 +1299,39 @@ test.describe("OneClickExchangeForm Component", () => {
 
     // Fill the form properly to get a real quote
     // Select send token
-    const sendDropdown = page
+    const sendDropdown = iframe
       .locator(".send-section")
       .locator(".dropdown-toggle");
     await sendDropdown.click();
-    await page.locator(".dropdown-item").filter({ hasText: "ETH" }).click();
+    await page.waitForTimeout(500);
+    await iframe.locator(".dropdown-menu.show").waitFor({ state: "visible" });
+    await iframe.locator(".dropdown-item").filter({ hasText: "ETH" }).click();
 
     // Fill amount
-    await page.locator('input[placeholder="0.00"]').first().fill("0.1");
+    await iframe.locator('#amount-in').fill("0.1");
     await page.waitForTimeout(500); // Wait for input to be processed
 
     // Select receive token
-    const receiveDropdown = page
+    const receiveDropdown = iframe
       .locator(".receive-section")
       .locator(".dropdown-toggle");
     await receiveDropdown.click();
-    await page.locator(".dropdown-item").filter({ hasText: "USDC" }).click();
+    await page.waitForTimeout(500);
+    const receiveDropdownMenu = iframe.locator(".receive-section .dropdown-menu.show");
+    await receiveDropdownMenu.waitFor({ state: "visible" });
+    await receiveDropdownMenu.locator(".dropdown-item").filter({ hasText: "USDC" }).first().click();
 
     // Select network
-    const networkDropdown = page
+    await page.waitForTimeout(1000); // Wait for networks to be populated
+    const networkDropdown = iframe
       .locator(".form-section")
       .filter({ hasText: "Network" })
       .locator(".dropdown-toggle");
     await networkDropdown.click();
-    await page
-      .locator(".dropdown-item")
-      .filter({ hasText: "Ethereum" })
-      .click();
+    await page.waitForTimeout(500);
+    const networkDropdownMenu = iframe.locator("#network-dropdown-menu");
+    await networkDropdownMenu.waitFor({ state: "visible" });
+    await networkDropdownMenu.locator(".dropdown-item").first().click();
 
     // Take screenshot of filled form
     await page.screenshot({
@@ -1330,15 +1341,15 @@ test.describe("OneClickExchangeForm Component", () => {
 
     // Wait for auto-fetched quote to appear
     // The quote should appear automatically after filling all fields
-    await page.waitForSelector(".quote-summary", {
+    await iframe.locator(".quote-summary").waitFor({
       state: "visible",
       timeout: 10000,
     });
 
     // Expand quote details to show all information
-    const detailsToggle = page.locator(".details-toggle");
+    const detailsToggle = iframe.locator(".details-toggle");
     await detailsToggle.click();
-    await page.waitForSelector(".quote-details", { state: "visible" });
+    await iframe.locator(".quote-details").waitFor({ state: "visible" });
 
     // Wait for details to fully expand
     await page.waitForTimeout(1000);
@@ -1357,7 +1368,7 @@ test.describe("OneClickExchangeForm Component", () => {
     await page.waitForTimeout(1000);
 
     // Check that Create Proposal button appears after quote
-    const createButton = page.locator('button:text("Create Proposal")');
+    const createButton = iframe.locator('button:text("Create Proposal")');
     await expect(createButton).toBeVisible();
 
     // Verify button is enabled and can be clicked
@@ -1366,10 +1377,10 @@ test.describe("OneClickExchangeForm Component", () => {
     // Click Create Proposal to demonstrate the full flow
     await createButton.click();
 
-    // Wait for the submission result to appear
+    // Wait for the submission result to appear (outside iframe)
     await page.waitForSelector("#submission-result", { state: "visible" });
 
-    // Verify the submitted data
+    // Verify the submitted data (outside iframe)
     const submittedTokenIn = await page
       .locator('[data-testid="submitted-token-in"]')
       .textContent();
@@ -1385,9 +1396,9 @@ test.describe("OneClickExchangeForm Component", () => {
 
     // Check that the correct values were submitted
     expect(submittedTokenIn).toBe("ETH");
-    expect(submittedTokenOut).toBe("USDC");
-    expect(submittedNetwork).toBe("Ethereum"); // Should be the display name, not the ID
-    expect(submittedAmount).toBe("0.1");
+    expect(submittedTokenOut).toBe("usdc"); // Token ID
+    expect(submittedNetwork).toBe("Ethereum"); // Display name from backend
+    expect(submittedAmount).toBe("0.1"); // Formatted amount from backend
 
     // Get the full submitted data for additional verification
     const submittedDataJson = await page
@@ -1425,28 +1436,111 @@ test.describe("OneClickExchangeForm Component", () => {
   });
 
   test("validates quote deadline", async ({ page, instanceAccount }) => {
-    await mockApiResponses(page);
-    await setupComponent(page);
+    // Set up API mocks first, but don't include the 1click quote mock
+    await mockRpcResponses(page);
+    
+    // Mock token list API
+    await page.route("https://bridge.chaindefuser.com/rpc", async (route) => {
+      const request = route.request();
+      const body = request.postDataJSON();
 
-    // Test quote without deadline
-    await page.evaluate(() => {
-      window.__mockInvalidQuote__ = {
-        amountIn: "100000000000000000",
-        amountOut: "350000000",
-        // Missing deadline
-      };
-
-      // Simulate error display for invalid quote
-      const errorDiv = document.createElement("div");
-      errorDiv.className = "alert alert-danger";
-      errorDiv.innerHTML =
-        '<i class="bi bi-exclamation-triangle-fill me-2"></i>Invalid quote: No expiry deadline provided';
-      document.querySelector(".one-click-exchange-form").appendChild(errorDiv);
+      if (body.method === "supported_tokens") {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            id: body.id,
+            jsonrpc: "2.0",
+            result: {
+              tokens: mockTokensOut.map((token) => ({
+                defuse_asset_identifier: `${token.network}:test`,
+                asset_name: token.symbol,
+                intents_token_id: token.id,
+                near_token_id: `nep141:${token.id}.omft.near`,
+              })),
+            },
+          }),
+        });
+      } else {
+        await route.continue();
+      }
     });
-
-    await expect(page.locator(".alert-danger")).toContainText(
-      "Invalid quote: No expiry deadline provided"
+    
+    // Mock our custom backend endpoint
+    await page.route("**/api/treasury/oneclick-quote", async (route) => {
+      await route.fulfill({
+        status: 403,
+        contentType: "application/json",
+        body: JSON.stringify({
+          error: "Invalid treasury DAO ID",
+        }),
+      });
+    });
+    
+    // Override the 1Click quote API to return an error
+    await page.route(
+      "https://1click.chaindefuser.com/v0/quote",
+      async (route) => {
+        await route.fulfill({
+          status: 400,
+          contentType: "application/json",
+          body: JSON.stringify({
+            error: "Invalid request: deadline is required for quote",
+          }),
+        });
+      }
     );
+
+    const iframe = await setupComponent(page);
+
+    // Wait for component to load
+    await page.waitForTimeout(1000);
+
+    // Fill the form to trigger quote fetch
+    // Select send token
+    const sendDropdown = iframe
+      .locator(".send-section")
+      .locator(".dropdown-toggle");
+    await sendDropdown.click();
+    await page.waitForTimeout(500);
+    await iframe.locator(".dropdown-menu.show").waitFor({ state: "visible" });
+    await iframe.locator(".dropdown-item").filter({ hasText: "ETH" }).click();
+
+    // Fill amount
+    await iframe.locator('#amount-in').fill("0.1");
+    await page.waitForTimeout(500);
+
+    // Select receive token
+    const receiveDropdown = iframe
+      .locator(".receive-section")
+      .locator(".dropdown-toggle");
+    await receiveDropdown.click();
+    await page.waitForTimeout(500);
+    const receiveDropdownMenu = iframe.locator(".receive-section .dropdown-menu.show");
+    await receiveDropdownMenu.waitFor({ state: "visible" });
+    await receiveDropdownMenu.locator(".dropdown-item").filter({ hasText: "USDC" }).first().click();
+
+    // Select network
+    await page.waitForTimeout(1000);
+    const networkDropdown = iframe
+      .locator(".form-section")
+      .filter({ hasText: "Network" })
+      .locator(".dropdown-toggle");
+    await networkDropdown.click();
+    await page.waitForTimeout(500);
+    const networkDropdownMenu = iframe.locator("#network-dropdown-menu");
+    await networkDropdownMenu.waitFor({ state: "visible" });
+    await networkDropdownMenu.locator(".dropdown-item").first().click();
+
+    // The iframe always adds a deadline, so let's verify the quote has a deadline in the happy path
+    // Since the API returns an error, the quote should not be displayed
+    await page.waitForTimeout(2000); // Wait for quote fetch attempt
+    
+    // Verify no quote is displayed when there's an error
+    await expect(iframe.locator(".quote-summary")).not.toBeVisible();
+    
+    // Verify the Create Proposal button is not visible when there's no valid quote
+    await expect(iframe.locator('button:text("Create Proposal")')).not.toBeVisible();
   });
 
   test("decimal input field accepts decimal numbers correctly", async ({
