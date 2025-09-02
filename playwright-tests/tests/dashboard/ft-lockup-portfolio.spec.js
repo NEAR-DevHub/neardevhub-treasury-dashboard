@@ -471,16 +471,21 @@ test("should display FT lockup portfolio with claim available", async ({
     .scrollIntoViewIfNeeded();
   // total and FT balance should be >= claimed amount i.e 10 USDT
   const usdtText = await page.getByTestId("USDt-token").innerText();
-  const parts = usdtText.split("\n").map((p) => p.trim()).filter(Boolean);
+  const parts = usdtText
+    .split("\n")
+    .map((p) => p.trim())
+    .filter(Boolean);
   const usdtAmount = parseFloat(parts[2]);
   expect(usdtAmount).toBeGreaterThanOrEqual(10);
 
-  const totalBalanceText = await page.getByTestId("total-balance").textContent();
+  const totalBalanceText = await page
+    .getByTestId("total-balance")
+    .textContent();
   const totalBalanceAmount = Number(
     totalBalanceText
-      ?.replace('$', '')   // remove dollar sign
-      .replace('USD', '')  // remove USD
-      .trim()              // remove spaces
+      ?.replace("$", "") // remove dollar sign
+      .replace("USD", "") // remove USD
+      .trim() // remove spaces
   );
   expect(totalBalanceAmount).toBeGreaterThanOrEqual(10);
 });
