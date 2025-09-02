@@ -206,7 +206,7 @@ return (
     {showNearIntents && treasuryWallet === "near-intents" ? (
       <Widget
         loading=""
-        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.asset-exchange.OneClickExchangeForm`}
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.asset-exchange.OneClickExchangeFormIframe`}
         props={{
           instance,
           onCancel: () => setShowCancelModal(true),
@@ -243,7 +243,7 @@ return (
                       args: {
                         receiver_id: args.quote.depositAddress,
                         amount: args.quote.amountIn,
-                        token_id: args.quote.requestPayload.originAsset,
+                        token_id: args.tokenIn,
                       },
                       amount: "1", // 1 yoctoNEAR
                       gas: "100000000000000", // 100 TGas
