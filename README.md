@@ -94,17 +94,55 @@ This workflow is ideal for creating clear, annotated demo videos from your Playw
 
 ## Running a Development Server using PlayWright hosted web4 gateway
 
+The development server provides a local testing environment that simulates the NEAR BOS (Blockchain Operating System) environment using Playwright. This allows developers to test the treasury dashboard with real wallet connections and NEAR protocol interactions without deploying to mainnet.
+
+### Purpose
+
+The devserver:
+- Hosts the treasury dashboard locally using Playwright's browser automation
+- Redirects Web4 requests to use the mainnet RPC (fastnear.com) for blockchain data
+- Preserves authentication state across development sessions
+- Enables testing with real wallet connections (Ledger, NEAR Wallet, etc.)
+- Provides a faster development cycle compared to deploying to NEAR BOS
+
 To start the development server, use the following command:
 
 ```bash
-npm run dev -- --contractId=webassemblymusic-treasury.near --storageStateFile=devstoragestate.json
+npm run dev -- --contractId=treasury-testing.near --treasury=testing-astradao.sputnik-dao.near --storageStateFile=devstoragestate.json
 ```
+
+This will open a browser window at `https://treasury-testing.near.page` where you can interact with the treasury dashboard connected to the `testing-astradao.sputnik-dao.near` DAO.
 
 ### Parameters
 
-- `--contractId` (required): Specifies the contract ID to be used. For example, `webassemblymusic-treasury.near`.
-- `--treasury` (optional): Specify which treasury to use. Defaults to `<contractId>.sputnik-dao.near`.
-- `--storageStateFile` (optional): Path to a Playwright storage state file. If provided, the storage state will be applied to the browser context. This is useful for preloading authentication or other session data.
+- `--contractId` (required): Specifies the NEAR account/contract ID that hosts the treasury dashboard component. This determines the URL where the dashboard will be accessed (`https://<contractId>.near.page`). For example, `treasury-testing.near` will open `https://treasury-testing.near.page`.
+- `--treasury` (optional): Specify which treasury DAO to connect to. Defaults to `<contractId>.sputnik-dao.near`. Note that some contracts may require a different treasury - for example, `treasury-testing.near` connects to `testing-astradao.sputnik-dao.near`.
+- `--storageStateFile` (optional): Path to a Playwright storage state file containing browser state (cookies, localStorage). This preserves wallet connections and authentication between development sessions.
+
+### Storage State File (`devstoragestate.json`)
+
+The storage state file preserves browser state between development sessions, including wallet connections and user authentication. This eliminates the need to reconnect your wallet every time you restart the development server.
+
+#### File Structure
+
+The storage state file contains the following properties:
+
+- **`cookies`**: Array of HTTP cookies. Usually empty for NEAR apps as authentication is handled through localStorage.
+- **`origins`**: Array of origin configurations, each containing:
+  - **`origin`**: The URL origin (e.g., `https://treasury-testing.near.page`)
+  - **`localStorage`**: Array of localStorage items for that origin
+- **`sessionStorage`**: Array of sessionStorage data. Typically empty as NEAR wallet data persists in localStorage.
+
+#### localStorage Properties for NEAR Applications
+
+The localStorage array contains key-value pairs for NEAR wallet integration:
+
+- **`near-social-vm:v01::accountId:`**: The currently logged-in NEAR account (e.g., `"example-user.near"`)
+- **`near-wallet-selector:contract`**: Contract configuration for the wallet selector
+- **`near-wallet-selector:ledger:accounts`**: Ledger hardware wallet account details including derivation path and public key
+- **`near-wallet-selector:recentlySignedInWallets`**: Array of recently used wallet types (e.g., `["ledger"]`)
+- **`near-wallet-selector:rememberRecentWallets`**: Whether to remember wallet selection (`"enabled"` or `"disabled"`)
+- **`near-wallet-selector:selectedWalletId`**: The currently selected wallet type (e.g., `"ledger"`, `"near-wallet"`, `"meteor-wallet"`)
 
 ### Example `devstoragestate.json`
 
@@ -115,11 +153,11 @@ Here is an example of a `devstoragestate.json` file that reflects the data neede
   "cookies": [],
   "origins": [
     {
-      "origin": "https://webassemblymusic-treasury.near.page",
+      "origin": "https://treasury-testing.near.page",
       "localStorage": [
         {
           "name": "near-social-vm:v01::accountId:",
-          "value": "\"petersalomonsen.near\""
+          "value": "\"example-user.near\""
         },
         {
           "name": "near-wallet-selector:contract",
@@ -127,7 +165,7 @@ Here is an example of a `devstoragestate.json` file that reflects the data neede
         },
         {
           "name": "near-wallet-selector:ledger:accounts",
-          "value": "[{\"accountId\":\"petersalomonsen.near\",\"derivationPath\":\"44'/397'/0'/0'/1'\",\"publicKey\":\"A7sZsyaujEaeYpUsw29hCi8vrxiyxXSbaTqbsxoa4AcN\"}]"
+          "value": "[{\"accountId\":\"example-user.near\",\"derivationPath\":\"44'/397'/0'/0'/1'\",\"publicKey\":\"Ed25519PublicKeyBase58EncodedString\"}]"
         },
         {
           "name": "near-wallet-selector:recentlySignedInWallets",

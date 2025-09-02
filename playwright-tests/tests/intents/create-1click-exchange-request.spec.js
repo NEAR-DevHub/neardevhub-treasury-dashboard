@@ -192,7 +192,7 @@ async function openCreatePage({ page, instanceAccount }) {
     timeout: 15000,
   });
   await page.getByRole("button", { name: "Create Request" }).click();
-  await page.waitForLoadState("networkidle");
+  await page.waitForTimeout(5_000);
 }
 
 // Helper function to intercept 1Click API quote and replace deposit address
@@ -835,6 +835,8 @@ test.describe("1Click API Integration - Asset Exchange", function () {
 
         // Store the quote on the page object for use in intent execution
         page.realQuote = realQuote.quote;
+        // Also store the signature which is at the top level
+        page.realQuote.signature = realQuote.signature;
 
         console.log("Returning modified quote:", realQuote);
         await route.fulfill({
@@ -845,12 +847,63 @@ test.describe("1Click API Integration - Asset Exchange", function () {
       }
     );
 
-    // Click Get Quote button
-    console.log("Clicking Get Quote button...");
-    await page.locator('button:has-text("Get Quote")').click();
+    // Mock our custom backend endpoint for actual proposal creation
+    await page.route("**/api/treasury/oneclick-quote", async (route) => {
+      const request = route.request();
+      const requestBody = request.postDataJSON();
+      console.log("Backend API request:", requestBody);
 
-    // Wait for quote to appear
-    console.log("Waiting for quote to appear...");
+      // Validate that it's a sputnik-dao address
+      if (
+        !requestBody.treasuryDaoID ||
+        !requestBody.treasuryDaoID.endsWith(".sputnik-dao.near")
+      ) {
+        await route.fulfill({
+          status: 403,
+          contentType: "application/json",
+          body: JSON.stringify({
+            error:
+              "Invalid treasury DAO ID. Only sputnik-dao.near addresses are allowed.",
+          }),
+        });
+        return;
+      }
+
+      // Use the real quote data from the dry run and add fields that only come with actual quotes
+      const actualQuote = {
+        ...page.realQuote, // This has all the dry quote fields
+        depositAddress: testDepositAddress, // Only in actual quotes
+        deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // Only in actual quotes
+        timeWhenInactive: new Date(
+          Date.now() + 1 * 60 * 60 * 1000
+        ).toISOString(), // 1 hour from now
+      };
+
+      // Add the signature to the quote (our backend includes it in the quote object)
+      if (page.realQuote.signature) {
+        actualQuote.signature = page.realQuote.signature;
+      }
+
+      // Return the same format as our backend would return
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          proposalPayload: {
+            tokenIn: requestBody.inputToken.id,
+            tokenInSymbol: requestBody.inputToken.symbol,
+            tokenOut: requestBody.outputToken.id,
+            networkOut: requestBody.networkOut,
+            amountIn: actualQuote.amountInFormatted || "0.1", // Backend uses formatted amount from quote
+            quote: actualQuote,
+          },
+        }),
+      });
+    });
+
+    // Wait for auto-fetched quote to appear (quotes now auto-fetch when form is filled)
+    console.log("Waiting for auto-fetched quote to appear...");
     await expect(page.getByText("Please approve this request")).toBeVisible({
       timeout: 10000,
     });

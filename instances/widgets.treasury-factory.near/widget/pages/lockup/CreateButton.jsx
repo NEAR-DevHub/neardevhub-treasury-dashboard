@@ -4,7 +4,7 @@ const { hasPermission } = VM.require(
   hasPermission: () => {},
 };
 
-const { isPendingPage, instance, setToastStatus } = props;
+const { isPendingPage, instance, setToastStatus, setVoteProposalId } = props;
 
 if (!instance) return <></>;
 
@@ -46,6 +46,7 @@ return (
               instance,
               onCloseCanvas: () => setShowCanvas(false),
               setToastStatus,
+              setVoteProposalId,
             }}
           />
         ),

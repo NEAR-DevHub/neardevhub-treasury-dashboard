@@ -104,6 +104,20 @@ const ToastStatusContent = () => {
         <div>
           {content}
           <br />
+          {showToastStatus === "ProposalAdded" && (
+            <a
+              className="text-underline"
+              href={href({
+                widgetSrc: `${instance}/widget/app`,
+                params: {
+                  page: "asset-exchange",
+                  id: voteProposalId,
+                },
+              })}
+            >
+              View Request
+            </a>
+          )}
           {showToastStatus !== "InProgress" &&
             showToastStatus !== "Removed" &&
             showToastStatus !== "ProposalAdded" &&
@@ -174,6 +188,8 @@ useEffect(() => {
             checkProposalStatus(proposalId);
           }
         } else if (transaction_method_name === "add_proposal") {
+          const proposalId = atob(transaction.body.result.status.SuccessValue);
+          setVoteProposalId(proposalId);
           setToastStatus("ProposalAdded");
         }
       }
@@ -230,6 +246,7 @@ return (
                   instance,
                   onCloseCanvas: toggleCreatePage,
                   setToastStatus,
+                  setVoteProposalId,
                 }}
               />
             ),
