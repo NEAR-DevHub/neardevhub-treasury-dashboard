@@ -41,4 +41,5 @@ return {
   ),
   isTesting: true,
   themeColor: "#f76218",
+  ftLockups: ["ft-lockup-testing.near"],
 };

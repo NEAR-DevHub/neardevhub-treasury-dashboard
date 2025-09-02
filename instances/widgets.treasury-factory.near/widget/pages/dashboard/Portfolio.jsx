@@ -207,7 +207,7 @@ const PortfolioCard = ({
   hideBorder,
 }) => {
   return (
-    <div className="d-flex flex-column">
+    <div className="d-flex flex-column" data-testid={`${symbol}-token`}>
       <div
         className={
           (!hideBorder && "border-bottom ") +
