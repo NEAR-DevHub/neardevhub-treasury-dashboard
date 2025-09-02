@@ -463,7 +463,9 @@ return (
           ) : (
             <>
               <div className="fw-bold h3 mb-0">
-                {formatCurrency(totalBalance)} USD
+                <span data-testid="total-balance">
+                  {formatCurrency(totalBalance)} USD
+                </span>
                 <div className="mt-2">
                   <Widget
                     loading=""

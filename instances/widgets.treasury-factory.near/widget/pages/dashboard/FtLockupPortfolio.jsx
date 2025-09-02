@@ -350,12 +350,16 @@ useEffect(() => {
     ftMetadata
   ) {
     props.setFtLockupBalance(
-      convertBalanceToReadableFormat(
-        Big(accountMetadata?.session_num ?? 0)
-          .mul(accountMetadata?.release_per_session ?? 0)
-          .minus(accountMetadata?.claimed_amount ?? 0),
-        ftMetadata?.decimals
+      Big(
+        convertBalanceToReadableFormat(
+          Big(accountMetadata?.session_num ?? 0)
+            .mul(accountMetadata?.release_per_session ?? 0)
+            .minus(accountMetadata?.claimed_amount ?? 0),
+          ftMetadata?.decimals
+        )
       )
+        .mul(ftMetadata?.price ?? 0)
+        .toFixed()
     );
   }
 }, [accountMetadata, ftMetadata]);

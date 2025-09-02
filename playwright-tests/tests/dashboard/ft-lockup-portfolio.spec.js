@@ -3,6 +3,7 @@ import { test } from "../../util/test.js";
 import { Worker, parseNEAR } from "near-workspaces";
 import { redirectWeb4, getLocalWidgetContent } from "../../util/web4.js";
 import { PROPOSAL_BOND, setPageAuthSettings } from "../../util/sandboxrpc.js";
+import Big from "big.js";
 
 let worker;
 let creatorAccount;
@@ -110,6 +111,41 @@ async function mockFtMetadata({ page }) {
   });
 }
 
+// mock FT balance using FT balance from sandbox RPC
+async function mockFTBalance({ page, daoAccount }) {
+  await page.route(/.*ft-tokens.*/, async (route) => {
+    const response = await route.fetch();
+    const responseBody = await response.json();
+
+    const ftBalanceFromRPC = await ftContract.view("ft_balance_of", {
+      account_id: daoAccount,
+    });
+    const ftInResponse = responseBody.fts.find(
+      (ft) => ft.contract === ftContract.accountId
+    );
+    if (ftInResponse) {
+      ftInResponse.amount = Big(ftBalanceFromRPC)
+        .plus(ftInResponse.amount)
+        .toFixed();
+    }
+    responseBody.totalCumulativeAmt = parseFloat(
+      Big(responseBody.totalCumulativeAmt)
+        .plus(
+          Big(ftBalanceFromRPC)
+            .div(Big(10).pow(ftInResponse.ft_meta.decimals))
+            .mul(ftInResponse.ft_meta.price)
+        )
+        .toFixed()
+    );
+    const updatedResponse = {
+      totalCumulativeAmt: responseBody.totalCumulativeAmt,
+      fts: [...responseBody.fts],
+    };
+    await route.fulfill({
+      json: updatedResponse,
+    });
+  });
+}
 async function setupDaoAccount({ page, daoAccount, instanceAccount }) {
   const daoName = daoAccount.split(".")[0];
   const create_testdao_args = {
@@ -407,7 +443,7 @@ test("should display FT lockup portfolio with claim available", async ({
   await expect(page.getByRole("button", { name: "Claim" })).toBeVisible();
   await page.getByRole("button", { name: "Claim" }).click();
   await expect(page.getByText("Confirm Transaction")).toBeVisible();
-
+  await mockFTBalance({ page, daoAccount });
   await expect(page.getByRole("button", { name: "Confirm" })).toBeVisible();
   await page.getByRole("button", { name: "Confirm" }).click();
 
@@ -429,6 +465,24 @@ test("should display FT lockup portfolio with claim available", async ({
   await expect(
     page.getByText("Claimed 10 USDt", { exact: true })
   ).toBeVisible();
+
+  await page
+    .getByText("Total Balance", { exact: true })
+    .scrollIntoViewIfNeeded();
+  // total and FT balance should be >= claimed amount i.e 10 USDT
+  const usdtText = await page.getByTestId("USDt-token").innerText();
+  const parts = usdtText.split("\n").map((p) => p.trim()).filter(Boolean);
+  const usdtAmount = parseFloat(parts[2]);
+  expect(usdtAmount).toBeGreaterThanOrEqual(10);
+
+  const totalBalanceText = await page.getByTestId("total-balance").textContent();
+  const totalBalanceAmount = Number(
+    totalBalanceText
+      ?.replace('$', '')   // remove dollar sign
+      .replace('USD', '')  // remove USD
+      .trim()              // remove spaces
+  );
+  expect(totalBalanceAmount).toBeGreaterThanOrEqual(10);
 });
 
 test("should hide FT lockup portfolio with all amount is claimed", async ({
