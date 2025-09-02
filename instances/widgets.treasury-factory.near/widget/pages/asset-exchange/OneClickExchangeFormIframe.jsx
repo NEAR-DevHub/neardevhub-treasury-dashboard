@@ -1,0 +1,1411 @@
+const { getAllColorsAsObject } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+);
+const { getIntentsBalances } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+);
+const instance = props.instance;
+if (!instance) {
+  return <></>;
+}
+
+const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+const config = treasuryDaoID ? Near.view(treasuryDaoID, "get_config") : null;
+const metadata = JSON.parse(atob(config.metadata ?? ""));
+const isDarkTheme = metadata.theme === "dark";
+const onSubmit = props.onSubmit ?? (() => {});
+const onCancel = props.onCancel ?? (() => {});
+
+const { themeColor } = VM.require(`${instance}/widget/config.data`) || {
+  themeColor: "",
+};
+const primaryColor = metadata?.primaryColor
+  ? metadata?.primaryColor
+  : themeColor;
+
+const colors = getAllColorsAsObject(isDarkTheme, primaryColor);
+const nearblocksKey = "${REPL_NEARBLOCKS_KEY}";
+
+const code = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8" />
+            <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+            <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+            />
+            <script src="https://cdn.jsdelivr.net/npm/big-js@3.1.3/big.min.js"></script>
+            <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+            />
+            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+            <title>1Click Exchange</title>
+            <style>
+            :root {
+                --bs-body-bg: ${colors["--bg-page-color"]} !important;
+                --bs-border-color: ${colors["--border-color"]} !important;
+                --border-color: ${colors["--border-color"]} !important;
+                --bs-form-control-disabled-bg: ${
+                  colors["--grey-04"]
+                } !important;
+            }
+            body {
+                background-color: ${colors["--bg-page-color"]} !important;
+                color: ${colors["--text-color"]} !important;
+                overflow-y: hidden;
+            }
+            .info-message {
+                background-color: ${colors["--grey-04"]};
+                border-radius: 8px;
+                padding: 16px;
+                margin-bottom: 20px;
+                display: flex;
+                align-items: flex-start;
+                gap: 12px;
+            }
+            .info-icon {
+                color: ${colors["--text-secondary-color"]};
+                font-size: 20px;
+                margin-top: 2px;
+            }
+            .info-text {
+                color: ${colors["--text-color"]};
+                font-size: 14px;
+                line-height: 1.5;
+            }
+            .exchange-sections {
+                position: relative;
+            }
+            .send-section,
+            .receive-section {
+                background-color: ${colors["--bg-system-color"]};
+                border: 1px solid ${colors["--border-color"]};
+                border-radius: 12px;
+                padding: 20px;
+            }
+            .send-section {
+                border-bottom-left-radius: 0;
+                border-bottom-right-radius: 0;
+                border-bottom: none;
+            }
+            .receive-section {
+                border-top-left-radius: 0;
+                border-top-right-radius: 0;
+            }
+            .section-label {
+                color: ${colors["--text-secondary-color"]};
+                font-size: 14px;
+                font-weight: 500;
+                margin-bottom: 12px;
+            }
+            .input-row {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                margin-bottom: 8px;
+            }
+            .amount-input {
+                flex: 1;
+            }
+            .amount-input input {
+                background: transparent;
+                border: none;
+                font-size: 24px;
+                font-weight: 500;
+                padding: 0;
+                color: ${colors["--text-color"]};
+                width: 100%;
+            }
+            .amount-input input:focus {
+                outline: none;
+                box-shadow: none;
+            }
+            .amount-input input::placeholder {
+                color: ${colors["--text-secondary-color"]};
+            }
+            .token-dropdown {
+                flex: 0 0 auto;
+                position: relative;
+            }
+            .dropdown-toggle {
+                background-color: ${colors["--bg-page-color"]};
+                border: 1px solid ${colors["--border-color"]};
+                border-radius: 8px;
+                padding: 8px 16px;
+                min-width: 150px;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                justify-content: space-between;
+            }
+            .dropdown-menu {
+                display: none;
+                position: absolute;
+                width: 300px;
+                max-height: 300px;
+                overflow-y: auto;
+                background-color: ${colors["--bg-page-color"]};
+                border: 1px solid ${colors["--border-color"]};
+                border-radius: 8px;
+                margin-top: 4px;
+                z-index: 1000;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            }
+            .dropdown-menu.show {
+                display: block;
+            }
+            .dropdown-search {
+                padding: 8px;
+                border-bottom: 1px solid ${colors["--border-color"]};
+            }
+            .dropdown-search input {
+                width: 100%;
+                padding: 8px;
+                border: 1px solid ${colors["--border-color"]};
+                border-radius: 4px;
+                background-color: ${colors["--bg-page-color"]};
+                color: ${colors["--text-color"]};
+            }
+            .dropdown-item {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 10px 12px;
+                cursor: pointer;
+                color: ${colors["--text-color"]};
+            }
+            .dropdown-item:hover {
+                background-color: ${colors["--grey-04"]};
+            }
+            .dropdown-item.selected {
+                background-color: ${colors["--grey-035"]};
+            }
+            .token-info {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .token-icon {
+                width: 24px;
+                height: 24px;
+                border-radius: 50%;
+            }
+            .token-details {
+                display: flex;
+                flex-direction: column;
+            }
+            .token-symbol {
+                font-weight: 500;
+                color: ${colors["--text-color"]};
+            }
+            .token-sublabel {
+                font-size: 12px;
+                color: ${colors["--text-secondary-color"]};
+            }
+            .value-display {
+                color: ${colors["--text-secondary-color"]};
+                font-size: 14px;
+                margin-top: 4px;
+            }
+            .swap-divider {
+                position: relative;
+                height: 1px;
+                background-color: ${colors["--border-color"]};
+                margin: 0;
+            }
+            .swap-icon-container {
+                position: absolute;
+                left: 50%;
+                top: 50%;
+                transform: translate(-50%, -50%);
+                background-color: ${colors["--bg-system-color"]};
+                border: 1px solid ${colors["--border-color"]};
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 1;
+            }
+            .swap-icon {
+                color: ${colors["--text-secondary-color"]};
+                font-size: 20px;
+                transform: rotate(90deg);
+            }
+            .form-section {
+                margin-bottom: 24px;
+            }
+            .form-label {
+                color: ${colors["--text-color"]};
+                font-weight: 500;
+                margin-bottom: 8px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .helper-text {
+                color: ${colors["--text-secondary-color"]};
+                font-size: 13px;
+                margin-top: 4px;
+            }
+            .quote-display {
+                background-color: ${colors["--bg-system-color"]};
+                border: 1px solid ${colors["--border-color"]};
+                border-radius: 8px;
+                padding: 20px;
+                margin-bottom: 24px;
+            }
+            .quote-alert {
+                background-color: rgba(177, 113, 8, 0.1);
+                border: 1px solid ${colors["--other-warning"]};
+                color: ${colors["--other-warning"]};
+                padding: 12px;
+                border-radius: 6px;
+                margin-bottom: 16px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-size: 14px;
+            }
+            .alert-icon {
+                color: ${colors["--other-warning"]};
+                font-size: 18px;
+            }
+            .quote-summary {
+                font-size: 18px;
+                font-weight: 500;
+                color: ${colors["--text-color"]};
+                margin-bottom: 20px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .arrow-icon {
+                color: ${colors["--text-secondary-color"]};
+            }
+            .quote-details {
+                border-top: 1px solid ${colors["--border-color"]};
+                padding-top: 16px;
+                margin-top: 16px;
+            }
+            .detail-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 8px 0;
+                color: ${colors["--text-color"]};
+                font-size: 14px;
+            }
+            .detail-row:not(:last-child) {
+                border-bottom: 1px solid ${colors["--grey-04"]};
+            }
+            .detail-label {
+                color: ${colors["--text-secondary-color"]};
+            }
+            .detail-value {
+                font-weight: 500;
+                color: ${colors["--text-color"]};
+            }
+            .details-toggle {
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
+                margin-top: 12px;
+                color: ${colors["--theme-color"]};
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: 500;
+                gap: 4px;
+            }
+            .details-toggle:hover {
+                text-decoration: underline;
+            }
+            .slippage-input-group {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .slippage-input {
+                width: 100px;
+            }
+            .error-message {
+                background-color: rgba(220, 53, 69, 0.1);
+                border: 1px solid ${colors["--other-red"]};
+                color: ${colors["--other-red"]};
+                padding: 12px;
+                border-radius: 6px;
+                margin-bottom: 16px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .spinner-border {
+                color: ${colors["--theme-color"]};
+            }
+            .btn {
+                padding: 10px 20px;
+                border-radius: 6px;
+                font-weight: 500;
+                transition: all 0.2s;
+            }
+            .btn-outline-secondary {
+                background: transparent;
+                border: 1px solid ${colors["--border-color"]};
+                color: ${colors["--text-color"]};
+            }
+            .btn-outline-secondary:hover {
+                background: ${colors["--grey-04"]};
+                color: ${colors["--text-color"]};
+            }
+            .btn-primary {
+                background: ${colors["--theme-color"]};
+                border: none;
+                color: white;
+            }
+            .btn-primary:hover:not(:disabled) {
+                background: ${colors["--theme-color-dark"]};
+            }
+            .btn-primary:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+            .btn-success {
+                background: ${colors["--other-green"]};
+                border: none;
+                color: white;
+            }
+            .btn-success:hover:not(:disabled) {
+                opacity: 0.9;
+            }
+            .custom-tooltip {
+                --bs-tooltip-bg: ${colors["--bg-page-color"]};
+                --bs-tooltip-color: ${colors["--text-color"]};
+                width: 300px;
+                font-size: 13px;
+                z-index: 1055;
+            }
+            .tooltip-inner {
+                border: 1px solid ${colors["--border-color"]};
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                max-width: 300px;
+                width: 300px;
+                white-space: normal;
+            }
+            </style>
+        </head>
+        <body data-bs-theme=${isDarkTheme ? "dark" : "light"}>
+            <div class="one-click-exchange-form">
+                <!-- Info Message -->
+                <div class="info-message">
+                    <i class="bi bi-info-circle-fill info-icon"></i>
+                    <div class="info-text">
+                        Swap tokens in your NEAR Intents holdings via the 1Click API.
+                        Exchanged tokens stay in your treasury account.
+                    </div>
+                </div>
+
+                <!-- Error display -->
+                <div id="error-container" style="display: none;">
+                    <div class="error-message">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <span id="error-message"></span>
+                    </div>
+                </div>
+
+                <!-- Exchange Sections Container -->
+                <div class="exchange-sections">
+                    <!-- Send Section -->
+                    <div class="send-section">
+                        <div class="section-label">Send</div>
+                        <div class="input-row">
+                            <div class="amount-input">
+                                <input
+                                    type="number"
+                                    id="amount-in"
+                                    placeholder="0.00"
+                                    min="0"
+                                    step="any"
+                                />
+                            </div>
+                            <div class="token-dropdown">
+                                <button class="dropdown-toggle" id="send-dropdown-toggle">
+                                    <span id="send-token-display">Select token</span>
+                                    <i class="bi bi-chevron-down"></i>
+                                </button>
+                                <div class="dropdown-menu" id="send-dropdown-menu">
+                                    <div class="dropdown-search">
+                                        <input type="text" placeholder="Search token..." id="send-search" />
+                                    </div>
+                                    <div id="send-token-list"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="value-display" id="send-value">$0.00</div>
+                    </div>
+
+                    <!-- Swap Divider with Icon -->
+                    <div class="swap-divider">
+                        <div class="swap-icon-container">
+                            <i class="bi bi-arrow-down-up swap-icon"></i>
+                        </div>
+                    </div>
+
+                    <!-- Receive Section -->
+                    <div class="receive-section">
+                        <div class="section-label">Receive</div>
+                        <div class="input-row">
+                            <div class="amount-input">
+                                <input
+                                    type="text"
+                                    id="amount-out"
+                                    placeholder="0.00"
+                                    readonly
+                                    disabled
+                                />
+                            </div>
+                            <div class="token-dropdown">
+                                <button class="dropdown-toggle" id="receive-dropdown-toggle">
+                                    <span id="receive-token-display">Select token</span>
+                                    <i class="bi bi-chevron-down"></i>
+                                </button>
+                                <div class="dropdown-menu" id="receive-dropdown-menu">
+                                    <div class="dropdown-search">
+                                        <input type="text" placeholder="Search token..." id="receive-search" />
+                                    </div>
+                                    <div id="receive-token-list"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="value-display" id="receive-value">$0.00</div>
+                    </div>
+                </div>
+
+                <!-- Network Section -->
+                <div class="form-section">
+                    <label class="form-label">Network</label>
+                    <div class="token-dropdown" style="width: 100%;">
+                        <button class="dropdown-toggle" id="network-dropdown-toggle" style="width: 100%;">
+                            <span id="network-display">Select token first</span>
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                        <div class="dropdown-menu" id="network-dropdown-menu" style="width: 100%;">
+                            <div id="network-list"></div>
+                        </div>
+                    </div>
+                    <div class="helper-text">
+                        Swapped tokens will remain in the treasury's NEAR Intents account
+                    </div>
+                </div>
+
+                <!-- Price Slippage Limit Section -->
+                <div class="form-section">
+                    <label class="form-label">
+                        Price Slippage Limit
+                        <i class="bi bi-info-circle text-muted"
+                           data-bs-toggle="tooltip"
+                           data-bs-custom-class="custom-tooltip"
+                           data-bs-placement="top"
+                           title="Maximum price change you're willing to accept. The swap will fail if the price moves beyond this limit.">
+                        </i>
+                    </label>
+                    <div class="slippage-input-group">
+                        <input
+                            type="number"
+                            id="slippage-input"
+                            class="form-control slippage-input"
+                            min="0"
+                            max="50"
+                            step="0.1"
+                        />
+                        <span>%</span>
+                    </div>
+                    <div class="helper-text">
+                        Your transaction will revert if the price changes unfavorably by more than this percentage.
+                    </div>
+                </div>
+
+                <!-- Quote Display -->
+                <div id="quote-display" style="display: none;">
+                    <div class="quote-display">
+                        <!-- Expiry Alert -->
+                        <div class="quote-alert" id="quote-alert">
+                            <i class="bi bi-exclamation-triangle-fill alert-icon"></i>
+                            <span id="quote-alert-text"></span>
+                        </div>
+
+                        <!-- Quote Summary -->
+                        <div class="quote-summary">
+                            <span id="quote-summary-from"></span>
+                            <i class="bi bi-arrow-right arrow-icon"></i>
+                            <span id="quote-summary-to"></span>
+                        </div>
+
+                        <!-- Collapsible Details -->
+                        <div class="quote-details" id="quote-details" style="display: none;">
+                            <div class="detail-row">
+                                <span class="detail-label">Estimated time</span>
+                                <span class="detail-value" id="detail-time">10 minutes</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Minimum received</span>
+                                <span class="detail-value" id="detail-min-received">N/A</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Deposit address</span>
+                                <span class="detail-value" id="detail-deposit">N/A</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">Quote expires</span>
+                                <span class="detail-value" id="detail-expires">N/A</span>
+                            </div>
+                        </div>
+
+                        <!-- Details Toggle -->
+                        <div class="details-toggle" id="details-toggle">
+                            <span>Details</span>
+                            <i class="bi bi-chevron-down" id="details-chevron"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-flex justify-content-end gap-2 mt-4">
+                    <button class="btn btn-outline-secondary" id="cancel-btn">
+                        Cancel
+                    </button>
+                    <button class="btn btn-primary" id="submit-btn" disabled>
+                        Get Quote
+                    </button>
+                </div>
+            </div>
+
+            <script>
+            // Global state
+            let tokenIn = null;
+            let tokenOut = null;
+            let networkOut = null;
+            let amountIn = "";
+            let slippageTolerance = "100"; // basis points
+            let isLoading = false;
+            let isLoadingQuote = false;
+            let intentsTokensIn = [];
+            let allTokensOut = [];
+            let quote = null;
+            let showQuoteDetails = false;
+            let autoFetchTimeout = null;
+            let treasuryDaoID = "";
+            let iconCache = {};
+            let availableNetworks = [];
+
+            // Initialize tooltips
+            document.addEventListener("DOMContentLoaded", function() {
+                var tooltipTriggerList = [].slice.call(
+                    document.querySelectorAll('[data-bs-toggle="tooltip"]')
+                );
+                tooltipTriggerList.map(function(tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl, {
+                        html: true,
+                        delay: { show: 300, hide: 500 },
+                        customClass: 'custom-tooltip',
+                        trigger: 'hover focus'
+                    });
+                });
+
+                // Set initial slippage value
+                const slippageInput = document.getElementById("slippage-input");
+                if (slippageInput) {
+                    slippageInput.value = "1.0";
+                }
+
+                // Setup event listeners
+                setupEventListeners();
+            });
+
+            function setupEventListeners() {
+                // Amount input
+                document.getElementById("amount-in").addEventListener("input", function(e) {
+                    amountIn = e.target.value;
+                    updateSendValue();
+                    scheduleAutoFetchQuote();
+                });
+
+                // Slippage input
+                document.getElementById("slippage-input").addEventListener("input", function(e) {
+                    const value = parseFloat(e.target.value || "0");
+                    slippageTolerance = (value * 100).toString(); // Convert to basis points
+                    scheduleAutoFetchQuote();
+                });
+
+                // Dropdown toggles
+                setupDropdown("send");
+                setupDropdown("receive");
+                setupDropdown("network");
+
+                // Details toggle
+                document.getElementById("details-toggle").addEventListener("click", function() {
+                    showQuoteDetails = !showQuoteDetails;
+                    const detailsDiv = document.getElementById("quote-details");
+                    const chevron = document.getElementById("details-chevron");
+                    
+                    if (showQuoteDetails) {
+                        detailsDiv.style.display = "block";
+                        chevron.className = "bi bi-chevron-up";
+                    } else {
+                        detailsDiv.style.display = "none";
+                        chevron.className = "bi bi-chevron-down";
+                    }
+                    updateIframeHeight();
+                });
+
+                // Cancel button
+                document.getElementById("cancel-btn").addEventListener("click", function() {
+                    window.parent.postMessage({ handler: "onCancel" }, "*");
+                });
+
+                // Submit button
+                document.getElementById("submit-btn").addEventListener("click", handleSubmit);
+            }
+
+            function setupDropdown(type) {
+                const toggle = document.getElementById(type + "-dropdown-toggle");
+                const menu = document.getElementById(type + "-dropdown-menu");
+                const search = document.getElementById(type + "-search");
+                
+                toggle.addEventListener("click", function(e) {
+                    e.stopPropagation();
+                    const isOpen = menu.classList.contains("show");
+                    
+                    // Close all other dropdowns
+                    document.querySelectorAll(".dropdown-menu").forEach(function(m) {
+                        m.classList.remove("show");
+                    });
+                    
+                    if (!isOpen) {
+                        menu.classList.add("show");
+                    }
+                });
+                
+                // Search functionality
+                if (search) {
+                    search.addEventListener("input", function(e) {
+                        const query = e.target.value.toLowerCase();
+                        filterTokenList(type, query);
+                    });
+                    
+                    search.addEventListener("click", function(e) {
+                        e.stopPropagation();
+                    });
+                }
+                
+                // Close dropdown when clicking outside
+                document.addEventListener("click", function() {
+                    menu.classList.remove("show");
+                });
+            }
+
+            function filterTokenList(type, query) {
+                const listId = type + "-token-list";
+                if (type === "network") {
+                    populateNetworkList(query);
+                } else if (type === "send") {
+                    populateSendTokenList(query);
+                } else if (type === "receive") {
+                    populateReceiveTokenList(query);
+                }
+            }
+
+            function populateSendTokenList(searchQuery = "") {
+                const container = document.getElementById("send-token-list");
+                container.innerHTML = "";
+                
+                const filtered = intentsTokensIn.filter(token => 
+                    !searchQuery || 
+                    token.symbol.toLowerCase().includes(searchQuery) ||
+                    token.name.toLowerCase().includes(searchQuery)
+                );
+                
+                filtered.forEach(token => {
+                    const item = document.createElement("div");
+                    item.className = "dropdown-item" + (tokenIn === token.id ? " selected" : "");
+                    
+                    const tokenInfo = document.createElement("div");
+                    tokenInfo.className = "token-info";
+                    
+                    if (token.icon || iconCache[token.symbol]) {
+                        const img = document.createElement("img");
+                        img.src = token.icon || iconCache[token.symbol];
+                        img.className = "token-icon";
+                        tokenInfo.appendChild(img);
+                    }
+                    
+                    const details = document.createElement("div");
+                    details.className = "token-details";
+                    
+                    const symbol = document.createElement("div");
+                    symbol.className = "token-symbol";
+                    symbol.textContent = token.symbol;
+                    
+                    const sublabel = document.createElement("div");
+                    sublabel.className = "token-sublabel";
+                    sublabel.textContent = "Balance: " + token.balance + " / " + (token.blockchain || "NEAR Protocol");
+                    
+                    details.appendChild(symbol);
+                    details.appendChild(sublabel);
+                    tokenInfo.appendChild(details);
+                    item.appendChild(tokenInfo);
+                    
+                    item.addEventListener("click", function() {
+                        selectSendToken(token);
+                    });
+                    
+                    container.appendChild(item);
+                });
+            }
+
+            function populateReceiveTokenList(searchQuery = "") {
+                const container = document.getElementById("receive-token-list");
+                container.innerHTML = "";
+                
+                // Get unique symbols
+                const uniqueSymbols = [...new Set(allTokensOut.map(t => t.symbol))].sort();
+                
+                const filtered = uniqueSymbols.filter(symbol => 
+                    !searchQuery || symbol.toLowerCase().includes(searchQuery)
+                );
+                
+                filtered.forEach(symbol => {
+                    const item = document.createElement("div");
+                    item.className = "dropdown-item" + (tokenOut === symbol ? " selected" : "");
+                    
+                    const tokenInfo = document.createElement("div");
+                    tokenInfo.className = "token-info";
+                    
+                    if (iconCache[symbol]) {
+                        const img = document.createElement("img");
+                        img.src = iconCache[symbol];
+                        img.className = "token-icon";
+                        tokenInfo.appendChild(img);
+                    }
+                    
+                    const symbolDiv = document.createElement("div");
+                    symbolDiv.className = "token-symbol";
+                    symbolDiv.textContent = symbol;
+                    tokenInfo.appendChild(symbolDiv);
+                    
+                    item.appendChild(tokenInfo);
+                    
+                    item.addEventListener("click", function() {
+                        selectReceiveToken(symbol);
+                    });
+                    
+                    container.appendChild(item);
+                });
+            }
+
+            function populateNetworkList(searchQuery = "") {
+                const container = document.getElementById("network-list");
+                container.innerHTML = "";
+                
+                const filtered = availableNetworks.filter(network => 
+                    !searchQuery || network.name.toLowerCase().includes(searchQuery)
+                );
+                
+                filtered.forEach(network => {
+                    const item = document.createElement("div");
+                    item.className = "dropdown-item" + (networkOut === network.id ? " selected" : "");
+                    
+                    const networkInfo = document.createElement("div");
+                    networkInfo.className = "token-info";
+                    
+                    if (network.icon) {
+                        const img = document.createElement("img");
+                        img.src = network.icon;
+                        img.className = "token-icon";
+                        networkInfo.appendChild(img);
+                    }
+                    
+                    const nameDiv = document.createElement("div");
+                    nameDiv.className = "token-symbol";
+                    nameDiv.textContent = network.name;
+                    networkInfo.appendChild(nameDiv);
+                    
+                    item.appendChild(networkInfo);
+                    
+                    item.addEventListener("click", function() {
+                        selectNetwork(network);
+                    });
+                    
+                    container.appendChild(item);
+                });
+            }
+
+            function selectSendToken(token) {
+                tokenIn = token.id;
+                document.getElementById("send-token-display").textContent = token.symbol;
+                document.getElementById("send-dropdown-menu").classList.remove("show");
+                updateSendValue();
+                scheduleAutoFetchQuote();
+            }
+
+            function selectReceiveToken(symbol) {
+                tokenOut = symbol;
+                networkOut = null; // Reset network selection
+                document.getElementById("receive-token-display").textContent = symbol;
+                document.getElementById("receive-dropdown-menu").classList.remove("show");
+                
+                // Update available networks
+                updateAvailableNetworks();
+                scheduleAutoFetchQuote();
+            }
+
+            function selectNetwork(network) {
+                networkOut = network.id;
+                document.getElementById("network-display").textContent = network.name;
+                document.getElementById("network-dropdown-menu").classList.remove("show");
+                scheduleAutoFetchQuote();
+            }
+
+            function getNetworkDisplayName(networkId) {
+                // Check icon cache for network name from Web3IconFetcher
+                if (iconCache[networkId + "_network"]) {
+                    return iconCache[networkId + "_network"];
+                }
+                
+                // Fallback: format the raw ID (capitalize first letter)
+                const baseNetwork = networkId.toLowerCase().split(":")[0];
+                return baseNetwork.charAt(0).toUpperCase() + baseNetwork.slice(1);
+            }
+            
+            function updateAvailableNetworks() {
+                if (!tokenOut) {
+                    availableNetworks = [];
+                    document.getElementById("network-display").textContent = "Select token first";
+                    return;
+                }
+                
+                availableNetworks = allTokensOut
+                    .filter(token => token.symbol === tokenOut)
+                    .map(token => {
+                        const networkName = getNetworkDisplayName(token.network);
+                        return {
+                            id: token.network,
+                            name: networkName,
+                            tokenId: token.id,
+                            icon: iconCache[token.network + "_network_icon"]
+                        };
+                    });
+                
+                if (availableNetworks.length > 0) {
+                    document.getElementById("network-display").textContent = "Select network";
+                    populateNetworkList();
+                }
+            }
+
+            function updateSendValue() {
+                const valueDisplay = document.getElementById("send-value");
+                if (tokenIn && amountIn) {
+                    const token = intentsTokensIn.find(t => t.id === tokenIn);
+                    if (token) {
+                        valueDisplay.textContent = "$" + (parseFloat(amountIn || 0) * parseFloat(token.price || 0)).toFixed(2) +
+                            " • NEAR Intents balance: " + token.balance + " " + token.symbol;
+                    }
+                } else {
+                    valueDisplay.textContent = "$0.00";
+                }
+            }
+
+            function scheduleAutoFetchQuote() {
+                // Clear existing timeout
+                if (autoFetchTimeout) {
+                    clearTimeout(autoFetchTimeout);
+                }
+                
+                // Check if we have all required fields
+                if (!tokenIn || !tokenOut || !networkOut || !amountIn || parseFloat(amountIn) <= 0) {
+                    quote = null;
+                    updateQuoteDisplay();
+                    updateSubmitButton();
+                    return;
+                }
+                
+                // Schedule new fetch
+                autoFetchTimeout = setTimeout(fetchDryQuote, 500);
+            }
+
+            function fetchDryQuote() {
+                const selectedTokenIn = intentsTokensIn.find(t => t.id === tokenIn);
+                const selectedTokenOut = allTokensOut.find(
+                    t => t.symbol === tokenOut && t.network === networkOut
+                );
+                
+                if (!selectedTokenIn || !selectedTokenOut) {
+                    return;
+                }
+                
+                isLoadingQuote = true;
+                updateSubmitButton();
+                
+                const decimals = selectedTokenIn.decimals || 18;
+                const amountInSmallestUnit = Big(amountIn)
+                    .mul(Big(10).pow(decimals))
+                    .toFixed(0);
+                
+                // Calculate deadline (7 days for DAO voting)
+                const deadline = new Date();
+                deadline.setDate(deadline.getDate() + 7);
+                
+                const quoteRequest = {
+                    dry: true,
+                    swapType: "EXACT_INPUT",
+                    slippageTolerance: parseInt(slippageTolerance),
+                    originAsset: selectedTokenIn.id.startsWith("nep141:")
+                        ? selectedTokenIn.id
+                        : "nep141:" + selectedTokenIn.id,
+                    depositType: "INTENTS",
+                    destinationAsset: selectedTokenOut.id,
+                    refundTo: treasuryDaoID,
+                    refundType: "INTENTS",
+                    recipient: treasuryDaoID,
+                    recipientType: "INTENTS",
+                    deadline: deadline.toISOString(),
+                    amount: amountInSmallestUnit
+                };
+                
+                fetch("https://1click.chaindefuser.com/v0/quote", {
+                    method: "POST",
+                    headers: { "content-type": "application/json" },
+                    body: JSON.stringify(quoteRequest)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    
+                    if (!data.quote) {
+                        throw new Error("Invalid quote response format");
+                    }
+                    
+                    quote = {
+                        ...data.quote,
+                        signature: data.signature,
+                        deadline: quoteRequest.deadline,
+                        amountOutFormatted: data.quote.amountOutFormatted ||
+                            Big(data.quote.amountOut || "0")
+                                .div(Big(10).pow(18))
+                                .toFixed(6),
+                        amountInFormatted: data.quote.amountInFormatted || amountIn,
+                        requestPayload: quoteRequest
+                    };
+                    
+                    updateQuoteDisplay();
+                })
+                .catch(err => {
+                    console.error("Failed to fetch quote:", err);
+                    quote = null;
+                    updateQuoteDisplay();
+                })
+                .finally(() => {
+                    isLoadingQuote = false;
+                    updateSubmitButton();
+                });
+            }
+
+            function updateQuoteDisplay() {
+                const quoteContainer = document.getElementById("quote-display");
+                const amountOutInput = document.getElementById("amount-out");
+                const receiveValue = document.getElementById("receive-value");
+                
+                if (quote) {
+                    // Update amount out
+                    amountOutInput.value = quote.amountOutFormatted;
+                    receiveValue.textContent = "$" + (quote.amountOutUsd || "0.00");
+                    
+                    // Update quote display
+                    const selectedTokenIn = intentsTokensIn.find(t => t.id === tokenIn);
+                    
+                    document.getElementById("quote-alert-text").textContent = 
+                        "Please approve this request within " + getTimeRemaining(quote.deadline) + 
+                        " - otherwise, it will be expired. We recommend confirming as soon as possible.";
+                    
+                    document.getElementById("quote-summary-from").textContent = 
+                        quote.amountInFormatted + " " + selectedTokenIn.symbol + 
+                        " ($" + (quote.amountInUsd || "0.00") + ")";
+                    
+                    document.getElementById("quote-summary-to").textContent = 
+                        quote.amountOutFormatted + " " + tokenOut + 
+                        " ($" + (quote.amountOutUsd || "0.00") + ")";
+                    
+                    // Update details
+                    document.getElementById("detail-time").textContent = 
+                        (quote.timeEstimate || 10) + " minutes";
+                    
+                    if (quote.minAmountOut && quote.amountOut && quote.amountOutFormatted) {
+                        const minReceived = Big(quote.minAmountOut)
+                            .mul(Big(quote.amountOutFormatted))
+                            .div(Big(quote.amountOut))
+                            .toFixed(6);
+                        document.getElementById("detail-min-received").textContent = 
+                            minReceived + " " + tokenOut;
+                    }
+                    
+                    if (quote.depositAddress) {
+                        document.getElementById("detail-deposit").textContent = 
+                            quote.depositAddress.substring(0, 20) + "...";
+                    }
+                    
+                    if (quote.deadline) {
+                        document.getElementById("detail-expires").textContent = 
+                            new Date(quote.deadline).toLocaleString();
+                    }
+                    
+                    quoteContainer.style.display = "block";
+                } else {
+                    amountOutInput.value = "";
+                    amountOutInput.placeholder = isLoadingQuote ? "Fetching..." : "0.00";
+                    receiveValue.textContent = "$0.00";
+                    quoteContainer.style.display = "none";
+                }
+                
+                updateIframeHeight();
+            }
+
+            function getTimeRemaining(deadline) {
+                if (!deadline) return null;
+                
+                const now = new Date();
+                const expiryDate = new Date(deadline);
+                const diffMs = expiryDate - now;
+                
+                if (diffMs <= 0) return "expired";
+                
+                const hours = Math.floor(diffMs / (1000 * 60 * 60));
+                const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                
+                if (hours > 24) {
+                    const days = Math.floor(hours / 24);
+                    return days + " day" + (days > 1 ? "s" : "");
+                } else if (hours > 0) {
+                    return hours + " hour" + (hours > 1 ? "s" : "");
+                } else {
+                    return minutes + " minute" + (minutes > 1 ? "s" : "");
+                }
+            }
+
+            function updateSubmitButton() {
+                const btn = document.getElementById("submit-btn");
+                
+                if (isLoadingQuote) {
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Fetching Quote...';
+                    btn.disabled = true;
+                    btn.className = "btn btn-primary";
+                } else if (quote) {
+                    btn.textContent = isLoading ? "Creating Proposal..." : "Create Proposal";
+                    btn.disabled = isLoading || !quote.deadline;
+                    btn.className = "btn btn-success";
+                } else {
+                    btn.textContent = "Get Quote";
+                    btn.disabled = true;
+                    btn.className = "btn btn-primary";
+                }
+            }
+
+            function handleSubmit() {
+                if (!quote || !quote.deadline) return;
+                
+                const selectedTokenIn = intentsTokensIn.find(t => t.id === tokenIn);
+                const selectedTokenOut = allTokensOut.find(
+                    t => t.symbol === tokenOut && t.network === networkOut
+                );
+                
+                if (!selectedTokenIn || !selectedTokenOut) {
+                    showError("Cannot find token information. Please try again.");
+                    return;
+                }
+                
+                const selectedNetwork = availableNetworks.find(n => n.id === networkOut);
+                const networkName = selectedNetwork ? selectedNetwork.name : networkOut;
+                
+                isLoading = true;
+                updateSubmitButton();
+                clearError();
+                
+                const decimals = selectedTokenIn.decimals || 18;
+                const amountInSmallestUnit = Big(amountIn)
+                    .mul(Big(10).pow(decimals))
+                    .toFixed(0);
+                
+                // Send to parent for backend processing
+                window.parent.postMessage({
+                    handler: "onSubmit",
+                    args: {
+                        treasuryDaoID,
+                        inputToken: selectedTokenIn,
+                        outputToken: selectedTokenOut,
+                        amountIn: amountInSmallestUnit,
+                        slippageTolerance: parseInt(slippageTolerance),
+                        networkOut: networkName,
+                        tokenOut: selectedTokenOut.symbol // Ensure symbol is sent
+                    }
+                }, "*");
+            }
+
+            function showError(message) {
+                const container = document.getElementById("error-container");
+                const messageEl = document.getElementById("error-message");
+                messageEl.textContent = message;
+                container.style.display = "block";
+                updateIframeHeight();
+            }
+
+            function clearError() {
+                document.getElementById("error-container").style.display = "none";
+                updateIframeHeight();
+            }
+
+            function updateIframeHeight() {
+                const height = document.documentElement.scrollHeight || document.body.scrollHeight;
+                window.parent.postMessage(
+                    { handler: "updateIframeHeight", height: height },
+                    "*"
+                );
+            }
+
+            // Listen for messages from parent (initial data and updates)
+            window.addEventListener("message", function(event) {
+                // Process the initial message data from BOS
+                if (event.data.treasuryDaoID) {
+                    treasuryDaoID = event.data.treasuryDaoID;
+                }
+                
+                if (event.data.intentsTokens) {
+                    intentsTokensIn = event.data.intentsTokens;
+                    populateSendTokenList();
+                }
+                
+                if (event.data.allTokensOut) {
+                    allTokensOut = event.data.allTokensOut;
+                    populateReceiveTokenList();
+                }
+                
+                if (event.data.iconCache) {
+                    iconCache = event.data.iconCache;
+                    // Refresh dropdowns with new icons
+                    populateSendTokenList();
+                    populateReceiveTokenList();
+                    updateAvailableNetworks();
+                }
+                
+                if (event.data.error) {
+                    showError(event.data.error);
+                    isLoading = false;
+                    updateSubmitButton();
+                }
+                
+                if (event.data.success) {
+                    // Handle success - parent will handle the actual submission
+                    isLoading = false;
+                    updateSubmitButton();
+                }
+                
+                // Update iframe height after processing data
+                updateIframeHeight();
+            });
+            </script>
+        </body>
+        </html>
+`;
+
+// Store tokens in state to pass to iframe
+const [intentsTokens, setIntentsTokens] = useState([]);
+const [allTokensOut, setAllTokensOut] = useState([]);
+
+// Fetch intents tokens
+useEffect(() => {
+  if (typeof getIntentsBalances === "function" && treasuryDaoID) {
+    getIntentsBalances(treasuryDaoID).then((balances) => {
+      const formattedTokens = balances.map((token) => ({
+        id: token.contract_id,
+        symbol: token.ft_meta.symbol,
+        name: token.ft_meta.name,
+        icon: token.ft_meta.icon,
+        balance: Big(token.amount ?? "0")
+          .div(Big(10).pow(token.ft_meta.decimals))
+          .toFixed(2),
+        decimals: token.ft_meta.decimals,
+        blockchain: token.blockchain,
+        price: 1, // TODO: Get actual price
+      }));
+      
+      setIntentsTokens(formattedTokens);
+    });
+  }
+}, [treasuryDaoID]);
+
+// Fetch all tokens from API
+useEffect(() => {
+  asyncFetch("https://bridge.chaindefuser.com/rpc", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      id: "supportedTokensFetchAll",
+      jsonrpc: "2.0",
+      method: "supported_tokens",
+      params: [{}],
+    }),
+  })
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      const data = res.body;
+      if (data.error) {
+        throw new Error(data.error.message || "Error fetching tokens.");
+      }
+      if (data.result && data.result.tokens) {
+        const uniqueTokens = new Map();
+        
+        data.result.tokens.forEach((token) => {
+          if (!token.defuse_asset_identifier || !token.asset_name) return;
+          
+          const parts = token.defuse_asset_identifier.split(":");
+          let chainId =
+            parts.length >= 2 ? parts.slice(0, 2).join(":") : parts[0];
+          
+          const key = `${token.asset_name}_${chainId}`;
+          if (!uniqueTokens.has(key)) {
+            uniqueTokens.set(key, {
+              id: token.intents_token_id || token.defuse_asset_id,
+              symbol: token.asset_name,
+              network: chainId,
+              nearTokenId: token.near_token_id,
+            });
+          }
+        });
+        
+        const tokens = Array.from(uniqueTokens.values());
+        setAllTokensOut(tokens);
+      }
+    })
+    .catch((err) => {
+      console.error("Failed to fetch tokens:", err);
+      const iframe = document.querySelector("iframe");
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage({
+          error: err.message || "Failed to fetch tokens.",
+        }, "*");
+      }
+    });
+}, []);
+
+State.init({
+  height: "800px",
+});
+
+// Add a loading state while data is being fetched
+if (!treasuryDaoID) {
+  return <div>Loading treasury configuration...</div>;
+}
+
+return (
+  <>
+    <iframe
+      srcDoc={code}
+      style={{ height: state.height, width: "100%" }}
+      message={{
+        treasuryDaoID: treasuryDaoID,
+        intentsTokens: intentsTokens,
+        allTokensOut: allTokensOut,
+      }}
+      onMessage={(e) => {
+        switch (e.handler) {
+          case "onCancel": {
+            onCancel();
+            break;
+          }
+          case "onSubmit": {
+            // Process the submission through our backend
+            const args = e.args;
+            asyncFetch("${REPL_BACKEND_API}/treasury/oneclick-quote", {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify(args),
+            })
+              .then((res) => {
+                if (!res.ok) {
+                  throw new Error(`HTTP error! status: ${res.status}`);
+                }
+                const data = res.body;
+                if (data.error) {
+                  throw new Error(data.error);
+                }
+                if (!data.success || !data.proposalPayload) {
+                  throw new Error("Invalid response from backend");
+                }
+                
+                // Submit the proposal payload
+                onSubmit(data.proposalPayload);
+              })
+              .catch((err) => {
+                console.error("Failed to create proposal:", err);
+                // Send error back to iframe
+                const iframe = document.querySelector("iframe");
+                if (iframe && iframe.contentWindow) {
+                  iframe.contentWindow.postMessage({
+                    error: err.message || "Failed to create proposal. Please try again.",
+                  }, "*");
+                }
+              });
+            break;
+          }
+          case "updateIframeHeight": {
+            State.update({ height: e.height + "px" });
+            break;
+          }
+        }
+      }}
+    />
+    
+    {/* Fetch icons using Web3IconFetcher widget */}
+    <Widget
+      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Web3IconFetcher`}
+      props={{
+        tokens: state.allTokensForIcons || [],
+        onIconsLoaded: (iconCache) => {
+          // Process icon cache and send to iframe
+          const processedCache = {};
+          Object.keys(iconCache).forEach((key) => {
+            const cached = iconCache[key];
+            if (cached !== "NOT_FOUND") {
+              if (cached.tokenIcon) {
+                processedCache[cached.symbol] = cached.tokenIcon;
+                processedCache[cached.symbol.toUpperCase()] = cached.tokenIcon;
+              }
+              if (cached.networkIcon) {
+                processedCache[cached.networkId + "_network_icon"] = cached.networkIcon;
+              }
+              if (cached.networkName) {
+                processedCache[cached.networkId + "_network"] = cached.networkName;
+              }
+            }
+          });
+          
+          // Send to iframe
+          const iframe = document.querySelector("iframe");
+          if (iframe && iframe.contentWindow) {
+            iframe.contentWindow.postMessage({
+              iconCache: processedCache,
+            }, "*");
+          }
+        },
+        fetchNetworkIcons: true,
+      }}
+    />
+  </>
+);
