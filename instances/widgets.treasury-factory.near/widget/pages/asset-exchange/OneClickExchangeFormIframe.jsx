@@ -1229,7 +1229,7 @@ const code = `
                         amountIn: amountInSmallestUnit,
                         slippageTolerance: parseInt(slippageTolerance),
                         networkOut: networkName,
-                        tokenOut: selectedTokenOut.symbol // Ensure symbol is sent
+                        tokenOutSymbol: selectedTokenOut.symbol // Send the symbol explicitly
                     }
                 }, "*");
             }
@@ -1445,8 +1445,11 @@ return (
                   throw new Error("Invalid response from backend");
                 }
 
-                // Submit the proposal payload
-                onSubmit(data.proposalPayload);
+                // Submit the proposal payload with the original tokenOutSymbol
+                onSubmit({
+                  ...data.proposalPayload,
+                  tokenOutSymbol: args.tokenOutSymbol // Preserve the original symbol
+                });
               })
               .catch((err) => {
                 console.error("Failed to create proposal:", err);

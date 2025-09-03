@@ -221,7 +221,7 @@ return (
               proposal_action: "asset-exchange",
               notes: `**Must be executed before ${args.quote.deadline}** for transferring tokens to 1Click's deposit address for swap execution.`,
               tokenIn: args.tokenInSymbol,
-              tokenOut: args.tokenOut,
+              tokenOut: args.tokenOutSymbol, // Use the explicit symbol field
               amountIn: args.quote.amountInFormatted,
               amountOut: args.quote.amountOutFormatted,
               slippage: args.slippage || "2",

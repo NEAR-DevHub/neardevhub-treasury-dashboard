@@ -163,6 +163,10 @@ test.describe("OneClickExchangeForm Component", () => {
     );
 
     // Mock our custom backend endpoint for actual proposal creation
+    // Backend API source: https://raw.githubusercontent.com/NEAR-DevHub/ref-sdk-api/refs/heads/main/src/routes/oneclick-treasury.ts
+    // The backend expects: treasuryDaoID, inputToken, outputToken, amountIn, slippageTolerance, networkOut
+    // Backend returns: success, proposalPayload (with tokenIn, tokenInSymbol, tokenOut, networkOut, amountIn, quote)
+    // NOTE: Backend currently doesn't return tokenOutSymbol - this is a known issue
     await page.route("**/api/treasury/oneclick-quote", async (route) => {
       const request = route.request();
       const body = request.postDataJSON();
@@ -183,7 +187,7 @@ test.describe("OneClickExchangeForm Component", () => {
         return;
       }
 
-      // Return a successful proposal payload
+      // Return a successful proposal payload matching actual backend response
       await route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -192,7 +196,10 @@ test.describe("OneClickExchangeForm Component", () => {
           proposalPayload: {
             tokenIn: body.inputToken.id,
             tokenInSymbol: body.inputToken.symbol,
-            tokenOut: body.outputToken.id,
+            tokenOut: body.outputToken.id || body.outputToken.near_token_id,
+            // IMPORTANT: tokenOutSymbol is NOT returned by backend currently
+            // We include it here for testing, but the real backend needs to be updated
+            tokenOutSymbol: body.outputToken.symbol || body.outputToken.asset_name || body.tokenOut,
             networkOut: body.networkOut, // This will be "Ethereum" from iframe
             amountIn: "0.1", // Return formatted amount for display
             quote: {
@@ -1679,6 +1686,66 @@ test.describe("OneClickExchangeForm Component", () => {
       // Clear for next test
       await amountInput.clear();
     }
+  });
+
+  test("should use token symbols in proposal, not token IDs", async ({
+    page,
+    instanceAccount,
+  }) => {
+    await mockApiResponses(page);
+    
+    // Capture the Near.call to verify proposal content
+    let proposalDescription = null;
+    await page.evaluate(() => {
+      window.Near = {
+        call: (calls) => {
+          // Capture the proposal description
+          const addProposal = calls.find(c => c.methodName === 'add_proposal');
+          if (addProposal) {
+            window.__capturedProposal = addProposal.args.proposal.description;
+          }
+          return Promise.resolve();
+        }
+      };
+    });
+    
+    const iframe = await setupComponent(page);
+    
+    // Select tokens and create proposal
+    const sendDropdown = iframe.locator(".send-section").locator(".dropdown-toggle");
+    await sendDropdown.click();
+    await iframe.locator(".dropdown-menu.show").waitFor({ state: "visible" });
+    await iframe.locator(".dropdown-item").filter({ hasText: "USDC" }).first().click();
+    
+    await iframe.locator("#amount-in").fill("100");
+    
+    const receiveDropdown = iframe.locator(".receive-section").locator(".dropdown-toggle");
+    await receiveDropdown.click();
+    const receiveMenu = iframe.locator(".receive-section .dropdown-menu.show");
+    await receiveMenu.waitFor({ state: "visible" });
+    await receiveMenu.locator(".dropdown-item").filter({ hasText: "USDC" }).first().click();
+    
+    // Select network
+    const networkDropdown = iframe.locator(".form-section").filter({ hasText: "Network" }).locator(".dropdown-toggle");
+    await networkDropdown.click();
+    await iframe.locator("#network-dropdown-menu").waitFor({ state: "visible" });
+    await iframe.locator("#network-dropdown-menu .dropdown-item").first().click();
+    
+    // Submit
+    await iframe.locator('button:has-text("Get Quote")').click();
+    await page.waitForTimeout(1000);
+    await iframe.locator('button:has-text("Create Proposal")').click();
+    
+    // Get the captured proposal
+    await page.waitForTimeout(500);
+    const capturedProposal = await page.evaluate(() => window.__capturedProposal);
+    
+    // Verify the proposal uses token symbols, not IDs
+    expect(capturedProposal).toContain('"tokenOut":"USDC"');
+    expect(capturedProposal).not.toContain('nep141:');
+    expect(capturedProposal).not.toContain('.omft.near');
+    
+    console.log("✓ Proposal correctly uses token symbols instead of token IDs");
   });
 
   test("should display human-readable network names", async ({
