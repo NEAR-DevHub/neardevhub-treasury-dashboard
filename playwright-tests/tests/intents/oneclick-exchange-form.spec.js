@@ -129,7 +129,7 @@ test.describe("OneClickExchangeForm Component", () => {
     });
 
     // Get the iframe element and its content
-    const iframe = await page.frameLocator("iframe");
+    const iframe = page.frameLocator("iframe");
 
     // Wait for the component inside the iframe to be visible
     await iframe.locator(".one-click-exchange-form").waitFor({
@@ -503,7 +503,7 @@ test.describe("OneClickExchangeForm Component", () => {
     });
 
     // Get the iframe element and its content
-    const iframe = await page.frameLocator("iframe");
+    const iframe = page.frameLocator("iframe");
 
     // Wait for the component inside the iframe to be visible
     await iframe.locator(".one-click-exchange-form").waitFor({
@@ -833,8 +833,7 @@ test.describe("OneClickExchangeForm Component", () => {
     await page.waitForTimeout(1000); // Wait a full second before exiting the test
   });
 
-
-  test("displays loading states", async ({ page, instanceAccount }) => {
+  test("displays loading states", async ({ page }) => {
     // Helper function to select a token from dropdown by exact symbol
     const selectTokenBySymbol = async (iframe, dropdownType, symbol) => {
       const menuId = `#${dropdownType}-dropdown-menu`;
@@ -1124,7 +1123,7 @@ test.describe("OneClickExchangeForm Component", () => {
     await page.waitForTimeout(1000);
   });
 
-  test("displays token icons correctly", async ({ page, instanceAccount }) => {
+  test("displays token icons correctly", async ({ page }) => {
     await mockApiResponses(page);
     const iframe = await setupComponent(page);
 
@@ -1225,7 +1224,7 @@ test.describe("OneClickExchangeForm Component", () => {
     });
 
     // Get the iframe element and its content
-    const iframe = await page.frameLocator("iframe");
+    const iframe = page.frameLocator("iframe");
 
     // Wait for component inside iframe to load
     await iframe.locator(".one-click-exchange-form").waitFor({
@@ -1339,7 +1338,7 @@ test.describe("OneClickExchangeForm Component", () => {
     console.log("Token balance display test completed");
   });
 
-  test("handles form submission", async ({ page, instanceAccount }) => {
+  test("handles form submission", async ({ page }) => {
     await mockApiResponses(page);
     const iframe = await setupComponent(page);
 
@@ -1521,7 +1520,7 @@ test.describe("OneClickExchangeForm Component", () => {
       });
 
       // Get the iframe element and its content
-      const iframe = await page.frameLocator("iframe");
+      const iframe = page.frameLocator("iframe");
 
       // Wait for the form to be ready
       await iframe
@@ -1562,7 +1561,9 @@ test.describe("OneClickExchangeForm Component", () => {
 
     // Select a network (Ethereum)
     await iframe.locator("#network-dropdown-toggle").click();
-    await iframe.locator("#network-dropdown-menu").waitFor({ state: "visible" });
+    await iframe
+      .locator("#network-dropdown-menu")
+      .waitFor({ state: "visible" });
     await iframe
       .locator("#network-dropdown-menu .dropdown-item")
       .filter({
@@ -1576,22 +1577,24 @@ test.describe("OneClickExchangeForm Component", () => {
     await expect(networkIcon).toBeVisible({ timeout: 5000 });
     console.log("✓ Network icon is visible");
 
-    // Also verify icons are visible in dropdown menus
+    // Verify icons are visible in dropdown menus by opening send dropdown again
     await iframe.locator("#send-dropdown-toggle").click();
+    await iframe.locator("#send-dropdown-menu").waitFor({ state: "visible" });
+
+    // Check that at least one token in the dropdown has an icon
     const dropdownTokenIcon = iframe
-      .locator("#send-dropdown-menu .dropdown-item")
-      .first()
-      .locator("img.token-icon");
+      .locator("#send-dropdown-menu .dropdown-item img.token-icon")
+      .first();
     await expect(dropdownTokenIcon).toBeVisible({ timeout: 5000 });
     console.log("✓ Token icons are visible in dropdown menu");
 
-    // Close dropdown
-    await iframe.locator("#send-dropdown-toggle").click();
+    // Close dropdown by pressing Escape
+    await page.keyboard.press("Escape");
 
     console.log("Icon visibility test completed successfully");
   });
 
-  test("validates quote deadline", async ({ page, instanceAccount }) => {
+  test("validates quote deadline", async ({ page }) => {
     // Set up API mocks first, but don't include the 1click quote mock
     await mockRpcResponses(page);
 
@@ -1748,7 +1751,7 @@ test.describe("OneClickExchangeForm Component", () => {
     });
 
     // Get the iframe element and its content
-    const iframe = await page.frameLocator("iframe");
+    const iframe = page.frameLocator("iframe");
 
     // Wait for component inside iframe to load
     await iframe.locator(".info-message").waitFor({
@@ -1832,7 +1835,6 @@ test.describe("OneClickExchangeForm Component", () => {
 
   test("should use token symbols in proposal, not token IDs", async ({
     page,
-    instanceAccount,
   }) => {
     // Helper function to select a token from dropdown by exact symbol
     const selectTokenBySymbol = async (iframe, dropdownType, symbol) => {
@@ -1856,7 +1858,7 @@ test.describe("OneClickExchangeForm Component", () => {
       });
 
       // Get the iframe element and its content
-      const iframe = await page.frameLocator("iframe");
+      const iframe = page.frameLocator("iframe");
 
       // Wait for the form to be ready
       await iframe
@@ -1869,7 +1871,6 @@ test.describe("OneClickExchangeForm Component", () => {
     await mockApiResponses(page);
 
     // Capture the Near.call to verify proposal content
-    let proposalDescription = null;
     await page.evaluate(() => {
       window.Near = {
         call: (calls) => {
@@ -1935,13 +1936,7 @@ test.describe("OneClickExchangeForm Component", () => {
     console.log("✓ Proposal correctly uses token symbols instead of token IDs");
   });
 
-  test("should display human-readable network names", async ({
-    page,
-    instanceAccount,
-  }) => {
-    // Get the network name mappings from web3icons
-    const { networkNames } = await getWeb3IconMaps();
-
+  test("should display human-readable network names", async ({ page }) => {
     test.setTimeout(60_000); // Increased timeout for network name testing
 
     await mockApiResponses(page);
@@ -1952,7 +1947,7 @@ test.describe("OneClickExchangeForm Component", () => {
     });
 
     // Get the first iframe which should be the OneClickExchangeForm
-    const iframe = await page.frameLocator("iframe").first();
+    const iframe = page.frameLocator("iframe").first();
 
     // Wait for the component inside the iframe to be visible
     await iframe.locator(".one-click-exchange-form").waitFor({
