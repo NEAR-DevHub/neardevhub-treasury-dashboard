@@ -1491,7 +1491,7 @@ useEffect(() => {
   if (typeof getIntentsBalances === "function" && treasuryDaoID) {
     getIntentsBalances(treasuryDaoID).then((balances) => {
       const formattedTokens = balances.map((token) => ({
-        id: token.contract_id,
+        id: token.token_id, // Use the full token_id with prefix from common.jsx
         symbol: token.ft_meta.symbol,
         name: token.ft_meta.name,
         icon: token.ft_meta.icon,

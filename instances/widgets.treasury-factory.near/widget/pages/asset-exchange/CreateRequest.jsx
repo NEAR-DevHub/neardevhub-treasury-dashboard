@@ -244,7 +244,7 @@ return (
                       args: {
                         receiver_id: args.quote.depositAddress,
                         amount: args.quote.amountIn,
-                        token_id: args.tokenIn,
+                        token_id: args.tokenIn, // Backend returns tokenIn with nep141: prefix
                       },
                       amount: "1", // 1 yoctoNEAR
                       gas: "100000000000000", // 100 TGas

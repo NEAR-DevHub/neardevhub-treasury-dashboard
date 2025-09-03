@@ -175,9 +175,45 @@ test.describe("OneClickExchangeForm Component", () => {
 
     // Mock our custom backend endpoint for actual proposal creation
     // Backend API source: https://raw.githubusercontent.com/NEAR-DevHub/ref-sdk-api/refs/heads/main/src/routes/oneclick-treasury.ts
-    // The backend expects: treasuryDaoID, inputToken, outputToken, amountIn, slippageTolerance, networkOut
-    // Backend returns: success, proposalPayload (with tokenIn, tokenInSymbol, tokenOut, networkOut, amountIn, quote)
-    // NOTE: Backend currently doesn't return tokenOutSymbol - this is a known issue
+    // Backend URL: https://ref-sdk-api-2.fly.dev/api/treasury/oneclick-quote
+    
+    /* IMPORTANT: Token ID Format
+     * The intents.near contract's mt_tokens_for_owner returns token IDs WITH nep141: prefix
+     * Example: "nep141:wrap.near", "nep141:eth.omft.near"
+     * 
+     * Sample ACTUAL backend request/response (2025-09-03):
+     * REQUEST:
+     * {
+     *   "treasuryDaoID": "treasury-testing.sputnik-dao.near",
+     *   "inputToken": {
+     *     "id": "nep141:wrap.near",  // MUST include nep141: prefix
+     *     "symbol": "WNEAR",
+     *     "decimals": 24,
+     *     ...
+     *   },
+     *   "outputToken": {
+     *     "id": "nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
+     *     ...
+     *   },
+     *   "amountIn": "1000000000000000000000000",
+     *   ...
+     * }
+     * 
+     * RESPONSE:
+     * {
+     *   "proposalPayload": {
+     *     "tokenIn": "nep141:wrap.near",  // Backend preserves the prefix
+     *     "tokenOut": "nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
+     *     ...
+     *   },
+     *   "quoteRequest": {
+     *     "originAsset": "nep141:wrap.near",  // Also has prefix
+     *     ...
+     *   }
+     * }
+     * 
+     * The mt_transfer method requires token_id WITH the nep141: prefix
+     */
     await page.route("**/api/treasury/oneclick-quote", async (route) => {
       const request = route.request();
       const body = request.postDataJSON();
