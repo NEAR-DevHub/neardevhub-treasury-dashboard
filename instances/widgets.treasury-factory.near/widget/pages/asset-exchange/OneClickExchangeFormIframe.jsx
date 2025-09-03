@@ -173,6 +173,7 @@ const code = `
             .dropdown-menu {
                 display: none;
                 position: absolute;
+                right: 0;
                 width: 300px;
                 max-height: 300px;
                 overflow-y: auto;
