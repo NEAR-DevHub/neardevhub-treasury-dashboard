@@ -1936,6 +1936,77 @@ test.describe("OneClickExchangeForm Component", () => {
     console.log("✓ Proposal correctly uses token symbols instead of token IDs");
   });
 
+  test("should allow searching for tokens in dropdowns", async ({ page }) => {
+    await mockApiResponses(page);
+
+    // Wait for the iframe to be loaded
+    await page.waitForSelector("iframe", {
+      state: "visible",
+    });
+
+    const iframe = page.frameLocator("iframe");
+
+    // Wait for the component inside the iframe to be visible
+    await iframe.locator(".one-click-exchange-form").waitFor({
+      state: "visible",
+      timeout: 30000,
+    });
+
+    // Wait for tokens to be loaded
+    await page.waitForTimeout(2000);
+
+    // Test search in Send dropdown
+    await iframe.locator("#send-dropdown-toggle").click();
+    await iframe.locator("#send-dropdown-menu").waitFor({ state: "visible" });
+
+    // Type in search field
+    const sendSearch = iframe.locator("#send-search");
+    await sendSearch.fill("usdc");
+    await page.waitForTimeout(300); // Wait for filtering
+
+    // Verify filtered results
+    const sendItems = iframe.locator("#send-token-list .dropdown-item");
+
+    // Should show only USDC token
+    const usdcItem = sendItems.filter({ hasText: "USDC" });
+    await expect(usdcItem).toBeVisible();
+
+    // Select USDC to test that selection works with search
+    await usdcItem.click();
+
+    // Verify USDC was selected
+    const sendDisplay = iframe.locator("#send-token-display");
+    await expect(sendDisplay).toContainText("USDC");
+
+    // Test search in Receive dropdown
+    await iframe.locator("#receive-dropdown-toggle").click();
+    await iframe
+      .locator("#receive-dropdown-menu")
+      .waitFor({ state: "visible" });
+
+    // Type in search field
+    const receiveSearch = iframe.locator("#receive-search");
+    await receiveSearch.fill("eth");
+    await page.waitForTimeout(300); // Wait for filtering
+
+    // Verify filtered results - should show both ETH and WETH
+    const receiveItems = iframe.locator("#receive-token-list .dropdown-item");
+    // Use exact text match to select ETH (not WETH)
+    const ethItem = receiveItems.filter({
+      has: iframe.locator('.token-symbol:text-is("ETH")'),
+    });
+    await expect(ethItem).toBeVisible();
+
+    // Select ETH to verify selection works
+    await ethItem.click();
+
+    // Verify ETH was selected
+    const receiveDisplay = iframe.locator("#receive-token-display");
+    await expect(receiveDisplay).toContainText("ETH");
+
+    console.log("✓ Token search functionality works correctly in dropdowns");
+  });
+
   test("should display human-readable network names", async ({ page }) => {
     test.setTimeout(60_000); // Increased timeout for network name testing
 

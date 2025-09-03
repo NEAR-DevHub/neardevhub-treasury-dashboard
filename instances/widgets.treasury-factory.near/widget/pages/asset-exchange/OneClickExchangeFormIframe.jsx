@@ -752,11 +752,12 @@ const code = `
                 const container = document.getElementById("send-token-list");
                 container.innerHTML = "";
                 
-                const filtered = intentsTokensIn.filter(token => 
-                    !searchQuery || 
-                    token.symbol.toLowerCase().includes(searchQuery) ||
-                    token.name.toLowerCase().includes(searchQuery)
-                );
+                const filtered = intentsTokensIn.filter(token => {
+                    if (!searchQuery) return true;
+                    const query = searchQuery.toLowerCase();
+                    return token.symbol.toLowerCase().includes(query) ||
+                           (token.name && token.name.toLowerCase().includes(query));
+                });
                 
                 filtered.forEach(token => {
                     const item = document.createElement("div");
