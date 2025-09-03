@@ -770,6 +770,9 @@ const code = `
                         img.src = token.icon || iconCache[token.symbol];
                         img.className = "token-icon";
                         tokenInfo.appendChild(img);
+                    } else {
+                        // Add padding when there's no icon to align with items that have icons
+                        tokenInfo.style.paddingLeft = "32px"; // 24px icon width + 8px gap
                     }
                     
                     const details = document.createElement("div");
@@ -819,6 +822,9 @@ const code = `
                         img.src = iconCache[symbol];
                         img.className = "token-icon";
                         tokenInfo.appendChild(img);
+                    } else {
+                        // Add padding when there's no icon to align with items that have icons
+                        tokenInfo.style.paddingLeft = "32px"; // 24px icon width + 8px gap
                     }
                     
                     const symbolDiv = document.createElement("div");
@@ -856,6 +862,9 @@ const code = `
                         img.src = network.icon;
                         img.className = "token-icon";
                         networkInfo.appendChild(img);
+                    } else {
+                        // Add padding when there's no icon to align with items that have icons
+                        networkInfo.style.paddingLeft = "32px"; // 24px icon width + 8px gap
                     }
                     
                     const nameDiv = document.createElement("div");
