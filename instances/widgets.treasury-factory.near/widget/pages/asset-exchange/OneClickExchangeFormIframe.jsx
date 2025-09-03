@@ -37,6 +37,21 @@ const code = `
             rel="stylesheet"
             />
             <script src="https://cdn.jsdelivr.net/npm/big-js@3.1.3/big.min.js"></script>
+        <script type="module">
+            // Import Web3Icons libraries for network name resolution
+            import('https://cdn.jsdelivr.net/npm/@web3icons/common@0.11.12/dist/index.min.js').then(module => {
+                window.web3IconsCommon = module;
+                console.log('Web3Icons Common loaded with', module.networks?.length || 0, 'networks');
+            }).catch(err => {
+                console.error('Failed to load Web3Icons Common:', err);
+            });
+            import('https://cdn.jsdelivr.net/npm/@web3icons/core@4.0.15/+esm').then(module => {
+                window.web3IconsCore = module;
+                console.log('Web3Icons Core loaded');
+            }).catch(err => {
+                console.error('Failed to load Web3Icons Core:', err);
+            });
+        </script>
             <link
             rel="stylesheet"
             href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
@@ -142,6 +157,10 @@ const code = `
                 align-items: center;
                 gap: 8px;
                 justify-content: space-between;
+                color: ${colors["--text-color"]};
+            }
+            .dropdown-toggle span {
+                color: ${colors["--text-color"]};
             }
             .dropdown-menu {
                 display: none;
@@ -872,13 +891,72 @@ const code = `
             }
 
             function getNetworkDisplayName(networkId) {
-                // Check icon cache for network name from Web3IconFetcher
-                if (iconCache[networkId + "_network"]) {
+                // Parse the network ID format (e.g., "eth:1:0xa0b86991...")
+                const parts = networkId.split(":");
+                const baseNetwork = parts[0].toLowerCase();
+                const chainId = parts[1];
+                
+                // Try to resolve using Web3Icons if available
+                if (window.web3IconsCommon && window.web3IconsCommon.networks) {
+                    let web3IconNetwork = null;
+                    
+                    // 1. Match by exact chainId
+                    if (chainId) {
+                        web3IconNetwork = window.web3IconsCommon.networks.find(n => 
+                            String(n.chainId) === chainId
+                        );
+                    }
+                    
+                    // 2. Match by network ID starting with baseNetwork
+                    if (!web3IconNetwork && baseNetwork) {
+                        web3IconNetwork = window.web3IconsCommon.networks.find(n => 
+                            n.id.toLowerCase().startsWith(baseNetwork)
+                        );
+                    }
+                    
+                    if (web3IconNetwork && web3IconNetwork.name) {
+                        console.log("Resolved " + networkId + " to " + web3IconNetwork.name + " using Web3Icons");
+                        // Cache the resolved name for future lookups
+                        if (!iconCache) iconCache = {};
+                        iconCache[networkId + "_network"] = web3IconNetwork.name;
+                        return web3IconNetwork.name;
+                    }
+                }
+                
+                // Check icon cache (might have been populated from parent)
+                if (iconCache && iconCache[networkId + "_network"]) {
                     return iconCache[networkId + "_network"];
                 }
                 
-                // Fallback: format the raw ID (capitalize first letter)
-                const baseNetwork = networkId.toLowerCase().split(":")[0];
+                // Manual mapping for known chain IDs as a fallback
+                const chainIdToName = {
+                    "1": "Ethereum",
+                    "137": "Polygon",
+                    "8453": "Base",
+                    "42161": "Arbitrum",
+                    "10": "Optimism",
+                    "43114": "Avalanche",
+                    "56": "BNB Smart Chain",
+                    "100": "Gnosis",
+                    "mainnet": baseNetwork === "sol" ? "Solana" : baseNetwork === "near" ? "NEAR" : null,
+                };
+                
+                if (chainId && chainIdToName[chainId]) {
+                    return chainIdToName[chainId];
+                }
+                
+                if (chainId === "mainnet" && chainIdToName.mainnet) {
+                    return chainIdToName.mainnet;
+                }
+                
+                // Special cases for non-EVM chains
+                if (baseNetwork === "sol" || baseNetwork === "solana") return "Solana";
+                if (baseNetwork === "near") return "NEAR";
+                if (baseNetwork === "sui") return "Sui";
+                if (baseNetwork === "stellar") return "Stellar";
+                if (baseNetwork === "bitcoin" || baseNetwork === "btc") return "Bitcoin";
+                
+                // Final fallback: format the raw ID (capitalize first letter)
                 return baseNetwork.charAt(0).toUpperCase() + baseNetwork.slice(1);
             }
             
@@ -1244,6 +1322,17 @@ useEffect(() => {
       }));
 
       setIntentsTokens(formattedTokens);
+      
+      // Also add intents tokens to icon fetch list
+      const currentIconTokens = state.allTokensForIcons || [];
+      const intentsIconTokens = formattedTokens.map(token => ({
+        symbol: token.symbol,
+        token: token.symbol,
+      }));
+      
+      State.update({
+        allTokensForIcons: [...currentIconTokens, ...intentsIconTokens],
+      });
     });
   }
 }, [treasuryDaoID]);
@@ -1291,6 +1380,10 @@ useEffect(() => {
 
         const tokens = Array.from(uniqueTokens.values());
         setAllTokensOut(tokens);
+        
+        // Log what networks we're dealing with for debugging
+        const uniqueNetworks = [...new Set(tokens.map(t => t.network))];
+        console.log("Unique networks from API:", uniqueNetworks);
       }
     })
     .catch((err) => {
@@ -1380,45 +1473,6 @@ return (
       }}
     />
 
-    {/* Fetch icons using Web3IconFetcher widget */}
-    <Widget
-      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Web3IconFetcher`}
-      props={{
-        tokens: state.allTokensForIcons || [],
-        onIconsLoaded: (iconCache) => {
-          // Process icon cache and send to iframe
-          const processedCache = {};
-          Object.keys(iconCache).forEach((key) => {
-            const cached = iconCache[key];
-            if (cached !== "NOT_FOUND") {
-              if (cached.tokenIcon) {
-                processedCache[cached.symbol] = cached.tokenIcon;
-                processedCache[cached.symbol.toUpperCase()] = cached.tokenIcon;
-              }
-              if (cached.networkIcon) {
-                processedCache[cached.networkId + "_network_icon"] =
-                  cached.networkIcon;
-              }
-              if (cached.networkName) {
-                processedCache[cached.networkId + "_network"] =
-                  cached.networkName;
-              }
-            }
-          });
-
-          // Send to iframe
-          const iframe = document.querySelector("iframe");
-          if (iframe && iframe.contentWindow) {
-            iframe.contentWindow.postMessage(
-              {
-                iconCache: processedCache,
-              },
-              "*"
-            );
-          }
-        },
-        fetchNetworkIcons: true,
-      }}
-    />
+    {/* Web3IconFetcher is now integrated directly in the iframe - no longer needed as separate widget */}
   </>
 );
