@@ -113,9 +113,12 @@ test.describe("OneClickExchangeForm Component", () => {
     const menu = iframe.locator(menuId);
     await menu.waitFor({ state: "visible" });
     // Use exact text match for the token symbol to avoid ambiguity
-    await menu.locator(".dropdown-item").filter({ 
-      has: iframe.locator(`.token-symbol:text-is("${symbol}")`) 
-    }).click();
+    await menu
+      .locator(".dropdown-item")
+      .filter({
+        has: iframe.locator(`.token-symbol:text-is("${symbol}")`),
+      })
+      .click();
   };
 
   // Helper function to wait for component to be ready
@@ -176,11 +179,11 @@ test.describe("OneClickExchangeForm Component", () => {
     // Mock our custom backend endpoint for actual proposal creation
     // Backend API source: https://raw.githubusercontent.com/NEAR-DevHub/ref-sdk-api/refs/heads/main/src/routes/oneclick-treasury.ts
     // Backend URL: https://ref-sdk-api-2.fly.dev/api/treasury/oneclick-quote
-    
+
     /* IMPORTANT: Token ID Format
      * The intents.near contract's mt_tokens_for_owner returns token IDs WITH nep141: prefix
      * Example: "nep141:wrap.near", "nep141:eth.omft.near"
-     * 
+     *
      * Sample ACTUAL backend request/response (2025-09-03):
      * REQUEST:
      * {
@@ -198,7 +201,7 @@ test.describe("OneClickExchangeForm Component", () => {
      *   "amountIn": "1000000000000000000000000",
      *   ...
      * }
-     * 
+     *
      * RESPONSE:
      * {
      *   "proposalPayload": {
@@ -211,7 +214,7 @@ test.describe("OneClickExchangeForm Component", () => {
      *     ...
      *   }
      * }
-     * 
+     *
      * The mt_transfer method requires token_id WITH the nep141: prefix
      */
     await page.route("**/api/treasury/oneclick-quote", async (route) => {
@@ -246,7 +249,10 @@ test.describe("OneClickExchangeForm Component", () => {
             tokenOut: body.outputToken.id || body.outputToken.near_token_id,
             // IMPORTANT: tokenOutSymbol is NOT returned by backend currently
             // We include it here for testing, but the real backend needs to be updated
-            tokenOutSymbol: body.outputToken.symbol || body.outputToken.asset_name || body.tokenOut,
+            tokenOutSymbol:
+              body.outputToken.symbol ||
+              body.outputToken.asset_name ||
+              body.tokenOut,
             networkOut: body.networkOut, // This will be "Ethereum" from iframe
             amountIn: "0.1", // Return formatted amount for display
             quote: {
@@ -839,9 +845,12 @@ test.describe("OneClickExchangeForm Component", () => {
       const menu = iframe.locator(menuId);
       await menu.waitFor({ state: "visible" });
       // Use exact text match for the token symbol to avoid ambiguity
-      await menu.locator(".dropdown-item").filter({ 
-        has: iframe.locator(`.token-symbol:text-is("${symbol}")`) 
-      }).click();
+      await menu
+        .locator(".dropdown-item")
+        .filter({
+          has: iframe.locator(`.token-symbol:text-is("${symbol}")`),
+        })
+        .click();
     };
 
     await mockApiResponses(page);
@@ -964,9 +973,7 @@ test.describe("OneClickExchangeForm Component", () => {
     await page.waitForTimeout(1000);
   });
 
-  test("handles quote expiry time calculation", async ({
-    page,
-  }) => {
+  test("handles quote expiry time calculation", async ({ page }) => {
     await mockApiResponses(page);
     const iframe = await setupComponent(page);
 
@@ -1454,7 +1461,9 @@ test.describe("OneClickExchangeForm Component", () => {
     // Check that the correct values were submitted
     expect(submittedTokenIn).toBe("ETH");
     // The tokenOut should be the NEAR token ID for USDC on Ethereum
-    expect(submittedTokenOut).toBe("nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near");
+    expect(submittedTokenOut).toBe(
+      "nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near"
+    );
     expect(submittedNetwork).toBe("Ethereum"); // Display name from backend
     expect(submittedAmount).toBe("0.1"); // Formatted amount from backend
 
@@ -1501,9 +1510,12 @@ test.describe("OneClickExchangeForm Component", () => {
       const menu = iframe.locator(menuId);
       await menu.waitFor({ state: "visible" });
       // Use exact text match for the token symbol to avoid ambiguity
-      await menu.locator(".dropdown-item").filter({ 
-        has: iframe.locator(`.token-symbol:text-is("${symbol}")`) 
-      }).click();
+      await menu
+        .locator(".dropdown-item")
+        .filter({
+          has: iframe.locator(`.token-symbol:text-is("${symbol}")`),
+        })
+        .click();
     };
 
     // Helper function to wait for component to be ready
@@ -1517,7 +1529,9 @@ test.describe("OneClickExchangeForm Component", () => {
       const iframe = await page.frameLocator("iframe");
 
       // Wait for the form to be ready
-      await iframe.locator("#send-dropdown-toggle").waitFor({ state: "visible" });
+      await iframe
+        .locator("#send-dropdown-toggle")
+        .waitFor({ state: "visible" });
 
       return iframe;
     };
@@ -1527,7 +1541,7 @@ test.describe("OneClickExchangeForm Component", () => {
 
     // Set up the component using the helper
     const iframe = await setupComponent(page);
-    
+
     // Give time for Web3Icons to load
     await page.waitForTimeout(2000);
 
@@ -1545,16 +1559,24 @@ test.describe("OneClickExchangeForm Component", () => {
     await selectTokenBySymbol(iframe, "receive", "USDC");
 
     // Check that the receive token icon is visible
-    const receiveTokenIcon = iframe.locator("#receive-token-display img.token-icon");
+    const receiveTokenIcon = iframe.locator(
+      "#receive-token-display img.token-icon"
+    );
     await expect(receiveTokenIcon).toBeVisible({ timeout: 5000 });
     console.log("✓ Receive token icon is visible");
 
     // Select a network (Ethereum)
     await iframe.locator("#network-dropdown-toggle").click();
-    await iframe.waitForSelector("#network-dropdown-menu", { state: "visible" });
-    await iframe.locator("#network-dropdown-menu .dropdown-item").filter({ 
-      hasText: "Ethereum" 
-    }).first().click();
+    await iframe.waitForSelector("#network-dropdown-menu", {
+      state: "visible",
+    });
+    await iframe
+      .locator("#network-dropdown-menu .dropdown-item")
+      .filter({
+        hasText: "Ethereum",
+      })
+      .first()
+      .click();
 
     // Check that the network icon is visible
     const networkIcon = iframe.locator("#network-display img.token-icon");
@@ -1563,10 +1585,13 @@ test.describe("OneClickExchangeForm Component", () => {
 
     // Also verify icons are visible in dropdown menus
     await iframe.locator("#send-dropdown-toggle").click();
-    const dropdownTokenIcon = iframe.locator("#send-dropdown-menu .dropdown-item").first().locator("img.token-icon");
+    const dropdownTokenIcon = iframe
+      .locator("#send-dropdown-menu .dropdown-item")
+      .first()
+      .locator("img.token-icon");
     await expect(dropdownTokenIcon).toBeVisible({ timeout: 5000 });
     console.log("✓ Token icons are visible in dropdown menu");
-    
+
     // Close dropdown
     await iframe.locator("#send-dropdown-toggle").click();
 
@@ -1822,9 +1847,12 @@ test.describe("OneClickExchangeForm Component", () => {
       const menu = iframe.locator(menuId);
       await menu.waitFor({ state: "visible" });
       // Use exact text match for the token symbol to avoid ambiguity
-      await menu.locator(".dropdown-item").filter({ 
-        has: iframe.locator(`.token-symbol:text-is("${symbol}")`) 
-      }).click();
+      await menu
+        .locator(".dropdown-item")
+        .filter({
+          has: iframe.locator(`.token-symbol:text-is("${symbol}")`),
+        })
+        .click();
     };
 
     // Helper function to wait for component to be ready
@@ -1838,61 +1866,79 @@ test.describe("OneClickExchangeForm Component", () => {
       const iframe = await page.frameLocator("iframe");
 
       // Wait for the form to be ready
-      await iframe.locator("#send-dropdown-toggle").waitFor({ state: "visible" });
+      await iframe
+        .locator("#send-dropdown-toggle")
+        .waitFor({ state: "visible" });
 
       return iframe;
     };
 
     await mockApiResponses(page);
-    
+
     // Capture the Near.call to verify proposal content
     let proposalDescription = null;
     await page.evaluate(() => {
       window.Near = {
         call: (calls) => {
           // Capture the proposal description
-          const addProposal = calls.find(c => c.methodName === 'add_proposal');
+          const addProposal = calls.find(
+            (c) => c.methodName === "add_proposal"
+          );
           if (addProposal) {
             window.__capturedProposal = addProposal.args.proposal.description;
           }
           return Promise.resolve();
-        }
+        },
       };
     });
-    
+
     const iframe = await setupComponent(page);
-    
+
     // Select tokens and create proposal
-    const sendDropdown = iframe.locator(".send-section").locator(".dropdown-toggle");
+    const sendDropdown = iframe
+      .locator(".send-section")
+      .locator(".dropdown-toggle");
     await sendDropdown.click();
     await selectTokenBySymbol(iframe, "send", "USDC");
-    
+
     await iframe.locator("#amount-in").fill("100");
-    
-    const receiveDropdown = iframe.locator(".receive-section").locator(".dropdown-toggle");
+
+    const receiveDropdown = iframe
+      .locator(".receive-section")
+      .locator(".dropdown-toggle");
     await receiveDropdown.click();
     await selectTokenBySymbol(iframe, "receive", "USDC");
-    
+
     // Select network
-    const networkDropdown = iframe.locator(".form-section").filter({ hasText: "Network" }).locator(".dropdown-toggle");
+    const networkDropdown = iframe
+      .locator(".form-section")
+      .filter({ hasText: "Network" })
+      .locator(".dropdown-toggle");
     await networkDropdown.click();
-    await iframe.locator("#network-dropdown-menu").waitFor({ state: "visible" });
-    await iframe.locator("#network-dropdown-menu .dropdown-item").first().click();
-    
+    await iframe
+      .locator("#network-dropdown-menu")
+      .waitFor({ state: "visible" });
+    await iframe
+      .locator("#network-dropdown-menu .dropdown-item")
+      .first()
+      .click();
+
     // Submit
     await iframe.locator('button:has-text("Get Quote")').click();
     await page.waitForTimeout(1000);
     await iframe.locator('button:has-text("Create Proposal")').click();
-    
+
     // Get the captured proposal
     await page.waitForTimeout(500);
-    const capturedProposal = await page.evaluate(() => window.__capturedProposal);
-    
+    const capturedProposal = await page.evaluate(
+      () => window.__capturedProposal
+    );
+
     // Verify the proposal uses token symbols, not IDs
     expect(capturedProposal).toContain('"tokenOut":"USDC"');
-    expect(capturedProposal).not.toContain('nep141:');
-    expect(capturedProposal).not.toContain('.omft.near');
-    
+    expect(capturedProposal).not.toContain("nep141:");
+    expect(capturedProposal).not.toContain(".omft.near");
+
     console.log("✓ Proposal correctly uses token symbols instead of token IDs");
   });
 
@@ -1902,11 +1948,11 @@ test.describe("OneClickExchangeForm Component", () => {
   }) => {
     // Get the network name mappings from web3icons
     const { networkNames } = await getWeb3IconMaps();
-    
+
     test.setTimeout(60_000); // Increased timeout for network name testing
 
     await mockApiResponses(page);
-    
+
     // Wait for the iframe to be loaded (be more specific about which iframe)
     await page.waitForSelector("iframe", {
       state: "visible",
@@ -1920,7 +1966,7 @@ test.describe("OneClickExchangeForm Component", () => {
       state: "visible",
       timeout: 10000,
     });
-    
+
     // Wait for component to load
     await page.waitForTimeout(1000);
 
@@ -1946,7 +1992,7 @@ test.describe("OneClickExchangeForm Component", () => {
       ".receive-section .dropdown-menu.show"
     );
     await receiveDropdownMenu.waitFor({ state: "visible" });
-    
+
     // Select a token that has multiple networks (like USDC)
     await receiveDropdownMenu
       .locator(".dropdown-item")
@@ -1964,70 +2010,95 @@ test.describe("OneClickExchangeForm Component", () => {
       .locator(".dropdown-toggle");
     await networkDropdown.click();
     await page.waitForTimeout(500);
-    
+
     const networkDropdownMenu = iframe.locator("#network-dropdown-menu");
     await networkDropdownMenu.waitFor({ state: "visible" });
 
     // Get all network options
     const networkItems = networkDropdownMenu.locator(".dropdown-item");
     const networkCount = await networkItems.count();
-    
+
     console.log(`Found ${networkCount} network options for USDC`);
-    
+
     // We should have multiple networks for USDC
     expect(networkCount).toBeGreaterThan(1);
-    
+
     // Validate each network name
     const foundNetworkNames = [];
     for (let i = 0; i < networkCount; i++) {
       const networkText = await networkItems.nth(i).textContent();
       foundNetworkNames.push(networkText.trim());
       console.log(`Network ${i + 1}: "${networkText.trim()}"`);
-      
+
       // Check that the network name is human-readable (not raw chain IDs)
       // Raw chain IDs are lowercase and may have a colon and number suffix
       const lowerText = networkText.trim().toLowerCase();
-      
+
       // Check if it's a raw chain ID (all lowercase, optionally with :number)
-      const isRawChainId = /^(eth|polygon|base|arbitrum|optimism|avalanche|bsc|fantom|gnosis|solana|sol)(:\d+)?$/.test(lowerText);
-      
+      const isRawChainId =
+        /^(eth|polygon|base|arbitrum|optimism|avalanche|bsc|fantom|gnosis|solana|sol)(:\d+)?$/.test(
+          lowerText
+        );
+
       // Also check if it's EXACTLY the same as the lowercase version (meaning no capital letters)
       const isAllLowercase = networkText.trim() === lowerText;
-      
+
       // It should NOT be a raw chain ID
       expect(isRawChainId && isAllLowercase).toBe(false);
     }
-    
+
     // Check that we're NOT getting raw network IDs like "Eth", "Sol", etc.
     // Note: "Sui" and "Stellar" are actually correct names, not raw IDs
     const rawNetworkIds = ["Eth", "Sol", "Near", "Btc"];
-    const hasRawIds = foundNetworkNames.some(name => rawNetworkIds.includes(name));
-    
+    const hasRawIds = foundNetworkNames.some((name) =>
+      rawNetworkIds.includes(name)
+    );
+
     if (hasRawIds) {
-      console.log("❌ Found raw network IDs instead of human-readable names:", 
-        foundNetworkNames.filter(name => rawNetworkIds.includes(name)));
+      console.log(
+        "❌ Found raw network IDs instead of human-readable names:",
+        foundNetworkNames.filter((name) => rawNetworkIds.includes(name))
+      );
     }
-    
+
     // We should NOT have raw IDs
     expect(hasRawIds).toBe(false);
-    
+
     // Check for expected human-readable names
-    const expectedNames = ["Ethereum", "Polygon", "Base", "Arbitrum", "Optimism", "Avalanche", "Solana", "NEAR"];
+    const expectedNames = [
+      "Ethereum",
+      "Polygon",
+      "Base",
+      "Arbitrum",
+      "Optimism",
+      "Avalanche",
+      "Solana",
+      "NEAR",
+    ];
     let foundExpectedCount = 0;
-    expectedNames.forEach(expectedName => {
-      if (foundNetworkNames.some(found => found === expectedName || found.includes(expectedName))) {
+    expectedNames.forEach((expectedName) => {
+      if (
+        foundNetworkNames.some(
+          (found) => found === expectedName || found.includes(expectedName)
+        )
+      ) {
         foundExpectedCount++;
         console.log(`✓ Found expected network: ${expectedName}`);
       }
     });
-    
+
     // We should find at least some properly formatted network names
     if (foundExpectedCount === 0) {
-      console.log("❌ No expected human-readable network names found. Got:", foundNetworkNames);
+      console.log(
+        "❌ No expected human-readable network names found. Got:",
+        foundNetworkNames
+      );
       // For now, let's just check that we're not getting raw IDs
       // The actual network name resolution needs to be fixed in the Web3IconFetcher integration
     } else {
-      console.log(`✓ Found ${foundExpectedCount}/${expectedNames.length} expected human-readable network names`);
+      console.log(
+        `✓ Found ${foundExpectedCount}/${expectedNames.length} expected human-readable network names`
+      );
     }
 
     // Take screenshot of network dropdown with human-readable names
@@ -2042,7 +2113,9 @@ test.describe("OneClickExchangeForm Component", () => {
     await page.waitForTimeout(500);
 
     // Skip additional token testing for now to focus on the main USDC test
-    
-    console.log("\nHuman-readable network name validation completed successfully!");
+
+    console.log(
+      "\nHuman-readable network name validation completed successfully!"
+    );
   });
 });

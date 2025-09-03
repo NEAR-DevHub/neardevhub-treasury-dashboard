@@ -1504,14 +1504,14 @@ useEffect(() => {
       }));
 
       setIntentsTokens(formattedTokens);
-      
+
       // Also add intents tokens to icon fetch list
       const currentIconTokens = state.allTokensForIcons || [];
-      const intentsIconTokens = formattedTokens.map(token => ({
+      const intentsIconTokens = formattedTokens.map((token) => ({
         symbol: token.symbol,
         token: token.symbol,
       }));
-      
+
       State.update({
         allTokensForIcons: [...currentIconTokens, ...intentsIconTokens],
       });
@@ -1562,9 +1562,9 @@ useEffect(() => {
 
         const tokens = Array.from(uniqueTokens.values());
         setAllTokensOut(tokens);
-        
+
         // Log what networks we're dealing with for debugging
-        const uniqueNetworks = [...new Set(tokens.map(t => t.network))];
+        const uniqueNetworks = [...new Set(tokens.map((t) => t.network))];
         console.log("Unique networks from API:", uniqueNetworks);
       }
     })
@@ -1630,7 +1630,7 @@ return (
                 // Submit the proposal payload with the original tokenOutSymbol
                 onSubmit({
                   ...data.proposalPayload,
-                  tokenOutSymbol: args.tokenOutSymbol // Preserve the original symbol
+                  tokenOutSymbol: args.tokenOutSymbol, // Preserve the original symbol
                 });
               })
               .catch((err) => {
