@@ -596,7 +596,7 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     });
 
     // The 1Click form is now inside an iframe
-    const iframe = page.frameLocator('iframe');
+    const iframe = page.frameLocator("iframe");
 
     // Wait for the iframe to load
     await page.waitForTimeout(3000);
@@ -614,10 +614,14 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     console.log("Form loaded successfully!");
 
     // Click the "Select token" dropdown inside iframe to open the token selector
-    console.log("Clicking 'Select token' dropdown to see available balances...");
-    const sendDropdown = iframe.locator(".send-section").locator(".dropdown-toggle");
+    console.log(
+      "Clicking 'Select token' dropdown to see available balances..."
+    );
+    const sendDropdown = iframe
+      .locator(".send-section")
+      .locator(".dropdown-toggle");
     await sendDropdown.click();
-    
+
     // Wait for available balances to load (important!)
     console.log("Waiting for NEAR Intents balances to load...");
     // Look for the ETH balance text that appears in the dropdown - be specific to avoid WETH
@@ -626,11 +630,13 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     ).toBeVisible({ timeout: 15000 });
 
     // Verify ETH balance shows 5.00 in the dropdown
-    await expect(iframe.locator(".dropdown-item").filter({ hasText: "Balance: 5.00" })).toBeVisible({
+    await expect(
+      iframe.locator(".dropdown-item").filter({ hasText: "Balance: 5.00" })
+    ).toBeVisible({
       timeout: 10000,
     });
     console.log("NEAR Intents balances loaded successfully");
-    
+
     // Close the dropdown by clicking outside or pressing Escape
     await page.keyboard.press("Escape");
     await page.waitForTimeout(500);
@@ -660,20 +666,20 @@ test.describe("1Click API Integration - Asset Exchange", function () {
 
     // Fill in the amount to swap - select the amount input inside iframe
     console.log("Filling in swap amount...");
-    const amountInput = iframe.locator('#amount-in');
+    const amountInput = iframe.locator("#amount-in");
     await expect(amountInput).toBeVisible({ timeout: 10000 });
-    
+
     // Clear the field and enter the amount with decimal
     await amountInput.click();
     await amountInput.clear();
-    
+
     // Use fill() method which works better with BOS decimal inputs
     await amountInput.fill("0.15");
-    
+
     // Verify the value was entered correctly
     const inputValue = await amountInput.inputValue();
     console.log(`Amount entered: ${inputValue}`);
-    
+
     // Double-check the value is correct
     if (inputValue !== "0.15") {
       console.warn(`⚠️ WARNING: Expected amount 0.15 but got ${inputValue}`);
@@ -681,8 +687,8 @@ test.describe("1Click API Integration - Asset Exchange", function () {
       await amountInput.clear();
       await amountInput.evaluate((el, val) => {
         el.value = val;
-        el.dispatchEvent(new Event('input', { bubbles: true }));
-        el.dispatchEvent(new Event('change', { bubbles: true }));
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        el.dispatchEvent(new Event("change", { bubbles: true }));
       }, "0.15");
       const retryValue = await amountInput.inputValue();
       console.log(`Retry amount entered: ${retryValue}`);
@@ -693,7 +699,9 @@ test.describe("1Click API Integration - Asset Exchange", function () {
 
     // Click on the Send token dropdown inside iframe
     console.log("Looking for Send token dropdown inside iframe...");
-    const sendTokenDropdown = iframe.locator(".send-section").locator(".dropdown-toggle");
+    const sendTokenDropdown = iframe
+      .locator(".send-section")
+      .locator(".dropdown-toggle");
     await expect(sendTokenDropdown).toBeVisible({ timeout: 10000 });
 
     console.log("Clicking Send token dropdown...");
@@ -715,7 +723,10 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     console.log("Looking for ETH option inside iframe...");
 
     // Click on the ETH token option in the dropdown - be specific to avoid WETH
-    const ethOption = iframe.locator(".dropdown-item").filter({ hasText: /^ETH/ }).first();
+    const ethOption = iframe
+      .locator(".dropdown-item")
+      .filter({ hasText: /^ETH/ })
+      .first();
 
     // Wait for it to be visible and click
     await expect(ethOption).toBeVisible({ timeout: 5000 });
@@ -729,19 +740,26 @@ test.describe("1Click API Integration - Asset Exchange", function () {
 
     // Find receive token dropdown inside iframe
     console.log("Looking for Receive token dropdown inside iframe...");
-    const receiveTokenDropdown = iframe.locator(".receive-section").locator(".dropdown-toggle");
+    const receiveTokenDropdown = iframe
+      .locator(".receive-section")
+      .locator(".dropdown-toggle");
     await expect(receiveTokenDropdown).toBeVisible({ timeout: 10000 });
     console.log("Clicking Receive token dropdown...");
     await receiveTokenDropdown.click();
     await page.waitForTimeout(500);
 
     // Wait for receive dropdown menu to appear inside iframe
-    const receiveDropdownMenu = iframe.locator(".receive-section .dropdown-menu.show");
+    const receiveDropdownMenu = iframe.locator(
+      ".receive-section .dropdown-menu.show"
+    );
     await receiveDropdownMenu.waitFor({ state: "visible" });
-    
+
     // Select USDC from the dropdown inside iframe
     console.log("Looking for USDC option inside iframe...");
-    const usdcOption = receiveDropdownMenu.locator(".dropdown-item").filter({ hasText: "USDC" }).first();
+    const usdcOption = receiveDropdownMenu
+      .locator(".dropdown-item")
+      .filter({ hasText: "USDC" })
+      .first();
     await expect(usdcOption).toBeVisible({ timeout: 5000 });
     console.log("Clicking USDC option...");
     await usdcOption.click();
@@ -752,7 +770,10 @@ test.describe("1Click API Integration - Asset Exchange", function () {
 
     // After selecting USDC, the network dropdown should be available
     await page.waitForTimeout(1000); // Wait for networks to be populated
-    const networkDropdown = iframe.locator(".form-section").filter({ hasText: "Network" }).locator(".dropdown-toggle");
+    const networkDropdown = iframe
+      .locator(".form-section")
+      .filter({ hasText: "Network" })
+      .locator(".dropdown-toggle");
     await expect(networkDropdown).toBeVisible({ timeout: 10000 });
     console.log("Clicking network dropdown...");
     await networkDropdown.click();
@@ -762,7 +783,9 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     const networkDropdownMenu = iframe.locator("#network-dropdown-menu");
     await networkDropdownMenu.waitFor({ state: "visible" });
     console.log("Looking for Ethereum network option inside iframe...");
-    const ethNetworkOption = networkDropdownMenu.locator(".dropdown-item").first();
+    const ethNetworkOption = networkDropdownMenu
+      .locator(".dropdown-item")
+      .first();
     await expect(ethNetworkOption).toBeVisible({ timeout: 5000 });
     console.log("Clicking Ethereum network option...");
     await ethNetworkOption.click();
@@ -770,7 +793,7 @@ test.describe("1Click API Integration - Asset Exchange", function () {
 
     // Test the Price Slippage Limit field inside iframe
     console.log("Setting Price Slippage Limit to 2%...");
-    const slippageInput = iframe.locator('#slippage-input');
+    const slippageInput = iframe.locator("#slippage-input");
     await slippageInput.fill("2");
     await page.waitForTimeout(500);
     console.log("✅ Price Slippage Limit set to 2%");
@@ -859,7 +882,9 @@ test.describe("1Click API Integration - Asset Exchange", function () {
       // Use our predefined mock quote for the actual proposal
       const actualQuote = {
         ...mockQuote,
-        timeWhenInactive: new Date(Date.now() + 1 * 60 * 60 * 1000).toISOString(), // 1 hour from now
+        timeWhenInactive: new Date(
+          Date.now() + 1 * 60 * 60 * 1000
+        ).toISOString(), // 1 hour from now
       };
 
       // Return the same format as the real backend
@@ -933,16 +958,16 @@ test.describe("1Click API Integration - Asset Exchange", function () {
 
     // Click Create Proposal button inside iframe
     console.log("\nClicking Create Proposal button inside iframe...");
-    
+
     // Intercept the wallet transaction to log the proposal details
-    page.on('console', async msg => {
+    page.on("console", async (msg) => {
       const text = msg.text();
-      if (text.includes('add_proposal') || text.includes('mt_transfer')) {
-        console.log('=== WALLET TRANSACTION LOG ===');
+      if (text.includes("add_proposal") || text.includes("mt_transfer")) {
+        console.log("=== WALLET TRANSACTION LOG ===");
         console.log(text);
       }
     });
-    
+
     await iframe.locator('button:text("Create Proposal")').click();
 
     // Wait for transaction modal to appear
@@ -956,7 +981,7 @@ test.describe("1Click API Integration - Asset Exchange", function () {
       path: path.join(screenshotsDir, "09-transaction-modal.png"),
       fullPage: true,
     });
-    
+
     // Try to capture the transaction arguments from the modal
     const modalContent = await page.locator(".modal-content").textContent();
     console.log("=== TRANSACTION MODAL CONTENT ===");
@@ -973,7 +998,9 @@ test.describe("1Click API Integration - Asset Exchange", function () {
 
     // Wait for the success toast to appear after clicking Confirm
     console.log("Waiting for success toast...");
-    await expect(page.getByText("Asset exchange request has been successfully created")).toBeVisible({
+    await expect(
+      page.getByText("Asset exchange request has been successfully created")
+    ).toBeVisible({
       timeout: 15000,
     });
 
@@ -1007,10 +1034,12 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     });
 
     // Wait for the proposal to appear in the table (not the "No requests found" message)
-    await expect(page.locator("text=No Asset Exchange Requests Found")).not.toBeVisible({
-      timeout: 15000
+    await expect(
+      page.locator("text=No Asset Exchange Requests Found")
+    ).not.toBeVisible({
+      timeout: 15000,
     });
-    
+
     // Get the data row (the table has a header row and data rows)
     const proposalRow = tableRows.nth(1); // Second row is the first data row
     await expect(proposalRow).toBeVisible();
@@ -1146,7 +1175,7 @@ test.describe("1Click API Integration - Asset Exchange", function () {
 
     // In sandbox, we need to manually execute the transfer that the proposal would have done
     console.log("Executing ETH transfer from treasury to deposit address...");
-    
+
     // Execute the mt_transfer that the approved proposal should have done
     // The DAO (treasury) calls mt_transfer on intents contract to send ETH to deposit address
     await daoContract.call(
@@ -1154,12 +1183,12 @@ test.describe("1Click API Integration - Asset Exchange", function () {
       "mt_transfer",
       {
         receiver_id: page.testDepositAddress,
-        amount: mockQuote.amountIn,  // Transfer the ETH amount from the quote
+        amount: mockQuote.amountIn, // Transfer the ETH amount from the quote
         token_id: "nep141:eth.omft.near",
       },
       { attachedDeposit: "1" }
     );
-    
+
     console.log("✅ ETH transferred to deposit address");
 
     // Verify the transfer by checking balances

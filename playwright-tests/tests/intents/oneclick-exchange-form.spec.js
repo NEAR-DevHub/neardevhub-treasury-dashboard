@@ -119,18 +119,18 @@ test.describe("OneClickExchangeForm Component", () => {
     await page.waitForSelector("iframe", {
       state: "visible",
     });
-    
+
     // Get the iframe element and its content
     const iframe = await page.frameLocator("iframe");
-    
+
     // Wait for the component inside the iframe to be visible
     await iframe.locator(".one-click-exchange-form").waitFor({
       state: "visible",
       timeout: 10000,
     });
-    
+
     await page.waitForTimeout(500); // Small delay for any animations
-    
+
     return iframe; // Return the iframe for use in tests
   };
 
@@ -470,10 +470,10 @@ test.describe("OneClickExchangeForm Component", () => {
       state: "visible",
       timeout: 15000,
     });
-    
+
     // Get the iframe element and its content
     const iframe = await page.frameLocator("iframe");
-    
+
     // Wait for the component inside the iframe to be visible
     await iframe.locator(".one-click-exchange-form").waitFor({
       state: "visible",
@@ -496,7 +496,9 @@ test.describe("OneClickExchangeForm Component", () => {
     // Dark theme should have dark background (not white)
     expect(containerStyles.backgroundColor).not.toBe("rgb(255, 255, 255)"); // Not light theme
     // Verify it's a dark color (all RGB values should be low)
-    const rgbMatch = containerStyles.backgroundColor.match(/rgb\((\d+), (\d+), (\d+)\)/);
+    const rgbMatch = containerStyles.backgroundColor.match(
+      /rgb\((\d+), (\d+), (\d+)\)/
+    );
     if (rgbMatch) {
       const [, r, g, b] = rgbMatch.map(Number);
       expect(r).toBeLessThan(100); // Dark colors have low RGB values
@@ -524,9 +526,12 @@ test.describe("OneClickExchangeForm Component", () => {
     expect(bodyTheme).toBe("dark");
 
     // Also verify that dark theme colors are applied to text
-    const textColor = await iframe.locator(".info-message").first().evaluate((el) => {
-      return window.getComputedStyle(el).color;
-    });
+    const textColor = await iframe
+      .locator(".info-message")
+      .first()
+      .evaluate((el) => {
+        return window.getComputedStyle(el).color;
+      });
 
     console.log("Info message text color:", textColor);
     // Dark theme should have light text color (not black)
@@ -543,25 +548,25 @@ test.describe("OneClickExchangeForm Component", () => {
     ).not.toBeVisible();
 
     // Fill amount only - button should still not be visible (incomplete form)
-    await iframe.locator('#amount-in').fill("1.0");
+    await iframe.locator("#amount-in").fill("1.0");
     await expect(
       iframe.locator('button:text("Create Proposal")')
     ).not.toBeVisible();
 
     // Test invalid amount (empty)
-    await iframe.locator('#amount-in').fill("");
+    await iframe.locator("#amount-in").fill("");
     await expect(
       iframe.locator('button:text("Create Proposal")')
     ).not.toBeVisible();
 
     // Test invalid amount (zero)
-    await iframe.locator('#amount-in').fill("0");
+    await iframe.locator("#amount-in").fill("0");
     await expect(
       iframe.locator('button:text("Create Proposal")')
     ).not.toBeVisible();
 
     // Test negative amount
-    await iframe.locator('#amount-in').fill("-1");
+    await iframe.locator("#amount-in").fill("-1");
     await expect(
       iframe.locator('button:text("Create Proposal")')
     ).not.toBeVisible();
@@ -724,9 +729,15 @@ test.describe("OneClickExchangeForm Component", () => {
     await receiveDropdown.click();
     await page.waitForTimeout(500); // Wait for dropdown to open
     // Get the receive dropdown specifically (second dropdown menu)
-    const receiveDropdownMenu = iframe.locator(".receive-section .dropdown-menu.show");
+    const receiveDropdownMenu = iframe.locator(
+      ".receive-section .dropdown-menu.show"
+    );
     await receiveDropdownMenu.waitFor({ state: "visible" });
-    await receiveDropdownMenu.locator(".dropdown-item").filter({ hasText: "USDC" }).first().click();
+    await receiveDropdownMenu
+      .locator(".dropdown-item")
+      .filter({ hasText: "USDC" })
+      .first()
+      .click();
 
     // Select network - wait for networks to be loaded after selecting receive token
     await page.waitForTimeout(1000); // Wait for networks to be populated
@@ -745,7 +756,9 @@ test.describe("OneClickExchangeForm Component", () => {
 
     // Wait for auto-fetched quote to appear (triggered by form field changes)
     // The quote should appear automatically after filling all fields
-    await expect(iframe.locator(".quote-alert")).toBeVisible({ timeout: 10000 });
+    await expect(iframe.locator(".quote-alert")).toBeVisible({
+      timeout: 10000,
+    });
 
     // Scroll down to see the full quote
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
@@ -843,7 +856,7 @@ test.describe("OneClickExchangeForm Component", () => {
     await iframe.locator(".dropdown-item").filter({ hasText: "ETH" }).click();
 
     // Now fill in the amount - wait for input to be enabled after token selection
-    const amountInput = iframe.locator('#amount-in');
+    const amountInput = iframe.locator("#amount-in");
     await amountInput.waitFor({ state: "visible" });
     await amountInput.click();
     await amountInput.fill("1");
@@ -859,9 +872,15 @@ test.describe("OneClickExchangeForm Component", () => {
     await page.waitForTimeout(500); // Wait for dropdown to be interactive
     await receiveDropdown.click();
     await page.waitForTimeout(500);
-    const receiveDropdownMenu = iframe.locator(".receive-section .dropdown-menu.show");
+    const receiveDropdownMenu = iframe.locator(
+      ".receive-section .dropdown-menu.show"
+    );
     await receiveDropdownMenu.waitFor({ state: "visible" });
-    await receiveDropdownMenu.locator(".dropdown-item").filter({ hasText: "USDC" }).first().click();
+    await receiveDropdownMenu
+      .locator(".dropdown-item")
+      .filter({ hasText: "USDC" })
+      .first()
+      .click();
 
     // Select network
     await page.waitForTimeout(1000); // Wait for networks to be populated
@@ -879,7 +898,9 @@ test.describe("OneClickExchangeForm Component", () => {
 
     // Auto-fetch should trigger the loading state after all fields are filled
     // We should see the loading state
-    await expect(iframe.locator('button:text("Fetching Quote...")')).toBeVisible({
+    await expect(
+      iframe.locator('button:text("Fetching Quote...")')
+    ).toBeVisible({
       timeout: 10000,
     });
     await expect(iframe.locator(".spinner-border")).toBeVisible();
@@ -888,7 +909,9 @@ test.describe("OneClickExchangeForm Component", () => {
     resolveQuote();
 
     // Wait for quote to appear
-    await expect(iframe.locator(".quote-summary")).toBeVisible({ timeout: 5000 });
+    await expect(iframe.locator(".quote-summary")).toBeVisible({
+      timeout: 5000,
+    });
 
     // Expand the quote details
     const detailsToggle = iframe.locator(".details-toggle");
@@ -962,7 +985,7 @@ test.describe("OneClickExchangeForm Component", () => {
     await iframe.locator(".dropdown-menu.show").waitFor({ state: "visible" });
     await iframe.locator(".dropdown-item").filter({ hasText: "ETH" }).click();
 
-    const amountInput = iframe.locator('#amount-in');
+    const amountInput = iframe.locator("#amount-in");
     await amountInput.scrollIntoViewIfNeeded();
     await amountInput.fill("0.1");
     await page.waitForTimeout(500);
@@ -973,9 +996,15 @@ test.describe("OneClickExchangeForm Component", () => {
     await receiveDropdown.scrollIntoViewIfNeeded();
     await receiveDropdown.click();
     await page.waitForTimeout(500);
-    const receiveDropdownMenu = iframe.locator(".receive-section .dropdown-menu.show");
+    const receiveDropdownMenu = iframe.locator(
+      ".receive-section .dropdown-menu.show"
+    );
     await receiveDropdownMenu.waitFor({ state: "visible" });
-    await receiveDropdownMenu.locator(".dropdown-item").filter({ hasText: "USDC" }).first().click();
+    await receiveDropdownMenu
+      .locator(".dropdown-item")
+      .filter({ hasText: "USDC" })
+      .first()
+      .click();
 
     await page.waitForTimeout(1000); // Wait for networks to be populated
     const networkDropdown = iframe
@@ -1047,7 +1076,7 @@ test.describe("OneClickExchangeForm Component", () => {
       // Reset the form to test the next one (if not the last)
       if (i < testExpiryTimes.length - 1) {
         // Change the amount input to trigger form reset
-        const amountInput = iframe.locator('#amount-in');
+        const amountInput = iframe.locator("#amount-in");
         await amountInput.scrollIntoViewIfNeeded();
         await amountInput.click({ clickCount: 3 }); // Triple click to select all
         await amountInput.fill("0.2"); // Change the value
@@ -1168,10 +1197,10 @@ test.describe("OneClickExchangeForm Component", () => {
       state: "visible",
       timeout: 15000,
     });
-    
+
     // Get the iframe element and its content
     const iframe = await page.frameLocator("iframe");
-    
+
     // Wait for component inside iframe to load
     await iframe.locator(".one-click-exchange-form").waitFor({
       state: "visible",
@@ -1308,7 +1337,7 @@ test.describe("OneClickExchangeForm Component", () => {
     await iframe.locator(".dropdown-item").filter({ hasText: "ETH" }).click();
 
     // Fill amount
-    await iframe.locator('#amount-in').fill("0.1");
+    await iframe.locator("#amount-in").fill("0.1");
     await page.waitForTimeout(500); // Wait for input to be processed
 
     // Select receive token
@@ -1317,9 +1346,15 @@ test.describe("OneClickExchangeForm Component", () => {
       .locator(".dropdown-toggle");
     await receiveDropdown.click();
     await page.waitForTimeout(500);
-    const receiveDropdownMenu = iframe.locator(".receive-section .dropdown-menu.show");
+    const receiveDropdownMenu = iframe.locator(
+      ".receive-section .dropdown-menu.show"
+    );
     await receiveDropdownMenu.waitFor({ state: "visible" });
-    await receiveDropdownMenu.locator(".dropdown-item").filter({ hasText: "USDC" }).first().click();
+    await receiveDropdownMenu
+      .locator(".dropdown-item")
+      .filter({ hasText: "USDC" })
+      .first()
+      .click();
 
     // Select network
     await page.waitForTimeout(1000); // Wait for networks to be populated
@@ -1438,7 +1473,7 @@ test.describe("OneClickExchangeForm Component", () => {
   test("validates quote deadline", async ({ page, instanceAccount }) => {
     // Set up API mocks first, but don't include the 1click quote mock
     await mockRpcResponses(page);
-    
+
     // Mock token list API
     await page.route("https://bridge.chaindefuser.com/rpc", async (route) => {
       const request = route.request();
@@ -1465,7 +1500,7 @@ test.describe("OneClickExchangeForm Component", () => {
         await route.continue();
       }
     });
-    
+
     // Mock our custom backend endpoint
     await page.route("**/api/treasury/oneclick-quote", async (route) => {
       await route.fulfill({
@@ -1476,7 +1511,7 @@ test.describe("OneClickExchangeForm Component", () => {
         }),
       });
     });
-    
+
     // Override the 1Click quote API to return an error
     await page.route(
       "https://1click.chaindefuser.com/v0/quote",
@@ -1507,7 +1542,7 @@ test.describe("OneClickExchangeForm Component", () => {
     await iframe.locator(".dropdown-item").filter({ hasText: "ETH" }).click();
 
     // Fill amount
-    await iframe.locator('#amount-in').fill("0.1");
+    await iframe.locator("#amount-in").fill("0.1");
     await page.waitForTimeout(500);
 
     // Select receive token
@@ -1516,9 +1551,15 @@ test.describe("OneClickExchangeForm Component", () => {
       .locator(".dropdown-toggle");
     await receiveDropdown.click();
     await page.waitForTimeout(500);
-    const receiveDropdownMenu = iframe.locator(".receive-section .dropdown-menu.show");
+    const receiveDropdownMenu = iframe.locator(
+      ".receive-section .dropdown-menu.show"
+    );
     await receiveDropdownMenu.waitFor({ state: "visible" });
-    await receiveDropdownMenu.locator(".dropdown-item").filter({ hasText: "USDC" }).first().click();
+    await receiveDropdownMenu
+      .locator(".dropdown-item")
+      .filter({ hasText: "USDC" })
+      .first()
+      .click();
 
     // Select network
     await page.waitForTimeout(1000);
@@ -1535,12 +1576,14 @@ test.describe("OneClickExchangeForm Component", () => {
     // The iframe always adds a deadline, so let's verify the quote has a deadline in the happy path
     // Since the API returns an error, the quote should not be displayed
     await page.waitForTimeout(2000); // Wait for quote fetch attempt
-    
+
     // Verify no quote is displayed when there's an error
     await expect(iframe.locator(".quote-summary")).not.toBeVisible();
-    
+
     // Verify the Create Proposal button is not visible when there's no valid quote
-    await expect(iframe.locator('button:text("Create Proposal")')).not.toBeVisible();
+    await expect(
+      iframe.locator('button:text("Create Proposal")')
+    ).not.toBeVisible();
   });
 
   test("decimal input field accepts decimal numbers correctly", async ({
@@ -1608,10 +1651,10 @@ test.describe("OneClickExchangeForm Component", () => {
       state: "visible",
       timeout: 15000,
     });
-    
+
     // Get the iframe element and its content
     const iframe = await page.frameLocator("iframe");
-    
+
     // Wait for component inside iframe to load
     await iframe.locator(".info-message").waitFor({
       state: "visible",
@@ -1620,7 +1663,7 @@ test.describe("OneClickExchangeForm Component", () => {
 
     // Find the amount input field inside the iframe
     // Select the send amount input by ID
-    const amountInput = iframe.locator('#amount-in');
+    const amountInput = iframe.locator("#amount-in");
     await expect(amountInput).toBeVisible();
 
     // Test various decimal inputs
@@ -1634,57 +1677,59 @@ test.describe("OneClickExchangeForm Component", () => {
     ];
 
     console.log("=== Testing decimal input behavior ===");
-    
+
     // Note: We can't evaluate inside iframe directly with BOS,
     // but the input should work normally
 
     for (const testCase of testCases) {
       console.log(`\nTesting input: ${testCase.input}`);
-      
+
       // Clear the input first
       await amountInput.click();
       await amountInput.clear();
-      
+
       // Try different input methods
       console.log("Method 1: Character by character typing");
       for (const char of testCase.input) {
         await page.keyboard.type(char);
         await page.waitForTimeout(50);
       }
-      
+
       let actualValue = await amountInput.inputValue();
       console.log(`  Result: ${actualValue}`);
-      
+
       // Clear and try another method
       await amountInput.clear();
-      
+
       // Method 2: Fill directly
       console.log("Method 2: Using fill()");
       await amountInput.fill(testCase.input);
       actualValue = await amountInput.inputValue();
       console.log(`  Result: ${actualValue}`);
-      
+
       // Clear and try another method
       await amountInput.clear();
-      
+
       // Method 3: Set value via JavaScript
       console.log("Method 3: Setting value via JavaScript");
       await amountInput.evaluate((el, val) => {
         el.value = val;
-        el.dispatchEvent(new Event('input', { bubbles: true }));
-        el.dispatchEvent(new Event('change', { bubbles: true }));
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        el.dispatchEvent(new Event("change", { bubbles: true }));
       }, testCase.input);
-      
+
       actualValue = await amountInput.inputValue();
       console.log(`  Result: ${actualValue}`);
-      
+
       // Check if any method works
       if (actualValue === testCase.expected) {
         console.log(`  ✅ PASS with JavaScript method`);
       } else {
-        console.log(`  ❌ FAIL: Expected ${testCase.expected}, got ${actualValue}`);
+        console.log(
+          `  ❌ FAIL: Expected ${testCase.expected}, got ${actualValue}`
+        );
       }
-      
+
       // Clear for next test
       await amountInput.clear();
     }

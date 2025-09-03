@@ -1242,7 +1242,7 @@ useEffect(() => {
         blockchain: token.blockchain,
         price: 1, // TODO: Get actual price
       }));
-      
+
       setIntentsTokens(formattedTokens);
     });
   }
@@ -1270,14 +1270,14 @@ useEffect(() => {
       }
       if (data.result && data.result.tokens) {
         const uniqueTokens = new Map();
-        
+
         data.result.tokens.forEach((token) => {
           if (!token.defuse_asset_identifier || !token.asset_name) return;
-          
+
           const parts = token.defuse_asset_identifier.split(":");
           let chainId =
             parts.length >= 2 ? parts.slice(0, 2).join(":") : parts[0];
-          
+
           const key = `${token.asset_name}_${chainId}`;
           if (!uniqueTokens.has(key)) {
             uniqueTokens.set(key, {
@@ -1288,7 +1288,7 @@ useEffect(() => {
             });
           }
         });
-        
+
         const tokens = Array.from(uniqueTokens.values());
         setAllTokensOut(tokens);
       }
@@ -1297,9 +1297,12 @@ useEffect(() => {
       console.error("Failed to fetch tokens:", err);
       const iframe = document.querySelector("iframe");
       if (iframe && iframe.contentWindow) {
-        iframe.contentWindow.postMessage({
-          error: err.message || "Failed to fetch tokens.",
-        }, "*");
+        iframe.contentWindow.postMessage(
+          {
+            error: err.message || "Failed to fetch tokens.",
+          },
+          "*"
+        );
       }
     });
 }, []);
@@ -1348,7 +1351,7 @@ return (
                 if (!data.success || !data.proposalPayload) {
                   throw new Error("Invalid response from backend");
                 }
-                
+
                 // Submit the proposal payload
                 onSubmit(data.proposalPayload);
               })
@@ -1357,9 +1360,14 @@ return (
                 // Send error back to iframe
                 const iframe = document.querySelector("iframe");
                 if (iframe && iframe.contentWindow) {
-                  iframe.contentWindow.postMessage({
-                    error: err.message || "Failed to create proposal. Please try again.",
-                  }, "*");
+                  iframe.contentWindow.postMessage(
+                    {
+                      error:
+                        err.message ||
+                        "Failed to create proposal. Please try again.",
+                    },
+                    "*"
+                  );
                 }
               });
             break;
@@ -1371,7 +1379,7 @@ return (
         }
       }}
     />
-    
+
     {/* Fetch icons using Web3IconFetcher widget */}
     <Widget
       src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Web3IconFetcher`}
@@ -1388,20 +1396,25 @@ return (
                 processedCache[cached.symbol.toUpperCase()] = cached.tokenIcon;
               }
               if (cached.networkIcon) {
-                processedCache[cached.networkId + "_network_icon"] = cached.networkIcon;
+                processedCache[cached.networkId + "_network_icon"] =
+                  cached.networkIcon;
               }
               if (cached.networkName) {
-                processedCache[cached.networkId + "_network"] = cached.networkName;
+                processedCache[cached.networkId + "_network"] =
+                  cached.networkName;
               }
             }
           });
-          
+
           // Send to iframe
           const iframe = document.querySelector("iframe");
           if (iframe && iframe.contentWindow) {
-            iframe.contentWindow.postMessage({
-              iconCache: processedCache,
-            }, "*");
+            iframe.contentWindow.postMessage(
+              {
+                iconCache: processedCache,
+              },
+              "*"
+            );
           }
         },
         fetchNetworkIcons: true,
