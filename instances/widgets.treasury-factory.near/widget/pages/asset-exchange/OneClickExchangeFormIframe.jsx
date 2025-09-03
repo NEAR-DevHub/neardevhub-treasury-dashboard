@@ -41,13 +41,21 @@ const code = `
             // Import Web3Icons libraries for network name resolution
             import('https://cdn.jsdelivr.net/npm/@web3icons/common@0.11.12/dist/index.min.js').then(module => {
                 window.web3IconsCommon = module;
-                console.log('Web3Icons Common loaded with', module.networks?.length || 0, 'networks');
+                console.log('Web3Icons Common loaded with', module.networks?.length || 0, 'networks and', module.tokens?.length || 0, 'tokens');
+                // Check if both are loaded
+                if (window.web3IconsCore) {
+                    loadTokenIcons();
+                }
             }).catch(err => {
                 console.error('Failed to load Web3Icons Common:', err);
             });
             import('https://cdn.jsdelivr.net/npm/@web3icons/core@4.0.15/+esm').then(module => {
                 window.web3IconsCore = module;
-                console.log('Web3Icons Core loaded');
+                console.log('Web3Icons Core loaded with svgs:', module.svgs ? 'available' : 'not available');
+                // Check if both are loaded
+                if (window.web3IconsCommon) {
+                    loadTokenIcons();
+                }
             }).catch(err => {
                 console.error('Failed to load Web3Icons Core:', err);
             });
@@ -866,7 +874,26 @@ const code = `
 
             function selectSendToken(token) {
                 tokenIn = token.id;
-                document.getElementById("send-token-display").textContent = token.symbol;
+                const display = document.getElementById("send-token-display");
+                display.innerHTML = ""; // Clear existing content
+                
+                // Add icon if available
+                if (token.icon || iconCache[token.symbol]) {
+                    const img = document.createElement("img");
+                    img.src = token.icon || iconCache[token.symbol];
+                    img.className = "token-icon";
+                    img.style.width = "20px";
+                    img.style.height = "20px";
+                    img.style.marginRight = "8px";
+                    img.style.verticalAlign = "middle";
+                    display.appendChild(img);
+                }
+                
+                // Add token symbol
+                const symbolSpan = document.createElement("span");
+                symbolSpan.textContent = token.symbol;
+                display.appendChild(symbolSpan);
+                
                 document.getElementById("send-dropdown-menu").classList.remove("show");
                 updateSendValue();
                 scheduleAutoFetchQuote();
@@ -875,7 +902,27 @@ const code = `
             function selectReceiveToken(symbol) {
                 tokenOut = symbol;
                 networkOut = null; // Reset network selection
-                document.getElementById("receive-token-display").textContent = symbol;
+                
+                const display = document.getElementById("receive-token-display");
+                display.innerHTML = ""; // Clear existing content
+                
+                // Add icon if available
+                if (iconCache[symbol]) {
+                    const img = document.createElement("img");
+                    img.src = iconCache[symbol];
+                    img.className = "token-icon";
+                    img.style.width = "20px";
+                    img.style.height = "20px";
+                    img.style.marginRight = "8px";
+                    img.style.verticalAlign = "middle";
+                    display.appendChild(img);
+                }
+                
+                // Add token symbol
+                const symbolSpan = document.createElement("span");
+                symbolSpan.textContent = symbol;
+                display.appendChild(symbolSpan);
+                
                 document.getElementById("receive-dropdown-menu").classList.remove("show");
                 
                 // Update available networks
@@ -885,11 +932,140 @@ const code = `
 
             function selectNetwork(network) {
                 networkOut = network.id;
-                document.getElementById("network-display").textContent = network.name;
+                
+                const display = document.getElementById("network-display");
+                display.innerHTML = ""; // Clear existing content
+                
+                // Add icon if available
+                const networkIcon = network.icon || iconCache[network.id + "_network_icon"] || getNetworkIcon(network.id);
+                if (networkIcon) {
+                    const img = document.createElement("img");
+                    img.src = networkIcon;
+                    img.className = "token-icon";
+                    img.style.width = "20px";
+                    img.style.height = "20px";
+                    img.style.marginRight = "8px";
+                    img.style.verticalAlign = "middle";
+                    display.appendChild(img);
+                    
+                    // Cache the icon for future use
+                    if (!iconCache[network.id + "_network_icon"]) {
+                        iconCache[network.id + "_network_icon"] = networkIcon;
+                    }
+                }
+                
+                // Add network name
+                const nameSpan = document.createElement("span");
+                nameSpan.textContent = network.name;
+                display.appendChild(nameSpan);
+                
                 document.getElementById("network-dropdown-menu").classList.remove("show");
                 scheduleAutoFetchQuote();
             }
 
+            function getTokenIcon(symbol) {
+                if (!window.web3IconsCore || !window.web3IconsCommon) return null;
+                try {
+                    // Find token in web3icons metadata
+                    const web3IconToken = window.web3IconsCommon.tokens.find(t => 
+                        t.symbol.toLowerCase() === symbol.toLowerCase()
+                    );
+                    
+                    if (web3IconToken && window.web3IconsCore.svgs.tokens.background[web3IconToken.fileName]) {
+                        const svg = window.web3IconsCore.svgs.tokens.background[web3IconToken.fileName].default;
+                        return "data:image/svg+xml;base64," + btoa(svg);
+                    }
+                    
+                    return null;
+                } catch (err) {
+                    console.log("Could not find icon for", symbol, err);
+                    return null;
+                }
+            }
+            
+            function getNetworkIcon(networkId) {
+                if (!window.web3IconsCore || !window.web3IconsCommon) return null;
+                try {
+                    const parts = networkId.split(":");
+                    const layer1 = parts[0];
+                    const chainId = parts[1];
+                    
+                    let web3IconNetwork = null;
+                    
+                    // 1. Match by exact chainId
+                    if (chainId) {
+                        web3IconNetwork = window.web3IconsCommon.networks.find(n => 
+                            String(n.chainId) === chainId
+                        );
+                    }
+                    
+                    // 2. Match by network ID starting with layer1
+                    if (!web3IconNetwork && layer1) {
+                        web3IconNetwork = window.web3IconsCommon.networks.find(n => 
+                            n.id.toLowerCase().startsWith(layer1.toLowerCase())
+                        );
+                    }
+                    
+                    if (web3IconNetwork && window.web3IconsCore.svgs.networks.background[web3IconNetwork.fileName]) {
+                        const svg = window.web3IconsCore.svgs.networks.background[web3IconNetwork.fileName].default;
+                        return "data:image/svg+xml;base64," + btoa(svg);
+                    }
+                    
+                    return null;
+                } catch (err) {
+                    console.log("Could not find network icon for", networkId, err);
+                    return null;
+                }
+            }
+            
+            function loadTokenIcons() {
+                if (!window.web3IconsCore || !window.web3IconsCommon) return;
+                
+                console.log("Loading token icons...");
+                
+                // Load icons for intents tokens
+                intentsTokensIn.forEach(token => {
+                    if (!iconCache[token.symbol]) {
+                        const icon = getTokenIcon(token.symbol);
+                        if (icon) {
+                            iconCache[token.symbol] = icon;
+                            console.log("Loaded icon for", token.symbol);
+                        }
+                    }
+                });
+                
+                // Load icons for output tokens
+                const uniqueSymbols = [...new Set(allTokensOut.map(t => t.symbol))];
+                uniqueSymbols.forEach(symbol => {
+                    if (!iconCache[symbol]) {
+                        const icon = getTokenIcon(symbol);
+                        if (icon) {
+                            iconCache[symbol] = icon;
+                            console.log("Loaded icon for", symbol);
+                        }
+                    }
+                });
+                
+                // Load network icons
+                availableNetworks.forEach(network => {
+                    if (!iconCache[network.id + "_network_icon"]) {
+                        const icon = getNetworkIcon(network.id);
+                        if (icon) {
+                            iconCache[network.id + "_network_icon"] = icon;
+                            console.log("Loaded network icon for", network.id);
+                        }
+                    }
+                });
+                
+                // Refresh UI with new icons
+                console.log("Refreshing UI with", Object.keys(iconCache).length, "icons");
+                populateSendTokenList();
+                populateReceiveTokenList();
+                if (networkOut) {
+                    populateNetworkList();
+                }
+            }
+            
             function getNetworkDisplayName(networkId) {
                 // Parse the network ID format (e.g., "eth:1:0xa0b86991...")
                 const parts = networkId.split(":");
@@ -961,9 +1137,12 @@ const code = `
             }
             
             function updateAvailableNetworks() {
+                const display = document.getElementById("network-display");
+                
                 if (!tokenOut) {
                     availableNetworks = [];
-                    document.getElementById("network-display").textContent = "Select token first";
+                    display.innerHTML = "";
+                    display.textContent = "Select token first";
                     return;
                 }
                 
@@ -975,12 +1154,13 @@ const code = `
                             id: token.network,
                             name: networkName,
                             tokenId: token.id,
-                            icon: iconCache[token.network + "_network_icon"]
+                            icon: iconCache[token.network + "_network_icon"] || getNetworkIcon(token.network)
                         };
                     });
                 
                 if (availableNetworks.length > 0) {
-                    document.getElementById("network-display").textContent = "Select network";
+                    display.innerHTML = "";
+                    display.textContent = "Select network";
                     populateNetworkList();
                 }
             }
@@ -1265,11 +1445,13 @@ const code = `
                 if (event.data.intentsTokens) {
                     intentsTokensIn = event.data.intentsTokens;
                     populateSendTokenList();
+                    loadTokenIcons(); // Load icons for new tokens
                 }
                 
                 if (event.data.allTokensOut) {
                     allTokensOut = event.data.allTokensOut;
                     populateReceiveTokenList();
+                    loadTokenIcons(); // Load icons for new tokens
                 }
                 
                 if (event.data.iconCache) {

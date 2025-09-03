@@ -107,6 +107,17 @@ test.describe("OneClickExchangeForm Component", () => {
     signature: "ed25519:test-signature",
   };
 
+  // Helper function to select a token from dropdown by exact symbol
+  const selectTokenBySymbol = async (iframe, dropdownType, symbol) => {
+    const menuId = `#${dropdownType}-dropdown-menu`;
+    const menu = iframe.locator(menuId);
+    await menu.waitFor({ state: "visible" });
+    // Use exact text match for the token symbol to avoid ambiguity
+    await menu.locator(".dropdown-item").filter({ 
+      has: iframe.locator(`.token-symbol:text-is("${symbol}")`) 
+    }).click();
+  };
+
   // Helper function to wait for component to be ready
   const setupComponent = async (page) => {
     // Wait for the iframe to be loaded
@@ -690,8 +701,7 @@ test.describe("OneClickExchangeForm Component", () => {
     await page.waitForTimeout(500); // Wait for dropdown to be interactive
     await sendDropdown.click();
     await page.waitForTimeout(500); // Wait for dropdown to open
-    await iframe.locator(".dropdown-menu.show").waitFor({ state: "visible" });
-    await iframe.locator(".dropdown-item").filter({ hasText: "ETH" }).click();
+    await selectTokenBySymbol(iframe, "send", "ETH");
 
     // Fill amount
     const amountInput = iframe.locator('input[placeholder="0.00"]').first();
@@ -920,7 +930,6 @@ test.describe("OneClickExchangeForm Component", () => {
 
   test("handles quote expiry time calculation", async ({
     page,
-    instanceAccount,
   }) => {
     await mockApiResponses(page);
     const iframe = await setupComponent(page);
@@ -960,8 +969,8 @@ test.describe("OneClickExchangeForm Component", () => {
     await sendDropdown.scrollIntoViewIfNeeded();
     await sendDropdown.click();
     await page.waitForTimeout(500);
-    await iframe.locator(".dropdown-menu.show").waitFor({ state: "visible" });
-    await iframe.locator(".dropdown-item").filter({ hasText: "ETH" }).click();
+    // Use helper to select ETH token precisely
+    await selectTokenBySymbol(iframe, "send", "ETH");
 
     const amountInput = iframe.locator("#amount-in");
     await amountInput.scrollIntoViewIfNeeded();
@@ -1311,8 +1320,7 @@ test.describe("OneClickExchangeForm Component", () => {
       .locator(".dropdown-toggle");
     await sendDropdown.click();
     await page.waitForTimeout(500);
-    await iframe.locator(".dropdown-menu.show").waitFor({ state: "visible" });
-    await iframe.locator(".dropdown-item").filter({ hasText: "ETH" }).click();
+    await selectTokenBySymbol(iframe, "send", "ETH");
 
     // Fill amount
     await iframe.locator("#amount-in").fill("0.1");
@@ -1409,7 +1417,8 @@ test.describe("OneClickExchangeForm Component", () => {
 
     // Check that the correct values were submitted
     expect(submittedTokenIn).toBe("ETH");
-    expect(submittedTokenOut).toBe("usdc"); // Token ID
+    // The tokenOut should be the NEAR token ID for USDC on Ethereum
+    expect(submittedTokenOut).toBe("nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near");
     expect(submittedNetwork).toBe("Ethereum"); // Display name from backend
     expect(submittedAmount).toBe("0.1"); // Formatted amount from backend
 
@@ -1446,6 +1455,85 @@ test.describe("OneClickExchangeForm Component", () => {
     console.log("- Got quote successfully");
     console.log("- Verified Create Proposal button is enabled");
     console.log("- Clicked Create Proposal to complete the flow");
+  });
+
+  test("displays token and network icons", async ({ page }) => {
+    // Helper function to select a token from dropdown by exact symbol
+    const selectTokenBySymbol = async (iframe, dropdownType, symbol) => {
+      const menuId = `#${dropdownType}-dropdown-menu`;
+      const menu = iframe.locator(menuId);
+      await menu.waitFor({ state: "visible" });
+      // Use exact text match for the token symbol to avoid ambiguity
+      await menu.locator(".dropdown-item").filter({ 
+        has: iframe.locator(`.token-symbol:text-is("${symbol}")`) 
+      }).click();
+    };
+
+    // Helper function to wait for component to be ready
+    const setupComponent = async (page) => {
+      // Wait for the iframe to be loaded
+      await page.waitForSelector("iframe", {
+        state: "visible",
+      });
+
+      // Get the iframe element and its content
+      const iframe = await page.frameLocator("iframe");
+
+      // Wait for the form to be ready
+      await iframe.locator("#send-dropdown-toggle").waitFor({ state: "visible" });
+
+      return iframe;
+    };
+
+    // Set up standard mocks
+    await mockApiResponses(page);
+
+    // Set up the component using the helper
+    const iframe = await setupComponent(page);
+    
+    // Give time for Web3Icons to load
+    await page.waitForTimeout(2000);
+
+    // Select a send token (ETH)
+    await iframe.locator("#send-dropdown-toggle").click();
+    await selectTokenBySymbol(iframe, "send", "ETH");
+
+    // Check that the send token icon is visible
+    const sendTokenIcon = iframe.locator("#send-token-display img.token-icon");
+    await expect(sendTokenIcon).toBeVisible({ timeout: 5000 });
+    console.log("✓ Send token icon is visible");
+
+    // Select a receive token (USDC)
+    await iframe.locator("#receive-dropdown-toggle").click();
+    await selectTokenBySymbol(iframe, "receive", "USDC");
+
+    // Check that the receive token icon is visible
+    const receiveTokenIcon = iframe.locator("#receive-token-display img.token-icon");
+    await expect(receiveTokenIcon).toBeVisible({ timeout: 5000 });
+    console.log("✓ Receive token icon is visible");
+
+    // Select a network (Ethereum)
+    await iframe.locator("#network-dropdown-toggle").click();
+    await iframe.waitForSelector("#network-dropdown-menu", { state: "visible" });
+    await iframe.locator("#network-dropdown-menu .dropdown-item").filter({ 
+      hasText: "Ethereum" 
+    }).first().click();
+
+    // Check that the network icon is visible
+    const networkIcon = iframe.locator("#network-display img.token-icon");
+    await expect(networkIcon).toBeVisible({ timeout: 5000 });
+    console.log("✓ Network icon is visible");
+
+    // Also verify icons are visible in dropdown menus
+    await iframe.locator("#send-dropdown-toggle").click();
+    const dropdownTokenIcon = iframe.locator("#send-dropdown-menu .dropdown-item").first().locator("img.token-icon");
+    await expect(dropdownTokenIcon).toBeVisible({ timeout: 5000 });
+    console.log("✓ Token icons are visible in dropdown menu");
+    
+    // Close dropdown
+    await iframe.locator("#send-dropdown-toggle").click();
+
+    console.log("Icon visibility test completed successfully");
   });
 
   test("validates quote deadline", async ({ page, instanceAccount }) => {
@@ -1491,8 +1579,7 @@ test.describe("OneClickExchangeForm Component", () => {
       .locator(".dropdown-toggle");
     await sendDropdown.click();
     await page.waitForTimeout(500);
-    await iframe.locator(".dropdown-menu.show").waitFor({ state: "visible" });
-    await iframe.locator(".dropdown-item").filter({ hasText: "ETH" }).click();
+    await selectTokenBySymbol(iframe, "send", "ETH");
 
     // Fill amount
     await iframe.locator("#amount-in").fill("0.1");
@@ -1714,16 +1801,13 @@ test.describe("OneClickExchangeForm Component", () => {
     // Select tokens and create proposal
     const sendDropdown = iframe.locator(".send-section").locator(".dropdown-toggle");
     await sendDropdown.click();
-    await iframe.locator(".dropdown-menu.show").waitFor({ state: "visible" });
-    await iframe.locator(".dropdown-item").filter({ hasText: "USDC" }).first().click();
+    await selectTokenBySymbol(iframe, "send", "USDC");
     
     await iframe.locator("#amount-in").fill("100");
     
     const receiveDropdown = iframe.locator(".receive-section").locator(".dropdown-toggle");
     await receiveDropdown.click();
-    const receiveMenu = iframe.locator(".receive-section .dropdown-menu.show");
-    await receiveMenu.waitFor({ state: "visible" });
-    await receiveMenu.locator(".dropdown-item").filter({ hasText: "USDC" }).first().click();
+    await selectTokenBySymbol(iframe, "receive", "USDC");
     
     // Select network
     const networkDropdown = iframe.locator(".form-section").filter({ hasText: "Network" }).locator(".dropdown-toggle");
@@ -1782,8 +1866,7 @@ test.describe("OneClickExchangeForm Component", () => {
       .locator(".dropdown-toggle");
     await sendDropdown.click();
     await page.waitForTimeout(500);
-    await iframe.locator(".dropdown-menu.show").waitFor({ state: "visible" });
-    await iframe.locator(".dropdown-item").filter({ hasText: "USDC" }).first().click();
+    await selectTokenBySymbol(iframe, "send", "USDC");
 
     // Fill amount
     await iframe.locator("#amount-in").fill("100");
@@ -1852,7 +1935,8 @@ test.describe("OneClickExchangeForm Component", () => {
     }
     
     // Check that we're NOT getting raw network IDs like "Eth", "Sol", etc.
-    const rawNetworkIds = ["Eth", "Sol", "Near", "Sui", "Stellar"];
+    // Note: "Sui" and "Stellar" are actually correct names, not raw IDs
+    const rawNetworkIds = ["Eth", "Sol", "Near", "Btc"];
     const hasRawIds = foundNetworkNames.some(name => rawNetworkIds.includes(name));
     
     if (hasRawIds) {
