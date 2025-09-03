@@ -833,10 +833,6 @@ test.describe("OneClickExchangeForm Component", () => {
     await page.waitForTimeout(1000); // Wait a full second before exiting the test
   });
 
-  test.skip("displays error states", async () => {
-    // Skipping as this requires more complex state management
-    // that isn't easily testable without component access
-  });
 
   test("displays loading states", async ({ page, instanceAccount }) => {
     // Helper function to select a token from dropdown by exact symbol
@@ -1502,8 +1498,7 @@ test.describe("OneClickExchangeForm Component", () => {
     console.log("- Clicked Create Proposal to complete the flow");
   });
 
-  test.skip("displays token and network icons", async ({ page }) => {
-    // Skipping: Icons work in manual testing but Web3Icons library loading timing in tests is inconsistent
+  test("displays token and network icons", async ({ page }) => {
     // Helper function to select a token from dropdown by exact symbol
     const selectTokenBySymbol = async (iframe, dropdownType, symbol) => {
       const menuId = `#${dropdownType}-dropdown-menu`;
@@ -1542,8 +1537,8 @@ test.describe("OneClickExchangeForm Component", () => {
     // Set up the component using the helper
     const iframe = await setupComponent(page);
 
-    // Give time for Web3Icons to load
-    await page.waitForTimeout(2000);
+    // Give more time for Web3Icons library to load and icons to be fetched
+    await page.waitForTimeout(5000);
 
     // Select a send token (ETH)
     await iframe.locator("#send-dropdown-toggle").click();
@@ -1567,9 +1562,7 @@ test.describe("OneClickExchangeForm Component", () => {
 
     // Select a network (Ethereum)
     await iframe.locator("#network-dropdown-toggle").click();
-    await iframe.waitForSelector("#network-dropdown-menu", {
-      state: "visible",
-    });
+    await iframe.locator("#network-dropdown-menu").waitFor({ state: "visible" });
     await iframe
       .locator("#network-dropdown-menu .dropdown-item")
       .filter({
