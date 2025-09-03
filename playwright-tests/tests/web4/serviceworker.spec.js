@@ -839,7 +839,7 @@ test.describe("Web4 Service Worker", () => {
       // Navigate and wait for initial service worker registration
       console.log(`🚀 Initial deployment - loading page...`);
       await page.goto(testServerInfo.url);
-      await page.waitForLoadState("networkidle");
+      await page.waitForTimeout(5000);
 
       // Wait for service worker registration
       await page.waitForFunction(
@@ -989,8 +989,8 @@ test.describe("Web4 Service Worker", () => {
       console.log(
         `🌐 Step 1: Normal page reload (simulating user returning to site)`
       );
-      await page.reload({ waitUntil: "networkidle" });
-      await page.waitForTimeout(3000);
+      await page.reload();
+      await page.waitForTimeout(5000);
 
       // Method 2: If that doesn't work, try manual service worker update trigger
       if (!updatedBuildTimestamp) {
@@ -1016,8 +1016,7 @@ test.describe("Web4 Service Worker", () => {
         await page.goto("about:blank");
         await page.waitForTimeout(1000);
         await page.goto(testServerInfo.url);
-        await page.waitForLoadState("networkidle");
-        await page.waitForTimeout(3000);
+        await page.waitForTimeout(5000);
       }
 
       // Wait for service worker update and check for new timestamp
@@ -1491,7 +1490,7 @@ test.describe("Web4 Service Worker", () => {
       const page = await context.newPage();
 
       // Navigate to the page and wait for service worker to be ready
-      await page.goto(testServerInfo.url, { waitUntil: "networkidle" });
+      await page.goto(testServerInfo.url, { timeout: 5000 });
       await page.waitForFunction(
         () =>
           window.navigator.serviceWorker &&
@@ -1504,7 +1503,7 @@ test.describe("Web4 Service Worker", () => {
       );
 
       // Reload to ensure service worker is controlling the page
-      await page.reload({ waitUntil: "networkidle" });
+      await page.reload({ timeout: 5000 });
       // Add a generous wait for the service worker to be fully active and ready to intercept.
       await page.waitForTimeout(3000);
 
@@ -1616,7 +1615,7 @@ test.describe("Web4 Service Worker", () => {
       const page = await context.newPage();
 
       // Navigate to the page and wait for service worker to be ready
-      await page.goto(testServerInfo.url, { waitUntil: "networkidle" });
+      await page.goto(testServerInfo.url, { timeout: 5000 });
       await page.waitForFunction(
         () =>
           window.navigator.serviceWorker &&
@@ -1629,7 +1628,7 @@ test.describe("Web4 Service Worker", () => {
       );
 
       // Reload to ensure service worker is controlling the page
-      await page.reload({ waitUntil: "networkidle" });
+      await page.reload({ timeout: 5000 });
       // Add a generous wait for the service worker to be fully active and ready to intercept.
       await page.waitForTimeout(3000);
 

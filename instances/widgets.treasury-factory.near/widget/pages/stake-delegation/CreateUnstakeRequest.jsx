@@ -77,6 +77,7 @@ function formatNearAmount(amount) {
 }
 
 function refreshData() {
+  props.setVoteProposalId(lastProposalId);
   props.setToastStatus("UnstakeProposalAdded");
   Storage.set("REFRESH_STAKE_TABLE_DATA", Math.random());
 }

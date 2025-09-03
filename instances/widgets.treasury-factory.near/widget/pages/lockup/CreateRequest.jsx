@@ -174,6 +174,7 @@ useEffect(() => {
 }, []);
 
 function refreshData() {
+  props.setVoteProposalId(lastProposalId);
   props.setToastStatus("ProposalAdded");
   Storage.set("REFRESH_LOCKUP_TABLE_DATA", Math.random());
 }

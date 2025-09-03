@@ -88,6 +88,10 @@ async function checkNewProposalSubmission({
       .getByRole("cell", { name: `${lastProposalId - 1}`, exact: true })
       .first()
   ).toBeVisible({ timeout: 20_000 });
+  const viewRequestLink = page.locator('a:has-text("View Request")');
+  await expect(viewRequestLink).toBeVisible();
+  const href = await viewRequestLink.getAttribute("href");
+  expect(href).toContain(`?page=lockup&id=${lastProposalId - 1}`);
 }
 
 async function navigateToLockupPage(page, instanceAccount) {

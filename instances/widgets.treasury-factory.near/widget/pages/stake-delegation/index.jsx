@@ -280,6 +280,7 @@ const SidebarMenu = () => {
                   instance,
                   isPendingPage: currentTab.title === "Pending Requests",
                   setToastStatus,
+                  setVoteProposalId,
                 }}
               />
             </div>
@@ -349,6 +350,22 @@ const ToastStatusContent = () => {
         <div>
           {content}
           <br />
+          {(showToastStatus === "StakeProposalAdded" ||
+            showToastStatus === "UnstakeProposalAdded" ||
+            showToastStatus === "WithdrawProposalAdded") && (
+            <a
+              className="text-underline"
+              href={href({
+                widgetSrc: `${instance}/widget/app`,
+                params: {
+                  page: "stake-delegation",
+                  id: voteProposalId,
+                },
+              })}
+            >
+              View Request
+            </a>
+          )}
           {showToastStatus !== "InProgress" &&
             showToastStatus !== "Removed" &&
             showToastStatus !== "StakeProposalAdded" &&
@@ -443,6 +460,8 @@ useEffect(() => {
               .args;
           const decodedArgs = JSON.parse(atob(args ?? "") ?? "{}");
           const description = decodedArgs.proposal.description;
+          const proposalId = atob(transaction.body.result.status.SuccessValue);
+          setVoteProposalId(proposalId);
           if (description.includes("withdraw")) {
             setToastStatus("WithdrawProposalAdded");
           } else if (description.includes("unstake")) {

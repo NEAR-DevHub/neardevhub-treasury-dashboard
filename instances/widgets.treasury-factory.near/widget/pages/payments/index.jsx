@@ -347,6 +347,20 @@ const ToastStatusContent = () => {
         <div>
           {content}
           <br />
+          {showToastStatus === "ProposalAdded" && (
+            <a
+              className="text-underline"
+              href={href({
+                widgetSrc: `${instance}/widget/app`,
+                params: {
+                  page: "payments",
+                  id: voteProposalId,
+                },
+              })}
+            >
+              View Request
+            </a>
+          )}
           {showToastStatus !== "InProgress" &&
             showToastStatus !== "Removed" &&
             showToastStatus !== "ProposalAdded" &&
@@ -435,6 +449,8 @@ useEffect(() => {
             checkProposalStatus(proposalId);
           }
         } else if (transaction_method_name === "add_proposal") {
+          const proposalId = atob(transaction.body.result.status.SuccessValue);
+          setVoteProposalId(proposalId);
           setToastStatus("ProposalAdded");
         }
       }
@@ -514,7 +530,7 @@ return (
                     target="_blank"
                     rel="noopener noreferrer"
                     className="primary-text-color cursor-pointer"
-                    href="https://docs.neartreasury.com/bulk-import"
+                    href="https://docs.neartreasury.com/payments/bulk-import"
                   >
                     View Step-by-Step Instructions
                   </a>
@@ -552,6 +568,7 @@ return (
                     instance,
                     onCloseCanvas: toggleCreatePage,
                     setToastStatus,
+                    setVoteProposalId,
                   }}
                 />
               </div>
