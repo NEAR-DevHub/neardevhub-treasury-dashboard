@@ -11,9 +11,6 @@ const {
   showManualRequest,
   onClickOfManualRequest,
   isLoadingProposals,
-  dataTestId,
-  disabled,
-  showCircularIcon,
 } = props;
 
 const [searchTerm, setSearchTerm] = useState("");
@@ -107,9 +104,9 @@ const Container = styled.div`
   }
 
   .dropdown-icon {
-    width: 1.3em;
-    height: 1.3em;
-    margin-right: 0.3em;
+    width: 1.25em;
+    height: 1.25em;
+    margin-right: 0.5em;
     vertical-align: middle;
   }
 `;
@@ -129,23 +126,15 @@ return (
         );
       }}
     >
-      <div
-        className="dropdown-toggle bg-dropdown border rounded-2 btn drop-btn"
-        data-testid={`${dataTestId}-btn`}
-      >
+      <div className="dropdown-toggle bg-dropdown border rounded-2 btn drop-btn">
         <div
-          className={`selected-option d-flex align-items-center w-100 text-wrap ${
+          className={`selected-option w-100 text-wrap ${
             selectedOption.label === defaultLabel ? "text-secondary" : ""
           }`}
-          onClick={!disabled && toggleDropdown}
+          onClick={toggleDropdown}
         >
           {selectedOption.icon && (
-            <img
-              className={`dropdown-icon ${
-                showCircularIcon ? "rounded-circle object-fit-cover" : ""
-              }`}
-              src={selectedOption.icon}
-            />
+            <img className="dropdown-icon" src={selectedOption.icon} />
           )}
           {selectedOption.label ?? defaultLabel}
         </div>
@@ -182,31 +171,15 @@ return (
               {filteredOptions.map((option) => (
                 <div
                   key={option.value}
-                  className={`dropdown-item cursor-pointer w-100 text-wrap py-1 ${
+                  className={`dropdown-item cursor-pointer w-100 text-wrap ${
                     selectedOption.value === option.value ? "selected" : ""
                   }`}
                   onClick={() => handleOptionClick(option)}
                 >
-                  <div className="d-flex align-items-start">
-                    {option.icon && (
-                      <img
-                        className={`dropdown-icon ${
-                          showCircularIcon
-                            ? "rounded-circle object-fit-cover"
-                            : ""
-                        }`}
-                        src={option.icon}
-                      />
-                    )}
-                    <div className="flex-grow-1">
-                      <div>{option.label}</div>
-                      {option.subLabel && (
-                        <small className="text-muted d-block">
-                          {option.subLabel}
-                        </small>
-                      )}
-                    </div>
-                  </div>
+                  {option.icon && (
+                    <img className="dropdown-icon" src={option.icon} />
+                  )}
+                  {option.label}
                 </div>
               ))}
             </div>
