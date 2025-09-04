@@ -968,9 +968,13 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     );
     await expect(depositAddressRow).toBeVisible();
     const depositAddressValue = depositAddressRow.locator(".detail-value");
-    // The deposit address should be the one from our mock quote
-    await expect(depositAddressValue).toContainText(testDepositAddress);
-    console.log(`✅ Deposit address displayed in quote: ${testDepositAddress}`);
+    // The deposit address should be the one from our mock quote (may be truncated in UI)
+    // Check for the first part of the address since UI truncates long addresses
+    const addressPrefix = testDepositAddress.substring(0, 20);
+    await expect(depositAddressValue).toContainText(addressPrefix);
+    console.log(
+      `✅ Deposit address displayed in quote (truncated): ${addressPrefix}...`
+    );
 
     // Take screenshot with expanded details
     await page.screenshot({
