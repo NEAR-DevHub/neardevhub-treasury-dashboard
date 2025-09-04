@@ -865,9 +865,11 @@ test.describe("OneClickExchangeForm Component", () => {
       '.detail-row:has(.detail-label:text("Deposit address"))'
     );
     await expect(depositAddressRow).toBeVisible();
-    // Verify the actual deposit address from the mock quote is displayed
+    // Verify the deposit address from the mock quote is displayed (truncated in UI)
     const depositAddressValue = depositAddressRow.locator(".detail-value");
-    await expect(depositAddressValue).toHaveText("test-deposit-address-123"); // From mockQuoteResponse
+    const testDepositAddress = "test-deposit-address-123"; // From mockQuoteResponse
+    const addressPrefix = testDepositAddress.substring(0, 20);
+    await expect(depositAddressValue).toContainText(addressPrefix);
 
     // Scroll to ensure details are visible
     await minReceivedRow.scrollIntoViewIfNeeded();
@@ -1544,6 +1546,9 @@ test.describe("OneClickExchangeForm Component", () => {
     // Verify the quote is included
     expect(submittedData.quote).toBeTruthy();
     expect(submittedData.quote.deadline).toBeTruthy();
+
+    // Verify the full deposit address from the quote (not truncated)
+    expect(submittedData.quote.depositAddress).toBe("test-deposit-address-123");
 
     console.log("✓ Form submitted with correct data:");
     console.log(`  - Token In: ${submittedTokenIn}`);
