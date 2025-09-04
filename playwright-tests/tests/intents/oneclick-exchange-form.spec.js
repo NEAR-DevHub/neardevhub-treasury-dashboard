@@ -184,34 +184,65 @@ test.describe("OneClickExchangeForm Component", () => {
      * The intents.near contract's mt_tokens_for_owner returns token IDs WITH nep141: prefix
      * Example: "nep141:wrap.near", "nep141:eth.omft.near"
      *
-     * Sample ACTUAL backend request/response (2025-09-03):
+     * Sample ACTUAL backend request/response (2025-09-04):
      * REQUEST:
      * {
-     *   "treasuryDaoID": "treasury-testing.sputnik-dao.near",
+     *   "treasuryDaoID": "webassemblymusic-treasury.sputnik-dao.near",
      *   "inputToken": {
-     *     "id": "nep141:wrap.near",  // MUST include nep141: prefix
-     *     "symbol": "WNEAR",
-     *     "decimals": 24,
-     *     ...
+     *     "id": "nep141:eth.omft.near",  // MUST include nep141: prefix
+     *     "symbol": "ETH",
+     *     "decimals": 18,
+     *     "balance": "0.01",
+     *     "price": 1
      *   },
      *   "outputToken": {
      *     "id": "nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
-     *     ...
+     *     "symbol": "USDC",
+     *     "network": "eth:1",
+     *     "nearTokenId": "eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near"
      *   },
-     *   "amountIn": "1000000000000000000000000",
-     *   ...
+     *   "amountIn": "5000000000000000",
+     *   "slippageTolerance": 100,
+     *   "networkOut": "eth:1",  // Network ID, not display name
+     *   "tokenOutSymbol": "USDC"
      * }
      *
      * RESPONSE:
      * {
+     *   "success": true,
      *   "proposalPayload": {
-     *     "tokenIn": "nep141:wrap.near",  // Backend preserves the prefix
+     *     "tokenIn": "nep141:eth.omft.near",  // Backend preserves the prefix
+     *     "tokenInSymbol": "ETH",
      *     "tokenOut": "nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
-     *     ...
+     *     "networkOut": "eth:1",  // Backend returns network ID as received
+     *     "amountIn": "0.005",  // Formatted amount
+     *     "quote": {
+     *       "amountIn": "5000000000000000",
+     *       "amountInFormatted": "0.005",
+     *       "amountInUsd": "21.5305",
+     *       "amountOut": "21537717",
+     *       "amountOutFormatted": "21.537717",
+     *       "amountOutUsd": "21.5305",
+     *       "minAmountOut": "21322339",
+     *       "timeEstimate": 10,
+     *       "deadline": "2025-09-05T20:53:07.614Z",
+     *       "depositAddress": "b1943cfbee28746c4b4f3f802b36c7189c30b78a87638f408d0f1c986a69de61",
+     *       "signature": "ed25519:2o3ZS8prASujUGB8uatgs8sXqnYUCC6gk3UYrfVmMYFnYo6JKtmBV1NgPBW9FDsvF8gKbWHhJwTWjHZWBGkJtv9Q"
+     *     }
      *   },
      *   "quoteRequest": {
-     *     "originAsset": "nep141:wrap.near",  // Also has prefix
-     *     ...
+     *     "dry": false,
+     *     "swapType": "EXACT_INPUT",
+     *     "slippageTolerance": 100,
+     *     "originAsset": "nep141:eth.omft.near",
+     *     "depositType": "INTENTS",
+     *     "destinationAsset": "nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
+     *     "refundTo": "webassemblymusic-treasury.sputnik-dao.near",
+     *     "refundType": "INTENTS",
+     *     "recipient": "webassemblymusic-treasury.sputnik-dao.near",
+     *     "recipientType": "INTENTS",
+     *     "deadline": "2025-09-11T20:53:04.447Z",
+     *     "amount": "5000000000000000"
      *   }
      * }
      *
@@ -1483,7 +1514,7 @@ test.describe("OneClickExchangeForm Component", () => {
     expect(submittedTokenOut).toBe(
       "nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near"
     );
-    expect(submittedNetwork).toBe("Ethereum"); // Display name from backend
+    expect(submittedNetwork).toBe("eth:1"); // Network ID from backend
     expect(submittedAmount).toBe("0.1"); // Formatted amount from backend
 
     // Get the full submitted data for additional verification
