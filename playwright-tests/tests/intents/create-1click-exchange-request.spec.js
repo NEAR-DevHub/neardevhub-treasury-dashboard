@@ -887,21 +887,27 @@ test.describe("1Click API Integration - Asset Exchange", function () {
         ).toISOString(), // 1 hour from now
       };
 
+      // Log what the UI is sending
+      console.log("UI sent inputToken.id:", requestBody.inputToken.id);
+      console.log(
+        "Has nep141: prefix:",
+        requestBody.inputToken.id?.startsWith("nep141:")
+      );
+
       // Return the same format as the real backend
-      // IMPORTANT: tokenIn must be the NEAR token contract ID (e.g., "eth.omft.near")
-      // This will be used as the token_id in the mt_transfer call
-      // Previously this was incorrectly using quote.requestPayload.originAsset
+      // The backend uses inputToken.id directly as tokenIn in the proposal payload
+      // This MUST include the nep141: prefix for mt_transfer to work correctly
       await route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
           success: true,
           proposalPayload: {
-            tokenIn: "eth.omft.near", // The NEAR token contract ID for ETH - used as token_id in mt_transfer
-            tokenInSymbol: requestBody.inputToken.symbol || "ETH",
-            tokenOut: requestBody.outputToken.symbol || "USDC", // Use symbol for display, not the full ID
+            tokenIn: requestBody.inputToken.id, // This should have nep141: prefix from UI
+            tokenInSymbol: requestBody.inputToken.symbol,
+            tokenOut: requestBody.outputToken.symbol,
             networkOut: requestBody.networkOut,
-            amountIn: actualQuote.amountInFormatted || "0.15", // Backend uses formatted amount from quote
+            amountIn: actualQuote.amountInFormatted,
             quote: actualQuote,
           },
         }),
@@ -1173,23 +1179,10 @@ test.describe("1Click API Integration - Asset Exchange", function () {
       fullPage: true,
     });
 
-    // In sandbox, we need to manually execute the transfer that the proposal would have done
-    console.log("Executing ETH transfer from treasury to deposit address...");
-
-    // Execute the mt_transfer that the approved proposal should have done
-    // The DAO (treasury) calls mt_transfer on intents contract to send ETH to deposit address
-    await daoContract.call(
-      intentsContract.accountId,
-      "mt_transfer",
-      {
-        receiver_id: page.testDepositAddress,
-        amount: mockQuote.amountIn, // Transfer the ETH amount from the quote
-        token_id: "nep141:eth.omft.near",
-      },
-      { attachedDeposit: "1" }
+    // The proposal approval has executed the mt_transfer automatically
+    console.log(
+      "✅ Proposal approved - mt_transfer has been executed automatically"
     );
-
-    console.log("✅ ETH transferred to deposit address");
 
     // Verify the transfer by checking balances
     console.log("Verifying token balances after transfer...");
