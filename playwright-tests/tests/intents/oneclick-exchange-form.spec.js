@@ -860,6 +860,15 @@ test.describe("OneClickExchangeForm Component", () => {
     );
     await expect(minReceivedRow).toBeVisible();
 
+    // Check deposit address is displayed with the correct value from the quote
+    const depositAddressRow = iframe.locator(
+      '.detail-row:has(.detail-label:text("Deposit address"))'
+    );
+    await expect(depositAddressRow).toBeVisible();
+    // Verify the actual deposit address from the mock quote is displayed
+    const depositAddressValue = depositAddressRow.locator(".detail-value");
+    await expect(depositAddressValue).toHaveText("test-deposit-address-123"); // From mockQuoteResponse
+
     // Scroll to ensure details are visible
     await minReceivedRow.scrollIntoViewIfNeeded();
     await page.waitForTimeout(1000); // Wait a full second before exiting the test
@@ -1467,6 +1476,15 @@ test.describe("OneClickExchangeForm Component", () => {
 
     // Wait for details to fully expand
     await page.waitForTimeout(1000);
+
+    // Verify deposit address is displayed in the quote details
+    const depositAddressRow = iframe.locator(
+      '.detail-row:has(.detail-label:text("Deposit address"))'
+    );
+    await expect(depositAddressRow).toBeVisible();
+    // The backend mock returns a deposit address based on the mock quote
+    const depositAddressValue = depositAddressRow.locator(".detail-value");
+    await expect(depositAddressValue).toContainText(/[a-z0-9]+/); // Should have the deposit address
 
     // Scroll down to make sure all quote details are visible
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));

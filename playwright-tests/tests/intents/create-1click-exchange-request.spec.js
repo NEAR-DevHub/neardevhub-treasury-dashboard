@@ -962,6 +962,16 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     await quoteDisplay.scrollIntoViewIfNeeded();
     await page.waitForTimeout(500); // Wait for scroll to complete
 
+    // Verify deposit address is displayed in the quote details
+    const depositAddressRow = iframe.locator(
+      '.detail-row:has(.detail-label:text("Deposit address"))'
+    );
+    await expect(depositAddressRow).toBeVisible();
+    const depositAddressValue = depositAddressRow.locator(".detail-value");
+    // The deposit address should be the one from our mock quote
+    await expect(depositAddressValue).toContainText(testDepositAddress);
+    console.log(`✅ Deposit address displayed in quote: ${testDepositAddress}`);
+
     // Take screenshot with expanded details
     await page.screenshot({
       path: path.join(screenshotsDir, "09-quote-details-expanded.png"),
