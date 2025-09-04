@@ -607,8 +607,11 @@ const code = `
                     <button class="btn btn-outline-secondary" id="cancel-btn">
                         Cancel
                     </button>
-                    <button class="btn btn-primary" id="submit-btn" disabled>
+                    <button class="btn btn-primary" id="get-quote-btn" disabled>
                         Get Quote
+                    </button>
+                    <button class="btn btn-success" id="create-proposal-btn" style="display: none;" disabled>
+                        Create Proposal
                     </button>
                 </div>
             </div>
@@ -622,11 +625,13 @@ const code = `
             let slippageTolerance = "100"; // basis points
             let isLoading = false;
             let isLoadingQuote = false;
+            let isLoadingPreview = false;
             let intentsTokensIn = [];
             let allTokensOut = [];
             let quote = null;
+            let realQuote = null; // Real quote from backend
+            let previewData = null; // Preview data from dry quote
             let showQuoteDetails = false;
-            let autoFetchTimeout = null;
             let treasuryDaoID = "";
             let iconCache = {};
             let availableNetworks = [];
@@ -660,14 +665,14 @@ const code = `
                 document.getElementById("amount-in").addEventListener("input", function(e) {
                     amountIn = e.target.value;
                     updateSendValue();
-                    scheduleAutoFetchQuote();
+                    updateReceiveEstimate(); // Only update estimate, don't fetch full quote
                 });
 
                 // Slippage input
                 document.getElementById("slippage-input").addEventListener("input", function(e) {
                     const value = parseFloat(e.target.value || "0");
                     slippageTolerance = (value * 100).toString(); // Convert to basis points
-                    scheduleAutoFetchQuote();
+                    // Don't auto-fetch quote anymore
                 });
 
                 // Dropdown toggles
@@ -696,8 +701,11 @@ const code = `
                     window.parent.postMessage({ handler: "onCancel" }, "*");
                 });
 
-                // Submit button
-                document.getElementById("submit-btn").addEventListener("click", handleSubmit);
+                // Get Quote button
+                document.getElementById("get-quote-btn").addEventListener("click", handleGetQuote);
+                
+                // Create Proposal button
+                document.getElementById("create-proposal-btn").addEventListener("click", handleCreateProposal);
             }
 
             function setupDropdown(type) {
@@ -907,7 +915,7 @@ const code = `
                 
                 document.getElementById("send-dropdown-menu").classList.remove("show");
                 updateSendValue();
-                scheduleAutoFetchQuote();
+                updateReceiveEstimate(); // Only update estimate
             }
 
             function selectReceiveToken(symbol) {
@@ -938,7 +946,7 @@ const code = `
                 
                 // Update available networks
                 updateAvailableNetworks();
-                scheduleAutoFetchQuote();
+                updateReceiveEstimate(); // Only update estimate
             }
 
             function selectNetwork(network) {
@@ -971,7 +979,7 @@ const code = `
                 display.appendChild(nameSpan);
                 
                 document.getElementById("network-dropdown-menu").classList.remove("show");
-                scheduleAutoFetchQuote();
+                updateReceiveEstimate(); // Only update estimate
             }
 
             function getTokenIcon(symbol) {
@@ -1189,24 +1197,200 @@ const code = `
                 }
             }
 
-            function scheduleAutoFetchQuote() {
-                // Clear existing timeout
-                if (autoFetchTimeout) {
-                    clearTimeout(autoFetchTimeout);
-                }
-                
-                // Check if we have all required fields
+            function updateReceiveEstimate() {
+                // Only update the receive amount estimate, not the full quote details
                 if (!tokenIn || !tokenOut || !networkOut || !amountIn || parseFloat(amountIn) <= 0) {
-                    quote = null;
-                    updateQuoteDisplay();
+                    document.getElementById("amount-out").value = "";
+                    document.getElementById("receive-value").textContent = "$0.00";
+                    previewData = null;
                     updateSubmitButton();
                     return;
                 }
                 
-                // Schedule new fetch
-                autoFetchTimeout = setTimeout(fetchDryQuote, 500);
+                // Show loading state in receive amount field
+                document.getElementById("amount-out").value = "Loading...";
+                document.getElementById("receive-value").textContent = "Calculating...";
+                
+                // Fetch dry quote for estimate only
+                fetchDryQuoteForEstimate();
             }
 
+            function fetchRealQuote() {
+                // Fetch real quote from our backend directly
+                const selectedTokenIn = intentsTokensIn.find(t => t.id === tokenIn);
+                const selectedTokenOut = allTokensOut.find(
+                    t => t.symbol === tokenOut && t.network === networkOut
+                );
+                
+                if (!selectedTokenIn || !selectedTokenOut) {
+                    showError("Cannot find token information. Please try again.");
+                    return;
+                }
+                
+                isLoadingQuote = true;
+                updateSubmitButton();
+                clearError();
+                
+                const decimals = selectedTokenIn.decimals || 18;
+                const amountInSmallestUnit = Big(amountIn)
+                    .mul(Big(10).pow(decimals))
+                    .toFixed(0);
+                
+                const requestBody = {
+                    treasuryDaoID,
+                    inputToken: selectedTokenIn,
+                    outputToken: selectedTokenOut,
+                    amountIn: amountInSmallestUnit,
+                    slippageTolerance: parseInt(slippageTolerance),
+                    networkOut: selectedTokenOut.network,
+                    tokenOutSymbol: selectedTokenOut.symbol
+                };
+                
+                console.log("Sending request to backend:", requestBody);
+                
+                // Call backend directly
+                fetch("${REPL_BACKEND_API}/treasury/oneclick-quote", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Accept: "application/json"
+                    },
+                    body: JSON.stringify(requestBody)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => {
+                            console.error("Backend error response:", text);
+                            throw new Error("Backend error (" + response.status + "): " + (text || response.statusText));
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    isLoadingQuote = false;
+                    console.log("Backend response:", data);
+                    
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    if (!data.success || !data.proposalPayload) {
+                        throw new Error("Invalid response from backend");
+                    }
+                    
+                    // Store the real quote with token symbols
+                    realQuote = {
+                        ...data.proposalPayload,
+                        tokenInSymbol: selectedTokenIn.symbol,
+                        tokenOutSymbol: selectedTokenOut.symbol
+                    };
+                    
+                    // Lock fields after getting quote
+                    lockFields();
+                    
+                    // Update display with real quote details
+                    updateQuoteDisplay();
+                    
+                    // Change button to "Create Proposal"
+                    updateSubmitButton();
+                })
+                .catch(err => {
+                    isLoadingQuote = false;
+                    console.error("Failed to get quote:", err);
+                    showError(err.message || "Failed to get quote. Please try again.");
+                    updateSubmitButton();
+                });
+            }
+            
+            function fetchDryQuoteForEstimate() {
+                // Similar to fetchDryQuote but only updates the receive amount
+                const selectedTokenIn = intentsTokensIn.find(t => t.id === tokenIn);
+                const selectedTokenOut = allTokensOut.find(
+                    t => t.symbol === tokenOut && t.network === networkOut
+                );
+                
+                if (!selectedTokenIn || !selectedTokenOut) {
+                    return;
+                }
+                
+                const requestPayload = {
+                    originAsset: selectedTokenIn.symbol,
+                    destinationAsset: tokenOut,
+                    originAmount: parseFloat(amountIn),
+                    destinationNetwork: networkOut,
+                    treasuryDaoId: treasuryDaoID,
+                    slippagePercentage: parseFloat(slippageTolerance) / 100
+                };
+                
+                // Mark that we're loading preview
+                isLoadingPreview = true;
+                
+                const decimals = selectedTokenIn.decimals || 18;
+                const amountInSmallestUnit = Big(amountIn)
+                    .mul(Big(10).pow(decimals))
+                    .toFixed(0);
+                
+                // Calculate deadline (7 days for DAO voting)
+                const deadline = new Date();
+                deadline.setDate(deadline.getDate() + 7);
+                
+                const quoteRequest = {
+                    dry: true,
+                    swapType: "EXACT_INPUT",
+                    slippageTolerance: parseInt(slippageTolerance),
+                    originAsset: selectedTokenIn.id.startsWith("nep141:")
+                        ? selectedTokenIn.id
+                        : "nep141:" + selectedTokenIn.id,
+                    depositType: "INTENTS",
+                    destinationAsset: selectedTokenOut.id,
+                    refundTo: treasuryDaoID,
+                    refundType: "INTENTS",
+                    recipient: treasuryDaoID,
+                    recipientType: "INTENTS",
+                    deadline: deadline.toISOString(),
+                    amount: amountInSmallestUnit
+                };
+                
+                fetch("https://1click.chaindefuser.com/v0/quote", {
+                    method: "POST",
+                    headers: { "content-type": "application/json" },
+                    body: JSON.stringify(quoteRequest)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    isLoadingPreview = false;
+                    if (data.quote) {
+                        // Store preview data
+                        previewData = data.quote;
+                        
+                        // Update the receive amount display
+                        const amountOut = data.quote.amountOutFormatted || 
+                            Big(data.quote.amountOut || "0")
+                                .div(Big(10).pow(selectedTokenOut.decimals || 18))
+                                .toFixed(6);
+                        document.getElementById("amount-out").value = amountOut;
+                        const usdValue = parseFloat(amountOut) * (selectedTokenOut.price || 1);
+                        document.getElementById("receive-value").textContent = "$" + usdValue.toFixed(2);
+                        
+                        // Update button state now that we have preview
+                        updateSubmitButton();
+                    } else {
+                        // If no quote, show error in receive field
+                        document.getElementById("amount-out").value = "Error";
+                        document.getElementById("receive-value").textContent = "Unable to quote";
+                        previewData = null;
+                        updateSubmitButton();
+                    }
+                })
+                .catch(err => {
+                    isLoadingPreview = false;
+                    console.error("Error fetching estimate:", err);
+                    document.getElementById("amount-out").value = "Error";
+                    document.getElementById("receive-value").textContent = "Unable to quote";
+                    previewData = null;
+                    updateSubmitButton();
+                });
+            }
+            
             function fetchDryQuote() {
                 const selectedTokenIn = intentsTokensIn.find(t => t.id === tokenIn);
                 const selectedTokenOut = allTokensOut.find(
@@ -1288,13 +1472,10 @@ const code = `
 
             function updateQuoteDisplay() {
                 const quoteContainer = document.getElementById("quote-display");
-                const amountOutInput = document.getElementById("amount-out");
-                const receiveValue = document.getElementById("receive-value");
                 
-                if (quote) {
-                    // Update amount out
-                    amountOutInput.value = quote.amountOutFormatted;
-                    receiveValue.textContent = "$" + (quote.amountOutUsd || "0.00");
+                // Only show full quote details if we have a real quote from backend
+                if (realQuote && realQuote.quote) {
+                    const quote = realQuote.quote;
                     
                     // Update quote display
                     const selectedTokenIn = intentsTokensIn.find(t => t.id === tokenIn);
@@ -1368,63 +1549,100 @@ const code = `
             }
 
             function updateSubmitButton() {
-                const btn = document.getElementById("submit-btn");
+                const getQuoteBtn = document.getElementById("get-quote-btn");
+                const createProposalBtn = document.getElementById("create-proposal-btn");
+                const hasRequiredFields = tokenIn && tokenOut && networkOut && amountIn && parseFloat(amountIn) > 0;
                 
                 if (isLoadingQuote) {
-                    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Fetching Quote...';
-                    btn.disabled = true;
-                    btn.className = "btn btn-primary";
-                } else if (quote) {
-                    btn.textContent = isLoading ? "Creating Proposal..." : "Create Proposal";
-                    btn.disabled = isLoading || !quote.deadline;
-                    btn.className = "btn btn-success";
+                    getQuoteBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Fetching Quote...';
+                    getQuoteBtn.disabled = true;
+                    getQuoteBtn.style.display = "inline-block";
+                    createProposalBtn.style.display = "none";
+                } else if (realQuote) {
+                    // Have real quote, show create proposal button
+                    getQuoteBtn.style.display = "none";
+                    createProposalBtn.style.display = "inline-block";
+                    
+                    if (isLoading) {
+                        createProposalBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating Proposal...';
+                        createProposalBtn.disabled = true;
+                    } else {
+                        createProposalBtn.textContent = "Create Proposal";
+                        createProposalBtn.disabled = !realQuote.quote || !realQuote.quote.deadline;
+                    }
                 } else {
-                    btn.textContent = "Get Quote";
-                    btn.disabled = true;
-                    btn.className = "btn btn-primary";
+                    // No real quote yet, show Get Quote button
+                    getQuoteBtn.style.display = "inline-block";
+                    getQuoteBtn.textContent = "Get Quote";
+                    // Only enable Get Quote when we have all fields AND a preview
+                    const hasPreview = previewData !== null && !isLoadingPreview;
+                    getQuoteBtn.disabled = !hasRequiredFields || !hasPreview;
+                    createProposalBtn.style.display = "none";
                 }
             }
 
-            function handleSubmit() {
-                if (!quote || !quote.deadline) return;
-                
-                const selectedTokenIn = intentsTokensIn.find(t => t.id === tokenIn);
-                const selectedTokenOut = allTokensOut.find(
-                    t => t.symbol === tokenOut && t.network === networkOut
-                );
-                
-                if (!selectedTokenIn || !selectedTokenOut) {
-                    showError("Cannot find token information. Please try again.");
+            function handleGetQuote() {
+                // Fetch the real quote from backend
+                if (!tokenIn || !tokenOut || !networkOut || !amountIn || parseFloat(amountIn) <= 0) {
+                    showError("Please fill in all fields");
                     return;
                 }
                 
-                const selectedNetwork = availableNetworks.find(n => n.id === networkOut);
-                const networkName = selectedNetwork ? selectedNetwork.name : networkOut;
+                fetchRealQuote();
+            }
+            
+            function handleCreateProposal() {
+                // Create the proposal with the real quote
+                if (!realQuote || !realQuote.quote || !realQuote.quote.deadline) {
+                    console.error("No real quote available for proposal creation");
+                    return;
+                }
                 
+                // Prevent duplicate submissions
+                if (isLoading) {
+                    console.log("Already processing proposal creation");
+                    return;
+                }
+                
+                // Simply send the real quote to parent for proposal creation
                 isLoading = true;
                 updateSubmitButton();
                 clearError();
                 
-                const decimals = selectedTokenIn.decimals || 18;
-                const amountInSmallestUnit = Big(amountIn)
-                    .mul(Big(10).pow(decimals))
-                    .toFixed(0);
+                console.log("Sending proposal to parent with quote:", realQuote);
                 
-                // Send to parent for backend processing
+                // The parent expects the full payload structure from backend
                 window.parent.postMessage({
                     handler: "onSubmit",
                     args: {
-                        treasuryDaoID,
-                        inputToken: selectedTokenIn,
-                        outputToken: selectedTokenOut,
-                        amountIn: amountInSmallestUnit,
-                        slippageTolerance: parseInt(slippageTolerance),
-                        networkOut: networkName,
-                        tokenOutSymbol: selectedTokenOut.symbol // Send the symbol explicitly
+                        ...realQuote,
+                        // Ensure backward compatibility with parent component expectations
+                        tokenInSymbol: realQuote.tokenInSymbol || tokenIn,
+                        tokenOutSymbol: realQuote.tokenOutSymbol || tokenOut,
+                        networkOut: realQuote.networkOut || networkOut,
+                        slippage: slippageTolerance
                     }
                 }, "*");
             }
 
+            function lockFields() {
+                // Lock all input fields and dropdowns after getting quote
+                document.getElementById("amount-in").disabled = true;
+                document.getElementById("slippage-input").disabled = true;
+                document.getElementById("send-dropdown-toggle").disabled = true;
+                document.getElementById("receive-dropdown-toggle").disabled = true;
+                document.getElementById("network-dropdown-toggle").disabled = true;
+            }
+            
+            function unlockFields() {
+                // Unlock fields when resetting
+                document.getElementById("amount-in").disabled = false;
+                document.getElementById("slippage-input").disabled = false;
+                document.getElementById("send-dropdown-toggle").disabled = false;
+                document.getElementById("receive-dropdown-toggle").disabled = false;
+                document.getElementById("network-dropdown-toggle").disabled = false;
+            }
+            
             function showError(message) {
                 const container = document.getElementById("error-container");
                 const messageEl = document.getElementById("error-message");
@@ -1619,46 +1837,31 @@ return (
             break;
           }
           case "onSubmit": {
-            // Process the submission through our backend
+            // We already have the quote from the iframe, no need to fetch again
             const args = e.args;
-            asyncFetch("${REPL_BACKEND_API}/treasury/oneclick-quote", {
-              method: "POST",
-              headers: { "content-type": "application/json" },
-              body: JSON.stringify(args),
-            })
-              .then((res) => {
-                if (!res.ok) {
-                  throw new Error(`HTTP error! status: ${res.status}`);
-                }
-                const data = res.body;
-                if (data.error) {
-                  throw new Error(data.error);
-                }
-                if (!data.success || !data.proposalPayload) {
-                  throw new Error("Invalid response from backend");
-                }
+            console.log("Received quote from iframe:", args);
 
-                // Submit the proposal payload with the original tokenOutSymbol
-                onSubmit({
-                  ...data.proposalPayload,
-                  tokenOutSymbol: args.tokenOutSymbol, // Preserve the original symbol
-                });
-              })
-              .catch((err) => {
-                console.error("Failed to create proposal:", err);
-                // Send error back to iframe
-                const iframe = document.querySelector("iframe");
-                if (iframe && iframe.contentWindow) {
-                  iframe.contentWindow.postMessage(
-                    {
-                      error:
-                        err.message ||
-                        "Failed to create proposal. Please try again.",
-                    },
-                    "*"
-                  );
-                }
+            // Directly submit the proposal with the quote we already have
+            try {
+              onSubmit({
+                ...args,
+                tokenOutSymbol: args.tokenOutSymbol || args.tokenOut, // Ensure we have the symbol
               });
+            } catch (err) {
+              console.error("Failed to create proposal:", err);
+              // Send error back to iframe
+              const iframe = document.querySelector("iframe");
+              if (iframe && iframe.contentWindow) {
+                iframe.contentWindow.postMessage(
+                  {
+                    error:
+                      err.message ||
+                      "Failed to create proposal. Please try again.",
+                  },
+                  "*"
+                );
+              }
+            }
             break;
           }
           case "updateIframeHeight": {

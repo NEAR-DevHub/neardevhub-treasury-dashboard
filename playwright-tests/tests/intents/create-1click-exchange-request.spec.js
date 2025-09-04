@@ -914,8 +914,23 @@ test.describe("1Click API Integration - Asset Exchange", function () {
       });
     });
 
-    // Wait for auto-fetched quote to appear inside iframe (quotes now auto-fetch when form is filled)
-    console.log("Waiting for auto-fetched quote to appear inside iframe...");
+    // Wait for preview to load in receive amount field
+    console.log("Waiting for preview to appear in receive amount...");
+    await page.waitForTimeout(2000); // Give time for preview to load
+    const receiveAmountField = iframe.locator("#amount-out");
+    await expect(receiveAmountField).not.toHaveValue("");
+    await expect(receiveAmountField).not.toHaveValue("Loading...");
+    const previewAmount = await receiveAmountField.inputValue();
+    console.log("Preview receive amount:", previewAmount);
+
+    // Now Get Quote button should be enabled
+    console.log("Clicking Get Quote button...");
+    const getQuoteButton = iframe.locator("#get-quote-btn");
+    await expect(getQuoteButton).toBeEnabled({ timeout: 10000 });
+    await getQuoteButton.click();
+
+    // Wait for quote to appear inside iframe
+    console.log("Waiting for quote to appear inside iframe...");
     await expect(iframe.locator(".quote-alert")).toContainText(
       "Please approve this request",
       { timeout: 10000 }
@@ -955,9 +970,8 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     console.log("✅ Quote details expanded and screenshot taken");
 
     // Verify Create Proposal button is now visible inside iframe
-    await expect(
-      iframe.locator('button:text("Create Proposal")')
-    ).toBeVisible();
+    const createProposalButton = iframe.locator("#create-proposal-btn");
+    await expect(createProposalButton).toBeVisible({ timeout: 10000 });
 
     console.log("✅ Successfully fetched quote from 1Click API!");
     console.log("✅ Quote shows: 0.15 ETH → 375.00 USDC");
@@ -974,7 +988,8 @@ test.describe("1Click API Integration - Asset Exchange", function () {
       }
     });
 
-    await iframe.locator('button:text("Create Proposal")').click();
+    // Now click Create Proposal
+    await createProposalButton.click();
 
     // Wait for transaction modal to appear
     console.log("Waiting for transaction modal...");

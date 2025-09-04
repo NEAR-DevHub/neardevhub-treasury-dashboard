@@ -573,34 +573,28 @@ test.describe("OneClickExchangeForm Component", () => {
     await mockApiResponses(page);
     const iframe = await setupComponent(page);
 
-    // Initially Create Proposal button shouldn't be visible (no quote fetched)
-    await expect(
-      iframe.locator('button:text("Create Proposal")')
-    ).not.toBeVisible();
+    // Initially Get Quote button should be disabled
+    const getQuoteButton = iframe.locator("#get-quote-btn");
+    await expect(getQuoteButton).toBeDisabled();
 
-    // Fill amount only - button should still not be visible (incomplete form)
+    // Create Proposal button shouldn't be visible initially
+    await expect(iframe.locator("#create-proposal-btn")).not.toBeVisible();
+
+    // Fill amount only - Get Quote should still be disabled (incomplete form)
     await iframe.locator("#amount-in").fill("1.0");
-    await expect(
-      iframe.locator('button:text("Create Proposal")')
-    ).not.toBeVisible();
+    await expect(getQuoteButton).toBeDisabled();
 
     // Test invalid amount (empty)
     await iframe.locator("#amount-in").fill("");
-    await expect(
-      iframe.locator('button:text("Create Proposal")')
-    ).not.toBeVisible();
+    await expect(getQuoteButton).toBeDisabled();
 
     // Test invalid amount (zero)
     await iframe.locator("#amount-in").fill("0");
-    await expect(
-      iframe.locator('button:text("Create Proposal")')
-    ).not.toBeVisible();
+    await expect(getQuoteButton).toBeDisabled();
 
     // Test negative amount
     await iframe.locator("#amount-in").fill("-1");
-    await expect(
-      iframe.locator('button:text("Create Proposal")')
-    ).not.toBeVisible();
+    await expect(getQuoteButton).toBeDisabled();
   });
 
   test("handles slippage tolerance input", async ({
@@ -784,11 +778,18 @@ test.describe("OneClickExchangeForm Component", () => {
     // Click on first available network (ethereum should be available)
     await networkDropdownMenu.locator(".dropdown-item").first().click();
 
-    // Wait for auto-fetched quote to appear (triggered by form field changes)
-    // The quote should appear automatically after filling all fields
+    // Click Get Quote button to fetch quote
+    const getQuoteButton = iframe.locator("#get-quote-btn");
+    await expect(getQuoteButton).toBeEnabled();
+    await getQuoteButton.click();
+
+    // Wait for quote to appear
     await expect(iframe.locator(".quote-alert")).toBeVisible({
       timeout: 10000,
     });
+
+    // Verify Create Proposal button is now visible
+    await expect(iframe.locator("#create-proposal-btn")).toBeVisible();
 
     // Scroll down to see the full quote
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
@@ -924,7 +925,11 @@ test.describe("OneClickExchangeForm Component", () => {
     await networkDropdownMenu.waitFor({ state: "visible" });
     await networkDropdownMenu.locator(".dropdown-item").first().click();
 
-    // Auto-fetch should trigger the loading state after all fields are filled
+    // Click Get Quote button to trigger loading state
+    const getQuoteButton = iframe.locator("#get-quote-btn");
+    await expect(getQuoteButton).toBeEnabled();
+    await getQuoteButton.click();
+
     // We should see the loading state
     await expect(
       iframe.locator('button:text("Fetching Quote...")')
@@ -1065,7 +1070,14 @@ test.describe("OneClickExchangeForm Component", () => {
         }
       );
 
-      // Wait for auto-fetched quote to appear
+      // Click Get Quote if this is the first test case
+      if (i === 0) {
+        const getQuoteButton = iframe.locator("#get-quote-btn");
+        await expect(getQuoteButton).toBeEnabled();
+        await getQuoteButton.click();
+      }
+
+      // Wait for quote to appear
       await iframe.locator(".quote-summary").waitFor({
         state: "visible",
         timeout: 10000,
@@ -1112,10 +1124,13 @@ test.describe("OneClickExchangeForm Component", () => {
         await amountInput.fill("0.1");
         await page.waitForTimeout(500);
 
-        // Wait for Create Proposal button to be visible (quote auto-fetched)
-        await expect(
-          iframe.locator('button:text("Create Proposal")')
-        ).toBeVisible();
+        // Click Get Quote again for the next test
+        const getQuoteButton = iframe.locator("#get-quote-btn");
+        await expect(getQuoteButton).toBeEnabled();
+        await getQuoteButton.click();
+
+        // Wait for Create Proposal button to be visible
+        await expect(iframe.locator("#create-proposal-btn")).toBeVisible();
       }
     }
 
@@ -1398,8 +1413,17 @@ test.describe("OneClickExchangeForm Component", () => {
       fullPage: true,
     });
 
-    // Wait for auto-fetched quote to appear
-    // The quote should appear automatically after filling all fields
+    // Wait for preview to appear in receive amount field
+    await page.waitForTimeout(2000); // Give time for preview to load
+    const receiveAmount = await iframe.locator("#amount-out").inputValue();
+    console.log("Preview receive amount:", receiveAmount);
+
+    // Now Get Quote button should be enabled
+    const getQuoteButton = iframe.locator("#get-quote-btn");
+    await expect(getQuoteButton).toBeEnabled({ timeout: 10000 });
+    await getQuoteButton.click();
+
+    // Wait for quote to appear
     await iframe.locator(".quote-summary").waitFor({
       state: "visible",
       timeout: 10000,
@@ -1427,7 +1451,7 @@ test.describe("OneClickExchangeForm Component", () => {
     await page.waitForTimeout(1000);
 
     // Check that Create Proposal button appears after quote
-    const createButton = iframe.locator('button:text("Create Proposal")');
+    const createButton = iframe.locator("#create-proposal-btn");
     await expect(createButton).toBeVisible();
 
     // Verify button is enabled and can be clicked
@@ -1671,17 +1695,19 @@ test.describe("OneClickExchangeForm Component", () => {
     await networkDropdownMenu.waitFor({ state: "visible" });
     await networkDropdownMenu.locator(".dropdown-item").first().click();
 
-    // The iframe always adds a deadline, so let's verify the quote has a deadline in the happy path
-    // Since the API returns an error, the quote should not be displayed
+    // Click Get Quote button - it should handle the error gracefully
+    const getQuoteButton = iframe.locator("#get-quote-btn");
+    await expect(getQuoteButton).toBeEnabled();
+    await getQuoteButton.click();
+
+    // Wait for error handling
     await page.waitForTimeout(2000); // Wait for quote fetch attempt
 
     // Verify no quote is displayed when there's an error
     await expect(iframe.locator(".quote-summary")).not.toBeVisible();
 
     // Verify the Create Proposal button is not visible when there's no valid quote
-    await expect(
-      iframe.locator('button:text("Create Proposal")')
-    ).not.toBeVisible();
+    await expect(iframe.locator("#create-proposal-btn")).not.toBeVisible();
   });
 
   test("decimal input field accepts decimal numbers correctly", async ({
@@ -1917,10 +1943,17 @@ test.describe("OneClickExchangeForm Component", () => {
       .first()
       .click();
 
-    // Submit
-    await iframe.locator('button:has-text("Get Quote")').click();
+    // Click Get Quote first
+    const getQuoteButton = iframe.locator("#get-quote-btn");
+    await expect(getQuoteButton).toBeEnabled();
+    await getQuoteButton.click();
+
+    // Wait for quote and Create Proposal button
     await page.waitForTimeout(1000);
-    await iframe.locator('button:has-text("Create Proposal")').click();
+    await expect(iframe.locator("#create-proposal-btn")).toBeVisible();
+
+    // Now click Create Proposal
+    await iframe.locator("#create-proposal-btn").click();
 
     // Get the captured proposal
     await page.waitForTimeout(500);
