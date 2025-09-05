@@ -104,8 +104,12 @@ export async function cacheCDN(page) {
         const contentType =
           response.headers()["content-type"] || "application/octet-stream";
 
-        await fs.promises.writeFile(cacheFilePath, body);
-        await fs.promises.writeFile(`${cacheFilePath}.type`, contentType);
+        try {
+          await fs.promises.writeFile(cacheFilePath, body);
+          await fs.promises.writeFile(`${cacheFilePath}.type`, contentType);
+        } catch (e) {
+          console.warn(e);
+        }
 
         try {
           await route.fulfill({
