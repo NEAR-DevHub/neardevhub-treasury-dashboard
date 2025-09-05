@@ -1033,7 +1033,7 @@ test.describe("OneClickExchangeForm Component", () => {
 
   test("handles quote expiry time calculation", async ({ page }) => {
     await mockApiResponses(page);
-    const iframe = await setupComponent(page);
+    let iframe = await setupComponent(page);
 
     // Wait for the component to be ready
     await page.waitForTimeout(1000); // Give time for tokens to load
@@ -1062,78 +1062,97 @@ test.describe("OneClickExchangeForm Component", () => {
       },
     ];
 
-    // Fill the form first
-    await page.waitForTimeout(500);
-    const sendDropdown = iframe
-      .locator(".send-section")
-      .locator(".dropdown-toggle");
-    await sendDropdown.scrollIntoViewIfNeeded();
-    await sendDropdown.click();
-    await page.waitForTimeout(500);
-    // Use helper to select ETH token precisely
-    await selectTokenBySymbol(iframe, "send", "ETH");
+    // Helper function to fill the form
+    const fillForm = async () => {
+      const sendDropdown = iframe
+        .locator(".send-section")
+        .locator(".dropdown-toggle");
+      await sendDropdown.scrollIntoViewIfNeeded();
+      await sendDropdown.click();
+      await page.waitForTimeout(500);
+      await selectTokenBySymbol(iframe, "send", "ETH");
 
-    const amountInput = iframe.locator("#amount-in");
-    await amountInput.scrollIntoViewIfNeeded();
-    await amountInput.fill("0.1");
-    await page.waitForTimeout(500);
+      const amountInput = iframe.locator("#amount-in");
+      await amountInput.scrollIntoViewIfNeeded();
+      await amountInput.fill("0.1");
+      await page.waitForTimeout(500);
 
-    const receiveDropdown = iframe
-      .locator(".receive-section")
-      .locator(".dropdown-toggle");
-    await receiveDropdown.scrollIntoViewIfNeeded();
-    await receiveDropdown.click();
-    await page.waitForTimeout(500);
-    const receiveDropdownMenu = iframe.locator(
-      ".receive-section .dropdown-menu.show"
-    );
-    await receiveDropdownMenu.waitFor({ state: "visible" });
-    await receiveDropdownMenu
-      .locator(".dropdown-item")
-      .filter({ hasText: "USDC" })
-      .first()
-      .click();
+      const receiveDropdown = iframe
+        .locator(".receive-section")
+        .locator(".dropdown-toggle");
+      await receiveDropdown.scrollIntoViewIfNeeded();
+      await receiveDropdown.click();
+      await page.waitForTimeout(500);
+      const receiveDropdownMenu = iframe.locator(
+        ".receive-section .dropdown-menu.show"
+      );
+      await receiveDropdownMenu.waitFor({ state: "visible" });
+      await receiveDropdownMenu
+        .locator(".dropdown-item")
+        .filter({ hasText: "USDC" })
+        .first()
+        .click();
 
-    await page.waitForTimeout(1000); // Wait for networks to be populated
-    const networkDropdown = iframe
-      .locator(".form-section")
-      .filter({ hasText: "Network" })
-      .locator(".dropdown-toggle");
-    await networkDropdown.scrollIntoViewIfNeeded();
-    await networkDropdown.click();
-    await page.waitForTimeout(500);
-    const networkDropdownMenu = iframe.locator("#network-dropdown-menu");
-    await networkDropdownMenu.waitFor({ state: "visible" });
-    await networkDropdownMenu.locator(".dropdown-item").first().click();
+      await page.waitForTimeout(1000); // Wait for networks to be populated
+      const networkDropdown = iframe
+        .locator(".form-section")
+        .filter({ hasText: "Network" })
+        .locator(".dropdown-toggle");
+      await networkDropdown.scrollIntoViewIfNeeded();
+      await networkDropdown.click();
+      await page.waitForTimeout(500);
+      const networkDropdownMenu = iframe.locator("#network-dropdown-menu");
+      await networkDropdownMenu.waitFor({ state: "visible" });
+      await networkDropdownMenu.locator(".dropdown-item").first().click();
+
+      // Wait for preview to appear
+      await page.waitForTimeout(2000);
+    };
 
     // Test each expiry time
     for (let i = 0; i < testExpiryTimes.length; i++) {
       const testCase = testExpiryTimes[i];
 
-      // Mock API response with specific deadline
-      await page.route(
-        "https://1click.chaindefuser.com/v0/quote",
-        async (route) => {
-          await route.fulfill({
-            status: 200,
-            contentType: "application/json",
-            body: JSON.stringify({
+      // Mock backend API response with specific deadline
+      await page.route("**/api/treasury/oneclick-quote", async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            success: true,
+            proposalPayload: {
+              tokenIn: "nep141:eth.omft.near",
+              tokenInSymbol: "ETH",
+              tokenOut:
+                "nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
+              tokenOutSymbol: "USDC",
+              networkOut: "eth:1",
+              amountIn: "0.1",
               quote: {
-                ...mockQuoteResponse.quote,
+                amountIn: "100000000000000000",
+                amountInFormatted: "0.1",
+                amountInUsd: "350.00",
+                amountOut: "350000000",
+                amountOutFormatted: "350.00",
+                amountOutUsd: "350.00",
+                minAmountOut: "343000000",
+                timeEstimate: 10,
                 deadline: testCase.deadline,
+                depositAddress: "test-deposit-address-123",
+                signature: "ed25519:test-signature",
               },
-              signature: "ed25519:test-signature",
-            }),
-          });
-        }
-      );
+            },
+          }),
+        });
+      });
 
-      // Click Get Quote if this is the first test case
-      if (i === 0) {
-        const getQuoteButton = iframe.locator("#get-quote-btn");
-        await expect(getQuoteButton).toBeEnabled();
-        await getQuoteButton.click();
-      }
+      // Fill the form for each test case
+      await fillForm();
+
+      // Click Get Quote button
+      const getQuoteButton = iframe.locator("#get-quote-btn");
+      await expect(getQuoteButton).toBeEnabled({ timeout: 10000 });
+      await getQuoteButton.click();
 
       // Wait for quote to appear
       await iframe.locator(".quote-summary").waitFor({
@@ -1144,8 +1163,25 @@ test.describe("OneClickExchangeForm Component", () => {
       // Wait for quote to render
       await page.waitForTimeout(500);
 
-      // Scroll the quote display into view before screenshot
+      // Expand quote details to show deadline
+      const detailsToggle = iframe.locator(".details-toggle");
+      await detailsToggle.click();
+
+      // Wait for details to expand
+      await iframe.locator(".quote-details").waitFor({ state: "visible" });
+      await page.waitForTimeout(500);
+
+      // Find and scroll to the expiry detail row
+      const expiryRow = iframe.locator(
+        '.detail-row:has(.detail-label:text("Quote expires"))'
+      );
+      await expiryRow.scrollIntoViewIfNeeded();
+
+      // Scroll the entire quote display into view
       await iframe.locator(".quote-display").scrollIntoViewIfNeeded();
+
+      // Wait a bit for scroll to settle
+      await page.waitForTimeout(500);
 
       // Take screenshot showing the expiry time
       await page.screenshot({
@@ -1166,29 +1202,27 @@ test.describe("OneClickExchangeForm Component", () => {
       );
 
       // Wait before moving to next test
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(1000);
 
-      // Reset the form to test the next one (if not the last)
+      // Reset the form for the next test (if not the last)
       if (i < testExpiryTimes.length - 1) {
-        // Change the amount input to trigger form reset
-        const amountInput = iframe.locator("#amount-in");
-        await amountInput.scrollIntoViewIfNeeded();
-        await amountInput.click({ clickCount: 3 }); // Triple click to select all
-        await amountInput.fill("0.2"); // Change the value
-        await page.waitForTimeout(500);
+        // Simply reload the page to get a fresh form
+        await page.reload();
 
-        // Change it back to original value
-        await amountInput.click({ clickCount: 3 });
-        await amountInput.fill("0.1");
-        await page.waitForTimeout(500);
+        // Wait for iframe to load again
+        await page.waitForSelector("iframe", { state: "visible" });
 
-        // Click Get Quote again for the next test
-        const getQuoteButton = iframe.locator("#get-quote-btn");
-        await expect(getQuoteButton).toBeEnabled();
-        await getQuoteButton.click();
+        // Re-establish iframe reference
+        iframe = page.frameLocator("iframe");
 
-        // Wait for Create Proposal button to be visible
-        await expect(iframe.locator("#create-proposal-btn")).toBeVisible();
+        // Wait for the component inside the iframe to be visible
+        await iframe.locator(".one-click-exchange-form").waitFor({
+          state: "visible",
+          timeout: 10000,
+        });
+
+        // Wait for component to be ready
+        await page.waitForTimeout(1000);
       }
     }
 
