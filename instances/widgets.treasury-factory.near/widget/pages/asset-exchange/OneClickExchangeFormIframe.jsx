@@ -283,76 +283,101 @@ const code = `
                 margin-top: 4px;
             }
             .quote-display {
-                background-color: ${colors["--bg-system-color"]};
-                border: 1px solid ${colors["--border-color"]};
-                border-radius: 8px;
-                padding: 20px;
                 margin-bottom: 24px;
             }
-            .quote-alert {
-                background-color: rgba(177, 113, 8, 0.1);
-                border: 1px solid ${colors["--other-warning"]};
+            .warning-box {
+                background: rgba(255, 158, 0, 0.1);
                 color: ${colors["--other-warning"]};
-                padding: 12px;
-                border-radius: 6px;
-                margin-bottom: 16px;
+                padding-inline: 0.8rem;
+                padding-block: 0.5rem;
+                font-weight: 500;
+                font-size: 13px;
+                border-radius: 0.5rem;
+                margin-bottom: 1rem;
                 display: flex;
                 align-items: center;
-                gap: 8px;
+                gap: 0.5rem;
+            }
+            .warning-box i {
+                color: ${colors["--other-warning"]} !important;
+                font-size: 1.2rem;
+            }
+            .collapse-container {
+                border-radius: 0.5rem;
+                border: 1px solid var(--border-color);
+            }
+            .collapse-container.collapse-shown {
+                border-bottom: none !important;
+                border-radius: 0.5rem 0.5rem 0 0;
+            }
+            .toggle-header {
+                padding-block: 0.6rem;
+                padding-inline: 0.6rem;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                background-color: ${colors["--grey-04"]};
+                border-radius: 0.5rem;
+            }
+            .collapse-container.collapse-shown .toggle-header {
+                border-radius: 0.5rem 0.5rem 0 0;
+            }
+            .exchange-rate-display {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                font-size: 14px;
+                color: ${colors["--text-color"]};
+                cursor: pointer;
+            }
+            .rate-warning {
+                color: ${colors["--other-red"]};
+            }
+            .details-toggle-btn {
+                display: flex;
+                gap: 0.5rem;
+                align-items: center;
+                cursor: pointer;
+                color: ${colors["--text-color"]};
                 font-size: 14px;
             }
-            .alert-icon {
-                color: ${colors["--other-warning"]};
-                font-size: 18px;
+            #exchange-details-collapse.show {
+                border-top: 1px solid var(--border-color);
             }
-            .quote-summary {
-                font-size: 18px;
-                font-weight: 500;
-                color: ${colors["--text-color"]};
-                margin-bottom: 20px;
-                display: flex;
-                align-items: center;
-                gap: 8px;
-            }
-            .arrow-icon {
-                color: ${colors["--text-secondary-color"]};
-            }
-            .quote-details {
-                border-top: 1px solid ${colors["--border-color"]};
-                padding-top: 16px;
-                margin-top: 16px;
-            }
-            .detail-row {
+            .collapse-item {
                 display: flex;
                 justify-content: space-between;
+                width: 100%;
                 align-items: center;
-                padding: 8px 0;
-                color: ${colors["--text-color"]};
-                font-size: 14px;
+                gap: 0.5rem;
+                border: 1px solid var(--border-color);
+                border-top: none;
+                padding-block: 0.6rem;
+                padding-inline: 0.6rem;
+                background-color: ${colors["--bg-system-color"]};
             }
-            .detail-row:not(:last-child) {
-                border-bottom: 1px solid ${colors["--grey-04"]};
+            .collapse-item:last-child {
+                border-radius: 0 0 0.5rem 0.5rem;
             }
             .detail-label {
+                display: flex;
+                gap: 0.5rem;
+                align-items: center;
                 color: ${colors["--text-secondary-color"]};
+                font-size: 14px;
             }
             .detail-value {
-                font-weight: 500;
                 color: ${colors["--text-color"]};
-            }
-            .details-toggle {
-                display: flex;
-                align-items: center;
-                justify-content: flex-end;
-                margin-top: 12px;
-                color: ${colors["--theme-color"]};
-                cursor: pointer;
                 font-size: 14px;
-                font-weight: 500;
-                gap: 4px;
             }
-            .details-toggle:hover {
-                text-decoration: underline;
+            .text-green {
+                color: ${colors["--other-green"]};
+            }
+            .text-red {
+                color: ${colors["--other-red"]};
+            }
+            .text-warning {
+                color: ${colors["--other-warning"]};
             }
             .slippage-input-group {
                 display: flex;
@@ -561,43 +586,90 @@ const code = `
                 <!-- Quote Display -->
                 <div id="quote-display" style="display: none;">
                     <div class="quote-display">
-                        <!-- Expiry Alert -->
-                        <div class="quote-alert" id="quote-alert">
-                            <i class="bi bi-exclamation-triangle-fill alert-icon"></i>
+                        <!-- Details section -->
+                        <div class="d-flex flex-column gap-2 collapse-container" id="collapse-container">
+                            <div class="toggle-header">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div id="exchange-rate-display" class="exchange-rate-display">
+                                        <div id="send-exchange-rate" style="display: none"></div>
+                                        <div id="receive-exchange-rate"></div>
+                                    </div>
+                                    <i class="bi bi-info-circle text-secondary"
+                                       data-bs-toggle="tooltip"
+                                       data-bs-custom-class="custom-tooltip"
+                                       data-bs-placement="top"
+                                       title="This exchange rate is based on the 1Click exchange provider.">
+                                    </i>
+                                </div>
+                                <div class="details-toggle-btn"
+                                     data-bs-toggle="collapse"
+                                     data-bs-target="#exchange-details-collapse"
+                                     aria-expanded="false"
+                                     aria-controls="exchange-details-collapse">
+                                    <i class="bi bi-exclamation-triangle rate-warning" 
+                                       id="exchange-rate-warning" 
+                                       style="display: none"></i>
+                                    <span>Details</span>
+                                    <i class="bi bi-chevron-down" id="details-chevron"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="collapse" id="exchange-details-collapse">
+                            <div class="collapse-item">
+                                <div class="detail-label">
+                                    <span>Price Difference</span>
+                                    <i class="bi bi-info-circle text-secondary"
+                                       data-bs-toggle="tooltip"
+                                       data-bs-custom-class="custom-tooltip"
+                                       data-bs-placement="top"
+                                       title="The difference between the market price and the price you get.">
+                                    </i>
+                                </div>
+                                <div class="detail-value" id="exchange-rate-percentage">N/A</div>
+                            </div>
+                            <div class="collapse-item">
+                                <div class="detail-label">
+                                    <span>Estimated time</span>
+                                </div>
+                                <div class="detail-value" id="detail-time">10 minutes</div>
+                            </div>
+                            <div class="collapse-item">
+                                <div class="detail-label">
+                                    <span>Minimum received</span>
+                                    <i class="bi bi-info-circle text-secondary"
+                                       data-bs-toggle="tooltip"
+                                       data-bs-custom-class="custom-tooltip"
+                                       data-bs-placement="top"
+                                       title="The minimum amount you will receive after applying slippage tolerance.">
+                                    </i>
+                                </div>
+                                <div class="detail-value" id="detail-min-received">N/A</div>
+                            </div>
+                            <div class="collapse-item">
+                                <div class="detail-label">
+                                    <span>Deposit address</span>
+                                    <i class="bi bi-info-circle text-secondary"
+                                       data-bs-toggle="tooltip"
+                                       data-bs-custom-class="custom-tooltip"
+                                       data-bs-placement="top"
+                                       title="Send your tokens to this address to complete the exchange.">
+                                    </i>
+                                </div>
+                                <div class="detail-value" id="detail-deposit">N/A</div>
+                            </div>
+                            <div class="collapse-item">
+                                <div class="detail-label">
+                                    <span>Quote expires</span>
+                                </div>
+                                <div class="detail-value" id="detail-expires">N/A</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Expiry Warning -->
+                        <div class="warning-box mt-3" id="quote-alert">
+                            <i class="bi bi-exclamation-triangle"></i>
                             <span id="quote-alert-text"></span>
-                        </div>
-
-                        <!-- Quote Summary -->
-                        <div class="quote-summary">
-                            <span id="quote-summary-from"></span>
-                            <i class="bi bi-arrow-right arrow-icon"></i>
-                            <span id="quote-summary-to"></span>
-                        </div>
-
-                        <!-- Collapsible Details -->
-                        <div class="quote-details" id="quote-details" style="display: none;">
-                            <div class="detail-row">
-                                <span class="detail-label">Estimated time</span>
-                                <span class="detail-value" id="detail-time">10 minutes</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">Minimum received</span>
-                                <span class="detail-value" id="detail-min-received">N/A</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">Deposit address</span>
-                                <span class="detail-value" id="detail-deposit">N/A</span>
-                            </div>
-                            <div class="detail-row">
-                                <span class="detail-label">Quote expires</span>
-                                <span class="detail-value" id="detail-expires">N/A</span>
-                            </div>
-                        </div>
-
-                        <!-- Details Toggle -->
-                        <div class="details-toggle" id="details-toggle">
-                            <span>Details</span>
-                            <i class="bi bi-chevron-down" id="details-chevron"></i>
                         </div>
                     </div>
                 </div>
@@ -680,21 +752,51 @@ const code = `
                 setupDropdown("receive");
                 setupDropdown("network");
 
-                // Details toggle
-                document.getElementById("details-toggle").addEventListener("click", function() {
-                    showQuoteDetails = !showQuoteDetails;
-                    const detailsDiv = document.getElementById("quote-details");
-                    const chevron = document.getElementById("details-chevron");
+                // Setup collapse event listeners  
+                // Note: The collapse is handled by Bootstrap's data-bs-toggle="collapse"
+                // We just need to listen for the events to update icons
+                const collapseElement = document.getElementById("exchange-details-collapse");
+                if (collapseElement) {
+                    const collapseContainer = document.getElementById("collapse-container");
+                    const toggleIcon = document.getElementById("details-chevron");
                     
-                    if (showQuoteDetails) {
-                        detailsDiv.style.display = "block";
-                        chevron.className = "bi bi-chevron-up";
-                    } else {
-                        detailsDiv.style.display = "none";
-                        chevron.className = "bi bi-chevron-down";
-                    }
-                    updateIframeHeight();
-                });
+                    collapseElement.addEventListener("shown.bs.collapse", function() {
+                        if (collapseContainer) collapseContainer.classList.add("collapse-shown");
+                        if (toggleIcon) {
+                            toggleIcon.classList.remove("bi-chevron-down");
+                            toggleIcon.classList.add("bi-chevron-up");
+                        }
+                        updateIframeHeight();
+                    });
+                    
+                    collapseElement.addEventListener("hidden.bs.collapse", function() {
+                        if (collapseContainer) collapseContainer.classList.remove("collapse-shown");
+                        if (toggleIcon) {
+                            toggleIcon.classList.remove("bi-chevron-up");
+                            toggleIcon.classList.add("bi-chevron-down");
+                        }
+                        updateIframeHeight();
+                    });
+                }
+                
+                // Exchange rate toggle
+                const exchangeRateDisplay = document.getElementById("exchange-rate-display");
+                if (exchangeRateDisplay) {
+                    exchangeRateDisplay.addEventListener("click", function(event) {
+                        event.stopPropagation();
+                        const sendRate = document.getElementById("send-exchange-rate");
+                        const receiveRate = document.getElementById("receive-exchange-rate");
+                        if (sendRate && receiveRate) {
+                            if (sendRate.style.display === "none") {
+                                sendRate.style.display = "block";
+                                receiveRate.style.display = "none";
+                            } else {
+                                sendRate.style.display = "none";
+                                receiveRate.style.display = "block";
+                            }
+                        }
+                    });
+                }
 
                 // Cancel button
                 document.getElementById("cancel-btn").addEventListener("click", function() {
@@ -1484,13 +1586,49 @@ const code = `
                         "Please approve this request within " + getTimeRemaining(quote.deadline) + 
                         " - otherwise, it will be expired. We recommend confirming as soon as possible.";
                     
-                    document.getElementById("quote-summary-from").textContent = 
-                        quote.amountInFormatted + " " + selectedTokenIn.symbol + 
-                        " ($" + (quote.amountInUsd || "0.00") + ")";
+                    // Update exchange rate display
+                    const sendRate = document.getElementById("send-exchange-rate");
+                    const receiveRate = document.getElementById("receive-exchange-rate");
+                    const ratePercentage = document.getElementById("exchange-rate-percentage");
+                    const rateWarning = document.getElementById("exchange-rate-warning");
                     
-                    document.getElementById("quote-summary-to").textContent = 
-                        quote.amountOutFormatted + " " + tokenOut + 
-                        " ($" + (quote.amountOutUsd || "0.00") + ")";
+                    // Calculate exchange rates
+                    const amountInNum = parseFloat(quote.amountInFormatted);
+                    const amountOutNum = parseFloat(quote.amountOutFormatted);
+                    const tokenInRate = amountInNum > 0 ? amountOutNum / amountInNum : 0;
+                    const tokenOutRate = amountOutNum > 0 ? amountInNum / amountOutNum : 0;
+                    
+                    sendRate.innerHTML = "1 " + selectedTokenIn.symbol + " ≈ " + 
+                        tokenInRate.toFixed(6) + " " + tokenOut;
+                    receiveRate.innerHTML = "1 " + tokenOut + " ≈ " + 
+                        tokenOutRate.toFixed(6) + " " + selectedTokenIn.symbol;
+                    
+                    // Calculate price difference if we have market prices
+                    if (selectedTokenIn.price && quote.amountInUsd && quote.amountOutUsd) {
+                        const expectedUsdValue = amountInNum * selectedTokenIn.price;
+                        const actualUsdValue = parseFloat(quote.amountOutUsd);
+                        const priceDiff = expectedUsdValue > 0 ? 
+                            ((actualUsdValue - expectedUsdValue) / expectedUsdValue * 100) : 0;
+                        
+                        ratePercentage.textContent = priceDiff.toFixed(2) + "%";
+                        
+                        // Show warning if price difference is significant
+                        if (priceDiff < -1) {
+                            rateWarning.style.display = "inline-block";
+                            ratePercentage.classList.add("text-red");
+                            ratePercentage.classList.remove("text-green");
+                        } else if (priceDiff > 0) {
+                            rateWarning.style.display = "none";
+                            ratePercentage.classList.add("text-green");
+                            ratePercentage.classList.remove("text-red");
+                        } else {
+                            rateWarning.style.display = "none";
+                            ratePercentage.classList.remove("text-red", "text-green");
+                        }
+                    } else {
+                        ratePercentage.textContent = "N/A";
+                        rateWarning.style.display = "none";
+                    }
                     
                     // Update details
                     document.getElementById("detail-time").textContent = 
@@ -1516,10 +1654,31 @@ const code = `
                     }
                     
                     quoteContainer.style.display = "block";
+                    
+                    // Initialize tooltips for the newly added quote display elements
+                    setTimeout(() => {
+                        const tooltipElements = quoteContainer.querySelectorAll('[data-bs-toggle="tooltip"]');
+                        tooltipElements.forEach(el => {
+                            if (!el._tooltip) {
+                                new bootstrap.Tooltip(el, {
+                                    html: true,
+                                    delay: { show: 300, hide: 500 },
+                                    customClass: 'custom-tooltip',
+                                    trigger: 'hover focus'
+                                });
+                            }
+                        });
+                    }, 100);
                 } else {
-                    amountOutInput.value = "";
-                    amountOutInput.placeholder = isLoadingQuote ? "Fetching..." : "0.00";
-                    receiveValue.textContent = "$0.00";
+                    const amountOutInput = document.getElementById("amount-out");
+                    const receiveValue = document.getElementById("receive-value");
+                    if (amountOutInput) {
+                        amountOutInput.value = "";
+                        amountOutInput.placeholder = isLoadingQuote ? "Fetching..." : "0.00";
+                    }
+                    if (receiveValue) {
+                        receiveValue.textContent = "$0.00";
+                    }
                     quoteContainer.style.display = "none";
                 }
                 

@@ -931,14 +931,17 @@ test.describe("1Click API Integration - Asset Exchange", function () {
 
     // Wait for quote to appear inside iframe
     console.log("Waiting for quote to appear inside iframe...");
-    await expect(iframe.locator(".quote-alert")).toContainText(
+    await expect(iframe.locator("#quote-alert")).toContainText(
       "Please approve this request",
       { timeout: 10000 }
     );
-    // Check for the quote summary inside iframe
-    await expect(iframe.locator(".quote-summary")).toBeVisible();
-    await expect(iframe.locator(".quote-summary")).toContainText("ETH");
-    await expect(iframe.locator(".quote-summary")).toContainText("USDC");
+    // Check for the quote details inside iframe
+    await expect(iframe.locator(".collapse-container")).toBeVisible();
+    const exchangeRate = iframe
+      .locator("#receive-exchange-rate, #send-exchange-rate")
+      .first();
+    await expect(exchangeRate).toContainText("ETH");
+    await expect(exchangeRate).toContainText("USDC");
 
     // Scroll to the quote details for better video visibility
     const quoteSection = iframe.locator(".quote-display");
@@ -953,7 +956,7 @@ test.describe("1Click API Integration - Asset Exchange", function () {
 
     // Expand quote details inside iframe
     console.log("Expanding quote details inside iframe...");
-    const detailsToggle = iframe.locator(".details-toggle");
+    const detailsToggle = iframe.locator(".details-toggle-btn");
     await detailsToggle.click();
     await page.waitForTimeout(500); // Wait for animation
 
@@ -963,15 +966,12 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     await page.waitForTimeout(500); // Wait for scroll to complete
 
     // Verify deposit address is displayed in the quote details
-    const depositAddressRow = iframe.locator(
-      '.detail-row:has(.detail-label:text("Deposit address"))'
-    );
-    await expect(depositAddressRow).toBeVisible();
-    const depositAddressValue = depositAddressRow.locator(".detail-value");
+    const depositAddressElement = iframe.locator("#detail-deposit");
+    await expect(depositAddressElement).toBeVisible();
     // The deposit address should be the one from our mock quote (may be truncated in UI)
     // Check for the first part of the address since UI truncates long addresses
     const addressPrefix = testDepositAddress.substring(0, 20);
-    await expect(depositAddressValue).toContainText(addressPrefix);
+    await expect(depositAddressElement).toContainText(addressPrefix);
     console.log(
       `✅ Deposit address displayed in quote (truncated): ${addressPrefix}...`
     );

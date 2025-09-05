@@ -815,7 +815,7 @@ test.describe("OneClickExchangeForm Component", () => {
     await getQuoteButton.click();
 
     // Wait for quote to appear
-    await expect(iframe.locator(".quote-alert")).toBeVisible({
+    await expect(iframe.locator("#quote-alert")).toBeVisible({
       timeout: 10000,
     });
 
@@ -833,17 +833,20 @@ test.describe("OneClickExchangeForm Component", () => {
     });
 
     // Check expiry alert
-    await expect(iframe.locator(".quote-alert")).toContainText(
+    await expect(iframe.locator("#quote-alert")).toContainText(
       "Please approve this request within"
     );
 
-    // Check quote summary
-    await expect(iframe.locator(".quote-summary")).toBeVisible();
-    await expect(iframe.locator(".quote-summary")).toContainText("ETH");
-    await expect(iframe.locator(".quote-summary")).toContainText("USDC");
+    // Check quote details are visible
+    await expect(iframe.locator(".collapse-container")).toBeVisible();
+    const exchangeRate = iframe
+      .locator("#receive-exchange-rate, #send-exchange-rate")
+      .first();
+    await expect(exchangeRate).toContainText("ETH");
+    await expect(exchangeRate).toContainText("USDC");
 
     // Check details toggle
-    const detailsToggle = iframe.locator(".details-toggle");
+    const detailsToggle = iframe.locator(".details-toggle-btn");
     await expect(detailsToggle).toBeVisible();
     await detailsToggle.click();
 
@@ -851,28 +854,25 @@ test.describe("OneClickExchangeForm Component", () => {
     await page.waitForTimeout(300);
 
     // Check quote details
-    await expect(iframe.locator(".quote-details")).toBeVisible();
-    await expect(iframe.locator(".detail-row")).toHaveCount(4); // time, minimum, deposit, expires
+    await expect(
+      iframe.locator("#exchange-details-collapse.show")
+    ).toBeVisible();
+    await expect(iframe.locator(".collapse-item")).toHaveCount(5); // price difference, time, minimum, deposit, expires
 
     // Check minimum received calculation
-    const minReceivedRow = iframe.locator(
-      '.detail-row:has(.detail-label:text("Minimum received"))'
-    );
-    await expect(minReceivedRow).toBeVisible();
+    const minReceivedElement = iframe.locator("#detail-min-received");
+    await expect(minReceivedElement).toBeVisible();
 
     // Check deposit address is displayed with the correct value from the quote
-    const depositAddressRow = iframe.locator(
-      '.detail-row:has(.detail-label:text("Deposit address"))'
-    );
-    await expect(depositAddressRow).toBeVisible();
+    const depositAddressElement = iframe.locator("#detail-deposit");
+    await expect(depositAddressElement).toBeVisible();
     // Verify the deposit address from the mock quote is displayed (truncated in UI)
-    const depositAddressValue = depositAddressRow.locator(".detail-value");
     const testDepositAddress = "test-deposit-address-123"; // From mockQuoteResponse
     const addressPrefix = testDepositAddress.substring(0, 20);
-    await expect(depositAddressValue).toContainText(addressPrefix);
+    await expect(depositAddressElement).toContainText(addressPrefix);
 
     // Scroll to ensure details are visible
-    await minReceivedRow.scrollIntoViewIfNeeded();
+    await minReceivedElement.scrollIntoViewIfNeeded();
     await page.waitForTimeout(1000); // Wait a full second before exiting the test
   });
 
@@ -1000,19 +1000,21 @@ test.describe("OneClickExchangeForm Component", () => {
     resolveQuote();
 
     // Wait for quote to appear
-    await expect(iframe.locator(".quote-summary")).toBeVisible({
+    await expect(iframe.locator(".collapse-container")).toBeVisible({
       timeout: 5000,
     });
 
     // Expand the quote details
-    const detailsToggle = iframe.locator(".details-toggle");
+    const detailsToggle = iframe.locator(".details-toggle-btn");
     await detailsToggle.click();
 
     // Wait for details to be visible
-    await expect(iframe.locator(".quote-details")).toBeVisible();
+    await expect(
+      iframe.locator("#exchange-details-collapse.show")
+    ).toBeVisible();
 
     // Scroll to the bottom to see the full quote details
-    const quoteDetails = iframe.locator(".quote-details");
+    const quoteDetails = iframe.locator("#exchange-details-collapse");
     await quoteDetails.scrollIntoViewIfNeeded();
 
     // Scroll to the very bottom of the page to ensure all details are visible
@@ -1156,7 +1158,7 @@ test.describe("OneClickExchangeForm Component", () => {
       await getQuoteButton.click();
 
       // Wait for quote to appear
-      await iframe.locator(".quote-summary").waitFor({
+      await iframe.locator(".collapse-container").waitFor({
         state: "visible",
         timeout: 10000,
       });
@@ -1165,18 +1167,18 @@ test.describe("OneClickExchangeForm Component", () => {
       await page.waitForTimeout(500);
 
       // Expand quote details to show deadline
-      const detailsToggle = iframe.locator(".details-toggle");
+      const detailsToggle = iframe.locator(".details-toggle-btn");
       await detailsToggle.click();
 
       // Wait for details to expand
-      await iframe.locator(".quote-details").waitFor({ state: "visible" });
+      await iframe
+        .locator("#exchange-details-collapse.show")
+        .waitFor({ state: "visible" });
       await page.waitForTimeout(500);
 
       // Find and scroll to the expiry detail row
-      const expiryRow = iframe.locator(
-        '.detail-row:has(.detail-label:text("Quote expires"))'
-      );
-      await expiryRow.scrollIntoViewIfNeeded();
+      const expiryElement = iframe.locator("#detail-expires");
+      await expiryElement.scrollIntoViewIfNeeded();
 
       // Scroll the entire quote display into view
       await iframe.locator(".quote-display").scrollIntoViewIfNeeded();
@@ -1195,7 +1197,7 @@ test.describe("OneClickExchangeForm Component", () => {
       });
 
       // Verify the expiry time is displayed correctly
-      const expiryText = await iframe.locator(".quote-alert").textContent();
+      const expiryText = await iframe.locator("#quote-alert").textContent();
       console.log(
         `Expiry test ${i + 1}: ${
           testCase.description
@@ -1517,27 +1519,26 @@ test.describe("OneClickExchangeForm Component", () => {
     await getQuoteButton.click();
 
     // Wait for quote to appear
-    await iframe.locator(".quote-summary").waitFor({
+    await iframe.locator(".collapse-container").waitFor({
       state: "visible",
       timeout: 10000,
     });
 
     // Expand quote details to show all information
-    const detailsToggle = iframe.locator(".details-toggle");
+    const detailsToggle = iframe.locator(".details-toggle-btn");
     await detailsToggle.click();
-    await iframe.locator(".quote-details").waitFor({ state: "visible" });
+    await iframe
+      .locator("#exchange-details-collapse.show")
+      .waitFor({ state: "visible" });
 
     // Wait for details to fully expand
     await page.waitForTimeout(1000);
 
     // Verify deposit address is displayed in the quote details
-    const depositAddressRow = iframe.locator(
-      '.detail-row:has(.detail-label:text("Deposit address"))'
-    );
-    await expect(depositAddressRow).toBeVisible();
+    const depositAddressElement = iframe.locator("#detail-deposit");
+    await expect(depositAddressElement).toBeVisible();
     // The backend mock returns a deposit address based on the mock quote
-    const depositAddressValue = depositAddressRow.locator(".detail-value");
-    await expect(depositAddressValue).toContainText(/[a-z0-9]+/); // Should have the deposit address
+    await expect(depositAddressElement).toContainText(/[a-z0-9]+/); // Should have the deposit address
 
     // Scroll down to make sure all quote details are visible
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
