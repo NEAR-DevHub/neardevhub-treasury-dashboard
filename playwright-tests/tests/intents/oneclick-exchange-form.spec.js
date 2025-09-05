@@ -891,35 +891,46 @@ test.describe("OneClickExchangeForm Component", () => {
         .click();
     };
 
+    // First set up the standard mocks (including immediate dry quote response)
     await mockApiResponses(page);
 
-    // Mock a delayed 1Click API response to see the loading state
+    // Now override the backend API with a delayed response to see loading state
     let resolveQuote;
     const quotePromise = new Promise((resolve) => (resolveQuote = resolve));
 
-    await page.route(
-      "https://1click.chaindefuser.com/v0/quote",
-      async (route) => {
-        await quotePromise;
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
+    await page.route("**/api/treasury/oneclick-quote", async (route) => {
+      // Delay the backend response to show loading state
+      await quotePromise;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          success: true,
+          proposalPayload: {
+            tokenIn: "nep141:eth.omft.near",
+            tokenInSymbol: "ETH",
+            tokenOut:
+              "nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near",
+            tokenOutSymbol: "USDC",
+            networkOut: "eth:1",
+            amountIn: "1",
             quote: {
-              amountIn: "100000000000000000", // 0.1 ETH
-              amountInFormatted: "0.1",
-              amountOut: "350000000",
-              amountOutFormatted: "350.00",
-              minAmountOut: "343000000",
-              depositAddress: "test-address",
-              deadline: new Date(Date.now() + 300000).toISOString(),
+              amountIn: "1000000000000000000",
+              amountInFormatted: "1",
+              amountInUsd: "3500.00",
+              amountOut: "3500000000",
+              amountOutFormatted: "3500.00",
+              amountOutUsd: "3500.00",
+              minAmountOut: "3430000000",
               timeEstimate: 5,
+              deadline: new Date(Date.now() + 300000).toISOString(),
+              depositAddress: "test-deposit-address-123",
+              signature: "ed25519:test-signature",
             },
-            signature: "test-signature",
-          }),
-        });
-      }
-    );
+          },
+        }),
+      });
+    });
 
     const iframe = await setupComponent(page);
 
@@ -967,9 +978,14 @@ test.describe("OneClickExchangeForm Component", () => {
     await networkDropdownMenu.waitFor({ state: "visible" });
     await networkDropdownMenu.locator(".dropdown-item").first().click();
 
+    // Wait for preview to appear in receive amount field (required for button to be enabled)
+    await page.waitForTimeout(2000); // Give time for preview to load
+    const receiveAmount = await iframe.locator("#amount-out").inputValue();
+    console.log("Preview receive amount:", receiveAmount);
+
     // Click Get Quote button to trigger loading state
     const getQuoteButton = iframe.locator("#get-quote-btn");
-    await expect(getQuoteButton).toBeEnabled();
+    await expect(getQuoteButton).toBeEnabled({ timeout: 10000 });
     await getQuoteButton.click();
 
     // We should see the loading state
