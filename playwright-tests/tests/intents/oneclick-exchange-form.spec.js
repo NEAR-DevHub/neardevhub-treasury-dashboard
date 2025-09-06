@@ -871,6 +871,29 @@ test.describe("OneClickExchangeForm Component", () => {
     const addressPrefix = testDepositAddress.substring(0, 20);
     await expect(depositAddressElement).toContainText(addressPrefix);
 
+    // Check that the info icon tooltip contains the full deposit address
+    const depositInfoIcon = iframe.locator("#deposit-address-info");
+    await expect(depositInfoIcon).toBeVisible();
+
+    // Wait for the tooltip to be updated with the full address
+    // Bootstrap moves the title to data-original-title after initialization
+    await expect(depositInfoIcon).toHaveAttribute(
+      "data-original-title",
+      /.*test-deposit-address-123.*/,
+      {
+        timeout: 5000,
+      }
+    );
+
+    const tooltipText = await depositInfoIcon.getAttribute(
+      "data-original-title"
+    );
+    console.log("Deposit address tooltip text:", tooltipText);
+    // Verify the tooltip contains the full address and proper text
+    expect(tooltipText).toContain(testDepositAddress);
+    expect(tooltipText).toContain("Create Proposal");
+    expect(tooltipText).toContain("transfer tokens to this deposit address");
+
     // Scroll to ensure details are visible
     await minReceivedElement.scrollIntoViewIfNeeded();
     await page.waitForTimeout(1000); // Wait a full second before exiting the test

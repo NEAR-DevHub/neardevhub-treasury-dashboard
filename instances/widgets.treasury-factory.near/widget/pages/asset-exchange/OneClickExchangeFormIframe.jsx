@@ -653,7 +653,8 @@ const code = `
                                        data-bs-toggle="tooltip"
                                        data-bs-custom-class="custom-tooltip"
                                        data-bs-placement="top"
-                                       title="Send your tokens to this address to complete the exchange.">
+                                       title="Clicking 'Create Proposal' will create a DAO proposal to transfer tokens to this deposit address. Once approved, the treasury will send tokens to this address to complete the exchange."
+                                       id="deposit-address-info">
                                     </i>
                                 </div>
                                 <div class="detail-value" id="detail-deposit">N/A</div>
@@ -1493,85 +1494,6 @@ const code = `
                 });
             }
             
-            function fetchDryQuote() {
-                const selectedTokenIn = intentsTokensIn.find(t => t.id === tokenIn);
-                const selectedTokenOut = allTokensOut.find(
-                    t => t.symbol === tokenOut && t.network === networkOut
-                );
-                
-                if (!selectedTokenIn || !selectedTokenOut) {
-                    return;
-                }
-                
-                isLoadingQuote = true;
-                updateSubmitButton();
-                
-                const decimals = selectedTokenIn.decimals || 18;
-                const amountInSmallestUnit = Big(amountIn)
-                    .mul(Big(10).pow(decimals))
-                    .toFixed(0);
-                
-                // Calculate deadline (7 days for DAO voting)
-                const deadline = new Date();
-                deadline.setDate(deadline.getDate() + 7);
-                
-                const quoteRequest = {
-                    dry: true,
-                    swapType: "EXACT_INPUT",
-                    slippageTolerance: parseInt(slippageTolerance),
-                    originAsset: selectedTokenIn.id.startsWith("nep141:")
-                        ? selectedTokenIn.id
-                        : "nep141:" + selectedTokenIn.id,
-                    depositType: "INTENTS",
-                    destinationAsset: selectedTokenOut.id,
-                    refundTo: treasuryDaoID,
-                    refundType: "INTENTS",
-                    recipient: treasuryDaoID,
-                    recipientType: "INTENTS",
-                    deadline: deadline.toISOString(),
-                    amount: amountInSmallestUnit
-                };
-                
-                fetch("https://1click.chaindefuser.com/v0/quote", {
-                    method: "POST",
-                    headers: { "content-type": "application/json" },
-                    body: JSON.stringify(quoteRequest)
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) {
-                        throw new Error(data.error);
-                    }
-                    
-                    if (!data.quote) {
-                        throw new Error("Invalid quote response format");
-                    }
-                    
-                    quote = {
-                        ...data.quote,
-                        signature: data.signature,
-                        deadline: quoteRequest.deadline,
-                        amountOutFormatted: data.quote.amountOutFormatted ||
-                            Big(data.quote.amountOut || "0")
-                                .div(Big(10).pow(18))
-                                .toFixed(6),
-                        amountInFormatted: data.quote.amountInFormatted || amountIn,
-                        requestPayload: quoteRequest
-                    };
-                    
-                    updateQuoteDisplay();
-                })
-                .catch(err => {
-                    console.error("Failed to fetch quote:", err);
-                    quote = null;
-                    updateQuoteDisplay();
-                })
-                .finally(() => {
-                    isLoadingQuote = false;
-                    updateSubmitButton();
-                });
-            }
-
             function updateQuoteDisplay() {
                 const quoteContainer = document.getElementById("quote-display");
                 
@@ -1646,6 +1568,16 @@ const code = `
                     if (quote.depositAddress) {
                         document.getElementById("detail-deposit").textContent = 
                             quote.depositAddress.substring(0, 20) + "...";
+                        
+                        // Update the info icon tooltip to include the full address
+                        const depositInfoIcon = document.getElementById("deposit-address-info");
+                        if (depositInfoIcon) {
+                            const tooltipText = "Clicking 'Create Proposal' will create a DAO proposal to transfer tokens to this deposit address: " + 
+                                quote.depositAddress + 
+                                ". Once approved, the treasury will send tokens to this address to complete the exchange.";
+                            depositInfoIcon.setAttribute("title", tooltipText);
+                            depositInfoIcon.setAttribute("data-original-title", tooltipText);
+                        }
                     }
                     
                     if (quote.deadline) {
