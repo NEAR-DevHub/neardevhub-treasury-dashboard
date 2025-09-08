@@ -199,7 +199,10 @@ useEffect(() => {
           .toFixed();
         const claimedAmount = Big(ftLockup.claimed_amount).toFixed();
 
-        if (Big(claimedAmount).gte(totalLockupAmount)) {
+        if (
+          Big(claimedAmount).gte(totalLockupAmount) &&
+          Big(claimedAmount).gte(Big(ftLockup.deposited_amount))
+        ) {
           fullyClaimed.push(ftLockup);
         } else {
           partiallyClaimed.push(ftLockup);

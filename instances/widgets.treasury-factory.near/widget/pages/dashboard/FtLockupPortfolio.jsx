@@ -356,9 +356,9 @@ useEffect(() => {
     props.setFtLockupBalance(
       Big(
         convertBalanceToReadableFormat(
-          Big(accountMetadata?.session_num ?? 0)
-            .mul(accountMetadata?.release_per_session ?? 0)
-            .minus(accountMetadata?.claimed_amount ?? 0),
+          Big(accountMetadata?.deposited_amount ?? 0).minus(
+            accountMetadata?.claimed_amount ?? 0
+          ),
           ftMetadata?.decimals
         )
       )
@@ -390,16 +390,13 @@ const FtAmountDetails = () => {
                   className="rounded-circle"
                 />
                 {convertBalanceToReadableFormat(
-                  Big(accountMetadata?.session_num ?? 0).mul(
-                    accountMetadata?.release_per_session ?? 0
-                  ),
+                  Big(accountMetadata?.deposited_amount ?? 0),
                   ftMetadata?.decimals
                 )}
               </div>
               <div className="text-sm text-secondary">
                 {formatPrice(
-                  Big(accountMetadata?.session_num ?? 0)
-                    .mul(accountMetadata?.release_per_session ?? 0)
+                  Big(accountMetadata?.deposited_amount ?? 0)
                     .div(Big(10).pow(Number(ftMetadata?.decimals) || 0))
                     .mul(ftMetadata?.price ?? 0)
                 )}
@@ -424,8 +421,7 @@ const FtAmountDetails = () => {
           <Row
             label="Unreleased"
             value={convertBalanceToReadableFormat(
-              Big(accountMetadata?.session_num ?? 0)
-                .mul(accountMetadata?.release_per_session ?? 0)
+              Big(accountMetadata?.deposited_amount ?? 0)
                 .minus(accountMetadata?.unclaimed_amount ?? 0)
                 .minus(accountMetadata?.claimed_amount ?? 0),
               ftMetadata?.decimals
@@ -693,9 +689,7 @@ const FundsNotAvailableForClaim = () => {
 const FundsAlreadyClaimed = () => {
   return (
     Big(accountMetadata.claimed_amount ?? 0).gte(
-      Big(accountMetadata.session_num ?? 0).mul(
-        accountMetadata?.release_per_session ?? 0
-      )
+      Big(accountMetadata.deposited_amount ?? 0)
     ) && (
       <div
         className="border border-1 rounded-3 overflow-hidden"
