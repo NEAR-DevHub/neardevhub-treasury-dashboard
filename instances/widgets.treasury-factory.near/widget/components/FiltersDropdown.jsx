@@ -190,15 +190,17 @@ const AmountOptions = ({ showDelete }) => {
             </div>
           </div>
         </div>
-        <div
-          className="text-red cursor-pointer"
-          onClick={(e) => {
-            e.stopPropagation();
-            removeFilter();
-          }}
-        >
-          <i className="bi bi-trash"></i>
-        </div>
+        {showDelete && (
+          <div
+            className="text-red cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation();
+              removeFilter();
+            }}
+          >
+            <i className="bi bi-trash"></i>
+          </div>
+        )}
       </div>
 
       {amountValues.value && (
@@ -353,7 +355,7 @@ const OptionRender = () => {
               </div>
             </button>
             {tokenDropdownOpen && (
-              <div className="dropdown-menu show w-100">
+              <div className="dropdown-menu show w-100 scrollable-options">
                 {filteredTokens.map((token) => (
                   <div
                     key={token}

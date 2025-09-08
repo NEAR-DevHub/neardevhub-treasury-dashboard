@@ -292,7 +292,7 @@ test.describe
     await mockWithFTBalance({ page, daoAccount, isSufficient: true });
 
     await page.goto(`/${instanceAccount}/widget/app?page=asset-exchange&id=0`);
-    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(5_000);
     const approveButton = page
       .getByRole("button", {
         name: "Approve",
@@ -313,6 +313,7 @@ test.describe
     const sandbox = await setupSandboxAndCreateProposal({ daoAccount, page });
     await page.goto(`/${instanceAccount}/widget/app?page=asset-exchange&id=0`);
     await mockWithFTBalance({ page, daoAccount, isSufficient: false });
+    await page.waitForTimeout(3000);
     const approveButton = page
       .getByRole("button", {
         name: "Approve",

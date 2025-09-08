@@ -103,13 +103,13 @@ export async function mockRpcRequest({
         };
       }
 
-      route.fulfill({
+      await route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify(mockedResponse),
       });
     } else {
-      route.fallback();
+      await route.fallback();
     }
   };
 

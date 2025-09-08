@@ -19,7 +19,7 @@ if (!instance) {
 }
 
 const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
-const { setToastStatus } = props;
+const { setToastStatus, setVoteProposalId } = props;
 
 const hasCreatePermission = hasPermission(
   treasuryDaoID,
@@ -92,7 +92,7 @@ const CreateBtn = () => {
 
   const DropdowntBtnContainer = styled.div`
     font-size: 13px;
-    min-width: 150px;
+    width: fit-content;
   
     .custom-select {
       position: relative;
@@ -146,14 +146,16 @@ const CreateBtn = () => {
           className={"dropdown btn primary-button d-flex align-items-center"}
         >
           <div className="d-flex gap-2 align-items-center ">
-            <i class="bi bi-plus-lg h5 mb-0"></i>Create Request
+            <i class="bi bi-plus-lg h5 mb-0"></i>
+            <span className="responsive-text">Create Request</span>
           </div>
         </div>
 
         <div
-          className={`dropdown-menu dropdown-menu-end dropdown-menu-lg-start px-2 shadow ${
+          className={`dropdown-menu dropdown-menu-end px-2 shadow ${
             isCreateBtnOpen ? "show" : ""
           }`}
+          style={{ right: 0, left: "auto" }}
         >
           {btnOptions.map((option) => (
             <div
@@ -190,6 +192,7 @@ return (
               instance,
               onCloseCanvas: toggleStakePage,
               setToastStatus,
+              setVoteProposalId,
             }}
           />
         ),
@@ -210,6 +213,7 @@ return (
               instance,
               onCloseCanvas: toggleUnStakePage,
               setToastStatus,
+              setVoteProposalId,
             }}
           />
         ),
@@ -230,6 +234,7 @@ return (
               instance,
               onCloseCanvas: toggleWithdrawPage,
               setToastStatus,
+              setVoteProposalId,
             }}
           />
         ),

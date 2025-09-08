@@ -69,7 +69,9 @@ if (props.deposit) {
     </div>
   );
 }
-const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+const { treasuryDaoID, ftLockups } = VM.require(
+  `${instance}/widget/config.data`
+);
 
 const lockupContract = accountToLockup(treasuryDaoID);
 
@@ -115,6 +117,10 @@ const Wrapper = styled.div`
       width: 100%;
     }
   }
+
+  .flex-3 {
+    flex: 3;
+  }
 `;
 
 const [nearStakedTokens, setNearStakedTokens] = useState(null);
@@ -135,6 +141,11 @@ const [show404Modal, setShow404Modal] = useState(false);
 const [disableRefreshBtn, setDisableRefreshBtn] = useState(false);
 const [lockupState, setLockupState] = useState(false);
 const [intentsTotalUsdBalance, setIntentsTotalUsdBalance] = useState("0"); // New state for intents balance
+const [isFtLockupCollapsed, setIsFtLockupCollapsed] = useState(true);
+const [fullyClaimedFtLockups, setFullyClaimedFtLockups] = useState([]);
+const [partiallyClaimedFtLockups, setPartiallyClaimedFtLockups] = useState([]);
+const [ftLockupBalance, setFtLockupBalance] = useState(null);
+const [refreshData, setRefreshData] = useState(false);
 
 useEffect(() => {
   asyncFetch(`${REPL_BACKEND_API}/near-price`)
@@ -159,7 +170,44 @@ useEffect(() => {
     .catch((err) => {
       setShow404Modal(true);
     });
-}, []);
+}, [refreshData]);
+
+useEffect(() => {
+  if (
+    ftLockups?.length &&
+    !(fullyClaimedFtLockups?.length || partiallyClaimedFtLockups?.length)
+  ) {
+    Promise.all(
+      ftLockups.map(async (ftLockup) => {
+        return Near.asyncView(ftLockup, "get_account", {
+          account_id: treasuryDaoID,
+        }).then((res) => {
+          return {
+            ...res,
+            contractId: ftLockup,
+          };
+        });
+      })
+    ).then((res) => {
+      // Categorize FT lockups based on claim status
+      const fullyClaimed = [];
+      const partiallyClaimed = [];
+
+      res.forEach((ftLockup) => {
+        const claimedAmount = Big(ftLockup.claimed_amount).toFixed();
+
+        if (Big(claimedAmount).gte(Big(ftLockup.deposited_amount))) {
+          fullyClaimed.push(ftLockup);
+        } else {
+          partiallyClaimed.push(ftLockup);
+        }
+      });
+
+      setFullyClaimedFtLockups(fullyClaimed);
+      setPartiallyClaimedFtLockups(partiallyClaimed);
+    });
+  }
+}, [ftLockups]);
 
 // disable refresh btn for 30 seconds
 useEffect(() => {
@@ -285,6 +333,7 @@ const totalBalance = Big(nearBalances?.totalParsed ?? "0")
   .plus(Big(lockupNearBalances?.totalParsed ?? "0").mul(nearPrice ?? 1))
   .plus(Big(daoFTTokens?.totalCumulativeAmt ?? "0"))
   .plus(Big(intentsTotalUsdBalance ?? "0")) // Add intents balance
+  .plus(Big(ftLockupBalance ?? "0"))
   .toFixed(2);
 
 function formatCurrency(amount) {
@@ -399,7 +448,10 @@ return (
       />
     )}
     <div className="d-flex gap-3 flex-wrap">
-      <div className="d-flex flex-column gap-3 flex-container">
+      <div
+        className="d-flex flex-column gap-3 flex-container"
+        style={{ flex: 1.1 }}
+      >
         <div className="card card-body" style={{ minHeight: "100px" }}>
           {" "}
           {/* Adjusted minHeight for button */}
@@ -411,7 +463,9 @@ return (
           ) : (
             <>
               <div className="fw-bold h3 mb-0">
-                {formatCurrency(totalBalance)} USD
+                <span data-testid="total-balance">
+                  {formatCurrency(totalBalance)} USD
+                </span>
                 <div className="mt-2">
                   <Widget
                     loading=""
@@ -452,37 +506,6 @@ return (
             instance,
           }}
         />
-        {lockupContract && (
-          <Widget
-            loading=""
-            src={
-              "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.Portfolio"
-            }
-            props={{
-              ftTokens: [],
-              isLockupContract: true,
-              lockupState,
-              nearStakedTokens: lockupStakedTokens,
-              nearUnStakedTokens: lockupUnStakedTokens,
-              nearPrice,
-              nearWithdrawTokens: lockupNearWithdrawTokens,
-              nearBalances: lockupNearBalances,
-              nearStakedTotalTokens: lockupStakedTotalTokens,
-              heading: (
-                <div className="d-flex flex-column gap-1 px-3 pt-3 pb-2">
-                  <div className="h5 mb-0">Lockup</div>
-                  <div>
-                    <span className="text-sm text-secondary">Wallet: </span>
-                    <span className="text-theme text-sm fw-medium">
-                      {lockupContract}
-                    </span>
-                  </div>
-                </div>
-              ),
-              instance,
-            }}
-          />
-        )}
         <Widget
           loading=""
           src={
@@ -518,8 +541,93 @@ return (
             instance,
           }}
         />
+        {lockupContract && (
+          <Widget
+            loading=""
+            src={
+              "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.Portfolio"
+            }
+            props={{
+              ftTokens: [],
+              isLockupContract: true,
+              lockupState,
+              nearStakedTokens: lockupStakedTokens,
+              nearUnStakedTokens: lockupUnStakedTokens,
+              nearPrice,
+              nearWithdrawTokens: lockupNearWithdrawTokens,
+              nearBalances: lockupNearBalances,
+              nearStakedTotalTokens: lockupStakedTotalTokens,
+              heading: (
+                <div className="d-flex flex-column gap-1 px-3 pt-3 pb-2">
+                  <div className="h5 mb-0">NEAR Lockup</div>
+                  <div>
+                    <span className="text-sm text-secondary">Wallet: </span>
+                    <span className="text-theme text-sm fw-medium">
+                      {lockupContract}
+                    </span>
+                  </div>
+                </div>
+              ),
+              instance,
+            }}
+          />
+        )}
+        {/* Partially claimed FT lockups - always visible */}
+        {partiallyClaimedFtLockups.map((ftLockup) => (
+          <Widget
+            key={ftLockup.contractId}
+            loading=""
+            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.FtLockupPortfolio`}
+            props={{
+              contractId: ftLockup.contractId,
+              metadata: ftLockup,
+              instance,
+              treasuryDaoID,
+              setFtLockupBalance: (balance) => {
+                setFtLockupBalance((prev) =>
+                  Big(prev ?? 0)
+                    .plus(balance)
+                    .toFixed()
+                );
+              },
+              refreshData: () => setRefreshData(!refreshData),
+            }}
+          />
+        ))}
+
+        {/* Fully claimed FT lockups - collapsible */}
+        {fullyClaimedFtLockups.length > 0 && (
+          <div className="d-flex flex-column gap-2">
+            <div className="collapse" id="hidden-ft-lockup">
+              {fullyClaimedFtLockups.map((ftLockup) => (
+                <Widget
+                  key={ftLockup.contractId}
+                  loading=""
+                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.FtLockupPortfolio`}
+                  props={{
+                    contractId: ftLockup.contractId,
+                    instance,
+                    treasuryDaoID,
+                    metadata: ftLockup,
+                  }}
+                />
+              ))}
+            </div>
+            <button
+              className="btn btn-outline-secondary w-100"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#hidden-ft-lockup"
+              aria-expanded={!isFtLockupCollapsed}
+              aria-controls="hidden-ft-lockup"
+              onClick={() => setIsFtLockupCollapsed(!isFtLockupCollapsed)}
+            >
+              {isFtLockupCollapsed ? "Show History" : "Show Less"}
+            </button>
+          </div>
+        )}
       </div>
-      <div className="d-flex flex-column gap-2 flex-wrap dashboard-item flex-1 flex-container">
+      <div className="d-flex flex-column gap-2 flex-wrap dashboard-item flex-container flex-3">
         <Widget
           loading=""
           src={
