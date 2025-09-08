@@ -379,14 +379,6 @@ const code = `
             .text-warning {
                 color: ${colors["--other-warning"]};
             }
-            .slippage-input-group {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-            }
-            .slippage-input {
-                width: 100px;
-            }
             .error-message {
                 background-color: rgba(220, 53, 69, 0.1);
                 border: 1px solid ${colors["--other-red"]};
@@ -559,7 +551,7 @@ const code = `
                 <!-- Price Slippage Limit Section -->
                 <div class="form-section">
                     <label class="form-label">
-                        Price Slippage Limit
+                        Price Slippage Limit (%)
                         <i class="bi bi-info-circle text-muted"
                            data-bs-toggle="tooltip"
                            data-bs-custom-class="custom-tooltip"
@@ -567,16 +559,16 @@ const code = `
                            title="Maximum price change you're willing to accept. The swap will fail if the price moves beyond this limit.">
                         </i>
                     </label>
-                    <div class="slippage-input-group">
+                    <div class="d-flex">
                         <input
                             type="number"
                             id="slippage-input"
-                            class="form-control slippage-input"
+                            class="form-control"
+                            placeholder="Enter percentage"
                             min="0"
                             max="50"
                             step="0.1"
                         />
-                        <span>%</span>
                     </div>
                     <div class="helper-text">
                         Your transaction will revert if the price changes unfavorably by more than this percentage.
