@@ -194,15 +194,9 @@ useEffect(() => {
       const partiallyClaimed = [];
 
       res.forEach((ftLockup) => {
-        const totalLockupAmount = Big(ftLockup.release_per_session)
-          .mul(ftLockup.session_num)
-          .toFixed();
         const claimedAmount = Big(ftLockup.claimed_amount).toFixed();
 
-        if (
-          Big(claimedAmount).gte(totalLockupAmount) &&
-          Big(claimedAmount).gte(Big(ftLockup.deposited_amount))
-        ) {
+        if (Big(claimedAmount).gte(Big(ftLockup.deposited_amount))) {
           fullyClaimed.push(ftLockup);
         } else {
           partiallyClaimed.push(ftLockup);
