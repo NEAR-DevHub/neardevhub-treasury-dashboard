@@ -12,9 +12,6 @@ const { hasPermission, encodeToMarkdown } = VM.require(
 ) || {
   hasPermission: () => {},
 };
-const { Modal, ModalContent, ModalHeader, ModalFooter } = VM.require(
-  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.modal"
-);
 const { contractId, instance, treasuryDaoID, metadata, refreshData } = props;
 
 const Container = styled.div`
@@ -42,7 +39,6 @@ const [ftMetadata, setFtMetadata] = useState(null);
 const [isTxnCreated, setTxnCreated] = useState(false);
 const [expanded, setExpanded] = useState(false);
 const [showToastStatus, setShowToastStatus] = useState(null);
-const [showLockupInfoModal, setShowLockupInfoModal] = useState(false);
 const [accountMetadata, setAccountMetadata] = useState(null);
 const [isFTRegistered, setIsFTRegistered] = useState(false);
 
@@ -274,10 +270,18 @@ const heading = (
   <div className="d-flex flex-column gap-1 px-3 pt-3 pb-2">
     <div className="h5 mb-0">
       Lockup
-      <i
-        class="bi bi-question-circle h6 mb-0 text-secondary cursor-pointer"
-        onClick={() => setShowLockupInfoModal(true)}
-      ></i>
+      <Widget
+        loading=""
+        src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+        props={{
+          popup:
+            "A fungible lockup releases tokens other than NEAR over time according to a vesting schedule. Anyone can trigger Claim, but funds are always secure — claimed tokens go directly into your treasury (Sputnik account).",
+          children: (
+            <i class="bi bi-question-circle h6 mb-0 text-secondary cursor-pointer"></i>
+          ),
+          instance,
+        }}
+      />
     </div>
     <div>
       <span className="text-sm text-secondary">Wallet: </span>
@@ -374,7 +378,7 @@ const FtAmountDetails = () => {
         <div className="py-2 d-flex gap-2 align-items-center justify-content-between px-3 flex-wrap">
           <div className="h6 mb-0 d-flex align-items-center gap-2">
             Original Allocated Amount
-            <CustomTooltip info="This is the total amount of tokens allocated." />
+            <CustomTooltip info="The total number of tokens assigned to you in this vesting schedule." />
           </div>
           <div className="d-flex gap-2 align-items-center justify-content-end">
             <div className="d-flex flex-column align-items-end">
@@ -426,7 +430,7 @@ const FtAmountDetails = () => {
                 .minus(accountMetadata?.claimed_amount ?? 0),
               ftMetadata?.decimals
             )}
-            tooltip="This is the total amount of tokens allocated."
+            tooltip="Tokens that are still locked and not yet available to claim under your vesting schedule."
             showBorder={true}
             showSymbol={true}
             innerItem={true}
@@ -437,7 +441,7 @@ const FtAmountDetails = () => {
               accountMetadata?.unclaimed_amount,
               ftMetadata?.decimals
             )}
-            tooltip="This is the total amount of tokens remaining unclaimed from the previous round that can be claimed together."
+            tooltip='Tokens from earlier payout periods ("rounds") that you haven’t claimed yet. These can be claimed together with the next unlock.'
             showBorder={true}
             showSymbol={true}
             innerItem={true}
@@ -448,7 +452,7 @@ const FtAmountDetails = () => {
               accountMetadata?.claimed_amount,
               ftMetadata?.decimals
             )}
-            tooltip="This is the total amount of tokens you have already claimed."
+            tooltip="Tokens you’ve already claimed and transferred to your DAO treasury."
             showBorder={false}
             showSymbol={true}
             innerItem={true}
@@ -456,47 +460,6 @@ const FtAmountDetails = () => {
         </div>
       )}
     </div>
-  );
-};
-
-const LockupInfoModal = () => {
-  return (
-    showLockupInfoModal && (
-      <Modal>
-        <ModalHeader>
-          <div className="d-flex align-items-center justify-content-between">
-            <div className="h5 fw-bold mb-0">How to Claim Tokens</div>
-            <i
-              className="bi bi-x-lg h4 mb-0 cursor-pointer"
-              onClick={() => setShowLockupInfoModal(false)}
-            ></i>
-          </div>
-        </ModalHeader>
-        <ModalContent>
-          <div className="d-flex flex-column gap-3">
-            <ol className="mb-0">
-              <li className="mb-2">
-                <div className="fw-bold">Lockup created</div>
-                <div className="text-secondary">
-                  Your tokens are stored safely in this Lockup wallet
-                </div>
-              </li>
-              <li className="my-2">
-                <div className="fw-bold">Claim Tokens</div>
-                <div className="text-secondary">
-                  Click “Claim” button - this will automatically claim tokens
-                  and transfer to the SputnikDAO wallet.
-                </div>
-              </li>
-            </ol>
-            <div className="info-box d-flex gap-2 text-sm">
-              <i class="bi bi-info-circle"></i>
-              Any NEAR account can claim tokens for the treasury
-            </div>
-          </div>
-        </ModalContent>
-      </Modal>
-    )
   );
 };
 
@@ -518,7 +481,7 @@ const LockupDetails = () => {
               }}
             />
           }
-          tooltip="The date the lockup contract was started."
+          tooltip="The date this vesting schedule began."
           showBorder={true}
         />
       </div>
@@ -528,7 +491,7 @@ const LockupDetails = () => {
           value={`${calculateReleasedSessions()} / ${
             accountMetadata.session_num ?? 0
           }`}
-          tooltip="This is the number of rounds that have completed."
+          tooltip="The number of payout rounds completed out of the total scheduled."
           showBorder={true}
         />
       </div>
@@ -536,7 +499,7 @@ const LockupDetails = () => {
         <Row
           label="Release Interval"
           value={formatSessionInterval(accountMetadata.session_interval)}
-          tooltip="Time between payouts."
+          tooltip="The time period between each payout."
           showBorder={true}
         />
       </div>
@@ -554,7 +517,7 @@ const LockupDetails = () => {
               }}
             />
           }
-          tooltip="The date when your next tokens will be available to claim."
+          tooltip="The next date when tokens will be available to claim."
           showBorder={false}
         />
       </div>
@@ -746,7 +709,6 @@ const FundsAlreadyClaimed = () => {
 
 return (
   <Container>
-    <LockupInfoModal />
     <ClaimSuccessToast />
     <TransactionLoader
       showInProgress={isTxnCreated}

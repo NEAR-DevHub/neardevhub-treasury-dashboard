@@ -278,15 +278,6 @@ test("should display FT lockup portfolio with no claim available", async ({
   await page.waitForTimeout(5_000);
 
   await expect(page.getByText(lockupContract.accountId)).toBeVisible();
-
-  await page.locator(".bi.bi-question-circle").click();
-  await expect(
-    page.getByRole("heading", { name: "How to Claim Tokens " })
-  ).toBeVisible();
-  await page
-    .getByRole("heading", { name: "How to Claim Tokens " })
-    .locator("i")
-    .click();
   await expect(
     page.getByText("No tokens are ready to be claimed")
   ).toBeVisible();
