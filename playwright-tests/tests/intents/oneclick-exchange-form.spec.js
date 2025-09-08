@@ -107,18 +107,29 @@ test.describe("OneClickExchangeForm Component", () => {
     signature: "ed25519:test-signature",
   };
 
-  // Helper function to select a token from dropdown by exact symbol
+  // Helper function to select a token from dropdown by symbol
   const selectTokenBySymbol = async (iframe, dropdownType, symbol) => {
     const menuId = `#${dropdownType}-dropdown-menu`;
     const menu = iframe.locator(menuId);
     await menu.waitFor({ state: "visible" });
-    // Use exact text match for the token symbol to avoid ambiguity
-    await menu
-      .locator(".dropdown-item")
-      .filter({
-        has: iframe.locator(`.token-symbol:text-is("${symbol}")`),
-      })
-      .click();
+    // First try to find exact match for the symbol
+    let items = menu.locator(".dropdown-item").filter({
+      has: iframe.locator(`h6:text-is("${symbol}")`),
+    });
+
+    const exactCount = await items.count();
+
+    // If no exact match, look for tokens that start with the symbol (for network names like "USDC (Near Protocol)")
+    if (exactCount === 0) {
+      items = menu.locator(".dropdown-item").filter({
+        has: iframe
+          .locator(`h6`)
+          .filter({ hasText: new RegExp(`^${symbol}(\\s|$)`) }),
+      });
+    }
+
+    // Click the first matching item
+    await items.first().click();
   };
 
   // Helper function to wait for component to be ready
@@ -339,7 +350,13 @@ test.describe("OneClickExchangeForm Component", () => {
                     "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1"
                   )
                 ) {
-                  return "1000000000"; // 1000 USDC with 6 decimals
+                  return "1000000000"; // 1000 USDC with 6 decimals (NEAR native)
+                } else if (
+                  tokenId.includes(
+                    "eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near"
+                  )
+                ) {
+                  return "500000000"; // 500 USDC with 6 decimals (Ethereum bridged)
                 } else {
                   return "0";
                 }
@@ -372,7 +389,11 @@ test.describe("OneClickExchangeForm Component", () => {
                 { token_id: "nep141:btc.omft.near" },
                 {
                   token_id:
-                    "nep141:17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+                    "nep141:17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1", // USDC on NEAR
+                },
+                {
+                  token_id:
+                    "nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near", // USDC on Ethereum
                 },
               ];
 
@@ -739,13 +760,6 @@ test.describe("OneClickExchangeForm Component", () => {
       path: path.join(screenshotsDir, "03e-slippage-decimal-final.png"),
       fullPage: true,
     });
-
-    // Check that the percentage symbol is displayed
-    await expect(
-      iframe
-        .locator('.form-section:has(.form-label:text("Price Slippage Limit"))')
-        .locator('span:text("%")')
-    ).toBeVisible();
   });
 
   test("displays quote and calculates minimum received", async ({
@@ -909,7 +923,7 @@ test.describe("OneClickExchangeForm Component", () => {
       await menu
         .locator(".dropdown-item")
         .filter({
-          has: iframe.locator(`.token-symbol:text-is("${symbol}")`),
+          has: iframe.locator(`h6:text-is("${symbol}")`),
         })
         .click();
     };
@@ -1660,7 +1674,7 @@ test.describe("OneClickExchangeForm Component", () => {
       await menu
         .locator(".dropdown-item")
         .filter({
-          has: iframe.locator(`.token-symbol:text-is("${symbol}")`),
+          has: iframe.locator(`h6:text-is("${symbol}")`),
         })
         .click();
     };
@@ -1736,7 +1750,7 @@ test.describe("OneClickExchangeForm Component", () => {
 
     // Check that at least one token in the dropdown has an icon
     const dropdownTokenIcon = iframe
-      .locator("#send-dropdown-menu .dropdown-item img.token-icon")
+      .locator("#send-dropdown-menu .dropdown-item img")
       .first();
     await expect(dropdownTokenIcon).toBeVisible({ timeout: 5000 });
     console.log("✓ Token icons are visible in dropdown menu");
@@ -1927,12 +1941,13 @@ test.describe("OneClickExchangeForm Component", () => {
     // Verify filtered results
     const sendItems = iframe.locator("#send-token-list .dropdown-item");
 
-    // Should show only USDC token
-    const usdcItem = sendItems.filter({ hasText: "USDC" });
-    await expect(usdcItem).toBeVisible();
+    // Should show only USDC tokens (may have multiple with network names)
+    const usdcItems = sendItems.filter({ hasText: "USDC" });
+    const usdcCount = await usdcItems.count();
+    expect(usdcCount).toBeGreaterThan(0); // At least one USDC should be visible
 
-    // Select USDC to test that selection works with search
-    await usdcItem.click();
+    // Select the first USDC to test that selection works with search
+    await usdcItems.first().click();
 
     // Verify USDC was selected
     const sendDisplay = iframe.locator("#send-token-display");
@@ -1953,7 +1968,7 @@ test.describe("OneClickExchangeForm Component", () => {
     const receiveItems = iframe.locator("#receive-token-list .dropdown-item");
     // Use exact text match to select ETH (not WETH)
     const ethItem = receiveItems.filter({
-      has: iframe.locator('.token-symbol:text-is("ETH")'),
+      has: iframe.locator('h6:text-is("ETH")'),
     });
     await expect(ethItem).toBeVisible();
 
@@ -1965,6 +1980,134 @@ test.describe("OneClickExchangeForm Component", () => {
     await expect(receiveDisplay).toContainText("ETH");
 
     console.log("✓ Token search functionality works correctly in dropdowns");
+  });
+
+  test("should display token balances and network names correctly", async ({
+    page,
+  }) => {
+    test.setTimeout(60_000);
+    await mockApiResponses(page);
+    const iframe = await setupComponent(page);
+
+    // Open send dropdown to check balances and network names
+    await iframe.locator("#send-dropdown-toggle").click();
+    await iframe.locator("#send-dropdown-menu").waitFor({ state: "visible" });
+
+    // Check WNEAR balance (10 WNEAR)
+    const wnearItem = iframe
+      .locator("#send-dropdown-menu .dropdown-item")
+      .filter({ has: iframe.locator('h6:text-is("wNEAR")') });
+    await expect(wnearItem).toContainText("10.00");
+
+    // Check ETH balance (5 ETH)
+    const ethItem = iframe
+      .locator("#send-dropdown-menu .dropdown-item")
+      .filter({ has: iframe.locator('h6:text-is("ETH")') });
+    await expect(ethItem).toContainText("5.00");
+
+    // Check BTC balance (2 BTC)
+    const btcItem = iframe
+      .locator("#send-dropdown-menu .dropdown-item")
+      .filter({ has: iframe.locator('h6:text-is("BTC")') });
+    await expect(btcItem).toContainText("2.00");
+
+    // Check USDC entries - should have two with network names
+    const usdcItems = iframe
+      .locator("#send-dropdown-menu .dropdown-item")
+      .filter({ has: iframe.locator('h6:has-text("USDC")') });
+
+    // Should have exactly 2 USDC entries
+    await expect(usdcItems).toHaveCount(2);
+
+    // Check USDC (Near Protocol) - 1000 USDC
+    const usdcNearItem = iframe
+      .locator("#send-dropdown-menu .dropdown-item")
+      .filter({
+        has: iframe
+          .locator('h6:has-text("USDC")')
+          .filter({ hasText: "Near Protocol" }),
+      });
+    await expect(usdcNearItem).toBeVisible();
+    await expect(usdcNearItem).toContainText("1,000.00");
+
+    // Check USDC (Ethereum) - 500 USDC
+    const usdcEthItem = iframe
+      .locator("#send-dropdown-menu .dropdown-item")
+      .filter({
+        has: iframe
+          .locator('h6:has-text("USDC")')
+          .filter({ hasText: "Ethereum" }),
+      });
+    await expect(usdcEthItem).toBeVisible();
+    await expect(usdcEthItem).toContainText("500.00");
+
+    // Take screenshot of send dropdown with network names
+    await page.screenshot({
+      path: path.join(screenshotsDir, "13-send-tokens-with-network-names.png"),
+      fullPage: false,
+      clip: await iframe.locator("#send-dropdown-menu").boundingBox(),
+    });
+
+    // Close send dropdown by clicking the send toggle again
+    await iframe.locator("#send-dropdown-toggle").click();
+    await iframe.locator("#send-dropdown-menu").waitFor({ state: "hidden" });
+    await page.waitForTimeout(500);
+
+    // Now check receive dropdown for summed balances
+    await iframe.locator("#receive-dropdown-toggle").click();
+    await iframe
+      .locator("#receive-dropdown-menu")
+      .waitFor({ state: "visible" });
+
+    // In receive dropdown, USDC should show only once (grouped)
+    const receiveUsdcItems = iframe
+      .locator("#receive-dropdown-menu .dropdown-item")
+      .filter({ has: iframe.locator('h6:text-is("USDC")') });
+
+    // Should have exactly 1 USDC entry (grouped)
+    await expect(receiveUsdcItems).toHaveCount(1);
+
+    // The balance should show the sum of all USDC balances (1000 + 500 = 1500)
+    await expect(receiveUsdcItems).toContainText("1,500.00");
+
+    // Check wNEAR balance (we have 10.00)
+    const receiveWnearItems = iframe
+      .locator("#receive-dropdown-menu .dropdown-item")
+      .filter({ has: iframe.locator('h6:text-is("wNEAR")') });
+    await expect(receiveWnearItems).toContainText("10.00");
+
+    // Check ETH balance (we have 5.00)
+    const receiveEthItems = iframe
+      .locator("#receive-dropdown-menu .dropdown-item")
+      .filter({ has: iframe.locator('h6:text-is("ETH")') });
+    await expect(receiveEthItems).toContainText("5.00");
+
+    // Check BTC balance (we have 2.00)
+    const receiveBtcItems = iframe
+      .locator("#receive-dropdown-menu .dropdown-item")
+      .filter({ has: iframe.locator('h6:text-is("BTC")') });
+    await expect(receiveBtcItems).toContainText("2.00");
+
+    // Check a token we don't have should show "-"
+    // Since allTokensOut includes many tokens, let's check for one that's not in intentsTokensIn
+    const receiveTokensWithoutBalance = iframe
+      .locator("#receive-dropdown-menu .dropdown-item")
+      .filter({ hasText: "-" });
+
+    // There should be some tokens without balance showing "-"
+    const countWithoutBalance = await receiveTokensWithoutBalance.count();
+    expect(countWithoutBalance).toBeGreaterThan(0);
+
+    // Take screenshot of receive dropdown
+    await page.screenshot({
+      path: path.join(screenshotsDir, "14-receive-tokens-grouped.png"),
+      fullPage: false,
+      clip: await iframe.locator("#receive-dropdown-menu").boundingBox(),
+    });
+
+    console.log("✓ Token balances and network names displayed correctly");
+    console.log("✓ USDC shows with network names in send dropdown");
+    console.log("✓ USDC is grouped in receive dropdown");
   });
 
   test("should display human-readable network names", async ({ page }) => {

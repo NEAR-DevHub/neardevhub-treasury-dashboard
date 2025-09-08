@@ -170,13 +170,20 @@ const code = `
             .dropdown-toggle span {
                 color: ${colors["--text-color"]};
             }
+            .dropdown-toggle::after {
+                display: none !important;
+            }
+            #send-token-display::after,
+            #receive-token-display::after,
+            #network-display::after {
+                display: none !important;
+            }
             .dropdown-menu {
                 display: none;
                 position: absolute;
                 right: 0;
                 width: 300px;
-                max-height: 300px;
-                overflow-y: auto;
+                max-height: 350px;
                 background-color: ${colors["--bg-page-color"]};
                 border: 1px solid ${colors["--border-color"]};
                 border-radius: 8px;
@@ -186,6 +193,24 @@ const code = `
             }
             .dropdown-menu.show {
                 display: block;
+            }
+            .scroll-box {
+                max-height: 250px;
+                overflow-y: auto;
+            }
+            .text-secondary {
+                color: ${colors["--text-secondary-color"]} !important;
+            }
+            .fw-semibold {
+                font-weight: 600;
+            }
+            .px-3 {
+                padding-left: 1rem !important;
+                padding-right: 1rem !important;
+            }
+            .py-2 {
+                padding-top: 0.5rem !important;
+                padding-bottom: 0.5rem !important;
             }
             .dropdown-search {
                 padding: 8px;
@@ -200,10 +225,7 @@ const code = `
                 color: ${colors["--text-color"]};
             }
             .dropdown-item {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 10px 12px;
+                padding: 8px 12px;
                 cursor: pointer;
                 color: ${colors["--text-color"]};
             }
@@ -213,27 +235,32 @@ const code = `
             .dropdown-item.selected {
                 background-color: ${colors["--grey-035"]};
             }
-            .token-info {
-                display: flex;
-                align-items: center;
-                gap: 8px;
+            .d-flex {
+                display: flex !important;
             }
-            .token-icon {
-                width: 24px;
-                height: 24px;
-                border-radius: 50%;
+            .justify-content-between {
+                justify-content: space-between !important;
             }
-            .token-details {
-                display: flex;
-                flex-direction: column;
+            .align-items-center {
+                align-items: center !important;
             }
-            .token-symbol {
-                font-weight: 500;
+            .gap-2 {
+                gap: 0.5rem !important;
+            }
+            .text-muted {
+                color: ${colors["--text-secondary-color"]} !important;
+            }
+            .text-sm {
+                font-size: 0.875rem !important;
+            }
+            .mb-0 {
+                margin-bottom: 0 !important;
+            }
+            h6 {
+                font-size: 1rem;
+                font-weight: 600;
                 color: ${colors["--text-color"]};
-            }
-            .token-sublabel {
-                font-size: 12px;
-                color: ${colors["--text-secondary-color"]};
+                margin: 0;
             }
             .value-display {
                 color: ${colors["--text-secondary-color"]};
@@ -481,13 +508,17 @@ const code = `
                             <div class="token-dropdown">
                                 <button class="dropdown-toggle" id="send-dropdown-toggle">
                                     <span id="send-token-display">Select token</span>
-                                    <i class="bi bi-chevron-down"></i>
+                                    <span class="ms-auto"><i class="bi bi-chevron-down h6 mb-0"></i></span>
                                 </button>
                                 <div class="dropdown-menu" id="send-dropdown-menu">
                                     <div class="dropdown-search">
                                         <input type="text" placeholder="Search token..." id="send-search" />
                                     </div>
-                                    <div id="send-token-list"></div>
+                                    <div class="text-secondary d-flex justify-content-between px-3 mb-2">
+                                        <div>Token</div>
+                                        <div>Balance</div>
+                                    </div>
+                                    <div id="send-token-list" class="scroll-box"></div>
                                 </div>
                             </div>
                         </div>
@@ -517,13 +548,17 @@ const code = `
                             <div class="token-dropdown">
                                 <button class="dropdown-toggle" id="receive-dropdown-toggle">
                                     <span id="receive-token-display">Select token</span>
-                                    <i class="bi bi-chevron-down"></i>
+                                    <span class="ms-auto"><i class="bi bi-chevron-down h6 mb-0"></i></span>
                                 </button>
                                 <div class="dropdown-menu" id="receive-dropdown-menu">
                                     <div class="dropdown-search">
                                         <input type="text" placeholder="Search token..." id="receive-search" />
                                     </div>
-                                    <div id="receive-token-list"></div>
+                                    <div class="text-secondary d-flex justify-content-between px-3 mb-2">
+                                        <div>Token</div>
+                                        <div>Balance</div>
+                                    </div>
+                                    <div id="receive-token-list" class="scroll-box"></div>
                                 </div>
                             </div>
                         </div>
@@ -537,7 +572,7 @@ const code = `
                     <div class="token-dropdown" style="width: 100%;">
                         <button class="dropdown-toggle" id="network-dropdown-toggle" style="width: 100%;">
                             <span id="network-display">Select token first</span>
-                            <i class="bi bi-chevron-down"></i>
+                            <span class="ms-auto"><i class="bi bi-chevron-down h6 mb-0"></i></span>
                         </button>
                         <div class="dropdown-menu" id="network-dropdown-menu" style="width: 100%;">
                             <div id="network-list"></div>
@@ -675,7 +710,7 @@ const code = `
                     <button class="btn btn-primary" id="get-quote-btn" disabled>
                         Get Quote
                     </button>
-                    <button class="btn btn-success" id="create-proposal-btn" style="display: none;" disabled>
+                    <button class="btn btn-primary" id="create-proposal-btn" style="display: none;" disabled>
                         Create Proposal
                     </button>
                 </div>
@@ -696,10 +731,46 @@ const code = `
             let quote = null;
             let realQuote = null; // Real quote from backend
             let previewData = null; // Preview data from dry quote
+            let tokenPrices = {}; // Store token prices by symbol
             let showQuoteDetails = false;
             let treasuryDaoID = "";
             let iconCache = {};
             let availableNetworks = [];
+
+            // Fetch token prices from API
+            async function fetchTokenPrices() {
+                try {
+                    const response = await fetch("https://api-mng-console.chaindefuser.com/api/tokens");
+                    const data = await response.json();
+                    
+                    if (data && data.items) {
+                        // Create a price map by symbol
+                        tokenPrices = {};
+                        data.items.forEach(token => {
+                            if (token.symbol && token.price !== undefined) {
+                                tokenPrices[token.symbol] = token.price;
+                            }
+                        });
+                        
+                        // Update existing tokens with prices
+                        intentsTokensIn = intentsTokensIn.map(token => ({
+                            ...token,
+                            price: tokenPrices[token.symbol] || 0
+                        }));
+                        
+                        allTokensOut = allTokensOut.map(token => ({
+                            ...token,
+                            price: tokenPrices[token.symbol] || 0
+                        }));
+                        
+                        // Refresh the dropdowns to show updated prices
+                        if (intentsTokensIn.length > 0) populateSendTokenList();
+                        if (allTokensOut.length > 0) populateReceiveTokenList();
+                    }
+                } catch (error) {
+                    console.error("Failed to fetch token prices:", error);
+                }
+            }
 
             // Initialize tooltips
             document.addEventListener("DOMContentLoaded", function() {
@@ -807,18 +878,35 @@ const code = `
                 const toggle = document.getElementById(type + "-dropdown-toggle");
                 const menu = document.getElementById(type + "-dropdown-menu");
                 const search = document.getElementById(type + "-search");
+                const chevronIcon = toggle.querySelector("i"); // Get the chevron icon
                 
                 toggle.addEventListener("click", function(e) {
                     e.stopPropagation();
                     const isOpen = menu.classList.contains("show");
                     
-                    // Close all other dropdowns
+                    // Close all other dropdowns and reset their chevrons
                     document.querySelectorAll(".dropdown-menu").forEach(function(m) {
-                        m.classList.remove("show");
+                        if (m !== menu) {
+                            m.classList.remove("show");
+                            const otherToggle = m.previousElementSibling;
+                            if (otherToggle) {
+                                const otherChevron = otherToggle.querySelector("i");
+                                if (otherChevron) {
+                                    otherChevron.classList.add("bi-chevron-down");
+                                    otherChevron.classList.remove("bi-chevron-up");
+                                }
+                            }
+                        }
                     });
                     
                     if (!isOpen) {
                         menu.classList.add("show");
+                        chevronIcon.classList.remove("bi-chevron-down");
+                        chevronIcon.classList.add("bi-chevron-up");
+                    } else {
+                        menu.classList.remove("show");
+                        chevronIcon.classList.add("bi-chevron-down");
+                        chevronIcon.classList.remove("bi-chevron-up");
                     }
                 });
                 
@@ -837,6 +925,8 @@ const code = `
                 // Close dropdown when clicking outside
                 document.addEventListener("click", function() {
                     menu.classList.remove("show");
+                    chevronIcon.classList.add("bi-chevron-down");
+                    chevronIcon.classList.remove("bi-chevron-up");
                 });
             }
 
@@ -862,38 +952,62 @@ const code = `
                            (token.name && token.name.toLowerCase().includes(query));
                 });
                 
+                // Check if any symbol appears multiple times (different networks)
+                const symbolCounts = {};
+                filtered.forEach(token => {
+                    symbolCounts[token.symbol] = (symbolCounts[token.symbol] || 0) + 1;
+                });
+                
                 filtered.forEach(token => {
                     const item = document.createElement("div");
-                    item.className = "dropdown-item" + (tokenIn === token.id ? " selected" : "");
+                    item.className = "dropdown-item d-flex justify-content-between align-items-center px-3 py-2" + (tokenIn === token.id ? " selected" : "");
                     
                     const tokenInfo = document.createElement("div");
-                    tokenInfo.className = "token-info";
+                    tokenInfo.className = "d-flex gap-2 align-items-center";
                     
                     if (token.icon || iconCache[token.symbol]) {
                         const img = document.createElement("img");
                         img.src = token.icon || iconCache[token.symbol];
-                        img.className = "token-icon";
+                        img.width = 30;
+                        img.height = 30;
                         tokenInfo.appendChild(img);
                     } else {
-                        // Add padding when there's no icon to align with items that have icons
-                        tokenInfo.style.paddingLeft = "32px"; // 24px icon width + 8px gap
+                        // Add spacer div to maintain alignment
+                        const spacer = document.createElement("div");
+                        spacer.style.width = "30px";
+                        spacer.style.height = "30px";
+                        tokenInfo.appendChild(spacer);
                     }
                     
-                    const details = document.createElement("div");
-                    details.className = "token-details";
+                    const nameContainer = document.createElement("div");
                     
-                    const symbol = document.createElement("div");
-                    symbol.className = "token-symbol";
-                    symbol.textContent = token.symbol;
+                    const symbolText = document.createElement("h6");
+                    symbolText.className = "mb-0";
+                    // Add network name in parentheses if there are multiple entries for this symbol
+                    if (symbolCounts[token.symbol] > 1 && token.blockchain) {
+                        const networkName = getNetworkDisplayName(token.blockchain);
+                        symbolText.textContent = token.symbol + " (" + networkName + ")";
+                    } else {
+                        symbolText.textContent = token.symbol;
+                    }
                     
-                    const sublabel = document.createElement("div");
-                    sublabel.className = "token-sublabel";
-                    sublabel.textContent = "Balance: " + token.balance + " / " + (token.blockchain || "NEAR Protocol");
+                    const priceText = document.createElement("div");
+                    priceText.className = "text-muted text-sm";
+                    priceText.textContent = "$" + Number(token.price ?? 0).toLocaleString("en-US");
                     
-                    details.appendChild(symbol);
-                    details.appendChild(sublabel);
-                    tokenInfo.appendChild(details);
+                    nameContainer.appendChild(symbolText);
+                    nameContainer.appendChild(priceText);
+                    tokenInfo.appendChild(nameContainer);
+                    
+                    const balanceText = document.createElement("div");
+                    balanceText.className = "text-muted";
+                    balanceText.textContent = Number(token.balance ?? 0).toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+                    
                     item.appendChild(tokenInfo);
+                    item.appendChild(balanceText);
                     
                     item.addEventListener("click", function() {
                         selectSendToken(token);
@@ -907,36 +1021,87 @@ const code = `
                 const container = document.getElementById("receive-token-list");
                 container.innerHTML = "";
                 
-                // Get unique symbols
-                const uniqueSymbols = [...new Set(allTokensOut.map(t => t.symbol))].sort();
+                // Get unique symbols with their first token data for price info
+                const symbolMap = new Map();
+                allTokensOut.forEach(token => {
+                    if (!symbolMap.has(token.symbol)) {
+                        symbolMap.set(token.symbol, token);
+                    }
+                });
                 
-                const filtered = uniqueSymbols.filter(symbol => 
-                    !searchQuery || symbol.toLowerCase().includes(searchQuery)
-                );
+                const filtered = Array.from(symbolMap.entries())
+                    .filter(([symbol, token]) => 
+                        !searchQuery || 
+                        symbol.toLowerCase().includes(searchQuery) ||
+                        (token.name && token.name.toLowerCase().includes(searchQuery))
+                    )
+                    .sort((a, b) => a[0].localeCompare(b[0]));
                 
-                filtered.forEach(symbol => {
+                filtered.forEach(([symbol, token]) => {
                     const item = document.createElement("div");
-                    item.className = "dropdown-item" + (tokenOut === symbol ? " selected" : "");
+                    item.className = "dropdown-item d-flex justify-content-between align-items-center px-3 py-2" + (tokenOut === symbol ? " selected" : "");
                     
                     const tokenInfo = document.createElement("div");
-                    tokenInfo.className = "token-info";
+                    tokenInfo.className = "d-flex gap-2 align-items-center";
                     
                     if (iconCache[symbol]) {
                         const img = document.createElement("img");
                         img.src = iconCache[symbol];
-                        img.className = "token-icon";
+                        img.width = 30;
+                        img.height = 30;
                         tokenInfo.appendChild(img);
                     } else {
-                        // Add padding when there's no icon to align with items that have icons
-                        tokenInfo.style.paddingLeft = "32px"; // 24px icon width + 8px gap
+                        // Add spacer div to maintain alignment
+                        const spacer = document.createElement("div");
+                        spacer.style.width = "30px";
+                        spacer.style.height = "30px";
+                        tokenInfo.appendChild(spacer);
                     }
                     
-                    const symbolDiv = document.createElement("div");
-                    symbolDiv.className = "token-symbol";
-                    symbolDiv.textContent = symbol;
-                    tokenInfo.appendChild(symbolDiv);
+                    const nameContainer = document.createElement("div");
+                    
+                    const symbolText = document.createElement("h6");
+                    symbolText.className = "mb-0";
+                    symbolText.textContent = symbol;
+                    
+                    const priceText = document.createElement("div");
+                    priceText.className = "text-muted text-sm";
+                    priceText.textContent = "$" + Number(token.price ?? 0).toLocaleString("en-US");
+                    
+                    nameContainer.appendChild(symbolText);
+                    nameContainer.appendChild(priceText);
+                    tokenInfo.appendChild(nameContainer);
+                    
+                    // Calculate total balance for grouped tokens
+                    let totalBalance = 0;
+                    let hasBalance = false;
+                    
+                    // Sum up balances from all matching tokens in intentsTokensIn
+                    intentsTokensIn.forEach(inToken => {
+                        if (inToken.symbol === symbol && inToken.balance) {
+                            const balance = parseFloat(inToken.balance);
+                            if (!isNaN(balance)) {
+                                totalBalance += balance;
+                                hasBalance = true;
+                            }
+                        }
+                    });
+                    
+                    const balanceText = document.createElement("div");
+                    balanceText.className = "text-muted";
+                    
+                    if (hasBalance) {
+                        // Format balance with proper decimals and commas
+                        balanceText.textContent = totalBalance.toLocaleString("en-US", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        });
+                    } else {
+                        balanceText.textContent = "-";
+                    }
                     
                     item.appendChild(tokenInfo);
+                    item.appendChild(balanceText);
                     
                     item.addEventListener("click", function() {
                         selectReceiveToken(symbol);
@@ -956,27 +1121,28 @@ const code = `
                 
                 filtered.forEach(network => {
                     const item = document.createElement("div");
-                    item.className = "dropdown-item" + (networkOut === network.id ? " selected" : "");
-                    
-                    const networkInfo = document.createElement("div");
-                    networkInfo.className = "token-info";
+                    item.className = "dropdown-item d-flex align-items-center px-3 py-2" + (networkOut === network.id ? " selected" : "");
                     
                     if (network.icon) {
                         const img = document.createElement("img");
                         img.src = network.icon;
-                        img.className = "token-icon";
-                        networkInfo.appendChild(img);
+                        img.width = 30;
+                        img.height = 30;
+                        img.style.marginRight = "8px";
+                        item.appendChild(img);
                     } else {
-                        // Add padding when there's no icon to align with items that have icons
-                        networkInfo.style.paddingLeft = "32px"; // 24px icon width + 8px gap
+                        // Add spacer div to maintain alignment
+                        const spacer = document.createElement("div");
+                        spacer.style.width = "30px";
+                        spacer.style.height = "30px";
+                        spacer.style.marginRight = "8px";
+                        item.appendChild(spacer);
                     }
                     
                     const nameDiv = document.createElement("div");
-                    nameDiv.className = "token-symbol";
+                    nameDiv.className = "fw-semibold";
                     nameDiv.textContent = network.name;
-                    networkInfo.appendChild(nameDiv);
-                    
-                    item.appendChild(networkInfo);
+                    item.appendChild(nameDiv);
                     
                     item.addEventListener("click", function() {
                         selectNetwork(network);
@@ -1009,6 +1175,11 @@ const code = `
                 display.appendChild(symbolSpan);
                 
                 document.getElementById("send-dropdown-menu").classList.remove("show");
+                const sendChevron = document.getElementById("send-dropdown-toggle").querySelector("i");
+                if (sendChevron) {
+                    sendChevron.classList.add("bi-chevron-down");
+                    sendChevron.classList.remove("bi-chevron-up");
+                }
                 updateSendValue();
                 updateReceiveEstimate(); // Only update estimate
             }
@@ -1038,6 +1209,11 @@ const code = `
                 display.appendChild(symbolSpan);
                 
                 document.getElementById("receive-dropdown-menu").classList.remove("show");
+                const receiveChevron = document.getElementById("receive-dropdown-toggle").querySelector("i");
+                if (receiveChevron) {
+                    receiveChevron.classList.add("bi-chevron-down");
+                    receiveChevron.classList.remove("bi-chevron-up");
+                }
                 
                 // Update available networks
                 updateAvailableNetworks();
@@ -1074,6 +1250,11 @@ const code = `
                 display.appendChild(nameSpan);
                 
                 document.getElementById("network-dropdown-menu").classList.remove("show");
+                const networkChevron = document.getElementById("network-dropdown-toggle").querySelector("i");
+                if (networkChevron) {
+                    networkChevron.classList.add("bi-chevron-down");
+                    networkChevron.classList.remove("bi-chevron-up");
+                }
                 updateReceiveEstimate(); // Only update estimate
             }
 
@@ -1218,33 +1399,7 @@ const code = `
                     return iconCache[networkId + "_network"];
                 }
                 
-                // Manual mapping for known chain IDs as a fallback
-                const chainIdToName = {
-                    "1": "Ethereum",
-                    "137": "Polygon",
-                    "8453": "Base",
-                    "42161": "Arbitrum",
-                    "10": "Optimism",
-                    "43114": "Avalanche",
-                    "56": "BNB Smart Chain",
-                    "100": "Gnosis",
-                    "mainnet": baseNetwork === "sol" ? "Solana" : baseNetwork === "near" ? "NEAR" : null,
-                };
                 
-                if (chainId && chainIdToName[chainId]) {
-                    return chainIdToName[chainId];
-                }
-                
-                if (chainId === "mainnet" && chainIdToName.mainnet) {
-                    return chainIdToName.mainnet;
-                }
-                
-                // Special cases for non-EVM chains
-                if (baseNetwork === "sol" || baseNetwork === "solana") return "Solana";
-                if (baseNetwork === "near") return "NEAR";
-                if (baseNetwork === "sui") return "Sui";
-                if (baseNetwork === "stellar") return "Stellar";
-                if (baseNetwork === "bitcoin" || baseNetwork === "btc") return "Bitcoin";
                 
                 // Final fallback: format the raw ID (capitalize first letter)
                 return baseNetwork.charAt(0).toUpperCase() + baseNetwork.slice(1);
@@ -1758,12 +1913,14 @@ const code = `
                     intentsTokensIn = event.data.intentsTokens;
                     populateSendTokenList();
                     loadTokenIcons(); // Load icons for new tokens
+                    fetchTokenPrices(); // Fetch prices for tokens
                 }
                 
                 if (event.data.allTokensOut) {
                     allTokensOut = event.data.allTokensOut;
                     populateReceiveTokenList();
                     loadTokenIcons(); // Load icons for new tokens
+                    fetchTokenPrices(); // Fetch prices for tokens
                 }
                 
                 if (event.data.iconCache) {
@@ -1812,7 +1969,6 @@ useEffect(() => {
           .toFixed(2),
         decimals: token.ft_meta.decimals,
         blockchain: token.blockchain,
-        price: 1, // TODO: Get actual price
       }));
 
       setIntentsTokens(formattedTokens);

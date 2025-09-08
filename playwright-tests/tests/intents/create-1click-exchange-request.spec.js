@@ -624,15 +624,18 @@ test.describe("1Click API Integration - Asset Exchange", function () {
 
     // Wait for available balances to load (important!)
     console.log("Waiting for NEAR Intents balances to load...");
-    // Look for the ETH balance text that appears in the dropdown - be specific to avoid WETH
+    // Look for the ETH token in the send dropdown specifically - now using h6 for token symbols
     await expect(
-      iframe.locator(".dropdown-item").filter({ hasText: /^ETH/ }).first()
+      iframe
+        .locator("#send-dropdown-menu .dropdown-item")
+        .filter({ has: iframe.locator('h6:text-is("ETH")') })
     ).toBeVisible({ timeout: 15000 });
 
-    // Verify ETH balance shows 5.00 in the dropdown
-    await expect(
-      iframe.locator(".dropdown-item").filter({ hasText: "Balance: 5.00" })
-    ).toBeVisible({
+    // Verify ETH balance shows 5.00 in the dropdown (balance is now shown directly, not with "Balance:" prefix)
+    const ethItem = iframe
+      .locator("#send-dropdown-menu .dropdown-item")
+      .filter({ has: iframe.locator('h6:text-is("ETH")') });
+    await expect(ethItem).toContainText("5.00", {
       timeout: 10000,
     });
     console.log("NEAR Intents balances loaded successfully");
@@ -722,11 +725,10 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     // Select ETH from the dropdown inside iframe
     console.log("Looking for ETH option inside iframe...");
 
-    // Click on the ETH token option in the dropdown - be specific to avoid WETH
+    // Click on the ETH token option in the dropdown - now using h6 for token symbols
     const ethOption = iframe
-      .locator(".dropdown-item")
-      .filter({ hasText: /^ETH/ })
-      .first();
+      .locator("#send-dropdown-menu .dropdown-item")
+      .filter({ has: iframe.locator('h6:text-is("ETH")') });
 
     // Wait for it to be visible and click
     await expect(ethOption).toBeVisible({ timeout: 5000 });
@@ -758,8 +760,7 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     console.log("Looking for USDC option inside iframe...");
     const usdcOption = receiveDropdownMenu
       .locator(".dropdown-item")
-      .filter({ hasText: "USDC" })
-      .first();
+      .filter({ has: iframe.locator('h6:text-is("USDC")') });
     await expect(usdcOption).toBeVisible({ timeout: 5000 });
     console.log("Clicking USDC option...");
     await usdcOption.click();
