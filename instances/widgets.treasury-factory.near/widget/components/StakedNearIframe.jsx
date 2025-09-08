@@ -125,7 +125,7 @@ const code = `
     }
   
     async function getStakingPools() {
-      return await fetch("https://api.fastnear.com/v1/account/" + treasuryDaoID + "/staking").then(r => r.json())
+      return await fetch("https://staking-pools-api.neartreasury.com/v1/account/" + treasuryDaoID + "/staking").then(r => r.json())
     }
   
     window.onload = async () => {
