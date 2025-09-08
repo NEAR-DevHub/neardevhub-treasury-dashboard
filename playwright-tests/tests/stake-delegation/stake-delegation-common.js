@@ -166,7 +166,7 @@ export async function mockStakedPools({
   multiplePools = false,
 }) {
   await page.route(
-    `https://api.fastnear.com/v1/account/${daoAccount}/staking`,
+    `https://staking-pools-api.neartreasury.com/v1/account/${daoAccount}/staking`,
     async (route) => {
       const json = havePools
         ? {

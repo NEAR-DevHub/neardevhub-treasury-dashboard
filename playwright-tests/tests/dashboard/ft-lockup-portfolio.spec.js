@@ -277,16 +277,9 @@ test("should display FT lockup portfolio with no claim available", async ({
 
   await page.waitForTimeout(5_000);
 
-  await expect(page.getByText(lockupContract.accountId)).toBeVisible();
-
-  await page.locator(".bi.bi-question-circle").click();
   await expect(
-    page.getByRole("heading", { name: "How to Claim Tokens " })
+    page.getByText("Wallet: " + lockupContract.accountId)
   ).toBeVisible();
-  await page
-    .getByRole("heading", { name: "How to Claim Tokens " })
-    .locator("i")
-    .click();
   await expect(
     page.getByText("No tokens are ready to be claimed")
   ).toBeVisible();
@@ -402,7 +395,9 @@ test("should display FT lockup portfolio with claim available", async ({
 
   await page.waitForTimeout(5_000);
 
-  await expect(page.getByText(lockupContract.accountId)).toBeVisible();
+  await expect(
+    page.getByText("Wallet: " + lockupContract.accountId)
+  ).toBeVisible();
 
   await expect(
     page.getByText("No tokens are ready to be claimed")
@@ -564,7 +559,9 @@ test("should hide FT lockup portfolio with all amount is claimed", async ({
   await page.goto(`https://${instanceAccount}.page/`);
   await expect(page.getByText("Show History")).toBeVisible();
   await page.getByText("Show History").click();
-  await expect(page.getByText(lockupContract.accountId)).toBeVisible();
+  await expect(
+    page.getByText("Wallet: " + lockupContract.accountId)
+  ).toBeVisible();
   await expect(
     page.getByText("All tokens have already been claimed")
   ).toBeVisible();
@@ -576,5 +573,7 @@ test("should hide FT lockup portfolio with all amount is claimed", async ({
     page.getByText("Claimed 100 USDt", { exact: true })
   ).toBeVisible();
   await page.getByText("Show less").click();
-  await expect(page.getByText(lockupContract.accountId)).not.toBeVisible();
+  await expect(
+    page.getByText("Wallet: " + lockupContract.accountId)
+  ).not.toBeVisible();
 });

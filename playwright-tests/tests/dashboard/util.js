@@ -25,7 +25,7 @@ export async function mockLockupStateAndNavigateToDashboard({
   });
 
   await page.route(
-    `https://api.fastnear.com/v1/account/${lockupContract}/staking`,
+    `https://staking-pools-api.neartreasury.com/v1/account/${lockupContract}/staking`,
     async (route) => {
       const json = {
         account_id: lockupContract,
