@@ -194,12 +194,9 @@ useEffect(() => {
       const partiallyClaimed = [];
 
       res.forEach((ftLockup) => {
-        const totalLockupAmount = Big(ftLockup.release_per_session)
-          .mul(ftLockup.session_num)
-          .toFixed();
         const claimedAmount = Big(ftLockup.claimed_amount).toFixed();
 
-        if (Big(claimedAmount).gte(totalLockupAmount)) {
+        if (Big(claimedAmount).gte(Big(ftLockup.deposited_amount))) {
           fullyClaimed.push(ftLockup);
         } else {
           partiallyClaimed.push(ftLockup);
@@ -451,7 +448,10 @@ return (
       />
     )}
     <div className="d-flex gap-3 flex-wrap">
-      <div className="d-flex flex-column gap-3 flex-container flex-1">
+      <div
+        className="d-flex flex-column gap-3 flex-container"
+        style={{ flex: 1.1 }}
+      >
         <div className="card card-body" style={{ minHeight: "100px" }}>
           {" "}
           {/* Adjusted minHeight for button */}
@@ -627,7 +627,7 @@ return (
           </div>
         )}
       </div>
-      <div className="d-flex flex-column gap-2 flex-wrap dashboard-item flex-1 flex-container flex-3">
+      <div className="d-flex flex-column gap-2 flex-wrap dashboard-item flex-container flex-3">
         <Widget
           loading=""
           src={

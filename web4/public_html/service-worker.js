@@ -131,10 +131,15 @@ async function handleRpcRequest(request) {
           `Service Worker: .sputnik-dao.near contract call with 'proposal' method detected: ${accountId}, method: ${methodName} (cache for 1 second)`
         );
         specialCacheDuration = { duration: 1 * 1000, invalidateAll: true };
-      } else if (methodName && methodName.includes("balance")) {
+      } else if (
+        methodName &&
+        (methodName.includes("balance") ||
+          methodName.includes("get_account") ||
+          methodName.includes("get_locked_amount"))
+      ) {
         // Any contract with method_name including 'balance': cache for 1 second, do NOT invalidate other caches
         swLog(
-          `Service Worker: 'balance' method detected: ${methodName} (cache for 1 second, no invalidation)`
+          `Service Worker: 'balance', 'get_account', or 'get_locked_amount' method detected: ${methodName} (cache for 1 second, no invalidation)`
         );
         specialCacheDuration = { duration: 1 * 1000, invalidateAll: false };
       }
