@@ -14,7 +14,7 @@ const storageBalance = "0.00";
 
 async function mockStakedPoolBalances({ page, daoAccount }) {
   await page.route(
-    `https://api.fastnear.com/v1/account/${daoAccount}/staking`,
+    `https://staking-pools-api.neartreasury.com/v1/account/${daoAccount}/staking`,
     async (route) => {
       const json = {
         account_id: daoAccount,
