@@ -1377,10 +1377,12 @@ function getIntentsBalances(accountId) {
                 .then((resolvedIcons) => {
                   const finalTokens = filteredTokensWithBalances.map(
                     (t, i) => ({
-                      // contract_id is needed by TokensDropdown
+                      // contract_id is needed by TokensDropdown (without prefix for backward compatibility)
                       contract_id: t.defuse_asset_id.startsWith("nep141:")
                         ? t.defuse_asset_id.split(":")[1]
                         : t.defuse_asset_id,
+                      // Preserve full token_id with prefix (nep141:, nep245:, etc.) for proper intents operations
+                      token_id: t.defuse_asset_id,
                       ft_meta: {
                         symbol: t.symbol,
                         icon: resolvedIcons[i], // Use icon from ft_metadata or original
@@ -1404,6 +1406,8 @@ function getIntentsBalances(accountId) {
                       contract_id: t.defuse_asset_id.startsWith("nep141:")
                         ? t.defuse_asset_id.split(":")[1]
                         : t.defuse_asset_id,
+                      // Preserve full token_id with prefix
+                      token_id: t.defuse_asset_id,
                       ft_meta: {
                         symbol: t.symbol,
                         icon: t.icon, // Fallback to original icon

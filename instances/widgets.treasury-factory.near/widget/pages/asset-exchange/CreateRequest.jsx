@@ -207,7 +207,7 @@ return (
     {showNearIntents && treasuryWallet === "near-intents" ? (
       <Widget
         loading=""
-        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.asset-exchange.OneClickExchangeForm`}
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.asset-exchange.OneClickExchangeFormIframe`}
         props={{
           instance,
           onCancel: () => setShowCancelModal(true),
@@ -221,7 +221,7 @@ return (
               proposal_action: "asset-exchange",
               notes: `**Must be executed before ${args.quote.deadline}** for transferring tokens to 1Click's deposit address for swap execution.`,
               tokenIn: args.tokenInSymbol,
-              tokenOut: args.tokenOut,
+              tokenOut: args.tokenOutSymbol, // Use the explicit symbol field
               amountIn: args.quote.amountInFormatted,
               amountOut: args.quote.amountOutFormatted,
               slippage: args.slippage || "2",
@@ -244,7 +244,7 @@ return (
                       args: {
                         receiver_id: args.quote.depositAddress,
                         amount: args.quote.amountIn,
-                        token_id: args.quote.requestPayload.originAsset,
+                        token_id: args.tokenIn, // Backend returns tokenIn with nep141: prefix
                       },
                       amount: "1", // 1 yoctoNEAR
                       gas: "100000000000000", // 100 TGas
