@@ -5,7 +5,7 @@ use near_workspaces;
 
 #[tokio::test]
 async fn test_get_web4_contract_bytes() -> Result<(), Box<dyn std::error::Error>> {
-    let sandbox = near_workspaces::sandbox().await?;
+    let sandbox = near_workspaces::sandbox_with_version("2.7.0").await?;
     let build_opts = BuildOpts::builder().build();
     let build_artifact = cargo_near_build::build(build_opts).expect("Failed to build contract");
 

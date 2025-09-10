@@ -103,19 +103,20 @@ const code = `
             .exchange-sections {
                 position: relative;
             }
-            .send-section,
-            .receive-section {
-                background-color: ${colors["--bg-system-color"]};
+            .send-section {
+                background-color: ${colors["--bg-page-color"]};
                 border: 1px solid ${colors["--border-color"]};
                 border-radius: 12px;
                 padding: 20px;
-            }
-            .send-section {
                 border-bottom-left-radius: 0;
                 border-bottom-right-radius: 0;
                 border-bottom: none;
             }
             .receive-section {
+                background-color: ${colors["--bg-system-color"]};
+                border: 1px solid ${colors["--border-color"]};
+                border-radius: 12px;
+                padding: 20px;
                 border-top-left-radius: 0;
                 border-top-right-radius: 0;
             }
@@ -278,7 +279,7 @@ const code = `
                 left: 50%;
                 top: 50%;
                 transform: translate(-50%, -50%);
-                background-color: ${colors["--bg-system-color"]};
+                background-color: ${colors["--bg-page-color"]};
                 border: 1px solid ${colors["--border-color"]};
                 border-radius: 50%;
                 width: 40px;
@@ -288,10 +289,9 @@ const code = `
                 justify-content: center;
                 z-index: 1;
             }
-            .swap-icon {
+            .swap-icon-container i {
                 color: ${colors["--text-secondary-color"]};
                 font-size: 20px;
-                transform: rotate(90deg);
             }
             .form-section {
                 margin-bottom: 24px;
@@ -528,7 +528,7 @@ const code = `
                     <!-- Swap Divider with Icon -->
                     <div class="swap-divider">
                         <div class="swap-icon-container">
-                            <i class="bi bi-arrow-down-up swap-icon"></i>
+                            <i class="bi bi-chevron-down"></i>
                         </div>
                     </div>
 
