@@ -71,7 +71,7 @@ export function getLocalWidgetContent(key, context = {}) {
  * @param {boolean} [options.callWidgetNodeURLForContractWidgets=true] - call the provided `widgetNodeUrl` when requesting social db contents under the provided `contractId`
  *     Set to false if you want to provide the modifiedWidgets object also for the contract widgets, otherwise the default is to request these widgets from `widgetNode`
  * @param {boolean} [options.disableServiceWorker=true] - if true (default), removes service-worker.js references from HTML to prevent service worker registration. Set to false to test with service workers enabled.
- * @param {boolean} [options.useLocalFiles=false] - if true, serves web4 resources from local web4/public_html directory instead of from the contract
+ * @param {boolean} [options.useLocalFiles=false] - if true, serves web4 resources from local web4/treasury-web4/src/web4 directory instead of from the contract
  *
  * @returns {Promise<void>} A promise that resolves when the routing setup is complete.
  */
@@ -213,7 +213,7 @@ export async function redirectWeb4({
       .substring(`https://${contractId}.page`.length);
 
     if (useLocalFiles) {
-      // Serve files from local web4/public_html directory
+      // Serve files from local web4/treasury-web4/src/web4 directory
       const projectRoot = path.resolve(
         dirname(new URL(import.meta.url).pathname),
         "..",
@@ -222,7 +222,9 @@ export async function redirectWeb4({
       const localFilePath = path.join(
         projectRoot,
         "web4",
-        "public_html",
+        "treasury-web4",
+        "src",
+        "web4",
         requestPath === "/" ? "index.html" : requestPath.substring(1)
       );
 
