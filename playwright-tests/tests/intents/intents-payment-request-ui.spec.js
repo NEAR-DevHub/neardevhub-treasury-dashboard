@@ -363,7 +363,8 @@ test("payment request to BTC address", async ({
   );
   await expect(btcAmountElement).toBeAttached();
   await btcAmountElement.scrollIntoViewIfNeeded();
-  await expect(btcAmountElement).toHaveText("320.00");
+  // With intelligent formatting, 320 BTC displays as "320" (no trailing zeros)
+  await expect(btcAmountElement).toHaveText("320");
 
   await page.waitForTimeout(500);
 
@@ -498,7 +499,8 @@ test("payment request to BTC address", async ({
 
   await page.getByRole("link", { name: "Dashboard" }).click();
   await btcAmountElement.scrollIntoViewIfNeeded();
-  await expect(btcAmountElement).toHaveText("318.00");
+  // With intelligent formatting, 318 BTC displays as "318" (no trailing zeros)
+  await expect(btcAmountElement).toHaveText("318");
   await page.waitForTimeout(500);
 });
 
@@ -647,7 +649,8 @@ test("payment request to USDC address on BASE", async ({
   );
   await expect(usdcAmountElement).toBeAttached();
   await usdcAmountElement.scrollIntoViewIfNeeded();
-  await expect(usdcAmountElement).toHaveText("100000.00");
+  // With intelligent formatting, 100000 USDC displays as "100,000" (with comma, no decimals)
+  await expect(usdcAmountElement).toHaveText("100,000");
 
   await page.waitForTimeout(500);
 
@@ -781,7 +784,8 @@ test("payment request to USDC address on BASE", async ({
 
   await page.getByRole("link", { name: "Dashboard" }).click();
   await usdcAmountElement.scrollIntoViewIfNeeded();
-  await expect(usdcAmountElement).toHaveText("97500.00");
+  // With intelligent formatting, 97500 USDC displays as "97,500" (with comma, no decimals)
+  await expect(usdcAmountElement).toHaveText("97,500");
   await page.waitForTimeout(500);
 });
 
@@ -968,7 +972,8 @@ test("payment request for wNEAR token on NEAR intents", async ({
   await expect(nearBalanceRowLocator).toBeAttached();
 
   await nearBalanceLocator.scrollIntoViewIfNeeded();
-  await expect(nearBalanceLocator).toHaveText("91.30");
+  // With intelligent formatting, 91.3 wNEAR displays as "91.3" (no trailing zero)
+  await expect(nearBalanceLocator).toHaveText("91.3");
 
   await page.waitForTimeout(500);
 
@@ -1106,8 +1111,9 @@ test("payment request for wNEAR token on NEAR intents", async ({
 
   await page.getByRole("link", { name: "Dashboard" }).click();
   await nearBalanceLocator.scrollIntoViewIfNeeded();
-  // Balance should be reduced to approximately 50 NEAR
-  await expect(nearBalanceLocator).toHaveText("41.30");
+  // Balance should be reduced to approximately 41.3 NEAR
+  // With intelligent formatting, displays as "41.3" (no trailing zero)
+  await expect(nearBalanceLocator).toHaveText("41.3");
   await page.waitForTimeout(500);
 });
 
@@ -1253,7 +1259,8 @@ test("insufficient balance alert for BTC payment request exceeding available bal
   );
   await expect(btcAmountElement).toBeAttached();
   await btcAmountElement.scrollIntoViewIfNeeded();
-  await expect(btcAmountElement).toHaveText("100.00");
+  // With intelligent formatting, 100 BTC displays as "100" (no trailing zeros)
+  await expect(btcAmountElement).toHaveText("100");
 
   await page.waitForTimeout(500);
 
@@ -1516,7 +1523,8 @@ test("insufficient balance alert for wNEAR payment request exceeding available b
   );
   await expect(nearBalanceRowLocator).toBeAttached();
   await nearBalanceLocator.scrollIntoViewIfNeeded();
-  await expect(nearBalanceLocator).toHaveText("25.00");
+  // With intelligent formatting, 25 wNEAR displays as "25" (no trailing zeros)
+  await expect(nearBalanceLocator).toHaveText("25");
 
   await page.waitForTimeout(500);
 
