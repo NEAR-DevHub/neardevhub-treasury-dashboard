@@ -315,7 +315,21 @@ test.describe("OneClickExchangeForm Component", () => {
   };
 
   // Helper function to mock RPC responses for intents balances
-  const mockRpcResponses = async (page) => {
+  // Can optionally pass custom token balances for specific tests
+  const mockRpcResponses = async (page, customBalances = null) => {
+    // Default balances if not provided
+    const defaultBalances = {
+      "wrap.near": "10000000000000000000000000", // 10 WNEAR with 24 decimals
+      "eth.omft.near": "5000000000000000000", // 5 ETH with 18 decimals
+      "btc.omft.near": "200000000", // 2 BTC with 8 decimals
+      "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1":
+        "1000000000", // 1000 USDC with 6 decimals (NEAR native)
+      "eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near": "500000000", // 500 USDC with 6 decimals (Ethereum bridged)
+      "sol.omft.near": "10000000000", // 10 SOL with 9 decimals
+    };
+
+    // Use custom balances if provided, otherwise use defaults
+    const tokenBalances = customBalances || defaultBalances;
     // Match mainnet RPC URLs (both near.org and fastnear.com)
     await page.route(
       /https:\/\/rpc\.mainnet\.(near\.org|fastnear\.com)/,
@@ -339,27 +353,13 @@ test.describe("OneClickExchangeForm Component", () => {
 
               // Create balance array based on number of token_ids requested
               const balances = args.token_ids.map((tokenId) => {
-                if (tokenId.includes("wrap.near")) {
-                  return "10000000000000000000000000"; // 10 WNEAR with 24 decimals
-                } else if (tokenId.includes("eth.omft.near")) {
-                  return "5000000000000000000"; // 5 ETH with 18 decimals
-                } else if (tokenId.includes("btc.omft.near")) {
-                  return "200000000"; // 2 BTC with 8 decimals
-                } else if (
-                  tokenId.includes(
-                    "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1"
-                  )
-                ) {
-                  return "1000000000"; // 1000 USDC with 6 decimals (NEAR native)
-                } else if (
-                  tokenId.includes(
-                    "eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near"
-                  )
-                ) {
-                  return "500000000"; // 500 USDC with 6 decimals (Ethereum bridged)
-                } else {
-                  return "0";
+                // Check each key in tokenBalances to find a match
+                for (const [key, balance] of Object.entries(tokenBalances)) {
+                  if (tokenId.includes(key)) {
+                    return balance;
+                  }
                 }
+                return "0"; // Default to 0 if token not found
               });
 
               await route.fulfill({
@@ -382,20 +382,10 @@ test.describe("OneClickExchangeForm Component", () => {
               );
               console.log("mt_tokens_for_owner called with:", args);
 
-              // Return token objects with token_id property
-              const tokens = [
-                { token_id: "nep141:wrap.near" },
-                { token_id: "nep141:eth.omft.near" },
-                { token_id: "nep141:btc.omft.near" },
-                {
-                  token_id:
-                    "nep141:17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1", // USDC on NEAR
-                },
-                {
-                  token_id:
-                    "nep141:eth-0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.omft.near", // USDC on Ethereum
-                },
-              ];
+              // Return token objects based on the tokens we have balances for
+              const tokens = Object.keys(tokenBalances).map((tokenId) => ({
+                token_id: `nep141:${tokenId}`,
+              }));
 
               await route.fulfill({
                 status: 200,
@@ -1402,10 +1392,10 @@ test.describe("OneClickExchangeForm Component", () => {
 
     // Verify that tokens show their NEAR Intents balances
     const expectedTokens = [
-      { symbol: "wNEAR", expectedBalance: "10.00" },
-      { symbol: "ETH", expectedBalance: "5.00" },
-      { symbol: "BTC", expectedBalance: "2.00" },
-      { symbol: "USDC", expectedBalance: "1000.00" },
+      { symbol: "wNEAR", expectedBalance: "10" },
+      { symbol: "ETH", expectedBalance: "5" },
+      { symbol: "BTC", expectedBalance: "2" },
+      { symbol: "USDC", expectedBalance: "1,000" },
     ];
 
     for (const token of expectedTokens) {
@@ -1997,19 +1987,19 @@ test.describe("OneClickExchangeForm Component", () => {
     const wnearItem = iframe
       .locator("#send-dropdown-menu .dropdown-item")
       .filter({ has: iframe.locator('h6:text-is("wNEAR")') });
-    await expect(wnearItem).toContainText("10.00");
+    await expect(wnearItem).toContainText("10");
 
     // Check ETH balance (5 ETH)
     const ethItem = iframe
       .locator("#send-dropdown-menu .dropdown-item")
       .filter({ has: iframe.locator('h6:text-is("ETH")') });
-    await expect(ethItem).toContainText("5.00");
+    await expect(ethItem).toContainText("5");
 
     // Check BTC balance (2 BTC)
     const btcItem = iframe
       .locator("#send-dropdown-menu .dropdown-item")
       .filter({ has: iframe.locator('h6:text-is("BTC")') });
-    await expect(btcItem).toContainText("2.00");
+    await expect(btcItem).toContainText("2");
 
     // Check USDC entries - should have two with network names
     const usdcItems = iframe
@@ -2028,7 +2018,7 @@ test.describe("OneClickExchangeForm Component", () => {
           .filter({ hasText: "Near Protocol" }),
       });
     await expect(usdcNearItem).toBeVisible();
-    await expect(usdcNearItem).toContainText("1,000.00");
+    await expect(usdcNearItem).toContainText("1,000");
 
     // Check USDC (Ethereum) - 500 USDC
     const usdcEthItem = iframe
@@ -2039,7 +2029,7 @@ test.describe("OneClickExchangeForm Component", () => {
           .filter({ hasText: "Ethereum" }),
       });
     await expect(usdcEthItem).toBeVisible();
-    await expect(usdcEthItem).toContainText("500.00");
+    await expect(usdcEthItem).toContainText("500");
 
     // Take screenshot of send dropdown with network names
     await page.screenshot({
@@ -2068,25 +2058,29 @@ test.describe("OneClickExchangeForm Component", () => {
     await expect(receiveUsdcItems).toHaveCount(1);
 
     // The balance should show the sum of all USDC balances (1000 + 500 = 1500)
-    await expect(receiveUsdcItems).toContainText("1,500.00");
+    // With intelligent formatting: USDC at $1, shows "1,500" (no trailing zeros)
+    await expect(receiveUsdcItems).toContainText("1,500");
 
-    // Check wNEAR balance (we have 10.00)
+    // Check wNEAR balance (we have 10)
+    // With intelligent formatting: wNEAR at $2.74, shows "10" (no trailing zeros)
     const receiveWnearItems = iframe
       .locator("#receive-dropdown-menu .dropdown-item")
       .filter({ has: iframe.locator('h6:text-is("wNEAR")') });
-    await expect(receiveWnearItems).toContainText("10.00");
+    await expect(receiveWnearItems).toContainText("10");
 
-    // Check ETH balance (we have 5.00)
+    // Check ETH balance (we have 5)
+    // With intelligent formatting: ETH at $4521, shows "5" (no trailing zeros)
     const receiveEthItems = iframe
       .locator("#receive-dropdown-menu .dropdown-item")
       .filter({ has: iframe.locator('h6:text-is("ETH")') });
-    await expect(receiveEthItems).toContainText("5.00");
+    await expect(receiveEthItems).toContainText("5");
 
-    // Check BTC balance (we have 2.00)
+    // Check BTC balance (we have 2)
+    // With intelligent formatting: BTC at $115k, shows "2" (no trailing zeros)
     const receiveBtcItems = iframe
       .locator("#receive-dropdown-menu .dropdown-item")
       .filter({ has: iframe.locator('h6:text-is("BTC")') });
-    await expect(receiveBtcItems).toContainText("2.00");
+    await expect(receiveBtcItems).toContainText("2");
 
     // Check a token we don't have should show "-"
     // Since allTokensOut includes many tokens, let's check for one that's not in intentsTokensIn
@@ -2280,4 +2274,323 @@ test.describe("OneClickExchangeForm Component", () => {
       "\nHuman-readable network name validation completed successfully!"
     );
   });
+
+  test("formats token balances in OneClick Exchange dropdown correctly", async ({
+    page,
+    instanceAccount,
+    daoAccount,
+  }) => {
+    // Define custom balances for testing formatting rules
+    // These match the expected formatted outputs based on $0.01 precision
+    const testBalances = {
+      "wrap.near": "800100000000000000000000", // 0.8001 wNEAR (24 decimals)
+      "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1":
+        "122290000", // 122.29 USDC (6 decimals) -> "122.29"
+      "btc.omft.near": "566984", // 0.00566984 BTC (8 decimals) -> "0.00566984"
+      "eth.omft.near": "35015088429776130", // 0.03501... ETH (18 decimals) -> "0.03501"
+      "sol.omft.near": "123000", // 0.000123 SOL (9 decimals) -> scientific notation
+    };
+
+    // Expected formatting based on intelligent decimal display with mocked prices
+    const expectedFormats = {
+      wNEAR: "0.8", // At $2.74: 0.8001 vs 0.8 differs by $0.000274, within $0.01 precision, so shows "0.8"
+      USDC: "122.29", // At ~$1, 2 decimals for stablecoin
+      BTC: "0.00566984", // At $115k, all decimals needed for precision
+      ETH: "0.035015", // At $4521, 6 decimals for precision
+      SOL: "0.00012", // At $180, displays 5 decimals with rounding
+    };
+
+    // Create an app widget that renders OneClickExchangeForm
+    const appWidgetContent = `
+      const instance = "${instanceAccount}";
+      const treasuryDaoID = "${daoAccount}";
+      
+      return (
+        <div style={{ padding: "10px" }}>
+          <Widget
+            src="widgets.treasury-factory.near/widget/pages.asset-exchange.OneClickExchangeFormIframe"
+            props={{ 
+              instance: instance,
+            }}
+          />
+        </div>
+      );
+    `;
+
+    // Set up redirectWeb4
+    await redirectWeb4({
+      page,
+      contractId: instanceAccount,
+      treasury: daoAccount,
+      modifiedWidgets: {
+        [`${instanceAccount}/widget/app`]: appWidgetContent,
+      },
+      callWidgetNodeURLForContractWidgets: false,
+    });
+
+    // Mock token prices API with correct format
+    await page.route(
+      "https://api-mng-console.chaindefuser.com/api/tokens",
+      async (route) => {
+        // Create response matching the actual API format
+        const mockResponse = {
+          items: [
+            {
+              defuse_asset_id: "nep141:wrap.near",
+              decimals: 24,
+              blockchain: "near",
+              symbol: "wNEAR",
+              price: 2.74,
+              price_updated_at: new Date().toISOString(),
+              contract_address: "wrap.near",
+            },
+            {
+              defuse_asset_id:
+                "nep141:17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+              decimals: 6,
+              blockchain: "near",
+              symbol: "USDC",
+              price: 0.999811,
+              price_updated_at: new Date().toISOString(),
+              contract_address:
+                "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+            },
+            {
+              defuse_asset_id: "nep141:btc.omft.near",
+              decimals: 8,
+              blockchain: "near",
+              symbol: "BTC",
+              price: 115202,
+              price_updated_at: new Date().toISOString(),
+              contract_address: "btc.omft.near",
+            },
+            {
+              defuse_asset_id: "nep141:eth.omft.near",
+              decimals: 18,
+              blockchain: "near",
+              symbol: "ETH",
+              price: 4521.18,
+              price_updated_at: new Date().toISOString(),
+              contract_address: "eth.omft.near",
+            },
+            {
+              defuse_asset_id: "nep141:sol.omft.near",
+              decimals: 9,
+              blockchain: "near",
+              symbol: "SOL",
+              price: 180,
+              price_updated_at: new Date().toISOString(),
+              contract_address: "sol.omft.near",
+            },
+          ],
+        };
+
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(mockResponse),
+        });
+      }
+    );
+
+    // Mock RPC responses with our custom test balances
+    await mockRpcResponses(page, testBalances);
+
+    // Mock theme
+    await mockTheme(page, "light");
+
+    // Navigate to the instance page
+    await page.goto(`https://${instanceAccount}.page/`);
+
+    // Wait for iframe to load
+    await page.waitForSelector("iframe", {
+      state: "visible",
+      timeout: 15000,
+    });
+
+    const iframe = page.frameLocator("iframe");
+
+    // Wait for component to load
+    await iframe.locator(".one-click-exchange-form").waitFor({
+      state: "visible",
+      timeout: 10000,
+    });
+
+    await page.waitForTimeout(3000); // Give time for tokens to load
+
+    // Open Send dropdown
+    const sendDropdown = iframe.locator(".send-section .dropdown-toggle");
+    await sendDropdown.click();
+
+    // Wait for dropdown to open
+    await iframe.locator(".dropdown-menu.show").waitFor({ state: "visible" });
+    await page.waitForTimeout(500);
+
+    // Check formatting for each token
+    const dropdownItems = iframe.locator(".dropdown-menu.show .dropdown-item");
+    const itemCount = await dropdownItems.count();
+
+    console.log(`\nChecking ${itemCount} tokens in dropdown...`);
+
+    for (let i = 0; i < itemCount; i++) {
+      const item = dropdownItems.nth(i);
+      const symbolText = await item.locator("h6").textContent();
+      const balanceText = await item
+        .locator(".text-muted")
+        .last()
+        .textContent();
+
+      console.log(`${symbolText}: ${balanceText}`);
+
+      // Check formatting for known tokens
+      const symbol = symbolText.trim();
+
+      if (expectedFormats[symbol]) {
+        // Verify the balance matches the expected format
+        expect(balanceText).toBe(expectedFormats[symbol]);
+        console.log(`  ✓ ${symbol} formatted correctly: ${balanceText}`);
+      } else {
+        console.log(`  - ${symbol}: ${balanceText} (not in test data)`);
+      }
+    }
+
+    // Take screenshot of formatted balances
+    await page.screenshot({
+      path: path.join(screenshotsDir, "formatted-token-balances-dropdown.png"),
+      fullPage: false,
+    });
+
+    console.log("\n✓ Token balance formatting in dropdown verified!");
+  });
+
+  test("formats NEAR balance differently at high price ($30)", async ({
+    page,
+    instanceAccount,
+    daoAccount,
+  }) => {
+    // Same balance but with higher NEAR price
+    const testBalances = {
+      "wrap.near": "800100000000000000000000", // 0.8001 wNEAR (24 decimals)
+    };
+
+    // Create an app widget that renders OneClickExchangeForm
+    const appWidgetContent = `
+      const instance = "${instanceAccount}";
+      const treasuryDaoID = "${daoAccount}";
+      
+      return (
+        <div style={{ padding: "10px" }}>
+          <Widget
+            src="widgets.treasury-factory.near/widget/pages.asset-exchange.OneClickExchangeFormIframe"
+            props={{ 
+              instance: instance,
+            }}
+          />
+        </div>
+      );
+    `;
+
+    // Set up redirectWeb4
+    await redirectWeb4({
+      page,
+      contractId: instanceAccount,
+      treasury: daoAccount,
+      modifiedWidgets: {
+        [`${instanceAccount}/widget/app`]: appWidgetContent,
+      },
+      callWidgetNodeURLForContractWidgets: false,
+    });
+
+    // Mock token prices API with NEAR at $30
+    await page.route(
+      "https://api-mng-console.chaindefuser.com/api/tokens",
+      async (route) => {
+        const mockResponse = {
+          items: [
+            {
+              defuse_asset_id: "nep141:wrap.near",
+              decimals: 24,
+              blockchain: "near",
+              symbol: "wNEAR",
+              price: 30, // High price scenario
+              price_updated_at: new Date().toISOString(),
+              contract_address: "wrap.near",
+            },
+          ],
+        };
+
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(mockResponse),
+        });
+      }
+    );
+
+    // Mock RPC responses with our custom test balances
+    await mockRpcResponses(page, testBalances);
+
+    // Mock theme
+    await mockTheme(page, "light");
+
+    // Navigate to the instance page
+    await page.goto(`https://${instanceAccount}.page/`);
+
+    // Wait for iframe to load
+    await page.waitForSelector("iframe", {
+      state: "visible",
+      timeout: 15000,
+    });
+
+    const iframe = page.frameLocator("iframe");
+
+    // Wait for component to load
+    await iframe.locator(".one-click-exchange-form").waitFor({
+      state: "visible",
+      timeout: 10000,
+    });
+
+    await page.waitForTimeout(3000); // Give time for tokens to load
+
+    // Open Send dropdown
+    const sendDropdown = iframe.locator(".send-section .dropdown-toggle");
+    await sendDropdown.click();
+
+    // Wait for dropdown to open
+    await iframe.locator(".dropdown-menu.show").waitFor({ state: "visible" });
+    await page.waitForTimeout(500);
+
+    // Check wNEAR formatting
+    const dropdownItems = iframe.locator(".dropdown-menu.show .dropdown-item");
+    const firstItem = dropdownItems.first();
+    const symbolText = await firstItem.locator("h6").textContent();
+    const balanceText = await firstItem
+      .locator(".text-muted")
+      .last()
+      .textContent();
+
+    console.log(`\nAt $30 NEAR price:`);
+    console.log(`${symbolText}: ${balanceText}`);
+
+    // At $30, 0.8001 NEAR = $24.003, 0.8 NEAR = $24.00
+    // Difference: $0.003, which is less than $0.01
+    // For $0.01 precision at $30: ceil(-log10(0.01/30)) = 4 decimals
+    // So 0.8001 should display as "0.8001" (all 4 digits needed for precision)
+    expect(balanceText).toBe("0.8001");
+    console.log(
+      `✓ Correctly shows 0.8001 at high price (all digits significant)`
+    );
+
+    // Take screenshot
+    await page.screenshot({
+      path: path.join(screenshotsDir, "formatted-balance-high-price.png"),
+      fullPage: false,
+    });
+
+    console.log("\n✓ High price formatting test verified!");
+  });
+
+  console.log(
+    "\nHuman-readable network name validation completed successfully!"
+  );
 });
