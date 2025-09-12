@@ -208,22 +208,33 @@ export async function redirectWeb4({
 
   // Web4 route handler
   const handleWeb4Route = async (route, request) => {
-    const requestPath = request.url().substring(`https://${contractId}.page`.length);
+    const requestPath = request
+      .url()
+      .substring(`https://${contractId}.page`.length);
 
     if (useLocalFiles) {
       // Serve files from local web4/public_html directory
-      const projectRoot = path.resolve(dirname(new URL(import.meta.url).pathname), "..", "..");
-      const localFilePath = path.join(projectRoot, "web4", "public_html", requestPath === "/" ? "index.html" : requestPath.substring(1));
-      
+      const projectRoot = path.resolve(
+        dirname(new URL(import.meta.url).pathname),
+        "..",
+        ".."
+      );
+      const localFilePath = path.join(
+        projectRoot,
+        "web4",
+        "public_html",
+        requestPath === "/" ? "index.html" : requestPath.substring(1)
+      );
+
       try {
         if (fs.existsSync(localFilePath)) {
           let content = fs.readFileSync(localFilePath, "utf-8");
-          
+
           // Optionally remove service-worker.js references to prevent service worker registration
           if (disableServiceWorker) {
             content = content.replace(/service-worker\.js/g, "");
           }
-          
+
           // Determine content type based on file extension
           const ext = path.extname(localFilePath).toLowerCase();
           let contentType = "text/plain";
@@ -251,7 +262,7 @@ export async function redirectWeb4({
               contentType = "image/svg+xml";
               break;
           }
-          
+
           await route.fulfill({
             contentType,
             body: content,
