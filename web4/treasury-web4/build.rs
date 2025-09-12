@@ -15,8 +15,8 @@ fn main() {
         .expect("Time went backwards")
         .as_millis();
 
-    // Change working directory to the directory of the script (similar to process.chdir)
-    let current_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("../public_html");
+    // Use the existing files in src/web4/
+    let current_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("src/web4");
 
     // Read the index.html file
     let index_path = current_dir.join("index.html");
