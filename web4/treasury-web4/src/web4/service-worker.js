@@ -4,7 +4,7 @@ const inflightRpcRequests = new Map();
 // Caches POST requests to rpc.mainnet.fastnear.com to improve performance
 
 // Build timestamp for cache busting (updated on each contract deployment)
-const BUILD_TIMESTAMP = 0; // PLACEHOLDER_BUILD_TIMESTAMP
+const BUILD_TIMESTAMP = 1757676097913;
 
 // Cache configuration
 const CACHE_NAME = `treasury-rpc-cache-v${Math.floor(BUILD_TIMESTAMP / 1000)}`;

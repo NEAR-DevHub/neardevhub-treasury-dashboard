@@ -10,7 +10,6 @@ import { Buffer } from "buffer";
 
 window.Buffer = Buffer;
 
-console.log("main.js loaded");
 let setupLedger;
 const walletSelectorModules = [
   setupMyNearWallet(),
