@@ -215,6 +215,13 @@ impl Contract {
                     body: BASE64_STANDARD.encode(hot_sdk_shim_js),
                 };
             }
+            "/main.js" => {
+                let main_js = include_str!("web4/main.js");
+                return Web4Response::Body {
+                    content_type: "application/javascript".to_owned(),
+                    body: BASE64_STANDARD.encode(main_js),
+                };
+            }
             _ => {
                 // Continue with regular web4 handling for the main app
             }
