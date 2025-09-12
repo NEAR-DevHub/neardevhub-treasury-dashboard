@@ -71,6 +71,7 @@ export function getLocalWidgetContent(key, context = {}) {
  * @param {boolean} [options.callWidgetNodeURLForContractWidgets=true] - call the provided `widgetNodeUrl` when requesting social db contents under the provided `contractId`
  *     Set to false if you want to provide the modifiedWidgets object also for the contract widgets, otherwise the default is to request these widgets from `widgetNode`
  * @param {boolean} [options.disableServiceWorker=true] - if true (default), removes service-worker.js references from HTML to prevent service worker registration. Set to false to test with service workers enabled.
+ * @param {boolean} [options.useLocalFiles=false] - if true, serves web4 resources from local web4/public_html directory instead of from the contract
  *
  * @returns {Promise<void>} A promise that resolves when the routing setup is complete.
  */
@@ -84,6 +85,7 @@ export async function redirectWeb4({
   modifiedWidgets = {},
   callWidgetNodeURLForContractWidgets = true,
   disableServiceWorker = true,
+  useLocalFiles = false,
 }) {
   const keyStore = new keyStores.InMemoryKeyStore();
 
@@ -206,14 +208,68 @@ export async function redirectWeb4({
 
   // Web4 route handler
   const handleWeb4Route = async (route, request) => {
-    const path = request.url().substring(`https://${contractId}.page`.length);
+    const requestPath = request.url().substring(`https://${contractId}.page`.length);
 
+    if (useLocalFiles) {
+      // Serve files from local web4/public_html directory
+      const projectRoot = path.resolve(dirname(new URL(import.meta.url).pathname), "..", "..");
+      const localFilePath = path.join(projectRoot, "web4", "public_html", requestPath === "/" ? "index.html" : requestPath.substring(1));
+      
+      try {
+        if (fs.existsSync(localFilePath)) {
+          let content = fs.readFileSync(localFilePath, "utf-8");
+          
+          // Optionally remove service-worker.js references to prevent service worker registration
+          if (disableServiceWorker) {
+            content = content.replace(/service-worker\.js/g, "");
+          }
+          
+          // Determine content type based on file extension
+          const ext = path.extname(localFilePath).toLowerCase();
+          let contentType = "text/plain";
+          switch (ext) {
+            case ".html":
+              contentType = "text/html";
+              break;
+            case ".css":
+              contentType = "text/css";
+              break;
+            case ".js":
+              contentType = "application/javascript";
+              break;
+            case ".json":
+              contentType = "application/json";
+              break;
+            case ".png":
+              contentType = "image/png";
+              break;
+            case ".jpg":
+            case ".jpeg":
+              contentType = "image/jpeg";
+              break;
+            case ".svg":
+              contentType = "image/svg+xml";
+              break;
+          }
+          
+          await route.fulfill({
+            contentType,
+            body: content,
+          });
+          return;
+        }
+      } catch (error) {
+        console.warn(`Failed to read local file ${localFilePath}:`, error);
+      }
+    }
+
+    // Fallback to contract-based serving
     let viewResult = await contractAccount.viewFunction({
       contractId,
       methodName: "web4_get",
       args: {
         request: {
-          path,
+          path: requestPath,
         },
       },
     });
@@ -242,7 +298,7 @@ export async function redirectWeb4({
         methodName: "web4_get",
         args: {
           request: {
-            path,
+            path: requestPath,
             preloads,
           },
         },
