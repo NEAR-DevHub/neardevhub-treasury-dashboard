@@ -19,7 +19,7 @@ test("should not display NEAR intents card if there are no assets in NEAR intent
 
   // Intercept RPC calls to redirect intents.near queries to the sandbox
   // Now this block is after worker initialization and sandboxRpcUrl is available
-  await page.route("https://rpc.mainnet.near.org", async (route) => {
+  await page.route("https://rpc.mainnet.fastnear.com", async (route) => {
     const request = route.request();
     if (request.method() === "POST") {
       let postData;
