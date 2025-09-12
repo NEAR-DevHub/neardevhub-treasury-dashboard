@@ -99,6 +99,7 @@ The development server provides a local testing environment that simulates the N
 ### Purpose
 
 The devserver:
+
 - Hosts the treasury dashboard locally using Playwright's browser automation
 - Redirects Web4 requests to use the mainnet RPC (fastnear.com) for blockchain data
 - Preserves authentication state across development sessions
@@ -190,7 +191,7 @@ This file contains `localStorage` entries for user account information and walle
 
 # Web4 gateway
 
-In the [web4](./web4) folder there is a setup for a web4 gateway. The [public_html](./web4/public_html/) contains the gateway static index.html file that is served on the web4 page, and there is also the [treasury-web4](./web4/treasury-web4/) that contains the web4 contract that is written in Rust.
+In the [web4](./web4) folder there is a setup for a web4 gateway. The [treasury-web4/src/web4](./web4/treasury-web4/src/web4/) contains the gateway static index.html file that is served on the web4 page, and there is also the [treasury-web4](./web4/treasury-web4/) that contains the web4 contract that is written in Rust.
 
 ## Local development
 
@@ -245,18 +246,20 @@ await redirectWeb4({
   page,
   contractId: instanceAccount,
   modifiedWidgets: {
-    "account/widget/app": "return <div>Test Widget</div>;"
+    "account/widget/app": "return <div>Test Widget</div>;",
   },
-  disableServiceWorker: true  // Default - prevents service worker registration
+  disableServiceWorker: true, // Default - prevents service worker registration
 });
 ```
 
 When `disableServiceWorker` is `true` (default):
+
 - Service worker registration is prevented by removing "service-worker.js" references from HTML
 - Tests can use page routes for mocking without interference
 - This is the recommended setting for most tests
 
 When `disableServiceWorker` is `false`:
+
 - Service workers run normally
 - `redirectWeb4` intercepts both page AND service worker requests via context routes
 - Useful for testing service worker behavior specifically
@@ -264,6 +267,7 @@ When `disableServiceWorker` is `false`:
 #### Example: Testing with Service Workers Enabled
 
 See `playwright-tests/tests/web4/service-worker-interference.spec.js` for a complete example that:
+
 - Demonstrates how service workers interfere with test routes
 - Shows how to test with service workers enabled while still using modified widgets
 - Illustrates the difference between `disableServiceWorker: true` (default) and `disableServiceWorker: false`
@@ -283,4 +287,4 @@ You can also locally develop the html page served by the web4 gateway. To run a 
 npm run gateway:treasury
 ```
 
-This will create a temporary folder for the static html file, and patch the [web4/public_html/index.html](./web4/public_html/index.html) file with an RPC setting pointing to the local api proxy. If you want to see changes to the html you have to restart the gateway.
+This will create a temporary folder for the static html file, and patch the [web4/treasury-web4/src/web4/index.html](./web4/treasury-web4/src/web4/index.html) file with an RPC setting pointing to the local api proxy. If you want to see changes to the html you have to restart the gateway.
