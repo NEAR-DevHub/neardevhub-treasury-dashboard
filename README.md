@@ -191,7 +191,7 @@ This file contains `localStorage` entries for user account information and walle
 
 # Web4 gateway
 
-In the [web4](./web4) folder there is a setup for a web4 gateway. The [public_html](./web4/public_html/) contains the gateway static index.html file that is served on the web4 page, and there is also the [treasury-web4](./web4/treasury-web4/) that contains the web4 contract that is written in Rust.
+In the [web4](./web4) folder there is a setup for a web4 gateway. The [treasury-web4/src/web4](./web4/treasury-web4/src/web4/) contains the gateway static index.html file that is served on the web4 page, and there is also the [treasury-web4](./web4/treasury-web4/) that contains the web4 contract that is written in Rust.
 
 ## Local development
 
@@ -287,4 +287,4 @@ You can also locally develop the html page served by the web4 gateway. To run a 
 npm run gateway:treasury
 ```
 
-This will create a temporary folder for the static html file, and patch the [web4/public_html/index.html](./web4/public_html/index.html) file with an RPC setting pointing to the local api proxy. If you want to see changes to the html you have to restart the gateway.
+This will create a temporary folder for the static html file, and patch the [web4/treasury-web4/src/web4/index.html](./web4/treasury-web4/src/web4/index.html) file with an RPC setting pointing to the local api proxy. If you want to see changes to the html you have to restart the gateway.
