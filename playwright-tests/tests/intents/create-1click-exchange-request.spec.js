@@ -522,8 +522,9 @@ test.describe("1Click API Integration - Asset Exchange", function () {
         'div.d-flex.flex-column:has(div.h6.mb-0.text-truncate:has-text("ETH"))'
       );
     await expect(ethBalanceRowLocator).toBeVisible();
-    await expect(ethBalanceRowLocator).toContainText("5.00");
-    console.log("✅ Verified initial ETH balance: 5.00 on dashboard");
+    // With intelligent formatting, 5.00 ETH may display as "5"
+    await expect(ethBalanceRowLocator).toContainText("5");
+    console.log("✅ Verified initial ETH balance: 5 ETH on dashboard");
 
     // Take screenshot of initial balances
     await page.screenshot({
@@ -631,11 +632,11 @@ test.describe("1Click API Integration - Asset Exchange", function () {
         .filter({ has: iframe.locator('h6:text-is("ETH")') })
     ).toBeVisible({ timeout: 15000 });
 
-    // Verify ETH balance shows 5.00 in the dropdown (balance is now shown directly, not with "Balance:" prefix)
+    // Verify ETH balance shows 5 in the dropdown (with intelligent formatting, trailing zeros removed)
     const ethItem = iframe
       .locator("#send-dropdown-menu .dropdown-item")
       .filter({ has: iframe.locator('h6:text-is("ETH")') });
-    await expect(ethItem).toContainText("5.00", {
+    await expect(ethItem).toContainText("5", {
       timeout: 10000,
     });
     console.log("NEAR Intents balances loaded successfully");
@@ -1462,7 +1463,8 @@ test.describe("1Click API Integration - Asset Exchange", function () {
         'div.d-flex.flex-column:has(div.h6.mb-0.text-truncate:has-text("ETH"))'
       );
     await expect(ethBalanceRowAfterSwap).toBeVisible();
-    await expect(ethBalanceRowAfterSwap).toContainText("4.85"); // 5.00 - 0.15 = 4.85
+    // With intelligent formatting, 4.85 ETH displays with meaningful decimals
+    await expect(ethBalanceRowAfterSwap).toContainText("4.85"); // 5 - 0.15 = 4.85
     console.log("✅ Verified ETH balance after swap: 4.85");
 
     // Check for new USDC token
@@ -1477,8 +1479,8 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     await usdcBalanceRowLocator.scrollIntoViewIfNeeded();
     await page.waitForTimeout(1000); // Wait 1 second to show the USDC balance
 
-    // Dashboard shows balance with 2 decimal places
-    await expect(usdcBalanceRowLocator).toContainText(/\d+\.\d{2}/);
+    // Dashboard shows balance with intelligent formatting (variable decimal places)
+    await expect(usdcBalanceRowLocator).toContainText(/\d+(\.\d+)?/);
     console.log("✅ Verified new USDC balance on dashboard");
 
     // Take final screenshot
