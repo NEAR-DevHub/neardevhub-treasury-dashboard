@@ -56,7 +56,8 @@ useEffect(() => {
   }
 }, [showUSDValue, amount]);
 
-function toReadableAmount(value, isUSD = false) {
+function toReadableAmount(value, isUSD) {
+  isUSD = isUSD || false;
   // For USD values, always use 2 decimals
   if (isUSD) {
     return tokenDisplayLib?.formatUsdValue
