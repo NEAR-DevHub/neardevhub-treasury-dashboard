@@ -2,11 +2,14 @@ const { NearToken } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Icons"
 ) || { NearToken: () => <></> };
 
-const tokenDisplayLib = VM.require(
-  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.tokenDisplay"
-);
+const tokenDisplayLib =
+  VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.tokenDisplay") || null;
 
-const address = props.address ?? ""; // Empty string for NEAR
+let address = props.address ?? ""; // Empty string for NEAR
+// Handle NEAR Intents token format (e.g., "nep141:btc.omft.near")
+if (address.startsWith("nep141:")) {
+  address = address.replace("nep141:", "");
+}
 const symbol = props.symbol; // Optional symbol prop for non-contract tokens
 const amountWithDecimals = props.amountWithDecimals ?? 0;
 const amountWithoutDecimals = props.amountWithoutDecimals;

@@ -1070,7 +1070,7 @@ test("payment request for wNEAR token on NEAR intents", async ({
     `${creatorAccount.accountId}`
   );
   await expect(proposalColumns.nth(tokenColumnIndex)).toHaveText("wNEAR");
-  await expect(proposalColumns.nth(fundingColumnIndex)).toHaveText("50.00");
+  await expect(proposalColumns.nth(fundingColumnIndex)).toHaveText("50");
 
   await proposalColumns.nth(fundingColumnIndex).click();
 
@@ -1579,7 +1579,7 @@ test("insufficient balance alert for wNEAR payment request exceeding available b
     .locator("td");
 
   const fundingColumnIndex = await getColumnIndex(page, "Funding Ask");
-  await expect(proposalColumns.nth(fundingColumnIndex)).toHaveText("100.00");
+  await expect(proposalColumns.nth(fundingColumnIndex)).toHaveText("100");
 
   // Click on the proposal to view details
   await proposalColumns.nth(fundingColumnIndex).click();
@@ -1602,11 +1602,11 @@ test("insufficient balance alert for wNEAR payment request exceeding available b
 
   const transactionAmountLocator = page.getByText("Transaction amount:");
   await expect(transactionAmountLocator).toBeVisible();
-  await expect(transactionAmountLocator).toContainText("100.00");
+  await expect(transactionAmountLocator).toContainText("100");
 
   const currentBalanceLocator = page.getByText("Your current balance:");
   await expect(currentBalanceLocator).toBeVisible();
-  await expect(currentBalanceLocator).toContainText("25.00");
+  await expect(currentBalanceLocator).toContainText("25");
 
   // Verify both Cancel and Proceed Anyway buttons are available
   await expect(page.getByRole("button", { name: "Cancel" })).toBeVisible();
