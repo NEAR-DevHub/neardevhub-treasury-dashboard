@@ -137,8 +137,9 @@ test("Asset exchange table doesn't show placeholder icons for 1Click tokens", as
   const ethText = await ethElement.textContent();
   console.log(`ETH TokenAmount text: "${ethText}"`);
 
-  // Should show "0.10 ETH" without any placeholder icon
-  expect(ethText).toContain("0.10");
+  // Should show ETH amount without any placeholder icon
+  // With intelligent formatting, 0.1 ETH might show different precision based on price
+  expect(ethText).toMatch(/0\.1\d*/);
   expect(ethText).toContain("ETH");
 
   // Check that there's no img tag with broken source
@@ -152,7 +153,8 @@ test("Asset exchange table doesn't show placeholder icons for 1Click tokens", as
   const usdcText = await usdcElement.textContent();
   console.log(`USDC TokenAmount text: "${usdcText}"`);
 
-  expect(usdcText).toContain("350.00");
+  // With intelligent formatting, 350 USDC shows as "350" without trailing zeros
+  expect(usdcText).toContain("350");
   expect(usdcText).toContain("USDC");
 
   const usdcImgCount = await usdcElement.locator('img[src="null"]').count();
@@ -165,7 +167,8 @@ test("Asset exchange table doesn't show placeholder icons for 1Click tokens", as
   const wnearText = await wnearElement.textContent();
   console.log(`wNEAR TokenAmount text: "${wnearText}"`);
 
-  expect(wnearText).toContain("100.00");
+  // With intelligent formatting, 100 wNEAR shows as "100" without trailing zeros
+  expect(wnearText).toContain("100");
   // wNEAR should have an actual icon
   const wnearImgCount = await wnearElement.locator("img").count();
   expect(wnearImgCount).toBeGreaterThan(0);

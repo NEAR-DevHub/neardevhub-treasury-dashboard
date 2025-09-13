@@ -12,8 +12,10 @@ const amountWithDecimals = props.amountWithDecimals ?? 0;
 const amountWithoutDecimals = props.amountWithoutDecimals;
 const showUSDValue = props.showUSDValue;
 
+// If symbol is provided, it's a symbol-based token (like 1Click tokens)
+// Otherwise, check if it's NEAR or wrap.near based on address
 const isNEAR = !symbol && (address === "" || address.toLowerCase() === "near");
-const isWrapNear = address === "wrap.near";
+const isWrapNear = !symbol && address === "wrap.near";
 
 const [tokenUSDValue, setTokenUSDValue] = useState(null);
 const [tokenPrice, setTokenPrice] = useState(null);
@@ -30,20 +32,18 @@ if (isWrapNear) {
     icon: "${REPL_WRAP_NEAR_ICON}",
   };
 }
-if (!isNEAR && !isWrapNear) {
-  if (symbol) {
-    // If symbol is explicitly provided (for non-contract tokens like 1Click tokens)
-    // Don't fetch metadata, just use the symbol
-    ftMetadata = {
-      symbol: symbol,
-      decimals: 1, // We'll use amountWithDecimals directly, no conversion needed
-      icon: null, // No icon for symbol-only tokens
-    };
-  } else {
-    // For contract addresses, fetch metadata from the contract
-    ftMetadata = Near.view(address, "ft_metadata", {});
-    if (ftMetadata === null) return null;
-  }
+if (symbol) {
+  // If symbol is explicitly provided (for non-contract tokens like 1Click tokens)
+  // Don't fetch metadata, just use the symbol
+  ftMetadata = {
+    symbol: symbol,
+    decimals: 1, // We'll use amountWithDecimals directly, no conversion needed
+    icon: null, // No icon for symbol-only tokens
+  };
+} else if (!isNEAR && !isWrapNear) {
+  // For contract addresses, fetch metadata from the contract
+  ftMetadata = Near.view(address, "ft_metadata", {});
+  if (ftMetadata === null) return null;
 }
 let amount = amountWithDecimals;
 let originalAmount = amountWithDecimals;
