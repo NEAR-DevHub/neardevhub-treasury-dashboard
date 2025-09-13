@@ -2,6 +2,10 @@ const { NearToken } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Icons"
 ) || { NearToken: () => <></> };
 
+const tokenDisplayLib = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.tokenDisplay"
+);
+
 const address = props.address ?? ""; // Empty string for NEAR
 const symbol = props.symbol; // Optional symbol prop for non-contract tokens
 const amountWithDecimals = props.amountWithDecimals ?? 0;
@@ -12,6 +16,7 @@ const isNEAR = !symbol && (address === "" || address.toLowerCase() === "near");
 const isWrapNear = address === "wrap.near";
 
 const [tokenUSDValue, setTokenUSDValue] = useState(null);
+const [tokenPrice, setTokenPrice] = useState(null);
 
 let ftMetadata = {
   symbol: "NEAR",
@@ -49,8 +54,22 @@ if (amountWithoutDecimals !== undefined) {
   amount = originalAmount.toFixed();
 }
 
-function toReadableAmount(amount, showAllDecimals) {
-  return Number(amount).toLocaleString(
+function toReadableAmount(value, showAllDecimals) {
+  // Use intelligent formatting if available and we have the price
+  if (!showAllDecimals && tokenDisplayLib && tokenPrice) {
+    try {
+      const formatted = tokenDisplayLib.formatTokenAmount(value, tokenPrice);
+      // Add thousand separators
+      const parts = formatted.split(".");
+      parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      return parts.join(".");
+    } catch (e) {
+      // Fall through to default formatting
+    }
+  }
+
+  // Fallback to original behavior
+  return Number(value).toLocaleString(
     "en-US",
     showAllDecimals
       ? { maximumFractionDigits: 10 }
@@ -87,17 +106,36 @@ const TokenAmount = ({ showAllDecimals, showTilde }) => {
 };
 
 useEffect(() => {
-  if (showUSDValue) {
-    asyncFetch(`${REPL_BACKEND_API}/ft-token-price?account_id=${address}`).then(
-      (res) => {
-        const price = res.body?.price;
-        if (price) {
+  // For symbol-based tokens (1Click), fetch price from 1Click API
+  if (symbol && !address) {
+    asyncFetch("https://1click.chaindefuser.com/v0/tokens").then((res) => {
+      if (res.body && Array.isArray(res.body)) {
+        const tokenData = res.body.find((t) => t.symbol === symbol);
+        if (tokenData && tokenData.price) {
+          setTokenPrice(tokenData.price);
+          if (showUSDValue) {
+            setTokenUSDValue(Big(amount).mul(tokenData.price).toFixed(2));
+          }
+        }
+      }
+    });
+  }
+  // For address-based tokens, fetch from backend API
+  else if (address || isNEAR) {
+    const tokenAddress = isNEAR ? "" : address;
+    asyncFetch(
+      `${REPL_BACKEND_API}/ft-token-price?account_id=${tokenAddress}`
+    ).then((res) => {
+      const price = res.body?.price;
+      if (price) {
+        setTokenPrice(price);
+        if (showUSDValue) {
           setTokenUSDValue(Big(amount).mul(price).toFixed(2));
         }
       }
-    );
+    });
   }
-}, [showUSDValue]);
+}, [showUSDValue, address, symbol]);
 
 // Check if there are more than 2 decimals in the original amount
 let needsTilde = false;
