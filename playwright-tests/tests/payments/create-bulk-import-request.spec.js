@@ -444,6 +444,11 @@ test("should create bulk requests using sandbox", async ({
   await page.waitForTimeout(5000);
   await page.getByRole("button", { name: "Create Request" }).click();
   await page.waitForTimeout(2000);
+  const canvasLocator = page.locator(".offcanvas-body");
+  await expect(canvasLocator.getByText("Treasury Wallet")).toBeVisible();
+  await canvasLocator.getByRole("button", { name: "Select Wallet" }).click();
+  await expect(canvasLocator.getByText("SputnikDAO")).toBeVisible();
+  await canvasLocator.getByText("SputnikDAO").click();
   await page.getByText("Import Multiple Payment Requests").click();
   const csvText = `Title\tSummary\tRecipient\tRequested Token\tFunding Ask\tNotes
   Test title 1\tSummary 1\tmegha19.near\tnear\t100\tNote1
