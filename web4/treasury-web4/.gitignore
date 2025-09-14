@@ -1,5 +1,4 @@
 /target
-
-index.html
-service-worker.js
-hot-sdk-shim.js
+src/web4/index.html
+src/web4/service-worker.js
+src/web4/hot-sdk-shim.js
