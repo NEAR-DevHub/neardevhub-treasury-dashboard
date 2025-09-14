@@ -8,11 +8,9 @@ import { mockRpcRequest, mockWithFTBalance } from "../../util/rpcmock.js";
 import { SandboxRPC } from "../../util/sandboxrpc.js";
 
 async function mockExchangeProposals({ page, status }) {
-  console.log("mockExchangeProposals", status);
   await page.route(
     /\/proposals\/.*\?.*category=asset-exchange/,
     async (route) => {
-      console.log("mockExchangeProposals route", route);
       let originalResult = [JSON.parse(JSON.stringify(SwapProposalData))];
       originalResult[0].id = 0;
       originalResult[0].status = status;
