@@ -240,6 +240,38 @@ function formatCompactNumber(amount, tokenPrice) {
   return formatTokenAmount(amount, tokenPrice || 1);
 }
 
+// Fetch all 1Click token prices at once
+// Returns a map with symbol and stripped assetId as keys
+function fetch1ClickTokenPrices() {
+  return asyncFetch("https://1click.chaindefuser.com/v0/tokens")
+    .then((res) => {
+      if (res.body && Array.isArray(res.body)) {
+        const prices = {};
+        res.body.forEach((token) => {
+          if (token.price) {
+            // Add price with symbol as key
+            if (token.symbol) {
+              prices[token.symbol] = token.price;
+            }
+            // Add price with assetId stripped of nep[0-9]+: prefix as key
+            if (token.assetId) {
+              // Strip nep141:, nep245:, etc. prefix
+              const strippedAssetId = token.assetId.replace(/^nep\d+:/, "");
+              prices[strippedAssetId] = token.price;
+              // Also keep the full assetId as key
+              prices[token.assetId] = token.price;
+            }
+          }
+        });
+        return prices;
+      }
+      return {};
+    })
+    .catch(() => {
+      return {};
+    });
+}
+
 return {
   formatTokenAmount,
   getOptimalDecimals,
@@ -252,4 +284,5 @@ return {
   getTotalPortfolioValue,
   validateTokenInput,
   formatCompactNumber,
+  fetch1ClickTokenPrices,
 };

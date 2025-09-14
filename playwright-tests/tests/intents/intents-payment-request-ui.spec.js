@@ -467,7 +467,7 @@ test("payment request to BTC address", async ({
     "@bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"
   );
   await expect(proposalColumns.nth(tokenColumnIndex)).toHaveText("BTC");
-  await expect(proposalColumns.nth(fundingColumnIndex)).toHaveText("2.00");
+  await expect(proposalColumns.nth(fundingColumnIndex)).toHaveText("2");
 
   await proposalColumns.nth(fundingColumnIndex).click();
   await page.waitForTimeout(2_000);
@@ -751,7 +751,7 @@ test("payment request to USDC address on BASE", async ({
     "@0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
   );
   await expect(proposalColumns.nth(tokenColumnIndex)).toHaveText("USDC");
-  await expect(proposalColumns.nth(fundingColumnIndex)).toHaveText("2,500.00");
+  await expect(proposalColumns.nth(fundingColumnIndex)).toHaveText("2,500");
 
   await proposalColumns.nth(fundingColumnIndex).click();
 
@@ -1317,7 +1317,7 @@ test("insufficient balance alert for BTC payment request exceeding available bal
     .locator("td");
 
   const fundingColumnIndex = await getColumnIndex(page, "Funding Ask");
-  await expect(proposalColumns.nth(fundingColumnIndex)).toHaveText("500.00");
+  await expect(proposalColumns.nth(fundingColumnIndex)).toHaveText("500");
 
   // Click on the proposal to view details
   await proposalColumns.nth(fundingColumnIndex).click();
