@@ -539,6 +539,14 @@ function generateFilteredProposalsQuery(
               }
               break;
 
+            case "source":
+              const sourceValue = values[0].toLowerCase().split(" ").join("-");
+              if (include) {
+                queryParams.push("source=" + sourceValue);
+              } else {
+                queryParams.push("source_not=" + sourceValue);
+              }
+              break;
             default:
               break;
           }
