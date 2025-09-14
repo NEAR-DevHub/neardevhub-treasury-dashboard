@@ -52,6 +52,11 @@ test.describe("User is logged in", () => {
     await page.goto(`/${instanceAccount}/widget/app?page=payments`);
     await page.waitForTimeout(5_000);
     await page.getByRole("button", { name: "Create Request" }).click();
+    const canvasLocator = page.locator(".offcanvas-body");
+    await expect(canvasLocator.getByText("Treasury Wallet")).toBeVisible();
+    await canvasLocator.getByRole("button", { name: "Select Wallet" }).click();
+    await expect(canvasLocator.getByText("SputnikDAO")).toBeVisible();
+    await canvasLocator.getByText("SputnikDAO").click();
     await page.getByText("Import Multiple Payment Requests").click();
   });
 
