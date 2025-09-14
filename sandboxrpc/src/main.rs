@@ -1,4 +1,4 @@
-use near_workspaces::{network::Custom, sandbox, types::NearToken, AccountId, Worker};
+use near_workspaces::{network::Custom, sandbox_with_version, types::NearToken, AccountId, Worker};
 use serde_json::json;
 use tokio::io::{self, AsyncBufReadExt, BufReader};
 
@@ -9,7 +9,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mainnet: Worker<Custom> =
         near_workspaces::custom("https://rpc.mainnet.fastnear.com").await?;
-    let worker = sandbox().await?;
+    let worker = sandbox_with_version("2.7.0").await?;
 
     let sputnik_dao_contract = worker
         .import_contract(&"sputnik-dao.near".parse().unwrap(), &mainnet)

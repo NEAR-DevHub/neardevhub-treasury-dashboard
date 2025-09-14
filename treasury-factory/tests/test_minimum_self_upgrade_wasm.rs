@@ -4,7 +4,7 @@ use wat::parse_str as wat2wasm;
 
 #[tokio::test]
 async fn test_minimum_self_upgrade_wasm() -> Result<(), Box<dyn std::error::Error>> {
-    let sandbox = near_workspaces::sandbox().await?;
+    let sandbox = near_workspaces::sandbox_with_version("2.7.0").await?;
 
     let account = sandbox.dev_create_account().await?;
 
