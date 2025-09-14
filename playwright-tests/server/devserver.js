@@ -49,6 +49,5 @@ await redirectWeb4({
   page,
   treasury,
   sandboxNodeUrl: "https://rpc.mainnet.fastnear.com",
-  useLocalFiles: true,
 });
 await page.goto(`https://${contractId}.page`);
