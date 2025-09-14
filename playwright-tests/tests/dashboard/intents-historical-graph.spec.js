@@ -127,29 +127,29 @@ test.describe("Intents Historical Graph", () => {
     ).toBeVisible();
   });
 
-    test("should not display graph when no data is available", async ({
-      page,
-      instanceAccount,
-      daoAccount,
-    }) => {
-      // Mock empty response
-      await page.route(
-        `**/api/intents-balance-history?account_id=${daoAccount}`,
-        async (route) => {
-          await route.fulfill({
-            json: {}, // Empty object
-            status: 200,
-          });
-        }
-      );
+  test("should not display graph when no data is available", async ({
+    page,
+    instanceAccount,
+    daoAccount,
+  }) => {
+    // Mock empty response
+    await page.route(
+      `**/api/intents-balance-history?account_id=${daoAccount}`,
+      async (route) => {
+        await route.fulfill({
+          json: {}, // Empty object
+          status: 200,
+        });
+      }
+    );
 
-      await page.goto(`/${instanceAccount}/widget/app`);
+    await page.goto(`/${instanceAccount}/widget/app`);
 
-      // Wait for the page to load
-      await page.waitForTimeout(5_000);
+    // Wait for the page to load
+    await page.waitForTimeout(5_000);
 
-      // The intents historical graph should not be visible when no data
-      const intentsGraph = page.getByRole("heading", { name: "Intents" });
-      await expect(intentsGraph).not.toBeVisible();
-    });
+    // The intents historical graph should not be visible when no data
+    const intentsGraph = page.getByRole("heading", { name: "Intents" });
+    await expect(intentsGraph).not.toBeVisible();
+  });
 });
