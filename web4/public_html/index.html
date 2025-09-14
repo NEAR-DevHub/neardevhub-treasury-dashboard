@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title></title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta property="og:url" content="SOCIAL_METADATA_URL" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="SOCIAL_METADATA_TITLE" />
+    <meta property="og:description" content="SOCIAL_METADATA_DESCRIPTION" />
+    <meta property="og:image" content="https://ipfs.near.social/ipfs/SOCIAL_IMAGE_IPFS_CID" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="SOCIAL_METADATA_TITLE" />
+    <meta name="twitter:description" content="SOCIAL_METADATA_DESCRIPTION" />
+    <meta name="twitter:image" content="https://ipfs.near.social/ipfs/SOCIAL_IMAGE_IPFS_CID" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css"
+    />
+    <script async src="https://ga.jspm.io/npm:es-module-shims@2.6.2/dist/es-module-shims.js" crossorigin="anonymous"></script>
+    <script type="importmap">
+    {
+      "imports": {
+        "@near-wallet-selector/core": "https://ga.jspm.io/npm:@near-wallet-selector/core@9.4.0/index.js",
+        "@near-wallet-selector/hot-wallet": "https://ga.jspm.io/npm:@near-wallet-selector/hot-wallet@9.4.0/index.js",
+        "@near-wallet-selector/intear-wallet": "https://ga.jspm.io/npm:@near-wallet-selector/intear-wallet@9.4.0/index.js",
+        "@near-wallet-selector/ledger": "https://ga.jspm.io/npm:@near-wallet-selector/ledger@9.4.0/index.js",
+        "@near-wallet-selector/meteor-wallet": "https://ga.jspm.io/npm:@near-wallet-selector/meteor-wallet@9.4.0/index.js",
+        "@near-wallet-selector/modal-ui-js": "https://ga.jspm.io/npm:@near-wallet-selector/modal-ui-js@9.4.0/index.js",
+        "@near-wallet-selector/my-near-wallet": "https://ga.jspm.io/npm:@near-wallet-selector/my-near-wallet@9.4.0/index.js",
+        "@near-wallet-selector/near-mobile-wallet": "https://ga.jspm.io/npm:@near-wallet-selector/near-mobile-wallet@9.4.0/index.js",
+        "@near-wallet-selector/sender": "https://ga.jspm.io/npm:@near-wallet-selector/sender@9.4.0/index.js",
+        "buffer": "https://ga.jspm.io/npm:@jspm/core@2.1.0/nodelibs/browser/buffer.js"
+      },
+      "scopes": {
+        "https://ga.jspm.io/": {
+          "@hot-wallet/sdk": "/hot-sdk-shim.js",
+          "@ledgerhq/devices": "https://ga.jspm.io/npm:@ledgerhq/devices@8.4.8/lib-es/index.js",
+          "@ledgerhq/devices/hid-framing": "https://ga.jspm.io/npm:@ledgerhq/devices@8.4.8/lib-es/hid-framing.js",
+          "@ledgerhq/errors": "https://ga.jspm.io/npm:@ledgerhq/errors@6.24.0/lib-es/index.js",
+          "@ledgerhq/hw-transport": "https://ga.jspm.io/npm:@ledgerhq/hw-transport@6.31.9/lib-es/Transport.js",
+          "@ledgerhq/hw-transport-webhid": "https://ga.jspm.io/npm:@ledgerhq/hw-transport-webhid@6.30.4/lib-es/TransportWebHID.js",
+          "@ledgerhq/logs": "https://ga.jspm.io/npm:@ledgerhq/logs@6.13.0/lib-es/index.js",
+          "@meteorwallet/sdk": "https://ga.jspm.io/npm:@meteorwallet/sdk@1.0.24/dist/index.js",
+          "@near-js/accounts": "https://ga.jspm.io/npm:@near-js/accounts@2.3.0/lib/commonjs/index.cjs",
+          "@near-js/crypto": "https://ga.jspm.io/npm:@near-js/crypto@1.4.0/lib/commonjs/index.cjs",
+          "@near-js/keystores": "https://ga.jspm.io/npm:@near-js/keystores@0.2.0/lib/commonjs/index.cjs",
+          "@near-js/keystores-browser": "https://ga.jspm.io/npm:@near-js/keystores-browser@0.2.0/lib/commonjs/index.cjs",
+          "@near-js/providers": "https://ga.jspm.io/npm:@near-js/providers@1.0.0/lib/commonjs/index.cjs",
+          "@near-js/signers": "https://ga.jspm.io/npm:@near-js/signers@0.2.0/lib/commonjs/index.cjs",
+          "@near-js/tokens": "https://ga.jspm.io/npm:@near-js/tokens@2.3.0/lib/commonjs/index.cjs",
+          "@near-js/transactions": "https://ga.jspm.io/npm:@near-js/transactions@2.3.0/lib/commonjs/index.cjs",
+          "@near-js/types": "https://ga.jspm.io/npm:@near-js/types@0.3.0/lib/commonjs/index.cjs",
+          "@near-js/utils": "https://ga.jspm.io/npm:@near-js/utils@1.0.0/lib/commonjs/index.cjs",
+          "@near-js/wallet-account": "https://ga.jspm.io/npm:@near-js/wallet-account@1.3.0/lib/commonjs/index.cjs",
+          "@near-wallet-selector/wallet-utils": "https://ga.jspm.io/npm:@near-wallet-selector/wallet-utils@9.4.0/index.js",
+          "@noble/curves/ed25519": "https://ga.jspm.io/npm:@noble/curves@1.2.0/ed25519.js",
+          "@noble/hashes/crypto": "https://ga.jspm.io/npm:@noble/hashes@1.7.1/crypto.js",
+          "@noble/hashes/sha256": "https://ga.jspm.io/npm:@noble/hashes@1.7.1/sha256.js",
+          "@noble/hashes/sha512": "https://ga.jspm.io/npm:@noble/hashes@1.3.2/sha512.js",
+          "@noble/hashes/utils": "https://ga.jspm.io/npm:@noble/hashes@1.3.2/utils.js",
+          "@peersyst/near-mobile-signer/dist/src/wallet/NearMobileWallet": "https://ga.jspm.io/npm:@peersyst/near-mobile-signer@1.1.4/dist/src/wallet/NearMobileWallet.js",
+          "@scure/base": "https://ga.jspm.io/npm:@scure/base@1.2.6/lib/index.js",
+          "base-x": "https://ga.jspm.io/npm:base-x@2.0.6/index.js",
+          "base64-js": "https://ga.jspm.io/npm:base64-js@1.5.1/index.js",
+          "bn.js": "https://ga.jspm.io/npm:bn.js@5.2.2/lib/bn.js",
+          "borsh": "https://ga.jspm.io/npm:borsh@1.0.0/lib/esm/index.js",
+          "brorand": "https://ga.jspm.io/npm:brorand@1.1.0/index.js",
+          "bs58": "https://ga.jspm.io/npm:bs58@4.0.0/index.js",
+          "buffer": "https://ga.jspm.io/npm:buffer@6.0.3/index.js",
+          "charenc": "https://ga.jspm.io/npm:charenc@0.0.2/charenc.js",
+          "copy-to-clipboard": "https://ga.jspm.io/npm:copy-to-clipboard@3.3.3/index.js",
+          "crypt": "https://ga.jspm.io/npm:crypt@0.0.2/crypt.js",
+          "crypto": "https://ga.jspm.io/npm:@jspm/core@2.1.0/nodelibs/browser/crypto.js",
+          "decode-uri-component": "https://ga.jspm.io/npm:decode-uri-component@0.2.2/index.js",
+          "depd": "https://ga.jspm.io/npm:depd@2.0.0/lib/browser/index.js",
+          "dijkstrajs": "https://ga.jspm.io/npm:dijkstrajs@1.0.3/dijkstra.js",
+          "elliptic": "https://ga.jspm.io/npm:elliptic@6.6.1/lib/dev.elliptic.js",
+          "events": "https://ga.jspm.io/npm:events@3.3.0/events.js",
+          "exponential-backoff": "https://ga.jspm.io/npm:exponential-backoff@3.1.2/dist/backoff.js",
+          "filter-obj": "https://ga.jspm.io/npm:filter-obj@1.1.0/index.js",
+          "generate-function": "https://ga.jspm.io/npm:generate-function@2.3.1/index.js",
+          "generate-object-property": "https://ga.jspm.io/npm:generate-object-property@1.2.0/index.js",
+          "hash.js": "https://ga.jspm.io/npm:hash.js@1.1.7/lib/hash.js",
+          "hmac-drbg": "https://ga.jspm.io/npm:hmac-drbg@1.0.1/lib/hmac-drbg.js",
+          "ieee754": "https://ga.jspm.io/npm:ieee754@1.2.1/index.js",
+          "inherits": "https://ga.jspm.io/npm:inherits@2.0.4/inherits_browser.js",
+          "is-mobile": "https://ga.jspm.io/npm:is-mobile@4.0.0/index.js",
+          "is-my-ip-valid": "https://ga.jspm.io/npm:is-my-ip-valid@1.0.1/index.js",
+          "is-my-json-valid": "https://ga.jspm.io/npm:is-my-json-valid@2.20.6/index.js",
+          "is-property": "https://ga.jspm.io/npm:is-property@1.0.2/is-property.js",
+          "isomorphic-unfetch": "https://ga.jspm.io/npm:isomorphic-unfetch@3.1.0/browser.js",
+          "js-sha256": "https://ga.jspm.io/npm:js-sha256@0.9.0/src/sha256.js",
+          "jsonpointer": "https://ga.jspm.io/npm:jsonpointer@5.0.1/jsonpointer.js",
+          "lru_map": "https://ga.jspm.io/npm:lru_map@0.4.1/dist/lru.js",
+          "minimalistic-assert": "https://ga.jspm.io/npm:minimalistic-assert@1.0.1/index.js",
+          "minimalistic-crypto-utils": "https://ga.jspm.io/npm:minimalistic-crypto-utils@1.0.1/lib/utils.js",
+          "mustache": "https://ga.jspm.io/npm:mustache@4.0.0/mustache.js",
+          "nanoid": "https://ga.jspm.io/npm:nanoid@5.1.5/index.browser.js",
+          "near-abi": "https://ga.jspm.io/npm:near-abi@0.2.0/lib/index.js",
+          "near-api-js": "https://ga.jspm.io/npm:near-api-js@5.0.0/lib/browser-index.js",
+          "near-api-js/lib/": "https://ga.jspm.io/npm:near-api-js@4.0.3/lib/",
+          "near-api-js/lib/providers": "https://ga.jspm.io/npm:near-api-js@4.0.3/lib/providers/index.js",
+          "process": "https://ga.jspm.io/npm:@jspm/core@2.1.0/nodelibs/browser/process.js",
+          "qrcode": "https://ga.jspm.io/npm:qrcode@1.5.4/lib/browser.js",
+          "query-string": "https://ga.jspm.io/npm:query-string@7.1.3/index.js",
+          "randombytes": "https://ga.jspm.io/npm:randombytes@2.1.0/browser.js",
+          "rxjs": "https://ga.jspm.io/npm:rxjs@7.8.1/dist/esm5/index.js",
+          "safe-buffer": "https://ga.jspm.io/npm:safe-buffer@5.2.1/index.js",
+          "secp256k1": "https://ga.jspm.io/npm:secp256k1@5.0.0/elliptic.js",
+          "semver": "https://ga.jspm.io/npm:semver@7.7.2/index.js",
+          "sha1": "https://ga.jspm.io/npm:sha1@1.1.1/sha1.js",
+          "split-on-first": "https://ga.jspm.io/npm:split-on-first@1.1.0/index.js",
+          "strict-uri-encode": "https://ga.jspm.io/npm:strict-uri-encode@2.0.0/index.js",
+          "toggle-selection": "https://ga.jspm.io/npm:toggle-selection@1.0.6/index.js",
+          "tslib": "https://ga.jspm.io/npm:tslib@2.8.1/tslib.es6.mjs",
+          "unfetch": "https://ga.jspm.io/npm:unfetch@4.2.0/dist/unfetch.js",
+          "util": "https://ga.jspm.io/npm:@jspm/core@2.1.0/nodelibs/browser/util.js",
+          "uuid4": "https://ga.jspm.io/npm:uuid4@2.0.3/browser.mjs",
+          "xtend": "https://ga.jspm.io/npm:xtend@4.0.2/immutable.js",
+          "zod": "https://ga.jspm.io/npm:zod@4.0.14/index.js"
+        },
+        "https://ga.jspm.io/npm:@meteorwallet/sdk@1.0.24/": {
+          "@near-js/accounts": "https://ga.jspm.io/npm:@near-js/accounts@2.3.0/lib/esm/index.js",
+          "@near-js/crypto": "https://ga.jspm.io/npm:@near-js/crypto@2.2.5/lib/esm/index.js",
+          "@near-js/keystores": "https://ga.jspm.io/npm:@near-js/keystores@2.2.5/lib/esm/index.js",
+          "@near-js/keystores-browser": "https://ga.jspm.io/npm:@near-js/keystores-browser@2.2.5/lib/esm/index.js",
+          "@near-js/providers": "https://ga.jspm.io/npm:@near-js/providers@2.2.5/lib/esm/index.js",
+          "@near-js/signers": "https://ga.jspm.io/npm:@near-js/signers@2.3.0/lib/esm/index.js",
+          "@near-js/transactions": "https://ga.jspm.io/npm:@near-js/transactions@2.3.0/lib/esm/index.js",
+          "@near-js/types": "https://ga.jspm.io/npm:@near-js/types@2.2.5/lib/esm/index.js",
+          "near-api-js": "https://ga.jspm.io/npm:near-api-js@6.3.0/lib/browser-index.js"
+        },
+        "https://ga.jspm.io/npm:@near-js/accounts@2.3.0/": {
+          "@near-js/crypto": "https://ga.jspm.io/npm:@near-js/crypto@2.3.0/lib/commonjs/index.cjs",
+          "@near-js/providers": "https://ga.jspm.io/npm:@near-js/providers@2.3.0/lib/commonjs/index.cjs",
+          "@near-js/signers": "https://ga.jspm.io/npm:@near-js/signers@2.3.0/lib/commonjs/index.cjs",
+          "@near-js/types": "https://ga.jspm.io/npm:@near-js/types@2.3.0/lib/commonjs/index.cjs",
+          "@near-js/utils": "https://ga.jspm.io/npm:@near-js/utils@2.3.0/lib/commonjs/index.cjs"
+        },
+        "https://ga.jspm.io/npm:@near-js/accounts@2.3.0/lib/esm/index.js": {
+          "@near-js/crypto": "https://ga.jspm.io/npm:@near-js/crypto@2.3.0/lib/esm/index.js",
+          "@near-js/providers": "https://ga.jspm.io/npm:@near-js/providers@2.3.0/lib/esm/index.js",
+          "@near-js/signers": "https://ga.jspm.io/npm:@near-js/signers@2.3.0/lib/esm/index.js",
+          "@near-js/tokens": "https://ga.jspm.io/npm:@near-js/tokens@2.3.0/lib/esm/index.js",
+          "@near-js/transactions": "https://ga.jspm.io/npm:@near-js/transactions@2.3.0/lib/esm/index.js",
+          "@near-js/types": "https://ga.jspm.io/npm:@near-js/types@2.3.0/lib/esm/index.js",
+          "@near-js/utils": "https://ga.jspm.io/npm:@near-js/utils@2.3.0/lib/esm/index.js",
+          "@noble/hashes/sha256": "https://ga.jspm.io/npm:@noble/hashes@1.7.1/esm/sha256.js"
+        },
+        "https://ga.jspm.io/npm:@near-js/crypto@1.4.0/lib/esm/index.js": {
+          "@near-js/utils": "https://ga.jspm.io/npm:@near-js/utils@1.0.0/lib/esm/index.js",
+          "@noble/curves/ed25519": "https://ga.jspm.io/npm:@noble/curves@1.2.0/esm/ed25519.js"
+        },
+        "https://ga.jspm.io/npm:@near-js/crypto@2.2.5/": {
+          "@near-js/utils": "https://ga.jspm.io/npm:@near-js/utils@2.2.5/lib/esm/index.js",
+          "@noble/curves/ed25519": "https://ga.jspm.io/npm:@noble/curves@1.8.1/esm/ed25519.js",
+          "secp256k1": "https://ga.jspm.io/npm:secp256k1@5.0.1/elliptic.js"
+        },
+        "https://ga.jspm.io/npm:@near-js/crypto@2.3.0/": {
+          "@near-js/utils": "https://ga.jspm.io/npm:@near-js/utils@2.3.0/lib/commonjs/index.cjs",
+          "@noble/curves/ed25519": "https://ga.jspm.io/npm:@noble/curves@1.8.1/ed25519.js",
+          "secp256k1": "https://ga.jspm.io/npm:secp256k1@5.0.1/elliptic.js"
+        },
+        "https://ga.jspm.io/npm:@near-js/crypto@2.3.0/lib/esm/index.js": {
+          "@near-js/utils": "https://ga.jspm.io/npm:@near-js/utils@2.3.0/lib/esm/index.js",
+          "@noble/curves/ed25519": "https://ga.jspm.io/npm:@noble/curves@1.8.1/esm/ed25519.js"
+        },
+        "https://ga.jspm.io/npm:@near-js/keystores-browser@2.2.5/": {
+          "@near-js/crypto": "https://ga.jspm.io/npm:@near-js/crypto@2.2.5/lib/esm/index.js",
+          "@near-js/keystores": "https://ga.jspm.io/npm:@near-js/keystores@2.2.5/lib/esm/index.js"
+        },
+        "https://ga.jspm.io/npm:@near-js/keystores-browser@2.3.0/": {
+          "@near-js/crypto": "https://ga.jspm.io/npm:@near-js/crypto@2.3.0/lib/commonjs/index.cjs",
+          "@near-js/keystores": "https://ga.jspm.io/npm:@near-js/keystores@2.3.0/lib/commonjs/index.cjs"
+        },
+        "https://ga.jspm.io/npm:@near-js/keystores-browser@2.3.0/lib/esm/index.js": {
+          "@near-js/crypto": "https://ga.jspm.io/npm:@near-js/crypto@2.3.0/lib/esm/index.js",
+          "@near-js/keystores": "https://ga.jspm.io/npm:@near-js/keystores@2.3.0/lib/esm/index.js"
+        },
+        "https://ga.jspm.io/npm:@near-js/keystores@0.2.0/lib/esm/index.js": {
+          "@near-js/crypto": "https://ga.jspm.io/npm:@near-js/crypto@1.4.0/lib/esm/index.js"
+        },
+        "https://ga.jspm.io/npm:@near-js/keystores@2.2.5/": {
+          "@near-js/crypto": "https://ga.jspm.io/npm:@near-js/crypto@2.2.5/lib/esm/index.js"
+        },
+        "https://ga.jspm.io/npm:@near-js/keystores@2.3.0/": {
+          "@near-js/crypto": "https://ga.jspm.io/npm:@near-js/crypto@2.3.0/lib/commonjs/index.cjs"
+        },
+        "https://ga.jspm.io/npm:@near-js/keystores@2.3.0/lib/esm/index.js": {
+          "@near-js/crypto": "https://ga.jspm.io/npm:@near-js/crypto@2.3.0/lib/esm/index.js"
+        },
+        "https://ga.jspm.io/npm:@near-js/providers@2.2.5/": {
+          "@near-js/transactions": "https://ga.jspm.io/npm:@near-js/transactions@2.3.0/lib/esm/index.js",
+          "@near-js/types": "https://ga.jspm.io/npm:@near-js/types@2.2.5/lib/esm/index.js",
+          "@near-js/utils": "https://ga.jspm.io/npm:@near-js/utils@2.2.5/lib/esm/index.js"
+        },
+        "https://ga.jspm.io/npm:@near-js/providers@2.3.0/": {
+          "@near-js/types": "https://ga.jspm.io/npm:@near-js/types@2.3.0/lib/commonjs/index.cjs",
+          "@near-js/utils": "https://ga.jspm.io/npm:@near-js/utils@2.3.0/lib/commonjs/index.cjs"
+        },
+        "https://ga.jspm.io/npm:@near-js/providers@2.3.0/lib/esm/index.js": {
+          "@near-js/transactions": "https://ga.jspm.io/npm:@near-js/transactions@2.3.0/lib/esm/index.js",
+          "@near-js/types": "https://ga.jspm.io/npm:@near-js/types@2.3.0/lib/esm/index.js",
+          "@near-js/utils": "https://ga.jspm.io/npm:@near-js/utils@2.3.0/lib/esm/index.js"
+        },
+        "https://ga.jspm.io/npm:@near-js/signers@0.2.0/": {
+          "@noble/hashes/sha256": "https://ga.jspm.io/npm:@noble/hashes@1.3.3/sha256.js"
+        },
+        "https://ga.jspm.io/npm:@near-js/signers@2.3.0/": {
+          "@near-js/crypto": "https://ga.jspm.io/npm:@near-js/crypto@2.3.0/lib/esm/index.js",
+          "@near-js/transactions": "https://ga.jspm.io/npm:@near-js/transactions@2.3.0/lib/esm/index.js",
+          "@noble/hashes/sha256": "https://ga.jspm.io/npm:@noble/hashes@1.7.1/esm/sha256.js"
+        },
+        "https://ga.jspm.io/npm:@near-js/signers@2.3.0/lib/commonjs/index.cjs": {
+          "@near-js/crypto": "https://ga.jspm.io/npm:@near-js/crypto@2.3.0/lib/commonjs/index.cjs",
+          "borsh": "https://ga.jspm.io/npm:borsh@1.0.0/lib/cjs/index.js"
+        },
+        "https://ga.jspm.io/npm:@near-js/transactions@2.3.0/": {
+          "@near-js/crypto": "https://ga.jspm.io/npm:@near-js/crypto@2.3.0/lib/commonjs/index.cjs",
+          "@near-js/types": "https://ga.jspm.io/npm:@near-js/types@2.3.0/lib/commonjs/index.cjs",
+          "borsh": "https://ga.jspm.io/npm:borsh@1.0.0/lib/cjs/index.js"
+        },
+        "https://ga.jspm.io/npm:@near-js/transactions@2.3.0/lib/esm/index.js": {
+          "@near-js/crypto": "https://ga.jspm.io/npm:@near-js/crypto@2.3.0/lib/esm/index.js",
+          "@near-js/types": "https://ga.jspm.io/npm:@near-js/types@2.3.0/lib/esm/index.js"
+        },
+        "https://ga.jspm.io/npm:@near-js/utils@1.0.0/lib/esm/index.js": {
+          "@near-js/types": "https://ga.jspm.io/npm:@near-js/types@0.3.0/lib/esm/index.js"
+        },
+        "https://ga.jspm.io/npm:@near-js/utils@2.2.5/": {
+          "@near-js/types": "https://ga.jspm.io/npm:@near-js/types@2.2.5/lib/esm/index.js",
+          "@scure/base": "https://ga.jspm.io/npm:@scure/base@1.2.6/lib/esm/index.js"
+        },
+        "https://ga.jspm.io/npm:@near-js/utils@2.3.0/": {
+          "@near-js/types": "https://ga.jspm.io/npm:@near-js/types@2.3.0/lib/commonjs/index.cjs"
+        },
+        "https://ga.jspm.io/npm:@near-js/utils@2.3.0/lib/esm/index.js": {
+          "@near-js/types": "https://ga.jspm.io/npm:@near-js/types@2.3.0/lib/esm/index.js",
+          "@scure/base": "https://ga.jspm.io/npm:@scure/base@1.2.6/lib/esm/index.js"
+        },
+        "https://ga.jspm.io/npm:@near-js/wallet-account@1.3.0/": {
+          "borsh": "https://ga.jspm.io/npm:borsh@1.0.0/lib/cjs/index.js"
+        },
+        "https://ga.jspm.io/npm:@near-js/wallet-account@1.3.0/lib/esm/index.js": {
+          "@near-js/accounts": "https://ga.jspm.io/npm:@near-js/accounts@2.3.0/lib/esm/index.js",
+          "@near-js/crypto": "https://ga.jspm.io/npm:@near-js/crypto@1.4.0/lib/esm/index.js",
+          "@near-js/transactions": "https://ga.jspm.io/npm:@near-js/transactions@2.3.0/lib/esm/index.js",
+          "@near-js/utils": "https://ga.jspm.io/npm:@near-js/utils@1.0.0/lib/esm/index.js"
+        },
+        "https://ga.jspm.io/npm:@near-wallet-selector/core@9.4.0/": {
+          "near-api-js": "https://ga.jspm.io/npm:near-api-js@4.0.3/lib/browser-index.js"
+        },
+        "https://ga.jspm.io/npm:@near-wallet-selector/intear-wallet@9.4.0/": {
+          "near-api-js": "https://ga.jspm.io/npm:near-api-js@4.0.3/lib/browser-index.js"
+        },
+        "https://ga.jspm.io/npm:@near-wallet-selector/ledger@9.4.0/": {
+          "near-api-js": "https://ga.jspm.io/npm:near-api-js@4.0.3/lib/browser-index.js"
+        },
+        "https://ga.jspm.io/npm:@near-wallet-selector/meteor-wallet@9.4.0/": {
+          "near-api-js": "https://ga.jspm.io/npm:near-api-js@4.0.3/lib/browser-index.js"
+        },
+        "https://ga.jspm.io/npm:@near-wallet-selector/wallet-utils@9.4.0/": {
+          "near-api-js": "https://ga.jspm.io/npm:near-api-js@4.0.3/lib/browser-index.js"
+        },
+        "https://ga.jspm.io/npm:@noble/curves@1.2.0/esm/ed25519.js": {
+          "@noble/hashes/sha512": "https://ga.jspm.io/npm:@noble/hashes@1.3.2/esm/sha512.js",
+          "@noble/hashes/utils": "https://ga.jspm.io/npm:@noble/hashes@1.3.2/esm/utils.js"
+        },
+        "https://ga.jspm.io/npm:@noble/curves@1.8.1/": {
+          "@noble/hashes/sha512": "https://ga.jspm.io/npm:@noble/hashes@1.7.1/esm/sha512.js",
+          "@noble/hashes/utils": "https://ga.jspm.io/npm:@noble/hashes@1.7.1/esm/utils.js"
+        },
+        "https://ga.jspm.io/npm:@noble/curves@1.8.1/ed25519.js": {
+          "@noble/hashes/sha512": "https://ga.jspm.io/npm:@noble/hashes@1.7.1/sha512.js",
+          "@noble/hashes/utils": "https://ga.jspm.io/npm:@noble/hashes@1.7.1/utils.js"
+        },
+        "https://ga.jspm.io/npm:@noble/hashes@1.3.2/": {
+          "@noble/hashes/crypto": "https://ga.jspm.io/npm:@noble/hashes@1.3.2/crypto.js"
+        },
+        "https://ga.jspm.io/npm:@noble/hashes@1.3.2/esm/_sha2.js": {
+          "@noble/hashes/crypto": "https://ga.jspm.io/npm:@noble/hashes@1.3.2/esm/crypto.js"
+        },
+        "https://ga.jspm.io/npm:@noble/hashes@1.3.2/esm/sha512.js": {
+          "@noble/hashes/crypto": "https://ga.jspm.io/npm:@noble/hashes@1.3.2/esm/crypto.js"
+        },
+        "https://ga.jspm.io/npm:@noble/hashes@1.3.2/esm/utils.js": {
+          "@noble/hashes/crypto": "https://ga.jspm.io/npm:@noble/hashes@1.3.2/esm/crypto.js"
+        },
+        "https://ga.jspm.io/npm:@noble/hashes@1.3.3/": {
+          "@noble/hashes/crypto": "https://ga.jspm.io/npm:@noble/hashes@1.3.3/crypto.js"
+        },
+        "https://ga.jspm.io/npm:@noble/hashes@1.7.1/esm/_md.js": {
+          "@noble/hashes/crypto": "https://ga.jspm.io/npm:@noble/hashes@1.7.1/esm/crypto.js"
+        },
+        "https://ga.jspm.io/npm:@noble/hashes@1.7.1/esm/sha256.js": {
+          "@noble/hashes/crypto": "https://ga.jspm.io/npm:@noble/hashes@1.7.1/esm/crypto.js"
+        },
+        "https://ga.jspm.io/npm:@noble/hashes@1.7.1/esm/sha512.js": {
+          "@noble/hashes/crypto": "https://ga.jspm.io/npm:@noble/hashes@1.7.1/esm/crypto.js"
+        },
+        "https://ga.jspm.io/npm:@noble/hashes@1.7.1/esm/utils.js": {
+          "@noble/hashes/crypto": "https://ga.jspm.io/npm:@noble/hashes@1.7.1/esm/crypto.js"
+        },
+        "https://ga.jspm.io/npm:@peersyst/near-mobile-signer@1.1.4/": {
+          "borsh": "https://ga.jspm.io/npm:borsh@1.0.0/lib/cjs/index.js",
+          "near-api-js": "https://ga.jspm.io/npm:near-api-js@4.0.3/lib/browser-index.js"
+        },
+        "https://ga.jspm.io/npm:elliptic@6.6.1/": {
+          "bn.js": "https://ga.jspm.io/npm:bn.js@4.12.2/lib/bn.js"
+        },
+        "https://ga.jspm.io/npm:hash.js@1.1.7/": {
+          "inherits": "https://ga.jspm.io/npm:inherits@2.0.3/inherits_browser.js"
+        },
+        "https://ga.jspm.io/npm:near-api-js@4.0.3/": {
+          "borsh": "https://ga.jspm.io/npm:borsh@1.0.0/lib/cjs/index.js"
+        },
+        "https://ga.jspm.io/npm:near-api-js@4.0.3/_/BUDgL8Qv.js": {
+          "@near-js/accounts": "https://ga.jspm.io/npm:@near-js/accounts@2.3.0/lib/esm/index.js",
+          "@near-js/utils": "https://ga.jspm.io/npm:@near-js/utils@1.0.0/lib/esm/index.js",
+          "@near-js/wallet-account": "https://ga.jspm.io/npm:@near-js/wallet-account@1.3.0/lib/esm/index.js"
+        },
+        "https://ga.jspm.io/npm:near-api-js@4.0.3/_/C5aeuoSt.js": {
+          "@near-js/keystores": "https://ga.jspm.io/npm:@near-js/keystores@0.2.0/lib/esm/index.js"
+        },
+        "https://ga.jspm.io/npm:near-api-js@5.0.0/": {
+          "borsh": "https://ga.jspm.io/npm:borsh@1.0.0/lib/cjs/index.js"
+        },
+        "https://ga.jspm.io/npm:near-api-js@5.0.0/_/BUDgL8Qv.js": {
+          "@near-js/accounts": "https://ga.jspm.io/npm:@near-js/accounts@2.3.0/lib/esm/index.js",
+          "@near-js/utils": "https://ga.jspm.io/npm:@near-js/utils@1.0.0/lib/esm/index.js",
+          "@near-js/wallet-account": "https://ga.jspm.io/npm:@near-js/wallet-account@1.3.0/lib/esm/index.js"
+        },
+        "https://ga.jspm.io/npm:near-api-js@5.0.0/_/C5aeuoSt.js": {
+          "@near-js/keystores": "https://ga.jspm.io/npm:@near-js/keystores@0.2.0/lib/esm/index.js"
+        },
+        "https://ga.jspm.io/npm:near-api-js@6.3.0/": {
+          "@near-js/crypto": "https://ga.jspm.io/npm:@near-js/crypto@2.3.0/lib/commonjs/index.cjs",
+          "@near-js/keystores": "https://ga.jspm.io/npm:@near-js/keystores@2.3.0/lib/commonjs/index.cjs",
+          "@near-js/keystores-browser": "https://ga.jspm.io/npm:@near-js/keystores-browser@2.3.0/lib/commonjs/index.cjs",
+          "@near-js/providers": "https://ga.jspm.io/npm:@near-js/providers@2.3.0/lib/commonjs/index.cjs",
+          "@near-js/signers": "https://ga.jspm.io/npm:@near-js/signers@2.3.0/lib/commonjs/index.cjs",
+          "@near-js/types": "https://ga.jspm.io/npm:@near-js/types@2.3.0/lib/commonjs/index.cjs",
+          "@near-js/utils": "https://ga.jspm.io/npm:@near-js/utils@2.3.0/lib/commonjs/index.cjs",
+          "borsh": "https://ga.jspm.io/npm:borsh@1.0.0/lib/cjs/index.js"
+        },
+        "https://ga.jspm.io/npm:near-api-js@6.3.0/_/7zgEf7PU.js": {
+          "@near-js/transactions": "https://ga.jspm.io/npm:@near-js/transactions@2.3.0/lib/esm/index.js"
+        },
+        "https://ga.jspm.io/npm:near-api-js@6.3.0/_/BeZlcxPd.js": {
+          "@near-js/types": "https://ga.jspm.io/npm:@near-js/types@2.3.0/lib/esm/index.js"
+        },
+        "https://ga.jspm.io/npm:near-api-js@6.3.0/_/Bn7NbMQw.js": {
+          "@near-js/accounts": "https://ga.jspm.io/npm:@near-js/accounts@2.3.0/lib/esm/index.js"
+        },
+        "https://ga.jspm.io/npm:near-api-js@6.3.0/_/C7iNApXb.js": {
+          "@near-js/keystores": "https://ga.jspm.io/npm:@near-js/keystores@2.3.0/lib/esm/index.js"
+        },
+        "https://ga.jspm.io/npm:near-api-js@6.3.0/_/CLkMQPUx.js": {
+          "@near-js/signers": "https://ga.jspm.io/npm:@near-js/signers@2.3.0/lib/esm/index.js"
+        },
+        "https://ga.jspm.io/npm:near-api-js@6.3.0/_/CUg7oUcD.js": {
+          "@near-js/providers": "https://ga.jspm.io/npm:@near-js/providers@2.3.0/lib/esm/index.js",
+          "@near-js/types": "https://ga.jspm.io/npm:@near-js/types@2.3.0/lib/esm/index.js",
+          "@near-js/utils": "https://ga.jspm.io/npm:@near-js/utils@2.3.0/lib/esm/index.js"
+        },
+        "https://ga.jspm.io/npm:near-api-js@6.3.0/_/Cb5UUOoV.js": {
+          "@near-js/accounts": "https://ga.jspm.io/npm:@near-js/accounts@2.3.0/lib/esm/index.js"
+        },
+        "https://ga.jspm.io/npm:near-api-js@6.3.0/_/CfhyGTva.js": {
+          "@near-js/keystores-browser": "https://ga.jspm.io/npm:@near-js/keystores-browser@2.3.0/lib/esm/index.js"
+        },
+        "https://ga.jspm.io/npm:near-api-js@6.3.0/_/Cv7FcKxl.js": {
+          "@near-js/utils": "https://ga.jspm.io/npm:@near-js/utils@2.3.0/lib/esm/index.js"
+        },
+        "https://ga.jspm.io/npm:near-api-js@6.3.0/_/CvpNA66N.js": {
+          "@near-js/keystores": "https://ga.jspm.io/npm:@near-js/keystores@2.3.0/lib/esm/index.js"
+        },
+        "https://ga.jspm.io/npm:near-api-js@6.3.0/_/DC0eMI5c.js": {
+          "@near-js/utils": "https://ga.jspm.io/npm:@near-js/utils@2.3.0/lib/esm/index.js"
+        },
+        "https://ga.jspm.io/npm:near-api-js@6.3.0/_/DCSTboLQ.js": {
+          "@near-js/accounts": "https://ga.jspm.io/npm:@near-js/accounts@2.3.0/lib/esm/index.js",
+          "@near-js/utils": "https://ga.jspm.io/npm:@near-js/utils@2.3.0/lib/esm/index.js"
+        },
+        "https://ga.jspm.io/npm:near-api-js@6.3.0/_/Dj6mDNNF.js": {
+          "@near-js/utils": "https://ga.jspm.io/npm:@near-js/utils@2.3.0/lib/esm/index.js"
+        },
+        "https://ga.jspm.io/npm:near-api-js@6.3.0/_/DyWfFKWH.js": {
+          "@near-js/crypto": "https://ga.jspm.io/npm:@near-js/crypto@2.3.0/lib/esm/index.js"
+        },
+        "https://ga.jspm.io/npm:near-api-js@6.3.0/_/JQWjfEX_.js": {
+          "@near-js/providers": "https://ga.jspm.io/npm:@near-js/providers@2.3.0/lib/esm/index.js",
+          "@near-js/types": "https://ga.jspm.io/npm:@near-js/types@2.3.0/lib/esm/index.js"
+        },
+        "https://ga.jspm.io/npm:near-api-js@6.3.0/_/o-7qv5cG.js": {
+          "@near-js/providers": "https://ga.jspm.io/npm:@near-js/providers@2.3.0/lib/esm/index.js"
+        },
+        "https://ga.jspm.io/npm:near-api-js@6.3.0/_/zUmh2zow.js": {
+          "@near-js/utils": "https://ga.jspm.io/npm:@near-js/utils@2.3.0/lib/esm/index.js"
+        }
+      }
+    }
+    </script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@near-wallet-selector/modal-ui-js@8.7.2/styles.css"
+    />
+    <style>
+      .custom-navbar {
+        display: flex;
+        justify-content: space-between;
+        height: 73px;
+        align-items: center;
+        width: 100%;
+        padding: 0 1rem;
+        font-size: 15px;
+        font-weight: 500;
+        gap: 0.5rem;
+      }
+
+      .custom-logout {
+        position: relative;
+        display: inline-block;
+      }
+
+      [data-bs-theme="light"] .custom-navbar {
+        background-color: #f4f4f4;
+        border-bottom: 1px solid rgba(226, 230, 236, 1);
+      }
+
+      [data-bs-theme="dark"] .custom-navbar {
+        background-color: #131313;
+        border-bottom: 1px solid #3b3b3b;
+      }
+
+      .custom-logout button {
+        align-items: center;
+        display: flex;
+        gap: 0.5rem;
+        padding-inline: 8px;
+        height: 48px;
+        border-radius: 48px;
+        padding-block: 10px;
+        margin: 10px;
+        background: none;
+        border: none;
+      }
+
+      [data-bs-theme="light"] .custom-logout button {
+        color: #1b1b18;
+        background-color: #f4f4f4;
+        &:hover {
+          background-color: #e6e6e6;
+        }
+      }
+
+      [data-bs-theme="dark"] .custom-logout button {
+        color: #cacaca;
+        background-color: #131313;
+        &:hover {
+          background-color: #3e3e3e;
+        }
+      }
+
+      button.btn-primary {
+        background: #3cb179 !important;
+        border-color: #3cb179 !important;
+      }
+
+      .custom-logout img {
+        border-radius: 50%;
+        height: 40px;
+        width: 40px;
+        object-fit: cover;
+      }
+
+      .dropdown-content {
+        display: none;
+        position: absolute;
+        box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+        padding: 12px 16px;
+        z-index: 1;
+        top: 85%;
+        width: 89%;
+        border-radius: 10px;
+        margin-inline: 10px;
+      }
+
+      [data-bs-theme="light"] .dropdown-content {
+        color: #1b1b18;
+        background-color: #f4f4f4;
+        border: 1px solid rgba(226, 230, 236, 1);
+      }
+
+      [data-bs-theme="dark"] .dropdown-content {
+        color: #cacaca;
+        background-color: rgba(34, 34, 34, 1);
+        border: 1px solid rgba(59, 59, 59, 1);
+      }
+
+      .custom-logout h6 {
+        margin-bottom: 0px;
+      }
+
+      .custom-logout .text-muted {
+        font-size: 12px;
+      }
+
+      .text-align-left {
+        text-align: left;
+      }
+
+      .web4-selector-dropdown-menu {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 650px;
+        box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.2);
+        padding: 10px;
+        border-radius: 12px;
+        z-index: 1000;
+        padding-inline: 0.5rem !important;
+      }
+
+      [data-bs-theme="light"] .web4-selector-dropdown-menu {
+        background-color: #fff;
+        border-color: rgba(226, 230, 236, 1);
+      }
+
+      [data-bs-theme="dark"] .web4-selector-dropdown-menu {
+        background-color: rgba(34, 34, 34, 1);
+        border-color: rgba(59, 59, 59, 1);
+      }
+
+      .web4-btn-light i {
+        color: rgba(153, 153, 153, 1) !important;
+      }
+      .show {
+        display: block !important;
+      }
+
+      /* Dropdown Button */
+      #dropdownToggle {
+        cursor: pointer;
+      }
+
+      .web4-btn-light {
+        background-color: transparent !important;
+      }
+
+      [data-bs-theme="light"] .web4-btn-light:hover {
+        background-color: rgba(230, 230, 230, 1) !important;
+      }
+
+      [data-bs-theme="dark"] .web4-btn-light:hover {
+        background-color: rgba(62, 62, 62, 1) !important;
+      }
+
+      /* Dropdown Cards */
+      .card-container {
+        display: flex;
+        gap: 10px;
+        justify-content: space-between;
+      }
+
+      .dropdown-card {
+        display: flex;
+        flex-direction: column;
+        width: 225px;
+        height: 270px;
+        padding: 15px;
+        border-radius: 8px;
+        text-decoration: none;
+        color: inherit;
+        background-color: white;
+        transition:
+          transform 0.2s,
+          background-color 0.2s;
+        cursor: pointer;
+      }
+
+      .dropdown-card img {
+        width: 50px;
+        height: 50px;
+        margin-bottom: 10px;
+      }
+
+      .dropdown-card strong {
+        font-size: 16px;
+        margin-bottom: 5px;
+      }
+
+      .dropdown-card p {
+        font-size: 13px;
+        color: rgba(153, 153, 153, 1);
+        margin-bottom: 0px !important;
+      }
+
+      .dropdown-card i {
+        opacity: 0;
+        transition: opacity 0.2s ease-in-out;
+      }
+
+      [data-bs-theme="dark"] i.text-color {
+        color: black !important;
+      }
+
+      .dropdown-card:hover i {
+        opacity: 1;
+      }
+
+      .text-sm {
+        font-size: 13px;
+      }
+
+      .flex-1 {
+        flex: 1;
+      }
+
+      .web4-badge {
+        width: fit-content;
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-size: 12px;
+        background-color: #3cb179;
+        color: white;
+      }
+
+      .selected-gateway {
+        background-color: rgba(244, 244, 244, 1) !important;
+      }
+
+      [data-bs-theme="dark"] .selected-gateway {
+        background-color: rgba(50, 50, 50, 1) !important;
+      }
+    </style>
+    <script>
+      !(function (t, e) {
+        var o, n, p, r;
+        e.__SV ||
+          ((window.posthog = e),
+          (e._i = []),
+          (e.init = function (i, s, a) {
+            function g(t, e) {
+              var o = e.split(".");
+              2 == o.length && ((t = t[o[0]]), (e = o[1])),
+                (t[e] = function () {
+                  t.push([e].concat(Array.prototype.slice.call(arguments, 0)));
+                });
+            }
+            ((p = t.createElement("script")).type = "text/javascript"),
+              (p.async = !0),
+              (p.src =
+                s.api_host.replace(".i.posthog.com", "-assets.i.posthog.com") +
+                "/static/array.js"),
+              (r = t.getElementsByTagName("script")[0]).parentNode.insertBefore(
+                p,
+                r,
+              );
+            var u = e;
+            for (
+              void 0 !== a ? (u = e[a] = []) : (a = "posthog"),
+                u.people = u.people || [],
+                u.toString = function (t) {
+                  var e = "posthog";
+                  return (
+                    "posthog" !== a && (e += "." + a), t || (e += " (stub)"), e
+                  );
+                },
+                u.people.toString = function () {
+                  return u.toString(1) + ".people (stub)";
+                },
+                o =
+                  "capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys getNextSurveyStep onSessionId setPersonProperties".split(
+                    " ",
+                  ),
+                n = 0;
+              n < o.length;
+              n++
+            )
+              g(u, o[n]);
+            e._i.push([i, s, a]);
+          }),
+          (e.__SV = 1));
+      })(document, window.posthog || []);
+      posthog.init("POSTHOG_API_KEY", {
+        api_host: "https://eu.i.posthog.com",
+        person_profiles: "identified_only",
+      });
+    </script>
+  </head>
+
+  <body>
+    <nav class="custom-navbar">
+      <div class="dropdown ms-2">
+        <div
+          class="d-flex gap-2 align-items-center btn btn-light web4-btn-light border-0 rounded-3"
+          id="dropdownToggle"
+        >
+          <img
+            id="logo"
+            src="https://ipfs.near.social/ipfs/bafkreibm63lijt7qs3dzlmrrdbhqgxkt55k5daswgrq5z4stqp4zk46kc4"
+            alt="treasury logo"
+          />
+
+          <i class="bi bi-chevron-down" id="dropdownIcon"></i>
+        </div>
+
+        <div
+          class="web4-selector-dropdown-menu border border-1"
+          id="dropdownMenu"
+        >
+          <div class="d-flex flex-column gap-2">
+            <div class="d-flex gap-2 align-items-center">
+              <div>Select Gateway</div>
+              <div class="text-sm text-muted">
+                Use your treasury in your preferred way
+              </div>
+            </div>
+
+            <div class="card-container d-flex gap-2 flex-wrap">
+              <a
+                class="dropdown-card rounded-3 flex-1 text-decoration-none selected-gateway"
+                id="web4-link"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <img
+                  src="https://ipfs.near.social/ipfs/bafkreiepnpb5bjy4bopxwmkxog35swcqliupvmjgzlo3k2pfc345qoquz4"
+                  alt="Web4"
+                  id="web4-image"
+                />
+                <strong>Web4</strong>
+                <p>
+                  Gateway built by the NEAR Treasury team, providing a secure
+                  and decentralized experience with optimal performance and
+                  ledger support.
+                </p>
+                <div class="web4-badge mt-2" style="background-color: #3cb179">
+                  Currently in Use
+                </div>
+              </a>
+
+              <a
+                class="dropdown-card border border-1 rounded-3 flex-1 text-decoration-none"
+                id="dev-org-link"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <div class="d-flex justify-content-between">
+                  <img
+                    src="https://ipfs.near.social/ipfs/bafkreiffkbotl7he7ikp2yjo2n2eebjrlnstyzc5tdokb2tvy4zd6nkcma"
+                    alt="NEAR Developer Portal"
+                  />
+                  <i class="bi bi-arrow-up-right h6 mb-0 text-color"></i>
+                </div>
+                <strong style="color: black">NEAR Developer Portal</strong>
+                <p>
+                  Use your existing NEAR Dev gateway for quick access and
+                  single-sign-on convenience.
+                </p>
+              </a>
+
+              <a
+                class="dropdown-card rounded-3 flex-1 text-decoration-none"
+                style="background-color: rgba(21, 23, 24, 1)"
+                id="social-link"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <div class="d-flex justify-content-between">
+                  <img
+                    src="https://ipfs.near.social/ipfs/bafkreietyx6i5ntxvk2kkbcmtbkjlqc5pe36agxqzdfinnb6eq6vx3mdxe"
+                    alt="Near Social"
+                  />
+                  <i
+                    class="bi bi-arrow-up-right h6 mb-0"
+                    style="color: white"
+                  ></i>
+                </div>
+                <strong style="color: white">Near Social</strong>
+                <p>
+                  Use your existing NEAR Social ecosystem gateway for quick
+                  access and single sign-on convenience.
+                </p>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex flex-row align-items-center">
+        <button
+          id="login-walletselector-btn"
+          type="button"
+          class="btn btn-primary"
+        >
+          Sign in
+        </button>
+
+        <div id="logout-dropdown-btn" type="button" class="custom-logout">
+          <div id="logout-btn"></div>
+          <div id="logout-dropdown" class="dropdown-content">
+            <div id="logout-walletselector-btn">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                fill="currentColor"
+                class="bi bi-box-arrow-right"
+                viewBox="0 0 16 16"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0z"
+                />
+                <path
+                  fill-rule="evenodd"
+                  d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z"
+                />
+              </svg>
+              &nbsp; Sign out
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+  </body>
+
+  <script>
+    
+    try {
+      const shimsScript = document.querySelector('script[src*="es-module-shims"]');
+      waitForShims();
+    } catch (error) {
+      console.error("Error in script:", error);
+    }
+    
+    function waitForShims() {
+      if (window.importShim) {
+        loadModule();
+      } else {
+        setTimeout(waitForShims, 10);
+      }
+    }
+    
+    async function loadModule() {
+      const { setupWalletSelector } = await import("@near-wallet-selector/core");
+      const { setupModal } = await import("@near-wallet-selector/modal-ui-js");
+      const { setupMyNearWallet } = await import("@near-wallet-selector/my-near-wallet");
+      const { setupMeteorWallet } = await import("@near-wallet-selector/meteor-wallet");
+      const { setupSender } = await import("@near-wallet-selector/sender");
+      const { setupIntearWallet } = await import("@near-wallet-selector/intear-wallet");
+      const { setupNearMobileWallet } = await import("@near-wallet-selector/near-mobile-wallet");
+      const { setupHotWallet } = await import("@near-wallet-selector/hot-wallet");
+      const { Buffer } = await import("buffer");
+
+      window.Buffer = Buffer;
+
+      let setupLedger;
+      const walletSelectorModules = [
+        setupMyNearWallet(),
+        setupMeteorWallet(),
+        setupSender(),
+        setupIntearWallet(),
+        setupNearMobileWallet(),
+        setupHotWallet(),
+      ];
+      try {
+        setupLedger = (await import("@near-wallet-selector/ledger")).setupLedger;
+        walletSelectorModules.push(setupLedger());
+      } catch (e) {
+        console.warn("not able to setup ledger", e);
+      }
+
+      const selector = await setupWalletSelector({
+        network: "mainnet",
+        modules: walletSelectorModules,
+      });
+
+      const modal = setupModal(selector, {
+        contractId: "social.near",
+      });
+
+      document
+        .getElementById("login-walletselector-btn")
+        .addEventListener("click", () => {
+          return modal.show();
+        });
+      const currentDomain = window.location.host ?? "";
+      const extractedDomain = currentDomain.split(".page")?.[0] ?? "";
+
+      document.getElementById("web4-link").href =
+        `https://${extractedDomain}.page/`;
+      document.getElementById("dev-org-link").href =
+        `https://dev.near.org/${extractedDomain}/widget/app`;
+      document.getElementById("social-link").href =
+        `https://near.social/${extractedDomain}/widget/app`;
+
+      const dropdownToggle = document.getElementById("dropdownToggle");
+      const dropdownIcon = document.getElementById("dropdownIcon");
+      const dropdownMenu = document.getElementById("dropdownMenu");
+
+      dropdownToggle.addEventListener("click", function (event) {
+        event.stopPropagation();
+        const isExpanded = dropdownMenu.classList.toggle("show");
+
+        dropdownIcon.classList.toggle("bi-chevron-down", !isExpanded);
+        dropdownIcon.classList.toggle("bi-chevron-up", isExpanded);
+      });
+
+      document
+        .getElementById("logout-walletselector-btn")
+        .addEventListener("click", async () => {
+          (await selector.wallet()).signOut().then(() => checkForLogin());
+        });
+
+      document
+        .getElementById("logout-dropdown-btn")
+        .addEventListener("click", (event) => {
+          event.stopPropagation();
+          document.getElementById("logout-dropdown").classList.toggle("show");
+        });
+
+      window.onclick = function (event) {
+        const dropdownBtn = document.getElementById("logout-dropdown-btn");
+        const dropdownContent = document.getElementById("logout-dropdown");
+        if (
+          !dropdownBtn.contains(event.target) &&
+          !dropdownContent.contains(event.target)
+        ) {
+          dropdownContent.classList.remove("show");
+        }
+
+        if (
+          !dropdownToggle.contains(event.target) &&
+          !dropdownMenu.contains(event.target)
+        ) {
+          dropdownMenu.classList.remove("show");
+          dropdownIcon.classList.add("bi-chevron-down");
+          dropdownIcon.classList.remove("bi-chevron-up");
+        }
+      };
+
+      async function checkForLogin() {
+        const isSignedIn = selector.isSignedIn();
+        const loginBtn = document.getElementById("login-walletselector-btn");
+        const logoutBtn = document.getElementById("logout-btn");
+
+        if (isSignedIn) {
+          const accountId = selector.store.getState().accounts[0].accountId;
+          loginBtn.style.display = "none";
+          logoutBtn.style.display = "block";
+
+          const imageSrc = `https://i.near.social/magic/large/https://near.social/magic/img/account/${accountId}`;
+          const response = await fetch("https://api.near.social/get", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Sec-Fetch-Mode": "cors",
+              "Sec-Fetch-Site": "cross-site",
+            },
+            body: JSON.stringify({ keys: [`${accountId}/profile/*`] }),
+          });
+
+          const data = await response.json();
+          const name = data?.[accountId]?.profile.name;
+          logoutBtn.innerHTML = `
+            <button>
+              <img src="${imageSrc}" />
+              <div class="text-align-left">
+              <h6> ${name} </h6>
+              <div style="opacity: 0.5; font-size: 12px"> ${accountId} </div>
+              </div>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                fill="currentColor"
+                class="bi bi-chevron-down"
+                viewBox="0 0 16 16"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708"
+                />
+              </svg>
+            </button>`;
+        } else {
+          loginBtn.style.display = "block";
+          logoutBtn.style.display = "none";
+        }
+      }
+
+      checkForLogin();
+
+      modal.on("onHide", async (event) => {
+        if (event.hideReason === "wallet-navigation") {
+          checkForLogin();
+        }
+      });
+
+      await import(
+        "https://cdn.jsdelivr.net/npm/near-bos-webcomponent@0.0.9/dist/main.1b3f0d7d1017de355a7c.bundle.js"
+      );
+      await import(
+        "https://cdn.jsdelivr.net/npm/near-bos-webcomponent@0.0.9/dist/runtime.25b143da327a5371509f.bundle.js"
+      );
+
+      const viewer = document.createElement("near-social-viewer");
+
+      viewer.selector = selector;
+      viewer.setAttribute(
+        "initialProps",
+        JSON.stringify({ page: "", pikespeakKey: "PIKESPEAK_API_KEY" }),
+      );
+
+      if (location.host.endsWith(".page")) {
+        const instanceAccount = location.host.split(".")[0];
+        viewer.setAttribute("src", `${instanceAccount}.near/widget/app`);
+        viewer.setAttribute("rpc", "https://rpc.mainnet.fastnear.com");
+      } else if (location.port === "8080") {
+        viewer.setAttribute("rpc", "http://127.0.0.1:14500");
+      }
+
+      document.body.appendChild(viewer);
+
+      const waitForTheme = setInterval(() => {
+        const theme = document?.querySelector("[data-bs-theme]");
+
+        if (theme) {
+          clearInterval(waitForTheme);
+
+          const isDarkTheme = theme.getAttribute("data-bs-theme") === "dark";
+          document.body.setAttribute(
+            "data-bs-theme",
+            isDarkTheme ? "dark" : "light",
+          );
+          const logo = document.getElementById("logo");
+          const web4Image = document.getElementById("web4-image");
+
+          web4Image.src = isDarkTheme
+            ? "https://ipfs.near.social/ipfs/bafkreiarq7ufrypui3ivevbnky46n5u5awgthls22jvr73fsmoyemprrzy"
+            : "https://ipfs.near.social/ipfs/bafkreiepnpb5bjy4bopxwmkxog35swcqliupvmjgzlo3k2pfc345qoquz4";
+
+          logo.src = isDarkTheme
+            ? "https://ipfs.near.social/ipfs/bafkreighuyf2wcsc3nyey64536craz2ffis45fnjelh4gqxigugasalcwy"
+            : "https://ipfs.near.social/ipfs/bafkreibm63lijt7qs3dzlmrrdbhqgxkt55k5daswgrq5z4stqp4zk46kc4";
+        }
+      }, 500);
+
+      if ('serviceWorker' in navigator) {
+        window.serviceWorkerRegistrationAttempted = true;
+        
+        function registerServiceWorker() {
+          navigator.serviceWorker.register('/service-worker.js')
+            .then(function(registration) {
+              console.log('Service Worker registered with scope:', registration.scope);
+              
+              if (navigator.serviceWorker.controller) {
+                console.log('Service Worker is already controlling');
+              } else {
+                console.log('Waiting for Service Worker to take control...');
+                navigator.serviceWorker.addEventListener('controllerchange', function() {
+                  console.log('Service Worker is now controlling');
+                });
+              }
+            })
+            .catch(function(error) {
+              console.log('Service Worker registration failed:', error);
+            });
+        }
+        
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+          registerServiceWorker();
+        } else {
+          window.addEventListener('load', registerServiceWorker);
+        }
+      }
+      }
+  </script>
+</html>

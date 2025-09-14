@@ -37,19 +37,19 @@ When you deploy an updated web4 contract, the service worker automatically updat
 
 **To modify the HTML content:**
 
-1. **Edit the source file**: `/web4/treasury-web4/src/web4/index.html`
+1. **Edit the source file**: `/web4/public_html/index.html`
 2. **Rebuild the contract**: `cargo clean && cargo near build non-reproducible-wasm`
 
 **DO NOT** edit `/web4/treasury-web4/src/web4/index.html` directly - it gets overwritten by the build script!
 
 **Why this matters:**
-- The build script (`build.rs`) now processes HTML directly from `src/web4/index.html`
+- The build script (`build.rs`) copies HTML from `public_html/index.html` to `src/web4/index.html`
 - The contract embeds HTML using `include_str!()` at compile time
 - Direct edits to `src/web4/index.html` are lost on rebuild
 - Changes to source HTML require a contract rebuild to take effect
 
 ### Build Process Details
-1. The `build.rs` script now processes HTML directly from `src/web4/index.html`
+1. The `build.rs` script copies HTML from `public_html/index.html`
 2. It processes environment variables (POSTHOG_API_KEY, PIKESPEAK_API_KEY)
 3. It outputs the processed HTML to `src/web4/index.html`
 4. The contract uses `include_str!("web4/index.html")` to embed the HTML at compile time
