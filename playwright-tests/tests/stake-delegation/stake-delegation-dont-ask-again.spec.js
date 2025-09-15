@@ -6,10 +6,6 @@ import { voteOnProposal } from "./stake-delegation-common.js";
 test.beforeEach(async ({ page }) => {
   await cacheCDN(page);
 });
-test.afterEach(async ({ page }, testInfo) => {
-  console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
-  await page.unrouteAll({ behavior: "ignoreErrors" });
-});
 
 async function checkHistoryProposal({ page, id, instanceAccount }) {
   const historyBtn = page.getByText("View in History");

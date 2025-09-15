@@ -1,11 +1,6 @@
 import { expect } from "@playwright/test";
 import { test } from "../../util/test.js";
 
-test.afterEach(async ({ page }, testInfo) => {
-  console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
-  await page.unrouteAll({ behavior: "ignoreErrors" });
-});
-
 test("should go directly to app widget for instance", async ({
   page,
   baseURL,

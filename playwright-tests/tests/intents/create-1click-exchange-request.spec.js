@@ -163,23 +163,6 @@ test.afterAll(async () => {
   await worker.tearDown();
 });
 
-test.afterEach(async ({ page }, testInfo) => {
-  console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
-
-  // Capture failure screenshot if test failed
-  if (testInfo.status === "failed") {
-    await page.screenshot({
-      path: path.join(
-        screenshotsDir,
-        `${testInfo.title.replace(/\s+/g, "-")}-failure.png`
-      ),
-      fullPage: true,
-    });
-  }
-
-  await page.unrouteAll({ behavior: "ignoreErrors" });
-});
-
 async function setupIndexer(page, worker) {
   const indexer = new Indexer(worker.provider.connection.url);
   await indexer.init();

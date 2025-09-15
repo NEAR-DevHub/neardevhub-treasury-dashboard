@@ -159,11 +159,6 @@ async function checkForErrorWithAmountField(
   expect(await submitBtn.isDisabled()).toBe(true);
 }
 
-test.afterEach(async ({ page }, testInfo) => {
-  console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
-  await page.unrouteAll({ behavior: "ignoreErrors" });
-});
-
 test.describe("User is not logged in", function () {
   test("should not see 'Create Request' action", async ({
     page,
