@@ -3,7 +3,26 @@ import fs from "fs";
 import path from "path";
 import os from "os";
 
+// Global fix for route timing issues with es-module-shims
+// This automatically converts page.route() to context.route() for better timing
+function enhancePageWithBetterRouting(page) {
+  const originalRoute = page.route.bind(page);
+
+  page.route = function (url, handler, options) {
+    // This fixes the race condition with es-module-shims in older code
+    return page.context().route(url, handler, options);
+  };
+
+  page._originalRoute = originalRoute;
+
+  return page;
+}
+
 export const test = base.extend({
+  page: async ({ page }, use) => {
+    const enhancedPage = enhancePageWithBetterRouting(page);
+    await use(enhancedPage);
+  },
   instanceAccount: ["treasury-devdao.near", { option: true }],
   daoAccount: ["devdao.sputnik-dao.near", { option: true }],
   lockupContract: [null, { option: true }],
