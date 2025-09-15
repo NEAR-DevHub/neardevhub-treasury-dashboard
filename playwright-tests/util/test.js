@@ -26,8 +26,14 @@ export async function cleanupRoutes(page) {
 
     // Also clean up context routes (since we're using context.route in the enhancement)
     const context = page.context();
-    if (context && !context.isClosed()) {
-      await context.unrouteAll({ behavior: "ignoreErrors" });
+    if (context) {
+      // Check if context is still active (some Playwright versions don't have isClosed method)
+      try {
+        await context.unrouteAll({ behavior: "ignoreErrors" });
+      } catch (contextError) {
+        // Context might already be closed, ignore the error
+        console.warn("Context cleanup warning:", contextError.message);
+      }
     }
 
     // Give a small delay to let any in-flight requests complete
