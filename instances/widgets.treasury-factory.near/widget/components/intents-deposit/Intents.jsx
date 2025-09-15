@@ -338,50 +338,47 @@ const AssetSelector = ({ isActive }) => {
   return (
     <div className="d-flex flex-column gap-md">
       <div className="h5 fw-bold mb-0">Select Asset</div>
-      {state.isLoadingTokens ||
-      state.allFetchedTokens.length === 0 ||
-      !state.allIconsFetched ? (
-        <div>
-          <Widget
-            loading=""
-            src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
-            props={{
-              options: [],
-              disabled: true,
-              defaultLabel: (
-                <div className="spinner-border spinner-border-sm" />
-              ),
-            }}
-          />
-        </div>
-      ) : (
-        <Widget
-          loading=""
-          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
-          props={{
-            selectedValue: selectedAssetName,
-            onChange: (option) => {
-              const newAssetName =
-                option && option.value !== undefined ? option.value : "";
-              State.update({ selectedAssetName: newAssetName });
-              updateNetworksForAsset(newAssetName);
-              if (newAssetName) {
-                State.update({ currentStep: 2 });
-              }
-            },
-            options: state.assetNamesForDropdown.map((assetName) => ({
-              value: assetName,
-              label: assetName,
-              icon: state.tokenIconMap[assetName] || placeholderAssetIcon,
-            })),
-            defaultLabel: "Select Asset",
-            showSearch: true,
-            searchInputPlaceholder: "Search assets",
-            searchByLabel: true,
-            showCircularIcon: true,
-          }}
-        />
-      )}
+      <Widget
+        src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.SearchSelectorModal"
+        props={{
+          modalTitle: "Select Asset",
+          selectedElement: state.selectedAssetName && (
+            <div className="d-flex align-items-center gap-2">
+              <img
+                src={
+                  state.tokenIconMap[selectedAssetName] || placeholderAssetIcon
+                }
+                alt={selectedAssetName}
+                className="rounded-circle"
+                style={{ width: "30px", height: "30px" }}
+              />
+              {selectedAssetName}
+            </div>
+          ),
+          dropdownLabel: "Select Asset",
+          options: state.assetNamesForDropdown,
+          enableSearch: true,
+          onSelect: (option) => {
+            State.update({ selectedAssetName: option });
+            updateNetworksForAsset(option);
+            if (option) {
+              State.update({ currentStep: 2 });
+            }
+          },
+          searchPlaceholder: "Search assets",
+          renderOption: (option) => (
+            <div className="d-flex align-items-center gap-2">
+              <img
+                src={state.tokenIconMap[option] || placeholderAssetIcon}
+                alt={option}
+                className="rounded-circle"
+                style={{ width: "30px", height: "30px" }}
+              />
+              {option}
+            </div>
+          ),
+        }}
+      />
     </div>
   );
 };
@@ -394,40 +391,45 @@ const NetworkSelector = ({ isActive }) => {
     <div className="d-flex flex-column gap-md">
       <div className="h5 fw-bold mb-0">Select Network</div>
       <Widget
-        loading=""
-        src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
+        src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.SearchSelectorModal"
         props={{
-          selectedValue: selectedNetworkFullInfo
-            ? selectedNetworkFullInfo.id
-            : "",
-          onChange: (option) => {
-            const networkInfo =
-              option && option.value !== undefined
-                ? state.networksForSelectedAssetDropdown.find(
-                    (n) => n.id === option.value
-                  )
-                : null;
-            State.update({ selectedNetworkFullInfo: networkInfo });
+          modalTitle: "Select Network",
+          selectedElement: state.selectedNetworkFullInfo.id && (
+            <div className="d-flex align-items-center gap-2">
+              <img
+                src={
+                  state.selectedNetworkFullInfo.icon || placeholderNetworkIcon
+                }
+                alt={selectedNetworkFullInfo.id}
+                className="rounded-circle"
+                style={{ width: "30px", height: "30px" }}
+              />
+              {selectedNetworkFullInfo.name}
+            </div>
+          ),
+          dropdownLabel: "Select Network",
+          options: state.networksForSelectedAssetDropdown,
+          enableSearch: true,
+          onSelect: (option) => {
+            const networkInfo = option || null;
             fetchDepositAddress(networkInfo);
-            if (networkInfo) {
-              State.update({ currentStep: 3 });
-            }
+            State.update({
+              selectedNetworkFullInfo: networkInfo,
+              currentStep: networkInfo ? 3 : state.currentStep,
+            });
           },
-          options: state.networksForSelectedAssetDropdown.map((network) => ({
-            value: network.id,
-            label: network.name,
-            icon: network.icon || placeholderNetworkIcon,
-          })),
-          defaultLabel: "Select Network",
-          showSearch: true,
-          searchInputPlaceholder: "Search networks",
-          searchByLabel: true,
-          showCircularIcon: true,
-          disabled:
-            state.isLoadingTokens ||
-            state.isLoadingAddress ||
-            !selectedAssetName ||
-            state.networksForSelectedAssetDropdown.length === 0,
+          searchPlaceholder: "Search networks",
+          renderOption: (option) => (
+            <div className="d-flex align-items-center gap-2">
+              <img
+                src={[option.icon] || placeholderNetworkIcon}
+                alt={option.name}
+                className="rounded-circle"
+                style={{ width: "30px", height: "30px" }}
+              />
+              {option.name}
+            </div>
+          ),
         }}
       />
     </div>

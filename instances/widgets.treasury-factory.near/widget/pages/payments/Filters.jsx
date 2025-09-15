@@ -1,3 +1,9 @@
+const { accountToLockup } = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
+) || {
+  accountToLockup: () => null,
+};
+
 const {
   activeFilters,
   setActiveFilters,
@@ -8,6 +14,8 @@ const {
   setAmountValues,
   setShowFilters,
 } = props;
+
+const lockupContract = accountToLockup(treasuryDaoID);
 
 // Available filters configuration
 const [availableFilters] = useState([
@@ -27,6 +35,7 @@ const [availableFilters] = useState([
         },
       ]
     : []),
+  { key: "source", label: "Source Wallet", type: "options", multiple: false },
   { key: "recipients", label: "Recipient", type: "account", multiple: true },
   { key: "token", label: "Token", type: "token", multiple: false },
   { key: "proposers", label: "Created by", type: "account", multiple: true },
@@ -79,6 +88,9 @@ const getOptionsForFilter = (filterKey) => {
     recipients: recipientOptions,
     token: tokenOptions,
     proposers: proposerOptions,
+    source: lockupContract
+      ? ["SputnikDAO", "Intents", "Lockup"]
+      : ["SputnikDAO", "Intents"],
   };
   return optionsMap[filterKey] || [];
 };

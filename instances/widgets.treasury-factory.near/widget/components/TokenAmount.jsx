@@ -2,16 +2,27 @@ const { NearToken } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Icons"
 ) || { NearToken: () => <></> };
 
-const address = props.address ?? ""; // Empty string for NEAR
+const tokenDisplayLib =
+  VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.tokenDisplay") || null;
+
+let address = props.address ?? ""; // Empty string for NEAR
+// Handle NEAR Intents token format (e.g., "nep141:btc.omft.near")
+if (address.startsWith("nep141:")) {
+  address = address.replace("nep141:", "");
+}
 const symbol = props.symbol; // Optional symbol prop for non-contract tokens
 const amountWithDecimals = props.amountWithDecimals ?? 0;
 const amountWithoutDecimals = props.amountWithoutDecimals;
 const showUSDValue = props.showUSDValue;
+const priceFromProps = props.price; // Optional price prop to avoid repeated API calls
 
+// If symbol is provided, it's a symbol-based token (like 1Click tokens)
+// Otherwise, check if it's NEAR or wrap.near based on address
 const isNEAR = !symbol && (address === "" || address.toLowerCase() === "near");
-const isWrapNear = address === "wrap.near";
+const isWrapNear = !symbol && address === "wrap.near";
 
 const [tokenUSDValue, setTokenUSDValue] = useState(null);
+const [tokenPrice, setTokenPrice] = useState(priceFromProps || null);
 
 let ftMetadata = {
   symbol: "NEAR",
@@ -25,20 +36,18 @@ if (isWrapNear) {
     icon: "${REPL_WRAP_NEAR_ICON}",
   };
 }
-if (!isNEAR && !isWrapNear) {
-  if (symbol) {
-    // If symbol is explicitly provided (for non-contract tokens like 1Click tokens)
-    // Don't fetch metadata, just use the symbol
-    ftMetadata = {
-      symbol: symbol,
-      decimals: 1, // We'll use amountWithDecimals directly, no conversion needed
-      icon: null, // No icon for symbol-only tokens
-    };
-  } else {
-    // For contract addresses, fetch metadata from the contract
-    ftMetadata = Near.view(address, "ft_metadata", {});
-    if (ftMetadata === null) return null;
-  }
+if (symbol) {
+  // If symbol is explicitly provided (for non-contract tokens like 1Click tokens)
+  // Don't fetch metadata, just use the symbol
+  ftMetadata = {
+    symbol: symbol,
+    decimals: 1, // We'll use amountWithDecimals directly, no conversion needed
+    icon: null, // No icon for symbol-only tokens
+  };
+} else if (!isNEAR && !isWrapNear) {
+  // For contract addresses, fetch metadata from the contract
+  ftMetadata = Near.view(address, "ft_metadata", {});
+  if (ftMetadata === null) return null;
 }
 let amount = amountWithDecimals;
 let originalAmount = amountWithDecimals;
@@ -49,8 +58,22 @@ if (amountWithoutDecimals !== undefined) {
   amount = originalAmount.toFixed();
 }
 
-function toReadableAmount(amount, showAllDecimals) {
-  return Number(amount).toLocaleString(
+function toReadableAmount(value, showAllDecimals) {
+  // Use intelligent formatting if available and we have the price
+  if (!showAllDecimals && tokenDisplayLib && tokenPrice) {
+    try {
+      const formatted = tokenDisplayLib.formatTokenAmount(value, tokenPrice);
+      // Add thousand separators
+      const parts = formatted.split(".");
+      parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      return parts.join(".");
+    } catch (e) {
+      // Fall through to default formatting
+    }
+  }
+
+  // Fallback to original behavior
+  return Number(value).toLocaleString(
     "en-US",
     showAllDecimals
       ? { maximumFractionDigits: 10 }
@@ -61,12 +84,25 @@ function toReadableAmount(amount, showAllDecimals) {
   );
 }
 
-const TokenAmount = ({ showAllDecimals, showTilde }) => {
+const TokenAmount = ({ showAllDecimals }) => {
+  const formattedAmount = toReadableAmount(amount, showAllDecimals);
+
+  // Determine if we should show tilde (amount is truncated)
+  let showTilde = false;
+  if (!showAllDecimals && originalAmount !== null) {
+    // Remove commas from formatted amount for comparison
+    const cleanFormatted = formattedAmount.replace(/,/g, "");
+    // Check if the formatted value differs from original (indicating truncation)
+    showTilde =
+      cleanFormatted !== amount &&
+      Math.abs(parseFloat(cleanFormatted) - parseFloat(amount)) > 0.0000001;
+  }
+
   return (
     <div className="text-center">
       <div className="d-flex gap-1 align-items-center justify-content-end">
         <span className="amount bolder mb-0">
-          {(showTilde ? "~" : "") + toReadableAmount(amount, showAllDecimals)}
+          {(showTilde ? "~" : "") + formattedAmount}
         </span>
         {isNEAR ? (
           <NearToken width={16} height={16} />
@@ -87,35 +123,56 @@ const TokenAmount = ({ showAllDecimals, showTilde }) => {
 };
 
 useEffect(() => {
-  if (showUSDValue) {
-    asyncFetch(`${REPL_BACKEND_API}/ft-token-price?account_id=${address}`).then(
-      (res) => {
-        const price = res.body?.price;
-        if (price) {
+  // If price is provided as prop, use it directly
+  if (priceFromProps) {
+    setTokenPrice(priceFromProps);
+    if (showUSDValue) {
+      setTokenUSDValue(Big(amount).mul(priceFromProps).toFixed(2));
+    }
+    return;
+  }
+
+  // For symbol-based tokens (1Click), fetch price from 1Click API
+  if (symbol && !address) {
+    asyncFetch("https://1click.chaindefuser.com/v0/tokens").then((res) => {
+      if (res.body && Array.isArray(res.body)) {
+        const tokenData = res.body.find((t) => t.symbol === symbol);
+        if (tokenData && tokenData.price) {
+          setTokenPrice(tokenData.price);
+          if (showUSDValue) {
+            setTokenUSDValue(Big(amount).mul(tokenData.price).toFixed(2));
+          }
+        }
+      }
+    });
+  }
+  // For address-based tokens, fetch from backend API
+  else if (address || isNEAR) {
+    const tokenAddress = isNEAR ? "" : address;
+    asyncFetch(
+      `${REPL_BACKEND_API}/ft-token-price?account_id=${tokenAddress}`
+    ).then((res) => {
+      const price = res.body?.price;
+      if (price) {
+        setTokenPrice(price);
+        if (showUSDValue) {
           setTokenUSDValue(Big(amount).mul(price).toFixed(2));
         }
       }
-    );
+    });
   }
-}, [showUSDValue]);
+}, [showUSDValue, address, symbol, amount, priceFromProps]);
 
-// Check if there are more than 2 decimals in the original amount
-let needsTilde = false;
-if (originalAmount !== null && amountWithoutDecimals !== undefined) {
-  const decimals = originalAmount.toString().split(".")[1];
-  needsTilde = decimals && decimals.length > 2;
-}
-
-return needsTilde ? (
+// Always show the TokenAmount with tooltip on hover
+// The TokenAmount component will determine if tilde is needed
+return (
   <Widget
     loading=""
     src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
     props={{
       popup: <TokenAmount showAllDecimals={true} />,
-      children: <TokenAmount showAllDecimals={false} showTilde={true} />,
+      children: <TokenAmount showAllDecimals={false} />,
       instance: props.instance,
     }}
   />
-) : (
-  <TokenAmount showAllDecimals={false} />
 );

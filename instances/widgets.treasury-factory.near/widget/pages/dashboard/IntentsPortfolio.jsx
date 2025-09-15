@@ -4,6 +4,19 @@ const { Skeleton } = VM.require(
 const { NearToken } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Icons"
 ) || { NearToken: () => <></> };
+const tokenDisplayLib = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.tokenDisplay"
+);
+const formatTokenAmount =
+  tokenDisplayLib?.formatTokenAmount ||
+  ((amount) => Big(amount || 0).toFixed(2));
+const formatUsdValue =
+  tokenDisplayLib?.formatUsdValue ||
+  ((amount, price) =>
+    "$" +
+    Big(amount || 0)
+      .mul(Big(price || 0))
+      .toFixed(2));
 
 const props = typeof props !== "undefined" ? props : {};
 const treasuryDaoID = props.treasuryDaoID;
@@ -15,14 +28,6 @@ const [tokens, setTokens] = useState(null);
 const [loading, setLoading] = useState(true);
 const [error, setError] = useState(false);
 const [expandedTokens, setExpandedTokens] = useState({});
-
-function formatCurrency(amount) {
-  const formattedAmount = Number(amount).toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-  return "$" + formattedAmount;
-}
 
 function convertBalanceToReadableFormat(amount, decimals) {
   return Big(amount ?? "0")
@@ -290,13 +295,11 @@ const TokenCard = ({ token, id }) => {
         </div>
         <div className="d-flex gap-2 align-items-center justify-content-end">
           <div className="d-flex flex-column align-items-end">
-            <div className="h6 mb-0">{Big(totalAmount || 0).toFixed(2)}</div>
+            <div className="h6 mb-0">
+              {formatTokenAmount(totalAmount, price)}
+            </div>
             <div className="text-sm text-secondary">
-              {formatCurrency(
-                Big(totalAmount)
-                  .mul(price ?? 0)
-                  .toFixed(2)
-              )}
+              {formatUsdValue(totalAmount, price)}
             </div>
           </div>
           <div
@@ -344,16 +347,12 @@ const TokenCard = ({ token, id }) => {
                       )}
                     </div>
                     <div className="h6 mb-0">
-                      {Big(individualToken.readableAmount || 0).toFixed(2)}
+                      {formatTokenAmount(individualToken.readableAmount, price)}
                     </div>
                   </div>
 
                   <div className="text-sm text-secondary">
-                    {formatCurrency(
-                      Big(individualToken.readableAmount)
-                        .mul(price ?? 0)
-                        .toFixed(2)
-                    )}
+                    {formatUsdValue(individualToken.readableAmount, price)}
                   </div>
                 </div>
                 <div

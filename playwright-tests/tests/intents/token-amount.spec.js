@@ -78,7 +78,7 @@ const testCases = [
     amountWithoutDecimals: "5500000000000000000000000", // 5.5 wNEAR
     originalAmount: "5.500000000000000000000000",
     showUSDValue: false,
-    expected: "5.50",
+    expected: "5.5",
     expectTilde: false,
   },
   {
@@ -88,7 +88,7 @@ const testCases = [
     amountWithoutDecimals: "2345678901234567890123456", // 2.345678... wNEAR
     originalAmount: "2.345678901234567890123456",
     showUSDValue: false,
-    expected: "~2.35",
+    expected: "~2.346",
     expectTilde: true,
   },
   {

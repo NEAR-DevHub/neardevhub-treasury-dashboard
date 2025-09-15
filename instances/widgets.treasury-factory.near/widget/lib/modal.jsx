@@ -108,7 +108,7 @@ const Modal = ({ children, props, width }) => (
     <ModalDialog
       width={width}
       className="card"
-      style={{ minWidth: props.minWidth }}
+      style={{ minWidth: props.minWidth, maxHeight: props.maxHeight }}
     >
       {children}
     </ModalDialog>

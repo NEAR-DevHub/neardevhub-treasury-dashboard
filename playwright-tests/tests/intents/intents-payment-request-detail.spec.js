@@ -47,7 +47,12 @@ test("NEAR Intents payment request for ETH", async ({ page }) => {
     page.locator(
       'div[data-component="widgets.treasury-factory.near/widget/components.TokenAmountAndIcon"]'
     )
-  ).toContainText("0.005 ETH");
+  ).toContainText("0.005");
+  await expect(
+    page.locator(
+      'div[data-component="widgets.treasury-factory.near/widget/components.TokenAmountAndIcon"]'
+    )
+  ).toContainText("ETH");
 
   // Wait for network info to load
   await page.waitForTimeout(3000);

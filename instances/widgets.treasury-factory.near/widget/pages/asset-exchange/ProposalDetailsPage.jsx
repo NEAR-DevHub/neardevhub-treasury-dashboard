@@ -15,28 +15,37 @@ const {
 
 const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 
+const tokenDisplayLib = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.tokenDisplay"
+);
+
 const [proposalData, setProposalData] = useState(null);
 const [isDeleted, setIsDeleted] = useState(false);
 const [tokenIcons, setTokenIcons] = useState({});
 const [tokenMap, setTokenMap] = useState({});
 const [tokenMapLoaded, setTokenMapLoaded] = useState(false);
+const [tokenPrices, setTokenPrices] = useState({});
 
-// Fetch 1Click token mappings
+// Fetch 1Click token mappings and prices
 useEffect(() => {
   asyncFetch("https://1click.chaindefuser.com/v0/tokens")
     .then((res) => {
       if (res.body && Array.isArray(res.body)) {
         const mapping = {};
-        // Create a mapping from NEAR contract addresses to symbols
-        // Look for tokens that have assetId starting with "nep141:" and extract the contract address
+        const prices = {};
+        // Create a mapping from NEAR contract addresses to symbols and prices
         for (const token of res.body) {
           if (token.assetId && token.assetId.startsWith("nep141:")) {
-            // Extract the contract address from assetId (e.g., "nep141:eth.omft.near" -> "eth.omft.near")
             const contractAddress = token.assetId.replace("nep141:", "");
             mapping[contractAddress.toLowerCase()] = token.symbol;
+            // Store price for the symbol
+            if (token.price) {
+              prices[token.symbol] = token.price;
+            }
           }
         }
         setTokenMap(mapping);
+        setTokenPrices(prices);
         setTokenMapLoaded(true);
       }
     })
@@ -300,7 +309,13 @@ return (
                       />
                     )}
                     <span className="bolder mb-0">
-                      {proposalData?.amountIn}
+                      {tokenDisplayLib?.formatTokenAmount &&
+                      tokenPrices[proposalData?.tokenIn]
+                        ? tokenDisplayLib.formatTokenAmount(
+                            proposalData?.amountIn,
+                            tokenPrices[proposalData?.tokenIn]
+                          )
+                        : proposalData?.amountIn}
                     </span>
                     <span>
                       {getTokenSymbolFromAddress(proposalData?.tokenIn)}
@@ -339,7 +354,13 @@ return (
                       />
                     )}
                     <span className="bolder mb-0">
-                      {proposalData?.amountOut}
+                      {tokenDisplayLib?.formatTokenAmount &&
+                      tokenPrices[proposalData?.tokenOut]
+                        ? tokenDisplayLib.formatTokenAmount(
+                            proposalData?.amountOut,
+                            tokenPrices[proposalData?.tokenOut]
+                          )
+                        : proposalData?.amountOut}
                     </span>
                     <span>{proposalData?.tokenOut}</span>
                   </div>
@@ -424,7 +445,13 @@ return (
                       />
                     )}
                     <span className="bolder mb-0">
-                      {proposalData?.minAmountReceive?.toFixed
+                      {tokenDisplayLib?.formatTokenAmount &&
+                      tokenPrices[proposalData?.tokenOut]
+                        ? tokenDisplayLib.formatTokenAmount(
+                            proposalData?.minAmountReceive,
+                            tokenPrices[proposalData?.tokenOut]
+                          )
+                        : proposalData?.minAmountReceive?.toFixed
                         ? proposalData?.minAmountReceive?.toFixed(2)
                         : proposalData?.minAmountReceive}
                     </span>

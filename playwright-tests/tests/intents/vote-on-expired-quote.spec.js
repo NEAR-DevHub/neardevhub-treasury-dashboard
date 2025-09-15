@@ -242,7 +242,7 @@ test.describe("Asset Exchange - Expired Quote Voting Prevention", () => {
 
     // Check that token symbols are displayed, not contract addresses
     const sendETHVisible = await page
-      .getByText("Send 2.0 ETH")
+      .getByText("Send 2 ETH")
       .isVisible()
       .catch(() => false);
     const contractAddressVisible = await page

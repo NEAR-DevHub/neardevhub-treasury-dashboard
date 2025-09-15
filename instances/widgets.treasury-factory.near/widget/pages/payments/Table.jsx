@@ -10,9 +10,13 @@ const {
   accountToLockup,
 } = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
 
+const tokenDisplayLib = VM.require(
+  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.tokenDisplay"
+);
+
 const instance = props.instance;
 const policy = props.policy;
-if (!instance || typeof accountToLockup !== "function") {
+if (!instance || typeof accountToLockup !== "function" || !tokenDisplayLib) {
   return <></>;
 }
 
@@ -59,6 +63,7 @@ const [nearStakedTokens, setNearStakedTokens] = useState(null);
 const [lockupNearBalances, setLockupNearBalances] = useState(null);
 const refreshTableData = props.refreshTableData;
 const [intentsTokensData, setIntentsTokensData] = useState(null);
+const [oneClickPrices, setOneClickPrices] = useState({});
 const accountId = context.accountId;
 
 const hasVotingPermission = (
@@ -171,6 +176,15 @@ useEffect(() => {
     .catch((error) => {
       console.error("Failed to fetch network info:", error);
     });
+}, []);
+
+// Fetch 1Click token prices once for all tokens
+useEffect(() => {
+  if (tokenDisplayLib) {
+    tokenDisplayLib.fetch1ClickTokenPrices().then((prices) => {
+      setOneClickPrices(prices);
+    });
+  }
 }, []);
 
 const ProposalsComponent = () => {
@@ -384,6 +398,7 @@ const ProposalsComponent = () => {
                   instance,
                   amountWithoutDecimals: args.amount,
                   address: args.token_id,
+                  price: oneClickPrices[args.token_id] || undefined,
                 }}
               />
             </td>

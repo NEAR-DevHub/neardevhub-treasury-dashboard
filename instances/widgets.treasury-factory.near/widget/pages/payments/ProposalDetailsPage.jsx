@@ -166,6 +166,12 @@ useEffect(() => {
             status = "Expired";
           }
         }
+        const sourceWallet = isIntentsPayment
+          ? "Intents"
+          : isFunctionType &&
+            item.kind.FunctionCall?.actions[0]?.method_name === "transfer"
+          ? "Lockup"
+          : "SputnikDAO";
 
         setProposalData({
           id: item.id,
@@ -185,6 +191,7 @@ useEffect(() => {
           intentsTokenInfo,
           proposalUrl,
           proposal: item,
+          sourceWallet,
         });
       })
       .catch((e) => {
@@ -555,7 +562,11 @@ return (
           ),
         ProposalContent: (
           <div className="card card-body d-flex flex-column gap-2">
-            <h6 className="mb-0 flex-1">{proposalData?.title}</h6>
+            <div className="d-flex flex-column gap-2 mt-1">
+              <label>Source Wallet</label>
+              <div className="text-secondary">{proposalData?.sourceWallet}</div>
+            </div>
+            <h6 className="mb-0 flex-1 border-top">{proposalData?.title}</h6>
             {proposalData?.summary && (
               <div className=" text-secondary">{proposalData?.summary}</div>
             )}
