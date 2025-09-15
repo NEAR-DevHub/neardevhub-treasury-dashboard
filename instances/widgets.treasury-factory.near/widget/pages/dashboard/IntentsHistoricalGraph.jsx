@@ -70,7 +70,8 @@ useEffect(() => {
     });
 }, [instance]);
 
-// Extract available tokens from the latest period data (1H)
+// Extract available tokens from the latest period data (1H), as this is what is shows in the portfolio section in the left bar
+// so we don't want to show older tokens that are not in the portfolio
 useEffect(() => {
   if (
     hasData &&
