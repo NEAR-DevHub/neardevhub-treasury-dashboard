@@ -17,11 +17,6 @@ function toBase64(json) {
   return Buffer.from(JSON.stringify(json)).toString("base64");
 }
 
-test.afterEach(async ({ page }, testInfo) => {
-  console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
-  await page.unrouteAll({ behavior: "ignoreErrors" });
-});
-
 const metadata = {
   flagLogo:
     "https://ipfs.near.social/ipfs/bafkreiboarigt5w26y5jyxyl4au7r2dl76o5lrm2jqjgqpooakck5xsojq",

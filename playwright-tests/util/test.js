@@ -18,6 +18,26 @@ function enhancePageWithBetterRouting(page) {
   return page;
 }
 
+// Enhanced cleanup function to handle route cleanup more robustly
+export async function cleanupRoutes(page) {
+  try {
+    // First, try to unroute all routes with ignoreErrors behavior
+    await page.unrouteAll({ behavior: "ignoreErrors" });
+
+    // Also clean up context routes (since we're using context.route in the enhancement)
+    const context = page.context();
+    if (context && !context.isClosed()) {
+      await context.unrouteAll({ behavior: "ignoreErrors" });
+    }
+
+    // Give a small delay to let any in-flight requests complete
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  } catch (error) {
+    // Ignore cleanup errors - the page/context might already be closed
+    console.warn("Route cleanup warning:", error.message);
+  }
+}
+
 export const test = base.extend({
   page: async ({ page }, use) => {
     const enhancedPage = enhancePageWithBetterRouting(page);
@@ -33,7 +53,9 @@ test.beforeEach(async ({ page }) => {
   await cacheCDN(page);
 });
 test.afterEach(async ({ page }, testInfo) => {
-  await page.unrouteAll({ behavior: "ignoreErrors" });
+  // Enhanced route cleanup
+  await cleanupRoutes(page);
+
   const video = await page.video();
   if (video) {
     const titleFile = testInfo.outputPath("test-title.txt");
