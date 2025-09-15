@@ -9,16 +9,15 @@ if (!instance) {
   return <></>;
 }
 
-const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
+const configData = VM.require(`${instance}/widget/config.data`);
+const treasuryDaoID = configData?.treasuryDaoID;
 const config = treasuryDaoID ? Near.view(treasuryDaoID, "get_config") : null;
 const metadata = JSON.parse(atob(config.metadata ?? ""));
 const isDarkTheme = metadata.theme === "dark";
 const onSubmit = props.onSubmit ?? (() => {});
 const onCancel = props.onCancel ?? (() => {});
 
-const { themeColor } = VM.require(`${instance}/widget/config.data`) || {
-  themeColor: "",
-};
+const themeColor = configData?.themeColor || "";
 const primaryColor = metadata?.primaryColor
   ? metadata?.primaryColor
   : themeColor;
@@ -36,7 +35,7 @@ const code = `
             href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css"
             rel="stylesheet"
             />
-            <script src="https://cdn.jsdelivr.net/npm/big-js@3.1.3/big.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/big.js@6.2.1/big.min.js"></script>
         <script type="module">
             // Import Web3Icons libraries for network name resolution
             import('https://cdn.jsdelivr.net/npm/@web3icons/common@0.11.12/dist/index.min.js').then(module => {
@@ -737,6 +736,70 @@ const code = `
             let iconCache = {};
             let availableNetworks = [];
 
+            // Token formatting functions
+            function formatTokenAmount(amount, tokenPrice, minUsdValue) {
+                minUsdValue = minUsdValue || 0.01;
+                if (!amount || !tokenPrice || tokenPrice === 0) {
+                    return "0";
+                }
+
+                const numAmount = new Big(amount);
+                const numPrice = new Big(tokenPrice);
+                
+                if (numAmount.eq(0)) {
+                    return "0";
+                }
+
+                const usdValue = numAmount.mul(numPrice);
+                
+                if (usdValue.lt(minUsdValue)) {
+                    return numAmount.toExponential(2);
+                }
+
+                // Calculate decimals needed so the smallest unit is worth <= $0.01
+                // For example: if token price is $1, we need 2 decimals (0.01 = $0.01)
+                const targetPrecision = new Big(0.01);
+                const requiredDecimals = Math.max(
+                    0,
+                    Math.ceil(-Math.log10(targetPrecision.div(numPrice).toNumber()))
+                );
+                
+                const decimals = Math.min(requiredDecimals, 8);
+                const formatted = numAmount.toFixed(decimals);
+                
+                // Remove trailing zeros and decimal point if no fractional part remains
+                // Only remove zeros that are actually trailing (not part of other digits)
+                let trimmed = formatted;
+                if (formatted.includes(".")) {
+                    // Remove trailing zeros but keep at least one digit after decimal if there are non-zero digits
+                    // This regex captures everything up to the last non-zero digit
+                    trimmed = formatted.replace(/(\\.\\d*[1-9])?0+$/, "$1");
+                    trimmed = trimmed.replace(/\\.$/, ""); // Remove decimal if alone
+                }
+                const parts = trimmed.split(".");
+                parts[0] = parts[0].replace(/\\B(?=(\\d{3})+(?!\\d))/g, ",");
+                
+                return parts.join(".");
+            }
+
+            function formatUsdValue(amount, tokenPrice) {
+                if (!amount || !tokenPrice) {
+                    return "$0.00";
+                }
+
+                const usdValue = new Big(amount).mul(new Big(tokenPrice));
+                
+                if (usdValue.lt(0.01)) {
+                    return "< $0.01";
+                }
+                
+                const formatted = usdValue.toFixed(2);
+                const parts = formatted.split(".");
+                parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                
+                return "$" + parts.join(".");
+            }
+
             // Fetch token prices from API
             async function fetchTokenPrices() {
                 try {
@@ -1001,10 +1064,9 @@ const code = `
                     
                     const balanceText = document.createElement("div");
                     balanceText.className = "text-muted";
-                    balanceText.textContent = Number(token.balance ?? 0).toLocaleString("en-US", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                    });
+                    // Use intelligent formatting based on token price
+                    const formattedBalance = formatTokenAmount(token.balance, token.price);
+                    balanceText.textContent = formattedBalance;
                     
                     item.appendChild(tokenInfo);
                     item.appendChild(balanceText);
@@ -1091,11 +1153,9 @@ const code = `
                     balanceText.className = "text-muted";
                     
                     if (hasBalance) {
-                        // Format balance with proper decimals and commas
-                        balanceText.textContent = totalBalance.toLocaleString("en-US", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2
-                        });
+                        // Use intelligent formatting based on token price
+                        const formattedBalance = formatTokenAmount(totalBalance.toString(), token.price);
+                        balanceText.textContent = formattedBalance;
                     } else {
                         balanceText.textContent = "-";
                     }
@@ -1439,8 +1499,9 @@ const code = `
                 if (tokenIn && amountIn) {
                     const token = intentsTokensIn.find(t => t.id === tokenIn);
                     if (token) {
-                        valueDisplay.textContent = "$" + (parseFloat(amountIn || 0) * parseFloat(token.price || 0)).toFixed(2) +
-                            " • NEAR Intents balance: " + token.balance + " " + token.symbol;
+                        const usdValue = formatUsdValue(amountIn || "0", token.price || 0);
+                        const formattedBalance = formatTokenAmount(token.balance, token.price);
+                        valueDisplay.textContent = usdValue + " • NEAR Intents balance: " + formattedBalance + " " + token.symbol;
                     }
                 } else {
                     valueDisplay.textContent = "$0.00";
@@ -1612,14 +1673,16 @@ const code = `
                         // Store preview data
                         previewData = data.quote;
                         
-                        // Update the receive amount display
-                        const amountOut = data.quote.amountOutFormatted || 
+                        // Update the receive amount display with intelligent formatting
+                        const rawAmountOut = data.quote.amountOutFormatted || 
                             Big(data.quote.amountOut || "0")
                                 .div(Big(10).pow(selectedTokenOut.decimals || 18))
-                                .toFixed(6);
-                        document.getElementById("amount-out").value = amountOut;
-                        const usdValue = parseFloat(amountOut) * (selectedTokenOut.price || 1);
-                        document.getElementById("receive-value").textContent = "$" + usdValue.toFixed(2);
+                                .toFixed();
+                        // Format the amount based on token price
+                        const formattedAmountOut = formatTokenAmount(rawAmountOut, selectedTokenOut.price || 1);
+                        document.getElementById("amount-out").value = formattedAmountOut;
+                        const usdValue = formatUsdValue(rawAmountOut, selectedTokenOut.price || 1);
+                        document.getElementById("receive-value").textContent = usdValue;
                         
                         // Update button state now that we have preview
                         updateSubmitButton();
@@ -1650,6 +1713,9 @@ const code = `
                     
                     // Update quote display
                     const selectedTokenIn = intentsTokensIn.find(t => t.id === tokenIn);
+                    const selectedTokenOut = allTokensOut.find(
+                        t => t.symbol === tokenOut && t.network === networkOut
+                    );
                     
                     document.getElementById("quote-alert-text").textContent = 
                         "Please approve this request within " + getTimeRemaining(quote.deadline) + 
@@ -1667,10 +1733,19 @@ const code = `
                     const tokenInRate = amountInNum > 0 ? amountOutNum / amountInNum : 0;
                     const tokenOutRate = amountOutNum > 0 ? amountInNum / amountOutNum : 0;
                     
+                    // Format exchange rates intelligently based on token prices
+                    const formattedTokenInRate = formatTokenAmount(
+                        tokenInRate.toString(),
+                        selectedTokenOut?.price || 1
+                    );
+                    const formattedTokenOutRate = formatTokenAmount(
+                        tokenOutRate.toString(),
+                        selectedTokenIn.price || 1
+                    );
                     sendRate.innerHTML = "1 " + selectedTokenIn.symbol + " ≈ " + 
-                        tokenInRate.toFixed(6) + " " + tokenOut;
+                        formattedTokenInRate + " " + tokenOut;
                     receiveRate.innerHTML = "1 " + tokenOut + " ≈ " + 
-                        tokenOutRate.toFixed(6) + " " + selectedTokenIn.symbol;
+                        formattedTokenOutRate + " " + selectedTokenIn.symbol;
                     
                     // Calculate price difference if we have market prices
                     if (selectedTokenIn.price && quote.amountInUsd && quote.amountOutUsd) {
@@ -1704,12 +1779,16 @@ const code = `
                         (quote.timeEstimate || 10) + " minutes";
                     
                     if (quote.minAmountOut && quote.amountOut && quote.amountOutFormatted) {
-                        const minReceived = Big(quote.minAmountOut)
+                        const rawMinReceived = Big(quote.minAmountOut)
                             .mul(Big(quote.amountOutFormatted))
                             .div(Big(quote.amountOut))
-                            .toFixed(6);
+                            .toFixed();
+                        const formattedMinReceived = formatTokenAmount(
+                            rawMinReceived, 
+                            selectedTokenOut?.price || 1
+                        );
                         document.getElementById("detail-min-received").textContent = 
-                            minReceived + " " + tokenOut;
+                            formattedMinReceived + " " + tokenOut;
                     }
                     
                     if (quote.depositAddress) {
@@ -1959,17 +2038,23 @@ const [allTokensOut, setAllTokensOut] = useState([]);
 useEffect(() => {
   if (typeof getIntentsBalances === "function" && treasuryDaoID) {
     getIntentsBalances(treasuryDaoID).then((balances) => {
-      const formattedTokens = balances.map((token) => ({
-        id: token.token_id, // Use the full token_id with prefix from common.jsx
-        symbol: token.ft_meta.symbol,
-        name: token.ft_meta.name,
-        icon: token.ft_meta.icon,
-        balance: Big(token.amount ?? "0")
+      const formattedTokens = balances.map((token) => {
+        // Pass the raw balance as a string to preserve precision
+        // The iframe will format it using formatTokenAmount
+        const rawBalance = Big(token.amount ?? "0")
           .div(Big(10).pow(token.ft_meta.decimals))
-          .toFixed(2),
-        decimals: token.ft_meta.decimals,
-        blockchain: token.blockchain,
-      }));
+          .toString(); // Use toString() instead of toFixed() to preserve all decimals
+        return {
+          id: token.token_id, // Use the full token_id with prefix from common.jsx
+          symbol: token.ft_meta.symbol,
+          name: token.ft_meta.name,
+          icon: token.ft_meta.icon,
+          balance: rawBalance, // Pass raw balance, formatting happens in iframe
+          decimals: token.ft_meta.decimals,
+          blockchain: token.blockchain,
+          price: token.ft_meta.price || 0, // Include price for formatting in iframe
+        };
+      });
 
       setIntentsTokens(formattedTokens);
 
