@@ -486,21 +486,26 @@ const OptionRender = () => {
         </div>
       );
     case "options":
-      const filteredOptions = options.filter((option) =>
-        (option || "")?.toLowerCase().includes(search.toLowerCase())
-      );
+      const filteredOptions = multiple
+        ? options.filter((option) =>
+            (option || "")?.toLowerCase().includes(search.toLowerCase())
+          )
+        : options;
+
       return (
         <div>
-          <div className="search-input-container">
-            <input
-              type="text"
-              className="form-control search-input"
-              placeholder="Search by name"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            <i className="bi bi-search search-icon" />
-          </div>
+          {multiple && (
+            <div className="search-input-container">
+              <input
+                type="text"
+                className="form-control search-input"
+                placeholder="Search by name"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              <i className="bi bi-search search-icon" />
+            </div>
+          )}
           <div className="scrollable-options">
             {filteredOptions.map((option) => (
               <div
@@ -508,12 +513,14 @@ const OptionRender = () => {
                 className="d-flex align-items-center gap-2 dropdown-item cursor-pointer"
                 onClick={(e) => handleSelection(option, e)}
               >
-                <input
-                  type="checkbox"
-                  className="form-check-input"
-                  role="switch"
-                  checked={selected.includes(option)}
-                />
+                {multiple && (
+                  <input
+                    type="checkbox"
+                    className="form-check-input"
+                    role="switch"
+                    checked={selected.includes(option)}
+                  />
+                )}
                 <div className="text-truncate">
                   <span>{option}</span>
                 </div>
