@@ -551,16 +551,6 @@ return (
               </div>
             ) : (
               <div>
-                <div className="mb-3" style={{ fontSize: "13px" }}>
-                  Fill in the details to send a payment request to a recipient.
-                  Need to send many?
-                  <span
-                    className="primary-text-color cursor-pointer"
-                    onClick={() => setIsBulkImport(true)}
-                  >
-                    Import Multiple Payment Requests
-                  </span>
-                </div>
                 <Widget
                   loading=""
                   src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.payments.CreatePaymentRequest`}
@@ -569,6 +559,7 @@ return (
                     onCloseCanvas: toggleCreatePage,
                     setToastStatus,
                     setVoteProposalId,
+                    setIsBulkImport,
                   }}
                 />
               </div>
