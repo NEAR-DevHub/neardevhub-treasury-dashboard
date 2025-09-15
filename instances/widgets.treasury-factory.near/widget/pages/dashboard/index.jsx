@@ -634,7 +634,7 @@ return (
             "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.ChartParent"
           }
           props={{
-            title: "Treasury Assets: Sputnik DAO",
+            title: "Sputnik DAO",
             nearPrice,
             nearBalance: nearBalances?.totalParsed ?? "0",
             totalBalance: formatCurrency(
@@ -646,6 +646,19 @@ return (
           }}
         />
 
+        {/* Intents Chart */}
+        <Widget
+          loading=""
+          src={
+            "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.IntentsHistoricalGraph"
+          }
+          props={{
+            title: "Intents",
+            instance,
+          }}
+        />
+
+        {/* Lockup Chart */}
         {lockupContract && (
           <Widget
             loading=""
@@ -653,7 +666,7 @@ return (
               "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.dashboard.ChartParent"
             }
             props={{
-              title: "Treasury Assets: Lockup",
+              title: "NEAR Lockup",
               nearPrice,
               instance,
               nearBalance: lockupNearBalances?.totalParsed ?? "0",
@@ -665,6 +678,8 @@ return (
             }}
           />
         )}
+
+        {/* Transaction History */}
         <Widget
           loading=""
           src={
