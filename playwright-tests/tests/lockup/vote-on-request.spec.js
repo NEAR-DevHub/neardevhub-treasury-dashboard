@@ -146,10 +146,6 @@ async function mockLockupProposals({ page }) {
     });
   });
 }
-test.afterEach(async ({ page }, testInfo) => {
-  console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
-  await page.unrouteAll({ behavior: "ignoreErrors" });
-});
 
 test.describe.parallel("User logged in with different roles", () => {
   const roles = [

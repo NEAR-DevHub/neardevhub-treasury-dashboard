@@ -4,10 +4,6 @@ import { SandboxRPC } from "../../util/sandboxrpc.js";
 import nearApi from "near-api-js";
 import { mockNearBalances } from "../../util/rpcmock.js";
 
-test.afterEach(async ({ page }, testInfo) => {
-  console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
-  await page.unrouteAll({ behavior: "ignoreErrors" });
-});
 
 test.describe("connected with ledger", function () {
   test.use({
