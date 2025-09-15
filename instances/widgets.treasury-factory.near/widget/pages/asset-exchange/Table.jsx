@@ -24,6 +24,9 @@ if (
 
 const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 
+const tokenDisplayLib =
+  VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.tokenDisplay") || null;
+
 const proposals = props.proposals;
 const columnsVisibility = JSON.parse(
   Storage.get(
@@ -47,11 +50,12 @@ const refreshTableData = props.refreshTableData;
 
 const accountId = context.accountId;
 
-// State for token icons and token mapping
+// State for token icons, token mapping, and prices
 const [tokenIcons, setTokenIcons] = useState({});
 const [tokenMap, setTokenMap] = useState({});
+const [oneClickPrices, setOneClickPrices] = useState({});
 
-// Fetch 1Click token mappings
+// Fetch 1Click token mappings and prices
 useEffect(() => {
   asyncFetch("https://1click.chaindefuser.com/v0/tokens")
     .then((res) => {
@@ -72,6 +76,13 @@ useEffect(() => {
     .catch((err) => {
       console.log("Failed to fetch 1Click token mappings:", err);
     });
+
+  // Fetch 1Click token prices once for all tokens
+  if (tokenDisplayLib) {
+    tokenDisplayLib.fetch1ClickTokenPrices().then((prices) => {
+      setOneClickPrices(prices);
+    });
+  }
 }, []);
 
 // Map 1Click contract addresses to token symbols using fetched data
@@ -276,6 +287,9 @@ const ProposalsComponent = () => {
                       amountWithDecimals: amountIn,
                       symbol: getTokenSymbolFromAddress(tokenIn), // Pass mapped symbol for 1Click tokens
                       showUSDValue: true,
+                      price:
+                        oneClickPrices[getTokenSymbolFromAddress(tokenIn)] ||
+                        undefined,
                     }}
                   />
                   {tokenIcons[getTokenSymbolFromAddress(tokenIn)] && (
@@ -313,6 +327,7 @@ const ProposalsComponent = () => {
                       amountWithDecimals: amountOut,
                       symbol: tokenOut, // tokenOut is already a symbol, not a contract address
                       showUSDValue: true,
+                      price: oneClickPrices[tokenOut] || undefined,
                     }}
                   />
                   {tokenIcons[tokenOut] && (
@@ -350,6 +365,7 @@ const ProposalsComponent = () => {
                       amountWithDecimals: minAmountReceive,
                       symbol: tokenOut, // tokenOut is already a symbol, not a contract address
                       showUSDValue: true,
+                      price: oneClickPrices[tokenOut] || undefined,
                     }}
                   />
                   {tokenIcons[tokenOut] && (

@@ -19,7 +19,7 @@ test("should not display NEAR intents card if there are no assets in NEAR intent
 
   // Intercept RPC calls to redirect intents.near queries to the sandbox
   // Now this block is after worker initialization and sandboxRpcUrl is available
-  await page.route("https://rpc.mainnet.near.org", async (route) => {
+  await page.route("https://rpc.mainnet.fastnear.com", async (route) => {
     const request = route.request();
     if (request.method() === "POST") {
       let postData;
@@ -685,8 +685,10 @@ test("show intents balance in dashboard (sandbox)", async ({
   const ethAmountElement = ethRowLocator.locator(
     "div.d-flex.gap-2.align-items-center.justify-content-end div.d-flex.flex-column.align-items-end div.h6.mb-0"
   );
-  // Total ETH should be 128.23 + 50 + 25 = 203.23 ETH
-  await expect(ethAmountElement).toHaveText("203.23", { timeout: 10000 }); // Aggregated display
+  // Total ETH should be 128.2267 + 50 + 25 = 203.2267 ETH
+  // With intelligent formatting, this may display with varying precision based on ETH price
+  const ethText = await ethAmountElement.textContent();
+  expect(parseFloat(ethText.replace(/,/g, ""))).toBeCloseTo(203.2267, 2);
 
   // Check that the ETH row has an expandable dropdown (chevron icon) since it has multiple chains
   const ethChevronLocator = ethRowLocator.locator(
@@ -702,17 +704,50 @@ test("show intents balance in dashboard (sandbox)", async ({
     .locator("div.d-flex.flex-column")
     .filter({ hasText: "ETH" });
 
-  // Check Ethereum chain balance
+  // Check Ethereum chain balance (128.2267 ETH)
   await expect(expandedEthSection.getByText("ETH")).toBeVisible();
-  await expect(expandedEthSection.getByText("128.23")).toBeVisible();
+  // With intelligent formatting, check for the value being close to expected
+  const ethBalanceElements = await expandedEthSection.locator(".h6.mb-0").all();
+  let foundEthBalance = false;
+  for (const elem of ethBalanceElements) {
+    const text = await elem.textContent();
+    const value = parseFloat(text.replace(/,/g, ""));
+    if (Math.abs(value - 128.2267) < 0.01) {
+      foundEthBalance = true;
+      break;
+    }
+  }
+  expect(foundEthBalance).toBe(true);
 
-  // Check Arbitrum chain balance
+  // Check Arbitrum chain balance (50 ETH)
   await expect(expandedEthSection.getByText("ARB")).toBeVisible();
-  await expect(expandedEthSection.getByText("50.00")).toBeVisible();
+  const arbBalanceElements = await expandedEthSection.locator(".h6.mb-0").all();
+  let foundArbBalance = false;
+  for (const elem of arbBalanceElements) {
+    const text = await elem.textContent();
+    const value = parseFloat(text.replace(/,/g, ""));
+    if (Math.abs(value - 50) < 0.01) {
+      foundArbBalance = true;
+      break;
+    }
+  }
+  expect(foundArbBalance).toBe(true);
 
-  // Check Base chain balance
+  // Check Base chain balance (25 ETH)
   await expect(expandedEthSection.getByText("BASE")).toBeVisible();
-  await expect(expandedEthSection.getByText("25.00")).toBeVisible();
+  const baseBalanceElements = await expandedEthSection
+    .locator(".h6.mb-0")
+    .all();
+  let foundBaseBalance = false;
+  for (const elem of baseBalanceElements) {
+    const text = await elem.textContent();
+    const value = parseFloat(text.replace(/,/g, ""));
+    if (Math.abs(value - 25) < 0.01) {
+      foundBaseBalance = true;
+      break;
+    }
+  }
+  expect(foundBaseBalance).toBe(true);
 
   // Locate the WNEAR row and check its balance
   const wnearRowLocator = intentsPortfolioLocator.locator(
@@ -721,7 +756,9 @@ test("show intents balance in dashboard (sandbox)", async ({
   const wnearAmountElement = wnearRowLocator.locator(
     "div.d-flex.gap-2.align-items-center.justify-content-end div.d-flex.flex-column.align-items-end div.h6.mb-0"
   );
-  await expect(wnearAmountElement).toHaveText("342.66");
+  // With intelligent formatting, check for the value being close to expected
+  const wnearText = await wnearAmountElement.textContent();
+  expect(parseFloat(wnearText.replace(/,/g, ""))).toBeCloseTo(342.66, 1);
 
   // Locate the BTC row and check its balance
   const btcRowLocator = intentsPortfolioLocator.locator(
@@ -730,7 +767,9 @@ test("show intents balance in dashboard (sandbox)", async ({
   const btcAmountElement = btcRowLocator.locator(
     "div.d-flex.gap-2.align-items-center.justify-content-end div.d-flex.flex-column.align-items-end div.h6.mb-0"
   );
-  await expect(btcAmountElement).toHaveText("0.50");
+  // BTC with high price may show different precision
+  const btcText = await btcAmountElement.textContent();
+  expect(parseFloat(btcText.replace(/,/g, ""))).toBeCloseTo(0.5, 2);
 
   // Locate the SOL row and check its balance
   const solRowLocator = intentsPortfolioLocator.locator(
@@ -739,7 +778,9 @@ test("show intents balance in dashboard (sandbox)", async ({
   const solAmountElement = solRowLocator.locator(
     "div.d-flex.gap-2.align-items-center.justify-content-end div.d-flex.flex-column.align-items-end div.h6.mb-0"
   );
-  await expect(solAmountElement).toHaveText("10.00");
+  // SOL may show different precision based on price
+  const solText = await solAmountElement.textContent();
+  expect(parseFloat(solText.replace(/,/g, ""))).toBeCloseTo(10, 1);
 
   // ETH icon
   const ethIconLocator = page
