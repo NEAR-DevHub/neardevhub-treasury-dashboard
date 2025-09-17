@@ -706,10 +706,10 @@ const code = `
                     <button class="btn btn-outline-secondary" id="cancel-btn">
                         Cancel
                     </button>
-                    <button class="btn btn-primary" id="get-quote-btn" disabled>
+                    <button class="btn btn-success" id="get-quote-btn" disabled>
                         Get Quote
                     </button>
-                    <button class="btn btn-primary" id="create-proposal-btn" style="display: none;" disabled>
+                    <button class="btn btn-success" id="create-proposal-btn" style="display: none;" disabled>
                         Create Proposal
                     </button>
                 </div>
@@ -1509,17 +1509,29 @@ const code = `
             }
 
             function updateReceiveEstimate() {
+                // Clear any error styling
+                document.getElementById("receive-value").classList.remove("text-danger");
+                document.getElementById("amount-out").placeholder = "";
+
                 // Only update the receive amount estimate, not the full quote details
                 if (!tokenIn || !tokenOut || !networkOut || !amountIn || parseFloat(amountIn) <= 0) {
                     document.getElementById("amount-out").value = "";
+                    // Remove any existing spinner
+                    const existingSpinner = document.getElementById("amount-out-spinner");
+                    if (existingSpinner) existingSpinner.remove();
                     document.getElementById("receive-value").textContent = "$0.00";
                     previewData = null;
                     updateSubmitButton();
                     return;
                 }
-                
+
                 // Show loading state in receive amount field
-                document.getElementById("amount-out").value = "Loading...";
+                document.getElementById("amount-out").value = "";
+                document.getElementById("amount-out").placeholder = "";
+                // Remove any existing spinner first
+                const existingSpinner = document.getElementById("amount-out-spinner");
+                if (existingSpinner) existingSpinner.remove();
+                document.getElementById("amount-out").insertAdjacentHTML('afterend', '<div class="spinner-border spinner-border-sm text-success ms-2" role="status" id="amount-out-spinner"><span class="visually-hidden">Loading...</span></div>');
                 document.getElementById("receive-value").textContent = "Calculating...";
                 
                 // Fetch dry quote for estimate only
@@ -1680,6 +1692,12 @@ const code = `
                                 .toFixed();
                         // Format the amount based on token price
                         const formattedAmountOut = formatTokenAmount(rawAmountOut, selectedTokenOut.price || 1);
+                        // Remove spinner and set value
+                        const spinner = document.getElementById("amount-out-spinner");
+                        if (spinner) spinner.remove();
+                        // Clear any error styling
+                        document.getElementById("receive-value").classList.remove("text-danger");
+                        document.getElementById("amount-out").placeholder = "";
                         document.getElementById("amount-out").value = formattedAmountOut;
                         const usdValue = formatUsdValue(rawAmountOut, selectedTokenOut.price || 1);
                         document.getElementById("receive-value").textContent = usdValue;
@@ -1688,8 +1706,15 @@ const code = `
                         updateSubmitButton();
                     } else {
                         // If no quote, show error in receive field
-                        document.getElementById("amount-out").value = "Error";
-                        document.getElementById("receive-value").textContent = "Unable to quote";
+                        const spinner = document.getElementById("amount-out-spinner");
+                        if (spinner) spinner.remove();
+
+                        // Display error message from API
+                        const errorMessage = data.error || data.message || "Unable to quote";
+                        document.getElementById("amount-out").value = "";
+                        document.getElementById("amount-out").placeholder = "";
+                        document.getElementById("receive-value").classList.add("text-danger");
+                        document.getElementById("receive-value").textContent = errorMessage;
                         previewData = null;
                         updateSubmitButton();
                     }
@@ -1697,8 +1722,16 @@ const code = `
                 .catch(err => {
                     isLoadingPreview = false;
                     console.error("Error fetching estimate:", err);
-                    document.getElementById("amount-out").value = "Error";
-                    document.getElementById("receive-value").textContent = "Unable to quote";
+                    // Remove spinner and show error
+                    const spinner = document.getElementById("amount-out-spinner");
+                    if (spinner) spinner.remove();
+
+                    // Display error message
+                    const errorMessage = err.message || "Unable to quote";
+                    document.getElementById("amount-out").value = "";
+                    document.getElementById("amount-out").placeholder = "";
+                    document.getElementById("receive-value").classList.add("text-danger");
+                    document.getElementById("receive-value").textContent = errorMessage;
                     previewData = null;
                     updateSubmitButton();
                 });
