@@ -41,6 +41,18 @@ const code = `
             import('https://cdn.jsdelivr.net/npm/@web3icons/common@0.11.12/dist/index.min.js').then(module => {
                 window.web3IconsCommon = module;
                 console.log('Web3Icons Common loaded with', module.networks?.length || 0, 'networks and', module.tokens?.length || 0, 'tokens');
+
+                // Add "btc" as an alias for Bitcoin network
+                if (module.networks && Array.isArray(module.networks)) {
+                    const bitcoinNetwork = module.networks.find(n => n.id === 'bitcoin');
+                    if (bitcoinNetwork) {
+                        // Create a copy with "btc" as the id
+                        const btcNetwork = { ...bitcoinNetwork, id: 'btc' };
+                        module.networks.push(btcNetwork);
+                        console.log('Added "btc" alias for Bitcoin network');
+                    }
+                }
+
                 // Check if both are loaded
                 if (window.web3IconsCore) {
                     loadTokenIcons();
