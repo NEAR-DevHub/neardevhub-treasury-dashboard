@@ -53,6 +53,40 @@ const code = `
                     }
                 }
 
+                // Add token aliases for wrapped/variant tokens
+                if (module.tokens && Array.isArray(module.tokens)) {
+                    const tokenAliases = [
+                        { original: 'ETH', aliases: ['WETH'] },
+                        { original: 'NEAR', aliases: ['wNEAR', 'GNEAR', 'NOEAR'] },
+                        { original: 'BTC', aliases: ['xBTC', 'cbBTC'] },
+                        { original: 'WBTC', aliases: ['xBTC', 'cbBTC'] },  // Also try WBTC as source
+                    ];
+
+                    tokenAliases.forEach(({ original, aliases }) => {
+                        const originalToken = module.tokens.find(t =>
+                            t.symbol.toUpperCase() === original.toUpperCase()
+                        );
+                        if (originalToken) {
+                            aliases.forEach(alias => {
+                                // Check if alias already exists
+                                const exists = module.tokens.some(t =>
+                                    t.symbol.toUpperCase() === alias.toUpperCase()
+                                );
+                                if (!exists) {
+                                    // Create a copy with the alias symbol
+                                    const aliasToken = {
+                                        ...originalToken,
+                                        symbol: alias,
+                                        name: alias + ' (using ' + original + ' icon)'
+                                    };
+                                    module.tokens.push(aliasToken);
+                                    console.log('Added "' + alias + '" as alias for ' + original + ' token');
+                                }
+                            });
+                        }
+                    });
+                }
+
                 // Check if both are loaded
                 if (window.web3IconsCore) {
                     loadTokenIcons();
