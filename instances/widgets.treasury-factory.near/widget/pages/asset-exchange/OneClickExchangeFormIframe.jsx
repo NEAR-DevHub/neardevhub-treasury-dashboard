@@ -1045,6 +1045,7 @@ const code = `
                         img.src = token.icon || iconCache[token.symbol];
                         img.width = 30;
                         img.height = 30;
+                        img.className = "rounded-circle";
                         tokenInfo.appendChild(img);
                     } else {
                         // Add spacer div to maintain alignment
@@ -1123,6 +1124,7 @@ const code = `
                         img.src = iconCache[symbol];
                         img.width = 30;
                         img.height = 30;
+                        img.className = "rounded-circle";
                         tokenInfo.appendChild(img);
                     } else {
                         // Add spacer div to maintain alignment
@@ -1200,6 +1202,7 @@ const code = `
                         img.src = network.icon;
                         img.width = 30;
                         img.height = 30;
+                        img.className = "rounded-circle";
                         img.style.marginRight = "8px";
                         item.appendChild(img);
                     } else {
@@ -1233,7 +1236,7 @@ const code = `
                 if (token.icon || iconCache[token.symbol]) {
                     const img = document.createElement("img");
                     img.src = token.icon || iconCache[token.symbol];
-                    img.className = "token-icon";
+                    img.className = "token-icon rounded-circle";
                     img.style.width = "20px";
                     img.style.height = "20px";
                     img.style.marginRight = "8px";
@@ -1267,7 +1270,7 @@ const code = `
                 if (iconCache[symbol]) {
                     const img = document.createElement("img");
                     img.src = iconCache[symbol];
-                    img.className = "token-icon";
+                    img.className = "token-icon rounded-circle";
                     img.style.width = "20px";
                     img.style.height = "20px";
                     img.style.marginRight = "8px";
@@ -1303,13 +1306,13 @@ const code = `
                 if (networkIcon) {
                     const img = document.createElement("img");
                     img.src = networkIcon;
-                    img.className = "token-icon";
+                    img.className = "token-icon rounded-circle";
                     img.style.width = "20px";
                     img.style.height = "20px";
                     img.style.marginRight = "8px";
                     img.style.verticalAlign = "middle";
                     display.appendChild(img);
-                    
+
                     // Cache the icon for future use
                     if (!iconCache[network.id + "_network_icon"]) {
                         iconCache[network.id + "_network_icon"] = networkIcon;
