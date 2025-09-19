@@ -2590,6 +2590,135 @@ test.describe("OneClickExchangeForm Component", () => {
     console.log("\n✓ High price formatting test verified!");
   });
 
+  test("should display Bitcoin with correct network names and icon", async ({
+    page,
+  }) => {
+    test.setTimeout(60_000);
+
+    await mockApiResponses(page);
+
+    // Wait for the iframe to be loaded
+    await page.waitForSelector("iframe", {
+      state: "visible",
+    });
+
+    const iframe = page.frameLocator("iframe").first();
+
+    // Wait for the component inside the iframe to be visible
+    await iframe.locator(".one-click-exchange-form").waitFor({
+      state: "visible",
+      timeout: 10000,
+    });
+
+    // Wait for component to load
+    await page.waitForTimeout(1000);
+
+    // Select Bitcoin as send token
+    const sendDropdown = iframe
+      .locator(".send-section")
+      .locator(".dropdown-toggle");
+    await sendDropdown.click();
+    await page.waitForTimeout(500);
+
+    // Look for BTC in the dropdown
+    const sendDropdownMenu = iframe.locator("#send-dropdown-menu");
+    await sendDropdownMenu.waitFor({ state: "visible" });
+
+    // Select Bitcoin
+    await selectTokenBySymbol(iframe, "send", "BTC");
+    await page.waitForTimeout(500);
+
+    // Fill amount
+    await iframe.locator("#amount-in").fill("0.001");
+    await page.waitForTimeout(500);
+
+    // Select receive token - any token to see the network options
+    const receiveDropdown = iframe
+      .locator(".receive-section")
+      .locator(".dropdown-toggle");
+    await receiveDropdown.click();
+    await page.waitForTimeout(500);
+
+    const receiveDropdownMenu = iframe.locator("#receive-dropdown-menu");
+    await receiveDropdownMenu.waitFor({ state: "visible" });
+
+    // Select USDC to see multiple networks
+    await selectTokenBySymbol(iframe, "receive", "USDC");
+    await page.waitForTimeout(1000);
+
+    // Open the network dropdown to check Bitcoin network display
+    const networkDropdown = iframe
+      .locator(".form-section")
+      .filter({ hasText: "Network" })
+      .locator(".dropdown-toggle");
+    await networkDropdown.click();
+    await page.waitForTimeout(500);
+
+    const networkDropdownMenu = iframe.locator("#network-dropdown-menu");
+    await networkDropdownMenu.waitFor({ state: "visible" });
+
+    // Close network dropdown
+    await networkDropdown.click();
+    await page.waitForTimeout(500);
+
+    // Now switch to Bitcoin as receive token to check its network display
+    await receiveDropdown.click();
+    await page.waitForTimeout(500);
+    await selectTokenBySymbol(iframe, "receive", "BTC");
+    await page.waitForTimeout(1000);
+
+    // Check that the network dropdown shows the correct Bitcoin networks
+    await networkDropdown.click();
+    await page.waitForTimeout(500);
+    await networkDropdownMenu.waitFor({ state: "visible" });
+
+    const networkItems = networkDropdownMenu.locator(".dropdown-item");
+    const networkCount = await networkItems.count();
+
+    console.log(`\nFound ${networkCount} network options for Bitcoin`);
+
+    // Get the network names
+    const bitcoinNetworkItem = networkItems
+      .filter({ hasText: "Bitcoin" })
+      .first();
+    const nearNetworkItem = networkItems
+      .filter({ hasText: "Near Protocol" })
+      .first();
+
+    // Assert Bitcoin network exists with correct name
+    await expect(bitcoinNetworkItem).toBeVisible();
+    const bitcoinText = await bitcoinNetworkItem.textContent();
+    expect(bitcoinText.trim()).toBe("Bitcoin");
+
+    // Assert Near Protocol network exists
+    await expect(nearNetworkItem).toBeVisible();
+    const nearText = await nearNetworkItem.textContent();
+    expect(nearText.trim()).toBe("Near Protocol");
+
+    // Assert Bitcoin network has icon
+    const bitcoinIcon = bitcoinNetworkItem.locator("img");
+    await expect(bitcoinIcon).toBeVisible();
+    const bitcoinIconSrc = await bitcoinIcon.getAttribute("src");
+    expect(bitcoinIconSrc).toContain("data:image/svg+xml");
+
+    // Assert Near Protocol network has icon
+    const nearIcon = nearNetworkItem.locator("img");
+    await expect(nearIcon).toBeVisible();
+    const nearIconSrc = await nearIcon.getAttribute("src");
+    expect(nearIconSrc).toContain("data:image/svg+xml");
+
+    console.log(`\n✓ Bitcoin token shows correct networks: NEAR and Bitcoin`);
+    console.log(`✓ Bitcoin network displays with proper icon`);
+
+    // Take a screenshot of the Bitcoin network dropdown
+    await page.screenshot({
+      path: path.join(screenshotsDir, "bitcoin-network-dropdown.png"),
+      fullPage: false,
+    });
+
+    console.log("\n✓ Bitcoin network display test completed successfully!");
+  });
+
   console.log(
     "\nHuman-readable network name validation completed successfully!"
   );
