@@ -41,6 +41,52 @@ const code = `
             import('https://cdn.jsdelivr.net/npm/@web3icons/common@0.11.12/dist/index.min.js').then(module => {
                 window.web3IconsCommon = module;
                 console.log('Web3Icons Common loaded with', module.networks?.length || 0, 'networks and', module.tokens?.length || 0, 'tokens');
+
+                // Add "btc" as an alias for Bitcoin network
+                if (module.networks && Array.isArray(module.networks)) {
+                    const bitcoinNetwork = module.networks.find(n => n.id === 'bitcoin');
+                    if (bitcoinNetwork) {
+                        // Create a copy with "btc" as the id
+                        const btcNetwork = { ...bitcoinNetwork, id: 'btc' };
+                        module.networks.push(btcNetwork);
+                        console.log('Added "btc" alias for Bitcoin network');
+                    }
+                }
+
+                // Add token aliases for wrapped/variant tokens
+                if (module.tokens && Array.isArray(module.tokens)) {
+                    const tokenAliases = [
+                        { original: 'ETH', aliases: ['WETH'] },
+                        { original: 'NEAR', aliases: ['wNEAR', 'GNEAR', 'NOEAR'] },
+                        { original: 'BTC', aliases: ['xBTC', 'cbBTC'] },
+                        { original: 'WBTC', aliases: ['xBTC', 'cbBTC'] },  // Also try WBTC as source
+                    ];
+
+                    tokenAliases.forEach(({ original, aliases }) => {
+                        const originalToken = module.tokens.find(t =>
+                            t.symbol.toUpperCase() === original.toUpperCase()
+                        );
+                        if (originalToken) {
+                            aliases.forEach(alias => {
+                                // Check if alias already exists
+                                const exists = module.tokens.some(t =>
+                                    t.symbol.toUpperCase() === alias.toUpperCase()
+                                );
+                                if (!exists) {
+                                    // Create a copy with the alias symbol
+                                    const aliasToken = {
+                                        ...originalToken,
+                                        symbol: alias,
+                                        name: alias + ' (using ' + original + ' icon)'
+                                    };
+                                    module.tokens.push(aliasToken);
+                                    console.log('Added "' + alias + '" as alias for ' + original + ' token');
+                                }
+                            });
+                        }
+                    });
+                }
+
                 // Check if both are loaded
                 if (window.web3IconsCore) {
                     loadTokenIcons();
@@ -1033,6 +1079,7 @@ const code = `
                         img.src = token.icon || iconCache[token.symbol];
                         img.width = 30;
                         img.height = 30;
+                        img.className = "rounded-circle";
                         tokenInfo.appendChild(img);
                     } else {
                         // Add spacer div to maintain alignment
@@ -1111,6 +1158,7 @@ const code = `
                         img.src = iconCache[symbol];
                         img.width = 30;
                         img.height = 30;
+                        img.className = "rounded-circle";
                         tokenInfo.appendChild(img);
                     } else {
                         // Add spacer div to maintain alignment
@@ -1188,6 +1236,7 @@ const code = `
                         img.src = network.icon;
                         img.width = 30;
                         img.height = 30;
+                        img.className = "rounded-circle";
                         img.style.marginRight = "8px";
                         item.appendChild(img);
                     } else {
@@ -1221,7 +1270,7 @@ const code = `
                 if (token.icon || iconCache[token.symbol]) {
                     const img = document.createElement("img");
                     img.src = token.icon || iconCache[token.symbol];
-                    img.className = "token-icon";
+                    img.className = "token-icon rounded-circle";
                     img.style.width = "20px";
                     img.style.height = "20px";
                     img.style.marginRight = "8px";
@@ -1255,7 +1304,7 @@ const code = `
                 if (iconCache[symbol]) {
                     const img = document.createElement("img");
                     img.src = iconCache[symbol];
-                    img.className = "token-icon";
+                    img.className = "token-icon rounded-circle";
                     img.style.width = "20px";
                     img.style.height = "20px";
                     img.style.marginRight = "8px";
@@ -1291,13 +1340,13 @@ const code = `
                 if (networkIcon) {
                     const img = document.createElement("img");
                     img.src = networkIcon;
-                    img.className = "token-icon";
+                    img.className = "token-icon rounded-circle";
                     img.style.width = "20px";
                     img.style.height = "20px";
                     img.style.marginRight = "8px";
                     img.style.verticalAlign = "middle";
                     display.appendChild(img);
-                    
+
                     // Cache the icon for future use
                     if (!iconCache[network.id + "_network_icon"]) {
                         iconCache[network.id + "_network_icon"] = networkIcon;
