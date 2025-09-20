@@ -129,7 +129,7 @@ const policy = treasuryDaoID
 const proposalPeriod = policy.proposal_period;
 
 useEffect(() => {
-  if (proposalPeriod && !proposalData) {
+  if (proposalPeriod && intentsTokensData && !proposalData) {
     Near.asyncView(treasuryDaoID, "get_proposal", { id: parseInt(id) })
       .then((item) => {
         const notes = decodeProposalDescription("notes", item.description);
@@ -200,23 +200,35 @@ useEffect(() => {
 
         // Determine source wallet and network
         const sourceWallet = quoteDeadlineStr ? "NEAR Intents" : "SputnikDAO";
-        const intentsToken =
-          quoteDeadlineStr &&
-          (intentsTokensData || []).find(
-            (token) =>
-              token.near_token_id === getTokenSymbolFromAddress(tokenIn)
-          );
-        const blockchainRaw = quoteDeadlineStr
-          ? intentsToken
-            ? intentsToken.defuse_asset_identifier
-                .split(":")
-                .slice(0, 2)
-                .join(":")
-            : "near"
-          : null;
-        const blockchain = tokenDisplayLib?.getNetworkDisplayName
-          ? tokenDisplayLib.getNetworkDisplayName(blockchainRaw)
-          : blockchainRaw;
+
+        // For NEAR Intents, decode the proposal args to get the actual token_id
+        let intentsToken = null;
+        let blockchain = null;
+
+        if (quoteDeadlineStr && item.kind?.FunctionCall) {
+          // Decode the args from the mt_transfer action (for asset exchange)
+          const action = item.kind.FunctionCall?.actions?.[0];
+          if (action && action.method_name === "mt_transfer") {
+            const args = action.args;
+            if (args) {
+              const decodedArgs = decodeBase64(args);
+              const tokenId = decodedArgs?.token_id;
+
+              if (tokenId && intentsTokensData) {
+                intentsToken = intentsTokensData.find(
+                  (token) => token.intents_token_id === tokenId
+                );
+
+                if (intentsToken) {
+                  blockchain = intentsToken.defuse_asset_identifier
+                    .split(":")
+                    .slice(0, 2)
+                    .join(":");
+                }
+              }
+            }
+          }
+        }
 
         setProposalData({
           id: item.id,
@@ -246,7 +258,7 @@ useEffect(() => {
         setIsDeleted(true);
       });
   }
-}, [id, proposalPeriod, proposalData]);
+}, [id, proposalPeriod, proposalData, intentsTokensData]);
 
 useEffect(() => {
   if (proposalData.id !== id) {
