@@ -272,6 +272,62 @@ function fetch1ClickTokenPrices() {
     });
 }
 
+// Fetch intents tokens data from the bridge API
+// Returns an array of tokens with their network information
+function fetchIntentsTokensData() {
+  return asyncFetch("https://bridge.chaindefuser.com/rpc", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      id: "supportedTokensFetchAll",
+      jsonrpc: "2.0",
+      method: "supported_tokens",
+      params: [{}],
+    }),
+  })
+    .then((response) => {
+      if (!response || !response.body) {
+        return [];
+      }
+      return response.body?.result?.tokens || [];
+    })
+    .catch((error) => {
+      console.error("Failed to fetch intents tokens:", error);
+      return [];
+    });
+}
+
+// Simple cache for network names resolved by Web3IconFetcher
+let networkNamesCache = {};
+
+// Function to get user-friendly network display name
+// Note: This is a simple fallback. For proper network names,
+// use the Web3IconFetcher component which resolves names dynamically
+function getNetworkDisplayName(networkId) {
+  if (!networkId) return null;
+
+  // Check cache first
+  if (networkNamesCache[networkId]) {
+    return networkNamesCache[networkId];
+  }
+
+  // Parse the network ID format (e.g., "eth:1" or "btc:mainnet")
+  const parts = networkId.split(":");
+  const baseNetwork = parts[0].toLowerCase();
+
+  // Simple fallback: capitalize first letter
+  // The actual network name should come from Web3IconFetcher
+  return baseNetwork.charAt(0).toUpperCase() + baseNetwork.slice(1);
+}
+
+// Function to update the network names cache
+// Called by components after Web3IconFetcher resolves names
+function updateNetworkNamesCache(networkId, name) {
+  if (networkId && name) {
+    networkNamesCache[networkId] = name;
+  }
+}
+
 return {
   formatTokenAmount,
   getOptimalDecimals,
@@ -285,4 +341,7 @@ return {
   validateTokenInput,
   formatCompactNumber,
   fetch1ClickTokenPrices,
+  fetchIntentsTokensData,
+  getNetworkDisplayName,
+  updateNetworkNamesCache,
 };

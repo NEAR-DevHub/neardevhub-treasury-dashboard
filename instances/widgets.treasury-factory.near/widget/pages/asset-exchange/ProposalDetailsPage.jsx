@@ -25,6 +25,8 @@ const [tokenIcons, setTokenIcons] = useState({});
 const [tokenMap, setTokenMap] = useState({});
 const [tokenMapLoaded, setTokenMapLoaded] = useState(false);
 const [tokenPrices, setTokenPrices] = useState({});
+const [intentsTokensData, setIntentsTokensData] = useState(null);
+const [networkNames, setNetworkNames] = useState({});
 
 // Fetch 1Click token mappings and prices
 useEffect(() => {
@@ -52,6 +54,23 @@ useEffect(() => {
     .catch((err) => {
       console.log("Failed to fetch 1Click token mappings:", err);
     });
+}, []);
+
+// Fetch network information and Web3Icons data
+useEffect(() => {
+  if (tokenDisplayLib) {
+    // Load Web3Icons data for network name resolution
+    if (tokenDisplayLib.loadWeb3IconsData) {
+      tokenDisplayLib.loadWeb3IconsData();
+    }
+
+    // Fetch intents tokens data
+    if (tokenDisplayLib.fetchIntentsTokensData) {
+      tokenDisplayLib.fetchIntentsTokensData().then((data) => {
+        setIntentsTokensData(data);
+      });
+    }
+  }
 }, []);
 
 // Map 1Click contract addresses to token symbols using fetched data
@@ -179,6 +198,26 @@ useEffect(() => {
           }
         }
 
+        // Determine source wallet and network
+        const sourceWallet = quoteDeadlineStr ? "NEAR Intents" : "SputnikDAO";
+        const intentsToken =
+          quoteDeadlineStr &&
+          (intentsTokensData || []).find(
+            (token) =>
+              token.near_token_id === getTokenSymbolFromAddress(tokenIn)
+          );
+        const blockchainRaw = quoteDeadlineStr
+          ? intentsToken
+            ? intentsToken.defuse_asset_identifier
+                .split(":")
+                .slice(0, 2)
+                .join(":")
+            : "near"
+          : null;
+        const blockchain = tokenDisplayLib?.getNetworkDisplayName
+          ? tokenDisplayLib.getNetworkDisplayName(blockchainRaw)
+          : blockchainRaw;
+
         setProposalData({
           id: item.id,
           proposer: item.proposer,
@@ -198,6 +237,8 @@ useEffect(() => {
           timeEstimate,
           depositAddress,
           signature,
+          sourceWallet,
+          blockchain,
         });
       })
       .catch(() => {
@@ -286,6 +327,10 @@ return (
         ProposalContent: (
           <div className="card card-body d-flex flex-column gap-2">
             <div className="d-flex flex-column gap-2">
+              <label>Source Wallet</label>
+              <div className="text-secondary">{proposalData?.sourceWallet}</div>
+            </div>
+            <div className="d-flex flex-column gap-2 mt-1 border-top">
               <label>Send</label>
               <h5 className="mb-0">
                 {proposalData?.quoteDeadline ? (
@@ -306,6 +351,7 @@ return (
                         width="20"
                         height="20"
                         alt={getTokenSymbolFromAddress(proposalData?.tokenIn)}
+                        style={{ borderRadius: "50%" }}
                       />
                     )}
                     <span className="bolder mb-0">
@@ -335,6 +381,12 @@ return (
                   />
                 )}
               </h5>
+              {proposalData?.blockchain && (
+                <div className="text-muted small mt-1">
+                  {networkNames[proposalData.blockchain] ||
+                    proposalData.blockchain}
+                </div>
+              )}
             </div>
             <div className="d-flex flex-column gap-2 mt-1">
               <label className="border-top">Receive</label>
@@ -351,6 +403,7 @@ return (
                         width="20"
                         height="20"
                         alt={proposalData?.tokenOut}
+                        style={{ borderRadius: "50%" }}
                       />
                     )}
                     <span className="bolder mb-0">
@@ -379,19 +432,9 @@ return (
                 )}
               </h5>
               {proposalData?.destinationNetwork && (
-                <div className="d-flex align-items-center gap-2 text-muted small mt-1">
-                  <Widget
-                    loading=""
-                    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Web3IconFetcher`}
-                    props={{
-                      chainName: proposalData.destinationNetwork,
-                      width: 16,
-                      height: 16,
-                    }}
-                  />
-                  <span className="text-capitalize">
-                    {proposalData.destinationNetwork}
-                  </span>
+                <div className="text-muted small mt-1">
+                  {networkNames[proposalData.destinationNetwork] ||
+                    proposalData.destinationNetwork}
                 </div>
               )}
             </div>
@@ -442,6 +485,7 @@ return (
                         width="20"
                         height="20"
                         alt={proposalData?.tokenOut}
+                        style={{ borderRadius: "50%" }}
                       />
                     )}
                     <span className="bolder mb-0">
@@ -600,18 +644,35 @@ return (
         checkProposalStatus,
       }}
     />
-    {/* Web3IconFetcher for loading token icons */}
+    {/* Web3IconFetcher for loading token icons and network names */}
     {proposalData && (
       <>
-        {/* Fetch icons for tokens that are not contract addresses */}
-        {tokensToFetch.length > 0 && (
+        {/* Combine token and network fetching into one call */}
+        {(tokensToFetch.length > 0 ||
+          proposalData?.destinationNetwork ||
+          proposalData?.blockchain) && (
           <Widget
             loading=""
             src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Web3IconFetcher`}
             props={{
-              tokens: tokensToFetch,
+              tokens: [
+                ...tokensToFetch,
+                proposalData?.destinationNetwork && {
+                  symbol: "USDC",
+                  networkId: proposalData.destinationNetwork,
+                },
+                proposalData?.blockchain && {
+                  symbol: "USDC",
+                  networkId: proposalData.blockchain,
+                },
+              ].filter(
+                (item) => item !== null && item !== undefined && item !== false
+              ),
               onIconsLoaded: (iconCache) => {
                 const newIcons = {};
+                const newNetworkNames = {};
+
+                // Process token icons
                 for (let i = 0; i < tokensToFetch.length; i++) {
                   const token = tokensToFetch[i];
                   const icon = iconCache[token];
@@ -619,11 +680,32 @@ return (
                     newIcons[token] = icon.tokenIcon;
                   }
                 }
+
+                // Process network names
+                if (proposalData?.destinationNetwork) {
+                  const cacheKey = `USDC:${proposalData.destinationNetwork}`;
+                  if (iconCache[cacheKey] && iconCache[cacheKey].networkName) {
+                    newNetworkNames[proposalData.destinationNetwork] =
+                      iconCache[cacheKey].networkName;
+                  }
+                }
+                if (proposalData?.blockchain) {
+                  const cacheKey = `USDC:${proposalData.blockchain}`;
+                  if (iconCache[cacheKey] && iconCache[cacheKey].networkName) {
+                    newNetworkNames[proposalData.blockchain] =
+                      iconCache[cacheKey].networkName;
+                  }
+                }
+
+                // Update states
                 if (Object.keys(newIcons).length > 0) {
                   setTokenIcons({ ...tokenIcons, ...newIcons });
                 }
+                if (Object.keys(newNetworkNames).length > 0) {
+                  setNetworkNames((prev) => ({ ...prev, ...newNetworkNames }));
+                }
               },
-              fetchNetworkIcons: false,
+              fetchNetworkIcons: true,
             }}
           />
         )}

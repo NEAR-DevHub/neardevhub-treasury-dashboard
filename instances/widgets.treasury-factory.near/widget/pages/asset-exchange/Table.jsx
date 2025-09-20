@@ -237,6 +237,9 @@ const ProposalsComponent = () => {
           const currentTime = Date.now();
           isQuoteExpired = quoteDeadline.getTime() < currentTime;
         }
+
+        // Determine source wallet
+        const sourceWallet = quoteDeadlineStr ? "NEAR Intents" : "SputnikDAO";
         return (
           <tr
             data-testid={"proposal-request-#" + item.id}
@@ -275,31 +278,38 @@ const ProposalsComponent = () => {
               </td>
             )}
 
+            <td className={"text-left"} style={{ minWidth: 150 }}>
+              <div className="fw-semi-bold">{sourceWallet}</div>
+            </td>
+
             <td className={"text-right " + isVisible("Send")}>
               {quoteDeadlineStr ? (
                 // For 1Click exchanges, use TokenAmount with symbol prop
-                <div className="d-flex align-items-center justify-content-end gap-1">
-                  <Widget
-                    loading=""
-                    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
-                    props={{
-                      instance,
-                      amountWithDecimals: amountIn,
-                      symbol: getTokenSymbolFromAddress(tokenIn), // Pass mapped symbol for 1Click tokens
-                      showUSDValue: true,
-                      price:
-                        oneClickPrices[getTokenSymbolFromAddress(tokenIn)] ||
-                        undefined,
-                    }}
-                  />
-                  {tokenIcons[getTokenSymbolFromAddress(tokenIn)] && (
-                    <img
-                      src={tokenIcons[getTokenSymbolFromAddress(tokenIn)]}
-                      width="16"
-                      height="16"
-                      alt={getTokenSymbolFromAddress(tokenIn)}
+                <div className="d-flex flex-column align-items-end">
+                  <div className="d-flex align-items-center justify-content-end gap-1">
+                    <Widget
+                      loading=""
+                      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
+                      props={{
+                        instance,
+                        amountWithDecimals: amountIn,
+                        symbol: getTokenSymbolFromAddress(tokenIn), // Pass mapped symbol for 1Click tokens
+                        showUSDValue: true,
+                        price:
+                          oneClickPrices[getTokenSymbolFromAddress(tokenIn)] ||
+                          undefined,
+                      }}
                     />
-                  )}
+                    {tokenIcons[getTokenSymbolFromAddress(tokenIn)] && (
+                      <img
+                        src={tokenIcons[getTokenSymbolFromAddress(tokenIn)]}
+                        width="16"
+                        height="16"
+                        alt={getTokenSymbolFromAddress(tokenIn)}
+                        style={{ borderRadius: "50%" }}
+                      />
+                    )}
+                  </div>
                 </div>
               ) : (
                 // For regular exchanges, use TokenAmount with address prop (original behavior)
@@ -318,26 +328,29 @@ const ProposalsComponent = () => {
             <td className={isVisible("Receive") + " text-right"}>
               {quoteDeadlineStr ? (
                 // For 1Click exchanges, use TokenAmount with symbol prop
-                <div className="d-flex align-items-center justify-content-end gap-1">
-                  <Widget
-                    loading=""
-                    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
-                    props={{
-                      instance,
-                      amountWithDecimals: amountOut,
-                      symbol: tokenOut, // tokenOut is already a symbol, not a contract address
-                      showUSDValue: true,
-                      price: oneClickPrices[tokenOut] || undefined,
-                    }}
-                  />
-                  {tokenIcons[tokenOut] && (
-                    <img
-                      src={tokenIcons[tokenOut]}
-                      width="16"
-                      height="16"
-                      alt={tokenOut}
+                <div className="d-flex flex-column align-items-end">
+                  <div className="d-flex align-items-center justify-content-end gap-1">
+                    <Widget
+                      loading=""
+                      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
+                      props={{
+                        instance,
+                        amountWithDecimals: amountOut,
+                        symbol: tokenOut, // tokenOut is already a symbol, not a contract address
+                        showUSDValue: true,
+                        price: oneClickPrices[tokenOut] || undefined,
+                      }}
                     />
-                  )}
+                    {tokenIcons[tokenOut] && (
+                      <img
+                        src={tokenIcons[tokenOut]}
+                        width="16"
+                        height="16"
+                        alt={tokenOut}
+                        style={{ borderRadius: "50%" }}
+                      />
+                    )}
+                  </div>
                 </div>
               ) : (
                 // For regular exchanges, use TokenAmount with address prop (original behavior)
@@ -374,6 +387,7 @@ const ProposalsComponent = () => {
                       width="16"
                       height="16"
                       alt={tokenOut}
+                      style={{ borderRadius: "50%" }}
                     />
                   )}
                 </div>
@@ -512,7 +526,7 @@ return (
             </span>
           </td>
           {!isPendingRequests && <td className={"text-center"}>Status</td>}
-
+          <td className={"text-left"}>Source Wallet</td>
           <td className={isVisible("Send") + " text-right"}>Send</td>
           <td className={isVisible("Receive") + " text-right"}>Receive</td>
           <td className={isVisible("Minimum received") + " text-right"}>
@@ -557,7 +571,7 @@ return (
       !Array.isArray(proposals) ? (
         <tbody>
           <RowsSkeleton
-            numberOfCols={isPendingRequests ? 11 : 9}
+            numberOfCols={isPendingRequests ? 12 : 10}
             numberOfRows={4}
             numberOfHiddenRows={4}
           />
@@ -596,6 +610,8 @@ return (
           tokens: tokensToFetch,
           onIconsLoaded: (iconCache) => {
             const newIcons = {};
+
+            // Process token icons
             for (let i = 0; i < tokensToFetch.length; i++) {
               const token = tokensToFetch[i];
               const icon = iconCache[token];
@@ -603,6 +619,8 @@ return (
                 newIcons[token] = icon.tokenIcon;
               }
             }
+
+            // Update state
             if (Object.keys(newIcons).length > 0) {
               setTokenIcons({ ...tokenIcons, ...newIcons });
             }
