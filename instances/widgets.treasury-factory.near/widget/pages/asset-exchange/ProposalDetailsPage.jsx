@@ -696,7 +696,14 @@ return (
                       className="text-break"
                       style={{ fontFamily: "monospace", fontSize: "14px" }}
                     >
-                      {proposalData.depositAddress}
+                      <a
+                        href={`https://explorer.near-intents.org/transactions/${proposalData.depositAddress}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ wordBreak: "break-all" }}
+                      >
+                        {proposalData.depositAddress}
+                      </a>
                     </div>
                   </div>
                 )}
