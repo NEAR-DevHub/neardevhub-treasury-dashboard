@@ -67,8 +67,8 @@ async function checkProposalDetailPage({
   } else {
     await expect(requestStatus).toBeHidden({ timeout: 20_000 });
   }
-  await expect(page.getByText("0.50 USDC")).toBeVisible();
-  await expect(page.getByText("0.60 USDt")).toBeVisible();
+  await expect(page.getByText("0.5 USDC")).toBeVisible();
+  await expect(page.getByText("0.6 USDt")).toBeVisible();
   await expect(page.getByText("Price Slippage")).toBeVisible();
   await expect(page.getByText("Minimum Amount Receive")).toBeVisible();
 
