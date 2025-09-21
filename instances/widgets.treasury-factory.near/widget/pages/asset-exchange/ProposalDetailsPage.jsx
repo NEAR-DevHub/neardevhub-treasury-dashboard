@@ -19,6 +19,9 @@ const tokenDisplayLib = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.tokenDisplay"
 );
 
+if (!tokenDisplayLib) {
+  return <></>;
+}
 const [proposalData, setProposalData] = useState(null);
 const [isDeleted, setIsDeleted] = useState(false);
 const [tokenMap, setTokenMap] = useState({});
@@ -28,14 +31,12 @@ const [tokenIcons, setTokenIcons] = useState({});
 const [networkNames, setNetworkNames] = useState({});
 
 // Initialize the token display library with state references
-if (tokenDisplayLib && tokenDisplayLib.init) {
-  tokenDisplayLib.init({
-    tokenIcons,
-    networkNames,
-    setTokenIcons,
-    setNetworkNames,
-  });
-}
+tokenDisplayLib.init({
+  tokenIcons,
+  networkNames,
+  setTokenIcons,
+  setNetworkNames,
+});
 
 // Fetch 1Click token mappings and prices
 useEffect(() => {
@@ -66,14 +67,11 @@ useEffect(() => {
 
 // Fetch network information and Web3Icons data
 useEffect(() => {
-  if (tokenDisplayLib) {
-    // Fetch intents tokens data
-    if (tokenDisplayLib.fetchIntentsTokensData) {
-      tokenDisplayLib.fetchIntentsTokensData().then((data) => {
-        setIntentsTokensData(data);
-      });
-    }
-  }
+  // Fetch intents tokens data
+
+  tokenDisplayLib.fetchIntentsTokensData().then((data) => {
+    setIntentsTokensData(data);
+  });
 }, []);
 
 // Map 1Click contract addresses to token symbols using fetched data
@@ -129,7 +127,7 @@ const policy = treasuryDaoID
   ? Near.view(treasuryDaoID, "get_policy", {})
   : null;
 
-const proposalPeriod = policy.proposal_period;
+const proposalPeriod = policy?.proposal_period;
 
 useEffect(() => {
   if (proposalPeriod && intentsTokensData && !proposalData) {
@@ -207,6 +205,7 @@ useEffect(() => {
         // For NEAR Intents, decode the proposal args to get the actual token_id
         let intentsToken = null;
         let blockchain = null;
+        let intentsTokenContractId = null; // The token contract ID from mt_transfer
 
         if (quoteDeadlineStr && item.kind?.FunctionCall) {
           // Decode the args from the mt_transfer action (for asset exchange)
@@ -216,6 +215,12 @@ useEffect(() => {
             if (args) {
               const decodedArgs = decodeBase64(args);
               const tokenId = decodedArgs?.token_id;
+
+              // For mt_transfer, the token_id IS the actual token contract address
+              // Strip the "nep141:" prefix if it exists
+              intentsTokenContractId = tokenId?.startsWith("nep141:")
+                ? tokenId.replace("nep141:", "")
+                : tokenId;
 
               if (tokenId && intentsTokensData) {
                 intentsToken = intentsTokensData.find(
@@ -254,6 +259,7 @@ useEffect(() => {
           signature,
           sourceWallet,
           blockchain,
+          intentsTokenContractId, // The actual token contract from mt_transfer
         });
       })
       .catch(() => {
@@ -261,7 +267,7 @@ useEffect(() => {
         setIsDeleted(true);
       });
   }
-}, [id, proposalPeriod, proposalData, intentsTokensData]);
+}, [id, intentsTokensData]);
 
 useEffect(() => {
   if (proposalData.id !== id) {
@@ -324,9 +330,11 @@ return (
                 proposalCreator: proposalData?.proposer,
                 nearBalance: nearBalances.available,
                 currentAmount: proposalData?.amountIn,
-                currentContract: proposalData?.tokenIn,
+                currentContract:
+                  proposalData?.intentsTokenContractId || proposalData?.tokenIn,
                 isHumanReadableCurrentAmount: true,
                 requiredVotes,
+                isIntentsRequest: !!proposalData?.quoteDeadline,
                 checkProposalStatus: () =>
                   checkProposalStatus(proposalData?.id),
                 isProposalDetailsPage: true,
