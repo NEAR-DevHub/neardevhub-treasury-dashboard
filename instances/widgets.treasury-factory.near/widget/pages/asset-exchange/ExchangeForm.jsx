@@ -261,6 +261,7 @@ const code = `
                         width="20"
                         height="20"
                         style="display: none"
+                        class="rounded-circle"
                     />
                     <span id="sendTokenSymbol">Select</span>
                     <span class="ms-auto"><i class="bi bi-chevron-down h6 mb-0"></i></span>
@@ -324,6 +325,7 @@ const code = `
                         width="20"
                         height="20"
                         style="display: none"
+                        class="rounded-circle"
                     />
                     <span id="receiveTokenSymbol">Select</span>
                     <span class="ms-auto"><i class="bi bi-chevron-down h6 mb-0"></i></span>
@@ -816,6 +818,7 @@ const code = `
                 img.src = token.icon;
                 img.width = 30;
                 img.height = 30;
+                img.className = "rounded-circle";
 
                 var nameContainer = document.createElement("div");
                 var symbolText = document.createElement("h6");
@@ -1022,7 +1025,10 @@ const code = `
                 "1 " +
                 fromToken.symbol +
                 " ($" +
-                fromToken.price +
+                Number(fromToken.price).toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 6,
+                }) +
                 ") " +
                 "≈ " +
                 Number(tokenOutRate).toLocaleString("en-US", {
@@ -1036,7 +1042,10 @@ const code = `
                 "1 " +
                 toToken.symbol +
                 " ($" +
-                toToken.price +
+                Number(toToken.price).toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 6,
+                }) +
                 ") " +
                 "≈ " +
                 Number(tokenInRate).toLocaleString("en-US", {
