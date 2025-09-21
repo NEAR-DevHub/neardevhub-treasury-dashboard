@@ -196,7 +196,7 @@ return (
                       className="text-underline"
                       target="_blank"
                       rel="noopener noreferrer"
-                      href={"https://docs.neartreasury.com/permissions"}
+                      href={"https://docs.neartreasury.com/setup/permissions"}
                     >
                       Permission Group(s)
                     </a>
