@@ -683,7 +683,9 @@ return (
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-underline"
-                            href={"https://docs.neartreasury.com/permissions"}
+                            href={
+                              "https://docs.neartreasury.com/setup/permissions"
+                            }
                           >
                             Permission Group(s)
                           </a>{" "}
