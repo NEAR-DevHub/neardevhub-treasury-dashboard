@@ -3,9 +3,20 @@ import fs from "fs";
 import path from "path";
 import os from "os";
 
+// Global cache locks to prevent concurrent downloads of the same resource
+const downloadLocks = new Map();
+
+// Track pages that are using sandbox routing to avoid conflicts
+const sandboxPages = new WeakSet();
+
 // Global fix for route timing issues with es-module-shims
 // This automatically converts page.route() to context.route() for better timing
 function enhancePageWithBetterRouting(page) {
+  // Don't enhance pages that are using sandbox routing
+  if (sandboxPages.has(page)) {
+    return page;
+  }
+
   const originalRoute = page.route.bind(page);
 
   page.route = function (url, handler, options) {
@@ -16,6 +27,11 @@ function enhancePageWithBetterRouting(page) {
   page._originalRoute = originalRoute;
 
   return page;
+}
+
+// Function to mark a page as using sandbox routing
+export function markPageAsSandbox(page) {
+  sandboxPages.add(page);
 }
 
 // Enhanced cleanup function to handle route cleanup more robustly
@@ -39,7 +55,6 @@ export async function cleanupRoutes(page) {
     // Give a small delay to let any in-flight requests complete
     await new Promise((resolve) => setTimeout(resolve, 100));
   } catch (error) {
-    // Ignore cleanup errors - the page/context might already be closed
     console.warn("Route cleanup warning:", error.message);
   }
 }
@@ -112,9 +127,6 @@ export async function removeOverlayMessage(page) {
   await page.evaluate(() => window.removeOverlay());
 }
 
-// Global cache locks to prevent concurrent downloads of the same resource
-const downloadLocks = new Map();
-
 /**
  * Call this to ensure that static cdn data is cached and not re-fetched on page reloads
  * Without this you may run into that the CDN will not serve files because of too many requests
@@ -127,7 +139,12 @@ export async function cacheCDN(page) {
   }
 
   const cacheRoute = async (url) => {
-    await page.route(url, async (route, request) => {
+    // Use the appropriate routing method based on whether the page is using sandbox
+    const routeMethod = sandboxPages.has(page)
+      ? page.route.bind(page)
+      : page._originalRoute || page.route.bind(page);
+
+    await routeMethod(url, async (route, request) => {
       const requestUrl = request.url();
       const urlHash = Buffer.from(requestUrl).toString("base64");
       const cacheFilePath = path.join(cacheDir, urlHash);
