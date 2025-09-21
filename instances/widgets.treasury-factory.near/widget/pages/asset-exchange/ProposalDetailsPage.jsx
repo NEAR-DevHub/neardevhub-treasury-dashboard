@@ -21,12 +21,21 @@ const tokenDisplayLib = VM.require(
 
 const [proposalData, setProposalData] = useState(null);
 const [isDeleted, setIsDeleted] = useState(false);
-const [tokenIcons, setTokenIcons] = useState({});
 const [tokenMap, setTokenMap] = useState({});
-const [tokenMapLoaded, setTokenMapLoaded] = useState(false);
 const [tokenPrices, setTokenPrices] = useState({});
 const [intentsTokensData, setIntentsTokensData] = useState(null);
+const [tokenIcons, setTokenIcons] = useState({});
 const [networkNames, setNetworkNames] = useState({});
+
+// Initialize the token display library with state references
+if (tokenDisplayLib && tokenDisplayLib.init) {
+  tokenDisplayLib.init({
+    tokenIcons,
+    networkNames,
+    setTokenIcons,
+    setNetworkNames,
+  });
+}
 
 // Fetch 1Click token mappings and prices
 useEffect(() => {
@@ -48,7 +57,6 @@ useEffect(() => {
         }
         setTokenMap(mapping);
         setTokenPrices(prices);
-        setTokenMapLoaded(true);
       }
     })
     .catch((err) => {
@@ -59,11 +67,6 @@ useEffect(() => {
 // Fetch network information and Web3Icons data
 useEffect(() => {
   if (tokenDisplayLib) {
-    // Load Web3Icons data for network name resolution
-    if (tokenDisplayLib.loadWeb3IconsData) {
-      tokenDisplayLib.loadWeb3IconsData();
-    }
-
     // Fetch intents tokens data
     if (tokenDisplayLib.fetchIntentsTokensData) {
       tokenDisplayLib.fetchIntentsTokensData().then((data) => {
@@ -351,21 +354,20 @@ return (
                     className="d-flex align-items-center gap-1"
                     style={{ fontSize: "18px" }}
                   >
-                    {tokenIcons[
-                      getTokenSymbolFromAddress(proposalData?.tokenIn)
-                    ] && (
-                      <img
-                        src={
-                          tokenIcons[
+                    {tokenDisplayLib?.getTokenIcon &&
+                      tokenDisplayLib.getTokenIcon(
+                        getTokenSymbolFromAddress(proposalData?.tokenIn)
+                      ) && (
+                        <img
+                          src={tokenDisplayLib.getTokenIcon(
                             getTokenSymbolFromAddress(proposalData?.tokenIn)
-                          ]
-                        }
-                        width="20"
-                        height="20"
-                        alt={getTokenSymbolFromAddress(proposalData?.tokenIn)}
-                        style={{ borderRadius: "50%" }}
-                      />
-                    )}
+                          )}
+                          width="20"
+                          height="20"
+                          alt={getTokenSymbolFromAddress(proposalData?.tokenIn)}
+                          style={{ borderRadius: "50%" }}
+                        />
+                      )}
                     <span className="bolder mb-0">
                       {tokenDisplayLib?.formatTokenAmount &&
                       tokenPrices[proposalData?.tokenIn]
@@ -395,8 +397,9 @@ return (
               </h5>
               {proposalData?.blockchain && (
                 <div className="text-muted small mt-1">
-                  {networkNames[proposalData.blockchain] ||
-                    proposalData.blockchain}
+                  {tokenDisplayLib.getNetworkDisplayName(
+                    proposalData.blockchain
+                  )}
                 </div>
               )}
             </div>
@@ -409,15 +412,18 @@ return (
                     className="d-flex align-items-center gap-1"
                     style={{ fontSize: "18px" }}
                   >
-                    {tokenIcons[proposalData?.tokenOut] && (
-                      <img
-                        src={tokenIcons[proposalData?.tokenOut]}
-                        width="20"
-                        height="20"
-                        alt={proposalData?.tokenOut}
-                        style={{ borderRadius: "50%" }}
-                      />
-                    )}
+                    {tokenDisplayLib?.getTokenIcon &&
+                      tokenDisplayLib.getTokenIcon(proposalData?.tokenOut) && (
+                        <img
+                          src={tokenDisplayLib.getTokenIcon(
+                            proposalData?.tokenOut
+                          )}
+                          width="20"
+                          height="20"
+                          alt={proposalData?.tokenOut}
+                          style={{ borderRadius: "50%" }}
+                        />
+                      )}
                     <span className="bolder mb-0">
                       {tokenDisplayLib?.formatTokenAmount &&
                       tokenPrices[proposalData?.tokenOut]
@@ -445,8 +451,9 @@ return (
               </h5>
               {proposalData?.destinationNetwork && (
                 <div className="text-muted small mt-1">
-                  {networkNames[proposalData.destinationNetwork] ||
-                    proposalData.destinationNetwork}
+                  {tokenDisplayLib.getNetworkDisplayName(
+                    proposalData.destinationNetwork
+                  )}
                 </div>
               )}
             </div>
@@ -491,15 +498,18 @@ return (
                     className="d-flex align-items-center gap-1"
                     style={{ fontSize: "18px" }}
                   >
-                    {tokenIcons[proposalData?.tokenOut] && (
-                      <img
-                        src={tokenIcons[proposalData?.tokenOut]}
-                        width="20"
-                        height="20"
-                        alt={proposalData?.tokenOut}
-                        style={{ borderRadius: "50%" }}
-                      />
-                    )}
+                    {tokenDisplayLib?.getTokenIcon &&
+                      tokenDisplayLib.getTokenIcon(proposalData?.tokenOut) && (
+                        <img
+                          src={tokenDisplayLib.getTokenIcon(
+                            proposalData?.tokenOut
+                          )}
+                          width="20"
+                          height="20"
+                          alt={proposalData?.tokenOut}
+                          style={{ borderRadius: "50%" }}
+                        />
+                      )}
                     <span className="bolder mb-0">
                       {tokenDisplayLib?.formatTokenAmount &&
                       tokenPrices[proposalData?.tokenOut]
@@ -669,54 +679,22 @@ return (
             props={{
               tokens: [
                 ...tokensToFetch,
-                proposalData?.destinationNetwork && {
-                  symbol: "USDC",
-                  networkId: proposalData.destinationNetwork,
-                },
-                proposalData?.blockchain && {
-                  symbol: "USDC",
-                  networkId: proposalData.blockchain,
-                },
+                // For destination network, use the tokenOut symbol
+                proposalData?.destinationNetwork &&
+                  proposalData?.tokenOut && {
+                    symbol: proposalData.tokenOut,
+                    networkId: proposalData.destinationNetwork,
+                  },
+                // For source blockchain, use the tokenIn symbol (mapped if needed)
+                proposalData?.blockchain &&
+                  proposalData?.tokenIn && {
+                    symbol: getTokenSymbolFromAddress(proposalData.tokenIn),
+                    networkId: proposalData.blockchain,
+                  },
               ].filter(
                 (item) => item !== null && item !== undefined && item !== false
               ),
-              onIconsLoaded: (iconCache) => {
-                const newIcons = {};
-                const newNetworkNames = {};
-
-                // Process token icons
-                for (let i = 0; i < tokensToFetch.length; i++) {
-                  const token = tokensToFetch[i];
-                  const icon = iconCache[token];
-                  if (icon && icon.tokenIcon) {
-                    newIcons[token] = icon.tokenIcon;
-                  }
-                }
-
-                // Process network names
-                if (proposalData?.destinationNetwork) {
-                  const cacheKey = `USDC:${proposalData.destinationNetwork}`;
-                  if (iconCache[cacheKey] && iconCache[cacheKey].networkName) {
-                    newNetworkNames[proposalData.destinationNetwork] =
-                      iconCache[cacheKey].networkName;
-                  }
-                }
-                if (proposalData?.blockchain) {
-                  const cacheKey = `USDC:${proposalData.blockchain}`;
-                  if (iconCache[cacheKey] && iconCache[cacheKey].networkName) {
-                    newNetworkNames[proposalData.blockchain] =
-                      iconCache[cacheKey].networkName;
-                  }
-                }
-
-                // Update states
-                if (Object.keys(newIcons).length > 0) {
-                  setTokenIcons({ ...tokenIcons, ...newIcons });
-                }
-                if (Object.keys(newNetworkNames).length > 0) {
-                  setNetworkNames((prev) => ({ ...prev, ...newNetworkNames }));
-                }
-              },
+              onIconsLoaded: tokenDisplayLib.createWeb3IconsHandler(),
               fetchNetworkIcons: true,
             }}
           />

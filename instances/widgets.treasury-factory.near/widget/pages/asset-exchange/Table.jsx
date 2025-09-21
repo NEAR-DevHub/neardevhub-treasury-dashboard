@@ -54,6 +54,17 @@ const accountId = context.accountId;
 const [tokenIcons, setTokenIcons] = useState({});
 const [tokenMap, setTokenMap] = useState({});
 const [oneClickPrices, setOneClickPrices] = useState({});
+const [networkNames, setNetworkNames] = useState({});
+
+// Initialize the token display library with state references
+if (tokenDisplayLib && tokenDisplayLib.init) {
+  tokenDisplayLib.init({
+    tokenIcons,
+    networkNames,
+    setTokenIcons,
+    setNetworkNames,
+  });
+}
 
 // Fetch 1Click token mappings and prices
 useEffect(() => {
@@ -300,15 +311,20 @@ const ProposalsComponent = () => {
                           undefined,
                       }}
                     />
-                    {tokenIcons[getTokenSymbolFromAddress(tokenIn)] && (
-                      <img
-                        src={tokenIcons[getTokenSymbolFromAddress(tokenIn)]}
-                        width="16"
-                        height="16"
-                        alt={getTokenSymbolFromAddress(tokenIn)}
-                        style={{ borderRadius: "50%" }}
-                      />
-                    )}
+                    {tokenDisplayLib?.getTokenIcon &&
+                      tokenDisplayLib.getTokenIcon(
+                        getTokenSymbolFromAddress(tokenIn)
+                      ) && (
+                        <img
+                          src={tokenDisplayLib.getTokenIcon(
+                            getTokenSymbolFromAddress(tokenIn)
+                          )}
+                          width="16"
+                          height="16"
+                          alt={getTokenSymbolFromAddress(tokenIn)}
+                          style={{ borderRadius: "50%" }}
+                        />
+                      )}
                   </div>
                 </div>
               ) : (
@@ -341,15 +357,16 @@ const ProposalsComponent = () => {
                         price: oneClickPrices[tokenOut] || undefined,
                       }}
                     />
-                    {tokenIcons[tokenOut] && (
-                      <img
-                        src={tokenIcons[tokenOut]}
-                        width="16"
-                        height="16"
-                        alt={tokenOut}
-                        style={{ borderRadius: "50%" }}
-                      />
-                    )}
+                    {tokenDisplayLib?.getTokenIcon &&
+                      tokenDisplayLib.getTokenIcon(tokenOut) && (
+                        <img
+                          src={tokenDisplayLib.getTokenIcon(tokenOut)}
+                          width="16"
+                          height="16"
+                          alt={tokenOut}
+                          style={{ borderRadius: "50%" }}
+                        />
+                      )}
                   </div>
                 </div>
               ) : (
@@ -608,23 +625,9 @@ return (
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Web3IconFetcher`}
         props={{
           tokens: tokensToFetch,
-          onIconsLoaded: (iconCache) => {
-            const newIcons = {};
-
-            // Process token icons
-            for (let i = 0; i < tokensToFetch.length; i++) {
-              const token = tokensToFetch[i];
-              const icon = iconCache[token];
-              if (icon && icon.tokenIcon) {
-                newIcons[token] = icon.tokenIcon;
-              }
-            }
-
-            // Update state
-            if (Object.keys(newIcons).length > 0) {
-              setTokenIcons({ ...tokenIcons, ...newIcons });
-            }
-          },
+          onIconsLoaded: tokenDisplayLib?.createWeb3IconsHandler
+            ? tokenDisplayLib.createWeb3IconsHandler()
+            : () => {},
           fetchNetworkIcons: false,
         }}
       />

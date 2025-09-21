@@ -1,3 +1,17 @@
+// Store references to state setters from the widget
+let tokenIconsState = {};
+let networkNamesState = {};
+let setTokenIconsRef = null;
+let setNetworkNamesRef = null;
+
+// Initialize the library with state references from the widget
+function init({ tokenIcons, networkNames, setTokenIcons, setNetworkNames }) {
+  tokenIconsState = tokenIcons || {};
+  networkNamesState = networkNames || {};
+  setTokenIconsRef = setTokenIcons;
+  setNetworkNamesRef = setNetworkNames;
+}
+
 function formatTokenAmount(amount, tokenPrice, minUsdValue) {
   minUsdValue = minUsdValue || 0.01;
   if (!amount || !tokenPrice || tokenPrice === 0) {
@@ -297,18 +311,19 @@ function fetchIntentsTokensData() {
     });
 }
 
-// Simple cache for network names resolved by Web3IconFetcher
-let networkNamesCache = {};
-
 // Function to get user-friendly network display name
-// Note: This is a simple fallback. For proper network names,
-// use the Web3IconFetcher component which resolves names dynamically
 function getNetworkDisplayName(networkId) {
   if (!networkId) return null;
 
   // Check cache first
-  if (networkNamesCache[networkId]) {
-    return networkNamesCache[networkId];
+  if (networkNamesState && networkNamesState[networkId]) {
+    // Handle both string (legacy) and object (new) formats
+    if (typeof networkNamesState[networkId] === "string") {
+      return networkNamesState[networkId];
+    }
+    if (networkNamesState[networkId].name) {
+      return networkNamesState[networkId].name;
+    }
   }
 
   // Parse the network ID format (e.g., "eth:1" or "btc:mainnet")
@@ -320,15 +335,73 @@ function getNetworkDisplayName(networkId) {
   return baseNetwork.charAt(0).toUpperCase() + baseNetwork.slice(1);
 }
 
-// Function to update the network names cache
-// Called by components after Web3IconFetcher resolves names
-function updateNetworkNamesCache(networkId, name) {
-  if (networkId && name) {
-    networkNamesCache[networkId] = name;
+// Function to get network icon from cache
+function getNetworkIcon(networkId) {
+  if (!networkId || !networkNamesState) return null;
+
+  if (networkNamesState[networkId] && networkNamesState[networkId].icon) {
+    return networkNamesState[networkId].icon;
   }
+
+  return null;
+}
+
+// Function to get token icon from cache
+function getTokenIcon(tokenSymbol) {
+  if (!tokenSymbol || !tokenIconsState) return null;
+  return tokenIconsState[tokenSymbol] || null;
+}
+
+// Function to create a Web3IconFetcher callback handler
+function createWeb3IconsHandler() {
+  return (iconCache) => {
+    const newIcons = {};
+    const newNetworkNames = {};
+
+    // Process all results from iconCache
+    Object.keys(iconCache).forEach((key) => {
+      const cached = iconCache[key];
+
+      // Collect token icons
+      if (cached && cached.tokenIcon) {
+        newIcons[key] = cached.tokenIcon;
+
+        // Special handling for Bitcoin: copy bitcoin entry to btc
+        if (key.toLowerCase() === "bitcoin") {
+          newIcons["btc"] = cached.tokenIcon;
+        }
+      }
+
+      // Collect network names and icons
+      if (cached && cached.networkId) {
+        newNetworkNames[cached.networkId] = {
+          name: cached.networkName || null,
+          icon: cached.networkIcon || null,
+        };
+
+        // Special handling for Bitcoin networks: also store under "btc:*" format
+        if (cached.networkId && cached.networkId.startsWith("bitcoin:")) {
+          const btcNetworkId = cached.networkId.replace("bitcoin:", "btc:");
+          newNetworkNames[btcNetworkId] = {
+            name: cached.networkName || "Bitcoin",
+            icon: cached.networkIcon || null,
+          };
+        }
+      }
+    });
+
+    // Update states if setters are provided
+    if (setTokenIconsRef && Object.keys(newIcons).length > 0) {
+      setTokenIconsRef((prev) => ({ ...prev, ...newIcons }));
+    }
+    if (setNetworkNamesRef && Object.keys(newNetworkNames).length > 0) {
+      setNetworkNamesRef((prev) => ({ ...prev, ...newNetworkNames }));
+    }
+  };
 }
 
 return {
+  init,
   formatTokenAmount,
   getOptimalDecimals,
   formatTokenWithSymbol,
@@ -343,5 +416,7 @@ return {
   fetch1ClickTokenPrices,
   fetchIntentsTokensData,
   getNetworkDisplayName,
-  updateNetworkNamesCache,
+  getNetworkIcon,
+  getTokenIcon,
+  createWeb3IconsHandler,
 };
