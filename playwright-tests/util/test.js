@@ -112,6 +112,9 @@ export async function removeOverlayMessage(page) {
   await page.evaluate(() => window.removeOverlay());
 }
 
+// Global cache locks to prevent concurrent downloads of the same resource
+const downloadLocks = new Map();
+
 /**
  * Call this to ensure that static cdn data is cached and not re-fetched on page reloads
  * Without this you may run into that the CDN will not serve files because of too many requests
@@ -125,9 +128,11 @@ export async function cacheCDN(page) {
 
   const cacheRoute = async (url) => {
     await page.route(url, async (route, request) => {
-      const urlHash = Buffer.from(request.url()).toString("base64");
+      const requestUrl = request.url();
+      const urlHash = Buffer.from(requestUrl).toString("base64");
       const cacheFilePath = path.join(cacheDir, urlHash);
 
+      // Check if file is already cached
       if (
         fs.existsSync(cacheFilePath) &&
         fs.existsSync(`${cacheFilePath}.type`)
@@ -143,29 +148,113 @@ export async function cacheCDN(page) {
             headers: { "Content-Type": contentType },
           });
         } catch (e) {
-          console.error(e);
+          console.error(
+            `Error fulfilling cached request for ${requestUrl}:`,
+            e
+          );
         }
-      } else {
-        const response = await route.fetch();
-        const body = await response.body();
-        const contentType =
-          response.headers()["content-type"] || "application/octet-stream";
+        return;
+      }
 
+      // Check if another request is already downloading this resource
+      if (downloadLocks.has(requestUrl)) {
+        // Wait for the ongoing download to complete
         try {
-          await fs.promises.writeFile(cacheFilePath, body);
-          await fs.promises.writeFile(`${cacheFilePath}.type`, contentType);
+          await downloadLocks.get(requestUrl);
+          // After waiting, try to serve from cache again
+          if (
+            fs.existsSync(cacheFilePath) &&
+            fs.existsSync(`${cacheFilePath}.type`)
+          ) {
+            const cachedContent = await fs.promises.readFile(cacheFilePath);
+            const contentType = await fs.promises.readFile(
+              `${cacheFilePath}.type`,
+              "utf-8"
+            );
+            await route.fulfill({
+              body: cachedContent,
+              headers: { "Content-Type": contentType },
+            });
+            return;
+          }
         } catch (e) {
-          console.warn(e);
+          console.warn(`Error waiting for download lock for ${requestUrl}:`, e);
         }
+      }
 
-        try {
-          await route.fulfill({
-            body,
-            headers: response.headers(),
-          });
-        } catch (e) {
-          console.error(e);
+      // Create a download promise and add it to locks
+      const downloadPromise = (async () => {
+        let retries = 3;
+        let delay = 1000; // Start with 1 second delay
+
+        while (retries > 0) {
+          try {
+            // Add timeout to the fetch request
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+            const response = await route.fetch({
+              signal: controller.signal,
+            });
+
+            clearTimeout(timeoutId);
+
+            const body = await response.body();
+            const contentType =
+              response.headers()["content-type"] || "application/octet-stream";
+
+            // Cache the response
+            try {
+              await fs.promises.writeFile(cacheFilePath, body);
+              await fs.promises.writeFile(`${cacheFilePath}.type`, contentType);
+            } catch (e) {
+              console.warn(`Error caching ${requestUrl}:`, e);
+            }
+
+            // Fulfill the request
+            try {
+              await route.fulfill({
+                body,
+                headers: response.headers(),
+              });
+            } catch (e) {
+              console.error(`Error fulfilling request for ${requestUrl}:`, e);
+            }
+
+            return; // Success, exit retry loop
+          } catch (error) {
+            retries--;
+            console.warn(
+              `Error fetching ${requestUrl} (${3 - retries}/3):`,
+              error.message
+            );
+
+            if (retries === 0) {
+              // Final attempt failed, continue with original request
+              console.error(
+                `Failed to fetch ${requestUrl} after 3 attempts, continuing with original request`
+              );
+              try {
+                await route.continue();
+              } catch (e) {
+                console.error(`Error continuing route for ${requestUrl}:`, e);
+              }
+              return;
+            }
+
+            // Wait before retrying with exponential backoff
+            await new Promise((resolve) => setTimeout(resolve, delay));
+            delay *= 2; // Double the delay for next retry
+          }
         }
+      })();
+
+      downloadLocks.set(requestUrl, downloadPromise);
+
+      try {
+        await downloadPromise;
+      } finally {
+        downloadLocks.delete(requestUrl);
       }
     });
   };
