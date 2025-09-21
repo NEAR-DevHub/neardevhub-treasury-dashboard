@@ -19,7 +19,7 @@ const tokenDisplayLib = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.tokenDisplay"
 );
 
-if (!tokenDisplayLib) {
+if (!tokenDisplayLib || !treasuryDaoID || !getNearBalances) {
   return <></>;
 }
 const [proposalData, setProposalData] = useState(null);
@@ -267,7 +267,7 @@ useEffect(() => {
         setIsDeleted(true);
       });
   }
-}, [id, intentsTokensData]);
+}, [id, intentsTokensData, proposalData]);
 
 useEffect(() => {
   if (proposalData.id !== id) {
