@@ -214,7 +214,12 @@ const Item = ({ option }) => {
   return (
     <div className="d-flex gap-3 align-items-center w-100">
       {typeof option.icon === "string" ? (
-        <img src={option.icon} height={30} width={30} />
+        <img
+          src={option.icon}
+          height={30}
+          width={30}
+          className="rounded-circle"
+        />
       ) : typeof option.icon === "function" ? (
         <option.icon />
       ) : (
@@ -253,7 +258,12 @@ useEffect(() => {
     getIntentsBalances(account).then((balances) => {
       const formattedIntentsTokens = balances.map((token) => ({
         icon: token.ft_meta?.icon ? (
-          <img src={token.ft_meta.icon} height={30} width={30} />
+          <img
+            src={token.ft_meta.icon}
+            height={30}
+            width={30}
+            className="rounded-circle"
+          />
         ) : (
           <div
             style={{
