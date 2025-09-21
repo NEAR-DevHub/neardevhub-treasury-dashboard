@@ -370,16 +370,41 @@ return (
                       )}
                     <span className="bolder mb-0">
                       {tokenDisplayLib?.formatTokenAmount &&
-                      tokenPrices[proposalData?.tokenIn]
+                      tokenPrices[
+                        getTokenSymbolFromAddress(proposalData?.tokenIn)
+                      ]
                         ? tokenDisplayLib.formatTokenAmount(
                             proposalData?.amountIn,
-                            tokenPrices[proposalData?.tokenIn]
+                            tokenPrices[
+                              getTokenSymbolFromAddress(proposalData?.tokenIn)
+                            ]
                           )
                         : proposalData?.amountIn}
                     </span>
                     <span>
                       {getTokenSymbolFromAddress(proposalData?.tokenIn)}
                     </span>
+                    {tokenPrices[
+                      getTokenSymbolFromAddress(proposalData?.tokenIn)
+                    ] && (
+                      <span className="text-muted">
+                        (
+                        {tokenDisplayLib?.formatUsdValue
+                          ? tokenDisplayLib.formatUsdValue(
+                              proposalData?.amountIn,
+                              tokenPrices[
+                                getTokenSymbolFromAddress(proposalData?.tokenIn)
+                              ]
+                            )
+                          : `$${(
+                              proposalData?.amountIn *
+                              tokenPrices[
+                                getTokenSymbolFromAddress(proposalData?.tokenIn)
+                              ]
+                            ).toFixed(2)}`}
+                        )
+                      </span>
+                    )}
                   </div>
                 ) : (
                   // For regular exchanges, use TokenAmountAndIcon (original behavior)
@@ -400,6 +425,16 @@ return (
                   {tokenDisplayLib.getNetworkDisplayName(
                     proposalData.blockchain
                   )}
+                </div>
+              )}
+              {tokenPrices[
+                getTokenSymbolFromAddress(proposalData?.tokenIn)
+              ] && (
+                <div className="text-muted small">
+                  1 {getTokenSymbolFromAddress(proposalData?.tokenIn)} = $
+                  {tokenPrices[
+                    getTokenSymbolFromAddress(proposalData?.tokenIn)
+                  ].toLocaleString()}
                 </div>
               )}
             </div>
@@ -434,6 +469,21 @@ return (
                         : proposalData?.amountOut}
                     </span>
                     <span>{proposalData?.tokenOut}</span>
+                    {tokenPrices[proposalData?.tokenOut] && (
+                      <span className="text-muted">
+                        (
+                        {tokenDisplayLib?.formatUsdValue
+                          ? tokenDisplayLib.formatUsdValue(
+                              proposalData?.amountOut,
+                              tokenPrices[proposalData?.tokenOut]
+                            )
+                          : `$${(
+                              proposalData?.amountOut *
+                              tokenPrices[proposalData?.tokenOut]
+                            ).toFixed(2)}`}
+                        )
+                      </span>
+                    )}
                   </div>
                 ) : (
                   // For regular exchanges, use TokenAmountAndIcon (original behavior)
@@ -454,6 +504,12 @@ return (
                   {tokenDisplayLib.getNetworkDisplayName(
                     proposalData.destinationNetwork
                   )}
+                </div>
+              )}
+              {tokenPrices[proposalData?.tokenOut] && (
+                <div className="text-muted small">
+                  1 {proposalData?.tokenOut} = $
+                  {tokenPrices[proposalData?.tokenOut].toLocaleString()}
                 </div>
               )}
             </div>
@@ -522,6 +578,21 @@ return (
                         : proposalData?.minAmountReceive}
                     </span>
                     <span>{proposalData?.tokenOut}</span>
+                    {tokenPrices[proposalData?.tokenOut] && (
+                      <span className="text-muted">
+                        (
+                        {tokenDisplayLib?.formatUsdValue
+                          ? tokenDisplayLib.formatUsdValue(
+                              proposalData?.minAmountReceive,
+                              tokenPrices[proposalData?.tokenOut]
+                            )
+                          : `$${(
+                              proposalData?.minAmountReceive *
+                              tokenPrices[proposalData?.tokenOut]
+                            ).toFixed(2)}`}
+                        )
+                      </span>
+                    )}
                   </div>
                 ) : (
                   // For regular exchanges, use TokenAmountAndIcon (original behavior)
