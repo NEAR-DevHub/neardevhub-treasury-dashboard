@@ -182,7 +182,6 @@ export class SandboxRPC {
     // Redirect RPC calls to sandbox
     await page.route(MOCK_RPC_URL, async (route, request) => {
       const postData = request.postDataJSON();
-      console.log("postData", postData.params.account_id);
       if (
         (typeof postData.params.account_id === "string" &&
           (postData.params.account_id.endsWith(SPUTNIK_DAO_CONTRACT_ID) ||
