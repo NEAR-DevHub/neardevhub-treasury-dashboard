@@ -767,7 +767,7 @@ const code = `
             let tokenOut = null;
             let networkOut = null;
             let amountIn = "";
-            let slippageTolerance = "100"; // basis points
+            let slippageTolerance = "1"; // percentage
             let isLoading = false;
             let isLoadingQuote = false;
             let isLoadingPreview = false;
@@ -916,7 +916,7 @@ const code = `
                 // Slippage input
                 document.getElementById("slippage-input").addEventListener("input", function(e) {
                     const value = parseFloat(e.target.value || "0");
-                    slippageTolerance = (value * 100).toString(); // Convert to basis points
+                    slippageTolerance = value.toString(); // Keep as percentage, will convert to basis points when needed
                     // Don't auto-fetch quote anymore
                 });
 
@@ -1613,7 +1613,7 @@ const code = `
                     inputToken: selectedTokenIn,
                     outputToken: selectedTokenOut,
                     amountIn: amountInSmallestUnit,
-                    slippageTolerance: parseInt(slippageTolerance),
+                    slippageTolerance: parseFloat(slippageTolerance) * 100, // Convert percentage to basis points
                     networkOut: selectedTokenOut.network,
                     tokenOutSymbol: selectedTokenOut.symbol
                 };
@@ -1690,7 +1690,7 @@ const code = `
                     originAmount: parseFloat(amountIn),
                     destinationNetwork: networkOut,
                     treasuryDaoId: treasuryDaoID,
-                    slippagePercentage: parseFloat(slippageTolerance) / 100
+                    slippagePercentage: parseFloat(slippageTolerance) // Already in percentage
                 };
                 
                 // Mark that we're loading preview
@@ -1708,7 +1708,7 @@ const code = `
                 const quoteRequest = {
                     dry: true,
                     swapType: "EXACT_INPUT",
-                    slippageTolerance: parseInt(slippageTolerance),
+                    slippageTolerance: parseFloat(slippageTolerance) * 100, // Convert percentage to basis points
                     originAsset: selectedTokenIn.id.startsWith("nep141:")
                         ? selectedTokenIn.id
                         : "nep141:" + selectedTokenIn.id,
