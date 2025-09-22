@@ -54,6 +54,17 @@ const accountId = context.accountId;
 const [tokenIcons, setTokenIcons] = useState({});
 const [tokenMap, setTokenMap] = useState({});
 const [oneClickPrices, setOneClickPrices] = useState({});
+const [networkNames, setNetworkNames] = useState({});
+
+// Initialize the token display library with state references
+if (tokenDisplayLib && tokenDisplayLib.init) {
+  tokenDisplayLib.init({
+    tokenIcons,
+    networkNames,
+    setTokenIcons,
+    setNetworkNames,
+  });
+}
 
 // Fetch 1Click token mappings and prices
 useEffect(() => {
@@ -237,6 +248,9 @@ const ProposalsComponent = () => {
           const currentTime = Date.now();
           isQuoteExpired = quoteDeadline.getTime() < currentTime;
         }
+
+        // Determine source wallet
+        const sourceWallet = quoteDeadlineStr ? "NEAR Intents" : "SputnikDAO";
         return (
           <tr
             data-testid={"proposal-request-#" + item.id}
@@ -275,31 +289,43 @@ const ProposalsComponent = () => {
               </td>
             )}
 
+            <td className={"text-left"} style={{ minWidth: 150 }}>
+              <div className="fw-semi-bold">{sourceWallet}</div>
+            </td>
+
             <td className={"text-right " + isVisible("Send")}>
               {quoteDeadlineStr ? (
                 // For 1Click exchanges, use TokenAmount with symbol prop
-                <div className="d-flex align-items-center justify-content-end gap-1">
-                  <Widget
-                    loading=""
-                    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
-                    props={{
-                      instance,
-                      amountWithDecimals: amountIn,
-                      symbol: getTokenSymbolFromAddress(tokenIn), // Pass mapped symbol for 1Click tokens
-                      showUSDValue: true,
-                      price:
-                        oneClickPrices[getTokenSymbolFromAddress(tokenIn)] ||
-                        undefined,
-                    }}
-                  />
-                  {tokenIcons[getTokenSymbolFromAddress(tokenIn)] && (
-                    <img
-                      src={tokenIcons[getTokenSymbolFromAddress(tokenIn)]}
-                      width="16"
-                      height="16"
-                      alt={getTokenSymbolFromAddress(tokenIn)}
+                <div className="d-flex flex-column align-items-end">
+                  <div className="d-flex align-items-center justify-content-end gap-1">
+                    <Widget
+                      loading=""
+                      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
+                      props={{
+                        instance,
+                        amountWithDecimals: amountIn,
+                        symbol: getTokenSymbolFromAddress(tokenIn), // Pass mapped symbol for 1Click tokens
+                        showUSDValue: true,
+                        price:
+                          oneClickPrices[getTokenSymbolFromAddress(tokenIn)] ||
+                          undefined,
+                      }}
                     />
-                  )}
+                    {tokenDisplayLib?.getTokenIcon &&
+                      tokenDisplayLib.getTokenIcon(
+                        getTokenSymbolFromAddress(tokenIn)
+                      ) && (
+                        <img
+                          src={tokenDisplayLib.getTokenIcon(
+                            getTokenSymbolFromAddress(tokenIn)
+                          )}
+                          width="16"
+                          height="16"
+                          alt={getTokenSymbolFromAddress(tokenIn)}
+                          style={{ borderRadius: "50%" }}
+                        />
+                      )}
+                  </div>
                 </div>
               ) : (
                 // For regular exchanges, use TokenAmount with address prop (original behavior)
@@ -318,26 +344,30 @@ const ProposalsComponent = () => {
             <td className={isVisible("Receive") + " text-right"}>
               {quoteDeadlineStr ? (
                 // For 1Click exchanges, use TokenAmount with symbol prop
-                <div className="d-flex align-items-center justify-content-end gap-1">
-                  <Widget
-                    loading=""
-                    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
-                    props={{
-                      instance,
-                      amountWithDecimals: amountOut,
-                      symbol: tokenOut, // tokenOut is already a symbol, not a contract address
-                      showUSDValue: true,
-                      price: oneClickPrices[tokenOut] || undefined,
-                    }}
-                  />
-                  {tokenIcons[tokenOut] && (
-                    <img
-                      src={tokenIcons[tokenOut]}
-                      width="16"
-                      height="16"
-                      alt={tokenOut}
+                <div className="d-flex flex-column align-items-end">
+                  <div className="d-flex align-items-center justify-content-end gap-1">
+                    <Widget
+                      loading=""
+                      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.TokenAmount`}
+                      props={{
+                        instance,
+                        amountWithDecimals: amountOut,
+                        symbol: tokenOut, // tokenOut is already a symbol, not a contract address
+                        showUSDValue: true,
+                        price: oneClickPrices[tokenOut] || undefined,
+                      }}
                     />
-                  )}
+                    {tokenDisplayLib?.getTokenIcon &&
+                      tokenDisplayLib.getTokenIcon(tokenOut) && (
+                        <img
+                          src={tokenDisplayLib.getTokenIcon(tokenOut)}
+                          width="16"
+                          height="16"
+                          alt={tokenOut}
+                          style={{ borderRadius: "50%" }}
+                        />
+                      )}
+                  </div>
                 </div>
               ) : (
                 // For regular exchanges, use TokenAmount with address prop (original behavior)
@@ -374,6 +404,7 @@ const ProposalsComponent = () => {
                       width="16"
                       height="16"
                       alt={tokenOut}
+                      style={{ borderRadius: "50%" }}
                     />
                   )}
                 </div>
@@ -512,7 +543,7 @@ return (
             </span>
           </td>
           {!isPendingRequests && <td className={"text-center"}>Status</td>}
-
+          <td className={"text-left"}>Source Wallet</td>
           <td className={isVisible("Send") + " text-right"}>Send</td>
           <td className={isVisible("Receive") + " text-right"}>Receive</td>
           <td className={isVisible("Minimum received") + " text-right"}>
@@ -557,7 +588,7 @@ return (
       !Array.isArray(proposals) ? (
         <tbody>
           <RowsSkeleton
-            numberOfCols={isPendingRequests ? 11 : 9}
+            numberOfCols={isPendingRequests ? 12 : 10}
             numberOfRows={4}
             numberOfHiddenRows={4}
           />
@@ -594,19 +625,9 @@ return (
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Web3IconFetcher`}
         props={{
           tokens: tokensToFetch,
-          onIconsLoaded: (iconCache) => {
-            const newIcons = {};
-            for (let i = 0; i < tokensToFetch.length; i++) {
-              const token = tokensToFetch[i];
-              const icon = iconCache[token];
-              if (icon && icon.tokenIcon) {
-                newIcons[token] = icon.tokenIcon;
-              }
-            }
-            if (Object.keys(newIcons).length > 0) {
-              setTokenIcons({ ...tokenIcons, ...newIcons });
-            }
-          },
+          onIconsLoaded: tokenDisplayLib?.createWeb3IconsHandler
+            ? tokenDisplayLib.createWeb3IconsHandler()
+            : () => {},
           fetchNetworkIcons: false,
         }}
       />

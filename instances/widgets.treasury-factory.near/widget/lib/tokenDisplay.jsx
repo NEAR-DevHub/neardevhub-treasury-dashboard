@@ -1,3 +1,17 @@
+// Store references to state setters from the widget
+let tokenIconsState = {};
+let networkNamesState = {};
+let setTokenIconsRef = null;
+let setNetworkNamesRef = null;
+
+// Initialize the library with state references from the widget
+function init({ tokenIcons, networkNames, setTokenIcons, setNetworkNames }) {
+  tokenIconsState = tokenIcons || {};
+  networkNamesState = networkNames || {};
+  setTokenIconsRef = setTokenIcons;
+  setNetworkNamesRef = setNetworkNames;
+}
+
 function formatTokenAmount(amount, tokenPrice, minUsdValue) {
   minUsdValue = minUsdValue || 0.01;
   if (!amount || !tokenPrice || tokenPrice === 0) {
@@ -272,7 +286,122 @@ function fetch1ClickTokenPrices() {
     });
 }
 
+// Fetch intents tokens data from the bridge API
+// Returns an array of tokens with their network information
+function fetchIntentsTokensData() {
+  return asyncFetch("https://bridge.chaindefuser.com/rpc", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      id: "supportedTokensFetchAll",
+      jsonrpc: "2.0",
+      method: "supported_tokens",
+      params: [{}],
+    }),
+  })
+    .then((response) => {
+      if (!response || !response.body) {
+        return [];
+      }
+      return response.body?.result?.tokens || [];
+    })
+    .catch((error) => {
+      console.error("Failed to fetch intents tokens:", error);
+      return [];
+    });
+}
+
+// Function to get user-friendly network display name
+function getNetworkDisplayName(networkId) {
+  if (!networkId) return null;
+
+  // Check cache first
+  if (networkNamesState && networkNamesState[networkId]) {
+    // Handle both string (legacy) and object (new) formats
+    if (typeof networkNamesState[networkId] === "string") {
+      return networkNamesState[networkId];
+    }
+    if (networkNamesState[networkId].name) {
+      return networkNamesState[networkId].name;
+    }
+  }
+
+  // Parse the network ID format (e.g., "eth:1" or "btc:mainnet")
+  const parts = networkId.split(":");
+  const baseNetwork = parts[0].toLowerCase();
+
+  // Simple fallback: capitalize first letter
+  // The actual network name should come from Web3IconFetcher
+  return baseNetwork.charAt(0).toUpperCase() + baseNetwork.slice(1);
+}
+
+// Function to get network icon from cache
+function getNetworkIcon(networkId) {
+  if (!networkId || !networkNamesState) return null;
+
+  if (networkNamesState[networkId] && networkNamesState[networkId].icon) {
+    return networkNamesState[networkId].icon;
+  }
+
+  return null;
+}
+
+// Function to get token icon from cache
+function getTokenIcon(tokenSymbol) {
+  if (!tokenSymbol || !tokenIconsState) return null;
+  return tokenIconsState[tokenSymbol] || null;
+}
+
+// Function to create a Web3IconFetcher callback handler
+function createWeb3IconsHandler() {
+  return (iconCache) => {
+    const newIcons = {};
+    const newNetworkNames = {};
+
+    // Process all results from iconCache
+    Object.keys(iconCache).forEach((key) => {
+      const cached = iconCache[key];
+
+      // Collect token icons
+      if (cached && cached.tokenIcon) {
+        newIcons[key] = cached.tokenIcon;
+
+        // Special handling for Bitcoin: copy bitcoin entry to btc
+        if (key.toLowerCase() === "bitcoin") {
+          newIcons["btc"] = cached.tokenIcon;
+        }
+      }
+
+      // Collect network names and icons
+      if (cached && cached.networkId) {
+        newNetworkNames[cached.networkId] = {
+          name: cached.networkName || null,
+          icon: cached.networkIcon || null,
+        };
+
+        // Special handling for Bitcoin networks: also store under "btc:*" format
+        if (cached.networkId && cached.networkId.startsWith("bitcoin:")) {
+          const btcNetworkId = cached.networkId.replace("bitcoin:", "btc:");
+          newNetworkNames[btcNetworkId] = {
+            name: cached.networkName || "Bitcoin",
+            icon: cached.networkIcon || null,
+          };
+        }
+      }
+    });
+
+    // Update states if setters are provided
+    if (setTokenIconsRef && Object.keys(newIcons).length > 0) {
+      setTokenIconsRef((prev) => ({ ...prev, ...newIcons }));
+    }
+    if (setNetworkNamesRef && Object.keys(newNetworkNames).length > 0) {
+      setNetworkNamesRef((prev) => ({ ...prev, ...newNetworkNames }));
+    }
+  };
+}
+
 return {
+  init,
   formatTokenAmount,
   getOptimalDecimals,
   formatTokenWithSymbol,
@@ -285,4 +414,9 @@ return {
   validateTokenInput,
   formatCompactNumber,
   fetch1ClickTokenPrices,
+  fetchIntentsTokensData,
+  getNetworkDisplayName,
+  getNetworkIcon,
+  getTokenIcon,
+  createWeb3IconsHandler,
 };
