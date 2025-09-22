@@ -15,6 +15,7 @@ export const DEFAULT_WIDGET_REFERENCE_ACCOUNT_ID =
   "bootstrap.treasury-factory.near";
 export const TREASURY_FACTORY_ACCOUNT_ID = "treasury-factory.near";
 export const SPUTNIK_DAO_FACTORY_ID = "sputnik-dao.near";
+export const FT_FACTORY_LOCKUP_CONTRACT_ID = "ft-lockup.near";
 
 export async function setPageAuthSettings(page, accountId, keyPair) {
   await page.evaluate(
@@ -181,8 +182,13 @@ export class SandboxRPC {
     // Redirect RPC calls to sandbox
     await page.route(MOCK_RPC_URL, async (route, request) => {
       const postData = request.postDataJSON();
+      console.log("postData", postData.params.account_id);
       if (
-        postData.params.account_id.endsWith(SPUTNIK_DAO_CONTRACT_ID) ||
+        (typeof postData.params.account_id === "string" &&
+          (postData.params.account_id.endsWith(SPUTNIK_DAO_CONTRACT_ID) ||
+            postData.params.account_id.endsWith(
+              FT_FACTORY_LOCKUP_CONTRACT_ID
+            ))) ||
         accounts.includes(postData.params.account_id)
       ) {
         await route.continue({ url: this.rpc_url });
