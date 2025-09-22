@@ -56,5 +56,15 @@ jobs:
         run: |
           mkdir -p ~/.cache
           tar -xzf playwright-browsers.tar.gz -C ~/.cache
+
+      - name: Download sandbox binary
+        uses: actions/download-artifact@v4
+        with:
+          name: sandboxrpc-binary
+          path: sandboxrpc/target/debug
+
+      - name: Make sandbox binary executable
+        run: chmod +x sandboxrpc/target/debug/sandboxrpc
+
       - name: Run tests
         run: ${{ matrix.target_account.test_command }}

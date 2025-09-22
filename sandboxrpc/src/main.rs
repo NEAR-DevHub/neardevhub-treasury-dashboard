@@ -24,6 +24,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("📥 Importing contracts from mainnet...");
 
+    let near_contract = worker
+        .import_contract(&"near".parse().unwrap(), &mainnet)
+        .transact()
+        .await?;
+
+    let init_near_result = near_contract.call("new").max_gas().transact().await?;
+    if init_near_result.is_failure() {
+        panic!(
+            "Error initializing NEAR\n{:?}",
+            String::from_utf8(init_near_result.raw_bytes().unwrap())
+        );
+    }
+    println!("✅ Imported near");
+
     let sputnik_dao_contract = worker
         .import_contract(&"sputnik-dao.near".parse().unwrap(), &mainnet)
         .transact()
