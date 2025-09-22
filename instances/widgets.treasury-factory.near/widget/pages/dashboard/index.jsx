@@ -172,6 +172,61 @@ useEffect(() => {
     });
 }, [refreshData]);
 
+function setFtLockups(lockups) {
+  // Categorize FT lockups based on claim status
+  const fullyClaimed = [];
+  const partiallyClaimed = [];
+
+  lockups.forEach((ftLockup) => {
+    const claimedAmount = Big(ftLockup.claimed_amount).toFixed();
+
+    if (Big(claimedAmount).gte(Big(ftLockup.deposited_amount))) {
+      fullyClaimed.push(ftLockup);
+    } else {
+      partiallyClaimed.push(ftLockup);
+    }
+  });
+
+  setFullyClaimedFtLockups(fullyClaimed);
+  setPartiallyClaimedFtLockups(partiallyClaimed);
+}
+
+// Fetch FT lockups from the factory contract
+useEffect(() => {
+  Near.asyncView("ft-lockup.near", "get_instances").then((instances) => {
+    if (instances.length === 0) {
+      return;
+    } else {
+      const instanceIds = instances.map((instance) => instance?.[1] || "");
+      console.log("instanceIds", instanceIds);
+      if (instanceIds.length > 0) {
+        Promise.all(
+          instanceIds.map((instanceId) => {
+            return Near.asyncView(instanceId, "get_account", {
+              account_id: treasuryDaoID,
+            }).then((res) => {
+              return {
+                ...res,
+                contractId: instanceId,
+              };
+            });
+          })
+        ).then((results) => {
+          // Filter out null values to get only instances where DAO is present
+          const instancesWithDao = results.filter(
+            (instance) => instance !== null
+          );
+
+          // Call setFtLockups with the array of instances where DAO is present
+          if (instancesWithDao.length > 0) {
+            setFtLockups(instancesWithDao);
+          }
+        });
+      }
+    }
+  });
+}, []);
+
 useEffect(() => {
   if (
     ftLockups?.length &&
@@ -189,22 +244,7 @@ useEffect(() => {
         });
       })
     ).then((res) => {
-      // Categorize FT lockups based on claim status
-      const fullyClaimed = [];
-      const partiallyClaimed = [];
-
-      res.forEach((ftLockup) => {
-        const claimedAmount = Big(ftLockup.claimed_amount).toFixed();
-
-        if (Big(claimedAmount).gte(Big(ftLockup.deposited_amount))) {
-          fullyClaimed.push(ftLockup);
-        } else {
-          partiallyClaimed.push(ftLockup);
-        }
-      });
-
-      setFullyClaimedFtLockups(fullyClaimed);
-      setPartiallyClaimedFtLockups(partiallyClaimed);
+      setFtLockups(res);
     });
   }
 }, [ftLockups]);
