@@ -1,10 +1,15 @@
 const { instance } = props;
 const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 
+const config = treasuryDaoID ? Near.view(treasuryDaoID, "get_config") : null;
+const metadata = JSON.parse(atob(config.metadata ?? ""));
+const isDarkTheme = metadata.theme === "dark";
+
 State.init({
   currentStep: 1,
   allFetchedTokens: [],
-  selectedToken: null, // Store the selected token object
+  uniqueAssets: [], // Deduplicated assets by asset_name
+  selectedAsset: null, // Store the selected asset (deduplicated)
   networksForSelectedAssetDropdown: [],
   selectedNetworkFullInfo: null,
   intentsDepositAddress: "",
@@ -39,7 +44,7 @@ const Container = styled.div`
 `;
 
 const currentStep = state.currentStep;
-const selectedAssetName = state.selectedAssetName;
+const selectedAsset = state.selectedAsset;
 const selectedNetworkFullInfo = state.selectedNetworkFullInfo;
 const nearIntentsTargetAccountId = treasuryDaoID;
 
@@ -53,8 +58,8 @@ const fetchIntentsTokens = () => {
     isLoadingTokens: true,
     errorApi: null,
     allFetchedTokens: [],
-    assetNamesForDropdown: [],
-    selectedAssetName: "",
+    uniqueAssets: [],
+    selectedAsset: null,
     networksForSelectedAssetDropdown: [],
     selectedNetworkFullInfo: null,
     intentsDepositAddress: "",
@@ -149,7 +154,9 @@ const fetchIntentsTokens = () => {
           // Fetch network icons for all unique chain names in a single batch request
           const chainNamesString = Array.from(uniqueChainNames).join(",");
           return asyncFetch(
-            `${REPL_BACKEND_API}/blockchain-by-network?network=${chainNamesString}`
+            `${REPL_BACKEND_API}/blockchain-by-network?network=${chainNamesString}&theme=${
+              isDarkTheme ? "dark" : "light"
+            }`
           )
             .then((networkResp) => {
               if (!networkResp.ok || !networkResp.body) {
@@ -170,15 +177,53 @@ const fetchIntentsTokens = () => {
                 }
               });
 
+              // Create unique assets by grouping tokens with the same asset_name
+              const assetMap = {};
+              enrichedTokens.forEach((token) => {
+                const assetName = token.asset_name;
+                if (!assetMap[assetName]) {
+                  assetMap[assetName] = {
+                    asset_name: assetName,
+                    name: token.name,
+                    symbol: token.symbol,
+                    icon: token.icon,
+                    // Store all tokens for this asset for network selection
+                    tokens: [],
+                  };
+                }
+                assetMap[assetName].tokens.push(token);
+              });
+
+              const uniqueAssets = Object.values(assetMap);
+
               State.update({
                 allFetchedTokens: enrichedTokens,
+                uniqueAssets: uniqueAssets,
                 networkIconMap,
               });
             })
             .catch((networkError) => {
               console.error("Failed to fetch network metadata:", networkError);
+              // Create unique assets even if network metadata fails
+              const assetMap = {};
+              enrichedTokens.forEach((token) => {
+                const assetName = token.asset_name;
+                if (!assetMap[assetName]) {
+                  assetMap[assetName] = {
+                    asset_name: assetName,
+                    name: token.name,
+                    symbol: token.symbol,
+                    icon: token.icon,
+                    tokens: [],
+                  };
+                }
+                assetMap[assetName].tokens.push(token);
+              });
+              const uniqueAssets = Object.values(assetMap);
+
               State.update({
                 allFetchedTokens: enrichedTokens,
+                uniqueAssets: uniqueAssets,
                 networkIconMap: {}, // Empty network icon map on error
               });
             });
@@ -187,6 +232,7 @@ const fetchIntentsTokens = () => {
         State.update({
           errorApi: "No bridgeable assets found or unexpected API response.",
           allFetchedTokens: [],
+          uniqueAssets: [],
         });
       }
     })
@@ -195,6 +241,7 @@ const fetchIntentsTokens = () => {
       State.update({
         errorApi: err.message || "Failed to fetch assets. Please try again.",
         allFetchedTokens: [],
+        uniqueAssets: [],
       });
     })
     .finally(() => {
@@ -203,8 +250,12 @@ const fetchIntentsTokens = () => {
 };
 
 // Function to update networks when asset changes
-const updateNetworksForAsset = (selectedToken) => {
-  if (!selectedToken || state.allFetchedTokens.length === 0) {
+const updateNetworksForAsset = (selectedAsset) => {
+  if (
+    !selectedAsset ||
+    !selectedAsset.tokens ||
+    selectedAsset.tokens.length === 0
+  ) {
     State.update({
       networksForSelectedAssetDropdown: [],
       selectedNetworkFullInfo: null,
@@ -213,12 +264,7 @@ const updateNetworksForAsset = (selectedToken) => {
     return;
   }
 
-  const tokensOfSelectedAsset = state.allFetchedTokens.filter(
-    (token) =>
-      token.defuse_asset_identifier === selectedToken.defuse_asset_identifier
-  );
-
-  const networks = tokensOfSelectedAsset
+  const networks = selectedAsset.tokens
     .map((token) => {
       if (!token.chainName) return null;
 
@@ -353,39 +399,39 @@ const AssetSelector = ({ isActive }) => {
         src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.SearchSelectorModal"
         props={{
           modalTitle: "Select Asset",
-          selectedElement: state.selectedToken && (
+          selectedElement: state.selectedAsset && (
             <div className="d-flex align-items-center gap-2">
               <img
-                src={state.selectedToken?.icon || placeholderAssetIcon}
-                alt={state.selectedToken?.name}
+                src={state.selectedAsset?.icon || placeholderAssetIcon}
+                alt={state.selectedAsset?.name}
                 className="rounded-circle"
                 style={{ width: "30px", height: "30px" }}
               />
-              {state.selectedToken?.name} ({state.selectedToken?.symbol})
+              {state.selectedAsset?.asset_name} ({state.selectedAsset?.name})
             </div>
           ),
           dropdownLabel: "Select Asset",
-          options: state.allFetchedTokens,
+          options: state.uniqueAssets,
           enableSearch: true,
-          onSelect: (selectedToken) => {
-            State.update({ selectedToken });
-            updateNetworksForAsset(selectedToken);
-            if (selectedToken) {
+          onSelect: (selectedAsset) => {
+            State.update({ selectedAsset });
+            updateNetworksForAsset(selectedAsset);
+            if (selectedAsset) {
               State.update({ currentStep: 2 });
             }
           },
           searchPlaceholder: "Search assets",
-          renderOption: (token) => (
+          renderOption: (asset) => (
             <div className="d-flex align-items-center gap-2">
               <img
-                src={token.icon || placeholderAssetIcon}
-                alt={token.name}
+                src={asset.icon || placeholderAssetIcon}
+                alt={asset.name}
                 className="rounded-circle"
                 style={{ width: "30px", height: "30px" }}
               />
               <div>
-                {token.name}
-                <div className="text-secondary text-sm">{token.symbol}</div>
+                {asset.asset_name}
+                <div className="text-secondary text-sm">{asset.name}</div>
               </div>
             </div>
           ),
@@ -396,7 +442,7 @@ const AssetSelector = ({ isActive }) => {
 };
 
 const NetworkSelector = ({ isActive }) => {
-  if (!isActive || !state.selectedToken)
+  if (!isActive || !state.selectedAsset)
     return <div className="text-secondary h5 fw-bold mb-0">Select Network</div>;
 
   return (
@@ -449,7 +495,7 @@ const NetworkSelector = ({ isActive }) => {
 };
 
 const DepositAddressSection = ({ isActive }) => {
-  if (!isActive || !state.selectedToken || !state.selectedNetworkFullInfo)
+  if (!isActive || !state.selectedAsset || !state.selectedNetworkFullInfo)
     return (
       <div className="text-secondary h5 fw-bold mb-0">Deposit Address</div>
     );
