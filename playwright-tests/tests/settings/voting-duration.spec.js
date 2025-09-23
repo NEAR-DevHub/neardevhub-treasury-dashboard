@@ -9,11 +9,6 @@ import {
 } from "../../util/rpcmock.js";
 import { InsufficientBalance, encodeToMarkdown } from "../../util/lib.js";
 
-test.afterEach(async ({ page }, testInfo) => {
-  console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
-  await page.unrouteAll({ behavior: "ignoreErrors" });
-});
-
 async function navigateToVotingDurationPage({ page, instanceAccount }) {
   await page.goto(
     `/${instanceAccount}/widget/app?page=settings&tab=voting-duration`

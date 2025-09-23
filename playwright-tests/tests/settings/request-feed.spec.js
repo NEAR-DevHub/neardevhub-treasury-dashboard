@@ -9,11 +9,6 @@ import {
 } from "../../util/inventory.js";
 import { mockTransactionSubmitRPCResponses } from "../../util/transaction.js";
 
-test.afterEach(async ({ page }, testInfo) => {
-  console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
-  await page.unrouteAll({ behavior: "ignoreErrors" });
-});
-
 const lastProposalId = 2;
 
 async function voteOnProposal({
