@@ -694,7 +694,6 @@ function getDaoRoles(treasuryDaoID) {
 }
 
 function hasPermission(treasuryDaoID, accountId, kindName, actionType) {
-  return true;
   if (!accountId) {
     return false;
   }
