@@ -336,7 +336,7 @@ const Row = ({ label, value, tooltip, showBorder, showSymbol, innerItem }) => {
 function convertBalanceToReadableFormat(amount, decimals) {
   return Big(amount ?? "0")
     .div(Big(10).pow(Number(decimals) || 1))
-    .toFixed();
+    .toFixed(6);
 }
 
 function formatCurrency(amount) {

@@ -198,30 +198,41 @@ useEffect(() => {
       return;
     } else {
       const instanceIds = instances.map((instance) => instance?.[1] || "");
-      console.log("instanceIds", instanceIds);
       if (instanceIds.length > 0) {
         Promise.all(
           instanceIds.map((instanceId) => {
             return Near.asyncView(instanceId, "get_account", {
               account_id: treasuryDaoID,
-            }).then((res) => {
-              return {
-                ...res,
-                contractId: instanceId,
-              };
-            });
+            })
+              .then((res) => {
+                if (typeof res === "object" && res !== null) {
+                  return {
+                    ...res,
+                    contractId: instanceId,
+                  };
+                }
+                return null;
+              })
+              .catch((err) => {
+                console.error("Error fetching ft lockups:", err);
+                return null;
+              });
           })
-        ).then((results) => {
-          // Filter out null values to get only instances where DAO is present
-          const instancesWithDao = results.filter(
-            (instance) => instance !== null
-          );
+        )
+          .then((results) => {
+            // Filter out null values to get only instances where DAO is present
+            const instancesWithDao = results.filter(
+              (instance) => instance !== null
+            );
 
-          // Call setFtLockups with the array of instances where DAO is present
-          if (instancesWithDao.length > 0) {
-            setFtLockups(instancesWithDao);
-          }
-        });
+            // Call setFtLockups with the array of instances where DAO is present
+            if (instancesWithDao.length > 0) {
+              setFtLockups(instancesWithDao);
+            }
+          })
+          .catch((err) => {
+            console.error("Error fetching ft lockups:", err);
+          });
       }
     }
   });
