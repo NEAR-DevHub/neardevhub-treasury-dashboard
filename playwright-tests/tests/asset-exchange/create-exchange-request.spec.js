@@ -61,10 +61,13 @@ async function openCreatePage({ page, instanceAccount }) {
 
 async function selectSendToken({ page, token }) {
   await page.frameLocator("iframe").locator("#selectedSendToken").click();
+  await page.waitForTimeout(2_000);
   const input = await page
     .frameLocator("iframe")
     .getByRole("textbox", { name: "Search token" });
-  await input.fill(token);
+  await input.fill("");
+  await input.pressSequentially(token);
+  await page.waitForTimeout(1_000);
   await page
     .frameLocator("iframe")
     .getByRole("heading", { name: token, exact: true })
@@ -77,10 +80,13 @@ async function selectSendToken({ page, token }) {
 
 async function selectReceiveToken({ page, token }) {
   await page.frameLocator("iframe").locator("#selectedReceiveToken").click();
+  await page.waitForTimeout(2_000);
   const input = await page
     .frameLocator("iframe")
     .getByRole("textbox", { name: "Search token" });
-  await input.fill(token);
+  await input.fill("");
+  await input.pressSequentially(token);
+  await page.waitForTimeout(1_000);
   await page
     .frameLocator("iframe")
     .getByRole("heading", { name: token, exact: true })
@@ -159,7 +165,7 @@ test.describe("User is logged in", function () {
     await openCreatePage({ page, instanceAccount });
     await selectSendToken({ page, token: "NEAR" });
     await page.frameLocator("iframe").locator("#send-amount").fill("1");
-    await selectReceiveToken({ page, token: "USDC" });
+    await selectReceiveToken({ page, token: "USDC.e" });
     const warningText = page
       .frameLocator("iframe")
       .getByText(
@@ -170,7 +176,7 @@ test.describe("User is logged in", function () {
     await expect(warningText).toBeVisible();
     await expect(submitBtn).toBeDisabled();
     // reverse the tokens
-    await selectSendToken({ page, token: "USDC" });
+    await selectSendToken({ page, token: "USDC.e" });
     await selectReceiveToken({ page, token: "NEAR" });
     await expect(warningText).toBeVisible();
     await expect(submitBtn).toBeDisabled();
@@ -291,8 +297,8 @@ test.describe("User is logged in", function () {
   }) => {
     test.setTimeout(60_000);
     await openCreatePage({ page, instanceAccount });
-    await selectSendToken({ page, token: "USDt" });
-    await selectReceiveToken({ page, token: "USDC" });
+    await selectSendToken({ page, token: "USDT.e" });
+    await selectReceiveToken({ page, token: "USDC.e" });
     const submitBtn = page.frameLocator("iframe").getByText("Submit");
     const response = {
       transactions: [
@@ -321,22 +327,18 @@ test.describe("User is logged in", function () {
     expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
         description:
-          "* Proposal Action: asset-exchange <br>* Token In: usdt.tether-token.near <br>* Token Out: 17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1 <br>* Amount In: 1 <br>* Slippage: 0.1 <br>* Amount Out: 0.99940",
+          "* Proposal Action: asset-exchange <br>* Token In: dac17f958d2ee523a2206206994597c13d831ec7.factory.bridge.near <br>* Token Out: a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.factory.bridge.near <br>* Amount In: 1 <br>* Slippage: 0.1 <br>* Amount Out: 0.99940",
         kind: {
           FunctionCall: {
+            receiver_id: "usdt.tether-token.near",
             actions: [
               {
-                args: toBase64({
-                  receiver_id: "v2.ref-finance.near",
-                  amount: "1000000",
-                  msg: swapPool,
-                }),
+                method_name: "ft_transfer_call",
+                args: "eyJyZWNlaXZlcl9pZCI6InYyLnJlZi1maW5hbmNlLm5lYXIiLCJhbW91bnQiOiIxMDAwMDAwIiwibXNnIjoie1wiZm9yY2VcIjowLFwiYWN0aW9uc1wiOlt7XCJwb29sX2lkXCI6NTUxNixcInRva2VuX2luXCI6XCJ1c2R0LnRldGhlci10b2tlbi5uZWFyXCIsXCJ0b2tlbl9vdXRcIjpcImEwYjg2OTkxYzYyMThiMzZjMWQxOWQ0YTJlOWViMGNlMzYwNmViNDguZmFjdG9yeS5icmlkZ2UubmVhclwiLFwiYW1vdW50X2luXCI6XCIxMDAwMDAwXCIsXCJhbW91bnRfb3V0XCI6XCIwXCIsXCJtaW5fYW1vdW50X291dFwiOlwiMFwifSx7XCJwb29sX2lkXCI6NDE3OSxcInRva2VuX2luXCI6XCJhMGI4Njk5MWM2MjE4YjM2YzFkMTlkNGEyZTllYjBjZTM2MDZlYjQ4LmZhY3RvcnkuYnJpZGdlLm5lYXJcIixcInRva2VuX291dFwiOlwiMTcyMDg2MjhmODRmNWQ2YWQzM2YwZGEzYmJiZWIyN2ZmY2IzOThlYWM1MDFhMzFiZDZhZDIwMTFlMzYxMzNhMVwiLFwiYW1vdW50X291dFwiOlwiMFwiLFwibWluX2Ftb3VudF9vdXRcIjpcIjk4OTQxMlwifV19In0=",
                 deposit: "1",
                 gas: "180000000000000",
-                method_name: "ft_transfer_call",
               },
             ],
-            receiver_id: "usdt.tether-token.near",
           },
         },
       },
@@ -351,7 +353,7 @@ test.describe("User is logged in", function () {
     test.setTimeout(60_000);
     await openCreatePage({ page, instanceAccount });
     await selectSendToken({ page, token: "WETH" });
-    await selectReceiveToken({ page, token: "USDC" });
+    await selectReceiveToken({ page, token: "USDC.e" });
     const submitBtn = page.frameLocator("iframe").getByText("Submit");
 
     const response = {
@@ -408,7 +410,7 @@ test.describe("User is logged in", function () {
     ).toBeVisible();
     await page.frameLocator("iframe").getByText("Details").click();
     await expect(
-      page.frameLocator("iframe").getByText("-99.9995% / 202,306.0574 USDC")
+      page.frameLocator("iframe").getByText("-99.9995% / 202,337.2237 USDC.e")
     ).toBeVisible();
     await expect(submitBtn).toBeEnabled();
     await submitBtn.click();
@@ -418,23 +420,19 @@ test.describe("User is logged in", function () {
     expect(await getTransactionModalObject(page)).toEqual({
       proposal: {
         description:
-          "* Proposal Action: asset-exchange <br>* Token In: c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2.factory.bridge.near <br>* Token Out: 17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1 <br>* Amount In: 100 <br>* Slippage: 0.1 <br>* Amount Out: 0.99940",
+          "* Proposal Action: asset-exchange <br>* Token In: c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2.factory.bridge.near <br>* Token Out: a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48.factory.bridge.near <br>* Amount In: 100 <br>* Slippage: 0.1 <br>* Amount Out: 0.99940",
         kind: {
           FunctionCall: {
-            actions: [
-              {
-                args: toBase64({
-                  receiver_id: "v2.ref-finance.near",
-                  amount: "1000000",
-                  msg: swapPool,
-                }),
-                deposit: "1",
-                gas: "180000000000000",
-                method_name: "ft_transfer_call",
-              },
-            ],
             receiver_id:
               "c02aaa39b223fe8d0a0e5c4f27ead9083c756cc2.factory.bridge.near",
+            actions: [
+              {
+                method_name: "ft_transfer_call",
+                args: "eyJyZWNlaXZlcl9pZCI6InYyLnJlZi1maW5hbmNlLm5lYXIiLCJhbW91bnQiOiIxMDAwMDAwIiwibXNnIjoie1wiZm9yY2VcIjowLFwiYWN0aW9uc1wiOlt7XCJwb29sX2lkXCI6NTUxNixcInRva2VuX2luXCI6XCJ1c2R0LnRldGhlci10b2tlbi5uZWFyXCIsXCJ0b2tlbl9vdXRcIjpcImEwYjg2OTkxYzYyMThiMzZjMWQxOWQ0YTJlOWViMGNlMzYwNmViNDguZmFjdG9yeS5icmlkZ2UubmVhclwiLFwiYW1vdW50X2luXCI6XCIxMDAwMDAwXCIsXCJhbW91bnRfb3V0XCI6XCIwXCIsXCJtaW5fYW1vdW50X291dFwiOlwiMFwifSx7XCJwb29sX2lkXCI6NDE3OSxcInRva2VuX2luXCI6XCJhMGI4Njk5MWM2MjE4YjM2YzFkMTlkNGEyZTllYjBjZTM2MDZlYjQ4LmZhY3RvcnkuYnJpZGdlLm5lYXJcIixcInRva2VuX291dFwiOlwiMTcyMDg2MjhmODRmNWQ2YWQzM2YwZGEzYmJiZWIyN2ZmY2IzOThlYWM1MDFhMzFiZDZhZDIwMTFlMzYxMzNhMVwiLFwiYW1vdW50X291dFwiOlwiMFwiLFwibWluX2Ftb3VudF9vdXRcIjpcIjk4OTQxMlwifV19In0=",
+                deposit: "1",
+                gas: "180000000000000",
+              },
+            ],
           },
         },
       },
