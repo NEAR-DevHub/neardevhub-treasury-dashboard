@@ -227,7 +227,7 @@ return (
               slippage: args.slippage || "2",
               quoteDeadline: args.quote.deadline, // Already ISO string from API
               destinationNetwork: args.networkOut,
-              timeEstimate: `${args.quote.timeEstimate} minutes`,
+              timeEstimate: `${args.quote.timeEstimate} seconds`,
               depositAddress: args.quote.depositAddress,
               signature: args.quote.signature,
             });

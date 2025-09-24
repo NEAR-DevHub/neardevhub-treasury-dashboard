@@ -88,6 +88,7 @@ test.describe("NEAR Intents Asset Exchange Proposal Details", () => {
     await expect(page.getByText("Sep 22, 2025, 08:02 AM UTC")).toBeVisible();
 
     // Verify Estimated Time
+    // Note: Historical proposal #30 was created with "10 minutes" text
     await expect(page.getByText("Estimated Time")).toBeVisible();
     await expect(page.getByText("10 minutes")).toBeVisible();
 

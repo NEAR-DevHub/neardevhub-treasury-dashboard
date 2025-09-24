@@ -703,8 +703,14 @@ const code = `
                             <div class="collapse-item">
                                 <div class="detail-label">
                                     <span>Estimated time</span>
+                                    <i class="bi bi-info-circle text-secondary"
+                                       data-bs-toggle="tooltip"
+                                       data-bs-custom-class="custom-tooltip"
+                                       data-bs-placement="top"
+                                       title="Estimated time for the swap to be executed after the deposit transaction is confirmed">
+                                    </i>
                                 </div>
-                                <div class="detail-value" id="detail-time">10 minutes</div>
+                                <div class="detail-value" id="detail-time">N/A</div>
                             </div>
                             <div class="collapse-item">
                                 <div class="detail-label">
@@ -734,6 +740,12 @@ const code = `
                             <div class="collapse-item">
                                 <div class="detail-label">
                                     <span>Quote expires</span>
+                                    <i class="bi bi-info-circle text-secondary"
+                                       data-bs-toggle="tooltip"
+                                       data-bs-custom-class="custom-tooltip"
+                                       data-bs-placement="top"
+                                       title="Time when the deposit address becomes inactive and funds may be lost">
+                                    </i>
                                 </div>
                                 <div class="detail-value" id="detail-expires">N/A</div>
                             </div>
@@ -1857,8 +1869,8 @@ const code = `
                     }
                     
                     // Update details
-                    document.getElementById("detail-time").textContent = 
-                        (quote.timeEstimate || 10) + " minutes";
+                    document.getElementById("detail-time").textContent =
+                        quote.timeEstimate ? quote.timeEstimate + " seconds" : "N/A";
                     
                     if (quote.minAmountOut && quote.amountOut && quote.amountOutFormatted) {
                         const rawMinReceived = Big(quote.minAmountOut)
