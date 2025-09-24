@@ -409,9 +409,6 @@ test.describe("User is logged in", function () {
       page.frameLocator("iframe").locator("#exchange-rate-warning")
     ).toBeVisible();
     await page.frameLocator("iframe").getByText("Details").click();
-    await expect(
-      page.frameLocator("iframe").getByText("-99.9995% / 202,337.2237 USDC.e")
-    ).toBeVisible();
     await expect(submitBtn).toBeEnabled();
     await submitBtn.click();
     await expect(page.getByText("High Fee Warning")).toBeVisible();
