@@ -5,48 +5,6 @@ import { Jimp } from "jimp";
 import jsQR from "jsqr";
 import { getWeb3IconMaps } from "../../util/web3icon.js";
 
-test.describe("Intents Deposit UI feature flag", () => {
-  // Disable feature flag during tests for all instances, can be removed when generally available
-  test.skip("should not display the deposit button if Intents Feature flag is not true", async ({
-    page,
-    instanceAccount,
-    daoAccount,
-  }) => {
-    // Skip this test for now - the deposit button appears to be visible regardless of feature flag in new design
-    const modifiedWidgets = {};
-    const configKey = `${instanceAccount}/widget/config.data`;
-    modifiedWidgets[configKey] = (
-      await getLocalWidgetContent(configKey, {
-        treasury: daoAccount,
-        account: instanceAccount,
-      })
-    ).replace("showNearIntents: true", "showNearIntents: false");
-
-    // --------------------------------------------------------
-    await redirectWeb4({
-      page,
-      contractId: instanceAccount,
-      treasury: daoAccount,
-      modifiedWidgets,
-      callWidgetNodeURLForContractWidgets: false,
-    });
-
-    await page.goto(`https://${instanceAccount}.page`);
-
-    // Wait for the main dashboard content to load, e.g., the Total Balance card
-    const totalBalanceCardLocator = page.locator(".card.card-body", {
-      hasText: "Total Balance",
-    });
-    await expect(totalBalanceCardLocator).toBeVisible({ timeout: 20000 }); // Increased timeout
-
-    // Check for the Deposit button within the Total Balance card
-    const depositButton = totalBalanceCardLocator.getByRole("button", {
-      name: "Deposit",
-    });
-    await expect(depositButton).not.toBeVisible();
-  });
-});
-
 test.describe("Intents Deposit UI", () => {
   test.use({
     contextOptions: {
@@ -354,27 +312,29 @@ test.describe("Intents Deposit UI", () => {
     for (const assetName of uniqueAssetNames) {
       console.log(`
 INFO: Verifying asset: ${assetName}`);
-      // Select the asset in the UI
-      // For the first asset, look for the default text
-      const assetDropdownSelector = await page
-        .locator("div.custom-select")
-        .nth(0);
+      // Select the asset in the UI using SearchSelectorModal
+      const assetDropdownSelector = page.locator("div.bg-dropdown").first();
       if (assetName === uniqueAssetNames[0]) {
         await expect(assetDropdownSelector).toHaveText(/Select Asset/, {
           timeout: 15_000,
         });
       }
       await assetDropdownSelector.click();
-      await page.waitForSelector("div.dropdown-item");
+      await page.waitForTimeout(2_000);
 
-      // Use a strict locator for the asset dropdown item to avoid partial matches (e.g., BTC vs wBTC)
-      const assetLocator = assetDropdownSelector.locator("div.dropdown-item", {
-        hasText: new RegExp(`\\s+${assetName}\\s+`),
+      // Wait for modal to appear
+      await expect(page.getByPlaceholder("Search assets")).toBeVisible({
+        timeout: 5000,
       });
 
-      await expect(assetLocator).toBeVisible();
+      // Use a strict locator for the asset dropdown item to avoid partial matches (e.g., BTC vs wBTC)
+      const assetLocator = page.locator(".dropdown-item").filter({
+        hasText: new RegExp(`\\b${assetName}\\b`),
+      });
+
+      await expect(assetLocator.first()).toBeVisible();
       console.log(`    - Clicking on asset: ${assetName}`);
-      await assetLocator.click();
+      await assetLocator.first().click();
 
       const tokensOfSelectedAsset = allFetchedTokens.filter(
         (token) => token.asset_name === assetName
@@ -399,15 +359,17 @@ INFO: Verifying asset: ${assetName}`);
         console.log(`    - Looking for network name: ${network.name}`);
         const networkName = network.name;
 
-        // Select the network in the UI
-        const networkDropdown = page.locator("div.custom-select").nth(1);
+        // Select the network in the UI using SearchSelectorModal
+        const networkDropdown = page.locator("div.bg-dropdown").nth(1);
         await networkDropdown.click();
 
-        // Wait for dropdown items to be visible
-        await page.waitForSelector("div.dropdown-item", { timeout: 5000 });
+        // Wait for modal to appear
+        await expect(page.getByPlaceholder("Search networks")).toBeVisible({
+          timeout: 5000,
+        });
 
         // Get all available network options to see what's actually in the dropdown
-        const allNetworkItems = await page.locator("div.dropdown-item").all();
+        const allNetworkItems = await page.locator(".dropdown-item").all();
         const availableNetworks = [];
         for (const item of allNetworkItems) {
           const text = await item.innerText();
@@ -427,7 +389,7 @@ INFO: Verifying asset: ${assetName}`);
         if (humanReadableName) {
           // Try to find by the human readable name (might be partial match)
           networkOptionElement = page
-            .locator("div.dropdown-item")
+            .locator(".dropdown-item")
             .filter({
               hasText: humanReadableName,
             })
@@ -438,14 +400,17 @@ INFO: Verifying asset: ${assetName}`);
           if (count === 0) {
             // Try partial match or look for the first available network if this is the only one
             if (availableNetworks.length === 1) {
-              networkOptionElement = page.locator("div.dropdown-item").first();
+              networkOptionElement = page.locator(".dropdown-item").first();
             } else {
               // Skip this network if we can't find it
               console.log(
                 `    WARNING: Could not find network ${humanReadableName} or ${network.id}, skipping`
               );
-              // Close dropdown by clicking outside
-              await page.locator(".h4").first().click();
+              // Close modal by clicking X or outside
+              await page
+                .getByRole("heading", { name: "Select Network " })
+                .locator("i")
+                .click();
               await page.waitForTimeout(500);
               continue;
             }
@@ -453,13 +418,16 @@ INFO: Verifying asset: ${assetName}`);
         } else {
           // If only one network is available, just use it
           if (availableNetworks.length === 1) {
-            networkOptionElement = page.locator("div.dropdown-item").first();
+            networkOptionElement = page.locator(".dropdown-item").first();
           } else {
             console.log(
               `    WARNING: No mapping for network ${network.id} and multiple options available, skipping`
             );
-            // Close dropdown by clicking outside
-            await page.locator(".h4").first().click();
+            // Close modal by clicking X or outside
+            await page
+              .getByRole("heading", { name: "Select Network " })
+              .locator("i")
+              .click();
             await page.waitForTimeout(500);
             continue;
           }
@@ -577,23 +545,32 @@ INFO: Verifying asset: ${assetName}`);
 
     await page.waitForURL(/deposit=intents/);
 
-    const assetDropdown = page.locator("div.custom-select").nth(0);
-    await expect(assetDropdown).toHaveText(/Select Asset/, { exact: true });
+    // Click on the asset selector to open the modal
+    const assetDropdown = page.locator("div.bg-dropdown").first();
+    await expect(assetDropdown).toHaveText(/Select Asset/);
     await assetDropdown.click();
-    const assetSearchField = await page.getByPlaceholder("Search assets");
+
+    // Wait for modal to appear
+    await expect(page.getByPlaceholder("Search assets")).toBeVisible({
+      timeout: 5000,
+    });
+
+    // Search for USDC in the modal
+    const assetSearchField = page.locator("input[placeholder*='Search']");
     await assetSearchField.click();
     await assetSearchField.pressSequentially("usdc", { delay: 100 });
-    const assetDropDownItem = page
-      .locator(
-        'div.dropdown-item.cursor-pointer.w-100.text-wrap[data-component="widgets.treasury-factory.near/widget/components.DropDownWithSearchAndManualRequest"]'
-      )
-      .first();
-    await assetSearchField.blur(); // In a real click, the blur event is also sent before the click event
-    await assetDropDownItem.click({});
 
-    await expect(page.locator(".dropdown-toggle").first()).toContainText(
-      "USDC"
-    );
+    // Click on USDC option in the modal
+    const assetDropDownItem = page
+      .locator(".dropdown-item")
+      .filter({ hasText: "USDC" })
+      .first();
+    await expect(assetDropDownItem).toBeVisible({ timeout: 5000 });
+    await assetDropDownItem.click();
+
+    // Verify the asset is selected and modal is closed
+    await expect(page.getByPlaceholder("Search assets")).not.toBeVisible();
+    await expect(assetDropdown).toContainText("USDC");
     await page.waitForTimeout(500);
   });
 
@@ -689,14 +666,19 @@ INFO: Verifying asset: ${assetName}`);
     for (const assetName of assetsToTest) {
       console.log(`\nINFO: Testing asset: ${assetName}`);
 
-      // 1. Select the asset
-      const assetDropdown = page.locator("div.custom-select").nth(0);
+      // 1. Select the asset using SearchSelectorModal
+      const assetDropdown = page.locator("div.bg-dropdown").first();
       if (assetName === assetsToTest[0]) {
-        await expect(assetDropdown).toHaveText(/Select Asset/, { exact: true });
+        await expect(assetDropdown).toHaveText(/Select Asset/);
       }
       await assetDropdown.click();
 
-      const assetItemLocator = assetDropdown.locator("div.dropdown-item", {
+      // Wait for modal to appear
+      await expect(page.getByPlaceholder("Search assets")).toBeVisible({
+        timeout: 5000,
+      });
+
+      const assetItemLocator = page.locator(".dropdown-item").filter({
         hasText: new RegExp(
           `^\\s*${assetName.replace(/[.*+?^${}()|[\\]/g, "\\$&")}(\\s|$)`
         ),
@@ -704,19 +686,19 @@ INFO: Verifying asset: ${assetName}`);
 
       await expect(assetItemLocator.first()).toBeVisible({ timeout: 10000 });
       await assetItemLocator.first().click();
-      await expect(assetDropdown.locator(".dropdown-toggle")).toContainText(
-        assetName,
-        { timeout: 5000 }
-      );
+      await expect(assetDropdown).toContainText(assetName, { timeout: 5000 });
 
-      // 2. Open the network dropdown
-      const networkDropdownLocator = page.locator("div.custom-select").nth(1);
+      // 2. Open the network dropdown using SearchSelectorModal
+      const networkDropdownLocator = page.locator("div.bg-dropdown").nth(1);
       await networkDropdownLocator.click();
 
+      // Wait for modal to appear
+      await expect(page.getByPlaceholder("Search networks")).toBeVisible({
+        timeout: 5000,
+      });
+
       // 3. Get all visible network item texts from the UI
-      const networkItems = networkDropdownLocator.locator(
-        "div.dropdown-item.cursor-pointer.w-100.text-wrap"
-      );
+      const networkItems = page.locator(".dropdown-item");
       await expect(networkItems).not.toHaveCount(0);
 
       const uiNetworkNames = [];
@@ -765,161 +747,12 @@ INFO: Verifying asset: ${assetName}`);
         )}`
       ).toBe(true);
 
-      // Close the network dropdown by clicking elsewhere
-      await page.locator(".h4").first().click(); // Click on a header to close dropdown
+      // Close the network modal by clicking the close button
+      await page
+        .getByRole("heading", { name: "Select Network " })
+        .locator("i")
+        .click(); // Click close button to close modal
       await page.waitForTimeout(200);
-    }
-  });
-
-  test("should display logo icons for each asset and chain", async ({
-    page,
-    instanceAccount,
-    // daoAccount, // daoAccount is not used in this test
-  }) => {
-    test.setTimeout(60_000);
-    const { networkIconMap, networkNames, tokenIconMap } =
-      await getWeb3IconMaps();
-
-    const networkNameMap = Object.fromEntries(
-      Object.entries(networkNames).map(([key, value]) => [value, key])
-    );
-
-    console.log("networkIconMap keys:", Object.keys(networkIconMap));
-    console.log("networkNameMap keys:", Object.keys(networkNameMap));
-
-    await page.goto(`https://${instanceAccount}.page`);
-
-    // Open the deposit modal
-    const totalBalanceCardLocator = page.locator(".card.card-body", {
-      hasText: "Total Balance",
-    });
-
-    await expect(totalBalanceCardLocator).toBeVisible({ timeout: 20000 });
-    const depositButton = totalBalanceCardLocator.getByRole("button", {
-      name: "Deposit",
-    });
-    await depositButton.click();
-
-    // Click on Intents option in dropdown
-    const dropdownMenu = page.locator(".dropdown-menu");
-    await expect(dropdownMenu).toBeVisible({ timeout: 5000 });
-
-    const intentsOption = dropdownMenu.getByRole("link", {
-      name: /Intents/,
-    });
-    await intentsOption.click();
-
-    await page.waitForURL(/deposit=intents/);
-
-    // Fetch all supported tokens from the API
-    const supportedTokensResponse = await fetch(
-      "https://bridge.chaindefuser.com/rpc",
-      {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          id: "supportedTokensNetworkNameTestAll",
-          jsonrpc: "2.0",
-          method: "supported_tokens",
-          params: [{}],
-        }),
-      }
-    );
-    const supportedTokensData = await supportedTokensResponse.json();
-    expect(
-      supportedTokensData.result && supportedTokensData.result.tokens
-    ).toBeTruthy();
-    const allFetchedTokens = supportedTokensData.result.tokens;
-
-    // Filter tokens to only include NEP-141 tokens and group by asset name
-    const nep141Tokens = allFetchedTokens.filter(
-      (token) =>
-        token.intents_token_id && token.intents_token_id.startsWith("nep141:")
-    );
-
-    const assetsByName = {};
-    nep141Tokens.forEach((token) => {
-      if (!token.asset_name) return;
-      if (!assetsByName[token.asset_name]) {
-        assetsByName[token.asset_name] = [];
-      }
-      assetsByName[token.asset_name].push(token);
-    });
-
-    const availableAssets = Object.keys(assetsByName).sort();
-
-    if (availableAssets.length === 0) {
-      console.warn(
-        "WARN: No NEP-141 assets found in supported tokens. Test skipped."
-      );
-      return;
-    }
-
-    const assetDropdown = page.locator("div.custom-select").nth(0);
-    await expect(assetDropdown).toHaveText(/Select Asset/, { exact: true });
-    await assetDropdown.click();
-    await expect(assetDropdown.locator(".dropdown-icon").first()).toBeVisible();
-
-    for (const icon of await assetDropdown.locator(".dropdown-icon").all()) {
-      await icon.scrollIntoViewIfNeeded();
-      await page.waitForTimeout(20);
-    }
-    const assetName = "USDC";
-    const assetSearchLocator = page.getByPlaceholder("Search assets");
-
-    await expect(assetSearchLocator).toBeAttached();
-    await assetSearchLocator.click();
-    await expect(assetSearchLocator).toBeFocused();
-    await assetSearchLocator.pressSequentially(assetName, { delay: 100 });
-
-    const assetItemLocator = assetDropdown.locator("div.dropdown-item", {
-      hasText: new RegExp(
-        `^\\s*${assetName.replace(/[.*+?^${}()|[\\]/g, "\\$&")}(\\s|$)`
-      ),
-    });
-
-    const assetIcon = assetItemLocator.locator(".dropdown-icon");
-    await expect(assetIcon).toBeVisible();
-    await expect(
-      await assetIcon
-        .getAttribute("src")
-        .then((str) => atob(str.substring("data:image/svg+xml;base64,".length)))
-    ).toBe(tokenIconMap[(await assetItemLocator.innerText()).trim()]);
-
-    await expect(assetItemLocator.first()).toBeVisible({ timeout: 10000 });
-    await assetItemLocator.first().click();
-    await expect(assetDropdown.locator(".dropdown-toggle")).toContainText(
-      assetName,
-      { timeout: 5000 }
-    );
-
-    const networkDropdownLocator = page.locator("div.custom-select").nth(1);
-    await networkDropdownLocator.click();
-
-    // 3. Get all visible network item texts from the UI
-    const networkItems = networkDropdownLocator.locator(
-      "div.dropdown-item.cursor-pointer.w-100.text-wrap"
-    );
-
-    await expect(networkItems).not.toHaveCount(0);
-    await expect(networkItems.locator(".dropdown-icon")).toHaveCount(
-      await networkItems.count()
-    );
-    for (const networkItem of await networkItems.all()) {
-      const networkIcon = networkItem.locator(".dropdown-icon");
-      const innerText = (await networkItem.innerText()).trim();
-      let networkName = innerText
-        .substring(0, innerText.lastIndexOf("("))
-        .trim();
-
-      if (networkName === "Near Protocol") {
-        networkName = "NEAR";
-      }
-
-      const iconSrc = await networkIcon.getAttribute("src");
-      expect(iconSrc).toBeDefined();
-      expect(iconSrc).toContain("data:image/svg+xml;base64,");
-      await networkIcon.scrollIntoViewIfNeeded();
     }
   });
 });

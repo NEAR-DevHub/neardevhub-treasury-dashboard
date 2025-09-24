@@ -1,27 +1,29 @@
 const { instance } = props;
 const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 
+const config = treasuryDaoID ? Near.view(treasuryDaoID, "get_config") : null;
+const metadata = JSON.parse(atob(config.metadata ?? ""));
+const isDarkTheme = metadata.theme === "dark";
+
 State.init({
   currentStep: 1,
   allFetchedTokens: [],
-  assetNamesForDropdown: [],
-  selectedAssetName: "",
+  uniqueAssets: [], // Deduplicated assets by asset_name
+  selectedAsset: null, // Store the selected asset (deduplicated)
   networksForSelectedAssetDropdown: [],
   selectedNetworkFullInfo: null,
   intentsDepositAddress: "",
   isLoadingTokens: false,
   isLoadingAddress: false,
   errorApi: null,
-  web3IconsCache: {},
-  tokenIconMap: {}, // Map for token icons
-  allTokensForIcons: [], // All tokens (assets + networks) for one-time icon fetching
-  allIconsFetched: false, // Track if all icons have been fetched
+  networkIconMap: {}, // Store network icons from API
 });
 
 const placeholderAssetIcon =
   "https://ipfs.near.social/ipfs/bafkreib7ahtyc3p6txuwcnn6kmfo5naiyjzomqnpt26crv27prd5f3ogt4";
 const placeholderNetworkIcon =
   "https://ipfs.near.social/ipfs/bafkreihc5rbvgxf4sz36pqdbg2gv2ag5erjm472zo2hapeh24idcvumt7m";
+
 const Container = styled.div`
   .bg-theme-color {
     background-color: var(--theme-color);
@@ -42,38 +44,9 @@ const Container = styled.div`
 `;
 
 const currentStep = state.currentStep;
-const selectedAssetName = state.selectedAssetName;
+const selectedAsset = state.selectedAsset;
 const selectedNetworkFullInfo = state.selectedNetworkFullInfo;
 const nearIntentsTargetAccountId = treasuryDaoID;
-
-// Callback when all icons are loaded from Web3Icons widget
-const handleAllIconsLoaded = (iconCache) => {
-  const tokenIconMap = {};
-  Object.keys(iconCache).forEach((symbol) => {
-    const cached = iconCache[symbol];
-    if (cached !== "NOT_FOUND" && cached.tokenIcon) {
-      tokenIconMap[cached.symbol] = cached.tokenIcon;
-    }
-    State.update({
-      tokenIconMap,
-      web3IconsCache: Object.assign({}, state.web3IconsCache, iconCache),
-      allIconsFetched: true,
-    });
-  });
-};
-
-const getNetworkIcon = (networkId) => {
-  if (!networkId) return null;
-
-  const key = networkId;
-  if (state.web3IconsCache && state.web3IconsCache[key]) {
-    const cached = state.web3IconsCache[key];
-    if (cached !== "NOT_FOUND" && cached.networkIcon) {
-      return cached.networkIcon;
-    }
-  }
-  return null;
-};
 
 // Function to fetch tokens for intents
 const fetchIntentsTokens = () => {
@@ -85,8 +58,8 @@ const fetchIntentsTokens = () => {
     isLoadingTokens: true,
     errorApi: null,
     allFetchedTokens: [],
-    assetNamesForDropdown: [],
-    selectedAssetName: "",
+    uniqueAssets: [],
+    selectedAsset: null,
     networksForSelectedAssetDropdown: [],
     selectedNetworkFullInfo: null,
     intentsDepositAddress: "",
@@ -118,65 +91,148 @@ const fetchIntentsTokens = () => {
         const filteredTokens = data.result.tokens.filter(
           (token) => token.standard === "nep141"
         );
-        const uniqueAssetNames = Array.from(
-          new Set(data.result.tokens.map((t) => t.asset_name))
-        )
-          .filter((name) => name) // Ensure name is not null or empty
-          .sort();
+        // Collect defuse asset IDs for batch metadata fetching
+        const defuseAssetIds = filteredTokens
+          .map((token) => token.intents_token_id)
+          .filter((id) => id);
 
-        // Collect all tokens for one-time icon fetching optimization
-        // This includes both simple asset names and network-specific tokens
-        // to avoid individual Web3IconFetcher calls when dropdowns are populated
-        const allTokensForIcons = [];
-        const seenAssetNames = new Set();
-        const seenNetworkKeys = new Set();
+        if (defuseAssetIds.length === 0) {
+          State.update({
+            errorApi: "No bridgeable assets found.",
+            allFetchedTokens: [],
+          });
+          return;
+        }
 
-        // First, collect unique asset names for simple asset icon fetching
-        uniqueAssetNames.forEach((assetName) => {
-          if (!seenAssetNames.has(assetName)) {
-            seenAssetNames.add(assetName);
-            allTokensForIcons.push(assetName); // Simple string for asset icons
-          }
-        });
-
-        // Then, collect network-specific tokens for network icon fetching
-        data.result.tokens.forEach((token) => {
-          if (!token.defuse_asset_identifier || !token.asset_name) return;
-
-          const parts = token.defuse_asset_identifier.split(":");
-          let chainId;
-          if (parts.length >= 2) {
-            chainId = parts.slice(0, 2).join(":");
-          } else {
-            chainId = parts[0];
+        // Fetch token metadata using the new defuse endpoint
+        const tokenIdsString = defuseAssetIds.join(",");
+        return asyncFetch(
+          `${REPL_BACKEND_API}/token-by-defuse-asset-id?defuseAssetId=${tokenIdsString}`
+        ).then((metadataResp) => {
+          if (!metadataResp.ok) {
+            throw new Error("Failed to fetch token metadata");
           }
 
-          const networkKey = `${token.asset_name}:${chainId}`;
-          if (!seenNetworkKeys.has(networkKey)) {
-            seenNetworkKeys.add(networkKey);
-            allTokensForIcons.push({
-              symbol: token.asset_name,
-              networkId: chainId,
-              ftContractId: token.near_token_id,
+          const metadataResults = metadataResp.body || [];
+
+          // Create a map for quick lookup
+          const metadataMap = {};
+          metadataResults.forEach((metadata) => {
+            if (metadata.defuse_asset_id) {
+              metadataMap[metadata.defuse_asset_id] = metadata;
+            }
+          });
+
+          // Combine bridge token data with defuse metadata and filter out tokens without metadata or chainName
+          const enrichedTokens = filteredTokens
+            .map((token) => {
+              const metadata = metadataMap[token.intents_token_id];
+              if (!metadata) {
+                console.warn(
+                  `Token not found in defuse API, removing from list:`,
+                  {
+                    intents_token_id: token.intents_token_id,
+                    asset_name: token.asset_name,
+                    defuse_asset_identifier: token.defuse_asset_identifier,
+                  }
+                );
+                return null; // Mark for removal
+              }
+              return {
+                ...token,
+                ...metadata, // Override with defuse metadata (symbol, icon, decimals, price, chainName)
+              };
+            })
+            .filter((token) => token !== null && token.chainName); // Remove tokens without metadata or chainName
+
+          // Collect unique chain names for network icon fetching
+          const uniqueChainNames = new Set();
+          enrichedTokens.forEach((token) => {
+            uniqueChainNames.add(token.chainName);
+          });
+
+          // Fetch network icons for all unique chain names in a single batch request
+          const chainNamesString = Array.from(uniqueChainNames).join(",");
+          return asyncFetch(
+            `${REPL_BACKEND_API}/blockchain-by-network?network=${chainNamesString}&theme=${
+              isDarkTheme ? "dark" : "light"
+            }`
+          )
+            .then((networkResp) => {
+              if (!networkResp.ok || !networkResp.body) {
+                throw new Error("Failed to fetch network metadata");
+              }
+
+              const networkResults = networkResp.body;
+
+              // Create network icon map using chainName as key
+              const networkIconMap = {};
+
+              networkResults.forEach((network) => {
+                if (network.network && network.icon) {
+                  networkIconMap[network.network] = {
+                    name: network.name || network.network,
+                    icon: network.icon,
+                  };
+                }
+              });
+
+              // Create unique assets by grouping tokens with the same asset_name
+              const assetMap = {};
+              enrichedTokens.forEach((token) => {
+                const assetName = token.asset_name;
+                if (!assetMap[assetName]) {
+                  assetMap[assetName] = {
+                    asset_name: assetName,
+                    name: token.name,
+                    symbol: token.symbol,
+                    icon: token.icon,
+                    // Store all tokens for this asset for network selection
+                    tokens: [],
+                  };
+                }
+                assetMap[assetName].tokens.push(token);
+              });
+
+              const uniqueAssets = Object.values(assetMap);
+
+              State.update({
+                allFetchedTokens: enrichedTokens,
+                uniqueAssets: uniqueAssets,
+                networkIconMap,
+              });
+            })
+            .catch((networkError) => {
+              console.error("Failed to fetch network metadata:", networkError);
+              // Create unique assets even if network metadata fails
+              const assetMap = {};
+              enrichedTokens.forEach((token) => {
+                const assetName = token.asset_name;
+                if (!assetMap[assetName]) {
+                  assetMap[assetName] = {
+                    asset_name: assetName,
+                    name: token.name,
+                    symbol: token.symbol,
+                    icon: token.icon,
+                    tokens: [],
+                  };
+                }
+                assetMap[assetName].tokens.push(token);
+              });
+              const uniqueAssets = Object.values(assetMap);
+
+              State.update({
+                allFetchedTokens: enrichedTokens,
+                uniqueAssets: uniqueAssets,
+                networkIconMap: {}, // Empty network icon map on error
+              });
             });
-          }
-        });
-
-        State.update({
-          allFetchedTokens: filteredTokens,
-          assetNamesForDropdown: uniqueAssetNames,
-          errorApi:
-            uniqueAssetNames.length === 0
-              ? "No bridgeable assets found."
-              : null,
-          allTokensForIcons: allTokensForIcons, // All tokens for one-time fetching
         });
       } else {
         State.update({
           errorApi: "No bridgeable assets found or unexpected API response.",
           allFetchedTokens: [],
-          assetNamesForDropdown: [],
-          allTokensForIcons: [],
+          uniqueAssets: [],
         });
       }
     })
@@ -185,8 +241,7 @@ const fetchIntentsTokens = () => {
       State.update({
         errorApi: err.message || "Failed to fetch assets. Please try again.",
         allFetchedTokens: [],
-        assetNamesForDropdown: [],
-        allTokensForIcons: [],
+        uniqueAssets: [],
       });
     })
     .finally(() => {
@@ -195,8 +250,12 @@ const fetchIntentsTokens = () => {
 };
 
 // Function to update networks when asset changes
-const updateNetworksForAsset = (assetName) => {
-  if (!assetName || state.allFetchedTokens.length === 0) {
+const updateNetworksForAsset = (selectedAsset) => {
+  if (
+    !selectedAsset ||
+    !selectedAsset.tokens ||
+    selectedAsset.tokens.length === 0
+  ) {
     State.update({
       networksForSelectedAssetDropdown: [],
       selectedNetworkFullInfo: null,
@@ -205,13 +264,11 @@ const updateNetworksForAsset = (assetName) => {
     return;
   }
 
-  const tokensOfSelectedAsset = state.allFetchedTokens.filter(
-    (token) => token.asset_name === assetName
-  );
-
-  const networks = tokensOfSelectedAsset
+  const networks = selectedAsset.tokens
     .map((token) => {
-      if (!token.defuse_asset_identifier) return null;
+      if (!token.chainName) return null;
+
+      const networkInfo = state.networkIconMap?.[token.chainName];
       const parts = token.defuse_asset_identifier.split(":");
       // The first part of the defuse_asset_identitier is the blockchain id
       let chainId;
@@ -221,18 +278,15 @@ const updateNetworksForAsset = (assetName) => {
         chainId = parts[0];
       }
 
-      const networkCache = state.web3IconsCache[chainId];
-      const networkName = networkCache?.networkName;
-
       return {
         id: chainId, // This is the ID like "eth:1"
-        name: networkName,
-        icon: getNetworkIcon(chainId), // Use enhanced network icon lookup
+        name: networkInfo?.name || token.chainName,
+        icon: networkInfo?.icon || placeholderNetworkIcon,
         near_token_id: token.near_token_id,
         originalTokenData: token,
       };
     })
-    .filter((network) => network && network.id && network.near_token_id); // Ensure valid network objects
+    .filter((network) => network && network.id && network.near_token_id);
 
   State.update({
     networksForSelectedAssetDropdown: networks,
@@ -244,7 +298,11 @@ const updateNetworksForAsset = (assetName) => {
 // Function to fetch deposit address when network changes
 const fetchDepositAddress = (networkInfo) => {
   if (!networkInfo || !networkInfo.near_token_id) {
-    State.update({ intentsDepositAddress: "" });
+    State.update({
+      intentsDepositAddress: "",
+      isLoadingAddress: false,
+      errorApi: "Invalid network selection.",
+    });
     return;
   }
 
@@ -281,7 +339,6 @@ const fetchDepositAddress = (networkInfo) => {
           data.error.message || "Error fetching deposit address."
         );
       }
-      console.log("data", data);
       if (data.result && data.result.address) {
         State.update({ intentsDepositAddress: data.result.address });
       } else {
@@ -338,96 +395,99 @@ const AssetSelector = ({ isActive }) => {
   return (
     <div className="d-flex flex-column gap-md">
       <div className="h5 fw-bold mb-0">Select Asset</div>
-      {state.isLoadingTokens ||
-      state.allFetchedTokens.length === 0 ||
-      !state.allIconsFetched ? (
-        <div>
-          <Widget
-            loading=""
-            src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
-            props={{
-              options: [],
-              disabled: true,
-              defaultLabel: (
-                <div className="spinner-border spinner-border-sm" />
-              ),
-            }}
-          />
-        </div>
-      ) : (
-        <Widget
-          loading=""
-          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
-          props={{
-            selectedValue: selectedAssetName,
-            onChange: (option) => {
-              const newAssetName =
-                option && option.value !== undefined ? option.value : "";
-              State.update({ selectedAssetName: newAssetName });
-              updateNetworksForAsset(newAssetName);
-              if (newAssetName) {
-                State.update({ currentStep: 2 });
-              }
-            },
-            options: state.assetNamesForDropdown.map((assetName) => ({
-              value: assetName,
-              label: assetName,
-              icon: state.tokenIconMap[assetName] || placeholderAssetIcon,
-            })),
-            defaultLabel: "Select Asset",
-            showSearch: true,
-            searchInputPlaceholder: "Search assets",
-            searchByLabel: true,
-            showCircularIcon: true,
-          }}
-        />
-      )}
+      <Widget
+        src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.SearchSelectorModal"
+        props={{
+          modalTitle: "Select Asset",
+          selectedElement: state.selectedAsset && (
+            <div className="d-flex align-items-center gap-2">
+              <img
+                src={state.selectedAsset?.icon || placeholderAssetIcon}
+                alt={state.selectedAsset?.name}
+                className="rounded-circle"
+                style={{ width: "30px", height: "30px" }}
+              />
+              {state.selectedAsset?.asset_name} ({state.selectedAsset?.name})
+            </div>
+          ),
+          dropdownLabel: "Select Asset",
+          options: state.uniqueAssets,
+          enableSearch: true,
+          onSelect: (selectedAsset) => {
+            State.update({ selectedAsset });
+            updateNetworksForAsset(selectedAsset);
+            if (selectedAsset) {
+              State.update({ currentStep: 2 });
+            }
+          },
+          searchPlaceholder: "Search assets",
+          renderOption: (asset) => (
+            <div className="d-flex align-items-center gap-2">
+              <img
+                src={asset.icon || placeholderAssetIcon}
+                alt={asset.name}
+                className="rounded-circle"
+                style={{ width: "30px", height: "30px" }}
+              />
+              <div>
+                {asset.asset_name}
+                <div className="text-secondary text-sm">{asset.name}</div>
+              </div>
+            </div>
+          ),
+        }}
+      />
     </div>
   );
 };
 
 const NetworkSelector = ({ isActive }) => {
-  if (!isActive || !selectedAssetName)
+  if (!isActive || !state.selectedAsset)
     return <div className="text-secondary h5 fw-bold mb-0">Select Network</div>;
 
   return (
     <div className="d-flex flex-column gap-md">
       <div className="h5 fw-bold mb-0">Select Network</div>
       <Widget
-        loading=""
-        src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DropDownWithSearchAndManualRequest"
+        src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.SearchSelectorModal"
         props={{
-          selectedValue: selectedNetworkFullInfo
-            ? selectedNetworkFullInfo.id
-            : "",
-          onChange: (option) => {
-            const networkInfo =
-              option && option.value !== undefined
-                ? state.networksForSelectedAssetDropdown.find(
-                    (n) => n.id === option.value
-                  )
-                : null;
-            State.update({ selectedNetworkFullInfo: networkInfo });
+          modalTitle: "Select Network",
+          selectedElement: state.selectedNetworkFullInfo.id && (
+            <div className="d-flex align-items-center gap-2">
+              <img
+                src={
+                  state.selectedNetworkFullInfo.icon || placeholderNetworkIcon
+                }
+                alt={state.selectedNetworkFullInfo.id}
+                className="rounded-circle"
+                style={{ width: "30px", height: "30px" }}
+              />
+              {state.selectedNetworkFullInfo.name}
+            </div>
+          ),
+          dropdownLabel: "Select Network",
+          options: state.networksForSelectedAssetDropdown,
+          enableSearch: true,
+          onSelect: (option) => {
+            const networkInfo = option || null;
             fetchDepositAddress(networkInfo);
-            if (networkInfo) {
-              State.update({ currentStep: 3 });
-            }
+            State.update({
+              selectedNetworkFullInfo: networkInfo,
+              currentStep: networkInfo ? 3 : state.currentStep,
+            });
           },
-          options: state.networksForSelectedAssetDropdown.map((network) => ({
-            value: network.id,
-            label: network.name,
-            icon: network.icon || placeholderNetworkIcon,
-          })),
-          defaultLabel: "Select Network",
-          showSearch: true,
-          searchInputPlaceholder: "Search networks",
-          searchByLabel: true,
-          showCircularIcon: true,
-          disabled:
-            state.isLoadingTokens ||
-            state.isLoadingAddress ||
-            !selectedAssetName ||
-            state.networksForSelectedAssetDropdown.length === 0,
+          searchPlaceholder: "Search networks",
+          renderOption: (option) => (
+            <div className="d-flex align-items-center gap-2">
+              <img
+                src={option.icon || placeholderNetworkIcon}
+                alt={option.name}
+                className="rounded-circle"
+                style={{ width: "30px", height: "30px" }}
+              />
+              {option.name}
+            </div>
+          ),
         }}
       />
     </div>
@@ -435,7 +495,7 @@ const NetworkSelector = ({ isActive }) => {
 };
 
 const DepositAddressSection = ({ isActive }) => {
-  if (!isActive || !selectedAssetName || !selectedNetworkFullInfo)
+  if (!isActive || !state.selectedAsset || !state.selectedNetworkFullInfo)
     return (
       <div className="text-secondary h5 fw-bold mb-0">Deposit Address</div>
     );
@@ -451,7 +511,7 @@ const DepositAddressSection = ({ isActive }) => {
           src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.intents-deposit.DepositAddress"
           props={{
             address: state.intentsDepositAddress,
-            warningMessage: `Only deposit from the ${selectedNetworkFullInfo.name} network.`,
+            warningMessage: `Only deposit from the ${state.selectedNetworkFullInfo.name} network.`,
             instance,
           }}
         />
@@ -473,18 +533,6 @@ return (
           sending cross-chain. Supports payments only. Token exchange coming
           soon.
         </div>
-
-        {/* Single Web3IconFetcher for all icons - optimized to fetch all asset and network icons at once */}
-        {state.allTokensForIcons.length > 0 && !state.allIconsFetched && (
-          <Widget
-            src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Web3IconFetcher"
-            props={{
-              tokens: state.allTokensForIcons,
-              onIconsLoaded: handleAllIconsLoaded,
-              fetchNetworkIcons: true, // Enable both asset and network icon fetching
-            }}
-          />
-        )}
 
         {/* Step Indicators and Content */}
         <div className="position-relative mt-2">

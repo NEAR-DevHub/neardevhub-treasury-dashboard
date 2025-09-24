@@ -444,7 +444,7 @@ const TreasuryCard = ({ treasury, hasTreasury }) => {
                   className="warning-link"
                   target="_blank"
                   rel="noopener noreferrer"
-                  href={`https://docs.neartreasury.com/support/`}
+                  href={`https://docs.neartreasury.com/help/support`}
                 >
                   please contact our team
                 </a>

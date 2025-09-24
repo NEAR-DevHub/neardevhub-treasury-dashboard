@@ -103,7 +103,7 @@ fn normalize_json(value: &mut Value) {
 
 #[tokio::test]
 async fn test_web4() -> Result<(), Box<dyn std::error::Error>> {
-    let sandbox = near_workspaces::sandbox().await?;
+    let sandbox = near_workspaces::sandbox_with_version("2.7.0").await?;
     let contract_wasm = build_project_once();
 
     let contract = sandbox.dev_deploy(&contract_wasm).await?;
@@ -138,7 +138,7 @@ async fn test_factory() -> Result<(), Box<dyn std::error::Error>> {
     let socialdb_contract_id: AccountId = SOCIALDB_ACCOUNT.parse()?;
     let treasury_factory_contract_id: AccountId = TREASURY_FACTORY_CONTRACT_ACCOUNT.parse()?;
 
-    let worker = near_workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox_with_version("2.7.0").await?;
 
     let treasury_factory_contract: near_workspaces::Contract = worker
         .import_contract(&treasury_factory_contract_id, &mainnet)
@@ -542,7 +542,7 @@ async fn test_factory_should_refund_if_failing_because_of_existing_account(
     let socialdb_contract_id: AccountId = SOCIALDB_ACCOUNT.parse()?;
     let treasury_factory_contract_id: AccountId = TREASURY_FACTORY_CONTRACT_ACCOUNT.parse()?;
 
-    let worker = near_workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox_with_version("2.7.0").await?;
 
     let treasury_factory_contract: near_workspaces::Contract = worker
         .import_contract(&treasury_factory_contract_id, &mainnet)
@@ -769,7 +769,7 @@ async fn test_factory_should_refund_if_failing_because_of_existing_dao_but_still
     let socialdb_contract_id: AccountId = SOCIALDB_ACCOUNT.parse()?;
     let treasury_factory_contract_id: AccountId = TREASURY_FACTORY_CONTRACT_ACCOUNT.parse()?;
 
-    let worker = near_workspaces::sandbox().await?;
+    let worker = near_workspaces::sandbox_with_version("2.7.0").await?;
 
     let treasury_factory_contract: near_workspaces::Contract = worker
         .import_contract(&treasury_factory_contract_id, &mainnet)
@@ -1070,7 +1070,7 @@ async fn test_factory_should_refund_if_failing_because_of_existing_dao_but_still
 
 #[tokio::test]
 async fn test_service_worker() -> Result<(), Box<dyn std::error::Error>> {
-    let sandbox = near_workspaces::sandbox().await?;
+    let sandbox = near_workspaces::sandbox_with_version("2.7.0").await?;
     let contract_wasm = build_project_once();
 
     let contract = sandbox.dev_deploy(&contract_wasm).await?;
@@ -1095,7 +1095,7 @@ async fn test_service_worker() -> Result<(), Box<dyn std::error::Error>> {
 #[tokio::test]
 async fn test_html_contains_service_worker_registration() -> Result<(), Box<dyn std::error::Error>>
 {
-    let sandbox = near_workspaces::sandbox().await?;
+    let sandbox = near_workspaces::sandbox_with_version("2.7.0").await?;
     let contract_wasm = build_project_once();
 
     let contract = sandbox.dev_deploy(&contract_wasm).await?;

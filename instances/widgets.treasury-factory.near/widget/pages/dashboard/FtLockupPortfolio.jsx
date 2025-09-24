@@ -334,9 +334,14 @@ const Row = ({ label, value, tooltip, showBorder, showSymbol, innerItem }) => {
 };
 
 function convertBalanceToReadableFormat(amount, decimals) {
-  return Big(amount ?? "0")
-    .div(Big(10).pow(Number(decimals) || 1))
-    .toFixed();
+  return Number(
+    Big(amount ?? "0")
+      .div(Big(10).pow(Number(decimals) || 1))
+      .toFixed()
+  ).toLocaleString("en-US", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 4,
+  });
 }
 
 function formatCurrency(amount) {

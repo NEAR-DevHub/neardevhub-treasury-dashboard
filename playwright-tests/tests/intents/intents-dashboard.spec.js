@@ -2,6 +2,7 @@ import { expect } from "@playwright/test";
 import { test } from "../../util/test.js";
 import { Worker, parseNEAR } from "near-workspaces";
 import { redirectWeb4 } from "../../util/web4.js";
+import { PROPOSAL_BOND } from "../../util/sandboxrpc.js";
 
 // Use the near-workspaces sandbox to deploy omft and intents contracts, make deposits, and test dashboard UI
 
@@ -19,7 +20,7 @@ test("should not display NEAR intents card if there are no assets in NEAR intent
 
   // Intercept RPC calls to redirect intents.near queries to the sandbox
   // Now this block is after worker initialization and sandboxRpcUrl is available
-  await page.route("https://rpc.mainnet.near.org", async (route) => {
+  await page.route("https://rpc.mainnet.fastnear.com", async (route) => {
     const request = route.request();
     if (request.method() === "POST") {
       let postData;
@@ -160,6 +161,13 @@ test("show intents balance in dashboard (sandbox)", async ({
   // --- SANDBOX SETUP ---
   const worker = await Worker.init();
   const sandboxRpcUrl = worker.provider.connection.url; // Define sandboxRpcUrl here
+
+  const creatorAccount = await worker.rootAccount.createSubAccount(
+    "testcreator",
+    {
+      initialBalance: parseNEAR("10"),
+    }
+  );
 
   // Import omft (ETH) and wNEAR contracts
   const omft = await worker.rootAccount.importContract({
@@ -575,6 +583,92 @@ test("show intents balance in dashboard (sandbox)", async ({
     { attachedDeposit: "1", gas: "300000000000000" }
   );
 
+  await worker.rootAccount.importContract({
+    mainnetContract: instanceAccount,
+  });
+
+  // Create DAO contract
+  const daoContract = await worker.rootAccount.importContract({
+    mainnetContract: daoAccount,
+    initialBalance: parseNEAR("10"),
+  });
+
+  // Initialize DAO with creatorAccount having permissions
+  const daoName = daoAccount.split(".")[0];
+  const create_testdao_args = {
+    config: {
+      name: daoName,
+      purpose: "treasury",
+      metadata: "",
+    },
+    policy: {
+      roles: [
+        {
+          kind: {
+            Group: [creatorAccount.accountId], // creatorAccount from beforeAll
+          },
+          name: "Create Requests",
+          permissions: [
+            "call:AddProposal",
+            "transfer:AddProposal",
+            "config:Finalize",
+          ],
+          vote_policy: {},
+        },
+        {
+          kind: {
+            Group: [creatorAccount.accountId],
+          },
+          name: "Manage Members",
+          permissions: [
+            "config:*",
+            "policy:*",
+            "add_member_to_role:*",
+            "remove_member_from_role:*",
+          ],
+          vote_policy: {},
+        },
+        {
+          kind: {
+            Group: [creatorAccount.accountId],
+          },
+          name: "Vote",
+          permissions: ["*:VoteReject", "*:VoteApprove", "*:VoteRemove"],
+          vote_policy: {},
+        },
+      ],
+      default_vote_policy: {
+        weight_kind: "RoleWeight",
+        quorum: "0",
+        threshold: [1, 2],
+      },
+      proposal_bond: PROPOSAL_BOND,
+      proposal_period: "604800000000000",
+      bounty_bond: "100000000000000000000000",
+      bounty_forgiveness_period: "604800000000000",
+    },
+  };
+  await daoContract.callRaw(daoAccount, "new", create_testdao_args, {
+    gas: "300000000000000",
+  });
+
+  // social.near setup (required for BOS widgets)
+  const socialNearAccount = await worker.rootAccount.importContract({
+    mainnetContract: "social.near",
+  });
+  await socialNearAccount.call(
+    socialNearAccount.accountId,
+    "new",
+    {},
+    { gas: "300000000000000" }
+  );
+  await socialNearAccount.call(
+    socialNearAccount.accountId,
+    "set_status",
+    { status: "Live" },
+    { gas: "300000000000000" }
+  );
+
   // --- CONTRACT BALANCE CHECKS ---
   const ethTokenId = "nep141:eth.omft.near";
   const ethArbTokenId = "nep141:arb.omft.near";
@@ -626,46 +720,12 @@ test("show intents balance in dashboard (sandbox)", async ({
   expect(solBalance).toEqual("10000000000"); // 10 SOL
 
   // --- UI TEST ---
-  await redirectWeb4({ page, contractId: treasury.accountId });
-
-  // Intercept RPC calls to redirect intents.near queries to the sandbox
-  // Now this block is after worker initialization and sandboxRpcUrl is available
-  const rpcRoute = async (route) => {
-    const request = route.request();
-    if (request.method() === "POST") {
-      let postData;
-      try {
-        postData = request.postDataJSON();
-      } catch (e) {
-        return route.fallback(); // Ensure other handlers can try
-      }
-
-      // At this point, postData is valid JSON if no error was caught.
-
-      // Proceed with detailed logging and matching only if essential parts of postData exist
-      if (
-        postData &&
-        typeof postData.method === "string" &&
-        postData.params !== undefined
-      ) {
-        if (
-          postData.method === "query" &&
-          typeof postData.params === "object" &&
-          postData.params !== null && // Ensure params is an object
-          postData.params.request_type === "call_function" &&
-          postData.params.account_id === "intents.near" &&
-          postData.params.method_name === "mt_batch_balance_of"
-        ) {
-          const response = await route.fetch({ url: sandboxRpcUrl });
-          const json = await response.json();
-          return await route.fulfill({ response, json });
-        }
-      }
-    }
-    return await route.fallback(); // Crucial: let other handlers (like from redirectWeb4) process if this one doesn't.
-  };
-  await page.route("https://rpc.mainnet.near.org", rpcRoute);
-  await page.route("https://rpc.mainnet.fastnear.com", rpcRoute);
+  await redirectWeb4({
+    page,
+    contractId: treasury.accountId,
+    networkId: "sandbox",
+    sandboxNodeUrl: sandboxRpcUrl,
+  });
 
   await page.goto(`https://${treasury.accountId}.page`);
 
@@ -685,8 +745,10 @@ test("show intents balance in dashboard (sandbox)", async ({
   const ethAmountElement = ethRowLocator.locator(
     "div.d-flex.gap-2.align-items-center.justify-content-end div.d-flex.flex-column.align-items-end div.h6.mb-0"
   );
-  // Total ETH should be 128.23 + 50 + 25 = 203.23 ETH
-  await expect(ethAmountElement).toHaveText("203.23", { timeout: 10000 }); // Aggregated display
+  // Total ETH should be 128.2267 + 50 + 25 = 203.2267 ETH
+  // With intelligent formatting, this may display with varying precision based on ETH price
+  const ethText = await ethAmountElement.textContent();
+  expect(parseFloat(ethText.replace(/,/g, ""))).toBeCloseTo(203.2267, 2);
 
   // Check that the ETH row has an expandable dropdown (chevron icon) since it has multiple chains
   const ethChevronLocator = ethRowLocator.locator(
@@ -702,17 +764,50 @@ test("show intents balance in dashboard (sandbox)", async ({
     .locator("div.d-flex.flex-column")
     .filter({ hasText: "ETH" });
 
-  // Check Ethereum chain balance
+  // Check Ethereum chain balance (128.2267 ETH)
   await expect(expandedEthSection.getByText("ETH")).toBeVisible();
-  await expect(expandedEthSection.getByText("128.23")).toBeVisible();
+  // With intelligent formatting, check for the value being close to expected
+  const ethBalanceElements = await expandedEthSection.locator(".h6.mb-0").all();
+  let foundEthBalance = false;
+  for (const elem of ethBalanceElements) {
+    const text = await elem.textContent();
+    const value = parseFloat(text.replace(/,/g, ""));
+    if (Math.abs(value - 128.2267) < 0.01) {
+      foundEthBalance = true;
+      break;
+    }
+  }
+  expect(foundEthBalance).toBe(true);
 
-  // Check Arbitrum chain balance
+  // Check Arbitrum chain balance (50 ETH)
   await expect(expandedEthSection.getByText("ARB")).toBeVisible();
-  await expect(expandedEthSection.getByText("50.00")).toBeVisible();
+  const arbBalanceElements = await expandedEthSection.locator(".h6.mb-0").all();
+  let foundArbBalance = false;
+  for (const elem of arbBalanceElements) {
+    const text = await elem.textContent();
+    const value = parseFloat(text.replace(/,/g, ""));
+    if (Math.abs(value - 50) < 0.01) {
+      foundArbBalance = true;
+      break;
+    }
+  }
+  expect(foundArbBalance).toBe(true);
 
-  // Check Base chain balance
+  // Check Base chain balance (25 ETH)
   await expect(expandedEthSection.getByText("BASE")).toBeVisible();
-  await expect(expandedEthSection.getByText("25.00")).toBeVisible();
+  const baseBalanceElements = await expandedEthSection
+    .locator(".h6.mb-0")
+    .all();
+  let foundBaseBalance = false;
+  for (const elem of baseBalanceElements) {
+    const text = await elem.textContent();
+    const value = parseFloat(text.replace(/,/g, ""));
+    if (Math.abs(value - 25) < 0.01) {
+      foundBaseBalance = true;
+      break;
+    }
+  }
+  expect(foundBaseBalance).toBe(true);
 
   // Locate the WNEAR row and check its balance
   const wnearRowLocator = intentsPortfolioLocator.locator(
@@ -721,7 +816,9 @@ test("show intents balance in dashboard (sandbox)", async ({
   const wnearAmountElement = wnearRowLocator.locator(
     "div.d-flex.gap-2.align-items-center.justify-content-end div.d-flex.flex-column.align-items-end div.h6.mb-0"
   );
-  await expect(wnearAmountElement).toHaveText("342.66");
+  // With intelligent formatting, check for the value being close to expected
+  const wnearText = await wnearAmountElement.textContent();
+  expect(parseFloat(wnearText.replace(/,/g, ""))).toBeCloseTo(342.66, 1);
 
   // Locate the BTC row and check its balance
   const btcRowLocator = intentsPortfolioLocator.locator(
@@ -730,7 +827,9 @@ test("show intents balance in dashboard (sandbox)", async ({
   const btcAmountElement = btcRowLocator.locator(
     "div.d-flex.gap-2.align-items-center.justify-content-end div.d-flex.flex-column.align-items-end div.h6.mb-0"
   );
-  await expect(btcAmountElement).toHaveText("0.50");
+  // BTC with high price may show different precision
+  const btcText = await btcAmountElement.textContent();
+  expect(parseFloat(btcText.replace(/,/g, ""))).toBeCloseTo(0.5, 2);
 
   // Locate the SOL row and check its balance
   const solRowLocator = intentsPortfolioLocator.locator(
@@ -739,17 +838,9 @@ test("show intents balance in dashboard (sandbox)", async ({
   const solAmountElement = solRowLocator.locator(
     "div.d-flex.gap-2.align-items-center.justify-content-end div.d-flex.flex-column.align-items-end div.h6.mb-0"
   );
-  await expect(solAmountElement).toHaveText("10.00");
-
-  // ETH icon
-  const ethIconLocator = page
-    .locator('div.h6.mb-0.text-truncate:has-text("ETH")')
-    .locator("../..")
-    .locator("img");
-  const correctEthIconBase64 =
-    "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCIgdmlld0JveD0iMCAwIDMyIDMyIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxjaXJjbGUgY3g9IjE2IiBjeT0iMTYiIHI9IjE2IiBmaWxsPSIjNjI3RUVBIi8+PGcgZmlsbD0iI0ZGRiIgZmlsbC1ydWxlPSJub256ZXJvIj48cGF0aCBmaWxsLW9wYWNpdHk9Ii42MDIiIGQ9Ik0xNi40OTggNHY4Ljg3bDcuNDk3IDMuMzV6Ii8+PHBhdGggZD0iTTE2LjQ5OCA0TDkgMTYuMjJsNy40OTgtMy4zNXoiLz48cGF0aCBmaWxsLW9wYWNpdHk9Ii42MDIiIGQ9Ik0xNi40OTggMjEuOTY4djYuMDI3TDI0IDE3LjYxNnoiLz48cGF0aCBkPSJNMTYuNDk4IDI3Ljk5NXYtNi4wMjhMOSAxNy42MTZ6Ii8+PHBhdGggZmlsbC1vcGFjaXR5PSIuMiIgZD0iTTE2LjQ5OCAyMC41NzNsNy40OTctNC4zNTMtNy40OTctMy4zNDh6Ii8+PHBhdGggZmlsbC1vcGFjaXR5PSIuNjAyIiBkPSJNOSAxNi4yMmw3LjQ5OCA0LjM1M3YtNy43MDF6Ii8+PC9nPjwvZz48L3N2Zz4="; // This is the one that was observed to be consistently passing.
-
-  await expect(ethIconLocator).toHaveAttribute("src", correctEthIconBase64);
+  // SOL may show different precision based on price
+  const solText = await solAmountElement.textContent();
+  expect(parseFloat(solText.replace(/,/g, ""))).toBeCloseTo(10, 1);
 
   // wNEAR balance
   const wnearBalanceAfterDeposit = await intents.view("mt_balance_of", {

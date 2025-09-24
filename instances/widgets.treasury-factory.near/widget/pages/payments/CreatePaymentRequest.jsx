@@ -574,6 +574,18 @@ return (
       />
       {selectedWallet && (
         <div className="d-flex flex-column gap-3">
+          {selectedWallet.value === treasuryDaoID && (
+            <div className="text-secondary">
+              You can send a payment request to only one recipient at a time.
+              Need to send many?{" "}
+              <span
+                className="primary-text-color text-decoration-underline cursor-pointer"
+                onClick={() => props.setIsBulkImport(true)}
+              >
+                Import Multiple Payment Requests
+              </span>
+            </div>
+          )}
           {intentsBalances &&
             !intentsBalances?.length &&
             selectedWallet.value === "intents.near" && (
