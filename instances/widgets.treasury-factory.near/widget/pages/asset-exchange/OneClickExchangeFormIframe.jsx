@@ -339,7 +339,7 @@ const code = `
                 font-size: 20px;
             }
             .form-section {
-                margin-bottom: 24px;
+                margin-block: 10px;
             }
             .form-label {
                 color: ${colors["--text-color"]};

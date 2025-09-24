@@ -1184,6 +1184,7 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     // Now proceed to approve the proposal
     const approveButton = page.getByRole("button", { name: "Approve" }).nth(1);
     await expect(approveButton).toBeVisible();
+    await page.waitForTimeout(1_000);
     await approveButton.click();
 
     // Confirm the approval transaction

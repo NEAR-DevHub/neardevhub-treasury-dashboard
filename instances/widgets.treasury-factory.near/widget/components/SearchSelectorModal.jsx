@@ -28,7 +28,7 @@ useEffect(() => {
     const filtered = (options || []).filter((option) => {
       // If option is an object
       if (typeof option === "object" && option !== null) {
-        return (option.label || option.id || option.value || "")
+        return (option.name || option.label || option.id || option.value || "")
           .toString()
           .toLowerCase()
           .includes(searchValue.toLowerCase());
