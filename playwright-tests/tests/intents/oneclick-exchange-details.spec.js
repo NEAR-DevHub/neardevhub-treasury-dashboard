@@ -28,7 +28,7 @@ test.describe("OneClick Exchange Proposal Details", () => {
     await fs.mkdir(screenshotsDir, { recursive: true });
   });
 
-  test("disables voting when 1Click API quote is expired", async ({
+  test("removes voting buttons when 1Click API quote is expired", async ({
     page,
     instanceAccount,
     daoAccount,
@@ -123,7 +123,7 @@ test.describe("OneClick Exchange Proposal Details", () => {
     console.log(`Proposal #7 visible: ${proposalIdVisible}`);
 
     // Check that the expired quote message is displayed
-    const expiredMessage = page.getByText("Voting is no longer available");
+    const expiredMessage = page.getByText("Voting is not available due to expired swap quote");
     const messageVisible = await expiredMessage.isVisible().catch(() => false);
 
     if (messageVisible) {
@@ -138,33 +138,19 @@ test.describe("OneClick Exchange Proposal Details", () => {
         console.log("✓ Learn more link is visible");
       }
 
-      // Verify that vote buttons are disabled
+      // Verify that vote buttons are NOT visible (removed instead of disabled)
       const approveButton = page.getByRole("button", { name: "Approve" });
       const rejectButton = page.getByRole("button", { name: "Reject" });
 
-      const approveDisabled = await approveButton
-        .isDisabled()
+      const approveVisible = await approveButton
+        .isVisible()
         .catch(() => false);
-      const rejectDisabled = await rejectButton.isDisabled().catch(() => false);
+      const rejectVisible = await rejectButton.isVisible().catch(() => false);
 
-      if (approveDisabled && rejectDisabled) {
-        console.log("✓ Vote buttons are disabled");
+      if (!approveVisible && !rejectVisible) {
+        console.log("✓ Vote buttons are removed (not shown)");
       } else {
-        console.log("✗ Vote buttons are not disabled as expected");
-      }
-
-      // Check opacity if buttons exist
-      if ((await approveButton.count()) > 0) {
-        const approveOpacity = await approveButton.evaluate(
-          (el) => window.getComputedStyle(el).opacity
-        );
-        const rejectOpacity = await rejectButton.evaluate(
-          (el) => window.getComputedStyle(el).opacity
-        );
-
-        if (parseFloat(approveOpacity) < 1 && parseFloat(rejectOpacity) < 1) {
-          console.log("✓ Buttons have reduced opacity");
-        }
+        console.log("✗ Vote buttons are visible when they should be removed");
       }
 
       // Check that token symbols are displayed, not contract addresses
@@ -234,8 +220,8 @@ test.describe("OneClick Exchange Proposal Details", () => {
 
       // All checks passed
       expect(messageVisible).toBeTruthy();
-      expect(approveDisabled).toBeTruthy();
-      expect(rejectDisabled).toBeTruthy();
+      expect(approveVisible).toBeFalsy();
+      expect(rejectVisible).toBeFalsy();
     } else {
       // If the new implementation isn't working, log what we see
       console.log(
@@ -365,7 +351,7 @@ test.describe("OneClick Exchange Proposal Details", () => {
     await page.waitForTimeout(5000);
 
     // Check that the expired quote message is NOT displayed
-    const expiredMessage = page.getByText("Voting is no longer available");
+    const expiredMessage = page.getByText("Voting is not available due to expired swap quote");
     const messageVisible = await expiredMessage.isVisible().catch(() => false);
 
     expect(messageVisible).toBeFalsy();
