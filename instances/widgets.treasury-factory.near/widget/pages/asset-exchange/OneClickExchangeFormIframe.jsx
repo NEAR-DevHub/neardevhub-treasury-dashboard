@@ -707,7 +707,7 @@ const code = `
                                        data-bs-toggle="tooltip"
                                        data-bs-custom-class="custom-tooltip"
                                        data-bs-placement="top"
-                                       title="Estimated time for the swap to be executed after the deposit transaction is confirmed">
+                                       title="Estimated time for the swap to be executed after the proposal is approved and the amount is deposited">
                                     </i>
                                 </div>
                                 <div class="detail-value" id="detail-time">N/A</div>
