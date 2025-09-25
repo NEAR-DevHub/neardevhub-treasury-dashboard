@@ -123,7 +123,9 @@ test.describe("OneClick Exchange Proposal Details", () => {
     console.log(`Proposal #7 visible: ${proposalIdVisible}`);
 
     // Check that the expired quote message is displayed
-    const expiredMessage = page.getByText("Voting is not available due to expired swap quote");
+    const expiredMessage = page.getByText(
+      "Voting is not available due to expired swap quote"
+    );
     const messageVisible = await expiredMessage.isVisible().catch(() => false);
 
     if (messageVisible) {
@@ -142,9 +144,7 @@ test.describe("OneClick Exchange Proposal Details", () => {
       const approveButton = page.getByRole("button", { name: "Approve" });
       const rejectButton = page.getByRole("button", { name: "Reject" });
 
-      const approveVisible = await approveButton
-        .isVisible()
-        .catch(() => false);
+      const approveVisible = await approveButton.isVisible().catch(() => false);
       const rejectVisible = await rejectButton.isVisible().catch(() => false);
 
       if (!approveVisible && !rejectVisible) {
@@ -351,7 +351,9 @@ test.describe("OneClick Exchange Proposal Details", () => {
     await page.waitForTimeout(5000);
 
     // Check that the expired quote message is NOT displayed
-    const expiredMessage = page.getByText("Voting is not available due to expired swap quote");
+    const expiredMessage = page.getByText(
+      "Voting is not available due to expired swap quote"
+    );
     const messageVisible = await expiredMessage.isVisible().catch(() => false);
 
     expect(messageVisible).toBeFalsy();
