@@ -744,7 +744,7 @@ const code = `
                                        data-bs-toggle="tooltip"
                                        data-bs-custom-class="custom-tooltip"
                                        data-bs-placement="top"
-                                       title="Time when the deposit address becomes inactive and funds may be lost">
+                                       title="Time at which the deposit address becomes inactive and funds may be lost. Proposals should not be approved after this point">
                                     </i>
                                 </div>
                                 <div class="detail-value" id="detail-expires">N/A</div>
