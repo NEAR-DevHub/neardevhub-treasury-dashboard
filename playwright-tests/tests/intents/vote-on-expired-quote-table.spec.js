@@ -14,7 +14,7 @@ test.describe("Asset Exchange Table - Expired Quote Handling", () => {
     storageState: "playwright-tests/storage-states/wallet-connected-admin.json",
   });
 
-  test("disables voting buttons for expired quotes in table view", async ({
+  test("removes voting buttons for expired quotes in table view", async ({
     page,
     instanceAccount,
     daoAccount,
@@ -196,43 +196,35 @@ test.describe("Asset Exchange Table - Expired Quote Handling", () => {
     if (expiredRowVisible) {
       console.log("✓ Found proposal #30 row");
 
-      // Check for the info icon in the actions column
-      const infoIcon = expiredRow.locator(".bi-info-circle");
-      const infoIconVisible = await infoIcon.isVisible().catch(() => false);
+      // Check for the expired quote message in the actions column
+      const expiredMessage = expiredRow.getByText(
+        "Voting not available due to expired swap quote"
+      );
+      const expiredMessageVisible = await expiredMessage
+        .isVisible()
+        .catch(() => false);
 
-      if (infoIconVisible) {
-        console.log("✓ Info icon is displayed for expired quote");
+      if (expiredMessageVisible) {
+        console.log("✓ Expired quote message is displayed");
 
-        // Hover over the info icon to see the tooltip
-        await infoIcon.hover();
+        // Hover over the message to see the tooltip
+        await expiredMessage.hover();
         await page.waitForTimeout(500);
 
-        // Check if the approve/reject buttons are disabled
+        // Check that approve/reject buttons are NOT visible (removed instead of disabled)
         const approveBtn = expiredRow.locator('button:has-text("Approve")');
         const rejectBtn = expiredRow.locator('button:has-text("Reject")');
 
-        const approveDisabled = await approveBtn
-          .isDisabled()
-          .catch(() => false);
-        const rejectDisabled = await rejectBtn.isDisabled().catch(() => false);
+        const approveVisible = await approveBtn.isVisible().catch(() => false);
+        const rejectVisible = await rejectBtn.isVisible().catch(() => false);
 
-        expect(approveDisabled).toBeTruthy();
-        expect(rejectDisabled).toBeTruthy();
-        console.log("✓ Voting buttons are disabled for expired quote");
-
-        // Check button opacity
-        const approveOpacity = await approveBtn.evaluate(
-          (el) => window.getComputedStyle(el).opacity
+        expect(approveVisible).toBeFalsy();
+        expect(rejectVisible).toBeFalsy();
+        console.log(
+          "✓ Voting buttons are removed (not shown) for expired quote"
         );
-        const rejectOpacity = await rejectBtn.evaluate(
-          (el) => window.getComputedStyle(el).opacity
-        );
-
-        expect(parseFloat(approveOpacity)).toBeLessThan(1);
-        expect(parseFloat(rejectOpacity)).toBeLessThan(1);
-        console.log("✓ Buttons have reduced opacity");
       } else {
-        console.log("✗ Info icon not found for expired quote");
+        console.log("✗ Expired quote message not found");
       }
     } else {
       console.log("✗ Proposal #30 row not found");
@@ -299,7 +291,7 @@ test.describe("Asset Exchange Table - Expired Quote Handling", () => {
     console.log("\nTable view expired quote test completed successfully!");
   });
 
-  test("clicking on expired quote row shows details with disabled voting", async ({
+  test("clicking on expired quote row shows details with removed voting buttons", async ({
     page,
     instanceAccount,
     daoAccount,
@@ -426,7 +418,7 @@ test.describe("Asset Exchange Table - Expired Quote Handling", () => {
     // The details panel is in the secondary layout
     const detailsPanel = page.locator(".layout-secondary.show");
     const expiredMessage = detailsPanel.getByText(
-      "Voting is no longer available"
+      "Voting is not available due to expired swap quote"
     );
     const messageVisible = await expiredMessage.isVisible().catch(() => false);
 
@@ -442,17 +434,17 @@ test.describe("Asset Exchange Table - Expired Quote Handling", () => {
       if (deadlineExpired) {
         console.log("✓ Quote deadline shown as expired in details");
       }
+    }
 
-      // Check if voting buttons are disabled in the details panel
-      const approveBtn = detailsPanel.getByRole("button", { name: "Approve" });
-      const rejectBtn = detailsPanel.getByRole("button", { name: "Reject" });
+    // Check that voting buttons are NOT visible in the details panel (removed instead of disabled)
+    const approveBtn = detailsPanel.getByRole("button", { name: "Approve" });
+    const rejectBtn = detailsPanel.getByRole("button", { name: "Reject" });
 
-      const approveDisabled = await approveBtn.isDisabled().catch(() => false);
-      const rejectDisabled = await rejectBtn.isDisabled().catch(() => false);
+    const approveVisible = await approveBtn.isVisible().catch(() => false);
+    const rejectVisible = await rejectBtn.isVisible().catch(() => false);
 
-      if (approveDisabled && rejectDisabled) {
-        console.log("✓ Voting buttons are disabled in details panel");
-      }
+    if (!approveVisible && !rejectVisible) {
+      console.log("✓ Voting buttons are removed (not shown) in details panel");
     }
 
     // Take a screenshot
