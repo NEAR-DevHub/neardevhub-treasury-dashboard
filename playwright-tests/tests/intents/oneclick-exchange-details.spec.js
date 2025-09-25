@@ -57,7 +57,7 @@ test.describe("OneClick Exchange Proposal Details", () => {
         slippage: "2",
         quoteDeadline: formattedExpiredDate,
         destinationNetwork: "ethereum",
-        timeEstimate: "10 minutes",
+        timeEstimate: "10 seconds",
         depositAddress: "test-deposit-address",
         signature: "ed25519:test-signature",
       }),
@@ -205,7 +205,7 @@ test.describe("OneClick Exchange Proposal Details", () => {
 
       // Check that all 1Click fields are displayed
       const timeEstimateVisible = await page
-        .locator("text=10 minutes")
+        .locator("text=10 seconds")
         .isVisible()
         .catch(() => false);
       const depositAddressVisible = await page
@@ -306,7 +306,7 @@ test.describe("OneClick Exchange Proposal Details", () => {
         slippage: "2",
         quoteDeadline: formattedFutureDate,
         destinationNetwork: "ethereum",
-        timeEstimate: "10 minutes",
+        timeEstimate: "10 seconds",
         depositAddress: "test-deposit-address",
         signature: "ed25519:test-signature",
       }),
@@ -420,7 +420,7 @@ test.describe("OneClick Exchange Proposal Details", () => {
 
     // Check that all 1Click fields are displayed for valid quote
     const timeEstimateVisible = await page
-      .locator("text=10 minutes")
+      .locator("text=10 seconds")
       .isVisible()
       .catch(() => false);
     const depositAddressVisible = await page

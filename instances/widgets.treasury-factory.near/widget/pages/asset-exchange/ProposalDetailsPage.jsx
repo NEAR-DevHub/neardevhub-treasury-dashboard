@@ -627,7 +627,7 @@ return (
                       src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
                       props={{
                         popup:
-                          "This is the expiry time for the 1Click API quote. After this time, the quoted exchange rate is no longer valid and voting will be disabled to prevent loss of funds.",
+                          "Time when the deposit address becomes inactive and funds may be lost",
                         children: (
                           <i className="bi bi-info-circle text-secondary"></i>
                         ),
@@ -664,7 +664,7 @@ return (
                         src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
                         props={{
                           popup:
-                            "Estimated time for the cross-chain swap to complete once the proposal is approved.",
+                            "Estimated time for the swap to be executed after the deposit transaction is confirmed",
                           children: (
                             <i className="bi bi-info-circle text-secondary"></i>
                           ),

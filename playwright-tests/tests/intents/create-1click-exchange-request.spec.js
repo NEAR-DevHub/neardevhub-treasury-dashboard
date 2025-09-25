@@ -1169,7 +1169,7 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     await expect(
       expandedDetails.locator("label:has-text('Estimated Time')")
     ).toBeVisible();
-    const timeText = `${actualTimeEstimate} minutes`;
+    const timeText = `${actualTimeEstimate} seconds`;
     await expect(expandedDetails.locator(`text=${timeText}`)).toBeVisible();
     console.log(`✓ Time estimate displayed: ${timeText}`);
 
