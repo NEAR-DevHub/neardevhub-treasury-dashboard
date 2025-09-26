@@ -566,7 +566,9 @@ return (
               <label>Source Wallet</label>
               <div className="text-secondary">{proposalData?.sourceWallet}</div>
             </div>
-            <h6 className="mb-0 flex-1 border-top">{proposalData?.title}</h6>
+            <h6 className="mb-0 flex-1 border-top pt-3">
+              {proposalData?.title}
+            </h6>
             {proposalData?.summary && (
               <div className=" text-secondary">{proposalData?.summary}</div>
             )}

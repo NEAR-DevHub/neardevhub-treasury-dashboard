@@ -353,8 +353,8 @@ return (
               <label>Source Wallet</label>
               <div className="text-secondary">{proposalData?.sourceWallet}</div>
             </div>
-            <div className="d-flex flex-column gap-2 mt-1 border-top">
-              <label>Send</label>
+            <div className="d-flex flex-column gap-2 mt-1">
+              <label className="border-top">Send</label>
               <h5 className="mb-0">
                 {proposalData?.quoteDeadline ? (
                   // For 1Click exchanges, show custom display with optional icon
