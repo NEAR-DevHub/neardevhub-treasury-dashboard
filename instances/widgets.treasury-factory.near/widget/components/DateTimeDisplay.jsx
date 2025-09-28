@@ -36,7 +36,7 @@ const getFormattedDate = (timestamp, format, timezone) => {
     case "date-only":
       // Sep 1, 2025
       return date.toLocaleDateString("en-US", {
-        month: "short",
+        month: "long",
         day: "numeric",
         year: "numeric",
         ...baseOptions,
