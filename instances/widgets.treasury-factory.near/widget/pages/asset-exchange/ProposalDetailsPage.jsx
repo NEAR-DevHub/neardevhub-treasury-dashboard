@@ -10,7 +10,6 @@ const {
   decodeProposalDescription,
   decodeBase64,
   getApproversAndThreshold,
-  formatSubmissionTimeStamp,
 } = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
 
 const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);

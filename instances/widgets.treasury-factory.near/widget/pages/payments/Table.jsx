@@ -282,9 +282,11 @@ const ProposalsComponent = () => {
             <td className={isVisible("Created Date")}>
               <Widget
                 loading=""
-                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
+                src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DateTimeDisplay"
                 props={{
-                  timestamp: item.submission_time,
+                  timestamp: item.submission_time / 1e6,
+                  format: "date-time",
+                  instance: instance,
                 }}
               />
             </td>
@@ -480,7 +482,8 @@ const ProposalsComponent = () => {
               >
                 {formatSubmissionTimeStamp(
                   item.submission_time,
-                  proposalPeriod
+                  proposalPeriod,
+                  instance
                 )}
               </td>
             )}

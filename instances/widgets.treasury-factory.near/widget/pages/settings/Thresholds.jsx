@@ -565,6 +565,7 @@ return (
                   descriptionText:
                     "This action will override your previous pending proposals. Complete existing one before creating a new to avoid conflicting or incomplete updates.",
                   tableProps: [{ proposals }],
+                  instance,
                 }}
               />
             </ModalContent>

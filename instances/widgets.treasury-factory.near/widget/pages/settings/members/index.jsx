@@ -507,6 +507,7 @@ return (
             loading=""
             src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.WarningTable`}
             props={{
+              instance,
               descriptionText:
                 "To avoid conflicts, you need to complete or resolve the existing pending requests before proceeding. These requests are currently active and must be approved or rejected first.",
               tableProps: [{ proposals }],

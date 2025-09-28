@@ -1,4 +1,10 @@
-const { tableProps, warningText, descriptionText, includeExpiryDate } = props;
+const {
+  tableProps,
+  warningText,
+  descriptionText,
+  includeExpiryDate,
+  instance,
+} = props;
 
 const { decodeProposalDescription } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
@@ -49,11 +55,13 @@ return (
                       <td style={{ width: "130px" }}>
                         <Widget
                           loading=""
-                          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
+                          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DateTimeDisplay"
                           props={{
-                            timestamp:
-                              proposal.submissionTimeMillis ??
-                              proposal.submission_time,
+                            timestamp: proposal.submissionTimeMillis
+                              ? Number(proposal.submissionTimeMillis)
+                              : Number(proposal.submission_time) / 1e6,
+                            format: "date-time",
+                            instance,
                           }}
                         />
                       </td>
@@ -62,15 +70,23 @@ return (
                           <td style={{ width: "110px" }}>
                             <Widget
                               loading=""
-                              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
-                              props={{ timestamp: proposal.currentExpiryTime }}
+                              src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DateTimeDisplay"
+                              props={{
+                                timestamp: proposal.currentExpiryTime,
+                                format: "date-time",
+                                instance,
+                              }}
                             />
                           </td>
                           <td style={{ width: "110px" }}>
                             <Widget
                               loading=""
-                              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
-                              props={{ timestamp: proposal.newExpiryTime }}
+                              src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DateTimeDisplay"
+                              props={{
+                                timestamp: proposal.newExpiryTime,
+                                format: "date-time",
+                                instance,
+                              }}
                             />
                           </td>
                         </>
