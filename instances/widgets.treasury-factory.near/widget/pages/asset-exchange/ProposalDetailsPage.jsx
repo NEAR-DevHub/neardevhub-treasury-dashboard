@@ -641,16 +641,14 @@ return (
                         : ""
                     }
                   >
-                    {proposalData.quoteDeadline.toLocaleString("en-US", {
-                      month: "short",
-                      day: "2-digit",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      hour12: true,
-                      timeZone: "UTC",
-                      timeZoneName: "short",
-                    })}
+                    <Widget
+                      loading=""
+                      src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DateTimeDisplay"
+                      props={{
+                        timestamp: proposalData.quoteDeadline,
+                        instance,
+                      }}
+                    />
                     {new Date() > proposalData.quoteDeadline && " (EXPIRED)"}
                   </div>
                 </div>
