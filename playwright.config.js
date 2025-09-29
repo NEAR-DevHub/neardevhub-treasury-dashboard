@@ -86,6 +86,7 @@ export default defineConfig({
         "**/settings/feed-filters.spec.js",
         "**/payments/filters.spec.js",
         "**/stake-delegation/stake-delegation-filters.spec.js",
+        "**/dashboard/intents-historical-graph.spec.js",
       ],
     },
     /*{
