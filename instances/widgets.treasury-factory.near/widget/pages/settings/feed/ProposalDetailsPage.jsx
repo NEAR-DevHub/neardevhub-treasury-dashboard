@@ -5,12 +5,8 @@ const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
 if (!instance) {
   return <></>;
 }
-const {
-  decodeProposalDescription,
-  decodeBase64,
-  getApproversAndThreshold,
-  formatSubmissionTimeStamp,
-} = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
+const { decodeProposalDescription, decodeBase64, getApproversAndThreshold } =
+  VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
 
 const { treasuryDaoID, allowLockupCancellation } = VM.require(
   `${instance}/widget/config.data`

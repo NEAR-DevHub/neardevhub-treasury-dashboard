@@ -924,6 +924,7 @@ test("show intents balance in dashboard (sandbox)", async ({
 
   await expect(totalBalanceCardLocator).not.toContainText("NaN");
 
+  await page.waitForTimeout(2_000);
   // Ensure that the total balance is more than the intents balance
   const totalBalanceText = await totalBalanceCardLocator.innerText();
 

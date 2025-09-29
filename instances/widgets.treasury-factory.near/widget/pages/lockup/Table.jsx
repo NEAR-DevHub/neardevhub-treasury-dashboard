@@ -150,8 +150,12 @@ const ProposalsComponent = ({ item }) => {
       <td className={isVisible("Created Date")}>
         <Widget
           loading=""
-          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
-          props={{ timestamp: item.submission_time }}
+          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DateTimeDisplay"
+          props={{
+            timestamp: item.submission_time / 1e6,
+            format: "date-time",
+            instance,
+          }}
         />
       </td>
       {!isPendingRequests && (
@@ -191,18 +195,25 @@ const ProposalsComponent = ({ item }) => {
       <td className={isVisible("Start Date")}>
         <Widget
           loading=""
-          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
-          props={{ timestamp: startTimestamp }}
+          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DateTimeDisplay"
+          props={{
+            timestamp: startTimestamp / 1e6,
+            format: "date-time",
+            instance,
+          }}
         />
       </td>
       <td className={isVisible("End Date")}>
         <Widget
           loading=""
-          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
+          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DateTimeDisplay"
           props={{
-            timestamp:
-              vestingSchedule.end_timestamp ??
-              parseInt(startTimestamp) + parseInt(args.release_duration),
+            timestamp: vestingSchedule.end_timestamp
+              ? vestingSchedule.end_timestamp / 1e6
+              : (parseInt(startTimestamp) + parseInt(args.release_duration)) /
+                1e6,
+            format: "date-time",
+            instance,
           }}
         />
       </td>
@@ -212,8 +223,12 @@ const ProposalsComponent = ({ item }) => {
             {vestingSchedule.cliff_timestamp ? (
               <Widget
                 loading=""
-                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
-                props={{ timestamp: vestingSchedule.cliff_timestamp }}
+                src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DateTimeDisplay"
+                props={{
+                  timestamp: vestingSchedule.cliff_timestamp / 1e6,
+                  format: "date-time",
+                  instance,
+                }}
               />
             ) : (
               "-"

@@ -386,21 +386,6 @@ const RadioButton = styled.div`
   }
 `;
 
-const formattedDate = (date) => {
-  const d = new Date(date).toLocaleDateString("en-US", {
-    dateStyle: "medium",
-    timeZone: "UTC",
-  });
-
-  const t = new Date(date).toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "numeric",
-    timeZone: "UTC",
-  });
-
-  return `${d} ${t} UTC`;
-};
-
 const getSelectedTokenSymbol = () => {
   const token = availableTokens.find((t) => t.token_id === selectedToken);
   return token ? token.symbol : "";
@@ -430,7 +415,14 @@ return (
               </h3>
               {balanceDate.date && (
                 <div style={{ fontSize: 14 }} className="balance-date">
-                  {formattedDate(balanceDate.date)}
+                  <Widget
+                    loading=""
+                    src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DateTimeDisplay"
+                    props={{
+                      timestamp: balanceDate.date,
+                      instance: instance,
+                    }}
+                  />
                 </div>
               )}
             </div>
