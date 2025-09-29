@@ -32,6 +32,12 @@ const [leftNavbarOptions, setLeftBarOptions] = useState([
     props: { instance, ...props },
   },
   {
+    title: "Preferences",
+    key: "preferences",
+    href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.Preferences`,
+    props: { instance, ...props },
+  },
+  {
     title: "System updates",
     key: "system-updates",
     href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.system-updates.SystemUpdates`,

@@ -394,6 +394,7 @@ return (
                   src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.settings.WarningTable`}
                   props={{
                     includeExpiryDate: true,
+                    instance,
                     warningText: (
                       <>
                         <ul className="px-3 mb-0">

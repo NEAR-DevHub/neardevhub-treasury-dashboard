@@ -142,33 +142,6 @@ const formatSessionInterval = (seconds) => {
   return `${secondsNum} second${secondsNum > 1 ? "s" : ""}`;
 };
 
-function convertToDate(timestamp) {
-  const date = new Date(timestamp * 1000);
-
-  const options = { year: "numeric", month: "short", day: "numeric" };
-  const formattedDate = date.toLocaleDateString("en-US", options);
-
-  return formattedDate;
-}
-
-function convertToDateForTooltip(timestamp) {
-  const date = new Date(timestamp * 1000);
-
-  const options = {
-    month: "short",
-    day: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: true,
-    timeZone: "UTC",
-    timeZoneName: "short",
-  };
-  const formattedDate = date.toLocaleDateString("en-US", options);
-
-  return formattedDate;
-}
-
 // Calculate next claim date based on start timestamp and session interval
 const calculateNextClaimDate = () => {
   const { start_timestamp, session_interval, session_num } = accountMetadata;
@@ -474,10 +447,10 @@ const LockupDetails = () => {
           value={
             <Widget
               loading=""
-              src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+              src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DateTimeDisplay"
               props={{
-                popup: convertToDateForTooltip(accountMetadata.start_timestamp),
-                children: convertToDate(accountMetadata.start_timestamp),
+                timestamp: accountMetadata.start_timestamp * 1000,
+                format: "date-only",
                 instance: instance,
               }}
             />
@@ -510,10 +483,10 @@ const LockupDetails = () => {
           value={
             <Widget
               loading=""
-              src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
+              src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DateTimeDisplay"
               props={{
-                popup: convertToDateForTooltip(claimDate),
-                children: convertToDate(claimDate),
+                timestamp: claimDate * 1000,
+                format: "date-only",
                 instance: instance,
               }}
             />

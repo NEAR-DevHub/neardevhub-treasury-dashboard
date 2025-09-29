@@ -382,20 +382,6 @@ const LoadingChart = () => {
     </div>
   );
 };
-const formattedDate = (date) => {
-  const d = date.toLocaleDateString("en-US", {
-    dateStyle: "medium",
-    timeZone: "UTC",
-  });
-
-  const t = date.toLocaleTimeString("en-US", {
-    hour: "numeric",
-    minute: "numeric",
-    timeZone: "UTC",
-  });
-
-  return `${d} ${t} UTC`;
-};
 
 return (
   <div className="card flex-1 w-100 card-body" key={accountId}>
@@ -419,7 +405,14 @@ return (
               </h3>
               {balanceDate.date && (
                 <div style={{ fontSize: 14 }} className="balance-date">
-                  {formattedDate(new Date(balanceDate.date))}
+                  <Widget
+                    loading=""
+                    src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DateTimeDisplay"
+                    props={{
+                      timestamp: balanceDate.date,
+                      instance: instance,
+                    }}
+                  />
                 </div>
               )}
             </div>

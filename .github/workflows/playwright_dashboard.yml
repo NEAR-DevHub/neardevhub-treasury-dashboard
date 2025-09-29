@@ -67,4 +67,15 @@ jobs:
         run: chmod +x sandboxrpc/target/debug/sandboxrpc
 
       - name: Run tests
+        id: dashboard-tests
         run: ${{ matrix.target_account.test_command }}
+
+      - name: Upload Playwright Test Artifacts (on failure)
+        if: failure() && steps.dashboard-tests.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-test-artifacts-dashboard-${{ matrix.target_account.test_command }}.zip
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 1
