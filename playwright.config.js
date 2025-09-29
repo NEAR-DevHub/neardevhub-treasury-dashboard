@@ -55,6 +55,11 @@ export default defineConfig({
         instanceAccount: "treasury-devdao.near",
         daoAccount: "devdao.sputnik-dao.near",
       },
+      testIgnore: [
+        "**/settings/feed-filters.spec.js",
+        "**/payments/filters.spec.js",
+        "**/stake-delegation/stake-delegation-filters.spec.js",
+      ],
     },
     {
       name: "infinex",
@@ -64,6 +69,11 @@ export default defineConfig({
         daoAccount: "infinex.sputnik-dao.near",
         lockupContract: "77fa9d86aca49e758a4cb72628972a0f3135d168.lockup.near",
       },
+      testIgnore: [
+        "**/settings/feed-filters.spec.js",
+        "**/payments/filters.spec.js",
+        "**/stake-delegation/stake-delegation-filters.spec.js",
+      ],
     },
     {
       name: "treasury-testing",
@@ -72,6 +82,11 @@ export default defineConfig({
         instanceAccount: "treasury-testing.near",
         daoAccount: "testing-astradao.sputnik-dao.near",
       },
+      testMatch: [
+        "**/settings/feed-filters.spec.js",
+        "**/payments/filters.spec.js",
+        "**/stake-delegation/stake-delegation-filters.spec.js",
+      ],
     },
     /*{
       name: 'firefox',
