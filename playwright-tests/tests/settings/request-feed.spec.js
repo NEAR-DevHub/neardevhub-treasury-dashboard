@@ -9,6 +9,11 @@ import {
 } from "../../util/inventory.js";
 import { mockTransactionSubmitRPCResponses } from "../../util/transaction.js";
 
+test.afterEach(async ({ page }, testInfo) => {
+  console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+});
+
 const lastProposalId = 2;
 
 async function voteOnProposal({
@@ -100,11 +105,6 @@ async function voteOnProposal({
     }
   );
 }
-
-test.afterEach(async ({ page }, testInfo) => {
-  console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
-  await page.unrouteAll({ behavior: "ignoreErrors" });
-});
 
 test.describe("User is not logged in", function () {
   test("Should navigate to different settings tabs", async ({
