@@ -105,9 +105,11 @@ test.describe("payment requests feed", function () {
     });
     await page.getByTestId("proposal-request-#1").click();
     await expect(
-      page.getByRole("heading", {
-        name: "NEARN payment to megha for the listing",
-      })
+      page
+        .getByRole("heading", {
+          name: "NEARN payment to megha for the listing",
+        })
+        .first()
     ).toBeVisible();
     await expect(page.getByText("1 USDC")).toBeVisible();
     await expect(page.getByText("Expires At")).toBeVisible();
