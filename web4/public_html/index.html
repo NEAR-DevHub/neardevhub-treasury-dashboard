@@ -26,7 +26,6 @@
     {
       "imports": {
         "@near-wallet-selector/core": "https://ga.jspm.io/npm:@near-wallet-selector/core@9.4.0/index.js",
-        "@near-wallet-selector/hot-wallet": "https://ga.jspm.io/npm:@near-wallet-selector/hot-wallet@9.4.0/index.js",
         "@near-wallet-selector/intear-wallet": "https://ga.jspm.io/npm:@near-wallet-selector/intear-wallet@9.4.0/index.js",
         "@near-wallet-selector/ledger": "https://ga.jspm.io/npm:@near-wallet-selector/ledger@9.4.0/index.js",
         "@near-wallet-selector/meteor-wallet": "https://ga.jspm.io/npm:@near-wallet-selector/meteor-wallet@9.4.0/index.js",
@@ -38,7 +37,6 @@
       },
       "scopes": {
         "https://ga.jspm.io/": {
-          "@hot-wallet/sdk": "/hot-sdk-shim.js",
           "@ledgerhq/devices": "https://ga.jspm.io/npm:@ledgerhq/devices@8.4.8/lib-es/index.js",
           "@ledgerhq/devices/hid-framing": "https://ga.jspm.io/npm:@ledgerhq/devices@8.4.8/lib-es/hid-framing.js",
           "@ledgerhq/errors": "https://ga.jspm.io/npm:@ledgerhq/errors@6.24.0/lib-es/index.js",
@@ -634,7 +632,6 @@
       const { setupSender } = await import("@near-wallet-selector/sender");
       const { setupIntearWallet } = await import("@near-wallet-selector/intear-wallet");
       const { setupNearMobileWallet } = await import("@near-wallet-selector/near-mobile-wallet");
-      const { setupHotWallet } = await import("@near-wallet-selector/hot-wallet");
       const { Buffer } = await import("buffer");
 
       window.Buffer = Buffer;
@@ -646,7 +643,6 @@
         setupSender(),
         setupIntearWallet(),
         setupNearMobileWallet(),
-        setupHotWallet(),
       ];
       try {
         setupLedger = (await import("@near-wallet-selector/ledger")).setupLedger;
