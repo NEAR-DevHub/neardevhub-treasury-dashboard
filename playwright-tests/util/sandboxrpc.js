@@ -5,11 +5,7 @@ import { parseNearAmount } from "near-api-js/lib/utils/format.js";
 import { KeyPairEd25519 } from "near-api-js/lib/utils/key_pair.js";
 import { getLocalWidgetSource } from "./bos-workspace.js";
 import { expect } from "@playwright/test";
-import {
-  overlayMessage,
-  removeOverlayMessage,
-  markPageAsSandbox,
-} from "./test.js";
+import { overlayMessage, removeOverlayMessage } from "./test.js";
 import { getLocalWidgetContent, redirectWeb4 } from "./web4.js";
 import { Indexer } from "./indexer.js";
 
@@ -183,9 +179,6 @@ export class SandboxRPC {
    * @param {string[]} accounts - List of account IDs to redirect to the sandbox
    */
   async attachRoutes(page, accounts = []) {
-    // Mark this page as using sandbox routing to prevent enhanced routing conflicts
-    markPageAsSandbox(page);
-
     // Redirect RPC calls to sandbox
     await page.route(MOCK_RPC_URL, async (route, request) => {
       const postData = request.postDataJSON();

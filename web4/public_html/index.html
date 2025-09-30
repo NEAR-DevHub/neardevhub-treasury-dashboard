@@ -33,7 +33,9 @@
         "@near-wallet-selector/my-near-wallet": "https://ga.jspm.io/npm:@near-wallet-selector/my-near-wallet@9.4.0/index.js",
         "@near-wallet-selector/near-mobile-wallet": "https://ga.jspm.io/npm:@near-wallet-selector/near-mobile-wallet@9.4.0/index.js",
         "@near-wallet-selector/sender": "https://ga.jspm.io/npm:@near-wallet-selector/sender@9.4.0/index.js",
-        "buffer": "https://ga.jspm.io/npm:@jspm/core@2.1.0/nodelibs/browser/buffer.js"
+        "buffer": "https://ga.jspm.io/npm:@jspm/core@2.1.0/nodelibs/browser/buffer.js",
+        "@near-wallet-selector/hot-wallet": "https://ga.jspm.io/npm:@near-wallet-selector/hot-wallet@9.4.0/index.js",
+        "@hot-wallet/sdk": "https://cdn.jsdelivr.net/gh/Megha-Dev-19/hot-sdk-js@main/dist/index.mjs"
       },
       "scopes": {
         "https://ga.jspm.io/": {
@@ -121,6 +123,14 @@
           "uuid4": "https://ga.jspm.io/npm:uuid4@2.0.3/browser.mjs",
           "xtend": "https://ga.jspm.io/npm:xtend@4.0.2/immutable.js",
           "zod": "https://ga.jspm.io/npm:zod@4.0.14/index.js"
+        },
+        "https://cdn.jsdelivr.net/gh/Megha-Dev-19/hot-sdk-js@main/dist/index.mjs": {
+          "borsh": "https://ga.jspm.io/npm:borsh@2.0.0/lib/esm/index.js",
+          "js-sha256": "https://ga.jspm.io/npm:js-sha256@0.11.0/src/sha256.js",
+          "@near-js/crypto": "https://ga.jspm.io/npm:@near-js/crypto@1.4.0/lib/commonjs/index.cjs",
+          "uuid4": "https://ga.jspm.io/npm:uuid4@2.0.3/browser.mjs",
+          "@near-js/utils": "https://ga.jspm.io/npm:@near-js/utils@1.0.0/lib/commonjs/index.cjs",
+          "sha1": "https://ga.jspm.io/npm:sha1@1.1.1/sha1.js"
         },
         "https://ga.jspm.io/npm:@noble/curves@1.2.0/esm/ed25519.js": {
           "@noble/hashes/sha512": "https://ga.jspm.io/npm:@noble/hashes@1.3.2/esm/sha512.js",
@@ -607,254 +617,243 @@
     </nav>
   </body>
 
-  <script>
-    
+  <script type="module">
+    import { setupWalletSelector } from "@near-wallet-selector/core";
+    import { setupModal } from "@near-wallet-selector/modal-ui-js";
+    import { setupMyNearWallet } from "@near-wallet-selector/my-near-wallet";
+    import { setupMeteorWallet } from "@near-wallet-selector/meteor-wallet";
+    import { setupSender } from "@near-wallet-selector/sender";
+    const { setupIntearWallet } = await import("@near-wallet-selector/intear-wallet");
+    const { setupNearMobileWallet } = await import("@near-wallet-selector/near-mobile-wallet");
+    const { setupHotWallet } = await import("@near-wallet-selector/hot-wallet");
+    import { Buffer } from "buffer";
+
+    window.Buffer = Buffer;
+
+    let setupLedger;
+    const walletSelectorModules = [
+      setupMyNearWallet(),
+      setupHotWallet(),
+      setupMeteorWallet(),
+      setupSender(),
+      setupIntearWallet(),
+      setupNearMobileWallet(),
+    ];
     try {
-      const shimsScript = document.querySelector('script[src*="es-module-shims"]');
-      waitForShims();
-    } catch (error) {
-      console.error("Error in script:", error);
+      setupLedger = (await import("@near-wallet-selector/ledger")).setupLedger;
+      walletSelectorModules.push(setupLedger());
+    } catch (e) {
+      console.warn("not able to setup ledger", e);
     }
-    
-    function waitForShims() {
-      if (window.importShim) {
-        loadModule();
-      } else {
-        setTimeout(waitForShims, 10);
-      }
-    }
-    
-    async function loadModule() {
-      const { setupWalletSelector } = await import("@near-wallet-selector/core");
-      const { setupModal } = await import("@near-wallet-selector/modal-ui-js");
-      const { setupMyNearWallet } = await import("@near-wallet-selector/my-near-wallet");
-      const { setupMeteorWallet } = await import("@near-wallet-selector/meteor-wallet");
-      const { setupSender } = await import("@near-wallet-selector/sender");
-      const { setupIntearWallet } = await import("@near-wallet-selector/intear-wallet");
-      const { setupNearMobileWallet } = await import("@near-wallet-selector/near-mobile-wallet");
-      const { Buffer } = await import("buffer");
 
-      window.Buffer = Buffer;
+    const selector = await setupWalletSelector({
+      network: "mainnet",
+      modules: walletSelectorModules,
+    });
 
-      let setupLedger;
-      const walletSelectorModules = [
-        setupMyNearWallet(),
-        setupMeteorWallet(),
-        setupSender(),
-        setupIntearWallet(),
-        setupNearMobileWallet(),
-      ];
-      try {
-        setupLedger = (await import("@near-wallet-selector/ledger")).setupLedger;
-        walletSelectorModules.push(setupLedger());
-      } catch (e) {
-        console.warn("not able to setup ledger", e);
-      }
+    const modal = setupModal(selector, {
+      contractId: "social.near",
+    });
 
-      const selector = await setupWalletSelector({
-        network: "mainnet",
-        modules: walletSelectorModules,
+    document
+      .getElementById("login-walletselector-btn")
+      .addEventListener("click", () => {
+        return modal.show();
+      });
+    const currentDomain = window.location.host ?? "";
+    const extractedDomain = currentDomain.split(".page")?.[0] ?? "";
+
+    document.getElementById("web4-link").href =
+      `https://${extractedDomain}.page/`;
+    document.getElementById("dev-org-link").href =
+      `https://dev.near.org/${extractedDomain}/widget/app`;
+    document.getElementById("social-link").href =
+      `https://near.social/${extractedDomain}/widget/app`;
+
+    const dropdownToggle = document.getElementById("dropdownToggle");
+    const dropdownIcon = document.getElementById("dropdownIcon");
+    const dropdownMenu = document.getElementById("dropdownMenu");
+
+    dropdownToggle.addEventListener("click", function (event) {
+      event.stopPropagation();
+      const isExpanded = dropdownMenu.classList.toggle("show");
+
+      dropdownIcon.classList.toggle("bi-chevron-down", !isExpanded);
+      dropdownIcon.classList.toggle("bi-chevron-up", isExpanded);
+    });
+
+    document
+      .getElementById("logout-walletselector-btn")
+      .addEventListener("click", async () => {
+        (await selector.wallet()).signOut().then(() => checkForLogin());
       });
 
-      const modal = setupModal(selector, {
-        contractId: "social.near",
-      });
-
-      document
-        .getElementById("login-walletselector-btn")
-        .addEventListener("click", () => {
-          return modal.show();
-        });
-      const currentDomain = window.location.host ?? "";
-      const extractedDomain = currentDomain.split(".page")?.[0] ?? "";
-
-      document.getElementById("web4-link").href =
-        `https://${extractedDomain}.page/`;
-      document.getElementById("dev-org-link").href =
-        `https://dev.near.org/${extractedDomain}/widget/app`;
-      document.getElementById("social-link").href =
-        `https://near.social/${extractedDomain}/widget/app`;
-
-      const dropdownToggle = document.getElementById("dropdownToggle");
-      const dropdownIcon = document.getElementById("dropdownIcon");
-      const dropdownMenu = document.getElementById("dropdownMenu");
-
-      dropdownToggle.addEventListener("click", function (event) {
+    document
+      .getElementById("logout-dropdown-btn")
+      .addEventListener("click", (event) => {
         event.stopPropagation();
-        const isExpanded = dropdownMenu.classList.toggle("show");
-
-        dropdownIcon.classList.toggle("bi-chevron-down", !isExpanded);
-        dropdownIcon.classList.toggle("bi-chevron-up", isExpanded);
+        document.getElementById("logout-dropdown").classList.toggle("show");
       });
 
-      document
-        .getElementById("logout-walletselector-btn")
-        .addEventListener("click", async () => {
-          (await selector.wallet()).signOut().then(() => checkForLogin());
+    window.onclick = function (event) {
+      const dropdownBtn = document.getElementById("logout-dropdown-btn");
+      const dropdownContent = document.getElementById("logout-dropdown");
+      if (
+        !dropdownBtn.contains(event.target) &&
+        !dropdownContent.contains(event.target)
+      ) {
+        dropdownContent.classList.remove("show");
+      }
+
+      if (
+        !dropdownToggle.contains(event.target) &&
+        !dropdownMenu.contains(event.target)
+      ) {
+        dropdownMenu.classList.remove("show");
+        dropdownIcon.classList.add("bi-chevron-down");
+        dropdownIcon.classList.remove("bi-chevron-up");
+      }
+    };
+
+    async function checkForLogin() {
+      const isSignedIn = selector.isSignedIn();
+      const loginBtn = document.getElementById("login-walletselector-btn");
+      const logoutBtn = document.getElementById("logout-btn");
+
+      if (isSignedIn) {
+        const accountId = selector.store.getState().accounts[0].accountId;
+        loginBtn.style.display = "none";
+        logoutBtn.style.display = "block";
+
+        const imageSrc = `https://i.near.social/magic/large/https://near.social/magic/img/account/${accountId}`;
+        const response = await fetch("https://api.near.social/get", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "cross-site",
+          },
+          body: JSON.stringify({ keys: [`${accountId}/profile/*`] }),
         });
 
-      document
-        .getElementById("logout-dropdown-btn")
-        .addEventListener("click", (event) => {
-          event.stopPropagation();
-          document.getElementById("logout-dropdown").classList.toggle("show");
-        });
+        const data = await response.json();
+        const name = data?.[accountId]?.profile.name;
+        logoutBtn.innerHTML = `
+          <button>
+            <img src="${imageSrc}" />
+            <div class="text-align-left">
+            <h6> ${name} </h6>
+            <div style="opacity: 0.5; font-size: 12px"> ${accountId} </div>
+            </div>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="16"
+              height="16"
+              fill="currentColor"
+              class="bi bi-chevron-down"
+              viewBox="0 0 16 16"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708"
+              />
+            </svg>
+          </button>`;
+      } else {
+        loginBtn.style.display = "block";
+        logoutBtn.style.display = "none";
+      }
+    }
 
-      window.onclick = function (event) {
-        const dropdownBtn = document.getElementById("logout-dropdown-btn");
-        const dropdownContent = document.getElementById("logout-dropdown");
-        if (
-          !dropdownBtn.contains(event.target) &&
-          !dropdownContent.contains(event.target)
-        ) {
-          dropdownContent.classList.remove("show");
-        }
+    checkForLogin();
 
-        if (
-          !dropdownToggle.contains(event.target) &&
-          !dropdownMenu.contains(event.target)
-        ) {
-          dropdownMenu.classList.remove("show");
-          dropdownIcon.classList.add("bi-chevron-down");
-          dropdownIcon.classList.remove("bi-chevron-up");
-        }
-      };
+    modal.on("onHide", async (event) => {
+      if (event.hideReason === "wallet-navigation") {
+        checkForLogin();
+      }
+    });
 
-      async function checkForLogin() {
-        const isSignedIn = selector.isSignedIn();
-        const loginBtn = document.getElementById("login-walletselector-btn");
-        const logoutBtn = document.getElementById("logout-btn");
+    await import(
+      "https://cdn.jsdelivr.net/npm/near-bos-webcomponent@0.0.9/dist/main.1b3f0d7d1017de355a7c.bundle.js"
+    );
+    await import(
+      "https://cdn.jsdelivr.net/npm/near-bos-webcomponent@0.0.9/dist/runtime.25b143da327a5371509f.bundle.js"
+    );
 
-        if (isSignedIn) {
-          const accountId = selector.store.getState().accounts[0].accountId;
-          loginBtn.style.display = "none";
-          logoutBtn.style.display = "block";
+    const viewer = document.createElement("near-social-viewer");
 
-          const imageSrc = `https://i.near.social/magic/large/https://near.social/magic/img/account/${accountId}`;
-          const response = await fetch("https://api.near.social/get", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Sec-Fetch-Mode": "cors",
-              "Sec-Fetch-Site": "cross-site",
-            },
-            body: JSON.stringify({ keys: [`${accountId}/profile/*`] }),
+    viewer.selector = selector;
+    viewer.setAttribute(
+      "initialProps",
+      JSON.stringify({ page: "", pikespeakKey: "PIKESPEAK_API_KEY" }),
+    );
+
+    if (location.host.endsWith(".page")) {
+      const instanceAccount = location.host.split(".")[0];
+      viewer.setAttribute("src", `${instanceAccount}.near/widget/app`);
+      viewer.setAttribute("rpc", "https://rpc.mainnet.fastnear.com");
+    } else if (location.port === "8080") {
+      viewer.setAttribute("rpc", "http://127.0.0.1:14500");
+    }
+
+    document.body.appendChild(viewer);
+
+    const waitForTheme = setInterval(() => {
+      const theme = document?.querySelector("[data-bs-theme]");
+
+      if (theme) {
+        clearInterval(waitForTheme);
+
+        const isDarkTheme = theme.getAttribute("data-bs-theme") === "dark";
+        document.body.setAttribute(
+          "data-bs-theme",
+          isDarkTheme ? "dark" : "light",
+        );
+        const logo = document.getElementById("logo");
+        const web4Image = document.getElementById("web4-image");
+
+        web4Image.src = isDarkTheme
+          ? "https://ipfs.near.social/ipfs/bafkreiarq7ufrypui3ivevbnky46n5u5awgthls22jvr73fsmoyemprrzy"
+          : "https://ipfs.near.social/ipfs/bafkreiepnpb5bjy4bopxwmkxog35swcqliupvmjgzlo3k2pfc345qoquz4";
+
+        logo.src = isDarkTheme
+          ? "https://ipfs.near.social/ipfs/bafkreighuyf2wcsc3nyey64536craz2ffis45fnjelh4gqxigugasalcwy"
+          : "https://ipfs.near.social/ipfs/bafkreibm63lijt7qs3dzlmrrdbhqgxkt55k5daswgrq5z4stqp4zk46kc4";
+      }
+    }, 500);
+
+    // Register service worker
+    if ('serviceWorker' in navigator) {
+      window.serviceWorkerRegistrationAttempted = true;
+      
+      function registerServiceWorker() {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(function(registration) {
+            console.log('Service Worker registered with scope:', registration.scope);
+            
+            // Wait for the service worker to be controlling
+            if (navigator.serviceWorker.controller) {
+              console.log('Service Worker is already controlling');
+            } else {
+              console.log('Waiting for Service Worker to take control...');
+              navigator.serviceWorker.addEventListener('controllerchange', function() {
+                console.log('Service Worker is now controlling');
+              });
+            }
+          })
+          .catch(function(error) {
+            console.log('Service Worker registration failed:', error);
           });
-
-          const data = await response.json();
-          const name = data?.[accountId]?.profile.name;
-          logoutBtn.innerHTML = `
-            <button>
-              <img src="${imageSrc}" />
-              <div class="text-align-left">
-              <h6> ${name} </h6>
-              <div style="opacity: 0.5; font-size: 12px"> ${accountId} </div>
-              </div>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                fill="currentColor"
-                class="bi bi-chevron-down"
-                viewBox="0 0 16 16"
-              >
-                <path
-                  fill-rule="evenodd"
-                  d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708"
-                />
-              </svg>
-            </button>`;
-        } else {
-          loginBtn.style.display = "block";
-          logoutBtn.style.display = "none";
-        }
       }
-
-      checkForLogin();
-
-      modal.on("onHide", async (event) => {
-        if (event.hideReason === "wallet-navigation") {
-          checkForLogin();
-        }
-      });
-
-      await import(
-        "https://cdn.jsdelivr.net/npm/near-bos-webcomponent@0.0.9/dist/main.1b3f0d7d1017de355a7c.bundle.js"
-      );
-      await import(
-        "https://cdn.jsdelivr.net/npm/near-bos-webcomponent@0.0.9/dist/runtime.25b143da327a5371509f.bundle.js"
-      );
-
-      const viewer = document.createElement("near-social-viewer");
-
-      viewer.selector = selector;
-      viewer.setAttribute(
-        "initialProps",
-        JSON.stringify({ page: "", pikespeakKey: "PIKESPEAK_API_KEY" }),
-      );
-
-      if (location.host.endsWith(".page")) {
-        const instanceAccount = location.host.split(".")[0];
-        viewer.setAttribute("src", `${instanceAccount}.near/widget/app`);
-        viewer.setAttribute("rpc", "https://rpc.mainnet.fastnear.com");
-      } else if (location.port === "8080") {
-        viewer.setAttribute("rpc", "http://127.0.0.1:14500");
+      
+      // Check if the document is already loaded
+      if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        // Document is already loaded, register immediately
+        registerServiceWorker();
+      } else {
+        // Document is still loading, wait for load event
+        window.addEventListener('load', registerServiceWorker);
       }
-
-      document.body.appendChild(viewer);
-
-      const waitForTheme = setInterval(() => {
-        const theme = document?.querySelector("[data-bs-theme]");
-
-        if (theme) {
-          clearInterval(waitForTheme);
-
-          const isDarkTheme = theme.getAttribute("data-bs-theme") === "dark";
-          document.body.setAttribute(
-            "data-bs-theme",
-            isDarkTheme ? "dark" : "light",
-          );
-          const logo = document.getElementById("logo");
-          const web4Image = document.getElementById("web4-image");
-
-          web4Image.src = isDarkTheme
-            ? "https://ipfs.near.social/ipfs/bafkreiarq7ufrypui3ivevbnky46n5u5awgthls22jvr73fsmoyemprrzy"
-            : "https://ipfs.near.social/ipfs/bafkreiepnpb5bjy4bopxwmkxog35swcqliupvmjgzlo3k2pfc345qoquz4";
-
-          logo.src = isDarkTheme
-            ? "https://ipfs.near.social/ipfs/bafkreighuyf2wcsc3nyey64536craz2ffis45fnjelh4gqxigugasalcwy"
-            : "https://ipfs.near.social/ipfs/bafkreibm63lijt7qs3dzlmrrdbhqgxkt55k5daswgrq5z4stqp4zk46kc4";
-        }
-      }, 500);
-
-      if ('serviceWorker' in navigator) {
-        window.serviceWorkerRegistrationAttempted = true;
-        
-        function registerServiceWorker() {
-          navigator.serviceWorker.register('/service-worker.js')
-            .then(function(registration) {
-              console.log('Service Worker registered with scope:', registration.scope);
-              
-              if (navigator.serviceWorker.controller) {
-                console.log('Service Worker is already controlling');
-              } else {
-                console.log('Waiting for Service Worker to take control...');
-                navigator.serviceWorker.addEventListener('controllerchange', function() {
-                  console.log('Service Worker is now controlling');
-                });
-              }
-            })
-            .catch(function(error) {
-              console.log('Service Worker registration failed:', error);
-            });
-        }
-        
-        if (document.readyState === 'complete' || document.readyState === 'interactive') {
-          registerServiceWorker();
-        } else {
-          window.addEventListener('load', registerServiceWorker);
-        }
-      }
-      }
+    }
   </script>
 </html>

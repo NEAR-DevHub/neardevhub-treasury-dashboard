@@ -7,7 +7,6 @@ use std::time::{SystemTime, UNIX_EPOCH};
 fn main() {
     println!("cargo:rerun-if-changed=./src/web4/index.html");
     println!("cargo:rerun-if-changed=./src/web4/service-worker.js");
-    println!("cargo:rerun-if-changed=./src/web4/hot-sdk-shim.js");
 
     // Get current timestamp for cache busting
     let timestamp = SystemTime::now()
@@ -37,12 +36,6 @@ fn main() {
     output_file
         .write_all(index_html.as_bytes())
         .expect("Failed to write to output file");
-
-    // Copy hot-sdk-shim.js from source to output
-    let hot_sdk_shim_source = current_dir.join("hot-sdk-shim.js");
-    let hot_sdk_shim_output =
-        Path::new(env!("CARGO_MANIFEST_DIR")).join("src/web4/hot-sdk-shim.js");
-    fs::copy(hot_sdk_shim_source, hot_sdk_shim_output).expect("Failed to copy hot-sdk-shim.js");
 
     // Process service worker with timestamp
     let service_worker_template = current_dir.join("service-worker.js");

@@ -9,6 +9,11 @@ import {
   TransferProposalData,
 } from "../../util/inventory.js";
 
+test.afterEach(async ({ page }, testInfo) => {
+  console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+});
+
 test.describe("payment requests feed", function () {
   test("export action should not be visible in pending requests tab", async ({
     page,

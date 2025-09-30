@@ -62,6 +62,11 @@ async function mockStakedPoolBalances({ page, daoAccount }) {
   );
 }
 
+test.afterEach(async ({ page }, testInfo) => {
+  console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+});
+
 const nearPrice = 5;
 test.describe("Dashboard Page", function () {
   test.use({

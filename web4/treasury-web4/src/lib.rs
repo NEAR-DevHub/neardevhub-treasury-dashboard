@@ -208,13 +208,6 @@ impl Contract {
                     body: BASE64_STANDARD.encode(service_worker_js),
                 };
             }
-            "/hot-sdk-shim.js" => {
-                let hot_sdk_shim_js = include_str!("web4/hot-sdk-shim.js");
-                return Web4Response::Body {
-                    content_type: "application/javascript".to_owned(),
-                    body: BASE64_STANDARD.encode(hot_sdk_shim_js),
-                };
-            }
             _ => {
                 // Continue with regular web4 handling for the main app
             }

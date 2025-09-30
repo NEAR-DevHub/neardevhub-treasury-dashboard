@@ -3,67 +3,7 @@ import fs from "fs";
 import path from "path";
 import os from "os";
 
-// Global cache locks to prevent concurrent downloads of the same resource
-const downloadLocks = new Map();
-
-// Track pages that are using sandbox routing to avoid conflicts
-const sandboxPages = new WeakSet();
-
-// Global fix for route timing issues with es-module-shims
-// This automatically converts page.route() to context.route() for better timing
-function enhancePageWithBetterRouting(page) {
-  // Don't enhance pages that are using sandbox routing
-  if (sandboxPages.has(page)) {
-    return page;
-  }
-
-  const originalRoute = page.route.bind(page);
-
-  page.route = function (url, handler, options) {
-    // This fixes the race condition with es-module-shims in older code
-    return page.context().route(url, handler, options);
-  };
-
-  page._originalRoute = originalRoute;
-
-  return page;
-}
-
-// Function to mark a page as using sandbox routing
-export function markPageAsSandbox(page) {
-  sandboxPages.add(page);
-}
-
-// Enhanced cleanup function to handle route cleanup more robustly
-export async function cleanupRoutes(page) {
-  try {
-    // First, try to unroute all routes with ignoreErrors behavior
-    await page.unrouteAll({ behavior: "ignoreErrors" });
-
-    // Also clean up context routes (since we're using context.route in the enhancement)
-    const context = page.context();
-    if (context) {
-      // Check if context is still active (some Playwright versions don't have isClosed method)
-      try {
-        await context.unrouteAll({ behavior: "ignoreErrors" });
-      } catch (contextError) {
-        // Context might already be closed, ignore the error
-        console.warn("Context cleanup warning:", contextError.message);
-      }
-    }
-
-    // Give a small delay to let any in-flight requests complete
-    await new Promise((resolve) => setTimeout(resolve, 100));
-  } catch (error) {
-    console.warn("Route cleanup warning:", error.message);
-  }
-}
-
 export const test = base.extend({
-  page: async ({ page }, use) => {
-    const enhancedPage = enhancePageWithBetterRouting(page);
-    await use(enhancedPage);
-  },
   instanceAccount: ["treasury-devdao.near", { option: true }],
   daoAccount: ["devdao.sputnik-dao.near", { option: true }],
   lockupContract: [null, { option: true }],
@@ -74,9 +14,7 @@ test.beforeEach(async ({ page }) => {
   await cacheCDN(page);
 });
 test.afterEach(async ({ page }, testInfo) => {
-  // Enhanced route cleanup
-  await cleanupRoutes(page);
-
+  await page.unrouteAll({ behavior: "ignoreErrors" });
   const video = await page.video();
   if (video) {
     const titleFile = testInfo.outputPath("test-title.txt");
@@ -139,16 +77,10 @@ export async function cacheCDN(page) {
   }
 
   const cacheRoute = async (url) => {
-    // Always use page-level routing for cacheCDN to avoid context-level route conflicts
-    // This is especially important for sandbox tests running in parallel
-    const routeMethod = page._originalRoute || page.route.bind(page);
-
-    await routeMethod(url, async (route, request) => {
-      const requestUrl = request.url();
-      const urlHash = Buffer.from(requestUrl).toString("base64");
+    await page.route(url, async (route, request) => {
+      const urlHash = Buffer.from(request.url()).toString("base64");
       const cacheFilePath = path.join(cacheDir, urlHash);
 
-      // Check if file is already cached
       if (
         fs.existsSync(cacheFilePath) &&
         fs.existsSync(`${cacheFilePath}.type`)
@@ -164,113 +96,29 @@ export async function cacheCDN(page) {
             headers: { "Content-Type": contentType },
           });
         } catch (e) {
-          console.error(
-            `Error fulfilling cached request for ${requestUrl}:`,
-            e
-          );
+          console.error(e);
         }
-        return;
-      }
+      } else {
+        const response = await route.fetch();
+        const body = await response.body();
+        const contentType =
+          response.headers()["content-type"] || "application/octet-stream";
 
-      // Check if another request is already downloading this resource
-      if (downloadLocks.has(requestUrl)) {
-        // Wait for the ongoing download to complete
         try {
-          await downloadLocks.get(requestUrl);
-          // After waiting, try to serve from cache again
-          if (
-            fs.existsSync(cacheFilePath) &&
-            fs.existsSync(`${cacheFilePath}.type`)
-          ) {
-            const cachedContent = await fs.promises.readFile(cacheFilePath);
-            const contentType = await fs.promises.readFile(
-              `${cacheFilePath}.type`,
-              "utf-8"
-            );
-            await route.fulfill({
-              body: cachedContent,
-              headers: { "Content-Type": contentType },
-            });
-            return;
-          }
+          await fs.promises.writeFile(cacheFilePath, body);
+          await fs.promises.writeFile(`${cacheFilePath}.type`, contentType);
         } catch (e) {
-          console.warn(`Error waiting for download lock for ${requestUrl}:`, e);
+          console.warn(e);
         }
-      }
 
-      // Create a download promise and add it to locks
-      const downloadPromise = (async () => {
-        let retries = 3;
-        let delay = 1000; // Start with 1 second delay
-
-        while (retries > 0) {
-          try {
-            // Add timeout to the fetch request
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-
-            const response = await route.fetch({
-              signal: controller.signal,
-            });
-
-            clearTimeout(timeoutId);
-
-            const body = await response.body();
-            const contentType =
-              response.headers()["content-type"] || "application/octet-stream";
-
-            // Cache the response
-            try {
-              await fs.promises.writeFile(cacheFilePath, body);
-              await fs.promises.writeFile(`${cacheFilePath}.type`, contentType);
-            } catch (e) {
-              console.warn(`Error caching ${requestUrl}:`, e);
-            }
-
-            // Fulfill the request
-            try {
-              await route.fulfill({
-                body,
-                headers: response.headers(),
-              });
-            } catch (e) {
-              console.error(`Error fulfilling request for ${requestUrl}:`, e);
-            }
-
-            return; // Success, exit retry loop
-          } catch (error) {
-            retries--;
-            console.warn(
-              `Error fetching ${requestUrl} (${3 - retries}/3):`,
-              error.message
-            );
-
-            if (retries === 0) {
-              // Final attempt failed, continue with original request
-              console.error(
-                `Failed to fetch ${requestUrl} after 3 attempts, continuing with original request`
-              );
-              try {
-                await route.continue();
-              } catch (e) {
-                console.error(`Error continuing route for ${requestUrl}:`, e);
-              }
-              return;
-            }
-
-            // Wait before retrying with exponential backoff
-            await new Promise((resolve) => setTimeout(resolve, delay));
-            delay *= 2; // Double the delay for next retry
-          }
+        try {
+          await route.fulfill({
+            body,
+            headers: response.headers(),
+          });
+        } catch (e) {
+          console.error(e);
         }
-      })();
-
-      downloadLocks.set(requestUrl, downloadPromise);
-
-      try {
-        await downloadPromise;
-      } finally {
-        downloadLocks.delete(requestUrl);
       }
     });
   };

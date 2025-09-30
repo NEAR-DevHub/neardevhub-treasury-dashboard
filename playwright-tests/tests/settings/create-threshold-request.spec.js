@@ -66,6 +66,11 @@ async function mockSettingsProposals({ page }) {
   });
 }
 
+test.afterEach(async ({ page }, testInfo) => {
+  console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+});
+
 async function navigateToThresholdPage({ page, instanceAccount }) {
   await page.goto(
     `/${instanceAccount}/widget/app?page=settings&tab=voting-thresholds`

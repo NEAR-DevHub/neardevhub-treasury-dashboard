@@ -31,6 +31,10 @@ import {
 test.beforeEach(async ({ page }) => {
   await cacheCDN(page);
 });
+test.afterEach(async ({ page }, testInfo) => {
+  console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+});
 
 test.describe("Have valid staked requests and sufficient token balance", function () {
   test.beforeEach(async ({ page, instanceAccount, daoAccount }, testInfo) => {

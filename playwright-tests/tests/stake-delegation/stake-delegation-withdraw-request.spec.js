@@ -16,6 +16,10 @@ import {
 test.beforeEach(async ({ page }) => {
   await cacheCDN(page);
 });
+test.afterEach(async ({ page }, testInfo) => {
+  console.log(`Finished ${testInfo.title} with status ${testInfo.status}`);
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+});
 
 test.describe("Withdraw request", function () {
   test.use({
