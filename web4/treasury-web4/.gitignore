@@ -1,3 +1,3 @@
 /target
-index.html
-service-worker.js
+src/web4/index.html
+src/web4/service-worker.js

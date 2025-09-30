@@ -99,6 +99,7 @@ The development server provides a local testing environment that simulates the N
 ### Purpose
 
 The devserver:
+
 - Hosts the treasury dashboard locally using Playwright's browser automation
 - Redirects Web4 requests to use the mainnet RPC (fastnear.com) for blockchain data
 - Preserves authentication state across development sessions
@@ -245,18 +246,20 @@ await redirectWeb4({
   page,
   contractId: instanceAccount,
   modifiedWidgets: {
-    "account/widget/app": "return <div>Test Widget</div>;"
+    "account/widget/app": "return <div>Test Widget</div>;",
   },
-  disableServiceWorker: true  // Default - prevents service worker registration
+  disableServiceWorker: true, // Default - prevents service worker registration
 });
 ```
 
 When `disableServiceWorker` is `true` (default):
+
 - Service worker registration is prevented by removing "service-worker.js" references from HTML
 - Tests can use page routes for mocking without interference
 - This is the recommended setting for most tests
 
 When `disableServiceWorker` is `false`:
+
 - Service workers run normally
 - `redirectWeb4` intercepts both page AND service worker requests via context routes
 - Useful for testing service worker behavior specifically
@@ -264,6 +267,7 @@ When `disableServiceWorker` is `false`:
 #### Example: Testing with Service Workers Enabled
 
 See `playwright-tests/tests/web4/service-worker-interference.spec.js` for a complete example that:
+
 - Demonstrates how service workers interfere with test routes
 - Shows how to test with service workers enabled while still using modified widgets
 - Illustrates the difference between `disableServiceWorker: true` (default) and `disableServiceWorker: false`
