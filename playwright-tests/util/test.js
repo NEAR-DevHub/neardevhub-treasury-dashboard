@@ -139,10 +139,9 @@ export async function cacheCDN(page) {
   }
 
   const cacheRoute = async (url) => {
-    // Use the appropriate routing method based on whether the page is using sandbox
-    const routeMethod = sandboxPages.has(page)
-      ? page.route.bind(page)
-      : page._originalRoute || page.route.bind(page);
+    // Always use page-level routing for cacheCDN to avoid context-level route conflicts
+    // This is especially important for sandbox tests running in parallel
+    const routeMethod = page._originalRoute || page.route.bind(page);
 
     await routeMethod(url, async (route, request) => {
       const requestUrl = request.url();
