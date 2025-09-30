@@ -19,7 +19,6 @@ return {
   ],
   treasuryDaoID: "${REPL_TREASURY}",
   proposalAPIEndpoint: "${REPL_PROPOSALS_CACHE_URL}",
-  showNearIntents: true,
   showProposalSelection: true,
   showKYC: true,
   showReferenceProposal: true,
