@@ -449,16 +449,18 @@ return (
             <label className="border-top">Created Date</label>
             <Widget
               loading=""
-              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
+              src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DateTimeDisplay"
               props={{
-                timestamp: proposalData?.submissionTime,
-                isProposalDetailsPage: true,
+                timestamp: proposalData?.submissionTime / 1e6,
+                instance,
               }}
             />
+
             <label className="border-top">Expires At</label>
             {formatSubmissionTimeStamp(
               proposalData?.submissionTime,
               proposalPeriod,
+              instance,
               true
             )}
             {/* <label className="border-top">Transaction</label> */}

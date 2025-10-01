@@ -352,7 +352,8 @@ return (
                 props={{
                   popup: (
                     <div>
-                      The 1Click API quote for this request expired on{" "}
+                      Voting is not available due to expired swap quote. The
+                      1Click API quote for this request expired on{" "}
                       {`${quoteDeadline.toLocaleString("en-US", {
                         month: "short",
                         day: "2-digit",
@@ -362,33 +363,19 @@ return (
                         hour12: true,
                         timeZone: "UTC",
                       })} UTC`}
-                      . Voting is disabled to prevent potential loss of funds
-                      from executing the swap at an outdated rate.
+                      . Executing the swap at an outdated rate could result in
+                      loss of funds.
                     </div>
                   ),
                   children: (
-                    <i
-                      className="bi bi-info-circle text-muted"
-                      style={{ cursor: "pointer" }}
-                    ></i>
+                    <span className="text-muted">
+                      <i className="bi bi-info-circle"></i> Voting not available
+                      due to expired swap quote
+                    </span>
                   ),
                   instance,
                 }}
               />
-              <button
-                className="btn btn-sm btn-success"
-                disabled
-                style={{ opacity: 0.5 }}
-              >
-                Approve
-              </button>
-              <button
-                className="btn btn-sm btn-danger"
-                disabled
-                style={{ opacity: 0.5 }}
-              >
-                Reject
-              </button>
             </div>
           ) : (
             // Full version for details page
@@ -396,8 +383,8 @@ return (
               <div className="d-flex align-items-center gap-2 text-muted flex-grow-1">
                 <i className="bi bi-info-circle"></i>
                 <span>
-                  Voting is no longer available. The 1Click API quote for this
-                  request expired on{" "}
+                  Voting is not available due to expired swap quote. The 1Click
+                  API quote for this request expired on{" "}
                   {`${quoteDeadline.toLocaleString("en-US", {
                     month: "short",
                     day: "2-digit",
@@ -415,8 +402,8 @@ return (
                       popup: (
                         <div>
                           The exchange rate quoted by 1Click API has expired.
-                          Voting is disabled to prevent potential loss of funds
-                          from executing the swap at an outdated rate.
+                          Executing the swap at an outdated rate could result in
+                          loss of funds.
                         </div>
                       ),
                       children: (
@@ -432,20 +419,6 @@ return (
                   />
                 </span>
               </div>
-              <button
-                className="btn btn-success"
-                disabled
-                style={{ opacity: 0.5 }}
-              >
-                Approve
-              </button>
-              <button
-                className="btn btn-danger"
-                disabled
-                style={{ opacity: 0.5 }}
-              >
-                Reject
-              </button>
             </div>
           )
         ) : !isReadyToBeWithdrawn ? (

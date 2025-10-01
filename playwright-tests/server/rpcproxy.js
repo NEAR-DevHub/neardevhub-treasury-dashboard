@@ -5,8 +5,8 @@ import http from "http";
 const SOCIAL_CONTRACT = "social.near";
 
 const RPCS = [
-  "https://1rpc.io/near",
   "https://rpc.mainnet.fastnear.com/",
+  "https://archival-rpc.mainnet.fastnear.com/",
   "https://free.rpc.fastnear.com",
   "https://near.lava.build",
   "https://near.blockpi.network/v1/rpc/public",

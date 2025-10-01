@@ -303,8 +303,9 @@ test("should display FT lockup portfolio with no claim available", async ({
   const startDate = new Date(parseInt(startTimestamp) * 1000);
   const formattedDate = startDate.toLocaleDateString("en-US", {
     year: "numeric",
-    month: "short",
+    month: "long",
     day: "numeric",
+    timeZone: "UTC",
   });
   await expect(page.getByText(formattedDate, { exact: true })).toBeVisible();
   await expect(page.getByText("Rounds")).toBeVisible();
@@ -424,8 +425,9 @@ test("should display FT lockup portfolio with claim available", async ({
   const startDate = new Date(parseInt(startTimestamp) * 1000);
   const formattedDate = startDate.toLocaleDateString("en-US", {
     year: "numeric",
-    month: "short",
+    month: "long",
     day: "numeric",
+    timeZone: "UTC",
   });
   await expect(page.getByText(formattedDate, { exact: true })).toBeVisible();
   await expect(page.getByText("Rounds")).toBeVisible();

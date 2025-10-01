@@ -1,12 +1,11 @@
 import { test } from "../../util/test.js";
 import { expect } from "@playwright/test";
-import { redirectWeb4, getLocalWidgetContent } from "../../util/web4.js";
-import { parseNEAR, Worker, Account } from "near-workspaces";
+import { redirectWeb4 } from "../../util/web4.js";
+import { parseNEAR, Worker } from "near-workspaces";
 import * as nearAPI from "near-api-js";
 import { connect } from "near-api-js";
 import { PROPOSAL_BOND, setPageAuthSettings } from "../../util/sandboxrpc.js";
 import { mockNearBalances } from "../../util/rpcmock.js";
-import { getTransactionModalObject } from "../../util/transaction.js";
 import fs from "fs/promises";
 import path from "path";
 import { Indexer } from "../../util/indexer.js";
@@ -24,7 +23,6 @@ let creatorAccount;
 let socialNearAccount;
 let intentsContract;
 let omftContract;
-let usdcContract;
 let solverAccount;
 let solverKeyPair;
 
@@ -184,22 +182,6 @@ async function setupIndexer(page, worker) {
   const indexer = new Indexer(worker.provider.connection.url);
   await indexer.init();
   await indexer.attachIndexerRoutes(page);
-}
-
-async function openCreatePage({ page, instanceAccount }) {
-  await page.goto(`https://${instanceAccount}.page/?page=asset-exchange`);
-  await expect(page.getByText("Pending Requests")).toBeVisible({
-    timeout: 15000,
-  });
-  await page.getByRole("button", { name: "Create Request" }).click();
-  await page.waitForTimeout(5_000);
-}
-
-// Helper function to intercept 1Click API quote and replace deposit address
-// TODO: Implement this to replace the deposit address with our own
-async function intercept1ClickQuote({ page, ourDepositAddress }) {
-  // We'll intercept the real 1Click API response and only replace the deposit address
-  // This allows us to use real quotes while testing with our own address
 }
 
 // Helper function to create signed payloads for NEP-413
@@ -454,16 +436,6 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     // Deposit tokens to treasury BEFORE navigating to page
     await depositTokensToTreasury({ daoAccount });
 
-    // Set up proper Web4 redirection and auth
-    const modifiedWidgets = {};
-    const configKey = `${instanceAccount}/widget/config.data`;
-
-    modifiedWidgets[configKey] = (
-      await getLocalWidgetContent(configKey, {
-        treasury: daoAccount,
-        account: instanceAccount,
-      })
-    ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
     await setupIndexer(page, worker);
 
     await redirectWeb4({
@@ -472,7 +444,7 @@ test.describe("1Click API Integration - Asset Exchange", function () {
       treasury: daoAccount,
       networkId: "sandbox",
       sandboxNodeUrl: worker.provider.connection.url,
-      modifiedWidgets,
+      modifiedWidgets: {},
       callWidgetNodeURLForContractWidgets: false,
     });
     // Mock user balance
@@ -574,10 +546,7 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     });
 
     // Find and click the Treasury Wallet dropdown
-    const treasuryWalletDropdown = page
-      .locator('.form-label:has-text("Treasury Wallet")')
-      .locator("~ div .dropdown-toggle")
-      .first();
+    const treasuryWalletDropdown = page.getByTestId("wallet-dropdown-btn");
     await treasuryWalletDropdown.click();
     console.log("Clicked Treasury Wallet dropdown");
 
@@ -1169,7 +1138,7 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     await expect(
       expandedDetails.locator("label:has-text('Estimated Time')")
     ).toBeVisible();
-    const timeText = `${actualTimeEstimate} minutes`;
+    const timeText = `${actualTimeEstimate} seconds`;
     await expect(expandedDetails.locator(`text=${timeText}`)).toBeVisible();
     console.log(`✓ Time estimate displayed: ${timeText}`);
 

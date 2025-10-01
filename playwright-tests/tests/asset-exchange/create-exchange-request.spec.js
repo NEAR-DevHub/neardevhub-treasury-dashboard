@@ -57,6 +57,12 @@ async function openCreatePage({ page, instanceAccount }) {
   await page.waitForTimeout(5_000);
   await createRequestButton.click();
   await page.waitForTimeout(5_000);
+  const canvasLocator = page.locator(".offcanvas-body");
+  await expect(canvasLocator.getByText("Treasury Wallet")).toBeVisible();
+  await canvasLocator.getByRole("button", { name: "Select Wallet" }).click();
+  await expect(canvasLocator.getByText("SputnikDAO")).toBeVisible();
+  await canvasLocator.getByText("SputnikDAO").click();
+  await page.waitForTimeout(2_000);
 }
 
 async function selectSendToken({ page, token }) {

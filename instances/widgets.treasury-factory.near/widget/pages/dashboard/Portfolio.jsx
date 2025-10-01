@@ -495,16 +495,6 @@ const LockupRow = ({
   );
 };
 
-function convertToDate(nanoseconds) {
-  const milliseconds = Number(nanoseconds) / 1_000_000; // Convert to milliseconds
-  const date = new Date(milliseconds);
-
-  const options = { year: "numeric", month: "long", day: "numeric" };
-  const formattedDate = date.toLocaleDateString("en-US", options);
-
-  return formattedDate;
-}
-
 useEffect(() => {
   if (
     isLockupContract &&
@@ -549,10 +539,12 @@ useEffect(() => {
     setLockupVested(
       formatNearAmount(Big(totalAllocated).minus(locked).toFixed())
     );
-    setLockupCliffDate(cliffTimestamp ? convertToDate(cliffTimestamp) : null);
+    setLockupCliffDate(
+      cliffTimestamp ? Number(cliffTimestamp) / 1_000_000 : null
+    );
     setLockupUnvested(formatNearAmount(locked));
-    setLockupStartDate(convertToDate(lockupStartTimestamp));
-    setLockupEndDate(convertToDate(lockupEndTimestamp));
+    setLockupStartDate(Number(lockupStartTimestamp) / 1_000_000);
+    setLockupEndDate(Number(lockupEndTimestamp) / 1_000_000);
   }
 }, [isLockupContract, lockupState, nearBalances]);
 
@@ -575,14 +567,34 @@ return (
                   <div className="border border-1 rounded-3">
                     <LockupRow
                       label="Start Date"
-                      value={lockupStartDate}
+                      value={
+                        <Widget
+                          loading=""
+                          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DateTimeDisplay"
+                          props={{
+                            timestamp: lockupStartDate,
+                            format: "date-only",
+                            instance: instance,
+                          }}
+                        />
+                      }
                       tooltipInfo="The date when the vesting period for this lockup account began."
                       showExpand={false}
                       noSpaceInEnd={true}
                     />
                     <LockupRow
                       label="End Date"
-                      value={lockupEndDate}
+                      value={
+                        <Widget
+                          loading=""
+                          src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DateTimeDisplay"
+                          props={{
+                            timestamp: lockupEndDate,
+                            format: "date-only",
+                            instance: instance,
+                          }}
+                        />
+                      }
                       tooltipInfo="The date when the vesting period for this lockup account will end."
                       hideBorder={lockupCliffDate ? false : true}
                       showExpand={false}
@@ -591,7 +603,17 @@ return (
                     {lockupCliffDate && (
                       <LockupRow
                         label="Cliff Date"
-                        value={lockupCliffDate}
+                        value={
+                          <Widget
+                            loading=""
+                            src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DateTimeDisplay"
+                            props={{
+                              timestamp: lockupCliffDate,
+                              format: "date-only",
+                              instance: instance,
+                            }}
+                          />
+                        }
                         tooltipInfo="The first date when a portion of the original allocated amount becomes vested according to the vesting schedule. At the cliff date, tokens may unlock all at once or gradually over time. Before the cliff date, you can stake these tokens, but you are unable to use them for any other payments."
                         hideBorder={true}
                         showExpand={false}

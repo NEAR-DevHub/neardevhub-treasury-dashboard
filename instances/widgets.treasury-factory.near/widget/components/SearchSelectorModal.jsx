@@ -11,6 +11,8 @@ const {
   selectedElement,
   searchPlaceholder,
   enableSearch,
+  disabled,
+  dataTestId,
 } = props;
 
 State.init({
@@ -46,8 +48,12 @@ useEffect(() => {
 return (
   <div>
     <div
-      className="d-flex align-items-center justify-content-between bg-dropdown border rounded-2 btn w-100"
-      onClick={() => State.update({ showModal: true })}
+      className={`d-flex align-items-center justify-content-between bg-dropdown border rounded-2 btn w-100 ${
+        disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+      }`}
+      onClick={() => !disabled && State.update({ showModal: true })}
+      style={{ pointerEvents: disabled ? "none" : "auto" }}
+      data-testid={dataTestId}
     >
       <div className="d-flex align-items-center gap-2">
         {selectedElement || dropdownLabel}
@@ -55,7 +61,7 @@ return (
       <i className="bi bi-chevron-down"></i>
     </div>
     {showModal && (
-      <Modal props={{ maxHeight: "600px" }}>
+      <Modal props={{ maxHeight: "600px", minWidth: "500px" }}>
         <ModalHeader>
           <div className="d-flex align-items-center justify-content-between">
             <div className="h5 fw-bold mb-0">{modalTitle}</div>

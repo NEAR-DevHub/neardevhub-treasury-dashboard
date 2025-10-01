@@ -85,9 +85,10 @@ test.describe("NEAR Intents Asset Exchange Proposal Details", () => {
 
     // Verify 1Click Quote Deadline
     await expect(page.getByText("1Click Quote Deadline")).toBeVisible();
-    await expect(page.getByText("Sep 22, 2025, 08:02 AM UTC")).toBeVisible();
+    await expect(page.getByText("Mon, Sep 22, 2025, 08:02 UTC")).toBeVisible();
 
     // Verify Estimated Time
+    // Note: Historical proposal #30 was created with "10 minutes" text
     await expect(page.getByText("Estimated Time")).toBeVisible();
     await expect(page.getByText("10 minutes")).toBeVisible();
 
@@ -114,10 +115,10 @@ test.describe("NEAR Intents Asset Exchange Proposal Details", () => {
     await expect(page.getByText("petersalomonsen.near")).toBeVisible();
 
     await expect(page.getByText("Created Date")).toBeVisible();
-    await expect(page.getByText("Sep 21, 2025, 08:04 AM UTC")).toBeVisible();
+    await expect(page.getByText("Sun, Sep 21, 2025, 08:04 UTC")).toBeVisible();
 
     await expect(page.getByText("Expires At")).toBeVisible();
-    await expect(page.getByText("Sep 28, 2025, 08:04 AM UTC")).toBeVisible();
+    await expect(page.getByText("Sun, Sep 28, 2025, 08:04 UTC")).toBeVisible();
 
     // Verify status
     await expect(page.getByText("1 Approved")).toBeVisible();

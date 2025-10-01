@@ -42,7 +42,7 @@ test.describe("Asset Exchange - Expired Quote Voting Prevention", () => {
         slippage: "2",
         quoteDeadline: formattedExpiredDate,
         destinationNetwork: "ethereum",
-        timeEstimate: "10 minutes",
+        timeEstimate: "10 seconds",
         depositAddress: "test-deposit-address.near",
         signature: "ed25519:test-signature-100",
       }),
@@ -101,15 +101,17 @@ test.describe("Asset Exchange - Expired Quote Voting Prevention", () => {
     await page.waitForTimeout(5000);
 
     // Verify the expired quote message is displayed
-    const expiredMessage = page.getByText("Voting is no longer available");
+    const expiredMessage = page.getByText(
+      "Voting is not available due to expired swap quote"
+    );
     await expect(expiredMessage).toBeVisible();
 
-    // Verify vote buttons are disabled
+    // Verify vote buttons are NOT visible (removed instead of disabled)
     const approveButton = page.getByRole("button", { name: "Approve" });
     const rejectButton = page.getByRole("button", { name: "Reject" });
 
-    await expect(approveButton).toBeDisabled();
-    await expect(rejectButton).toBeDisabled();
+    await expect(approveButton).not.toBeVisible();
+    await expect(rejectButton).not.toBeVisible();
 
     // Verify the quote deadline shows as expired in the proposal content
     await expect(page.locator("text=Quote Deadline")).toBeVisible();
@@ -167,7 +169,7 @@ test.describe("Asset Exchange - Expired Quote Voting Prevention", () => {
         slippage: "3",
         quoteDeadline: formattedFutureDate,
         destinationNetwork: "polygon",
-        timeEstimate: "15 minutes",
+        timeEstimate: "15 seconds",
         depositAddress: "valid-deposit-address.near",
         signature: "ed25519:test-signature-101",
       }),
@@ -226,7 +228,9 @@ test.describe("Asset Exchange - Expired Quote Voting Prevention", () => {
     await page.waitForTimeout(5000);
 
     // Verify the expired quote message is NOT displayed
-    const expiredMessage = page.getByText("Voting is no longer available");
+    const expiredMessage = page.getByText(
+      "Voting is not available due to expired swap quote"
+    );
     await expect(expiredMessage).not.toBeVisible();
 
     // Verify vote buttons are ENABLED

@@ -2,10 +2,6 @@ const { NearToken, Copy } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Icons"
 ) || { NearToken: () => <></>, Copy: () => <></> };
 
-const { readableDate } = VM.require(
-  "${REPL_DEVHUB}/widget/core.lib.common"
-) || { readableDate: () => {} };
-
 const { accountToLockup } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
 );
@@ -71,33 +67,6 @@ useEffect(() => {
 
 function convertBalanceToReadableFormat(amount) {
   return Big(amount ?? "0").toFixed(2);
-}
-
-function formatRelativeDate(date) {
-  const today = new Date();
-  const targetDate = new Date(date);
-
-  const todayDateOnly = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate()
-  );
-  const targetDateOnly = new Date(
-    targetDate.getFullYear(),
-    targetDate.getMonth(),
-    targetDate.getDate()
-  );
-
-  const diffTime = todayDateOnly - targetDateOnly;
-  const diffDays = diffTime / (1000 * 60 * 60 * 24);
-
-  if (diffDays === 0) {
-    return "Today";
-  } else if (diffDays === 1) {
-    return "Yesterday";
-  } else {
-    return targetDate.toISOString().split("T")[0];
-  }
 }
 
 function formatCurrency(amount) {
@@ -226,7 +195,14 @@ return (
                             <div className="fw-semi-bold text-md mb-0">
                               {txnType}
                             </div>
-                            <div>{readableDate(txn.timestamp / 1000000)}</div>
+                            <Widget
+                              loading=""
+                              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DateTimeDisplay`}
+                              props={{
+                                timestamp: txn.timestamp / 1000000,
+                                instance,
+                              }}
+                            />
                           </div>
                         </div>
                       </td>

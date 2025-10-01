@@ -5,12 +5,8 @@ const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
 if (!instance) {
   return <></>;
 }
-const {
-  decodeProposalDescription,
-  decodeBase64,
-  getApproversAndThreshold,
-  formatSubmissionTimeStamp,
-} = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
+const { decodeProposalDescription, decodeBase64, getApproversAndThreshold } =
+  VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
 
 const { treasuryDaoID, allowLockupCancellation } = VM.require(
   `${instance}/widget/config.data`
@@ -203,13 +199,13 @@ return (
           </div>
           <div className="d-flex flex-column gap-2 mt-1">
             <label className="border-top">Start Date</label>
-
             <Widget
               loading=""
-              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
+              src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DateTimeDisplay"
               props={{
-                timestamp: proposalData?.startTimestamp,
-                isProposalDetailsPage: true,
+                timestamp: proposalData?.startTimestamp / 1e6,
+
+                instance,
               }}
             />
           </div>
@@ -217,13 +213,15 @@ return (
             <label className="border-top">End Date</label>
             <Widget
               loading=""
-              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
+              src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DateTimeDisplay"
               props={{
-                timestamp:
-                  proposalData?.vestingSchedule.end_timestamp ??
-                  parseInt(proposalData?.startTimestamp) +
-                    parseInt(proposalData?.args.release_duration),
-                isProposalDetailsPage: true,
+                timestamp: proposalData?.vestingSchedule.end_timestamp
+                  ? proposalData?.vestingSchedule.end_timestamp / 1e6
+                  : (parseInt(proposalData?.startTimestamp) +
+                      parseInt(proposalData?.args.release_duration)) /
+                    1e6,
+
+                instance,
               }}
             />
           </div>
@@ -234,10 +232,11 @@ return (
                 {proposalData?.vestingSchedule.cliff_timestamp ? (
                   <Widget
                     loading=""
-                    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Date`}
+                    src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DateTimeDisplay"
                     props={{
-                      timestamp: proposalData?.vestingSchedule.cliff_timestamp,
-                      isProposalDetailsPage: true,
+                      timestamp:
+                        proposalData?.vestingSchedule.cliff_timestamp / 1e6,
+                      instance,
                     }}
                   />
                 ) : (

@@ -69,18 +69,9 @@ jobs:
       - name: Run tests
         id: stake-delegation-tests
         run: |
-          # Run filters tests only with treasury-testing project (since that has most amount of proposals)
-          if [ "${{ matrix.project }}" = "treasury-testing" ]; then
-            npx playwright test playwright-tests/tests/stake-delegation/stake-delegation-filters.spec.js \
-              --project=${{ matrix.project }} \
-              --shard=${{ matrix.shard }}
-          else
-            # Run all other stake-delegation tests except filters
-            npx playwright test playwright-tests/tests/stake-delegation \
-              --project=${{ matrix.project }} \
-              --shard=${{ matrix.shard }} \
-              --grep-invert="filters"
-          fi
+          npx playwright test playwright-tests/tests/stake-delegation \
+            --project=${{ matrix.project }} \
+            --shard=${{ matrix.shard }}
 
       - name: Sanitize shard name
         run: echo "SHARD_SAFE=$(echo "${{ matrix.shard }}" | sed 's|/|-|')" >> $GITHUB_ENV

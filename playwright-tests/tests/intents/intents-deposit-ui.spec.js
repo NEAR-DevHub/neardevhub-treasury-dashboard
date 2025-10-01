@@ -13,23 +13,12 @@ test.describe("Intents Deposit UI", () => {
   });
 
   test.beforeEach(async ({ page, instanceAccount, daoAccount }) => {
-    // Enable feature flag during tests for all instances, can be removed when generally available
-
-    const modifiedWidgets = {};
-    const configKey = `${instanceAccount}/widget/config.data`;
-    modifiedWidgets[configKey] = (
-      await getLocalWidgetContent(configKey, {
-        treasury: daoAccount,
-        account: instanceAccount,
-      })
-    ).replace("treasuryDaoID:", "showNearIntents: true, treasuryDaoID:");
-
     // --------------------------------------------------------
     await redirectWeb4({
       page,
       contractId: instanceAccount,
       treasury: daoAccount,
-      modifiedWidgets,
+      modifiedWidgets: {},
       callWidgetNodeURLForContractWidgets: false,
     });
   });

@@ -10,7 +10,6 @@ const {
   decodeProposalDescription,
   decodeBase64,
   getApproversAndThreshold,
-  formatSubmissionTimeStamp,
 } = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
 
 const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
@@ -353,8 +352,8 @@ return (
               <label>Source Wallet</label>
               <div className="text-secondary">{proposalData?.sourceWallet}</div>
             </div>
-            <div className="d-flex flex-column gap-2 mt-1 border-top">
-              <label>Send</label>
+            <div className="d-flex flex-column gap-2 mt-1">
+              <label className="border-top">Send</label>
               <h5 className="mb-0">
                 {proposalData?.quoteDeadline ? (
                   // For 1Click exchanges, show custom display with optional icon
@@ -627,7 +626,7 @@ return (
                       src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
                       props={{
                         popup:
-                          "This is the expiry time for the 1Click API quote. After this time, the quoted exchange rate is no longer valid and voting will be disabled to prevent loss of funds.",
+                          "Time when the deposit address becomes inactive and funds may be lost",
                         children: (
                           <i className="bi bi-info-circle text-secondary"></i>
                         ),
@@ -642,16 +641,14 @@ return (
                         : ""
                     }
                   >
-                    {proposalData.quoteDeadline.toLocaleString("en-US", {
-                      month: "short",
-                      day: "2-digit",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      hour12: true,
-                      timeZone: "UTC",
-                      timeZoneName: "short",
-                    })}
+                    <Widget
+                      loading=""
+                      src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.DateTimeDisplay"
+                      props={{
+                        timestamp: proposalData.quoteDeadline,
+                        instance,
+                      }}
+                    />
                     {new Date() > proposalData.quoteDeadline && " (EXPIRED)"}
                   </div>
                 </div>
@@ -664,7 +661,7 @@ return (
                         src="${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OverlayTrigger"
                         props={{
                           popup:
-                            "Estimated time for the cross-chain swap to complete once the proposal is approved.",
+                            "Estimated time for the swap to be executed after the deposit transaction is confirmed",
                           children: (
                             <i className="bi bi-info-circle text-secondary"></i>
                           ),
