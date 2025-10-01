@@ -311,7 +311,7 @@ return (
             Cancel
           </button>
           <button
-            className="btn btn-primary"
+            className="btn theme-btn"
             onClick={handleSaveChanges}
             disabled={!hasChanges()}
           >
