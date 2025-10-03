@@ -107,6 +107,6 @@ cargo near deploy build-non-reproducible-wasm <account-id>
 - [NEAR Rust SDK Documentation](https://docs.near.org/sdk/rust/introduction)
 - [NEAR Documentation](https://docs.near.org)
 - [NEAR StackOverflow](https://stackoverflow.com/questions/tagged/nearprotocol)
-- [NEAR Discord](https://near.chat)
+- [NEAR Discord](https://discord.com/invite/GZ7735Xjce)
 - [NEAR Telegram Developers Community Group](https://t.me/neardev)
 - NEAR DevHub: [Telegram](https://t.me/neardevhub), [Twitter](https://twitter.com/neardevhub)
