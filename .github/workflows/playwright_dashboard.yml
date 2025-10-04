@@ -74,7 +74,7 @@ jobs:
         if: failure() && steps.dashboard-tests.outcome == 'failure'
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-test-artifacts-dashboard-${{ matrix.target_account.test_command }}.zip
+          name: playwright-test-artifacts-dashboard-${{ matrix.project }}-shard-${{ env.SHARD_SAFE }}.zip
           path: |
             test-results/
             playwright-report/
