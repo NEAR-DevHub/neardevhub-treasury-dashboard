@@ -178,6 +178,9 @@ function setFtLockups(lockups) {
   const partiallyClaimed = [];
 
   lockups.forEach((ftLockup) => {
+    if (Big(ftLockup.deposited_amount).lte(0)) {
+      return;
+    }
     const claimedAmount = Big(ftLockup.claimed_amount).toFixed();
 
     if (Big(claimedAmount).gte(Big(ftLockup.deposited_amount))) {
