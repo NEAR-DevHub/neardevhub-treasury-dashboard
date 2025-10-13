@@ -748,7 +748,7 @@ async fn test_factory_should_refund_if_failing_because_of_existing_account(
         user_account_details_before.balance.as_millinear()
             - user_account_details_after.balance.as_millinear()
             < 10
-    , "User account balance after ( {} mNEAR) should be almost the same as user balance before ( {} mNEAR)", 
+    , "User account balance after ( {} mNEAR) should be almost the same as user balance before ( {} mNEAR)",
     user_account_details_after.balance.as_millinear(),
     user_account_details_before.balance.as_millinear()
 );

@@ -76,13 +76,12 @@ impl Contract {
         // Encode length (8 bytes) + account ID (padded to 64 bytes)
         let mut encoded_data = vec![0u8; 8 + 64];
         encoded_data[..8]
-            .copy_from_slice(&(allowed_self_upgrade_account_bytes.len() as u64).to_le_bytes()); // Store length (8 bytes)
+            .copy_from_slice(&(allowed_self_upgrade_account_bytes.len() as u64).to_le_bytes());
         encoded_data[8..8 + allowed_self_upgrade_account_bytes.len()]
-            .copy_from_slice(allowed_self_upgrade_account_bytes); // Store account ID
+            .copy_from_slice(allowed_self_upgrade_account_bytes);
 
         let encoded_account_base64 = general_purpose::STANDARD.encode(&encoded_data);
 
-        // Final Base64 string
         let final_wasm_base64 = format!(
             "{}{}",
             minimum_self_upgrade_contract_wasm_base64, encoded_account_base64
@@ -93,10 +92,10 @@ impl Contract {
                 "create_account_advanced".to_string(),
                 json!({
                     "new_account_id": new_instance_contract_id.clone(),
-                    "options": {
+                    "options": json!({
                         "full_access_keys": [env::signer_account_pk(),admin_full_access_public_key],
                         "contract_bytes_base64": final_wasm_base64
-                    }
+                    })
                 })
                 .to_string()
                 .as_bytes()
@@ -106,6 +105,53 @@ impl Contract {
             )
             .then(
                 Self::ext(env::current_account_id()).create_account_callback(
+                    env::predecessor_account_id(),
+                    name,
+                    new_instance_contract_id,
+                    sputnik_dao_factory_account_id,
+                    social_db_account_id,
+                    widget_reference_account_id,
+                    create_dao_args,
+                ),
+            )
+    }
+
+    #[payable]
+    pub fn create_instance_global_contract(
+        &mut self,
+        name: String,
+        sputnik_dao_factory_account_id: String,
+        social_db_account_id: String,
+        widget_reference_account_id: String,
+        create_dao_args: String,
+    ) -> Promise {
+        if env::attached_deposit() != NearToken::from_near(7) {
+            env::panic_str("Must attach 7 NEAR to create treasury instance with global contract");
+        }
+        let new_instance_contract_id: AccountId = format!("{}.near", name).parse().unwrap();
+        let admin_full_access_public_key: PublicKey =
+            "ed25519:DuAFUPhxv3zBDbZP8oCwC1KQPVzaUY88s5tECv8JDPMg"
+                .parse()
+                .unwrap();
+
+        Promise::new("near".parse().unwrap())
+            .function_call(
+                "create_account_advanced".to_string(),
+                json!({
+                    "new_account_id": new_instance_contract_id.clone(),
+                    "options": json!({
+                        "full_access_keys": [env::signer_account_pk(),admin_full_access_public_key],
+                        "use_global_contract_account_id": env::current_account_id().as_str()
+                    })
+                })
+                .to_string()
+                .as_bytes()
+                .to_vec(),
+                NearToken::from_millinear(500),
+                Gas::from_tgas(30),
+            )
+            .then(
+                Self::ext(env::current_account_id()).create_account_global_contract_callback(
                     env::predecessor_account_id(),
                     name,
                     new_instance_contract_id,
@@ -165,11 +211,56 @@ impl Contract {
                 )
                 .as_str(),
             );
-            Promise::new(refund_on_failure_account).transfer(
-                CREATE_SPUTNIK_DAO_DEPOSIT
-                    .saturating_add(SOCIAL_DB_DEPOSIT)
-                    .saturating_add(NEW_INSTANCE_ACCOUNT_DEPOSIT),
-            )
+            let refund_deposit = CREATE_SPUTNIK_DAO_DEPOSIT
+                .saturating_add(SOCIAL_DB_DEPOSIT)
+                .saturating_add(NEW_INSTANCE_ACCOUNT_DEPOSIT);
+            Promise::new(refund_on_failure_account).transfer(refund_deposit)
+        }
+    }
+
+    #[private]
+    pub fn create_account_global_contract_callback(
+        &self,
+        refund_on_failure_account: AccountId,
+        name: String,
+        new_instance_contract_id: AccountId,
+        sputnik_dao_factory_account_id: String,
+        social_db_account_id: String,
+        widget_reference_account_id: String,
+        create_dao_args: String,
+    ) -> Promise {
+        let create_account_result = env::promise_result(0);
+        let create_account_result: bool = match create_account_result {
+            PromiseResult::Successful(result) => {
+                near_sdk::serde_json::from_slice::<bool>(&result).unwrap_or(false)
+            }
+            _ => false,
+        };
+
+        if create_account_result {
+            sputnik_dao::ext(sputnik_dao_factory_account_id.parse().unwrap())
+                .with_static_gas(Gas::from_tgas(100))
+                .with_attached_deposit(CREATE_SPUTNIK_DAO_DEPOSIT)
+                .create(name.to_string(), create_dao_args)
+                .then(Self::ext(env::current_account_id()).create_dao_callback(
+                    refund_on_failure_account,
+                    new_instance_contract_id,
+                    format!("{}.{}", name, sputnik_dao_factory_account_id),
+                    widget_reference_account_id,
+                    social_db_account_id,
+                ))
+        } else {
+            env::log_str(
+                format!(
+                    "Failed creating treasury web4 account {}",
+                    new_instance_contract_id
+                )
+                .as_str(),
+            );
+            let refund_deposit = CREATE_SPUTNIK_DAO_DEPOSIT
+                .saturating_add(SOCIAL_DB_DEPOSIT)
+                .saturating_add(NearToken::from_millinear(500));
+            Promise::new(refund_on_failure_account).transfer(refund_deposit)
         }
     }
 
@@ -201,6 +292,18 @@ impl Contract {
 
     pub fn get_web4_contract_bytes(&self) {
         env::value_return(WEB4_CONTRACT_BYTES);
+    }
+
+    /// Deploy the web4 contract as a global contract to the factory account itself.
+    /// This function can only be called by the treasury-factory contract itself.
+    pub fn deploy_web4_global_contract(&mut self) -> Promise {
+        // Only allow the contract itself to call this function
+        if env::predecessor_account_id() != env::current_account_id() {
+            env::panic_str("Only the treasury factory contract can deploy the global web4 contract");
+        }
+
+        let global_account = env::current_account_id();
+        Promise::new(global_account).deploy_global_contract_by_account_id(WEB4_CONTRACT_BYTES.to_vec())
     }
 }
 
