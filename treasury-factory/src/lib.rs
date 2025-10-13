@@ -76,12 +76,13 @@ impl Contract {
         // Encode length (8 bytes) + account ID (padded to 64 bytes)
         let mut encoded_data = vec![0u8; 8 + 64];
         encoded_data[..8]
-            .copy_from_slice(&(allowed_self_upgrade_account_bytes.len() as u64).to_le_bytes());
+            .copy_from_slice(&(allowed_self_upgrade_account_bytes.len() as u64).to_le_bytes()); // Store length (8 bytes)
         encoded_data[8..8 + allowed_self_upgrade_account_bytes.len()]
-            .copy_from_slice(allowed_self_upgrade_account_bytes);
+            .copy_from_slice(allowed_self_upgrade_account_bytes); // Store account ID
 
         let encoded_account_base64 = general_purpose::STANDARD.encode(&encoded_data);
 
+        // Final Base64 string
         let final_wasm_base64 = format!(
             "{}{}",
             minimum_self_upgrade_contract_wasm_base64, encoded_account_base64
@@ -92,10 +93,10 @@ impl Contract {
                 "create_account_advanced".to_string(),
                 json!({
                     "new_account_id": new_instance_contract_id.clone(),
-                    "options": json!({
+                    "options": {
                         "full_access_keys": [env::signer_account_pk(),admin_full_access_public_key],
                         "contract_bytes_base64": final_wasm_base64
-                    })
+                    }
                 })
                 .to_string()
                 .as_bytes()
@@ -211,10 +212,11 @@ impl Contract {
                 )
                 .as_str(),
             );
-            let refund_deposit = CREATE_SPUTNIK_DAO_DEPOSIT
-                .saturating_add(SOCIAL_DB_DEPOSIT)
-                .saturating_add(NEW_INSTANCE_ACCOUNT_DEPOSIT);
-            Promise::new(refund_on_failure_account).transfer(refund_deposit)
+            Promise::new(refund_on_failure_account).transfer(
+                CREATE_SPUTNIK_DAO_DEPOSIT
+                    .saturating_add(SOCIAL_DB_DEPOSIT)
+                    .saturating_add(NEW_INSTANCE_ACCOUNT_DEPOSIT),
+            )
         }
     }
 
