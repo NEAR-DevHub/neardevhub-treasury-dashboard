@@ -299,11 +299,14 @@ impl Contract {
     pub fn deploy_web4_global_contract(&mut self) -> Promise {
         // Only allow the contract itself to call this function
         if env::predecessor_account_id() != env::current_account_id() {
-            env::panic_str("Only the treasury factory contract can deploy the global web4 contract");
+            env::panic_str(
+                "Only the treasury factory contract can deploy the global web4 contract",
+            );
         }
 
         let global_account = env::current_account_id();
-        Promise::new(global_account).deploy_global_contract_by_account_id(WEB4_CONTRACT_BYTES.to_vec())
+        Promise::new(global_account)
+            .deploy_global_contract_by_account_id(WEB4_CONTRACT_BYTES.to_vec())
     }
 }
 

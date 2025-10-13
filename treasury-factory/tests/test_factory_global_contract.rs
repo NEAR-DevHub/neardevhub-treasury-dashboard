@@ -19,8 +19,7 @@ fn build_project_once() -> Vec<u8> {
         fs::read(wasm_path).expect("Unable to read existing contract wasm")
     } else {
         let build_opts = BuildOpts::builder().build();
-        let build_artifact =
-            cargo_near_build::build(build_opts).expect("Failed to build contract");
+        let build_artifact = cargo_near_build::build(build_opts).expect("Failed to build contract");
         fs::read(build_artifact.path).expect("Unable to read contract wasm")
     }
 }
@@ -172,7 +171,11 @@ async fn test_factory_global_contract() -> Result<(), Box<dyn std::error::Error>
         .max_gas()
         .transact()
         .await?;
-    assert!(deploy_global_result.is_success(), "Failed to deploy global web4 contract: {:?}", deploy_global_result.receipt_failures());
+    assert!(
+        deploy_global_result.is_success(),
+        "Failed to deploy global web4 contract: {:?}",
+        deploy_global_result.receipt_failures()
+    );
 
     let init_sputnik_dao_factory_result =
         sputnik_dao_factory.call("new").max_gas().transact().await?;
@@ -294,7 +297,10 @@ async fn test_factory_global_contract() -> Result<(), Box<dyn std::error::Error>
 
     // Call create_instance_global_contract with 7 NEAR deposit
     let create_treasury_instance_result = user_account
-        .call(treasury_factory_contract.id(), "create_instance_global_contract")
+        .call(
+            treasury_factory_contract.id(),
+            "create_instance_global_contract",
+        )
         .args_json(json!(
             {
                 "sputnik_dao_factory_account_id": SPUTNIKDAO_FACTORY_CONTRACT_ACCOUNT,
@@ -488,6 +494,83 @@ async fn test_factory_global_contract() -> Result<(), Box<dyn std::error::Error>
         metadata["image"]["ipfs_cid"],
         "bafkreiefdkigadpkpccreqfnhut2li2nmf3alhz7c3wadveconelisnksu"
     );
+
+    // Test updating the global contract
+    println!("\n=== Testing Global Contract Update ===");
+
+    // Modify the factory wasm (which embeds the web4 contract)
+    // Replace "near-social-viewer" -> "UPDATED-VIEWER-V2" (same length: 18 bytes)
+    let original_string = b"<title></title>";
+    let replacement_string = b"<totle></totle>";
+
+    assert_eq!(
+        original_string.len(),
+        replacement_string.len(),
+        "Strings must have equal length"
+    );
+
+    let mut updated_factory_wasm = treasury_factory_contract_wasm.clone();
+
+    // Find and replace all occurrences in the binary data
+    for i in 0..updated_factory_wasm
+        .len()
+        .saturating_sub(original_string.len())
+    {
+        if &updated_factory_wasm[i..i + original_string.len()] == original_string {
+            updated_factory_wasm[i..i + replacement_string.len()]
+                .copy_from_slice(replacement_string);
+            println!("Found and replaced string at position {}", i);
+        }
+    }
+
+    // Deploy the updated factory contract
+    let deploy_updated_factory_result = treasury_factory_contract
+        .as_account()
+        .deploy(&updated_factory_wasm)
+        .await?;
+    assert!(
+        deploy_updated_factory_result.is_success(),
+        "Failed to deploy updated factory"
+    );
+
+    // Update the global contract
+    let update_global_result = treasury_factory_contract
+        .call("deploy_web4_global_contract")
+        .max_gas()
+        .transact()
+        .await?;
+    assert!(
+        update_global_result.is_success(),
+        "Failed to update global web4 contract: {:?}",
+        update_global_result.receipt_failures()
+    );
+
+    println!("{:?}", update_global_result);
+
+    worker.fast_forward(10).await?;
+
+    // Verify the existing instance now uses the updated global contract
+    let result_after_update = worker
+        .view(&instance_account_id.parse().unwrap(), "web4_get")
+        .args_json(json!({"request": {"path": "/", "preloads": create_preload_result(instance_account_id.clone(), String::from("test treasury title"), String::from("test description"))}}))
+        .await?;
+
+    let response_after_update = result_after_update.json::<Web4Response>().unwrap();
+    let body_string_after_update =
+        String::from_utf8(BASE64_STANDARD.decode(response_after_update.body).unwrap()).unwrap();
+
+    assert!(
+        !body_string_after_update.contains("<title></title>"),
+        "Updated global contract should not contain the original string"
+    );
+
+    // Verify the updated string is present
+    assert!(
+        body_string_after_update.contains("<totle></totle>"),
+        "Updated global contract should contain the replacement string"
+    );
+
+    println!("✅ Global contract update test passed!");
 
     Ok(())
 }
