@@ -109,7 +109,7 @@ return (
         ...props,
         currentTab,
         onTabChange: handleTabChange,
-        page: "custom-function-call",
+        page: "custom-proposals",
         tabs: [
           {
             title: "Pending Requests",
@@ -136,7 +136,7 @@ return (
       props={{
         showCanvas: showCreateRequest,
         onClose: toggleCreatePage,
-        title: "Create Custom Function Call Request",
+        title: "Create Custom Proposal Request",
         children: (
           <div>
             <Widget

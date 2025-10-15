@@ -111,15 +111,15 @@ async function setupWorker({ daoAccount, instanceAccount, page }) {
 
   // Add custom-function-call to navbarLinks
   // Check if it already exists to avoid duplicates
-  if (!configContent.includes('title: "Custom Function Call"')) {
+  if (!configContent.includes('title: "Custom Proposals"')) {
     modifiedWidgets[configKey] = configContent.replace(
       `{
       title: "Settings",
       href: "?page=settings",
     },`,
       `{
-      title: "Custom Function Call",
-      href: "?page=custom-function-call",
+      title: "Custom Proposals",
+      href: "?page=custom-proposals",
     },
     {
       title: "Settings",
@@ -139,10 +139,10 @@ async function setupWorker({ daoAccount, instanceAccount, page }) {
 
   // Add custom-function-call case to app.jsx
   // Check if it already exists to avoid duplicates
-  if (!appContent.includes('case "custom-function-call"')) {
+  if (!appContent.includes('case "custom-proposals"')) {
     modifiedWidgets[appKey] = appContent.replace(
       `case "lockup": {`,
-      `case "custom-function-call": {
+      `case "custom-proposals": {
       return (
         <Widget
           src={
@@ -169,7 +169,7 @@ async function setupWorker({ daoAccount, instanceAccount, page }) {
     callWidgetNodeURLForContractWidgets: false,
   });
 
-  await page.goto(`https://${instanceAccount}.page/?page=custom-function-call`);
+  await page.goto(`https://${instanceAccount}.page/?page=custom-proposals`);
 
   await setPageAuthSettings(
     page,

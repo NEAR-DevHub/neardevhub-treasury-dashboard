@@ -177,7 +177,7 @@ const ToastStatusContent = () => {
                 href={href({
                   widgetSrc: `${instance}/widget/app`,
                   params: {
-                    page: "custom-function-call",
+                    page: "custom-proposals",
                     tab: "History",
                     highlightProposalId:
                       typeof highlightProposalId === "number"

@@ -287,12 +287,10 @@ const handleSubmit = () => {
     }
 
     // Convert gas from Tgas to gas units (1 Tgas = 10^12 gas)
-    const gasInUnits = Math.floor(parseFloat(gas) * Math.pow(10, 12));
+    const gasInUnits = Big(gas).mul(Big(10).pow(12)).toFixed();
 
     // Convert deposit from NEAR to yoctoNEAR (1 NEAR = 10^24 yoctoNEAR)
-    const depositInYoctoNEAR = Math.floor(
-      parseFloat(deposit) * Math.pow(10, 24)
-    );
+    const depositInYoctoNEAR = Big(deposit).mul(Big(10).pow(24)).toFixed();
 
     // Create the proposal data
     const proposalData = {
@@ -306,8 +304,8 @@ const handleSubmit = () => {
             {
               method_name: methodName,
               args: parsedArguments,
-              gas: Big(gasInUnits).toFixed(),
-              deposit: Big(depositInYoctoNEAR).toFixed(),
+              gas: gasInUnits,
+              deposit: depositInYoctoNEAR,
             },
           ],
         },
@@ -401,7 +399,7 @@ return (
                 ? "is-invalid"
                 : ""
             }`}
-            placeholder="e.g., example.near"
+            placeholder="e.g., wrap.near"
             value={contractId}
             onChange={(e) => {
               setContractId(e.target.value);
@@ -438,7 +436,7 @@ return (
               ? "is-invalid"
               : ""
           }`}
-          placeholder="e.g., transfer"
+          placeholder="e.g., ft_transfer"
           value={methodName}
           onChange={(e) => {
             setMethodName(e.target.value);

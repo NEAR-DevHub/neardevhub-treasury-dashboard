@@ -81,7 +81,7 @@ function Page() {
       );
     }
 
-    case "custom-function-call": {
+    case "custom-proposals": {
       return (
         <Widget
           src={
