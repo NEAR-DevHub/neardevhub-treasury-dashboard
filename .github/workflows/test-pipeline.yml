@@ -81,3 +81,9 @@ jobs:
     uses: ./.github/workflows/playwright_web4.yml
     with:
       node-version: "20"
+
+  playwright_custom_function_call:
+    needs: [install]
+    uses: ./.github/workflows/playwright_custom_function_call.yml
+    with:
+      node-version: "20"

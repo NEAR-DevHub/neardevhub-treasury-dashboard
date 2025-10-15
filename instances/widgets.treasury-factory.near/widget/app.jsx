@@ -81,6 +81,17 @@ function Page() {
       );
     }
 
+    case "custom-function-call": {
+      return (
+        <Widget
+          src={
+            "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.custom-function-call.index"
+          }
+          props={propsToSend}
+        />
+      );
+    }
+
     default: {
       // TODO: 404 page
       return <p>404</p>;
