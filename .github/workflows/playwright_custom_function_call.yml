@@ -20,7 +20,7 @@ jobs:
       matrix:
         shard: [1/1]
         project:
-          - treasury-testing
+          - treasury-dashboard
 
     steps:
       - name: Checkout repository
