@@ -25,8 +25,14 @@ fn build_project_once() -> Vec<u8> {
 }
 
 fn load_sputnikdao_factory_wasm() -> Vec<u8> {
-    let wasm_path = "../../sputnik-dao-contract/target/near/sputnikdao_factory2/sputnikdao_factory2.wasm";
-    fs::read(wasm_path).expect("Unable to read sputnikdao-factory2 wasm. Make sure to build it first.")
+    // TEMPORARY: Using local wasm copy for testing purposes.
+    // TODO: Before merging this PR:
+    //   1. Deploy the updated sputnikdao-factory to mainnet with global contract support
+    //   2. Delete tests/sputnikdao_factory2.wasm
+    //   3. Update the test to use mainnet's sputnikdao-factory via import (lines 101-105)
+    //      instead of loading from local wasm file
+    let wasm_path = "tests/sputnikdao_factory2.wasm";
+    fs::read(wasm_path).expect("Unable to read sputnikdao-factory2 wasm from tests directory")
 }
 
 fn create_preload_result(
