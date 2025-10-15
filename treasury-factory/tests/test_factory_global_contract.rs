@@ -24,6 +24,11 @@ fn build_project_once() -> Vec<u8> {
     }
 }
 
+fn load_sputnikdao_factory_wasm() -> Vec<u8> {
+    let wasm_path = "../../sputnik-dao-contract/target/near/sputnikdao_factory2/sputnikdao_factory2.wasm";
+    fs::read(wasm_path).expect("Unable to read sputnikdao-factory2 wasm. Make sure to build it first.")
+}
+
 fn create_preload_result(
     account_id: String,
     title: String,
@@ -177,6 +182,14 @@ async fn test_factory_global_contract() -> Result<(), Box<dyn std::error::Error>
         deploy_global_result.receipt_failures()
     );
 
+    // Deploy updated sputnikdao-factory2 with global contract support
+    let sputnikdao_factory_wasm = load_sputnikdao_factory_wasm();
+    let sputnik_dao_factory = sputnik_dao_factory
+        .as_account()
+        .deploy(&sputnikdao_factory_wasm)
+        .await?
+        .result;
+
     let init_sputnik_dao_factory_result =
         sputnik_dao_factory.call("new").max_gas().transact().await?;
     if init_sputnik_dao_factory_result.is_failure() {
@@ -186,6 +199,18 @@ async fn test_factory_global_contract() -> Result<(), Box<dyn std::error::Error>
         );
     }
     assert!(init_sputnik_dao_factory_result.is_success());
+
+    // Deploy DAO contract as a global contract to the sputnikdao-factory account
+    let deploy_dao_global_result = sputnik_dao_factory
+        .call("deploy_dao_global_contract")
+        .max_gas()
+        .transact()
+        .await?;
+    assert!(
+        deploy_dao_global_result.is_success(),
+        "Failed to deploy global DAO contract: {:?}",
+        deploy_dao_global_result.receipt_failures()
+    );
 
     let instance_name = "test-treasury-global";
     let instance_account_id = format!("{}.near", instance_name);
@@ -295,7 +320,7 @@ async fn test_factory_global_contract() -> Result<(), Box<dyn std::error::Error>
     let treasury_factory_account_details_before = treasury_factory_contract.view_account().await?;
     let user_account_details_before = user_account.view_account().await?;
 
-    // Call create_instance_global_contract with 7 NEAR deposit
+    // Call create_instance_global_contract with 2 NEAR deposit
     let create_treasury_instance_result = user_account
         .call(
             treasury_factory_contract.id(),
@@ -311,7 +336,7 @@ async fn test_factory_global_contract() -> Result<(), Box<dyn std::error::Error>
             }
         ))
         .max_gas()
-        .deposit(NearToken::from_near(7))
+        .deposit(NearToken::from_near(2))
         .transact()
         .await?;
 
@@ -329,13 +354,13 @@ async fn test_factory_global_contract() -> Result<(), Box<dyn std::error::Error>
 
     assert!(create_treasury_instance_result.is_success());
 
-    // User should have spent at least 7 NEAR
+    // User should have spent at least 2 NEAR
     assert!(
         user_account_details_after.balance
             < (user_account_details_before
                 .balance
-                .saturating_sub(NearToken::from_near(7))),
-        "User balance after ( {} mNEAR) should be at least 7 NEAR less than before creating instance ( {} mNEAR ). {:?}",
+                .saturating_sub(NearToken::from_near(2))),
+        "User balance after ( {} mNEAR) should be at least 2 NEAR less than before creating instance ( {} mNEAR ). {:?}",
         user_account_details_after.balance.as_millinear(),
         user_account_details_before.balance.as_millinear(),
         create_treasury_instance_result.logs()
