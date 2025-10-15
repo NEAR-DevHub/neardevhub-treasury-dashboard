@@ -222,95 +222,95 @@ async function fillCustomFunctionCallForm(
 }
 
 test.describe("Wallet connected", () => {
-    test("should validate form fields before submission", async ({
-      page,
+  test("should validate form fields before submission", async ({
+    page,
+    daoAccount,
+    instanceAccount,
+  }) => {
+    test.setTimeout(160_000);
+    const { worker, creatorAccount } = await setupWorker({
       daoAccount,
       instanceAccount,
-    }) => {
-      test.setTimeout(160_000);
-      const { worker, creatorAccount } = await setupWorker({
-        daoAccount,
-        instanceAccount,
-        page,
-      });
-
-      await clickCreateRequestButton(page);
-
-      const canvasLocator = page.locator(".offcanvas-body");
-      const submitButton = canvasLocator.getByTestId("submit-button");
-
-      // Try to submit without filling any fields
-      await submitButton.click();
-
-      // Check for validation errors
-      await expect(
-        canvasLocator.getByText("Contract ID is required")
-      ).toBeVisible();
-      await expect(
-        canvasLocator.getByText("Method Name is required")
-      ).toBeVisible();
-      await expect(
-        canvasLocator.getByText("Gas (Tgas) is required")
-      ).toBeVisible();
-      await expect(
-        canvasLocator.getByText("Deposit (NEAR) is required")
-      ).toBeVisible();
-
-      // Fill Contract ID with invalid format
-      await canvasLocator.getByTestId("contract-id-input").fill("invalid");
-      await submitButton.click();
-      await expect(
-        canvasLocator.getByText(
-          "Invalid account format. Must be a .near, .aurora, .tg account or 64-character hex"
-        )
-      ).toBeVisible();
-
-      // Clear the error by editing
-      await canvasLocator.getByTestId("contract-id-input").fill("");
-      await expect(
-        canvasLocator.getByText(
-          "Invalid account format. Must be a .near, .aurora, .tg account or 64-character hex"
-        )
-      ).not.toBeVisible();
-
-      // Fill Method Name with invalid format (multiple words)
-      await canvasLocator.getByTestId("method-name-input").fill("invalid method");
-      await submitButton.click();
-      await expect(
-        canvasLocator.getByText(
-          "Method name must be a single word (letters, numbers, underscore only)"
-        )
-      ).toBeVisible();
-
-      // Fill Arguments with invalid JSON (plain string)
-      await canvasLocator.getByTestId("arguments-input").fill('"just a string"');
-      await submitButton.click();
-      await expect(
-        canvasLocator.getByText(
-          "Arguments must be a JSON object or array, not a string"
-        )
-      ).toBeVisible();
-
-      // Fill Arguments with invalid JSON syntax
-      await canvasLocator.getByTestId("arguments-input").fill("{invalid}");
-      await submitButton.click();
-      await expect(canvasLocator.getByText("Invalid JSON format")).toBeVisible();
-
-      // Fill Gas with value above 300
-      await canvasLocator.getByTestId("gas-input").fill("400");
-      await submitButton.click();
-      await expect(
-        canvasLocator.getByText("Gas must be between 0 and 300 Tgas")
-      ).toBeVisible();
-
-      // Errors should clear when editing
-      await canvasLocator.getByTestId("method-name-input").fill("transfer");
-      await expect(
-        canvasLocator.getByText(
-          "Method name must be a single word (letters, numbers, underscore only)"
-        )
-      ).not.toBeVisible();
+      page,
     });
+
+    await clickCreateRequestButton(page);
+
+    const canvasLocator = page.locator(".offcanvas-body");
+    const submitButton = canvasLocator.getByTestId("submit-button");
+
+    // Try to submit without filling any fields
+    await submitButton.click();
+
+    // Check for validation errors
+    await expect(
+      canvasLocator.getByText("Contract ID is required")
+    ).toBeVisible();
+    await expect(
+      canvasLocator.getByText("Method Name is required")
+    ).toBeVisible();
+    await expect(
+      canvasLocator.getByText("Gas (Tgas) is required")
+    ).toBeVisible();
+    await expect(
+      canvasLocator.getByText("Deposit (NEAR) is required")
+    ).toBeVisible();
+
+    // Fill Contract ID with invalid format
+    await canvasLocator.getByTestId("contract-id-input").fill("invalid");
+    await submitButton.click();
+    await expect(
+      canvasLocator.getByText(
+        "Invalid account format. Must be a .near, .aurora, .tg account or 64-character hex"
+      )
+    ).toBeVisible();
+
+    // Clear the error by editing
+    await canvasLocator.getByTestId("contract-id-input").fill("");
+    await expect(
+      canvasLocator.getByText(
+        "Invalid account format. Must be a .near, .aurora, .tg account or 64-character hex"
+      )
+    ).not.toBeVisible();
+
+    // Fill Method Name with invalid format (multiple words)
+    await canvasLocator.getByTestId("method-name-input").fill("invalid method");
+    await submitButton.click();
+    await expect(
+      canvasLocator.getByText(
+        "Method name must be a single word (letters, numbers, underscore only)"
+      )
+    ).toBeVisible();
+
+    // Fill Arguments with invalid JSON (plain string)
+    await canvasLocator.getByTestId("arguments-input").fill('"just a string"');
+    await submitButton.click();
+    await expect(
+      canvasLocator.getByText(
+        "Arguments must be a JSON object or array, not a string"
+      )
+    ).toBeVisible();
+
+    // Fill Arguments with invalid JSON syntax
+    await canvasLocator.getByTestId("arguments-input").fill("{invalid}");
+    await submitButton.click();
+    await expect(canvasLocator.getByText("Invalid JSON format")).toBeVisible();
+
+    // Fill Gas with value above 300
+    await canvasLocator.getByTestId("gas-input").fill("400");
+    await submitButton.click();
+    await expect(
+      canvasLocator.getByText("Gas must be between 0 and 300 Tgas")
+    ).toBeVisible();
+
+    // Errors should clear when editing
+    await canvasLocator.getByTestId("method-name-input").fill("transfer");
+    await expect(
+      canvasLocator.getByText(
+        "Method name must be a single word (letters, numbers, underscore only)"
+      )
+    ).not.toBeVisible();
+  });
 
   test("should create custom function call proposal and vote on it", async ({
     page,
