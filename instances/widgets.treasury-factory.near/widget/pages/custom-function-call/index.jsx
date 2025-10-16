@@ -116,7 +116,8 @@ const SidebarMenu = ({ currentTab }) => {
           props={{
             ActionButton: () => (
               <button className="btn primary-button d-flex align-items-center gap-2 mb-0">
-                <i class="bi bi-plus-lg h5 mb-0"></i>Create Request
+                <i class="bi bi-plus-lg h5 mb-0"></i>
+                <span className="responsive-text">Create Request</span>
               </button>
             ),
             checkForDeposit: true,
