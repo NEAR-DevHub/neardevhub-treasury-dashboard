@@ -19,6 +19,7 @@ const {
 
 const onCloseCanvas = props.onCloseCanvas ?? (() => {});
 const setToastStatus = props.setToastStatus ?? (() => {});
+const setVoteProposalId = props.setVoteProposalId ?? (() => {});
 
 const instance = props.instance;
 if (!instance || typeof accountToLockup !== "function") {
@@ -119,6 +120,7 @@ useEffect(() => {
           setTimeout(() => {
             cleanInputs();
             clearTimeout(checkTxnTimeout);
+            setVoteProposalId(lastProposalId);
             setToastStatus("ProposalAdded");
             refreshData();
             setTxnCreated(false);
@@ -343,6 +345,8 @@ const handleCancel = () => {
 };
 
 const Container = styled.div`
+  font-size: 14px;
+
   .form-label {
     font-weight: 600;
     margin-bottom: 0.5rem;
@@ -386,6 +390,20 @@ return (
     />
 
     <div className="d-flex flex-column gap-3">
+      <div>
+        <span className="text-secondary">
+          Use a Custom Function Call to invoke any method on a NEAR account.{" "}
+        </span>
+
+        <a
+          href="https://docs.neartreasury.com/advanced/custom-proposals"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-decoration-underline text-primary "
+        >
+          Learn more
+        </a>
+      </div>
       {/* Contract ID */}
       <div>
         <label className="form-label">

@@ -216,8 +216,6 @@ const VoteSuccessToast = () => {
 
 const proposalPeriod = policy.proposal_period;
 
-const [showDetailsProposalKind, setShowDetailsProposalKind] = useState(null);
-
 const hasOneDeleteIcon =
   isPendingRequests &&
   hasDeletePermission &&
@@ -235,10 +233,17 @@ const ProposalsComponent = () => {
         const kind = Object.keys(item.kind ?? {})?.[0];
         return (
           <tr
+            data-testid={"proposal-request-#" + item.id}
+            onClick={() => {
+              props.onSelectRequest && props.onSelectRequest(item.id);
+            }}
+            key={index}
             className={
-              voteProposalId === item.id || highlightProposalId === item.id
+              "cursor-pointer proposal-row " +
+              (highlightProposalId === item.id ||
+              props.selectedProposalDetailsId === item.id
                 ? "bg-highlight"
-                : ""
+                : "")
             }
           >
             <td className="fw-semi-bold">{item.id}</td>
@@ -289,21 +294,6 @@ const ProposalsComponent = () => {
                   }}
                 />
               </div>
-            </td>
-            <td className={isVisible("Details") + " text-center"}>
-              <Widget
-                loading=""
-                src={`${REPL_DEVHUB}/widget/devhub.components.molecule.Button`}
-                props={{
-                  classNames: {
-                    root: "btn btn-outline-secondary shadow-none",
-                  },
-                  label: "Details",
-                  onClick: () => {
-                    setShowDetailsProposalKind(item.kind);
-                  },
-                }}
-              />
             </td>
             {isPendingRequests && (
               <td className={isVisible("Required Votes") + " text-center"}>
@@ -435,30 +425,6 @@ return (
       </table>
     ) : (
       <div>
-        {showDetailsProposalKind && (
-          <Widget
-            loading=""
-            src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Modal`}
-            props={{
-              instance,
-              heading: "Proposal details",
-              content: (
-                <Markdown
-                  text={`
-\`\`\`jsx
-${JSON.stringify(showDetailsProposalKind, null, 2)}
-`}
-                  syntaxHighlighterProps={{
-                    wrapLines: true,
-                  }}
-                />
-              ),
-              confirmLabel: "Yes",
-              isOpen: showDetailsProposalKind,
-              onCancelClick: () => setShowDetailsProposalKind(null),
-            }}
-          />
-        )}
         {proposals.length === 0 ? (
           <div
             style={{ height: "50vh" }}
@@ -486,9 +452,6 @@ ${JSON.stringify(showDetailsProposalKind, null, 2)}
                 <td className={isVisible("Description")}>Description</td>
                 <td className={isVisible("Creator") + " text-center"}>
                   Created by
-                </td>
-                <td className={isVisible("Details") + " text-center"}>
-                  Details
                 </td>
                 {isPendingRequests && (
                   <td className={isVisible("Required Votes") + " text-center"}>

@@ -359,28 +359,91 @@ test.describe("Wallet connected", () => {
     await expect(
       page.getByRole("cell", { name: "0", exact: true })
     ).toBeVisible({ timeout: 30_000 });
-    // Check that the proposal appears in the table with the correct description
     await expect(
-      page.getByText("* Notes: Test custom function call")
-    ).toBeVisible({
-      timeout: 30_000,
+      page.getByRole("cell", { name: "0", exact: true })
+    ).toBeVisible({ timeout: 30_000 });
+
+    // Click on the proposal row to open details page
+    const proposalRow = page.getByTestId("proposal-request-#0");
+    await expect(proposalRow).toBeVisible();
+    await proposalRow.click();
+    await expect(page.getByText("Method Name")).toBeVisible();
+    await expect(page.getByText("Contract ID")).toBeVisible();
+    await expect(page.getByText("Arguments")).toBeVisible();
+    await expect(page.getByText("Gas", { exact: true })).toBeVisible();
+    await expect(page.getByText("Deposit")).toBeVisible();
+
+    const approveButton = page.getByRole("button", { name: "Approve" }).nth(1);
+    await expect(approveButton).toBeVisible();
+    await approveButton.click();
+    await page.getByRole("button", { name: "Confirm" }).click();
+    await page.getByRole("button", { name: "Confirm" }).click();
+    await expect(
+      page.getByText("Custom function call executed successfully!")
+    ).toBeVisible({ timeout: 30_000 });
+  });
+
+  test("should vote on proposal from details page", async ({
+    page,
+    daoAccount,
+    instanceAccount,
+  }) => {
+    test.setTimeout(200_000);
+    const { worker, creatorAccount } = await setupWorker({
+      daoAccount,
+      instanceAccount,
+      page,
     });
 
+    await clickCreateRequestButton(page);
+
+    // Fill the form
+    await fillCustomFunctionCallForm(page, {
+      contractId: "theori.near",
+      methodName: "set_status",
+      args: '{"status": "active"}',
+      gas: 50,
+      deposit: 0,
+      notes: "Setting status to active",
+    });
+
+    const canvasLocator = page.locator(".offcanvas-body");
+    const submitButton = canvasLocator.getByTestId("submit-button");
+
+    // Submit the form
+    await submitButton.click();
+
+    await page.getByRole("button", { name: "Confirm" }).click();
+
+    // Check for success toast
+    await expect(
+      page.getByText("Custom function call proposal created successfully!")
+    ).toBeVisible({ timeout: 30_000 });
+
+    // Wait for the Confirm button to disappear
+    await expect(
+      page.getByRole("button", { name: "Confirm" })
+    ).not.toBeVisible();
+
+    await page.getByText("View Request").click();
+    await page.waitForTimeout(3_000);
+
+    // Wait for the details page to appear
+    await expect(page.getByText("Contract ID")).toBeVisible({
+      timeout: 10_000,
+    });
+    await expect(page.getByText("set_status")).toBeVisible();
+
+    // Approve from details page
     const approveButton = page.getByRole("button", { name: "Approve" });
     await expect(approveButton).toBeVisible();
     await approveButton.click();
     await page.getByRole("button", { name: "Confirm" }).click();
     await page.getByRole("button", { name: "Confirm" }).click();
-    await expect(page.getByText("View in History")).toBeVisible({
-      timeout: 30_000,
-    });
-    await page.getByText("View in History").click();
 
-    // Check that the approved proposal appears in history with contract and method
+    // Check for success toast
     await expect(
-      page.getByRole("cell", { name: "0", exact: true })
-    ).toBeVisible({
-      timeout: 30_000,
-    });
+      page.getByText("Custom function call executed successfully!")
+    ).toBeVisible({ timeout: 30_000 });
   });
 });

@@ -4,7 +4,11 @@ const { hasPermission } = VM.require(
   hasPermission: () => {},
 };
 
-const { tab, instance } = props;
+const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
+  href: () => {},
+};
+
+const { tab, instance, id } = props;
 
 if (!instance) {
   return <></>;
@@ -15,6 +19,12 @@ const { treasuryDaoID } = VM.require(`${instance}/widget/config.data`);
 const [showCreateRequest, setShowCreateRequest] = useState(false);
 const [showToastStatus, setToastStatus] = useState(false);
 const [currentTab, setCurrentTab] = useState({ title: "Pending Requests" });
+const [voteProposalId, setVoteProposalId] = useState(null);
+
+const proposalDetailsPageId =
+  id || id === "0" || id === 0 ? parseInt(id) : null;
+
+const [showProposalDetailsId, setShowProposalId] = useState(null);
 
 const hasCreatePermission = hasPermission(
   treasuryDaoID,
@@ -22,12 +32,6 @@ const hasCreatePermission = hasPermission(
   "call",
   "AddProposal"
 );
-
-const Container = styled.div`
-  .flex-1 {
-    flex: 1;
-  }
-`;
 
 const toggleCreatePage = () => {
   setShowCreateRequest(!showCreateRequest);
@@ -43,10 +47,43 @@ const ToastStatusContent = () => {
     case "ProposalAdded":
       content = "Custom function call proposal created successfully!";
       break;
+    case "Approved":
+      content = "Custom function call executed successfully!";
+      break;
+    case "Rejected":
+      content = "Custom function call rejected!";
+      break;
+    case "Failed":
+      content = "Custom function call execution failed!";
+      break;
+    case "Removed":
+      content = "Custom function call proposal deleted!";
+      break;
     default:
-      content = "Proposal created successfully!";
+      content = "Action completed successfully!";
   }
-  return <div className="toast-body">{content}</div>;
+  return (
+    <div className="toast-body">
+      <div>
+        {content}
+        <br />
+        {showToastStatus === "ProposalAdded" && (
+          <a
+            className="text-underline"
+            href={href({
+              widgetSrc: `${instance}/widget/app`,
+              params: {
+                page: "custom-proposals",
+                id: voteProposalId,
+              },
+            })}
+          >
+            View Request
+          </a>
+        )}
+      </div>
+    </div>
+  );
 };
 
 const Toast = () => {
@@ -101,56 +138,117 @@ const SidebarMenu = ({ currentTab }) => {
 };
 
 return (
-  <Container className="h-100 w-100 flex-grow-1 d-flex flex-column">
-    <Widget
-      loading=""
-      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Tabs`}
-      props={{
-        ...props,
-        currentTab,
-        onTabChange: handleTabChange,
-        page: "custom-proposals",
-        tabs: [
-          {
-            title: "Pending Requests",
-            href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.custom-function-call.PendingRequests`,
-            props: props,
-          },
-          {
-            title: "History",
-            href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.custom-function-call.History`,
-            props: props,
-          },
-        ],
-        SidebarMenu: () => <SidebarMenu currentTab={currentTab} />,
-      }}
-    />
-
-    {/* Toast Notification */}
+  <div className="w-100 h-100 flex-grow-1 d-flex flex-column">
     <Toast />
-
-    {/* Offcanvas for Create Request */}
-    <Widget
-      loading=""
-      src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OffCanvas`}
-      props={{
-        showCanvas: showCreateRequest,
-        onClose: toggleCreatePage,
-        title: "Create Custom Proposal Request",
-        children: (
-          <div>
+    {typeof proposalDetailsPageId === "number" ? (
+      <Widget
+        loading=""
+        src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.custom-function-call.ProposalDetailsPage`}
+        props={{
+          ...props,
+          id: proposalDetailsPageId,
+          instance,
+          setToastStatus,
+          setVoteProposalId,
+        }}
+      />
+    ) : (
+      <div className="h-100 w-100 flex-grow-1 d-flex flex-column">
+        <Widget
+          loading=""
+          src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.OffCanvas`}
+          props={{
+            showCanvas: showCreateRequest,
+            onClose: toggleCreatePage,
+            title: "Create Custom Proposal Request",
+            children: (
+              <div>
+                <Widget
+                  loading=""
+                  src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.custom-function-call.CreateCustomFunctionCallRequest`}
+                  props={{
+                    instance,
+                    onCloseCanvas: toggleCreatePage,
+                    setToastStatus,
+                    setVoteProposalId,
+                  }}
+                />
+              </div>
+            ),
+          }}
+        />
+        <div className="layout-flex-wrap flex-grow-1">
+          <div className="layout-main">
             <Widget
               loading=""
-              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.custom-function-call.CreateCustomFunctionCallRequest`}
+              src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Tabs`}
               props={{
-                instance,
-                onCloseCanvas: toggleCreatePage,
-                setToastStatus,
+                ...props,
+                currentTab,
+                onTabChange: handleTabChange,
+                page: "custom-proposals",
+                tabs: [
+                  {
+                    title: "Pending Requests",
+                    href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.custom-function-call.PendingRequests`,
+                    props: {
+                      ...props,
+                      onSelectRequest: (id) => setShowProposalId(id),
+                      highlightProposalId:
+                        props.highlightProposalId ||
+                        (typeof showProposalDetailsId === "number"
+                          ? showProposalDetailsId
+                          : voteProposalId),
+                      setToastStatus,
+                      setVoteProposalId,
+                      selectedProposalDetailsId: showProposalDetailsId,
+                    },
+                  },
+                  {
+                    title: "History",
+                    href: `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.custom-function-call.History`,
+                    props: {
+                      ...props,
+                      onSelectRequest: (id) => setShowProposalId(id),
+                      highlightProposalId:
+                        props.highlightProposalId ||
+                        (typeof showProposalDetailsId === "number"
+                          ? showProposalDetailsId
+                          : voteProposalId),
+                      setToastStatus,
+                      setVoteProposalId,
+                      selectedProposalDetailsId: showProposalDetailsId,
+                    },
+                  },
+                ],
+                SidebarMenu: () => <SidebarMenu currentTab={currentTab} />,
               }}
             />
           </div>
-        ),
-      }}
-    />
-  </Container>
+          <div
+            className={`layout-secondary ${
+              typeof showProposalDetailsId === "number" ? "show" : ""
+            }`}
+          >
+            {typeof showProposalDetailsId === "number" && (
+              <Widget
+                loading=""
+                src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.custom-function-call.ProposalDetailsPage`}
+                props={{
+                  ...props,
+                  id: showProposalDetailsId,
+                  instance,
+                  isCompactVersion: true,
+                  onClose: () => setShowProposalId(null),
+                  setToastStatus,
+                  setVoteProposalId,
+                  currentTab,
+                }}
+              />
+            )}
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
 );

@@ -18,9 +18,14 @@ const [totalLength, setTotalLength] = useState(null);
 const [loading, setLoading] = useState(false);
 const [isPrevPageCalled, setIsPrevCalled] = useState(false);
 
-const refreshData = Storage.get(
+const refreshTableData = Storage.get(
   "REFRESH_TABLE_DATA",
   `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.custom-function-call.CreateCustomFunctionCallRequest`
+);
+
+const refreshProposalsTableData = Storage.get(
+  "REFRESH_TABLE_DATA",
+  `${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/pages.custom-function-call.ProposalDetailsPage`
 );
 
 const fetchProposals = useCallback(() => {
@@ -41,7 +46,7 @@ const fetchProposals = useCallback(() => {
 
 useEffect(() => {
   fetchProposals();
-}, [currentPage, rowsPerPage, refreshData]);
+}, [currentPage, rowsPerPage, refreshTableData, refreshProposalsTableData]);
 
 const policy = treasuryDaoID
   ? Near.view(treasuryDaoID, "get_policy", {})
