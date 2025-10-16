@@ -66,6 +66,7 @@ return (
         highlightProposalId,
         loading: loading,
         policy,
+        onSelectRequest: props.onSelectRequest,
       }}
     />
     {(proposals ?? [])?.length > 0 && (
