@@ -1,9 +1,11 @@
 const { href } = VM.require("${REPL_DEVHUB}/widget/core.lib.url") || {
   href: () => {},
 };
-const { getNearBalances, formatSubmissionTimeStamp } = VM.require(
-  "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common"
-);
+const {
+  getNearBalances,
+  formatSubmissionTimeStamp,
+  decodeProposalDescription,
+} = VM.require("${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.common");
 
 const { RowsSkeleton } = VM.require(
   "${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/lib.skeleton"
@@ -15,7 +17,8 @@ if (
   !instance ||
   !RowsSkeleton ||
   typeof getNearBalances !== "function" ||
-  typeof formatSubmissionTimeStamp !== "function"
+  typeof formatSubmissionTimeStamp !== "function" ||
+  typeof decodeProposalDescription !== "function"
 ) {
   return <></>;
 }
@@ -230,7 +233,7 @@ const ProposalsComponent = () => {
     <tbody style={{ overflowX: "auto" }}>
       {proposals?.map((item, index) => {
         const description = item.description;
-        const kind = Object.keys(item.kind ?? {})?.[0];
+        const notes = decodeProposalDescription("notes", item.description);
         return (
           <tr
             data-testid={"proposal-request-#" + item.id}
@@ -276,7 +279,7 @@ const ProposalsComponent = () => {
                 className="custom-truncate fw-semi-bold"
                 style={{ width: 180 }}
               >
-                {description}
+                {notes || description || "-"}
               </div>
             </td>
 

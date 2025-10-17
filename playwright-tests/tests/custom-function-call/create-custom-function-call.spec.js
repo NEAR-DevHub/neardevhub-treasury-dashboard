@@ -391,7 +391,7 @@ test.describe("Wallet connected", () => {
     await expect(removeButtons).toHaveCount(3);
 
     // Remove action 3
-    await canvasLocator.locator('[data-testid="remove-action-2"]').click();
+    await canvasLocator.getByTestId("remove-action-2").click();
     await expect(canvasLocator.getByText("Action 3")).not.toBeVisible();
     await expect(canvasLocator.getByText("Action 2")).toBeVisible();
 

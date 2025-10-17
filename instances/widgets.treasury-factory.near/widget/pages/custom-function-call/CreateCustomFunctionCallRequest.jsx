@@ -460,7 +460,7 @@ return (
           on NEAR accounts.
           <br />
           <strong>Please verify:</strong>
-          <ul className="mt-2 mb-0">
+          <ul>
             <li>Contract ID is correct and trusted</li>
             <li>Method name and arguments are accurate</li>
             <li>Gas and deposit amounts are appropriate</li>
@@ -525,14 +525,14 @@ return (
           >
             <h6 className="mb-0">Action {index + 1}</h6>
             {actions.length > 1 && (
-              <button
+              <div
                 type="button"
-                className="btn btn-sm btn-outline-danger px-2 py-1"
+                className="cursor-pointer text-red px-2 py-1"
                 onClick={() => removeAction(index)}
                 data-testid={`remove-action-${index}`}
               >
                 <i className="bi bi-trash"></i>
-              </button>
+              </div>
             )}
           </div>
 
@@ -568,7 +568,7 @@ return (
 
             {/* Arguments (JSON) */}
             <div className="mb-3">
-              <label className="form-label">Arguments (JSON)</label>
+              <label className="form-label">Arguments (Optional)</label>
               <textarea
                 className={`form-control ${
                   showValidationErrors && validationErrors[`arguments_${index}`]
@@ -594,7 +594,7 @@ return (
                   </div>
                 )}
               <div className="form-text">
-                Optional. Enter method arguments as valid JSON.
+                Enter method arguments as valid JSON.
               </div>
             </div>
 

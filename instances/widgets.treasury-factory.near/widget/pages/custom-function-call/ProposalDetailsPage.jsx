@@ -180,56 +180,61 @@ const CustomFunctionCallContent = () => {
 
   return (
     <div className="d-flex flex-column gap-3">
-      <div>
+      <div className="border-bottom pb-2">
         <label>Contract ID</label>
         <div className="text-muted">{details.contractId}</div>
       </div>
-
-      {details.actions.map((action, index) => (
-        <div key={index} className="border rounded-3 overflow-hidden">
-          <div
-            className="d-flex justify-content-between align-items-center px-3 py-2"
-            style={{ backgroundColor: "var(--bg-system-color)" }}
-          >
-            <h6 className="mb-0">Action {index + 1}</h6>
-          </div>
-
-          <div className="px-3 py-2 border-top rounded-top-3">
-            <div className="mb-3">
-              <label>Method Name</label>
-              <div className="text-muted">{action.methodName}</div>
+      <div className="d-flex flex-column gap-3">
+        {details.actions.map((action, index) => (
+          <div key={index} className="border rounded-3 overflow-hidden">
+            <div
+              className="d-flex justify-content-between align-items-center px-3 py-2"
+              style={{ backgroundColor: "var(--bg-system-color)" }}
+            >
+              <h6 className="mb-0">Action {index + 1}</h6>
             </div>
-            <div className="mb-3">
-              <label>Arguments</label>
-              {action.args ? (
-                <Markdown
-                  text={`
+
+            <div className="px-3 py-2 border-top rounded-top-3">
+              <div className="mb-3">
+                <label>Method Name</label>
+                <div className="text-muted">{action.methodName}</div>
+              </div>
+              <div className="mb-3">
+                <label className="border-top">Arguments</label>
+                {action.args ? (
+                  <Markdown
+                    text={`
 \`\`\`jsx
 ${action.args}
 \`\`\`
 `}
-                />
-              ) : (
-                "-"
-              )}
-            </div>
-
-            <div className="row">
-              <div className="col-md-6">
-                <label>Gas</label>
-                <div className="text-muted">{formatGas(action.gas)} Tgas</div>
+                  />
+                ) : (
+                  "-"
+                )}
               </div>
 
-              <div className="col-md-6">
-                <label>Deposit</label>
-                <div className="text-muted">
-                  {formatDeposit(action.deposit)} NEAR
+              <div className="border-top pt-2">
+                <div className="row">
+                  <div className="col-md-6">
+                    <label>Gas</label>
+                    <div className="text-muted">
+                      {formatGas(action.gas)} Tgas
+                    </div>
+                  </div>
+
+                  <div className="col-md-6">
+                    <label>Deposit</label>
+                    <div className="text-muted">
+                      {formatDeposit(action.deposit)} NEAR
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 };
