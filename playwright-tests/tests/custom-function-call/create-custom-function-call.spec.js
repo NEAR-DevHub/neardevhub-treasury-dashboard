@@ -111,15 +111,15 @@ async function setupWorker({ daoAccount, instanceAccount, page }) {
 
   // Add custom-function-call to navbarLinks
   // Check if it already exists to avoid duplicates
-  if (!configContent.includes('title: "Custom Proposals"')) {
+  if (!configContent.includes('title: "Function Calls"')) {
     modifiedWidgets[configKey] = configContent.replace(
       `{
       title: "Settings",
       href: "?page=settings",
     },`,
       `{
-      title: "Custom Proposals",
-      href: "?page=custom-proposals",
+      title: "Function Calls",
+      href: "?page=function-calls",
     },
     {
       title: "Settings",
@@ -139,10 +139,10 @@ async function setupWorker({ daoAccount, instanceAccount, page }) {
 
   // Add custom-function-call case to app.jsx
   // Check if it already exists to avoid duplicates
-  if (!appContent.includes('case "custom-proposals"')) {
+  if (!appContent.includes('case "function-calls"')) {
     modifiedWidgets[appKey] = appContent.replace(
       `case "lockup": {`,
-      `case "custom-proposals": {
+      `case "function-calls": {
       return (
         <Widget
           src={
@@ -169,7 +169,7 @@ async function setupWorker({ daoAccount, instanceAccount, page }) {
     callWidgetNodeURLForContractWidgets: false,
   });
 
-  await page.goto(`https://${instanceAccount}.page/?page=custom-proposals`);
+  await page.goto(`https://${instanceAccount}.page/?page=function-calls`);
 
   await setPageAuthSettings(
     page,
@@ -201,19 +201,19 @@ async function fillCustomFunctionCallForm(
   // Fill Contract ID
   await canvasLocator.getByTestId("contract-id-input").fill(contractId);
 
-  // Fill Method Name
-  await canvasLocator.getByTestId("method-name-input").fill(methodName);
+  // Fill Method Name (now indexed for first action)
+  await canvasLocator.getByTestId("method-name-input-0").fill(methodName);
 
-  // Fill Arguments (optional)
+  // Fill Arguments (optional, now indexed for first action)
   if (args) {
-    await canvasLocator.getByTestId("arguments-input").fill(args);
+    await canvasLocator.getByTestId("arguments-input-0").fill(args);
   }
 
-  // Fill Gas
-  await canvasLocator.getByTestId("gas-input").fill(gas.toString());
+  // Fill Gas (now indexed for first action)
+  await canvasLocator.getByTestId("gas-input-0").fill(gas.toString());
 
-  // Fill Deposit
-  await canvasLocator.getByTestId("deposit-input").fill(deposit.toString());
+  // Fill Deposit (now indexed for first action)
+  await canvasLocator.getByTestId("deposit-input-0").fill(deposit.toString());
 
   // Fill Notes (optional)
   if (notes) {
@@ -274,7 +274,9 @@ test.describe("Wallet connected", () => {
     ).not.toBeVisible();
 
     // Fill Method Name with invalid format (multiple words)
-    await canvasLocator.getByTestId("method-name-input").fill("invalid method");
+    await canvasLocator
+      .getByTestId("method-name-input-0")
+      .fill("invalid method");
     await submitButton.click();
     await expect(
       canvasLocator.getByText(
@@ -283,7 +285,9 @@ test.describe("Wallet connected", () => {
     ).toBeVisible();
 
     // Fill Arguments with invalid JSON (plain string)
-    await canvasLocator.getByTestId("arguments-input").fill('"just a string"');
+    await canvasLocator
+      .getByTestId("arguments-input-0")
+      .fill('"just a string"');
     await submitButton.click();
     await expect(
       canvasLocator.getByText(
@@ -292,19 +296,19 @@ test.describe("Wallet connected", () => {
     ).toBeVisible();
 
     // Fill Arguments with invalid JSON syntax
-    await canvasLocator.getByTestId("arguments-input").fill("{invalid}");
+    await canvasLocator.getByTestId("arguments-input-0").fill("{invalid}");
     await submitButton.click();
     await expect(canvasLocator.getByText("Invalid JSON format")).toBeVisible();
 
     // Fill Gas with value above 300
-    await canvasLocator.getByTestId("gas-input").fill("400");
+    await canvasLocator.getByTestId("gas-input-0").fill("400");
     await submitButton.click();
     await expect(
       canvasLocator.getByText("Gas must be between 0 and 300 Tgas")
     ).toBeVisible();
 
     // Errors should clear when editing
-    await canvasLocator.getByTestId("method-name-input").fill("transfer");
+    await canvasLocator.getByTestId("method-name-input-0").fill("transfer");
     await expect(
       canvasLocator.getByText(
         "Method name must be a single word (letters, numbers, underscore only)"
@@ -312,7 +316,92 @@ test.describe("Wallet connected", () => {
     ).not.toBeVisible();
   });
 
-  test("should create custom function call proposal and vote on it", async ({
+  test("should handle multiple actions - add, remove, and validate", async ({
+    page,
+    daoAccount,
+    instanceAccount,
+  }) => {
+    test.setTimeout(160_000);
+    const { worker, creatorAccount } = await setupWorker({
+      daoAccount,
+      instanceAccount,
+      page,
+    });
+
+    await clickCreateRequestButton(page);
+    const canvasLocator = page.locator(".offcanvas-body");
+
+    // Add second action
+    await canvasLocator.getByText("Add Another Action").click();
+
+    // Verify we have 2 actions
+    await expect(canvasLocator.getByText("Action 1")).toBeVisible();
+    await expect(canvasLocator.getByText("Action 2")).toBeVisible();
+
+    // Add third action
+    await canvasLocator.getByText("Add Another Action").click();
+    await expect(canvasLocator.getByText("Action 3")).toBeVisible();
+
+    // Fill first action with valid data
+    await canvasLocator.getByTestId("method-name-input-0").fill("transfer");
+    await canvasLocator
+      .getByTestId("arguments-input-0")
+      .fill('{"receiver_id": "alice.near"}');
+    await canvasLocator.getByTestId("gas-input-0").fill("30");
+    await canvasLocator.getByTestId("deposit-input-0").fill("0.1");
+
+    // Fill second action with invalid data to test validation
+    await canvasLocator
+      .getByTestId("method-name-input-1")
+      .fill("invalid method");
+    await canvasLocator.getByTestId("gas-input-1").fill("400");
+    await canvasLocator.getByTestId("deposit-input-1").fill("0.1");
+
+    // Fill third action with valid data
+    await canvasLocator.getByTestId("method-name-input-2").fill("approve");
+    await canvasLocator
+      .getByTestId("arguments-input-2")
+      .fill('{"amount": "1000"}');
+    await canvasLocator.getByTestId("gas-input-2").fill("20");
+    await canvasLocator.getByTestId("deposit-input-2").fill("0.05");
+
+    // Fill contract ID
+    await canvasLocator.getByTestId("contract-id-input").fill("theori.near");
+
+    // Submit and check for validation errors on second action
+    await canvasLocator.getByTestId("submit-button").click();
+
+    await expect(
+      canvasLocator.getByText(
+        "Method name must be a single word (letters, numbers, underscore only)"
+      )
+    ).toBeVisible();
+    await expect(
+      canvasLocator.getByText("Gas must be between 0 and 300 Tgas")
+    ).toBeVisible();
+
+    // Fix second action
+    await canvasLocator.getByTestId("method-name-input-1").fill("approve");
+    await canvasLocator.getByTestId("gas-input-1").fill("25");
+
+    // Remove third action (should not be possible to remove if only 1 action, but we have 3)
+    const removeButtons = canvasLocator.locator(
+      '[data-testid*="remove-action"]'
+    );
+    await expect(removeButtons).toHaveCount(3);
+
+    // Remove action 3
+    await canvasLocator.locator('[data-testid="remove-action-2"]').click();
+    await expect(canvasLocator.getByText("Action 3")).not.toBeVisible();
+    await expect(canvasLocator.getByText("Action 2")).toBeVisible();
+
+    const remainingRemoveButtons = canvasLocator.locator(
+      '[data-testid*="remove-action"]'
+    );
+    await expect(remainingRemoveButtons).toHaveCount(2);
+  });
+
+  test("should create single action proposal and vote directly from table", async ({
     page,
     daoAccount,
     instanceAccount,
@@ -326,14 +415,14 @@ test.describe("Wallet connected", () => {
 
     await clickCreateRequestButton(page);
 
-    // Fill the form
+    // Fill the form with single action
     await fillCustomFunctionCallForm(page, {
       contractId: "theori.near",
       methodName: "transfer",
       args: '{"receiver_id": "alice.near", "amount": "1000000000000000000000000"}',
       gas: 30,
       deposit: 0.1,
-      notes: "Test custom function call",
+      notes: "Test single action custom function call",
     });
 
     const canvasLocator = page.locator(".offcanvas-body");
@@ -346,7 +435,7 @@ test.describe("Wallet connected", () => {
 
     // Check for success toast
     await expect(
-      page.getByText("Custom function call proposal created successfully!")
+      page.getByText("Function call request has been successfully created.")
     ).toBeVisible({ timeout: 30_000 });
 
     // Wait for the Confirm button to disappear - this ensures transaction completes
@@ -356,34 +445,31 @@ test.describe("Wallet connected", () => {
 
     await page.locator(".bi.bi-x-lg").click();
 
+    await page.getByTestId("proposal-request-#0").click();
     await expect(
       page.getByRole("cell", { name: "0", exact: true })
     ).toBeVisible({ timeout: 30_000 });
-    await expect(
-      page.getByRole("cell", { name: "0", exact: true })
-    ).toBeVisible({ timeout: 30_000 });
-
-    // Click on the proposal row to open details page
-    const proposalRow = page.getByTestId("proposal-request-#0");
-    await expect(proposalRow).toBeVisible();
-    await proposalRow.click();
     await expect(page.getByText("Method Name")).toBeVisible();
-    await expect(page.getByText("Contract ID")).toBeVisible();
     await expect(page.getByText("Arguments")).toBeVisible();
     await expect(page.getByText("Gas", { exact: true })).toBeVisible();
-    await expect(page.getByText("Deposit")).toBeVisible();
+    await expect(page.getByText("Deposit", { exact: true })).toBeVisible();
+    await expect(page.getByText("Notes")).toBeVisible();
+    await expect(page.getByText("Contract ID")).toBeVisible();
 
+    // Vote directly from table (without opening details page)
     const approveButton = page.getByRole("button", { name: "Approve" }).nth(1);
     await expect(approveButton).toBeVisible();
     await approveButton.click();
     await page.getByRole("button", { name: "Confirm" }).click();
     await page.getByRole("button", { name: "Confirm" }).click();
     await expect(
-      page.getByText("Custom function call executed successfully!")
+      page.getByText(
+        "The function call request has been successfully executed."
+      )
     ).toBeVisible({ timeout: 30_000 });
   });
 
-  test("should vote on proposal from details page", async ({
+  test("should create multiple actions proposal and vote from details page", async ({
     page,
     daoAccount,
     instanceAccount,
@@ -396,54 +482,89 @@ test.describe("Wallet connected", () => {
     });
 
     await clickCreateRequestButton(page);
-
-    // Fill the form
-    await fillCustomFunctionCallForm(page, {
-      contractId: "theori.near",
-      methodName: "set_status",
-      args: '{"status": "active"}',
-      gas: 50,
-      deposit: 0,
-      notes: "Setting status to active",
-    });
-
     const canvasLocator = page.locator(".offcanvas-body");
-    const submitButton = canvasLocator.getByTestId("submit-button");
+
+    // Fill contract ID
+    await canvasLocator.getByTestId("contract-id-input").fill("theori.near");
+
+    // Add second action
+    await canvasLocator.getByText("Add Another Action").click();
+
+    // Add third action
+    await canvasLocator.getByText("Add Another Action").click();
+
+    // Fill first action
+    await canvasLocator.getByTestId("method-name-input-0").fill("transfer");
+    await canvasLocator
+      .getByTestId("arguments-input-0")
+      .fill(
+        '{"receiver_id": "alice.near", "amount": "1000000000000000000000000"}'
+      );
+    await canvasLocator.getByTestId("gas-input-0").fill("30");
+    await canvasLocator.getByTestId("deposit-input-0").fill("0.1");
+
+    // Fill second action
+    await canvasLocator.getByTestId("method-name-input-1").fill("approve");
+    await canvasLocator
+      .getByTestId("arguments-input-1")
+      .fill('{"amount": "500000000000000000000000"}');
+    await canvasLocator.getByTestId("gas-input-1").fill("25");
+    await canvasLocator.getByTestId("deposit-input-1").fill("0.05");
+
+    // Fill third action
+    await canvasLocator.getByTestId("method-name-input-2").fill("mint");
+    await canvasLocator
+      .getByTestId("arguments-input-2")
+      .fill(
+        '{"account_id": "bob.near", "amount": "1000000000000000000000000"}'
+      );
+    await canvasLocator.getByTestId("gas-input-2").fill("35");
+    await canvasLocator.getByTestId("deposit-input-2").fill("0.15");
+
+    // Fill notes
+    await canvasLocator
+      .getByTestId("notes-input")
+      .fill("Test multiple actions custom function call");
 
     // Submit the form
-    await submitButton.click();
-
+    await canvasLocator.getByTestId("submit-button").click();
     await page.getByRole("button", { name: "Confirm" }).click();
 
     // Check for success toast
     await expect(
-      page.getByText("Custom function call proposal created successfully!")
+      page.getByText("Function call request has been successfully created.")
     ).toBeVisible({ timeout: 30_000 });
 
-    // Wait for the Confirm button to disappear
+    // Wait for the Confirm button to disappear - this ensures transaction completes
     await expect(
       page.getByRole("button", { name: "Confirm" })
     ).not.toBeVisible();
 
     await page.getByText("View Request").click();
-    await page.waitForTimeout(3_000);
 
-    // Wait for the details page to appear
-    await expect(page.getByText("Contract ID")).toBeVisible({
-      timeout: 10_000,
-    });
-    await expect(page.getByText("set_status")).toBeVisible();
+    // Verify multiple actions are displayed
+    await expect(page.getByText("Action 1")).toBeVisible();
+    await expect(page.getByText("Action 2")).toBeVisible();
+    await expect(page.getByText("Action 3")).toBeVisible();
+    await expect(page.getByText("Contract ID")).toBeVisible();
+    await expect(
+      page.getByText("Test multiple actions custom function call")
+    ).toBeVisible();
 
-    // Approve from details page
+    await expect(page.getByText("Method Name")).toHaveCount(3);
+    await expect(page.getByText("Arguments")).toHaveCount(3);
+    await expect(page.getByText("Gas", { exact: true })).toHaveCount(3);
+    await expect(page.getByText("Deposit", { exact: true })).toHaveCount(3);
+
     const approveButton = page.getByRole("button", { name: "Approve" });
     await expect(approveButton).toBeVisible();
     await approveButton.click();
     await page.getByRole("button", { name: "Confirm" }).click();
     await page.getByRole("button", { name: "Confirm" }).click();
-
-    // Check for success toast
     await expect(
-      page.getByText("Custom function call executed successfully!")
+      page.getByText(
+        "The function call request has been successfully executed."
+      )
     ).toBeVisible({ timeout: 30_000 });
   });
 });

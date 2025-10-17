@@ -177,7 +177,7 @@ const ToastStatusContent = () => {
                 href={href({
                   widgetSrc: `${instance}/widget/app`,
                   params: {
-                    page: "custom-proposals",
+                    page: "function-calls",
                     tab: "History",
                     highlightProposalId:
                       typeof highlightProposalId === "number"
@@ -432,12 +432,12 @@ return (
           >
             {isPendingRequests ? (
               <div className="d-flex justify-content-center align-items-center flex-column gap-2">
-                <h4>No Custom Function Call proposals found</h4>
+                <h4>No Function Call proposals found</h4>
                 <h6>There are currently no proposals</h6>
               </div>
             ) : (
               <div className="d-flex justify-content-center align-items-center flex-column gap-2">
-                <h4>No Custom Function Call proposals found</h4>
+                <h4>No Function Call proposals found</h4>
                 <h6>There are currently no history proposals</h6>
               </div>
             )}

@@ -44,20 +44,27 @@ const handleTabChange = (tab) => {
 const ToastStatusContent = () => {
   let content = "";
   switch (showToastStatus) {
-    case "ProposalAdded":
-      content = "Custom function call proposal created successfully!";
+    case "InProgress":
+      content =
+        "Your vote is counted" +
+        (typeof proposalDetailsPageId === "number"
+          ? "."
+          : ", the function call request is highlighted.");
       break;
     case "Approved":
-      content = "Custom function call executed successfully!";
+      content = "The function call request has been successfully executed.";
       break;
     case "Rejected":
-      content = "Custom function call rejected!";
+      content = "The function call request has been rejected.";
       break;
     case "Failed":
-      content = "Custom function call execution failed!";
+      content = "The function call execution has failed.";
       break;
     case "Removed":
-      content = "Custom function call proposal deleted!";
+      content = "The function call request has been successfully deleted.";
+      break;
+    case "ProposalAdded":
+      content = "Function call request has been successfully created.";
       break;
     default:
       content = "Action completed successfully!";
@@ -73,7 +80,7 @@ const ToastStatusContent = () => {
             href={href({
               widgetSrc: `${instance}/widget/app`,
               params: {
-                page: "custom-proposals",
+                page: "function-calls",
                 id: voteProposalId,
               },
             })}
@@ -161,7 +168,7 @@ return (
           props={{
             showCanvas: showCreateRequest,
             onClose: toggleCreatePage,
-            title: "Create Custom Proposal Request",
+            title: "Create Function Call Request",
             children: (
               <div>
                 <Widget
@@ -187,7 +194,7 @@ return (
                 ...props,
                 currentTab,
                 onTabChange: handleTabChange,
-                page: "custom-proposals",
+                page: "function-calls",
                 tabs: [
                   {
                     title: "Pending Requests",

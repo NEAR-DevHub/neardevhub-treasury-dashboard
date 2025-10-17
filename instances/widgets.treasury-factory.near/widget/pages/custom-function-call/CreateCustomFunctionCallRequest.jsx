@@ -33,10 +33,14 @@ const { treasuryDaoID, proposalAPIEndpoint } = VM.require(
 const lockupContract = accountToLockup(treasuryDaoID);
 
 const [contractId, setContractId] = useState("");
-const [methodName, setMethodName] = useState("");
-const [argumentsJson, setArgumentsJson] = useState("");
-const [gas, setGas] = useState("");
-const [deposit, setDeposit] = useState("");
+const [actions, setActions] = useState([
+  {
+    methodName: "",
+    argumentsJson: "",
+    gas: "",
+    deposit: "",
+  },
+]);
 const [notes, setNotes] = useState("");
 const [isTxnCreated, setTxnCreated] = useState(false);
 const [showCancelModal, setShowCancelModal] = useState(false);
@@ -52,6 +56,40 @@ function getLastProposalId() {
     (result) => result
   );
 }
+
+// Add a new action
+const addAction = () => {
+  setActions([
+    ...actions,
+    {
+      methodName: "",
+      argumentsJson: "",
+      gas: "",
+      deposit: "",
+    },
+  ]);
+};
+
+// Remove an action
+const removeAction = (index) => {
+  if (actions.length === 1) return; // Keep at least one action
+  setActions(actions.filter((_, i) => i !== index));
+
+  // Clear validation errors for removed action
+  const newErrors = { ...validationErrors };
+  delete newErrors[`methodName_${index}`];
+  delete newErrors[`arguments_${index}`];
+  delete newErrors[`gas_${index}`];
+  delete newErrors[`deposit_${index}`];
+  setValidationErrors(newErrors);
+};
+
+// Update an action field
+const updateAction = (index, field, value) => {
+  const newActions = [...actions];
+  newActions[index][field] = value;
+  setActions(newActions);
+};
 
 // Helper function to check if string is hex64
 function isHex64(str) {
@@ -232,17 +270,20 @@ const validateForm = () => {
   return validateContractId(contractId).then((contractIdError) => {
     if (contractIdError) errors.contractId = contractIdError;
 
-    const methodNameError = validateMethodName(methodName);
-    if (methodNameError) errors.methodName = methodNameError;
+    // Validate each action
+    actions.forEach((action, index) => {
+      const methodNameError = validateMethodName(action.methodName);
+      if (methodNameError) errors[`methodName_${index}`] = methodNameError;
 
-    const argumentsError = validateArguments(argumentsJson);
-    if (argumentsError) errors.arguments = argumentsError;
+      const argumentsError = validateArguments(action.argumentsJson);
+      if (argumentsError) errors[`arguments_${index}`] = argumentsError;
 
-    const gasError = validateGas(gas);
-    if (gasError) errors.gas = gasError;
+      const gasError = validateGas(action.gas);
+      if (gasError) errors[`gas_${index}`] = gasError;
 
-    const depositError = validateDeposit(deposit);
-    if (depositError) errors.deposit = depositError;
+      const depositError = validateDeposit(action.deposit);
+      if (depositError) errors[`deposit_${index}`] = depositError;
+    });
 
     setValidationErrors(errors);
     setShowValidationErrors(true);
@@ -252,10 +293,14 @@ const validateForm = () => {
 
 const cleanInputs = () => {
   setContractId("");
-  setMethodName("");
-  setArgumentsJson("");
-  setGas("");
-  setDeposit("");
+  setActions([
+    {
+      methodName: "",
+      argumentsJson: "",
+      gas: "",
+      deposit: "",
+    },
+  ]);
   setNotes("");
   setValidationErrors({});
   setShowValidationErrors(false);
@@ -279,20 +324,32 @@ const handleSubmit = () => {
 
     setTxnCreated(true);
 
-    // Parse arguments if provided
-    let parsedArguments = "";
-    if (argumentsJson.trim()) {
-      const jsonArgs = JSON.parse(argumentsJson);
-      parsedArguments = Buffer.from(JSON.stringify(jsonArgs)).toString(
-        "base64"
-      );
-    }
+    // Build actions array
+    const builtActions = actions.map((action) => {
+      // Parse arguments if provided
+      let parsedArguments = "";
+      if (action.argumentsJson.trim()) {
+        const jsonArgs = JSON.parse(action.argumentsJson);
+        parsedArguments = Buffer.from(JSON.stringify(jsonArgs)).toString(
+          "base64"
+        );
+      }
 
-    // Convert gas from Tgas to gas units (1 Tgas = 10^12 gas)
-    const gasInUnits = Big(gas).mul(Big(10).pow(12)).toFixed();
+      // Convert gas from Tgas to gas units (1 Tgas = 10^12 gas)
+      const gasInUnits = Big(action.gas).mul(Big(10).pow(12)).toFixed();
 
-    // Convert deposit from NEAR to yoctoNEAR (1 NEAR = 10^24 yoctoNEAR)
-    const depositInYoctoNEAR = Big(deposit).mul(Big(10).pow(24)).toFixed();
+      // Convert deposit from NEAR to yoctoNEAR (1 NEAR = 10^24 yoctoNEAR)
+      const depositInYoctoNEAR = Big(action.deposit)
+        .mul(Big(10).pow(24))
+        .toFixed();
+
+      return {
+        method_name: action.methodName,
+        args: parsedArguments,
+        gas: gasInUnits,
+        deposit: depositInYoctoNEAR,
+      };
+    });
 
     // Create the proposal data
     const proposalData = {
@@ -302,14 +359,7 @@ const handleSubmit = () => {
       kind: {
         FunctionCall: {
           receiver_id: contractId,
-          actions: [
-            {
-              method_name: methodName,
-              args: parsedArguments,
-              gas: gasInUnits,
-              deposit: depositInYoctoNEAR,
-            },
-          ],
+          actions: builtActions,
         },
       },
     };
@@ -362,6 +412,19 @@ const Container = styled.div`
     font-size: 0.875rem;
     margin-top: 0.25rem;
   }
+  .warning-box {
+    background: rgba(255, 158, 0, 0.1);
+    color: var(--other-warning) !important;
+    font-weight: 500;
+    font-size: 13px;
+    i {
+      color: var(--other-warning) !important;
+    }
+
+    a {
+      color: var(--other-warning) !important;
+    }
+  }
 `;
 
 return (
@@ -390,19 +453,28 @@ return (
     />
 
     <div className="d-flex flex-column gap-3">
-      <div>
-        <span className="text-secondary">
-          Use a Custom Function Call to invoke any method on a NEAR account.{" "}
-        </span>
-
-        <a
-          href="https://docs.neartreasury.com/advanced/custom-proposals"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-decoration-underline text-primary "
-        >
-          Learn more
-        </a>
+      <div className="warning-box d-flex align-items-start gap-2 px-3 py-2 rounded-2">
+        <i className="bi bi-exclamation-triangle h5 mb-0 text-warning"></i>
+        <div>
+          Custom Function Calls can be risky as they execute arbitrary methods
+          on NEAR accounts.
+          <br />
+          <strong>Please verify:</strong>
+          <ul className="mt-2 mb-0">
+            <li>Contract ID is correct and trusted</li>
+            <li>Method name and arguments are accurate</li>
+            <li>Gas and deposit amounts are appropriate</li>
+            <li>You understand the consequences of the function call</li>
+          </ul>
+          <a
+            href="https://docs.neartreasury.com/advanced/custom-proposals"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-decoration-underline fw-bold"
+          >
+            Learn more about custom proposals
+          </a>
+        </div>
       </div>
       {/* Contract ID */}
       <div>
@@ -442,117 +514,170 @@ return (
         )}
       </div>
 
-      {/* Method Name */}
-      <div>
-        <label className="form-label">
-          Method Name <span className="text-danger">*</span>
-        </label>
-        <input
-          type="text"
-          className={`form-control ${
-            showValidationErrors && validationErrors.methodName
-              ? "is-invalid"
-              : ""
-          }`}
-          placeholder="e.g., ft_transfer"
-          value={methodName}
-          onChange={(e) => {
-            setMethodName(e.target.value);
-            clearFieldError("methodName");
-          }}
-          data-testid="method-name-input"
-        />
-        {showValidationErrors && validationErrors.methodName && (
-          <div className="invalid-feedback">{validationErrors.methodName}</div>
-        )}
-      </div>
+      {/* Actions */}
+      {actions.map((action, index) => (
+        <div key={index} className="border rounded-3 overflow-hidden">
+          <div
+            className="d-flex justify-content-between align-items-center px-3 py-2"
+            style={{
+              backgroundColor: "var(--bg-system-color)",
+            }}
+          >
+            <h6 className="mb-0">Action {index + 1}</h6>
+            {actions.length > 1 && (
+              <button
+                type="button"
+                className="btn btn-sm btn-outline-danger px-2 py-1"
+                onClick={() => removeAction(index)}
+                data-testid={`remove-action-${index}`}
+              >
+                <i className="bi bi-trash"></i>
+              </button>
+            )}
+          </div>
 
-      {/* Arguments (JSON) */}
-      <div>
-        <label className="form-label">Arguments (JSON)</label>
-        <textarea
-          className={`form-control ${
-            showValidationErrors && validationErrors.arguments
-              ? "is-invalid"
-              : ""
-          }`}
-          rows="4"
-          placeholder='{"receiver_id": "alice.near", "amount": "1000000000000000000000000"}'
-          value={argumentsJson}
-          onChange={(e) => {
-            setArgumentsJson(e.target.value);
-            clearFieldError("arguments");
-          }}
-          data-testid="arguments-input"
-        />
-        {showValidationErrors && validationErrors.arguments && (
-          <div className="invalid-feedback">{validationErrors.arguments}</div>
-        )}
-        <div className="form-text">
-          Optional. Enter method arguments as valid JSON.
-        </div>
-      </div>
+          <div className="px-3 py-2 border-top rounded-top-3">
+            {/* Method Name */}
+            <div className="mb-3">
+              <label className="form-label">
+                Method Name <span className="text-danger">*</span>
+              </label>
+              <input
+                type="text"
+                className={`form-control ${
+                  showValidationErrors &&
+                  validationErrors[`methodName_${index}`]
+                    ? "is-invalid"
+                    : ""
+                }`}
+                placeholder="e.g., ft_transfer"
+                value={action.methodName}
+                onChange={(e) => {
+                  updateAction(index, "methodName", e.target.value);
+                  clearFieldError(`methodName_${index}`);
+                }}
+                data-testid={`method-name-input-${index}`}
+              />
+              {showValidationErrors &&
+                validationErrors[`methodName_${index}`] && (
+                  <div className="invalid-feedback">
+                    {validationErrors[`methodName_${index}`]}
+                  </div>
+                )}
+            </div>
 
-      {/* Gas */}
-      <div>
-        <label className="form-label">
-          Gas (Tgas) <span className="text-danger">*</span>
-        </label>
-        <input
-          type="number"
-          className={`form-control ${
-            showValidationErrors && validationErrors.gas ? "is-invalid" : ""
-          }`}
-          placeholder="e.g., 30"
-          value={gas}
-          onChange={(e) => {
-            setGas(e.target.value);
-            clearFieldError("gas");
-          }}
-          min="0"
-          max="300"
-          step="0.1"
-          data-testid="gas-input"
-        />
-        {showValidationErrors && validationErrors.gas && (
-          <div className="invalid-feedback">{validationErrors.gas}</div>
-        )}
-        <div className="form-text">
-          Gas limit in Tgas (1 Tgas = 10^12 gas units). Range: 0-300 Tgas.
-        </div>
-      </div>
+            {/* Arguments (JSON) */}
+            <div className="mb-3">
+              <label className="form-label">Arguments (JSON)</label>
+              <textarea
+                className={`form-control ${
+                  showValidationErrors && validationErrors[`arguments_${index}`]
+                    ? "is-invalid"
+                    : ""
+                }`}
+                rows="4"
+                placeholder={`{
+  "receiver_id": "alice.near",
+  "amount": "10000000000000"
+}`}
+                value={action.argumentsJson}
+                onChange={(e) => {
+                  updateAction(index, "argumentsJson", e.target.value);
+                  clearFieldError(`arguments_${index}`);
+                }}
+                data-testid={`arguments-input-${index}`}
+              />
+              {showValidationErrors &&
+                validationErrors[`arguments_${index}`] && (
+                  <div className="invalid-feedback">
+                    {validationErrors[`arguments_${index}`]}
+                  </div>
+                )}
+              <div className="form-text">
+                Optional. Enter method arguments as valid JSON.
+              </div>
+            </div>
 
-      {/* Deposit */}
-      <div>
-        <label className="form-label">
-          Deposit (NEAR) <span className="text-danger">*</span>
-        </label>
-        <input
-          type="number"
-          className={`form-control ${
-            showValidationErrors && validationErrors.deposit ? "is-invalid" : ""
-          }`}
-          placeholder="e.g., 0.1"
-          value={deposit}
-          onChange={(e) => {
-            setDeposit(e.target.value);
-            clearFieldError("deposit");
-          }}
-          min="0"
-          step="0.000000000000000000000001"
-          data-testid="deposit-input"
-        />
-        {showValidationErrors && validationErrors.deposit && (
-          <div className="invalid-feedback">{validationErrors.deposit}</div>
-        )}
-        <div className="form-text">
-          NEAR tokens to attach to the function call.
+            {/* Gas and Deposit Row */}
+            <div className="row">
+              <div className="col-md-6 mb-3">
+                <label className="form-label">
+                  Gas (Tgas) <span className="text-danger">*</span>
+                </label>
+                <input
+                  type="number"
+                  className={`form-control ${
+                    showValidationErrors && validationErrors[`gas_${index}`]
+                      ? "is-invalid"
+                      : ""
+                  }`}
+                  placeholder="e.g., 30"
+                  value={action.gas}
+                  onChange={(e) => {
+                    updateAction(index, "gas", e.target.value);
+                    clearFieldError(`gas_${index}`);
+                  }}
+                  min="0"
+                  max="300"
+                  step="0.1"
+                  data-testid={`gas-input-${index}`}
+                />
+                {showValidationErrors && validationErrors[`gas_${index}`] && (
+                  <div className="invalid-feedback">
+                    {validationErrors[`gas_${index}`]}
+                  </div>
+                )}
+                <div className="form-text">Range: 0-300 Tgas</div>
+              </div>
+
+              <div className="col-md-6 mb-3">
+                <label className="form-label">
+                  Deposit (NEAR) <span className="text-danger">*</span>
+                </label>
+                <input
+                  type="number"
+                  className={`form-control ${
+                    showValidationErrors && validationErrors[`deposit_${index}`]
+                      ? "is-invalid"
+                      : ""
+                  }`}
+                  placeholder="e.g., 0.1"
+                  value={action.deposit}
+                  onChange={(e) => {
+                    updateAction(index, "deposit", e.target.value);
+                    clearFieldError(`deposit_${index}`);
+                  }}
+                  min="0"
+                  step="0.000000000000000000000001"
+                  data-testid={`deposit-input-${index}`}
+                />
+                {showValidationErrors &&
+                  validationErrors[`deposit_${index}`] && (
+                    <div className="invalid-feedback">
+                      {validationErrors[`deposit_${index}`]}
+                    </div>
+                  )}
+                <div className="form-text">NEAR to attach</div>
+              </div>
+            </div>
+          </div>
         </div>
+      ))}
+
+      {/* Add Action Button */}
+      <div>
+        <button
+          type="button"
+          className="btn btn-outline-secondary w-100"
+          onClick={addAction}
+        >
+          <i className="bi bi-plus-lg"></i> Add Another Action
+        </button>
       </div>
 
       {/* Notes */}
       <div>
-        <label className="form-label">Notes (optional)</label>
+        <label className="form-label">Notes (Optional)</label>
         <textarea
           className="form-control"
           rows="3"

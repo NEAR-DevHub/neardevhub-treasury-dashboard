@@ -34,7 +34,7 @@ const generateCsvUrl = () => {
       endpoint += `?category=lockup`;
       break;
     }
-    case "custom-proposals": {
+    case "function-calls": {
       endpoint += `?proposal_types=FunctionCall`;
       break;
     }

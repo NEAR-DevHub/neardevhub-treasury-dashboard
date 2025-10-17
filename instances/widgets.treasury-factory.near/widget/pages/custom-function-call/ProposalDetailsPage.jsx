@@ -123,24 +123,30 @@ function getFunctionCallDetails() {
   const functionCall = proposalData?.kind?.FunctionCall;
   if (!functionCall) return null;
 
-  const action = functionCall.actions?.[0];
-  if (!action) return null;
+  const actions = (functionCall.actions || []).map((action) => {
+    let argsString = "";
+    if (action.args) {
+      argsString = Buffer.from(action.args, "base64").toString("utf-8");
+      // Try to parse and format JSON for better display
+      try {
+        const parsed = JSON.parse(argsString);
+        argsString = JSON.stringify(parsed, null, 2);
+      } catch (e) {
+        // If not valid JSON, keep as is
+      }
+    }
 
-  let argsString = Buffer.from(action.args, "base64").toString("utf-8");
-  // Try to parse and format JSON for better display
-  try {
-    const parsed = JSON.parse(argsString);
-    argsString = JSON.stringify(parsed, null, 2);
-  } catch (e) {
-    // If not valid JSON, keep as is
-  }
+    return {
+      methodName: action.method_name,
+      args: argsString,
+      gas: action.gas,
+      deposit: action.deposit,
+    };
+  });
 
   return {
     contractId: functionCall.receiver_id,
-    methodName: action.method_name,
-    args: argsString,
-    gas: action.gas,
-    deposit: action.deposit,
+    actions: actions,
   };
 }
 
@@ -179,40 +185,51 @@ const CustomFunctionCallContent = () => {
         <div className="text-muted">{details.contractId}</div>
       </div>
 
-      <div>
-        <label>Method Name</label>
-        <div className="text-muted">{details.methodName}</div>
-      </div>
+      {details.actions.map((action, index) => (
+        <div key={index} className="border rounded-3 overflow-hidden">
+          <div
+            className="d-flex justify-content-between align-items-center px-3 py-2"
+            style={{ backgroundColor: "var(--bg-system-color)" }}
+          >
+            <h6 className="mb-0">Action {index + 1}</h6>
+          </div>
 
-      <div>
-        <label>Arguments</label>
-        <div className="markdown-scroll">
-          <Markdown
-            text={`
+          <div className="px-3 py-2 border-top rounded-top-3">
+            <div className="mb-3">
+              <label>Method Name</label>
+              <div className="text-muted">{action.methodName}</div>
+            </div>
+            <div className="mb-3">
+              <label>Arguments</label>
+              {action.args ? (
+                <Markdown
+                  text={`
 \`\`\`jsx
-${details.args}
+${action.args}
 \`\`\`
 `}
-            syntaxHighlighterProps={{
-              wrapLines: true,
-            }}
-          />
-        </div>
-      </div>
+                />
+              ) : (
+                "-"
+              )}
+            </div>
 
-      <div className="row">
-        <div className="col-md-6">
-          <label>Gas</label>
-          <div className="text-muted">{formatGas(details.gas)} Tgas</div>
-        </div>
+            <div className="row">
+              <div className="col-md-6">
+                <label>Gas</label>
+                <div className="text-muted">{formatGas(action.gas)} Tgas</div>
+              </div>
 
-        <div className="col-md-6">
-          <label>Deposit</label>
-          <div className="text-muted">
-            {formatDeposit(details.deposit)} NEAR
+              <div className="col-md-6">
+                <label>Deposit</label>
+                <div className="text-muted">
+                  {formatDeposit(action.deposit)} NEAR
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      ))}
     </div>
   );
 };
@@ -251,7 +268,7 @@ return (
       props={{
         ...props,
         proposalPeriod,
-        page: "custom-proposals",
+        page: "function-calls",
         VoteActions: (hasVotingPermission || hasDeletePermission) &&
           proposalData?.status === "InProgress" && (
             <Widget
@@ -285,11 +302,11 @@ return (
         instance,
         deleteGroup,
         proposalStatusLabel: {
-          approved: "Custom Function Call Executed",
-          rejected: "Custom Function Call Rejected",
-          deleted: "Custom Function Call Deleted",
-          failed: "Custom Function Call Failed",
-          expired: "Custom Function Call Expired",
+          approved: "Function Call Executed",
+          rejected: "Function Call Rejected",
+          deleted: "Function Call Deleted",
+          failed: "Function Call Failed",
+          expired: "Function Call Expired",
         },
         checkProposalStatus,
       }}
