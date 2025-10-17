@@ -274,7 +274,7 @@ const ProposalsComponent = () => {
                 />
               </td>
             )}
-            <td className={isVisible("Description")}>
+            <td className={isVisible("Notes")}>
               <div
                 className="custom-truncate fw-semi-bold"
                 style={{ width: 180 }}
@@ -347,28 +347,14 @@ const ProposalsComponent = () => {
                 )}
               </td>
             )}
-            {isPendingRequests &&
-              (hasVotingPermission || hasDeletePermission) && (
-                <td className="text-right" onClick={(e) => e.stopPropagation()}>
-                  <Widget
-                    loading=""
-                    src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.VoteActions`}
-                    props={{
-                      instance,
-                      votes: item.votes,
-                      proposalId: item.id,
-                      hasVotingPermission,
-                      proposalCreator: item.proposer,
-                      hasDeletePermission,
-                      avoidCheckForBalance: true,
-                      requiredVotes,
-                      checkProposalStatus: () => checkProposalStatus(item.id),
-                      hasOneDeleteIcon,
-                      proposal: item,
-                    }}
-                  />
-                </td>
-              )}
+            <td className="text-right">
+              <button
+                className="btn btn-outline-secondary btn-sm"
+                style={{ minWidth: "130px" }}
+              >
+                Review Request
+              </button>
+            </td>
           </tr>
         );
       })}
@@ -390,7 +376,7 @@ return (
             <td>#</td>
             <td className={isVisible("Created Date")}>Created Date</td>
             {!isPendingRequests && <td className="text-center">Status</td>}
-            <td className={isVisible("Description")}>Description</td>
+            <td className={isVisible("Notes")}>Notes</td>
             <td className={isVisible("Creator") + " text-center"}>
               Created by
             </td>
@@ -452,7 +438,7 @@ return (
                 <td>#</td>
                 <td className={isVisible("Created Date")}>Created Date</td>
                 {!isPendingRequests && <td className="text-center">Status</td>}
-                <td className={isVisible("Description")}>Description</td>
+                <td className={isVisible("Notes")}>Notes</td>
                 <td className={isVisible("Creator") + " text-center"}>
                   Created by
                 </td>

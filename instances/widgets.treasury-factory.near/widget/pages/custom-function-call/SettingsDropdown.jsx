@@ -26,7 +26,7 @@ const [settingsOptions, setSettingsOptions] = useState(
           show: true,
         },
         {
-          title: "Description",
+          title: "Notes",
           show: true,
         },
         {

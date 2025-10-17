@@ -456,15 +456,18 @@ return (
       <div className="warning-box d-flex align-items-start gap-2 px-3 py-2 rounded-2">
         <i className="bi bi-exclamation-triangle h5 mb-0 text-warning"></i>
         <div>
-          Custom Function Calls can be risky as they execute arbitrary methods
-          on NEAR accounts.
+          <strong>Heads Up: Advanced Feature</strong>
           <br />
-          <strong>Please verify:</strong>
-          <ul>
-            <li>Contract ID is correct and trusted</li>
-            <li>Method name and arguments are accurate</li>
-            <li>Gas and deposit amounts are appropriate</li>
-            <li>You understand the consequences of the function call</li>
+          You are about to create a custom transaction request that will
+          interact directly with a smart contract. This is a powerful action,
+          and mistakes can be irreversible.
+          <div className="mt-1">
+            <strong>Please triple-check the following details:</strong>
+          </div>
+          <ul className="mb-1">
+            <li>Contract ID is correct and trusted.</li>
+            <li>Method Name & Arguments are accurate.</li>
+            <li>Gas & Deposit amounts are appropriate.</li>
           </ul>
           <a
             href="https://docs.neartreasury.com/advanced/custom-proposals"
@@ -472,7 +475,7 @@ return (
             rel="noopener noreferrer"
             className="text-decoration-underline fw-bold"
           >
-            Learn more about custom proposals
+            Learn more about Function Calls
           </a>
         </div>
       </div>

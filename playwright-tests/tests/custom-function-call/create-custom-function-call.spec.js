@@ -453,11 +453,11 @@ test.describe("Wallet connected", () => {
     await expect(page.getByText("Arguments")).toBeVisible();
     await expect(page.getByText("Gas", { exact: true })).toBeVisible();
     await expect(page.getByText("Deposit", { exact: true })).toBeVisible();
-    await expect(page.getByText("Notes")).toBeVisible();
+    await expect(page.getByText("Note", { exact: true })).toBeVisible();
     await expect(page.getByText("Contract ID")).toBeVisible();
 
     // Vote directly from table (without opening details page)
-    const approveButton = page.getByRole("button", { name: "Approve" }).nth(1);
+    const approveButton = page.getByRole("button", { name: "Approve" });
     await expect(approveButton).toBeVisible();
     await approveButton.click();
     await page.getByRole("button", { name: "Confirm" }).click();
