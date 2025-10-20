@@ -164,13 +164,19 @@ function formatGas(gasUnits) {
 
 // Convert yoctoNEAR to NEAR
 function formatDeposit(yoctoNEAR) {
-  if (!yoctoNEAR) return "0";
+  if (!yoctoNEAR || yoctoNEAR === "0") return "0";
   try {
     // Convert from yoctoNEAR to NEAR (divide by 10^24)
     const near = Big(yoctoNEAR).div(Big(10).pow(24));
-    return near.toFixed();
+    const result = near.toFixed();
+    // If the result is 0 but we had a non-zero input (very small amounts like 1 yoctoNEAR)
+    if (result === "0" && yoctoNEAR !== "0") {
+      // For very small amounts, show in yoctoNEAR
+      return `${yoctoNEAR} yoctoNEAR`;
+    }
+    return `${result} NEAR`;
   } catch (e) {
-    return yoctoNEAR;
+    return `${yoctoNEAR} yoctoNEAR`;
   }
 }
 
@@ -226,7 +232,7 @@ ${action.args}
                   <div className="col-md-6">
                     <label>Deposit</label>
                     <div className="text-muted">
-                      {formatDeposit(action.deposit)} NEAR
+                      {formatDeposit(action.deposit)}
                     </div>
                   </div>
                 </div>

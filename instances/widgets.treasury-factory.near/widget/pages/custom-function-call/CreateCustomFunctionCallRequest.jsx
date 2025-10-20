@@ -457,26 +457,29 @@ return (
         <i className="bi bi-exclamation-triangle h5 mb-0 text-warning"></i>
         <div>
           <strong>Heads Up: Advanced Feature</strong>
-          <br />
-          You are about to create a custom transaction request that will
-          interact directly with a smart contract. This is a powerful action,
-          and mistakes can be irreversible.
-          <div className="mt-1">
-            <strong>Please triple-check the following details:</strong>
+          <div className="mt-2">
+            You are about to create a custom transaction request that will
+            interact directly with a smart contract. This is a powerful action,
+            and mistakes can be irreversible.
           </div>
-          <ul className="mb-1">
-            <li>Contract ID is correct and trusted.</li>
-            <li>Method Name & Arguments are accurate.</li>
-            <li>Gas & Deposit amounts are appropriate.</li>
-          </ul>
-          <a
-            href="https://docs.neartreasury.com/advanced/custom-proposals"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-decoration-underline fw-bold"
-          >
-            Learn more about Function Calls
-          </a>
+          <div className="mt-2">
+            <strong>Please triple-check the following details:</strong>
+            <ul className="mb-1">
+              <li>Contract ID is correct and trusted.</li>
+              <li>Method Name & Arguments are accurate.</li>
+              <li>Gas & Deposit amounts are appropriate.</li>
+            </ul>
+          </div>
+          <div className="mt-2">
+            <a
+              href="https://docs.neartreasury.com/advanced/function_calls"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-decoration-underline fw-bold"
+            >
+              Learn more
+            </a>
+          </div>
         </div>
       </div>
       {/* Contract ID */}
