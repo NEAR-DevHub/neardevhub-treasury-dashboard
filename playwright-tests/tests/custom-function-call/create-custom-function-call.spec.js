@@ -540,7 +540,7 @@ test.describe("Wallet connected", () => {
       page.getByRole("button", { name: "Confirm" })
     ).not.toBeVisible();
 
-    await page.getByText("View Request").click();
+    await page.getByText("View Request", { exact: true }).click();
 
     // Verify multiple actions are displayed
     await expect(page.getByText("Action 1")).toBeVisible();
