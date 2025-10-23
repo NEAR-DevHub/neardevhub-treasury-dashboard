@@ -9,6 +9,10 @@ return {
       href: "?page=payments",
     },
     {
+      title: "Function Calls",
+      href: "?page=function-calls",
+    },
+    {
       title: "Stake Delegation",
       href: "?page=stake-delegation",
     },
