@@ -463,6 +463,7 @@ test("should display FT lockup portfolio with claim available", async ({
     page.getByText("Claimed 10 USDt", { exact: true })
   ).toBeVisible();
 
+  await page.reload();
   await page
     .getByText("Total Balance", { exact: true })
     .scrollIntoViewIfNeeded();

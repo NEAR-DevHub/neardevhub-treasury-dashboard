@@ -167,7 +167,7 @@ const Theme = styled.div`
   }
 
   .display-none {
-    display: none;
+    display: none !important;
   }
 
   .btn-transparent {

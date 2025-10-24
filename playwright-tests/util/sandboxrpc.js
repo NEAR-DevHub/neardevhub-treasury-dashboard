@@ -17,7 +17,33 @@ export const TREASURY_FACTORY_ACCOUNT_ID = "treasury-factory.near";
 export const SPUTNIK_DAO_FACTORY_ID = "sputnik-dao.near";
 export const FT_FACTORY_LOCKUP_CONTRACT_ID = "ft-lockup.near";
 
+/**
+ * @param {import('@playwright/test').Page} page
+ * @param {string} accountId
+ * @param {*} keyPair
+ */
 export async function setPageAuthSettings(page, accountId, keyPair) {
+  await page.route(
+    "https://ga.jspm.io/npm:@near-wallet-selector/my-near-wallet@9.4.0/index.js",
+    async (route) => {
+      const response = await route.fetch();
+      const body = await response.text();
+      const patchedBody = body.replace(
+        "storedKeyCanSign(r,e){",
+        "storedKeyCanSign(r,e){\nreturn true;"
+      );
+
+      const patchLocation = patchedBody.indexOf("storedKeyCanSign(r,e){");
+      console.log(
+        "returning patched my-near-wallet",
+        patchedBody.substring(patchLocation, patchLocation + 50)
+      );
+      await route.fulfill({
+        response,
+        body: patchedBody,
+      });
+    }
+  );
   await page.evaluate(
     ({ accountId, publicKey, privateKey }) => {
       localStorage.setItem("near-social-vm:v01::accountId:", accountId);
