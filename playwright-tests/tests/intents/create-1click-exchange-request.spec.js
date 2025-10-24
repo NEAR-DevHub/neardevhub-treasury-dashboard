@@ -507,7 +507,7 @@ test.describe("1Click API Integration - Asset Exchange", function () {
     console.log("Navigating to asset exchange page by clicking menu...");
 
     // Click on Asset Exchange in the menu
-    await page.getByRole("link", { name: "Asset Exchange" }).click();
+    await page.goto(`https://${instanceAccount}.page/app?page=asset-exchange`);
 
     // Wait for page to load
     await expect(page.getByText("Pending Requests")).toBeVisible({
@@ -1017,7 +1017,7 @@ test.describe("1Click API Integration - Asset Exchange", function () {
 
     // Navigate back to see the proposal by clicking Asset Exchange link
     console.log("Navigating to Pending Requests to verify proposal...");
-    await page.getByRole("link", { name: "Asset Exchange" }).click();
+    await page.goto(`https://${instanceAccount}.page/app?page=asset-exchange`);
 
     // Wait for the table to load
     await expect(page.getByText("Pending Requests")).toBeVisible({
