@@ -18,10 +18,6 @@ const [navbarWithAssetExchange, setNavbarWithAssetExchange] = useState([]);
 useEffect(() => {
   if (Array.isArray(navbarLinks) && !navbarWithAssetExchange?.length) {
     const updatedNavbarLinks = [...(navbarLinks ?? [])];
-    const assetExchangeLink = {
-      title: "Asset Exchange",
-      href: "?page=asset-exchange",
-    };
 
     const settingsIndex = updatedNavbarLinks.findIndex(
       (link) => link.title === "Settings"
@@ -29,10 +25,6 @@ useEffect(() => {
     const lockupExists = updatedNavbarLinks.some(
       (link) => link.title === "Lockup"
     );
-    const assetExchangeExists = updatedNavbarLinks.some(
-      (link) => link.title === "Asset Exchange"
-    );
-
     if (!lockupExists) {
       const lockupLink = { title: "Lockup", href: "?page=lockup" };
 
@@ -43,13 +35,6 @@ useEffect(() => {
       }
     }
 
-    if (!assetExchangeExists) {
-      if (settingsIndex !== -1) {
-        updatedNavbarLinks.splice(settingsIndex, 0, assetExchangeLink); // Insert before "Settings"
-      } else {
-        updatedNavbarLinks.push(assetExchangeLink); // Add at the end if "Settings" is missing
-      }
-    }
     setNavbarWithAssetExchange(updatedNavbarLinks);
   }
 }, [navbarLinks]);
