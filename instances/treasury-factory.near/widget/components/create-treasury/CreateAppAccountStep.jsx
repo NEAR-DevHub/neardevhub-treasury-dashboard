@@ -51,7 +51,7 @@ const checkAccountAvailability = async (accountId, postfix) => {
 };
 
 const validateInput = () => {
-  setAlertMsg({ ".near": null });
+  setAlertMsg({ ".sputnik-dao.near": null });
 
   const validation = nearAccountValidation(
     formFields.accountName,
@@ -59,13 +59,12 @@ const validateInput = () => {
     true
   );
   if (!validation.isValid) {
-    setAlertMsg({ ".near": validation.error });
+    setAlertMsg({ ".sputnik-dao.near": validation.error });
     return Promise.resolve(false);
   }
 
   // Check account availability
   return Promise.all([
-    checkAccountAvailability(formFields.accountName, ".near"),
     checkAccountAvailability(formFields.accountName, ".sputnik-dao.near"),
   ])
     .then((isValid) => {
@@ -122,7 +121,7 @@ const AccountDisplay = ({ label, prefix, tooltipInfo, noBorder }) => {
 return (
   <>
     <div>
-      <h3>Create Treasury Accounts</h3>
+      <h3>Create Treasury Account</h3>
       <p>
         Enter a name for your treasury. This will be used for both the
         application's URL and your treasury's Sputnik DAO account.
@@ -165,11 +164,6 @@ return (
 
     <div className="d-flex flex-column gap-1 border border-1 rounded-3">
       <AccountDisplay
-        label={"NEAR"}
-        prefix=".near"
-        tooltipInfo="This NEAR account name will be used for the application's URL and other management purposes, not the actual account where the funds will be held."
-      />
-      <AccountDisplay
         label={"Sputnik DAO"}
         prefix=".sputnik-dao.near"
         tooltipInfo="This is the name of your treasury's account on the Sputnik DAO platform, where your funds will be held."
@@ -177,13 +171,13 @@ return (
       />
     </div>
 
-    {(alertMsg?.[".near"] || alertMsg?.[".sputnik-dao.near"]) && (
+    {alertMsg?.[".sputnik-dao.near"] && (
       <Widget
         loading=""
         src={`${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/components.Info`}
         props={{
           type: "alert",
-          text: alertMsg[".near"] || alertMsg[".sputnik-dao.near"],
+          text: alertMsg[".sputnik-dao.near"],
         }}
       />
     )}
@@ -209,10 +203,7 @@ return (
           classNames: {
             root: `btn btn-primary w-100`,
           },
-          disabled:
-            alertMsg?.[".near"] ||
-            alertMsg?.[".sputnik-dao.near"] ||
-            isValidating,
+          disabled: alertMsg?.[".sputnik-dao.near"] || isValidating,
           label: "Continue",
           onClick: handleContinue,
           loading: isValidating,

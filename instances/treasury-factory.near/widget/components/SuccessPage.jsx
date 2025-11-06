@@ -107,7 +107,7 @@ return (
       <div className="d-flex gap-3 align-items-center">
         <a
           className="btn btn-primary w-100"
-          href={`https://${accountName}.near.page`}
+          href={`https://app.neartreasury.com/${accountName}.sputnik-dao.near`}
           target="_blank"
           rel="noopener noreferrer"
         >

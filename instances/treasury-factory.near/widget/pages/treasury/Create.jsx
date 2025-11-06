@@ -155,9 +155,10 @@ useEffect(() => {
               .args;
           const decodedArgs = JSON.parse(atob(args ?? "") ?? "{}");
           const treasuryName = decodedArgs?.name;
-          Near.asyncView(`${treasuryName}.near`, "web4_get", {
-            request: { path: "/" },
-          }).then((web4) => {
+          Near.asyncView(
+            `${treasuryName}.sputnik-dao.near`,
+            "view_account"
+          ).then((web4) => {
             if (web4) {
               Storage.set("TreasuryAccountName", treasuryName);
               removeDeployedTreasuryFromDraft(treasuryName);

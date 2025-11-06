@@ -38,7 +38,7 @@ test.describe("connected with ledger", function () {
 
     // create application account name step
     await expect(
-      await page.getByRole("heading", { name: "Create Treasury Accounts" }),
+      await page.getByRole("heading", { name: "Create Treasury Account" }),
     ).toBeVisible();
     
     const treasuryInput = page.getByPlaceholder("my-treasury");
@@ -105,7 +105,7 @@ test.describe("connected with ledger", function () {
     await expect(continueButton).toBeDisabled();
     
     // Test valid name should show preview without errors
-    await treasuryInput.fill('megha19');
+    await treasuryInput.fill('templar');
     await continueButton.click();
     await expect(page.getByText("Account name already exists")).toBeVisible();
     await expect(continueButton).toBeDisabled();
@@ -114,9 +114,8 @@ test.describe("connected with ledger", function () {
     const treasuryName = "treasury-new-megha";
     await treasuryInput.fill(treasuryName);
     await page.waitForTimeout(600); 
-    await expect(page.getByText(`NEAR ${treasuryName} .near`)).toBeVisible();
     await expect(
-      page.getByText(`Sputnik DAO  ${treasuryName} .`),
+      page.getByText(`Sputnik DAO  ${treasuryName} .sputnik-dao.near`),
     ).toBeVisible();
     await expect(continueButton).toBeEnabled();
     
@@ -193,10 +192,7 @@ test.describe("connected with ledger", function () {
     });
 
     console.log(JSON.stringify(transactionToSend));
-    expect(
-      transactionToSend.actions[0].params.args.widget_reference_account_id,
-    ).toEqual(widget_reference_account_id);
-
+  
     await page.evaluate((transactionResult) => {
       window.transactionSentPromiseResolve(transactionResult);
     }, transactionResult);

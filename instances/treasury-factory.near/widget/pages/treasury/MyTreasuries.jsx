@@ -14,8 +14,6 @@ const showCongratsModal = props.showCongratsModal;
 const formFields = props.formFields;
 
 const [userTreasuries, setUserTreasuries] = useState(null);
-const [otherDaos, setOtherDaos] = useState([]);
-const [isExpanded, setExpanded] = useState(false);
 
 const storageAccountName = Storage.get(
   "TreasuryAccountName",
@@ -46,19 +44,17 @@ function mergeUniqueTreasuries(arr1, arr2) {
 useEffect(() => {
   if (accountId) {
     getUserTreasuries(accountId).then((results) => {
-      const withTreasury = results.filter((dao) => dao.hasTreasury);
-      const withoutTreasury = results.filter((dao) => !dao.hasTreasury);
-
+      const treasuries = results;
       if (storageAccountName) {
         const storageDaoId = `${storageAccountName}.sputnik-dao.near`;
         // Check if storageAccountName is already in withTreasury
-        const hasStorageAccount = withTreasury.some(
+        const hasStorageAccount = treasuries.some(
           (dao) => dao.daoId === storageDaoId
         );
 
         // If not, push a new object into withTreasury
         if (!hasStorageAccount) {
-          withTreasury.push({
+          treasuries.push({
             daoId: storageDaoId,
             instanceAccount: `${storageAccountName}.near`,
             hasTreasury: true,
@@ -68,15 +64,7 @@ useEffect(() => {
           });
         }
       }
-      setUserTreasuries((prev) =>
-        mergeUniqueTreasuries(prev ?? [], withTreasury ?? [])
-      );
-
-      setOtherDaos(withoutTreasury);
-
-      if (!(withTreasury || [])?.length && (withoutTreasury || []).length) {
-        setExpanded(true);
-      }
+      setUserTreasuries(treasuries);
     });
   }
 }, [storageAccountName]);
@@ -432,26 +420,6 @@ const TreasuryCard = ({ treasury, hasTreasury }) => {
               Complete Setup
             </a>
           )}
-          {!hasTreasury && (
-            <div className="d-flex gap-3 warning-box px-3 py-2 rounded-3 align-items-center">
-              <i class="bi bi-exclamation-triangle h5 mb-0"></i>
-              <div>
-                <div className="fw-bold">
-                  This treasury is not currently supported.
-                </div>
-                To enable it for use with NEAR Treasury,
-                <a
-                  className="warning-link"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  href={`https://docs.neartreasury.com/help/support`}
-                >
-                  please contact our team
-                </a>
-                .
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>
@@ -469,11 +437,11 @@ const TreasuryCardList = ({ treasuries, hasTreasury }) => {
         );
         return (
           <div className="col-md-4" key={treasury.daoId}>
-            {hasTreasury && !treasury.isDraft ? (
+            {!treasury.isDraft ? (
               <a
                 target="_blank"
                 rel="noopener noreferrer"
-                href={`https://${treasury.instanceAccount}.page/`}
+                href={`https://app.neartreasury.com/${treasury.daoId}`}
                 className="text-decoration-none text-dark d-block h-100 w-100"
               >
                 {cardContent}
@@ -516,43 +484,6 @@ if (accountId) {
                 treasuries={userTreasuries}
                 hasTreasury={true}
               />
-            )}
-
-            {Array.isArray(otherDaos) && otherDaos.length > 0 && (
-              <>
-                <div className={userTreasuries.length && "border-top my-3"} />
-                <div className="d-flex gap-2 align-items-center justify-content-between">
-                  <div className="d-flex gap-2 align-items-center mb-3">
-                    <h6 className="mb-0 fw-bold">Other DAOs</h6>
-                    <div className="custom-tag rounded-3 fw-bold text-center">
-                      {otherDaos.length}
-                    </div>
-                  </div>
-                  <div className="text-secondary cursor-pointer">
-                    {!isExpanded ? (
-                      <div
-                        className="d-flex gap-2 align-items-center"
-                        onClick={toggleExpand}
-                      >
-                        Show <i className="bi bi-chevron-down"></i>
-                      </div>
-                    ) : (
-                      <div
-                        className="d-flex gap-2 align-items-center"
-                        onClick={toggleExpand}
-                      >
-                        Hide <i className="bi bi-chevron-up"></i>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                {isExpanded && (
-                  <TreasuryCardList
-                    treasuries={otherDaos}
-                    hasTreasury={false}
-                  />
-                )}
-              </>
             )}
           </div>
         </div>
