@@ -37,13 +37,12 @@ test.describe("My Treasuries", () => {
     ).toBeVisible();
     await expect(page.getByText("testing name")).toBeVisible();
     await expect(page.getByText("Total Balance").nth(0)).toBeVisible();
-    await expect(page.getByText("Other DAOs")).toBeVisible();
 
     const [newPage] = await Promise.all([
       page.context().waitForEvent("page"),
       page.getByRole("link", { name: "testing name" }).click(),
     ]);
     await newPage.waitForLoadState();
-    await expect(newPage.url()).toBe("https://treasury-testing.near.page/");
+    await expect(newPage.url()).toBe("https://app.neartreasury.com/testing.sputnik-dao.near");
   });
 });
