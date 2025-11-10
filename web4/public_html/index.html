@@ -356,19 +356,22 @@
       .dropdown-card {
         display: flex;
         flex-direction: column;
-        width: 225px;
-        height: 270px;
+        width: 235px;
+        height: 285px;
         padding: 15px;
         border-radius: 8px;
         text-decoration: none;
         color: inherit;
-        background-color: white;
-        transition:
-          transform 0.2s,
-          background-color 0.2s;
+        background-color: rgba(255, 255, 255, 1);
+        transition: transform 0.2s, background-color 0.2s;
         cursor: pointer;
+        border: 1px solid rgba(226, 230, 236, 1);
       }
 
+      [data-bs-theme="dark"] .dropdown-card {
+        background-color: #222222;
+        border: 1px solid #3b3b3b;
+      }
       .dropdown-card img {
         width: 50px;
         height: 50px;
@@ -410,10 +413,10 @@
       .web4-badge {
         width: fit-content;
         padding: 5px 10px;
-        border-radius: 5px;
+        border-radius: 10px;
         font-size: 12px;
-        background-color: #3cb179;
-        color: white;
+        background-color: white;
+        color: black;
       }
 
       .selected-gateway {
@@ -421,7 +424,7 @@
       }
 
       [data-bs-theme="dark"] .selected-gateway {
-        background-color: rgba(50, 50, 50, 1) !important;
+        background-color: #323232 !important;
       }
     </style>
     <script>
@@ -484,15 +487,26 @@
     <nav class="custom-navbar">
       <div class="dropdown ms-2">
         <div
-          class="d-flex gap-2 align-items-center btn btn-light web4-btn-light border-0 rounded-3"
+          class="d-flex gap-2 align-items-center btn btn-light web4-btn-light border-0 rounded-3 position-relative"
           id="dropdownToggle"
         >
-          <img
-            id="logo"
-            src="https://ipfs.near.social/ipfs/bafkreibm63lijt7qs3dzlmrrdbhqgxkt55k5daswgrq5z4stqp4zk46kc4"
-            alt="treasury logo"
-          />
-
+          <div class="position-relative">
+            <img
+              id="logo"
+              src="https://ipfs.near.social/ipfs/bafkreibm63lijt7qs3dzlmrrdbhqgxkt55k5daswgrq5z4stqp4zk46kc4"
+              alt="treasury logo"
+            />
+            <span
+              class="position-absolute start-100 translate-middle p-1 border border-light rounded-circle"
+              style="
+                width: 12px;
+                height: 12px;
+                top: 12px;
+                background-color: rgba(60, 177, 121, 1);
+              "
+            >
+            </span>
+          </div>
           <i class="bi bi-chevron-down" id="dropdownIcon"></i>
         </div>
 
@@ -502,7 +516,7 @@
         >
           <div class="d-flex flex-column gap-2">
             <div class="d-flex gap-2 align-items-center">
-              <div>Select Gateway</div>
+              <div>Select Version</div>
               <div class="text-sm text-muted">
                 Use your treasury in your preferred way
               </div>
@@ -510,45 +524,58 @@
 
             <div class="card-container d-flex gap-2 flex-wrap">
               <a
-                class="dropdown-card rounded-3 flex-1 text-decoration-none selected-gateway"
-                id="web4-link"
+                class="dropdown-card rounded-3 flex-1 text-decoration-none"
+                id="react-link"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <img
-                  src="https://ipfs.near.social/ipfs/bafkreiepnpb5bjy4bopxwmkxog35swcqliupvmjgzlo3k2pfc345qoquz4"
-                  alt="Web4"
-                  id="web4-image"
-                />
-                <strong>Web4</strong>
-                <p>
-                  Gateway built by the NEAR Treasury team, providing a secure
-                  and decentralized experience with optimal performance and
-                  ledger support.
-                </p>
-                <div class="web4-badge mt-2" style="background-color: #3cb179">
-                  Currently in Use
+                <div class="d-flex justify-content-between align-items-start">
+                  <img
+                    src="https://ipfs.near.social/ipfs/bafkreiepnpb5bjy4bopxwmkxog35swcqliupvmjgzlo3k2pfc345qoquz4"
+                    alt="Latest Version"
+                    id="web4-image"
+                  />
+                  <div
+                    class="web4-badge"
+                    style="
+                      background-color: rgba(60, 177, 121, 1);
+                      font-size: 14px;
+                      color: white;
+                    "
+                  >
+                    New
+                  </div>
                 </div>
+
+                <strong>Latest Version</strong>
+
+                <p>
+                  Gateway built by the NEAR Treasury team, enhanced interface
+                  and expanded capabilities. Your Sputnik DAO contract remains
+                  the same.
+                </p>
               </a>
 
               <a
-                class="dropdown-card border border-1 rounded-3 flex-1 text-decoration-none"
-                id="dev-org-link"
+                class="dropdown-card border border-1 rounded-3 flex-1 text-decoration-none selected-gateway"
+                id="web4-link"
                 target="_blank"
                 rel="noopener noreferrer"
               >
                 <div class="d-flex justify-content-between">
                   <img
-                    src="https://ipfs.near.social/ipfs/bafkreiffkbotl7he7ikp2yjo2n2eebjrlnstyzc5tdokb2tvy4zd6nkcma"
-                    alt="NEAR Developer Portal"
+                    src="https://ipfs.near.social/ipfs/bafkreiepnpb5bjy4bopxwmkxog35swcqliupvmjgzlo3k2pfc345qoquz4"
+                    alt="Web4 Gateway"
                   />
                   <i class="bi bi-arrow-up-right h6 mb-0 text-color"></i>
                 </div>
-                <strong style="color: black">NEAR Developer Portal</strong>
+                <strong>Web4 Gateway</strong>
                 <p>
-                  Use your existing NEAR Dev gateway for quick access and
-                  single-sign-on convenience.
+                  Gateway built by the NEAR Treasury team rendered using web4
+                  contract, providing a secure and decentralized experience with
+                  optimal performance and ledger support.
                 </p>
+                <div class="web4-badge mt-2">Currently in Use</div>
               </a>
 
               <a
@@ -663,12 +690,27 @@
     const currentDomain = window.location.host ?? "";
     const extractedDomain = currentDomain.split(".page")?.[0] ?? "";
 
-    document.getElementById("web4-link").href =
-      `https://${extractedDomain}.page/`;
-    document.getElementById("dev-org-link").href =
-      `https://dev.near.org/${extractedDomain}/widget/app`;
-    document.getElementById("social-link").href =
-      `https://near.social/${extractedDomain}/widget/app`;
+    let treasuryDaoID = extractedDomain;
+    if (extractedDomain) {
+      try {
+        const args = {keys: [`${extractedDomain}/widget/config.data`]};
+        const rpcResponse = await fetch('https://free.rpc.fastnear.com/', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({method: "query", params: {request_type: "call_function", account_id: "social.near", method_name: "get", args_base64: btoa(JSON.stringify(args)), finality: "optimistic"}, id: "dontcare", jsonrpc: "2.0"})});
+        const rpcData = await rpcResponse.json();
+        if (rpcData.result && rpcData.result.result) {
+          const configDataString = new TextDecoder().decode(new Uint8Array(rpcData.result.result));
+          const configData = JSON.parse(configDataString);
+          const configCode = configData[extractedDomain]?.widget?.["config.data"];
+          if (configCode) {
+            const treasuryDaoIDMatch = configCode.match(/treasuryDaoID:\s*["']([^"']+)["']/);
+
+         if (treasuryDaoIDMatch) {treasuryDaoID = treasuryDaoIDMatch[1];} else {console.warn('treasuryDaoID not found in config data');}
+          }
+        }
+      } catch (error) {console.error('Failed to fetch config data:', error);}
+    }
+    document.getElementById("web4-link").href = `https://${extractedDomain}.page/`;
+    document.getElementById("react-link").href = `https://app.neartreasury.com/${treasuryDaoID}/`;
+    document.getElementById("social-link").href = `https://near.social/${extractedDomain}/widget/app`;
 
     const dropdownToggle = document.getElementById("dropdownToggle");
     const dropdownIcon = document.getElementById("dropdownIcon");

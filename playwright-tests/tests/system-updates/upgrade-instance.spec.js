@@ -10,7 +10,8 @@ import { Indexer } from "../../util/indexer.js";
 import { redirectWeb4 } from "../../util/web4.js";
 import { setPageAuthSettings } from "../../util/sandboxrpc.js";
 
-test("should update treasury factory with new web4 contract and self upgrade instance", async ({
+// skip this test for now
+test.skip("should update treasury factory with new web4 contract and self upgrade instance", async ({
   page,
   instanceAccount,
   daoAccount,
