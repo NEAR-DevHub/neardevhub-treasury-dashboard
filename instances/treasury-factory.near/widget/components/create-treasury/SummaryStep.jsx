@@ -66,12 +66,25 @@ useEffect(() => {
     let checkTxnTimeout = null;
 
     const checkAccountCreation = async () => {
-      Near.asyncView(
-        `${formFields.accountName}.sputnik-dao.near`,
-        "view_account"
-      )
-        .then((web4) => {
-          if (web4) {
+      asyncFetch(`${REPL_RPC_URL}`, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: "dontcare",
+          method: "query",
+          params: {
+            request_type: "view_account",
+            finality: "final",
+            account_id: `${formFields.accountName}.sputnik-dao.near`,
+          },
+        }),
+      })
+        .then((resp) => {
+          if (resp.body?.result?.amount) {
             setTxnCreated(false);
             showCongratsModal(true);
             clearTimeout(checkTxnTimeout);

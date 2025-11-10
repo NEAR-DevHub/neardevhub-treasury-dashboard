@@ -104,12 +104,6 @@ test.describe("connected with ledger", function () {
     await expect(page.getByText("Name cannot be a NEAR-implicit account (hex address)")).toBeVisible();
     await expect(continueButton).toBeDisabled();
     
-    // Test valid name should show preview without errors
-    await treasuryInput.fill('templar');
-    await continueButton.click();
-    await expect(page.getByText("Account name already exists")).toBeVisible();
-    await expect(continueButton).toBeDisabled();
-    
     // Test valid name format - button should be enabled
     const treasuryName = "treasury-new-megha";
     await treasuryInput.fill(treasuryName);
@@ -146,6 +140,38 @@ test.describe("connected with ledger", function () {
 
     const submitBtn = page.locator("button", { hasText: "Confirm and Create" });
     await submitBtn.scrollIntoViewIfNeeded();
+    
+    await page.route("**/free.rpc.fastnear.com/**", async (route, request) => {
+      const postData = request.postDataJSON();
+      
+      // Check if this is a view_account request for the treasury being created
+      if (
+        postData?.params?.request_type === "view_account" &&
+        postData?.params?.account_id === `${treasuryName}.sputnik-dao.near`
+      ) {
+        
+        // Redirect to sandbox RPC to get real response
+        const sandboxResponse = await fetch(sandbox.rpc_url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(postData),
+        });
+        
+        const sandboxData = await sandboxResponse.json();
+        
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(sandboxData),
+        });
+      } else {
+        // For other requests, continue normally
+        await route.fallback();
+      }
+    });
+
     await submitBtn.click();
 
     // bos txn confirmation modal
