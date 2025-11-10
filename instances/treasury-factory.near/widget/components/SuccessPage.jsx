@@ -93,11 +93,6 @@ return (
     <div className="card w-100 d-flex flex-column gap-4 border-0">
       <div className="border border-1 rounded-3 p-0">
         <AccountDisplay
-          label={"NEAR"}
-          prefix=".near"
-          tooltipInfo="This NEAR account name will be used for the application's URL and other management purposes, not the actual account where the funds will be held."
-        />
-        <AccountDisplay
           label={"Sputnik DAO"}
           prefix=".sputnik-dao.near"
           tooltipInfo="This is the name of your treasury's account on the Sputnik DAO platform, where your funds will be held."
@@ -107,7 +102,7 @@ return (
       <div className="d-flex gap-3 align-items-center">
         <a
           className="btn btn-primary w-100"
-          href={`https://${accountName}.near.page`}
+          href={`https://app.neartreasury.com/${accountName}.sputnik-dao.near`}
           target="_blank"
           rel="noopener noreferrer"
         >

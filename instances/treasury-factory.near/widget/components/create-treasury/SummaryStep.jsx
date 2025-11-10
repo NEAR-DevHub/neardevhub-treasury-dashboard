@@ -4,8 +4,6 @@ const { TransactionLoader } = VM.require(
 
 const { formFields, showCongratsModal } = props;
 
-const REQUIRED_BALANCE = 9;
-
 const [isTxnCreated, setTxnCreated] = useState(false);
 
 const Section = styled.div`
@@ -68,11 +66,25 @@ useEffect(() => {
     let checkTxnTimeout = null;
 
     const checkAccountCreation = async () => {
-      Near.asyncView(`${formFields.accountName}.near`, "web4_get", {
-        request: { path: "/" },
+      asyncFetch(`${REPL_RPC_URL}`, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: "dontcare",
+          method: "query",
+          params: {
+            request_type: "view_account",
+            finality: "final",
+            account_id: `${formFields.accountName}.sputnik-dao.near`,
+          },
+        }),
       })
-        .then((web4) => {
-          if (web4) {
+        .then((resp) => {
+          if (resp.body?.result?.amount) {
             setTxnCreated(false);
             showCongratsModal(true);
             clearTimeout(checkTxnTimeout);
@@ -106,114 +118,112 @@ function createDao() {
     threshold: "1",
   };
   setTxnCreated(true);
-  const createDaoConfig = {
-    config: {
-      name: `${formFields.accountName}`,
-      purpose: `creating ${formFields.accountName} treasury`,
-      metadata: "",
-    },
-    policy: {
-      roles: [
-        {
-          kind: {
-            Group: filterMemberByPermission(PERMISSIONS.create),
-          },
-          name: "Requestor",
-          permissions: [
-            "call:AddProposal",
-            "transfer:AddProposal",
-            "call:VoteRemove",
-            "transfer:VoteRemove",
-          ],
-          vote_policy: {
-            transfer: oneRequiredVote,
-            call: oneRequiredVote,
-          },
-        },
-        {
-          kind: {
-            Group: filterMemberByPermission(PERMISSIONS.edit),
-          },
-          name: "Admin",
-          permissions: [
-            "config:*",
-            "policy:*",
-            "add_member_to_role:*",
-            "remove_member_from_role:*",
-            "upgrade_self:*",
-            "upgrade_remote:*",
-            "set_vote_token:*",
-            "add_bounty:*",
-            "bounty_done:*",
-            "factory_info_update:*",
-            "policy_add_or_update_role:*",
-            "policy_remove_role:*",
-            "policy_update_default_vote_policy:*",
-            "policy_update_parameters:*",
-          ],
-          vote_policy: {
-            config: oneRequiredVote,
-            policy: oneRequiredVote,
-            add_member_to_role: oneRequiredVote,
-            remove_member_from_role: oneRequiredVote,
-            upgrade_self: oneRequiredVote,
-            upgrade_remote: oneRequiredVote,
-            set_vote_token: oneRequiredVote,
-            add_bounty: oneRequiredVote,
-            bounty_done: oneRequiredVote,
-            factory_info_update: oneRequiredVote,
-            policy_add_or_update_role: oneRequiredVote,
-            policy_remove_role: oneRequiredVote,
-            policy_update_default_vote_policy: oneRequiredVote,
-            policy_update_parameters: oneRequiredVote,
-          },
-        },
-        {
-          kind: {
-            Group: filterMemberByPermission(PERMISSIONS.vote),
-          },
-          name: "Approver",
-          permissions: [
-            "call:VoteReject",
-            "call:VoteApprove",
-            "call:RemoveProposal",
-            "call:Finalize",
-            "transfer:VoteReject",
-            "transfer:VoteApprove",
-            "transfer:RemoveProposal",
-            "transfer:Finalize",
-          ],
-          vote_policy: {
-            transfer: oneRequiredVote,
-            call: oneRequiredVote,
-          },
-        },
-      ],
-      default_vote_policy: {
-        weight_kind: "RoleWeight",
-        quorum: "0",
-        threshold: [1, 2],
-      },
-      proposal_bond: "100000000000000000000000",
-      proposal_period: "604800000000000",
-      bounty_bond: "100000000000000000000000",
-      bounty_forgiveness_period: "604800000000000",
-    },
-  };
 
   Near.call([
     {
-      contractName: `${REPL_BASE_DEPLOYMENT_ACCOUNT}`,
-      methodName: "create_instance",
+      contractName: `sputnik-dao.near`,
+      methodName: "create",
       args: {
         name: `${formFields.accountName}`,
-        sputnik_dao_factory_account_id: `${REPL_SPUTNIK_FACTORY_ACCOUNT}`,
-        social_db_account_id: `${REPL_SOCIAL_CONTRACT}`,
-        widget_reference_account_id: `${REPL_FACTORY_REFERENCE_ACCOUNT}`,
-        create_dao_args: btoa(JSON.stringify(createDaoConfig)),
+        args: btoa(
+          JSON.stringify({
+            config: {
+              name: `${formFields.accountName}`,
+              purpose: `creating ${formFields.accountName} treasury`,
+              metadata: "",
+            },
+            policy: {
+              roles: [
+                {
+                  kind: {
+                    Group: filterMemberByPermission(PERMISSIONS.create),
+                  },
+                  name: "Requestor",
+                  permissions: [
+                    "call:AddProposal",
+                    "transfer:AddProposal",
+                    "call:VoteRemove",
+                    "transfer:VoteRemove",
+                  ],
+                  vote_policy: {
+                    transfer: oneRequiredVote,
+                    call: oneRequiredVote,
+                  },
+                },
+                {
+                  kind: {
+                    Group: filterMemberByPermission(PERMISSIONS.edit),
+                  },
+                  name: "Admin",
+                  permissions: [
+                    "config:*",
+                    "policy:*",
+                    "add_member_to_role:*",
+                    "remove_member_from_role:*",
+                    "upgrade_self:*",
+                    "upgrade_remote:*",
+                    "set_vote_token:*",
+                    "add_bounty:*",
+                    "bounty_done:*",
+                    "factory_info_update:*",
+                    "policy_add_or_update_role:*",
+                    "policy_remove_role:*",
+                    "policy_update_default_vote_policy:*",
+                    "policy_update_parameters:*",
+                  ],
+                  vote_policy: {
+                    config: oneRequiredVote,
+                    policy: oneRequiredVote,
+                    add_member_to_role: oneRequiredVote,
+                    remove_member_from_role: oneRequiredVote,
+                    upgrade_self: oneRequiredVote,
+                    upgrade_remote: oneRequiredVote,
+                    set_vote_token: oneRequiredVote,
+                    add_bounty: oneRequiredVote,
+                    bounty_done: oneRequiredVote,
+                    factory_info_update: oneRequiredVote,
+                    policy_add_or_update_role: oneRequiredVote,
+                    policy_remove_role: oneRequiredVote,
+                    policy_update_default_vote_policy: oneRequiredVote,
+                    policy_update_parameters: oneRequiredVote,
+                  },
+                },
+                {
+                  kind: {
+                    Group: filterMemberByPermission(PERMISSIONS.vote),
+                  },
+                  name: "Approver",
+                  permissions: [
+                    "call:VoteReject",
+                    "call:VoteApprove",
+                    "call:RemoveProposal",
+                    "call:Finalize",
+                    "transfer:VoteReject",
+                    "transfer:VoteApprove",
+                    "transfer:RemoveProposal",
+                    "transfer:Finalize",
+                  ],
+                  vote_policy: {
+                    transfer: oneRequiredVote,
+                    call: oneRequiredVote,
+                  },
+                },
+              ],
+              default_vote_policy: {
+                weight_kind: "RoleWeight",
+                quorum: "0",
+                threshold: [1, 2],
+              },
+              proposal_bond: "100000000000000000000000",
+              proposal_period: "604800000000000",
+              bounty_bond: "100000000000000000000000",
+              bounty_forgiveness_period: "604800000000000",
+            },
+          })
+        ),
       },
       gas: 300000000000000,
-      deposit: Big(REQUIRED_BALANCE).mul(Big(10).pow(24)).toFixed(),
+      deposit: Big(6).mul(Big(10).pow(24)).toFixed(),
     },
   ]);
 }
@@ -279,25 +289,6 @@ return (
           <Section withBorder>
             <div className="d-flex justify-content-between align-items-center">
               <div>
-                <label>Applicatiion Account Name</label>
-                <div>
-                  {formFields.accountName
-                    ? `${formFields.accountName}.near`
-                    : "-"}
-                </div>
-              </div>
-
-              <Link
-                href={`/${REPL_BASE_DEPLOYMENT_ACCOUNT}/widget/app?page=create-treasury&step=1`}
-              >
-                <i className="bi bi-pencil" />
-              </Link>
-            </div>
-          </Section>
-
-          <Section withBorder>
-            <div className="d-flex justify-content-between align-items-center">
-              <div>
                 <label>Sputnik Account Name</label>
                 <div>
                   {formFields.accountName
@@ -341,18 +332,12 @@ return (
       <Section>
         <h4>Costs</h4>
         <ul>
-          <SummaryListItem
-            title="SputnikDAO"
-            value={6}
-            info="Estimated one-time costs to store info in SputnikDAO"
-          />
-          <SummaryListItem
-            title="Frontend BOS Widget Hosting"
-            value={3}
-            info="Estimated one-time costs to store info in BOS"
-          />
           <b>
-            <SummaryListItem title="Total" value={REQUIRED_BALANCE} />
+            <SummaryListItem
+              title="SputnikDAO"
+              value={6}
+              info="Estimated one-time costs to store info in SputnikDAO"
+            />
           </b>
         </ul>
       </Section>

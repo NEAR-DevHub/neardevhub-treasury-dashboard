@@ -4,7 +4,7 @@ const { getNearBalances } = VM.require(
 if (!getNearBalances) return <></>;
 
 const { setCurrentPage } = props;
-const REQUIRED_BALANCE = 9;
+const REQUIRED_BALANCE = 6;
 
 let balance = getNearBalances(context.accountId);
 balance = balance ? parseFloat(balance.availableParsed) : 0;
@@ -76,14 +76,6 @@ return (
             value={6}
             info="Estimated one-time costs to store info in SputnikDAO"
           />
-          <SummaryListItem
-            title="Frontend BOS Widget Hosting"
-            value={3}
-            info="Estimated one-time costs to store info in BOS"
-          />
-          <b>
-            <SummaryListItem title="Total" value={REQUIRED_BALANCE} />
-          </b>
         </ul>
       </div>
       {balance < REQUIRED_BALANCE && (
