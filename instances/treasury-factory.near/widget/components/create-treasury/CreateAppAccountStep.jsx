@@ -108,7 +108,7 @@ const AccountDisplay = ({ label, prefix, tooltipInfo, noBorder }) => {
               <i className="mx-1 bi bi-info-circle text-secondary" />
             </OverlayTrigger>
           </div>
-          <span className="h6 mb-0 align-items-center">
+          <span className="h6 mb-0 align-items-center text-break">
             <span className="text-primary">{formFields.accountName}</span>
             <span style={{ marginLeft: "-5px" }}>{prefix}</span>
           </span>
