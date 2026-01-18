@@ -142,7 +142,7 @@ const ReceiverAccountComponent = (
     )}
 
     <div className="d-flex flex-column" style={{ minWidth: 0, flex: 1 }}>
-      {displayName && (
+      {displayName && name && (
         <div className="mb-0 text-truncate" title={name}>
           {name}
         </div>

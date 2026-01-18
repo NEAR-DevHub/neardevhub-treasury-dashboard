@@ -784,7 +784,7 @@
           <button>
             <img src="${imageSrc}" />
             <div class="text-align-left">
-            <h6> ${name} </h6>
+            ${name ?`<h6> ${name} </h6>` :  ''}
             <div style="opacity: 0.5; font-size: 12px"> ${accountId} </div>
             </div>
             <svg
