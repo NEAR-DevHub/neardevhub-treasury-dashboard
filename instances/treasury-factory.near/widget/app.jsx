@@ -82,6 +82,14 @@ return (
   <Theme>
     <ThemeContainer>
       <AppLayout>
+        <Widget
+          loading=""
+          src="${REPL_DEVDAO_ACCOUNT}/widget/components.AnnouncementBanner"
+          props={{
+            instance: "${REPL_BASE_DEPLOYMENT_ACCOUNT}",
+          }}
+        />
+
         <Page />
       </AppLayout>
     </ThemeContainer>
