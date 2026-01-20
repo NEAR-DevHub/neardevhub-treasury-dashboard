@@ -283,7 +283,7 @@ const BalanceComponent = ({ daoId, isDraft }) => {
 
           {ftTokens?.fts.length > maxShow && (
             <div
-              style={{ marginLeft: "-15px", zIndex: 999 }}
+              style={{ marginLeft: "-15px", zIndex: 70 }}
               className="grey-circle rounded-circle d-flex justify-content-center align-items-center"
             >
               +{ftTokens.fts.length - (maxShow - 1)}
