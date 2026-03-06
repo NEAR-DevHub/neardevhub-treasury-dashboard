@@ -214,7 +214,7 @@ function createDao() {
                 quorum: "0",
                 threshold: [1, 2],
               },
-              proposal_bond: "100000000000000000000000",
+              proposal_bond: "0",
               proposal_period: "604800000000000",
               bounty_bond: "100000000000000000000000",
               bounty_forgiveness_period: "604800000000000",
@@ -223,7 +223,7 @@ function createDao() {
         ),
       },
       gas: 300000000000000,
-      deposit: Big(6).mul(Big(10).pow(24)).toFixed(),
+      deposit: Big(0.09).mul(Big(10).pow(24)).toFixed(),
     },
   ]);
 }
@@ -335,7 +335,7 @@ return (
           <b>
             <SummaryListItem
               title="SputnikDAO"
-              value={6}
+              value={0.09}
               info="Estimated one-time costs to store info in SputnikDAO"
             />
           </b>

@@ -4,7 +4,7 @@ const { getNearBalances } = VM.require(
 if (!getNearBalances) return <></>;
 
 const { setCurrentPage } = props;
-const REQUIRED_BALANCE = 6;
+const REQUIRED_BALANCE = 0.09;
 
 let balance = getNearBalances(context.accountId);
 balance = balance ? parseFloat(balance.availableParsed) : 0;
@@ -73,7 +73,7 @@ return (
         <ul>
           <SummaryListItem
             title="SputnikDAO"
-            value={6}
+            value={0.09}
             info="Estimated one-time costs to store info in SputnikDAO"
           />
         </ul>
