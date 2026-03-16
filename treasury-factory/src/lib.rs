@@ -11,6 +11,7 @@ pub mod external;
 pub use crate::external::*;
 
 static CREATE_SPUTNIK_DAO_DEPOSIT: NearToken = NearToken::from_near(6);
+static CREATE_SPUTNIK_DAO_GLOBAL_DEPOSIT: NearToken = NearToken::from_near(1);
 static SOCIAL_DB_DEPOSIT: NearToken = NearToken::from_millinear(500);
 static NEW_INSTANCE_ACCOUNT_DEPOSIT: NearToken = NearToken::from_millinear(2500);
 
@@ -126,8 +127,8 @@ impl Contract {
         widget_reference_account_id: String,
         create_dao_args: String,
     ) -> Promise {
-        if env::attached_deposit() != NearToken::from_near(7) {
-            env::panic_str("Must attach 7 NEAR to create treasury instance with global contract");
+        if env::attached_deposit() != NearToken::from_near(2) {
+            env::panic_str("Must attach 2 NEAR to create treasury instance with global contract");
         }
         let new_instance_contract_id: AccountId = format!("{}.near", name).parse().unwrap();
         let admin_full_access_public_key: PublicKey =
@@ -203,6 +204,7 @@ impl Contract {
                     format!("{}.{}", name, sputnik_dao_factory_account_id),
                     widget_reference_account_id,
                     social_db_account_id,
+                    CREATE_SPUTNIK_DAO_DEPOSIT,
                 ))
         } else {
             env::log_str(
@@ -242,14 +244,15 @@ impl Contract {
         if create_account_result {
             sputnik_dao::ext(sputnik_dao_factory_account_id.parse().unwrap())
                 .with_static_gas(Gas::from_tgas(100))
-                .with_attached_deposit(CREATE_SPUTNIK_DAO_DEPOSIT)
-                .create(name.to_string(), create_dao_args)
+                .with_attached_deposit(CREATE_SPUTNIK_DAO_GLOBAL_DEPOSIT)
+                .create_global_contract(name.to_string(), create_dao_args)
                 .then(Self::ext(env::current_account_id()).create_dao_callback(
                     refund_on_failure_account,
                     new_instance_contract_id,
                     format!("{}.{}", name, sputnik_dao_factory_account_id),
                     widget_reference_account_id,
                     social_db_account_id,
+                    CREATE_SPUTNIK_DAO_GLOBAL_DEPOSIT,
                 ))
         } else {
             env::log_str(
@@ -259,7 +262,7 @@ impl Contract {
                 )
                 .as_str(),
             );
-            let refund_deposit = CREATE_SPUTNIK_DAO_DEPOSIT
+            let refund_deposit = CREATE_SPUTNIK_DAO_GLOBAL_DEPOSIT
                 .saturating_add(SOCIAL_DB_DEPOSIT)
                 .saturating_add(NearToken::from_millinear(500));
             Promise::new(refund_on_failure_account).transfer(refund_deposit)
@@ -274,6 +277,7 @@ impl Contract {
         sputnik_dao_contract_id: String,
         widget_reference_account_id: String,
         social_db_account_id: String,
+        dao_deposit_to_refund: NearToken,
     ) -> Promise {
         let create_dao_result = env::promise_result(0);
 
@@ -287,7 +291,7 @@ impl Contract {
         if create_dao_result == PromiseResult::Failed {
             env::log_str(format!("Succeeded creating and funding web4 account {}, but failed creating treasury account {}",new_instance_contract_id, sputnik_dao_contract_id).as_str());
             promise = promise
-                .then(Promise::new(refund_on_failure_account).transfer(CREATE_SPUTNIK_DAO_DEPOSIT))
+                .then(Promise::new(refund_on_failure_account).transfer(dao_deposit_to_refund))
         }
         promise
     }

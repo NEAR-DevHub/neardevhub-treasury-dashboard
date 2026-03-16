@@ -7,6 +7,7 @@ pub const XCC_SUCCESS: u64 = 1;
 #[ext_contract(sputnik_dao)]
 trait SputnikDao {
     fn create(&self, name: String, args: String);
+    fn create_global_contract(&self, name: String, args: String);
 }
 
 #[ext_contract(instance_contract)]
